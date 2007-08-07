@@ -1,0 +1,132 @@
+\documentclass[a4paper,12pt]{article}
+
+\begin{document}
+\title{CM4all Beng}
+\author{Max Kellermann}
+
+\maketitle
+
+\begin{abstract}
+Beng proxy is an HTTP server including an HTTP proxy and a
+minimalistic template processor.  Its goal is to dynamically aggregate
+a web site from a number of sources (widgets).
+\end{abstract}
+
+
+\section{Features}
+
+Beng-proxy delivers resources via HTTP.  In the most simple form, it
+it provides a resource in pass-through mode, acting as an HTTP proxy.
+
+It caches resources if possible.
+
+XML resources can be transformed with XSLT.
+
+On HTML resources, it can apply a simple template language.  This
+language provides commands to insert another HTML page, which is
+called \textbf{Widget}.
+
+\subsection{Widgets}
+
+A \textbf{Widget} is an object which can be inserted into a web site.
+It is rendered by a Widget server into HTML.
+
+We do not assume that we can trust the widget server.  As a
+consequence, we have to ensure that a malicious widget server cannot
+compromise the security of \emph{beng-proxy}, the client or even other
+widget servers.
+
+There is a global registry for well-known preconfigured widgets.  The
+user can also choose to run his own (non-registered) widget server.
+In fact, any public HTTP server should be able to act as a widget
+server.
+
+
+\subsection{Cookies}
+
+\emph{beng-proxy} can be accessed with cookies switched off.  It includes a
+full-featured session management and provides cookies for the widget
+servers.
+
+\emph{beng-proxy} maintains the client's session id in either a cookie
+or as part of the URI.  In its local session storage, it holds all
+cookies which were created by the widget servers.  This way, the
+client gets to see only the one session id, disregarding how much
+session information may be managed by \emph{beng-proxy}.
+
+
+\subsection{JavaScript}
+
+Since all widgets are put together into a single HTML page, all of the
+JavaScript runs in the same security context.  That will open the door
+for malicious widget servers, which are now able to take over the full
+web site, including all other widgets.  For that reason, JavaScript is
+only allowed for very few well-known and trusted widget servers.  For
+all other widget servers, JavaScript use is rejected, or it must be
+embedded in an IFRAME, which has technical and practical
+disadvantages.
+
+
+\subsection{Forms}
+
+\emph{beng-proxy} itself does not use the HTTP query string or POST
+data.  All of it can be handed off to a widget.  To enable this,
+\emph{beng-proxy} rewrites forms, and remembers which widget server to
+send the data to.
+
+
+\section{Widget protocol}
+
+A widget server is simply an HTTP server.  Its content type must be
+text/html.  Alternatively, text/xml is allowed, but the caller must
+specify an XSLT file for transformation to HTML.
+
+
+\section{The Beng Template Language}
+
+The \emph{Beng} template language defines commands which may be
+inserted in the form of XML processing instructions.
+
+\subsection{Adding a widget}
+
+To add a widget, insert the following command:
+
+\begin{verbatim*}
+<?cm4all-beng-widget name="foo"?>
+\end{verbatim*}
+
+The following attributes may be specified:
+
+\begin{tabular}{|l|p{8cm}|}
+\hline
+id & unique identification of this widget; this is required for proper
+session and form management if there are several widgets with the same
+server URI \\
+\hline
+name & registered name of the widget server \\
+\hline
+uri & use an unregistered widget \\
+\hline
+dock & do not insert the widget here, but at the specified dock \\
+\hline
+path\_info & optional path info to append to the widget URI; must begin with
+a slash \\
+\hline
+query\_string & optional query string to append to the widget URI
+(without the question mark) \\
+\hline
+\end{tabular}
+
+
+\subsection{Placeholder for widgets}
+
+When creating a template for multiple pages (called a ``design'' in
+the CM-AG slang), you may add placeholders where somebody else might
+want to paste a widget.
+
+\begin{verbatim*}
+<?cm4all-beng-dock id="foo"?>
+\end{verbatim*}
+
+
+\end{document}
