@@ -18,7 +18,10 @@ pool_t
 pool_new_linear(pool_t parent, const char *name, size_t initial_size);
 
 void
-pool_destroy(pool_t pool);
+pool_ref(pool_t pool);
+
+void
+pool_unref(pool_t pool);
 
 void *
 p_malloc(pool_t pool, size_t size);

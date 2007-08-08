@@ -39,7 +39,7 @@ remove_connection(struct client_connection *connection)
     if (connection->http != NULL)
         http_server_connection_free(&connection->http);
 
-    pool_destroy(connection->pool);
+    pool_unref(connection->pool);
 }
 
 static void
@@ -155,5 +155,5 @@ int main(int argc, char **argv)
     if (instance.listener != NULL)
         listener_free(&instance.listener);
 
-    pool_destroy(instance.pool);
+    pool_unref(instance.pool);
 }

@@ -33,6 +33,7 @@ struct linear_pool_area {
 struct pool {
     struct list_head siblings, children;
     pool_t parent;
+    unsigned ref;
     enum pool_type type;
     const char *name;
     union {
@@ -78,6 +79,7 @@ pool_new(pool_t parent, const char *name)
 
     pool = xcalloc(sizeof(*pool));
     list_init(&pool->children);
+    pool->ref = 1;
     pool->name = name;
 
     if (parent != NULL)
@@ -119,14 +121,10 @@ pool_new_linear(pool_t parent, const char *name, size_t initial_size)
     return pool;
 }
 
-void
+static void
 pool_destroy(pool_t pool)
 {
-    while (!list_empty(&pool->children)) {
-        pool_t child = (pool_t)pool->children.next;
-        list_remove(&child->siblings);
-        pool_destroy(child);
-    }
+    assert(list_empty(&pool->children));
 
     switch (pool->type) {
     case POOL_LIBC:
@@ -145,6 +143,22 @@ pool_destroy(pool_t pool)
         }
         break;
     }
+}
+
+void
+pool_ref(pool_t pool)
+{
+    assert(pool->ref > 0);
+    ++pool->ref;
+}
+
+void
+pool_unref(pool_t pool)
+{
+    assert(pool->ref > 0);
+    --pool->ref;
+    if (pool->ref == 0)
+        pool_destroy(pool);
 }
 
 static void *
