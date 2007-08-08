@@ -147,6 +147,8 @@ pool_destroy(pool_t pool)
         }
         break;
     }
+
+    free(pool);
 }
 
 void
