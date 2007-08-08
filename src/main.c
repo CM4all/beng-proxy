@@ -4,10 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "listener.h"
 #include "http-server.h"
 #include "pool.h"
-#include "list.h"
+#include "instance.h"
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -21,14 +20,6 @@ struct client_connection {
     struct list_head siblings;
     pool_t pool;
     http_server_connection_t http;
-};
-
-struct instance {
-    pool_t pool;
-    listener_t listener;
-    struct list_head connections;
-    int should_exit;
-    struct event sigterm_event, sigint_event, sigquit_event;
 };
 
 static void
