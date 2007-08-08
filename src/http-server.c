@@ -399,6 +399,4 @@ http_server_response_finish(http_server_connection_t connection)
     }
 
     http_server_request_free(&connection->request);
-
-    http_server_consume_input(connection);
 }
