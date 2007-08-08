@@ -134,6 +134,8 @@ my_http_server_callback(struct http_server_request *request,
 
     while ((nbytes = read(fd, buffer, sizeof(buffer))) > 0)
         http_server_send(request->connection, buffer, (size_t)nbytes);
+    close(fd);
+
     http_server_response_finish(request->connection);
 }
 
