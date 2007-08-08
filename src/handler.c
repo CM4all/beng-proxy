@@ -7,13 +7,22 @@
 #include "instance.h"
 #include "http-server.h"
 
+#include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 struct client_connection {
     struct list_head siblings;
     pool_t pool;
     http_server_connection_t http;
+};
+
+struct translated {
+    const char *path;
+    const char *path_info;
 };
 
 void
@@ -27,12 +36,31 @@ remove_connection(struct client_connection *connection)
     pool_unref(connection->pool);
 }
 
+static struct translated *
+translate(struct http_server_request *request)
+{
+    struct translated *translated;
+    char path[1024];
+
+    /* XXX this is, of course, a huge security hole */
+    snprintf(path, sizeof(path), "/var/www/%s", request->uri);
+
+    translated = p_calloc(request->pool, sizeof(translated));
+    translated->path = p_strdup(request->pool, path);
+    return translated;
+}
+
 static void
 my_http_server_callback(struct http_server_request *request,
                         /*const void *body, size_t body_length,*/
                         void *ctx)
 {
     struct client_connection *connection = ctx;
+    struct translated *translated;
+    int ret, fd;
+    struct stat st;
+    char buffer[4096];
+    ssize_t nbytes;
 
     if (request == NULL) {
         remove_connection(connection);
@@ -45,7 +73,67 @@ my_http_server_callback(struct http_server_request *request,
     printf("in my_http_server_callback()\n");
     printf("host=%s\n", strmap_get(request->headers, "host"));
 
-    http_server_send_message(request->connection, HTTP_STATUS_OK, "Hello, world!");
+    translated = translate(request);
+    if (translated == NULL) {
+        http_server_send_message(request->connection,
+                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "Internal server error");
+        http_server_response_finish(request->connection);
+        return;
+    }
+
+    if (translated == NULL || translated->path == NULL) {
+        http_server_send_message(request->connection,
+                                 HTTP_STATUS_NOT_FOUND,
+                                 "The requested resource does not exist.");
+        http_server_response_finish(request->connection);
+        return;
+    }
+
+    ret = stat(translated->path, &st);
+    if (ret != 0) {
+        if (errno == ENOENT) {
+            http_server_send_message(request->connection,
+                                     HTTP_STATUS_NOT_FOUND,
+                                     "The requested file does not exist.");
+        } else {
+            http_server_send_message(request->connection,
+                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                     "Internal server error");
+        }
+        http_server_response_finish(request->connection);
+        return;
+    }
+
+    if (!S_ISREG(st.st_mode)) {
+        http_server_send_message(request->connection,
+                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "Not a regular file");
+        http_server_response_finish(request->connection);
+        return;
+    }
+
+    fd = open(translated->path, O_RDONLY);
+    if (fd < 0) {
+        if (errno == ENOENT) {
+            http_server_send_message(request->connection,
+                                     HTTP_STATUS_NOT_FOUND,
+                                     "The requested file does not exist.");
+        } else {
+            http_server_send_message(request->connection,
+                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                     "Internal server error");
+        }
+        http_server_response_finish(request->connection);
+        return;
+    }
+
+    snprintf(buffer, sizeof(buffer), "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n",
+             (unsigned long)st.st_size);
+    http_server_send(request->connection, buffer, strlen(buffer));
+
+    while ((nbytes = read(fd, buffer, sizeof(buffer))) > 0)
+        http_server_send(request->connection, buffer, (size_t)nbytes);
     http_server_response_finish(request->connection);
 }
 
