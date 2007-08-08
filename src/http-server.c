@@ -172,6 +172,19 @@ http_server_event_callback(int fd, short event, void *ctx)
         return;
     }
 
+    if (event & EV_WRITE) {
+        start = fifo_buffer_read(connection->output, &length);
+        nbytes = write(fd, start, length);
+        if (nbytes < 0) {
+            perror("write error on HTTP connection");
+            http_server_connection_close(connection);
+            connection->callback(NULL, connection->callback_ctx);
+            return;
+        }
+
+        fifo_buffer_consume(connection->output, length);
+    }
+
     if (event & EV_READ) {
         buffer = fifo_buffer_write(connection->input, &max_length);
         assert(buffer != NULL);
@@ -219,19 +232,6 @@ http_server_event_callback(int fd, short event, void *ctx)
         } else {
             http_server_request_free(&connection->request);
         }
-    }
-
-    if (event & EV_WRITE) {
-        start = fifo_buffer_read(connection->output, &length);
-        nbytes = write(fd, start, length);
-        if (nbytes < 0) {
-            perror("write error on HTTP connection");
-            http_server_connection_close(connection);
-            connection->callback(NULL, connection->callback_ctx);
-            return;
-        }
-
-        fifo_buffer_consume(connection->output, length);
     }
 
     http_server_event_setup(connection);
