@@ -132,7 +132,7 @@ http_server_handle_line(http_server_connection_t connection,
 static int
 http_server_parse_headers(http_server_connection_t connection)
 {
-    const char *buffer, *buffer_end, *start, *end, *next = NULL, *bound;
+    const char *buffer, *buffer_end, *start, *end, *next = NULL;
     size_t length;
 
     assert(connection->request == NULL || connection->reading_headers);
@@ -145,7 +145,7 @@ http_server_parse_headers(http_server_connection_t connection)
     buffer_end = buffer + length;
 
     start = buffer;
-    while ((end = memchr(start, '\n', bound - start)) != NULL) {
+    while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
         while (end > start && char_is_whitespace(end[-1]))
             --end;
