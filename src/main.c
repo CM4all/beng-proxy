@@ -8,6 +8,7 @@
 #include "http-server.h"
 
 #include <sys/types.h>
+#include <sys/signal.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +17,29 @@
 
 struct instance {
     listener_t listener;
+    int should_exit;
+    struct event sigterm_event, sigint_event, sigquit_event;
 };
+
+static void
+exit_event_callback(int fd, short event, void *ctx)
+{
+    struct instance *instance = (struct instance*)ctx;
+
+    (void)fd;
+    (void)event;
+
+    if (instance->should_exit)
+        return;
+
+    instance->should_exit = 1;
+    event_del(&instance->sigterm_event);
+    event_del(&instance->sigint_event);
+    event_del(&instance->sigquit_event);
+
+    if (instance->listener != NULL)
+        listener_free(&instance->listener);
+}
 
 static void
 my_http_server_callback(struct http_server_request *request,
@@ -50,15 +73,33 @@ my_listener_callback(int fd,
         close(fd);
 }
 
+static void
+setup_signals(struct instance *instance)
+{
+    event_set(&instance->sigterm_event, SIGTERM, EV_SIGNAL|EV_PERSIST,
+              exit_event_callback, instance);
+    event_add(&instance->sigterm_event, NULL);
+
+    event_set(&instance->sigint_event, SIGINT, EV_SIGNAL|EV_PERSIST,
+              exit_event_callback, instance);
+    event_add(&instance->sigint_event, NULL);
+
+    event_set(&instance->sigquit_event, SIGQUIT, EV_SIGNAL|EV_PERSIST,
+              exit_event_callback, instance);
+    event_add(&instance->sigquit_event, NULL);
+}
+
 int main(int argc, char **argv)
 {
     int ret;
-    struct instance instance;
+    static struct instance instance;
 
     (void)argc;
     (void)argv;
 
     event_init();
+
+    setup_signals(&instance);
 
     ret = listener_tcp_port_new(8080, &my_listener_callback, NULL, &instance.listener);
     if (ret < 0) {
@@ -68,5 +109,6 @@ int main(int argc, char **argv)
 
     event_dispatch();
 
-    listener_free(&instance.listener);
+    if (instance.listener != NULL)
+        listener_free(&instance.listener);
 }
