@@ -165,6 +165,21 @@ http_server_parse_headers(http_server_connection_t connection)
 }
 
 static void
+http_server_consume_input(http_server_connection_t connection)
+{
+    while (1) {
+        if (connection->request == NULL || connection->reading_headers) {
+            if (http_server_parse_headers(connection) == 0)
+                break;
+        } else if (connection->reading_body) {
+            /* XXX read body*/
+        } else {
+            break;
+        }
+    }
+}
+
+static void
 http_server_event_callback(int fd, short event, void *ctx);
 
 static void
@@ -242,16 +257,7 @@ http_server_event_callback(int fd, short event, void *ctx)
 
         fifo_buffer_append(connection->input, (size_t)nbytes);
 
-        while (1) {
-            if (connection->request == NULL || connection->reading_headers) {
-                if (http_server_parse_headers(connection) == 0)
-                    break;
-            } else if (connection->reading_body) {
-                /* XXX read body*/
-            } else {
-                break;
-            }
-        }
+        http_server_consume_input(connection);
     }
 
     http_server_event_setup(connection);
@@ -374,4 +380,6 @@ http_server_response_finish(http_server_connection_t connection)
     }
 
     http_server_request_free(&connection->request);
+
+    http_server_consume_input(connection);
 }
