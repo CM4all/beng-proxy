@@ -338,6 +338,26 @@ http_server_connection_free(http_server_connection_t *connection_r)
         http_server_request_free(&connection->request);
 }
 
+size_t
+http_server_send(http_server_connection_t connection, void *p, size_t length)
+{
+    unsigned char *dest;
+    size_t max_length;
+
+    assert(connection != NULL);
+    assert(connection->fd >= 0);
+    assert(p != NULL);
+
+    dest = fifo_buffer_write(connection->output, &max_length);
+    if (length > max_length)
+        length = max_length;
+
+    memcpy(dest, p, length);
+    fifo_buffer_append(connection->output, length);
+
+    return length;
+}
+
 void
 http_server_send_message(http_server_connection_t connection,
                          http_status_t status, const char *msg)
@@ -365,7 +385,6 @@ http_server_send_message(http_server_connection_t connection,
     memcpy(dest + header_length, msg, body_length);
 
     fifo_buffer_append(connection->output, header_length + body_length);
-
 }
 
 void

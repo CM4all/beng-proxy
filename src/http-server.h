@@ -49,6 +49,9 @@ http_server_connection_new(pool_t pool, int fd,
 void
 http_server_connection_free(http_server_connection_t *connection_r);
 
+size_t
+http_server_send(http_server_connection_t connection, void *p, size_t length);
+
 void
 http_server_send_message(http_server_connection_t connection,
                          http_status_t status, const char *msg);
