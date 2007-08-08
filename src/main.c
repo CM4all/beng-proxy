@@ -72,6 +72,11 @@ my_http_server_callback(struct http_server_request *request,
 {
     struct client_connection *connection = ctx;
 
+    if (request == NULL) {
+        remove_connection(connection);
+        return;
+    }
+
     (void)request;
     (void)connection;
 

@@ -138,7 +138,7 @@ http_server_event_callback(int fd, short event, void *ctx)
 
     if (event & EV_TIMEOUT) {
         fprintf(stderr, "timeout\n");
-        http_server_connection_free(&connection);
+        connection->callback(NULL, connection->callback_ctx);
         return;
     }
 
@@ -151,13 +151,13 @@ http_server_event_callback(int fd, short event, void *ctx)
         nbytes = read(fd, buffer, max_length);
         if (nbytes < 0) {
             perror("read error on HTTP connection");
-            http_server_connection_free(&connection);
+            connection->callback(NULL, connection->callback_ctx);
             return;
         }
 
         if (nbytes == 0) {
             /* XXX */
-            http_server_connection_free(&connection);
+            connection->callback(NULL, connection->callback_ctx);
             return;
         }
 
@@ -194,7 +194,7 @@ http_server_event_callback(int fd, short event, void *ctx)
         nbytes = write(fd, start, length);
         if (nbytes < 0) {
             perror("write error on HTTP connection");
-            http_server_connection_free(&connection);
+            connection->callback(NULL, connection->callback_ctx);
             return;
         }
 
@@ -265,6 +265,9 @@ http_server_connection_free(http_server_connection_t *connection_r)
 
     if (connection->output != NULL)
         fifo_buffer_delete(&connection->output);
+
+    if (connection->request != NULL)
+        http_server_request_free(&connection->request);
 }
 
 void
