@@ -129,6 +129,41 @@ http_server_handle_line(http_server_connection_t connection,
     }
 }
 
+static int
+http_server_parse_headers(http_server_connection_t connection)
+{
+    const char *buffer, *buffer_end, *start, *end, *next = NULL, *bound;
+    size_t length;
+
+    assert(connection->request == NULL || connection->reading_headers);
+
+    buffer = fifo_buffer_read(connection->input, &length);
+    if (buffer == NULL)
+        return 0;
+
+    assert(length > 0);
+    buffer_end = buffer + length;
+
+    start = buffer;
+    while ((end = memchr(start, '\n', bound - start)) != NULL) {
+        next = end + 1;
+        while (end > start && char_is_whitespace(end[-1]))
+            --end;
+
+        http_server_handle_line(connection, start, end - start);
+        if (!connection->reading_headers)
+            break;
+
+        start = next;
+    }
+
+    if (next == NULL)
+        return 0;
+
+    fifo_buffer_consume(connection->input, next - buffer);
+    return 1;
+}
+
 static void
 http_server_event_callback(int fd, short event, void *ctx);
 
@@ -160,7 +195,7 @@ http_server_event_callback(int fd, short event, void *ctx)
 {
     http_server_connection_t connection = ctx;
     void *buffer;
-    const char *start, *end, *next, *bound;
+    const char *start;
     size_t max_length, length;
     ssize_t nbytes;
 
@@ -207,29 +242,14 @@ http_server_event_callback(int fd, short event, void *ctx)
 
         fifo_buffer_append(connection->input, (size_t)nbytes);
 
-        if (connection->request == NULL || connection->reading_headers) {
-            end = memchr(buffer, '\n', (size_t)nbytes);
-            if (end == NULL)
-                return;
-
-            start = fifo_buffer_read(connection->input, &length);
-            bound = start + length;
-
-            do {
-                next = end + 1;
-                while (end > start && end[-1] >= 0 && end[-1] <= 0x20)
-                    --end;
-                http_server_handle_line(connection, start, end - start);
-                fifo_buffer_consume(connection->input, next - start);
-
-                if (connection->request != NULL && !connection->reading_headers)
+        while (1) {
+            if (connection->request == NULL || connection->reading_headers) {
+                if (http_server_parse_headers(connection) == 0)
                     break;
-
-                start = next;
-                end = memchr(start, '\n', bound - start);
-            } while (end != NULL);
-        } else {
-            /* XXX read body*/
+            } else {
+                /* XXX read body*/
+                break;
+            }
         }
     }
 
