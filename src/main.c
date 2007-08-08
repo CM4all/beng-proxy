@@ -14,6 +14,10 @@
 
 #include <event.h>
 
+struct instance {
+    listener_t listener;
+};
+
 static void
 my_http_server_callback(struct http_server_request *request,
                         /*const void *body, size_t body_length,*/
@@ -49,14 +53,14 @@ my_listener_callback(int fd,
 int main(int argc, char **argv)
 {
     int ret;
-    listener_t listener;
+    struct instance instance;
 
     (void)argc;
     (void)argv;
 
     event_init();
 
-    ret = listener_tcp_port_new(8080, &my_listener_callback, NULL, &listener);
+    ret = listener_tcp_port_new(8080, &my_listener_callback, NULL, &instance.listener);
     if (ret < 0) {
         perror("listener_tcp_port_new() failed");
         exit(2);
@@ -64,5 +68,5 @@ int main(int argc, char **argv)
 
     event_dispatch();
 
-    listener_free(&listener);
+    listener_free(&instance.listener);
 }
