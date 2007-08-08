@@ -273,6 +273,8 @@ http_server_connection_free(http_server_connection_t *connection_r)
 
     assert(connection != NULL);
 
+    event_del(&connection->event);
+
     if (connection->fd >= 0)
         close(connection->fd);
 
