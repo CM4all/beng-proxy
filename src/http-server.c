@@ -27,7 +27,7 @@ struct http_server_connection {
     struct event event;
     fifo_buffer_t input, output;
     struct http_server_request *request;
-    int reading_headers;
+    int reading_headers, reading_body;
 };
 
 static struct http_server_request *
@@ -246,8 +246,9 @@ http_server_event_callback(int fd, short event, void *ctx)
             if (connection->request == NULL || connection->reading_headers) {
                 if (http_server_parse_headers(connection) == 0)
                     break;
-            } else {
+            } else if (connection->reading_body) {
                 /* XXX read body*/
+            } else {
                 break;
             }
         }
