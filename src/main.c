@@ -6,6 +6,7 @@
 
 #include "listener.h"
 #include "http-server.h"
+#include "pool.h"
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -16,6 +17,7 @@
 #include <event.h>
 
 struct instance {
+    pool_t pool;
     listener_t listener;
     int should_exit;
     struct event sigterm_event, sigint_event, sigquit_event;
@@ -99,9 +101,13 @@ int main(int argc, char **argv)
 
     event_init();
 
+    instance.pool = pool_new_libc(NULL, "global");
+
     setup_signals(&instance);
 
-    ret = listener_tcp_port_new(8080, &my_listener_callback, NULL, &instance.listener);
+    ret = listener_tcp_port_new(instance.pool,
+                                8080, &my_listener_callback, NULL,
+                                &instance.listener);
     if (ret < 0) {
         perror("listener_tcp_port_new() failed");
         exit(2);
@@ -111,4 +117,6 @@ int main(int argc, char **argv)
 
     if (instance.listener != NULL)
         listener_free(&instance.listener);
+
+    pool_destroy(instance.pool);
 }

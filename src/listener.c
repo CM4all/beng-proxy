@@ -48,7 +48,7 @@ listener_event_callback(int fd, short event, void *ctx)
 }
 
 int
-listener_tcp_port_new(int port,
+listener_tcp_port_new(pool_t pool, int port,
                       listener_callback_t callback, void *ctx,
                       listener_t *listener_r)
 {
@@ -60,7 +60,7 @@ listener_tcp_port_new(int port,
     assert(callback != NULL);
     assert(listener_r != NULL);
 
-    listener = calloc(1, sizeof(*listener));
+    listener = p_calloc(pool, sizeof(*listener));
     if (listener == NULL)
         return -1;
 
@@ -125,5 +125,4 @@ listener_free(listener_t *listener_r)
 
     event_del(&listener->event);
     close(listener->fd);
-    free(listener);
 }
