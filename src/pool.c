@@ -69,6 +69,7 @@ pool_add_child(pool_t pool, pool_t child)
 {
     assert(child->parent == NULL);
 
+    child->parent = pool;
     list_add(&child->siblings, &pool->children);
 }
 
@@ -125,6 +126,9 @@ static void
 pool_destroy(pool_t pool)
 {
     assert(list_empty(&pool->children));
+
+    if (pool->parent != NULL)
+        list_remove(&pool->siblings);
 
     switch (pool->type) {
     case POOL_LIBC:
