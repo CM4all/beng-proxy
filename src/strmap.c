@@ -50,7 +50,7 @@ strmap_addn(strmap_t map, const char *key, const char *value)
 
     assert(value != NULL);
 
-    slot = &map->slots[hash ^ map->capacity];
+    slot = &map->slots[hash % map->capacity];
     if (slot->key != NULL) {
         while (slot->next != NULL) {
             slot = slot->next;
@@ -74,7 +74,7 @@ strmap_get(strmap_t map, const char *key)
     unsigned hash = calc_hash(key);
     struct pair *slot;
 
-    slot = &map->slots[hash ^ map->capacity];
+    slot = &map->slots[hash % map->capacity];
     if (slot->key != NULL && strcmp(slot->key, key) == 0) {
         assert(slot->value != NULL);
         return slot->value;
