@@ -10,6 +10,8 @@
 #include "listener.h"
 #include "list.h"
 
+#include <event.h>
+
 struct instance {
     pool_t pool;
     listener_t listener;
@@ -18,5 +20,14 @@ struct instance {
     struct event sigterm_event, sigint_event, sigquit_event;
 };
 
-#endif
+struct client_connection;
 
+void
+remove_connection(struct client_connection *connection);
+
+void
+http_listener_callback(int fd,
+                       const struct sockaddr *addr, socklen_t addrlen,
+                       void *ctx);
+
+#endif

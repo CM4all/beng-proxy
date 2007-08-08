@@ -6,6 +6,7 @@ LIBDAEMON_CFLAGS := $(shell pkg-config --cflags libcm4all-daemon)
 LIBDAEMON_LIBS := $(shell pkg-config --libs libcm4all-daemon)
 
 SOURCES = src/main.c \
+	src/handler.c \
 	src/listener.c \
 	src/http-server.c \
 	src/fifo-buffer.c \
