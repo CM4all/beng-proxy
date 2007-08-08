@@ -6,6 +6,7 @@
 
 #include "http-server.h"
 #include "fifo-buffer.h"
+#include "strutil.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -40,6 +41,7 @@ http_server_request_new(http_server_connection_t connection)
     pool = pool_new_linear(connection->pool, "http_server_request", 8192);
     request = p_calloc(pool, sizeof(*request));
     request->pool = pool;
+    request->headers = strmap_new(pool, 64);
 
     request->connection = connection;
 
@@ -95,7 +97,31 @@ http_server_handle_line(http_server_connection_t connection,
                 connection->request->method,
                 connection->request->uri);
     } else if (length > 0) {
-        /* XXX parse header */
+        /* parse request header */
+        const char *colon, *key_end;
+        char *key, *value;
+
+        while (length > 0 && char_is_whitespace(line[length - 1]))
+            --length;
+
+        colon = memchr(line, ':', length);
+        if (colon == NULL || colon == line)
+            return;
+
+        key_end = colon;
+        while (key_end > line && char_is_whitespace(key_end[-1]))
+            --key_end;
+
+        ++colon;
+        while (colon < line + length && char_is_whitespace(*colon))
+            ++colon;
+
+        key = p_strndup(connection->request->pool, line, key_end - line);
+        value = p_strndup(connection->request->pool, colon, line + length - colon);
+
+        str_to_lower(key);
+
+        strmap_addn(connection->request->headers, key, value);
     } else {
         connection->reading_headers = 0;
         connection->callback(connection->request, connection->callback_ctx);

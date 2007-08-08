@@ -81,6 +81,7 @@ my_http_server_callback(struct http_server_request *request,
     (void)connection;
 
     printf("in my_http_server_callback()\n");
+    printf("host=%s\n", strmap_get(request->headers, "host"));
 
     http_server_send_message(request->connection, HTTP_STATUS_OK, "Hello, world!");
 }

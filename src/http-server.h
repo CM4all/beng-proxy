@@ -8,6 +8,7 @@
 #define __BENG_HTTP_SERVER_H
 
 #include "pool.h"
+#include "strmap.h"
 
 /*#include <sys/socket.h>*/
 #include <sys/types.h>
@@ -31,6 +32,7 @@ struct http_server_request {
     http_server_connection_t connection;
     http_method_t method;
     char *uri;
+    strmap_t headers;
 };
 
 typedef void (*http_server_callback_t)(struct http_server_request *request,
