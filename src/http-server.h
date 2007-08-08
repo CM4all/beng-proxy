@@ -51,4 +51,7 @@ void
 http_server_send_message(http_server_connection_t connection,
                          http_status_t status, const char *msg);
 
+void
+http_server_response_finish(http_server_connection_t connection);
+
 #endif

@@ -126,7 +126,6 @@ http_server_handle_line(http_server_connection_t connection,
         connection->reading_headers = 0;
         connection->callback(connection->request, connection->callback_ctx);
         /* XXX request body? */
-        http_server_request_free(&connection->request);
     }
 }
 
@@ -230,7 +229,7 @@ http_server_event_callback(int fd, short event, void *ctx)
                 end = memchr(start, '\n', bound - start);
             } while (end != NULL);
         } else {
-            http_server_request_free(&connection->request);
+            /* XXX read body*/
         }
     }
 
@@ -339,4 +338,16 @@ http_server_send_message(http_server_connection_t connection,
     memcpy(dest + header_length, msg, body_length);
 
     fifo_buffer_append(connection->output, header_length + body_length);
+
+}
+
+void
+http_server_response_finish(http_server_connection_t connection)
+{
+    assert(connection->request != NULL);
+    assert(!connection->reading_headers);
+
+    /* XXX discard rest of body? */
+
+    http_server_request_free(&connection->request);
 }
