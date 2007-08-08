@@ -128,6 +128,9 @@ http_server_event_setup(http_server_connection_t connection)
 }
 
 static void
+http_server_connection_close(http_server_connection_t connection);
+
+static void
 http_server_event_callback(int fd, short event, void *ctx)
 {
     http_server_connection_t connection = ctx;
@@ -138,6 +141,7 @@ http_server_event_callback(int fd, short event, void *ctx)
 
     if (event & EV_TIMEOUT) {
         fprintf(stderr, "timeout\n");
+        http_server_connection_close(connection);
         connection->callback(NULL, connection->callback_ctx);
         return;
     }
@@ -151,12 +155,14 @@ http_server_event_callback(int fd, short event, void *ctx)
         nbytes = read(fd, buffer, max_length);
         if (nbytes < 0) {
             perror("read error on HTTP connection");
+            http_server_connection_close(connection);
             connection->callback(NULL, connection->callback_ctx);
             return;
         }
 
         if (nbytes == 0) {
             /* XXX */
+            http_server_connection_close(connection);
             connection->callback(NULL, connection->callback_ctx);
             return;
         }
@@ -194,6 +200,7 @@ http_server_event_callback(int fd, short event, void *ctx)
         nbytes = write(fd, start, length);
         if (nbytes < 0) {
             perror("write error on HTTP connection");
+            http_server_connection_close(connection);
             connection->callback(NULL, connection->callback_ctx);
             return;
         }
@@ -247,6 +254,18 @@ http_server_connection_new(pool_t pool, int fd,
     return 0;
 }
 
+static void
+http_server_connection_close(http_server_connection_t connection)
+{
+    assert(connection != NULL);
+
+    if (connection->fd >= 0) {
+        event_del(&connection->event);
+        close(connection->fd);
+        connection->fd = -1;
+    }
+}
+
 void
 http_server_connection_free(http_server_connection_t *connection_r)
 {
@@ -255,10 +274,7 @@ http_server_connection_free(http_server_connection_t *connection_r)
 
     assert(connection != NULL);
 
-    event_del(&connection->event);
-
-    if (connection->fd >= 0)
-        close(connection->fd);
+    http_server_connection_close(connection);
 
     if (connection->input != NULL)
         fifo_buffer_delete(&connection->input);
@@ -279,6 +295,7 @@ http_server_send_message(http_server_connection_t connection,
     unsigned char *dest;
 
     assert(connection != NULL);
+    assert(connection->fd >= 0);
     assert(status >= 100 && status < 600);
     assert(msg != NULL);
 
