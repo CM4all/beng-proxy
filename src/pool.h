@@ -29,4 +29,10 @@ p_malloc(pool_t pool, size_t size);
 void *
 p_calloc(pool_t pool, size_t size);
 
+char *
+p_strdup(pool_t pool, const char *src);
+
+char *
+p_strndup(pool_t pool, const char *src, size_t length);
+
 #endif

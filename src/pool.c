@@ -217,3 +217,21 @@ p_calloc(pool_t pool, size_t size)
     memset(p, 0, size);
     return p;
 }
+
+char *
+p_strdup(pool_t pool, const char *src)
+{
+    size_t length = strlen(src) + 1;
+    char *dest = p_malloc(pool, length);
+    memcpy(dest, src, length);
+    return dest;
+}
+
+char *
+p_strndup(pool_t pool, const char *src, size_t length)
+{
+    char *dest = p_malloc(pool, length + 1);
+    memcpy(dest, src, length);
+    dest[length] = 0;
+    return dest;
+}
