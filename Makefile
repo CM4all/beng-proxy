@@ -9,6 +9,7 @@ SOURCES = src/main.c \
 	src/listener.c \
 	src/http-server.c \
 	src/fifo-buffer.c \
+	src/strmap.c \
 	src/pool.c
 
 HEADERS = $(wildcard src/*.h)
