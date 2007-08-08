@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <event.h>
 
@@ -53,10 +54,7 @@ listener_tcp_port_new(int port,
 {
     listener_t listener;
     int ret, param;
-    struct sockaddr_in6 sa6 = {
-        .sin6_family = AF_INET6,
-        .sin6_addr = IN6ADDR_ANY_INIT,
-    };
+    struct sockaddr_in6 sa6;
 
     assert(port > 0);
     assert(callback != NULL);
@@ -82,6 +80,9 @@ listener_tcp_port_new(int port,
         return -1;
     }
 
+    memset(&sa6, 0, sizeof(sa6));
+    sa6.sin6_family = AF_INET6;
+    sa6.sin6_addr = in6addr_any;
     sa6.sin6_port = htons(port);
     ret = bind(listener->fd, (const struct sockaddr*)&sa6, sizeof(sa6));
     if (ret < 0) {
