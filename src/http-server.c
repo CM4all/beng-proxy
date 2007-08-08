@@ -15,6 +15,7 @@
 #include <string.h>
 
 struct http_server_connection {
+    pool_t pool;
     int fd;
     /*
     struct sockaddr_storage remote_addr;
@@ -28,22 +29,21 @@ struct http_server_connection {
     int reading_headers;
 };
 
-static int
-http_server_request_new(http_server_connection_t connection,
-                        struct http_server_request **request_r)
+static struct http_server_request *
+http_server_request_new(http_server_connection_t connection)
 {
+    pool_t pool;
     struct http_server_request *request;
 
-    assert(request_r != NULL);
+    assert(connection != NULL);
 
-    request = calloc(1, sizeof(*request));
-    if (request == NULL)
-        return -1;
+    pool = pool_new_linear(connection->pool, "http_server_request", 8192);
+    request = p_calloc(pool, sizeof(*request));
+    request->pool = pool;
 
     request->connection = connection;
 
-    *request_r = request;
-    return 0;
+    return request;
 }
 
 static void
@@ -52,12 +52,7 @@ http_server_request_free(struct http_server_request **request_r)
     struct http_server_request *request = *request_r;
     *request_r = NULL;
 
-    assert(request != NULL);
-
-    if (request->uri != NULL)
-        free(request->uri);
-
-    free(request);
+    pool_unref(request->pool);
 }
 
 static http_method_t
@@ -77,8 +72,6 @@ http_server_handle_line(http_server_connection_t connection,
     if (connection->request == NULL) {
         const char *eol, *space;
         http_method_t method;
-        char *uri;
-        int ret;
 
         eol = line + length;
 
@@ -93,21 +86,9 @@ http_server_handle_line(http_server_connection_t connection,
         if (space == NULL)
             space = eol;
 
-        uri = malloc(space - line + 1);
-        if (uri == NULL)
-            return; /* XXX */
-
-        memcpy(uri, line, space - line);
-        uri[space - line] = 0;
-
-        ret = http_server_request_new(connection, &connection->request);
-        if (ret < 0) {
-            free(uri);
-            return;
-        }
-
+        connection->request = http_server_request_new(connection);
         connection->request->method = method;
-        connection->request->uri = uri;
+        connection->request->uri = p_strndup(connection->request->pool, line, space - line);
         connection->reading_headers = 1;
 
         fprintf(stderr, "method=%d uri='%s'\n",
@@ -224,7 +205,7 @@ http_server_event_callback(int fd, short event, void *ctx)
 }
 
 int
-http_server_connection_new(int fd,
+http_server_connection_new(pool_t pool, int fd,
                            http_server_callback_t callback, void *ctx,
                            http_server_connection_t *connection_r)
 {
@@ -235,10 +216,11 @@ http_server_connection_new(int fd,
     assert(callback != NULL);
     assert(connection_r != NULL);
 
-    connection = calloc(1, sizeof(*connection));
+    connection = p_calloc(pool, sizeof(*connection));
     if (connection == NULL)
         return -1;
 
+    connection->pool = pool;
     connection->fd = fd;
     connection->callback = callback;
     connection->callback_ctx = ctx;

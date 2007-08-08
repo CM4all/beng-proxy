@@ -102,7 +102,7 @@ my_listener_callback(int fd,
 
     list_add(&connection->siblings, &instance->connections);
 
-    ret = http_server_connection_new(fd,
+    ret = http_server_connection_new(pool, fd,
                                      my_http_server_callback, connection,
                                      &connection->http);
     if (ret < 0) {
