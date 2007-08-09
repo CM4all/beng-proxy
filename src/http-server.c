@@ -155,9 +155,8 @@ http_server_handle_line(http_server_connection_t connection,
     } else {
         connection->reading_headers = 0;
         connection->callback(connection->request, connection->callback_ctx);
-
-        /* the callback must not invoke http_server_response_finish() */
-        assert(connection->request != NULL);
+        if (connection->request == NULL)
+            return;
 
         if (connection->request->handler == NULL) {
             fprintf(stderr, "WARNING: no handler for request\n");
@@ -278,8 +277,11 @@ http_server_event_callback(int fd, short event, void *ctx)
 
         fifo_buffer_consume(connection->output, (size_t)nbytes);
 
-        if ((size_t)nbytes == length)
+        if ((size_t)nbytes == length && connection->response != NULL)
             http_server_call_response_body(connection);
+
+        if (connection->fd < 0)
+            return;
     }
 
     if (event & EV_READ) {
@@ -304,6 +306,9 @@ http_server_event_callback(int fd, short event, void *ctx)
         fifo_buffer_append(connection->input, (size_t)nbytes);
 
         http_server_consume_input(connection);
+
+        if (connection->fd < 0)
+            return;
     }
 
     http_server_event_setup(connection);
