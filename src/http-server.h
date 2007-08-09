@@ -64,6 +64,9 @@ http_server_connection_new(pool_t pool, int fd,
                            http_server_connection_t *connection_r);
 
 void
+http_server_connection_close(http_server_connection_t connection);
+
+void
 http_server_connection_free(http_server_connection_t *connection_r);
 
 size_t

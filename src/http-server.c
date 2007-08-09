@@ -68,9 +68,6 @@ http_parse_method_name(const char *name, size_t length)
 }
 
 static void
-http_server_connection_close(http_server_connection_t connection);
-
-static void
 http_server_call_response_body(http_server_connection_t connection)
 {
     void *buffer;
@@ -349,7 +346,7 @@ http_server_connection_new(pool_t pool, int fd,
     return 0;
 }
 
-static void
+void
 http_server_connection_close(http_server_connection_t connection)
 {
     assert(connection != NULL);
@@ -362,6 +359,15 @@ http_server_connection_close(http_server_connection_t connection)
 
     connection->reading_headers = 0;
     connection->reading_body = 0;
+
+    if (connection->input != NULL)
+        fifo_buffer_delete(&connection->input);
+
+    if (connection->output != NULL)
+        fifo_buffer_delete(&connection->output);
+
+    if (connection->request != NULL)
+        http_server_request_free(&connection->request);
 }
 
 void
@@ -373,15 +379,6 @@ http_server_connection_free(http_server_connection_t *connection_r)
     assert(connection != NULL);
 
     http_server_connection_close(connection);
-
-    if (connection->input != NULL)
-        fifo_buffer_delete(&connection->input);
-
-    if (connection->output != NULL)
-        fifo_buffer_delete(&connection->output);
-
-    if (connection->request != NULL)
-        http_server_request_free(&connection->request);
 }
 
 size_t

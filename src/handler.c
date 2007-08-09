@@ -32,8 +32,13 @@ static size_t file_response_body(struct http_server_request *request,
     ssize_t nbytes;
 
     nbytes = read(fd, buffer, max_length);
-    if (nbytes <= 0) {
-        /* XXX */
+    if (nbytes < 0) {
+        perror("failed to read from file");
+        http_server_connection_close(request->connection);
+        return 0;
+    }
+
+    if (nbytes == 0) {
         http_server_response_finish(request->connection);
         return 0;
     }
