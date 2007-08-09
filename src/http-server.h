@@ -44,6 +44,7 @@ struct http_server_request_handler {
                          const void *buffer, size_t length);
     size_t (*response_body)(struct http_server_request *request,
                             void *buffer, size_t max_length);
+    void (*response_direct)(struct http_server_request *request, int fd);
     void (*free)(struct http_server_request *request);
 };
 
@@ -74,6 +75,9 @@ http_server_send(http_server_connection_t connection, void *p, size_t length);
 void
 http_server_send_message(http_server_connection_t connection,
                          http_status_t status, const char *msg);
+
+void
+http_server_response_direct_mode(http_server_connection_t connection);
 
 void
 http_server_response_finish(http_server_connection_t connection);

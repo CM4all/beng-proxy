@@ -15,6 +15,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __linux
+#include <sys/sendfile.h>
+#endif
+
 struct client_connection {
     struct list_head siblings;
     pool_t pool;
@@ -47,6 +51,27 @@ static size_t file_response_body(struct http_server_request *request,
     return (size_t)nbytes;
 }
 
+#ifdef __linux
+
+static void file_response_direct(struct http_server_request *request,
+                                 int sockfd)
+{
+    int fd = (int)(size_t)request->handler_ctx;
+    ssize_t nbytes;
+
+    nbytes = sendfile(sockfd, fd, NULL, 1024 * 1024);
+    if (nbytes < 0) {
+        perror("sendfile() failed");
+        http_server_connection_close(request->connection);
+        return;
+    }
+
+    if (nbytes == 0)
+        http_server_response_finish(request->connection);
+}
+
+#endif
+
 static void file_response_free(struct http_server_request *request)
 {
     int fd = (int)(size_t)request->handler_ctx;
@@ -56,6 +81,9 @@ static void file_response_free(struct http_server_request *request)
 
 static const struct http_server_request_handler file_request_handler = {
     .response_body = file_response_body,
+#ifdef __linux
+    .response_direct = file_response_direct,
+#endif
     .free = file_response_free,
 };
 
@@ -170,6 +198,10 @@ my_http_server_callback(struct http_server_request *request,
 
     request->handler = &file_request_handler;
     request->handler_ctx = (void*)(size_t)fd;
+
+#ifdef __linux
+    http_server_response_direct_mode(request->connection);
+#endif
 }
 
 void

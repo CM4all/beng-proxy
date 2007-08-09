@@ -27,7 +27,7 @@ struct http_server_connection {
     struct event event;
     fifo_buffer_t input, output;
     struct http_server_request *request;
-    int reading_headers, reading_body;
+    int reading_headers, reading_body, direct_mode;
 };
 
 static struct http_server_request *
@@ -80,6 +80,8 @@ http_server_call_response_body(http_server_connection_t connection)
     size_t max_length, length;
     ssize_t nbytes;
 
+    assert(connection != NULL);
+    assert(!connection->direct_mode);
     assert(connection->request != NULL);
     assert(connection->request->handler != NULL);
 
@@ -196,7 +198,9 @@ http_server_handle_line(http_server_connection_t connection,
         if (connection->request->handler->request_body != NULL)
             connection->request->handler->request_body(connection->request,
                                                        NULL, 0);
-        http_server_call_response_body(connection);
+
+        if (!connection->direct_mode)
+            http_server_call_response_body(connection);
     }
 }
 
@@ -267,7 +271,8 @@ http_server_event_setup(http_server_connection_t connection)
     if (!fifo_buffer_full(connection->input))
         event = EV_READ | EV_TIMEOUT;
 
-    if (!fifo_buffer_empty(connection->output))
+    if (connection->direct_mode ||
+        !fifo_buffer_empty(connection->output))
         event |= EV_WRITE;
 
     tv.tv_sec = 30;
@@ -295,16 +300,22 @@ http_server_event_callback(int fd, short event, void *ctx)
 
     if (event & EV_WRITE) {
         start = fifo_buffer_read(connection->output, &length);
-        nbytes = write(fd, start, length);
-        if (nbytes < 0) {
-            perror("write error on HTTP connection");
-            http_server_connection_close(connection);
-            return;
+        if (start == NULL && connection->direct_mode) {
+            connection->request->handler->response_direct(connection->request,
+                                                          connection->fd);
+        } else {
+            nbytes = write(fd, start, length);
+            if (nbytes < 0) {
+                perror("write error on HTTP connection");
+                http_server_connection_close(connection);
+                return;
+            }
+
+            fifo_buffer_consume(connection->output, (size_t)nbytes);
         }
 
-        fifo_buffer_consume(connection->output, (size_t)nbytes);
-
-        if ((size_t)nbytes == length && connection->request != NULL)
+        if ((size_t)nbytes == length && connection->request != NULL &&
+            !connection->direct_mode)
             http_server_call_response_body(connection);
 
         if (connection->fd < 0)
@@ -434,6 +445,7 @@ http_server_send_message(http_server_connection_t connection,
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
+    assert(!connection->direct_mode);
     assert(status >= 100 && status < 600);
     assert(msg != NULL);
 
@@ -454,6 +466,27 @@ http_server_send_message(http_server_connection_t connection,
 }
 
 void
+http_server_response_direct_mode(http_server_connection_t connection)
+{
+    assert(connection != NULL);
+    assert(connection->fd >= 0);
+    assert(connection->request != NULL);
+    assert(connection->request->handler != NULL);
+    assert(connection->request->handler->response_direct != NULL);
+
+    if (connection->direct_mode)
+        return;
+
+    connection->direct_mode = 1;
+
+    /* if the output buffer is already empty, we can start the direct
+       transfer right now */
+    if (fifo_buffer_empty(connection->output))
+        connection->request->handler->response_direct(connection->request,
+                                                      connection->fd);
+}
+
+void
 http_server_response_finish(http_server_connection_t connection)
 {
     assert(connection->request != NULL);
@@ -465,4 +498,6 @@ http_server_response_finish(http_server_connection_t connection)
     }
 
     http_server_request_free(&connection->request);
+
+    connection->direct_mode = 0;
 }
