@@ -8,6 +8,11 @@
 #include "fifo-buffer.h"
 #include "strutil.h"
 
+#ifdef __linux
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -306,6 +311,15 @@ http_server_event_callback(int fd, short event, void *ctx)
             if (connection->request != NULL && !connection->direct_mode)
                 http_server_call_response_body(connection);
         } else {
+#ifdef __linux
+            int i = 0;
+
+            if (connection->direct_mode) {
+                i = 1;
+                setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &i, sizeof(i));
+            }
+#endif
+
             nbytes = write(fd, start, length);
             if (nbytes < 0) {
                 perror("write error on HTTP connection");
@@ -322,6 +336,13 @@ http_server_event_callback(int fd, short event, void *ctx)
                 else
                     http_server_call_response_body(connection);
             }
+
+#ifdef __linux
+            if (i) {
+                i = 0;
+                setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &i, sizeof(i));
+            }
+#endif
         }
 
         if (connection->fd < 0)
