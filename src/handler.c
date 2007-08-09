@@ -37,7 +37,7 @@ struct file_transfer {
 static size_t file_response_body(struct http_server_request *request,
                                  void *buffer, size_t max_length)
 {
-    int fd = (int)(size_t)request->handler_ctx;
+    struct file_transfer *f = request->handler_ctx;
     ssize_t nbytes;
 
     nbytes = read(fd, buffer, max_length);
