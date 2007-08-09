@@ -315,9 +315,13 @@ http_server_event_callback(int fd, short event, void *ctx)
 
             fifo_buffer_consume(connection->output, (size_t)nbytes);
 
-            if ((size_t)nbytes == length && connection->request != NULL &&
-                !connection->direct_mode)
-                http_server_call_response_body(connection);
+            if ((size_t)nbytes == length && connection->request != NULL) {
+                if (connection->direct_mode)
+                    connection->request->handler->response_direct(connection->request,
+                                                                  connection->fd);
+                else
+                    http_server_call_response_body(connection);
+            }
         }
 
         if (connection->fd < 0)

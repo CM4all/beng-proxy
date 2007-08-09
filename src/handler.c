@@ -60,7 +60,7 @@ static void file_response_direct(struct http_server_request *request,
     ssize_t nbytes;
 
     nbytes = sendfile(sockfd, fd, NULL, 1024 * 1024);
-    if (nbytes < 0) {
+    if (nbytes < 0 && errno != EAGAIN) {
         perror("sendfile() failed");
         http_server_connection_close(request->connection);
         return;
