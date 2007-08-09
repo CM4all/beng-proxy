@@ -156,7 +156,6 @@ http_server_handle_line(http_server_connection_t connection,
         if (connection->request->handler == NULL) {
             fprintf(stderr, "WARNING: no handler for request\n");
             http_server_connection_close(connection);
-            connection->callback(NULL, connection->callback_ctx);
             return;
         }
 
@@ -254,7 +253,6 @@ http_server_event_callback(int fd, short event, void *ctx)
     if (event & EV_TIMEOUT) {
         fprintf(stderr, "timeout\n");
         http_server_connection_close(connection);
-        connection->callback(NULL, connection->callback_ctx);
         return;
     }
 
@@ -264,7 +262,6 @@ http_server_event_callback(int fd, short event, void *ctx)
         if (nbytes < 0) {
             perror("write error on HTTP connection");
             http_server_connection_close(connection);
-            connection->callback(NULL, connection->callback_ctx);
             return;
         }
 
@@ -284,14 +281,12 @@ http_server_event_callback(int fd, short event, void *ctx)
         if (nbytes < 0) {
             perror("read error on HTTP connection");
             http_server_connection_close(connection);
-            connection->callback(NULL, connection->callback_ctx);
             return;
         }
 
         if (nbytes == 0) {
             /* XXX */
             http_server_connection_close(connection);
-            connection->callback(NULL, connection->callback_ctx);
             return;
         }
 
@@ -368,6 +363,13 @@ http_server_connection_close(http_server_connection_t connection)
 
     if (connection->request != NULL)
         http_server_request_free(&connection->request);
+
+    if (connection->callback != NULL) {
+        http_server_callback_t callback = connection->callback;
+        connection->callback = NULL;
+        callback(NULL, connection->callback_ctx);
+        connection->callback_ctx = NULL;
+    }
 }
 
 void
