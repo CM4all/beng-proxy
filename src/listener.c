@@ -65,17 +65,14 @@ listener_tcp_port_new(pool_t pool, int port,
         return -1;
 
     listener->fd = socket(PF_INET6, SOCK_STREAM, 0);
-    if (listener->fd < 0) {
-        free(listener);
+    if (listener->fd < 0)
         return -1;
-    }
 
     param = 1;
     ret = setsockopt(listener->fd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
-        free(listener);
         errno = save_errno;
         return -1;
     }
@@ -88,7 +85,6 @@ listener_tcp_port_new(pool_t pool, int port,
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
-        free(listener);
         errno = save_errno;
         return -1;
     }
@@ -97,7 +93,6 @@ listener_tcp_port_new(pool_t pool, int port,
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
-        free(listener);
         errno = save_errno;
         return -1;
     }
