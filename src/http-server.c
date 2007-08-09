@@ -349,6 +349,9 @@ http_server_send(http_server_connection_t connection, void *p, size_t length)
     assert(p != NULL);
 
     dest = fifo_buffer_write(connection->output, &max_length);
+    if (dest == NULL)
+        return 0;
+
     if (length > max_length)
         length = max_length;
 
