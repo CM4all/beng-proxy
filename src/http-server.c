@@ -298,47 +298,27 @@ http_server_event_callback(int fd, short event, void *ctx)
     http_server_event_setup(connection);
 }
 
-int
+http_server_connection_t
 http_server_connection_new(pool_t pool, int fd,
-                           http_server_callback_t callback, void *ctx,
-                           http_server_connection_t *connection_r)
+                           http_server_callback_t callback, void *ctx)
 {
     http_server_connection_t connection;
-    int ret;
 
     assert(fd >= 0);
     assert(callback != NULL);
-    assert(connection_r != NULL);
 
     connection = p_calloc(pool, sizeof(*connection));
-    if (connection == NULL)
-        return -1;
-
     connection->pool = pool;
     connection->fd = fd;
     connection->callback = callback;
     connection->callback_ctx = ctx;
 
-    ret = fifo_buffer_new(4096, &connection->input);
-    if (ret < 0) {
-        int save_errno = errno;
-        http_server_connection_free(&connection);
-        errno = save_errno;
-        return -1;
-    }
-
-    ret = fifo_buffer_new(4096, &connection->output);
-    if (ret < 0) {
-        int save_errno = errno;
-        http_server_connection_free(&connection);
-        errno = save_errno;
-        return -1;
-    }
+    connection->input = fifo_buffer_new(pool, 4096);
+    connection->output = fifo_buffer_new(pool, 4096);
 
     http_server_event_setup(connection);
 
-    *connection_r = connection;
-    return 0;
+    return connection;
 }
 
 void
@@ -354,12 +334,6 @@ http_server_connection_close(http_server_connection_t connection)
 
     connection->reading_headers = 0;
     connection->reading_body = 0;
-
-    if (connection->input != NULL)
-        fifo_buffer_delete(&connection->input);
-
-    if (connection->output != NULL)
-        fifo_buffer_delete(&connection->output);
 
     if (connection->request != NULL)
         http_server_request_free(&connection->request);

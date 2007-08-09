@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "http-server.h"
 
+#include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -61,10 +62,12 @@ static const struct http_server_request_handler file_request_handler = {
 void
 remove_connection(struct client_connection *connection)
 {
+    assert(connection != NULL);
+    assert(connection->http != NULL);
+
     list_remove(&connection->siblings);
 
-    if (connection->http != NULL)
-        http_server_connection_free(&connection->http);
+    http_server_connection_free(&connection->http);
 
     pool_unref(connection->pool);
 }
@@ -178,7 +181,6 @@ http_listener_callback(int fd,
                        void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
-    int ret;
     pool_t pool;
     struct client_connection *connection;
 
@@ -194,11 +196,6 @@ http_listener_callback(int fd,
 
     list_add(&connection->siblings, &instance->connections);
 
-    ret = http_server_connection_new(pool, fd,
-                                     my_http_server_callback, connection,
-                                     &connection->http);
-    if (ret < 0) {
-        close(fd);
-        remove_connection(connection);
-    }
+    connection->http = http_server_connection_new(pool, fd,
+                                                  my_http_server_callback, connection);
 }

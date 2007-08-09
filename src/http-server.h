@@ -58,10 +58,9 @@ struct http_server_request_handler {
 typedef void (*http_server_callback_t)(struct http_server_request *request,
                                        void *ctx);
 
-int
+http_server_connection_t
 http_server_connection_new(pool_t pool, int fd,
-                           http_server_callback_t callback, void *ctx,
-                           http_server_connection_t *connection_r);
+                           http_server_callback_t callback, void *ctx);
 
 void
 http_server_connection_close(http_server_connection_t connection);

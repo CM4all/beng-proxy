@@ -20,6 +20,8 @@
 #ifndef __FIFO_BUFFER_H
 #define __FIFO_BUFFER_H
 
+#include "pool.h"
+
 #include <stddef.h>
 
 typedef struct fifo_buffer *fifo_buffer_t;
@@ -29,11 +31,8 @@ typedef struct fifo_buffer *fifo_buffer_t;
 extern "C" {
 #endif
 
-int
-fifo_buffer_new(size_t size, fifo_buffer_t *buffer_r);
-
-void
-fifo_buffer_delete(fifo_buffer_t *buffer_r);
+fifo_buffer_t
+fifo_buffer_new(pool_t pool, size_t size);
 
 void
 fifo_buffer_clear(fifo_buffer_t buffer);

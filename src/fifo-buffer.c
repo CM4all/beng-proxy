@@ -28,38 +28,19 @@ struct fifo_buffer {
     unsigned char buffer[1];
 };
 
-int
-fifo_buffer_new(size_t size, fifo_buffer_t *buffer_r)
+fifo_buffer_t
+fifo_buffer_new(pool_t pool, size_t size)
 {
     fifo_buffer_t buffer;
 
     assert(size > 0);
-    assert(buffer_r != NULL);
 
-    buffer = (fifo_buffer_t)malloc(sizeof(*buffer) - sizeof(buffer->buffer) + size);
-    if (buffer == NULL)
-        return -1;
-
+    buffer = (fifo_buffer_t)p_malloc(pool, sizeof(*buffer) - sizeof(buffer->buffer) + size);
     buffer->size = size;
     buffer->start = 0;
     buffer->end = 0;
 
-    *buffer_r = buffer;
-    return 0;
-}
-
-void
-fifo_buffer_delete(fifo_buffer_t *buffer_r)
-{
-    fifo_buffer_t buffer;
-
-    assert(buffer_r != NULL);
-    assert(*buffer_r != NULL);
-
-    buffer = *buffer_r;
-    *buffer_r = NULL;
-
-    free(buffer);
+    return buffer;
 }
 
 void
