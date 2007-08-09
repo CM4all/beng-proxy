@@ -303,7 +303,7 @@ http_server_event_callback(int fd, short event, void *ctx)
         if (start == NULL && connection->direct_mode) {
             connection->request->handler->response_direct(connection->request,
                                                           connection->fd);
-            if (!connection->direct_mode)
+            if (connection->request != NULL && !connection->direct_mode)
                 http_server_call_response_body(connection);
         } else {
             nbytes = write(fd, start, length);
