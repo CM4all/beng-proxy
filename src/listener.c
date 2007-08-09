@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -25,13 +26,25 @@ struct listener {
     void *callback_ctx;
 };
 
+static int
+set_non_block(int fd)
+{
+    int ret;
+
+    ret = fcntl(fd, F_GETFL, 0);
+    if (ret < 0)
+        return ret;
+
+    return fcntl(fd, F_SETFL, ret | O_NONBLOCK);
+}
+
 static void
 listener_event_callback(int fd, short event, void *ctx)
 {
     listener_t listener = ctx;
     struct sockaddr_storage sa;
     socklen_t sa_len;
-    int remote_fd;
+    int remote_fd, ret;
 
     (void)event;
 
@@ -39,6 +52,13 @@ listener_event_callback(int fd, short event, void *ctx)
     remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);
     if (remote_fd < 0) {
         perror("accept() failed");
+        return;
+    }
+
+    ret = set_non_block(remote_fd);
+    if (ret < 0) {
+        perror("fcntl(O_NONBLOCK) failed");
+        close(remote_fd);
         return;
     }
 
