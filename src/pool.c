@@ -210,6 +210,7 @@ p_malloc(pool_t pool, size_t size)
     }
 
     assert(0);
+    return NULL;
 }
 
 void *
