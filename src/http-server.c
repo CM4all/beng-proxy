@@ -71,7 +71,7 @@ static void
 http_server_handle_line(http_server_connection_t connection,
                         const char *line, size_t length)
 {
-    assert(connection->request || connection->reading_headers);
+    assert(connection->request == NULL || connection->reading_headers);
 
     if (connection->request == NULL) {
         const char *eol, *space;
