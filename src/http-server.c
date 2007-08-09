@@ -318,6 +318,9 @@ http_server_connection_close(http_server_connection_t connection)
         close(connection->fd);
         connection->fd = -1;
     }
+
+    connection->reading_headers = 0;
+    connection->reading_body = 0;
 }
 
 void
