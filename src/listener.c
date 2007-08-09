@@ -51,7 +51,8 @@ listener_event_callback(int fd, short event, void *ctx)
     sa_len = sizeof(sa);
     remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);
     if (remote_fd < 0) {
-        perror("accept() failed");
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+            perror("accept() failed");
         return;
     }
 
@@ -110,6 +111,14 @@ listener_tcp_port_new(pool_t pool, int port,
     }
 
     ret = listen(listener->fd, 16);
+    if (ret < 0) {
+        int save_errno = errno;
+        close(listener->fd);
+        errno = save_errno;
+        return -1;
+    }
+
+    ret = set_non_block(listener->fd);
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
