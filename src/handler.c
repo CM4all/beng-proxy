@@ -95,7 +95,11 @@ my_http_server_callback(struct http_server_request *request,
     char buffer[4096];
 
     if (request == NULL) {
-        remove_connection(connection);
+        /* since remove_connection() might recurse here, we check if
+           the connection has already been removed from the linked
+           list */
+        if (connection->http != NULL)
+            remove_connection(connection);
         return;
     }
 
