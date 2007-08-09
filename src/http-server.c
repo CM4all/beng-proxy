@@ -135,6 +135,46 @@ http_server_call_response_body(http_server_connection_t connection)
 }
 
 static void
+http_server_try_response_body(http_server_connection_t connection)
+{
+    const void *buffer;
+    size_t length;
+    ssize_t nbytes;
+    int cork = 0;
+
+    assert(connection != NULL);
+    assert(connection->fd >= 0);
+    assert(connection->request != NULL);
+
+    while ((buffer = fifo_buffer_read(connection->output, &length)) != NULL) {
+        if (!cork) {
+            cork = 1;
+            setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
+        }
+
+        nbytes = write(connection->fd, buffer, length);
+        if (nbytes > 0) {
+            fifo_buffer_consume(connection->output, (size_t)nbytes);
+            if (!connection->direct_mode &&
+                (size_t)nbytes == length)
+                http_server_call_response_body(connection);
+            else
+                break;
+        }
+    }
+
+    if (connection->request != NULL && connection->direct_mode &&
+        fifo_buffer_empty(connection->output))
+        connection->request->handler->response_direct(connection->request,
+                                                      connection->fd);
+
+    if (cork) {
+        cork = 0;
+        setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
+    }
+}
+
+static void
 http_server_handle_line(http_server_connection_t connection,
                         const char *line, size_t length)
 {
@@ -211,8 +251,8 @@ http_server_handle_line(http_server_connection_t connection,
             connection->request->handler->request_body(connection->request,
                                                        NULL, 0);
 
-        if (!connection->direct_mode)
-            http_server_call_response_body(connection);
+        if (connection->request != NULL)
+            http_server_try_response_body(connection);
     }
 }
 
