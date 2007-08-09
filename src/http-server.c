@@ -33,6 +33,7 @@ struct http_server_connection {
     fifo_buffer_t input, output;
     struct http_server_request *request;
     int reading_headers, reading_body, direct_mode;
+    int keep_alive;
 };
 
 static struct http_server_request *
@@ -187,6 +188,12 @@ http_server_handle_line(http_server_connection_t connection,
 
         strmap_addn(connection->request->headers, key, value);
     } else {
+        const char *header_connection;
+
+        header_connection = strmap_get(connection->request->headers, "connection");
+        connection->keep_alive = header_connection != NULL &&
+            strcmp(header_connection, "keep-alive") == 0;
+
         connection->reading_headers = 0;
         connection->callback(connection->request, connection->callback_ctx);
         if (connection->request == NULL)
@@ -347,6 +354,12 @@ http_server_event_callback(int fd, short event, void *ctx)
 
         if (connection->fd < 0)
             return;
+
+        if (connection->request == NULL && !connection->keep_alive &&
+            fifo_buffer_empty(connection->output)) {
+            http_server_connection_close(connection);
+            return;
+        }
     }
 
     if (event & EV_READ) {
