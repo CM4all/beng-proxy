@@ -233,7 +233,7 @@ http_server_event_callback(int fd, short event, void *ctx)
             return;
         }
 
-        fifo_buffer_consume(connection->output, length);
+        fifo_buffer_consume(connection->output, (size_t)nbytes);
     }
 
     if (event & EV_READ) {
