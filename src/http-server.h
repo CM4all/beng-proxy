@@ -37,6 +37,14 @@ struct http_server_request {
     strmap_t headers;
 };
 
+/**
+ * This callback is the application level request handler.  It is
+ * called first when the request line and the request headers have
+ * been parsed.
+ *
+ * @param request the current request, or NULL if the connection was aborted
+ * @param ctx the pointer which was passed along with this callback
+ */
 typedef void (*http_server_callback_t)(struct http_server_request *request,
                                        /*const void *body, size_t body_length,*/
                                        void *ctx);
