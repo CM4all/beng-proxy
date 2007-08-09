@@ -277,7 +277,7 @@ http_server_event_callback(int fd, short event, void *ctx)
 
         fifo_buffer_consume(connection->output, (size_t)nbytes);
 
-        if ((size_t)nbytes == length && connection->response != NULL)
+        if ((size_t)nbytes == length && connection->request != NULL)
             http_server_call_response_body(connection);
 
         if (connection->fd < 0)
