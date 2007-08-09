@@ -227,6 +227,11 @@ http_server_event_setup(http_server_connection_t connection)
     short event = 0;
     struct timeval tv;
 
+    assert(connection != NULL);
+    assert(connection->fd >= 0);
+    assert(connection->input != NULL);
+    assert(connection->output != NULL);
+
     if (!fifo_buffer_full(connection->input))
         event = EV_READ | EV_TIMEOUT;
 
