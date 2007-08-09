@@ -68,6 +68,31 @@ http_parse_method_name(const char *name, size_t length)
 }
 
 static void
+http_server_connection_close(http_server_connection_t connection);
+
+static void
+http_server_call_response_body(http_server_connection_t connection)
+{
+    void *buffer;
+    size_t max_length, length;
+
+    assert(connection->request != NULL);
+    assert(connection->request->handler != NULL);
+
+    if (connection->request->handler->response_body == NULL)
+        return;
+
+    buffer = fifo_buffer_write(connection->output, &max_length);
+    if (buffer == NULL)
+        return;
+
+    length = connection->request->handler->response_body(connection->request,
+                                                         buffer, max_length);
+    if (length > 0)
+        fifo_buffer_append(connection->output, length);
+}
+
+static void
 http_server_handle_line(http_server_connection_t connection,
                         const char *line, size_t length)
 {
@@ -127,7 +152,23 @@ http_server_handle_line(http_server_connection_t connection,
     } else {
         connection->reading_headers = 0;
         connection->callback(connection->request, connection->callback_ctx);
+
+        /* the callback must not invoke http_server_response_finish() */
+        assert(connection->request != NULL);
+
+        if (connection->request->handler == NULL) {
+            fprintf(stderr, "WARNING: no handler for request\n");
+            http_server_connection_close(connection);
+            connection->callback(NULL, connection->callback_ctx);
+            return;
+        }
+
         /* XXX request body? */
+
+        if (connection->request->handler->request_body != NULL)
+            connection->request->handler->request_body(connection->request,
+                                                       NULL, 0);
+        http_server_call_response_body(connection);
     }
 }
 
@@ -205,9 +246,6 @@ http_server_event_setup(http_server_connection_t connection)
 }
 
 static void
-http_server_connection_close(http_server_connection_t connection);
-
-static void
 http_server_event_callback(int fd, short event, void *ctx)
 {
     http_server_connection_t connection = ctx;
@@ -234,6 +272,9 @@ http_server_event_callback(int fd, short event, void *ctx)
         }
 
         fifo_buffer_consume(connection->output, (size_t)nbytes);
+
+        if ((size_t)nbytes == length)
+            http_server_call_response_body(connection);
     }
 
     if (event & EV_READ) {

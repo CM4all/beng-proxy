@@ -35,18 +35,27 @@ struct http_server_request {
     http_method_t method;
     char *uri;
     strmap_t headers;
+    const struct http_server_request_handler *handler;
+    void *handler_ctx;
+};
+
+struct http_server_request_handler {
+    void (*request_body)(struct http_server_request *request,
+                         const void *buffer, size_t length);
+    size_t (*response_body)(struct http_server_request *request,
+                            void *buffer, size_t max_length);
+    void (*free)(struct http_server_request *request);
 };
 
 /**
  * This callback is the application level request handler.  It is
- * called first when the request line and the request headers have
- * been parsed.
+ * called when the request line and the request headers have been
+ * parsed.  It must install a request handler (request->handler).
  *
  * @param request the current request, or NULL if the connection was aborted
  * @param ctx the pointer which was passed along with this callback
  */
 typedef void (*http_server_callback_t)(struct http_server_request *request,
-                                       /*const void *body, size_t body_length,*/
                                        void *ctx);
 
 int

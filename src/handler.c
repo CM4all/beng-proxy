@@ -25,6 +25,34 @@ struct translated {
     const char *path_info;
 };
 
+static size_t file_response_body(struct http_server_request *request,
+                                 void *buffer, size_t max_length)
+{
+    int fd = (int)(size_t)request->handler_ctx;
+    ssize_t nbytes;
+
+    nbytes = read(fd, buffer, max_length);
+    if (nbytes <= 0) {
+        /* XXX */
+        http_server_response_finish(request->connection);
+        return 0;
+    }
+
+    return (size_t)nbytes;
+}
+
+static void file_response_free(struct http_server_request *request)
+{
+    int fd = (int)(size_t)request->handler_ctx;
+    close(fd);
+    request->handler_ctx = NULL;
+}
+
+static const struct http_server_request_handler file_request_handler = {
+    .response_body = file_response_body,
+    .free = file_response_free,
+};
+
 void
 remove_connection(struct client_connection *connection)
 {
@@ -60,7 +88,6 @@ my_http_server_callback(struct http_server_request *request,
     int ret, fd;
     struct stat st;
     char buffer[4096];
-    ssize_t nbytes;
 
     if (request == NULL) {
         remove_connection(connection);
@@ -132,11 +159,8 @@ my_http_server_callback(struct http_server_request *request,
              (unsigned long)st.st_size);
     http_server_send(request->connection, buffer, strlen(buffer));
 
-    while ((nbytes = read(fd, buffer, sizeof(buffer))) > 0)
-        http_server_send(request->connection, buffer, (size_t)nbytes);
-    close(fd);
-
-    http_server_response_finish(request->connection);
+    request->handler = &file_request_handler;
+    request->handler_ctx = (void*)(size_t)fd;
 }
 
 void
