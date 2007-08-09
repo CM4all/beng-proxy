@@ -7,7 +7,7 @@
 #include "listener.h"
 
 #include <assert.h>
-#include <sys/types.h>
+#include <stddef.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdlib.h>

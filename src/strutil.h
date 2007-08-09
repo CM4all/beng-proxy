@@ -7,7 +7,7 @@
 #ifndef __BENG_STRUTIL_H
 #define __BENG_STRUTIL_H
 
-#include <sys/types.h>
+#include <stddef.h>
 
 static inline int
 char_is_whitespace(char ch)

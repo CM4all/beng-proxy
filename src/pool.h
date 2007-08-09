@@ -7,7 +7,7 @@
 #ifndef __BENG_POOL_H
 #define __BENG_POOL_H
 
-#include <sys/types.h>
+#include <stddef.h>
 
 typedef struct pool *pool_t;
 
