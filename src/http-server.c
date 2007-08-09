@@ -122,10 +122,6 @@ http_server_handle_line(http_server_connection_t connection,
         connection->request->method = method;
         connection->request->uri = p_strndup(connection->request->pool, line, space - line);
         connection->reading_headers = 1;
-
-        fprintf(stderr, "method=%d uri='%s'\n",
-                connection->request->method,
-                connection->request->uri);
     } else if (length > 0) {
         /* parse request header */
         const char *colon, *key_end;

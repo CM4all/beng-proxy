@@ -109,9 +109,6 @@ my_http_server_callback(struct http_server_request *request,
     (void)request;
     (void)connection;
 
-    printf("in my_http_server_callback()\n");
-    printf("host=%s\n", strmap_get(request->headers, "host"));
-
     translated = translate(request);
     if (translated == NULL) {
         http_server_send_message(request->connection,
