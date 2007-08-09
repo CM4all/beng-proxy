@@ -54,6 +54,12 @@ http_server_request_free(struct http_server_request **request_r)
     struct http_server_request *request = *request_r;
     *request_r = NULL;
 
+    if (request->handler != NULL &&
+        request->handler->free != NULL) {
+        request->handler->free(request);
+        request->handler = NULL;
+    }
+
     pool_unref(request->pool);
 }
 
