@@ -30,6 +30,10 @@ struct translated {
     const char *path_info;
 };
 
+struct file_transfer {
+    int fd;
+};
+
 static size_t file_response_body(struct http_server_request *request,
                                  void *buffer, size_t max_length)
 {
@@ -56,10 +60,10 @@ static size_t file_response_body(struct http_server_request *request,
 static void file_response_direct(struct http_server_request *request,
                                  int sockfd)
 {
-    int fd = (int)(size_t)request->handler_ctx;
+    struct file_transfer *f = request->handler_ctx;
     ssize_t nbytes;
 
-    nbytes = sendfile(sockfd, fd, NULL, 1024 * 1024);
+    nbytes = sendfile(sockfd, f->fd, NULL, 1024 * 1024);
     if (nbytes < 0 && errno != EAGAIN) {
         perror("sendfile() failed");
         http_server_connection_close(request->connection);
@@ -74,8 +78,8 @@ static void file_response_direct(struct http_server_request *request,
 
 static void file_response_free(struct http_server_request *request)
 {
-    int fd = (int)(size_t)request->handler_ctx;
-    close(fd);
+    struct file_transfer *f = request->handler_ctx;
+    close(f->fd);
     request->handler_ctx = NULL;
 }
 
@@ -124,6 +128,7 @@ my_http_server_callback(struct http_server_request *request,
     int ret, fd;
     struct stat st;
     char buffer[4096];
+    struct file_transfer *f;
 
     if (request == NULL) {
         /* since remove_connection() might recurse here, we check if
@@ -196,8 +201,11 @@ my_http_server_callback(struct http_server_request *request,
              (unsigned long)st.st_size);
     http_server_send(request->connection, buffer, strlen(buffer));
 
+    f = p_calloc(request->pool, sizeof(*f));
+    f->fd = fd;
+
     request->handler = &file_request_handler;
-    request->handler_ctx = (void*)(size_t)fd;
+    request->handler_ctx = f;
 
 #ifdef __linux
     http_server_response_direct_mode(request->connection);
