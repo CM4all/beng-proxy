@@ -352,9 +352,10 @@ http_server_connection_close(http_server_connection_t connection)
 
     if (connection->callback != NULL) {
         http_server_callback_t callback = connection->callback;
+        void *callback_ctx = connection->callback_ctx;
         connection->callback = NULL;
-        callback(NULL, connection->callback_ctx);
         connection->callback_ctx = NULL;
+        callback(NULL, callback_ctx);
     }
 }
 
