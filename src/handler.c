@@ -185,8 +185,6 @@ http_listener_callback(int fd,
     (void)addrlen;
     (void)ctx;
 
-    printf("client %d\n", fd);
-
     pool = pool_new_linear(instance->pool, "client_connection", 8192);
     connection = p_calloc(pool, sizeof(*connection));
     connection->pool = pool;
