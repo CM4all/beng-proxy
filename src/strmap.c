@@ -23,7 +23,7 @@ struct strmap {
 
 static inline unsigned
 calc_hash(const char *p) {
-    unsigned hash = 0;
+    unsigned hash = 5381;
 
     assert(p != NULL);
 
