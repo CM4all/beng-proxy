@@ -40,6 +40,8 @@ exit_event_callback(int fd, short event, void *ctx)
 static void
 setup_signals(struct instance *instance)
 {
+    signal(SIGPIPE, SIG_IGN);
+
     event_set(&instance->sigterm_event, SIGTERM, EV_SIGNAL|EV_PERSIST,
               exit_event_callback, instance);
     event_add(&instance->sigterm_event, NULL);
