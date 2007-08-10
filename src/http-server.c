@@ -142,19 +142,27 @@ http_server_try_response_body(http_server_connection_t connection)
     const void *buffer;
     size_t length;
     ssize_t nbytes;
+#ifdef __linux
     int cork = 0;
+#endif
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
 
     while ((buffer = fifo_buffer_read(connection->output, &length)) != NULL) {
+#ifdef __linux
         if (!cork) {
             cork = 1;
             setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
         }
+#endif
 
         nbytes = write(connection->fd, buffer, length);
-        if (nbytes > 0) {
+        if (nbytes < 0 && errno != EAGAIN) {
+            perror("write error on HTTP connection");
+            http_server_connection_close(connection);
+            break;
+        } else if (nbytes > 0) {
             fifo_buffer_consume(connection->output, (size_t)nbytes);
             if (connection->request != NULL &&
                 !connection->direct_mode &&
@@ -162,6 +170,8 @@ http_server_try_response_body(http_server_connection_t connection)
                 http_server_call_response_body(connection);
             else
                 break;
+        } else {
+            break;
         }
     }
 
@@ -170,10 +180,12 @@ http_server_try_response_body(http_server_connection_t connection)
         connection->request->handler->response_direct(connection->request,
                                                       connection->fd);
 
-    if (cork) {
+#ifdef __linux
+    if (cork && connection->fd >= 0) {
         cork = 0;
         setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
     }
+#endif
 }
 
 static void
@@ -348,8 +360,7 @@ http_server_event_callback(int fd, short event, void *ctx)
 {
     http_server_connection_t connection = ctx;
     void *buffer;
-    const char *start;
-    size_t max_length, length;
+    size_t max_length;
     ssize_t nbytes;
 
     if (event & EV_TIMEOUT) {
@@ -359,46 +370,7 @@ http_server_event_callback(int fd, short event, void *ctx)
     }
 
     if (event & EV_WRITE) {
-        start = fifo_buffer_read(connection->output, &length);
-        if (start == NULL && connection->direct_mode) {
-            connection->request->handler->response_direct(connection->request,
-                                                          connection->fd);
-            if (connection->request != NULL && !connection->direct_mode)
-                http_server_call_response_body(connection);
-        } else {
-#ifdef __linux
-            int i = 0;
-
-            if (connection->direct_mode) {
-                i = 1;
-                setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &i, sizeof(i));
-            }
-#endif
-
-            nbytes = write(fd, start, length);
-            if (nbytes < 0) {
-                perror("write error on HTTP connection");
-                http_server_connection_close(connection);
-                return;
-            }
-
-            fifo_buffer_consume(connection->output, (size_t)nbytes);
-
-            if ((size_t)nbytes == length && connection->request != NULL) {
-                if (connection->direct_mode)
-                    connection->request->handler->response_direct(connection->request,
-                                                                  connection->fd);
-                else
-                    http_server_call_response_body(connection);
-            }
-
-#ifdef __linux
-            if (i) {
-                i = 0;
-                setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &i, sizeof(i));
-            }
-#endif
-        }
+        http_server_try_response_body(connection);
 
         if (connection->fd < 0)
             return;
