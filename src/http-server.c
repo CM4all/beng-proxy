@@ -325,7 +325,9 @@ http_server_event_setup(http_server_connection_t connection)
     assert(connection->input != NULL);
     assert(connection->output != NULL);
 
-    if (!fifo_buffer_full(connection->input))
+    if ((connection->keep_alive || connection->request == NULL ||
+         connection->reading_headers || connection->reading_body) &&
+        !fifo_buffer_full(connection->input))
         event = EV_READ | EV_TIMEOUT;
 
     if (connection->direct_mode ||
