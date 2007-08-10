@@ -5,6 +5,7 @@
  */
 
 #include "strmap.h"
+#include "compiler.h"
 
 #include <assert.h>
 #include <string.h>
@@ -20,7 +21,7 @@ struct strmap {
     struct pair slots[1];
 };
 
-static unsigned
+static inline unsigned
 calc_hash(const char *p) {
     unsigned hash = 0;
 
