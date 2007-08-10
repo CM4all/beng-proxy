@@ -32,6 +32,7 @@ struct translated {
 
 struct file_transfer {
     int fd;
+    off_t rest;
 };
 
 static size_t file_response_body(struct http_server_request *request,
@@ -40,11 +41,17 @@ static size_t file_response_body(struct http_server_request *request,
     struct file_transfer *f = request->handler_ctx;
     ssize_t nbytes;
 
-    nbytes = read(fd, buffer, max_length);
+    nbytes = read(f->fd, buffer, max_length);
     if (nbytes < 0) {
         perror("failed to read from file");
         http_server_connection_close(request->connection);
         return 0;
+    }
+
+    if (nbytes > 0) {
+        f->rest -= (off_t)nbytes;
+        if (f->rest <= 0)
+            http_server_response_finish(request->connection);
     }
 
     if (nbytes == 0) {
@@ -68,6 +75,12 @@ static void file_response_direct(struct http_server_request *request,
         perror("sendfile() failed");
         http_server_connection_close(request->connection);
         return;
+    }
+
+    if (nbytes > 0) {
+        f->rest -= (off_t)nbytes;
+        if (f->rest <= 0)
+            http_server_response_finish(request->connection);
     }
 
     if (nbytes == 0)
@@ -203,6 +216,7 @@ my_http_server_callback(struct http_server_request *request,
 
     f = p_calloc(request->pool, sizeof(*f));
     f->fd = fd;
+    f->rest = st.st_size;
 
     request->handler = &file_request_handler;
     request->handler_ctx = f;
