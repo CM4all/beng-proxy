@@ -210,6 +210,12 @@ http_server_try_response_body(http_server_connection_t connection)
                                                       connection->fd);
 
     http_server_uncork(connection);
+
+    if (connection->request == NULL && !connection->keep_alive &&
+        fifo_buffer_empty(connection->output))
+        /* no keepalive and response is finished: we must close the
+           connection */
+        http_server_connection_close(connection);
 }
 
 static void
@@ -290,11 +296,6 @@ http_server_handle_line(http_server_connection_t connection,
         }
 
         http_server_try_response_body(connection);
-
-        if (connection->fd >= 0 && connection->request == NULL &&
-            !connection->keep_alive &&
-            fifo_buffer_empty(connection->output))
-            http_server_connection_close(connection);
     }
 }
 
@@ -399,13 +400,6 @@ http_server_event_callback(int fd, short event, void *ctx)
         http_server_try_response_body(connection);
 
         if (connection->fd < 0) {
-            pool_unref(connection->pool);
-            return;
-        }
-
-        if (connection->request == NULL && !connection->keep_alive &&
-            fifo_buffer_empty(connection->output)) {
-            http_server_connection_close(connection);
             pool_unref(connection->pool);
             return;
         }
