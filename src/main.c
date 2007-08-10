@@ -95,4 +95,6 @@ int main(int argc, char **argv)
     event_base_free(instance.event_base);
 
     pool_unref(instance.pool);
+
+    pool_recycler_clear();
 }

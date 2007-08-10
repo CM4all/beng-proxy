@@ -42,6 +42,11 @@ struct pool {
     } current_area;
 };
 
+static struct {
+    unsigned num_linear_areas;
+    struct linear_pool_area *linear_areas;
+} recycler;
+
 static void *
 xmalloc(size_t size)
 {
@@ -62,6 +67,56 @@ xcalloc(size_t size)
         abort();
     }
     return p;
+}
+
+void
+pool_recycler_clear(void)
+{
+    struct linear_pool_area *linear;
+
+    while (recycler.linear_areas != NULL) {
+        linear = recycler.linear_areas;
+        recycler.linear_areas = linear->prev;
+        free(linear);
+    }
+
+    recycler.num_linear_areas = 0;
+}
+
+static void
+pool_recycler_put_linear(struct linear_pool_area *area)
+{
+    assert(area != 0);
+    assert(area->size > 0);
+
+    if (recycler.num_linear_areas < 32) {
+        area->prev = recycler.linear_areas;
+        recycler.linear_areas = area;
+        ++recycler.num_linear_areas;
+    } else {
+        free(area);
+    }
+}
+
+static struct linear_pool_area *
+pool_recycler_get_linear(size_t size)
+{
+    struct linear_pool_area **linear_p, *linear;
+
+    assert(size > 0);
+
+    for (linear_p = &recycler.linear_areas, linear = *linear_p;
+         linear != NULL;
+         linear_p = &linear->prev, linear = *linear_p) {
+        if (linear->size == size) {
+            assert(recycler.num_linear_areas > 0);
+            --recycler.num_linear_areas;
+            *linear_p = linear->prev;
+            return linear;
+        }
+    }
+
+    return NULL;
 }
 
 static void
@@ -109,13 +164,26 @@ pool_new_linear_area(struct linear_pool_area *prev, size_t size)
     return area;
 }
 
+static struct linear_pool_area *
+pool_get_linear_area(struct linear_pool_area *prev, size_t size)
+{
+    struct linear_pool_area *area = pool_recycler_get_linear(size);
+    if (area == NULL) {
+        area = pool_new_linear_area(prev, size);
+    } else {
+        area->prev = prev;
+        area->used = 0;
+    }
+    return area;
+}
+
 pool_t
 pool_new_linear(pool_t parent, const char *name, size_t initial_size)
 {
     pool_t pool = pool_new(parent, name);
     pool->type = POOL_LINEAR;
 
-    pool->current_area.linear = pool_new_linear_area(NULL, initial_size);
+    pool->current_area.linear = pool_get_linear_area(NULL, initial_size);
 
     assert(parent != NULL);
 
@@ -143,7 +211,7 @@ pool_destroy(pool_t pool)
         while (pool->current_area.linear != NULL) {
             struct linear_pool_area *area = pool->current_area.linear;
             pool->current_area.linear = area->prev;
-            free(area);
+            pool_recycler_put_linear(area);
         }
         break;
     }
@@ -189,7 +257,7 @@ p_malloc_linear(pool_t pool, size_t size)
         fprintf(stderr, "growing linear pool '%s'\n", pool->name);
         if (size > new_area_size)
             new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
-        area = pool_new_linear_area(area, new_area_size);
+        area = pool_get_linear_area(area, new_area_size);
         pool->current_area.linear = area;
     }
 

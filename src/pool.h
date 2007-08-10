@@ -11,6 +11,9 @@
 
 typedef struct pool *pool_t;
 
+void
+pool_recycler_clear(void);
+
 pool_t
 pool_new_libc(pool_t parent, const char *name);
 
