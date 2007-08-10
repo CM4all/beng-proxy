@@ -394,16 +394,23 @@ http_server_event_callback(int fd, short event, void *ctx)
     }
 
     if (event & EV_WRITE) {
+        pool_ref(connection->pool);
+
         http_server_try_response_body(connection);
 
-        if (connection->fd < 0)
+        if (connection->fd < 0) {
+            pool_unref(connection->pool);
             return;
+        }
 
         if (connection->request == NULL && !connection->keep_alive &&
             fifo_buffer_empty(connection->output)) {
             http_server_connection_close(connection);
+            pool_unref(connection->pool);
             return;
         }
+
+        pool_unref(connection->pool);
     }
 
     if (event & EV_READ) {
@@ -427,10 +434,16 @@ http_server_event_callback(int fd, short event, void *ctx)
 
         fifo_buffer_append(connection->input, (size_t)nbytes);
 
+        pool_ref(connection->pool);
+
         http_server_consume_input(connection);
 
-        if (connection->fd < 0)
+        if (connection->fd < 0) {
+            pool_unref(connection->pool);
             return;
+        }
+
+        pool_unref(connection->pool);
     }
 
     http_server_event_setup(connection);
