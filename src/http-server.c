@@ -250,18 +250,15 @@ http_server_handle_line(http_server_connection_t connection,
         const char *colon, *key_end;
         char *key, *value;
 
-        while (length > 0 && char_is_whitespace(line[length - 1]))
-            --length;
-
         colon = memchr(line, ':', length);
         if (colon == NULL || colon == line)
             return;
 
         key_end = colon;
-        while (key_end > line && char_is_whitespace(key_end[-1]))
-            --key_end;
 
         ++colon;
+        if (*colon == ' ')
+            ++colon;
         while (colon < line + length && char_is_whitespace(*colon))
             ++colon;
 
