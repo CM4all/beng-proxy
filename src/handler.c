@@ -260,7 +260,7 @@ http_listener_callback(int fd,
     (void)ctx;
 
     pool = pool_new_linear(instance->pool, "client_connection", 8192);
-    connection = p_calloc(pool, sizeof(*connection));
+    connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
 
     list_add(&connection->siblings, &instance->connections);
