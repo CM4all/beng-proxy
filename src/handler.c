@@ -31,6 +31,7 @@ struct translated {
 };
 
 struct file_transfer {
+    struct stat st;
     int fd;
     off_t rest;
 };
@@ -139,7 +140,6 @@ my_http_server_callback(struct http_server_request *request,
     struct client_connection *connection = ctx;
     struct translated *translated;
     int ret, fd;
-    struct stat st;
     char buffer[4096];
     struct file_transfer *f;
 
@@ -172,7 +172,9 @@ my_http_server_callback(struct http_server_request *request,
         return;
     }
 
-    ret = stat(translated->path, &st);
+    f = p_calloc(request->pool, sizeof(*f));
+
+    ret = stat(translated->path, &f->st);
     if (ret != 0) {
         if (errno == ENOENT) {
             http_server_send_message(request->connection,
@@ -187,7 +189,7 @@ my_http_server_callback(struct http_server_request *request,
         return;
     }
 
-    if (!S_ISREG(st.st_mode)) {
+    if (!S_ISREG(f->st.st_mode)) {
         http_server_send_message(request->connection,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Not a regular file");
@@ -211,12 +213,11 @@ my_http_server_callback(struct http_server_request *request,
     }
 
     snprintf(buffer, sizeof(buffer), "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n",
-             (unsigned long)st.st_size);
+             (unsigned long)f->st.st_size);
     http_server_send(request->connection, buffer, strlen(buffer));
 
-    f = p_calloc(request->pool, sizeof(*f));
     f->fd = fd;
-    f->rest = st.st_size;
+    f->rest = f->st.st_size;
 
     request->handler = &file_request_handler;
     request->handler_ctx = f;
