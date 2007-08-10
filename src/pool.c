@@ -15,6 +15,9 @@
 #define LINEAR_ALIGN 8
 #define LINEAR_ALIGN_BITS 0x7
 
+#define RECYCLER_MAX_POOLS 32
+#define RECYCLER_MAX_LINEAR_AREAS 32
+
 enum pool_type {
     POOL_LIBC,
     POOL_LINEAR,
@@ -91,7 +94,7 @@ pool_recycler_put_linear(struct linear_pool_area *area)
     assert(area != 0);
     assert(area->size > 0);
 
-    if (recycler.num_linear_areas < 32) {
+    if (recycler.num_linear_areas < RECYCLER_MAX_LINEAR_AREAS) {
         area->prev = recycler.linear_areas;
         recycler.linear_areas = area;
         ++recycler.num_linear_areas;
@@ -227,7 +230,7 @@ pool_destroy(pool_t pool)
         break;
     }
 
-    if (recycler.num_pools < 32) {
+    if (recycler.num_pools < RECYCLER_MAX_POOLS) {
         pool->current_area.recycler = recycler.pools;
         recycler.pools = pool;
         ++recycler.num_pools;
