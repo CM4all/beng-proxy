@@ -213,8 +213,8 @@ http_server_try_response_body(http_server_connection_t connection)
 
     if (connection->request == NULL && !connection->keep_alive &&
         fifo_buffer_empty(connection->output))
-        /* no keepalive and response is finished: we must close the
-           connection */
+        /* keepalive disabled and response is finished: we must close
+           the connection */
         http_server_connection_close(connection);
 }
 
