@@ -17,6 +17,7 @@
 
 #define RECYCLER_MAX_POOLS 32
 #define RECYCLER_MAX_LINEAR_AREAS 32
+#define RECYCLER_MAX_LINEAR_SIZE 65536
 
 enum pool_type {
     POOL_LIBC,
@@ -94,7 +95,8 @@ pool_recycler_put_linear(struct linear_pool_area *area)
     assert(area != 0);
     assert(area->size > 0);
 
-    if (recycler.num_linear_areas < RECYCLER_MAX_LINEAR_AREAS) {
+    if (recycler.num_linear_areas < RECYCLER_MAX_LINEAR_AREAS &&
+        area->size <= RECYCLER_MAX_LINEAR_SIZE) {
         area->prev = recycler.linear_areas;
         recycler.linear_areas = area;
         ++recycler.num_linear_areas;
