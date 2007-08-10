@@ -253,6 +253,11 @@ http_server_handle_line(http_server_connection_t connection,
 
         if (connection->request != NULL)
             http_server_try_response_body(connection);
+
+        if (connection->fd >= 0 && connection->request == NULL &&
+            !connection->keep_alive &&
+            fifo_buffer_empty(connection->output))
+            http_server_connection_close(connection);
     }
 }
 
