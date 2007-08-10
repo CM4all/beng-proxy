@@ -314,10 +314,13 @@ http_server_parse_headers(http_server_connection_t connection)
     start = buffer;
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
-        while (end > start && char_is_whitespace(end[-1]))
+        --end;
+        if (*end == '\r')
+            --end;
+        while (end >= start && char_is_whitespace(*end))
             --end;
 
-        http_server_handle_line(connection, start, end - start);
+        http_server_handle_line(connection, start, end - start + 1);
         if (!connection->reading_headers)
             break;
 
