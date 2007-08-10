@@ -127,7 +127,7 @@ translate(struct http_server_request *request)
     /* XXX this is, of course, a huge security hole */
     snprintf(path, sizeof(path), "/var/www/%s", request->uri);
 
-    translated = p_malloc(request->pool, sizeof(translated));
+    translated = p_malloc(request->pool, sizeof(*translated));
     translated->path = p_strdup(request->pool, path);
     translated->path_info = NULL;
     return translated;
@@ -260,7 +260,7 @@ http_listener_callback(int fd,
     (void)ctx;
 
     pool = pool_new_linear(instance->pool, "client_connection", 8192);
-    connection = p_malloc(pool, sizeof(*connection));
+    connection = p_calloc(pool, sizeof(*connection));
     connection->pool = pool;
 
     list_add(&connection->siblings, &instance->connections);
