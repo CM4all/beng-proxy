@@ -229,7 +229,9 @@ my_http_server_callback(struct http_server_request *request,
         request->handler_ctx = f;
     }
 
-    snprintf(buffer, sizeof(buffer), "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n",
+    http_server_send_status(request->connection, 200);
+
+    snprintf(buffer, sizeof(buffer), "Content-Type: text/html\r\nContent-Length: %lu\r\n\r\n",
              (unsigned long)f->st.st_size);
     http_server_send(request->connection, buffer, strlen(buffer));
 

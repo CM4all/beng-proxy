@@ -520,6 +520,25 @@ http_server_send(http_server_connection_t connection, void *p, size_t length)
     return length;
 }
 
+size_t
+http_server_send_status(http_server_connection_t connection, int status)
+{
+    char *dest;
+    size_t length;
+
+    assert(connection != NULL);
+    assert(connection->fd >= 0);
+    assert(status >= 100 && status < 600);
+
+    dest = fifo_buffer_write(connection->output, &length);
+    snprintf(dest, length,
+             "HTTP/1.1 %d\r\nServer: beng-proxy " VERSION "\r\n",
+             status);
+    length = strlen(dest);
+    fifo_buffer_append(connection->output, length);
+    return length;
+}
+
 void
 http_server_send_message(http_server_connection_t connection,
                          http_status_t status, const char *msg)
@@ -531,13 +550,14 @@ http_server_send_message(http_server_connection_t connection,
     assert(connection != NULL);
     assert(connection->fd >= 0);
     assert(!connection->direct_mode);
-    assert(status >= 100 && status < 600);
     assert(msg != NULL);
+
+    http_server_send_status(connection, status);
 
     body_length = strlen(msg);
 
-    snprintf(header, sizeof(header), "HTTP/1.1 %d\r\nContent-Type: text/plain\r\nContent-Length: %u\r\n\r\n",
-             status, (unsigned)body_length);
+    snprintf(header, sizeof(header), "Content-Type: text/plain\r\nContent-Length: %u\r\n\r\n",
+             (unsigned)body_length);
     header_length = strlen(header);
 
     dest = fifo_buffer_write(connection->output, &max_length);
