@@ -12,7 +12,7 @@
 static inline int
 char_is_whitespace(char ch)
 {
-    return ch > 0 && ch <= 0x20;
+    return (ch & ~0x1f) == 0;
 }
 
 void
