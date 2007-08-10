@@ -238,25 +238,22 @@ http_server_handle_line(http_server_connection_t connection,
 
         connection->reading_headers = 0;
         connection->callback(connection->request, connection->callback_ctx);
-        if (connection->request == NULL) {
-            http_server_try_response_body(connection);
-            return;
+
+        if (connection->request != NULL) {
+            if (connection->request->handler == NULL) {
+                fprintf(stderr, "WARNING: no handler for request\n");
+                http_server_connection_close(connection);
+                return;
+            }
+
+            /* XXX request body? */
+
+            if (connection->request->handler->request_body != NULL)
+                connection->request->handler->request_body(connection->request,
+                                                           NULL, 0);
         }
 
-        if (connection->request->handler == NULL) {
-            fprintf(stderr, "WARNING: no handler for request\n");
-            http_server_connection_close(connection);
-            return;
-        }
-
-        /* XXX request body? */
-
-        if (connection->request->handler->request_body != NULL)
-            connection->request->handler->request_body(connection->request,
-                                                       NULL, 0);
-
-        if (connection->request != NULL)
-            http_server_try_response_body(connection);
+        http_server_try_response_body(connection);
 
         if (connection->fd >= 0 && connection->request == NULL &&
             !connection->keep_alive &&
