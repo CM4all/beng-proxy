@@ -207,103 +207,122 @@ http_server_try_response_body(http_server_connection_t connection)
 }
 
 static void
+http_server_parse_request_line(http_server_connection_t connection,
+                               const char *line, size_t length)
+{
+    const char *eol, *space;
+    http_method_t method = HTTP_METHOD_NULL;
+
+    if (length < 5) {
+        http_server_connection_close(connection);
+        return;
+    }
+
+    eol = line + length;
+
+    switch (line[0]) {
+    case 'G':
+        if (line[1] == 'E' && line[2] == 'T' && line[3] == ' ') {
+            method = HTTP_METHOD_GET;
+            line += 4;
+        }
+        break;
+
+    case 'P':
+        if (line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
+            line[4] == ' ') {
+            method = HTTP_METHOD_POST;
+            line += 5;
+        }
+        break;
+
+    case 'H':
+        if (line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
+            line[4] == ' ') {
+            method = HTTP_METHOD_POST;
+            line += 5;
+        }
+        break;
+    }
+
+    space = memchr(line, ' ', eol - line);
+    if (space == NULL)
+        space = eol;
+
+    connection->request = http_server_request_new(connection);
+    connection->request->method = method;
+    connection->request->uri = p_strndup(connection->request->pool, line, space - line);
+    connection->reading_headers = 1;
+}
+
+static void
+http_server_parse_header_line(http_server_connection_t connection,
+                              const char *line, size_t length)
+{
+    const char *colon, *key_end;
+    char *key, *value;
+
+    colon = memchr(line, ':', length);
+    if (colon == NULL || colon == line)
+        return;
+
+    key_end = colon;
+
+    ++colon;
+    if (*colon == ' ')
+        ++colon;
+    while (colon < line + length && char_is_whitespace(*colon))
+        ++colon;
+
+    key = p_strndup(connection->request->pool, line, key_end - line);
+    value = p_strndup(connection->request->pool, colon, line + length - colon);
+
+    str_to_lower(key);
+
+    strmap_addn(connection->request->headers, key, value);
+}
+
+static void
+http_server_headers_finished(http_server_connection_t connection)
+{
+    const char *header_connection;
+
+    header_connection = strmap_get(connection->request->headers, "connection");
+    connection->keep_alive = header_connection != NULL &&
+        strcmp(header_connection, "keep-alive") == 0;
+
+    connection->reading_headers = 0;
+    connection->callback(connection->request, connection->callback_ctx);
+
+    if (connection->request != NULL) {
+        if (connection->request->handler == NULL) {
+            fprintf(stderr, "WARNING: no handler for request\n");
+            http_server_connection_close(connection);
+            return;
+        }
+
+        /* XXX request body? */
+
+        if (connection->request->handler->request_body != NULL)
+            connection->request->handler->request_body(connection->request,
+                                                       NULL, 0);
+    }
+
+    http_server_try_response_body(connection);
+}
+
+static void
 http_server_handle_line(http_server_connection_t connection,
                         const char *line, size_t length)
 {
     assert(connection->request == NULL || connection->reading_headers);
 
     if (connection->request == NULL) {
-        const char *eol, *space;
-        http_method_t method = HTTP_METHOD_NULL;
-
-        if (length < 5) {
-            http_server_connection_close(connection);
-            return;
-        }
-
-        eol = line + length;
-
-        switch (line[0]) {
-        case 'G':
-            if (line[1] == 'E' && line[2] == 'T' && line[3] == ' ') {
-                method = HTTP_METHOD_GET;
-                line += 4;
-            }
-            break;
-
-        case 'P':
-            if (line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
-                line[4] == ' ') {
-                method = HTTP_METHOD_POST;
-                line += 5;
-            }
-            break;
-
-        case 'H':
-            if (line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
-                line[4] == ' ') {
-                method = HTTP_METHOD_POST;
-                line += 5;
-            }
-            break;
-        }
-
-        space = memchr(line, ' ', eol - line);
-        if (space == NULL)
-            space = eol;
-
-        connection->request = http_server_request_new(connection);
-        connection->request->method = method;
-        connection->request->uri = p_strndup(connection->request->pool, line, space - line);
-        connection->reading_headers = 1;
+        http_server_parse_request_line(connection, line, length);
     } else if (length > 0) {
-        /* parse request header */
-        const char *colon, *key_end;
-        char *key, *value;
-
-        colon = memchr(line, ':', length);
-        if (colon == NULL || colon == line)
-            return;
-
-        key_end = colon;
-
-        ++colon;
-        if (*colon == ' ')
-            ++colon;
-        while (colon < line + length && char_is_whitespace(*colon))
-            ++colon;
-
-        key = p_strndup(connection->request->pool, line, key_end - line);
-        value = p_strndup(connection->request->pool, colon, line + length - colon);
-
-        str_to_lower(key);
-
-        strmap_addn(connection->request->headers, key, value);
+        http_server_parse_header_line(connection, line, length);
     } else {
-        const char *header_connection;
-
-        header_connection = strmap_get(connection->request->headers, "connection");
-        connection->keep_alive = header_connection != NULL &&
-            strcmp(header_connection, "keep-alive") == 0;
-
-        connection->reading_headers = 0;
-        connection->callback(connection->request, connection->callback_ctx);
-
-        if (connection->request != NULL) {
-            if (connection->request->handler == NULL) {
-                fprintf(stderr, "WARNING: no handler for request\n");
-                http_server_connection_close(connection);
-                return;
-            }
-
-            /* XXX request body? */
-
-            if (connection->request->handler->request_body != NULL)
-                connection->request->handler->request_body(connection->request,
-                                                           NULL, 0);
-        }
-
-        http_server_try_response_body(connection);
+        http_server_headers_finished(connection);
     }
 }
 
