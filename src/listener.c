@@ -129,9 +129,7 @@ listener_tcp_port_new(pool_t pool, int port,
     listener->callback = callback;
     listener->callback_ctx = ctx;
 
-    event_set(&listener->event, listener->fd,
-              EV_READ|EV_PERSIST, listener_event_callback, listener);
-    event_add(&listener->event, NULL);
+    listener_event_add(listener);
 
     *listener_r = listener;
 
@@ -147,6 +145,20 @@ listener_free(listener_t *listener_r)
     assert(listener != NULL);
     assert(listener->fd >= 0);
 
-    event_del(&listener->event);
+    listener_event_del(listener);
     close(listener->fd);
+}
+
+void
+listener_event_add(listener_t listener)
+{
+    event_set(&listener->event, listener->fd,
+              EV_READ|EV_PERSIST, listener_event_callback, listener);
+    event_add(&listener->event, NULL);
+}
+
+void
+listener_event_del(listener_t listener)
+{
+    event_del(&listener->event);
 }

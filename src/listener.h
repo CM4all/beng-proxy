@@ -25,4 +25,10 @@ listener_tcp_port_new(pool_t pool, int port,
 void
 listener_free(listener_t *listener_r);
 
+void
+listener_event_add(listener_t listener);
+
+void
+listener_event_del(listener_t listener);
+
 #endif
