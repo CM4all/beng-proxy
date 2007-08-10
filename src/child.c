@@ -7,6 +7,7 @@
 #include "http-server.h"
 #include "pool.h"
 #include "instance.h"
+#include "connection.h"
 
 #include <sys/signal.h>
 #include <sys/wait.h>

@@ -14,6 +14,7 @@ LIBEVENT_LIBS = -L/usr/local/lib -levent
 
 SOURCES = src/main.c \
 	src/child.c \
+	src/connection.c \
 	src/handler.c \
 	src/listener.c \
 	src/http-server.c \

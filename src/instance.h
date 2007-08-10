@@ -46,12 +46,11 @@ create_child(struct instance *instance);
 void
 kill_children(struct instance *instance);
 
-void
-remove_connection(struct client_connection *connection);
+
+struct http_server_request;
 
 void
-http_listener_callback(int fd,
-                       const struct sockaddr *addr, socklen_t addrlen,
-                       void *ctx);
+my_http_server_callback(struct http_server_request *request,
+                        void *ctx);
 
 #endif

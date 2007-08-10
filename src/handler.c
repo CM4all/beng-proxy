@@ -6,6 +6,7 @@
 
 #include "instance.h"
 #include "http-server.h"
+#include "connection.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -18,12 +19,6 @@
 #ifdef __linux
 #include <sys/sendfile.h>
 #endif
-
-struct client_connection {
-    struct list_head siblings;
-    pool_t pool;
-    http_server_connection_t http;
-};
 
 struct translated {
     const char *path;
@@ -105,19 +100,6 @@ static const struct http_server_request_handler file_request_handler = {
     .free = file_response_free,
 };
 
-void
-remove_connection(struct client_connection *connection)
-{
-    assert(connection != NULL);
-    assert(connection->http != NULL);
-
-    list_remove(&connection->siblings);
-
-    http_server_connection_free(&connection->http);
-
-    pool_unref(connection->pool);
-}
-
 static struct translated *
 translate(struct http_server_request *request)
 {
@@ -133,9 +115,8 @@ translate(struct http_server_request *request)
     return translated;
 }
 
-static void
+void
 my_http_server_callback(struct http_server_request *request,
-                        /*const void *body, size_t body_length,*/
                         void *ctx)
 {
     struct client_connection *connection = ctx;
@@ -244,27 +225,4 @@ my_http_server_callback(struct http_server_request *request,
 #ifdef __linux
     http_server_response_direct_mode(request->connection);
 #endif
-}
-
-void
-http_listener_callback(int fd,
-                       const struct sockaddr *addr, socklen_t addrlen,
-                       void *ctx)
-{
-    struct instance *instance = (struct instance*)ctx;
-    pool_t pool;
-    struct client_connection *connection;
-
-    (void)addr;
-    (void)addrlen;
-    (void)ctx;
-
-    pool = pool_new_linear(instance->pool, "client_connection", 16384);
-    connection = p_malloc(pool, sizeof(*connection));
-    connection->pool = pool;
-
-    list_add(&connection->siblings, &instance->connections);
-
-    connection->http = http_server_connection_new(pool, fd,
-                                                  my_http_server_callback, connection);
 }
