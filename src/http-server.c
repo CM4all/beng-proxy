@@ -76,6 +76,8 @@ http_parse_method_name(const char *name, size_t length)
         return HTTP_METHOD_GET;
     if (length == 4 && memcmp(name, "POST", 4) == 0)
         return HTTP_METHOD_POST;
+    if (length == 4 && memcmp(name, "HEAD", 4) == 0)
+        return HTTP_METHOD_HEAD;
     return HTTP_METHOD_INVALID;
 }
 

@@ -172,6 +172,15 @@ my_http_server_callback(struct http_server_request *request,
         return;
     }
 
+    if (request->method != HTTP_METHOD_HEAD &&
+        request->method != HTTP_METHOD_GET) {
+        http_server_send_message(request->connection,
+                                 HTTP_STATUS_METHOD_NOT_ALLOWED,
+                                 "This method is not allowed.");
+        http_server_response_finish(request->connection);
+        return;
+    }
+
     f = p_calloc(request->pool, sizeof(*f));
 
     ret = stat(translated->path, &f->st);
@@ -197,30 +206,37 @@ my_http_server_callback(struct http_server_request *request,
         return;
     }
 
-    fd = open(translated->path, O_RDONLY);
-    if (fd < 0) {
-        if (errno == ENOENT) {
-            http_server_send_message(request->connection,
-                                     HTTP_STATUS_NOT_FOUND,
-                                     "The requested file does not exist.");
-        } else {
-            http_server_send_message(request->connection,
-                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                     "Internal server error");
+    if (request->method != HTTP_METHOD_HEAD) {
+        fd = open(translated->path, O_RDONLY);
+        if (fd < 0) {
+            if (errno == ENOENT) {
+                http_server_send_message(request->connection,
+                                         HTTP_STATUS_NOT_FOUND,
+                                         "The requested file does not exist.");
+            } else {
+                http_server_send_message(request->connection,
+                                         HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                         "Internal server error");
+            }
+            http_server_response_finish(request->connection);
+            return;
         }
-        http_server_response_finish(request->connection);
-        return;
+
+        f->fd = fd;
+        f->rest = f->st.st_size;
+
+        request->handler = &file_request_handler;
+        request->handler_ctx = f;
     }
 
     snprintf(buffer, sizeof(buffer), "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %lu\r\n\r\n",
              (unsigned long)f->st.st_size);
     http_server_send(request->connection, buffer, strlen(buffer));
 
-    f->fd = fd;
-    f->rest = f->st.st_size;
-
-    request->handler = &file_request_handler;
-    request->handler_ctx = f;
+    if (request->method == HTTP_METHOD_HEAD) {
+        http_server_response_finish(request->connection);
+        return;
+    }
 
 #ifdef __linux
     http_server_response_direct_mode(request->connection);
