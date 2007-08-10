@@ -332,7 +332,7 @@ http_server_event_setup(http_server_connection_t connection)
 
     if (connection->direct_mode ||
         !fifo_buffer_empty(connection->output))
-        event |= EV_WRITE;
+        event |= EV_WRITE | EV_TIMEOUT;
 
     tv.tv_sec = 30;
     tv.tv_usec = 0;
