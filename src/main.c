@@ -26,19 +26,19 @@ exit_event_callback(int fd, short event, void *ctx)
         return;
 
     instance->should_exit = 1;
-    event_del(&instance->sigterm_event);
-    event_del(&instance->sigint_event);
-    event_del(&instance->sigquit_event);
+    deinit_signals(instance);
 
     if (instance->listener != NULL)
         listener_free(&instance->listener);
 
     while (!list_empty(&instance->connections))
         remove_connection((struct client_connection*)instance->connections.next);
+
+    kill_children(instance);
 }
 
-static void
-setup_signals(struct instance *instance)
+void
+init_signals(struct instance *instance)
 {
     signal(SIGPIPE, SIG_IGN);
 
@@ -55,6 +55,14 @@ setup_signals(struct instance *instance)
     event_add(&instance->sigquit_event, NULL);
 }
 
+void
+deinit_signals(struct instance *instance)
+{
+    event_del(&instance->sigterm_event);
+    event_del(&instance->sigint_event);
+    event_del(&instance->sigquit_event);
+}
+
 int main(int argc, char **argv)
 {
     int ret;
@@ -66,9 +74,10 @@ int main(int argc, char **argv)
     instance.event_base = event_init();
 
     list_init(&instance.connections);
+    list_init(&instance.children);
     instance.pool = pool_new_libc(NULL, "global");
 
-    setup_signals(&instance);
+    init_signals(&instance);
 
     ret = listener_tcp_port_new(instance.pool,
                                 8080, &http_listener_callback, &instance,
