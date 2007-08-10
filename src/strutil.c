@@ -5,6 +5,7 @@
  */
 
 #include "strutil.h"
+#include "compiler.h"
 
 static inline int
 is_upcase(char ch)

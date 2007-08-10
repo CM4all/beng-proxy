@@ -7,6 +7,7 @@
 #include "http-server.h"
 #include "fifo-buffer.h"
 #include "strutil.h"
+#include "compiler.h"
 
 #ifdef __linux
 #include <sys/socket.h>
