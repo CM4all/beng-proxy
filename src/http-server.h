@@ -9,25 +9,11 @@
 
 #include "pool.h"
 #include "strmap.h"
+#include "http.h"
 
 /*#include <sys/socket.h>*/
 #include <sys/types.h>
 #include <event.h>
-
-typedef enum {
-    HTTP_METHOD_NULL = 0,
-    HTTP_METHOD_HEAD,
-    HTTP_METHOD_GET,
-    HTTP_METHOD_POST,
-    HTTP_METHOD_INVALID,
-} http_method_t;
-
-typedef enum {
-    HTTP_STATUS_OK = 200,
-    HTTP_STATUS_NOT_FOUND = 404,
-    HTTP_STATUS_METHOD_NOT_ALLOWED = 405,
-    HTTP_STATUS_INTERNAL_SERVER_ERROR = 500,
-} http_status_t;
 
 typedef struct http_server_connection *http_server_connection_t;
 
