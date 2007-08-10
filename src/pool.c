@@ -40,10 +40,13 @@ struct pool {
     union {
         struct libc_pool_chunk *libc;
         struct linear_pool_area *linear;
+        struct pool *recycler;
     } current_area;
 };
 
 static struct {
+    unsigned num_pools;
+    pool_t pools;
     unsigned num_linear_areas;
     struct linear_pool_area *linear_areas;
 } recycler;
@@ -62,7 +65,16 @@ xmalloc(size_t size)
 void
 pool_recycler_clear(void)
 {
+    pool_t pool;
     struct linear_pool_area *linear;
+
+    while (recycler.pools != NULL) {
+        pool = recycler.pools;
+        recycler.pools = pool->current_area.recycler;
+        free(pool);
+    }
+
+    recycler.num_pools = 0;
 
     while (recycler.linear_areas != NULL) {
         linear = recycler.linear_areas;
@@ -123,7 +135,14 @@ pool_new(pool_t parent, const char *name)
 {
     pool_t pool;
 
-    pool = xmalloc(sizeof(*pool));
+    if (recycler.pools == NULL)
+        pool = xmalloc(sizeof(*pool));
+    else {
+        pool = recycler.pools;
+        recycler.pools = pool->current_area.recycler;
+        --recycler.num_pools;
+    }
+
     list_init(&pool->children);
     pool->ref = 1;
     pool->name = name;
@@ -208,7 +227,12 @@ pool_destroy(pool_t pool)
         break;
     }
 
-    free(pool);
+    if (recycler.num_pools < 32) {
+        pool->current_area.recycler = recycler.pools;
+        recycler.pools = pool;
+        ++recycler.num_pools;
+    } else
+        free(pool);
 }
 
 void
