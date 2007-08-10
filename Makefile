@@ -9,6 +9,9 @@ override CFLAGS += -DVERSION=\"$(VERSION)\"
 LIBDAEMON_CFLAGS := $(shell pkg-config --cflags libcm4all-daemon)
 LIBDAEMON_LIBS := $(shell pkg-config --libs libcm4all-daemon)
 
+LIBEVENT_CFLAGS =
+LIBEVENT_LIBS = -levent
+
 SOURCES = src/main.c \
 	src/handler.c \
 	src/listener.c \
@@ -30,10 +33,10 @@ clean:
 	rm -f src/beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html}
 
 src/beng-proxy: $(OBJECTS)
-	$(CC) -o $@ $^ -levent $(LIBDAEMON_LIBS)
+	$(CC) -o $@ $^ $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
 $(OBJECTS): %.o: %.c $(HEADERS)
-	$(CC) -c $(CFLAGS) -o $@ $< $(LIBDAEMON_CFLAGS)
+	$(CC) -c $(CFLAGS) -o $@ $< $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS)
 
 doc/beng.pdf: doc/beng.tex
 	cd $(dir $<) && pdflatex $(notdir $<)
