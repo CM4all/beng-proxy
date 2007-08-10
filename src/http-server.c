@@ -72,18 +72,6 @@ http_server_request_free(struct http_server_request **request_r)
     pool_unref(request->pool);
 }
 
-static http_method_t
-http_parse_method_name(const char *name, size_t length)
-{
-    if (length == 3 && memcmp(name, "GET", 3) == 0)
-        return HTTP_METHOD_GET;
-    if (length == 4 && memcmp(name, "POST", 4) == 0)
-        return HTTP_METHOD_POST;
-    if (length == 4 && memcmp(name, "HEAD", 4) == 0)
-        return HTTP_METHOD_HEAD;
-    return HTTP_METHOD_INVALID;
-}
-
 static inline void
 http_server_cork(http_server_connection_t connection)
 {
@@ -226,16 +214,39 @@ http_server_handle_line(http_server_connection_t connection,
 
     if (connection->request == NULL) {
         const char *eol, *space;
-        http_method_t method;
+        http_method_t method = HTTP_METHOD_NULL;
+
+        if (length < 5) {
+            http_server_connection_close(connection);
+            return;
+        }
 
         eol = line + length;
 
-        space = memchr(line, ' ', length);
-        if (space == NULL)
-            return;
+        switch (line[0]) {
+        case 'G':
+            if (line[1] == 'E' && line[2] == 'T' && line[3] == ' ') {
+                method = HTTP_METHOD_GET;
+                line += 4;
+            }
+            break;
 
-        method = http_parse_method_name(line, space - line);
-        line = space + 1;
+        case 'P':
+            if (line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
+                line[4] == ' ') {
+                method = HTTP_METHOD_POST;
+                line += 5;
+            }
+            break;
+
+        case 'H':
+            if (line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
+                line[4] == ' ') {
+                method = HTTP_METHOD_POST;
+                line += 5;
+            }
+            break;
+        }
 
         space = memchr(line, ' ', eol - line);
         if (space == NULL)
