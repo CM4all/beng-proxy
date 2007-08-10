@@ -128,10 +128,9 @@ pool_new(pool_t parent, const char *name)
     pool->ref = 1;
     pool->name = name;
 
+    pool->parent = NULL;
     if (parent != NULL)
         pool_add_child(parent, pool);
-    else
-        pool->parent = NULL;
 
     return pool;
 }
