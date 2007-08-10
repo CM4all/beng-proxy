@@ -2,7 +2,7 @@ include version.mk
 
 CC = gcc
 CFLAGS = -O0 -g
-override CFLAGS += -Wall -W -pedantic -Werror -pedantic-errors -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef
+WARNING_CFLAGS += -Wall -W -pedantic -Werror -pedantic-errors -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef
 
 override CFLAGS += -DVERSION=\"$(VERSION)\"
 
@@ -33,10 +33,10 @@ clean:
 	rm -f src/beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html}
 
 src/beng-proxy: $(OBJECTS)
-	$(CC) -o $@ $^ $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
 $(OBJECTS): %.o: %.c $(HEADERS)
-	$(CC) -c $(CFLAGS) -o $@ $< $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) $(WARNING_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS)
 
 doc/beng.pdf: doc/beng.tex
 	cd $(dir $<) && pdflatex $(notdir $<)
