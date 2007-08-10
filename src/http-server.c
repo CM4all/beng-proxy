@@ -34,6 +34,9 @@ struct http_server_connection {
     struct http_server_request *request;
     int reading_headers, reading_body, direct_mode;
     int keep_alive;
+#ifdef __linux
+    int cork;
+#endif
 };
 
 static struct http_server_request *
@@ -79,6 +82,40 @@ http_parse_method_name(const char *name, size_t length)
     if (length == 4 && memcmp(name, "HEAD", 4) == 0)
         return HTTP_METHOD_HEAD;
     return HTTP_METHOD_INVALID;
+}
+
+static inline void
+http_server_cork(http_server_connection_t connection)
+{
+    assert(connection != NULL);
+    assert(connection->fd >= 0);
+
+#ifdef __linux
+    if (!connection->cork) {
+        connection->cork = 1;
+        setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK,
+                   &connection->cork, sizeof(connection->cork));
+    }
+#else
+    (void)connection;
+#endif
+}
+
+static inline void
+http_server_uncork(http_server_connection_t connection)
+{
+    assert(connection != NULL);
+
+#ifdef __linux
+    if (connection->cork) {
+        assert(connection->fd >= 0);
+        connection->cork = 0;
+        setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK,
+                   &connection->cork, sizeof(connection->cork));
+    }
+#else
+    (void)connection;
+#endif
 }
 
 static void
@@ -142,20 +179,12 @@ http_server_try_response_body(http_server_connection_t connection)
     const void *buffer;
     size_t length;
     ssize_t nbytes;
-#ifdef __linux
-    int cork = 0;
-#endif
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
 
     while ((buffer = fifo_buffer_read(connection->output, &length)) != NULL) {
-#ifdef __linux
-        if (!cork) {
-            cork = 1;
-            setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
-        }
-#endif
+        http_server_cork(connection);
 
         nbytes = write(connection->fd, buffer, length);
         if (nbytes < 0 && errno != EAGAIN) {
@@ -180,12 +209,7 @@ http_server_try_response_body(http_server_connection_t connection)
         connection->request->handler->response_direct(connection->request,
                                                       connection->fd);
 
-#ifdef __linux
-    if (cork && connection->fd >= 0) {
-        cork = 0;
-        setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK, &cork, sizeof(cork));
-    }
-#endif
+    http_server_uncork(connection);
 }
 
 static void
@@ -448,6 +472,7 @@ http_server_connection_close(http_server_connection_t connection)
 
     connection->reading_headers = 0;
     connection->reading_body = 0;
+    connection->cork = 0;
 
     if (connection->request != NULL)
         http_server_request_free(&connection->request);
