@@ -1,6 +1,10 @@
+include version.mk
+
 CC = gcc
 CFLAGS = -O0 -g
 override CFLAGS += -Wall -W -pedantic -Werror -pedantic-errors -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef
+
+override CFLAGS += -DVERSION=\"$(VERSION)\"
 
 LIBDAEMON_CFLAGS := $(shell pkg-config --cflags libcm4all-daemon)
 LIBDAEMON_LIBS := $(shell pkg-config --libs libcm4all-daemon)
