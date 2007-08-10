@@ -146,7 +146,6 @@ http_server_try_response_body(http_server_connection_t connection)
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
-    assert(connection->request != NULL);
 
     while ((buffer = fifo_buffer_read(connection->output, &length)) != NULL) {
         if (!cork) {
@@ -157,7 +156,8 @@ http_server_try_response_body(http_server_connection_t connection)
         nbytes = write(connection->fd, buffer, length);
         if (nbytes > 0) {
             fifo_buffer_consume(connection->output, (size_t)nbytes);
-            if (!connection->direct_mode &&
+            if (connection->request != NULL &&
+                !connection->direct_mode &&
                 (size_t)nbytes == length)
                 http_server_call_response_body(connection);
             else
@@ -238,8 +238,10 @@ http_server_handle_line(http_server_connection_t connection,
 
         connection->reading_headers = 0;
         connection->callback(connection->request, connection->callback_ctx);
-        if (connection->request == NULL)
+        if (connection->request == NULL) {
+            http_server_try_response_body(connection);
             return;
+        }
 
         if (connection->request->handler == NULL) {
             fprintf(stderr, "WARNING: no handler for request\n");
