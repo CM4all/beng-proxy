@@ -14,6 +14,9 @@
 
 struct instance {
     pool_t pool;
+
+    struct event_base *event_base;
+
     listener_t listener;
     struct list_head connections;
     int should_exit;

@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    event_init();
+    instance.event_base = event_init();
 
     list_init(&instance.connections);
     instance.pool = pool_new_libc(NULL, "global");
@@ -82,6 +82,8 @@ int main(int argc, char **argv)
 
     if (instance.listener != NULL)
         listener_free(&instance.listener);
+
+    event_base_free(instance.event_base);
 
     pool_unref(instance.pool);
 }
