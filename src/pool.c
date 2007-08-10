@@ -6,6 +6,7 @@
 
 #include "pool.h"
 #include "list.h"
+#include "compiler.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -126,7 +127,7 @@ pool_recycler_get_linear(size_t size)
     return NULL;
 }
 
-static void
+static inline void
 pool_add_child(pool_t pool, pool_t child)
 {
     assert(child->parent == NULL);
@@ -180,7 +181,7 @@ pool_new_linear_area(struct linear_pool_area *prev, size_t size)
     return area;
 }
 
-static struct linear_pool_area *
+static inline struct linear_pool_area *
 pool_get_linear_area(struct linear_pool_area *prev, size_t size)
 {
     struct linear_pool_area *area = pool_recycler_get_linear(size);

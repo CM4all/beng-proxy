@@ -7,6 +7,8 @@
 #ifndef __BENG_STRUTIL_H
 #define __BENG_STRUTIL_H
 
+#include "compiler.h"
+
 #include <stddef.h>
 
 static inline int
