@@ -13,6 +13,7 @@
 #include <string.h>
 
 #define LINEAR_ALIGN 8
+#define LINEAR_ALIGN_BITS 0x7
 
 enum pool_type {
     POOL_LIBC,
@@ -242,7 +243,7 @@ p_malloc_linear(pool_t pool, size_t size)
     struct linear_pool_area *area = pool->current_area.linear;
     void *p;
 
-    size = ((size + LINEAR_ALIGN - 1) / LINEAR_ALIGN) * LINEAR_ALIGN;
+    size |= LINEAR_ALIGN_BITS;
 
     if (area->used + size > area->size) {
         size_t new_area_size = area->size;
