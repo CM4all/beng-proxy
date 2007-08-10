@@ -186,6 +186,7 @@ p_malloc_linear(pool_t pool, size_t size)
 
     if (area->used + size > area->size) {
         size_t new_area_size = area->size;
+        fprintf(stderr, "growing linear pool '%s'\n", pool->name);
         if (size > new_area_size)
             new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
         area = pool_new_linear_area(area, new_area_size);
