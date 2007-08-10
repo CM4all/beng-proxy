@@ -58,17 +58,6 @@ xmalloc(size_t size)
     return p;
 }
 
-static void *
-xcalloc(size_t size)
-{
-    void *p = calloc(1, size);
-    if (p == NULL) {
-        fputs("Out of memory\n", stderr);
-        abort();
-    }
-    return p;
-}
-
 void
 pool_recycler_clear(void)
 {
@@ -133,13 +122,15 @@ pool_new(pool_t parent, const char *name)
 {
     pool_t pool;
 
-    pool = xcalloc(sizeof(*pool));
+    pool = xmalloc(sizeof(*pool));
     list_init(&pool->children);
     pool->ref = 1;
     pool->name = name;
 
     if (parent != NULL)
         pool_add_child(parent, pool);
+    else
+        pool->parent = NULL;
 
     return pool;
 }
@@ -149,6 +140,7 @@ pool_new_libc(pool_t parent, const char *name)
 {
     pool_t pool = pool_new(parent, name);
     pool->type = POOL_LIBC;
+    pool->current_area.libc = NULL;
     return pool;
 }
 
