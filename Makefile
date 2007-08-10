@@ -16,6 +16,7 @@ SOURCES = src/main.c \
 	src/child.c \
 	src/connection.c \
 	src/handler.c \
+	src/file-handler.c \
 	src/listener.c \
 	src/http-server.c \
 	src/fifo-buffer.c \

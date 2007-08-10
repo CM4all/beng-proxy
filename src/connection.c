@@ -7,6 +7,7 @@
 #include "instance.h"
 #include "http-server.h"
 #include "connection.h"
+#include "handler.h"
 
 #include <assert.h>
 

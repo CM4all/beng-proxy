@@ -7,9 +7,10 @@
 #ifndef __BENG_CONNECTION_H
 #define __BENG_CONNECTION_H
 
-#include "listener.h"
 #include "list.h"
 #include "http-server.h"
+
+#include <sys/socket.h>
 
 struct client_connection {
     struct list_head siblings;

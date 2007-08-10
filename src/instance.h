@@ -46,11 +46,4 @@ create_child(struct instance *instance);
 void
 kill_children(struct instance *instance);
 
-
-struct http_server_request;
-
-void
-my_http_server_callback(struct http_server_request *request,
-                        void *ctx);
-
 #endif
