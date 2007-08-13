@@ -246,6 +246,8 @@ http_server_parse_request_line(http_server_connection_t connection,
         break;
     }
 
+    /* XXX: unknown method? */
+
     space = memchr(line, ' ', eol - line);
     if (space == NULL)
         space = eol;
@@ -290,7 +292,7 @@ http_server_headers_finished(http_server_connection_t connection)
 
     header_connection = strmap_get(connection->request->headers, "connection");
     connection->keep_alive = header_connection != NULL &&
-        strcmp(header_connection, "keep-alive") == 0;
+        strcasecmp(header_connection, "keep-alive") == 0;
 
     connection->reading_headers = 0;
     connection->callback(connection->request, connection->callback_ctx);
