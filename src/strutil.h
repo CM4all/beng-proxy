@@ -17,6 +17,12 @@ char_is_whitespace(char ch)
     return (ch & ~0x1f) == 0;
 }
 
+static inline int
+char_is_digit(char ch)
+{
+    return ch >= '0' && ch <= '9';
+}
+
 void
 str_to_lower(char *s);
 
