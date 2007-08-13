@@ -58,7 +58,8 @@ void
 http_server_connection_free(http_server_connection_t *connection_r);
 
 size_t
-http_server_send(http_server_connection_t connection, void *p, size_t length);
+http_server_send(http_server_connection_t connection,
+                 const void *p, size_t length);
 
 size_t
 http_server_send_status(http_server_connection_t connection, int status);

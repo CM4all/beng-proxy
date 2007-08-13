@@ -539,7 +539,8 @@ http_server_connection_free(http_server_connection_t *connection_r)
 }
 
 size_t
-http_server_send(http_server_connection_t connection, void *p, size_t length)
+http_server_send(http_server_connection_t connection,
+                 const void *p, size_t length)
 {
     unsigned char *dest;
     size_t max_length;
