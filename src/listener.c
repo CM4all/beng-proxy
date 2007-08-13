@@ -5,6 +5,7 @@
  */
 
 #include "listener.h"
+#include "socket-util.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -26,18 +27,6 @@ struct listener {
     void *callback_ctx;
 };
 
-static int
-set_non_block(int fd)
-{
-    int ret;
-
-    ret = fcntl(fd, F_GETFL, 0);
-    if (ret < 0)
-        return ret;
-
-    return fcntl(fd, F_SETFL, ret | O_NONBLOCK);
-}
-
 static void
 listener_event_callback(int fd, short event, void *ctx)
 {
@@ -56,7 +45,7 @@ listener_event_callback(int fd, short event, void *ctx)
         return;
     }
 
-    ret = set_non_block(remote_fd);
+    ret = socket_set_nonblock(remote_fd);
     if (ret < 0) {
         perror("fcntl(O_NONBLOCK) failed");
         close(remote_fd);
@@ -118,7 +107,7 @@ listener_tcp_port_new(pool_t pool, int port,
         return -1;
     }
 
-    ret = set_non_block(listener->fd);
+    ret = socket_set_nonblock(listener->fd);
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
