@@ -311,7 +311,8 @@ http_server_headers_finished(http_server_connection_t connection)
                                                        NULL, 0);
     }
 
-    http_server_try_response_body(connection);
+    if (connection->request != NULL)
+        http_server_try_response_body(connection);
 }
 
 static void
