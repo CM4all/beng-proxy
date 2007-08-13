@@ -136,6 +136,15 @@ pool_add_child(pool_t pool, pool_t child)
     list_add(&child->siblings, &pool->children);
 }
 
+static inline void
+pool_remove_child(pool_t pool, pool_t child)
+{
+    assert(child->parent == pool);
+
+    list_remove(&pool->siblings);
+    child->parent = NULL;
+}
+
 static pool_t
 pool_new(pool_t parent, const char *name)
 {
@@ -221,7 +230,7 @@ pool_destroy(pool_t pool)
     assert(list_empty(&pool->children));
 
     if (pool->parent != NULL)
-        list_remove(&pool->siblings);
+        pool_remove_child(pool->parent, pool);
 
     switch (pool->type) {
     case POOL_LIBC:
