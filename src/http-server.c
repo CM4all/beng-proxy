@@ -214,6 +214,9 @@ http_server_parse_request_line(http_server_connection_t connection,
     const char *eol, *space;
     http_method_t method = HTTP_METHOD_NULL;
 
+    assert(connection != NULL);
+    assert(connection->request == NULL);
+
     if (length < 5) {
         http_server_connection_close(connection);
         return;
@@ -429,16 +432,16 @@ http_server_event_callback(int fd, short event, void *ctx)
     }
 
     if (event & EV_WRITE) {
-        pool_ref(connection->pool);
+        pool_lock(connection->pool);
 
         http_server_try_response_body(connection);
 
         if (connection->fd < 0) {
-            pool_unref(connection->pool);
+            pool_unlock(connection->pool);
             return;
         }
 
-        pool_unref(connection->pool);
+        pool_unlock(connection->pool);
     }
 
     if (event & EV_READ) {
@@ -462,16 +465,16 @@ http_server_event_callback(int fd, short event, void *ctx)
 
         fifo_buffer_append(connection->input, (size_t)nbytes);
 
-        pool_ref(connection->pool);
+        pool_lock(connection->pool);
 
         http_server_consume_input(connection);
 
         if (connection->fd < 0) {
-            pool_unref(connection->pool);
+            pool_unlock(connection->pool);
             return;
         }
 
-        pool_unref(connection->pool);
+        pool_unlock(connection->pool);
     }
 
     http_server_event_setup(connection);

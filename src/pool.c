@@ -39,7 +39,7 @@ struct linear_pool_area {
 struct pool {
     struct list_head siblings, children;
     pool_t parent;
-    unsigned ref;
+    unsigned ref, lock;
     enum pool_type type;
     const char *name;
     union {
@@ -141,7 +141,7 @@ pool_remove_child(pool_t pool, pool_t child)
 {
     assert(child->parent == pool);
 
-    list_remove(&pool->siblings);
+    list_remove(&child->siblings);
     child->parent = NULL;
 }
 
@@ -160,6 +160,7 @@ pool_new(pool_t parent, const char *name)
 
     list_init(&pool->children);
     pool->ref = 1;
+    pool->lock = 0;
     pool->name = name;
 
     pool->parent = NULL;
@@ -219,6 +220,8 @@ pool_new_linear(pool_t parent, const char *name, size_t initial_size)
 static void
 pool_destroy(pool_t pool)
 {
+    assert(pool->ref == 0);
+
 #ifndef NDEBUG
     if (!list_empty(&pool->children)) {
         pool_t child = (pool_t)pool->children.next;
@@ -228,9 +231,6 @@ pool_destroy(pool_t pool)
 #endif
 
     assert(list_empty(&pool->children));
-
-    if (pool->parent != NULL)
-        pool_remove_child(pool->parent, pool);
 
     switch (pool->type) {
     case POOL_LIBC:
@@ -279,8 +279,38 @@ pool_unref(pool_t pool)
     fprintf(stderr, "pool_unref('%s')=%u\n", pool->name, pool->ref);
 #endif
 
-    if (pool->ref == 0)
+    if (pool->ref == 0) {
+        if (pool->parent != NULL)
+            pool_remove_child(pool->parent, pool);
+        if (pool->lock == 0)
+            pool_destroy(pool);
+    }
+}
+
+void
+pool_lock(pool_t pool)
+{
+    ++pool->lock;
+
+#ifdef POOL_TRACE_REF
+    fprintf(stderr, "pool_lock('%s')=%u\n", pool->name, pool->lock);
+#endif
+}
+
+void
+pool_unlock(pool_t pool)
+{
+    assert(pool->lock > 0);
+    --pool->lock;
+
+#ifdef POOL_TRACE_REF
+    fprintf(stderr, "pool_unlock('%s')=%u\n", pool->name, pool->lock);
+#endif
+
+    if (pool->lock == 0 && pool->ref == 0) {
+        assert(pool->parent == NULL);
         pool_destroy(pool);
+    }
 }
 
 static void *

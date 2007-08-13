@@ -26,6 +26,12 @@ pool_ref(pool_t pool);
 void
 pool_unref(pool_t pool);
 
+void
+pool_lock(pool_t pool);
+
+void
+pool_unlock(pool_t pool);
+
 void *
 p_malloc(pool_t pool, size_t size);
 
