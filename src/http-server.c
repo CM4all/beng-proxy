@@ -412,6 +412,7 @@ http_server_event_setup(http_server_connection_t connection)
     tv.tv_sec = 30;
     tv.tv_usec = 0;
 
+    event_del(&connection->event);
     event_set(&connection->event, connection->fd,
               event, http_server_event_callback, connection);
     event_add(&connection->event, &tv);
