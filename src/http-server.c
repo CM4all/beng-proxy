@@ -563,6 +563,9 @@ http_server_send(http_server_connection_t connection,
     memcpy(dest, p, length);
     fifo_buffer_append(connection->output, length);
 
+    if ((connection->event.ev_events & EV_WRITE) == 0)
+        http_server_event_setup(connection);
+
     return length;
 }
 
