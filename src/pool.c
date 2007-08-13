@@ -210,6 +210,14 @@ pool_new_linear(pool_t parent, const char *name, size_t initial_size)
 static void
 pool_destroy(pool_t pool)
 {
+#ifndef NDEBUG
+    if (!list_empty(&pool->children)) {
+        pool_t child = (pool_t)pool->children.next;
+        fprintf(stderr, "unreleased pool: '%s' (ref %u) in '%s'\n",
+                child->name, child->ref, pool->name);
+    }
+#endif
+
     assert(list_empty(&pool->children));
 
     if (pool->parent != NULL)
@@ -246,6 +254,10 @@ pool_ref(pool_t pool)
 {
     assert(pool->ref > 0);
     ++pool->ref;
+
+#ifdef POOL_TRACE_REF
+    fprintf(stderr, "pool_ref('%s')=%u\n", pool->name, pool->ref);
+#endif
 }
 
 void
@@ -253,6 +265,11 @@ pool_unref(pool_t pool)
 {
     assert(pool->ref > 0);
     --pool->ref;
+
+#ifdef POOL_TRACE_REF
+    fprintf(stderr, "pool_unref('%s')=%u\n", pool->name, pool->ref);
+#endif
+
     if (pool->ref == 0)
         pool_destroy(pool);
 }
