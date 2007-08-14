@@ -79,15 +79,13 @@ http_server_cork(http_server_connection_t connection)
     assert(connection != NULL);
     assert(connection->fd >= 0);
 
-#ifdef __linux
     if (!connection->cork) {
         connection->cork = 1;
+#ifdef __linux
         setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK,
                    &connection->cork, sizeof(connection->cork));
-    }
-#else
-    (void)connection;
 #endif
+    }
 }
 
 static inline void
@@ -95,16 +93,14 @@ http_server_uncork(http_server_connection_t connection)
 {
     assert(connection != NULL);
 
-#ifdef __linux
     if (connection->cork) {
         assert(connection->fd >= 0);
         connection->cork = 0;
+#ifdef __linux
         setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK,
                    &connection->cork, sizeof(connection->cork));
-    }
-#else
-    (void)connection;
 #endif
+    }
 }
 
 static void
@@ -551,11 +547,26 @@ http_server_send(http_server_connection_t connection,
                  const void *p, size_t length)
 {
     unsigned char *dest;
-    size_t max_length;
+    size_t pre_written = 0, max_length;
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
     assert(p != NULL);
+
+    if (!connection->cork && fifo_buffer_empty(connection->output)) {
+        /* try to quick-write */
+        ssize_t nbytes;
+
+        nbytes = write(connection->fd, p, length);
+        if (nbytes == (ssize_t)length)
+            return (size_t)nbytes;;
+
+        if (nbytes > 0) {
+            pre_written = (size_t)length;
+            p = (const char*)p + pre_written;
+            length -= pre_written;
+        }
+    }
 
     dest = fifo_buffer_write(connection->output, &max_length);
     if (dest == NULL)
@@ -570,7 +581,7 @@ http_server_send(http_server_connection_t connection,
     if ((connection->event.ev_events & EV_WRITE) == 0)
         http_server_event_setup(connection);
 
-    return length;
+    return pre_written + length;
 }
 
 size_t
