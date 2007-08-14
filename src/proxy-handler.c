@@ -58,7 +58,6 @@ proxy_http_client_callback(struct http_client_response *response,
     char headers[256];
 
     if (response == NULL) {
-        fprintf(stderr, "http_client connection closed\n");
         pt->http = NULL;
         pt->response = NULL;
         return;
@@ -123,7 +122,6 @@ static void proxy_response_free(struct http_server_request *request)
     assert(pt->response == NULL);
 
     request->handler_ctx = NULL;
-    printf("in proxy_response_free()\n");
 }
 
 static const struct http_server_request_handler proxy_request_handler = {

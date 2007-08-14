@@ -251,7 +251,6 @@ http_client_handle_line(http_client_connection_t connection,
 {
     assert(connection->response != NULL);
 
-    printf("handle_line('%.*s')\n", (int)length, line);
     if (!connection->reading_headers) {
         http_client_parse_status_line(connection, line, length);
     } else if (length > 0) {
@@ -321,7 +320,6 @@ http_client_consume_body(http_client_connection_t connection)
 
     consumed = connection->response->handler->response_body(connection->response,
                                                             buffer, length);
-    printf("http_client_consume_body(%zu)=%zu\n", length, consumed);
     assert(consumed <= length);
 
     if (consumed > 0) {
@@ -340,9 +338,6 @@ http_client_consume_input(http_client_connection_t connection)
     assert(connection->response != NULL);
 
     do {
-        printf("response=%p reading_headers=%d reading_body=%d\n",
-               (void*)connection->response, connection->reading_headers,
-               connection->reading_body);
         if (!connection->reading_body) {
             if (http_client_parse_headers(connection) == 0)
                 break;
