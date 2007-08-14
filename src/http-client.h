@@ -27,8 +27,8 @@ struct http_client_response {
 };
 
 struct http_client_request_handler {
-    void (*response_body)(struct http_client_response *response,
-                          const void *buffer, size_t length);
+    size_t (*response_body)(struct http_client_response *response,
+                            const void *buffer, size_t length);
     void (*response_direct)(struct http_client_response *response, int fd);
     void (*free)(struct http_client_response *response);
 };
@@ -49,6 +49,9 @@ http_client_request(http_client_connection_t connection,
 
 void
 http_client_response_direct_mode(http_client_connection_t connection);
+
+void
+http_client_response_read(http_client_connection_t connection);
 
 void
 http_client_response_finish(http_client_connection_t connection);

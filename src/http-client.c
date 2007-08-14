@@ -303,7 +303,7 @@ static void
 http_client_consume_body(http_client_connection_t connection)
 {
     const void *buffer;
-    size_t length;
+    size_t length, consumed;
 
     assert(connection != NULL);
     assert(connection->response != NULL);
@@ -319,15 +319,18 @@ http_client_consume_body(http_client_connection_t connection)
     if ((off_t)length > connection->body_rest)
         length = (size_t)connection->body_rest;
 
-    printf("http_client_consume_body(%zu)\n", length);
-    connection->response->handler->response_body(connection->response,
-                                                 buffer, length);
+    consumed = connection->response->handler->response_body(connection->response,
+                                                            buffer, length);
+    printf("http_client_consume_body(%zu)=%zu\n", length, consumed);
+    assert(consumed <= length);
 
-    fifo_buffer_consume(connection->input, length);
+    if (consumed > 0) {
+        fifo_buffer_consume(connection->input, consumed);
 
-    connection->body_rest -= (off_t)length;
-    if (connection->body_rest <= 0)
-        http_client_response_finish(connection);
+        connection->body_rest -= (off_t)consumed;
+        if (connection->body_rest <= 0)
+            http_client_response_finish(connection);
+    }
 }
 
 static void
@@ -542,6 +545,14 @@ http_client_response_direct_mode(http_client_connection_t connection)
     if (fifo_buffer_empty(connection->output))
         connection->response->handler->response_direct(connection->response,
                                                       connection->fd);
+}
+
+void
+http_client_response_read(http_client_connection_t connection)
+{
+    http_client_consume_body(connection);
+
+    http_client_event_setup(connection);
 }
 
 void

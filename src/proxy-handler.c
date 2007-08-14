@@ -24,14 +24,14 @@ struct proxy_transfer {
     struct http_client_response *response;
 };
 
-static void
+static size_t
 proxy_client_response_body(struct http_client_response *response,
                            const void *buffer, size_t length)
 {
     struct proxy_transfer *pt = response->handler_ctx;
 
     /* XXX */
-    http_server_send(pt->request->connection, buffer, length);
+    return http_server_send(pt->request->connection, buffer, length);
 }
 
 static void
@@ -105,6 +105,8 @@ static size_t proxy_response_body(struct http_server_request *request,
     (void)pt;
     (void)buffer;
     (void)max_length;
+
+    http_client_response_read(pt->http);
 
     return 0;
 }
