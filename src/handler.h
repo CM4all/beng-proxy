@@ -21,4 +21,9 @@ file_callback(struct client_connection *connection,
               struct http_server_request *request,
               struct translated *translated);
 
+void
+proxy_callback(struct client_connection *connection,
+               struct http_server_request *request,
+               struct translated *translated);
+
 #endif

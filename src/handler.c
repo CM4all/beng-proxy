@@ -8,6 +8,7 @@
 #include "handler.h"
 
 #include <stdio.h>
+#include <string.h>
 
 static struct translated *
 translate(struct http_server_request *request)
@@ -15,8 +16,12 @@ translate(struct http_server_request *request)
     struct translated *translated;
     char path[1024];
 
-    /* XXX this is, of course, a huge security hole */
-    snprintf(path, sizeof(path), "/var/www/%s", request->uri);
+    if (memcmp(request->uri, "/proxy/", 7) == 0) {
+        snprintf(path, sizeof(path), "http://dory.intern.cm-ag/~max/%s", request->uri + 7);
+    } else {
+        /* XXX this is, of course, a huge security hole */
+        snprintf(path, sizeof(path), "/var/www/%s", request->uri);
+    }
 
     translated = p_malloc(request->pool, sizeof(*translated));
     translated->path = p_strdup(request->pool, path);
@@ -60,5 +65,8 @@ my_http_server_callback(struct http_server_request *request,
         return;
     }
 
-    file_callback(connection, request, translated);
+    if (memcmp(translated->path, "http://", 7) == 0)
+        proxy_callback(connection, request, translated);
+    else
+        file_callback(connection, request, translated);
 }
