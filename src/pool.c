@@ -225,8 +225,8 @@ pool_destroy(pool_t pool)
 #ifndef NDEBUG
     if (!list_empty(&pool->children)) {
         pool_t child = (pool_t)pool->children.next;
-        fprintf(stderr, "unreleased pool: '%s' (ref %u) in '%s'\n",
-                child->name, child->ref, pool->name);
+        fprintf(stderr, "unreleased pool: '%s' (ref %u, lock %u) in '%s'\n",
+                child->name, child->ref, child->lock, pool->name);
     }
 #endif
 
