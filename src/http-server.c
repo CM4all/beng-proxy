@@ -650,6 +650,8 @@ http_server_response_finish(http_server_connection_t connection)
     assert(connection->request != NULL);
     assert(!connection->reading_headers);
 
+    pool_lock(connection->pool);
+
     if (connection->reading_body) {
         /* XXX discard rest of body? */
         connection->reading_body = 0;
@@ -658,4 +660,6 @@ http_server_response_finish(http_server_connection_t connection)
     http_server_request_free(&connection->request);
 
     connection->direct_mode = 0;
+
+    pool_unlock(connection->pool);
 }
