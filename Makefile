@@ -19,6 +19,7 @@ SOURCES = src/main.c \
 	src/file-handler.c \
 	src/socket-util.c \
 	src/listener.c \
+	src/client-socket.c \
 	src/http-server.c \
 	src/fifo-buffer.c \
 	src/strutil.c \
