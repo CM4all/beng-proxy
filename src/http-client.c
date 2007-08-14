@@ -550,9 +550,14 @@ http_client_response_direct_mode(http_client_connection_t connection)
 void
 http_client_response_read(http_client_connection_t connection)
 {
+    pool_lock(connection->pool);
+
     http_client_consume_body(connection);
 
-    http_client_event_setup(connection);
+    if (connection->fd >= 0)
+        http_client_event_setup(connection);
+
+    pool_unlock(connection->pool);
 }
 
 void
