@@ -519,6 +519,8 @@ http_server_connection_close(http_server_connection_t connection)
     connection->reading_body = 0;
     connection->cork = 0;
 
+    pool_lock(connection->pool);
+
     if (connection->request != NULL)
         http_server_request_free(&connection->request);
 
@@ -529,6 +531,8 @@ http_server_connection_close(http_server_connection_t connection)
         connection->callback_ctx = NULL;
         callback(NULL, callback_ctx);
     }
+
+    pool_unlock(connection->pool);
 }
 
 void
