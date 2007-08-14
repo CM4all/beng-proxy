@@ -269,7 +269,7 @@ pool_ref(pool_t pool)
 #endif
 }
 
-void
+unsigned
 pool_unref(pool_t pool)
 {
     assert(pool->ref > 0);
@@ -284,7 +284,10 @@ pool_unref(pool_t pool)
             pool_remove_child(pool->parent, pool);
         if (pool->lock == 0)
             pool_destroy(pool);
+        return 0;
     }
+
+    return pool->ref;
 }
 
 void

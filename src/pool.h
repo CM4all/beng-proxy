@@ -23,7 +23,7 @@ pool_new_linear(pool_t parent, const char *name, size_t initial_size);
 void
 pool_ref(pool_t pool);
 
-void
+unsigned
 pool_unref(pool_t pool);
 
 void
