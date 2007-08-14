@@ -21,6 +21,7 @@ SOURCES = src/main.c \
 	src/listener.c \
 	src/client-socket.c \
 	src/http-server.c \
+	src/http-client.c \
 	src/fifo-buffer.c \
 	src/strutil.c \
 	src/strmap.c \
