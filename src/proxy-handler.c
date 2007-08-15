@@ -42,7 +42,8 @@ proxy_client_response_free(struct http_client_response *response)
     pt->response = NULL;
     /* XXX */
 
-    http_server_response_finish(pt->request->connection);   
+    if (pt->request != NULL)
+        http_server_response_finish(pt->request->connection);   
 }
 
 static struct http_client_request_handler proxy_client_request_handler = {
@@ -115,6 +116,8 @@ static size_t proxy_response_body(struct http_server_request *request,
 static void proxy_response_free(struct http_server_request *request)
 {
     struct proxy_transfer *pt = request->handler_ctx;
+
+    pt->request = NULL;
 
     if (pt->http != NULL) {
         http_client_connection_close(pt->http);
