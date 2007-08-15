@@ -15,10 +15,15 @@ struct pair {
     const char *key, *value;
 };
 
+struct slot {
+    struct slot *next;
+    struct pair pair;
+};
+
 struct strmap {
     pool_t pool;
     unsigned capacity;
-    struct pair slots[1];
+    struct slot slots[1];
 };
 
 static inline unsigned
@@ -47,16 +52,16 @@ void
 strmap_addn(strmap_t map, const char *key, const char *value)
 {
     unsigned hash = calc_hash(key);
-    struct pair *slot, *prev;
+    struct slot *slot, *prev;
 
     assert(value != NULL);
 
     slot = &map->slots[hash % map->capacity];
-    if (slot->key != NULL) {
+    if (slot->pair.key != NULL) {
         while (slot->next != NULL) {
             slot = slot->next;
-            assert(slot->key != NULL);
-            assert(slot->value != NULL);
+            assert(slot->pair.key != NULL);
+            assert(slot->pair.value != NULL);
         }
 
         prev = slot;
@@ -65,29 +70,29 @@ strmap_addn(strmap_t map, const char *key, const char *value)
         prev->next = slot;
     }
 
-    slot->key = key;
-    slot->value = value;
+    slot->pair.key = key;
+    slot->pair.value = value;
 }
 
 const char *
 strmap_get(strmap_t map, const char *key)
 {
     unsigned hash = calc_hash(key);
-    struct pair *slot;
+    struct slot *slot;
 
     slot = &map->slots[hash % map->capacity];
-    if (slot->key != NULL && strcmp(slot->key, key) == 0) {
-        assert(slot->value != NULL);
-        return slot->value;
+    if (slot->pair.key != NULL && strcmp(slot->pair.key, key) == 0) {
+        assert(slot->pair.value != NULL);
+        return slot->pair.value;
     }
 
     while (slot->next != NULL) {
         slot = slot->next;
-        assert(slot->key != NULL);
-        assert(slot->value != NULL);
+        assert(slot->pair.key != NULL);
+        assert(slot->pair.value != NULL);
 
-        if (strcmp(slot->key, key) == 0)
-            return slot->value;
+        if (strcmp(slot->pair.key, key) == 0)
+            return slot->pair.value;
     }
 
     return NULL;
