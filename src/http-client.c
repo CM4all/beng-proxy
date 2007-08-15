@@ -70,6 +70,12 @@ http_client_response_free(struct http_client_response **request_r)
     pool_unref(request->pool);
 }
 
+static inline int
+http_client_connection_valid(http_client_connection_t connection)
+{
+    return connection->fd >= 0;
+}
+
 static inline void
 http_client_cork(http_client_connection_t connection)
 {
@@ -349,6 +355,43 @@ http_client_consume_input(http_client_connection_t connection)
 }
 
 static void
+http_client_try_read(http_client_connection_t connection)
+{
+    void *buffer;
+    size_t max_length;
+    ssize_t nbytes;
+
+    if (connection->direct_mode &&
+        fifo_buffer_empty(connection->input)) {
+        assert(connection->response->handler->response_direct != NULL);
+        connection->response->handler->response_direct(connection->response,
+                                                       connection->fd);
+    } else {
+        buffer = fifo_buffer_write(connection->input, &max_length);
+        assert(buffer != NULL);
+
+        assert(max_length > 0);
+
+        nbytes = read(connection->fd, buffer, max_length);
+        if (nbytes < 0) {
+            perror("read error on HTTP connection");
+            http_client_connection_close(connection);
+            return;
+        }
+
+        if (nbytes == 0) {
+            /* XXX */
+            http_client_connection_close(connection);
+            return;
+        }
+
+        fifo_buffer_append(connection->input, (size_t)nbytes);
+
+        http_client_consume_input(connection);
+    }
+}
+
+static void
 http_client_event_callback(int fd, short event, void *ctx);
 
 static void
@@ -383,9 +426,10 @@ static void
 http_client_event_callback(int fd, short event, void *ctx)
 {
     http_client_connection_t connection = ctx;
-    void *buffer;
-    size_t max_length;
-    ssize_t nbytes;
+
+    (void)fd;
+
+    pool_ref(connection->pool);
 
     if (event & EV_TIMEOUT) {
         fprintf(stderr, "timeout\n");
@@ -393,53 +437,16 @@ http_client_event_callback(int fd, short event, void *ctx)
         return;
     }
 
-    if (event & EV_WRITE) {
-        pool_ref(connection->pool);
-
+    if (http_client_connection_valid(connection) && (event & EV_WRITE) != 0)
         http_client_try_send(connection);
 
-        if (pool_unref(connection->pool) == 0)
-            return;
-    }
+    if (http_client_connection_valid(connection) && (event & EV_READ) != 0)
+        http_client_try_read(connection);
 
-    if (event & EV_READ) {
-        if (connection->direct_mode &&
-            fifo_buffer_empty(connection->input)) {
-            assert(connection->response->handler->response_direct != NULL);
-            connection->response->handler->response_direct(connection->response,
-                                                           connection->fd);
-        } else {
-            buffer = fifo_buffer_write(connection->input, &max_length);
-            assert(buffer != NULL);
+    if (http_client_connection_valid(connection))
+        http_client_event_setup(connection);
 
-            assert(max_length > 0);
-
-            nbytes = read(fd, buffer, max_length);
-            if (nbytes < 0) {
-                perror("read error on HTTP connection");
-                http_client_connection_close(connection);
-                return;
-            }
-
-            if (nbytes == 0) {
-                /* XXX */
-                http_client_connection_close(connection);
-                return;
-            }
-
-            fifo_buffer_append(connection->input, (size_t)nbytes);
-
-            pool_ref(connection->pool);
-
-            http_client_consume_input(connection);
-
-            if (pool_unref(connection->pool) == 0)
-                return;
-        }
-    }
-
-    http_client_event_setup(connection);
-
+    pool_unref(connection->pool);
     pool_commit();
 }
 
