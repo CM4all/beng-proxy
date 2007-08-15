@@ -15,7 +15,7 @@
 #endif
 
 struct list_head {
-    struct list_head *prev, *next;
+    struct list_head *next, *prev;
 };
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
