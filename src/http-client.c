@@ -234,15 +234,6 @@ http_client_headers_finished(http_client_connection_t connection)
 
     connection->reading_headers = 0;
     connection->reading_body = 1;
-    connection->callback(connection->response, connection->callback_ctx);
-
-    if (connection->response != NULL) {
-        if (connection->response->handler == NULL) {
-            fprintf(stderr, "WARNING: no handler for request\n");
-            http_client_connection_close(connection);
-            return;
-        }
-    }
 }
 
 static void
@@ -295,6 +286,19 @@ http_client_parse_headers(http_client_connection_t connection)
         return 0;
 
     fifo_buffer_consume(connection->input, next - buffer);
+
+    if (!connection->reading_headers) {
+        connection->callback(connection->response, connection->callback_ctx);
+
+        if (connection->response != NULL) {
+            if (connection->response->handler == NULL) {
+                fprintf(stderr, "WARNING: no handler for request\n");
+                http_client_connection_close(connection);
+                return 0;
+            }
+        }
+    }
+
     return 1;
 }
 
