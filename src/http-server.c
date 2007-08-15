@@ -135,8 +135,9 @@ http_server_call_response_body(http_server_connection_t connection)
         if (length == 0)
             return;
 
-        nbytes = buffered_quick_write(connection->fd, connection->output,
-                                      buffer, length);
+        if (http_server_connection_valid(connection))
+            nbytes = buffered_quick_write(connection->fd, connection->output,
+                                          buffer, length);
     } while (connection->request != NULL &&
              connection->request->handler != NULL &&
              connection->request->handler->response_body != NULL &&
