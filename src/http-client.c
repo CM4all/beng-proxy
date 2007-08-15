@@ -287,7 +287,8 @@ http_client_parse_headers(http_client_connection_t connection)
 
     fifo_buffer_consume(connection->input, next - buffer);
 
-    if (!connection->reading_headers) {
+    if (http_client_connection_valid(connection) &&
+        !connection->reading_headers) {
         connection->callback(connection->response, connection->callback_ctx);
 
         if (connection->response != NULL) {
