@@ -82,14 +82,31 @@ proxy_http_client_callback(struct http_client_response *response,
     http_server_try_write(pt->request->connection);
 }
 
+static const char *const copy_headers[] = {
+    "user-agent",
+    NULL
+};
+
 static void
 proxy_client_forward_request(struct proxy_transfer *pt)
 {
+    strmap_t request_headers;
+    const char *value;
+    unsigned i;
+
     assert(pt != NULL);
     assert(pt->http != NULL);
     assert(pt->uri != NULL);
 
-    http_client_request(pt->http, HTTP_METHOD_GET, pt->uri);
+    request_headers = strmap_new(pt->request->pool, 64);
+
+    for (i = 0; copy_headers[i] != NULL; ++i) {
+        value = strmap_get(pt->request->headers, copy_headers[i]);
+        if (value != NULL)
+            strmap_addn(request_headers, copy_headers[i], value);
+    }
+
+    http_client_request(pt->http, HTTP_METHOD_GET, pt->uri, request_headers);
 }
 
 static void

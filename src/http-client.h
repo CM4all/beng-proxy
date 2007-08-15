@@ -45,7 +45,8 @@ http_client_connection_close(http_client_connection_t connection);
 
 void
 http_client_request(http_client_connection_t connection,
-                    http_method_t method, const char *uri);
+                    http_method_t method, const char *uri,
+                    strmap_t headers);
 
 void
 http_client_response_direct_mode(http_client_connection_t connection);
