@@ -11,7 +11,6 @@
 #include <string.h>
 
 struct pair {
-    struct pair *next;
     const char *key, *value;
 };
 
