@@ -10,6 +10,28 @@
 #include <errno.h>
 
 ssize_t
+write_from_buffer(int fd, fifo_buffer_t buffer)
+{
+    const void *data;
+    size_t length;
+    ssize_t nbytes;
+
+    data = fifo_buffer_read(buffer, &length);
+    if (data == NULL)
+        return -2;
+
+    nbytes = write(fd, data, length);
+    if (nbytes < 0 && errno != EAGAIN)
+        return -1;
+
+    if (nbytes <= 0)
+        return length;
+
+    fifo_buffer_consume(buffer, (size_t)nbytes);
+    return (ssize_t)length - nbytes;
+}
+
+ssize_t
 buffered_quick_write(int fd, fifo_buffer_t output_buffer,
                      const void *data, size_t length) {
     if (fifo_buffer_empty(output_buffer)) {

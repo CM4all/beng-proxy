@@ -121,29 +121,22 @@ http_client_call_request_body(http_client_connection_t connection)
 static void
 http_client_try_send(http_client_connection_t connection)
 {
-    const void *buffer;
-    size_t length;
-    ssize_t nbytes;
+    ssize_t rest;
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
     assert(fifo_buffer_empty(connection->input));
 
-    while ((buffer = fifo_buffer_read(connection->output, &length)) != NULL) {
-        nbytes = write(connection->fd, buffer, length);
-        if (nbytes < 0 && errno != EAGAIN) {
-            perror("write error on HTTP connection");
-            http_client_connection_close(connection);
-            break;
-        } else if (nbytes > 0) {
-            fifo_buffer_consume(connection->output, (size_t)nbytes);
-            if (connection->response != NULL && (size_t)nbytes == length)
-                http_client_call_request_body(connection);
-            else
-                break;
-        } else {
-            break;
-        }
+    while ((rest = write_from_buffer(connection->fd,
+                                     connection->output)) == 0) {
+        http_client_call_request_body(connection);
+        if (connection->response == NULL)
+            return;
+    }
+
+    if (rest == -1) {
+        perror("write error on HTTP connection");
+        http_client_connection_close(connection);
     }
 }
 
