@@ -61,6 +61,10 @@ proxy_http_client_callback(struct http_client_response *response,
     if (response == NULL) {
         pt->http = NULL;
         pt->response = NULL;
+
+        if (pt->request != NULL)
+            http_server_connection_free(&pt->request->connection);
+
         return;
     }
 
