@@ -10,10 +10,6 @@
 #include <assert.h>
 #include <string.h>
 
-struct pair {
-    const char *key, *value;
-};
-
 struct slot {
     struct slot *next;
     struct pair pair;
@@ -22,6 +18,8 @@ struct slot {
 struct strmap {
     pool_t pool;
     unsigned capacity;
+    struct slot *current_slot;
+    unsigned next_slot;
     struct slot slots[1];
 };
 
@@ -95,4 +93,30 @@ strmap_get(strmap_t map, const char *key)
     }
 
     return NULL;
+}
+
+void
+strmap_rewind(strmap_t map)
+{
+    map->current_slot = NULL;
+    map->next_slot = 0;
+}
+
+const struct pair *
+strmap_next(strmap_t map)
+{
+    if (map->current_slot != NULL && map->current_slot->next != NULL) {
+        map->current_slot = map->current_slot->next;
+        return &map->current_slot->pair;
+    }
+
+    while (map->next_slot < map->capacity &&
+           map->slots[map->next_slot].pair.key == NULL)
+        ++map->next_slot;
+
+    if (map->next_slot >= map->capacity)
+        return NULL;
+
+    map->current_slot = &map->slots[map->next_slot++];
+    return &map->current_slot->pair;
 }

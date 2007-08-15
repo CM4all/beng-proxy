@@ -11,6 +11,10 @@
 
 typedef struct strmap *strmap_t;
 
+struct pair {
+    const char *key, *value;
+};
+
 strmap_t
 strmap_new(pool_t pool, unsigned capacity);
 
@@ -19,5 +23,11 @@ strmap_addn(strmap_t map, const char *key, const char *value);
 
 const char *
 strmap_get(strmap_t map, const char *key);
+
+void
+strmap_rewind(strmap_t map);
+
+const struct pair *
+strmap_next(strmap_t map);
 
 #endif
