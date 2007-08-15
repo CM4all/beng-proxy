@@ -447,6 +447,8 @@ http_client_event_callback(int fd, short event, void *ctx)
     }
 
     http_client_event_setup(connection);
+
+    pool_commit();
 }
 
 http_client_connection_t

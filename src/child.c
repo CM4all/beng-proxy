@@ -64,6 +64,8 @@ child_event_callback(int fd, short event, void *ctx)
 
     if (list_empty(&instance->children))
         event_del(&instance->child_event);
+
+    pool_commit();
 }
 
 pid_t

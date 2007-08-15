@@ -74,6 +74,8 @@ client_socket_event_callback(int fd, short event, void *ctx)
     }
 
     client_socket->callback(fd, 0, client_socket->callback_ctx);
+
+    pool_commit();
 }
 
 int

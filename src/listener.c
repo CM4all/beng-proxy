@@ -55,6 +55,8 @@ listener_event_callback(int fd, short event, void *ctx)
     listener->callback(remote_fd,
                        (const struct sockaddr*)&sa, sa_len,
                        listener->callback_ctx);
+
+    pool_commit();
 }
 
 int

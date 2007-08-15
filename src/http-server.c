@@ -475,6 +475,8 @@ http_server_event_callback(int fd, short event, void *ctx)
     }
 
     http_server_event_setup(connection);
+
+    pool_commit();
 }
 
 http_server_connection_t

@@ -26,11 +26,27 @@ pool_ref(pool_t pool);
 unsigned
 pool_unref(pool_t pool);
 
-void
-pool_lock(pool_t pool);
+static inline void
+pool_lock(pool_t pool)
+{
+    pool_ref(pool);
+}
 
+static inline void
+pool_unlock(pool_t pool)
+{
+    pool_unref(pool);
+}
+
+#ifdef NDEBUG
+static inline void
+pool_commit(void)
+{
+}
+#else
 void
-pool_unlock(pool_t pool);
+pool_commit(void);
+#endif
 
 void *
 p_malloc(pool_t pool, size_t size);

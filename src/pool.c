@@ -39,7 +39,7 @@ struct linear_pool_area {
 struct pool {
     struct list_head siblings, children;
     pool_t parent;
-    unsigned ref, lock;
+    unsigned ref;
     enum pool_type type;
     const char *name;
     union {
@@ -48,6 +48,10 @@ struct pool {
         struct pool *recycler;
     } current_area;
 };
+
+#ifndef NDEBUG
+static LIST_HEAD(trash);
+#endif
 
 static struct {
     unsigned num_pools;
@@ -160,7 +164,6 @@ pool_new(pool_t parent, const char *name)
 
     list_init(&pool->children);
     pool->ref = 1;
-    pool->lock = 0;
     pool->name = name;
 
     pool->parent = NULL;
@@ -221,16 +224,16 @@ static void
 pool_destroy(pool_t pool)
 {
     assert(pool->ref == 0);
+    assert(pool->parent == NULL);
 
 #ifndef NDEBUG
-    if (!list_empty(&pool->children)) {
+    while (!list_empty(&pool->children)) {
         pool_t child = (pool_t)pool->children.next;
-        fprintf(stderr, "unreleased pool: '%s' (ref %u, lock %u) in '%s'\n",
-                child->name, child->ref, child->lock, pool->name);
+        pool_remove_child(pool, child);
+        assert(child->ref > 0);
+        list_add(&child->siblings, &trash);
     }
 #endif
-
-    assert(list_empty(&pool->children));
 
     switch (pool->type) {
     case POOL_LIBC:
@@ -282,39 +285,20 @@ pool_unref(pool_t pool)
     if (pool->ref == 0) {
         if (pool->parent != NULL)
             pool_remove_child(pool->parent, pool);
-        if (pool->lock == 0)
-            pool_destroy(pool);
+        pool_destroy(pool);
         return 0;
     }
 
     return pool->ref;
 }
 
+#ifndef NDEBUG
 void
-pool_lock(pool_t pool)
+pool_commit(void)
 {
-    ++pool->lock;
-
-#ifdef POOL_TRACE_REF
-    fprintf(stderr, "pool_lock('%s')=%u\n", pool->name, pool->lock);
-#endif
+    assert(list_empty(&trash));
 }
-
-void
-pool_unlock(pool_t pool)
-{
-    assert(pool->lock > 0);
-    --pool->lock;
-
-#ifdef POOL_TRACE_REF
-    fprintf(stderr, "pool_unlock('%s')=%u\n", pool->name, pool->lock);
 #endif
-
-    if (pool->lock == 0 && pool->ref == 0) {
-        assert(pool->parent == NULL);
-        pool_destroy(pool);
-    }
-}
 
 static void *
 p_malloc_libc(pool_t pool, size_t size)
