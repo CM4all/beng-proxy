@@ -73,6 +73,8 @@ proxy_http_client_callback(struct http_client_response *response,
     snprintf(headers, sizeof(headers), "Content-Length: %lu\r\n\r\n",
              (unsigned long)response->content_length);
     http_server_send(pt->request->connection, headers, strlen(headers));
+
+    http_server_try_write(pt->request->connection);
 }
 
 static void

@@ -69,6 +69,9 @@ http_server_send_message(http_server_connection_t connection,
                          http_status_t status, const char *msg);
 
 void
+http_server_try_write(http_server_connection_t connection);
+
+void
 http_server_response_direct_mode(http_server_connection_t connection);
 
 void

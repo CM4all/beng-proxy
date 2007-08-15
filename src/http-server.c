@@ -615,6 +615,15 @@ http_server_send_message(http_server_connection_t connection,
 }
 
 void
+http_server_try_write(http_server_connection_t connection)
+{
+    assert(connection != NULL);
+    assert(!connection->cork);
+
+    http_server_try_response_body(connection);
+}
+
+void
 http_server_response_direct_mode(http_server_connection_t connection)
 {
     assert(connection != NULL);
