@@ -8,6 +8,7 @@
 #include "fifo-buffer.h"
 #include "strutil.h"
 #include "compiler.h"
+#include "buffered-io.h"
 
 #ifdef __linux
 #include <sys/socket.h>
@@ -515,7 +516,9 @@ http_client_request(http_client_connection_t connection,
 
     (void)method; /* XXX */
     snprintf(buffer, max_length, "GET %s HTTP/1.1\r\nHost: localhost\r\n\r\n", uri);
-    fifo_buffer_append(connection->output, strlen(buffer));
+
+    buffered_quick_write(connection->fd, connection->output,
+                         buffer, strlen(buffer));
 
     connection->response = http_client_response_new(connection);
 
