@@ -40,6 +40,7 @@ struct pool {
     struct list_head siblings, children;
     pool_t parent;
     unsigned ref;
+    int trashed;
     enum pool_type type;
     const char *name;
     union {
@@ -164,6 +165,7 @@ pool_new(pool_t parent, const char *name)
 
     list_init(&pool->children);
     pool->ref = 1;
+    pool->trashed = 0;
     pool->name = name;
 
     pool->parent = NULL;
@@ -227,11 +229,15 @@ pool_destroy(pool_t pool)
     assert(pool->parent == NULL);
 
 #ifndef NDEBUG
+    if (pool->trashed)
+        list_remove(&pool->siblings);
+
     while (!list_empty(&pool->children)) {
         pool_t child = (pool_t)pool->children.next;
         pool_remove_child(pool, child);
         assert(child->ref > 0);
         list_add(&child->siblings, &trash);
+        child->trashed = 1;
     }
 #endif
 
