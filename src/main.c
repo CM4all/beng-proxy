@@ -9,6 +9,7 @@
 #include "instance.h"
 #include "connection.h"
 
+#include <assert.h>
 #include <sys/signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -66,7 +67,7 @@ deinit_signals(struct instance *instance)
 
 int main(int argc, char **argv)
 {
-    int ret;
+    int ret, ref;
     static struct instance instance;
 
     (void)argc;
@@ -95,7 +96,8 @@ int main(int argc, char **argv)
 
     event_base_free(instance.event_base);
 
-    pool_unref(instance.pool);
+    ref = pool_unref(instance.pool);
+    assert(ref == 0);
     pool_commit();
 
     pool_recycler_clear();
