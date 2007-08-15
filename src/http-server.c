@@ -48,7 +48,7 @@ http_server_request_new(http_server_connection_t connection)
 
     assert(connection != NULL);
 
-    pool = pool_new_linear(connection->pool, "http_server_request", 8192);
+    pool = pool_new_linear(connection->pool, "http_server_request", 16384);
     request = p_calloc(pool, sizeof(*request));
     request->pool = pool;
     request->headers = strmap_new(pool, 64);
