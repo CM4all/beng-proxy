@@ -83,6 +83,16 @@ proxy_http_client_callback(struct http_client_response *response,
 }
 
 static void
+proxy_client_forward_request(struct proxy_transfer *pt)
+{
+    assert(pt != NULL);
+    assert(pt->http != NULL);
+    assert(pt->uri != NULL);
+
+    http_client_request(pt->http, HTTP_METHOD_GET, pt->uri);
+}
+
+static void
 proxy_client_socket_callback(int fd, int err, void *ctx)
 {
     struct proxy_transfer *pt = ctx;
@@ -93,7 +103,7 @@ proxy_client_socket_callback(int fd, int err, void *ctx)
         pt->http = http_client_connection_new(pt->request->pool, fd,
                                               proxy_http_client_callback, pt);
 
-        http_client_request(pt->http, HTTP_METHOD_GET, pt->uri);
+        proxy_client_forward_request(pt);
     } else {
         fprintf(stderr, "failed to connect: %s\n", strerror(err));
         http_server_send_message(pt->request->connection,
