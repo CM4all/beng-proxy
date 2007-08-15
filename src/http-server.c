@@ -8,6 +8,7 @@
 #include "fifo-buffer.h"
 #include "strutil.h"
 #include "compiler.h"
+#include "buffered-io.h"
 
 #ifdef __linux
 #include <sys/socket.h>
@@ -134,34 +135,12 @@ http_server_call_response_body(http_server_connection_t connection)
         if (length == 0)
             return;
 
-        if (fifo_buffer_empty(connection->output)) {
-            /* to save time, we handle a special but very common case
-               here: the output buffer is empty, and we're going to add
-               data now.  since the socket is non-blocking, we immediately
-               try to commit the new data to the socket */
-
-            /* XXX does that lead to resource starvation? */
-
-            nbytes = write(connection->fd, buffer, length);
-            if (nbytes <= 0) {
-                /* didn't work - postpone the new data block */
-                fifo_buffer_append(connection->output, length);
-                break;
-            } else if (nbytes > 0 && (size_t)nbytes < length) {
-                /* some was sent */
-                fifo_buffer_append(connection->output, length);
-                fifo_buffer_consume(connection->output, (size_t)nbytes);
-                break;
-            } else {
-                /* everything was sent - do it again! */
-            }
-        } else {
-            fifo_buffer_append(connection->output, length);
-            break;
-        }
+        nbytes = buffered_quick_write(connection->fd, connection->output,
+                                      buffer, length);
     } while (connection->request != NULL &&
              connection->request->handler != NULL &&
-             connection->request->handler->response_body != NULL);
+             connection->request->handler->response_body != NULL &&
+             nbytes == (ssize_t)length);
 }
 
 static void
