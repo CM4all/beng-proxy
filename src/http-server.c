@@ -429,16 +429,12 @@ http_server_event_callback(int fd, short event, void *ctx)
     }
 
     if (event & EV_WRITE) {
-        pool_lock(connection->pool);
+        pool_ref(connection->pool);
 
         http_server_try_response_body(connection);
 
-        if (connection->fd < 0) {
-            pool_unlock(connection->pool);
+        if (pool_unref(connection->pool) == 0)
             return;
-        }
-
-        pool_unlock(connection->pool);
     }
 
     if (event & EV_READ) {
@@ -462,16 +458,12 @@ http_server_event_callback(int fd, short event, void *ctx)
 
         fifo_buffer_append(connection->input, (size_t)nbytes);
 
-        pool_lock(connection->pool);
+        pool_ref(connection->pool);
 
         http_server_consume_input(connection);
 
-        if (connection->fd < 0) {
-            pool_unlock(connection->pool);
+        if (pool_unref(connection->pool) == 0)
             return;
-        }
-
-        pool_unlock(connection->pool);
     }
 
     http_server_event_setup(connection);
@@ -517,7 +509,7 @@ http_server_connection_close(http_server_connection_t connection)
     connection->reading_body = 0;
     connection->cork = 0;
 
-    pool_lock(connection->pool);
+    pool_ref(connection->pool);
 
     if (connection->request != NULL)
         http_server_request_free(&connection->request);
@@ -530,7 +522,7 @@ http_server_connection_close(http_server_connection_t connection)
         callback(NULL, callback_ctx);
     }
 
-    pool_unlock(connection->pool);
+    pool_unref(connection->pool);
 }
 
 void
@@ -663,7 +655,7 @@ http_server_response_finish(http_server_connection_t connection)
     assert(connection->request != NULL);
     assert(!connection->reading_headers);
 
-    pool_lock(connection->pool);
+    pool_ref(connection->pool);
 
     if (connection->reading_body) {
         /* XXX discard rest of body? */
@@ -674,5 +666,5 @@ http_server_response_finish(http_server_connection_t connection)
 
     connection->direct_mode = 0;
 
-    pool_unlock(connection->pool);
+    pool_unref(connection->pool);
 }

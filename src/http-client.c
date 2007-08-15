@@ -394,16 +394,12 @@ http_client_event_callback(int fd, short event, void *ctx)
     }
 
     if (event & EV_WRITE) {
-        pool_lock(connection->pool);
+        pool_ref(connection->pool);
 
         http_client_try_send(connection);
 
-        if (connection->fd < 0) {
-            pool_unlock(connection->pool);
+        if (pool_unref(connection->pool) == 0)
             return;
-        }
-
-        pool_unlock(connection->pool);
     }
 
     if (event & EV_READ) {
@@ -433,16 +429,12 @@ http_client_event_callback(int fd, short event, void *ctx)
 
             fifo_buffer_append(connection->input, (size_t)nbytes);
 
-            pool_lock(connection->pool);
+            pool_ref(connection->pool);
 
             http_client_consume_input(connection);
 
-            if (connection->fd < 0) {
-                pool_unlock(connection->pool);
+            if (pool_unref(connection->pool) == 0)
                 return;
-            }
-
-            pool_unlock(connection->pool);
         }
     }
 
@@ -547,14 +539,14 @@ http_client_response_direct_mode(http_client_connection_t connection)
 void
 http_client_response_read(http_client_connection_t connection)
 {
-    pool_lock(connection->pool);
+    pool_ref(connection->pool);
 
     http_client_consume_body(connection);
 
     if (connection->fd >= 0)
         http_client_event_setup(connection);
 
-    pool_unlock(connection->pool);
+    pool_unref(connection->pool);
 }
 
 void
