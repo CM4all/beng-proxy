@@ -15,7 +15,7 @@ struct pair {
     const char *key, *value;
 };
 
-strmap_t
+strmap_t attr_malloc
 strmap_new(pool_t pool, unsigned capacity);
 
 void

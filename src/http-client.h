@@ -36,7 +36,7 @@ struct http_client_request_handler {
 typedef void (*http_client_callback_t)(struct http_client_response *response,
                                        void *ctx);
 
-http_client_connection_t
+http_client_connection_t attr_malloc
 http_client_connection_new(pool_t pool, int fd,
                            http_client_callback_t callback, void *ctx);
 

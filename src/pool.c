@@ -77,7 +77,7 @@ xmalloc(size_t size)
     return p;
 }
 
-static inline size_t
+static inline size_t attr_const
 align_size(size_t size)
 {
     return ((size - 1) | ALIGN_BITS) + 1;
