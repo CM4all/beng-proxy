@@ -27,13 +27,13 @@ enum pool_type {
 
 struct libc_pool_chunk {
     struct libc_pool_chunk *next;
-    unsigned char data[1];
+    unsigned char data[sizeof(size_t)];
 };
 
 struct linear_pool_area {
     struct linear_pool_area *prev;
     size_t size, used;
-    unsigned char data[1];
+    unsigned char data[sizeof(size_t)];
 };
 
 struct pool {
