@@ -73,9 +73,6 @@ listener_tcp_port_new(pool_t pool, int port,
     assert(listener_r != NULL);
 
     listener = p_calloc(pool, sizeof(*listener));
-    if (listener == NULL)
-        return -1;
-
     listener->fd = socket(PF_INET6, SOCK_STREAM, 0);
     if (listener->fd < 0)
         return -1;
