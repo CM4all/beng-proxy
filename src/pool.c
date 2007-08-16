@@ -361,11 +361,17 @@ p_malloc(pool_t pool, size_t size)
     return NULL;
 }
 
+static inline void
+clear_memory(void *p, size_t size)
+{
+    memset(p, 0, size);
+}
+
 void *
 p_calloc(pool_t pool, size_t size)
 {
     void *p = p_malloc(pool, size);
-    memset(p, 0, size);
+    clear_memory(p, size);
     return p;
 }
 
