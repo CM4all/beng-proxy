@@ -368,7 +368,18 @@ p_malloc(pool_t pool, size_t size)
 static inline void
 clear_memory(void *p, size_t size)
 {
+#if defined(__x86_64__) && defined(NDEBUG)
+    size_t n = (size + 7) / 8;
+    size_t dummy0, dummy1;
+    asm volatile("cld\n\t"
+                 "rep stosq\n\t"
+                 : "=&c"(dummy0), "=&D"(dummy1)
+                 : "a"(0), "0"(n), "1"(p)
+                 : "memory"
+                 );
+#else
     memset(p, 0, size);
+#endif
 }
 
 void *
