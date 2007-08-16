@@ -188,7 +188,7 @@ pool_new(pool_t parent, const char *name)
     return pool;
 }
 
-pool_t attr_malloc
+pool_t
 pool_new_libc(pool_t parent, const char *name)
 {
     pool_t pool = pool_new(parent, name);
@@ -222,7 +222,7 @@ pool_get_linear_area(struct linear_pool_area *prev, size_t size)
     return area;
 }
 
-pool_t attr_malloc
+pool_t
 pool_new_linear(pool_t parent, const char *name, size_t initial_size)
 {
     pool_t pool = pool_new(parent, name);
