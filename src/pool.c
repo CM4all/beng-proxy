@@ -13,8 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define LINEAR_ALIGN 8
-#define LINEAR_ALIGN_BITS 0x7
+#define ALIGN 8
+#define ALIGN_BITS 0x7
 
 #define RECYCLER_MAX_POOLS 256
 #define RECYCLER_MAX_LINEAR_AREAS 256
@@ -75,7 +75,7 @@ xmalloc(size_t size)
 static inline size_t
 align_size(size_t size)
 {
-    return ((size - 1) | LINEAR_ALIGN_BITS) + 1;
+    return ((size - 1) | ALIGN_BITS) + 1;
 }
 
 void
@@ -329,8 +329,6 @@ p_malloc_linear(pool_t pool, size_t size)
     struct linear_pool_area *area = pool->current_area.linear;
     void *p;
 
-    size = align_size(size);
-
     if (area->used + size > area->size) {
         size_t new_area_size = area->size;
         fprintf(stderr, "growing linear pool '%s'\n", pool->name);
@@ -346,8 +344,8 @@ p_malloc_linear(pool_t pool, size_t size)
     return p;
 }
 
-void *
-p_malloc(pool_t pool, size_t size)
+static void *
+internal_malloc(pool_t pool, size_t size)
 {
     switch (pool->type) {
     case POOL_LIBC:
@@ -361,6 +359,12 @@ p_malloc(pool_t pool, size_t size)
     return NULL;
 }
 
+void *
+p_malloc(pool_t pool, size_t size)
+{
+    return internal_malloc(pool, align_size(size));
+}
+
 static inline void
 clear_memory(void *p, size_t size)
 {
@@ -370,7 +374,7 @@ clear_memory(void *p, size_t size)
 void *
 p_calloc(pool_t pool, size_t size)
 {
-    void *p = p_malloc(pool, size);
+    void *p = internal_malloc(pool, align_size(size));
     clear_memory(p, size);
     return p;
 }
