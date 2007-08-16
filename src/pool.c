@@ -13,8 +13,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#if defined(__x86_64__) || defined(__PPC64__)
 #define ALIGN 8
 #define ALIGN_BITS 0x7
+#else
+#define ALIGN 4
+#define ALIGN_BITS 0x3
+#endif
 
 #define RECYCLER_MAX_POOLS 256
 #define RECYCLER_MAX_LINEAR_AREAS 256
