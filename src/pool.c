@@ -380,7 +380,7 @@ clear_memory(void *p, size_t size)
                  "rep stosq\n\t"
                  : "=&c"(dummy0), "=&D"(dummy1)
                  : "a"(0), "0"(n), "1"(p)
-                 : "memory"
+                   /* : "memory"   memory barrier not required here */
                  );
 #else
     memset(p, 0, size);
