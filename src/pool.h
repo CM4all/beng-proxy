@@ -7,6 +7,8 @@
 #ifndef __BENG_POOL_H
 #define __BENG_POOL_H
 
+#include "compiler.h"
+
 #include <stddef.h>
 
 typedef struct pool *pool_t;
@@ -36,16 +38,16 @@ void
 pool_commit(void);
 #endif
 
-void *
+void * attr_malloc
 p_malloc(pool_t pool, size_t size);
 
-void *
+void * attr_malloc
 p_calloc(pool_t pool, size_t size);
 
-char *
+char * attr_malloc
 p_strdup(pool_t pool, const char *src);
 
-char *
+char * attr_malloc
 p_strndup(pool_t pool, const char *src, size_t length);
 
 #endif

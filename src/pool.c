@@ -66,7 +66,7 @@ static struct {
     struct linear_pool_area *linear_areas;
 } recycler;
 
-static void *
+static void * attr_malloc
 xmalloc(size_t size)
 {
     void *p = malloc(size);
@@ -163,7 +163,7 @@ pool_remove_child(pool_t pool, pool_t child)
     child->parent = NULL;
 }
 
-static pool_t
+static pool_t attr_malloc
 pool_new(pool_t parent, const char *name)
 {
     pool_t pool;
@@ -188,7 +188,7 @@ pool_new(pool_t parent, const char *name)
     return pool;
 }
 
-pool_t
+pool_t attr_malloc
 pool_new_libc(pool_t parent, const char *name)
 {
     pool_t pool = pool_new(parent, name);
@@ -197,7 +197,7 @@ pool_new_libc(pool_t parent, const char *name)
     return pool;
 }
 
-static struct linear_pool_area *
+static struct linear_pool_area * attr_malloc
 pool_new_linear_area(struct linear_pool_area *prev, size_t size)
 {
     struct linear_pool_area *area = xmalloc(sizeof(*area) - sizeof(area->data) + size);
@@ -222,7 +222,7 @@ pool_get_linear_area(struct linear_pool_area *prev, size_t size)
     return area;
 }
 
-pool_t
+pool_t attr_malloc
 pool_new_linear(pool_t parent, const char *name, size_t initial_size)
 {
     pool_t pool = pool_new(parent, name);
