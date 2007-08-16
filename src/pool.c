@@ -72,6 +72,12 @@ xmalloc(size_t size)
     return p;
 }
 
+static inline size_t
+align_size(size_t size)
+{
+    return ((size - 1) | LINEAR_ALIGN_BITS) + 1;
+}
+
 void
 pool_recycler_clear(void)
 {
@@ -323,7 +329,7 @@ p_malloc_linear(pool_t pool, size_t size)
     struct linear_pool_area *area = pool->current_area.linear;
     void *p;
 
-    size |= LINEAR_ALIGN_BITS;
+    size = align_size(size);
 
     if (area->used + size > area->size) {
         size_t new_area_size = area->size;
