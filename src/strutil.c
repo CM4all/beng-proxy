@@ -17,6 +17,6 @@ void
 str_to_lower(char *s)
 {
     for (; *s != 0; ++s)
-        if (is_upcase(*s))
+        if (unlikely(is_upcase(*s)))
             *s += 'a' - 'A';
 }

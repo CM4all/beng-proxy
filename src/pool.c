@@ -70,7 +70,7 @@ static void * attr_malloc
 xmalloc(size_t size)
 {
     void *p = malloc(size);
-    if (p == NULL) {
+    if (unlikely(p == NULL)) {
         fputs("Out of memory\n", stderr);
         abort();
     }
@@ -334,7 +334,7 @@ p_malloc_linear(pool_t pool, size_t size)
     struct linear_pool_area *area = pool->current_area.linear;
     void *p;
 
-    if (area->used + size > area->size) {
+    if (unlikely(area->used + size > area->size)) {
         size_t new_area_size = area->size;
         fprintf(stderr, "growing linear pool '%s'\n", pool->name);
         if (size > new_area_size)

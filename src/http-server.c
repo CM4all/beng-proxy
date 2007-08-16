@@ -160,7 +160,7 @@ http_server_try_response_body(http_server_connection_t connection)
         http_server_cork(connection);
 
         nbytes = write(connection->fd, buffer, length);
-        if (nbytes < 0 && errno != EAGAIN) {
+        if (unlikely(nbytes < 0 && errno != EAGAIN)) {
             perror("write error on HTTP connection");
             http_server_connection_close(connection);
             break;
@@ -201,7 +201,7 @@ http_server_parse_request_line(http_server_connection_t connection,
     assert(connection != NULL);
     assert(connection->request == NULL);
 
-    if (length < 5) {
+    if (unlikely(length < 5)) {
         http_server_connection_close(connection);
         return;
     }
@@ -210,23 +210,23 @@ http_server_parse_request_line(http_server_connection_t connection,
 
     switch (line[0]) {
     case 'G':
-        if (line[1] == 'E' && line[2] == 'T' && line[3] == ' ') {
-            method = HTTP_METHOD_GET;
+        if (likely(line[1] == 'E' && line[2] == 'T' && line[3] == ' ')) {
+                method = HTTP_METHOD_GET;
             line += 4;
         }
         break;
 
     case 'P':
-        if (line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
-            line[4] == ' ') {
+        if (likely(line[1] == 'O' && line[2] == 'S' && line[3] == 'T' &&
+                   line[4] == ' ')) {
             method = HTTP_METHOD_POST;
             line += 5;
         }
         break;
 
     case 'H':
-        if (line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
-            line[4] == ' ') {
+        if (likely(line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
+                   line[4] == ' ')) {
             method = HTTP_METHOD_POST;
             line += 5;
         }
@@ -236,7 +236,7 @@ http_server_parse_request_line(http_server_connection_t connection,
     /* XXX: unknown method? */
 
     space = memchr(line, ' ', eol - line);
-    if (space == NULL)
+    if (unlikely(space == NULL))
         space = eol;
 
     connection->request = http_server_request_new(connection);
@@ -253,13 +253,13 @@ http_server_parse_header_line(http_server_connection_t connection,
     char *key, *value;
 
     colon = memchr(line, ':', length);
-    if (colon == NULL || colon == line)
+    if (unlikely(colon == NULL || colon == line))
         return;
 
     key_end = colon;
 
     ++colon;
-    if (*colon == ' ')
+    if (likely(*colon == ' '))
         ++colon;
     while (colon < line + length && char_is_whitespace(*colon))
         ++colon;
@@ -336,9 +336,9 @@ http_server_parse_headers(http_server_connection_t connection)
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
         --end;
-        if (*end == '\r')
+        if (likely(*end == '\r'))
             --end;
-        while (end >= start && char_is_whitespace(*end))
+        while (unlikely(end >= start && char_is_whitespace(*end)))
             --end;
 
         http_server_handle_line(connection, start, end - start + 1);
@@ -383,13 +383,13 @@ http_server_try_read(http_server_connection_t connection)
     assert(max_length > 0);
 
     nbytes = read(connection->fd, buffer, max_length);
-    if (nbytes < 0) {
+    if (unlikely(nbytes < 0)) {
         perror("read error on HTTP connection");
         http_server_connection_close(connection);
         return;
     }
 
-    if (nbytes == 0) {
+    if (unlikely(nbytes == 0)) {
         /* XXX */
         http_server_connection_close(connection);
         return;
@@ -441,7 +441,7 @@ http_server_event_callback(int fd, short event, void *ctx)
 
     pool_ref(connection->pool);
 
-    if (event & EV_TIMEOUT) {
+    if (unlikely(event & EV_TIMEOUT)) {
         fprintf(stderr, "timeout\n");
         http_server_connection_close(connection);
     }
@@ -452,7 +452,7 @@ http_server_event_callback(int fd, short event, void *ctx)
     if (http_server_connection_valid(connection) && (event & EV_READ) != 0)
         http_server_try_read(connection);
 
-    if (http_server_connection_valid(connection))
+    if (likely(http_server_connection_valid(connection)))
         http_server_event_setup(connection);
 
     pool_unref(connection->pool);
@@ -551,10 +551,10 @@ http_server_send(http_server_connection_t connection,
     }
 
     dest = fifo_buffer_write(connection->output, &max_length);
-    if (dest == NULL)
+    if (unlikely(dest == NULL))
         return 0;
 
-    if (length > max_length)
+    if (unlikely(length > max_length))
         length = max_length;
 
     memcpy(dest, p, length);
@@ -607,7 +607,7 @@ http_server_send_message(http_server_connection_t connection,
     header_length = strlen(header);
 
     dest = fifo_buffer_write(connection->output, &max_length);
-    if (dest == NULL || max_length < header_length + body_length)
+    if (unlikely(dest == NULL || max_length < header_length + body_length))
         return;
 
     memcpy(dest, header, header_length);

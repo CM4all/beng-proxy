@@ -125,7 +125,7 @@ append_headers(http_client_connection_t connection,
     assert(connection->writing_headers);
 
     /* we always want enough room for the trailing \r\n */
-    if (max_length < 2)
+    if (unlikely(max_length < 2))
         return 0;
 
     if (current == NULL && connection->request_headers != NULL) {
@@ -137,7 +137,7 @@ append_headers(http_client_connection_t connection,
         key_length = strlen(current->key);
         value_length = strlen(current->value);
 
-        if (length + key_length + 2 + value_length + 2 + 2 > max_length)
+        if (unlikely(length + key_length + 2 + value_length + 2 + 2 > max_length))
             break;
 
         memcpy(dest + length, current->key, key_length);
@@ -197,7 +197,7 @@ http_client_try_send(http_client_connection_t connection)
         }
     }
 
-    if (rest == -1) {
+    if (unlikely(rest == -1)) {
         perror("write error on HTTP connection");
         http_client_connection_close(connection);
     }
@@ -218,15 +218,15 @@ http_client_parse_status_line(http_client_connection_t connection,
         }
     }
 
-    if (length < 3 || !char_is_digit(line[0]) ||
-        !char_is_digit(line[1]) || !char_is_digit(line[2])) {
+    if (unlikely(length < 3 || !char_is_digit(line[0]) ||
+                 !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
         fprintf(stderr, "no HTTP status found\n");
         http_client_connection_close(connection);
         return -1;
     }
 
     status = ((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0';
-    if (status < 100 || status > 599) {
+    if (unlikely(status < 100 || status > 599)) {
         http_client_connection_close(connection);
         return -1;
     }
@@ -250,15 +250,15 @@ http_client_parse_header_line(http_client_connection_t connection,
     assert(connection->response->headers != NULL);
 
     colon = memchr(line, ':', length);
-    if (colon == NULL || colon == line)
+    if (unlikely(colon == NULL || colon == line))
         return;
 
     key_end = colon;
 
     ++colon;
-    if (*colon == ' ')
+    if (likely(*colon == ' '))
         ++colon;
-    while (colon < line + length && char_is_whitespace(*colon))
+    while (unlikely(colon < line + length && char_is_whitespace(*colon)))
         ++colon;
 
     key = p_strndup(connection->response->pool, line, key_end - line);
@@ -280,13 +280,13 @@ http_client_headers_finished(http_client_connection_t connection)
         strcasecmp(header_connection, "keep-alive") == 0;
 
     value = strmap_get(connection->response->headers, "content-length");
-    if (value == NULL) {
+    if (unlikely(value == NULL)) {
         fprintf(stderr, "no Content-Length header in HTTP response\n");
         http_client_connection_close(connection);
         return;
     } else {
         connection->response->content_length = strtoul(value, &endptr, 10);
-        if (*endptr != 0 || connection->response->content_length < 0) {
+        if (unlikely(*endptr != 0 || connection->response->content_length < 0)) {
             fprintf(stderr, "invalid Content-Length header in HTTP response\n");
             http_client_connection_close(connection);
             return;
@@ -333,9 +333,9 @@ http_client_parse_headers(http_client_connection_t connection)
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
         --end;
-        if (*end == '\r')
+        if (likely(*end == '\r'))
             --end;
-        while (end >= start && char_is_whitespace(*end))
+        while (unlikely(end >= start && char_is_whitespace(*end)))
             --end;
 
         http_client_handle_line(connection, start, end - start + 1);
@@ -355,7 +355,7 @@ http_client_parse_headers(http_client_connection_t connection)
         connection->callback(connection->response, connection->callback_ctx);
 
         if (connection->response != NULL) {
-            if (connection->response->handler == NULL) {
+            if (unlikely(connection->response->handler == NULL)) {
                 fprintf(stderr, "WARNING: no handler for request\n");
                 http_client_connection_close(connection);
                 return 0;
@@ -493,7 +493,7 @@ http_client_event_callback(int fd, short event, void *ctx)
 
     pool_ref(connection->pool);
 
-    if (event & EV_TIMEOUT) {
+    if (unlikely(event & EV_TIMEOUT)) {
         fprintf(stderr, "timeout\n");
         http_client_connection_close(connection);
         return;
@@ -505,7 +505,7 @@ http_client_event_callback(int fd, short event, void *ctx)
     if (http_client_connection_valid(connection) && (event & EV_READ) != 0)
         http_client_try_read(connection);
 
-    if (http_client_connection_valid(connection))
+    if (likely(http_client_connection_valid(connection)))
         http_client_event_setup(connection);
 
     pool_unref(connection->pool);
