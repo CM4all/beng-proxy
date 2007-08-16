@@ -135,13 +135,15 @@ http_server_call_response_body(http_server_connection_t connection)
         if (length == 0)
             return;
 
-        if (http_server_connection_valid(connection))
+        if (http_server_connection_valid(connection)) {
             nbytes = buffered_quick_write(connection->fd, connection->output,
                                           buffer, length);
+            if (nbytes != (ssize_t)length)
+                break;
+        }
     } while (connection->request != NULL &&
              connection->request->handler != NULL &&
-             connection->request->handler->response_body != NULL &&
-             nbytes == (ssize_t)length);
+             connection->request->handler->response_body != NULL);
 }
 
 static void
