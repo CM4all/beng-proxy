@@ -144,6 +144,8 @@ pool_add_child(pool_t pool, pool_t child)
 static inline void
 pool_remove_child(pool_t pool, pool_t child)
 {
+    (void)pool;
+
     assert(child->parent == pool);
 
     list_remove(&child->siblings);
