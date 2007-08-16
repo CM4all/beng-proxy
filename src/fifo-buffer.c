@@ -25,7 +25,7 @@
 
 struct fifo_buffer {
     size_t size, start, end;
-    unsigned char buffer[1];
+    unsigned char buffer[sizeof(size_t)];
 };
 
 fifo_buffer_t
