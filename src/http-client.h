@@ -30,6 +30,7 @@ struct http_client_request_handler {
     size_t (*response_body)(struct http_client_response *response,
                             const void *buffer, size_t length);
     void (*response_direct)(struct http_client_response *response, int fd);
+    void (*response_finished)(struct http_client_response *response);
     void (*free)(struct http_client_response *response);
 };
 

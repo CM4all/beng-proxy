@@ -97,12 +97,11 @@ proxy_client_response_body(struct http_client_response *response,
 }
 
 static void
-proxy_client_response_free(struct http_client_response *response)
+proxy_client_response_finished(struct http_client_response *response)
 {
     struct proxy_transfer *pt = response->handler_ctx;
 
     pt->response = NULL;
-    /* XXX */
 
     if (pt->processor == NULL) {
         if (pt->request != NULL)
@@ -112,8 +111,20 @@ proxy_client_response_free(struct http_client_response *response)
     }
 }
 
+static void
+proxy_client_response_free(struct http_client_response *response)
+{
+    struct proxy_transfer *pt = response->handler_ctx;
+
+    if (pt->response != NULL) {
+        pt->response = NULL;
+        /* XXX abort */
+    }
+}
+
 static struct http_client_request_handler proxy_client_request_handler = {
     .response_body = proxy_client_response_body,
+    .response_finished = proxy_client_response_finished,
     .free = proxy_client_response_free,
 };
 
