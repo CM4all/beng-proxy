@@ -114,9 +114,7 @@ processor_input(processor_t processor, const void *buffer, size_t length)
         return 0;
     }
 
-    length = (size_t)nbytes;
-
-    processor->content_length += (off_t)length;
+    processor->content_length += (off_t)nbytes;
 
     if (processor->content_length >= 8 * 1024 * 1024) {
         fprintf(stderr, "file too large for processor\n");
@@ -124,7 +122,7 @@ processor_input(processor_t processor, const void *buffer, size_t length)
         return 0;
     }
 
-    return length;
+    return (size_t)nbytes;
 }
 
 void
