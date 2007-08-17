@@ -168,7 +168,11 @@ processor_output(processor_t processor)
         const struct processor_handler *handler = processor->handler;
         void *handler_ctx = processor->handler_ctx;
 
-        processor_close(processor);
+        munmap(processor->map, (size_t)processor->content_length);
+        processor->map = NULL;
+
         handler->output_finished(handler_ctx);
+
+        processor_close(processor);
     }
 }
