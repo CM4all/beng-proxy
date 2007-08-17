@@ -134,6 +134,9 @@ processor_input_finished(processor_t processor)
         return;
     }
 
+    madvise(processor->map, (size_t)processor->content_length,
+            MADV_SEQUENTIAL);
+
     ret = close(processor->fd);
     processor->fd = -1;
     if (ret == (off_t)-1) {
