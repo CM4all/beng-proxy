@@ -636,6 +636,8 @@ http_client_response_read(http_client_connection_t connection)
 void
 http_client_response_finish(http_client_connection_t connection)
 {
+    struct http_client_response *response;
+
     assert(connection->response != NULL);
     assert(!connection->reading_headers);
 
@@ -655,9 +657,11 @@ http_client_response_finish(http_client_connection_t connection)
 
     connection->direct_mode = 0;
 
-    if (connection->response->handler->response_finished != NULL)
-        connection->response->handler->response_finished(connection->response);
+    response = connection->response;
+    connection->response = NULL;
 
-    if (connection->response != NULL)
-        http_client_response_free(&connection->response);
+    if (response->handler->response_finished != NULL)
+        response->handler->response_finished(response);
+
+    http_client_response_free(&response);
 }
