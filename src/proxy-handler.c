@@ -20,9 +20,11 @@
 struct proxy_transfer {
     struct http_server_request *request;
     const char *uri;
+
     client_socket_t client_socket;
     http_client_connection_t http;
     struct http_client_response *response;
+    int response_finished;
 
     processor_t processor;
 };
@@ -102,6 +104,7 @@ proxy_client_response_finished(struct http_client_response *response)
     struct proxy_transfer *pt = response->handler_ctx;
 
     pt->response = NULL;
+    pt->response_finished = 1;
 
     if (pt->processor == NULL) {
         if (pt->request != NULL)
@@ -116,7 +119,9 @@ proxy_client_response_free(struct http_client_response *response)
 {
     struct proxy_transfer *pt = response->handler_ctx;
 
-    if (pt->response != NULL) {
+    if (!pt->response_finished) {
+        /* abort the transfer */
+        assert(pt->response != NULL);
         pt->response = NULL;
         /* XXX abort */
     }
