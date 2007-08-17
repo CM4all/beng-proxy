@@ -14,7 +14,7 @@
 static inline int
 char_is_whitespace(char ch)
 {
-    return (ch & ~0x1f) == 0;
+    return ((unsigned char)ch) <= 0x20;
 }
 
 static inline int
