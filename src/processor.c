@@ -325,6 +325,21 @@ processor_input_finished(processor_t processor)
                              processor->handler_ctx);
 }
 
+static int
+substitution_output(processor_t processor, struct substitution *s)
+{
+    (void)processor;
+    (void)s;
+    return 0;
+}
+
+static int
+substitution_finished(const struct substitution *s)
+{
+    (void)s;
+    return 1;
+}
+
 void
 processor_output(processor_t processor)
 {
@@ -335,21 +350,28 @@ processor_output(processor_t processor)
     assert(processor->position <= processor->source_length);
 
     while (processor->first_substitution != NULL &&
-           processor->position == processor->first_substitution->start) {
+           processor->position == processor->first_substitution->start &&
+           nbytes == 0) {
+        nbytes = substitution_output(processor, processor->first_substitution);
+        if (!substitution_finished(processor->first_substitution))
+            return;
+
         processor->position = processor->first_substitution->end;
         processor->first_substitution = processor->first_substitution->next;
     }
 
-    if (processor->first_substitution == NULL)
-        rest = (size_t)(processor->source_length - processor->position);
-    else
-        rest = (size_t)(processor->first_substitution->start - processor->position);
+    if (nbytes == 0) {
+        if (processor->first_substitution == NULL)
+            rest = (size_t)(processor->source_length - processor->position);
+        else
+            rest = (size_t)(processor->first_substitution->start - processor->position);
 
-    if (rest > 0) {
-        nbytes = processor->handler->output(processor->map + processor->position,
-                                            rest, processor->handler_ctx);
-        assert(nbytes <= rest);
-        processor->position += nbytes;
+        if (rest > 0) {
+            nbytes = processor->handler->output(processor->map + processor->position,
+                                                rest, processor->handler_ctx);
+            assert(nbytes <= rest);
+            processor->position += nbytes;
+        }
     }
 
     if (processor->first_substitution == NULL &&
