@@ -30,6 +30,24 @@ struct proxy_transfer {
 };
 
 static void
+proxy_transfer_close(struct proxy_transfer *pt)
+{
+    if (pt->processor != NULL)
+        processor_free(&pt->processor);
+
+    if (pt->http != NULL) {
+        http_client_connection_close(pt->http);
+        pt->http = NULL;
+        assert(pt->response == NULL);
+    }
+
+    if (pt->request != NULL) {
+        http_server_connection_free(&pt->request->connection);
+        assert(pt->request == NULL);
+    }
+}
+
+static void
 proxy_processor_input(void *ctx)
 {
     struct proxy_transfer *pt = ctx;
@@ -73,8 +91,10 @@ proxy_processor_free(void *ctx)
 {
     struct proxy_transfer *pt = ctx;
 
-    /* XXX */
-    pt->processor = NULL;
+    /* XXX when the processor fails, it will close itself and invoke
+       this callback */
+    if (pt->processor != NULL)
+        proxy_transfer_close(pt);
 }
 
 static struct processor_handler proxy_processor_handler = {
@@ -121,9 +141,9 @@ proxy_client_response_free(struct http_client_response *response)
 
     if (!pt->response_finished) {
         /* abort the transfer */
-        assert(pt->response != NULL);
+        assert(response == pt->response);
         pt->response = NULL;
-        /* XXX abort */
+        proxy_transfer_close(pt);
     }
 }
 
@@ -140,13 +160,12 @@ proxy_http_client_callback(struct http_client_response *response,
     struct proxy_transfer *pt = ctx;
     const char *value;
 
+    assert(pt->response == NULL);
+
     if (response == NULL) {
         pt->http = NULL;
-        pt->response = NULL;
-
-        if (pt->request != NULL)
-            http_server_connection_free(&pt->request->connection);
-
+        if (!pt->response_finished)
+            proxy_transfer_close(pt);
         return;
     }
 
@@ -247,19 +266,12 @@ static void proxy_response_free(struct http_server_request *request)
 {
     struct proxy_transfer *pt = request->handler_ctx;
 
-    if (pt->processor != NULL)
-        processor_free(&pt->processor);
-
-    pt->request = NULL;
-
-    if (pt->http != NULL) {
-        http_client_connection_close(pt->http);
-        pt->http = NULL;
-    }
-
-    assert(pt->response == NULL);
+    assert(request == pt->request);
 
     request->handler_ctx = NULL;
+    pt->request = NULL;
+
+    proxy_transfer_close(pt);
 }
 
 static const struct http_server_request_handler proxy_request_handler = {
