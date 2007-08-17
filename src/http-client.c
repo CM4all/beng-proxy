@@ -653,6 +653,9 @@ http_client_response_finish(http_client_connection_t connection)
         connection->reading_body = 0;
     }
 
+    if (connection->response->handler->response_finished != NULL)
+        connection->response->handler->response_finished(connection->response);
+
     http_client_response_free(&connection->response);
 
     connection->direct_mode = 0;
