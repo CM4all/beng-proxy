@@ -32,7 +32,7 @@ struct processor {
     pool_t pool;
     const char *path;
     int fd;
-    off_t content_length, position;
+    off_t source_length, content_length, position;
     char *map;
 
     enum parser_state parser_state;
@@ -64,6 +64,7 @@ processor_new(pool_t pool,
 
     processor->pool = pool;
     processor->fd = -1;
+    processor->source_length = 0;
     processor->content_length = 0;
     processor->map = NULL;
 
@@ -96,7 +97,7 @@ processor_close(processor_t processor)
     }
 
     if (processor->map != NULL) {
-        munmap(processor->map, (size_t)processor->content_length);
+        munmap(processor->map, (size_t)processor->source_length);
         processor->map = NULL;
     }
 
@@ -131,6 +132,9 @@ processor_element_finished(processor_t processor, off_t end)
     s->start = processor->element_offset;
     s->end = end;
 
+    /* subtract the command length from content_length */
+    processor->content_length -= s->end - s->start;
+
     *processor->append_substitution_p = s;
     processor->append_substitution_p = &s->next;
 }
@@ -153,7 +157,7 @@ processor_parse_input(processor_t processor, const char *start, size_t length)
                 return;
 
             processor->parser_state = PARSER_START;
-            processor->element_offset = processor->content_length + (off_t)(p - start);
+            processor->element_offset = processor->source_length + (off_t)(p - start);
             processor->match_length = 1;
             buffer = p + 1;
             break;
@@ -215,7 +219,7 @@ processor_parse_input(processor_t processor, const char *start, size_t length)
                 } else if (*buffer == '>') {
                     processor->parser_state = PARSER_INSIDE;
                     ++buffer;
-                    processor_element_finished(processor, processor->content_length + (off_t)(buffer - start));
+                    processor_element_finished(processor, processor->source_length + (off_t)(buffer - start));
                     break;
                 } else {
                     processor->parser_state = PARSER_NONE;
@@ -232,7 +236,7 @@ processor_parse_input(processor_t processor, const char *start, size_t length)
                 } else if (*buffer == '>') {
                     processor->parser_state = PARSER_NONE;
                     ++buffer;
-                    processor_element_finished(processor, processor->content_length + (off_t)(buffer - start));
+                    processor_element_finished(processor, processor->source_length + (off_t)(buffer - start));
                     break;
                 } else {
                     processor->parser_state = PARSER_NONE;
@@ -275,9 +279,10 @@ processor_input(processor_t processor, const void *buffer, size_t length)
 
     processor_parse_input(processor, (const char*)buffer, (size_t)nbytes);
 
+    processor->source_length += (off_t)nbytes;
     processor->content_length += (off_t)nbytes;
 
-    if (processor->content_length >= 8 * 1024 * 1024) {
+    if (processor->source_length >= 8 * 1024 * 1024) {
         fprintf(stderr, "file too large for processor\n");
         processor_close(processor);
         return 0;
@@ -294,7 +299,7 @@ processor_input_finished(processor_t processor)
     assert(processor != NULL);
     assert(processor->fd >= 0);
 
-    processor->map = mmap(NULL, (size_t)processor->content_length,
+    processor->map = mmap(NULL, (size_t)processor->source_length,
                           PROT_READ, MAP_PRIVATE, processor->fd,
                           0);
     if (processor->map == NULL) {
@@ -303,7 +308,7 @@ processor_input_finished(processor_t processor)
         return;
     }
 
-    madvise(processor->map, (size_t)processor->content_length,
+    madvise(processor->map, (size_t)processor->source_length,
             MADV_SEQUENTIAL);
 
     ret = close(processor->fd);
@@ -340,7 +345,7 @@ processor_output(processor_t processor)
         const struct processor_handler *handler = processor->handler;
         void *handler_ctx = processor->handler_ctx;
 
-        munmap(processor->map, (size_t)processor->content_length);
+        munmap(processor->map, (size_t)processor->source_length);
         processor->map = NULL;
 
         handler->output_finished(handler_ctx);
