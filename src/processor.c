@@ -325,7 +325,7 @@ processor_input_finished(processor_t processor)
                              processor->handler_ctx);
 }
 
-static int
+static size_t
 substitution_output(processor_t processor, struct substitution *s)
 {
     (void)processor;
