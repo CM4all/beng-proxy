@@ -360,6 +360,7 @@ proxy_callback(struct client_connection *connection,
     hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
+    /* XXX make this asynchronous */
     ret = getaddrinfo_helper(host_and_port, 80, &hints, &ai);
     if (ret != 0) {
         fprintf(stderr, "failed to resolve proxy host name\n");
@@ -380,12 +381,15 @@ proxy_callback(struct client_connection *connection,
                             &pt->client_socket);
     if (ret != 0) {
         perror("client_socket_new() failed");
+        freeaddrinfo(ai);
         http_server_send_message(request->connection,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
         http_server_response_finish(request->connection);
         return;
     }
+
+    freeaddrinfo(ai);
 
     request->handler = &proxy_request_handler;
     request->handler_ctx = pt;
