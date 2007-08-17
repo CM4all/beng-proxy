@@ -98,6 +98,8 @@ processor_input(processor_t processor, const void *buffer, size_t length)
 
     assert(processor != NULL);
     assert(processor->fd >= 0);
+    assert(buffer != NULL);
+    assert(length > 0);
 
     nbytes = write(processor->fd, buffer, length);
     if (nbytes < 0) {
@@ -105,6 +107,14 @@ processor_input(processor_t processor, const void *buffer, size_t length)
         processor_close(processor);
         return 0;
     }
+
+    if (nbytes == 0) {
+        fprintf(stderr, "disk full\n");
+        processor_close(processor);
+        return 0;
+    }
+
+    length = (size_t)nbytes;
 
     processor->content_length += (off_t)length;
 
@@ -114,7 +124,7 @@ processor_input(processor_t processor, const void *buffer, size_t length)
         return 0;
     }
 
-    return (size_t)length;
+    return length;
 }
 
 void
