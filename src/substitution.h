@@ -8,6 +8,9 @@
 #define __BENG_SUBSTITUTION_H
 
 #include "http-client.h"
+#include "client-socket.h"
+#include "processor.h"
+#include "fifo-buffer.h"
 
 #include <sys/types.h>
 
@@ -24,8 +27,17 @@ typedef size_t (*substitution_output_t)(const void *data, size_t length, void *c
 struct substitution {
     struct substitution *next;
     off_t start, end;
+    const char *url, *uri;
 
-    size_t position;
+    pool_t pool;
+
+    client_socket_t client_socket;
+    http_client_connection_t http;
+    struct http_client_response *response;
+    int response_finished;
+    fifo_buffer_t buffer;
+
+    processor_t processor;
 
     const struct substitution_handler *handler;
     void *handler_ctx;

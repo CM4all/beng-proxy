@@ -178,6 +178,10 @@ processor_substitution_output(struct substitution *s)
     processor_t processor = s->handler_ctx;
 
     processor_maybe_substitution_output(processor, s);
+    if (processor->first_substitution != s) {
+        /* XXX */
+        processor_output(processor);
+    }
 }
 
 static const struct substitution_handler processor_substitution_handler = {
@@ -193,6 +197,10 @@ processor_element_finished(processor_t processor, off_t end)
     s->next = NULL;
     s->start = processor->element_offset;
     s->end = end;
+
+    s->url = "http://dory.intern.cm-ag/"; /* XXX */
+
+    s->pool = processor->pool;
 
     s->handler = &processor_substitution_handler;
     s->handler_ctx = processor;
