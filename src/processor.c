@@ -126,12 +126,33 @@ processor_free(processor_t *processor_r)
     processor_close(processor);
 }
 
+static size_t
+processor_invoke_substitution_output(processor_t processor,
+                                     struct substitution *s)
+{
+    size_t nbytes;
+
+    assert(processor->fd < 0);
+    assert(processor->num_unknown_substitutions == 0);
+    assert(processor->first_substitution == s);
+    assert(processor->position == s->start);
+
+    nbytes = substitution_output(processor->first_substitution,
+                                 processor->handler->output,
+                                 processor->handler_ctx);
+    if (substitution_finished(processor->first_substitution)) {
+        processor->position = processor->first_substitution->end;
+        substitution_close(processor->first_substitution);
+        processor->first_substitution = processor->first_substitution->next;
+    }
+
+    return nbytes;
+}
+
 static void
 processor_maybe_substitution_output(processor_t processor,
                                     struct substitution *s)
 {
-    size_t nbytes;
-
     if (processor->fd >= 0)
         return;
 
@@ -142,15 +163,7 @@ processor_maybe_substitution_output(processor_t processor,
         processor->position < processor->first_substitution->start)
         return;
 
-    nbytes = substitution_output(processor->first_substitution,
-                                 processor->handler->output,
-                                 processor->handler_ctx);
-    if (!substitution_finished(processor->first_substitution))
-        return;
-
-    processor->position = processor->first_substitution->end;
-    substitution_close(processor->first_substitution);
-    processor->first_substitution = processor->first_substitution->next;
+    processor_invoke_substitution_output(processor, s);
 }
 
 static void
@@ -407,15 +420,10 @@ processor_output(processor_t processor)
     while (processor->first_substitution != NULL &&
            processor->position == processor->first_substitution->start &&
            nbytes == 0) {
-        nbytes = substitution_output(processor->first_substitution,
-                                     processor->handler->output,
-                                     processor->handler_ctx);
-        if (!substitution_finished(processor->first_substitution))
+        struct substitution *s = processor->first_substitution;
+        nbytes = processor_invoke_substitution_output(processor, s);
+        if (s == processor->first_substitution)
             return;
-
-        processor->position = processor->first_substitution->end;
-        substitution_close(processor->first_substitution);
-        processor->first_substitution = processor->first_substitution->next;
     }
 
     if (nbytes == 0) {
