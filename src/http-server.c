@@ -584,11 +584,11 @@ http_server_send_chunk(http_server_connection_t connection,
     if (dest == NULL)
         return 0;
 
-    if (max_length < 4 + 2 + 1 + 2)
+    if (max_length < 4 + 2 + 1 + 2 + 5)
         return 0;
 
-    if (length > max_length - 4 - 2 - 2)
-        length = max_length - 4 - 2 - 2;
+    if (length > max_length - 4 - 2 - 2 - 5)
+        length = max_length - 4 - 2 - 2 - 5;
 
     dest[0] = hex_digits[(length >> 12) & 0xf];
     dest[1] = hex_digits[(length >> 8) & 0xf];
