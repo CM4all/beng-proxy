@@ -20,7 +20,7 @@ substitution_start(struct substitution *s)
 
     s->position = 0;
 
-    s->handler->meta(s, "text/html", sizeof(data) - 1);
+    s->handler->meta(s, "text/html");
 }
 
 void

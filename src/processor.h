@@ -15,7 +15,7 @@ typedef struct processor *processor_t;
 
 struct processor_handler {
     void (*input)(void *ctx);
-    void (*meta)(const char *content_type, off_t length, void *ctx);
+    void (*meta)(const char *content_type, void *ctx);
     size_t (*output)(const void *data, size_t length, void *ctx);
     void (*output_finished)(void *ctx);
     void (*free)(void *ctx);

@@ -15,7 +15,7 @@ struct substitution;
 
 struct substitution_handler {
     void (*meta)(struct substitution *s,
-                 const char *content_type, off_t length);
+                 const char *content_type);
     void (*output)(struct substitution *s);
 };
 
@@ -23,7 +23,7 @@ typedef size_t (*substitution_output_t)(const void *data, size_t length, void *c
 
 struct substitution {
     struct substitution *next;
-    off_t start, end, content_length;
+    off_t start, end;
 
     size_t position;
 

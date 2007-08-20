@@ -56,15 +56,15 @@ proxy_processor_input(void *ctx)
 }
 
 static void
-proxy_processor_meta(const char *content_type, off_t length, void *ctx)
+proxy_processor_meta(const char *content_type, void *ctx)
 {
     struct proxy_transfer *pt = ctx;
     char headers[256];
 
     http_server_send_status(pt->request->connection, 200);
 
-    snprintf(headers, sizeof(headers), "Content-Type: %s\r\nContent-Length: %lu\r\n\r\n",
-             content_type, (unsigned long)length);
+    snprintf(headers, sizeof(headers), "Content-Type: %s\r\nTransfer-Encoding: chunked\r\n\r\n",
+             content_type);
     http_server_send(pt->request->connection, headers, strlen(headers));
 
     http_server_try_write(pt->request->connection);
@@ -75,7 +75,7 @@ proxy_processor_output(const void *data, size_t length, void *ctx)
 {
     struct proxy_transfer *pt = ctx;
 
-    return http_server_send(pt->request->connection, data, length);
+    return http_server_send_chunk(pt->request->connection, data, length);
 }
 
 static void
@@ -83,6 +83,7 @@ proxy_processor_output_finished(void *ctx)
 {
     struct proxy_transfer *pt = ctx;
 
+    http_server_send_last_chunk(pt->request->connection);
     http_server_response_finish(pt->request->connection);
 }
 
