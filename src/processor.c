@@ -38,6 +38,7 @@ struct processor {
     size_t element_name_length;
 
     struct substitution *first_substitution, **append_substitution_p;
+    unsigned num_unknown_substitutions;
 
     const struct processor_handler *handler;
     void *handler_ctx;
@@ -67,6 +68,7 @@ processor_new(pool_t pool,
     processor->parser_state = PARSER_NONE;
     processor->first_substitution = NULL;
     processor->append_substitution_p = &processor->first_substitution;
+    processor->num_unknown_substitutions = 0;
 
     processor->handler = handler;
     processor->handler_ctx = ctx;
@@ -120,6 +122,61 @@ processor_free(processor_t *processor_r)
 }
 
 static void
+processor_maybe_substitution_output(processor_t processor,
+                                    struct substitution *s)
+{
+    size_t nbytes;
+
+    if (processor->fd >= 0)
+        return;
+
+    assert(processor->position <= s->start);
+
+    if (processor->num_unknown_substitutions > 0 ||
+        processor->first_substitution != s ||
+        processor->position < processor->first_substitution->start)
+        return;
+
+    nbytes = substitution_output(processor->first_substitution,
+                                 processor->handler->output,
+                                 processor->handler_ctx);
+    if (!substitution_finished(processor->first_substitution))
+        return;
+
+    processor->position = processor->first_substitution->end;
+    processor->first_substitution = processor->first_substitution->next;
+}
+
+static void
+processor_substitution_meta(struct substitution *s,
+                            const char *content_type, off_t length)
+{
+    processor_t processor = s->handler_ctx;
+
+    (void)content_type; /* XXX */
+
+    assert(processor->num_unknown_substitutions > 0);
+
+    processor->content_length += length;
+    --processor->num_unknown_substitutions;
+
+    processor_maybe_substitution_output(processor, s);
+}
+
+static void
+processor_substitution_output(struct substitution *s)
+{
+    processor_t processor = s->handler_ctx;
+
+    processor_maybe_substitution_output(processor, s);
+}
+
+static const struct substitution_handler processor_substitution_handler = {
+    .meta = processor_substitution_meta,
+    .output = processor_substitution_output,
+};
+
+static void
 processor_element_finished(processor_t processor, off_t end)
 {
     struct substitution *s = p_malloc(processor->pool, sizeof(*s));
@@ -128,11 +185,18 @@ processor_element_finished(processor_t processor, off_t end)
     s->start = processor->element_offset;
     s->end = end;
 
+    s->handler = &processor_substitution_handler;
+    s->handler_ctx = processor;
+
     /* subtract the command length from content_length */
     processor->content_length -= s->end - s->start;
 
     *processor->append_substitution_p = s;
     processor->append_substitution_p = &s->next;
+
+    ++processor->num_unknown_substitutions;
+
+    substitution_start(s);
 }
 
 static void
@@ -329,6 +393,10 @@ processor_output(processor_t processor)
     assert(processor != NULL);
     assert(processor->map != NULL);
     assert(processor->position <= processor->source_length);
+
+    if (processor->fd >= 0 ||
+        processor->num_unknown_substitutions > 0)
+        return;
 
     while (processor->first_substitution != NULL &&
            processor->position == processor->first_substitution->start &&
