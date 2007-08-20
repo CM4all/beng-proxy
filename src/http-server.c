@@ -414,6 +414,8 @@ http_server_event_setup(http_server_connection_t connection)
     assert(connection->input != NULL);
     assert(connection->output != NULL);
 
+    event_del(&connection->event);
+
     if ((connection->keep_alive || connection->request == NULL ||
          connection->reading_headers || connection->reading_body) &&
         !fifo_buffer_full(connection->input))
@@ -423,10 +425,12 @@ http_server_event_setup(http_server_connection_t connection)
         !fifo_buffer_empty(connection->output))
         event |= EV_WRITE | EV_TIMEOUT;
 
+    if (event == 0)
+        return;
+
     tv.tv_sec = 30;
     tv.tv_usec = 0;
 
-    event_del(&connection->event);
     event_set(&connection->event, connection->fd,
               event, http_server_event_callback, connection);
     event_add(&connection->event, &tv);
