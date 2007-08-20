@@ -9,16 +9,16 @@
 
 #include <sys/types.h>
 
+typedef size_t (*substitution_output_t)(const void *data, size_t length, void *ctx);
+
 struct substitution {
     struct substitution *next;
     off_t start, end;
 };
 
-typedef size_t (*substitution_callback_t)(const void *data, size_t length, void *ctx);
-
 size_t
 substitution_output(struct substitution *s,
-                    substitution_callback_t callback, void *callback_ctx);
+                    substitution_output_t callback, void *callback_ctx);
 
 int
 substitution_finished(const struct substitution *s);

@@ -8,7 +8,7 @@
 
 size_t
 substitution_output(struct substitution *s,
-                    substitution_callback_t callback, void *callback_ctx)
+                    substitution_output_t callback, void *callback_ctx)
 {
     (void)s;
     (void)callback;
