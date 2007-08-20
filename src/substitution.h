@@ -7,6 +7,8 @@
 #ifndef __BENG_SUBSTITUTION_H
 #define __BENG_SUBSTITUTION_H
 
+#include "http-client.h"
+
 #include <sys/types.h>
 
 struct substitution;
@@ -22,6 +24,8 @@ typedef size_t (*substitution_output_t)(const void *data, size_t length, void *c
 struct substitution {
     struct substitution *next;
     off_t start, end, content_length;
+
+    size_t position;
 
     const struct substitution_handler *handler;
     void *handler_ctx;

@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+static const char data[] = "<em>this is the substitution text</em>";
+
 void
 substitution_start(struct substitution *s)
 {
@@ -16,7 +18,9 @@ substitution_start(struct substitution *s)
     assert(s->handler != NULL);
     assert(s->handler->meta != NULL);
 
-    s->handler->meta(s, "text/html", 0);
+    s->position = 0;
+
+    s->handler->meta(s, "text/html", sizeof(data) - 1);
 }
 
 void
@@ -31,15 +35,16 @@ size_t
 substitution_output(struct substitution *s,
                     substitution_output_t callback, void *callback_ctx)
 {
-    (void)s;
-    (void)callback;
-    (void)callback_ctx;
-    return 0;
+    size_t nbytes;
+
+    nbytes = callback(data + s->position, sizeof(data) - 1 - s->position, callback_ctx);
+    s->position += nbytes;
+
+    return nbytes;
 }
 
 int
 substitution_finished(const struct substitution *s)
 {
-    (void)s;
-    return 1;
+    return s->position == sizeof(data) - 1;
 }
