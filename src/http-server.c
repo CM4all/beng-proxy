@@ -566,6 +566,54 @@ http_server_send(http_server_connection_t connection,
     return pre_written + length;
 }
 
+static const char hex_digits[] = "0123456789abcdef";
+
+size_t
+http_server_send_chunk(http_server_connection_t connection,
+                       const void *p, size_t length)
+{
+    char *dest;
+    size_t max_length;
+
+    assert(connection != NULL);
+    assert(connection->fd >= 0);
+    assert(p != NULL);
+    assert(length > 0);
+
+    dest = fifo_buffer_write(connection->output, &max_length);
+    if (dest == NULL)
+        return 0;
+
+    if (max_length < 4 + 2 + 1 + 2)
+        return 0;
+
+    if (length > max_length - 4 - 2 - 2)
+        length = max_length - 4 - 2 - 2;
+
+    dest[0] = hex_digits[(length >> 12) & 0xf];
+    dest[1] = hex_digits[(length >> 8) & 0xf];
+    dest[2] = hex_digits[(length >> 4) & 0xf];
+    dest[3] = hex_digits[length & 0xf];
+    dest[4] = '\r';
+    dest[5] = '\n';
+    memcpy(dest + 4 + 2, p, length);
+    dest[4 + 2 + length] = '\r';
+    dest[4 + 2 + length + 1] = '\n';
+
+    fifo_buffer_append(connection->output, 4 + 2 + length + 2);
+
+    return length;
+}
+
+void
+http_server_send_last_chunk(http_server_connection_t connection)
+{
+    size_t nbytes;
+
+    nbytes = http_server_send(connection, "0\r\n\r\n", 5);
+    assert(nbytes == 5);
+}
+
 size_t
 http_server_send_status(http_server_connection_t connection, int status)
 {

@@ -62,6 +62,13 @@ http_server_send(http_server_connection_t connection,
                  const void *p, size_t length);
 
 size_t
+http_server_send_chunk(http_server_connection_t connection,
+                       const void *p, size_t length);
+
+void
+http_server_send_last_chunk(http_server_connection_t connection);
+
+size_t
 http_server_send_status(http_server_connection_t connection, int status);
 
 void
