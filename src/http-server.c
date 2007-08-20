@@ -611,7 +611,7 @@ http_server_send_last_chunk(http_server_connection_t connection)
     size_t nbytes;
 
     nbytes = http_server_send(connection, "0\r\n\r\n", 5);
-    assert(nbytes == 5);
+    assert(nbytes == 5); /* XXX */
 }
 
 size_t
