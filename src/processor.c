@@ -6,6 +6,7 @@
 
 #include "processor.h"
 #include "strutil.h"
+#include "substitution.h"
 
 #include <sys/mman.h>
 #include <assert.h>
@@ -13,11 +14,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-
-struct substitution {
-    struct substitution *next;
-    off_t start, end;
-};
 
 enum parser_state {
     PARSER_NONE,
@@ -325,21 +321,6 @@ processor_input_finished(processor_t processor)
                              processor->handler_ctx);
 }
 
-static size_t
-substitution_output(processor_t processor, struct substitution *s)
-{
-    (void)processor;
-    (void)s;
-    return 0;
-}
-
-static int
-substitution_finished(const struct substitution *s)
-{
-    (void)s;
-    return 1;
-}
-
 void
 processor_output(processor_t processor)
 {
@@ -352,7 +333,9 @@ processor_output(processor_t processor)
     while (processor->first_substitution != NULL &&
            processor->position == processor->first_substitution->start &&
            nbytes == 0) {
-        nbytes = substitution_output(processor, processor->first_substitution);
+        nbytes = substitution_output(processor->first_substitution,
+                                     processor->handler->output,
+                                     processor->handler_ctx);
         if (!substitution_finished(processor->first_substitution))
             return;
 
