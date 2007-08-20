@@ -179,6 +179,10 @@ processor_substitution_meta(struct substitution *s,
     processor->content_length += length;
     --processor->num_unknown_substitutions;
 
+    if (processor->fd < 0 && processor->num_unknown_substitutions == 0)
+        processor->handler->meta("text/html", processor->content_length,
+                                 processor->handler_ctx);
+
     processor_maybe_substitution_output(processor, s);
 }
 
@@ -400,8 +404,9 @@ processor_input_finished(processor_t processor)
 
     processor->position = 0;
 
-    processor->handler->meta("text/html", processor->content_length,
-                             processor->handler_ctx);
+    if (processor->num_unknown_substitutions == 0)
+        processor->handler->meta("text/html", processor->content_length,
+                                 processor->handler_ctx);
 }
 
 void
