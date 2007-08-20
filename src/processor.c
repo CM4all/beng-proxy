@@ -200,7 +200,7 @@ processor_element_finished(processor_t processor, off_t end)
 
     s->url = "http://dory.intern.cm-ag/"; /* XXX */
 
-    s->pool = processor->pool;
+    s->pool = pool_new_linear(processor->pool, "processor_substitution", 16384);
 
     s->handler = &processor_substitution_handler;
     s->handler_ctx = processor;

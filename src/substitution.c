@@ -305,6 +305,12 @@ substitution_close(struct substitution *s)
         assert(s->http == NULL);
         assert(s->response == NULL);
     }
+
+    if (s->pool != NULL) {
+        pool_t pool = s->pool;
+        s->pool = NULL;
+        pool_unref(pool);
+    }
 }
 
 size_t
