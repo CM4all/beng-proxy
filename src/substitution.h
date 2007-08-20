@@ -30,6 +30,9 @@ struct substitution {
 void
 substitution_start(struct substitution *s);
 
+void
+substitution_close(struct substitution *s);
+
 size_t
 substitution_output(struct substitution *s,
                     substitution_output_t callback, void *callback_ctx);

@@ -19,6 +19,14 @@ substitution_start(struct substitution *s)
     s->handler->meta(s, "text/html", 0);
 }
 
+void
+substitution_close(struct substitution *s)
+{
+    assert(s != NULL);
+
+    (void)s;
+}
+
 size_t
 substitution_output(struct substitution *s,
                     substitution_output_t callback, void *callback_ctx)

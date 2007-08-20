@@ -89,6 +89,11 @@ processor_close(processor_t processor)
 {
     assert(processor != NULL);
 
+    while (processor->first_substitution != NULL) {
+        substitution_close(processor->first_substitution);
+        processor->first_substitution = processor->first_substitution->next;
+    }
+
     if (processor->fd >= 0) {
         close(processor->fd);
         processor->fd = -1;
@@ -144,6 +149,7 @@ processor_maybe_substitution_output(processor_t processor,
         return;
 
     processor->position = processor->first_substitution->end;
+    substitution_close(processor->first_substitution);
     processor->first_substitution = processor->first_substitution->next;
 }
 
@@ -408,6 +414,7 @@ processor_output(processor_t processor)
             return;
 
         processor->position = processor->first_substitution->end;
+        substitution_close(processor->first_substitution);
         processor->first_substitution = processor->first_substitution->next;
     }
 
