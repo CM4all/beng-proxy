@@ -51,7 +51,7 @@ static const struct istream_handler substitution_istream_handler = {
 };
 
 static void 
-substitution_http_client_callback(int status, strmap_t headers,
+substitution_http_client_callback(http_status_t status, strmap_t headers,
                                   off_t content_length, istream_t body,
                                   void *ctx)
 {
@@ -60,7 +60,7 @@ substitution_http_client_callback(int status, strmap_t headers,
 
     assert(s->istream == NULL);
 
-    if (status < 0) {
+    if (status == 0) {
         /* XXX */
         s->http = NULL;
         return;

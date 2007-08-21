@@ -96,7 +96,7 @@ static const struct istream_handler proxy_client_istream_handler = {
 };
 
 static void 
-proxy_http_client_callback(int status, strmap_t headers,
+proxy_http_client_callback(http_status_t status, strmap_t headers,
                            off_t content_length, istream_t body,
                            void *ctx)
 {
@@ -106,7 +106,7 @@ proxy_http_client_callback(int status, strmap_t headers,
 
     assert(pt->istream == NULL);
 
-    if (status < 0) {
+    if (status == 0) {
         pt->http = NULL;
         if (!pt->istream_eof)
             proxy_transfer_close(pt);

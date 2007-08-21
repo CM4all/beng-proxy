@@ -699,7 +699,7 @@ http_client_connection_close(http_client_connection_t connection)
         void *callback_ctx = connection->callback_ctx;
         connection->callback = NULL;
         connection->callback_ctx = NULL;
-        callback(-1, NULL, 0, NULL, callback_ctx);
+        callback(0, NULL, 0, NULL, callback_ctx);
     }
 }
 

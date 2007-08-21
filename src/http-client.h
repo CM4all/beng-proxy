@@ -17,7 +17,7 @@
 
 typedef struct http_client_connection *http_client_connection_t;
 
-typedef void (*http_client_callback_t)(int status, strmap_t headers,
+typedef void (*http_client_callback_t)(http_status_t status, strmap_t headers,
                                        off_t content_length, istream_t body,
                                        void *ctx);
 
