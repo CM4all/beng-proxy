@@ -17,10 +17,8 @@
 struct substitution;
 
 struct substitution_handler {
-    void (*output)(struct substitution *s);
+    size_t (*output)(struct substitution *s, const void *data, size_t length);
 };
-
-typedef size_t (*substitution_output_t)(const void *data, size_t length, void *ctx);
 
 struct substitution {
     struct substitution *next;
@@ -33,7 +31,6 @@ struct substitution {
     http_client_connection_t http;
     istream_t istream;
     int istream_eof;
-    fifo_buffer_t buffer;
 
     const struct substitution_handler *handler;
     void *handler_ctx;
@@ -45,9 +42,8 @@ substitution_start(struct substitution *s);
 void
 substitution_close(struct substitution *s);
 
-size_t
-substitution_output(struct substitution *s,
-                    substitution_output_t callback, void *callback_ctx);
+void
+substitution_output(struct substitution *s);
 
 int
 substitution_finished(const struct substitution *s);

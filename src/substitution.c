@@ -17,23 +17,8 @@ static size_t
 substitution_istream_data(const void *data, size_t length, void *ctx)
 {
     struct substitution *s = ctx;
-    void *dest;
-    size_t max_length;
 
-    /* XXX */
-    dest = fifo_buffer_write(s->buffer, &max_length);
-    if (dest == NULL)
-        return 0;
-
-    if (length > max_length)
-        length = max_length;
-
-    memcpy(dest, data, length);
-    fifo_buffer_append(s->buffer, length);
-
-    s->handler->output(s);
-
-    return length;
+    return s->handler->output(s, data, length);
 }
 
 static void
@@ -43,8 +28,6 @@ substitution_istream_eof(void *ctx)
 
     s->istream = NULL;
     s->istream_eof = 1;
-
-    s->handler->output(s);
 }
 
 static void
@@ -93,8 +76,10 @@ substitution_http_client_callback(int status, strmap_t headers,
         }
     }
 
-    body->handler = &substitution_istream_handler;
-    body->handler_ctx = s;
+    assert(s->istream->handler == NULL);
+
+    s->istream->handler = &substitution_istream_handler;
+    s->istream->handler_ctx = s;
 }
 
 static void
@@ -104,8 +89,6 @@ substitution_client_socket_callback(int fd, int err, void *ctx)
 
     if (err == 0) {
         assert(fd >= 0);
-
-        s->buffer = fifo_buffer_new(s->pool, 4096);
 
         s->istream = NULL;
         s->http = http_client_connection_new(s->pool, fd,
@@ -164,7 +147,6 @@ substitution_start(struct substitution *s)
     assert(s->handler != NULL);
 
     s->istream_eof = 0;
-    s->buffer = NULL;
 
     if (memcmp(s->url, "http://", 7) != 0) {
         /* XXX */
@@ -229,30 +211,15 @@ substitution_close(struct substitution *s)
     }
 }
 
-size_t
-substitution_output(struct substitution *s,
-                    substitution_output_t callback, void *callback_ctx)
+void
+substitution_output(struct substitution *s)
 {
-    const char *data;
-    size_t length, nbytes;
-
-    if (s->buffer == NULL)
-        return 0;
-
-    data = fifo_buffer_read(s->buffer, &length);
-    if (data == NULL)
-        return 0;
-
-    nbytes = callback(data, length, callback_ctx);
-    assert(nbytes <= length);
-
-    fifo_buffer_consume(s->buffer, nbytes);
-    return nbytes;
+    if (s->client_socket == NULL)
+        istream_read(s->istream);
 }
 
 int
 substitution_finished(const struct substitution *s)
 {
-    return s->istream_eof &&
-        (s->buffer == NULL || fifo_buffer_empty(s->buffer));
+    return s->istream_eof;
 }
