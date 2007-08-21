@@ -116,6 +116,10 @@ pool_recycler_put_linear(struct linear_pool_area *area)
     assert(area != 0);
     assert(area->size > 0);
 
+#ifdef POISON
+    memset(area->data, 0x01, area->used);
+#endif
+
     if (recycler.num_linear_areas < RECYCLER_MAX_LINEAR_AREAS &&
         area->size <= RECYCLER_MAX_LINEAR_SIZE) {
 #ifdef VALGRIND
@@ -218,6 +222,10 @@ pool_new_linear_area(struct linear_pool_area *prev, size_t size)
     area->prev = prev;
     area->size = size;
     area->used = 0;
+
+#ifdef POISON
+    memset(area->data, 0x01, area->size);
+#endif
 
 #ifdef VALGRIND
     VALGRIND_MAKE_MEM_NOACCESS(area->data, area->size);
