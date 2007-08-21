@@ -207,26 +207,31 @@ processor_substitution_output(struct substitution *s,
         processor->position < processor->first_substitution->start)
         return 0;
 
-    pool_ref(processor->pool);
-
     nbytes = processor->output.handler->data(data, length,
                                              processor->output.handler_ctx);
-
-    if (substitution_finished(processor->first_substitution)) {
-        processor->position = processor->first_substitution->end;
-        substitution_close(processor->first_substitution);
-        processor->first_substitution = processor->first_substitution->next;
-    }
-
-    pool_unref(processor->pool);
 
     processor->substitution_nbytes += nbytes;
 
     return nbytes;
 }
 
+static void
+processor_substitution_eof(struct substitution *s)
+{
+    processor_t processor = s->handler_ctx;
+
+    assert(processor->fd < 0);
+    assert(processor->first_substitution == s);
+    assert(processor->position == processor->first_substitution->start);
+
+    processor->position = s->end;
+    processor->first_substitution = s->next;
+    substitution_close(s);
+}
+
 static const struct substitution_handler processor_substitution_handler = {
     .output = processor_substitution_output,
+    .eof = processor_substitution_eof,
 };
 
 static void

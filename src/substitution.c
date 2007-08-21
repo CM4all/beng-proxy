@@ -28,6 +28,8 @@ substitution_istream_eof(void *ctx)
 
     s->istream = NULL;
     s->istream_eof = 1;
+
+    s->handler->eof(s);
 }
 
 static void
@@ -218,10 +220,4 @@ substitution_output(struct substitution *s)
 {
     if (s->istream != NULL)
         istream_read(s->istream);
-}
-
-int
-substitution_finished(const struct substitution *s)
-{
-    return s->istream_eof;
 }

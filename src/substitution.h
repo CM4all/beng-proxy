@@ -18,6 +18,7 @@ struct substitution;
 
 struct substitution_handler {
     size_t (*output)(struct substitution *s, const void *data, size_t length);
+    void (*eof)(struct substitution *s);
 };
 
 struct substitution {
@@ -44,8 +45,5 @@ substitution_close(struct substitution *s);
 
 void
 substitution_output(struct substitution *s);
-
-int
-substitution_finished(const struct substitution *s);
 
 #endif
