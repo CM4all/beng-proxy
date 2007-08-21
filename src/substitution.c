@@ -87,17 +87,17 @@ substitution_http_client_callback(http_status_t status, strmap_t headers,
 }
 
 void
-substitution_start(struct substitution *s)
+substitution_start(struct substitution *s, const char *url)
 {
     assert(s != NULL);
-    assert(s->url != NULL);
     assert(s->handler != NULL);
+    assert(url != NULL);
 
     s->istream = NULL;
     s->istream_eof = 0;
 
     s->url_stream = url_stream_new(s->pool,
-                                   HTTP_METHOD_GET, s->url, NULL,
+                                   HTTP_METHOD_GET, url, NULL,
                                    substitution_http_client_callback, s);
     if (s->url_stream == NULL) {
         /* XXX */

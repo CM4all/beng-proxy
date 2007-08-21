@@ -23,7 +23,6 @@ struct substitution_handler {
 struct substitution {
     struct substitution *next;
     off_t start, end;
-    const char *url;
 
     pool_t pool;
 
@@ -36,7 +35,7 @@ struct substitution {
 };
 
 void
-substitution_start(struct substitution *s);
+substitution_start(struct substitution *s, const char *url);
 
 void
 substitution_close(struct substitution *s);

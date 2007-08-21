@@ -239,8 +239,6 @@ processor_element_finished(processor_t processor, off_t end)
     s->start = processor->element_offset;
     s->end = end;
 
-    s->url = "http://dory.intern.cm-ag/"; /* XXX */
-
     s->pool = pool;
 
     s->handler = &processor_substitution_handler;
@@ -249,7 +247,7 @@ processor_element_finished(processor_t processor, off_t end)
     *processor->append_substitution_p = s;
     processor->append_substitution_p = &s->next;
 
-    substitution_start(s);
+    substitution_start(s, "http://dory.intern.cm-ag/"); /* XXX */
 }
 
 static void
