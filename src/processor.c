@@ -133,6 +133,8 @@ processor_invoke_substitution_output(processor_t processor,
     assert(processor->first_substitution == s);
     assert(processor->position == s->start);
 
+    pool_ref(processor->pool);
+
     nbytes = substitution_output(processor->first_substitution,
                                  processor->handler->output,
                                  processor->handler_ctx);
@@ -141,6 +143,8 @@ processor_invoke_substitution_output(processor_t processor,
         substitution_close(processor->first_substitution);
         processor->first_substitution = processor->first_substitution->next;
     }
+
+    pool_unref(processor->pool);
 
     return nbytes;
 }
@@ -434,12 +438,17 @@ processor_output(processor_t processor)
         processor->position == processor->source_length) {
         const struct processor_handler *handler = processor->handler;
         void *handler_ctx = processor->handler_ctx;
+        pool_t pool = processor->pool;
 
         munmap(processor->map, (size_t)processor->source_length);
         processor->map = NULL;
 
+        pool_ref(pool);
+
         handler->output_finished(handler_ctx);
 
         processor_close(processor);
+
+        pool_unref(pool);
     }
 }
