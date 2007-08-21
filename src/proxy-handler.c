@@ -23,8 +23,9 @@ struct proxy_transfer {
 
     client_socket_t client_socket;
     http_client_connection_t http;
-    struct http_client_response *response;
-    int response_finished;
+    off_t content_length;
+    istream_t istream;
+    int istream_eof;
 
     processor_t processor;
 };
@@ -38,7 +39,7 @@ proxy_transfer_close(struct proxy_transfer *pt)
     if (pt->http != NULL) {
         http_client_connection_close(pt->http);
         pt->http = NULL;
-        assert(pt->response == NULL);
+        assert(pt->istream == NULL);
     }
 
     if (pt->request != NULL) {
@@ -52,7 +53,9 @@ proxy_processor_input(void *ctx)
 {
     struct proxy_transfer *pt = ctx;
 
-    http_client_response_read(pt->http);
+    assert(pt->istream != NULL);
+
+    istream_read(pt->istream);
 }
 
 static void
@@ -112,25 +115,24 @@ static struct processor_handler proxy_processor_handler = {
 };
 
 static size_t
-proxy_client_response_body(struct http_client_response *response,
-                           const void *buffer, size_t length)
+proxy_client_istream_data(const void *data, size_t length, void *ctx)
 {
-    struct proxy_transfer *pt = response->handler_ctx;
+    struct proxy_transfer *pt = ctx;
 
     /* XXX */
     if (pt->processor == NULL)
-        return http_server_send(pt->request->connection, buffer, length);
+        return http_server_send(pt->request->connection, data, length);
     else
-        return processor_input(pt->processor, buffer, length);
+        return processor_input(pt->processor, data, length);
 }
 
 static void
-proxy_client_response_finished(struct http_client_response *response)
+proxy_client_istream_eof(void *ctx)
 {
-    struct proxy_transfer *pt = response->handler_ctx;
+    struct proxy_transfer *pt = ctx;
 
-    pt->response = NULL;
-    pt->response_finished = 1;
+    pt->istream = NULL;
+    pt->istream_eof = 1;
 
     if (pt->processor == NULL) {
         if (pt->request != NULL)
@@ -141,54 +143,59 @@ proxy_client_response_finished(struct http_client_response *response)
 }
 
 static void
-proxy_client_response_free(struct http_client_response *response)
+proxy_client_istream_free(void *ctx)
 {
-    struct proxy_transfer *pt = response->handler_ctx;
+    struct proxy_transfer *pt = ctx;
 
-    if (!pt->response_finished) {
+    if (!pt->istream_eof) {
         /* abort the transfer */
-        assert(response == pt->response);
-        pt->response = NULL;
+        pt->istream = NULL;
         proxy_transfer_close(pt);
     }
 }
 
-static struct http_client_request_handler proxy_client_request_handler = {
-    .response_body = proxy_client_response_body,
-    .response_finished = proxy_client_response_finished,
-    .free = proxy_client_response_free,
+static const struct istream_handler proxy_client_istream_handler = {
+    .data = proxy_client_istream_data,
+    .eof = proxy_client_istream_eof,
+    .free = proxy_client_istream_free,
 };
 
 static void 
-proxy_http_client_callback(struct http_client_response *response,
+proxy_http_client_callback(int status, strmap_t headers,
+                           off_t content_length, istream_t body,
                            void *ctx)
 {
     struct proxy_transfer *pt = ctx;
     const char *value;
 
-    assert(pt->response == NULL);
+    assert(pt->istream == NULL);
 
-    if (response == NULL) {
+    if (status < 0) {
         pt->http = NULL;
-        if (!pt->response_finished)
+        if (!pt->istream_eof)
             proxy_transfer_close(pt);
         return;
     }
 
-    assert(response->content_length >= 0);
+    assert(content_length >= 0);
 
-    value = strmap_get(response->headers, "content-type");
+    value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
+        pool_ref(pt->request->pool);
         pt->processor = processor_new(pt->request->pool,
                                       &proxy_processor_handler, pt);
+        pool_unref(pt->request->pool);
         if (pt->processor == NULL) {
             /* XXX */
             abort();
         }
     }
 
-    response->handler = &proxy_client_request_handler;
-    response->handler_ctx = pt;
+    body->handler = &proxy_client_istream_handler;
+    body->handler_ctx = pt;
+
+    pt->content_length = content_length;
+    pt->istream = body;
 
     if (pt->processor == NULL) {
         char response_headers[256];
@@ -196,7 +203,7 @@ proxy_http_client_callback(struct http_client_response *response,
         http_server_send_status(pt->request->connection, 200);
 
         snprintf(response_headers, sizeof(response_headers), "Content-Length: %lu\r\n\r\n",
-                 (unsigned long)response->content_length);
+                 (unsigned long)content_length);
         http_server_send(pt->request->connection, response_headers, strlen(response_headers));
 
         http_server_try_write(pt->request->connection);
@@ -261,7 +268,7 @@ static size_t proxy_response_body(struct http_server_request *request,
     (void)max_length;
 
     if (pt->processor == NULL)
-        http_client_response_read(pt->http);
+        istream_read(pt->istream);
     else
         processor_output(pt->processor);
 

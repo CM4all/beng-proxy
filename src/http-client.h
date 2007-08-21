@@ -10,35 +10,15 @@
 #include "pool.h"
 #include "strmap.h"
 #include "http.h"
+#include "istream.h"
 
 #include <sys/types.h>
 #include <event.h>
 
 typedef struct http_client_connection *http_client_connection_t;
 
-struct http_client_response {
-    pool_t pool;
-    http_client_connection_t connection;
-
-    /* response metadata */
-    int status;
-    strmap_t headers;
-    off_t content_length;
-
-    /* callback */
-    const struct http_client_request_handler *handler;
-    void *handler_ctx;
-};
-
-struct http_client_request_handler {
-    size_t (*response_body)(struct http_client_response *response,
-                            const void *buffer, size_t length);
-    void (*response_direct)(struct http_client_response *response, int fd);
-    void (*response_finished)(struct http_client_response *response);
-    void (*free)(struct http_client_response *response);
-};
-
-typedef void (*http_client_callback_t)(struct http_client_response *response,
+typedef void (*http_client_callback_t)(int status, strmap_t headers,
+                                       off_t content_length, istream_t body,
                                        void *ctx);
 
 http_client_connection_t attr_malloc
@@ -52,14 +32,5 @@ void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
                     strmap_t headers);
-
-void
-http_client_response_direct_mode(http_client_connection_t connection);
-
-void
-http_client_response_read(http_client_connection_t connection);
-
-void
-http_client_response_finish(http_client_connection_t connection);
 
 #endif

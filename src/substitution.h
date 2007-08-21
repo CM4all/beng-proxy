@@ -33,8 +33,8 @@ struct substitution {
 
     client_socket_t client_socket;
     http_client_connection_t http;
-    struct http_client_response *response;
-    int response_finished;
+    istream_t istream;
+    int istream_eof;
     fifo_buffer_t buffer;
 
     processor_t processor;

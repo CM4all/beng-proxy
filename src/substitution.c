@@ -18,7 +18,9 @@ substitution_processor_input(void *ctx)
 {
     struct substitution *s = ctx;
 
-    http_client_response_read(s->http);
+    assert(s->istream != NULL);
+
+    istream_read(s->istream);
 }
 
 static void
@@ -84,10 +86,9 @@ static struct processor_handler substitution_processor_handler = {
 };
 
 static size_t
-substitution_response_body(struct http_client_response *response,
-                           const void *buffer, size_t length)
+substitution_istream_data(const void *data, size_t length, void *ctx)
 {
-    struct substitution *s = response->handler_ctx;
+    struct substitution *s = ctx;
 
     /* XXX */
     if (s->processor == NULL) {
@@ -101,23 +102,23 @@ substitution_response_body(struct http_client_response *response,
         if (length > max_length)
             length = max_length;
 
-        memcpy(dest, buffer, length);
+        memcpy(dest, data, length);
         fifo_buffer_append(s->buffer, length);
 
         s->handler->output(s);
 
         return length;
     } else
-        return processor_input(s->processor, buffer, length);
+        return processor_input(s->processor, data, length);
 }
 
 static void
-substitution_response_finished(struct http_client_response *response)
+substitution_istream_eof(void *ctx)
 {
-    struct substitution *s = response->handler_ctx;
+    struct substitution *s = ctx;
 
-    s->response = NULL;
-    s->response_finished = 1;
+    s->istream = NULL;
+    s->istream_eof = 1;
 
     if (s->processor == NULL) {
         s->handler->output(s);
@@ -128,42 +129,42 @@ substitution_response_finished(struct http_client_response *response)
 }
 
 static void
-substitution_response_free(struct http_client_response *response)
+substitution_istream_free(void *ctx)
 {
-    struct substitution *s = response->handler_ctx;
+    struct substitution *s = ctx;
 
-    if (!s->response_finished) {
+    if (!s->istream_eof) {
         /* abort the transfer */
-        assert(response == s->response);
-        s->response = NULL;
+        s->istream = NULL;
         /* XXX */
     }
 }
 
-static struct http_client_request_handler substitution_request_handler = {
-    .response_body = substitution_response_body,
-    .response_finished = substitution_response_finished,
-    .free = substitution_response_free,
+static const struct istream_handler substitution_istream_handler = {
+    .data = substitution_istream_data,
+    .eof = substitution_istream_eof,
+    .free = substitution_istream_free,
 };
 
 static void 
-substitution_http_client_callback(struct http_client_response *response,
+substitution_http_client_callback(int status, strmap_t headers,
+                                  off_t content_length, istream_t body,
                                   void *ctx)
 {
     struct substitution *s = ctx;
     const char *value;
 
-    assert(s->response == NULL);
+    assert(s->istream == NULL);
 
-    if (response == NULL) {
+    if (status < 0) {
         /* XXX */
         s->http = NULL;
         return;
     }
 
-    assert(response->content_length >= 0);
+    assert(content_length >= 0);
 
-    value = strmap_get(response->headers, "content-type");
+    value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
         s->processor = processor_new(s->pool,
                                      &substitution_processor_handler, s);
@@ -172,8 +173,8 @@ substitution_http_client_callback(struct http_client_response *response,
         }
     }
 
-    response->handler = &substitution_request_handler;
-    response->handler_ctx = s;
+    body->handler = &substitution_istream_handler;
+    body->handler_ctx = s;
 
     if (s->processor == NULL) {
         /* XXX */
@@ -191,7 +192,7 @@ substitution_client_socket_callback(int fd, int err, void *ctx)
 
         s->buffer = fifo_buffer_new(s->pool, 4096);
 
-        s->response = NULL;
+        s->istream = NULL;
         s->http = http_client_connection_new(s->pool, fd,
                                              substitution_http_client_callback, s);
 
@@ -248,7 +249,7 @@ substitution_start(struct substitution *s)
     assert(s->handler != NULL);
     assert(s->handler->meta != NULL);
 
-    s->response_finished = 0;
+    s->istream_eof = 0;
     s->buffer = NULL;
     s->processor = NULL;
 
@@ -303,8 +304,11 @@ substitution_close(struct substitution *s)
     } else if (s->http != NULL) {
         http_client_connection_close(s->http);
         assert(s->http == NULL);
-        assert(s->response == NULL);
+        assert(s->istream == NULL);
     }
+
+    if (s->processor != NULL)
+        processor_free(&s->processor);
 
     if (s->pool != NULL) {
         pool_t pool = s->pool;
@@ -337,6 +341,6 @@ substitution_output(struct substitution *s,
 int
 substitution_finished(const struct substitution *s)
 {
-    return s->processor == NULL && s->response_finished &&
+    return s->processor == NULL && s->istream_eof &&
         (s->buffer == NULL || fifo_buffer_empty(s->buffer));
 }
