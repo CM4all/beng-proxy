@@ -40,6 +40,7 @@ struct processor {
     size_t element_name_length;
 
     struct substitution *first_substitution, **append_substitution_p;
+    size_t substitution_nbytes; /* XXX this is a hack */
 
     struct istream output;
     istream_t input;
@@ -218,6 +219,8 @@ processor_substitution_output(struct substitution *s,
     }
 
     pool_unref(processor->pool);
+
+    processor->substitution_nbytes += nbytes;
 
     return nbytes;
 }
@@ -450,10 +453,11 @@ processor_output(processor_t processor)
            processor->position == processor->first_substitution->start &&
            nbytes == 0) {
         struct substitution *s = processor->first_substitution;
+        processor->substitution_nbytes = 0;
         substitution_output(s);
-        nbytes = 1; /* XXX */
         if (s == processor->first_substitution)
             return;
+        nbytes = processor->substitution_nbytes;
     }
 
     if (nbytes == 0) {
