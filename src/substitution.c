@@ -150,6 +150,7 @@ substitution_start(struct substitution *s)
     assert(s->url != NULL);
     assert(s->handler != NULL);
 
+    s->istream = NULL;
     s->istream_eof = 0;
 
     if (memcmp(s->url, "http://", 7) != 0) {
