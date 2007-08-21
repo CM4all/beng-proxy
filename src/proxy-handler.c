@@ -173,7 +173,7 @@ proxy_http_client_callback(struct http_client_response *response,
     assert(response->content_length >= 0);
 
     value = strmap_get(response->headers, "content-type");
-    if (strncmp(value, "text/html", 9) == 0) {
+    if (value != NULL && strncmp(value, "text/html", 9) == 0) {
         pt->processor = processor_new(pt->request->pool,
                                       &proxy_processor_handler, pt);
         if (pt->processor == NULL) {
