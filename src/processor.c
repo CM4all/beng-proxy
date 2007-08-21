@@ -78,6 +78,7 @@ processor_new(pool_t pool,
     }
     unlink("/tmp/beng-processor.tmp");
 
+    pool_ref(pool);
     return processor;
 }
 
@@ -110,6 +111,12 @@ processor_close(processor_t processor)
 
         if (handler->free != NULL)
             handler->free(handler_ctx);
+    }
+
+    if (processor->pool != NULL) {
+        pool_t pool = processor->pool;
+        processor->pool = NULL;
+        pool_unref(pool);
     }
 }
 
