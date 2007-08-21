@@ -186,13 +186,13 @@ proxy_http_client_callback(struct http_client_response *response,
     response->handler_ctx = pt;
 
     if (pt->processor == NULL) {
-        char headers[256];
+        char response_headers[256];
 
         http_server_send_status(pt->request->connection, 200);
 
-        snprintf(headers, sizeof(headers), "Content-Length: %lu\r\n\r\n",
+        snprintf(response_headers, sizeof(response_headers), "Content-Length: %lu\r\n\r\n",
                  (unsigned long)response->content_length);
-        http_server_send(pt->request->connection, headers, strlen(headers));
+        http_server_send(pt->request->connection, response_headers, strlen(response_headers));
 
         http_server_try_write(pt->request->connection);
     }
