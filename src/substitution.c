@@ -164,7 +164,7 @@ substitution_http_client_callback(struct http_client_response *response,
     assert(response->content_length >= 0);
 
     value = strmap_get(response->headers, "content-type");
-    if (strncmp(value, "text/html", 9) == 0) {
+    if (value != NULL && strncmp(value, "text/html", 9) == 0) {
         s->processor = processor_new(s->pool,
                                      &substitution_processor_handler, s);
         if (s->processor == NULL) {
