@@ -87,6 +87,9 @@ processor_close(processor_t processor)
 {
     assert(processor != NULL);
 
+    fprintf(stderr, "processor_close(%p)\n",
+            (void*)processor);
+
     while (processor->first_substitution != NULL) {
         substitution_close(processor->first_substitution);
         processor->first_substitution = processor->first_substitution->next;
