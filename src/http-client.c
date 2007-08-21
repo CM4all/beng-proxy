@@ -41,11 +41,12 @@ struct http_client_connection {
 
     /* response */
     struct http_client_response *response;
-    int reading_headers, reading_body, direct_mode;
+    int reading_headers, reading_body;
     off_t body_rest;
 
     /* connection settings */
     int keep_alive;
+    int direct_mode;
 #ifdef __linux
     int cork;
 #endif
