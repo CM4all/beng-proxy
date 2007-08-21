@@ -164,8 +164,9 @@ processor_close(processor_t processor)
     assert(processor != NULL);
 
     while (processor->first_substitution != NULL) {
-        substitution_close(processor->first_substitution);
-        processor->first_substitution = processor->first_substitution->next;
+        struct substitution *s = processor->first_substitution;
+        processor->first_substitution = s->next;
+        substitution_close(s);
     }
 
     if (processor->fd >= 0) {
