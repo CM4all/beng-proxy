@@ -26,20 +26,20 @@ struct proxy_transfer {
     off_t content_length;
     istream_t istream;
     int istream_eof;
-
-    processor_t processor;
 };
 
 static void
 proxy_transfer_close(struct proxy_transfer *pt)
 {
-    if (pt->processor != NULL)
-        processor_free(&pt->processor);
+    if (pt->istream != NULL) {
+        istream_t istream = pt->istream;
+        pt->istream = NULL;
+        istream_close(istream);
+    }
 
     if (pt->http != NULL) {
         http_client_connection_close(pt->http);
         pt->http = NULL;
-        assert(pt->istream == NULL);
     }
 
     if (pt->request != NULL) {
@@ -48,82 +48,16 @@ proxy_transfer_close(struct proxy_transfer *pt)
     }
 }
 
-static void
-proxy_processor_input(void *ctx)
-{
-    struct proxy_transfer *pt = ctx;
-
-    assert(pt->istream != NULL);
-
-    istream_read(pt->istream);
-}
-
-static void
-proxy_processor_meta(const char *content_type, void *ctx)
-{
-    struct proxy_transfer *pt = ctx;
-    char headers[256];
-
-    http_server_send_status(pt->request->connection, 200);
-
-    snprintf(headers, sizeof(headers), "Content-Type: %s\r\nTransfer-Encoding: chunked\r\n\r\n",
-             content_type);
-    http_server_send(pt->request->connection, headers, strlen(headers));
-
-    http_server_try_write(pt->request->connection);
-}
-
-static size_t
-proxy_processor_output(const void *data, size_t length, void *ctx)
-{
-    struct proxy_transfer *pt = ctx;
-
-    return http_server_send_chunk(pt->request->connection, data, length);
-}
-
-static void
-proxy_processor_output_finished(void *ctx)
-{
-    struct proxy_transfer *pt = ctx;
-    pool_t pool = pt->request->pool;
-
-    pool_ref(pool);
-
-    http_server_send_last_chunk(pt->request->connection);
-    http_server_response_finish(pt->request->connection);
-
-    pool_unref(pool);
-}
-
-static void
-proxy_processor_free(void *ctx)
-{
-    struct proxy_transfer *pt = ctx;
-
-    /* XXX when the processor fails, it will close itself and invoke
-       this callback */
-    if (pt->processor != NULL)
-        proxy_transfer_close(pt);
-}
-
-static struct processor_handler proxy_processor_handler = {
-    .input = proxy_processor_input,
-    .meta = proxy_processor_meta,
-    .output = proxy_processor_output,
-    .output_finished = proxy_processor_output_finished,
-    .free = proxy_processor_free,
-};
-
 static size_t
 proxy_client_istream_data(const void *data, size_t length, void *ctx)
 {
     struct proxy_transfer *pt = ctx;
 
     /* XXX */
-    if (pt->processor == NULL)
-        return http_server_send(pt->request->connection, data, length);
+    if (pt->content_length == (off_t)-1)
+        return http_server_send_chunk(pt->request->connection, data, length);
     else
-        return processor_input(pt->processor, data, length);
+        return http_server_send(pt->request->connection, data, length);
 }
 
 static void
@@ -134,12 +68,13 @@ proxy_client_istream_eof(void *ctx)
     pt->istream = NULL;
     pt->istream_eof = 1;
 
-    if (pt->processor == NULL) {
-        if (pt->request != NULL)
-            http_server_response_finish(pt->request->connection);
-    } else {
-        processor_input_finished(pt->processor);
-    }
+    if (pt->request == NULL)
+        return;
+
+    if (pt->content_length == (off_t)-1)
+        http_server_send_last_chunk(pt->request->connection);
+
+    http_server_response_finish(pt->request->connection);
 }
 
 static void
@@ -167,6 +102,7 @@ proxy_http_client_callback(int status, strmap_t headers,
 {
     struct proxy_transfer *pt = ctx;
     const char *value;
+    char response_headers[256];
 
     assert(pt->istream == NULL);
 
@@ -179,35 +115,38 @@ proxy_http_client_callback(int status, strmap_t headers,
 
     assert(content_length >= 0);
 
-    value = strmap_get(headers, "content-type");
-    if (value != NULL && strncmp(value, "text/html", 9) == 0) {
-        pool_ref(pt->request->pool);
-        pt->processor = processor_new(pt->request->pool,
-                                      &proxy_processor_handler, pt);
-        pool_unref(pt->request->pool);
-        if (pt->processor == NULL) {
-            /* XXX */
-            abort();
-        }
-    }
-
-    body->handler = &proxy_client_istream_handler;
-    body->handler_ctx = pt;
-
     pt->content_length = content_length;
     pt->istream = body;
 
-    if (pt->processor == NULL) {
-        char response_headers[256];
+    value = strmap_get(headers, "content-type");
+    if (value != NULL && strncmp(value, "text/html", 9) == 0) {
+        pool_ref(pt->request->pool);
 
-        http_server_send_status(pt->request->connection, 200);
+        pt->content_length = (off_t)-1;
+        pt->istream = processor_new(pt->request->pool, pt->istream);
 
+        pool_unref(pt->request->pool);
+        if (pt->istream == NULL) {
+            /* XXX */
+            abort();
+        }
+
+        snprintf(response_headers, sizeof(response_headers),
+                 "Content-Type: %s\r\nTransfer-Encoding: chunked\r\n\r\n",
+                 value);
+    } else {
         snprintf(response_headers, sizeof(response_headers), "Content-Length: %lu\r\n\r\n",
                  (unsigned long)content_length);
-        http_server_send(pt->request->connection, response_headers, strlen(response_headers));
-
-        http_server_try_write(pt->request->connection);
     }
+
+    assert(pt->istream->handler == NULL);
+
+    pt->istream->handler = &proxy_client_istream_handler;
+    pt->istream->handler_ctx = pt;
+
+    http_server_send_status(pt->request->connection, 200);
+    http_server_send(pt->request->connection, response_headers, strlen(response_headers));
+    http_server_try_write(pt->request->connection);    
 }
 
 static const char *const copy_headers[] = {
@@ -263,14 +202,10 @@ static size_t proxy_response_body(struct http_server_request *request,
 {
     struct proxy_transfer *pt = request->handler_ctx;
 
-    (void)pt;
     (void)buffer;
     (void)max_length;
 
-    if (pt->processor == NULL)
-        istream_read(pt->istream);
-    else
-        processor_output(pt->processor);
+    istream_read(pt->istream);
 
     return 0;
 }

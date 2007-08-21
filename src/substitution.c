@@ -13,31 +13,14 @@
 #include <string.h>
 #include <errno.h>
 
-static void
-substitution_processor_input(void *ctx)
-{
-    struct substitution *s = ctx;
-
-    assert(s->istream != NULL);
-
-    istream_read(s->istream);
-}
-
-static void
-substitution_processor_meta(const char *content_type, void *ctx)
-{
-    struct substitution *s = ctx;
-
-    s->handler->meta(s, content_type);
-}
-
 static size_t
-substitution_processor_output(const void *data, size_t length, void *ctx)
+substitution_istream_data(const void *data, size_t length, void *ctx)
 {
     struct substitution *s = ctx;
     void *dest;
     size_t max_length;
 
+    /* XXX */
     dest = fifo_buffer_write(s->buffer, &max_length);
     if (dest == NULL)
         return 0;
@@ -54,65 +37,6 @@ substitution_processor_output(const void *data, size_t length, void *ctx)
 }
 
 static void
-substitution_processor_output_finished(void *ctx)
-{
-    struct substitution *s = ctx;
-
-    assert(s->processor != NULL);
-
-    processor_free(&s->processor);
-
-    s->handler->output(s);
-}
-
-static void
-substitution_processor_free(void *ctx)
-{
-    struct substitution *s = ctx;
-
-    /* XXX when the processor fails, it will close itself and invoke
-       this callback */
-    if (s->processor != NULL) {
-        /* XXX */
-    }
-}
-
-static struct processor_handler substitution_processor_handler = {
-    .input = substitution_processor_input,
-    .meta = substitution_processor_meta,
-    .output = substitution_processor_output,
-    .output_finished = substitution_processor_output_finished,
-    .free = substitution_processor_free,
-};
-
-static size_t
-substitution_istream_data(const void *data, size_t length, void *ctx)
-{
-    struct substitution *s = ctx;
-
-    /* XXX */
-    if (s->processor == NULL) {
-        void *dest;
-        size_t max_length;
-
-        dest = fifo_buffer_write(s->buffer, &max_length);
-        if (dest == NULL)
-            return 0;
-
-        if (length > max_length)
-            length = max_length;
-
-        memcpy(dest, data, length);
-        fifo_buffer_append(s->buffer, length);
-
-        s->handler->output(s);
-
-        return length;
-    } else
-        return processor_input(s->processor, data, length);
-}
-
-static void
 substitution_istream_eof(void *ctx)
 {
     struct substitution *s = ctx;
@@ -120,12 +44,7 @@ substitution_istream_eof(void *ctx)
     s->istream = NULL;
     s->istream_eof = 1;
 
-    if (s->processor == NULL) {
-        s->handler->output(s);
-    } else {
-        processor_input_finished(s->processor);
-        processor_output(s->processor);
-    }
+    s->handler->output(s);
 }
 
 static void
@@ -164,22 +83,18 @@ substitution_http_client_callback(int status, strmap_t headers,
 
     assert(content_length >= 0);
 
+    s->istream = body;
+
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
-        s->processor = processor_new(s->pool,
-                                     &substitution_processor_handler, s);
-        if (s->processor == NULL) {
+        s->istream = processor_new(s->pool, s->istream);
+        if (s->istream == NULL) {
             abort();
         }
     }
 
     body->handler = &substitution_istream_handler;
     body->handler_ctx = s;
-
-    if (s->processor == NULL) {
-        /* XXX */
-        abort();
-    }
 }
 
 static void
@@ -247,11 +162,9 @@ substitution_start(struct substitution *s)
     assert(s != NULL);
     assert(s->url != NULL);
     assert(s->handler != NULL);
-    assert(s->handler->meta != NULL);
 
     s->istream_eof = 0;
     s->buffer = NULL;
-    s->processor = NULL;
 
     if (memcmp(s->url, "http://", 7) != 0) {
         /* XXX */
@@ -290,8 +203,6 @@ substitution_start(struct substitution *s)
     }
 
     freeaddrinfo(ai);
-
-    s->handler->meta(s, "text/html");
 }
 
 void
@@ -299,16 +210,17 @@ substitution_close(struct substitution *s)
 {
     assert(s != NULL);
 
+    if (s->istream != NULL) {
+        istream_close(s->istream);
+        assert(s->istream == NULL);
+    }
+
     if (s->client_socket != NULL) {
         client_socket_free(&s->client_socket);
     } else if (s->http != NULL) {
         http_client_connection_close(s->http);
         assert(s->http == NULL);
-        assert(s->istream == NULL);
     }
-
-    if (s->processor != NULL)
-        processor_free(&s->processor);
 
     if (s->pool != NULL) {
         pool_t pool = s->pool;
@@ -341,6 +253,6 @@ substitution_output(struct substitution *s,
 int
 substitution_finished(const struct substitution *s)
 {
-    return s->processor == NULL && s->istream_eof &&
+    return s->istream_eof &&
         (s->buffer == NULL || fifo_buffer_empty(s->buffer));
 }

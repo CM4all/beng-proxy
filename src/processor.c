@@ -24,6 +24,8 @@ enum parser_state {
     PARSER_INSIDE,
 };
 
+typedef struct processor *processor_t;
+
 struct processor {
     pool_t pool;
     const char *path;
@@ -39,24 +41,97 @@ struct processor {
 
     struct substitution *first_substitution, **append_substitution_p;
 
-    const struct processor_handler *handler;
-    void *handler_ctx;
+    struct istream output;
+    istream_t input;
 };
 
 static const char element_start[] = "<c:";
 static const char element_end[] = "</c:";
 
-processor_t
-processor_new(pool_t pool,
-              const struct processor_handler *handler, void *ctx)
+static inline processor_t
+istream_to_processor(istream_t istream)
+{
+    return (processor_t)(((char*)istream) - offsetof(struct processor, output));
+}
+
+static void
+processor_output(processor_t processor);
+
+static void
+processor_output_stream_read(istream_t istream)
+{
+    processor_t processor = istream_to_processor(istream);
+
+    if (processor->fd < 0)
+        processor_output(processor);
+}
+
+static void
+processor_close(processor_t processor);
+
+static void
+processor_output_stream_close(istream_t istream)
+{
+    processor_t processor = istream_to_processor(istream);
+
+    processor_close(processor);
+}
+
+static const struct istream processor_output_stream = {
+    .read = processor_output_stream_read,
+    .direct = NULL,
+    .close = processor_output_stream_close,
+};
+
+
+static size_t
+processor_input(processor_t processor, const void *buffer, size_t length);
+
+static size_t
+processor_input_data(const void *data, size_t length, void *ctx)
+{
+    processor_t processor = ctx;
+
+    return processor_input(processor, data, length);
+}
+
+static void
+processor_input_finished(processor_t processor);
+
+static void
+processor_input_eof(void *ctx)
+{
+    processor_t processor = ctx;
+
+    assert(processor->input != NULL);
+    processor->input = NULL;
+
+    processor_input_finished(processor);
+}
+
+static void
+processor_input_free(void *ctx)
+{
+    processor_t processor = ctx;
+
+    if (processor->input != NULL)
+        processor_close(processor); /* XXX */
+}
+
+static const struct istream_handler processor_input_handler = {
+    .data = processor_input_data,
+    .eof = processor_input_eof,
+    .free = processor_input_free,
+};
+
+
+istream_t
+processor_new(pool_t pool, istream_t istream)
 {
     processor_t processor = p_malloc(pool, sizeof(*processor));
 
-    assert(handler != NULL);
-    assert(handler->input != NULL);
-    assert(handler->meta != NULL);
-    assert(handler->output != NULL);
-    assert(handler->output_finished != NULL);
+    assert(istream != NULL);
+    assert(istream->handler == NULL);
 
     processor->pool = pool;
     processor->fd = -1;
@@ -67,8 +142,10 @@ processor_new(pool_t pool,
     processor->first_substitution = NULL;
     processor->append_substitution_p = &processor->first_substitution;
 
-    processor->handler = handler;
-    processor->handler_ctx = ctx;
+    processor->output = processor_output_stream;
+    processor->input = istream;
+    istream->handler = &processor_input_handler;
+    istream->handler_ctx = processor;
 
     /* XXX */
     processor->fd = open("/tmp/beng-processor.tmp", O_CREAT|O_EXCL|O_RDWR, 0777);
@@ -78,7 +155,7 @@ processor_new(pool_t pool,
     }
     unlink("/tmp/beng-processor.tmp");
 
-    return processor;
+    return &processor->output;
 }
 
 static void
@@ -101,26 +178,16 @@ processor_close(processor_t processor)
         processor->map = NULL;
     }
 
-    if (processor->handler != NULL) {
-        const struct processor_handler *handler = processor->handler;
-        void *handler_ctx = processor->handler_ctx;
+    if (processor->output.handler != NULL) {
+        const struct istream_handler *handler = processor->output.handler;
+        void *handler_ctx = processor->output.handler_ctx;
 
-        processor->handler = NULL;
-        processor->handler_ctx = NULL;
+        processor->output.handler = NULL;
+        processor->output.handler_ctx = NULL;
 
         if (handler->free != NULL)
             handler->free(handler_ctx);
     }
-}
-
-void
-processor_free(processor_t *processor_r)
-{
-    processor_t processor = *processor_r;
-    *processor_r = NULL;
-    assert(processor != NULL);
-
-    processor_close(processor);
 }
 
 static size_t
@@ -136,8 +203,8 @@ processor_invoke_substitution_output(processor_t processor,
     pool_ref(processor->pool);
 
     nbytes = substitution_output(processor->first_substitution,
-                                 processor->handler->output,
-                                 processor->handler_ctx);
+                                 processor->output.handler->data,
+                                 processor->output.handler_ctx);
     if (substitution_finished(processor->first_substitution)) {
         processor->position = processor->first_substitution->end;
         substitution_close(processor->first_substitution);
@@ -166,17 +233,6 @@ processor_maybe_substitution_output(processor_t processor,
 }
 
 static void
-processor_substitution_meta(struct substitution *s,
-                            const char *content_type)
-{
-    processor_t processor = s->handler_ctx;
-
-    (void)content_type; /* XXX */
-
-    processor_maybe_substitution_output(processor, s);
-}
-
-static void
 processor_substitution_output(struct substitution *s)
 {
     processor_t processor = s->handler_ctx;
@@ -189,7 +245,6 @@ processor_substitution_output(struct substitution *s)
 }
 
 static const struct substitution_handler processor_substitution_handler = {
-    .meta = processor_substitution_meta,
     .output = processor_substitution_output,
 };
 
@@ -331,7 +386,7 @@ processor_parse_input(processor_t processor, const char *start, size_t length)
     }
 }
 
-size_t
+static size_t
 processor_input(processor_t processor, const void *buffer, size_t length)
 {
     ssize_t nbytes;
@@ -367,7 +422,7 @@ processor_input(processor_t processor, const void *buffer, size_t length)
     return (size_t)nbytes;
 }
 
-void
+static void
 processor_input_finished(processor_t processor)
 {
     off_t ret;
@@ -397,10 +452,11 @@ processor_input_finished(processor_t processor)
 
     processor->position = 0;
 
-    processor->handler->meta("text/html", processor->handler_ctx);
+    /* XXX processor->handler->meta("text/html", processor->handler_ctx); */
+    processor_output(processor);
 }
 
-void
+static void
 processor_output(processor_t processor)
 {
     size_t rest, nbytes = 0;
@@ -428,8 +484,8 @@ processor_output(processor_t processor)
             rest = (size_t)(processor->first_substitution->start - processor->position);
 
         if (rest > 0) {
-            nbytes = processor->handler->output(processor->map + processor->position,
-                                                rest, processor->handler_ctx);
+            nbytes = processor->output.handler->data(processor->map + processor->position,
+                                                     rest, processor->output.handler_ctx);
             assert(nbytes <= rest);
             processor->position += nbytes;
         }
@@ -437,8 +493,8 @@ processor_output(processor_t processor)
 
     if (processor->first_substitution == NULL &&
         processor->position == processor->source_length) {
-        const struct processor_handler *handler = processor->handler;
-        void *handler_ctx = processor->handler_ctx;
+        const struct istream_handler *handler = processor->output.handler;
+        void *handler_ctx = processor->output.handler_ctx;
         pool_t pool = processor->pool;
 
         munmap(processor->map, (size_t)processor->source_length);
@@ -446,7 +502,7 @@ processor_output(processor_t processor)
 
         pool_ref(pool);
 
-        handler->output_finished(handler_ctx);
+        handler->eof(handler_ctx);
 
         processor_close(processor);
 

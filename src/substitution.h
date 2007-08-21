@@ -17,8 +17,6 @@
 struct substitution;
 
 struct substitution_handler {
-    void (*meta)(struct substitution *s,
-                 const char *content_type);
     void (*output)(struct substitution *s);
 };
 
@@ -36,8 +34,6 @@ struct substitution {
     istream_t istream;
     int istream_eof;
     fifo_buffer_t buffer;
-
-    processor_t processor;
 
     const struct substitution_handler *handler;
     void *handler_ctx;
