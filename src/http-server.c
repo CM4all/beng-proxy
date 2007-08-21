@@ -616,6 +616,9 @@ http_server_send_chunk(http_server_connection_t connection,
 
     fifo_buffer_append(connection->output, 4 + 2 + length + 2);
 
+    if ((connection->event.ev_events & EV_WRITE) == 0)
+        http_server_event_setup(connection);
+
     return length;
 }
 
