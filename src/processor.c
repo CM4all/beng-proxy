@@ -83,16 +83,45 @@ static const struct istream processor_output_stream = {
     .close = processor_output_stream_close,
 };
 
-
-static size_t
-processor_input(processor_t processor, const void *buffer, size_t length);
+static void
+processor_parse_input(processor_t processor, const char *start, size_t length);
 
 static size_t
 processor_input_data(const void *data, size_t length, void *ctx)
 {
     processor_t processor = ctx;
 
-    return processor_input(processor, data, length);
+    ssize_t nbytes;
+
+    assert(processor != NULL);
+    assert(processor->fd >= 0);
+    assert(data != NULL);
+    assert(length > 0);
+
+    nbytes = write(processor->fd, data, length);
+    if (nbytes < 0) {
+        perror("write to temporary file failed");
+        processor_close(processor);
+        return 0;
+    }
+
+    if (nbytes == 0) {
+        fprintf(stderr, "disk full\n");
+        processor_close(processor);
+        return 0;
+    }
+
+    processor_parse_input(processor, (const char*)data, (size_t)nbytes);
+
+    processor->source_length += (off_t)nbytes;
+
+    if (processor->source_length >= 8 * 1024 * 1024) {
+        fprintf(stderr, "file too large for processor\n");
+        processor_close(processor);
+        return 0;
+    }
+
+    return (size_t)nbytes;
 }
 
 static void
@@ -387,42 +416,6 @@ processor_parse_input(processor_t processor, const char *start, size_t length)
             break;
         }
     }
-}
-
-static size_t
-processor_input(processor_t processor, const void *buffer, size_t length)
-{
-    ssize_t nbytes;
-
-    assert(processor != NULL);
-    assert(processor->fd >= 0);
-    assert(buffer != NULL);
-    assert(length > 0);
-
-    nbytes = write(processor->fd, buffer, length);
-    if (nbytes < 0) {
-        perror("write to temporary file failed");
-        processor_close(processor);
-        return 0;
-    }
-
-    if (nbytes == 0) {
-        fprintf(stderr, "disk full\n");
-        processor_close(processor);
-        return 0;
-    }
-
-    processor_parse_input(processor, (const char*)buffer, (size_t)nbytes);
-
-    processor->source_length += (off_t)nbytes;
-
-    if (processor->source_length >= 8 * 1024 * 1024) {
-        fprintf(stderr, "file too large for processor\n");
-        processor_close(processor);
-        return 0;
-    }
-
-    return (size_t)nbytes;
 }
 
 static void
