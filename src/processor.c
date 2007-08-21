@@ -96,17 +96,41 @@ processor_input_data(const void *data, size_t length, void *ctx)
 }
 
 static void
-processor_input_finished(processor_t processor);
-
-static void
 processor_input_eof(void *ctx)
 {
     processor_t processor = ctx;
+    off_t ret;
 
+    assert(processor != NULL);
+    assert(processor->fd >= 0);
     assert(processor->input != NULL);
+
     processor->input = NULL;
 
-    processor_input_finished(processor);
+    processor->map = mmap(NULL, (size_t)processor->source_length,
+                          PROT_READ, MAP_PRIVATE, processor->fd,
+                          0);
+    if (processor->map == NULL) {
+        perror("mmap() failed");
+        processor_close(processor);
+        return;
+    }
+
+    madvise(processor->map, (size_t)processor->source_length,
+            MADV_SEQUENTIAL);
+
+    ret = close(processor->fd);
+    processor->fd = -1;
+    if (ret == (off_t)-1) {
+        perror("close() failed");
+        processor_close(processor);
+        return;
+    }
+
+    processor->position = 0;
+
+    /* XXX processor->handler->meta("text/html", processor->handler_ctx); */
+    processor_output(processor);
 }
 
 static void
@@ -399,40 +423,6 @@ processor_input(processor_t processor, const void *buffer, size_t length)
     }
 
     return (size_t)nbytes;
-}
-
-static void
-processor_input_finished(processor_t processor)
-{
-    off_t ret;
-
-    assert(processor != NULL);
-    assert(processor->fd >= 0);
-
-    processor->map = mmap(NULL, (size_t)processor->source_length,
-                          PROT_READ, MAP_PRIVATE, processor->fd,
-                          0);
-    if (processor->map == NULL) {
-        perror("mmap() failed");
-        processor_close(processor);
-        return;
-    }
-
-    madvise(processor->map, (size_t)processor->source_length,
-            MADV_SEQUENTIAL);
-
-    ret = close(processor->fd);
-    processor->fd = -1;
-    if (ret == (off_t)-1) {
-        perror("close() failed");
-        processor_close(processor);
-        return;
-    }
-
-    processor->position = 0;
-
-    /* XXX processor->handler->meta("text/html", processor->handler_ctx); */
-    processor_output(processor);
 }
 
 static void
