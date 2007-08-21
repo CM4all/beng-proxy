@@ -82,9 +82,14 @@ static void
 proxy_processor_output_finished(void *ctx)
 {
     struct proxy_transfer *pt = ctx;
+    pool_t pool = pt->request->pool;
+
+    pool_ref(pool);
 
     http_server_send_last_chunk(pt->request->connection);
     http_server_response_finish(pt->request->connection);
+
+    pool_unref(pool);
 }
 
 static void
