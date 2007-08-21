@@ -80,6 +80,8 @@ substitution_http_client_callback(int status, strmap_t headers,
 
     s->istream->handler = &substitution_istream_handler;
     s->istream->handler_ctx = s;
+
+    istream_read(s->istream);
 }
 
 static void
@@ -214,7 +216,7 @@ substitution_close(struct substitution *s)
 void
 substitution_output(struct substitution *s)
 {
-    if (s->client_socket == NULL)
+    if (s->istream != NULL)
         istream_read(s->istream);
 }
 
