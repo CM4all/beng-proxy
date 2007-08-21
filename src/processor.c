@@ -196,7 +196,8 @@ static const struct substitution_handler processor_substitution_handler = {
 static void
 processor_element_finished(processor_t processor, off_t end)
 {
-    struct substitution *s = p_malloc(processor->pool, sizeof(*s));
+    pool_t pool = pool_new_linear(processor->pool, "processor_substitution", 16384);
+    struct substitution *s = p_malloc(pool, sizeof(*s));
 
     s->next = NULL;
     s->start = processor->element_offset;
@@ -204,7 +205,7 @@ processor_element_finished(processor_t processor, off_t end)
 
     s->url = "http://dory.intern.cm-ag/"; /* XXX */
 
-    s->pool = pool_new_linear(processor->pool, "processor_substitution", 16384);
+    s->pool = pool;
 
     s->handler = &processor_substitution_handler;
     s->handler_ctx = processor;
