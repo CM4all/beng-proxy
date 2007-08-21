@@ -24,21 +24,31 @@
 
 struct http_client_connection {
     pool_t pool;
+
+    /* I/O */
     int fd;
-    http_client_callback_t callback;
-    void *callback_ctx;
     struct event event;
     fifo_buffer_t input, output;
-    struct http_client_response *response;
+
+    /* callback */
+    http_client_callback_t callback;
+    void *callback_ctx;
+
+    /* request */
     int writing_headers;
     strmap_t request_headers;
     const struct pair *next_request_header;
+
+    /* response */
+    struct http_client_response *response;
     int reading_headers, reading_body, direct_mode;
+    off_t body_rest;
+
+    /* connection settings */
     int keep_alive;
 #ifdef __linux
     int cork;
 #endif
-    off_t body_rest;
 };
 
 static struct http_client_response *

@@ -24,18 +24,28 @@
 
 struct http_server_connection {
     pool_t pool;
-    int fd;
+
     /*
     struct sockaddr_storage remote_addr;
     socklen_t remote_addrlen;
     */
-    http_server_callback_t callback;
-    void *callback_ctx;
+
+    /* I/O */
+    int fd;
     struct event event;
     fifo_buffer_t input, output;
+
+    /* callback */
+    http_server_callback_t callback;
+    void *callback_ctx;
+
+    /* request */
     struct http_server_request *request;
-    int reading_headers, reading_body, direct_mode;
+    int reading_headers, reading_body;
+
+    /* connection settings */
     int keep_alive;
+    int direct_mode;
 #ifdef __linux
     int cork;
 #endif

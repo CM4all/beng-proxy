@@ -19,9 +19,13 @@ typedef struct http_client_connection *http_client_connection_t;
 struct http_client_response {
     pool_t pool;
     http_client_connection_t connection;
+
+    /* response metadata */
     int status;
     strmap_t headers;
     off_t content_length;
+
+    /* callback */
     const struct http_client_request_handler *handler;
     void *handler_ctx;
 };

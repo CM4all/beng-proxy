@@ -20,9 +20,13 @@ typedef struct http_server_connection *http_server_connection_t;
 struct http_server_request {
     pool_t pool;
     http_server_connection_t connection;
+
+    /* request metadata */
     http_method_t method;
     char *uri;
     strmap_t headers;
+
+    /* callback */
     const struct http_server_request_handler *handler;
     void *handler_ctx;
 };
