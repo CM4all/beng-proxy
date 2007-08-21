@@ -689,9 +689,8 @@ http_client_connection_close(http_client_connection_t connection)
             connection->response.pool = NULL;
         } else if (connection->response.reading_body) {
             http_client_response_stream_close(&connection->response.stream);
+            assert(!connection->response.reading);
         }
-
-        assert(!connection->response.reading);
     }
 
     if (connection->callback != NULL) {
