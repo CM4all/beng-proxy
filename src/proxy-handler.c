@@ -6,8 +6,7 @@
 
 #include "connection.h"
 #include "handler.h"
-#include "client-socket.h"
-#include "http-client.h"
+#include "url-stream.h"
 #include "processor.h"
 
 #include <assert.h>
@@ -15,14 +14,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <netdb.h>
 
 struct proxy_transfer {
     struct http_server_request *request;
-    const char *uri;
 
-    client_socket_t client_socket;
-    http_client_connection_t http;
+    url_stream_t url_stream;
     off_t content_length;
     istream_t istream;
     int istream_eof;
@@ -37,9 +33,9 @@ proxy_transfer_close(struct proxy_transfer *pt)
         istream_close(istream);
     }
 
-    if (pt->http != NULL) {
-        http_client_connection_close(pt->http);
-        pt->http = NULL;
+    if (pt->url_stream != NULL) {
+        url_stream_close(pt->url_stream);
+        assert(pt->url_stream == NULL);
     }
 
     if (pt->request != NULL) {
@@ -106,8 +102,10 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
     assert(pt->istream == NULL);
 
+    pt->url_stream = NULL;
+
     if (status == 0) {
-        pt->http = NULL;
+        /* XXX */
         if (!pt->istream_eof)
             proxy_transfer_close(pt);
         return;
@@ -154,49 +152,6 @@ static const char *const copy_headers[] = {
     NULL
 };
 
-static void
-proxy_client_forward_request(struct proxy_transfer *pt)
-{
-    strmap_t request_headers;
-    const char *value;
-    unsigned i;
-
-    assert(pt != NULL);
-    assert(pt->http != NULL);
-    assert(pt->uri != NULL);
-
-    request_headers = strmap_new(pt->request->pool, 64);
-
-    for (i = 0; copy_headers[i] != NULL; ++i) {
-        value = strmap_get(pt->request->headers, copy_headers[i]);
-        if (value != NULL)
-            strmap_addn(request_headers, copy_headers[i], value);
-    }
-
-    http_client_request(pt->http, HTTP_METHOD_GET, pt->uri, request_headers);
-}
-
-static void
-proxy_client_socket_callback(int fd, int err, void *ctx)
-{
-    struct proxy_transfer *pt = ctx;
-
-    if (err == 0) {
-        assert(fd >= 0);
-
-        pt->http = http_client_connection_new(pt->request->pool, fd,
-                                              proxy_http_client_callback, pt);
-
-        proxy_client_forward_request(pt);
-    } else {
-        fprintf(stderr, "failed to connect: %s\n", strerror(err));
-        http_server_send_message(pt->request->connection,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "proxy connect failed");
-        http_server_response_finish(pt->request->connection);
-    }
-}
-
 static size_t proxy_response_body(struct http_server_request *request,
                                   void *buffer, size_t max_length)
 {
@@ -227,49 +182,12 @@ static const struct http_server_request_handler proxy_request_handler = {
     .free = proxy_response_free,
 };
 
-static int
-getaddrinfo_helper(const char *host_and_port, int default_port,
-                   const struct addrinfo *hints,
-                   struct addrinfo **aip) {
-    const char *colon, *host, *port;
-    char buffer[256];
-
-    colon = strchr(host_and_port, ':');
-    if (colon == NULL) {
-        snprintf(buffer, sizeof(buffer), "%d", default_port);
-
-        host = host_and_port;
-        port = buffer;
-    } else {
-        size_t len = colon - host_and_port;
-
-        if (len >= sizeof(buffer)) {
-            errno = ENAMETOOLONG;
-            return EAI_SYSTEM;
-        }
-
-        memcpy(buffer, host_and_port, len);
-        buffer[len] = 0;
-
-        host = buffer;
-        port = colon + 1;
-    }
-
-    if (strcmp(host, "*") == 0)
-        host = "0.0.0.0";
-
-    return getaddrinfo(host, port, hints, aip);
-}
-
 void
 proxy_callback(struct client_connection *connection,
                struct http_server_request *request,
                struct translated *translated)
 {
-    int ret;
     struct proxy_transfer *pt;
-    const char *p, *slash, *host_and_port;
-    struct addrinfo hints, *ai;
 
     (void)connection;
 
@@ -282,62 +200,19 @@ proxy_callback(struct client_connection *connection,
         return;
     }
 
-    if (memcmp(translated->path, "http://", 7) != 0) {
-        /* XXX */
-        http_server_send_message(request->connection,
-                                 HTTP_STATUS_BAD_REQUEST,
-                                 "Invalid proxy URI");
-        http_server_response_finish(request->connection);
-        return;
-    }
-
-    p = translated->path + 7;
-    slash = strchr(p, '/');
-    if (slash == NULL || slash == p) {
-        /* XXX */
-        http_server_send_message(request->connection,
-                                 HTTP_STATUS_BAD_REQUEST,
-                                 "Invalid proxy URI");
-        http_server_response_finish(request->connection);
-        return;
-    }
-
-    host_and_port = p_strndup(request->pool, p, slash - p);
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-
-    /* XXX make this asynchronous */
-    ret = getaddrinfo_helper(host_and_port, 80, &hints, &ai);
-    if (ret != 0) {
-        fprintf(stderr, "failed to resolve proxy host name\n");
-        http_server_send_message(request->connection,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Internal server error");
-        http_server_response_finish(request->connection);
-        return;
-    }
-
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->request = request;
-    pt->uri = slash;
 
-    ret = client_socket_new(request->pool,
-                            ai->ai_addr, ai->ai_addrlen,
-                            proxy_client_socket_callback, pt,
-                            &pt->client_socket);
-    if (ret != 0) {
-        perror("client_socket_new() failed");
-        freeaddrinfo(ai);
+    pt->url_stream = url_stream_new(request->pool,
+                                    HTTP_METHOD_GET, translated->path, NULL,
+                                    proxy_http_client_callback, pt);
+    if (pt->url_stream == NULL) {
         http_server_send_message(request->connection,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
         http_server_response_finish(request->connection);
         return;
     }
-
-    freeaddrinfo(ai);
 
     request->handler = &proxy_request_handler;
     request->handler_ctx = pt;

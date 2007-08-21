@@ -7,8 +7,7 @@
 #ifndef __BENG_SUBSTITUTION_H
 #define __BENG_SUBSTITUTION_H
 
-#include "http-client.h"
-#include "client-socket.h"
+#include "url-stream.h"
 #include "processor.h"
 #include "fifo-buffer.h"
 
@@ -24,12 +23,11 @@ struct substitution_handler {
 struct substitution {
     struct substitution *next;
     off_t start, end;
-    const char *url, *uri;
+    const char *url;
 
     pool_t pool;
 
-    client_socket_t client_socket;
-    http_client_connection_t http;
+    url_stream_t url_stream;
     istream_t istream;
     int istream_eof;
 
