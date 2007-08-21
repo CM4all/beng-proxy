@@ -101,7 +101,7 @@ url_stream_new(pool_t pool,
                strmap_t headers,
                url_stream_callback_t callback, void *ctx)
 {
-    url_stream_t us = p_calloc(pool, sizeof(*us));
+    url_stream_t us = p_malloc(pool, sizeof(*us));
     int ret;
     const char *p, *slash, *host_and_port;
     struct addrinfo hints, *ai;
@@ -112,6 +112,7 @@ url_stream_new(pool_t pool,
     us->pool = pool;
     us->method = method;
     us->headers = headers;
+    us->client_socket = NULL;
     us->callback = callback;
     us->callback_ctx = ctx;
 
