@@ -130,8 +130,7 @@ http_client_response_stream_close(istream_t istream)
         /* XXX invalidate connection */
     }
 
-    if (istream->handler->free != NULL)
-        istream->handler->free(istream->handler_ctx);
+    istream_invoke_free(istream);
 }
 
 static const struct istream http_client_response_stream = {
@@ -154,8 +153,7 @@ http_client_response_body_consumed(http_client_connection_t connection, size_t n
 
     pool_ref(connection->pool);
 
-    if (connection->response.stream.handler->eof != NULL)
-        connection->response.stream.handler->eof(connection->response.stream.handler_ctx);
+    istream_invoke_eof(&connection->response.stream);
 
     http_client_response_stream_close(&connection->response.stream);
 
@@ -494,8 +492,8 @@ http_client_consume_body(http_client_connection_t connection)
     if ((off_t)length > connection->response.body_rest)
         length = (size_t)connection->response.body_rest;
 
-    consumed = connection->response.stream.handler->data(buffer, length,
-                                                         connection->response.stream.handler_ctx);
+    consumed = istream_invoke_data(&connection->response.stream,
+                                   buffer, length);
     assert(consumed <= length);
 
     if (consumed > 0) {
@@ -532,9 +530,8 @@ http_client_try_response_direct(http_client_connection_t connection)
     assert(connection->response.reading_body);
     assert(connection->response.stream.handler->direct != NULL);
 
-    nbytes = connection->response.stream.handler->direct(connection->fd,
-                                                         (size_t)connection->response.body_rest,
-                                                         connection->response.stream.handler_ctx);
+    nbytes = istream_invoke_direct(&connection->response.stream, connection->fd,
+                                   (size_t)connection->response.body_rest);
     if (nbytes < 0) {
         /* XXX EAGAIN? */
         perror("read error on HTTP connection");

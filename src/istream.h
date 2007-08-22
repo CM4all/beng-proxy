@@ -49,4 +49,36 @@ istream_close(istream_t istream)
     istream->close(istream);
 }
 
+
+static inline size_t
+istream_invoke_data(istream_t istream, const void *data, size_t length)
+{
+    return istream->handler->data(data, length, istream->handler_ctx);
+}
+
+static inline ssize_t
+istream_invoke_direct(istream_t istream, int fd, size_t max_length)
+{
+    return istream->handler->direct(fd, max_length, istream->handler_ctx);
+}
+
+static inline void
+istream_invoke_eof(istream_t istream)
+{
+    if (istream->handler->eof != NULL)
+        istream->handler->eof(istream->handler_ctx);
+}
+
+static inline void
+istream_invoke_free(istream_t istream)
+{
+    if (istream->handler != NULL && istream->handler->free != NULL) {
+        const struct istream_handler *handler = istream->handler;
+        void *handler_ctx = istream->handler_ctx;
+        istream->handler = NULL;
+        istream->handler_ctx = NULL;
+        handler->free(handler_ctx);
+    }
+}
+
 #endif

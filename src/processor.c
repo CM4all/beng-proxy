@@ -216,16 +216,7 @@ processor_close(processor_t processor)
         processor->map = NULL;
     }
 
-    if (processor->output.handler != NULL) {
-        const struct istream_handler *handler = processor->output.handler;
-        void *handler_ctx = processor->output.handler_ctx;
-
-        processor->output.handler = NULL;
-        processor->output.handler_ctx = NULL;
-
-        if (handler->free != NULL)
-            handler->free(handler_ctx);
-    }
+    istream_invoke_free(&processor->output);
 }
 
 static size_t
@@ -243,8 +234,7 @@ processor_substitution_output(struct substitution *s,
         processor->position < processor->first_substitution->start)
         return 0;
 
-    return processor->output.handler->data(data, length,
-                                           processor->output.handler_ctx);
+    return istream_invoke_data(&processor->output, data, length);
 }
 
 static void
@@ -322,16 +312,15 @@ processor_output(processor_t processor)
         rest = 0;
 
     if (rest > 0) {
-        nbytes = processor->output.handler->data(processor->map + processor->position,
-                                                 rest, processor->output.handler_ctx);
+        nbytes = istream_invoke_data(&processor->output,
+                                     processor->map + processor->position,
+                                     rest);
         assert(nbytes <= rest);
         processor->position += nbytes;
     }
 
     if (processor->first_substitution == NULL &&
         processor->position == processor->source_length) {
-        const struct istream_handler *handler = processor->output.handler;
-        void *handler_ctx = processor->output.handler_ctx;
         pool_t pool = processor->pool;
 
         munmap(processor->map, (size_t)processor->source_length);
@@ -339,7 +328,7 @@ processor_output(processor_t processor)
 
         pool_ref(pool);
 
-        handler->eof(handler_ctx);
+        istream_invoke_eof(&processor->output);
 
         processor_close(processor);
 
