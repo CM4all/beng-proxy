@@ -91,8 +91,10 @@ istream_file_direct(istream_t istream)
         /* -2 means the callback wasn't able to consume any data right
             now */
     } else if (nbytes == 0) {
+        pool_ref(istream->pool);
         istream_invoke_eof(istream);
         istream_close(istream);
+        pool_unref(istream->pool);
     } else {
         /* XXX */
         fprintf(stderr, "failed to read from '%s': %s\n",
@@ -135,6 +137,7 @@ istream_file_new(pool_t pool, const char *path)
     file->buffer = fifo_buffer_new(pool, 4096);
     file->path = path;
     file->stream = istream_file;
+    file->stream.pool = pool;
 
     return &file->stream;
 }

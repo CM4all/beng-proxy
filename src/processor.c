@@ -180,6 +180,7 @@ processor_new(pool_t pool, istream_t istream)
     processor->append_substitution_p = &processor->first_substitution;
 
     processor->output = processor_output_stream;
+    processor->output.pool = pool;
     processor->input = istream;
     istream->handler = &processor_input_handler;
     istream->handler_ctx = processor;
