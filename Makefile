@@ -25,6 +25,7 @@ SOURCES = src/main.c \
 	src/listener.c \
 	src/client-socket.c \
 	src/buffered-io.c \
+	src/header-writer.c \
 	src/http-server.c \
 	src/http-client.c \
 	src/url-stream.c \

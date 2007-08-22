@@ -9,6 +9,7 @@
 #include "strutil.h"
 #include "compiler.h"
 #include "buffered-io.h"
+#include "header-writer.h"
 
 #ifdef __linux
 #include <sys/socket.h>
@@ -37,8 +38,7 @@ struct http_client_connection {
     /* request */
     struct {
         int writing_headers;
-        strmap_t headers;
-        const struct pair *next_header;
+        struct header_writer header_writer;
     } request;
 
     /* response */
@@ -200,60 +200,27 @@ http_client_uncork(http_client_connection_t connection)
 #endif
 }
 
-static size_t
-append_headers(http_client_connection_t connection,
-               char *dest, size_t max_length)
-{
-    const struct pair *current = connection->request.next_header;
-    size_t length = 0, key_length, value_length;
-
-    assert(connection != NULL);
-    assert(connection->request.writing_headers);
-
-    /* we always want enough room for the trailing \r\n */
-    if (unlikely(max_length < 2))
-        return 0;
-
-    if (current == NULL && connection->request.headers != NULL) {
-        strmap_rewind(connection->request.headers);
-        current = strmap_next(connection->request.headers);
-    }
-
-    while (current != NULL) {
-        key_length = strlen(current->key);
-        value_length = strlen(current->value);
-
-        if (unlikely(length + key_length + 2 + value_length + 2 + 2 > max_length))
-            break;
-
-        memcpy(dest + length, current->key, key_length);
-        length += key_length;
-        dest[length++] = ':';
-        dest[length++] = ' ';
-        memcpy(dest + length, current->value, value_length);
-        length += value_length;
-        dest[length++] = '\r';
-        dest[length++] = '\n';
-
-        current = strmap_next(connection->request.headers);
-    }
-
-    connection->request.next_header = current;
-    if (current == NULL) {
-        assert(length + 2 <= max_length);
-        dest[length++] = '\r';
-        dest[length++] = '\n';
-        connection->request.headers = NULL;
-    }
-
-    return length;
-}
-
 static void
 http_client_call_request_body(http_client_connection_t connection)
 {
     /* XXX */
     (void)connection;
+}
+
+static void
+http_client_write_headers(http_client_connection_t connection)
+{
+    ssize_t nbytes;
+
+    assert(connection->request.writing_headers);
+
+    nbytes = header_writer_run(&connection->request.header_writer);
+    if (nbytes == 0) {
+        connection->request.writing_headers = 0;
+        connection->response.reading = 1;
+        connection->response.reading_headers = 0;
+        connection->response.reading_body = 0;
+    }
 }
 
 static void
@@ -268,14 +235,7 @@ http_client_try_send(http_client_connection_t connection)
     while ((rest = write_from_buffer(connection->fd,
                                      connection->output)) == 0) {
         if (connection->request.writing_headers) {
-            char *buffer;
-            size_t max_length, length;
-            
-            buffer = fifo_buffer_write(connection->output, &max_length);
-            if (buffer != NULL) {
-                length = append_headers(connection, buffer, max_length);
-                fifo_buffer_append(connection->output, length);
-            }
+            http_client_write_headers(connection);
         } else {
             http_client_call_request_body(connection);
             if (!connection->response.reading)
@@ -675,8 +635,6 @@ http_client_connection_close(http_client_connection_t connection)
     }
 
     connection->request.writing_headers = 0;
-    connection->request.headers = NULL;
-    connection->request.next_header = NULL;
     connection->cork = 0;
 
     if (connection->response.reading) {
@@ -705,32 +663,26 @@ http_client_request(http_client_connection_t connection,
                     strmap_t headers)
 {
     char *buffer;
-    size_t max_length, length;
+    size_t max_length;
 
     assert(connection != NULL);
     assert(!connection->request.writing_headers);
-    assert(connection->request.headers == NULL);
-    assert(connection->request.next_header == NULL);
     assert(!connection->response.reading);
 
     connection->request.writing_headers = 1;
-    connection->request.headers = headers;
+    header_writer_init(&connection->request.header_writer,
+                       connection->output, headers);
 
     buffer = fifo_buffer_write(connection->output, &max_length);
     assert(buffer != NULL); /* XXX */
 
     (void)method; /* XXX */
     snprintf(buffer, max_length, "GET %s HTTP/1.1\r\nHost: localhost\r\n", uri);
-    length = strlen(buffer);
+    fifo_buffer_append(connection->output, strlen(buffer));
 
-    length += append_headers(connection, buffer + length, max_length - length);
+    http_client_write_headers(connection);
 
-    buffered_quick_write(connection->fd, connection->output,
-                         buffer, length);
-
-    connection->response.reading = 1;
-    connection->response.reading_headers = 0;
-    connection->response.reading_body = 0;
+    http_client_try_send(connection);
 
     http_client_event_setup(connection);
 }
