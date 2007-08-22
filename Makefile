@@ -30,7 +30,7 @@ SOURCES = src/main.c \
 	src/url-stream.c \
 	src/fifo-buffer.c \
 	src/istream-memory.c \
-	src/file-stream.c \
+	src/istream-file.c \
 	src/strutil.c \
 	src/strmap.c \
 	src/pool.c
