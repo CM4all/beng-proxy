@@ -485,8 +485,10 @@ http_server_event_setup(http_server_connection_t connection)
         !fifo_buffer_empty(connection->output))
         event |= EV_WRITE | EV_TIMEOUT;
 
-    if (event == 0)
+    if (event == 0) {
+        connection->event.ev_events = 0;
         return;
+    }
 
     tv.tv_sec = 30;
     tv.tv_usec = 0;
