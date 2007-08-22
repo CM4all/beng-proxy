@@ -7,6 +7,8 @@
 #ifndef __BENG_ISTREAM_H
 #define __BENG_ISTREAM_H
 
+#include "pool.h"
+
 #include <sys/types.h>
 
 typedef struct istream *istream_t;
@@ -49,7 +51,6 @@ istream_close(istream_t istream)
     istream->close(istream);
 }
 
-
 static inline size_t
 istream_invoke_data(istream_t istream, const void *data, size_t length)
 {
@@ -80,5 +81,9 @@ istream_invoke_free(istream_t istream)
         handler->free(handler_ctx);
     }
 }
+
+
+istream_t
+istream_file_new(pool_t pool, const char *path);
 
 #endif
