@@ -91,7 +91,11 @@ strmap_put(strmap_t map, const char *key, const char *value, int overwrite)
     assert(value != NULL);
 
     prev = &map->slots[hash % map->capacity];
-    if (prev->pair.key != NULL && strcmp(prev->pair.key, key) == 0)
+    if (prev->pair.key == NULL) {
+        prev->pair.key = key;
+        prev->pair.value = value;
+        return NULL;
+    } else if (strcmp(prev->pair.key, key) == 0)
         return strmap_maybe_overwrite(prev, value, overwrite);
 
     for (slot = prev->next; slot != NULL; slot = prev->next) {
