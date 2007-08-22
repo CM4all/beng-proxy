@@ -29,6 +29,7 @@ SOURCES = src/main.c \
 	src/http-client.c \
 	src/url-stream.c \
 	src/fifo-buffer.c \
+	src/istream-memory.c \
 	src/file-stream.c \
 	src/strutil.c \
 	src/strmap.c \

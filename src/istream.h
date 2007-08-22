@@ -84,6 +84,9 @@ istream_invoke_free(istream_t istream)
 
 
 istream_t
+istream_memory_new(pool_t pool, const void *data, size_t length);
+
+istream_t
 istream_file_new(pool_t pool, const char *path);
 
 #endif
