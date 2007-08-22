@@ -19,7 +19,6 @@
 typedef struct processor *processor_t;
 
 struct processor {
-    pool_t pool;
     const char *path;
     int fd;
     off_t source_length, position;
@@ -169,7 +168,6 @@ processor_new(pool_t pool, istream_t istream)
     assert(istream != NULL);
     assert(istream->handler == NULL);
 
-    processor->pool = pool;
     processor->fd = -1;
     processor->source_length = 0;
     processor->map = NULL;
@@ -267,7 +265,7 @@ void
 parser_element_finished(struct parser *parser, off_t end)
 {
     processor_t processor = parser_to_processor(parser);
-    pool_t pool = pool_new_linear(processor->pool, "processor_substitution", 16384);
+    pool_t pool = pool_new_linear(processor->output.pool, "processor_substitution", 16384);
     struct substitution *s = p_malloc(pool, sizeof(*s));
 
     s->next = NULL;
@@ -322,7 +320,7 @@ processor_output(processor_t processor)
 
     if (processor->first_substitution == NULL &&
         processor->position == processor->source_length) {
-        pool_t pool = processor->pool;
+        pool_t pool = processor->output.pool;
 
         munmap(processor->map, (size_t)processor->source_length);
         processor->map = NULL;
