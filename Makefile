@@ -19,6 +19,7 @@ SOURCES = src/main.c \
 	src/file-handler.c \
 	src/proxy-handler.c \
 	src/processor.c \
+	src/parser.c \
 	src/substitution.c \
 	src/socket-util.c \
 	src/listener.c \
