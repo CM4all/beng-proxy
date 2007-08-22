@@ -59,6 +59,8 @@ substitution_http_client_callback(http_status_t status, strmap_t headers,
 
     assert(s->istream == NULL);
 
+    (void)content_length;
+
     s->url_stream = NULL;
 
     if (status == 0) {
