@@ -1,5 +1,5 @@
 /*
- * istream implementation which reads from a fixed memory buffer.
+ * Write HTTP headers into a fifo_buffer_t.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
