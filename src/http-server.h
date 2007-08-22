@@ -10,6 +10,7 @@
 #include "pool.h"
 #include "strmap.h"
 #include "http.h"
+#include "istream.h"
 
 /*#include <sys/socket.h>*/
 #include <sys/types.h>
@@ -25,19 +26,6 @@ struct http_server_request {
     http_method_t method;
     char *uri;
     strmap_t headers;
-
-    /* callback */
-    const struct http_server_request_handler *handler;
-    void *handler_ctx;
-};
-
-struct http_server_request_handler {
-    void (*request_body)(struct http_server_request *request,
-                         const void *buffer, size_t length);
-    size_t (*response_body)(struct http_server_request *request,
-                            void *buffer, size_t max_length);
-    void (*response_direct)(struct http_server_request *request, int fd);
-    void (*free)(struct http_server_request *request);
 };
 
 /**
@@ -62,30 +50,18 @@ void
 http_server_connection_free(http_server_connection_t *connection_r);
 
 size_t
-http_server_send(http_server_connection_t connection,
-                 const void *p, size_t length);
-
-size_t
-http_server_send_chunk(http_server_connection_t connection,
-                       const void *p, size_t length);
-
-void
-http_server_send_last_chunk(http_server_connection_t connection);
-
-size_t
 http_server_send_status(http_server_connection_t connection, int status);
-
-void
-http_server_send_message(http_server_connection_t connection,
-                         http_status_t status, const char *msg);
 
 void
 http_server_try_write(http_server_connection_t connection);
 
 void
-http_server_response_direct_mode(http_server_connection_t connection);
+http_server_response(struct http_server_request *request,
+                     http_status_t status, strmap_t headers,
+                     off_t content_length, istream_t body);
 
 void
-http_server_response_finish(http_server_connection_t connection);
+http_server_send_message(struct http_server_request *request,
+                         http_status_t status, const char *msg);
 
 #endif

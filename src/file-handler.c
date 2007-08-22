@@ -9,171 +9,70 @@
 
 #include <assert.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
-
-#ifdef __linux
-#include <sys/sendfile.h>
-#endif
-
-struct file_transfer {
-    struct stat st;
-    int fd;
-    off_t rest;
-};
-
-static size_t file_response_body(struct http_server_request *request,
-                                 void *buffer, size_t max_length)
-{
-    struct file_transfer *f = request->handler_ctx;
-    ssize_t nbytes;
-
-    nbytes = read(f->fd, buffer, max_length);
-    if (nbytes < 0) {
-        perror("failed to read from file");
-        http_server_connection_close(request->connection);
-        return 0;
-    }
-
-    if (nbytes > 0) {
-        f->rest -= (off_t)nbytes;
-        if (f->rest <= 0)
-            http_server_response_finish(request->connection);
-    }
-
-    if (nbytes == 0) {
-        http_server_response_finish(request->connection);
-        return 0;
-    }
-
-    return (size_t)nbytes;
-}
-
-#ifdef __linux
-
-static void file_response_direct(struct http_server_request *request,
-                                 int sockfd)
-{
-    struct file_transfer *f = request->handler_ctx;
-    ssize_t nbytes;
-
-    nbytes = sendfile(sockfd, f->fd, NULL, 1024 * 1024);
-    if (nbytes < 0 && errno != EAGAIN) {
-        perror("sendfile() failed");
-        http_server_connection_close(request->connection);
-        return;
-    }
-
-    if (nbytes > 0) {
-        f->rest -= (off_t)nbytes;
-        if (f->rest <= 0)
-            http_server_response_finish(request->connection);
-    }
-
-    if (nbytes == 0)
-        http_server_response_finish(request->connection);
-}
-
-#endif
-
-static void file_response_free(struct http_server_request *request)
-{
-    struct file_transfer *f = request->handler_ctx;
-    close(f->fd);
-    request->handler_ctx = NULL;
-}
-
-static const struct http_server_request_handler file_request_handler = {
-    .response_body = file_response_body,
-#ifdef __linux
-    .response_direct = file_response_direct,
-#endif
-    .free = file_response_free,
-};
+#include <unistd.h>
 
 void
 file_callback(struct client_connection *connection,
               struct http_server_request *request,
               struct translated *translated)
 {
-    int ret, fd;
-    char buffer[4096];
-    struct file_transfer *f;
+    int ret;
+    strmap_t headers;
+    istream_t body;
+    struct stat st;
 
     (void)connection;
 
     if (request->method != HTTP_METHOD_HEAD &&
         request->method != HTTP_METHOD_GET) {
-        http_server_send_message(request->connection,
+        http_server_send_message(request,
                                  HTTP_STATUS_METHOD_NOT_ALLOWED,
                                  "This method is not allowed.");
-        http_server_response_finish(request->connection);
         return;
     }
 
-    f = p_malloc(request->pool, sizeof(*f));
-
-    ret = stat(translated->path, &f->st);
+    ret = stat(translated->path, &st);
     if (ret != 0) {
         if (errno == ENOENT) {
-            http_server_send_message(request->connection,
+            http_server_send_message(request,
                                      HTTP_STATUS_NOT_FOUND,
                                      "The requested file does not exist.");
         } else {
-            http_server_send_message(request->connection,
+            http_server_send_message(request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                      "Internal server error");
         }
-        http_server_response_finish(request->connection);
         return;
     }
 
-    if (!S_ISREG(f->st.st_mode)) {
-        http_server_send_message(request->connection,
+    if (!S_ISREG(st.st_mode)) {
+        http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Not a regular file");
-        http_server_response_finish(request->connection);
         return;
     }
 
     if (request->method != HTTP_METHOD_HEAD) {
-        fd = open(translated->path, O_RDONLY);
-        if (fd < 0) {
+        body = istream_file_new(request->pool, translated->path);
+        if (body == NULL) {
             if (errno == ENOENT) {
-                http_server_send_message(request->connection,
+                http_server_send_message(request,
                                          HTTP_STATUS_NOT_FOUND,
                                          "The requested file does not exist.");
             } else {
-                http_server_send_message(request->connection,
+                http_server_send_message(request,
                                          HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                          "Internal server error");
             }
-            http_server_response_finish(request->connection);
             return;
         }
-
-        f->fd = fd;
-        f->rest = f->st.st_size;
-
-        request->handler = &file_request_handler;
-        request->handler_ctx = f;
+    } else {
+        body = NULL;
     }
 
-    http_server_send_status(request->connection, 200);
+    headers = strmap_new(request->pool, 64);
+    strmap_addn(headers, "content-type", "text/html");
 
-    snprintf(buffer, sizeof(buffer), "Content-Type: text/html\r\nContent-Length: %lu\r\n\r\n",
-             (unsigned long)f->st.st_size);
-    http_server_send(request->connection, buffer, strlen(buffer));
-
-    if (request->method == HTTP_METHOD_HEAD) {
-        http_server_response_finish(request->connection);
-        return;
-    }
-
-#ifdef __linux
-    http_server_response_direct_mode(request->connection);
-#endif
+    http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
 }

@@ -50,18 +50,16 @@ my_http_server_callback(struct http_server_request *request,
 
     translated = translate(request);
     if (translated == NULL) {
-        http_server_send_message(request->connection,
+        http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
-        http_server_response_finish(request->connection);
         return;
     }
 
     if (translated == NULL || translated->path == NULL) {
-        http_server_send_message(request->connection,
+        http_server_send_message(request,
                                  HTTP_STATUS_NOT_FOUND,
                                  "The requested resource does not exist.");
-        http_server_response_finish(request->connection);
         return;
     }
 

@@ -65,6 +65,7 @@ istream_memory_new(pool_t pool, const void *data, size_t length)
     assert(data != NULL);
 
     memory->stream = istream_memory;
+    memory->stream.pool = pool;
     memory->data = data;
     memory->length = length;
 

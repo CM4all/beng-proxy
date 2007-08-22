@@ -51,6 +51,14 @@ istream_close(istream_t istream)
     istream->close(istream);
 }
 
+static inline void
+istream_free(istream_t *istream_r)
+{
+    istream_t istream = *istream_r;
+    *istream_r = NULL;
+    istream_close(istream);
+}
+
 static inline size_t
 istream_invoke_data(istream_t istream, const void *data, size_t length)
 {

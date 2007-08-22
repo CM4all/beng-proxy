@@ -9,8 +9,10 @@
 #include "strutil.h"
 #include "compiler.h"
 #include "buffered-io.h"
+#include "header-writer.h"
 
 #ifdef __linux
+#include <sys/sendfile.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -43,9 +45,24 @@ struct http_server_connection {
     struct http_server_request *request;
     int reading_headers, reading_body;
 
+    /* response */
+    struct {
+        int writing;
+        enum {
+            WRITE_STATUS,
+            WRITE_HEADERS,
+            WRITE_BODY,
+            WRITE_POST
+        } write_state;
+        int blocking;
+        int chunked;
+        istream_t status;
+        struct header_writer header_writer;
+        istream_t body;
+    } response;
+
     /* connection settings */
     int keep_alive;
-    int direct_mode;
 #ifdef __linux
     int cork;
 #endif
@@ -74,12 +91,6 @@ http_server_request_free(struct http_server_request **request_r)
 {
     struct http_server_request *request = *request_r;
     *request_r = NULL;
-
-    if (request->handler != NULL &&
-        request->handler->free != NULL) {
-        request->handler->free(request);
-        request->handler = NULL;
-    }
 
     pool_unref(request->pool);
 }
@@ -121,43 +132,96 @@ http_server_uncork(http_server_connection_t connection)
 }
 
 static void
-http_server_call_response_body(http_server_connection_t connection)
+http_server_response_eof(http_server_connection_t connection)
 {
-    void *buffer;
-    size_t max_length, length;
-    ssize_t nbytes;
-
-    assert(connection != NULL);
-    assert(!connection->direct_mode);
     assert(connection->request != NULL);
-    assert(connection->request->handler != NULL);
+    assert(!connection->reading_headers);
+    assert(connection->response.writing);
+    assert(connection->response.write_state == WRITE_POST);
+    assert(connection->response.status == NULL);
+    assert(connection->response.body == NULL);
 
-    if (connection->request->handler->response_body == NULL)
-        return;
+    pool_ref(connection->pool);
 
-    buffer = fifo_buffer_write(connection->output, &max_length);
-    if (buffer == NULL)
-        return;
+    if (connection->reading_body) {
+        /* XXX discard rest of body? */
+        connection->reading_body = 0;
+    }
 
-    do {
-        length = connection->request->handler->response_body(connection->request,
-                                                             buffer, max_length);
-        if (length == 0)
-            return;
+    connection->response.writing = 0;
 
-        if (http_server_connection_valid(connection)) {
-            nbytes = buffered_quick_write(connection->fd, connection->output,
-                                          buffer, length);
-            if (nbytes != (ssize_t)length)
-                break;
-        }
-    } while (connection->request != NULL &&
-             connection->request->handler != NULL &&
-             connection->request->handler->response_body != NULL);
+    http_server_request_free(&connection->request);
+
+    if (!connection->keep_alive)
+        /* keepalive disabled and response is finished: we must close
+           the connection */
+        http_server_connection_close(connection);
+
+    pool_unref(connection->pool);
 }
 
 static void
-http_server_try_response_body(http_server_connection_t connection)
+http_server_response_read(http_server_connection_t connection)
+{
+    ssize_t nbytes;
+
+    assert(connection->request != NULL);
+    assert(connection->response.writing);
+    assert(connection->response.write_state != WRITE_POST);
+
+    switch (connection->response.write_state) {
+    case WRITE_STATUS:
+        assert(connection->response.status != NULL);
+        istream_read(connection->response.status);
+
+        break;
+
+    case WRITE_HEADERS:
+        nbytes = header_writer_run(&connection->response.header_writer);
+        if (nbytes == 0) {
+            if (connection->response.body == NULL) {
+                connection->response.write_state = WRITE_POST;
+                http_server_response_eof(connection);
+            } else {
+                connection->response.write_state = WRITE_BODY;
+            }
+        }
+
+        break;
+
+    case WRITE_BODY:
+        assert(connection->response.body != NULL);
+#ifdef __linux
+        if (connection->response.chunked)
+            istream_read(connection->response.body);
+        else
+            istream_direct(connection->response.body);
+#else
+        istream_read(connection->response.body);
+#endif
+
+        break;
+
+    case WRITE_POST:
+        assert(0);
+    }
+}
+
+static void
+http_server_response_read_loop(http_server_connection_t connection)
+{
+    struct http_server_request *request = connection->request;
+    unsigned old_state;
+
+    do {
+        old_state = connection->response.write_state;
+        http_server_response_read(connection);
+    } while (connection->request == request &&
+             connection->response.write_state != old_state);
+}
+
+static void
+http_server_try_response(http_server_connection_t connection)
 {
     const void *buffer;
     size_t length;
@@ -165,6 +229,8 @@ http_server_try_response_body(http_server_connection_t connection)
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
+
+    connection->response.blocking = 0;
 
     while ((buffer = fifo_buffer_read(connection->output, &length)) != NULL) {
         http_server_cork(connection);
@@ -175,11 +241,10 @@ http_server_try_response_body(http_server_connection_t connection)
             http_server_connection_close(connection);
             break;
         } else if (nbytes > 0) {
+            connection->response.blocking = (size_t)nbytes < length;
             fifo_buffer_consume(connection->output, (size_t)nbytes);
-            if (connection->request != NULL &&
-                !connection->direct_mode &&
-                (size_t)nbytes == length)
-                http_server_call_response_body(connection);
+            if (connection->request != NULL && !connection->response.blocking)
+                http_server_response_read(connection);
             else
                 break;
         } else {
@@ -187,14 +252,14 @@ http_server_try_response_body(http_server_connection_t connection)
         }
     }
 
-    if (connection->request != NULL && connection->direct_mode &&
-        fifo_buffer_empty(connection->output))
-        connection->request->handler->response_direct(connection->request,
-                                                      connection->fd);
+    if (connection->request != NULL && !connection->response.blocking)
+        http_server_response_read_loop(connection);
 
     http_server_uncork(connection);
 
-    if (connection->request == NULL && !connection->keep_alive &&
+    if (connection->request != NULL && !connection->keep_alive &&
+        connection->response.writing &&
+        connection->response.write_state == WRITE_POST &&
         fifo_buffer_empty(connection->output))
         /* keepalive disabled and response is finished: we must close
            the connection */
@@ -293,23 +358,6 @@ http_server_headers_finished(http_server_connection_t connection)
 
     connection->reading_headers = 0;
     connection->callback(connection->request, connection->callback_ctx);
-
-    if (connection->request != NULL) {
-        if (connection->request->handler == NULL) {
-            fprintf(stderr, "WARNING: no handler for request\n");
-            http_server_connection_close(connection);
-            return;
-        }
-
-        /* XXX request body? */
-
-        if (connection->request->handler->request_body != NULL)
-            connection->request->handler->request_body(connection->request,
-                                                       NULL, 0);
-    }
-
-    if (connection->request != NULL)
-        http_server_try_response_body(connection);
 }
 
 static void
@@ -431,7 +479,7 @@ http_server_event_setup(http_server_connection_t connection)
         !fifo_buffer_full(connection->input))
         event = EV_READ | EV_TIMEOUT;
 
-    if (connection->direct_mode ||
+    if ((connection->response.writing && connection->response.blocking) ||
         !fifo_buffer_empty(connection->output))
         event |= EV_WRITE | EV_TIMEOUT;
 
@@ -461,7 +509,7 @@ http_server_event_callback(int fd, short event, void *ctx)
     }
 
     if (http_server_connection_valid(connection) && (event & EV_WRITE) != 0)
-        http_server_try_response_body(connection);
+        http_server_try_response(connection);
 
     if (http_server_connection_valid(connection) && (event & EV_READ) != 0)
         http_server_try_read(connection);
@@ -513,8 +561,20 @@ http_server_connection_close(http_server_connection_t connection)
 
     pool_ref(connection->pool);
 
-    if (connection->request != NULL)
+    if (connection->request != NULL) {
         http_server_request_free(&connection->request);
+
+        if (connection->response.writing) {
+            if (connection->response.status != NULL)
+                istream_free(&connection->response.status);
+
+            if (connection->response.body != NULL) {
+                pool_t pool = connection->response.body->pool;
+                istream_free(&connection->response.body);
+                pool_unref(pool);
+            }
+        }
+    }
 
     if (connection->callback != NULL) {
         http_server_callback_t callback = connection->callback;
@@ -538,51 +598,9 @@ http_server_connection_free(http_server_connection_t *connection_r)
     http_server_connection_close(connection);
 }
 
-size_t
-http_server_send(http_server_connection_t connection,
-                 const void *p, size_t length)
-{
-    unsigned char *dest;
-    size_t pre_written = 0, max_length;
-
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
-    assert(p != NULL);
-
-    if (!connection->cork && fifo_buffer_empty(connection->output)) {
-        /* try to quick-write */
-        ssize_t nbytes;
-
-        nbytes = write(connection->fd, p, length);
-        if (nbytes == (ssize_t)length)
-            return (size_t)nbytes;;
-
-        if (nbytes > 0) {
-            pre_written = (size_t)length;
-            p = (const char*)p + pre_written;
-            length -= pre_written;
-        }
-    }
-
-    dest = fifo_buffer_write(connection->output, &max_length);
-    if (unlikely(dest == NULL))
-        return 0;
-
-    if (unlikely(length > max_length))
-        length = max_length;
-
-    memcpy(dest, p, length);
-    fifo_buffer_append(connection->output, length);
-
-    if ((connection->event.ev_events & EV_WRITE) == 0)
-        http_server_event_setup(connection);
-
-    return pre_written + length;
-}
-
 static const char hex_digits[] = "0123456789abcdef";
 
-size_t
+static size_t
 http_server_send_chunk(http_server_connection_t connection,
                        const void *p, size_t length)
 {
@@ -622,13 +640,17 @@ http_server_send_chunk(http_server_connection_t connection,
     return length;
 }
 
-void
+static void
 http_server_send_last_chunk(http_server_connection_t connection)
 {
-    size_t nbytes;
+    char *dest;
+    size_t max_length;
 
-    nbytes = http_server_send(connection, "0\r\n\r\n", 5);
-    assert(nbytes == 5); /* XXX */
+    dest = fifo_buffer_write(connection->output, &max_length);
+    assert(dest != NULL && max_length >= 5); /* XXX */
+
+    memcpy(dest, "0\r\n\r\n", 5);
+    fifo_buffer_append(connection->output, 5);
 }
 
 size_t
@@ -651,82 +673,245 @@ http_server_send_status(http_server_connection_t connection, int status)
 }
 
 void
-http_server_send_message(http_server_connection_t connection,
-                         http_status_t status, const char *msg)
-{
-    char header[256];
-    size_t header_length, body_length, max_length;
-    unsigned char *dest;
-
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
-    assert(!connection->direct_mode);
-    assert(msg != NULL);
-
-    http_server_send_status(connection, status);
-
-    body_length = strlen(msg);
-
-    snprintf(header, sizeof(header), "Content-Type: text/plain\r\nContent-Length: %u\r\n\r\n",
-             (unsigned)body_length);
-    header_length = strlen(header);
-
-    dest = fifo_buffer_write(connection->output, &max_length);
-    if (unlikely(dest == NULL || max_length < header_length + body_length))
-        return;
-
-    memcpy(dest, header, header_length);
-    memcpy(dest + header_length, msg, body_length);
-
-    fifo_buffer_append(connection->output, header_length + body_length);
-}
-
-void
 http_server_try_write(http_server_connection_t connection)
 {
     assert(connection != NULL);
     assert(!connection->cork);
 
-    http_server_try_response_body(connection);
+    http_server_try_response(connection);
 }
 
-void
-http_server_response_direct_mode(http_server_connection_t connection)
+static size_t
+write_or_append(http_server_connection_t connection,
+                const void *data, size_t length)
 {
-    assert(connection != NULL);
+    void *dest;
+    size_t max_length;
+    ssize_t nbytes;
+
     assert(connection->fd >= 0);
-    assert(connection->request != NULL);
-    assert(connection->request->handler != NULL);
-    assert(connection->request->handler->response_direct != NULL);
+    assert(connection->response.writing);
 
-    if (connection->direct_mode)
-        return;
+    if (length >= 1024 && fifo_buffer_empty(connection->output)) {
+        nbytes = write(connection->fd, data, length);
+        connection->response.blocking = (ssize_t)length < nbytes;
+        if (nbytes >= 0)
+            return (size_t)nbytes;
 
-    connection->direct_mode = 1;
+        if (errno == EAGAIN)
+            return 0;
 
-    /* if the output buffer is already empty, we can start the direct
-       transfer right now */
-    if (fifo_buffer_empty(connection->output))
-        connection->request->handler->response_direct(connection->request,
-                                                      connection->fd);
+        perror("write error on HTTP connection");
+        http_server_connection_close(connection);
+        return 0;
+    } else {
+        dest = fifo_buffer_write(connection->output, &max_length);
+        if (dest == NULL)
+            return 0;
+
+        if (length > max_length)
+            length = max_length;
+
+        memcpy(dest, data, length);
+        fifo_buffer_append(connection->output, length);
+
+        if ((connection->event.ev_events & EV_WRITE) == 0)
+            http_server_event_setup(connection);
+
+        return length;
+    }
 }
 
-void
-http_server_response_finish(http_server_connection_t connection)
+
+static size_t
+http_server_status_data(const void *data, size_t length, void *ctx)
 {
-    assert(connection->request != NULL);
-    assert(!connection->reading_headers);
+    http_server_connection_t connection = ctx;
 
-    pool_ref(connection->pool);
+    assert(connection->response.writing);
+    assert(connection->response.write_state == WRITE_STATUS);
 
-    if (connection->reading_body) {
-        /* XXX discard rest of body? */
-        connection->reading_body = 0;
+    return write_or_append(connection, data, length);
+}
+
+static void
+http_server_status_eof(void *ctx)
+{
+    http_server_connection_t connection = ctx;
+
+    assert(connection->response.writing);
+    assert(connection->response.write_state == WRITE_STATUS);
+
+    connection->response.status = NULL;
+    connection->response.write_state = WRITE_HEADERS;
+}
+
+static void
+http_server_status_free(void *ctx)
+{
+    http_server_connection_t connection = ctx;
+
+    if (connection->response.write_state == WRITE_STATUS)
+        http_server_connection_close(connection);
+}
+
+static const struct istream_handler http_server_status_handler = {
+    .data = http_server_status_data,
+    .eof = http_server_status_eof,
+    .free = http_server_status_free,
+};
+
+
+static size_t
+http_server_response_body_data(const void *data, size_t length, void *ctx)
+{
+    http_server_connection_t connection = ctx;
+
+    assert(connection->response.writing);
+    assert(connection->response.write_state != WRITE_POST);
+
+    if (connection->response.write_state != WRITE_BODY)
+        return 0;
+
+    if (connection->response.chunked)
+        return http_server_send_chunk(connection, data, length);
+    else
+        return write_or_append(connection, data, length);
+}
+
+#ifdef __linux
+static ssize_t
+http_server_response_body_direct(int fd, size_t max_length, void *ctx)
+{
+    http_server_connection_t connection = ctx;
+    ssize_t nbytes;
+
+    assert(connection->response.writing);
+    assert(connection->response.write_state != WRITE_POST);
+
+    connection->response.blocking = 0;
+
+    if (connection->response.write_state != WRITE_BODY)
+        return -2;
+
+    nbytes = sendfile(connection->fd, fd, NULL, max_length);
+    if (nbytes < 0 && errno == EAGAIN)
+        return -2;
+
+    if (nbytes > 0)
+        connection->response.blocking = 1;
+
+    return nbytes;
+}
+#endif
+
+static void
+http_server_response_body_eof(void *ctx)
+{
+    http_server_connection_t connection = ctx;
+
+    assert(connection->response.writing);
+    assert(connection->response.write_state != WRITE_POST);
+    assert(connection->response.body != NULL);
+    assert(connection->response.body->pool != NULL);
+
+    pool_unref(connection->response.body->pool);
+
+    connection->response.body = NULL;
+    if (connection->response.write_state == WRITE_BODY)
+        connection->response.write_state = WRITE_POST;
+
+    if (connection->response.chunked) {
+        if (connection->response.write_state == WRITE_POST) {
+            http_server_send_last_chunk(connection);
+        } else {
+            /* XXX chunked body is empty before we were able to write */
+            abort();
+        }
     }
 
-    http_server_request_free(&connection->request);
+    http_server_response_eof(connection);
+}
 
-    connection->direct_mode = 0;
+static void
+http_server_response_body_free(void *ctx)
+{
+    http_server_connection_t connection = ctx;
 
-    pool_unref(connection->pool);
+    if (connection->response.write_state == WRITE_BODY)
+        http_server_connection_close(connection);
+}
+
+static const struct istream_handler http_server_response_body_handler = {
+    .data = http_server_response_body_data,
+#ifdef __linux
+    .direct = http_server_response_body_direct,
+#endif
+    .eof = http_server_response_body_eof,
+    .free = http_server_response_body_free,
+};
+
+
+void
+http_server_response(struct http_server_request *request,
+                     http_status_t status, strmap_t headers,
+                     off_t content_length, istream_t body)
+{
+    http_server_connection_t connection = request->connection;
+    const char *status_line;
+
+    assert(connection->request == request);
+    assert(!connection->response.writing);
+
+    status_line = p_sprintf(connection->pool, "HTTP/1.1 %d\r\n", status);
+    connection->response.status = istream_string_new(request->pool,
+                                                     status_line);
+    connection->response.status->handler = &http_server_status_handler;
+    connection->response.status->handler_ctx = connection;
+
+    if (headers == NULL)
+        headers = strmap_new(request->pool, 16);
+
+    if (content_length == (off_t)-1) {
+        if (connection->keep_alive) {
+            strmap_put(headers, "transfer-encoding", "chunked", 1);
+            connection->response.chunked = 1;
+        } else
+            connection->response.chunked = 0;
+    } else {
+        strmap_put(headers, "content-length",
+                   p_sprintf(request->pool, "%lu", (unsigned long)content_length),
+                   1);
+        connection->response.chunked = 0;
+    }
+
+    strmap_put(headers, "connection",
+               connection->keep_alive ? "keep-alive" : "close",
+               1);
+
+    header_writer_init(&connection->response.header_writer,
+                       connection->output, headers);
+
+    connection->response.body = body;
+    if (connection->response.body != NULL) {
+        pool_ref(connection->response.body->pool);
+        connection->response.body->handler = &http_server_response_body_handler;
+        connection->response.body->handler_ctx = connection;
+    }
+
+    connection->response.writing = 1;
+    connection->response.write_state = WRITE_STATUS;
+
+    http_server_try_response(connection);
+}
+
+void
+http_server_send_message(struct http_server_request *request,
+                         http_status_t status, const char *msg)
+{
+    size_t length = strlen(msg);
+
+    http_server_response(request, status, NULL,
+                         length,
+                         istream_memory_new(request->pool, msg, length));
 }
