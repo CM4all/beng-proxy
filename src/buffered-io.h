@@ -12,6 +12,16 @@
 #include <sys/types.h>
 
 /**
+ * Appends data from a file to the buffer.
+ *
+ * @param fd the source file descriptor
+ * @param buffer the destination buffer
+ * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
+ */
+ssize_t
+read_to_buffer(int fd, fifo_buffer_t buffer);
+
+/**
  * Writes data from the buffer to the file.
  *
  * @param fd the destination file descriptor
