@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #if defined(__x86_64__) || defined(__PPC64__)
 #define ALIGN 8
@@ -440,4 +441,31 @@ p_strndup(pool_t pool, const char *src, size_t length)
     memcpy(dest, src, length);
     dest[length] = 0;
     return dest;
+}
+
+char * attr_malloc
+p_sprintf(pool_t pool, const char *fmt, ...)
+{
+#if __STDC_VERSION__ >= 199901L
+    size_t length;
+    int length2;
+    va_list ap;
+    char *p;
+
+    va_start(ap, fmt);
+    length = (size_t)vsnprintf(NULL, 0, fmt, ap) + 1;
+    va_end(ap);
+
+    p = p_malloc(pool, length);
+
+    va_start(ap, fmt);
+    length2 = vsnprintf(p, length, fmt, ap);
+    va_end(ap);
+
+    assert((size_t)length2 + 1 == length);
+
+    return p;
+#else
+#error C99 required for snprintf(NULL, 0, ...)
+#endif
 }

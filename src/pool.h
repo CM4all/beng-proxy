@@ -50,4 +50,7 @@ p_strdup(pool_t pool, const char *src);
 char * attr_malloc
 p_strndup(pool_t pool, const char *src, size_t length);
 
+char * attr_malloc attr_printf(2, 3)
+p_sprintf(pool_t pool, const char *fmt, ...);
+
 #endif
