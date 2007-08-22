@@ -93,8 +93,7 @@ processor_input_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    processor->parser.source_length = processor->source_length;
-
+    processor->parser.position = processor->source_length;
     parser_feed(&processor->parser, (const char*)data, (size_t)nbytes);
 
     processor->source_length += (off_t)nbytes;
@@ -175,7 +174,7 @@ processor_new(pool_t pool, istream_t istream)
     processor->source_length = 0;
     processor->map = NULL;
 
-    processor->parser.parser_state = PARSER_NONE;
+    processor->parser.state = PARSER_NONE;
 
     processor->first_substitution = NULL;
     processor->append_substitution_p = &processor->first_substitution;

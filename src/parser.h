@@ -19,8 +19,8 @@ enum parser_state {
 };
 
 struct parser {
-    enum parser_state parser_state;
-    off_t source_length;
+    enum parser_state state;
+    off_t position;
     off_t element_offset;
     size_t match_length;
     char element_name[64];
