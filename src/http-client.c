@@ -249,12 +249,11 @@ http_client_try_send(http_client_connection_t connection)
     }
 }
 
-static int
+static void
 http_client_parse_status_line(http_client_connection_t connection,
                               const char *line, size_t length)
 {
     const char *space;
-    int status;
 
     assert(connection != NULL);
     assert(connection->response.pool == NULL);
@@ -274,13 +273,13 @@ http_client_parse_status_line(http_client_connection_t connection,
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
         fprintf(stderr, "no HTTP status found\n");
         http_client_connection_close(connection);
-        return -1;
+        return;
     }
 
     connection->response.status = ((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0';
     if (unlikely(connection->response.status < 100 || connection->response.status > 599)) {
         http_client_connection_close(connection);
-        return -1;
+        return;
     }
 
     connection->response.reading_headers = 1;
@@ -288,8 +287,6 @@ http_client_parse_status_line(http_client_connection_t connection,
     connection->response.headers = strmap_new(connection->response.pool, 64);
 
     /* XXX */
-
-    return status;
 }
 
 static void
