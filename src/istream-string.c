@@ -9,7 +9,7 @@
 #include <string.h>
 
 istream_t
-istream_string_new(pool_t pool, const void *s)
+istream_string_new(pool_t pool, const char *s)
 {
     return istream_memory_new(pool, s, strlen(s));
 }
