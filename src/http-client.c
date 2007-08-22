@@ -669,6 +669,11 @@ http_client_request(http_client_connection_t connection,
     assert(!connection->request.writing_headers);
     assert(!connection->response.reading);
 
+    if (headers == NULL)
+        headers = strmap_new(connection->pool, 16);
+
+    strmap_put(headers, "user-agent", "beng-proxy v" VERSION, 0);
+
     connection->request.writing_headers = 1;
     header_writer_init(&connection->request.header_writer,
                        connection->output, headers);
