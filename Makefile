@@ -31,6 +31,7 @@ SOURCES = src/main.c \
 	src/url-stream.c \
 	src/fifo-buffer.c \
 	src/istream-memory.c \
+	src/istream-string.c \
 	src/istream-file.c \
 	src/strutil.c \
 	src/strmap.c \
