@@ -42,8 +42,10 @@ struct http_server_connection {
     void *callback_ctx;
 
     /* request */
-    struct http_server_request *request;
-    int reading_headers, reading_body;
+    struct {
+        int reading_headers, reading_body;
+        struct http_server_request *request;
+    } request;
 
     /* response */
     struct {
@@ -134,8 +136,8 @@ http_server_uncork(http_server_connection_t connection)
 static void
 http_server_response_eof(http_server_connection_t connection)
 {
-    assert(connection->request != NULL);
-    assert(!connection->reading_headers);
+    assert(connection->request.request != NULL);
+    assert(!connection->request.reading_headers);
     assert(connection->response.writing);
     assert(connection->response.write_state == WRITE_POST);
     assert(connection->response.status == NULL);
@@ -143,14 +145,14 @@ http_server_response_eof(http_server_connection_t connection)
 
     pool_ref(connection->pool);
 
-    if (connection->reading_body) {
+    if (connection->request.reading_body) {
         /* XXX discard rest of body? */
-        connection->reading_body = 0;
+        connection->request.reading_body = 0;
     }
 
     connection->response.writing = 0;
 
-    http_server_request_free(&connection->request);
+    http_server_request_free(&connection->request.request);
 
     if (!connection->keep_alive)
         /* keepalive disabled and response is finished: we must close
@@ -165,7 +167,7 @@ http_server_response_read(http_server_connection_t connection)
 {
     ssize_t nbytes;
 
-    assert(connection->request != NULL);
+    assert(connection->request.request != NULL);
     assert(connection->response.writing);
     assert(connection->response.write_state != WRITE_POST);
 
@@ -210,13 +212,13 @@ http_server_response_read(http_server_connection_t connection)
 static void
 http_server_response_read_loop(http_server_connection_t connection)
 {
-    struct http_server_request *request = connection->request;
+    struct http_server_request *request = connection->request.request;
     unsigned old_state;
 
     do {
         old_state = connection->response.write_state;
         http_server_response_read(connection);
-    } while (connection->request == request &&
+    } while (connection->request.request == request &&
              connection->response.write_state != old_state);
 }
 
@@ -243,7 +245,7 @@ http_server_try_response(http_server_connection_t connection)
         } else if (nbytes > 0) {
             connection->response.blocking = (size_t)nbytes < length;
             fifo_buffer_consume(connection->output, (size_t)nbytes);
-            if (connection->request != NULL && !connection->response.blocking)
+            if (connection->request.request != NULL && !connection->response.blocking)
                 http_server_response_read(connection);
             else
                 break;
@@ -252,12 +254,12 @@ http_server_try_response(http_server_connection_t connection)
         }
     }
 
-    if (connection->request != NULL && !connection->response.blocking)
+    if (connection->request.request != NULL && !connection->response.blocking)
         http_server_response_read_loop(connection);
 
     http_server_uncork(connection);
 
-    if (connection->request != NULL && !connection->keep_alive &&
+    if (connection->request.request != NULL && !connection->keep_alive &&
         connection->response.writing &&
         connection->response.write_state == WRITE_POST &&
         fifo_buffer_empty(connection->output))
@@ -274,7 +276,7 @@ http_server_parse_request_line(http_server_connection_t connection,
     http_method_t method = HTTP_METHOD_NULL;
 
     assert(connection != NULL);
-    assert(connection->request == NULL);
+    assert(connection->request.request == NULL);
 
     if (unlikely(length < 5)) {
         http_server_connection_close(connection);
@@ -314,10 +316,10 @@ http_server_parse_request_line(http_server_connection_t connection,
     if (unlikely(space == NULL))
         space = eol;
 
-    connection->request = http_server_request_new(connection);
-    connection->request->method = method;
-    connection->request->uri = p_strndup(connection->request->pool, line, space - line);
-    connection->reading_headers = 1;
+    connection->request.request = http_server_request_new(connection);
+    connection->request.request->method = method;
+    connection->request.request->uri = p_strndup(connection->request.request->pool, line, space - line);
+    connection->request.reading_headers = 1;
 }
 
 static void
@@ -339,12 +341,12 @@ http_server_parse_header_line(http_server_connection_t connection,
     while (colon < line + length && char_is_whitespace(*colon))
         ++colon;
 
-    key = p_strndup(connection->request->pool, line, key_end - line);
-    value = p_strndup(connection->request->pool, colon, line + length - colon);
+    key = p_strndup(connection->request.request->pool, line, key_end - line);
+    value = p_strndup(connection->request.request->pool, colon, line + length - colon);
 
     str_to_lower(key);
 
-    strmap_addn(connection->request->headers, key, value);
+    strmap_addn(connection->request.request->headers, key, value);
 }
 
 static void
@@ -352,21 +354,21 @@ http_server_headers_finished(http_server_connection_t connection)
 {
     const char *header_connection;
 
-    header_connection = strmap_get(connection->request->headers, "connection");
+    header_connection = strmap_get(connection->request.request->headers, "connection");
     connection->keep_alive = header_connection != NULL &&
         strcasecmp(header_connection, "keep-alive") == 0;
 
-    connection->reading_headers = 0;
-    connection->callback(connection->request, connection->callback_ctx);
+    connection->request.reading_headers = 0;
+    connection->callback(connection->request.request, connection->callback_ctx);
 }
 
 static void
 http_server_handle_line(http_server_connection_t connection,
                         const char *line, size_t length)
 {
-    assert(connection->request == NULL || connection->reading_headers);
+    assert(connection->request.request == NULL || connection->request.reading_headers);
 
-    if (connection->request == NULL) {
+    if (connection->request.request == NULL) {
         http_server_parse_request_line(connection, line, length);
     } else if (length > 0) {
         http_server_parse_header_line(connection, line, length);
@@ -381,7 +383,7 @@ http_server_parse_headers(http_server_connection_t connection)
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
     size_t length;
 
-    assert(connection->request == NULL || connection->reading_headers);
+    assert(connection->request.request == NULL || connection->request.reading_headers);
 
     buffer = fifo_buffer_read(connection->input, &length);
     if (buffer == NULL)
@@ -400,7 +402,7 @@ http_server_parse_headers(http_server_connection_t connection)
             --end;
 
         http_server_handle_line(connection, start, end - start + 1);
-        if (!connection->reading_headers)
+        if (!connection->request.reading_headers)
             break;
 
         start = next;
@@ -417,10 +419,10 @@ static void
 http_server_consume_input(http_server_connection_t connection)
 {
     while (1) {
-        if (connection->request == NULL || connection->reading_headers) {
+        if (connection->request.request == NULL || connection->request.reading_headers) {
             if (http_server_parse_headers(connection) == 0)
                 break;
-        } else if (connection->reading_body) {
+        } else if (connection->request.reading_body) {
             /* XXX read body*/
         } else {
             break;
@@ -474,8 +476,8 @@ http_server_event_setup(http_server_connection_t connection)
 
     event_del(&connection->event);
 
-    if ((connection->keep_alive || connection->request == NULL ||
-         connection->reading_headers || connection->reading_body) &&
+    if ((connection->keep_alive || connection->request.request == NULL ||
+         connection->request.reading_headers || connection->request.reading_body) &&
         !fifo_buffer_full(connection->input))
         event = EV_READ | EV_TIMEOUT;
 
@@ -555,14 +557,14 @@ http_server_connection_close(http_server_connection_t connection)
         connection->fd = -1;
     }
 
-    connection->reading_headers = 0;
-    connection->reading_body = 0;
+    connection->request.reading_headers = 0;
+    connection->request.reading_body = 0;
     connection->cork = 0;
 
     pool_ref(connection->pool);
 
-    if (connection->request != NULL) {
-        http_server_request_free(&connection->request);
+    if (connection->request.request != NULL) {
+        http_server_request_free(&connection->request.request);
 
         if (connection->response.writing) {
             if (connection->response.status != NULL)
@@ -860,7 +862,7 @@ http_server_response(struct http_server_request *request,
     http_server_connection_t connection = request->connection;
     const char *status_line;
 
-    assert(connection->request == request);
+    assert(connection->request.request == request);
     assert(!connection->response.writing);
 
     status_line = p_sprintf(connection->pool, "HTTP/1.1 %d\r\n", status);
