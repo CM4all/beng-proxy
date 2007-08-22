@@ -5,6 +5,7 @@
  */
 
 #include "substitution.h"
+#include "processor.h"
 
 #include <assert.h>
 #include <stdlib.h>

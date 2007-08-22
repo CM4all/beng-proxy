@@ -8,8 +8,6 @@
 #define __BENG_SUBSTITUTION_H
 
 #include "url-stream.h"
-#include "processor.h"
-#include "fifo-buffer.h"
 
 #include <sys/types.h>
 
