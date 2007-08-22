@@ -22,6 +22,9 @@ void
 strmap_addn(strmap_t map, const char *key, const char *value);
 
 const char *
+strmap_put(strmap_t map, const char *key, const char *value, int overwrite);
+
+const char *
 strmap_get(strmap_t map, const char *key);
 
 void
