@@ -43,7 +43,12 @@ struct http_server_connection {
 
     /* request */
     struct {
-        int reading_headers, reading_body;
+        enum {
+            READ_START,
+            READ_HEADERS,
+            READ_BODY,
+            READ_END
+        } read_state;
         struct http_server_request *request;
     } request;
 
@@ -137,7 +142,8 @@ static void
 http_server_response_eof(http_server_connection_t connection)
 {
     assert(connection->request.request != NULL);
-    assert(!connection->request.reading_headers);
+    assert(connection->request.read_state != READ_START &&
+           connection->request.read_state != READ_HEADERS);
     assert(connection->response.writing);
     assert(connection->response.write_state == WRITE_POST);
     assert(connection->response.status == NULL);
@@ -145,11 +151,11 @@ http_server_response_eof(http_server_connection_t connection)
 
     pool_ref(connection->pool);
 
-    if (connection->request.reading_body) {
+    if (connection->request.read_state == READ_BODY) {
         /* XXX discard rest of body? */
-        connection->request.reading_body = 0;
     }
 
+    connection->request.read_state = READ_START;
     connection->response.writing = 0;
 
     http_server_request_free(&connection->request.request);
@@ -277,6 +283,7 @@ http_server_parse_request_line(http_server_connection_t connection,
 
     assert(connection != NULL);
     assert(connection->request.request == NULL);
+    assert(connection->request.read_state == READ_START);
 
     if (unlikely(length < 5)) {
         http_server_connection_close(connection);
@@ -319,7 +326,7 @@ http_server_parse_request_line(http_server_connection_t connection,
     connection->request.request = http_server_request_new(connection);
     connection->request.request->method = method;
     connection->request.request->uri = p_strndup(connection->request.request->pool, line, space - line);
-    connection->request.reading_headers = 1;
+    connection->request.read_state = READ_HEADERS;
 }
 
 static void
@@ -358,7 +365,8 @@ http_server_headers_finished(http_server_connection_t connection)
     connection->keep_alive = header_connection != NULL &&
         strcasecmp(header_connection, "keep-alive") == 0;
 
-    connection->request.reading_headers = 0;
+    /* XXX body? */
+    connection->request.read_state = READ_END;
     connection->callback(connection->request.request, connection->callback_ctx);
 }
 
@@ -366,7 +374,8 @@ static void
 http_server_handle_line(http_server_connection_t connection,
                         const char *line, size_t length)
 {
-    assert(connection->request.request == NULL || connection->request.reading_headers);
+    assert(connection->request.read_state == READ_START ||
+           connection->request.read_state == READ_HEADERS);
 
     if (connection->request.request == NULL) {
         http_server_parse_request_line(connection, line, length);
@@ -383,7 +392,8 @@ http_server_parse_headers(http_server_connection_t connection)
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
     size_t length;
 
-    assert(connection->request.request == NULL || connection->request.reading_headers);
+    assert(connection->request.read_state == READ_START ||
+           connection->request.read_state == READ_HEADERS);
 
     buffer = fifo_buffer_read(connection->input, &length);
     if (buffer == NULL)
@@ -402,7 +412,7 @@ http_server_parse_headers(http_server_connection_t connection)
             --end;
 
         http_server_handle_line(connection, start, end - start + 1);
-        if (!connection->request.reading_headers)
+        if (connection->request.read_state != READ_HEADERS)
             break;
 
         start = next;
@@ -419,10 +429,11 @@ static void
 http_server_consume_input(http_server_connection_t connection)
 {
     while (1) {
-        if (connection->request.request == NULL || connection->request.reading_headers) {
+        if (connection->request.read_state == READ_START ||
+            connection->request.read_state == READ_HEADERS) {
             if (http_server_parse_headers(connection) == 0)
                 break;
-        } else if (connection->request.reading_body) {
+        } else if (connection->request.read_state == READ_BODY) {
             /* XXX read body*/
         } else {
             break;
@@ -476,8 +487,9 @@ http_server_event_setup(http_server_connection_t connection)
 
     event_del(&connection->event);
 
-    if ((connection->keep_alive || connection->request.request == NULL ||
-         connection->request.reading_headers || connection->request.reading_body) &&
+    if ((connection->request.read_state == READ_START ||
+         connection->request.read_state == READ_HEADERS ||
+         connection->request.read_state == READ_BODY) &&
         !fifo_buffer_full(connection->input))
         event = EV_READ | EV_TIMEOUT;
 
@@ -539,6 +551,8 @@ http_server_connection_new(pool_t pool, int fd,
     connection->fd = fd;
     connection->callback = callback;
     connection->callback_ctx = ctx;
+    connection->request.read_state = READ_START;
+    connection->response.writing = 0;
 
     connection->input = fifo_buffer_new(pool, 4096);
     connection->output = fifo_buffer_new(pool, 4096);
@@ -559,8 +573,7 @@ http_server_connection_close(http_server_connection_t connection)
         connection->fd = -1;
     }
 
-    connection->request.reading_headers = 0;
-    connection->request.reading_body = 0;
+    connection->request.read_state = READ_START;
     connection->cork = 0;
 
     pool_ref(connection->pool);
@@ -615,6 +628,7 @@ http_server_send_chunk(http_server_connection_t connection,
     assert(connection->fd >= 0);
     assert(p != NULL);
     assert(length > 0);
+
 
     dest = fifo_buffer_write(connection->output, &max_length);
     if (dest == NULL)
