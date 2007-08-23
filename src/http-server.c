@@ -111,11 +111,10 @@ http_server_request_new(http_server_connection_t connection)
     assert(connection != NULL);
 
     pool = pool_new_linear(connection->pool, "http_server_request", 16384);
-    request = p_calloc(pool, sizeof(*request));
+    request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
-    request->headers = strmap_new(pool, 64);
-
     request->connection = connection;
+    request->headers = strmap_new(pool, 64);
 
     return request;
 }
@@ -505,7 +504,8 @@ http_server_event_setup(http_server_connection_t connection)
     assert(connection->input != NULL);
     assert(connection->output != NULL);
 
-    event_del(&connection->event);
+    if (connection->event.ev_events != 0)
+        event_del(&connection->event);
 
     if ((connection->request.read_state == READ_START ||
          connection->request.read_state == READ_HEADERS ||
@@ -566,17 +566,20 @@ http_server_connection_new(pool_t pool, int fd,
     assert(fd >= 0);
     assert(callback != NULL);
 
-    connection = p_calloc(pool, sizeof(*connection));
+    connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
     connection->fd = fd;
     connection->callback = callback;
     connection->callback_ctx = ctx;
     connection->request.read_state = READ_START;
+    connection->request.request = NULL;
     connection->response.writing = 0;
+    connection->cork = 0;
 
     connection->input = fifo_buffer_new(pool, 4096);
     connection->output = fifo_buffer_new(pool, 4096);
 
+    connection->event.ev_events = 0;
     http_server_event_setup(connection);
 
     return connection;
