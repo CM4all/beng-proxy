@@ -91,13 +91,13 @@ istream_invoke_free(istream_t istream)
 }
 
 
-istream_t
+istream_t attr_malloc
 istream_memory_new(pool_t pool, const void *data, size_t length);
 
-istream_t
+istream_t attr_malloc
 istream_string_new(pool_t pool, const char *s);
 
-istream_t
+istream_t attr_malloc
 istream_file_new(pool_t pool, const char *path);
 
 #endif
