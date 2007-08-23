@@ -11,37 +11,37 @@
 
 #include <stddef.h>
 
-static inline int
+static always_inline int
 char_is_whitespace(char ch)
 {
     return ((unsigned char)ch) <= 0x20;
 }
 
-static inline int
+static always_inline int
 char_is_digit(char ch)
 {
     return ch >= '0' && ch <= '9';
 }
 
-static inline int
+static always_inline int
 char_is_minuscule_letter(char ch)
 {
     return ch >= 'a' && ch <= 'z';
 }
 
-static inline int
+static always_inline int
 char_is_capital_letter(char ch)
 {
     return ch >= 'A' && ch <= 'Z';
 }
 
-static inline int
+static always_inline int
 char_is_letter(char ch)
 {
     return char_is_minuscule_letter(ch) || char_is_capital_letter(ch);
 }
 
-static inline int
+static always_inline int
 char_is_alphanumeric(char ch)
 {
     return char_is_letter(ch) || char_is_digit(ch);

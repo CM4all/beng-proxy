@@ -11,6 +11,8 @@
 
 #if defined(__GNUC__) && __GNUC__ >= 4
 
+#define always_inline inline __attribute__((always_inline))
+
 #ifdef ALWAYS_INLINE
 #define inline inline __attribute__((always_inline))
 #endif
@@ -24,6 +26,8 @@
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 #else
+
+#define always_inline inline
 
 #define attr_malloc
 #define attr_pure
