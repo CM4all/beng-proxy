@@ -9,6 +9,7 @@
 #include "strutil.h"
 #include "compiler.h"
 #include "buffered-io.h"
+#include "header-parser.h"
 #include "header-writer.h"
 
 #ifdef __linux
@@ -290,39 +291,6 @@ http_client_parse_status_line(http_client_connection_t connection,
 }
 
 static void
-http_client_parse_header_line(http_client_connection_t connection,
-                              const char *line, size_t length)
-{
-    const char *colon, *key_end;
-    char *key, *value;
-
-    assert(connection != NULL);
-    assert(connection->response.reading_headers);
-    assert(connection->response.pool != NULL);
-    assert(connection->response.headers != NULL);
-    assert(!connection->response.reading_body);
-
-    colon = memchr(line, ':', length);
-    if (unlikely(colon == NULL || colon == line))
-        return;
-
-    key_end = colon;
-
-    ++colon;
-    if (likely(*colon == ' '))
-        ++colon;
-    while (unlikely(colon < line + length && char_is_whitespace(*colon)))
-        ++colon;
-
-    key = p_strndup(connection->response.pool, line, key_end - line);
-    value = p_strndup(connection->response.pool, colon, line + length - colon);
-
-    str_to_lower(key);
-
-    strmap_addn(connection->response.headers, key, value);
-}
-
-static void
 http_client_headers_finished(http_client_connection_t connection)
 {
     const char *header_connection, *value;
@@ -364,7 +332,9 @@ http_client_handle_line(http_client_connection_t connection,
     if (!connection->response.reading_headers) {
         http_client_parse_status_line(connection, line, length);
     } else if (length > 0) {
-        http_client_parse_header_line(connection, line, length);
+        header_parse_line(connection->response.pool,
+                          connection->response.headers,
+                          line, length);
     } else {
         http_client_headers_finished(connection);
     }

@@ -9,6 +9,7 @@
 #include "strutil.h"
 #include "compiler.h"
 #include "buffered-io.h"
+#include "header-parser.h"
 #include "header-writer.h"
 
 #ifdef __linux
@@ -356,33 +357,6 @@ http_server_parse_request_line(http_server_connection_t connection,
 }
 
 static void
-http_server_parse_header_line(http_server_connection_t connection,
-                              const char *line, size_t length)
-{
-    const char *colon, *key_end;
-    char *key, *value;
-
-    colon = memchr(line, ':', length);
-    if (unlikely(colon == NULL || colon == line))
-        return;
-
-    key_end = colon;
-
-    ++colon;
-    if (likely(*colon == ' '))
-        ++colon;
-    while (colon < line + length && char_is_whitespace(*colon))
-        ++colon;
-
-    key = p_strndup(connection->request.request->pool, line, key_end - line);
-    value = p_strndup(connection->request.request->pool, colon, line + length - colon);
-
-    str_to_lower(key);
-
-    strmap_addn(connection->request.request->headers, key, value);
-}
-
-static void
 http_server_headers_finished(http_server_connection_t connection)
 {
     const char *header_connection;
@@ -406,7 +380,9 @@ http_server_handle_line(http_server_connection_t connection,
     if (connection->request.request == NULL) {
         http_server_parse_request_line(connection, line, length);
     } else if (length > 0) {
-        http_server_parse_header_line(connection, line, length);
+        header_parse_line(connection->request.request->pool,
+                          connection->request.request->headers,
+                          line, length);
     } else {
         http_server_headers_finished(connection);
     }
