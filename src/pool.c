@@ -382,16 +382,11 @@ p_malloc_linear(pool_t pool, size_t size)
 static void *
 internal_malloc(pool_t pool, size_t size)
 {
-    switch (pool->type) {
-    case POOL_LIBC:
-        return p_malloc_libc(pool, size);
-
-    case POOL_LINEAR:
+    if (likely(pool->type == POOL_LINEAR))
         return p_malloc_linear(pool, size);
-    }
 
-    assert(0);
-    return NULL;
+    assert(pool->type == POOL_LIBC);
+    return p_malloc_libc(pool, size);
 }
 
 void *
