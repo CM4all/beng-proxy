@@ -214,6 +214,8 @@ http_server_response_read(http_server_connection_t connection)
 
     case WRITE_HEADERS:
         nbytes = header_writer_run(&connection->response.header_writer);
+        if (nbytes > 0) /* XXX remove this hack, design better header_writer API instead */
+            nbytes = header_writer_run(&connection->response.header_writer);
         if (nbytes == 0) {
             if (connection->response.body == NULL) {
                 connection->response.write_state = WRITE_POST;
