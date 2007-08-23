@@ -954,8 +954,11 @@ http_server_response(struct http_server_request *request,
         } else
             connection->response.chunked = 0;
     } else {
+        snprintf(connection->response.content_length_buffer,
+                 sizeof(connection->response.content_length_buffer),
+                 "%lu", (unsigned long)content_length);
         strmap_put(headers, "content-length",
-                   p_sprintf(request->pool, "%lu", (unsigned long)content_length),
+                   connection->response.content_length_buffer,
                    1);
         connection->response.chunked = 0;
     }
