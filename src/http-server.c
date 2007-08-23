@@ -460,7 +460,7 @@ http_server_consume_input(http_server_connection_t connection)
     }
 }
 
-static void
+void
 http_server_try_read(http_server_connection_t connection)
 {
     void *buffer;
@@ -474,6 +474,8 @@ http_server_try_read(http_server_connection_t connection)
 
     nbytes = read(connection->fd, buffer, max_length);
     if (unlikely(nbytes < 0)) {
+        if (errno == EAGAIN)
+            return;
         perror("read error on HTTP connection");
         http_server_connection_close(connection);
         return;

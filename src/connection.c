@@ -45,4 +45,5 @@ http_listener_callback(int fd,
 
     connection->http = http_server_connection_new(pool, fd,
                                                   my_http_server_callback, connection);
+    http_server_try_read(connection->http);
 }
