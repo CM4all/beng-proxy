@@ -11,11 +11,11 @@
 
 #if defined(__GNUC__) && __GNUC__ >= 4
 
-#define always_inline inline __attribute__((always_inline))
-
 #ifdef ALWAYS_INLINE
 #define inline inline __attribute__((always_inline))
 #endif
+
+#define attr_always_inline inline __attribute__((always_inline))
 
 #define attr_malloc __attribute__((malloc))
 #define attr_pure __attribute__((pure))
@@ -27,7 +27,7 @@
 
 #else
 
-#define always_inline inline
+#define attr_always_inline inline
 
 #define attr_malloc
 #define attr_pure
