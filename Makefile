@@ -1,10 +1,12 @@
 include version.mk
 
 CC = gcc
-CFLAGS = -O0 -g
+CFLAGS = -O0 -g -DPOISON
 WARNING_CFLAGS += -Wall -W -pedantic -Werror -pedantic-errors -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef
 
-override CFLAGS += -DVERSION=\"$(VERSION)\"
+MORE_CFLAGS = -DVERSION=\"$(VERSION)\"
+
+ALL_CFLAGS = $(CFLAGS) $(MORE_CFLAGS) $(WARNING_CFLAGS) 
 
 LIBDAEMON_CFLAGS := $(shell pkg-config --cflags libcm4all-daemon)
 LIBDAEMON_LIBS := $(shell pkg-config --libs libcm4all-daemon)
@@ -52,7 +54,19 @@ src/beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
 $(OBJECTS): %.o: %.c $(HEADERS)
-	$(CC) -c -o $@ $< $(CFLAGS) $(WARNING_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS)
+	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(WARNING_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS)
+
+profile: CFLAGS = -O3 -DNDEBUG -g -pg
+profile: src/beng-proxy
+	./src/beng-proxy
+
+benchmark: CFLAGS = -O3 -DNDEBUG -pg
+benchmark: src/beng-proxy
+	./src/beng-proxy
+
+valgrind: CFLAGS = -O0 -g -DPOISON -DVALGRIND
+valgrind: src/beng-proxy
+	valgrind --show-reachable=yes --leak-check=yes ./src/beng-proxy
 
 doc/beng.pdf: doc/beng.tex
 	cd $(dir $<) && pdflatex $(notdir $<)
