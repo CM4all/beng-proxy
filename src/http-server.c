@@ -278,13 +278,17 @@ http_server_try_response(http_server_connection_t connection)
             http_server_connection_close(connection);
             break;
         } else if (nbytes > 0) {
-            connection->response.blocking = (size_t)nbytes < length;
             fifo_buffer_consume(connection->output, (size_t)nbytes);
-            if (connection->response.writing &&
-                connection->response.write_state != WRITE_POST &&
-                !connection->response.blocking)
-                http_server_response_read(connection);
-            else
+            if (!connection->response.writing ||
+                connection->response.write_state == WRITE_POST)
+                break;
+
+            connection->response.blocking = (size_t)nbytes < length;
+            if (connection->response.blocking)
+                break;
+
+            http_server_response_read(connection);
+            if (!http_server_connection_valid(connection))
                 break;
         } else {
             break;
