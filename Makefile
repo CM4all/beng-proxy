@@ -56,11 +56,11 @@ src/beng-proxy: $(OBJECTS)
 $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(WARNING_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS)
 
-profile: CFLAGS = -O3 -DNDEBUG -g -pg
+profile: CFLAGS = -O0 -DNDEBUG -g -pg
 profile: src/beng-proxy
 	./src/beng-proxy
 
-benchmark: CFLAGS = -O3 -DNDEBUG -pg
+benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE -pg
 benchmark: src/beng-proxy
 	./src/beng-proxy
 
