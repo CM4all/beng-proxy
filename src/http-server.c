@@ -88,6 +88,7 @@ struct http_server_connection {
         } write_state;
         int blocking;
         int chunked;
+        off_t rest;
         char status_buffer[64];
         char content_length_buffer[32];
         istream_t status;
@@ -829,10 +830,36 @@ static const struct istream_handler http_server_status_handler = {
 };
 
 
+static void
+http_server_response_body_eof_detected(http_server_connection_t connection)
+{
+    assert(connection->response.writing);
+    assert(connection->response.write_state == WRITE_BODY);
+    assert(connection->response.body != NULL);
+    assert(connection->response.body->pool != NULL);
+
+    pool_unref(connection->response.body->pool);
+
+    connection->response.write_state = WRITE_POST;
+    istream_free(&connection->response.body);
+
+    if (connection->response.chunked) {
+        if (connection->response.write_state == WRITE_POST) {
+            http_server_send_last_chunk(connection);
+        } else {
+            /* XXX chunked body is empty before we were able to write */
+            abort();
+        }
+    }
+
+    http_server_response_eof(connection);
+}
+
 static size_t
 http_server_response_body_data(const void *data, size_t length, void *ctx)
 {
     http_server_connection_t connection = ctx;
+    size_t nbytes;
 
     assert(connection->response.writing);
     assert(connection->response.write_state != WRITE_POST);
@@ -841,9 +868,18 @@ http_server_response_body_data(const void *data, size_t length, void *ctx)
         return 0;
 
     if (connection->response.chunked)
-        return http_server_send_chunk(connection, data, length);
+        nbytes = http_server_send_chunk(connection, data, length);
     else
-        return write_or_append(connection, data, length);
+        nbytes = write_or_append(connection, data, length);
+
+    if (connection->response.rest != (off_t)-1) {
+        assert(connection->response.rest >= (off_t)nbytes);
+        connection->response.rest -= (off_t)nbytes;
+        if (connection->response.rest == 0)
+            http_server_response_body_eof_detected(connection);
+    }
+
+    return nbytes;
 }
 
 #ifdef __linux
@@ -865,8 +901,16 @@ http_server_response_body_direct(int fd, size_t max_length, void *ctx)
     if (nbytes < 0 && errno == EAGAIN)
         return -2;
 
-    if (nbytes > 0)
+    if (nbytes > 0) {
         connection->response.blocking = 1;
+
+        if (connection->response.rest != (off_t)-1) {
+            assert(connection->response.rest >= (off_t)nbytes);
+            connection->response.rest -= (off_t)nbytes;
+            if (connection->response.rest == 0)
+                http_server_response_body_eof_detected(connection);
+        }
+    }
 
     return nbytes;
 }
@@ -959,6 +1003,7 @@ http_server_response(struct http_server_request *request,
     assert(connection->request.request == request);
     assert(!connection->response.writing);
 
+    connection->response.rest = content_length;
     connection->response.status
         = istream_memory_new(request->pool,
                              connection->response.status_buffer,
