@@ -168,9 +168,9 @@ http_server_uncork(http_server_connection_t connection)
 static void
 http_server_response_eof(http_server_connection_t connection)
 {
-    assert(connection->request.request != NULL);
     assert(connection->request.read_state != READ_START &&
            connection->request.read_state != READ_HEADERS);
+    assert(connection->request.request != NULL);
     assert(connection->response.writing);
     assert(connection->response.write_state == WRITE_POST);
     assert(connection->response.status == NULL);
@@ -200,6 +200,8 @@ http_server_response_read(http_server_connection_t connection)
 {
     ssize_t nbytes;
 
+    assert(connection->request.read_state != READ_START &&
+           connection->request.read_state != READ_HEADERS);
     assert(connection->request.request != NULL);
     assert(connection->response.writing);
     assert(connection->response.write_state != WRITE_POST);
@@ -278,7 +280,9 @@ http_server_try_response(http_server_connection_t connection)
         } else if (nbytes > 0) {
             connection->response.blocking = (size_t)nbytes < length;
             fifo_buffer_consume(connection->output, (size_t)nbytes);
-            if (connection->request.request != NULL && !connection->response.blocking)
+            if (connection->response.writing &&
+                connection->response.write_state != WRITE_POST &&
+                !connection->response.blocking)
                 http_server_response_read(connection);
             else
                 break;
@@ -287,12 +291,14 @@ http_server_try_response(http_server_connection_t connection)
         }
     }
 
-    if (connection->request.request != NULL && !connection->response.blocking)
+    if (connection->response.writing &&
+        connection->response.write_state != WRITE_POST &&
+        !connection->response.blocking)
         http_server_response_read_loop(connection);
 
     http_server_uncork(connection);
 
-    if (connection->request.request != NULL && !connection->keep_alive &&
+    if (!connection->keep_alive &&
         connection->response.writing &&
         connection->response.write_state == WRITE_POST &&
         fifo_buffer_empty(connection->output))
@@ -309,8 +315,8 @@ http_server_parse_request_line(http_server_connection_t connection,
     http_method_t method = HTTP_METHOD_NULL;
 
     assert(connection != NULL);
-    assert(connection->request.request == NULL);
     assert(connection->request.read_state == READ_START);
+    assert(connection->request.request == NULL);
 
     if (unlikely(length < 5)) {
         http_server_connection_close(connection);
@@ -377,13 +383,21 @@ http_server_handle_line(http_server_connection_t connection,
     assert(connection->request.read_state == READ_START ||
            connection->request.read_state == READ_HEADERS);
 
-    if (connection->request.request == NULL) {
+    if (unlikely(connection->request.read_state == READ_START)) {
+        assert(connection->request.request == NULL);
+
         http_server_parse_request_line(connection, line, length);
-    } else if (length > 0) {
+    } else if (likely(length > 0)) {
+        assert(connection->request.read_state == READ_HEADERS);
+        assert(connection->request.request != NULL);
+
         header_parse_line(connection->request.request->pool,
                           connection->request.request->headers,
                           line, length);
     } else {
+        assert(connection->request.read_state == READ_HEADERS);
+        assert(connection->request.request != NULL);
+
         http_server_headers_finished(connection);
     }
 }
@@ -580,7 +594,8 @@ http_server_connection_close(http_server_connection_t connection)
 
     pool_ref(connection->pool);
 
-    if (connection->request.request != NULL) {
+    if (connection->request.read_state != READ_START) {
+        assert(connection->request.request != NULL);
         http_server_request_free(&connection->request.request);
 
         if (connection->response.writing) {
@@ -592,6 +607,8 @@ http_server_connection_close(http_server_connection_t connection)
                 istream_free(&connection->response.body);
                 pool_unref(pool);
             }
+
+            connection->response.writing = 0;
         }
     }
 
