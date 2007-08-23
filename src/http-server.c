@@ -194,6 +194,20 @@ http_server_response_eof(http_server_connection_t connection)
     pool_unref(connection->pool);
 }
 
+static ssize_t
+http_server_try_flush_output(http_server_connection_t connection)
+{
+    ssize_t nbytes;
+
+    nbytes = write_from_buffer(connection->fd, connection->output);
+    if (nbytes == -1) {
+        perror("write error on HTTP connection");
+        http_server_connection_close(connection);
+    }
+
+    return nbytes;
+}
+
 static void
 http_server_response_read(http_server_connection_t connection)
 {
@@ -232,8 +246,11 @@ http_server_response_read(http_server_connection_t connection)
 #ifdef __linux
         if (connection->response.chunked)
             istream_read(connection->response.body);
-        else
-            istream_direct(connection->response.body);
+        else {
+            nbytes = http_server_try_flush_output(connection);
+            if (nbytes == -2 || nbytes == 0)
+                istream_direct(connection->response.body);
+        }
 #else
         istream_read(connection->response.body);
 #endif
