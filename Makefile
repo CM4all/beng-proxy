@@ -61,7 +61,7 @@ profile: CFLAGS = -O0 -DNDEBUG -g -pg
 profile: src/beng-proxy
 	./src/beng-proxy
 
-benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE -pg
+benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
 benchmark: src/beng-proxy
 	./src/beng-proxy
 
