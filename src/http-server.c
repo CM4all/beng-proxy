@@ -315,8 +315,10 @@ http_server_try_response(http_server_connection_t connection)
 
     if (connection->response.writing &&
         connection->response.write_state != WRITE_POST &&
-        !connection->response.blocking)
+        !connection->response.blocking) {
+        http_server_cork(connection);
         http_server_response_read_loop(connection);
+    }
 
     http_server_uncork(connection);
 
