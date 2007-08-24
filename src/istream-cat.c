@@ -20,6 +20,7 @@ struct input {
 struct istream_cat {
     struct istream output;
     struct input *current;
+    int direct_mode, blocking;
     struct input inputs[MAX_INPUTS];
 };
 
@@ -31,13 +32,18 @@ cat_input_data(const void *data, size_t length, void *ctx)
 {
     struct input *input = ctx;
     struct istream_cat *cat = input->cat;
+    ssize_t nbytes;
 
     assert(input->istream != NULL);
 
-    if (input == cat->current)
-        return istream_invoke_data(&cat->output, data, length);
-    else
+    if (input != cat->current)
         return 0;
+
+    nbytes = istream_invoke_data(&cat->output, data, length);
+    if (nbytes == (ssize_t)length)
+        cat->blocking = 0;
+
+    return nbytes;
 }
 
 static ssize_t
@@ -101,16 +107,25 @@ istream_cat_read(istream_t istream)
 {
     struct istream_cat *cat = istream_to_cat(istream);
 
-    while (cat->current != NULL && cat->current->istream == NULL)
-        cat->current = cat->current->next;
+    cat->direct_mode = 0;
 
-    if (cat->current == NULL) {
-        istream_invoke_eof(&cat->output);
-        istream_close(&cat->output);
-        return;
-    }
+    pool_ref(cat->output.pool);
 
-    istream_read(cat->current->istream);
+    do {
+        while (cat->current != NULL && cat->current->istream == NULL)
+            cat->current = cat->current->next;
+
+        if (cat->current == NULL) {
+            istream_invoke_eof(&cat->output);
+            istream_close(&cat->output);
+            break;
+        }
+
+        cat->blocking = 1;
+        istream_read(cat->current->istream);
+    } while (cat->current != NULL && !cat->direct_mode && !cat->blocking);
+
+    pool_unref(cat->output.pool);
 }
 
 static void
@@ -118,16 +133,25 @@ istream_cat_direct(istream_t istream)
 {
     struct istream_cat *cat = istream_to_cat(istream);
 
-    while (cat->current != NULL && cat->current->istream == NULL)
-        cat->current = cat->current->next;
+    cat->direct_mode = 1;
 
-    if (cat->current == NULL) {
-        istream_invoke_eof(&cat->output);
-        istream_close(&cat->output);
-        return;
-    }
+    pool_ref(cat->output.pool);
 
-    istream_direct(cat->current->istream);
+    do {
+        while (cat->current != NULL && cat->current->istream == NULL)
+            cat->current = cat->current->next;
+
+        if (cat->current == NULL) {
+            istream_invoke_eof(&cat->output);
+            istream_close(&cat->output);
+            break;
+        }
+
+        cat->blocking = 1;
+        istream_direct(cat->current->istream);
+    } while (cat->current != NULL && cat->direct_mode && !cat->blocking);
+
+    pool_unref(cat->output.pool);
 }
 
 static void
