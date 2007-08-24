@@ -160,34 +160,6 @@ http_server_uncork(http_server_connection_t connection)
 }
 
 static void
-http_server_response_eof2(http_server_connection_t connection)
-{
-    assert(connection->request.read_state != READ_START &&
-           connection->request.read_state != READ_HEADERS);
-    assert(connection->request.request != NULL);
-    assert(connection->response.writing == WRITE_POST);
-    assert(connection->response.istream == NULL);
-
-    pool_ref(connection->pool);
-
-    if (connection->request.read_state == READ_BODY) {
-        /* XXX discard rest of body? */
-    }
-
-    connection->request.read_state = READ_START;
-    connection->response.writing = NOT_WRITING;
-
-    http_server_request_free(&connection->request.request);
-
-    if (!connection->keep_alive)
-        /* keepalive disabled and response is finished: we must close
-           the connection */
-        http_server_connection_close(connection);
-
-    pool_unref(connection->pool);
-}
-
-static void
 http_server_try_write(http_server_connection_t connection)
 {
     assert(connection != NULL);
@@ -595,14 +567,32 @@ http_server_response_eof(void *ctx)
 {
     http_server_connection_t connection = ctx;
 
+    assert(connection->request.read_state != READ_START &&
+           connection->request.read_state != READ_HEADERS);
+    assert(connection->request.request != NULL);
     assert(connection->response.writing == WRITE_IN_PROGRESS);
     assert(connection->response.istream != NULL);
     assert(connection->response.istream->pool != NULL);
 
+    pool_ref(connection->pool);
+
     connection->response.istream = NULL;
 
-    connection->response.writing = WRITE_POST;
-    http_server_response_eof2(connection);
+    if (connection->request.read_state == READ_BODY) {
+        /* XXX discard rest of body? */
+    }
+
+    connection->request.read_state = READ_START;
+    connection->response.writing = NOT_WRITING;
+
+    http_server_request_free(&connection->request.request);
+
+    if (!connection->keep_alive)
+        /* keepalive disabled and response is finished: we must close
+           the connection */
+        http_server_connection_close(connection);
+
+    pool_unref(connection->pool);
 }
 
 static void
