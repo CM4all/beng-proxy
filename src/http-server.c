@@ -189,7 +189,7 @@ http_server_response_eof2(http_server_connection_t connection)
 }
 
 static void
-http_server_try_response(http_server_connection_t connection)
+http_server_try_write(http_server_connection_t connection)
 {
     assert(connection != NULL);
     assert(connection->fd >= 0);
@@ -448,7 +448,7 @@ http_server_event_callback(int fd, short event, void *ctx)
     }
 
     if (http_server_connection_valid(connection) && (event & EV_WRITE) != 0)
-        http_server_try_response(connection);
+        http_server_try_write(connection);
 
     if (http_server_connection_valid(connection) && (event & EV_READ) != 0)
         http_server_try_read(connection);
@@ -709,7 +709,9 @@ http_server_response(struct http_server_request *request,
     connection->response.writing = 1;
     connection->response.write_state = WRITE_IN_PROGRESS;
 
-    http_server_try_response(connection);
+    http_server_try_write(connection);
+    if (http_server_connection_valid(connection))
+        http_server_event_setup(connection);
 }
 
 void
