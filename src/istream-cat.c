@@ -40,6 +40,18 @@ cat_input_data(const void *data, size_t length, void *ctx)
         return 0;
 }
 
+static ssize_t
+cat_input_direct(int fd, size_t max_length, void *ctx)
+{
+    struct input *input = ctx;
+    struct istream_cat *cat = input->cat;
+
+    assert(input->istream != NULL);
+    assert(input == cat->current);
+
+    return istream_invoke_direct(&cat->output, fd, max_length);
+}
+
 static void
 cat_input_eof(void *ctx)
 {
@@ -72,6 +84,7 @@ cat_input_free(void *ctx)
 
 static const struct istream_handler cat_input_handler = {
     .data = cat_input_data,
+    .direct = cat_input_direct,
     .eof = cat_input_eof,
     .free = cat_input_free,
 };
