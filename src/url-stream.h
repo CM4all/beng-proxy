@@ -9,6 +9,7 @@
 
 #include "pool.h"
 #include "strmap.h"
+#include "growing-buffer.h"
 #include "http.h"
 #include "istream.h"
 
@@ -21,7 +22,7 @@ typedef void (*url_stream_callback_t)(http_status_t status, strmap_t headers,
 url_stream_t attr_malloc
 url_stream_new(pool_t pool,
                http_method_t method, const char *url,
-               strmap_t headers,
+               growing_buffer_t headers,
                url_stream_callback_t callback, void *ctx);
 
 void

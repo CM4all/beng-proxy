@@ -19,7 +19,7 @@ struct url_stream {
     pool_t pool;
     http_method_t method;
     const char *uri;
-    strmap_t headers;
+    growing_buffer_t headers;
     client_socket_t client_socket;
     http_client_connection_t http;
 
@@ -98,7 +98,7 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
 url_stream_t attr_malloc
 url_stream_new(pool_t pool,
                http_method_t method, const char *url,
-               strmap_t headers,
+               growing_buffer_t headers,
                url_stream_callback_t callback, void *ctx)
 {
     url_stream_t us = p_malloc(pool, sizeof(*us));

@@ -39,7 +39,7 @@ struct http_client_connection {
     /* request */
     struct {
         int writing_headers;
-        struct header_writer header_writer;
+        istream_t headers;
     } request;
 
     /* response */
@@ -209,22 +209,6 @@ http_client_call_request_body(http_client_connection_t connection)
 }
 
 static void
-http_client_write_headers(http_client_connection_t connection)
-{
-    ssize_t nbytes;
-
-    assert(connection->request.writing_headers);
-
-    nbytes = header_writer_run(&connection->request.header_writer);
-    if (nbytes == 0) {
-        connection->request.writing_headers = 0;
-        connection->response.reading = 1;
-        connection->response.reading_headers = 0;
-        connection->response.reading_body = 0;
-    }
-}
-
-static void
 http_client_try_send(http_client_connection_t connection)
 {
     ssize_t rest;
@@ -236,7 +220,7 @@ http_client_try_send(http_client_connection_t connection)
     while ((rest = write_from_buffer(connection->fd,
                                      connection->output)) == 0) {
         if (connection->request.writing_headers) {
-            http_client_write_headers(connection);
+            istream_read(connection->request.headers);
         } else {
             http_client_call_request_body(connection);
             if (!connection->response.reading)
@@ -606,6 +590,12 @@ http_client_connection_close(http_client_connection_t connection)
     connection->request.writing_headers = 0;
     connection->cork = 0;
 
+    if (connection->request.headers != NULL) {
+        pool_t pool = connection->request.headers->pool;
+        istream_free(&connection->request.headers);
+        pool_unref(pool);
+    }
+
     if (connection->response.reading) {
         if (connection->response.reading_headers) {
             assert(connection->response.pool != NULL);
@@ -626,10 +616,96 @@ http_client_connection_close(http_client_connection_t connection)
     }
 }
 
+static size_t
+write_or_append(http_client_connection_t connection,
+                const void *data, size_t length)
+{
+    void *dest;
+    size_t max_length;
+    ssize_t nbytes;
+
+    assert(connection->fd >= 0);
+    /*XXX assert(connection->request.writing);*/
+
+    if (length >= 1024 && fifo_buffer_empty(connection->output)) {
+        nbytes = write(connection->fd, data, length);
+        /* XXX connection->response.blocking = (ssize_t)length < nbytes; */
+        if (nbytes >= 0)
+            return (size_t)nbytes;
+
+        if (errno == EAGAIN)
+            return 0;
+
+        perror("write error on HTTP connection");
+        http_client_connection_close(connection);
+        return 0;
+    } else {
+        dest = fifo_buffer_write(connection->output, &max_length);
+        if (dest == NULL)
+            return 0;
+
+        if (length > max_length)
+            length = max_length;
+
+        memcpy(dest, data, length);
+        fifo_buffer_append(connection->output, length);
+
+        if ((connection->event.ev_events & EV_WRITE) == 0)
+            http_client_event_setup(connection);
+
+        return length;
+    }
+}
+
+
+static size_t
+http_client_headers_data(const void *data, size_t length, void *ctx)
+{
+    http_client_connection_t connection = ctx;
+
+    assert(connection->request.writing_headers);
+
+    return write_or_append(connection, data, length);
+}
+
+static void
+http_client_headers_eof(void *ctx)
+{
+    http_client_connection_t connection = ctx;
+
+    assert(connection->request.writing_headers);
+
+    pool_unref(connection->request.headers->pool);
+    connection->request.headers = NULL;
+
+    connection->request.writing_headers = 0;
+    connection->response.reading = 1;
+    connection->response.reading_headers = 0;
+    connection->response.reading_body = 0;
+
+    /* XXX event_setup()? */
+}
+
+static void
+http_client_headers_free(void *ctx)
+{
+    http_client_connection_t connection = ctx;
+
+    if (connection->request.writing_headers)
+        http_client_connection_close(connection);
+}
+
+static const struct istream_handler http_client_request_headers_handler = {
+    .data = http_client_headers_data,
+    .eof = http_client_headers_eof,
+    .free = http_client_headers_free,
+};
+
+
 void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
-                    strmap_t headers)
+                    growing_buffer_t headers)
 {
     char *buffer;
     size_t max_length;
@@ -639,13 +715,19 @@ http_client_request(http_client_connection_t connection,
     assert(!connection->response.reading);
 
     if (headers == NULL)
-        headers = strmap_new(connection->pool, 16);
+        headers = growing_buffer_new(connection->pool, 256); /* XXX wrong pool */
 
-    strmap_put(headers, "user-agent", "beng-proxy v" VERSION, 0);
+    /* XXX what if this header already exists? */
+    header_write(headers, "user-agent", "beng-proxy v" VERSION);
 
     connection->request.writing_headers = 1;
-    header_writer_init(&connection->request.header_writer,
-                       connection->output, headers);
+
+    growing_buffer_write_buffer(headers, "\r\n", 2);
+
+    connection->request.headers = growing_buffer_istream(headers);
+    pool_ref(connection->request.headers->pool);
+    connection->request.headers->handler = &http_client_request_headers_handler;
+    connection->request.headers->handler_ctx = connection;
 
     buffer = fifo_buffer_write(connection->output, &max_length);
     assert(buffer != NULL); /* XXX */
@@ -654,7 +736,7 @@ http_client_request(http_client_connection_t connection,
     snprintf(buffer, max_length, "GET %s HTTP/1.1\r\nHost: localhost\r\n", uri);
     fifo_buffer_append(connection->output, strlen(buffer));
 
-    http_client_write_headers(connection);
+    istream_read(connection->request.headers);
 
     http_client_try_send(connection);
 

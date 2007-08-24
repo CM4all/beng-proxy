@@ -8,6 +8,7 @@
 #include "handler.h"
 #include "url-stream.h"
 #include "processor.h"
+#include "header-writer.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -41,7 +42,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 {
     struct proxy_transfer *pt = ctx;
     const char *value;
-    strmap_t response_headers;
+    growing_buffer_t response_headers;
 
     pt->url_stream = NULL;
 
@@ -53,7 +54,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
     assert(content_length >= 0);
 
-    response_headers = strmap_new(pt->request->pool, 64);
+    response_headers = growing_buffer_new(pt->request->pool, 2048);
     /* XXX copy headers */
 
     value = strmap_get(headers, "content-type");
@@ -68,7 +69,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
             abort();
         }
 
-        strmap_addn(response_headers, "content-type", "text/html");
+        header_write(response_headers, "content-type", "text/html");
         content_length = (off_t)-1;
     }
 

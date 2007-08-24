@@ -6,6 +6,7 @@
 
 #include "connection.h"
 #include "handler.h"
+#include "header-writer.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -18,7 +19,7 @@ file_callback(struct client_connection *connection,
               struct translated *translated)
 {
     int ret;
-    strmap_t headers;
+    growing_buffer_t headers;
     istream_t body;
     struct stat st;
 
@@ -71,8 +72,8 @@ file_callback(struct client_connection *connection,
         body = NULL;
     }
 
-    headers = strmap_new(request->pool, 64);
-    strmap_addn(headers, "content-type", "text/html");
+    headers = growing_buffer_new(request->pool, 2048);
+    header_write(headers, "content-type", "text/html");
 
     http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
 }

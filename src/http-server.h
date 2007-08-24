@@ -11,6 +11,7 @@
 #include "strmap.h"
 #include "http.h"
 #include "istream.h"
+#include "growing-buffer.h"
 
 /*#include <sys/socket.h>*/
 #include <sys/types.h>
@@ -60,7 +61,8 @@ http_server_try_write(http_server_connection_t connection);
 
 void
 http_server_response(struct http_server_request *request,
-                     http_status_t status, strmap_t headers,
+                     http_status_t status,
+                     growing_buffer_t headers,
                      off_t content_length, istream_t body);
 
 void

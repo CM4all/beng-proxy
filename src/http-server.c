@@ -92,7 +92,7 @@ struct http_server_connection {
         char status_buffer[64];
         char content_length_buffer[32];
         istream_t status;
-        struct header_writer header_writer;
+        istream_t headers;
         istream_t body;
     } response;
 
@@ -228,17 +228,8 @@ http_server_response_read(http_server_connection_t connection)
         break;
 
     case WRITE_HEADERS:
-        nbytes = header_writer_run(&connection->response.header_writer);
-        if (nbytes > 0) /* XXX remove this hack, design better header_writer API instead */
-            nbytes = header_writer_run(&connection->response.header_writer);
-        if (nbytes == 0) {
-            if (connection->response.body == NULL) {
-                connection->response.write_state = WRITE_POST;
-                http_server_response_eof(connection);
-            } else {
-                connection->response.write_state = WRITE_BODY;
-            }
-        }
+        assert(connection->response.headers != NULL);
+        istream_read(connection->response.headers);
 
         break;
 
@@ -633,6 +624,12 @@ http_server_connection_close(http_server_connection_t connection)
             if (connection->response.status != NULL)
                 istream_free(&connection->response.status);
 
+            if (connection->response.headers != NULL) {
+                pool_t pool = connection->response.headers->pool;
+                istream_free(&connection->response.headers);
+                pool_unref(pool);
+            }
+
             if (connection->response.body != NULL) {
                 pool_t pool = connection->response.body->pool;
                 istream_free(&connection->response.body);
@@ -830,6 +827,56 @@ static const struct istream_handler http_server_status_handler = {
 };
 
 
+static size_t
+http_server_headers_data(const void *data, size_t length, void *ctx)
+{
+    http_server_connection_t connection = ctx;
+
+    assert(connection->response.writing);
+    assert(connection->response.write_state != WRITE_BODY &&
+           connection->response.write_state != WRITE_POST);
+
+    if (connection->response.write_state != WRITE_HEADERS)
+        return 0;
+
+    return write_or_append(connection, data, length);
+}
+
+static void
+http_server_headers_eof(void *ctx)
+{
+    http_server_connection_t connection = ctx;
+
+    assert(connection->response.writing);
+    assert(connection->response.write_state == WRITE_HEADERS);
+
+    pool_unref(connection->response.headers->pool);
+    connection->response.headers = NULL;
+
+    if (connection->response.body == NULL) {
+        connection->response.write_state = WRITE_POST;
+        http_server_response_eof(connection);
+    } else {
+        connection->response.write_state = WRITE_BODY;
+    }
+}
+
+static void
+http_server_headers_free(void *ctx)
+{
+    http_server_connection_t connection = ctx;
+
+    if (connection->response.write_state == WRITE_HEADERS)
+        http_server_connection_close(connection);
+}
+
+static const struct istream_handler http_server_response_headers_handler = {
+    .data = http_server_headers_data,
+    .eof = http_server_headers_eof,
+    .free = http_server_headers_free,
+};
+
+
 static void
 http_server_response_body_eof_detected(http_server_connection_t connection)
 {
@@ -995,7 +1042,8 @@ format_status_line(char *p, http_status_t status)
 
 void
 http_server_response(struct http_server_request *request,
-                     http_status_t status, strmap_t headers,
+                     http_status_t status,
+                     growing_buffer_t headers,
                      off_t content_length, istream_t body)
 {
     http_server_connection_t connection = request->connection;
@@ -1013,11 +1061,11 @@ http_server_response(struct http_server_request *request,
     connection->response.status->handler_ctx = connection;
 
     if (headers == NULL)
-        headers = strmap_new(request->pool, 16);
+        headers = growing_buffer_new(request->pool, 256);
 
     if (content_length == (off_t)-1) {
         if (connection->keep_alive) {
-            strmap_put(headers, "transfer-encoding", "chunked", 1);
+            header_write(headers, "transfer-encoding", "chunked");
             connection->response.chunked = 1;
         } else
             connection->response.chunked = 0;
@@ -1025,18 +1073,20 @@ http_server_response(struct http_server_request *request,
         snprintf(connection->response.content_length_buffer,
                  sizeof(connection->response.content_length_buffer),
                  "%lu", (unsigned long)content_length);
-        strmap_put(headers, "content-length",
-                   connection->response.content_length_buffer,
-                   1);
+        header_write(headers, "content-length",
+                     connection->response.content_length_buffer);
         connection->response.chunked = 0;
     }
 
-    strmap_put(headers, "connection",
-               connection->keep_alive ? "keep-alive" : "close",
-               1);
+    header_write(headers, "connection",
+                 connection->keep_alive ? "keep-alive" : "close");
 
-    header_writer_init(&connection->response.header_writer,
-                       connection->output, headers);
+    growing_buffer_write_buffer(headers, "\r\n", 2);
+
+    connection->response.headers = growing_buffer_istream(headers);
+    pool_ref(connection->response.headers->pool);
+    connection->response.headers->handler = &http_server_response_headers_handler;
+    connection->response.headers->handler_ctx = connection;
 
     connection->response.body = body;
     if (connection->response.body != NULL) {

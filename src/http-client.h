@@ -11,6 +11,7 @@
 #include "strmap.h"
 #include "http.h"
 #include "istream.h"
+#include "growing-buffer.h"
 
 #include <sys/types.h>
 #include <event.h>
@@ -31,6 +32,6 @@ http_client_connection_close(http_client_connection_t connection);
 void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
-                    strmap_t headers);
+                    growing_buffer_t headers);
 
 #endif
