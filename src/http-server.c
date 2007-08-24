@@ -583,15 +583,6 @@ http_server_connection_free(http_server_connection_t *connection_r)
     http_server_connection_close(connection);
 }
 
-void
-http_server_try_write(http_server_connection_t connection)
-{
-    assert(connection != NULL);
-    assert(!connection->cork);
-
-    http_server_try_response(connection);
-}
-
 static size_t
 write_or_append(http_server_connection_t connection,
                 const void *data, size_t length)

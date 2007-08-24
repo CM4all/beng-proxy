@@ -54,9 +54,6 @@ void
 http_server_try_read(http_server_connection_t connection);
 
 void
-http_server_try_write(http_server_connection_t connection);
-
-void
 http_server_response(struct http_server_request *request,
                      http_status_t status,
                      growing_buffer_t headers,
