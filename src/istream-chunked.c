@@ -157,6 +157,8 @@ istream_chunked_close(istream_t istream)
     }
     
     chunked->buffer = NULL;
+
+    istream_invoke_free(&chunked->output);
 }
 
 static const struct istream istream_chunked = {
