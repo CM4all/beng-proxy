@@ -248,6 +248,8 @@ processor_substitution_eof(struct substitution *s)
     processor->position = s->end;
     processor->first_substitution = s->next;
     substitution_close(s);
+
+    processor_output(processor);
 }
 
 static const struct substitution_handler processor_substitution_handler = {
