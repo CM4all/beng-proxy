@@ -509,10 +509,10 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
 
     nbytes = write(connection->fd, data, length);
     connection->response.blocking = nbytes < (ssize_t)length;
-    if (nbytes >= 0)
+    if (likely(nbytes >= 0))
         return (size_t)nbytes;
 
-    if (errno == EAGAIN)
+    if (likely(errno == EAGAIN))
         return 0;
 
     perror("write error on HTTP connection");
@@ -532,10 +532,10 @@ http_server_response_stream_direct(int fd, size_t max_length, void *ctx)
     connection->response.blocking = 0;
 
     nbytes = sendfile(connection->fd, fd, NULL, max_length);
-    if (nbytes < 0 && errno == EAGAIN)
+    if (unlikely(nbytes < 0 && errno == EAGAIN))
         return -2;
 
-    if (nbytes > 0)
+    if (likely(nbytes > 0))
         connection->response.blocking = 1;
 
     return nbytes;
