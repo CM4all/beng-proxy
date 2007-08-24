@@ -87,7 +87,6 @@ struct http_server_connection {
             WRITE_POST
         } write_state;
         int blocking;
-        int chunked;
         off_t rest;
         char status_buffer[64];
         char content_length_buffer[32];
@@ -236,13 +235,9 @@ http_server_response_read(http_server_connection_t connection)
     case WRITE_BODY:
         assert(connection->response.body != NULL);
 #ifdef __linux
-        if (connection->response.chunked)
-            istream_read(connection->response.body);
-        else {
-            nbytes = http_server_try_flush_output(connection);
-            if (nbytes == -2 || nbytes == 0)
-                istream_direct(connection->response.body);
-        }
+        nbytes = http_server_try_flush_output(connection);
+        if (nbytes == -2 || nbytes == 0)
+            istream_direct(connection->response.body);
 #else
         istream_read(connection->response.body);
 #endif
@@ -662,62 +657,6 @@ http_server_connection_free(http_server_connection_t *connection_r)
     http_server_connection_close(connection);
 }
 
-static const char hex_digits[] = "0123456789abcdef";
-
-static size_t
-http_server_send_chunk(http_server_connection_t connection,
-                       const void *p, size_t length)
-{
-    char *dest;
-    size_t max_length;
-
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
-    assert(p != NULL);
-    assert(length > 0);
-
-
-    dest = fifo_buffer_write(connection->output, &max_length);
-    if (dest == NULL)
-        return 0;
-
-    if (max_length < 4 + 2 + 1 + 2 + 5)
-        return 0;
-
-    if (length > max_length - 4 - 2 - 2 - 5)
-        length = max_length - 4 - 2 - 2 - 5;
-
-    dest[0] = hex_digits[(length >> 12) & 0xf];
-    dest[1] = hex_digits[(length >> 8) & 0xf];
-    dest[2] = hex_digits[(length >> 4) & 0xf];
-    dest[3] = hex_digits[length & 0xf];
-    dest[4] = '\r';
-    dest[5] = '\n';
-    memcpy(dest + 4 + 2, p, length);
-    dest[4 + 2 + length] = '\r';
-    dest[4 + 2 + length + 1] = '\n';
-
-    fifo_buffer_append(connection->output, 4 + 2 + length + 2);
-
-    if ((connection->event.ev_events & EV_WRITE) == 0)
-        http_server_event_setup(connection);
-
-    return length;
-}
-
-static void
-http_server_send_last_chunk(http_server_connection_t connection)
-{
-    char *dest;
-    size_t max_length;
-
-    dest = fifo_buffer_write(connection->output, &max_length);
-    assert(dest != NULL && max_length >= 5); /* XXX */
-
-    memcpy(dest, "0\r\n\r\n", 5);
-    fifo_buffer_append(connection->output, 5);
-}
-
 size_t
 http_server_send_status(http_server_connection_t connection, int status)
 {
@@ -890,15 +829,6 @@ http_server_response_body_eof_detected(http_server_connection_t connection)
     connection->response.write_state = WRITE_POST;
     istream_free(&connection->response.body);
 
-    if (connection->response.chunked) {
-        if (connection->response.write_state == WRITE_POST) {
-            http_server_send_last_chunk(connection);
-        } else {
-            /* XXX chunked body is empty before we were able to write */
-            abort();
-        }
-    }
-
     http_server_response_eof(connection);
 }
 
@@ -914,10 +844,7 @@ http_server_response_body_data(const void *data, size_t length, void *ctx)
     if (connection->response.write_state != WRITE_BODY)
         return 0;
 
-    if (connection->response.chunked)
-        nbytes = http_server_send_chunk(connection, data, length);
-    else
-        nbytes = write_or_append(connection, data, length);
+    nbytes = write_or_append(connection, data, length);
 
     if (connection->response.rest != (off_t)-1) {
         assert(connection->response.rest >= (off_t)nbytes);
@@ -976,19 +903,10 @@ http_server_response_body_eof(void *ctx)
     pool_unref(connection->response.body->pool);
 
     connection->response.body = NULL;
-    if (connection->response.write_state == WRITE_BODY)
+    if (connection->response.write_state == WRITE_BODY) {
         connection->response.write_state = WRITE_POST;
-
-    if (connection->response.chunked) {
-        if (connection->response.write_state == WRITE_POST) {
-            http_server_send_last_chunk(connection);
-        } else {
-            /* XXX chunked body is empty before we were able to write */
-            abort();
-        }
+        http_server_response_eof(connection);
     }
-
-    http_server_response_eof(connection);
 }
 
 static void
@@ -1066,16 +984,14 @@ http_server_response(struct http_server_request *request,
     if (content_length == (off_t)-1) {
         if (connection->keep_alive) {
             header_write(headers, "transfer-encoding", "chunked");
-            connection->response.chunked = 1;
-        } else
-            connection->response.chunked = 0;
+            body = istream_chunked_new(request->pool, body);
+        }
     } else {
         snprintf(connection->response.content_length_buffer,
                  sizeof(connection->response.content_length_buffer),
                  "%lu", (unsigned long)content_length);
         header_write(headers, "content-length",
                      connection->response.content_length_buffer);
-        connection->response.chunked = 0;
     }
 
     header_write(headers, "connection",

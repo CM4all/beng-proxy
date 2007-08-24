@@ -100,4 +100,7 @@ istream_string_new(pool_t pool, const char *s);
 istream_t attr_malloc
 istream_file_new(pool_t pool, const char *path);
 
+istream_t
+istream_chunked_new(pool_t pool, istream_t input);
+
 #endif
