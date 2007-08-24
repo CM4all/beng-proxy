@@ -79,11 +79,7 @@ struct http_server_connection {
 
     /* response */
     struct {
-        enum {
-            NOT_WRITING = 0,
-            WRITE_IN_PROGRESS,
-            WRITE_POST
-        } writing;
+        int writing;
         int blocking;
         char status_buffer[64];
         char content_length_buffer[32];
@@ -167,7 +163,7 @@ http_server_try_write(http_server_connection_t connection)
     assert(connection->request.read_state != READ_START &&
            connection->request.read_state != READ_HEADERS);
     assert(connection->request.request != NULL);
-    assert(connection->response.writing == WRITE_IN_PROGRESS);
+    assert(connection->response.writing);
 
     http_server_cork(connection);
     istream_direct(connection->response.istream);
@@ -379,7 +375,7 @@ http_server_event_setup(http_server_connection_t connection)
         event = EV_READ | EV_TIMEOUT;
 
     if (connection->response.writing && connection->response.blocking) {
-        assert(connection->response.writing == WRITE_IN_PROGRESS);
+        assert(connection->response.writing);
         event |= EV_WRITE | EV_TIMEOUT;
     }
 
@@ -439,7 +435,7 @@ http_server_connection_new(pool_t pool, int fd,
     connection->callback_ctx = ctx;
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
-    connection->response.writing = NOT_WRITING;
+    connection->response.writing = 0;
     connection->cork = 0;
 
     connection->input = fifo_buffer_new(pool, 4096);
@@ -474,7 +470,7 @@ http_server_connection_close(http_server_connection_t connection)
             if (connection->response.istream != NULL)
                 istream_free(&connection->response.istream);
 
-            connection->response.writing = NOT_WRITING;
+            connection->response.writing = 0;
         }
     }
 
@@ -528,7 +524,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
 {
     http_server_connection_t connection = ctx;
 
-    assert(connection->response.writing == WRITE_IN_PROGRESS);
+    assert(connection->response.writing);
     assert(connection->response.istream != NULL);
 
     return write_or_append(connection, data, length);
@@ -541,7 +537,7 @@ http_server_response_stream_direct(int fd, size_t max_length, void *ctx)
     http_server_connection_t connection = ctx;
     ssize_t nbytes;
 
-    assert(connection->response.writing == WRITE_IN_PROGRESS);
+    assert(connection->response.writing);
 
     connection->response.blocking = 0;
 
@@ -564,7 +560,7 @@ http_server_response_stream_eof(void *ctx)
     assert(connection->request.read_state != READ_START &&
            connection->request.read_state != READ_HEADERS);
     assert(connection->request.request != NULL);
-    assert(connection->response.writing == WRITE_IN_PROGRESS);
+    assert(connection->response.writing);
     assert(connection->response.istream != NULL);
     assert(connection->response.istream->pool != NULL);
 
@@ -577,7 +573,7 @@ http_server_response_stream_eof(void *ctx)
     }
 
     connection->request.read_state = READ_START;
-    connection->response.writing = NOT_WRITING;
+    connection->response.writing = 0;
 
     http_server_request_free(&connection->request.request);
 
@@ -594,7 +590,7 @@ http_server_response_stream_free(void *ctx)
 {
     http_server_connection_t connection = ctx;
 
-    if (connection->response.writing == WRITE_IN_PROGRESS)
+    if (connection->response.writing)
         http_server_connection_close(connection);
 }
 
@@ -684,7 +680,7 @@ http_server_response(struct http_server_request *request,
     connection->response.istream->handler = &http_server_response_stream_handler;
     connection->response.istream->handler_ctx = connection;
 
-    connection->response.writing = WRITE_IN_PROGRESS;
+    connection->response.writing = 1;
 
     http_server_try_write(connection);
     if (http_server_connection_valid(connection))
