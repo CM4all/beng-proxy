@@ -201,19 +201,6 @@ http_server_response_read(http_server_connection_t connection)
 }
 
 static void
-http_server_response_read_loop(http_server_connection_t connection)
-{
-    struct http_server_request *request = connection->request.request;
-    unsigned old_state;
-
-    do {
-        old_state = connection->response.write_state;
-        http_server_response_read(connection);
-    } while (connection->request.request == request &&
-             connection->response.write_state != old_state);
-}
-
-static void
 http_server_try_response(http_server_connection_t connection)
 {
     const void *buffer;
@@ -255,7 +242,7 @@ http_server_try_response(http_server_connection_t connection)
         connection->response.write_state != WRITE_POST &&
         !connection->response.blocking) {
         http_server_cork(connection);
-        http_server_response_read_loop(connection);
+        http_server_response_read(connection);
     }
 
     http_server_uncork(connection);
