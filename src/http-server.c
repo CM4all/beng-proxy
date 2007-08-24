@@ -172,12 +172,6 @@ http_server_try_write(http_server_connection_t connection)
     http_server_cork(connection);
     istream_direct(connection->response.istream);
     http_server_uncork(connection);
-
-    if (!connection->keep_alive &&
-        connection->response.writing == WRITE_POST)
-        /* keepalive disabled and response is finished: we must close
-           the connection */
-        http_server_connection_close(connection);
 }
 
 static void
