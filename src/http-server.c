@@ -60,7 +60,7 @@ struct http_server_connection {
     /* I/O */
     int fd;
     struct event event;
-    fifo_buffer_t input, output;
+    fifo_buffer_t input;
 
     /* callback */
     http_server_callback_t callback;
@@ -189,68 +189,23 @@ http_server_response_eof2(http_server_connection_t connection)
 }
 
 static void
-http_server_response_read(http_server_connection_t connection)
+http_server_try_response(http_server_connection_t connection)
 {
+    assert(connection != NULL);
+    assert(connection->fd >= 0);
     assert(connection->request.read_state != READ_START &&
            connection->request.read_state != READ_HEADERS);
     assert(connection->request.request != NULL);
     assert(connection->response.writing);
-    assert(connection->response.write_state != WRITE_POST);
+    assert(connection->response.write_state == WRITE_IN_PROGRESS);
 
+    http_server_cork(connection);
     istream_direct(connection->response.istream);
-}
-
-static void
-http_server_try_response(http_server_connection_t connection)
-{
-    const void *buffer;
-    size_t length;
-    ssize_t nbytes;
-
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
-
-    connection->response.blocking = 0;
-
-    while ((buffer = fifo_buffer_read(connection->output, &length)) != NULL) {
-        http_server_cork(connection);
-
-        nbytes = write(connection->fd, buffer, length);
-        if (unlikely(nbytes < 0 && errno != EAGAIN)) {
-            perror("write error on HTTP connection");
-            http_server_connection_close(connection);
-            break;
-        } else if (nbytes > 0) {
-            fifo_buffer_consume(connection->output, (size_t)nbytes);
-            if (!connection->response.writing ||
-                connection->response.write_state == WRITE_POST)
-                break;
-
-            connection->response.blocking = (size_t)nbytes < length;
-            if (connection->response.blocking)
-                break;
-
-            http_server_response_read(connection);
-            if (!http_server_connection_valid(connection))
-                break;
-        } else {
-            break;
-        }
-    }
-
-    if (connection->response.writing &&
-        connection->response.write_state != WRITE_POST &&
-        !connection->response.blocking) {
-        http_server_cork(connection);
-        http_server_response_read(connection);
-    }
-
     http_server_uncork(connection);
 
     if (!connection->keep_alive &&
         connection->response.writing &&
-        connection->response.write_state == WRITE_POST &&
-        fifo_buffer_empty(connection->output))
+        connection->response.write_state == WRITE_POST)
         /* keepalive disabled and response is finished: we must close
            the connection */
         http_server_connection_close(connection);
@@ -450,7 +405,6 @@ http_server_event_setup(http_server_connection_t connection)
     assert(connection != NULL);
     assert(connection->fd >= 0);
     assert(connection->input != NULL);
-    assert(connection->output != NULL);
 
     if (connection->event.ev_events != 0)
         event_del(&connection->event);
@@ -461,9 +415,10 @@ http_server_event_setup(http_server_connection_t connection)
         !fifo_buffer_full(connection->input))
         event = EV_READ | EV_TIMEOUT;
 
-    if ((connection->response.writing && connection->response.blocking) ||
-        !fifo_buffer_empty(connection->output))
+    if (connection->response.writing && connection->response.blocking) {
+        assert(connection->response.write_state == WRITE_IN_PROGRESS);
         event |= EV_WRITE | EV_TIMEOUT;
+    }
 
     if (event == 0) {
         connection->event.ev_events = 0;
@@ -525,7 +480,6 @@ http_server_connection_new(pool_t pool, int fd,
     connection->cork = 0;
 
     connection->input = fifo_buffer_new(pool, 4096);
-    connection->output = fifo_buffer_new(pool, 4096);
 
     connection->event.ev_events = 0;
     http_server_event_setup(connection);
@@ -587,41 +541,22 @@ static size_t
 write_or_append(http_server_connection_t connection,
                 const void *data, size_t length)
 {
-    void *dest;
-    size_t max_length;
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
     assert(connection->response.writing);
 
-    if (length >= 1024 && fifo_buffer_empty(connection->output)) {
-        nbytes = write(connection->fd, data, length);
-        connection->response.blocking = (ssize_t)length < nbytes;
-        if (nbytes >= 0)
-            return (size_t)nbytes;
+    nbytes = write(connection->fd, data, length);
+    connection->response.blocking = nbytes < (ssize_t)length;
+    if (nbytes >= 0)
+        return (size_t)nbytes;
 
-        if (errno == EAGAIN)
-            return 0;
-
-        perror("write error on HTTP connection");
-        http_server_connection_close(connection);
+    if (errno == EAGAIN)
         return 0;
-    } else {
-        dest = fifo_buffer_write(connection->output, &max_length);
-        if (dest == NULL)
-            return 0;
 
-        if (length > max_length)
-            length = max_length;
-
-        memcpy(dest, data, length);
-        fifo_buffer_append(connection->output, length);
-
-        if ((connection->event.ev_events & EV_WRITE) == 0)
-            http_server_event_setup(connection);
-
-        return length;
-    }
+    perror("write error on HTTP connection");
+    http_server_connection_close(connection);
+    return 0;
 }
 
 
