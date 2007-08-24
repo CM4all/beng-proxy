@@ -33,6 +33,7 @@ SOURCES = src/main.c \
 	src/http-client.c \
 	src/url-stream.c \
 	src/fifo-buffer.c \
+	src/growing-buffer.c \
 	src/istream-memory.c \
 	src/istream-string.c \
 	src/istream-file.c \
