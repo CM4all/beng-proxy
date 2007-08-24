@@ -530,7 +530,7 @@ write_or_append(http_server_connection_t connection,
 
 
 static size_t
-http_server_response_data(const void *data, size_t length, void *ctx)
+http_server_response_stream_data(const void *data, size_t length, void *ctx)
 {
     http_server_connection_t connection = ctx;
 
@@ -542,7 +542,7 @@ http_server_response_data(const void *data, size_t length, void *ctx)
 
 #ifdef __linux
 static ssize_t
-http_server_response_direct(int fd, size_t max_length, void *ctx)
+http_server_response_stream_direct(int fd, size_t max_length, void *ctx)
 {
     http_server_connection_t connection = ctx;
     ssize_t nbytes;
@@ -563,7 +563,7 @@ http_server_response_direct(int fd, size_t max_length, void *ctx)
 #endif
 
 static void
-http_server_response_eof(void *ctx)
+http_server_response_stream_eof(void *ctx)
 {
     http_server_connection_t connection = ctx;
 
@@ -596,7 +596,7 @@ http_server_response_eof(void *ctx)
 }
 
 static void
-http_server_response_free(void *ctx)
+http_server_response_stream_free(void *ctx)
 {
     http_server_connection_t connection = ctx;
 
@@ -604,13 +604,13 @@ http_server_response_free(void *ctx)
         http_server_connection_close(connection);
 }
 
-static const struct istream_handler http_server_response_handler = {
-    .data = http_server_response_data,
+static const struct istream_handler http_server_response_stream_handler = {
+    .data = http_server_response_stream_data,
 #ifdef __linux
-    .direct = http_server_response_direct,
+    .direct = http_server_response_stream_direct,
 #endif
-    .eof = http_server_response_eof,
-    .free = http_server_response_free,
+    .eof = http_server_response_stream_eof,
+    .free = http_server_response_stream_free,
 };
 
 
@@ -687,7 +687,7 @@ http_server_response(struct http_server_request *request,
 
     connection->response.istream = istream_cat_new(request->pool, status_stream,
                                                    header_stream, body, NULL);
-    connection->response.istream->handler = &http_server_response_handler;
+    connection->response.istream->handler = &http_server_response_stream_handler;
     connection->response.istream->handler_ctx = connection;
 
     connection->response.writing = WRITE_IN_PROGRESS;
