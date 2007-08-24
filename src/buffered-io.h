@@ -19,7 +19,7 @@
  * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
  */
 ssize_t
-read_to_buffer(int fd, fifo_buffer_t buffer);
+read_to_buffer(int fd, fifo_buffer_t buffer, size_t length);
 
 /**
  * Writes data from the buffer to the file.

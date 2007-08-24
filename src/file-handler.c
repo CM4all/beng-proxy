@@ -55,7 +55,7 @@ file_callback(struct client_connection *connection,
     }
 
     if (request->method != HTTP_METHOD_HEAD) {
-        body = istream_file_new(request->pool, translated->path);
+        body = istream_file_new(request->pool, translated->path, st.st_size);
         if (body == NULL) {
             if (errno == ENOENT) {
                 http_server_send_message(request,

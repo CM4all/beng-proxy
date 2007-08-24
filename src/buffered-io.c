@@ -11,7 +11,7 @@
 #include <errno.h>
 
 ssize_t
-read_to_buffer(int fd, fifo_buffer_t buffer)
+read_to_buffer(int fd, fifo_buffer_t buffer, size_t length)
 {
     void *dest;
     size_t max_length;
@@ -24,7 +24,10 @@ read_to_buffer(int fd, fifo_buffer_t buffer)
     if (dest == NULL)
         return -2;
 
-    nbytes = read(fd, dest, max_length);
+    if (length > max_length)
+        length = max_length;
+
+    nbytes = read(fd, dest, length);
     if (nbytes > 0)
         fifo_buffer_append(buffer, (size_t)nbytes);
 

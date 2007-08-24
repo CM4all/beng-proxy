@@ -21,6 +21,7 @@
 struct file {
     struct istream stream;
     int fd;
+    off_t rest;
     fifo_buffer_t buffer;
     const char *path;
 };
@@ -59,8 +60,19 @@ istream_file_eof_detected(struct file *file)
     close(file->fd);
     file->fd = -1;
 
+    pool_ref(file->stream.pool);
     istream_invoke_eof(&file->stream);
     istream_close(&file->stream);
+    pool_unref(file->stream.pool);
+}
+
+static inline size_t
+istream_file_max_read(const struct file *file)
+{
+    if (file->rest != (off_t)-1 && file->rest < INT_MAX)
+        return (size_t)file->rest;
+    else
+        return INT_MAX;
 }
 
 static void
@@ -72,27 +84,40 @@ istream_file_read(istream_t istream)
 
     rest = istream_file_invoke_data(file);
 
-    if (file->fd < 0) {
+    if (file->rest == 0) {
         if (rest == 0)
             istream_file_eof_detected(file);
         return;
     }
 
-    nbytes = read_to_buffer(file->fd, file->buffer);
+    nbytes = read_to_buffer(file->fd, file->buffer,
+                            istream_file_max_read(file));
     if (nbytes == 0) {
-        if (rest == 0)
-            istream_file_eof_detected(file);
+        if (file->rest == (off_t)-1) {
+            file->rest = 0;
+            if (rest == 0)
+                istream_file_eof_detected(file);
+        } else {
+            fprintf(stderr, "premature end of file in '%s'\n",
+                    file->path);
+            istream_close(istream);
+        }
         return;
     } else if (nbytes == -1) {
         fprintf(stderr, "failed to read from '%s': %s\n",
                 file->path, strerror(errno));
         istream_close(istream);
         return;
+    } else if (nbytes > 0 && file->rest != (off_t)-1) {
+        file->rest -= (off_t)nbytes;
+        assert(file->rest >= 0);
     }
 
     assert(!fifo_buffer_empty(file->buffer));
 
-    istream_file_invoke_data(file);
+    rest = istream_file_invoke_data(file);
+    if (rest == 0 && file->rest == 0)
+        istream_file_eof_detected(file);
 }
 
 static void
@@ -105,20 +130,30 @@ istream_file_direct(istream_t istream)
     if (istream_file_invoke_data(file) > 0)
         return;
 
-    if (file->fd < 0) {
+    if (file->rest == 0) {
         istream_file_eof_detected(file);
         return;
     }
 
-    nbytes = istream_invoke_direct(istream, file->fd, INT_MAX);
+    nbytes = istream_invoke_direct(istream, file->fd,
+                                   istream_file_max_read(file));
     if (nbytes > 0 || nbytes == -2) {
         /* -2 means the callback wasn't able to consume any data right
             now */
+        if (nbytes > 0 && file->rest != (off_t)-1) {
+            file->rest -= (off_t)nbytes;
+            assert(file->rest >= 0);
+            if (file->rest == 0)
+                istream_file_eof_detected(file);
+        }
     } else if (nbytes == 0) {
-        pool_ref(istream->pool);
-        istream_invoke_eof(istream);
-        istream_close(istream);
-        pool_unref(istream->pool);
+        if (file->rest == (off_t)-1) {
+            istream_file_eof_detected(file);
+        } else {
+            fprintf(stderr, "premature end of file in '%s'\n",
+                    file->path);
+            istream_close(istream);
+        }
     } else {
         /* XXX */
         fprintf(stderr, "failed to read from '%s': %s\n",
@@ -147,7 +182,7 @@ static const struct istream istream_file = {
 };
 
 istream_t
-istream_file_new(pool_t pool, const char *path)
+istream_file_new(pool_t pool, const char *path, off_t length)
 {
     struct file *file = p_malloc(pool, sizeof(*file));
 
@@ -158,6 +193,7 @@ istream_file_new(pool_t pool, const char *path)
         return NULL;
     }
 
+    file->rest = length;
     file->buffer = fifo_buffer_new(pool, 4096);
     file->path = path;
     file->stream = istream_file;

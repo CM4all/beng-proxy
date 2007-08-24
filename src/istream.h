@@ -98,7 +98,7 @@ istream_t attr_malloc
 istream_string_new(pool_t pool, const char *s);
 
 istream_t attr_malloc
-istream_file_new(pool_t pool, const char *path);
+istream_file_new(pool_t pool, const char *path, off_t length);
 
 istream_t
 istream_chunked_new(pool_t pool, istream_t input);
