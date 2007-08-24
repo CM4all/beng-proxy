@@ -382,6 +382,8 @@ p_malloc_linear(pool_t pool, size_t size)
 static void *
 internal_malloc(pool_t pool, size_t size)
 {
+    assert(pool != NULL);
+
     if (likely(pool->type == POOL_LINEAR))
         return p_malloc_linear(pool, size);
 
