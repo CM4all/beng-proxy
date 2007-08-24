@@ -32,9 +32,9 @@ istream_to_file(istream_t istream)
 }
 
 /**
- * @return true if there is still data in the buffer
+ * @return the number of bytes still in the buffer
  */
-static int
+static size_t
 istream_file_invoke_data(struct file *file)
 {
     const void *data;
@@ -48,21 +48,40 @@ istream_file_invoke_data(struct file *file)
     assert(consumed <= length);
 
     fifo_buffer_consume(file->buffer, consumed);
-    return consumed < length;
+    return length - consumed;
+}
+
+static void
+istream_file_eof_detected(struct file *file)
+{
+    assert(file->fd >= 0);
+
+    close(file->fd);
+    file->fd = -1;
+
+    istream_invoke_eof(&file->stream);
+    istream_close(&file->stream);
 }
 
 static void
 istream_file_read(istream_t istream)
 {
     struct file *file = istream_to_file(istream);
+    size_t rest;
     ssize_t nbytes;
 
-    assert(file->fd >= 0);
+    rest = istream_file_invoke_data(file);
+
+    if (file->fd < 0) {
+        if (rest == 0)
+            istream_file_eof_detected(file);
+        return;
+    }
 
     nbytes = read_to_buffer(file->fd, file->buffer);
     if (nbytes == 0) {
-        istream_invoke_eof(istream);
-        istream_close(istream);
+        if (rest == 0)
+            istream_file_eof_detected(file);
         return;
     } else if (nbytes == -1) {
         fprintf(stderr, "failed to read from '%s': %s\n",
@@ -70,6 +89,8 @@ istream_file_read(istream_t istream)
         istream_close(istream);
         return;
     }
+
+    assert(!fifo_buffer_empty(file->buffer));
 
     istream_file_invoke_data(file);
 }
@@ -80,11 +101,14 @@ istream_file_direct(istream_t istream)
     struct file *file = istream_to_file(istream);
     ssize_t nbytes;
 
-    assert(file->fd >= 0);
-
     /* first consume the rest of the buffer */
-    if (istream_file_invoke_data(file))
+    if (istream_file_invoke_data(file) > 0)
         return;
+
+    if (file->fd < 0) {
+        istream_file_eof_detected(file);
+        return;
+    }
 
     nbytes = istream_invoke_direct(istream, file->fd, INT_MAX);
     if (nbytes > 0 || nbytes == -2) {
