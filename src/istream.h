@@ -103,4 +103,7 @@ istream_file_new(pool_t pool, const char *path);
 istream_t
 istream_chunked_new(pool_t pool, istream_t input);
 
+istream_t
+istream_cat_new(pool_t pool, ...);
+
 #endif

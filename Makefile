@@ -38,6 +38,7 @@ SOURCES = src/main.c \
 	src/istream-string.c \
 	src/istream-file.c \
 	src/istream-chunked.c \
+	src/istream-cat.c \
 	src/strutil.c \
 	src/strmap.c \
 	src/pool.c
