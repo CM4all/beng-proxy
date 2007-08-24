@@ -60,7 +60,7 @@ istream_file_read(istream_t istream)
     assert(file->fd >= 0);
 
     nbytes = read_to_buffer(file->fd, file->buffer);
-    if (nbytes == -2) {
+    if (nbytes == 0) {
         istream_invoke_eof(istream);
         istream_close(istream);
         return;
