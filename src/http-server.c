@@ -496,14 +496,16 @@ http_server_connection_free(http_server_connection_t *connection_r)
     http_server_connection_close(connection);
 }
 
+
 static size_t
-write_or_append(http_server_connection_t connection,
-                const void *data, size_t length)
+http_server_response_stream_data(const void *data, size_t length, void *ctx)
 {
+    http_server_connection_t connection = ctx;
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
     assert(connection->response.writing);
+    assert(connection->response.istream != NULL);
 
     nbytes = write(connection->fd, data, length);
     connection->response.blocking = nbytes < (ssize_t)length;
@@ -516,18 +518,6 @@ write_or_append(http_server_connection_t connection,
     perror("write error on HTTP connection");
     http_server_connection_close(connection);
     return 0;
-}
-
-
-static size_t
-http_server_response_stream_data(const void *data, size_t length, void *ctx)
-{
-    http_server_connection_t connection = ctx;
-
-    assert(connection->response.writing);
-    assert(connection->response.istream != NULL);
-
-    return write_or_append(connection, data, length);
 }
 
 #ifdef __linux
