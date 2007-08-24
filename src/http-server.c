@@ -583,25 +583,6 @@ http_server_connection_free(http_server_connection_t *connection_r)
     http_server_connection_close(connection);
 }
 
-size_t
-http_server_send_status(http_server_connection_t connection, int status)
-{
-    char *dest;
-    size_t length;
-
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
-    assert(status >= 100 && status < 600);
-
-    dest = fifo_buffer_write(connection->output, &length);
-    snprintf(dest, length,
-             "HTTP/1.1 %d\r\nServer: beng-proxy " VERSION "\r\n",
-             status);
-    length = strlen(dest);
-    fifo_buffer_append(connection->output, length);
-    return length;
-}
-
 void
 http_server_try_write(http_server_connection_t connection)
 {

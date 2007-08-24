@@ -53,9 +53,6 @@ http_server_connection_free(http_server_connection_t *connection_r);
 void
 http_server_try_read(http_server_connection_t connection);
 
-size_t
-http_server_send_status(http_server_connection_t connection, int status);
-
 void
 http_server_try_write(http_server_connection_t connection);
 
