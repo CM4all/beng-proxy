@@ -116,6 +116,7 @@ processor_input_eof(void *ctx)
     assert(processor->fd >= 0);
     assert(processor->input != NULL);
 
+    processor->input->handler = NULL;
     pool_unref(processor->input->pool);
     processor->input = NULL;
 
@@ -150,12 +151,12 @@ processor_input_free(void *ctx)
 {
     processor_t processor = ctx;
 
-    if (processor->input != NULL) {
-        pool_unref(processor->input->pool);
-        processor->input = NULL;
+    assert(processor->input != NULL);
 
-        processor_close(processor); /* XXX */
-    }
+    pool_unref(processor->input->pool);
+    processor->input = NULL;
+
+    processor_close(processor); /* XXX */
 }
 
 static const struct istream_handler processor_input_handler = {
@@ -230,8 +231,8 @@ processor_close(processor_t processor)
     }
 
     if (processor->input != NULL) {
-        pool_unref(processor->input->pool);
         istream_free(&processor->input);
+        pool_unref(processor->input->pool);
     }
 
     istream_invoke_free(&processor->output);

@@ -556,6 +556,7 @@ http_server_response_stream_eof(void *ctx)
 
     pool_ref(connection->pool);
 
+    connection->response.istream->handler = NULL;
     connection->response.istream = NULL;
 
     if (connection->request.read_state == READ_BODY) {
@@ -580,8 +581,9 @@ http_server_response_stream_free(void *ctx)
 {
     http_server_connection_t connection = ctx;
 
-    if (connection->response.writing)
-        http_server_connection_close(connection);
+    assert(connection->response.writing);
+
+    http_server_connection_close(connection);
 }
 
 static const struct istream_handler http_server_response_stream_handler = {
