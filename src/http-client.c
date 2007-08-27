@@ -473,7 +473,8 @@ http_client_event_setup(http_client_connection_t connection)
     assert(connection->fd >= 0);
     assert(connection->input != NULL);
 
-    event_del(&connection->event);
+    if (connection->event.ev_events != 0)
+        event_del(&connection->event);
 
     if (connection->response.read_state != READ_NONE &&
         (connection->direct_mode ||
@@ -532,13 +533,18 @@ http_client_connection_new(pool_t pool, int fd,
     assert(fd >= 0);
     assert(callback != NULL);
 
-    connection = p_calloc(pool, sizeof(*connection));
+    connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
     connection->fd = fd;
+
+    connection->event.ev_events = 0;
+    connection->input = fifo_buffer_new(pool, 4096);
+
     connection->callback = callback;
     connection->callback_ctx = ctx;
 
-    connection->input = fifo_buffer_new(pool, 4096);
+    connection->request.istream = NULL;
+    connection->response.read_state = READ_NONE;
 
     return connection;
 }
@@ -614,6 +620,9 @@ http_client_request_stream_eof(void *ctx)
     connection->request.istream = NULL;
 
     connection->response.read_state = READ_STATUS;
+    connection->response.pool = NULL;
+    connection->response.headers = NULL;
+    connection->direct_mode = 0;
 
     /* XXX event_setup()? */
 }
