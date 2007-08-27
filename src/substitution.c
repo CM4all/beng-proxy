@@ -26,6 +26,7 @@ substitution_istream_eof(void *ctx)
 {
     struct substitution *s = ctx;
 
+    s->istream->handler = NULL;
     pool_unref(s->istream->pool);
     s->istream = NULL;
     s->istream_eof = 1;
