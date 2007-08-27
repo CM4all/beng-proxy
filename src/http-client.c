@@ -544,7 +544,6 @@ http_client_event_callback(int fd, short event, void *ctx)
     if (unlikely(event & EV_TIMEOUT)) {
         fprintf(stderr, "timeout\n");
         http_client_connection_close(connection);
-        return;
     }
 
     if (http_client_connection_valid(connection) && (event & EV_WRITE) != 0)
