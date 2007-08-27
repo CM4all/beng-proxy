@@ -56,11 +56,11 @@ struct http_client_connection {
         strmap_t headers;
         off_t content_length, body_rest;
         struct istream stream;
+        int direct_mode;
     } response;
 
     /* connection settings */
     int keep_alive;
-    int direct_mode;
 #ifdef __linux
     int cork;
 #endif
@@ -84,7 +84,7 @@ http_client_response_stream_read(istream_t istream)
     http_client_connection_t connection = response_stream_to_connection(istream);
     pool_ref(connection->pool);
 
-    connection->direct_mode = 0;
+    connection->response.direct_mode = 0;
 
     http_client_consume_body(connection);
 
@@ -108,7 +108,7 @@ http_client_response_stream_direct(istream_t istream)
     assert(connection->response.stream.handler != NULL);
     assert(connection->response.stream.handler->direct != NULL);
 
-    connection->direct_mode = 1;
+    connection->response.direct_mode = 1;
 
     http_client_try_response_direct(connection);
 }
@@ -127,7 +127,7 @@ http_client_response_stream_close(istream_t istream)
     connection->response.read_state = READ_NONE;
     connection->response.pool = NULL;
     connection->response.headers = NULL;
-    connection->direct_mode = 0;
+    connection->response.direct_mode = 0;
 
     if (connection->response.body_rest > 0) {
         /* XXX invalidate connection */
@@ -409,7 +409,7 @@ http_client_try_response_direct(http_client_connection_t connection)
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
-    assert(connection->direct_mode);
+    assert(connection->response.direct_mode);
     assert(connection->response.read_state == READ_BODY);
     assert(connection->response.stream.handler->direct != NULL);
 
@@ -432,7 +432,7 @@ http_client_try_read(http_client_connection_t connection)
     size_t max_length;
     ssize_t nbytes;
 
-    if (connection->direct_mode &&
+    if (connection->response.direct_mode &&
         fifo_buffer_empty(connection->input)) {
         http_client_try_response_direct(connection);
     } else {
@@ -477,7 +477,7 @@ http_client_event_setup(http_client_connection_t connection)
         event_del(&connection->event);
 
     if (connection->response.read_state != READ_NONE &&
-        (connection->direct_mode ||
+        (connection->response.direct_mode ||
          fifo_buffer_empty(connection->input)))
         event = EV_READ | EV_TIMEOUT;
 
@@ -622,7 +622,7 @@ http_client_request_stream_eof(void *ctx)
     connection->response.read_state = READ_STATUS;
     connection->response.pool = NULL;
     connection->response.headers = NULL;
-    connection->direct_mode = 0;
+    connection->response.direct_mode = 0;
 
     /* XXX event_setup()? */
 }
