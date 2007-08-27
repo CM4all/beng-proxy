@@ -578,8 +578,6 @@ http_client_connection_new(pool_t pool, int fd,
     connection->input = fifo_buffer_new(pool, 4096);
     connection->output = fifo_buffer_new(pool, 4096);
 
-    http_client_event_setup(connection);
-
     return connection;
 }
 
