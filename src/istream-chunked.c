@@ -42,9 +42,9 @@ chunked_try_write(struct istream_chunked *chunked)
     nbytes = istream_invoke_data(&chunked->output, data, length);
     assert(nbytes <= length);
 
-    if (length > 0) {
-        fifo_buffer_consume(chunked->buffer, length);
-        if (length == nbytes && chunked->input == NULL)
+    if (nbytes > 0) {
+        fifo_buffer_consume(chunked->buffer, nbytes);
+        if (nbytes == length && chunked->input == NULL)
             chunked_eof_detected(chunked);
     }
 }
