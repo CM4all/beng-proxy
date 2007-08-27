@@ -26,6 +26,7 @@ substitution_istream_eof(void *ctx)
 {
     struct substitution *s = ctx;
 
+    pool_unref(s->istream->pool);
     s->istream = NULL;
     s->istream_eof = 1;
 
@@ -37,7 +38,7 @@ substitution_istream_free(void *ctx)
 {
     struct substitution *s = ctx;
 
-    if (!s->istream_eof) {
+    if (!s->istream_eof && s->istream != NULL) {
         /* abort the transfer */
         s->istream = NULL;
         /* XXX */
@@ -82,6 +83,8 @@ substitution_http_client_callback(http_status_t status, strmap_t headers,
     }
 
     assert(s->istream->handler == NULL);
+
+    pool_ref(s->istream->pool);
 
     s->istream->handler = &substitution_istream_handler;
     s->istream->handler_ctx = s;

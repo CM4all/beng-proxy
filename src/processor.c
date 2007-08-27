@@ -116,6 +116,7 @@ processor_input_eof(void *ctx)
     assert(processor->fd >= 0);
     assert(processor->input != NULL);
 
+    pool_unref(processor->input->pool);
     processor->input = NULL;
 
     processor->map = mmap(NULL, (size_t)processor->source_length,
@@ -149,8 +150,12 @@ processor_input_free(void *ctx)
 {
     processor_t processor = ctx;
 
-    if (processor->input != NULL)
+    if (processor->input != NULL) {
+        pool_unref(processor->input->pool);
+        processor->input = NULL;
+
         processor_close(processor); /* XXX */
+    }
 }
 
 static const struct istream_handler processor_input_handler = {
@@ -190,6 +195,7 @@ processor_new(pool_t pool, istream_t istream)
     processor->input = istream;
     istream->handler = &processor_input_handler;
     istream->handler_ctx = processor;
+    pool_ref(processor->input->pool);
 
     /* XXX */
     processor->fd = open("/tmp/beng-processor.tmp", O_CREAT|O_EXCL|O_RDWR, 0777);
@@ -221,6 +227,11 @@ processor_close(processor_t processor)
     if (processor->map != NULL) {
         munmap(processor->map, (size_t)processor->source_length);
         processor->map = NULL;
+    }
+
+    if (processor->input != NULL) {
+        pool_unref(processor->input->pool);
+        istream_free(&processor->input);
     }
 
     istream_invoke_free(&processor->output);
