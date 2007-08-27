@@ -17,17 +17,6 @@ struct istream_chunked {
 };
 
 static void
-chunked_eof_detected(struct istream_chunked *chunked)
-{
-    assert(chunked->input == NULL);
-    assert(chunked->buffer != NULL);
-    assert(fifo_buffer_empty(chunked->buffer));
-
-    chunked->buffer = NULL;
-    istream_invoke_eof(&chunked->output);
-}
-
-static void
 chunked_try_write(struct istream_chunked *chunked)
 {
     const char *data;
@@ -44,8 +33,10 @@ chunked_try_write(struct istream_chunked *chunked)
 
     if (nbytes > 0) {
         fifo_buffer_consume(chunked->buffer, nbytes);
-        if (nbytes == length && chunked->input == NULL)
-            chunked_eof_detected(chunked);
+        if (nbytes == length && chunked->input == NULL) {
+            chunked->buffer = NULL;
+            istream_invoke_eof(&chunked->output);
+        }
     }
 }
 
