@@ -38,6 +38,7 @@ struct http_client_connection {
 
     /* request */
     struct {
+        pool_t pool;
         istream_t istream;
         int blocking;
         char request_line_buffer[1024];
@@ -51,7 +52,6 @@ struct http_client_connection {
             READ_HEADERS,
             READ_BODY
         } read_state;
-        pool_t pool;
         int status;
         strmap_t headers;
         off_t content_length, body_rest;
@@ -122,10 +122,12 @@ http_client_response_stream_close(istream_t istream)
         return;
 
     assert(connection->response.read_state == READ_BODY);
+    assert(connection->request.pool != NULL);
+    assert(connection->request.istream == NULL);
 
-    pool_unref(connection->response.pool);
+    pool_unref(connection->request.pool);
+    connection->request.pool = NULL;
     connection->response.read_state = READ_NONE;
-    connection->response.pool = NULL;
     connection->response.headers = NULL;
     connection->response.direct_mode = 0;
 
@@ -146,7 +148,8 @@ static void
 http_client_response_body_consumed(http_client_connection_t connection, size_t nbytes)
 {
     assert(connection->response.read_state == READ_BODY);
-    assert(connection->response.pool != NULL);
+    assert(connection->request.pool != NULL);
+    assert(connection->request.istream == NULL);
     assert((off_t)nbytes <= connection->response.body_rest);
 
     connection->response.body_rest -= (off_t)nbytes;
@@ -209,7 +212,8 @@ http_client_parse_status_line(http_client_connection_t connection,
     const char *space;
 
     assert(connection != NULL);
-    assert(connection->response.pool == NULL);
+    assert(connection->request.pool != NULL);
+    assert(connection->request.istream == NULL);
     assert(connection->response.headers == NULL);
     assert(connection->response.read_state == READ_STATUS);
 
@@ -235,8 +239,7 @@ http_client_parse_status_line(http_client_connection_t connection,
     }
 
     connection->response.read_state = READ_HEADERS;
-    connection->response.pool = pool_new_linear(connection->pool, "http_client_response", 8192);
-    connection->response.headers = strmap_new(connection->response.pool, 64);
+    connection->response.headers = strmap_new(connection->request.pool, 64);
 
     /* XXX */
 }
@@ -269,7 +272,7 @@ http_client_headers_finished(http_client_connection_t connection)
 
     connection->response.read_state = READ_BODY;
     connection->response.stream = http_client_response_stream;
-    connection->response.stream.pool = connection->response.pool;
+    connection->response.stream.pool = connection->request.pool;
 }
 
 static void
@@ -285,7 +288,7 @@ http_client_handle_line(http_client_connection_t connection,
     } else if (length > 0) {
         assert(connection->response.read_state == READ_HEADERS);
 
-        header_parse_line(connection->response.pool,
+        header_parse_line(connection->request.pool,
                           connection->response.headers,
                           line, length);
     } else {
@@ -543,6 +546,7 @@ http_client_connection_new(pool_t pool, int fd,
     connection->callback = callback;
     connection->callback_ctx = ctx;
 
+    connection->request.pool = NULL;
     connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
 
@@ -562,20 +566,17 @@ http_client_connection_close(http_client_connection_t connection)
 
     connection->cork = 0;
 
-    if (connection->request.istream != NULL) {
-        pool_t pool = connection->request.istream->pool;
+    if (connection->request.istream != NULL)
         istream_free(&connection->request.istream);
-        pool_unref(pool);
-    }
 
-    if (connection->response.read_state == READ_HEADERS) {
-        assert(connection->response.pool != NULL);
-
-        pool_unref(connection->response.pool);
-        connection->response.pool = NULL;
-    } else if (connection->response.read_state == READ_BODY) {
+    if (connection->response.read_state == READ_BODY) {
         http_client_response_stream_close(&connection->response.stream);
         assert(connection->response.read_state == READ_NONE);
+    }
+
+    if (connection->request.pool != NULL) {
+        pool_unref(connection->request.pool);
+        connection->request.pool = NULL;
     }
 
     if (connection->callback != NULL) {
@@ -620,7 +621,6 @@ http_client_request_stream_eof(void *ctx)
     connection->request.istream = NULL;
 
     connection->response.read_state = READ_STATUS;
-    connection->response.pool = NULL;
     connection->response.headers = NULL;
     connection->response.direct_mode = 0;
 
@@ -651,8 +651,11 @@ http_client_request(http_client_connection_t connection,
     istream_t request_line_stream, header_stream;
 
     assert(connection != NULL);
+    assert(connection->request.pool == NULL);
     assert(connection->request.istream == NULL);
     assert(connection->response.read_state == READ_NONE);
+
+    connection->request.pool = pool_new_linear(connection->pool, "http_client_request", 8192);
 
     /* request line */
 
@@ -662,13 +665,13 @@ http_client_request(http_client_connection_t connection,
              "GET %s HTTP/1.1\r\nHost: localhost\r\n", uri);
 
     request_line_stream
-        = istream_string_new(connection->pool, /* XXX wrong pool */
+        = istream_string_new(connection->request.pool,
                              connection->request.request_line_buffer);
 
     /* headers */
 
     if (headers == NULL)
-        headers = growing_buffer_new(connection->pool, 256); /* XXX wrong pool */
+        headers = growing_buffer_new(connection->request.pool, 256);
 
     /* XXX what if this header already exists? */
     header_write(headers, "user-agent", "beng-proxy v" VERSION);
@@ -679,7 +682,7 @@ http_client_request(http_client_connection_t connection,
 
     /* request istream */
 
-    connection->request.istream = istream_cat_new(connection->pool, /* XXX wrong pool */
+    connection->request.istream = istream_cat_new(connection->request.pool,
                                                   request_line_stream,
                                                   header_stream, /* XXX body, */ NULL);
     connection->request.istream->handler = &http_client_request_stream_handler;
