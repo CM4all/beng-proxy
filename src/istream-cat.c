@@ -162,11 +162,11 @@ istream_cat_close(istream_t istream)
 
     while (cat->current != NULL) {
         input = cat->current;
+        cat->current = input->next;
         if (input->istream != NULL) {
-            pool_t pool = cat->current->istream->pool;
-            istream_free(&cat->current->istream);
+            pool_t pool = input->istream->pool;
+            istream_free(&input->istream);
             pool_unref(pool);
-            cat->current = input->next;
         }
     }
     
