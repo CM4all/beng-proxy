@@ -536,6 +536,12 @@ http_client_connection_new(pool_t pool, int fd,
     assert(fd >= 0);
     assert(callback != NULL);
 
+#ifdef NDEBUG
+    pool_ref(pool);
+#else
+    pool = pool_new_linear(pool, "http_client_connection", 8192);
+#endif
+
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
     connection->fd = fd;
@@ -586,6 +592,8 @@ http_client_connection_close(http_client_connection_t connection)
         connection->callback_ctx = NULL;
         callback(0, NULL, 0, NULL, callback_ctx);
     }
+
+    pool_unref(connection->pool);
 }
 
 
