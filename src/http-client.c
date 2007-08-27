@@ -125,8 +125,6 @@ http_client_response_stream_close(istream_t istream)
     assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
 
-    pool_unref(connection->request.pool);
-    connection->request.pool = NULL;
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
     connection->response.direct_mode = 0;
@@ -136,6 +134,9 @@ http_client_response_stream_close(istream_t istream)
     }
 
     istream_invoke_free(istream);
+
+    pool_unref(connection->request.pool);
+    connection->request.pool = NULL;
 }
 
 static const struct istream http_client_response_stream = {
