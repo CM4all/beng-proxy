@@ -163,10 +163,18 @@ static const struct istream_handler processor_input_handler = {
 istream_t
 processor_new(pool_t pool, istream_t istream)
 {
-    processor_t processor = p_malloc(pool, sizeof(*processor));
+    processor_t processor;
 
     assert(istream != NULL);
     assert(istream->handler == NULL);
+
+#ifdef NDEBUG
+    pool_ref(pool);
+#else
+    pool = pool_new_linear(pool, "processor", 4096);
+#endif
+
+    processor = p_malloc(pool, sizeof(*processor));
 
     processor->fd = -1;
     processor->source_length = 0;
@@ -216,6 +224,8 @@ processor_close(processor_t processor)
     }
 
     istream_invoke_free(&processor->output);
+
+    pool_unref(processor->output.pool);
 }
 
 static size_t
