@@ -44,7 +44,12 @@ struct http_client_connection {
 
     /* response */
     struct {
-        int reading, reading_headers, reading_body;
+        enum {
+            READ_NONE,
+            READ_STATUS,
+            READ_HEADERS,
+            READ_BODY
+        } read_state;
         pool_t pool;
         int status;
         strmap_t headers;
@@ -98,8 +103,7 @@ http_client_response_stream_direct(istream_t istream)
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
-    assert(connection->response.reading);
-    assert(connection->response.reading_body);
+    assert(connection->response.read_state == READ_BODY);
     assert(connection->response.stream.handler != NULL);
     assert(connection->response.stream.handler->direct != NULL);
 
@@ -116,13 +120,13 @@ http_client_response_stream_close(istream_t istream)
 {
     http_client_connection_t connection = response_stream_to_connection(istream);
 
-    if (!connection->response.reading)
+    if (connection->response.read_state == READ_NONE)
         return;
 
-    assert(connection->response.reading_body);
+    assert(connection->response.read_state == READ_BODY);
 
     pool_unref(connection->response.pool);
-    connection->response.reading = 0;
+    connection->response.read_state = READ_NONE;
     connection->response.pool = NULL;
     connection->response.headers = NULL;
     connection->direct_mode = 0;
@@ -143,8 +147,7 @@ static const struct istream http_client_response_stream = {
 static void
 http_client_response_body_consumed(http_client_connection_t connection, size_t nbytes)
 {
-    assert(connection->response.reading);
-    assert(connection->response.reading_body);
+    assert(connection->response.read_state == READ_BODY);
     assert(connection->response.pool != NULL);
     assert((off_t)nbytes <= connection->response.body_rest);
 
@@ -223,7 +226,7 @@ http_client_try_send(http_client_connection_t connection)
             istream_read(connection->request.headers);
         } else {
             http_client_call_request_body(connection);
-            if (!connection->response.reading)
+            if (connection->response.read_state == READ_NONE)
                 return;
         }
     }
@@ -243,8 +246,7 @@ http_client_parse_status_line(http_client_connection_t connection,
     assert(connection != NULL);
     assert(connection->response.pool == NULL);
     assert(connection->response.headers == NULL);
-    assert(!connection->response.reading_headers);
-    assert(!connection->response.reading_body);
+    assert(connection->response.read_state == READ_STATUS);
 
     if (length > 4 && memcmp(line, "HTTP", 4) == 0) {
         space = memchr(line + 4, ' ', length - 4);
@@ -267,7 +269,7 @@ http_client_parse_status_line(http_client_connection_t connection,
         return;
     }
 
-    connection->response.reading_headers = 1;
+    connection->response.read_state = READ_HEADERS;
     connection->response.pool = pool_new_linear(connection->pool, "http_client_response", 8192);
     connection->response.headers = strmap_new(connection->response.pool, 64);
 
@@ -300,8 +302,7 @@ http_client_headers_finished(http_client_connection_t connection)
         connection->response.body_rest = connection->response.content_length;
     }
 
-    connection->response.reading_headers = 0;
-    connection->response.reading_body = 1;
+    connection->response.read_state = READ_BODY;
     connection->response.stream = http_client_response_stream;
     connection->response.stream.pool = connection->response.pool;
 }
@@ -311,15 +312,20 @@ http_client_handle_line(http_client_connection_t connection,
                         const char *line, size_t length)
 {
     assert(connection != NULL);
-    assert(!connection->response.reading_body);
+    assert(connection->response.read_state == READ_STATUS ||
+           connection->response.read_state == READ_HEADERS);
 
-    if (!connection->response.reading_headers) {
+    if (connection->response.read_state == READ_STATUS) {
         http_client_parse_status_line(connection, line, length);
     } else if (length > 0) {
+        assert(connection->response.read_state == READ_HEADERS);
+
         header_parse_line(connection->response.pool,
                           connection->response.headers,
                           line, length);
     } else {
+        assert(connection->response.read_state == READ_HEADERS);
+
         http_client_headers_finished(connection);
     }
 }
@@ -330,7 +336,9 @@ http_client_parse_headers(http_client_connection_t connection)
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
     size_t length;
 
-    assert(connection->response.reading);
+    assert(connection != NULL);
+    assert(connection->response.read_state == READ_STATUS ||
+           connection->response.read_state == READ_HEADERS);
 
     buffer = fifo_buffer_read(connection->input, &length);
     if (buffer == NULL)
@@ -349,7 +357,7 @@ http_client_parse_headers(http_client_connection_t connection)
             --end;
 
         http_client_handle_line(connection, start, end - start + 1);
-        if (!connection->response.reading_headers)
+        if (connection->response.read_state != READ_HEADERS)
             break;
 
         start = next;
@@ -361,9 +369,8 @@ http_client_parse_headers(http_client_connection_t connection)
     fifo_buffer_consume(connection->input, next - buffer);
 
     if (http_client_connection_valid(connection) &&
-        !connection->response.reading_headers) {
-        assert(connection->response.reading);
-        assert(connection->response.reading_body);
+        connection->response.read_state != READ_HEADERS) {
+        assert(connection->response.read_state == READ_BODY);
 
         connection->callback(connection->response.status,
                              connection->response.headers,
@@ -371,7 +378,7 @@ http_client_parse_headers(http_client_connection_t connection)
                              &connection->response.stream,
                              connection->callback_ctx);
 
-        if (connection->response.reading) {
+        if (connection->response.read_state == READ_BODY) {
             if (unlikely(connection->response.stream.handler == NULL)) {
                 fprintf(stderr, "WARNING: no handler for request\n");
                 http_client_connection_close(connection);
@@ -390,8 +397,7 @@ http_client_consume_body(http_client_connection_t connection)
     size_t length, consumed;
 
     assert(connection != NULL);
-    assert(connection->response.reading);
-    assert(connection->response.reading_body);
+    assert(connection->response.read_state == READ_BODY);
     assert(connection->response.body_rest >= 0);
 
     /* XXX */
@@ -417,17 +423,19 @@ static void
 http_client_consume_input(http_client_connection_t connection)
 {
     assert(connection != NULL);
-    assert(connection->response.reading);
+    assert(connection->response.read_state == READ_STATUS ||
+           connection->response.read_state == READ_HEADERS ||
+           connection->response.read_state == READ_BODY);
 
     do {
-        if (!connection->response.reading_body) {
-            if (http_client_parse_headers(connection) == 0)
-                break;
-        } else {
+        if (connection->response.read_state == READ_BODY) {
             http_client_consume_body(connection);
             break;
+        } else {
+            if (http_client_parse_headers(connection) == 0)
+                break;
         }
-    } while (connection->response.reading);
+    } while (connection->response.read_state != READ_NONE);
 }
 
 static void
@@ -437,8 +445,7 @@ http_client_try_response_direct(http_client_connection_t connection)
 
     assert(connection->fd >= 0);
     assert(connection->direct_mode);
-    assert(connection->response.reading);
-    assert(connection->response.reading_body);
+    assert(connection->response.read_state == READ_BODY);
     assert(connection->response.stream.handler->direct != NULL);
 
     nbytes = istream_invoke_direct(&connection->response.stream, connection->fd,
@@ -504,7 +511,7 @@ http_client_event_setup(http_client_connection_t connection)
 
     event_del(&connection->event);
 
-    if (connection->response.reading &&
+    if (connection->response.read_state != READ_NONE &&
         (connection->direct_mode ||
          fifo_buffer_empty(connection->input)))
         event = EV_READ | EV_TIMEOUT;
@@ -596,15 +603,14 @@ http_client_connection_close(http_client_connection_t connection)
         pool_unref(pool);
     }
 
-    if (connection->response.reading) {
-        if (connection->response.reading_headers) {
-            assert(connection->response.pool != NULL);
-            pool_unref(connection->response.pool);
-            connection->response.pool = NULL;
-        } else if (connection->response.reading_body) {
-            http_client_response_stream_close(&connection->response.stream);
-            assert(!connection->response.reading);
-        }
+    if (connection->response.read_state == READ_HEADERS) {
+        assert(connection->response.pool != NULL);
+
+        pool_unref(connection->response.pool);
+        connection->response.pool = NULL;
+    } else if (connection->response.read_state == READ_BODY) {
+        http_client_response_stream_close(&connection->response.stream);
+        assert(connection->response.read_state == READ_NONE);
     }
 
     if (connection->callback != NULL) {
@@ -679,9 +685,7 @@ http_client_headers_eof(void *ctx)
     connection->request.headers = NULL;
 
     connection->request.writing_headers = 0;
-    connection->response.reading = 1;
-    connection->response.reading_headers = 0;
-    connection->response.reading_body = 0;
+    connection->response.read_state = READ_STATUS;
 
     /* XXX event_setup()? */
 }
@@ -712,7 +716,7 @@ http_client_request(http_client_connection_t connection,
 
     assert(connection != NULL);
     assert(!connection->request.writing_headers);
-    assert(!connection->response.reading);
+    assert(connection->response.read_state == READ_NONE);
 
     if (headers == NULL)
         headers = growing_buffer_new(connection->pool, 256); /* XXX wrong pool */
