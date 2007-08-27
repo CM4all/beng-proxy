@@ -72,8 +72,10 @@ cat_input_eof(void *ctx)
     if (input == cat->current) {
         cat->current = input->next;
         if (cat->current == NULL) {
+            pool_ref(cat->output.pool);
             istream_invoke_eof(&cat->output);
             istream_close(&cat->output);
+            pool_unref(cat->output.pool);
         }
     }
 }
