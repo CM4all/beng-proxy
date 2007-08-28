@@ -25,8 +25,9 @@ static void
 proxy_transfer_close(struct proxy_transfer *pt)
 {
     if (pt->url_stream != NULL) {
-        url_stream_close(pt->url_stream);
-        assert(pt->url_stream == NULL);
+        url_stream_t url_stream = pt->url_stream;
+        pt->url_stream = NULL;
+        url_stream_close(url_stream);
     }
 
     pt->request = NULL;
@@ -40,8 +41,6 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
     struct proxy_transfer *pt = ctx;
     const char *value;
     growing_buffer_t response_headers;
-
-    pt->url_stream = NULL;
 
     if (status == 0) {
         /* XXX */
