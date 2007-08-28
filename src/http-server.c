@@ -680,9 +680,13 @@ http_server_response(struct http_server_request *request,
 
     connection->response.writing = 1;
 
+    pool_ref(connection->pool);
+
     http_server_try_write(connection);
     if (http_server_connection_valid(connection))
         http_server_event_setup(connection);
+
+    pool_unref(connection->pool);
 }
 
 void
