@@ -154,9 +154,9 @@ http_client_response_stream_close(istream_t istream)
         /* XXX invalidate connection */
     }
 
-    if (connection->request.pool != NULL) {
-        istream_invoke_free(istream);
+    istream_invoke_free(istream);
 
+    if (connection->request.pool != NULL) {
         pool_unref(connection->request.pool);
         connection->request.pool = NULL;
     }
