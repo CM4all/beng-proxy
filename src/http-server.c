@@ -463,12 +463,13 @@ http_server_connection_close(http_server_connection_t connection)
         connection->fd = -1;
     }
 
-    connection->request.read_state = READ_START;
     connection->cork = 0;
 
     pool_ref(connection->pool);
 
     if (connection->request.read_state != READ_START) {
+        connection->request.read_state = READ_START;
+
         assert(connection->request.request != NULL);
         http_server_request_free(&connection->request.request);
 
