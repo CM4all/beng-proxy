@@ -66,6 +66,7 @@ cat_input_eof(void *ctx)
 
     assert(input->istream != NULL);
 
+    input->istream->handler = NULL;
     pool_unref(input->istream->pool);
     input->istream = NULL;
 
