@@ -494,25 +494,14 @@ http_client_try_response_direct(http_client_connection_t connection)
 static void
 http_client_try_read(http_client_connection_t connection)
 {
-    void *buffer;
-    size_t max_length;
-    ssize_t nbytes;
-
     if (connection->response.direct_mode &&
         fifo_buffer_empty(connection->input)) {
         http_client_try_response_direct(connection);
     } else {
-        buffer = fifo_buffer_write(connection->input, &max_length);
-        assert(buffer != NULL);
+        ssize_t nbytes;
 
-        assert(max_length > 0);
-
-        nbytes = read(connection->fd, buffer, max_length);
-        if (nbytes < 0) {
-            perror("read error on HTTP connection");
-            http_client_connection_close(connection);
-            return;
-        }
+        nbytes = read_to_buffer(connection->fd, connection->input, INT_MAX);
+        assert(nbytes != -2);
 
         if (nbytes == 0) {
             /* XXX */
@@ -520,7 +509,11 @@ http_client_try_read(http_client_connection_t connection)
             return;
         }
 
-        fifo_buffer_append(connection->input, (size_t)nbytes);
+        if (nbytes < 0) {
+            perror("read error on HTTP connection");
+            http_client_connection_close(connection);
+            return;
+        }
 
         http_client_consume_input(connection);
     }
