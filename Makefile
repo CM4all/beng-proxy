@@ -52,7 +52,7 @@ OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 all: src/beng-proxy
 
 clean:
-	rm -f src/beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html}
+	rm -f src/beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out
 
 src/beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
