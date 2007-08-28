@@ -64,10 +64,9 @@ substitution_http_client_callback(http_status_t status, strmap_t headers,
 
     (void)content_length;
 
-    s->url_stream = NULL;
-
     if (status == 0) {
         /* XXX */
+        s->url_stream = NULL;
         return;
     }
 
@@ -117,12 +116,13 @@ substitution_close(struct substitution *s)
 {
     assert(s != NULL);
 
-    if (s->url_stream != NULL) {
-        url_stream_close(s->url_stream);
-        assert(s->url_stream == NULL);
-    } else if (s->istream != NULL) {
+    if (s->istream != NULL) {
         istream_close(s->istream);
         assert(s->istream == NULL);
+        assert(s->url_stream == NULL);
+    } else if (s->url_stream != NULL) {
+        url_stream_close(s->url_stream);
+        assert(s->url_stream == NULL);
     }
 
     if (s->pool != NULL) {
