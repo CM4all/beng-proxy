@@ -57,6 +57,7 @@ struct http_client_connection {
         off_t content_length, body_rest;
         struct istream stream;
         int direct_mode;
+        istream_t body;
     } response;
 
     /* connection settings */
@@ -128,6 +129,7 @@ http_client_response_stream_close(istream_t istream)
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
     connection->response.direct_mode = 0;
+    connection->response.body = NULL;
 
     if (connection->response.body_rest > 0) {
         /* XXX invalidate connection */
@@ -137,6 +139,9 @@ http_client_response_stream_close(istream_t istream)
 
     pool_unref(connection->request.pool);
     connection->request.pool = NULL;
+
+    if (!connection->keep_alive)
+        http_client_connection_close(connection);
 }
 
 static const struct istream http_client_response_stream = {
@@ -151,6 +156,10 @@ http_client_response_body_consumed(http_client_connection_t connection, size_t n
     assert(connection->response.read_state == READ_BODY);
     assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
+
+    if (connection->response.body_rest == (off_t)-1)
+        return;
+
     assert((off_t)nbytes <= connection->response.body_rest);
 
     connection->response.body_rest -= (off_t)nbytes;
@@ -255,25 +264,44 @@ http_client_headers_finished(http_client_connection_t connection)
     connection->keep_alive = header_connection != NULL &&
         strcasecmp(header_connection, "keep-alive") == 0;
 
-    value = strmap_get(connection->response.headers, "content-length");
-    if (unlikely(value == NULL)) {
-        fprintf(stderr, "no Content-Length header in HTTP response\n");
-        http_client_connection_close(connection);
-        return;
-    } else {
-        connection->response.content_length = strtoul(value, &endptr, 10);
-        if (unlikely(*endptr != 0 || connection->response.content_length < 0)) {
-            fprintf(stderr, "invalid Content-Length header in HTTP response\n");
-            http_client_connection_close(connection);
-            return;
-        }
-
-        connection->response.body_rest = connection->response.content_length;
-    }
-
-    connection->response.read_state = READ_BODY;
     connection->response.stream = http_client_response_stream;
     connection->response.stream.pool = connection->request.pool;
+
+    value = strmap_get(connection->response.headers, "transfer-encoding");
+    if (value == NULL || strcasecmp(value, "chunked") != 0) {
+        /* not chunked */
+
+        value = strmap_get(connection->response.headers, "content-length");
+        if (unlikely(value == NULL)) {
+            if (connection->keep_alive) {
+                fprintf(stderr, "no Content-Length header in HTTP response\n");
+                http_client_connection_close(connection);
+                return;
+            }
+
+            connection->response.content_length = (off_t)-1;
+        } else {
+            connection->response.content_length = strtoul(value, &endptr, 10);
+            if (unlikely(*endptr != 0 || connection->response.content_length < 0)) {
+                fprintf(stderr, "invalid Content-Length header in HTTP response\n");
+                http_client_connection_close(connection);
+                return;
+            }
+        }
+
+        connection->response.body = &connection->response.stream;
+    } else {
+        /* chunked */
+
+        connection->response.content_length = (off_t)-1;
+
+        connection->response.body
+            = istream_dechunk_new(connection->request.pool,
+                                  &connection->response.stream);
+    }
+
+    connection->response.body_rest = connection->response.content_length;
+    connection->response.read_state = READ_BODY;
 }
 
 static void
@@ -344,7 +372,7 @@ http_client_parse_headers(http_client_connection_t connection)
         connection->callback(connection->response.status,
                              connection->response.headers,
                              connection->response.content_length,
-                             &connection->response.stream,
+                             connection->response.body,
                              connection->callback_ctx);
 
         if (connection->response.read_state == READ_BODY) {
@@ -367,7 +395,6 @@ http_client_consume_body(http_client_connection_t connection)
 
     assert(connection != NULL);
     assert(connection->response.read_state == READ_BODY);
-    assert(connection->response.body_rest >= 0);
 
     /* XXX */
 
@@ -375,7 +402,8 @@ http_client_consume_body(http_client_connection_t connection)
     if (buffer == NULL)
         return;
 
-    if ((off_t)length > connection->response.body_rest)
+    if (connection->response.body_rest != (off_t)-1 &&
+        (off_t)length > connection->response.body_rest)
         length = (size_t)connection->response.body_rest;
 
     consumed = istream_invoke_data(&connection->response.stream,
@@ -410,6 +438,7 @@ http_client_consume_input(http_client_connection_t connection)
 static void
 http_client_try_response_direct(http_client_connection_t connection)
 {
+    size_t max_length;
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
@@ -417,8 +446,13 @@ http_client_try_response_direct(http_client_connection_t connection)
     assert(connection->response.read_state == READ_BODY);
     assert(connection->response.stream.handler->direct != NULL);
 
+    max_length = connection->response.body_rest == (off_t)-1 ||
+        connection->response.body_rest > INT_MAX
+        ? (size_t)INT_MAX
+        : (size_t)connection->response.body_rest;
+
     nbytes = istream_invoke_direct(&connection->response.stream, connection->fd,
-                                   (size_t)connection->response.body_rest);
+                                   max_length);
     if (nbytes < 0) {
         /* XXX EAGAIN? */
         perror("read error on HTTP connection");

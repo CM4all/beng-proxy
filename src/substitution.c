@@ -70,8 +70,6 @@ substitution_http_client_callback(http_status_t status, strmap_t headers,
         return;
     }
 
-    assert(content_length >= 0);
-
     s->istream = body;
 
     value = strmap_get(headers, "content-type");

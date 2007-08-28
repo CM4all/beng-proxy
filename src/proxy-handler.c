@@ -29,10 +29,7 @@ proxy_transfer_close(struct proxy_transfer *pt)
         assert(pt->url_stream == NULL);
     }
 
-    if (pt->request != NULL) {
-        http_server_connection_free(&pt->request->connection);
-        assert(pt->request == NULL);
-    }
+    pt->request = NULL;
 }
 
 static void 
@@ -51,8 +48,6 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
         proxy_transfer_close(pt);
         return;
     }
-
-    assert(content_length >= 0);
 
     response_headers = growing_buffer_new(pt->request->pool, 2048);
     /* XXX copy headers */
