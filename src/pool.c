@@ -341,7 +341,19 @@ pool_unref(pool_t pool)
 void
 pool_commit(void)
 {
-    assert(list_empty(&trash));
+    if (!list_empty(&trash)) {
+        pool_t pool;
+
+        fprintf(stderr, "pool_commit(): there are unreleased pools in the trash:");
+
+        for (pool = (pool_t)trash.next; &pool->siblings != &trash;
+             pool = (pool_t)pool->siblings.next) {
+            fprintf(stderr, " '%s'(%u)", pool->name, pool->ref);
+        }
+        fprintf(stderr, "\n");
+
+        abort();
+    }
 }
 #endif
 
