@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <event.h>
 
 static const char *http_status_to_string_data[][20] = {
     [2] = {

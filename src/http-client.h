@@ -13,8 +13,7 @@
 #include "istream.h"
 #include "growing-buffer.h"
 
-#include <sys/types.h>
-#include <event.h>
+#include <stddef.h>
 
 typedef struct http_client_connection *http_client_connection_t;
 

@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <event.h>
 
 struct http_client_connection {
     pool_t pool;
