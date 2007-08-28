@@ -408,6 +408,18 @@ http_client_parse_headers(http_client_connection_t connection)
     return 1;
 }
 
+static inline size_t
+http_client_response_max_read(http_client_connection_t connection, size_t length)
+{
+    assert(connection->response.read_state == READ_BODY);
+
+    if (connection->response.body_rest != (off_t)-1 &&
+        connection->response.body_rest < (off_t)length)
+        return (size_t)connection->response.body_rest;
+    else
+        return length;
+}
+
 static void
 http_client_consume_body(http_client_connection_t connection)
 {
@@ -423,10 +435,7 @@ http_client_consume_body(http_client_connection_t connection)
     if (buffer == NULL)
         return;
 
-    if (connection->response.body_rest != (off_t)-1 &&
-        (off_t)length > connection->response.body_rest)
-        length = (size_t)connection->response.body_rest;
-
+    length = http_client_response_max_read(connection, length);
     consumed = istream_invoke_data(&connection->response.stream,
                                    buffer, length);
     assert(consumed <= length);
@@ -456,17 +465,6 @@ http_client_consume_input(http_client_connection_t connection)
     } while (connection->response.read_state != READ_NONE);
 }
 
-static inline size_t
-http_client_response_max_read(http_client_connection_t connection)
-{
-    if (connection->response.read_state == READ_BODY &&
-        connection->response.body_rest != (off_t)-1 &&
-        connection->response.body_rest < INT_MAX)
-        return (size_t)connection->response.body_rest;
-    else
-        return INT_MAX;
-}
-
 static void
 http_client_try_response_direct(http_client_connection_t connection)
 {
@@ -478,7 +476,7 @@ http_client_try_response_direct(http_client_connection_t connection)
     assert(connection->response.stream.handler->direct != NULL);
 
     nbytes = istream_invoke_direct(&connection->response.stream, connection->fd,
-                                   http_client_response_max_read(connection));
+                                   http_client_response_max_read(connection, INT_MAX));
     if (nbytes < 0) {
         /* XXX EAGAIN? */
         perror("read error on HTTP connection");
