@@ -77,6 +77,12 @@ response_stream_to_connection(istream_t istream)
     return (http_client_connection_t)(((char*)istream) - offsetof(struct http_client_connection, response.stream));
 }
 
+static inline int
+http_client_connection_valid(http_client_connection_t connection)
+{
+    return connection->fd >= 0;
+}
+
 static void
 http_client_consume_body(http_client_connection_t connection);
 
@@ -117,9 +123,6 @@ http_client_response_stream_direct(istream_t istream)
 
     http_client_try_response_direct(connection);
 }
-
-static inline int
-http_client_connection_valid(http_client_connection_t connection);
 
 static void
 http_client_response_stream_close(istream_t istream)
@@ -197,12 +200,6 @@ http_client_response_body_consumed(http_client_connection_t connection, size_t n
     http_client_response_stream_close(&connection->response.stream);
 
     pool_unref(connection->pool);
-}
-
-static inline int
-http_client_connection_valid(http_client_connection_t connection)
-{
-    return connection->fd >= 0;
 }
 
 static inline void
