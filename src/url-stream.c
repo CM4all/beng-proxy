@@ -132,7 +132,7 @@ url_stream_new(pool_t pool,
                growing_buffer_t headers,
                url_stream_callback_t callback, void *ctx)
 {
-    url_stream_t us = p_malloc(pool, sizeof(*us));
+    url_stream_t us;
     int ret;
     const char *p, *slash, *host_and_port;
     struct addrinfo hints, *ai;
@@ -140,6 +140,13 @@ url_stream_new(pool_t pool,
     assert(url != NULL);
     assert(callback != NULL);
 
+#ifdef NDEBUG
+    pool_ref(pool);
+#else
+    pool = pool_new_linear(pool, "url_stream", 4096);
+#endif
+
+    us = p_malloc(pool, sizeof(*us));
     us->pool = pool;
     us->method = method;
     us->headers = headers;
@@ -197,4 +204,10 @@ url_stream_close(url_stream_t connection)
         client_socket_free(&connection->client_socket);
     else if (connection->http != NULL)
         http_client_connection_close(connection->http);
+
+    if (connection->pool != NULL) {
+        pool_t pool = connection->pool;
+        connection->pool = NULL;
+        pool_unref(pool);
+    }
 }
