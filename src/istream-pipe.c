@@ -89,7 +89,7 @@ pipe_input_direct(int fd, size_t max_length, void *ctx)
     }
 
     nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,
-                    /*SPLICE_F_NONBLOCK | */SPLICE_F_MORE | SPLICE_F_MOVE);
+                    SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
     if (unlikely(nbytes < 0 && errno == EAGAIN))
         return -2;
 
