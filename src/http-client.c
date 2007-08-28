@@ -447,22 +447,20 @@ http_client_consume_body(http_client_connection_t connection)
 }
 
 static void
-http_client_consume_input(http_client_connection_t connection)
+http_client_consume_headers(http_client_connection_t connection)
 {
     assert(connection != NULL);
     assert(connection->response.read_state == READ_STATUS ||
-           connection->response.read_state == READ_HEADERS ||
-           connection->response.read_state == READ_BODY);
+           connection->response.read_state == READ_HEADERS);
 
     do {
-        if (connection->response.read_state == READ_BODY) {
-            http_client_consume_body(connection);
+        if (http_client_parse_headers(connection) == 0)
             break;
-        } else {
-            if (http_client_parse_headers(connection) == 0)
-                break;
-        }
-    } while (connection->response.read_state != READ_NONE);
+    } while (connection->response.read_state == READ_STATUS ||
+             connection->response.read_state == READ_HEADERS);
+
+    if (connection->response.read_state == READ_BODY)
+        http_client_consume_body(connection);
 }
 
 static void
@@ -511,7 +509,10 @@ http_client_try_read(http_client_connection_t connection)
             return;
         }
 
-        http_client_consume_input(connection);
+        if (connection->response.read_state == READ_BODY)
+            http_client_consume_body(connection);
+        else
+            http_client_consume_headers(connection);
     }
 }
 
