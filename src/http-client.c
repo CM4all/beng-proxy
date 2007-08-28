@@ -458,10 +458,20 @@ http_client_consume_input(http_client_connection_t connection)
     } while (connection->response.read_state != READ_NONE);
 }
 
+static inline size_t
+http_client_response_max_read(http_client_connection_t connection)
+{
+    if (connection->response.read_state == READ_BODY &&
+        connection->response.body_rest != (off_t)-1 &&
+        connection->response.body_rest < INT_MAX)
+        return (size_t)connection->response.body_rest;
+    else
+        return INT_MAX;
+}
+
 static void
 http_client_try_response_direct(http_client_connection_t connection)
 {
-    size_t max_length;
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
@@ -469,13 +479,8 @@ http_client_try_response_direct(http_client_connection_t connection)
     assert(connection->response.read_state == READ_BODY);
     assert(connection->response.stream.handler->direct != NULL);
 
-    max_length = connection->response.body_rest == (off_t)-1 ||
-        connection->response.body_rest > INT_MAX
-        ? (size_t)INT_MAX
-        : (size_t)connection->response.body_rest;
-
     nbytes = istream_invoke_direct(&connection->response.stream, connection->fd,
-                                   max_length);
+                                   http_client_response_max_read(connection));
     if (nbytes < 0) {
         /* XXX EAGAIN? */
         perror("read error on HTTP connection");
