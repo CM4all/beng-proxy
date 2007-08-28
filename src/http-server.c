@@ -13,7 +13,11 @@
 #include "header-writer.h"
 
 #ifdef __linux
+#ifdef SPLICE
+#include "splice.h"
+#else
 #include <sys/sendfile.h>
+#endif
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -538,7 +542,12 @@ http_server_response_stream_direct(int fd, size_t max_length, void *ctx)
 
     connection->response.blocking = 0;
 
+#ifdef SPLICE
+    nbytes = splice(fd, NULL, connection->fd, NULL, max_length,
+                    SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
+#else
     nbytes = sendfile(connection->fd, fd, NULL, max_length);
+#endif
     if (unlikely(nbytes < 0 && errno == EAGAIN))
         return -2;
 
@@ -666,6 +675,16 @@ http_server_response(struct http_server_request *request,
         header_write(headers, "content-length",
                      connection->response.content_length_buffer);
     }
+
+#ifdef __linux
+#ifdef SPLICE
+    if (body->direct != NULL) {
+        istream_t p = istream_pipe_new(request->pool, body);
+        if (p != NULL)
+            body = p;
+    }
+#endif
+#endif
 
     header_write(headers, "connection",
                  connection->keep_alive ? "keep-alive" : "close");
