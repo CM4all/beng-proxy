@@ -171,6 +171,9 @@ http_server_try_write(http_server_connection_t connection)
 }
 
 static void
+http_server_connection_close(http_server_connection_t connection);
+
+static void
 http_server_parse_request_line(http_server_connection_t connection,
                                const char *line, size_t length)
 {
@@ -448,7 +451,7 @@ http_server_connection_new(pool_t pool, int fd,
     return connection;
 }
 
-void
+static void
 http_server_connection_close(http_server_connection_t connection)
 {
     assert(connection != NULL);
