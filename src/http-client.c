@@ -565,10 +565,13 @@ http_client_connection_close(http_client_connection_t connection)
 {
     assert(connection != NULL);
 
+    pool_ref(connection->pool);
+
     if (connection->fd >= 0) {
         event_del(&connection->event);
         close(connection->fd);
         connection->fd = -1;
+        pool_unref(connection->pool);
     }
 
     connection->cork = 0;
