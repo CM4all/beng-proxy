@@ -12,9 +12,7 @@ struct translated {
     const char *path_info;
 };
 
-void
-my_http_server_callback(struct http_server_request *request,
-                        void *ctx);
+extern const struct http_server_connection_handler my_http_server_connection_handler;
 
 void
 file_callback(struct client_connection *connection,

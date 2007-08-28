@@ -7,6 +7,7 @@
 #include "connection.h"
 #include "handler.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -29,21 +30,14 @@ translate(struct http_server_request *request)
     return translated;
 }
 
-void
-my_http_server_callback(struct http_server_request *request,
-                        void *ctx)
+static void
+my_http_server_connection_request(struct http_server_request *request,
+                                  void *ctx)
 {
     struct client_connection *connection = ctx;
     struct translated *translated;
 
-    if (request == NULL) {
-        /* since remove_connection() might recurse here, we check if
-           the connection has already been removed from the linked
-           list */
-        if (connection->http != NULL)
-            remove_connection(connection);
-        return;
-    }
+    assert(request != NULL);
 
     (void)request;
     (void)connection;
@@ -68,3 +62,20 @@ my_http_server_callback(struct http_server_request *request,
     else
         file_callback(connection, request, translated);
 }
+
+static void
+my_http_server_connection_free(void *ctx)
+{
+    struct client_connection *connection = ctx;
+
+    /* since remove_connection() might recurse here, we check if
+       the connection has already been removed from the linked
+       list */
+    if (connection->http != NULL)
+        remove_connection(connection);
+}
+
+const struct http_server_connection_handler my_http_server_connection_handler = {
+    .request = my_http_server_connection_request,
+    .free = my_http_server_connection_free,
+};

@@ -62,9 +62,9 @@ struct http_server_connection {
     struct event event;
     fifo_buffer_t input;
 
-    /* callback */
-    http_server_callback_t callback;
-    void *callback_ctx;
+    /* handler */
+    const struct http_server_connection_handler *handler;
+    void *handler_ctx;
 
     /* request */
     struct {
@@ -236,7 +236,7 @@ http_server_headers_finished(http_server_connection_t connection)
 
     /* XXX body? */
     connection->request.read_state = READ_END;
-    connection->callback(connection->request.request, connection->callback_ctx);
+    connection->handler->request(connection->request.request, connection->handler_ctx);
 }
 
 static void
@@ -421,18 +421,20 @@ http_server_event_callback(int fd, short event, void *ctx)
 
 http_server_connection_t
 http_server_connection_new(pool_t pool, int fd,
-                           http_server_callback_t callback, void *ctx)
+                           const struct http_server_connection_handler *handler,
+                           void *ctx)
 {
     http_server_connection_t connection;
 
     assert(fd >= 0);
-    assert(callback != NULL);
+    assert(handler != NULL);
+    assert(handler->request != NULL);
 
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
     connection->fd = fd;
-    connection->callback = callback;
-    connection->callback_ctx = ctx;
+    connection->handler = handler;
+    connection->handler_ctx = ctx;
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
     connection->response.writing = 0;
@@ -474,12 +476,12 @@ http_server_connection_close(http_server_connection_t connection)
         }
     }
 
-    if (connection->callback != NULL) {
-        http_server_callback_t callback = connection->callback;
-        void *callback_ctx = connection->callback_ctx;
-        connection->callback = NULL;
-        connection->callback_ctx = NULL;
-        callback(NULL, callback_ctx);
+    if (connection->handler != NULL && connection->handler->free != NULL) {
+        const struct http_server_connection_handler *handler = connection->handler;
+        void *handler_ctx = connection->handler_ctx;
+        connection->handler = NULL;
+        connection->handler_ctx = NULL;
+        handler->free(handler_ctx);
     }
 
     pool_unref(connection->pool);

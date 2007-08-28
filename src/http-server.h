@@ -29,20 +29,17 @@ struct http_server_request {
     strmap_t headers;
 };
 
-/**
- * This callback is the application level request handler.  It is
- * called when the request line and the request headers have been
- * parsed.  It must install a request handler (request->handler).
- *
- * @param request the current request, or NULL if the connection was aborted
- * @param ctx the pointer which was passed along with this callback
- */
-typedef void (*http_server_callback_t)(struct http_server_request *request,
-                                       void *ctx);
+struct http_server_connection_handler {
+    void (*request)(struct http_server_request *request,
+                    void *ctx);
+    void (*free)(void *ctx);
+};
+
 
 http_server_connection_t attr_malloc
 http_server_connection_new(pool_t pool, int fd,
-                           http_server_callback_t callback, void *ctx);
+                           const struct http_server_connection_handler *handler,
+                           void *ctx);
 
 void
 http_server_connection_close(http_server_connection_t connection);

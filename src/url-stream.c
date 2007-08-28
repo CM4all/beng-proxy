@@ -99,8 +99,6 @@ url_stream_response_free(void *ctx)
     url_stream_t us = ctx;
 
     us->callback(0, NULL, 0, NULL, us->callback_ctx);
-
-    (void)us;
 }
 
 static const struct http_client_response_handler url_stream_response_handler = {
