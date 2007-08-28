@@ -62,19 +62,51 @@ getaddrinfo_helper(const char *host_and_port, int default_port,
     return getaddrinfo(host, port, hints, aip);
 }
 
-static void 
-url_stream_http_client_callback(http_status_t status, strmap_t headers,
-                                off_t content_length, istream_t body,
-                                void *ctx)
+static void
+url_stream_connection_idle(void *ctx)
 {
     url_stream_t us = ctx;
 
-    if (status == 0) {
-        us->http = NULL;
-    }
+    http_client_connection_close(us->http);
+}
+
+static void
+url_stream_connection_free(void *ctx)
+{
+    url_stream_t us = ctx;
+
+    us->http = NULL;
+}
+
+static const struct http_client_connection_handler url_stream_connection_handler = {
+    .idle = url_stream_connection_idle,
+    .free = url_stream_connection_free,
+};
+
+static void
+url_stream_response_response(http_status_t status, strmap_t headers,
+                             off_t content_length, istream_t body,
+                             void *ctx)
+{
+    url_stream_t us = ctx;
 
     us->callback(status, headers, content_length, body, us->callback_ctx);
 }
+
+static void
+url_stream_response_free(void *ctx)
+{
+    url_stream_t us = ctx;
+
+    us->callback(0, NULL, 0, NULL, us->callback_ctx);
+
+    (void)us;
+}
+
+static const struct http_client_response_handler url_stream_response_handler = {
+    .response = url_stream_response_response,
+    .free = url_stream_response_free,
+};
 
 static void
 url_stream_client_socket_callback(int fd, int err, void *ctx)
@@ -87,8 +119,9 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
         assert(fd >= 0);
 
         us->http = http_client_connection_new(us->pool, fd,
-                                              url_stream_http_client_callback, us);
-        http_client_request(us->http, us->method, us->uri, us->headers);
+                                              &url_stream_connection_handler, us);
+        http_client_request(us->http, us->method, us->uri, us->headers,
+                            &url_stream_response_handler, us);
     } else {
         fprintf(stderr, "failed to connect: %s\n", strerror(err));
         /* XXX */

@@ -32,9 +32,9 @@ struct http_client_connection {
     struct event event;
     fifo_buffer_t input;
 
-    /* callback */
-    http_client_callback_t callback;
-    void *callback_ctx;
+    /* handler */
+    const struct http_client_connection_handler *handler;
+    void *handler_ctx;
 
     /* request */
     struct {
@@ -42,6 +42,9 @@ struct http_client_connection {
         istream_t istream;
         int blocking;
         char request_line_buffer[1024];
+
+        const struct http_client_response_handler *handler;
+        void *handler_ctx;
     } request;
 
     /* response */
@@ -114,6 +117,9 @@ http_client_response_stream_direct(istream_t istream)
     http_client_try_response_direct(connection);
 }
 
+static inline int
+http_client_connection_valid(http_client_connection_t connection);
+
 static void
 http_client_response_stream_close(istream_t istream)
 {
@@ -125,6 +131,15 @@ http_client_response_stream_close(istream_t istream)
     assert(connection->response.read_state == READ_BODY);
     assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
+
+    if (connection->request.handler != NULL &&
+        connection->request.handler->free != NULL) {
+        const struct http_client_response_handler *handler = connection->request.handler;
+        void *handler_ctx = connection->request.handler_ctx;
+        connection->request.handler = NULL;
+        connection->request.handler_ctx = NULL;
+        handler->free(handler_ctx);
+    }
 
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
@@ -140,8 +155,16 @@ http_client_response_stream_close(istream_t istream)
     pool_unref(connection->request.pool);
     connection->request.pool = NULL;
 
-    if (!connection->keep_alive)
+    if (!connection->keep_alive) {
         http_client_connection_close(connection);
+        return;
+    }
+
+    if (http_client_connection_valid(connection) &&
+        connection->handler != NULL &&
+        connection->handler->idle != NULL) {
+        connection->handler->idle(connection->handler_ctx);
+    }
 }
 
 static const struct istream http_client_response_stream = {
@@ -369,11 +392,11 @@ http_client_parse_headers(http_client_connection_t connection)
         connection->response.read_state != READ_HEADERS) {
         assert(connection->response.read_state == READ_BODY);
 
-        connection->callback(connection->response.status,
-                             connection->response.headers,
-                             connection->response.content_length,
-                             connection->response.body,
-                             connection->callback_ctx);
+        connection->request.handler->response(connection->response.status,
+                                              connection->response.headers,
+                                              connection->response.content_length,
+                                              connection->response.body,
+                                              connection->request.handler_ctx);
 
         if (connection->response.read_state == READ_BODY) {
             if (unlikely(connection->response.stream.handler == NULL)) {
@@ -564,12 +587,14 @@ http_client_event_callback(int fd, short event, void *ctx)
 
 http_client_connection_t
 http_client_connection_new(pool_t pool, int fd,
-                           http_client_callback_t callback, void *ctx)
+                           const struct http_client_connection_handler *handler,
+                           void *ctx)
 {
     http_client_connection_t connection;
 
     assert(fd >= 0);
-    assert(callback != NULL);
+    assert(handler != NULL);
+    assert(handler->free != NULL);
 
 #ifdef NDEBUG
     pool_ref(pool);
@@ -584,8 +609,8 @@ http_client_connection_new(pool_t pool, int fd,
     connection->event.ev_events = 0;
     connection->input = fifo_buffer_new(pool, 4096);
 
-    connection->callback = callback;
-    connection->callback_ctx = ctx;
+    connection->handler = handler;
+    connection->handler_ctx = ctx;
 
     connection->request.pool = NULL;
     connection->request.istream = NULL;
@@ -623,12 +648,13 @@ http_client_connection_close(http_client_connection_t connection)
         connection->request.pool = NULL;
     }
 
-    if (connection->callback != NULL) {
-        http_client_callback_t callback = connection->callback;
-        void *callback_ctx = connection->callback_ctx;
-        connection->callback = NULL;
-        connection->callback_ctx = NULL;
-        callback(0, NULL, 0, NULL, callback_ctx);
+    if (connection->handler != NULL &&
+        connection->handler->free != NULL) {
+        const struct http_client_connection_handler *handler = connection->handler;
+        void *handler_ctx = connection->handler_ctx;
+        connection->handler = NULL;
+        connection->handler_ctx = NULL;
+        handler->free(handler_ctx);
     }
 
     pool_unref(connection->pool);
@@ -692,7 +718,9 @@ static const struct istream_handler http_client_request_stream_handler = {
 void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
-                    growing_buffer_t headers)
+                    growing_buffer_t headers,
+                    const struct http_client_response_handler *handler,
+                    void *ctx)
 {
     istream_t request_line_stream, header_stream;
 
@@ -700,8 +728,12 @@ http_client_request(http_client_connection_t connection,
     assert(connection->request.pool == NULL);
     assert(connection->request.istream == NULL);
     assert(connection->response.read_state == READ_NONE);
+    assert(handler != NULL);
+    assert(handler->response != NULL);
 
     connection->request.pool = pool_new_linear(connection->pool, "http_client_request", 8192);
+    connection->request.handler = handler;
+    connection->request.handler_ctx = ctx;
 
     /* request line */
 

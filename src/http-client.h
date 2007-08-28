@@ -18,13 +18,22 @@
 
 typedef struct http_client_connection *http_client_connection_t;
 
-typedef void (*http_client_callback_t)(http_status_t status, strmap_t headers,
-                                       off_t content_length, istream_t body,
-                                       void *ctx);
+struct http_client_connection_handler {
+    void (*idle)(void *ctx);
+    void (*free)(void *ctx);
+};
+
+struct http_client_response_handler {
+    void (*response)(http_status_t status, strmap_t headers,
+                     off_t content_length, istream_t body,
+                     void *ctx);
+    void (*free)(void *ctx);
+};
 
 http_client_connection_t attr_malloc
 http_client_connection_new(pool_t pool, int fd,
-                           http_client_callback_t callback, void *ctx);
+                           const struct http_client_connection_handler *handler,
+                           void *ctx);
 
 void
 http_client_connection_close(http_client_connection_t connection);
@@ -32,6 +41,8 @@ http_client_connection_close(http_client_connection_t connection);
 void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
-                    growing_buffer_t headers);
+                    growing_buffer_t headers,
+                    const struct http_client_response_handler *handler,
+                    void *ctx);
 
 #endif
