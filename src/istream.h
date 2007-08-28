@@ -100,6 +100,11 @@ istream_string_new(pool_t pool, const char *s);
 istream_t attr_malloc
 istream_file_new(pool_t pool, const char *path, off_t length);
 
+#ifdef __linux
+istream_t
+istream_pipe_new(pool_t pool, istream_t input);
+#endif
+
 istream_t
 istream_chunked_new(pool_t pool, istream_t input);
 

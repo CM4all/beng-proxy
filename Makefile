@@ -40,6 +40,7 @@ SOURCES = src/main.c \
 	src/istream-chunked.c \
 	src/istream-dechunk.c \
 	src/istream-cat.c \
+	src/istream-pipe.c \
 	src/strutil.c \
 	src/strmap.c \
 	src/pool.c
