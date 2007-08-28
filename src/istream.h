@@ -104,6 +104,9 @@ istream_t
 istream_chunked_new(pool_t pool, istream_t input);
 
 istream_t
+istream_dechunk_new(pool_t pool, istream_t input);
+
+istream_t
 istream_cat_new(pool_t pool, ...);
 
 #endif
