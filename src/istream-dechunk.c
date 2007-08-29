@@ -18,7 +18,8 @@ struct istream_dechunk {
         NONE,
         SIZE,
         AFTER_SIZE,
-        DATA
+        DATA,
+        AFTER_DATA
     } state;
     size_t size;
 };
@@ -102,9 +103,20 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
 
             dechunk->size -= nbytes;
             if (dechunk->size == 0)
-                dechunk->state = NONE;
+                dechunk->state = AFTER_DATA;
 
             position += nbytes;
+            break;
+
+        case AFTER_DATA:
+            if (data[position] == '\n') {
+                dechunk->state = NONE;
+            } else if (data[position] != '\r') {
+                fprintf(stderr, "newline expected\n");
+                istream_close(&dechunk->output);
+                return position;
+            }
+            ++position;
             break;
         }
     }
