@@ -126,13 +126,13 @@ chunked_source_free(void *ctx)
 {
     struct istream_chunked *chunked = ctx;
 
-    assert(chunked->input != NULL);
+    if (chunked->input != NULL) {
+        pool_unref(chunked->input->pool);
+        chunked->input = NULL;
+        chunked->buffer = NULL;
 
-    pool_unref(chunked->input->pool);
-    chunked->input = NULL;
-    chunked->buffer = NULL;
-
-    istream_close(&chunked->output);
+        istream_close(&chunked->output);
+    }
 }
 
 static const struct istream_handler chunked_source_handler = {
