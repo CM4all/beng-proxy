@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 struct istream_dechunk {
     struct istream output;
@@ -57,11 +58,14 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
                 digit = data[position] - 'a' + 0xa;
             } else if (data[position] >= 'A' && data[position] <= 'F') {
                 digit = data[position] - 'A' + 0xa;
-            } else {
-                if (dechunk->state == SIZE)
-                    dechunk->state = AFTER_SIZE;
+            } else if (dechunk->state == SIZE) {
+                dechunk->state = AFTER_SIZE;
                 ++position;
                 continue;
+            } else {
+                fprintf(stderr, "chunk length expected\n");
+                istream_close(&dechunk->output);
+                return position;
             }
 
             if (dechunk->state == NONE) {
