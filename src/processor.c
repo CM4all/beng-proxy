@@ -312,6 +312,24 @@ parser_element_finished(struct parser *parser, off_t end)
 }
 
 static void
+processor_output_substitution(processor_t processor)
+{
+    while (processor->first_substitution != NULL &&
+           processor->position == processor->first_substitution->start) {
+        struct substitution *s = processor->first_substitution;
+
+        processor->output_locked = 1;
+        substitution_output(s);
+        processor->output_locked = 0;
+
+        /* we assume the substitution object is blocking if it hasn't
+           reached EOF with this one call */
+        if (s == processor->first_substitution)
+            return;
+    }
+}
+
+static void
 processor_output(processor_t processor)
 {
     size_t rest, nbytes;
@@ -323,22 +341,10 @@ processor_output(processor_t processor)
     if (processor->fd >= 0)
         return;
 
-    while (processor->first_substitution != NULL &&
-           processor->position == processor->first_substitution->start) {
-        struct substitution *s = processor->first_substitution;
-
-        processor->output_locked = 1;
-        pool_ref(processor->output.pool);
-
-        substitution_output(s);
-
-        if (pool_unref(processor->output.pool) == 0)
-            return;
-        processor->output_locked = 0;
-
-        if (s == processor->first_substitution)
-            return;
-    }
+    pool_ref(processor->output.pool);
+    processor_output_substitution(processor);
+    if (pool_unref(processor->output.pool) == 0)
+        return;
 
     if (processor->first_substitution == NULL)
         rest = (size_t)(processor->source_length - processor->position);
