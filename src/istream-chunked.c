@@ -78,9 +78,6 @@ chunked_source_data(const void *data, size_t length, void *ctx)
             return 0;
     }
 
-    if (max_length < 4 + 2 + 1 + 2 + 5)
-        return 0;
-
     if (length > max_length - 4 - 2 - 2 - 5)
         length = max_length - 4 - 2 - 2 - 5;
 
