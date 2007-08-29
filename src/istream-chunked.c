@@ -66,8 +66,17 @@ chunked_source_data(const void *data, size_t length, void *ctx)
     assert(chunked->input != NULL);
 
     dest = fifo_buffer_write(chunked->buffer, &max_length);
-    if (dest == NULL)
-        return 0;
+    if (dest == NULL || max_length < 4 + 2 + 1 + 2 + 5) {
+        /* the buffer is full - try to flush it */
+        chunked_try_write(chunked);
+
+        if (chunked->input == NULL)
+            return 0;
+
+        dest = fifo_buffer_write(chunked->buffer, &max_length);
+        if (dest == NULL || max_length < 4 + 2 + 1 + 2 + 5)
+            return 0;
+    }
 
     if (max_length < 4 + 2 + 1 + 2 + 5)
         return 0;
