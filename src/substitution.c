@@ -60,8 +60,6 @@ substitution_http_client_callback(http_status_t status, strmap_t headers,
     struct substitution *s = ctx;
     const char *value;
 
-    assert(s->istream == NULL);
-
     (void)content_length;
 
     if (status == 0) {
