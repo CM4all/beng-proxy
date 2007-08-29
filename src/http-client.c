@@ -155,7 +155,7 @@ http_client_response_stream_close(istream_t istream)
         connection->request.pool = NULL;
     }
 
-    if (!connection->keep_alive) {
+    if (!connection->keep_alive && http_client_connection_valid(connection)) {
         http_client_connection_close(connection);
         return;
     }
