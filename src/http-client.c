@@ -436,6 +436,9 @@ http_client_consume_body(http_client_connection_t connection)
                                    buffer, length);
     assert(consumed <= length);
 
+    if (!http_client_connection_valid(connection))
+        return;
+
     if (consumed > 0) {
         fifo_buffer_consume(connection->input, consumed);
         http_client_response_body_consumed(connection, consumed);

@@ -32,8 +32,10 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     pool_unref(dechunk->input->pool);
     dechunk->input = NULL;
 
+    pool_ref(dechunk->output.pool);
     istream_invoke_eof(&dechunk->output);
     istream_close(&dechunk->output);
+    pool_unref(dechunk->output.pool);
 }
 
 static size_t
