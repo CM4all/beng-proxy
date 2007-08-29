@@ -93,6 +93,9 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
             nbytes = istream_invoke_data(&dechunk->output, data + position, size);
             assert(nbytes <= size);
 
+            if (nbytes == 0)
+                return position;
+
             dechunk->size -= nbytes;
             if (dechunk->size == 0)
                 dechunk->state = NONE;
