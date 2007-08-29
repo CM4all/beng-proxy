@@ -87,6 +87,7 @@ static inline void
 event2_reset(struct event2 *event)
 {
     event->old_mask = 0;
+    event->new_mask = 0;
 }
 
 static inline void
