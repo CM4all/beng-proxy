@@ -22,6 +22,9 @@ struct istream_dechunk {
         AFTER_DATA
     } state;
     size_t size;
+
+    void (*eof_callback)(void *ctx);
+    void *ctx;
 };
 
 static void
@@ -37,6 +40,10 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     pool_ref(dechunk->output.pool);
     istream_invoke_eof(&dechunk->output);
     istream_close(&dechunk->output);
+
+    if (dechunk->eof_callback != NULL)
+        dechunk->eof_callback(dechunk->ctx);
+
     pool_unref(dechunk->output.pool);
 }
 
@@ -186,7 +193,8 @@ static const struct istream istream_dechunk = {
 };
 
 istream_t
-istream_dechunk_new(pool_t pool, istream_t input)
+istream_dechunk_new(pool_t pool, istream_t input,
+                    void (*eof_callback)(void *ctx), void *ctx)
 {
     struct istream_dechunk *dechunk = p_malloc(pool, sizeof(*dechunk));
 
@@ -197,6 +205,8 @@ istream_dechunk_new(pool_t pool, istream_t input)
     dechunk->output.pool = pool;
     dechunk->input = input;
     dechunk->state = NONE;
+    dechunk->eof_callback = eof_callback;
+    dechunk->ctx = ctx;
 
     input->handler = &dechunk_input_handler;
     input->handler_ctx = dechunk;
