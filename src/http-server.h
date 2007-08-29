@@ -34,16 +34,14 @@ struct http_server_connection_handler {
 };
 
 
-http_server_connection_t attr_malloc
+void
 http_server_connection_new(pool_t pool, int fd,
                            const struct http_server_connection_handler *handler,
-                           void *ctx);
+                           void *ctx,
+                           http_server_connection_t *connection_r);
 
 void
 http_server_connection_free(http_server_connection_t *connection_r);
-
-void
-http_server_try_read(http_server_connection_t connection);
 
 void
 http_server_response(struct http_server_request *request,

@@ -328,7 +328,7 @@ http_server_consume_input(http_server_connection_t connection)
     }
 }
 
-void
+static void
 http_server_try_read(http_server_connection_t connection)
 {
     void *buffer;
@@ -427,10 +427,11 @@ http_server_event_callback(int fd, short event, void *ctx)
     pool_commit();
 }
 
-http_server_connection_t
+void
 http_server_connection_new(pool_t pool, int fd,
                            const struct http_server_connection_handler *handler,
-                           void *ctx)
+                           void *ctx,
+                           http_server_connection_t *connection_r)
 {
     http_server_connection_t connection;
 
@@ -453,7 +454,11 @@ http_server_connection_new(pool_t pool, int fd,
     connection->event.ev_events = 0;
     http_server_event_setup(connection);
 
-    return connection;
+    *connection_r = connection;
+
+    pool_ref(connection->pool);
+    http_server_try_read(connection);
+    pool_unref(connection->pool);
 }
 
 static void
