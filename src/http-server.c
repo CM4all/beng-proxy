@@ -461,9 +461,16 @@ http_server_connection_close(http_server_connection_t connection)
     pool_ref(connection->pool);
 
     if (connection->request.read_state != READ_START) {
+        pool_t pool;
+
         connection->request.read_state = READ_START;
 
         assert(connection->request.request != NULL);
+
+        pool = connection->request.request->pool;
+        assert(pool != NULL);
+        pool_ref(pool);
+
         http_server_request_free(&connection->request.request);
 
         if (connection->response.writing) {
@@ -472,6 +479,8 @@ http_server_connection_close(http_server_connection_t connection)
 
             connection->response.writing = 0;
         }
+
+        pool_unref(pool);
     }
 
     if (connection->handler != NULL && connection->handler->free != NULL) {
