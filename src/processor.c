@@ -48,7 +48,9 @@ processor_output_stream_read(istream_t istream)
 {
     processor_t processor = istream_to_processor(istream);
 
-    if (processor->fd < 0)
+    if (processor->fd >= 0)
+        istream_read(processor->input);
+    else
         processor_output(processor);
 }
 
