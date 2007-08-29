@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 struct proxy_transfer {
+    pool_t pool;
     struct http_server_request *request;
     url_stream_t url_stream;
 };
@@ -24,6 +25,10 @@ struct proxy_transfer {
 static void
 proxy_transfer_close(struct proxy_transfer *pt)
 {
+    pool_t pool = pt->pool;
+
+    assert(pt->pool != NULL);
+
     if (pt->url_stream != NULL) {
         url_stream_t url_stream = pt->url_stream;
         pt->url_stream = NULL;
@@ -31,6 +36,8 @@ proxy_transfer_close(struct proxy_transfer *pt)
     }
 
     pt->request = NULL;
+    pt->pool = NULL;
+    pool_unref(pool);
 }
 
 static void 
@@ -97,6 +104,7 @@ proxy_callback(struct client_connection *connection,
     }
 
     pt = p_calloc(request->pool, sizeof(*pt));
+    pt->pool = request->pool;
     pt->request = request;
 
     pt->url_stream = url_stream_new(request->pool,
@@ -108,4 +116,6 @@ proxy_callback(struct client_connection *connection,
                                  "Internal server error");
         return;
     }
+
+    pool_ref(pt->pool);
 }
