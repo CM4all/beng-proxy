@@ -131,6 +131,8 @@ http_client_response_stream_close(istream_t istream)
     assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
 
+    event2_nand(&connection->event, EV_READ);
+
     if (connection->request.handler != NULL &&
         connection->request.handler->free != NULL) {
         const struct http_client_response_handler *handler = connection->request.handler;
