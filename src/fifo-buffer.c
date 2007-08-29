@@ -100,6 +100,9 @@ fifo_buffer_write(fifo_buffer_t buffer, size_t *max_length_r)
         fifo_buffer_move(buffer);
         if (buffer->end == buffer->size)
             return NULL;
+    } else if (buffer->start > 0 && buffer->start == buffer->end) {
+        buffer->start = 0;
+        buffer->end = 0;
     }
 
     *max_length_r = buffer->size - buffer->end;
