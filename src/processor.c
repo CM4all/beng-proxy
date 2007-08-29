@@ -28,6 +28,8 @@ struct processor {
 
     struct substitution *first_substitution, **append_substitution_p;
 
+    int output_locked;
+
     struct istream output;
     istream_t input;
 };
@@ -190,6 +192,7 @@ processor_new(pool_t pool, istream_t istream)
 
     processor->first_substitution = NULL;
     processor->append_substitution_p = &processor->first_substitution;
+    processor->output_locked = 0;
 
     processor->output = processor_output_stream;
     processor->output.pool = pool;
@@ -271,7 +274,8 @@ processor_substitution_eof(struct substitution *s)
     processor->first_substitution = s->next;
     substitution_close(s);
 
-    processor_output(processor);
+    if (!processor->output_locked)
+        processor_output(processor);
 }
 
 static const struct substitution_handler processor_substitution_handler = {
@@ -322,7 +326,16 @@ processor_output(processor_t processor)
     while (processor->first_substitution != NULL &&
            processor->position == processor->first_substitution->start) {
         struct substitution *s = processor->first_substitution;
+
+        processor->output_locked = 1;
+        pool_ref(processor->output.pool);
+
         substitution_output(s);
+
+        if (pool_unref(processor->output.pool) == 0)
+            return;
+        processor->output_locked = 0;
+
         if (s == processor->first_substitution)
             return;
     }
