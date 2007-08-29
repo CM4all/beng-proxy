@@ -153,7 +153,10 @@ istream_chunked_read(istream_t istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
 
-    chunked_try_write(chunked);
+    if (chunked->input == NULL)
+        chunked_try_write(chunked);
+    else
+        istream_read(chunked->input);
 }
 
 static void
