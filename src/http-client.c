@@ -11,6 +11,7 @@
 #include "buffered-io.h"
 #include "header-parser.h"
 #include "header-writer.h"
+#include "event2.h"
 
 #ifdef __linux
 #include <sys/socket.h>
@@ -23,14 +24,13 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <event.h>
 
 struct http_client_connection {
     pool_t pool;
 
     /* I/O */
     int fd;
-    struct event event;
+    struct event2 event;
     fifo_buffer_t input;
 
     /* handler */
@@ -87,9 +87,6 @@ static void
 http_client_consume_body(http_client_connection_t connection);
 
 static void
-http_client_event_setup(http_client_connection_t connection);
-
-static void
 http_client_response_stream_read(istream_t istream)
 {
     http_client_connection_t connection = response_stream_to_connection(istream);
@@ -98,9 +95,6 @@ http_client_response_stream_read(istream_t istream)
     connection->response.direct_mode = 0;
 
     http_client_consume_body(connection);
-
-    if (connection->fd >= 0)
-        http_client_event_setup(connection);
 
     pool_unref(connection->pool);
 }
@@ -446,6 +440,8 @@ http_client_consume_body(http_client_connection_t connection)
         fifo_buffer_consume(connection->input, consumed);
         http_client_response_body_consumed(connection, consumed);
     }
+
+    event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
 }
 
 static void
@@ -484,7 +480,8 @@ http_client_try_response_direct(http_client_connection_t connection)
         return;
     }
 
-    http_client_response_body_consumed(connection, (size_t)nbytes);
+    if (nbytes > 0)
+        http_client_response_body_consumed(connection, (size_t)nbytes);
 }
 
 static void
@@ -515,44 +512,13 @@ http_client_try_read(http_client_connection_t connection)
             http_client_consume_body(connection);
         else
             http_client_consume_headers(connection);
+
+        if (http_client_connection_valid(connection) &&
+            connection->response.read_state != READ_NONE &&
+            (connection->response.direct_mode ||
+             !fifo_buffer_full(connection->input)))
+            event2_or(&connection->event, EV_READ);
     }
-}
-
-static void
-http_client_event_callback(int fd, short event, void *ctx);
-
-static void
-http_client_event_setup(http_client_connection_t connection)
-{
-    short event = 0;
-    struct timeval tv;
-
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
-    assert(connection->input != NULL);
-
-    if (connection->event.ev_events != 0)
-        event_del(&connection->event);
-
-    if (connection->response.read_state != READ_NONE &&
-        (connection->response.direct_mode ||
-         fifo_buffer_empty(connection->input)))
-        event = EV_READ | EV_TIMEOUT;
-
-    if (connection->request.istream != NULL && connection->request.blocking)
-        event |= EV_WRITE | EV_TIMEOUT;
-
-    if (event == 0) {
-        connection->event.ev_events = 0;
-        return;
-    }
-
-    tv.tv_sec = 30;
-    tv.tv_usec = 0;
-
-    event_set(&connection->event, connection->fd,
-              event, http_client_event_callback, connection);
-    event_add(&connection->event, &tv);
 }
 
 static void
@@ -563,6 +529,9 @@ http_client_event_callback(int fd, short event, void *ctx)
     (void)fd;
 
     pool_ref(connection->pool);
+
+    event2_reset(&connection->event);
+    event2_lock(&connection->event);
 
     if (unlikely(event & EV_TIMEOUT)) {
         fprintf(stderr, "timeout\n");
@@ -576,7 +545,7 @@ http_client_event_callback(int fd, short event, void *ctx)
         http_client_try_read(connection);
 
     if (likely(http_client_connection_valid(connection)))
-        http_client_event_setup(connection);
+        event2_unlock(&connection->event);
 
     pool_unref(connection->pool);
     pool_commit();
@@ -588,6 +557,10 @@ http_client_connection_new(pool_t pool, int fd,
                            void *ctx)
 {
     http_client_connection_t connection;
+    static const struct timeval tv = {
+        .tv_sec = 30,
+        .tv_usec = 0,
+    };
 
     assert(fd >= 0);
     assert(handler != NULL);
@@ -603,7 +576,6 @@ http_client_connection_new(pool_t pool, int fd,
     connection->pool = pool;
     connection->fd = fd;
 
-    connection->event.ev_events = 0;
     connection->input = fifo_buffer_new(pool, 4096);
 
     connection->handler = handler;
@@ -612,6 +584,10 @@ http_client_connection_new(pool_t pool, int fd,
     connection->request.pool = NULL;
     connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
+
+    event2_init(&connection->event, connection->fd,
+                http_client_event_callback, connection,
+                &tv);
 
     return connection;
 }
@@ -624,7 +600,7 @@ http_client_connection_close(http_client_connection_t connection)
     pool_ref(connection->pool);
 
     if (connection->fd >= 0) {
-        event_del(&connection->event);
+        event2_set(&connection->event, 0);
         close(connection->fd);
         connection->fd = -1;
         pool_unref(connection->pool);
@@ -669,11 +645,15 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     nbytes = write(connection->fd, data, length);
     connection->request.blocking = nbytes < (ssize_t)length;
-    if (likely(nbytes >= 0))
+    if (likely(nbytes >= 0)) {
+        event2_or(&connection->event, EV_WRITE);
         return (size_t)nbytes;
+    }
 
-    if (likely(errno == EAGAIN))
+    if (likely(errno == EAGAIN)) {
+        event2_or(&connection->event, EV_WRITE);
         return 0;
+    }
 
     perror("write error on HTTP client connection");
     http_client_connection_close(connection);
@@ -693,7 +673,7 @@ http_client_request_stream_eof(void *ctx)
     connection->response.headers = NULL;
     connection->response.direct_mode = 0;
 
-    /* XXX event_setup()? */
+    event2_set(&connection->event, EV_READ);
 }
 
 static void
@@ -765,10 +745,12 @@ http_client_request(http_client_connection_t connection,
 
     pool_ref(connection->pool);
 
+    event2_lock(&connection->event);
+
     istream_read(connection->request.istream);
 
-    if (http_client_connection_valid(connection))
-        http_client_event_setup(connection);
+    if (likely(http_client_connection_valid(connection)))
+        event2_unlock(&connection->event);
 
     pool_unref(connection->pool);
 }

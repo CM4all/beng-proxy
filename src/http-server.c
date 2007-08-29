@@ -11,6 +11,7 @@
 #include "buffered-io.h"
 #include "header-parser.h"
 #include "header-writer.h"
+#include "event2.h"
 
 #ifdef __linux
 #ifdef SPLICE
@@ -28,7 +29,6 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <event.h>
 
 static const char *http_status_to_string_data[][20] = {
     [2] = {
@@ -64,7 +64,7 @@ struct http_server_connection {
 
     /* I/O */
     int fd;
-    struct event event;
+    struct event2 event;
     fifo_buffer_t input;
 
     /* handler */
@@ -171,7 +171,9 @@ http_server_try_write(http_server_connection_t connection)
     assert(connection->response.writing);
 
     http_server_cork(connection);
+    event2_lock(&connection->event);
     istream_direct(connection->response.istream);
+    event2_unlock(&connection->event);
     http_server_uncork(connection);
 }
 
@@ -342,8 +344,11 @@ http_server_try_read(http_server_connection_t connection)
 
     nbytes = read(connection->fd, buffer, max_length);
     if (unlikely(nbytes < 0)) {
-        if (errno == EAGAIN)
+        if (errno == EAGAIN) {
+            event2_or(&connection->event, EV_READ);
             return;
+        }
+
         perror("read error on HTTP connection");
         http_server_connection_close(connection);
         return;
@@ -358,46 +363,13 @@ http_server_try_read(http_server_connection_t connection)
     fifo_buffer_append(connection->input, (size_t)nbytes);
 
     http_server_consume_input(connection);
-}
 
-static void
-http_server_event_callback(int fd, short event, void *ctx);
-
-static void
-http_server_event_setup(http_server_connection_t connection)
-{
-    short event = 0;
-    struct timeval tv;
-
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
-    assert(connection->input != NULL);
-
-    if (connection->event.ev_events != 0)
-        event_del(&connection->event);
-
-    if ((connection->request.read_state == READ_START ||
+    if (http_server_connection_valid(connection) &&
+        (connection->request.read_state == READ_START ||
          connection->request.read_state == READ_HEADERS ||
          connection->request.read_state == READ_BODY) &&
         !fifo_buffer_full(connection->input))
-        event = EV_READ | EV_TIMEOUT;
-
-    if (connection->response.writing && connection->response.blocking) {
-        assert(connection->response.writing);
-        event |= EV_WRITE | EV_TIMEOUT;
-    }
-
-    if (event == 0) {
-        connection->event.ev_events = 0;
-        return;
-    }
-
-    tv.tv_sec = 30;
-    tv.tv_usec = 0;
-
-    event_set(&connection->event, connection->fd,
-              event, http_server_event_callback, connection);
-    event_add(&connection->event, &tv);
+        event2_or(&connection->event, EV_READ);
 }
 
 static void
@@ -408,6 +380,9 @@ http_server_event_callback(int fd, short event, void *ctx)
     (void)fd;
 
     pool_ref(connection->pool);
+
+    event2_reset(&connection->event);
+    event2_lock(&connection->event);
 
     if (unlikely(event & EV_TIMEOUT)) {
         fprintf(stderr, "timeout\n");
@@ -421,7 +396,7 @@ http_server_event_callback(int fd, short event, void *ctx)
         http_server_try_read(connection);
 
     if (likely(http_server_connection_valid(connection)))
-        http_server_event_setup(connection);
+        event2_unlock(&connection->event);
 
     pool_unref(connection->pool);
     pool_commit();
@@ -434,6 +409,10 @@ http_server_connection_new(pool_t pool, int fd,
                            http_server_connection_t *connection_r)
 {
     http_server_connection_t connection;
+    static const struct timeval tv = {
+        .tv_sec = 30,
+        .tv_usec = 0,
+    };
 
     assert(fd >= 0);
     assert(handler != NULL);
@@ -451,13 +430,18 @@ http_server_connection_new(pool_t pool, int fd,
 
     connection->input = fifo_buffer_new(pool, 4096);
 
-    connection->event.ev_events = 0;
-    http_server_event_setup(connection);
+    pool_ref(connection->pool);
+
+    event2_init(&connection->event, connection->fd,
+                http_server_event_callback, connection,
+                &tv);
+    event2_lock(&connection->event);
 
     *connection_r = connection;
 
-    pool_ref(connection->pool);
     http_server_try_read(connection);
+
+    event2_unlock(&connection->event);
     pool_unref(connection->pool);
 }
 
@@ -467,7 +451,7 @@ http_server_connection_close(http_server_connection_t connection)
     assert(connection != NULL);
 
     if (connection->fd >= 0) {
-        event_del(&connection->event);
+        event2_set(&connection->event, 0);
         close(connection->fd);
         connection->fd = -1;
     }
@@ -525,11 +509,16 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
 
     nbytes = write(connection->fd, data, length);
     connection->response.blocking = nbytes < (ssize_t)length;
-    if (likely(nbytes >= 0))
-        return (size_t)nbytes;
 
-    if (likely(errno == EAGAIN))
+    if (likely(nbytes >= 0)) {
+        event2_or(&connection->event, EV_WRITE);
+        return (size_t)nbytes;
+    }
+
+    if (likely(errno == EAGAIN)) {
+        event2_or(&connection->event, EV_WRITE);
         return 0;
+    }
 
     perror("write error on HTTP connection");
     http_server_connection_close(connection);
@@ -556,8 +545,10 @@ http_server_response_stream_direct(int fd, size_t max_length, void *ctx)
     if (unlikely(nbytes < 0 && errno == EAGAIN))
         return -2;
 
-    if (likely(nbytes > 0))
+    if (likely(nbytes > 0)) {
+        event2_or(&connection->event, EV_WRITE);
         connection->response.blocking = 1;
+    }
 
     return nbytes;
 }
@@ -589,10 +580,14 @@ http_server_response_stream_eof(void *ctx)
 
     http_server_request_free(&connection->request.request);
 
-    if (!connection->keep_alive)
+    if (connection->keep_alive) {
+        /* set up events for next request */
+        event2_set(&connection->event, EV_READ);
+    } else {
         /* keepalive disabled and response is finished: we must close
            the connection */
         http_server_connection_close(connection);
+    }
 
     pool_unref(connection->pool);
 }
@@ -708,8 +703,6 @@ http_server_response(struct http_server_request *request,
     pool_ref(connection->pool);
 
     http_server_try_write(connection);
-    if (http_server_connection_valid(connection))
-        http_server_event_setup(connection);
 
     pool_unref(connection->pool);
 }
