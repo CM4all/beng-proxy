@@ -54,14 +54,14 @@ static void
 replace_substitution_free(void *ctx)
 {
     struct substitution *s = ctx;
-    struct replace *replace = ctx;
+    struct replace *replace = s->replace;
 
     assert(s->istream != NULL);
     pool_unref(s->istream->pool);
     s->istream = NULL;
 
     if (replace->first_substitution != s ||
-        replace->position < s->start)
+        (replace->fd >= 0 || replace->position < s->start))
         return;
 
     replace_to_next_substitution(replace, s);
