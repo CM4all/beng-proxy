@@ -1,7 +1,7 @@
 include version.mk
 
 CC = gcc
-CFLAGS = -O0 -g -DPOISON
+CFLAGS = -O0 -g -DPOISON -DDEBUG_POOL_REF
 WARNING_CFLAGS += -Wall -W -pedantic -Werror -pedantic-errors -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef
 
 MORE_CFLAGS = -DVERSION=\"$(VERSION)\"

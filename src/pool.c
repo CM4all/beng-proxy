@@ -46,8 +46,19 @@ struct linear_pool_area {
     unsigned char data[sizeof(size_t)];
 };
 
+struct pool_ref {
+    struct list_head list_head;
+    const char *file;
+    unsigned line;
+    unsigned count;
+};
+
 struct pool {
     struct list_head siblings, children;
+#ifdef DEBUG_POOL_REF
+    struct list_head refs, unrefs;
+    struct pool_ref main_ref;
+#endif
     pool_t parent;
     unsigned ref;
     int trashed;
@@ -194,6 +205,10 @@ pool_new(pool_t parent, const char *name)
     }
 
     list_init(&pool->children);
+#ifdef DEBUG_POOL_REF
+    list_init(&pool->refs);
+    list_init(&pool->unrefs);
+#endif
     pool->ref = 1;
     pool->trashed = 0;
     pool->name = name;
@@ -306,8 +321,36 @@ pool_destroy(pool_t pool)
         free(pool);
 }
 
+#ifdef DEBUG_POOL_REF
+static void
+pool_increment_ref(pool_t pool, struct list_head *list,
+                   const char *file, unsigned line)
+{
+    struct pool_ref *ref;
+
+    for (ref = (struct pool_ref *)&pool->refs.next;
+         &ref->list_head != &pool->refs;
+         ref = (struct pool_ref *)&ref->list_head.next) {
+        if (ref->line == line && strcmp(ref->file, file) == 0) {
+            ++ref->count;
+            return;
+        }
+    }
+
+    ref = p_malloc(pool, sizeof(*ref));
+    ref->file = file;
+    ref->line = line;
+    ref->count = 1;
+    list_add(&ref->list_head, list);
+}
+#endif
+
 void
+#ifdef DEBUG_POOL_REF
+pool_ref_debug(pool_t pool, const char *file, unsigned line)
+#else
 pool_ref(pool_t pool)
+#endif
 {
     assert(pool->ref > 0);
     ++pool->ref;
@@ -315,16 +358,28 @@ pool_ref(pool_t pool)
 #ifdef POOL_TRACE_REF
     fprintf(stderr, "pool_ref('%s')=%u\n", pool->name, pool->ref);
 #endif
+
+#ifdef DEBUG_POOL_REF
+    pool_increment_ref(pool, &pool->refs, file, line);
+#endif
 }
 
 unsigned
+#ifdef DEBUG_POOL_REF
+pool_unref_debug(pool_t pool, const char *file, unsigned line)
+#else
 pool_unref(pool_t pool)
+#endif
 {
     assert(pool->ref > 0);
     --pool->ref;
 
 #ifdef POOL_TRACE_REF
     fprintf(stderr, "pool_unref('%s')=%u\n", pool->name, pool->ref);
+#endif
+
+#ifdef DEBUG_POOL_REF
+    pool_increment_ref(pool, &pool->unrefs, file, line);
 #endif
 
     if (pool->ref == 0) {
@@ -348,7 +403,23 @@ pool_commit(void)
 
         for (pool = (pool_t)trash.next; &pool->siblings != &trash;
              pool = (pool_t)pool->siblings.next) {
+#ifdef DEBUG_POOL_REF
+            const struct pool_ref *ref;
+            fprintf(stderr, "\n '%s'(%u)\n", pool->name, pool->ref);
+            for (ref = (const struct pool_ref *)pool->refs.next;
+                 &ref->list_head != &pool->refs;
+                 ref = (const struct pool_ref *)ref->list_head.next) {
+                fprintf(stderr, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
+            }
+            fprintf(stderr, "    UNREF:\n");
+            for (ref = (const struct pool_ref *)pool->unrefs.next;
+                 &ref->list_head != &pool->unrefs;
+                 ref = (const struct pool_ref *)ref->list_head.next) {
+                fprintf(stderr, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
+            }
+#else
             fprintf(stderr, " '%s'(%u)", pool->name, pool->ref);
+#endif
         }
         fprintf(stderr, "\n");
 

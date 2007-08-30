@@ -22,11 +22,27 @@ pool_new_libc(pool_t parent, const char *name);
 pool_t
 pool_new_linear(pool_t parent, const char *name, size_t initial_size);
 
+#ifdef DEBUG_POOL_REF
+
+void
+pool_ref_debug(pool_t pool, const char *file, unsigned line);
+
+unsigned
+pool_unref_debug(pool_t pool, const char *file, unsigned line);
+
+#define pool_ref(pool) pool_ref_debug(pool, __FILE__, __LINE__)
+
+#define pool_unref(pool) pool_unref_debug(pool, __FILE__, __LINE__)
+
+#else
+
 void
 pool_ref(pool_t pool);
 
 unsigned
 pool_unref(pool_t pool);
+
+#endif
 
 #ifdef NDEBUG
 static inline void
