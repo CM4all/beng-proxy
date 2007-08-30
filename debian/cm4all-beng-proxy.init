@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# cm4all-beng-proxy: start the BENG proxy daemon
+#
+# Author: Max Kellermann <mk@cm4all.com>
+#
+
+### BEGIN INIT INFO
+# Provides:          cm4all-beng-proxy
+# Required-Start:    $network
+# Required-Stop:     $network
+# Should-Start:      
+# Should-Stop:       
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start or stop the CM4all BENG proxy daemon
+### END INIT INFO
+
+test -f /usr/sbin/beng-proxy || exit 0
+
+source /lib/lsb/init-functions
+
+PIDFILE=/var/run/cm4all/beng-proxy.pid
+OPTIONS=""
+
+test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
+
+case "$1" in
+    start)
+	log_begin_msg "Starting CM4all BENG proxy daemon"
+        start-stop-daemon --start --quiet \
+            --exec /usr/sbin/beng-proxy \
+            --pidfile "$PIDFILE" \
+            -- \
+            --pidfile "$PIDFILE" \
+            $OPTIONS
+	log_end_msg $?
+	;;
+    stop)
+	log_begin_msg "Stopping CM4all BENG proxy daemon"
+	start-stop-daemon --stop --quiet \
+            --retry 60 \
+            --oknodo \
+            --pidfile "$PIDFILE" \
+            --exec /usr/sbin/beng-proxy
+	log_end_msg $?
+	;;
+    restart|force-reload)
+	$0 stop
+	$0 start
+	;;
+    *)
+	log_success_msg "Usage: /etc/init.d/cm4all-beng-proxy {start|stop|force-reload|restart}"
+	exit 1
+	;;
+esac
+
+exit 0

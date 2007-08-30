@@ -1,0 +1,13 @@
+Source: cm4all-beng-proxy
+Section: non-free/web
+Priority: optional
+Maintainer: Max Kellermann <mk@cm4all.com>
+Build-Depends: debhelper (>= 5), gcc (>= 4.1), libcm4all-daemon-dev (>= 0.2), libevent-dev (>= 1.3c), libattr1-dev
+Standards-Version: 3.7.2
+
+Package: cm4all-beng-proxy
+Architecture: any
+Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), cm4all-thirdparty-multilog
+Description: HTTP proxy server
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
