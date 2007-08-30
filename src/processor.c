@@ -170,6 +170,7 @@ processor_close(processor_t processor)
 {
     assert(processor != NULL);
 
+    processor->replace.output = NULL;
     replace_destroy(&processor->replace);
 
     if (processor->input != NULL) {
