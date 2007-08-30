@@ -58,6 +58,7 @@ embed_input_free(void *ctx)
 
     if (!embed->input_eof && embed->input != NULL) {
         /* abort the transfer */
+        pool_unref(embed->input->pool);
         embed->input = NULL;
         /* XXX */
     }
