@@ -25,6 +25,10 @@ struct processor {
     char *map;
 
     struct parser parser;
+    enum {
+        TAG_NONE,
+        TAG_EMBED,
+    } tag;
     char *href;
 
     struct substitution *first_substitution, **append_substitution_p;
@@ -297,7 +301,13 @@ parser_element_start(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
 
-    processor->href = NULL;
+    if (parser->element_name_length == 7 &&
+        memcmp(parser->element_name, "c:embed", 7) == 0) {
+        processor->tag = TAG_EMBED;
+        processor->href = NULL;
+    } else {
+        processor->tag = TAG_NONE;
+    }
 }
 
 void
@@ -307,8 +317,10 @@ parser_attr_finished(struct parser *parser, off_t end)
 
     (void)end;
 
-    if (parser->attr_name_length == 4 && memcmp(parser->attr_name, "href", 4) == 0)
-        processor->href = p_strndup(processor->output.pool, parser->attr_value, parser->attr_value_length);
+    if (processor->tag == TAG_EMBED && parser->attr_name_length == 4 &&
+        memcmp(parser->attr_name, "href", 4) == 0)
+        processor->href = p_strndup(processor->output.pool, parser->attr_value,
+                                    parser->attr_value_length);
 }
 
 void
@@ -318,7 +330,7 @@ parser_element_finished(struct parser *parser, off_t end)
     pool_t pool;
     struct substitution *s;
 
-    if (processor->href == NULL)
+    if (processor->tag != TAG_EMBED || processor->href == NULL)
         return;
 
     pool = pool_new_linear(processor->output.pool, "processor_substitution", 16384);

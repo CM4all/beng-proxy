@@ -11,8 +11,6 @@
 #include <assert.h>
 #include <string.h>
 
-static const char element_start[] = "<c:";
-
 void
 parser_feed(struct parser *parser, const char *start, size_t length)
 {
@@ -26,43 +24,20 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         switch (parser->state) {
         case PARSER_NONE:
             /* find first character */
-            p = memchr(buffer, element_start[0], end - buffer);
+            p = memchr(buffer, '<', end - buffer);
             if (p == NULL)
                 return;
 
-            parser->state = PARSER_START;
             parser->element_offset = parser->position + (off_t)(p - start);
-            parser->match_length = 1;
+            parser->state = PARSER_NAME;
+            parser->element_name_length = 0;
             buffer = p + 1;
-            break;
-
-        case PARSER_START:
-            /* compare more characters */
-            assert(parser->match_length > 0);
-            assert(parser->match_length < sizeof(element_start) - 1);
-
-            do {
-                if (*buffer != element_start[parser->match_length]) {
-                    parser->state = PARSER_NONE;
-                    break;
-                }
-
-                ++parser->match_length;
-                ++buffer;
-
-                if (parser->match_length == sizeof(element_start) - 1) {
-                    parser->state = PARSER_NAME;
-                    parser->element_name_length = 0;
-                    break;
-                }
-            } while (unlikely(buffer < end));
-
             break;
 
         case PARSER_NAME:
             /* copy element name */
             while (buffer < end) {
-                if (char_is_alphanumeric(*buffer)) {
+                if (char_is_alphanumeric(*buffer) || *buffer == ':' || *buffer == '-' || *buffer == '_') {
                     if (parser->element_name_length == sizeof(parser->element_name)) {
                         /* name buffer overflowing */
                         parser->state = PARSER_NONE;
