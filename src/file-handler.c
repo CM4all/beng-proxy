@@ -7,12 +7,14 @@
 #include "connection.h"
 #include "handler.h"
 #include "header-writer.h"
+#include "processor.h"
 
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
 #include <attr/xattr.h>
+#include <string.h>
 
 void
 file_callback(struct client_connection *connection,
@@ -87,5 +89,13 @@ file_callback(struct client_connection *connection,
         content_type[0] = 0;
     }
 
-    http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
+    if (strncmp(content_type, "text/html", 9) == 0) {
+        if (body != NULL)
+            body = processor_new(request->pool, body);
+
+        http_server_response(request, HTTP_STATUS_OK, headers,
+                             (off_t)-1, body);
+    } else {
+        http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
+    }
 }
