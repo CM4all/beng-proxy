@@ -204,11 +204,9 @@ parser_element_start(struct parser *parser)
 }
 
 void
-parser_attr_finished(struct parser *parser, off_t end)
+parser_attr_finished(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
-
-    (void)end;
 
     if (processor->tag == TAG_EMBED && parser->attr_name_length == 4 &&
         memcmp(parser->attr_name, "href", 4) == 0)

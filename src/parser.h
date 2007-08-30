@@ -38,6 +38,7 @@ struct parser {
     char attr_value_delimiter;
     char attr_value[1024];
     size_t attr_value_length;
+    off_t attr_value_start, attr_value_end;
 };
 
 static inline void
@@ -53,7 +54,7 @@ void
 parser_element_finished(struct parser *parser, off_t end);
 
 void
-parser_attr_finished(struct parser *parser, off_t end);
+parser_attr_finished(struct parser *parser);
 
 void
 parser_feed(struct parser *parser, const char *start, size_t length);

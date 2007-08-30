@@ -99,7 +99,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->state = PARSER_AFTER_ATTR_NAME;
                     break;
                 } else {
-                    parser_attr_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser_attr_finished(parser);
                     parser->state = PARSER_ELEMENT;
                     break;
                 }
@@ -117,7 +117,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 } else if (char_is_whitespace(*buffer)) {
                     ++buffer;
                 } else {
-                    parser_attr_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser_attr_finished(parser);
                     parser->state = PARSER_ELEMENT;
                     break;
                 }
@@ -131,11 +131,13 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->state = PARSER_ATTR_VALUE;
                     parser->attr_value_delimiter = *buffer;
                     ++buffer;
+                    parser->attr_value_start = parser->position + (off_t)(buffer - start);
                     break;
                 } else if (char_is_whitespace(*buffer)) {
                     ++buffer;
                 } else {
                     parser->state = PARSER_ATTR_VALUE_COMPAT;
+                    parser->attr_value_start = parser->position + (off_t)(buffer - start);
                     break;
                 }
             } while (buffer < end);
@@ -146,8 +148,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             /* wait till we find the delimiter */
             do {
                 if (*buffer == parser->attr_value_delimiter) {
+                    parser->attr_value_end = parser->position + (off_t)(buffer - start);
                     ++buffer;
-                    parser_attr_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser_attr_finished(parser);
                     parser->state = PARSER_ELEMENT;
                     break;
                 } else {
@@ -175,7 +178,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
                     parser->attr_value[parser->attr_value_length++] = *buffer++;
                 } else {
-                    parser_attr_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser->attr_value_end = parser->position + (off_t)(buffer - start);
+                    parser_attr_finished(parser);
                     parser->state = PARSER_ELEMENT;
                     break;
                 }
