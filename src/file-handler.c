@@ -27,7 +27,7 @@ file_callback(struct client_connection *connection,
     istream_t body;
     struct stat st;
     ssize_t nbytes;
-    char buffer[256], content_type[256];
+    char buffer[64], content_type[256];
 
     (void)connection;
 
