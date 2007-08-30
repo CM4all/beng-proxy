@@ -49,6 +49,9 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
     const char *value;
     growing_buffer_t response_headers;
 
+    assert(pt->url_stream != NULL);
+    pt->url_stream = NULL;
+
     if (status == 0) {
         /* XXX */
         proxy_transfer_close(pt);
@@ -79,6 +82,8 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
     http_server_response(pt->request, HTTP_STATUS_OK,
                          response_headers,
                          content_length, body);
+
+    proxy_transfer_close(pt);
 }
 
 static const char *const copy_headers[] = {
