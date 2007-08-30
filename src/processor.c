@@ -220,11 +220,18 @@ void
 parser_element_finished(struct parser *parser, off_t end)
 {
     processor_t processor = parser_to_processor(parser);
+    istream_t istream;
 
     if (processor->tag != TAG_EMBED || processor->href == NULL)
         return;
 
+    istream = embed_new(processor->output.pool, processor->href);
+    istream = istream_cat_new(processor->output.pool,
+                              istream_string_new(processor->output.pool, "<div class='embed'>"),
+                              istream,
+                              istream_string_new(processor->output.pool, "</div>"),
+                              NULL);
+
     replace_add(&processor->replace, processor->parser.element_offset,
-                end,
-                embed_new(processor->output.pool, processor->href));
+                end, istream);
 }
