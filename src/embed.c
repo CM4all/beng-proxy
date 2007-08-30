@@ -45,7 +45,10 @@ embed_input_eof(void *ctx)
     embed->input = NULL;
     embed->input_eof = 1;
 
+    pool_ref(embed->output.pool);
     istream_invoke_eof(&embed->output);
+    istream_close(&embed->output);
+    pool_unref(embed->output.pool);
 }
 
 static void
@@ -107,6 +110,8 @@ istream_embed_close(istream_t istream)
         istream_close(embed->input);
         assert(embed->input == NULL);
     }
+
+    istream_invoke_free(&embed->output);
 }
 
 static const struct istream istream_embed = {
