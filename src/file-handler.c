@@ -87,6 +87,7 @@ file_callback(struct client_connection *connection,
         header_write(headers, "content-type", content_type);
     } else {
         content_type[0] = 0;
+        header_write(headers, "content-type", "application/octet-stream");
     }
 
     if (strncmp(content_type, "text/html", 9) == 0) {
