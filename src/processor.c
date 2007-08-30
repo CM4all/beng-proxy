@@ -190,7 +190,7 @@ processor_new(pool_t pool, istream_t istream)
     processor->source_length = 0;
     processor->map = NULL;
 
-    processor->parser.state = PARSER_NONE;
+    parser_init(&processor->parser);
 
     processor->first_substitution = NULL;
     processor->append_substitution_p = &processor->first_substitution;

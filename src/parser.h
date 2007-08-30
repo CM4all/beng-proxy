@@ -27,6 +27,12 @@ struct parser {
     size_t element_name_length;
 };
 
+static inline void
+parser_init(struct parser *parser)
+{
+    parser->state = PARSER_NONE;
+}
+
 void
 parser_element_finished(struct parser *parser, off_t end);
 
