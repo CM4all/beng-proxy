@@ -12,7 +12,6 @@
 #include <string.h>
 
 static const char element_start[] = "<c:";
-static const char element_end[] = "</c:";
 
 void
 parser_feed(struct parser *parser, const char *start, size_t length)
@@ -73,6 +72,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->element_name[parser->element_name_length++] = *buffer++;
                 } else if ((char_is_whitespace(*buffer) || *buffer == '/' || *buffer == '>') &&
                            parser->element_name_length > 0) {
+                    parser_element_start(parser);
                     parser->state = PARSER_ELEMENT;
                     break;
                 } else {
@@ -96,8 +96,112 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     ++buffer;
                     parser_element_finished(parser, parser->position + (off_t)(buffer - start));
                     break;
+                } else if (char_is_letter(*buffer)) {
+                    parser->state = PARSER_ATTR_NAME;
+                    parser->attr_name_length = 0;
+                    parser->attr_value_length = 0;
+                    break;
                 } else {
                     parser->state = PARSER_NONE;
+                    break;
+                }
+            } while (buffer < end);
+
+            break;
+
+        case PARSER_ATTR_NAME:
+            /* copy attribute name */
+            do {
+                if (char_is_alphanumeric(*buffer) || *buffer == ':') {
+                    if (parser->attr_name_length == sizeof(parser->attr_name)) {
+                        /* name buffer overflowing */
+                        parser->state = PARSER_ELEMENT;
+                        break;
+                    }
+
+                    parser->attr_name[parser->attr_name_length++] = *buffer++;
+                } else if (*buffer == '=' || char_is_whitespace(*buffer)) {
+                    parser->state = PARSER_AFTER_ATTR_NAME;
+                    break;
+                } else {
+                    parser_attr_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser->state = PARSER_ELEMENT;
+                    break;
+                }
+            } while (buffer < end);
+
+            break;
+
+        case PARSER_AFTER_ATTR_NAME:
+            /* wait till we find '=' */
+            do {
+                if (*buffer == '=') {
+                    parser->state = PARSER_BEFORE_ATTR_VALUE;
+                    ++buffer;
+                    break;
+                } else if (char_is_whitespace(*buffer)) {
+                    ++buffer;
+                } else {
+                    parser_attr_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser->state = PARSER_ELEMENT;
+                    break;
+                }
+            } while (buffer < end);
+
+            break;
+
+        case PARSER_BEFORE_ATTR_VALUE:
+            do {
+                if (*buffer == '"' || *buffer == '\'') {
+                    parser->state = PARSER_ATTR_VALUE;
+                    parser->attr_value_delimiter = *buffer;
+                    ++buffer;
+                    break;
+                } else if (char_is_whitespace(*buffer)) {
+                    ++buffer;
+                } else {
+                    parser->state = PARSER_ATTR_VALUE_COMPAT;
+                    break;
+                }
+            } while (buffer < end);
+
+            break;
+
+        case PARSER_ATTR_VALUE:
+            /* wait till we find the delimiter */
+            do {
+                if (*buffer == parser->attr_value_delimiter) {
+                    ++buffer;
+                    parser_attr_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser->state = PARSER_ELEMENT;
+                    break;
+                } else {
+                    if (parser->attr_value_length == sizeof(parser->attr_value)) {
+                        /* XXX value buffer overflowing */
+                        parser->state = PARSER_ELEMENT;
+                        break;
+                    }
+
+                    parser->attr_value[parser->attr_value_length++] = *buffer++;
+                }
+            } while (buffer < end);
+
+            break;
+
+        case PARSER_ATTR_VALUE_COMPAT:
+            /* wait till the value is finished */
+            do {
+                if (char_is_alphanumeric(*buffer) || *buffer == '_' || *buffer == '-') {
+                    if (parser->attr_value_length == sizeof(parser->attr_value)) {
+                        /* XXX value buffer overflowing */
+                        parser->state = PARSER_ELEMENT;
+                        break;
+                    }
+
+                    parser->attr_value[parser->attr_value_length++] = *buffer++;
+                } else {
+                    parser_attr_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser->state = PARSER_ELEMENT;
                     break;
                 }
             } while (buffer < end);

@@ -25,6 +25,7 @@ struct processor {
     char *map;
 
     struct parser parser;
+    char *href;
 
     struct substitution *first_substitution, **append_substitution_p;
 
@@ -292,12 +293,36 @@ parser_to_processor(struct parser *parser)
 }
 
 void
+parser_element_start(struct parser *parser)
+{
+    processor_t processor = parser_to_processor(parser);
+
+    processor->href = NULL;
+}
+
+void
+parser_attr_finished(struct parser *parser, off_t end)
+{
+    processor_t processor = parser_to_processor(parser);
+
+    (void)end;
+
+    if (parser->attr_name_length == 4 && memcmp(parser->attr_name, "href", 4) == 0)
+        processor->href = p_strndup(processor->output.pool, parser->attr_value, parser->attr_value_length);
+}
+
+void
 parser_element_finished(struct parser *parser, off_t end)
 {
     processor_t processor = parser_to_processor(parser);
-    pool_t pool = pool_new_linear(processor->output.pool, "processor_substitution", 16384);
-    struct substitution *s = p_malloc(pool, sizeof(*s));
+    pool_t pool;
+    struct substitution *s;
 
+    if (processor->href == NULL)
+        return;
+
+    pool = pool_new_linear(processor->output.pool, "processor_substitution", 16384);
+    s = p_malloc(pool, sizeof(*s));
     s->next = NULL;
     s->start = processor->parser.element_offset;
     s->end = end;
@@ -310,7 +335,7 @@ parser_element_finished(struct parser *parser, off_t end)
     *processor->append_substitution_p = s;
     processor->append_substitution_p = &s->next;
 
-    substitution_start(s, "http://dory.intern.cm-ag/"); /* XXX */
+    substitution_start(s, processor->href);
 }
 
 static void
