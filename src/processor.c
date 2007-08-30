@@ -29,6 +29,8 @@ struct processor {
     enum {
         TAG_NONE,
         TAG_EMBED,
+        TAG_A,
+        TAG_IMG,
     } tag;
     char *href;
 };
@@ -195,10 +197,18 @@ parser_element_start(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
 
+    /* XXX capital letters? */
+
     if (parser->element_name_length == 7 &&
         memcmp(parser->element_name, "c:embed", 7) == 0) {
         processor->tag = TAG_EMBED;
         processor->href = NULL;
+    } else if (parser->element_name_length == 1 &&
+               parser->element_name[0] == 'a') {
+        processor->tag = TAG_A;
+    } else if (parser->element_name_length == 3 &&
+               memcmp(parser->element_name, "img", 3) == 0) {
+        processor->tag = TAG_IMG;
     } else {
         processor->tag = TAG_NONE;
     }
@@ -213,6 +223,18 @@ parser_attr_finished(struct parser *parser)
         memcmp(parser->attr_name, "href", 4) == 0)
         processor->href = p_strndup(processor->output.pool, parser->attr_value,
                                     parser->attr_value_length);
+    else if (processor->tag == TAG_IMG && parser->attr_name_length == 3 &&
+             memcmp(parser->attr_name, "src", 3) == 0)
+        replace_add(&processor->replace,
+                    processor->parser.attr_value_start,
+                    processor->parser.attr_value_end,
+                    istream_string_new(processor->output.pool, "http://dory.intern.cm-ag/icons/unknown.gif"));
+    else if (processor->tag == TAG_A && parser->attr_name_length == 4 &&
+             memcmp(parser->attr_name, "href", 4) == 0)
+        replace_add(&processor->replace,
+                    processor->parser.attr_value_start,
+                    processor->parser.attr_value_end,
+                    istream_string_new(processor->output.pool, "http://localhost:8080/beng.html"));
 }
 
 void
