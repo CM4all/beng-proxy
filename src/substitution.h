@@ -24,7 +24,6 @@ struct substitution {
 
     pool_t pool;
 
-    url_stream_t url_stream;
     istream_t istream;
     int istream_eof;
 

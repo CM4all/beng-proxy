@@ -6,6 +6,7 @@
 
 #include "substitution.h"
 #include "processor.h"
+#include "embed.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -41,6 +42,7 @@ substitution_istream_free(void *ctx)
 
     if (!s->istream_eof && s->istream != NULL) {
         /* abort the transfer */
+        pool_unref(s->istream->pool);
         s->istream = NULL;
         /* XXX */
     }
@@ -52,45 +54,6 @@ static const struct istream_handler substitution_istream_handler = {
     .free = substitution_istream_free,
 };
 
-static void 
-substitution_http_client_callback(http_status_t status, strmap_t headers,
-                                  off_t content_length, istream_t body,
-                                  void *ctx)
-{
-    struct substitution *s = ctx;
-    const char *value;
-
-    (void)content_length;
-
-    assert(s->url_stream != NULL);
-    s->url_stream = NULL;
-
-    if (status == 0) {
-        /* XXX */
-        substitution_close(s);
-        return;
-    }
-
-    s->istream = body;
-
-    value = strmap_get(headers, "content-type");
-    if (value != NULL && strncmp(value, "text/html", 9) == 0) {
-        s->istream = processor_new(s->pool, s->istream);
-        if (s->istream == NULL) {
-            abort();
-        }
-    }
-
-    assert(s->istream->handler == NULL);
-
-    pool_ref(s->istream->pool);
-
-    s->istream->handler = &substitution_istream_handler;
-    s->istream->handler_ctx = s;
-
-    istream_read(s->istream);
-}
-
 void
 substitution_start(struct substitution *s, const char *url)
 {
@@ -98,16 +61,14 @@ substitution_start(struct substitution *s, const char *url)
     assert(s->handler != NULL);
     assert(url != NULL);
 
-    s->istream = NULL;
+    s->istream = embed_new(s->pool, url);
     s->istream_eof = 0;
 
-    s->url_stream = url_stream_new(s->pool,
-                                   HTTP_METHOD_GET, url, NULL,
-                                   substitution_http_client_callback, s);
-    if (s->url_stream == NULL) {
-        /* XXX */
-        return;
-    }
+    pool_ref(s->istream->pool);
+
+    s->istream->handler = &substitution_istream_handler;
+    s->istream->handler_ctx = s;
+    istream_read(s->istream);
 }
 
 void
@@ -118,10 +79,6 @@ substitution_close(struct substitution *s)
     if (s->istream != NULL) {
         istream_close(s->istream);
         assert(s->istream == NULL);
-        assert(s->url_stream == NULL);
-    } else if (s->url_stream != NULL) {
-        url_stream_close(s->url_stream);
-        assert(s->url_stream == NULL);
     }
 
     if (s->pool != NULL) {

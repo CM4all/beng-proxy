@@ -25,6 +25,7 @@ SOURCES = src/main.c \
 	src/proxy-handler.c \
 	src/processor.c \
 	src/parser.c \
+	src/embed.c \
 	src/substitution.c \
 	src/socket-util.c \
 	src/listener.c \
