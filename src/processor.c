@@ -19,7 +19,6 @@
 typedef struct processor *processor_t;
 
 struct processor {
-    const char *path;
     int fd;
     off_t source_length, position;
     char *map;
