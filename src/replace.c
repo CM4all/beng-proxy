@@ -259,9 +259,8 @@ replace_read(struct replace *replace)
         return;
 
     pool_ref(replace->pool);
+
     replace_read_substitution(replace);
-    if (pool_unref(replace->pool) == 0)
-        return;
 
     if (replace->first_substitution == NULL)
         rest = (size_t)(replace->source_length - replace->position);
@@ -270,15 +269,17 @@ replace_read(struct replace *replace)
     else
         rest = 0;
 
-    if (rest > 0) {
+    if (replace->map != NULL && rest > 0) {
         nbytes = istream_invoke_data(replace->output,
                                      replace->map + replace->position,
                                      rest);
         assert(nbytes <= rest);
+
         replace->position += nbytes;
     }
 
-    if (replace->first_substitution == NULL &&
+    if (replace->map != NULL &&
+        replace->first_substitution == NULL &&
         replace->position == replace->source_length) {
 
         munmap(replace->map, (size_t)replace->source_length);
@@ -291,4 +292,6 @@ replace_read(struct replace *replace)
 
         pool_unref(replace->pool);
     }
+
+    pool_unref(replace->pool);
 }
