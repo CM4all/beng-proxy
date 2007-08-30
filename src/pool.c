@@ -345,6 +345,26 @@ pool_increment_ref(pool_t pool, struct list_head *list,
 }
 #endif
 
+#ifdef DEBUG_POOL_REF
+static void
+pool_dump_refs(pool_t pool)
+{
+    const struct pool_ref *ref;
+    fprintf(stderr, "pool '%s'(%u) REF:\n", pool->name, pool->ref);
+    for (ref = (const struct pool_ref *)pool->refs.next;
+         &ref->list_head != &pool->refs;
+         ref = (const struct pool_ref *)ref->list_head.next) {
+        fprintf(stderr, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
+    }
+    fprintf(stderr, "    UNREF:\n");
+    for (ref = (const struct pool_ref *)pool->unrefs.next;
+         &ref->list_head != &pool->unrefs;
+         ref = (const struct pool_ref *)ref->list_head.next) {
+        fprintf(stderr, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
+    }
+}
+#endif
+
 void
 #ifdef DEBUG_POOL_REF
 pool_ref_debug(pool_t pool, const char *file, unsigned line)
@@ -385,6 +405,9 @@ pool_unref(pool_t pool)
     if (pool->ref == 0) {
         if (pool->parent != NULL)
             pool_remove_child(pool->parent, pool);
+#ifdef DUMP_POOL_UNREF
+        pool_dump_refs(pool);
+#endif
         pool_destroy(pool);
         return 0;
     }
@@ -393,6 +416,7 @@ pool_unref(pool_t pool)
 }
 
 #ifndef NDEBUG
+
 void
 pool_commit(void)
 {
@@ -404,19 +428,7 @@ pool_commit(void)
         for (pool = (pool_t)trash.next; &pool->siblings != &trash;
              pool = (pool_t)pool->siblings.next) {
 #ifdef DEBUG_POOL_REF
-            const struct pool_ref *ref;
-            fprintf(stderr, "\n '%s'(%u)\n", pool->name, pool->ref);
-            for (ref = (const struct pool_ref *)pool->refs.next;
-                 &ref->list_head != &pool->refs;
-                 ref = (const struct pool_ref *)ref->list_head.next) {
-                fprintf(stderr, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
-            }
-            fprintf(stderr, "    UNREF:\n");
-            for (ref = (const struct pool_ref *)pool->unrefs.next;
-                 &ref->list_head != &pool->unrefs;
-                 ref = (const struct pool_ref *)ref->list_head.next) {
-                fprintf(stderr, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
-            }
+            pool_dump_refs(pool);
 #else
             fprintf(stderr, " '%s'(%u)", pool->name, pool->ref);
 #endif
