@@ -22,6 +22,7 @@ struct url_stream {
     growing_buffer_t headers;
     client_socket_t client_socket;
     http_client_connection_t http;
+    int got_response;
 
     /* callback */
     url_stream_callback_t callback;
@@ -76,6 +77,7 @@ url_stream_connection_free(void *ctx)
     url_stream_t us = ctx;
 
     us->http = NULL;
+    url_stream_close(us);
 }
 
 static const struct http_client_connection_handler url_stream_connection_handler = {
@@ -90,6 +92,7 @@ url_stream_response_response(http_status_t status, strmap_t headers,
 {
     url_stream_t us = ctx;
 
+    us->got_response = 1;
     us->callback(status, headers, content_length, body, us->callback_ctx);
 }
 
@@ -98,7 +101,10 @@ url_stream_response_free(void *ctx)
 {
     url_stream_t us = ctx;
 
-    us->callback(0, NULL, 0, NULL, us->callback_ctx);
+    if (!us->got_response)
+        us->callback(0, NULL, 0, NULL, us->callback_ctx);
+
+    http_client_connection_close(us->http);
 }
 
 static const struct http_client_response_handler url_stream_response_handler = {
@@ -116,6 +122,7 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
     if (err == 0) {
         assert(fd >= 0);
 
+        us->got_response = 0;
         us->http = http_client_connection_new(us->pool, fd,
                                               &url_stream_connection_handler, us);
         http_client_request(us->http, us->method, us->uri, us->headers,

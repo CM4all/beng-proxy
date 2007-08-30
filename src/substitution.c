@@ -62,9 +62,12 @@ substitution_http_client_callback(http_status_t status, strmap_t headers,
 
     (void)content_length;
 
+    assert(s->url_stream != NULL);
+    s->url_stream = NULL;
+
     if (status == 0) {
         /* XXX */
-        s->url_stream = NULL;
+        substitution_close(s);
         return;
     }
 
