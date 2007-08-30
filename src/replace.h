@@ -1,0 +1,51 @@
+/*
+ * Replace part of a stream.
+ *
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#ifndef __BENG_REPLACE_H
+#define __BENG_REPLACE_H
+
+#include "istream.h"
+
+struct substitution {
+    struct substitution *next;
+    struct replace *replace;
+    off_t start, end;
+    istream_t istream;
+};
+
+struct replace {
+    pool_t pool;
+    istream_t output;
+
+    int fd;
+    off_t source_length, position;
+    char *map;
+
+    struct substitution *first_substitution, **append_substitution_p;
+
+    int read_locked;
+};
+
+int
+replace_init(struct replace *replace, pool_t pool, istream_t output);
+
+void
+replace_destroy(struct replace *replace);
+
+size_t
+replace_feed(struct replace *replace, const void *data, size_t length);
+
+void
+replace_eof(struct replace *replace);
+
+void
+replace_add(struct replace *replace, off_t start, off_t end,
+            istream_t istream);
+
+void
+replace_read(struct replace *replace);
+
+#endif

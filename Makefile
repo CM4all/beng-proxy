@@ -23,10 +23,10 @@ SOURCES = src/main.c \
 	src/handler.c \
 	src/file-handler.c \
 	src/proxy-handler.c \
+	src/replace.c \
 	src/processor.c \
 	src/parser.c \
 	src/embed.c \
-	src/substitution.c \
 	src/socket-util.c \
 	src/listener.c \
 	src/client-socket.c \
