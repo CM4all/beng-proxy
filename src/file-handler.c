@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <attr/xattr.h>
 #include <string.h>
+#include <stdio.h>
 
 void
 file_callback(struct client_connection *connection,
@@ -26,7 +27,7 @@ file_callback(struct client_connection *connection,
     istream_t body;
     struct stat st;
     ssize_t nbytes;
-    char content_type[256];
+    char buffer[256], content_type[256];
 
     (void)connection;
 
@@ -78,6 +79,9 @@ file_callback(struct client_connection *connection,
     }
 
     headers = growing_buffer_new(request->pool, 2048);
+
+    snprintf(buffer, sizeof(buffer), "%x-%x", (unsigned)st.st_dev, (unsigned)st.st_ino);
+    header_write(headers, "etag", buffer);
 
     nbytes = getxattr(translated->path, "user.Content-Type", /* XXX use fgetxattr() */
                       content_type, sizeof(content_type) - 1);
