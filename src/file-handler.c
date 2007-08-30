@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
+#include <attr/xattr.h>
 
 void
 file_callback(struct client_connection *connection,
@@ -22,6 +23,8 @@ file_callback(struct client_connection *connection,
     growing_buffer_t headers;
     istream_t body;
     struct stat st;
+    ssize_t nbytes;
+    char content_type[256];
 
     (void)connection;
 
@@ -73,7 +76,16 @@ file_callback(struct client_connection *connection,
     }
 
     headers = growing_buffer_new(request->pool, 2048);
-    header_write(headers, "content-type", "text/html");
+
+    nbytes = getxattr(translated->path, "user.Content-Type", /* XXX use fgetxattr() */
+                      content_type, sizeof(content_type) - 1);
+    if (nbytes > 0) {
+        assert((size_t)nbytes < sizeof(content_type));
+        content_type[nbytes] = 0;
+        header_write(headers, "content-type", content_type);
+    } else {
+        content_type[0] = 0;
+    }
 
     http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
 }

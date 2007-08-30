@@ -14,6 +14,9 @@ LIBDAEMON_LIBS := $(shell pkg-config --libs libcm4all-daemon)
 LIBEVENT_CFLAGS =
 LIBEVENT_LIBS = -L/usr/local/lib -levent
 
+LIBATTR_CFLAGS =
+LIBATTR_LIBS = -lattr
+
 SOURCES = src/main.c \
 	src/child.c \
 	src/connection.c \
@@ -57,10 +60,10 @@ clean:
 	rm -f src/beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out
 
 src/beng-proxy: $(OBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS)
 
 $(OBJECTS): %.o: %.c $(HEADERS)
-	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(WARNING_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS)
+	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(WARNING_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS)
 
 profile: CFLAGS = -O0 -DNDEBUG -g -pg
 profile: src/beng-proxy
