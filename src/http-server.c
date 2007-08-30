@@ -217,7 +217,7 @@ http_server_parse_request_line(http_server_connection_t connection,
     case 'H':
         if (likely(line[1] == 'E' && line[2] == 'A' && line[3] == 'D' &&
                    line[4] == ' ')) {
-            method = HTTP_METHOD_POST;
+            method = HTTP_METHOD_HEAD;
             line += 5;
         }
         break;
