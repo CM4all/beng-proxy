@@ -8,6 +8,7 @@
 #include "handler.h"
 #include "header-writer.h"
 #include "processor.h"
+#include "date.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -16,7 +17,6 @@
 #include <attr/xattr.h>
 #include <string.h>
 #include <stdio.h>
-#include <time.h>
 
 void
 file_callback(struct client_connection *connection,
@@ -102,8 +102,7 @@ file_callback(struct client_connection *connection,
         http_server_response(request, HTTP_STATUS_OK, headers,
                              (off_t)-1, body);
     } else {
-        strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&st.st_mtime));
-        header_write(headers, "last-modified", buffer);
+        header_write(headers, "last-modified", http_date_format(st.st_mtime));
 
         http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
     }
