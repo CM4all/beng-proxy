@@ -18,6 +18,8 @@ args_parse(pool_t pool, const char *p)
         next = and = strchr(p, '&');
         if (and == NULL)
             and = p + strlen(p);
+        else
+            ++next;
         equals = memchr(p, '=', and - p);
         if (equals > p)
             strmap_addn(args,
