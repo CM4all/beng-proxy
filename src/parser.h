@@ -11,14 +11,33 @@
 
 enum parser_state {
     PARSER_NONE,
+
+    /** parsing an element name */
     PARSER_ELEMENT_NAME,
+
+    /** inside the element tag */
     PARSER_ELEMENT_TAG,
+
+    /** parsing attribute name */
     PARSER_ATTR_NAME,
+
+    /** after the attribute name, waiting for '=' */
     PARSER_AFTER_ATTR_NAME,
+
+    /** after the '=', waiting for the attribute value */
     PARSER_BEFORE_ATTR_VALUE,
+
+    /** parsing the quoted attribute value */
     PARSER_ATTR_VALUE,
+
+    /** compatibility with older and broken HTML: attribute value
+        without quotes */
     PARSER_ATTR_VALUE_COMPAT,
+
+    /** found a slash, waiting for the '>' */
     PARSER_SHORT,
+
+    /** inside the element, currently unused */
     PARSER_INSIDE,
 };
 
