@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 static const char *http_status_to_string_data[][20] = {
     [2] = {
@@ -659,6 +660,8 @@ http_server_response(struct http_server_request *request,
 {
     http_server_connection_t connection = request->connection;
     istream_t status_stream, header_stream;
+    time_t now;
+    char buffer[64];
 
     assert(connection->request.request == request);
     assert(!connection->response.writing);
@@ -671,6 +674,10 @@ http_server_response(struct http_server_request *request,
 
     if (headers == NULL)
         headers = growing_buffer_new(request->pool, 256);
+
+    now = time(NULL);
+    strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&now));
+    header_write(headers, "date", buffer);
 
     if (content_length == (off_t)-1) {
         if (body != NULL && connection->keep_alive) {
