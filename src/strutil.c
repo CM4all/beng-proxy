@@ -11,5 +11,5 @@ void
 str_to_lower(char *s)
 {
     for (; *s != 0; ++s)
-        char_to_lower(s);
+        char_to_lower_inplace(s);
 }
