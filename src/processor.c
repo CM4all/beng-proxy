@@ -212,6 +212,18 @@ parser_element_start(struct parser *parser)
     }
 }
 
+static void
+replace_attribute_value(processor_t processor, istream_t value)
+{
+    assert(processor->parser.state == PARSER_ATTR_VALUE ||
+           processor->parser.state == PARSER_ATTR_VALUE_COMPAT);
+
+    replace_add(&processor->replace,
+                processor->parser.attr_value_start,
+                processor->parser.attr_value_end,
+                value);
+}
+
 void
 parser_attr_finished(struct parser *parser)
 {
@@ -223,16 +235,14 @@ parser_attr_finished(struct parser *parser)
                                     parser->attr_value_length);
     else if (processor->tag == TAG_IMG && parser->attr_name_length == 3 &&
              memcmp(parser->attr_name, "src", 3) == 0)
-        replace_add(&processor->replace,
-                    processor->parser.attr_value_start,
-                    processor->parser.attr_value_end,
-                    istream_string_new(processor->output.pool, "http://dory.intern.cm-ag/icons/unknown.gif"));
+        replace_attribute_value(processor,
+                                istream_string_new(processor->output.pool,
+                                                   "http://dory.intern.cm-ag/icons/unknown.gif"));
     else if (processor->tag == TAG_A && parser->attr_name_length == 4 &&
              memcmp(parser->attr_name, "href", 4) == 0)
-        replace_add(&processor->replace,
-                    processor->parser.attr_value_start,
-                    processor->parser.attr_value_end,
-                    istream_string_new(processor->output.pool, "http://localhost:8080/beng.html"));
+        replace_attribute_value(processor,
+                                istream_string_new(processor->output.pool,
+                                                   "http://localhost:8080/beng.html"));
 }
 
 void
