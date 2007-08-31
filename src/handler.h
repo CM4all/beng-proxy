@@ -9,7 +9,8 @@
 
 struct translated {
     const char *path;
-    const char *path_info;
+    const char *args;
+    const char *query_string;
 };
 
 extern const struct http_server_connection_handler my_http_server_connection_handler;

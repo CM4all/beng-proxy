@@ -9,6 +9,7 @@
 #include "url-stream.h"
 #include "processor.h"
 #include "header-writer.h"
+#include "args.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -19,6 +20,7 @@
 struct proxy_transfer {
     pool_t pool;
     struct http_server_request *request;
+    struct translated *translated;
     url_stream_t url_stream;
 };
 
@@ -63,9 +65,13 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
+        strmap_t args = NULL;
+        if (pt->translated->args != NULL)
+            args = args_parse(pt->request->pool, pt->translated->args);
+
         pool_ref(pt->request->pool);
 
-        body = processor_new(pt->request->pool, body, NULL);
+        body = processor_new(pt->request->pool, body, NULL, args);
 
         pool_unref(pt->request->pool);
         if (body == NULL) {
@@ -111,6 +117,7 @@ proxy_callback(struct client_connection *connection,
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->pool = request->pool;
     pt->request = request;
+    pt->translated = translated;
 
     pt->url_stream = url_stream_new(request->pool,
                                     HTTP_METHOD_GET, translated->path, NULL,

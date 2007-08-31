@@ -9,6 +9,7 @@
 #include "header-writer.h"
 #include "processor.h"
 #include "date.h"
+#include "args.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -96,8 +97,13 @@ file_callback(struct client_connection *connection,
     }
 
     if (strncmp(content_type, "text/html", 9) == 0) {
-        if (body != NULL)
-            body = processor_new(request->pool, body, NULL);
+        if (body != NULL) {
+            strmap_t args = NULL;
+            if (translated->args != NULL)
+                args = args_parse(request->pool, translated->args);
+
+            body = processor_new(request->pool, body, NULL, args);
+        }
 
         http_server_response(request, HTTP_STATUS_OK, headers,
                              (off_t)-1, body);

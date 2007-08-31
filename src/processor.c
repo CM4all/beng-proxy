@@ -25,6 +25,7 @@ struct processor {
     istream_t input;
 
     const char *base_uri;
+    strmap_t args;
 
     struct replace replace;
 
@@ -35,7 +36,7 @@ struct processor {
         TAG_A,
         TAG_IMG,
     } tag;
-    char *href;
+    char *id, *href;
 };
 
 static inline processor_t
@@ -135,7 +136,8 @@ static const struct istream_handler processor_input_handler = {
 
 
 istream_t
-processor_new(pool_t pool, istream_t istream, const char *base_uri)
+processor_new(pool_t pool, istream_t istream, const char *base_uri,
+              strmap_t args)
 {
     processor_t processor;
     int ret;
@@ -160,6 +162,7 @@ processor_new(pool_t pool, istream_t istream, const char *base_uri)
     pool_ref(processor->input->pool);
 
     processor->base_uri = base_uri;
+    processor->args = args;
 
     ret = replace_init(&processor->replace, pool, &processor->output);
     if (ret < 0) {
@@ -205,6 +208,7 @@ parser_element_start(struct parser *parser)
     if (parser->element_name_length == 7 &&
         memcmp(parser->element_name, "c:embed", 7) == 0) {
         processor->tag = TAG_EMBED;
+        processor->id = NULL;
         processor->href = NULL;
     } else if (parser->element_name_length == 1 &&
                parser->element_name[0] == 'a') {
@@ -256,6 +260,10 @@ parser_attr_finished(struct parser *parser)
             memcmp(parser->attr_name, "href", 4) == 0)
             processor->href = p_strndup(processor->output.pool, parser->attr_value,
                                         parser->attr_value_length);
+        else if (parser->attr_name_length == 2 &&
+                 memcmp(parser->attr_name, "id", 2) == 0)
+            processor->id = p_strndup(processor->output.pool, parser->attr_value,
+                                      parser->attr_value_length);
         break;
 
     case TAG_IMG:
@@ -277,11 +285,27 @@ parser_element_finished(struct parser *parser, off_t end)
 {
     processor_t processor = parser_to_processor(parser);
     istream_t istream;
+    const char *url;
 
     if (processor->tag != TAG_EMBED || processor->href == NULL)
         return;
 
-    istream = embed_new(processor->output.pool, processor->href);
+    url = processor->href;
+
+    if (processor->id != NULL && processor->args != NULL) {
+        const char *append = strmap_get(processor->args, processor->id);
+        if (append != NULL) {
+            size_t length1 = strlen(url);
+            size_t length2 = strlen(append);
+            char *dest = p_malloc(processor->output.pool, length1 + length2 + 1);
+            memcpy(dest, url, length1);
+            memcpy(dest + length1, append, length2);
+            dest[length1 + length2] = 0;
+            url = dest;
+        }
+    }
+
+    istream = embed_new(processor->output.pool, url);
     istream = istream_cat_new(processor->output.pool,
                               istream_string_new(processor->output.pool, "<div class='embed'>"),
                               istream,

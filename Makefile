@@ -46,6 +46,7 @@ SOURCES = src/main.c \
 	src/istream-cat.c \
 	src/istream-pipe.c \
 	src/uri.c \
+	src/args.c \
 	src/date.c \
 	src/strutil.c \
 	src/strmap.c \
