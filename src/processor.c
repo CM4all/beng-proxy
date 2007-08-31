@@ -247,16 +247,29 @@ parser_attr_finished(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
 
-    if (processor->tag == TAG_EMBED && parser->attr_name_length == 4 &&
-        memcmp(parser->attr_name, "href", 4) == 0)
-        processor->href = p_strndup(processor->output.pool, parser->attr_value,
-                                    parser->attr_value_length);
-    else if (processor->tag == TAG_IMG && parser->attr_name_length == 3 &&
-             memcmp(parser->attr_name, "src", 3) == 0)
-        make_url_attribute_absolute(processor);
-    else if (processor->tag == TAG_A && parser->attr_name_length == 4 &&
-             memcmp(parser->attr_name, "href", 4) == 0)
-        make_url_attribute_absolute(processor);
+    switch (processor->tag) {
+    case TAG_NONE:
+        break;
+
+    case TAG_EMBED:
+        if (parser->attr_name_length == 4 &&
+            memcmp(parser->attr_name, "href", 4) == 0)
+            processor->href = p_strndup(processor->output.pool, parser->attr_value,
+                                        parser->attr_value_length);
+        break;
+
+    case TAG_IMG:
+        if (parser->attr_name_length == 3 &&
+            memcmp(parser->attr_name, "src", 3) == 0)
+            make_url_attribute_absolute(processor);
+        break;
+
+    case TAG_A:
+        if (parser->attr_name_length == 4 &&
+            memcmp(parser->attr_name, "href", 4) == 0)
+            make_url_attribute_absolute(processor);
+        break;
+    }
 }
 
 void
