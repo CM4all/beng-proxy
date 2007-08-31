@@ -197,8 +197,6 @@ parser_element_start(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
 
-    /* XXX capital letters? */
-
     if (parser->element_name_length == 7 &&
         memcmp(parser->element_name, "c:embed", 7) == 0) {
         processor->tag = TAG_EMBED;

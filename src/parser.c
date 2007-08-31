@@ -44,7 +44,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                         break;
                     }
 
-                    parser->element_name[parser->element_name_length++] = *buffer++;
+                    parser->element_name[parser->element_name_length++] = char_to_lower(*buffer++);
                 } else if ((char_is_whitespace(*buffer) || *buffer == '/' || *buffer == '>') &&
                            parser->element_name_length > 0) {
                     parser_element_start(parser);
@@ -94,7 +94,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                         break;
                     }
 
-                    parser->attr_name[parser->attr_name_length++] = *buffer++;
+                    parser->attr_name[parser->attr_name_length++] = char_to_lower(*buffer++);
                 } else if (*buffer == '=' || char_is_whitespace(*buffer)) {
                     parser->state = PARSER_AFTER_ATTR_NAME;
                     break;
