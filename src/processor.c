@@ -143,7 +143,7 @@ processor_new(pool_t pool, istream_t istream)
 #ifdef NDEBUG
     pool_ref(pool);
 #else
-    pool = pool_new_linear(pool, "processor", 4096);
+    pool = pool_new_linear(pool, "processor", 16384);
 #endif
 
     processor = p_malloc(pool, sizeof(*processor));
