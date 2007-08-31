@@ -197,6 +197,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser_element_finished(parser, parser->position + (off_t)(buffer - start));
                     break;
                 } else {
+                    /* ignore this syntax error and just close the
+                       element tag */
+                    parser_element_finished(parser, parser->position + (off_t)(buffer - start));
                     parser->state = PARSER_NONE;
                     break;
                 }
