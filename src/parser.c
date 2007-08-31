@@ -29,12 +29,12 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 return;
 
             parser->element_offset = parser->position + (off_t)(p - start);
-            parser->state = PARSER_NAME;
+            parser->state = PARSER_ELEMENT_NAME;
             parser->element_name_length = 0;
             buffer = p + 1;
             break;
 
-        case PARSER_NAME:
+        case PARSER_ELEMENT_NAME:
             /* copy element name */
             while (buffer < end) {
                 if (char_is_alphanumeric(*buffer) || *buffer == ':' || *buffer == '-' || *buffer == '_') {
@@ -48,7 +48,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 } else if ((char_is_whitespace(*buffer) || *buffer == '/' || *buffer == '>') &&
                            parser->element_name_length > 0) {
                     parser_element_start(parser);
-                    parser->state = PARSER_ELEMENT;
+                    parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else {
                     parser->state = PARSER_NONE;
@@ -58,7 +58,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
             break;
 
-        case PARSER_ELEMENT:
+        case PARSER_ELEMENT_TAG:
             do {
                 if (char_is_whitespace(*buffer)) {
                     ++buffer;
@@ -90,7 +90,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 if (char_is_alphanumeric(*buffer) || *buffer == ':') {
                     if (parser->attr_name_length == sizeof(parser->attr_name)) {
                         /* name buffer overflowing */
-                        parser->state = PARSER_ELEMENT;
+                        parser->state = PARSER_ELEMENT_TAG;
                         break;
                     }
 
@@ -100,7 +100,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     break;
                 } else {
                     parser_attr_finished(parser);
-                    parser->state = PARSER_ELEMENT;
+                    parser->state = PARSER_ELEMENT_TAG;
                     break;
                 }
             } while (buffer < end);
@@ -118,7 +118,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     ++buffer;
                 } else {
                     parser_attr_finished(parser);
-                    parser->state = PARSER_ELEMENT;
+                    parser->state = PARSER_ELEMENT_TAG;
                     break;
                 }
             } while (buffer < end);
@@ -151,12 +151,12 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->attr_value_end = parser->position + (off_t)(buffer - start);
                     ++buffer;
                     parser_attr_finished(parser);
-                    parser->state = PARSER_ELEMENT;
+                    parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else {
                     if (parser->attr_value_length == sizeof(parser->attr_value)) {
                         /* XXX value buffer overflowing */
-                        parser->state = PARSER_ELEMENT;
+                        parser->state = PARSER_ELEMENT_TAG;
                         break;
                     }
 
@@ -172,7 +172,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 if (char_is_alphanumeric(*buffer) || *buffer == '_' || *buffer == '-') {
                     if (parser->attr_value_length == sizeof(parser->attr_value)) {
                         /* XXX value buffer overflowing */
-                        parser->state = PARSER_ELEMENT;
+                        parser->state = PARSER_ELEMENT_TAG;
                         break;
                     }
 
@@ -180,7 +180,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 } else {
                     parser->attr_value_end = parser->position + (off_t)(buffer - start);
                     parser_attr_finished(parser);
-                    parser->state = PARSER_ELEMENT;
+                    parser->state = PARSER_ELEMENT_TAG;
                     break;
                 }
             } while (buffer < end);
