@@ -97,7 +97,7 @@ file_callback(struct client_connection *connection,
 
     if (strncmp(content_type, "text/html", 9) == 0) {
         if (body != NULL)
-            body = processor_new(request->pool, body);
+            body = processor_new(request->pool, body, NULL);
 
         http_server_response(request, HTTP_STATUS_OK, headers,
                              (off_t)-1, body);

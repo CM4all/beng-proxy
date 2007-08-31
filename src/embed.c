@@ -14,6 +14,8 @@
 struct embed {
     struct istream output;
 
+    const char *url;
+
     url_stream_t url_stream;
     istream_t input;
     int input_eof, direct_mode;
@@ -142,7 +144,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
 
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
-        embed->input = processor_new(embed->output.pool, body);
+        embed->input = processor_new(embed->output.pool, body, embed->url);
         if (embed->input == NULL) {
             istream_close(body);
             embed->input = istream_string_new(embed->output.pool, "Failed to create processor object.");
@@ -173,6 +175,7 @@ embed_new(pool_t pool, const char *url)
     embed = p_malloc(pool, sizeof(*embed));
     embed->output = istream_embed;
     embed->output.pool = pool;
+    embed->url = url;
     embed->input = NULL;
     embed->input_eof = 0;
     embed->direct_mode = 0;

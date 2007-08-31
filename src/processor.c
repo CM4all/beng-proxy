@@ -9,6 +9,7 @@
 #include "strutil.h"
 #include "replace.h"
 #include "embed.h"
+#include "uri.h"
 
 #include <sys/mman.h>
 #include <assert.h>
@@ -22,6 +23,8 @@ typedef struct processor *processor_t;
 struct processor {
     struct istream output;
     istream_t input;
+
+    const char *base_uri;
 
     struct replace replace;
 
@@ -132,7 +135,7 @@ static const struct istream_handler processor_input_handler = {
 
 
 istream_t
-processor_new(pool_t pool, istream_t istream)
+processor_new(pool_t pool, istream_t istream, const char *base_uri)
 {
     processor_t processor;
     int ret;
@@ -155,6 +158,8 @@ processor_new(pool_t pool, istream_t istream)
     istream->handler = &processor_input_handler;
     istream->handler_ctx = processor;
     pool_ref(processor->input->pool);
+
+    processor->base_uri = base_uri;
 
     ret = replace_init(&processor->replace, pool, &processor->output);
     if (ret < 0) {
@@ -224,6 +229,19 @@ replace_attribute_value(processor_t processor, istream_t value)
                 value);
 }
 
+static void
+make_url_attribute_absolute(processor_t processor)
+{
+    const char *new_uri = uri_absolute(processor->output.pool,
+                                       processor->base_uri,
+                                       processor->parser.attr_value,
+                                       processor->parser.attr_value_length);
+    if (new_uri != NULL)
+        replace_attribute_value(processor,
+                                istream_string_new(processor->output.pool,
+                                                   new_uri));
+}
+
 void
 parser_attr_finished(struct parser *parser)
 {
@@ -235,14 +253,10 @@ parser_attr_finished(struct parser *parser)
                                     parser->attr_value_length);
     else if (processor->tag == TAG_IMG && parser->attr_name_length == 3 &&
              memcmp(parser->attr_name, "src", 3) == 0)
-        replace_attribute_value(processor,
-                                istream_string_new(processor->output.pool,
-                                                   "http://dory.intern.cm-ag/icons/unknown.gif"));
+        make_url_attribute_absolute(processor);
     else if (processor->tag == TAG_A && parser->attr_name_length == 4 &&
              memcmp(parser->attr_name, "href", 4) == 0)
-        replace_attribute_value(processor,
-                                istream_string_new(processor->output.pool,
-                                                   "http://localhost:8080/beng.html"));
+        make_url_attribute_absolute(processor);
 }
 
 void

@@ -65,7 +65,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
         pool_ref(pt->request->pool);
 
-        body = processor_new(pt->request->pool, body);
+        body = processor_new(pt->request->pool, body, NULL);
 
         pool_unref(pt->request->pool);
         if (body == NULL) {

@@ -13,6 +13,6 @@
 #include <sys/types.h>
 
 istream_t attr_malloc
-processor_new(pool_t pool, istream_t istream);
+processor_new(pool_t pool, istream_t istream, const char *base_uri);
 
 #endif
