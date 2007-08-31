@@ -673,7 +673,7 @@ http_server_response(struct http_server_request *request,
         headers = growing_buffer_new(request->pool, 256);
 
     if (content_length == (off_t)-1) {
-        if (connection->keep_alive) {
+        if (body != NULL && connection->keep_alive) {
             header_write(headers, "transfer-encoding", "chunked");
             body = istream_chunked_new(request->pool, body);
         }
