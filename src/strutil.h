@@ -47,6 +47,13 @@ char_is_alphanumeric(char ch)
     return char_is_letter(ch) || char_is_digit(ch);
 }
 
+static attr_always_inline void
+char_to_lower(char *ch_r)
+{
+    if (unlikely(char_is_capital_letter(*ch_r)))
+        *ch_r += 'a' - 'A';
+}
+
 void
 str_to_lower(char *s);
 

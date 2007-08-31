@@ -11,6 +11,5 @@ void
 str_to_lower(char *s)
 {
     for (; *s != 0; ++s)
-        if (unlikely(char_is_capital_letter(*s)))
-            *s += 'a' - 'A';
+        char_to_lower(s);
 }
