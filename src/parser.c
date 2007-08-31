@@ -169,7 +169,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         case PARSER_ATTR_VALUE_COMPAT:
             /* wait till the value is finished */
             do {
-                if (char_is_alphanumeric(*buffer) || *buffer == '_' || *buffer == '-') {
+                if (!char_is_whitespace(*buffer) && *buffer != '>') {
                     if (parser->attr_value_length == sizeof(parser->attr_value)) {
                         /* XXX value buffer overflowing */
                         parser->state = PARSER_ELEMENT_TAG;
