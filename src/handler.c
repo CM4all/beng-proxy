@@ -42,6 +42,8 @@ translate(struct http_server_request *request)
         else
             translated->args = p_strndup(request->pool, args,
                                          qmark - args);
+    } else {
+        translated->args = NULL;
     }
 
     if (memcmp(request->uri, "/proxy/", 7) == 0) {
