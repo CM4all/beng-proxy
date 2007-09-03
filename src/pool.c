@@ -561,3 +561,31 @@ p_sprintf(pool_t pool, const char *fmt, ...)
 #error C99 required for snprintf(NULL, 0, ...)
 #endif
 }
+
+char * attr_malloc attr_printf(2, 3)
+p_strcat(pool_t pool, const char *first, ...)
+{
+    size_t length = 1;
+    va_list ap;
+    const char *s;
+    char *ret, *p;
+
+    va_start(ap, first);
+    for (s = first; s != NULL; s = va_arg(ap, const char*))
+        length += strlen(s);
+    va_end(ap);
+
+    ret = p = p_malloc(pool, length);
+
+    va_start(ap, first);
+    for (s = first; s != NULL; s = va_arg(ap, const char*)) {
+        length = strlen(s);
+        memcpy(p, s, length);
+        p += length;
+    }
+    va_end(ap);
+
+    *p = 0;
+
+    return ret;
+}
