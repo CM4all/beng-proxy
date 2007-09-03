@@ -10,6 +10,6 @@
 #include "istream.h"
 
 istream_t
-embed_new(pool_t pool, const char *url);
+embed_new(pool_t pool, const char *url, const char *base_uri);
 
 #endif

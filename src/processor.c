@@ -305,7 +305,7 @@ parser_element_finished(struct parser *parser, off_t end)
         }
     }
 
-    istream = embed_new(processor->output.pool, url);
+    istream = embed_new(processor->output.pool, url, processor->href);
     istream = istream_cat_new(processor->output.pool,
                               istream_string_new(processor->output.pool, "<div class='embed'>"),
                               istream,
