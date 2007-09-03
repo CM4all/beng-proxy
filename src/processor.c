@@ -239,7 +239,7 @@ static void
 make_url_attribute_absolute(processor_t processor)
 {
     const char *new_uri = uri_absolute(processor->output.pool,
-                                       processor->widget == NULL ? NULL : processor->widget->uri,
+                                       processor->widget == NULL ? NULL : processor->widget->base_uri,
                                        processor->parser.attr_value,
                                        processor->parser.attr_value_length);
     if (new_uri != NULL)
@@ -260,8 +260,8 @@ parser_attr_finished(struct parser *parser)
     case TAG_EMBED:
         if (parser->attr_name_length == 4 &&
             memcmp(parser->attr_name, "href", 4) == 0)
-            processor->embedded_widget->uri = p_strndup(processor->output.pool, parser->attr_value,
-                                                        parser->attr_value_length);
+            processor->embedded_widget->base_uri = p_strndup(processor->output.pool, parser->attr_value,
+                                                             parser->attr_value_length);
         else if (parser->attr_name_length == 2 &&
                  memcmp(parser->attr_name, "id", 2) == 0)
             processor->embedded_widget->id = p_strndup(processor->output.pool, parser->attr_value,
@@ -290,13 +290,13 @@ parser_element_finished(struct parser *parser, off_t end)
     istream_t istream;
     const char *url;
 
-    if (processor->tag != TAG_EMBED || processor->embedded_widget->uri == NULL)
+    if (processor->tag != TAG_EMBED || processor->embedded_widget->base_uri == NULL)
         return;
 
     widget = processor->embedded_widget;
     processor->widget = NULL;
 
-    url = widget->uri;
+    url = widget->base_uri;
 
     if (widget->id != NULL && processor->args != NULL) {
         const char *append = strmap_get(processor->args, widget->id);

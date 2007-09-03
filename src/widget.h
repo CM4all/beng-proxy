@@ -9,7 +9,7 @@
 
 struct widget {
     const char *id;
-    const char *uri;
+    const char *base_uri;
 };
 
 #endif
