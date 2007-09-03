@@ -9,7 +9,6 @@
 #include "header-writer.h"
 #include "processor.h"
 #include "date.h"
-#include "args.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -100,12 +99,8 @@ file_callback(struct client_connection *connection,
         if (body != NULL) {
             struct processor_env *env;
 
-            env = p_calloc(request->pool, sizeof(*env));
-            env->external_uri = &translated->uri;
-
-            if (translated->uri.args != NULL)
-                env->args = args_parse(request->pool, translated->uri.args,
-                                       translated->uri.args_length);
+            env = p_malloc(request->pool, sizeof(*env));
+            processor_env_init(request->pool, env, &translated->uri);
 
             body = processor_new(request->pool, body, NULL, env);
         }

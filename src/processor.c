@@ -20,6 +20,19 @@
 #include <stdio.h>
 #include <string.h>
 
+void
+processor_env_init(pool_t pool, struct processor_env *env,
+                   const struct parsed_uri *uri)
+{
+    env->external_uri = uri;
+
+    if (uri->args == NULL)
+        env->args = NULL;
+    else
+        env->args = args_parse(pool, uri->args, uri->args_length);
+}
+
+
 typedef struct processor *processor_t;
 
 struct processor {

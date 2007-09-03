@@ -22,6 +22,10 @@ struct processor_env {
     strmap_t args;
 };
 
+void
+processor_env_init(pool_t pool, struct processor_env *env,
+                   const struct parsed_uri *uri);
+
 istream_t attr_malloc
 processor_new(pool_t pool, istream_t istream,
               const struct widget *widget,

@@ -9,7 +9,6 @@
 #include "url-stream.h"
 #include "processor.h"
 #include "header-writer.h"
-#include "args.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -66,14 +65,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
-        struct processor_env *env = &pt->env;
-
-        memset(env, 0, sizeof(*env));
-        env->external_uri = &pt->translated->uri;
-
-        if (pt->translated->uri.args != NULL)
-            env->args = args_parse(pt->request->pool, pt->translated->uri.args,
-                                   pt->translated->uri.args_length);
+        processor_env_init(pt->request->pool, &pt->env, &pt->translated->uri);
 
         pool_ref(pt->request->pool);
 
