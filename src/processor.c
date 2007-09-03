@@ -239,7 +239,7 @@ static void
 make_url_attribute_absolute(processor_t processor)
 {
     const char *new_uri = uri_absolute(processor->output.pool,
-                                       processor->widget == NULL ? NULL : processor->widget->base_uri,
+                                       processor->widget == NULL ? NULL : processor->widget->real_uri,
                                        processor->parser.attr_value,
                                        processor->parser.attr_value_length);
     if (new_uri != NULL)
@@ -286,9 +286,8 @@ void
 parser_element_finished(struct parser *parser, off_t end)
 {
     processor_t processor = parser_to_processor(parser);
-    const struct widget *widget;
+    struct widget *widget;
     istream_t istream;
-    const char *url;
 
     if (processor->tag != TAG_EMBED || processor->embedded_widget->base_uri == NULL)
         return;
@@ -296,15 +295,15 @@ parser_element_finished(struct parser *parser, off_t end)
     widget = processor->embedded_widget;
     processor->widget = NULL;
 
-    url = widget->base_uri;
+    widget->real_uri = widget->base_uri;
 
     if (widget->id != NULL && processor->args != NULL) {
         const char *append = strmap_get(processor->args, widget->id);
         if (append != NULL)
-            url = p_strcat(processor->output.pool, url, append, NULL);
+            widget->real_uri = p_strcat(processor->output.pool, widget->base_uri, append, NULL);
     }
 
-    istream = embed_new(processor->output.pool, url, widget);
+    istream = embed_new(processor->output.pool, widget->real_uri, widget);
     istream = istream_cat_new(processor->output.pool,
                               istream_string_new(processor->output.pool, "<div class='embed'>"),
                               istream,
