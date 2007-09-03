@@ -115,6 +115,42 @@ strmap_put(strmap_t map, const char *key, const char *value, int overwrite)
 }
 
 const char *
+strmap_remove(strmap_t map, const char *key)
+{
+    unsigned hash = calc_hash(key);
+    struct slot *slot, *prev;
+
+    assert(key != NULL);
+
+    prev = &map->slots[hash % map->capacity];
+    if (prev->pair.key == NULL)
+        return NULL;
+
+    if (strcmp(prev->pair.key, key) == 0) {
+        const char *value = prev->pair.value;
+        if (prev->next == NULL) {
+            prev->pair.key = NULL;
+            prev->pair.value = NULL;
+        } else {
+            *prev = *prev->next;
+        }
+        return value;
+    }
+
+    for (slot = prev->next; slot != NULL; slot = prev->next) {
+        assert(slot->pair.key != NULL);
+        assert(slot->pair.value != NULL);
+
+        if (strcmp(slot->pair.key, key) == 0) {
+            prev->next = slot->next;
+            return slot->pair.value;
+        }
+    }
+
+    return NULL;
+}
+
+const char *
 strmap_get(strmap_t map, const char *key)
 {
     unsigned hash = calc_hash(key);
