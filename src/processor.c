@@ -249,6 +249,55 @@ make_url_attribute_absolute(processor_t processor)
                                                    new_uri));
 }
 
+static void
+transform_url_attribute(processor_t processor)
+{
+    const char *new_uri = uri_absolute(processor->output.pool,
+                                       processor->widget == NULL ? NULL : processor->widget->real_uri,
+                                       processor->parser.attr_value,
+                                       processor->parser.attr_value_length);
+    const char *semicolon, *base_external_uri;
+    const char *args;
+
+    if (new_uri == NULL)
+        return;
+
+    if (processor->widget == NULL ||  processor->widget->id == NULL ||
+        processor->env->external_uri == NULL ||
+        strncmp(new_uri, processor->widget->base_uri, strlen(processor->widget->base_uri)) != 0) {
+        replace_attribute_value(processor,
+                                istream_string_new(processor->output.pool,
+                                                   new_uri));
+        return;
+    }
+
+    /* the URI is relative to the widget's base URI.  Convert the URI
+       into an absolute URI to the template page on this server and
+       add the appropriate args. */
+    args = args_format(processor->output.pool, processor->env->args,
+                       processor->widget->id,
+                       new_uri + strlen(processor->widget->base_uri));
+
+    /* XXX this should be done somewhere else */
+    semicolon = strchr(processor->env->external_uri, ';');
+    if (semicolon == NULL)
+        base_external_uri = processor->env->external_uri;
+    else
+        base_external_uri = p_strndup(processor->output.pool,
+                                      processor->env->external_uri,
+                                      semicolon - processor->env->external_uri);
+
+    new_uri = p_strcat(processor->output.pool,
+                       base_external_uri,
+                       ";",
+                       args,
+                       NULL);
+
+    replace_attribute_value(processor,
+                            istream_string_new(processor->output.pool,
+                                               new_uri));
+}
+
 void
 parser_attr_finished(struct parser *parser)
 {
@@ -278,7 +327,7 @@ parser_attr_finished(struct parser *parser)
     case TAG_A:
         if (parser->attr_name_length == 4 &&
             memcmp(parser->attr_name, "href", 4) == 0)
-            make_url_attribute_absolute(processor);
+            transform_url_attribute(processor);
         break;
     }
 }
