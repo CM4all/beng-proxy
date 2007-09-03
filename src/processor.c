@@ -294,15 +294,8 @@ parser_element_finished(struct parser *parser, off_t end)
 
     if (processor->id != NULL && processor->args != NULL) {
         const char *append = strmap_get(processor->args, processor->id);
-        if (append != NULL) {
-            size_t length1 = strlen(url);
-            size_t length2 = strlen(append);
-            char *dest = p_malloc(processor->output.pool, length1 + length2 + 1);
-            memcpy(dest, url, length1);
-            memcpy(dest + length1, append, length2);
-            dest[length1 + length2] = 0;
-            url = dest;
-        }
+        if (append != NULL)
+            url = p_strcat(processor->output.pool, url, append, NULL);
     }
 
     istream = embed_new(processor->output.pool, url, processor->href);
