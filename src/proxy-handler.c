@@ -69,11 +69,11 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
         struct processor_env *env = &pt->env;
 
         memset(env, 0, sizeof(*env));
-        env->external_uri = pt->request->uri;
+        env->external_uri = &pt->translated->uri;
 
-        if (pt->translated->args != NULL)
-            env->args = args_parse(pt->request->pool, pt->translated->args,
-                                   strlen(pt->translated->args));
+        if (pt->translated->uri.args != NULL)
+            env->args = args_parse(pt->request->pool, pt->translated->uri.args,
+                                   pt->translated->uri.args_length);
 
         pool_ref(pt->request->pool);
 

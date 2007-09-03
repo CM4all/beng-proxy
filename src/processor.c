@@ -256,7 +256,7 @@ transform_url_attribute(processor_t processor)
                                        processor->widget == NULL ? NULL : processor->widget->real_uri,
                                        processor->parser.attr_value,
                                        processor->parser.attr_value_length);
-    const char *semicolon, *base_external_uri;
+    const char *base_external_uri;
     const char *args;
 
     if (new_uri == NULL)
@@ -278,14 +278,10 @@ transform_url_attribute(processor_t processor)
                        processor->widget->id,
                        new_uri + strlen(processor->widget->base_uri));
 
-    /* XXX this should be done somewhere else */
-    semicolon = strchr(processor->env->external_uri, ';');
-    if (semicolon == NULL)
-        base_external_uri = processor->env->external_uri;
-    else
-        base_external_uri = p_strndup(processor->output.pool,
-                                      processor->env->external_uri,
-                                      semicolon - processor->env->external_uri);
+    /* XXX waste of memory */
+    base_external_uri = p_strndup(processor->output.pool,
+                                  processor->env->external_uri->base,
+                                  processor->env->external_uri->base_length);
 
     new_uri = p_strcat(processor->output.pool,
                        base_external_uri,

@@ -11,6 +11,48 @@
 
 /* XXX this is quick and dirty */
 
+void
+uri_parse(struct parsed_uri *dest, const char *src)
+{
+    const char *semicolon, *qmark;
+
+    qmark = strchr(src, '?');
+
+    if (qmark == NULL)
+        semicolon = strchr(src, ';');
+    else
+        semicolon = memchr(src, ';', qmark - src);
+
+    dest->base = src;
+    if (semicolon != NULL)
+        dest->base_length = semicolon - src;
+    else if (qmark != NULL)
+        dest->base_length = qmark - src;
+    else
+        dest->base_length = strlen(src);
+
+    if (semicolon == NULL) {
+        dest->args = NULL;
+        dest->args_length = 0;
+    } else {
+        /* XXX second semicolon for stuff being forwared? */
+        dest->args = semicolon + 1;
+        if (qmark == NULL)
+            dest->args_length = strlen(dest->args);
+        else
+            dest->args_length = qmark - dest->args;
+    }
+
+    if (qmark == NULL) {
+        dest->query = NULL;
+        dest->query_length = 0;
+    } else {
+        dest->query = qmark + 1;
+        dest->query_length = strlen(dest->query);
+    }
+}
+
+
 static int
 uri_has_protocol(const char *uri, size_t length)
 {

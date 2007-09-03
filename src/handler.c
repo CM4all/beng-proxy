@@ -15,45 +15,20 @@ static struct translated *
 translate(struct http_server_request *request)
 {
     struct translated *translated;
-    const char *semicolon, *qmark;
-    size_t uri_length;
     char path[1024];
 
     translated = p_malloc(request->pool, sizeof(*translated));
 
-    semicolon = strchr(request->uri, ';');
-    qmark = strchr(request->uri, '?');
-
-    if (qmark != NULL && semicolon > qmark)
-        semicolon = NULL;
-
-    if (semicolon != NULL)
-        uri_length = semicolon - request->uri;
-    else if (qmark != NULL)
-        uri_length = qmark - request->uri;
-    else
-        uri_length = strlen(request->uri);
-
-    if (semicolon != NULL) {
-        /* XXX second semicolon for stuff being forwared? */
-        const char *args = semicolon + 1;
-        if (qmark == NULL)
-            translated->args = p_strdup(request->pool, args);
-        else
-            translated->args = p_strndup(request->pool, args,
-                                         qmark - args);
-    } else {
-        translated->args = NULL;
-    }
+    uri_parse(&translated->uri, request->uri);
 
     if (memcmp(request->uri, "/proxy/", 7) == 0) {
         /* XXX append query string */
         snprintf(path, sizeof(path), "http://dory.intern.cm-ag/~max/%.*s",
-                 (int)uri_length - 7, request->uri + 7);
+                 (int)translated->uri.base_length, translated->uri.base);
     } else {
         /* XXX this is, of course, a huge security hole */
         snprintf(path, sizeof(path), "/var/www/%.*s",
-                 (int)uri_length, request->uri);
+                 (int)translated->uri.base_length, translated->uri.base);
     }
 
     translated->path = p_strdup(request->pool, path);

@@ -101,11 +101,11 @@ file_callback(struct client_connection *connection,
             struct processor_env *env;
 
             env = p_calloc(request->pool, sizeof(*env));
-            env->external_uri = request->uri;
+            env->external_uri = &translated->uri;
 
-            if (translated->args != NULL)
-                env->args = args_parse(request->pool, translated->args,
-                                       strlen(translated->args));
+            if (translated->uri.args != NULL)
+                env->args = args_parse(request->pool, translated->uri.args,
+                                       translated->uri.args_length);
 
             body = processor_new(request->pool, body, NULL, env);
         }
