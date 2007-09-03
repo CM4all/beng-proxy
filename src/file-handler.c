@@ -104,7 +104,8 @@ file_callback(struct client_connection *connection,
             env->external_uri = request->uri;
 
             if (translated->args != NULL)
-                env->args = args_parse(request->pool, translated->args);
+                env->args = args_parse(request->pool, translated->args,
+                                       strlen(translated->args));
 
             body = processor_new(request->pool, body, NULL, env);
         }

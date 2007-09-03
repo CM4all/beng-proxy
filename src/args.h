@@ -11,7 +11,7 @@
 #include "strmap.h"
 
 strmap_t
-args_parse(pool_t pool, const char *p);
+args_parse(pool_t pool, const char *p, size_t length);
 
 /**
  * Format the arguments into a string in the form

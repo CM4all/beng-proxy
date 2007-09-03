@@ -9,15 +9,16 @@
 #include <string.h>
 
 strmap_t
-args_parse(pool_t pool, const char *p)
+args_parse(pool_t pool, const char *p, size_t length)
 {
+    const char *end = p + length;
     strmap_t args = strmap_new(pool, 16);
     const char *and, *equals, *next;
 
     do {
-        next = and = strchr(p, '&');
+        next = and = memchr(p, '&', end - p);
         if (and == NULL)
-            and = p + strlen(p);
+            and = end;
         else
             ++next;
         equals = memchr(p, '=', and - p);
