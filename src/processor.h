@@ -15,7 +15,10 @@
 struct widget;
 
 struct processor_env {
+    /** the URI which was requested by the beng-proxy client */
     const char *external_uri;
+
+    /** semicolon-arguments in the external URI */
     strmap_t args;
 };
 
