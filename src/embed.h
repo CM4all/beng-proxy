@@ -9,7 +9,9 @@
 
 #include "istream.h"
 
+struct widget;
+
 istream_t
-embed_new(pool_t pool, const char *url, const char *base_uri);
+embed_new(pool_t pool, const char *url, const struct widget *widget);
 
 #endif

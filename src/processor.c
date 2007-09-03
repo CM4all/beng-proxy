@@ -10,6 +10,7 @@
 #include "replace.h"
 #include "embed.h"
 #include "uri.h"
+#include "widget.h"
 
 #include <sys/mman.h>
 #include <assert.h>
@@ -24,7 +25,7 @@ struct processor {
     struct istream output;
     istream_t input;
 
-    const char *base_uri;
+    const struct widget *widget;
     strmap_t args;
 
     struct replace replace;
@@ -36,7 +37,7 @@ struct processor {
         TAG_A,
         TAG_IMG,
     } tag;
-    char *id, *href;
+    struct widget *embedded_widget;
 };
 
 static inline processor_t
@@ -136,7 +137,8 @@ static const struct istream_handler processor_input_handler = {
 
 
 istream_t
-processor_new(pool_t pool, istream_t istream, const char *base_uri,
+processor_new(pool_t pool, istream_t istream,
+              const struct widget *widget,
               strmap_t args)
 {
     processor_t processor;
@@ -161,7 +163,7 @@ processor_new(pool_t pool, istream_t istream, const char *base_uri,
     istream->handler_ctx = processor;
     pool_ref(processor->input->pool);
 
-    processor->base_uri = base_uri;
+    processor->widget = widget;
     processor->args = args;
 
     ret = replace_init(&processor->replace, pool, &processor->output);
@@ -208,8 +210,8 @@ parser_element_start(struct parser *parser)
     if (parser->element_name_length == 7 &&
         memcmp(parser->element_name, "c:embed", 7) == 0) {
         processor->tag = TAG_EMBED;
-        processor->id = NULL;
-        processor->href = NULL;
+        processor->embedded_widget = p_calloc(processor->output.pool,
+                                              sizeof(*processor->embedded_widget));
     } else if (parser->element_name_length == 1 &&
                parser->element_name[0] == 'a') {
         processor->tag = TAG_A;
@@ -237,7 +239,7 @@ static void
 make_url_attribute_absolute(processor_t processor)
 {
     const char *new_uri = uri_absolute(processor->output.pool,
-                                       processor->base_uri,
+                                       processor->widget == NULL ? NULL : processor->widget->uri,
                                        processor->parser.attr_value,
                                        processor->parser.attr_value_length);
     if (new_uri != NULL)
@@ -258,12 +260,12 @@ parser_attr_finished(struct parser *parser)
     case TAG_EMBED:
         if (parser->attr_name_length == 4 &&
             memcmp(parser->attr_name, "href", 4) == 0)
-            processor->href = p_strndup(processor->output.pool, parser->attr_value,
-                                        parser->attr_value_length);
+            processor->embedded_widget->uri = p_strndup(processor->output.pool, parser->attr_value,
+                                                        parser->attr_value_length);
         else if (parser->attr_name_length == 2 &&
                  memcmp(parser->attr_name, "id", 2) == 0)
-            processor->id = p_strndup(processor->output.pool, parser->attr_value,
-                                      parser->attr_value_length);
+            processor->embedded_widget->id = p_strndup(processor->output.pool, parser->attr_value,
+                                                       parser->attr_value_length);
         break;
 
     case TAG_IMG:
@@ -284,21 +286,25 @@ void
 parser_element_finished(struct parser *parser, off_t end)
 {
     processor_t processor = parser_to_processor(parser);
+    const struct widget *widget;
     istream_t istream;
     const char *url;
 
-    if (processor->tag != TAG_EMBED || processor->href == NULL)
+    if (processor->tag != TAG_EMBED || processor->embedded_widget->uri == NULL)
         return;
 
-    url = processor->href;
+    widget = processor->embedded_widget;
+    processor->widget = NULL;
 
-    if (processor->id != NULL && processor->args != NULL) {
-        const char *append = strmap_get(processor->args, processor->id);
+    url = widget->uri;
+
+    if (widget->id != NULL && processor->args != NULL) {
+        const char *append = strmap_get(processor->args, widget->id);
         if (append != NULL)
             url = p_strcat(processor->output.pool, url, append, NULL);
     }
 
-    istream = embed_new(processor->output.pool, url, processor->href);
+    istream = embed_new(processor->output.pool, url, widget);
     istream = istream_cat_new(processor->output.pool,
                               istream_string_new(processor->output.pool, "<div class='embed'>"),
                               istream,

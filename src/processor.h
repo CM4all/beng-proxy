@@ -12,8 +12,11 @@
 
 #include <sys/types.h>
 
+struct widget;
+
 istream_t attr_malloc
-processor_new(pool_t pool, istream_t istream, const char *base_uri,
+processor_new(pool_t pool, istream_t istream,
+              const struct widget *widget,
               strmap_t args);
 
 #endif
