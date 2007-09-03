@@ -22,6 +22,7 @@ struct proxy_transfer {
     struct http_server_request *request;
     struct translated *translated;
     url_stream_t url_stream;
+    struct processor_env env;
 };
 
 static void
@@ -65,13 +66,17 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
-        strmap_t args = NULL;
+        struct processor_env *env = &pt->env;
+
+        memset(env, 0, sizeof(*env));
+        env->external_uri = pt->request->uri;
+
         if (pt->translated->args != NULL)
-            args = args_parse(pt->request->pool, pt->translated->args);
+            env->args = args_parse(pt->request->pool, pt->translated->args);
 
         pool_ref(pt->request->pool);
 
-        body = processor_new(pt->request->pool, body, NULL, args);
+        body = processor_new(pt->request->pool, body, NULL, &pt->env);
 
         pool_unref(pt->request->pool);
         if (body == NULL) {

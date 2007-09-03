@@ -98,11 +98,15 @@ file_callback(struct client_connection *connection,
 
     if (strncmp(content_type, "text/html", 9) == 0) {
         if (body != NULL) {
-            strmap_t args = NULL;
-            if (translated->args != NULL)
-                args = args_parse(request->pool, translated->args);
+            struct processor_env *env;
 
-            body = processor_new(request->pool, body, NULL, args);
+            env = p_calloc(request->pool, sizeof(*env));
+            env->external_uri = request->uri;
+
+            if (translated->args != NULL)
+                env->args = args_parse(request->pool, translated->args);
+
+            body = processor_new(request->pool, body, NULL, env);
         }
 
         http_server_response(request, HTTP_STATUS_OK, headers,

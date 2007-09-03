@@ -10,6 +10,7 @@
 #include "replace.h"
 #include "embed.h"
 #include "uri.h"
+#include "args.h"
 #include "widget.h"
 
 #include <sys/mman.h>
@@ -26,7 +27,7 @@ struct processor {
     istream_t input;
 
     const struct widget *widget;
-    strmap_t args;
+    const struct processor_env *env;
 
     struct replace replace;
 
@@ -139,7 +140,7 @@ static const struct istream_handler processor_input_handler = {
 istream_t
 processor_new(pool_t pool, istream_t istream,
               const struct widget *widget,
-              strmap_t args)
+              const struct processor_env *env)
 {
     processor_t processor;
     int ret;
@@ -164,7 +165,7 @@ processor_new(pool_t pool, istream_t istream,
     pool_ref(processor->input->pool);
 
     processor->widget = widget;
-    processor->args = args;
+    processor->env = env;
 
     ret = replace_init(&processor->replace, pool, &processor->output);
     if (ret < 0) {
@@ -297,13 +298,14 @@ parser_element_finished(struct parser *parser, off_t end)
 
     widget->real_uri = widget->base_uri;
 
-    if (widget->id != NULL && processor->args != NULL) {
-        const char *append = strmap_get(processor->args, widget->id);
+    if (widget->id != NULL && processor->env->args != NULL) {
+        const char *append = strmap_get(processor->env->args, widget->id);
         if (append != NULL)
             widget->real_uri = p_strcat(processor->output.pool, widget->base_uri, append, NULL);
     }
 
-    istream = embed_new(processor->output.pool, widget->real_uri, widget);
+    istream = embed_new(processor->output.pool, widget->real_uri, widget,
+                        processor->env);
     istream = istream_cat_new(processor->output.pool,
                               istream_string_new(processor->output.pool, "<div class='embed'>"),
                               istream,
