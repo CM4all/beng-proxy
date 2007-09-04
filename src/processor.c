@@ -30,6 +30,11 @@ processor_env_init(pool_t pool, struct processor_env *env,
         env->args = NULL;
     else
         env->args = args_parse(pool, uri->args, uri->args_length);
+
+    if (env->args == NULL)
+        env->focus = NULL;
+    else
+        env->focus = strmap_get(env->args, "focus");
 }
 
 
@@ -267,7 +272,7 @@ make_url_attribute_absolute(processor_t processor)
 }
 
 static void
-transform_url_attribute(processor_t processor)
+transform_url_attribute(processor_t processor, int focus)
 {
     const char *new_uri = uri_absolute(processor->output.pool,
                                        processor->widget == NULL ? NULL : processor->widget->real_uri,
@@ -288,12 +293,18 @@ transform_url_attribute(processor_t processor)
         return;
     }
 
+    if (!focus && memchr(processor->parser.attr_value, '?',
+                         processor->parser.attr_value_length) != NULL)
+        focus = 1;
+
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args = args_format(processor->output.pool, processor->env->args,
                        processor->widget->id,
-                       new_uri + strlen(processor->widget->base_uri));
+                       new_uri + strlen(processor->widget->base_uri),
+                       "focus",
+                       focus ? processor->widget->id : NULL);
 
     /* XXX waste of memory */
     base_external_uri = p_strndup(processor->output.pool,
@@ -340,13 +351,13 @@ parser_attr_finished(struct parser *parser)
     case TAG_A:
         if (parser->attr_name_length == 4 &&
             memcmp(parser->attr_name, "href", 4) == 0)
-            transform_url_attribute(processor);
+            transform_url_attribute(processor, 0);
         break;
 
     case TAG_FORM:
         if (parser->attr_name_length == 6 &&
             memcmp(parser->attr_name, "action", 6) == 0)
-            transform_url_attribute(processor);
+            transform_url_attribute(processor, 1);
         break;
     }
 }
@@ -370,6 +381,20 @@ parser_element_finished(struct parser *parser, off_t end)
         const char *append = strmap_get(processor->env->args, widget->id);
         if (append != NULL)
             widget->real_uri = p_strcat(processor->output.pool, widget->base_uri, append, NULL);
+    }
+
+    if (widget->id != NULL && processor->env->focus != NULL &&
+        processor->env->external_uri->query != NULL &&
+        strcmp(widget->id, processor->env->focus) == 0) {
+        /* we're in focus.  forward query string and request body. */
+        const char *query = p_strndup(processor->output.pool,
+                                      processor->env->external_uri->query,
+                                      processor->env->external_uri->query_length);
+
+        widget->real_uri = p_strcat(processor->output.pool, widget->real_uri,
+                                    "?", query, NULL);
+
+        /* XXX forward request body */
     }
 
     istream = embed_new(processor->output.pool, widget->real_uri, widget,

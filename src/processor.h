@@ -20,6 +20,10 @@ struct processor_env {
 
     /** semicolon-arguments in the external URI */
     strmap_t args;
+
+    /** which widget is focused, i.e. gets the request body and the
+        query string? */
+    const char *focus;
 };
 
 void
