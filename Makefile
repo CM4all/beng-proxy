@@ -19,6 +19,7 @@ LIBATTR_LIBS = -lattr
 
 SOURCES = src/main.c \
 	src/child.c \
+	src/session.c \
 	src/connection.c \
 	src/handler.c \
 	src/file-handler.c \

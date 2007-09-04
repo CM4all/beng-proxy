@@ -8,6 +8,7 @@
 #include "pool.h"
 #include "instance.h"
 #include "connection.h"
+#include "session.h"
 
 #include <assert.h>
 #include <sys/signal.h>
@@ -37,6 +38,8 @@ exit_event_callback(int fd, short event, void *ctx)
         remove_connection((struct client_connection*)instance->connections.next);
 
     kill_children(instance);
+
+    session_manager_deinit();
 }
 
 void
@@ -80,6 +83,8 @@ int main(int argc, char **argv)
     instance.pool = pool_new_libc(NULL, "global");
 
     init_signals(&instance);
+
+    session_manager_init(instance.pool);
 
     ret = listener_tcp_port_new(instance.pool,
                                 8080, &http_listener_callback, &instance,

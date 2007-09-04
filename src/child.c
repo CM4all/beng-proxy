@@ -8,6 +8,7 @@
 #include "pool.h"
 #include "instance.h"
 #include "connection.h"
+#include "session.h"
 
 #include <sys/signal.h>
 #include <sys/wait.h>
@@ -94,10 +95,14 @@ create_child(struct instance *instance)
         while (!list_empty(&instance->connections))
             remove_connection((struct client_connection*)instance->connections.next);
 
+        session_manager_deinit();
+
         event_base_free(instance->event_base);
         instance->event_base = event_init();
 
         init_signals(instance);
+
+        session_manager_init(instance->pool);
 
         if (instance->listener != NULL)
             listener_event_add(instance->listener);

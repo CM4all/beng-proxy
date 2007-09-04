@@ -12,6 +12,7 @@
 #include "uri.h"
 #include "args.h"
 #include "widget.h"
+#include "session.h"
 
 #include <sys/mman.h>
 #include <assert.h>
@@ -24,14 +25,31 @@ void
 processor_env_init(pool_t pool, struct processor_env *env,
                    const struct parsed_uri *uri)
 {
+    const char *session_id;
+
     env->external_uri = uri;
 
     if (uri->args == NULL) {
         env->args = strmap_new(pool, 16);
         env->focus = NULL;
+        session_id = NULL;
     } else {
         env->args = args_parse(pool, uri->args, uri->args_length);
         env->focus = strmap_get(env->args, "focus");
+        session_id = strmap_get(env->args, "session");
+    }
+
+    env->session = NULL;
+    if (session_id != NULL) {
+        session_id_t session_id2 = session_id_parse(session_id);
+        if (session_id2 != 0)
+            env->session = session_get(session_id2);
+    }
+
+    if (env->session == NULL) {
+        env->session = session_new();
+        session_id_format(env->session_id_buffer, env->session->id);
+        strmap_addn(env->args, "session", env->session_id_buffer);
     }
 }
 

@@ -24,6 +24,10 @@ struct processor_env {
     /** which widget is focused, i.e. gets the request body and the
         query string? */
     const char *focus;
+
+    struct session *session;
+
+    char session_id_buffer[9];
 };
 
 void
