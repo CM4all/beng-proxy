@@ -72,4 +72,7 @@ p_sprintf(pool_t pool, const char *fmt, ...);
 char * attr_malloc
 p_strcat(pool_t pool, const char *s, ...);
 
+char * attr_malloc
+p_strncat(pool_t pool, const char *s, size_t length, ...);
+
 #endif

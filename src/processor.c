@@ -278,7 +278,6 @@ transform_url_attribute(processor_t processor, int focus)
                                        processor->widget == NULL ? NULL : processor->widget->real_uri,
                                        processor->parser.attr_value,
                                        processor->parser.attr_value_length);
-    const char *base_external_uri;
     const char *args;
 
     if (new_uri == NULL)
@@ -306,16 +305,12 @@ transform_url_attribute(processor_t processor, int focus)
                        "focus",
                        focus ? processor->widget->id : NULL);
 
-    /* XXX waste of memory */
-    base_external_uri = p_strndup(processor->output.pool,
-                                  processor->env->external_uri->base,
-                                  processor->env->external_uri->base_length);
-
-    new_uri = p_strcat(processor->output.pool,
-                       base_external_uri,
-                       ";",
-                       args,
-                       NULL);
+    new_uri = p_strncat(processor->output.pool,
+                        processor->env->external_uri->base,
+                        processor->env->external_uri->base_length,
+                        ";", 1,
+                        args, strlen(args),
+                        NULL);
 
     replace_attribute_value(processor,
                             istream_string_new(processor->output.pool,
@@ -387,12 +382,12 @@ parser_element_finished(struct parser *parser, off_t end)
         processor->env->external_uri->query != NULL &&
         strcmp(widget->id, processor->env->focus) == 0) {
         /* we're in focus.  forward query string and request body. */
-        const char *query = p_strndup(processor->output.pool,
-                                      processor->env->external_uri->query,
-                                      processor->env->external_uri->query_length);
-
-        widget->real_uri = p_strcat(processor->output.pool, widget->real_uri,
-                                    "?", query, NULL);
+        widget->real_uri = p_strncat(processor->output.pool,
+                                     widget->real_uri, strlen(widget->real_uri),
+                                     "?", 1,
+                                     processor->env->external_uri->query,
+                                     processor->env->external_uri->query_length,
+                                     NULL);
 
         /* XXX forward request body */
     }
