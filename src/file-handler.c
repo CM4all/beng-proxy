@@ -81,7 +81,7 @@ file_callback(struct client_connection *connection,
 
     headers = growing_buffer_new(request->pool, 2048);
 
-    snprintf(buffer, sizeof(buffer), "%x-%x", (unsigned)st.st_dev, (unsigned)st.st_ino);
+    snprintf(buffer, sizeof(buffer), "\"%x-%x\"", (unsigned)st.st_dev, (unsigned)st.st_ino);
     header_write(headers, "etag", buffer);
 
     nbytes = getxattr(translated->path, "user.Content-Type", /* XXX use fgetxattr() */
