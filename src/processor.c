@@ -49,6 +49,7 @@ struct processor {
         TAG_NONE,
         TAG_EMBED,
         TAG_A,
+        TAG_FORM,
         TAG_IMG,
     } tag;
     struct widget *embedded_widget;
@@ -229,6 +230,9 @@ parser_element_start(struct parser *parser)
     } else if (parser->element_name_length == 1 &&
                parser->element_name[0] == 'a') {
         processor->tag = TAG_A;
+    } else if (parser->element_name_length == 4 &&
+               memcmp(parser->element_name, "form", 4) == 0) {
+        processor->tag = TAG_FORM;
     } else if (parser->element_name_length == 3 &&
                memcmp(parser->element_name, "img", 3) == 0) {
         processor->tag = TAG_IMG;
@@ -336,6 +340,12 @@ parser_attr_finished(struct parser *parser)
     case TAG_A:
         if (parser->attr_name_length == 4 &&
             memcmp(parser->attr_name, "href", 4) == 0)
+            transform_url_attribute(processor);
+        break;
+
+    case TAG_FORM:
+        if (parser->attr_name_length == 6 &&
+            memcmp(parser->attr_name, "action", 6) == 0)
             transform_url_attribute(processor);
         break;
     }
