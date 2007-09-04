@@ -26,15 +26,13 @@ processor_env_init(pool_t pool, struct processor_env *env,
 {
     env->external_uri = uri;
 
-    if (uri->args == NULL)
-        env->args = NULL;
-    else
-        env->args = args_parse(pool, uri->args, uri->args_length);
-
-    if (env->args == NULL)
+    if (uri->args == NULL) {
+        env->args = strmap_new(pool, 16);
         env->focus = NULL;
-    else
+    } else {
+        env->args = args_parse(pool, uri->args, uri->args_length);
         env->focus = strmap_get(env->args, "focus");
+    }
 }
 
 
@@ -372,7 +370,7 @@ parser_element_finished(struct parser *parser, off_t end)
 
     widget->real_uri = widget->base_uri;
 
-    if (widget->id != NULL && processor->env->args != NULL) {
+    if (widget->id != NULL) {
         const char *append = strmap_get(processor->env->args, widget->id);
         if (append != NULL)
             widget->real_uri = p_strcat(processor->output.pool, widget->base_uri, append, NULL);
