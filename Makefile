@@ -50,6 +50,7 @@ SOURCES = src/main.c \
 	src/date.c \
 	src/strutil.c \
 	src/strmap.c \
+	src/pstring.c \
 	src/pool.c
 
 HEADERS = $(wildcard src/*.h)
