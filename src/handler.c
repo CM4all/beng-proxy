@@ -24,7 +24,7 @@ translate(struct http_server_request *request)
     if (memcmp(request->uri, "/proxy/", 7) == 0) {
         /* XXX append query string */
         snprintf(path, sizeof(path), "http://dory.intern.cm-ag/~max/%.*s",
-                 (int)translated->uri.base_length, translated->uri.base);
+                 (int)translated->uri.base_length - 7, translated->uri.base + 7);
     } else {
         /* XXX this is, of course, a huge security hole */
         snprintf(path, sizeof(path), "/var/www/%.*s",
