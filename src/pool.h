@@ -69,7 +69,7 @@ p_strndup(pool_t pool, const char *src, size_t length);
 char * attr_malloc attr_printf(2, 3)
 p_sprintf(pool_t pool, const char *fmt, ...);
 
-char * attr_malloc attr_printf(2, 3)
+char * attr_malloc
 p_strcat(pool_t pool, const char *s, ...);
 
 #endif
