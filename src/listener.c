@@ -67,6 +67,9 @@ listener_tcp_port_new(pool_t pool, int port,
     listener_t listener;
     int ret, param;
     struct sockaddr_in6 sa6;
+    struct sockaddr_in sa4;
+    const struct sockaddr *sa = (const struct sockaddr*)&sa6;
+    socklen_t addrlen = sizeof(sa6);
 
     assert(port > 0);
     assert(callback != NULL);
@@ -74,8 +77,25 @@ listener_tcp_port_new(pool_t pool, int port,
 
     listener = p_calloc(pool, sizeof(*listener));
     listener->fd = socket(PF_INET6, SOCK_STREAM, 0);
-    if (listener->fd < 0)
-        return -1;
+    if (listener->fd >= 0) {
+        memset(&sa6, 0, sizeof(sa6));
+        sa6.sin6_family = AF_INET6;
+        sa6.sin6_addr = in6addr_any;
+        sa6.sin6_port = htons(port);
+    } else {
+        /* fall back to IPv4 */
+        listener->fd = socket(PF_INET, SOCK_STREAM, 0);
+        if (listener->fd < 0)
+            return -1;
+
+        memset(&sa4, 0, sizeof(sa4));
+        sa4.sin_family = AF_INET;
+        sa4.sin_addr.s_addr = INADDR_ANY;
+        sa4.sin_port = htons(port);
+
+        sa = (const struct sockaddr*)&sa4;
+        addrlen = sizeof(sa4);
+    }
 
     param = 1;
     ret = setsockopt(listener->fd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
@@ -86,11 +106,7 @@ listener_tcp_port_new(pool_t pool, int port,
         return -1;
     }
 
-    memset(&sa6, 0, sizeof(sa6));
-    sa6.sin6_family = AF_INET6;
-    sa6.sin6_addr = in6addr_any;
-    sa6.sin6_port = htons(port);
-    ret = bind(listener->fd, (const struct sockaddr*)&sa6, sizeof(sa6));
+    ret = bind(listener->fd, sa, addrlen);
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
