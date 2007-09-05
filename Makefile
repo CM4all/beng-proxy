@@ -46,6 +46,7 @@ SOURCES = src/main.c \
 	src/istream-dechunk.c \
 	src/istream-cat.c \
 	src/istream-pipe.c \
+	src/istream-delayed.c \
 	src/uri.c \
 	src/args.c \
 	src/date.c \
