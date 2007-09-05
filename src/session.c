@@ -30,6 +30,7 @@ cleanup_event_callback(int fd, short event, void *ctx)
 {
     time_t now = time(NULL);
     session_t session, next;
+    struct timeval tv;
 
     (void)fd;
     (void)event;
@@ -42,6 +43,9 @@ cleanup_event_callback(int fd, short event, void *ctx)
         if (now >= session->expires)
             session_remove(session);
     }
+
+    tv = cleanup_interval;
+    evtimer_add(&session_manager.cleanup_event, &tv);
 }
 
 void
