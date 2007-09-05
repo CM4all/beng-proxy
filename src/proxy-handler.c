@@ -112,6 +112,9 @@ proxy_callback(struct client_connection *connection,
         return;
     }
 
+    if (request->body != NULL)
+        istream_close(request->body); /* XXX */
+
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->pool = request->pool;
     pt->request = request;

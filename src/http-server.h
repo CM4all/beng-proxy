@@ -25,6 +25,9 @@ struct http_server_request {
     http_method_t method;
     char *uri;
     strmap_t headers;
+
+    off_t content_length;
+    istream_t body;
 };
 
 struct http_server_connection_handler {

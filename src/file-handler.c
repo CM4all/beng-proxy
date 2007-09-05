@@ -33,7 +33,8 @@ file_callback(struct client_connection *connection,
     (void)connection;
 
     if (request->method != HTTP_METHOD_HEAD &&
-        request->method != HTTP_METHOD_GET) {
+        request->method != HTTP_METHOD_GET &&
+        request->method != HTTP_METHOD_POST) {
         http_server_send_message(request,
                                  HTTP_STATUS_METHOD_NOT_ALLOWED,
                                  "This method is not allowed.");
@@ -107,9 +108,23 @@ file_callback(struct client_connection *connection,
             body = processor_new(request->pool, body, NULL, env);
         }
 
+        if (request->body != NULL)
+            istream_close(request->body); /* XXX */
+
         http_server_response(request, HTTP_STATUS_OK, headers,
                              (off_t)-1, body);
     } else {
+        if (request->method == HTTP_METHOD_POST) {
+            istream_close(body);
+            http_server_send_message(request,
+                                     HTTP_STATUS_METHOD_NOT_ALLOWED,
+                                     "This method is not allowed.");
+            return;
+        }
+
+        if (request->body != NULL)
+            istream_close(request->body);
+
         header_write(headers, "last-modified", http_date_format(st.st_mtime));
 
         http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
