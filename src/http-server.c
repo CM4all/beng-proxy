@@ -582,7 +582,11 @@ http_server_response_stream_eof(void *ctx)
     connection->response.istream = NULL;
 
     if (connection->request.read_state == READ_BODY) {
-        /* XXX discard rest of body? */
+        /* We are still reading the request body, which we don't need
+           anymore.  To discard it, we simply close the connection by
+           disabling keepalive; this seems cheaper than redirecting
+           the rest of the body to /dev/null */
+        connection->keep_alive = 0;
     }
 
     connection->request.read_state = READ_START;
