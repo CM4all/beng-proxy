@@ -239,11 +239,11 @@ http_server_parse_request_line(http_server_connection_t connection,
 static void
 http_server_headers_finished(http_server_connection_t connection)
 {
-    const char *header_connection;
+    const char *value;
 
-    header_connection = strmap_get(connection->request.request->headers, "connection");
-    connection->keep_alive = header_connection != NULL &&
-        strcasecmp(header_connection, "keep-alive") == 0;
+    value = strmap_get(connection->request.request->headers, "connection");
+    connection->keep_alive = value != NULL &&
+        strcasecmp(value, "keep-alive") == 0;
 
     /* XXX body? */
     connection->request.read_state = READ_END;
