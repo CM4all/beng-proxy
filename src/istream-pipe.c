@@ -111,11 +111,16 @@ pipe_input_eof(void *ctx)
 {
     struct istream_pipe *p = ctx;
 
+    assert(p->fds[1] >= 0);
+
     p->input->handler = NULL;
     p->input->handler_ctx = NULL;
 
     pool_unref(p->input->pool);
     p->input = NULL;
+
+    close(p->fds[1]);
+    p->fds[1] = -1;
 
     if (p->piped == 0) {
         istream_invoke_eof(&p->output);
