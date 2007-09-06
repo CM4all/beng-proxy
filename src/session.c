@@ -22,6 +22,7 @@ static struct timeval cleanup_interval = {
 struct {
     pool_t pool;
     struct list_head sessions; /* XXX use hash table */
+    unsigned num_sessions;
     struct event cleanup_event;
 } session_manager;
 
@@ -116,6 +117,7 @@ session_new(void)
     session->expires = time(NULL) + SESSION_TTL_NEW;
 
     list_add(&session->hash_siblings, &session_manager.sessions);
+    ++session_manager.num_sessions;
 
     return session;
 }
@@ -146,6 +148,8 @@ session_remove(session_t session)
         return;
 
     list_remove(&session->hash_siblings);
+    --session_manager.num_sessions;
+
     session->removed = 1;
     pool_unref(pool);
 }
