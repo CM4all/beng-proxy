@@ -31,7 +31,6 @@ cleanup_event_callback(int fd, short event, void *ctx)
 {
     time_t now = time(NULL);
     session_t session, next;
-    struct timeval tv;
 
     (void)fd;
     (void)event;
@@ -45,23 +44,21 @@ cleanup_event_callback(int fd, short event, void *ctx)
             session_remove(session);
     }
 
-    tv = cleanup_interval;
-    evtimer_add(&session_manager.cleanup_event, &tv);
+    if (session_manager.num_sessions > 0) {
+        struct timeval tv = cleanup_interval;
+        evtimer_add(&session_manager.cleanup_event, &tv);
+    }
 }
 
 void
 session_manager_init(pool_t pool)
 {
-    struct timeval tv;
-
     assert(session_manager.pool == NULL);
 
     session_manager.pool = pool_new_libc(pool, "session_manager");
     list_init(&session_manager.sessions);
 
-    tv = cleanup_interval;
     evtimer_set(&session_manager.cleanup_event, cleanup_event_callback, NULL);
-    evtimer_add(&session_manager.cleanup_event, &tv);
 }
 
 void
@@ -119,6 +116,11 @@ session_new(void)
     list_add(&session->hash_siblings, &session_manager.sessions);
     ++session_manager.num_sessions;
 
+    if (session_manager.num_sessions == 1) {
+        struct timeval tv = cleanup_interval;
+        evtimer_add(&session_manager.cleanup_event, &tv);
+    }
+
     return session;
 }
 
@@ -147,8 +149,13 @@ session_remove(session_t session)
     if (session->removed)
         return;
 
+    assert(session_manager.num_sessions > 0);
+
     list_remove(&session->hash_siblings);
     --session_manager.num_sessions;
+
+    if (session_manager.num_sessions == 0)
+        evtimer_del(&session_manager.cleanup_event);
 
     session->removed = 1;
     pool_unref(pool);
