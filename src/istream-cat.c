@@ -47,7 +47,7 @@ cat_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-cat_input_direct(int fd, size_t max_length, void *ctx)
+cat_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct input *input = ctx;
     struct istream_cat *cat = input->cat;
@@ -55,7 +55,7 @@ cat_input_direct(int fd, size_t max_length, void *ctx)
     assert(input->istream != NULL);
     assert(input == cat->current);
 
-    return istream_invoke_direct(&cat->output, fd, max_length);
+    return istream_invoke_direct(&cat->output, type, fd, max_length);
 }
 
 static void

@@ -42,7 +42,7 @@ pipe_consume(struct istream_pipe *p)
     assert(p->fds[0] >= 0);
     assert(p->piped > 0);
 
-    nbytes = istream_invoke_direct(&p->output, p->fds[0], p->piped);
+    nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
     if (unlikely(nbytes < 0 && errno != EAGAIN)) {
         int save_errno = errno;
         istream_close(&p->output);
@@ -75,10 +75,12 @@ pipe_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-pipe_input_direct(int fd, size_t max_length, void *ctx)
+pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct istream_pipe *p = ctx;
     ssize_t nbytes;
+
+    (void)type; /* XXX check if it's already a pipe */
 
     assert(p->fds[1] >= 0);
 

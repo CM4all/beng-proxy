@@ -499,7 +499,8 @@ http_client_try_response_direct(http_client_connection_t connection)
     assert(connection->response.read_state == READ_BODY);
     assert(connection->response.stream.handler->direct != NULL);
 
-    nbytes = istream_invoke_direct(&connection->response.stream, connection->fd,
+    nbytes = istream_invoke_direct(&connection->response.stream,
+                                   ISTREAM_SOCKET, connection->fd,
                                    http_client_response_max_read(connection, INT_MAX));
     if (nbytes < 0) {
         /* XXX EAGAIN? */

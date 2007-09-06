@@ -135,7 +135,7 @@ istream_file_direct(istream_t istream)
         return;
     }
 
-    nbytes = istream_invoke_direct(istream, file->fd,
+    nbytes = istream_invoke_direct(istream, ISTREAM_FILE, file->fd,
                                    istream_file_max_read(file));
     if (nbytes > 0 || nbytes == -2) {
         /* -2 means the callback wasn't able to consume any data right

@@ -281,7 +281,8 @@ http_server_try_request_direct(http_server_connection_t connection)
     assert(connection->request.read_state == READ_BODY);
     assert(connection->request.stream.handler->direct != NULL);
 
-    nbytes = istream_invoke_direct(&connection->request.stream, connection->fd,
+    nbytes = istream_invoke_direct(&connection->request.stream,
+                                   ISTREAM_SOCKET, connection->fd,
                                    http_server_request_max_read(connection, INT_MAX));
     if (nbytes < 0) {
         /* XXX EAGAIN? */
@@ -773,10 +774,12 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
 
 #ifdef __linux
 static ssize_t
-http_server_response_stream_direct(int fd, size_t max_length, void *ctx)
+http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     http_server_connection_t connection = ctx;
     ssize_t nbytes;
+
+    (void)type; /* XXX check type */
 
     assert(connection->response.writing);
 

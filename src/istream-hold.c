@@ -39,14 +39,14 @@ hold_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-hold_input_direct(int fd, size_t max_length, void *ctx)
+hold_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct istream_hold *hold = ctx;
 
     if (hold->output.handler == NULL)
         return 0;
 
-    return istream_invoke_direct(&hold->output, fd, max_length);
+    return istream_invoke_direct(&hold->output, type, fd, max_length);
 }
 
 static void

@@ -11,11 +11,18 @@
 
 #include <sys/types.h>
 
+/** fd types for the direct mode; values taken from sys/stat.h */
+typedef enum {
+    ISTREAM_FILE = 0100000,
+    ISTREAM_PIPE = 0010000,
+    ISTREAM_SOCKET = 0140000,
+} istream_direct_t;
+
 typedef struct istream *istream_t;
 
 struct istream_handler {
     size_t (*data)(const void *data, size_t length, void *ctx);
-    ssize_t (*direct)(int fd, size_t max_length, void *ctx);
+    ssize_t (*direct)(istream_direct_t type, int fd, size_t max_length, void *ctx);
     void (*eof)(void *ctx);
     void (*free)(void *ctx);
 };
@@ -66,9 +73,9 @@ istream_invoke_data(istream_t istream, const void *data, size_t length)
 }
 
 static inline ssize_t
-istream_invoke_direct(istream_t istream, int fd, size_t max_length)
+istream_invoke_direct(istream_t istream, istream_direct_t type, int fd, size_t max_length)
 {
-    return istream->handler->direct(fd, max_length, istream->handler_ctx);
+    return istream->handler->direct(type, fd, max_length, istream->handler_ctx);
 }
 
 static inline void
