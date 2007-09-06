@@ -63,9 +63,11 @@ pipe_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_pipe *p = ctx;
 
+    assert(p->output.handler != NULL);
+
     if (p->piped > 0) {
         pipe_consume(p);
-        if (p->piped > 0)
+        if (p->piped > 0 || p->output.handler == NULL)
             return 0;
     }
 
@@ -80,13 +82,16 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     struct istream_pipe *p = ctx;
     ssize_t nbytes;
 
+    assert(p->output.handler != NULL);
     assert(p->fds[1] >= 0);
 
     if (p->piped > 0) {
         pipe_consume(p);
-        if (p->piped > 0)
+        if (p->piped > 0 || p->output.handler == NULL)
             return 0;
     }
+
+    assert(p->fds[1] >= 0);
 
     if (type == ISTREAM_PIPE)
         /* it's already a pipe - no need for wrapping it into a pipe */
