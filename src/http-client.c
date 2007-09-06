@@ -43,6 +43,7 @@ struct http_client_connection {
         istream_t istream;
         int blocking;
         char request_line_buffer[1024];
+        char content_length_buffer[32];
 
         const struct http_client_response_handler *handler;
         void *handler_ctx;
@@ -723,6 +724,7 @@ void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
                     growing_buffer_t headers,
+                    off_t content_length, istream_t body,
                     const struct http_client_response_handler *handler,
                     void *ctx)
 {
@@ -758,6 +760,19 @@ http_client_request(http_client_connection_t connection,
     /* XXX what if this header already exists? */
     header_write(headers, "user-agent", "beng-proxy v" VERSION);
 
+    if (body != NULL) {
+        if (content_length == (off_t)-1) {
+            header_write(headers, "transfer-encoding", "chunked");
+            body = istream_chunked_new(connection->request.pool, body);
+        } else {
+            snprintf(connection->request.content_length_buffer,
+                     sizeof(connection->request.content_length_buffer),
+                     "%lu", (unsigned long)content_length);
+            header_write(headers, "content-length",
+                         connection->request.content_length_buffer);
+        }
+    }
+
     growing_buffer_write_buffer(headers, "\r\n", 2);
 
     header_stream = growing_buffer_istream(headers);
@@ -766,7 +781,7 @@ http_client_request(http_client_connection_t connection,
 
     connection->request.istream = istream_cat_new(connection->request.pool,
                                                   request_line_stream,
-                                                  header_stream, /* XXX body, */ NULL);
+                                                  header_stream, body);
     connection->request.istream->handler = &http_client_request_stream_handler;
     connection->request.istream->handler_ctx = connection;
 
