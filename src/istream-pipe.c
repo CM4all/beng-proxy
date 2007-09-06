@@ -21,19 +21,6 @@ struct istream_pipe {
     size_t piped;
 };
 
-static void
-pipe_eof_detected(struct istream_pipe *p)
-{
-    assert(p->input != NULL);
-    assert(p->piped == 0);
-
-    pool_unref(p->input->pool);
-    p->input = NULL;
-
-    istream_invoke_eof(&p->output);
-    istream_close(&p->output);
-}
-
 static ssize_t
 pipe_consume(struct istream_pipe *p)
 {
@@ -53,6 +40,13 @@ pipe_consume(struct istream_pipe *p)
     if (nbytes > 0) {
         assert((size_t)nbytes < p->piped);
         p->piped -= (size_t)nbytes;
+
+        if (p->piped == 0 && p->input == NULL) {
+            /* p->input has already reported EOF, and we have been
+               waiting for the pipe buffer to become empty */
+            istream_invoke_eof(&p->output);
+            istream_close(&p->output);
+        }
     }
 
     return nbytes;
@@ -111,10 +105,16 @@ pipe_input_eof(void *ctx)
 {
     struct istream_pipe *p = ctx;
 
+    p->input->handler = NULL;
+    p->input->handler_ctx = NULL;
+
+    pool_unref(p->input->pool);
     p->input = NULL;
 
-    if (p->piped == 0)
-        pipe_eof_detected(p);
+    if (p->piped == 0) {
+        istream_invoke_eof(&p->output);
+        istream_close(&p->output);
+    }
 }
 
 static void
