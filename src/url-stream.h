@@ -23,6 +23,7 @@ url_stream_t attr_malloc
 url_stream_new(pool_t pool,
                http_method_t method, const char *url,
                growing_buffer_t headers,
+               off_t content_length, istream_t body,
                url_stream_callback_t callback, void *ctx);
 
 void

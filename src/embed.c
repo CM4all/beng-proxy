@@ -87,6 +87,7 @@ embed_new(pool_t pool, const char *url, const struct widget *widget,
 
     embed->url_stream = url_stream_new(pool,
                                        HTTP_METHOD_GET, url, NULL,
+                                       0, NULL, /* XXX request body */
                                        embed_http_client_callback, embed);
     if (embed->url_stream == NULL)
         istream_delayed_set(embed->delayed,

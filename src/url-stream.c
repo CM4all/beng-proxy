@@ -17,9 +17,13 @@
 
 struct url_stream {
     pool_t pool;
+
     http_method_t method;
     const char *uri;
     growing_buffer_t headers;
+    off_t content_length;
+    istream_t body;
+
     client_socket_t client_socket;
     http_client_connection_t http;
     int got_response;
@@ -126,6 +130,7 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
         us->http = http_client_connection_new(us->pool, fd,
                                               &url_stream_connection_handler, us);
         http_client_request(us->http, us->method, us->uri, us->headers,
+                            us->content_length, us->body,
                             &url_stream_response_handler, us);
     } else {
         fprintf(stderr, "failed to connect: %s\n", strerror(err));
@@ -137,6 +142,7 @@ url_stream_t attr_malloc
 url_stream_new(pool_t pool,
                http_method_t method, const char *url,
                growing_buffer_t headers,
+               off_t content_length, istream_t body,
                url_stream_callback_t callback, void *ctx)
 {
     url_stream_t us;
@@ -157,6 +163,8 @@ url_stream_new(pool_t pool,
     us->pool = pool;
     us->method = method;
     us->headers = headers;
+    us->content_length = content_length;
+    us->body = body;
     us->client_socket = NULL;
     us->callback = callback;
     us->callback_ctx = ctx;

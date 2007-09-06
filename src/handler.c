@@ -25,6 +25,10 @@ translate(struct http_server_request *request)
         /* XXX append query string */
         snprintf(path, sizeof(path), "http://dory.intern.cm-ag/~max/%.*s",
                  (int)translated->uri.base_length - 7, translated->uri.base + 7);
+    } else if (memcmp(request->uri, "/test/", 6) == 0) {
+        /* XXX append query string */
+        snprintf(path, sizeof(path), "http://cfatest01.intern.cm-ag/%.*s",
+                 (int)translated->uri.base_length - 6, translated->uri.base + 6);
     } else {
         /* XXX this is, of course, a huge security hole */
         snprintf(path, sizeof(path), "/var/www/%.*s",

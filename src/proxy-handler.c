@@ -101,27 +101,23 @@ proxy_callback(struct client_connection *connection,
                struct translated *translated)
 {
     struct proxy_transfer *pt;
+    istream_t body;
 
     (void)connection;
-
-    if (request->method != HTTP_METHOD_HEAD &&
-        request->method != HTTP_METHOD_GET) {
-        http_server_send_message(request,
-                                 HTTP_STATUS_METHOD_NOT_ALLOWED,
-                                 "This method is not supported.");
-        return;
-    }
-
-    if (request->body != NULL)
-        istream_close(request->body); /* XXX */
 
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->pool = request->pool;
     pt->request = request;
     pt->translated = translated;
 
+    if (request->body == NULL)
+        body = NULL;
+    else
+        body = istream_hold_new(request->pool, request->body);
+
     pt->url_stream = url_stream_new(request->pool,
-                                    HTTP_METHOD_GET, translated->path, NULL,
+                                    request->method, translated->path, NULL,
+                                    request->content_length, body,
                                     proxy_http_client_callback, pt);
     if (pt->url_stream == NULL) {
         http_server_send_message(request,
