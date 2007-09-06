@@ -324,7 +324,9 @@ http_server_request_stream_close(istream_t istream)
 
     connection->request.read_state = READ_END;
     connection->request.direct_mode = 0;
-    connection->request.request->body = NULL;
+
+    if (connection->request.request != NULL)
+        connection->request.request->body = NULL;
 
     if (connection->request.body_rest > 0 ||
         (connection->request.body_rest == (off_t)-1 && !connection->request.dechunk_eof))
@@ -558,6 +560,7 @@ http_server_consume_input(http_server_connection_t connection)
                 break;
         } else if (connection->request.read_state == READ_BODY) {
             http_server_consume_body(connection);
+            break;
         } else {
             break;
         }
@@ -697,8 +700,6 @@ http_server_connection_close(http_server_connection_t connection)
     if (connection->request.read_state != READ_START) {
         pool_t pool;
 
-        connection->request.read_state = READ_START;
-
         assert(connection->request.request != NULL);
 
         pool = connection->request.request->pool;
@@ -706,6 +707,8 @@ http_server_connection_close(http_server_connection_t connection)
         pool_ref(pool);
 
         http_server_request_free(&connection->request.request);
+
+        connection->request.read_state = READ_START;
 
         if (connection->response.writing) {
             if (connection->response.istream != NULL)
@@ -822,10 +825,10 @@ http_server_response_stream_eof(void *ctx)
         connection->keep_alive = 0;
     }
 
+    http_server_request_free(&connection->request.request);
+
     connection->request.read_state = READ_START;
     connection->response.writing = 0;
-
-    http_server_request_free(&connection->request.request);
 
     if (connection->keep_alive) {
         /* set up events for next request */
