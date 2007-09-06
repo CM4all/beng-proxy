@@ -40,6 +40,8 @@ istream_file_invoke_data(struct file *file)
 {
     const void *data;
     size_t length, consumed;
+
+    assert(file->buffer != NULL);
     
     data = fifo_buffer_read(file->buffer, &length);
     if (data == NULL)
@@ -82,7 +84,12 @@ istream_file_read(istream_t istream)
     size_t rest;
     ssize_t nbytes;
 
-    rest = istream_file_invoke_data(file);
+    if (file->buffer == NULL) {
+        if (file->rest > 0)
+            file->buffer = fifo_buffer_new(file->stream.pool, 4096);
+        rest = 0;
+    } else
+        rest = istream_file_invoke_data(file);
 
     if (file->rest == 0) {
         if (rest == 0)
@@ -127,7 +134,7 @@ istream_file_direct(istream_t istream)
     ssize_t nbytes;
 
     /* first consume the rest of the buffer */
-    if (istream_file_invoke_data(file) > 0)
+    if (file->buffer != NULL && istream_file_invoke_data(file) > 0)
         return;
 
     if (file->rest == 0) {
@@ -194,7 +201,7 @@ istream_file_new(pool_t pool, const char *path, off_t length)
     }
 
     file->rest = length;
-    file->buffer = fifo_buffer_new(pool, 4096);
+    file->buffer = NULL;
     file->path = path;
     file->stream = istream_file;
     file->stream.pool = pool;
