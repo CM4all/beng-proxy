@@ -52,6 +52,12 @@ pipe_consume(struct istream_pipe *p)
     return nbytes;
 }
 
+
+/*
+ * istream handler
+ *
+ */
+
 static size_t
 pipe_input_data(const void *data, size_t length, void *ctx)
 {
@@ -138,6 +144,11 @@ static const struct istream_handler pipe_input_handler = {
 };
 
 
+/*
+ * istream implementation
+ *
+ */
+
 static inline struct istream_pipe *
 istream_to_pipe(istream_t istream)
 {
@@ -189,6 +200,12 @@ static const struct istream istream_pipe = {
     .direct = istream_pipe_direct,
     .close = istream_pipe_close,
 };
+
+
+/*
+ * constructor
+ *
+ */
 
 istream_t
 istream_pipe_new(pool_t pool, istream_t input)
