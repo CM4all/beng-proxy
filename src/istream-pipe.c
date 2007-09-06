@@ -80,8 +80,6 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     struct istream_pipe *p = ctx;
     ssize_t nbytes;
 
-    (void)type; /* XXX check if it's already a pipe */
-
     assert(p->fds[1] >= 0);
 
     if (p->piped > 0) {
@@ -89,6 +87,10 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         if (p->piped > 0)
             return 0;
     }
+
+    if (type == ISTREAM_PIPE)
+        /* it's already a pipe - no need for wrapping it into a pipe */
+        return istream_invoke_direct(&p->output, type, fd, max_length);
 
     nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,
                     SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
