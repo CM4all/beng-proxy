@@ -98,7 +98,7 @@ http_client_response_max_read(http_client_connection_t connection, size_t length
 }
 
 static void
-http_client_try_response_direct(http_client_connection_t connection);
+http_client_try_read(http_client_connection_t connection);
 
 
 /*
@@ -126,10 +126,8 @@ http_client_response_stream_read(istream_t istream)
 
     http_client_consume_body(connection);
 
-    if (connection->response.read_state == READ_BODY &&
-        (istream->handler_direct & ISTREAM_SOCKET) != 0 &&
-        fifo_buffer_empty(connection->input))
-        http_client_try_response_direct(connection);
+    if (connection->response.read_state == READ_BODY)
+        http_client_try_read(connection);
 
     pool_unref(connection->pool);
 }
@@ -535,6 +533,11 @@ http_client_try_read(http_client_connection_t connection)
         }
 
         if (nbytes < 0) {
+            if (errno == EAGAIN) {
+                event2_or(&connection->event, EV_READ);
+                return;
+            }
+
             perror("read error on HTTP connection");
             http_client_connection_close(connection);
             return;
