@@ -15,6 +15,7 @@ typedef enum {
     ISTREAM_FILE = 01,
     ISTREAM_PIPE = 02,
     ISTREAM_SOCKET = 04,
+    ISTREAM_ANY = (ISTREAM_FILE | ISTREAM_PIPE | ISTREAM_SOCKET),
 } istream_direct_t;
 
 typedef struct istream *istream_t;
