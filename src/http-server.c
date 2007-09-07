@@ -209,6 +209,7 @@ http_server_request_body_consumed(http_server_connection_t connection, size_t nb
     pool_unref(connection->pool);
 }
 
+/** determine how much can be read from the request body */
 static inline size_t
 http_server_request_max_read(http_server_connection_t connection, size_t length)
 {
@@ -261,6 +262,11 @@ http_server_consume_body(http_server_connection_t connection)
     event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
 }
 
+
+/*
+ * istream implementation for the request body
+ *
+ */
 
 static inline http_server_connection_t
 response_stream_to_connection(istream_t istream)
@@ -736,6 +742,12 @@ http_server_connection_free(http_server_connection_t *connection_r)
     http_server_connection_close(connection);
 }
 
+
+
+/*
+ * istream handler for the response
+ *
+ */
 
 static size_t
 http_server_response_stream_data(const void *data, size_t length, void *ctx)

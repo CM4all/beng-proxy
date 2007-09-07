@@ -72,12 +72,6 @@ struct http_client_connection {
 #endif
 };
 
-static inline http_client_connection_t
-response_stream_to_connection(istream_t istream)
-{
-    return (http_client_connection_t)(((char*)istream) - offsetof(struct http_client_connection, response.stream));
-}
-
 static inline int
 http_client_connection_valid(http_client_connection_t connection)
 {
@@ -90,6 +84,7 @@ http_client_consume_body(http_client_connection_t connection);
 static void
 http_client_response_body_consumed(http_client_connection_t connection, size_t nbytes);
 
+/** determine how much can be read from the response body */
 static inline size_t
 http_client_response_max_read(http_client_connection_t connection, size_t length)
 {
@@ -104,6 +99,18 @@ http_client_response_max_read(http_client_connection_t connection, size_t length
 
 static void
 http_client_try_response_direct(http_client_connection_t connection);
+
+
+/*
+ * istream implementation for the response body
+ *
+ */
+
+static inline http_client_connection_t
+response_stream_to_connection(istream_t istream)
+{
+    return (http_client_connection_t)(((char*)istream) - offsetof(struct http_client_connection, response.stream));
+}
 
 static void
 http_client_response_stream_read(istream_t istream)
@@ -181,6 +188,7 @@ static const struct istream http_client_response_stream = {
     .read = http_client_response_stream_read,
     .close = http_client_response_stream_close,
 };
+
 
 static void
 http_client_response_body_consumed(http_client_connection_t connection, size_t nbytes)
@@ -657,6 +665,11 @@ http_client_connection_close(http_client_connection_t connection)
     pool_unref(connection->pool);
 }
 
+
+/*
+ * istream handler for the request
+ *
+ */
 
 static size_t
 http_client_request_stream_data(const void *data, size_t length, void *ctx)
