@@ -570,16 +570,11 @@ http_server_consume_input(http_server_connection_t connection)
 static void
 http_server_try_read(http_server_connection_t connection)
 {
-    void *buffer;
-    size_t max_length;
     ssize_t nbytes;
 
-    buffer = fifo_buffer_write(connection->input, &max_length);
-    assert(buffer != NULL);
+    nbytes = read_to_buffer(connection->fd, connection->input, INT_MAX);
+    assert(nbytes != -2);
 
-    assert(max_length > 0);
-
-    nbytes = read(connection->fd, buffer, max_length);
     if (unlikely(nbytes < 0)) {
         if (errno == EAGAIN) {
             event2_or(&connection->event, EV_READ);
@@ -596,8 +591,6 @@ http_server_try_read(http_server_connection_t connection)
         http_server_connection_close(connection);
         return;
     }
-
-    fifo_buffer_append(connection->input, (size_t)nbytes);
 
     http_server_consume_input(connection);
 
