@@ -31,6 +31,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __linux
+#ifdef SPLICE
+#define ISTREAM_DIRECT_SUPPORT (ISTREAM_FILE | ISTREAM_PIPE)
+#else
+#define ISTREAM_DIRECT_SUPPORT ISTREAM_FILE
+#endif
+#else
+#define ISTREAM_DIRECT_SUPPORT 0
+#endif
+
+
 static const char *http_status_to_string_data[][20] = {
     [2] = {
         [HTTP_STATUS_OK - 200] = "200 OK",
@@ -83,7 +94,6 @@ struct http_server_connection {
         struct http_server_request *request;
 
         off_t body_rest;
-        int direct_mode;
         struct istream stream;
         int dechunk_eof;
     } request;
@@ -262,53 +272,38 @@ static void
 http_server_request_stream_read(istream_t istream)
 {
     http_server_connection_t connection = response_stream_to_connection(istream);
-    pool_ref(connection->pool);
-
-    connection->request.direct_mode = 0;
-
-    http_server_consume_body(connection);
-
-    pool_unref(connection->pool);
-}
-
-static void
-http_server_try_request_direct(http_server_connection_t connection)
-{
-    ssize_t nbytes;
-
-    assert(connection->fd >= 0);
-    assert(connection->request.direct_mode);
-    assert(connection->request.read_state == READ_BODY);
-    assert(connection->request.stream.handler->direct != NULL);
-
-    nbytes = istream_invoke_direct(&connection->request.stream,
-                                   ISTREAM_SOCKET, connection->fd,
-                                   http_server_request_max_read(connection, INT_MAX));
-    if (nbytes < 0) {
-        /* XXX EAGAIN? */
-        perror("read error on HTTP connection");
-        http_server_connection_close(connection);
-        return;
-    }
-
-    if (nbytes > 0)
-        http_server_request_body_consumed(connection, (size_t)nbytes);
-}
-
-static void
-http_server_request_stream_direct(istream_t istream)
-{
-    http_server_connection_t connection = response_stream_to_connection(istream);
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
     assert(connection->request.read_state == READ_BODY);
     assert(connection->request.stream.handler != NULL);
-    assert(connection->request.stream.handler->direct != NULL);
 
-    connection->request.direct_mode = 1;
+    pool_ref(connection->pool);
 
-    http_server_try_request_direct(connection);
+    http_server_consume_body(connection);
+
+    if (connection->request.read_state == READ_BODY &&
+        (istream->handler_direct & ISTREAM_SOCKET) != 0 &&
+        fifo_buffer_empty(connection->input)) {
+        ssize_t nbytes;
+
+        assert(connection->request.stream.handler->direct != NULL);
+
+        nbytes = istream_invoke_direct(&connection->request.stream,
+                                       ISTREAM_SOCKET, connection->fd,
+                                       http_server_request_max_read(connection, INT_MAX));
+        if (nbytes < 0) {
+            /* XXX EAGAIN? */
+            perror("read error on HTTP connection");
+            http_server_connection_close(connection);
+            return;
+        }
+
+        if (nbytes > 0)
+            http_server_request_body_consumed(connection, (size_t)nbytes);
+    }
+
+    pool_unref(connection->pool);
 }
 
 static void
@@ -324,7 +319,6 @@ http_server_request_stream_close(istream_t istream)
     event2_nand(&connection->event, EV_READ);
 
     connection->request.read_state = READ_END;
-    connection->request.direct_mode = 0;
 
     if (connection->request.request != NULL)
         connection->request.request->body = NULL;
@@ -338,7 +332,6 @@ http_server_request_stream_close(istream_t istream)
 
 static const struct istream http_server_request_stream = {
     .read = http_server_request_stream_read,
-    .direct = http_server_request_stream_direct,
     .close = http_server_request_stream_close,
 };
 
@@ -355,7 +348,7 @@ http_server_try_write(http_server_connection_t connection)
 
     http_server_cork(connection);
     event2_lock(&connection->event);
-    istream_direct(connection->response.istream);
+    istream_read(connection->response.istream);
     event2_unlock(&connection->event);
     http_server_uncork(connection);
 }
@@ -951,6 +944,7 @@ http_server_response(struct http_server_request *request,
     connection->response.istream = istream_cat_new(request->pool, status_stream,
                                                    header_stream, body, NULL);
     connection->response.istream->handler = &http_server_response_stream_handler;
+    connection->response.istream->handler_direct = ISTREAM_DIRECT_SUPPORT;
     connection->response.istream->handler_ctx = connection;
 
     connection->response.writing = 1;

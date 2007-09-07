@@ -83,6 +83,8 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     ssize_t nbytes;
 
     assert(p->output.handler != NULL);
+    assert(p->output.handler->direct != NULL);
+    assert((p->output.handler_direct & ISTREAM_PIPE) != 0);
     assert(p->fds[1] >= 0);
 
     if (p->piped > 0) {
@@ -170,15 +172,10 @@ istream_pipe_read(istream_t istream)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
 
+    /* XXX is this update required? */
+    p->input->handler_direct = istream->handler_direct | ISTREAM_FILE; /* XXX ISTREAM_SOCKET is not yet supported by Linux 2.6.23 */
+
     istream_read(p->input);
-}
-
-static void
-istream_pipe_direct(istream_t istream)
-{
-    struct istream_pipe *p = istream_to_pipe(istream);
-
-    istream_direct(p->input);
 }
 
 static void
@@ -207,7 +204,6 @@ istream_pipe_close(istream_t istream)
 
 static const struct istream istream_pipe = {
     .read = istream_pipe_read,
-    .direct = istream_pipe_direct,
     .close = istream_pipe_close,
 };
 
@@ -225,7 +221,6 @@ istream_pipe_new(pool_t pool, istream_t input)
 
     assert(input != NULL);
     assert(input->handler == NULL);
-    assert(input->direct != NULL);
 
     ret = pipe(p->fds);
     if (ret < 0) {
@@ -240,6 +235,7 @@ istream_pipe_new(pool_t pool, istream_t input)
 
     input->handler = &pipe_input_handler;
     input->handler_ctx = p;
+    input->handler_direct = ISTREAM_FILE | ISTREAM_PIPE; /* XXX ISTREAM_SOCKET is not yet supported by Linux 2.6.23 */
     pool_ref(input->pool);
 
     return &p->output;

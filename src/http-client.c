@@ -61,7 +61,6 @@ struct http_client_connection {
         strmap_t headers;
         off_t content_length, body_rest;
         struct istream stream;
-        int direct_mode;
         istream_t body;
         int dechunk_eof;
     } response;
@@ -89,23 +88,25 @@ static void
 http_client_consume_body(http_client_connection_t connection);
 
 static void
-http_client_response_stream_read(istream_t istream)
+http_client_response_body_consumed(http_client_connection_t connection, size_t nbytes);
+
+static inline size_t
+http_client_response_max_read(http_client_connection_t connection, size_t length)
 {
-    http_client_connection_t connection = response_stream_to_connection(istream);
-    pool_ref(connection->pool);
+    assert(connection->response.read_state == READ_BODY);
 
-    connection->response.direct_mode = 0;
-
-    http_client_consume_body(connection);
-
-    pool_unref(connection->pool);
+    if (connection->response.body_rest != (off_t)-1 &&
+        connection->response.body_rest < (off_t)length)
+        return (size_t)connection->response.body_rest;
+    else
+        return length;
 }
 
 static void
 http_client_try_response_direct(http_client_connection_t connection);
 
 static void
-http_client_response_stream_direct(istream_t istream)
+http_client_response_stream_read(istream_t istream)
 {
     http_client_connection_t connection = response_stream_to_connection(istream);
 
@@ -113,11 +114,17 @@ http_client_response_stream_direct(istream_t istream)
     assert(connection->fd >= 0);
     assert(connection->response.read_state == READ_BODY);
     assert(connection->response.stream.handler != NULL);
-    assert(connection->response.stream.handler->direct != NULL);
 
-    connection->response.direct_mode = 1;
+    pool_ref(connection->pool);
 
-    http_client_try_response_direct(connection);
+    http_client_consume_body(connection);
+
+    if (connection->response.read_state == READ_BODY &&
+        (istream->handler_direct & ISTREAM_SOCKET) != 0 &&
+        fifo_buffer_empty(connection->input))
+        http_client_try_response_direct(connection);
+
+    pool_unref(connection->pool);
 }
 
 static void
@@ -145,7 +152,6 @@ http_client_response_stream_close(istream_t istream)
 
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
-    connection->response.direct_mode = 0;
     connection->response.body = NULL;
 
     if (connection->response.body_rest > 0) {
@@ -173,7 +179,6 @@ http_client_response_stream_close(istream_t istream)
 
 static const struct istream http_client_response_stream = {
     .read = http_client_response_stream_read,
-    .direct = http_client_response_stream_direct,
     .close = http_client_response_stream_close,
 };
 
@@ -420,18 +425,6 @@ http_client_parse_headers(http_client_connection_t connection)
     return 1;
 }
 
-static inline size_t
-http_client_response_max_read(http_client_connection_t connection, size_t length)
-{
-    assert(connection->response.read_state == READ_BODY);
-
-    if (connection->response.body_rest != (off_t)-1 &&
-        connection->response.body_rest < (off_t)length)
-        return (size_t)connection->response.body_rest;
-    else
-        return length;
-}
-
 static void
 http_client_consume_body(http_client_connection_t connection)
 {
@@ -495,7 +488,7 @@ http_client_try_response_direct(http_client_connection_t connection)
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
-    assert(connection->response.direct_mode);
+    assert(connection->response.stream.handler_direct & ISTREAM_SOCKET);
     assert(connection->response.read_state == READ_BODY);
     assert(connection->response.stream.handler->direct != NULL);
 
@@ -516,8 +509,10 @@ http_client_try_response_direct(http_client_connection_t connection)
 static void
 http_client_try_read(http_client_connection_t connection)
 {
-    if (connection->response.direct_mode &&
+    if (connection->response.read_state == READ_BODY &&
+        (connection->response.stream.handler_direct & ISTREAM_SOCKET) != 0 &&
         fifo_buffer_empty(connection->input)) {
+        /* XXX ensure connection->input is empty */
         http_client_try_response_direct(connection);
     } else {
         ssize_t nbytes;
@@ -544,7 +539,7 @@ http_client_try_read(http_client_connection_t connection)
 
         if (http_client_connection_valid(connection) &&
             connection->response.read_state != READ_NONE &&
-            (connection->response.direct_mode ||
+            ((connection->response.stream.handler_direct & ISTREAM_SOCKET) != 0 ||
              !fifo_buffer_full(connection->input)))
             event2_or(&connection->event, EV_READ);
     }
@@ -700,7 +695,6 @@ http_client_request_stream_eof(void *ctx)
 
     connection->response.read_state = READ_STATUS;
     connection->response.headers = NULL;
-    connection->response.direct_mode = 0;
 
     event2_set(&connection->event, EV_READ);
 }

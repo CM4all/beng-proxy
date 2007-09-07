@@ -120,22 +120,10 @@ istream_hold_read(istream_t istream)
     if (unlikely(hold->input_eof || hold->input_free))
         /* eof() or free() was queued */
         istream_close(istream);
-    else
+    else {
+        hold->input->handler_direct = hold->output.handler_direct;
         istream_read(hold->input);
-}
-
-static void
-istream_hold_direct(istream_t istream)
-{
-    struct istream_hold *hold = istream_to_hold(istream);
-
-    assert(hold->output.handler != NULL);
-
-    if (unlikely(hold->input_eof || hold->input_free))
-        /* eof() or free() was queued */
-        istream_close(istream);
-    else
-        istream_direct(hold->input);
+    }
 }
 
 static void
@@ -162,7 +150,6 @@ istream_hold_close(istream_t istream)
 
 static const struct istream istream_hold = {
     .read = istream_hold_read,
-    .direct = istream_hold_direct,
     .close = istream_hold_close,
 };
 

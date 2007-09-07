@@ -78,9 +78,8 @@ istream_file_max_read(const struct file *file)
 }
 
 static void
-istream_file_read(istream_t istream)
+istream_file_try_data(struct file *file)
 {
-    struct file *file = istream_to_file(istream);
     size_t rest;
     ssize_t nbytes;
 
@@ -107,13 +106,13 @@ istream_file_read(istream_t istream)
         } else {
             fprintf(stderr, "premature end of file in '%s'\n",
                     file->path);
-            istream_close(istream);
+            istream_close(&file->stream);
         }
         return;
     } else if (nbytes == -1) {
         fprintf(stderr, "failed to read from '%s': %s\n",
                 file->path, strerror(errno));
-        istream_close(istream);
+        istream_close(&file->stream);
         return;
     } else if (nbytes > 0 && file->rest != (off_t)-1) {
         file->rest -= (off_t)nbytes;
@@ -128,10 +127,11 @@ istream_file_read(istream_t istream)
 }
 
 static void
-istream_file_direct(istream_t istream)
+istream_file_try_direct(struct file *file)
 {
-    struct file *file = istream_to_file(istream);
     ssize_t nbytes;
+
+    assert(file->stream.handler->direct != NULL);
 
     /* first consume the rest of the buffer */
     if (file->buffer != NULL && istream_file_invoke_data(file) > 0)
@@ -142,7 +142,7 @@ istream_file_direct(istream_t istream)
         return;
     }
 
-    nbytes = istream_invoke_direct(istream, ISTREAM_FILE, file->fd,
+    nbytes = istream_invoke_direct(&file->stream, ISTREAM_FILE, file->fd,
                                    istream_file_max_read(file));
     if (nbytes > 0 || nbytes == -2) {
         /* -2 means the callback wasn't able to consume any data right
@@ -159,14 +159,27 @@ istream_file_direct(istream_t istream)
         } else {
             fprintf(stderr, "premature end of file in '%s'\n",
                     file->path);
-            istream_close(istream);
+            istream_close(&file->stream);
         }
     } else {
         /* XXX */
         fprintf(stderr, "failed to read from '%s': %s\n",
                 file->path, strerror(errno));
-        istream_close(istream);
+        istream_close(&file->stream);
     }
+}
+
+static void
+istream_file_read(istream_t istream)
+{
+    struct file *file = istream_to_file(istream);
+
+    assert(file->stream.handler != NULL);
+
+    if ((istream->handler_direct & ISTREAM_FILE) == 0)
+        istream_file_try_data(file);
+    else
+        istream_file_try_direct(file);
 }
 
 static void
@@ -184,7 +197,6 @@ istream_file_close(istream_t istream)
 
 static const struct istream istream_file = {
     .read = istream_file_read,
-    .direct = istream_file_direct,
     .close = istream_file_close,
 };
 

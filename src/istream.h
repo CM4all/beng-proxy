@@ -30,9 +30,9 @@ struct istream {
     pool_t pool;
     const struct istream_handler *handler;
     void *handler_ctx;
+    istream_direct_t handler_direct;
 
     void (*read)(istream_t istream);
-    void (*direct)(istream_t istream);
     void (*close)(istream_t istream);
 };
 
@@ -40,15 +40,6 @@ static inline void
 istream_read(istream_t istream)
 {
     istream->read(istream);
-}
-
-static inline void
-istream_direct(istream_t istream)
-{
-    if (istream->direct == NULL)
-        istream->read(istream);
-    else
-        istream->direct(istream);
 }
 
 static inline void

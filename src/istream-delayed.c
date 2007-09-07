@@ -12,7 +12,7 @@
 struct istream_delayed {
     struct istream output;
     istream_t input;
-    int input_eof, direct_mode;
+    int input_eof;
     void (*abort_callback)(void *ctx);
     void *callback_ctx;
 };
@@ -85,17 +85,6 @@ istream_delayed_read(istream_t istream)
 }
 
 static void
-istream_delayed_direct(istream_t istream)
-{
-    struct istream_delayed *delayed = istream_to_delayed(istream);
-
-    if (delayed->input != NULL)
-        istream_direct(delayed->input);
-    else
-        delayed->direct_mode = 1;
-}
-
-static void
 istream_delayed_close(istream_t istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
@@ -120,7 +109,6 @@ istream_delayed_close(istream_t istream)
 
 static const struct istream istream_delayed = {
     .read = istream_delayed_read,
-    .direct = istream_delayed_direct,
     .close = istream_delayed_close,
 };
 
@@ -137,7 +125,6 @@ istream_delayed_new(pool_t pool, void (*abort_callback)(void *ctx),
     delayed->output.pool = pool;
     delayed->input = NULL;
     delayed->input_eof = 0;
-    delayed->direct_mode = 0;
     delayed->abort_callback = abort_callback;
     delayed->callback_ctx = callback_ctx;
 
@@ -160,12 +147,10 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
 
     input->handler = &delayed_input_handler;
     input->handler_ctx = delayed;
+    input->handler_direct = delayed->output.handler_direct;
 
     if (delayed->output.handler == NULL) /* allow this special case here */
         return;
 
-    if (delayed->direct_mode)
-        istream_direct(input);
-    else
-        istream_read(input);
+    istream_read(input);
 }

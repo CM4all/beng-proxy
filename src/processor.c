@@ -106,7 +106,6 @@ processor_output_stream_close(istream_t istream)
 
 static const struct istream processor_output_stream = {
     .read = processor_output_stream_read,
-    .direct = NULL,
     .close = processor_output_stream_close,
 };
 

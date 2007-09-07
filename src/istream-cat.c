@@ -125,34 +125,9 @@ istream_cat_read(istream_t istream)
         }
 
         cat->blocking = 1;
+        cat->current->istream->handler_direct = istream->handler_direct;
         istream_read(cat->current->istream);
-    } while (cat->current != NULL && !cat->direct_mode && !cat->blocking);
-
-    pool_unref(cat->output.pool);
-}
-
-static void
-istream_cat_direct(istream_t istream)
-{
-    struct istream_cat *cat = istream_to_cat(istream);
-
-    cat->direct_mode = 1;
-
-    pool_ref(cat->output.pool);
-
-    do {
-        while (cat->current != NULL && cat->current->istream == NULL)
-            cat->current = cat->current->next;
-
-        if (cat->current == NULL) {
-            istream_invoke_eof(&cat->output);
-            istream_close(&cat->output);
-            break;
-        }
-
-        cat->blocking = 1;
-        istream_direct(cat->current->istream);
-    } while (cat->current != NULL && cat->direct_mode && !cat->blocking);
+    } while (cat->current != NULL && !cat->blocking);
 
     pool_unref(cat->output.pool);
 }
@@ -178,7 +153,6 @@ istream_cat_close(istream_t istream)
 
 static const struct istream istream_cat = {
     .read = istream_cat_read,
-    .direct = istream_cat_direct,
     .close = istream_cat_close,
 };
 
