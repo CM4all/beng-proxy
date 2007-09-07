@@ -11,11 +11,10 @@
 
 #include <sys/types.h>
 
-/** fd types for the direct mode; values taken from sys/stat.h */
 typedef enum {
-    ISTREAM_FILE = 0100000,
-    ISTREAM_PIPE = 0010000,
-    ISTREAM_SOCKET = 0140000,
+    ISTREAM_FILE = 01,
+    ISTREAM_PIPE = 02,
+    ISTREAM_SOCKET = 04,
 } istream_direct_t;
 
 typedef struct istream *istream_t;
