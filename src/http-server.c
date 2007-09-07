@@ -262,6 +262,33 @@ http_server_consume_body(http_server_connection_t connection)
     event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
 }
 
+static void
+http_server_try_request_direct(http_server_connection_t connection)
+{
+    ssize_t nbytes;
+
+    assert(connection->fd >= 0);
+    assert(connection->request.stream.handler_direct & ISTREAM_SOCKET);
+    assert(connection->request.read_state == READ_BODY);
+    assert(connection->request.stream.handler->direct != NULL);
+
+    nbytes = istream_invoke_direct(&connection->request.stream,
+                                   ISTREAM_SOCKET, connection->fd,
+                                   http_server_request_max_read(connection, INT_MAX));
+    if (nbytes < 0) {
+        /* XXX EAGAIN? */
+        perror("read error on HTTP connection");
+        http_server_connection_close(connection);
+        return;
+    }
+
+    if (nbytes > 0)
+        http_server_request_body_consumed(connection, (size_t)nbytes);
+}
+
+static void
+http_server_try_read(http_server_connection_t connection);
+
 
 /*
  * istream implementation for the request body
@@ -288,26 +315,8 @@ http_server_request_stream_read(istream_t istream)
 
     http_server_consume_body(connection);
 
-    if (connection->request.read_state == READ_BODY &&
-        (istream->handler_direct & ISTREAM_SOCKET) != 0 &&
-        fifo_buffer_empty(connection->input)) {
-        ssize_t nbytes;
-
-        assert(connection->request.stream.handler->direct != NULL);
-
-        nbytes = istream_invoke_direct(&connection->request.stream,
-                                       ISTREAM_SOCKET, connection->fd,
-                                       http_server_request_max_read(connection, INT_MAX));
-        if (nbytes < 0) {
-            /* XXX EAGAIN? */
-            perror("read error on HTTP connection");
-            http_server_connection_close(connection);
-            return;
-        }
-
-        if (nbytes > 0)
-            http_server_request_body_consumed(connection, (size_t)nbytes);
-    }
+    if (connection->request.read_state == READ_BODY)
+        http_server_try_read(connection);
 
     pool_unref(connection->pool);
 }
@@ -568,7 +577,7 @@ http_server_consume_input(http_server_connection_t connection)
 }
 
 static void
-http_server_try_read(http_server_connection_t connection)
+http_server_try_read_buffered(http_server_connection_t connection)
 {
     ssize_t nbytes;
 
@@ -600,6 +609,17 @@ http_server_try_read(http_server_connection_t connection)
          connection->request.read_state == READ_BODY) &&
         !fifo_buffer_full(connection->input))
         event2_or(&connection->event, EV_READ);
+}
+
+static void
+http_server_try_read(http_server_connection_t connection)
+{
+    if (connection->request.read_state == READ_BODY &&
+        (connection->request.stream.handler_direct & ISTREAM_SOCKET) != 0 &&
+        fifo_buffer_empty(connection->input))
+        http_server_try_request_direct(connection);
+    else
+        http_server_try_read_buffered(connection);
 }
 
 static void
