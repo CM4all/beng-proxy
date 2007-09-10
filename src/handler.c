@@ -15,7 +15,6 @@ static struct translated *
 translate(struct http_server_request *request)
 {
     struct translated *translated;
-    char path[1024];
 
     translated = p_malloc(request->pool, sizeof(*translated));
 
@@ -23,19 +22,30 @@ translate(struct http_server_request *request)
 
     if (memcmp(request->uri, "/proxy/", 7) == 0) {
         /* XXX append query string */
-        snprintf(path, sizeof(path), "http://dory.intern.cm-ag/~max/%.*s",
-                 (int)translated->uri.base_length - 7, translated->uri.base + 7);
+        translated->path = p_strncat(request->pool,
+                                     "http://dory.intern.cm-ag/~max/",
+                                     sizeof("http://dory.intern.cm-ag/~max/") - 1,
+                                     translated->uri.base + 7,
+                                     translated->uri.base_length - 7,
+                                     NULL);
     } else if (memcmp(request->uri, "/test/", 6) == 0) {
         /* XXX append query string */
-        snprintf(path, sizeof(path), "http://cfatest01.intern.cm-ag/%.*s",
-                 (int)translated->uri.base_length - 6, translated->uri.base + 6);
+        translated->path = p_strncat(request->pool,
+                                     "http://cfatest01.intern.cm-ag/",
+                                     sizeof("http://cfatest01.intern.cm-ag/") - 1,
+                                     translated->uri.base + 6,
+                                     translated->uri.base_length - 6,
+                                     NULL);
     } else {
         /* XXX this is, of course, a huge security hole */
-        snprintf(path, sizeof(path), "/var/www/%.*s",
-                 (int)translated->uri.base_length, translated->uri.base);
+        translated->path = p_strncat(request->pool,
+                                     "/var/www/",
+                                     sizeof("/var/www/") - 1,
+                                     translated->uri.base,
+                                     translated->uri.base_length,
+                                     NULL);
     }
 
-    translated->path = p_strdup(request->pool, path);
     return translated;
 }
 
