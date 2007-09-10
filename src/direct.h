@@ -30,6 +30,8 @@ istream_direct_to_socket(istream_direct_t src_type, int src_fd,
 #endif
         assert(src_type == ISTREAM_FILE);
 
+        (void)src_type;
+
         return sendfile(dest_fd, src_fd, NULL, max_length);
 #ifdef SPLICE
     }
