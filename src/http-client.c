@@ -133,6 +133,13 @@ http_client_response_stream_close(istream_t istream)
     connection->response.headers = NULL;
     connection->response.body = NULL;
 
+    istream_invoke_free(istream);
+
+    if (connection->response.body_reader.rest > 0)
+        connection->keep_alive = 0;
+
+    http_body_deinit(&connection->response.body_reader);
+
     if (connection->request.handler != NULL &&
         connection->request.handler->free != NULL) {
         const struct http_client_response_handler *handler = connection->request.handler;
@@ -141,14 +148,6 @@ http_client_response_stream_close(istream_t istream)
         connection->request.handler_ctx = NULL;
         handler->free(handler_ctx);
     }
-
-    if (connection->response.body_reader.rest > 0) {
-        /* XXX invalidate connection */
-    }
-
-    istream_invoke_free(istream);
-
-    http_body_deinit(&connection->response.body_reader);
 
     if (connection->request.pool != NULL) {
         pool_unref(connection->request.pool);
