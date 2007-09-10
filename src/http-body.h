@@ -12,6 +12,10 @@
 
 #include <stddef.h>
 
+#ifdef VALGRIND
+#include <valgrind/memcheck.h>
+#endif
+
 struct http_body_reader {
     struct istream output;
     off_t rest;
@@ -47,6 +51,16 @@ http_body_init(struct http_body_reader *body,
     body->output.pool = pool;
     body->rest = content_length;
     body->dechunk_eof = 0;
+}
+
+static inline void
+http_body_deinit(struct http_body_reader *body)
+{
+#ifdef VALGRIND
+    VALGRIND_MAKE_MEM_UNDEFINED(body, sizeof(*body));
+#endif
+
+    body->output.pool = NULL;
 }
 
 #endif

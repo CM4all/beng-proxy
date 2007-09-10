@@ -141,13 +141,14 @@ http_client_response_stream_close(istream_t istream)
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
     connection->response.body = NULL;
-    connection->response.body_reader.output.pool = NULL;
 
     if (connection->response.body_reader.rest > 0) {
         /* XXX invalidate connection */
     }
 
     istream_invoke_free(istream);
+
+    http_body_deinit(&connection->response.body_reader);
 
     if (connection->request.pool != NULL) {
         pool_unref(connection->request.pool);

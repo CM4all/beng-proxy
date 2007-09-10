@@ -252,6 +252,8 @@ http_server_request_stream_close(istream_t istream)
         connection->keep_alive = 0;
 
     istream_invoke_free(istream);
+
+    http_body_deinit(&connection->request.body_reader);
 }
 
 static const struct istream http_server_request_stream = {
