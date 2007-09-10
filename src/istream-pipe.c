@@ -14,6 +14,9 @@
 #include <unistd.h>
 #include <errno.h>
 
+/* XXX ISTREAM_SOCKET is not yet supported by Linux 2.6.23 */
+#define SPLICE_SOURCE_TYPES (ISTREAM_FILE | ISTREAM_PIPE)
+
 struct istream_pipe {
     struct istream output;
     istream_t input;
@@ -236,7 +239,7 @@ istream_pipe_new(pool_t pool, istream_t input)
 
     input->handler = &pipe_input_handler;
     input->handler_ctx = p;
-    input->handler_direct = ISTREAM_FILE | ISTREAM_PIPE; /* XXX ISTREAM_SOCKET is not yet supported by Linux 2.6.23 */
+    input->handler_direct = SPLICE_SOURCE_TYPES;
     pool_ref(input->pool);
 
     return &p->output;
