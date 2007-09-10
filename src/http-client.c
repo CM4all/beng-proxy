@@ -255,9 +255,6 @@ http_client_headers_finished(http_client_connection_t connection)
     connection->keep_alive = header_connection != NULL &&
         strcasecmp(header_connection, "keep-alive") == 0;
 
-    connection->response.body_reader.output = http_client_response_stream;
-    connection->response.body_reader.output.pool = connection->request.pool;
-
     value = strmap_get(connection->response.headers, "transfer-encoding");
     if (value == NULL || strcasecmp(value, "chunked") != 0) {
         /* not chunked */
@@ -280,20 +277,26 @@ http_client_headers_finished(http_client_connection_t connection)
             }
         }
 
+        http_body_init(&connection->response.body_reader,
+                       &http_client_response_stream, connection->request.pool,
+                       connection->response.content_length);
+
         connection->response.body = &connection->response.body_reader.output;
     } else {
         /* chunked */
 
         connection->response.content_length = (off_t)-1;
 
-        connection->response.body_reader.dechunk_eof = 0;
+        http_body_init(&connection->response.body_reader,
+                       &http_client_response_stream, connection->request.pool,
+                       connection->response.content_length);
+
         connection->response.body
             = istream_dechunk_new(connection->request.pool,
                                   &connection->response.body_reader.output,
                                   http_body_dechunked_eof, &connection->response.body_reader);
     }
 
-    connection->response.body_reader.rest = connection->response.content_length;
     connection->response.read_state = READ_BODY;
 }
 

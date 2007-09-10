@@ -379,9 +379,10 @@ http_server_headers_finished(http_server_connection_t connection)
                 return;
             }
 
-            connection->request.body_reader.rest = request->content_length;
-            connection->request.body_reader.output = http_server_request_stream;
-            connection->request.body_reader.output.pool = request->pool;
+            http_body_init(&connection->request.body_reader,
+                           &http_server_request_stream, request->pool,
+                           request->content_length);
+
             request->body = &connection->request.body_reader.output;
             connection->request.read_state = READ_BODY;
         }
@@ -390,10 +391,10 @@ http_server_headers_finished(http_server_connection_t connection)
 
         request->content_length = (off_t)-1;
 
-        connection->request.body_reader.rest = request->content_length;
-        connection->request.body_reader.dechunk_eof = 0;
-        connection->request.body_reader.output = http_server_request_stream;
-        connection->request.body_reader.output.pool = request->pool;
+        http_body_init(&connection->request.body_reader,
+                       &http_server_request_stream, request->pool,
+                       request->content_length);
+
         request->body
             = istream_dechunk_new(request->pool,
                                   &connection->request.body_reader.output,

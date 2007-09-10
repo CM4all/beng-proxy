@@ -38,4 +38,15 @@ http_body_try_direct(struct http_body_reader *body, int fd);
 void
 http_body_dechunked_eof(void *ctx);
 
+static inline void
+http_body_init(struct http_body_reader *body,
+               const struct istream *stream, pool_t pool,
+               off_t content_length)
+{
+    body->output = *stream;
+    body->output.pool = pool;
+    body->rest = content_length;
+    body->dechunk_eof = 0;
+}
+
 #endif
