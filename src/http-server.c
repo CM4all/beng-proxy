@@ -100,7 +100,6 @@ struct http_server_connection {
     /* response */
     struct {
         int writing;
-        int blocking;
         char status_buffer[64];
         char content_length_buffer[32];
         istream_t istream;
@@ -705,7 +704,6 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     assert(connection->response.istream != NULL);
 
     nbytes = write(connection->fd, data, length);
-    connection->response.blocking = nbytes < (ssize_t)length;
 
     if (likely(nbytes >= 0)) {
         event2_or(&connection->event, EV_WRITE);
@@ -733,8 +731,6 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
 
     assert(connection->response.writing);
 
-    connection->response.blocking = 0;
-
 #ifdef SPLICE
     nbytes = splice(fd, NULL, connection->fd, NULL, max_length,
                     SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
@@ -744,10 +740,8 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     if (unlikely(nbytes < 0 && errno == EAGAIN))
         return -2;
 
-    if (likely(nbytes > 0)) {
+    if (likely(nbytes > 0))
         event2_or(&connection->event, EV_WRITE);
-        connection->response.blocking = 1;
-    }
 
     return nbytes;
 }

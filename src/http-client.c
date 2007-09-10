@@ -42,7 +42,6 @@ struct http_client_connection {
     struct {
         pool_t pool;
         istream_t istream;
-        int blocking;
         char request_line_buffer[1024];
         char content_length_buffer[32];
 
@@ -606,7 +605,6 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
     assert(connection->request.istream != NULL);
 
     nbytes = write(connection->fd, data, length);
-    connection->request.blocking = nbytes < (ssize_t)length;
     if (likely(nbytes >= 0)) {
         event2_or(&connection->event, EV_WRITE);
         return (size_t)nbytes;
