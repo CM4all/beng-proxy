@@ -18,6 +18,14 @@
 #include <string.h>
 #include <stdio.h>
 
+static void
+make_etag(char *dest, size_t dest_max_length, const struct stat *st)
+{
+    snprintf(dest, dest_max_length, "\"%x-%x-%x\"",
+             (unsigned)st->st_dev, (unsigned)st->st_ino,
+             (unsigned)st->st_mtime);
+}
+
 void
 file_callback(struct client_connection *connection,
               struct http_server_request *request,
@@ -82,9 +90,7 @@ file_callback(struct client_connection *connection,
 
     headers = growing_buffer_new(request->pool, 2048);
 
-    snprintf(buffer, sizeof(buffer), "\"%x-%x-%x\"",
-             (unsigned)st.st_dev, (unsigned)st.st_ino,
-             (unsigned)st.st_mtime);
+    make_etag(buffer, sizeof(buffer), &st);
     header_write(headers, "etag", buffer);
 
     nbytes = getxattr(translated->path, "user.Content-Type", /* XXX use fgetxattr() */
