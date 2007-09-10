@@ -95,8 +95,9 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 
     assert(p->fds[1] >= 0);
 
-    if (type == ISTREAM_PIPE)
-        /* it's already a pipe - no need for wrapping it into a pipe */
+    if ((p->output.handler_direct & type) != 0)
+        /* already supported by handler (maybe already a pipe) - no
+           need for wrapping it into a pipe */
         return istream_invoke_direct(&p->output, type, fd, max_length);
 
     nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,
