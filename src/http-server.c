@@ -166,22 +166,6 @@ http_server_uncork(http_server_connection_t connection)
 
 
 static void
-http_server_request_stream_close(istream_t istream);
-
-/** determine how much can be read from the request body */
-static inline size_t
-http_server_request_max_read(http_server_connection_t connection, size_t length)
-{
-    assert(connection->request.read_state == READ_BODY);
-
-    if (connection->request.body_reader.rest != (off_t)-1 &&
-        connection->request.body_reader.rest < (off_t)length)
-        return (size_t)connection->request.body_reader.rest;
-    else
-        return length;
-}
-
-static void
 http_server_consume_body(http_server_connection_t connection)
 {
     assert(connection != NULL);
