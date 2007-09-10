@@ -5,7 +5,7 @@
  */
 
 #include "date.h"
-#include "compiler.h"
+#include "format.h"
 
 #include <stdint.h>
 
@@ -48,22 +48,6 @@ month_name(int month)
 {
     return months[likely(month >= 0 && month < 12)
                   ? month : 12];
-}
-
-static attr_always_inline void
-format_2digit(char *dest, unsigned number)
-{
-    dest[0] = '0' + number / 10;
-    dest[1] = '0' + number % 10;
-}
-
-static attr_always_inline void
-format_4digit(char *dest, unsigned number)
-{
-    dest[0] = '0' + number / 1000;
-    dest[1] = '0' + (number / 100) % 10;
-    dest[2] = '0' + (number / 10) % 10;
-    dest[3] = '0' + number % 10;
 }
 
 void
