@@ -6,6 +6,7 @@
 
 #include "istream.h"
 #include "fifo-buffer.h"
+#include "format.h"
 
 #include <assert.h>
 #include <string.h>
@@ -54,8 +55,6 @@ chunked_try_write(struct istream_chunked *chunked)
 }
 
 
-static const char hex_digits[] = "0123456789abcdef";
-
 static size_t
 chunked_source_data(const void *data, size_t length, void *ctx)
 {
@@ -81,10 +80,7 @@ chunked_source_data(const void *data, size_t length, void *ctx)
     if (length > max_length - 4 - 2 - 2 - 5)
         length = max_length - 4 - 2 - 2 - 5;
 
-    dest[0] = hex_digits[(length >> 12) & 0xf];
-    dest[1] = hex_digits[(length >> 8) & 0xf];
-    dest[2] = hex_digits[(length >> 4) & 0xf];
-    dest[3] = hex_digits[length & 0xf];
+    format_uint16_hex_fixed(dest, (uint16_t)length);
     dest[4] = '\r';
     dest[5] = '\n';
     memcpy(dest + 4 + 2, data, length);

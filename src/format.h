@@ -12,6 +12,9 @@
 #include <stdint.h>
 #include <string.h>
 
+extern const char hex_digits[0x10];
+
+
 static attr_always_inline void
 format_2digit(char *dest, unsigned number)
 {
@@ -26,6 +29,14 @@ format_4digit(char *dest, unsigned number)
     dest[1] = '0' + (number / 100) % 10;
     dest[2] = '0' + (number / 10) % 10;
     dest[3] = '0' + number % 10;
+}
+
+static attr_always_inline void
+format_uint16_hex_fixed(char dest[4], uint16_t number) {
+    dest[0] = hex_digits[(number >> 12) & 0xf];
+    dest[1] = hex_digits[(number >> 8) & 0xf];
+    dest[2] = hex_digits[(number >> 4) & 0xf];
+    dest[3] = hex_digits[number & 0xf];
 }
 
 /**
