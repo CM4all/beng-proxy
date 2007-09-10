@@ -12,6 +12,7 @@
 #include "header-parser.h"
 #include "header-writer.h"
 #include "event2.h"
+#include "http-body.h"
 
 #ifdef __linux
 #include <sys/socket.h>
@@ -59,10 +60,10 @@ struct http_client_connection {
         } read_state;
         int status;
         strmap_t headers;
-        off_t content_length, body_rest;
-        struct istream stream;
+        off_t content_length;
         istream_t body;
         int dechunk_eof;
+        struct http_body_reader body_reader;
     } response;
 
     /* connection settings */
@@ -82,22 +83,6 @@ static void
 http_client_consume_body(http_client_connection_t connection);
 
 static void
-http_client_response_body_consumed(http_client_connection_t connection, size_t nbytes);
-
-/** determine how much can be read from the response body */
-static inline size_t
-http_client_response_max_read(http_client_connection_t connection, size_t length)
-{
-    assert(connection->response.read_state == READ_BODY);
-
-    if (connection->response.body_rest != (off_t)-1 &&
-        connection->response.body_rest < (off_t)length)
-        return (size_t)connection->response.body_rest;
-    else
-        return length;
-}
-
-static void
 http_client_try_read(http_client_connection_t connection);
 
 
@@ -109,7 +94,7 @@ http_client_try_read(http_client_connection_t connection);
 static inline http_client_connection_t
 response_stream_to_connection(istream_t istream)
 {
-    return (http_client_connection_t)(((char*)istream) - offsetof(struct http_client_connection, response.stream));
+    return (http_client_connection_t)(((char*)istream) - offsetof(struct http_client_connection, response.body_reader.output));
 }
 
 static void
@@ -120,7 +105,7 @@ http_client_response_stream_read(istream_t istream)
     assert(connection != NULL);
     assert(connection->fd >= 0);
     assert(connection->response.read_state == READ_BODY);
-    assert(connection->response.stream.handler != NULL);
+    assert(connection->response.body_reader.output.handler != NULL);
 
     pool_ref(connection->pool);
 
@@ -158,8 +143,9 @@ http_client_response_stream_close(istream_t istream)
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
     connection->response.body = NULL;
+    connection->response.body_reader.output.pool = NULL;
 
-    if (connection->response.body_rest > 0) {
+    if (connection->response.body_reader.rest > 0) {
         /* XXX invalidate connection */
     }
 
@@ -187,31 +173,6 @@ static const struct istream http_client_response_stream = {
     .close = http_client_response_stream_close,
 };
 
-
-static void
-http_client_response_body_consumed(http_client_connection_t connection, size_t nbytes)
-{
-    assert(connection->response.read_state == READ_BODY);
-    assert(connection->request.pool != NULL);
-    assert(connection->request.istream == NULL);
-
-    if (connection->response.body_rest == (off_t)-1)
-        return;
-
-    assert((off_t)nbytes <= connection->response.body_rest);
-
-    connection->response.body_rest -= (off_t)nbytes;
-    if (connection->response.body_rest > 0)
-        return;
-
-    pool_ref(connection->pool);
-
-    istream_invoke_eof(&connection->response.stream);
-
-    http_client_response_stream_close(&connection->response.stream);
-
-    pool_unref(connection->pool);
-}
 
 static inline void
 http_client_cork(http_client_connection_t connection)
@@ -306,8 +267,8 @@ http_client_headers_finished(http_client_connection_t connection)
     connection->keep_alive = header_connection != NULL &&
         strcasecmp(header_connection, "keep-alive") == 0;
 
-    connection->response.stream = http_client_response_stream;
-    connection->response.stream.pool = connection->request.pool;
+    connection->response.body_reader.output = http_client_response_stream;
+    connection->response.body_reader.output.pool = connection->request.pool;
 
     value = strmap_get(connection->response.headers, "transfer-encoding");
     if (value == NULL || strcasecmp(value, "chunked") != 0) {
@@ -331,7 +292,7 @@ http_client_headers_finished(http_client_connection_t connection)
             }
         }
 
-        connection->response.body = &connection->response.stream;
+        connection->response.body = &connection->response.body_reader.output;
     } else {
         /* chunked */
 
@@ -340,11 +301,11 @@ http_client_headers_finished(http_client_connection_t connection)
         connection->response.dechunk_eof = 0;
         connection->response.body
             = istream_dechunk_new(connection->request.pool,
-                                  &connection->response.stream,
+                                  &connection->response.body_reader.output,
                                   http_client_dechunked_eof, connection);
     }
 
-    connection->response.body_rest = connection->response.content_length;
+    connection->response.body_reader.rest = connection->response.content_length;
     connection->response.read_state = READ_BODY;
 }
 
@@ -420,7 +381,7 @@ http_client_parse_headers(http_client_connection_t connection)
                                               connection->request.handler_ctx);
 
         if (connection->response.read_state == READ_BODY) {
-            if (unlikely(connection->response.stream.handler == NULL)) {
+            if (unlikely(connection->response.body_reader.output.handler == NULL)) {
                 fprintf(stderr, "WARNING: no handler for request\n");
                 http_client_connection_close(connection);
                 return 0;
@@ -434,37 +395,20 @@ http_client_parse_headers(http_client_connection_t connection)
 static void
 http_client_consume_body(http_client_connection_t connection)
 {
-    const void *buffer;
-    size_t length, consumed;
-
     assert(connection != NULL);
     assert(connection->response.read_state == READ_BODY);
 
-    /* XXX */
-
-    buffer = fifo_buffer_read(connection->input, &length);
-    if (buffer == NULL)
-        return;
-
-    length = http_client_response_max_read(connection, length);
-    consumed = istream_invoke_data(&connection->response.stream,
-                                   buffer, length);
-    assert(consumed <= length);
+    http_body_consume_body(&connection->response.body_reader, connection->input);
 
     if (!http_client_connection_valid(connection))
         return;
-
-    if (consumed > 0) {
-        fifo_buffer_consume(connection->input, consumed);
-        http_client_response_body_consumed(connection, consumed);
-    }
 
     if (connection->response.content_length == (off_t)-1 &&
         connection->response.dechunk_eof) {
         /* the dechunker has detected the EOF chunk, and has
            propagated this fact to its handler.  now do the cleanup in
            the http_client_connection_t. */
-        http_client_response_stream_close(&connection->response.stream);
+        http_client_response_stream_close(&connection->response.body_reader.output);
         return;
     }
 
@@ -494,66 +438,64 @@ http_client_try_response_direct(http_client_connection_t connection)
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
-    assert(connection->response.stream.handler_direct & ISTREAM_SOCKET);
     assert(connection->response.read_state == READ_BODY);
-    assert(connection->response.stream.handler->direct != NULL);
 
-    nbytes = istream_invoke_direct(&connection->response.stream,
-                                   ISTREAM_SOCKET, connection->fd,
-                                   http_client_response_max_read(connection, INT_MAX));
+    nbytes = http_body_try_direct(&connection->response.body_reader, connection->fd);
     if (nbytes < 0) {
         /* XXX EAGAIN? */
         perror("read error on HTTP connection");
         http_client_connection_close(connection);
         return;
     }
+}
 
-    if (nbytes > 0)
-        http_client_response_body_consumed(connection, (size_t)nbytes);
+static void
+http_client_try_read_buffered(http_client_connection_t connection)
+{
+    ssize_t nbytes;
+
+    nbytes = read_to_buffer(connection->fd, connection->input, INT_MAX);
+    assert(nbytes != -2);
+
+    if (nbytes == 0) {
+        /* XXX */
+        http_client_connection_close(connection);
+        return;
+    }
+
+    if (nbytes < 0) {
+        if (errno == EAGAIN) {
+            event2_or(&connection->event, EV_READ);
+            return;
+        }
+
+        perror("read error on HTTP connection");
+        http_client_connection_close(connection);
+        return;
+    }
+
+    if (connection->response.read_state == READ_BODY)
+        http_client_consume_body(connection);
+    else
+        http_client_consume_headers(connection);
+
+    if (http_client_connection_valid(connection) &&
+        connection->response.read_state != READ_NONE &&
+        ((connection->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 ||
+         !fifo_buffer_full(connection->input)))
+        event2_or(&connection->event, EV_READ);
 }
 
 static void
 http_client_try_read(http_client_connection_t connection)
 {
     if (connection->response.read_state == READ_BODY &&
-        (connection->response.stream.handler_direct & ISTREAM_SOCKET) != 0 &&
-        fifo_buffer_empty(connection->input)) {
+        (connection->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 &&
+        fifo_buffer_empty(connection->input))
         /* XXX ensure connection->input is empty */
         http_client_try_response_direct(connection);
-    } else {
-        ssize_t nbytes;
-
-        nbytes = read_to_buffer(connection->fd, connection->input, INT_MAX);
-        assert(nbytes != -2);
-
-        if (nbytes == 0) {
-            /* XXX */
-            http_client_connection_close(connection);
-            return;
-        }
-
-        if (nbytes < 0) {
-            if (errno == EAGAIN) {
-                event2_or(&connection->event, EV_READ);
-                return;
-            }
-
-            perror("read error on HTTP connection");
-            http_client_connection_close(connection);
-            return;
-        }
-
-        if (connection->response.read_state == READ_BODY)
-            http_client_consume_body(connection);
-        else
-            http_client_consume_headers(connection);
-
-        if (http_client_connection_valid(connection) &&
-            connection->response.read_state != READ_NONE &&
-            ((connection->response.stream.handler_direct & ISTREAM_SOCKET) != 0 ||
-             !fifo_buffer_full(connection->input)))
-            event2_or(&connection->event, EV_READ);
-    }
+    else
+        http_client_try_read_buffered(connection);
 }
 
 static void
@@ -647,7 +589,7 @@ http_client_connection_close(http_client_connection_t connection)
         istream_free(&connection->request.istream);
 
     if (connection->response.read_state == READ_BODY) {
-        http_client_response_stream_close(&connection->response.stream);
+        http_client_response_stream_close(&connection->response.body_reader.output);
         assert(connection->response.read_state == READ_NONE);
     }
 
