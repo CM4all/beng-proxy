@@ -15,6 +15,7 @@
 #include "date.h"
 #include "http-body.h"
 #include "direct.h"
+#include "format.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -832,9 +833,7 @@ http_server_response(struct http_server_request *request,
             body = istream_chunked_new(request->pool, body);
         }
     } else {
-        snprintf(connection->response.content_length_buffer,
-                 sizeof(connection->response.content_length_buffer),
-                 "%lu", (unsigned long)content_length);
+        format_uint64(connection->response.content_length_buffer, content_length);
         header_write(headers, "content-length",
                      connection->response.content_length_buffer);
     }
