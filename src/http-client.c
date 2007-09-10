@@ -135,7 +135,7 @@ http_client_response_stream_close(istream_t istream)
 
     istream_invoke_free(istream);
 
-    if (connection->response.body_reader.rest > 0)
+    if (!http_body_eof(&connection->response.body_reader))
         connection->keep_alive = 0;
 
     http_body_deinit(&connection->response.body_reader);
