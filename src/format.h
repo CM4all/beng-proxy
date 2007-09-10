@@ -48,11 +48,11 @@ format_uint64(char dest[32], uint64_t number)
     char *p = dest + sizeof(dest) - 1;
 
     *p = 0;
-    while (number != 0) {
+    do {
         --p;
         *p = '0' + (number % 10);
         number /= 10;
-    }
+    } while (number != 0);
 
     if (p > dest)
         memmove(dest, p, dest + sizeof(dest) - p);
@@ -67,11 +67,11 @@ format_uint32_hex(char dest[9], uint32_t number)
     char *p = dest + sizeof(dest) - 1;
 
     *p = 0;
-    while (number != 0) {
+    do {
         --p;
         *p = hex_digits[number % 0x10];
         number /= 0x10;
-    }
+    } while (number != 0);
 
     if (p > dest)
         memmove(dest, p, dest + sizeof(dest) - p);
