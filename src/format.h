@@ -58,4 +58,23 @@ format_uint64(char dest[32], uint64_t number)
         memmove(dest, p, dest + sizeof(dest) - p);
 }
 
+/**
+ * Format a 32 bit unsigned integer into a hex string.
+ */
+static attr_always_inline void
+format_uint32_hex(char dest[9], uint32_t number)
+{
+    char *p = dest + sizeof(dest) - 1;
+
+    *p = 0;
+    while (number != 0) {
+        --p;
+        *p = hex_digits[number % 0x10];
+        number /= 0x10;
+    }
+
+    if (p > dest)
+        memmove(dest, p, dest + sizeof(dest) - p);
+}
+
 #endif

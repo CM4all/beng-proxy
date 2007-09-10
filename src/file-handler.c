@@ -9,6 +9,7 @@
 #include "header-writer.h"
 #include "processor.h"
 #include "date.h"
+#include "format.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -19,11 +20,21 @@
 #include <stdio.h>
 
 static void
-make_etag(char *dest, size_t dest_max_length, const struct stat *st)
+make_etag(char *p, const struct stat *st)
 {
-    snprintf(dest, dest_max_length, "\"%x-%x-%x\"",
-             (unsigned)st->st_dev, (unsigned)st->st_ino,
-             (unsigned)st->st_mtime);
+    *p++ = '"';
+
+    format_uint32_hex(p, (uint32_t)st->st_dev);
+    p += strlen(p);
+
+    format_uint32_hex(p, (uint32_t)st->st_ino);
+    p += strlen(p);
+
+    format_uint32_hex(p, (uint32_t)st->st_mtime);
+    p += strlen(p);
+
+    *p++ = '"';
+    *p = 0;
 }
 
 void
@@ -90,7 +101,7 @@ file_callback(struct client_connection *connection,
 
     headers = growing_buffer_new(request->pool, 2048);
 
-    make_etag(buffer, sizeof(buffer), &st);
+    make_etag(buffer, &st);
     header_write(headers, "etag", buffer);
 
     nbytes = getxattr(translated->path, "user.Content-Type", /* XXX use fgetxattr() */
