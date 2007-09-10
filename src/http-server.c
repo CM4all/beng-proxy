@@ -14,33 +14,17 @@
 #include "event2.h"
 #include "date.h"
 #include "http-body.h"
+#include "direct.h"
 
-#ifdef __linux
-#ifdef SPLICE
-#include "splice.h"
-#else
-#include <sys/sendfile.h>
-#endif
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#endif
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-
-#ifdef __linux
-#ifdef SPLICE
-#define ISTREAM_DIRECT_SUPPORT (ISTREAM_FILE | ISTREAM_PIPE)
-#else
-#define ISTREAM_DIRECT_SUPPORT ISTREAM_FILE
-#endif
-#else
-#define ISTREAM_DIRECT_SUPPORT 0
-#endif
 
 
 static const char *http_status_to_string_data[][20] = {
@@ -727,16 +711,9 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     http_server_connection_t connection = ctx;
     ssize_t nbytes;
 
-    (void)type; /* XXX check type */
-
     assert(connection->response.writing);
 
-#ifdef SPLICE
-    nbytes = splice(fd, NULL, connection->fd, NULL, max_length,
-                    SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
-#else
-    nbytes = sendfile(connection->fd, fd, NULL, max_length);
-#endif
+    nbytes = istream_direct_to_socket(type, fd, connection->fd, max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN))
         return -2;
 
