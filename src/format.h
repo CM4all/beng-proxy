@@ -42,7 +42,7 @@ format_uint16_hex_fixed(char dest[4], uint16_t number) {
 /**
  * Format a 64 bit unsigned integer into a decimal string.
  */
-static attr_always_inline void
+static attr_always_inline size_t
 format_uint64(char dest[32], uint64_t number)
 {
     char *p = dest + 32 - 1;
@@ -56,12 +56,14 @@ format_uint64(char dest[32], uint64_t number)
 
     if (p > dest)
         memmove(dest, p, dest + 32 - p);
+
+    return dest + 32 - p - 1;
 }
 
 /**
  * Format a 32 bit unsigned integer into a hex string.
  */
-static attr_always_inline void
+static attr_always_inline size_t
 format_uint32_hex(char dest[9], uint32_t number)
 {
     char *p = dest + 9 - 1;
@@ -75,6 +77,8 @@ format_uint32_hex(char dest[9], uint32_t number)
 
     if (p > dest)
         memmove(dest, p, dest + 9 - p);
+
+    return dest + 9 - p - 1;
 }
 
 #endif

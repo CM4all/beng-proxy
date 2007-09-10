@@ -24,18 +24,15 @@ make_etag(char *p, const struct stat *st)
 {
     *p++ = '"';
 
-    format_uint32_hex(p, (uint32_t)st->st_dev);
-    p += strlen(p);
+    p += format_uint32_hex(p, (uint32_t)st->st_dev);
 
     *p++ = '-';
 
-    format_uint32_hex(p, (uint32_t)st->st_ino);
-    p += strlen(p);
+    p += format_uint32_hex(p, (uint32_t)st->st_ino);
 
     *p++ = '-';
 
-    format_uint32_hex(p, (uint32_t)st->st_mtime);
-    p += strlen(p);
+    p += format_uint32_hex(p, (uint32_t)st->st_mtime);
 
     *p++ = '"';
     *p = 0;
