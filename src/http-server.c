@@ -840,7 +840,8 @@ http_server_response(struct http_server_request *request,
 
 #ifdef __linux
 #ifdef SPLICE
-    body = istream_pipe_new(request->pool, body);
+    if (body != NULL)
+        body = istream_pipe_new(request->pool, body);
 #endif
 #endif
 
