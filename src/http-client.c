@@ -129,6 +129,10 @@ http_client_response_stream_close(istream_t istream)
 
     event2_nand(&connection->event, EV_READ);
 
+    connection->response.read_state = READ_NONE;
+    connection->response.headers = NULL;
+    connection->response.body = NULL;
+
     if (connection->request.handler != NULL &&
         connection->request.handler->free != NULL) {
         const struct http_client_response_handler *handler = connection->request.handler;
@@ -137,10 +141,6 @@ http_client_response_stream_close(istream_t istream)
         connection->request.handler_ctx = NULL;
         handler->free(handler_ctx);
     }
-
-    connection->response.read_state = READ_NONE;
-    connection->response.headers = NULL;
-    connection->response.body = NULL;
 
     if (connection->response.body_reader.rest > 0) {
         /* XXX invalidate connection */
