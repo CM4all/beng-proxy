@@ -103,6 +103,8 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
            need for wrapping it into a pipe */
         return istream_invoke_direct(&p->output, type, fd, max_length);
 
+    assert((type & SPLICE_SOURCE_TYPES) == type);
+
     nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,
                     SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
     if (unlikely(nbytes < 0 && errno == EAGAIN))
