@@ -45,7 +45,7 @@ format_uint16_hex_fixed(char dest[4], uint16_t number) {
 static attr_always_inline void
 format_uint64(char dest[32], uint64_t number)
 {
-    char *p = dest + sizeof(dest) - 1;
+    char *p = dest + 32 - 1;
 
     *p = 0;
     do {
@@ -55,7 +55,7 @@ format_uint64(char dest[32], uint64_t number)
     } while (number != 0);
 
     if (p > dest)
-        memmove(dest, p, dest + sizeof(dest) - p);
+        memmove(dest, p, dest + 32 - p);
 }
 
 /**
@@ -64,7 +64,7 @@ format_uint64(char dest[32], uint64_t number)
 static attr_always_inline void
 format_uint32_hex(char dest[9], uint32_t number)
 {
-    char *p = dest + sizeof(dest) - 1;
+    char *p = dest + 9 - 1;
 
     *p = 0;
     do {
@@ -74,7 +74,7 @@ format_uint32_hex(char dest[9], uint32_t number)
     } while (number != 0);
 
     if (p > dest)
-        memmove(dest, p, dest + sizeof(dest) - p);
+        memmove(dest, p, dest + 9 - p);
 }
 
 #endif
