@@ -62,7 +62,6 @@ struct http_client_connection {
         strmap_t headers;
         off_t content_length;
         istream_t body;
-        int dechunk_eof;
         struct http_body_reader body_reader;
     } response;
 
@@ -248,16 +247,6 @@ http_client_parse_status_line(http_client_connection_t connection,
 }
 
 static void
-http_client_dechunked_eof(void *ctx)
-{
-    http_client_connection_t connection = ctx;
-
-    assert(connection->response.read_state == READ_BODY);
-
-    connection->response.dechunk_eof = 1;
-}
-
-static void
 http_client_headers_finished(http_client_connection_t connection)
 {
     const char *header_connection, *value;
@@ -298,11 +287,11 @@ http_client_headers_finished(http_client_connection_t connection)
 
         connection->response.content_length = (off_t)-1;
 
-        connection->response.dechunk_eof = 0;
+        connection->response.body_reader.dechunk_eof = 0;
         connection->response.body
             = istream_dechunk_new(connection->request.pool,
                                   &connection->response.body_reader.output,
-                                  http_client_dechunked_eof, connection);
+                                  http_body_dechunked_eof, &connection->response.body_reader);
     }
 
     connection->response.body_reader.rest = connection->response.content_length;
@@ -402,15 +391,6 @@ http_client_consume_body(http_client_connection_t connection)
 
     if (!http_client_connection_valid(connection))
         return;
-
-    if (connection->response.content_length == (off_t)-1 &&
-        connection->response.dechunk_eof) {
-        /* the dechunker has detected the EOF chunk, and has
-           propagated this fact to its handler.  now do the cleanup in
-           the http_client_connection_t. */
-        http_client_response_stream_close(&connection->response.body_reader.output);
-        return;
-    }
 
     event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
 }

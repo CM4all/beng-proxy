@@ -28,6 +28,8 @@ http_body_max_read(struct http_body_reader *body, size_t length)
 static void
 http_body_consumed(struct http_body_reader *body, size_t nbytes)
 {
+    pool_t pool = body->output.pool;
+
     if (body->rest == (off_t)-1)
         return;
 
@@ -37,12 +39,12 @@ http_body_consumed(struct http_body_reader *body, size_t nbytes)
     if (body->rest > 0)
         return;
 
-    pool_ref(body->output.pool);
+    pool_ref(pool);
 
     istream_invoke_eof(&body->output);
     istream_close(&body->output);
 
-    pool_unref(body->output.pool);
+    pool_unref(pool);
 }
 
 void
@@ -67,6 +69,12 @@ http_body_consume_body(struct http_body_reader *body,
         fifo_buffer_consume(buffer, consumed);
         http_body_consumed(body, consumed);
     }
+
+    if (http_body_valid(body) &&
+        body->rest == (off_t)-1 && body->dechunk_eof)
+        /* the dechunker has detected the EOF chunk, and has
+           propagated this fact to its handler */
+        istream_close(&body->output);
 }
 
 ssize_t
@@ -85,4 +93,14 @@ http_body_try_direct(struct http_body_reader *body, int fd)
         http_body_consumed(body, (size_t)nbytes);
 
     return nbytes;
+}
+
+void
+http_body_dechunked_eof(void *ctx)
+{
+    struct http_body_reader *body = ctx;
+
+    assert(http_body_valid(body));
+
+    body->dechunk_eof = 1;
 }

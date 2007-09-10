@@ -95,7 +95,6 @@ struct http_server_connection {
         struct http_server_request *request;
 
         struct http_body_reader body_reader;
-        int dechunk_eof;
     } request;
 
     /* response */
@@ -210,15 +209,6 @@ http_server_consume_body(http_server_connection_t connection)
     if (!http_server_connection_valid(connection))
         return;
 
-    if (connection->request.body_reader.rest == (off_t)-1 &&
-        connection->request.dechunk_eof) {
-        /* the dechunker has detected the EOF chunk, and has
-           propagated this fact to its handler.  now do the cleanup in
-           the http_server_connection_t. */
-        http_server_request_stream_close(&connection->request.body_reader.output);
-        return;
-    }
-
     event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
 }
 
@@ -291,8 +281,7 @@ http_server_request_stream_close(istream_t istream)
     if (connection->request.request != NULL)
         connection->request.request->body = NULL;
 
-    if (connection->request.body_reader.rest > 0 ||
-        (connection->request.body_reader.rest == (off_t)-1 && !connection->request.dechunk_eof))
+    if (!http_body_eof(&connection->request.body_reader))
         connection->keep_alive = 0;
 
     istream_invoke_free(istream);
@@ -377,16 +366,6 @@ http_server_parse_request_line(http_server_connection_t connection,
 }
 
 static void
-http_server_dechunked_eof(void *ctx)
-{
-    http_server_connection_t connection = ctx;
-
-    assert(connection->request.read_state == READ_BODY);
-
-    connection->request.dechunk_eof = 1;
-}
-
-static void
 http_server_headers_finished(http_server_connection_t connection)
 {
     struct http_server_request *request = connection->request.request;
@@ -429,13 +408,13 @@ http_server_headers_finished(http_server_connection_t connection)
         request->content_length = (off_t)-1;
 
         connection->request.body_reader.rest = request->content_length;
-        connection->request.dechunk_eof = 0;
+        connection->request.body_reader.dechunk_eof = 0;
         connection->request.body_reader.output = http_server_request_stream;
         connection->request.body_reader.output.pool = request->pool;
         request->body
             = istream_dechunk_new(request->pool,
                                   &connection->request.body_reader.output,
-                                  http_server_dechunked_eof, connection);
+                                  http_body_dechunked_eof, &connection->request.body_reader);
 
         connection->request.read_state = READ_BODY;
     }

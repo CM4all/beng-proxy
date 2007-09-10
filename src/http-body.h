@@ -15,7 +15,15 @@
 struct http_body_reader {
     struct istream output;
     off_t rest;
+    int dechunk_eof;
 };
+
+static inline int
+http_body_eof(const struct http_body_reader *body)
+{
+    return body->rest == 0 ||
+        (body->rest == (off_t)-1 && body->dechunk_eof);
+}
 
 void
 http_body_consume_body(struct http_body_reader *body,
@@ -23,5 +31,11 @@ http_body_consume_body(struct http_body_reader *body,
 
 ssize_t
 http_body_try_direct(struct http_body_reader *body, int fd);
+
+/**
+ * Callback for istream_dechunk_new().
+ */
+void
+http_body_dechunked_eof(void *ctx);
 
 #endif
