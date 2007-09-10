@@ -181,7 +181,13 @@ istream_pipe_read(istream_t istream)
     /* XXX is this update required? */
     p->input->handler_direct = istream->handler_direct | SPLICE_SOURCE_TYPES;
 
-    istream_read(p->input);
+    if (unlikely(p->input == NULL)) {
+        assert(p->piped > 0);
+
+        pipe_consume(p);
+    } else {
+        istream_read(p->input);
+    }
 }
 
 static void
