@@ -157,6 +157,8 @@ http_client_response_stream_close(istream_t istream)
 #ifdef VALGRIND
     VALGRIND_MAKE_MEM_UNDEFINED(&connection->request, sizeof(connection->request));
     VALGRIND_MAKE_MEM_UNDEFINED(&connection->response, sizeof(connection->response));
+    connection->request.pool = NULL;
+    connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
     connection->response.body_reader.output.pool = NULL;
 #endif
