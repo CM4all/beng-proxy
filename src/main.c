@@ -99,7 +99,9 @@ int main(int argc, char **argv)
     if (instance.listener != NULL)
         listener_free(&instance.listener);
 
+#ifndef PROFILE
     event_base_free(instance.event_base);
+#endif
 
     ref = pool_unref(instance.pool);
     assert(ref == 0);

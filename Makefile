@@ -2,6 +2,8 @@ include version.mk
 
 CC = gcc
 CFLAGS = -O0 -g -DPOISON -DDEBUG_POOL_REF -DSPLICE
+LDFLAGS =
+
 WARNING_CFLAGS += -Wall -W -pedantic -Werror -pedantic-errors -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef
 
 MORE_CFLAGS = -DVERSION=\"$(VERSION)\"
@@ -69,12 +71,13 @@ clean:
 	rm -f src/beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out
 
 src/beng-proxy: $(OBJECTS)
-	$(CC) -o $@ $^ $(CFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS)
 
 $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(WARNING_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS)
 
-profile: CFLAGS = -O0 -DNDEBUG -g -pg
+profile: CFLAGS = -O0 -DNDEBUG -DSPLICE -DPROFILE -g -pg
+profile: LDFLAGS = -lc_p -pg
 profile: src/beng-proxy
 	./src/beng-proxy
 
