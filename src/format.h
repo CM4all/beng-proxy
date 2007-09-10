@@ -34,7 +34,7 @@ format_4digit(char *dest, unsigned number)
 static attr_always_inline void
 format_uint64(char dest[32], uint64_t number)
 {
-    char *p = dest + 31;
+    char *p = dest + sizeof(dest) - 1;
 
     *p = 0;
     while (number != 0) {
@@ -44,7 +44,7 @@ format_uint64(char dest[32], uint64_t number)
     }
 
     if (p > dest)
-        memmove(dest, p, dest + 32 - p);
+        memmove(dest, p, dest + sizeof(dest) - p);
 }
 
 #endif
