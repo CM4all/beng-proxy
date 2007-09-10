@@ -155,6 +155,13 @@ http_client_response_stream_close(istream_t istream)
         connection->request.pool = NULL;
     }
 
+#ifdef VALGRIND
+    VALGRIND_MAKE_MEM_UNDEFINED(&connection->request, sizeof(connection->request));
+    VALGRIND_MAKE_MEM_UNDEFINED(&connection->response, sizeof(connection->response));
+    connection->response.read_state = READ_NONE;
+    connection->response.body_reader.output.pool = NULL;
+#endif
+
     if (!connection->keep_alive && http_client_connection_valid(connection)) {
         http_client_connection_close(connection);
         return;
