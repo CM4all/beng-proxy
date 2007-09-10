@@ -823,7 +823,7 @@ http_server_response(struct http_server_request *request,
                      off_t content_length, istream_t body)
 {
     http_server_connection_t connection = request->connection;
-    istream_t status_stream, header_stream, pipe_stream;
+    istream_t status_stream, header_stream;
 
     assert(connection->request.request == request);
     assert(!connection->response.writing);
@@ -854,9 +854,7 @@ http_server_response(struct http_server_request *request,
 
 #ifdef __linux
 #ifdef SPLICE
-    pipe_stream = istream_pipe_new(request->pool, body);
-    if (pipe_stream != NULL)
-        body = pipe_stream;
+    body = istream_pipe_new(request->pool, body);
 #endif
 #endif
 

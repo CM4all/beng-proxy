@@ -88,7 +88,6 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     assert(p->output.handler != NULL);
     assert(p->output.handler->direct != NULL);
     assert((p->output.handler_direct & ISTREAM_PIPE) != 0);
-    assert(p->fds[1] >= 0);
 
     if (p->piped > 0) {
         pipe_consume(p);
@@ -96,14 +95,25 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
             return 0;
     }
 
-    assert(p->fds[1] >= 0);
-
     if ((p->output.handler_direct & type) != 0)
         /* already supported by handler (maybe already a pipe) - no
            need for wrapping it into a pipe */
         return istream_invoke_direct(&p->output, type, fd, max_length);
 
     assert((type & SPLICE_SOURCE_TYPES) == type);
+
+    if (p->fds[1] < 0) {
+        int ret;
+
+        assert(p->fds[0] < 0);
+
+        ret = pipe(p->fds);
+        if (ret < 0) {
+            perror("pipe() failed");
+            istream_close(&p->output);
+            return 0;
+        }
+    }
 
     nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,
                     SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
@@ -126,16 +136,16 @@ pipe_input_eof(void *ctx)
 {
     struct istream_pipe *p = ctx;
 
-    assert(p->fds[1] >= 0);
-
     p->input->handler = NULL;
     p->input->handler_ctx = NULL;
 
     pool_unref(p->input->pool);
     p->input = NULL;
 
-    close(p->fds[1]);
-    p->fds[1] = -1;
+    if (p->fds[1] >= 0) {
+        close(p->fds[1]);
+        p->fds[1] = -1;
+    }
 
     if (p->piped == 0) {
         istream_invoke_eof(&p->output);
@@ -231,20 +241,15 @@ istream_t
 istream_pipe_new(pool_t pool, istream_t input)
 {
     struct istream_pipe *p = p_malloc(pool, sizeof(*p));
-    int ret;
 
     assert(input != NULL);
     assert(input->handler == NULL);
 
-    ret = pipe(p->fds);
-    if (ret < 0) {
-        perror("pipe() failed");
-        return NULL;
-    }
-
     p->output = istream_pipe;
     p->output.pool = pool;
     p->input = input;
+    p->fds[0] = -1;
+    p->fds[1] = -1;
     p->piped = 0;
 
     input->handler = &pipe_input_handler;
