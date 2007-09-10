@@ -179,7 +179,7 @@ istream_pipe_read(istream_t istream)
     struct istream_pipe *p = istream_to_pipe(istream);
 
     /* XXX is this update required? */
-    p->input->handler_direct = istream->handler_direct | ISTREAM_FILE; /* XXX ISTREAM_SOCKET is not yet supported by Linux 2.6.23 */
+    p->input->handler_direct = istream->handler_direct | SPLICE_SOURCE_TYPES;
 
     istream_read(p->input);
 }
