@@ -23,7 +23,9 @@
 
 void
 processor_env_init(pool_t pool, struct processor_env *env,
-                   const struct parsed_uri *uri)
+                   const struct parsed_uri *uri,
+                   off_t request_content_length,
+                   istream_t request_body)
 {
     const char *session_id;
 
@@ -38,6 +40,9 @@ processor_env_init(pool_t pool, struct processor_env *env,
         env->focus = strmap_get(env->args, "focus");
         session_id = strmap_get(env->args, "session");
     }
+
+    env->request_content_length = request_content_length;
+    env->request_body = request_body;
 
     env->session = NULL;
     if (session_id != NULL) {
@@ -377,7 +382,9 @@ parser_element_finished(struct parser *parser, off_t end)
 {
     processor_t processor = parser_to_processor(parser);
     struct widget *widget;
-    istream_t istream;
+    http_method_t method = HTTP_METHOD_GET;
+    off_t request_content_length = 0;
+    istream_t request_body = NULL, istream;
 
     if (processor->tag != TAG_EMBED || processor->embedded_widget->base_uri == NULL)
         return;
@@ -394,7 +401,7 @@ parser_element_finished(struct parser *parser, off_t end)
     }
 
     if (widget->id != NULL && processor->env->focus != NULL &&
-        processor->env->external_uri->query != NULL &&
+        (processor->env->external_uri->query != NULL || processor->env->request_body != NULL) &&
         strcmp(widget->id, processor->env->focus) == 0) {
         /* we're in focus.  forward query string and request body. */
         widget->real_uri = p_strncat(processor->output.pool,
@@ -404,10 +411,18 @@ parser_element_finished(struct parser *parser, off_t end)
                                      processor->env->external_uri->query_length,
                                      NULL);
 
-        /* XXX forward request body */
+        if (processor->env->request_body != NULL) {
+            method = HTTP_METHOD_POST; /* XXX which method? */
+            request_content_length = processor->env->request_content_length;
+            request_body = istream_hold_new(processor->output.pool, processor->env->request_body);
+            /* XXX what if there is no stream handler? or two? */
+        }
     }
 
-    istream = embed_new(processor->output.pool, widget->real_uri, widget,
+    istream = embed_new(processor->output.pool,
+                        method, widget->real_uri,
+                        request_content_length, request_body,
+                        widget,
                         processor->env);
     istream = istream_cat_new(processor->output.pool,
                               istream_string_new(processor->output.pool, "<div class='embed'>"),

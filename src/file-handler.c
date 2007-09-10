@@ -121,13 +121,11 @@ file_callback(struct client_connection *connection,
             struct processor_env *env;
 
             env = p_malloc(request->pool, sizeof(*env));
-            processor_env_init(request->pool, env, &translated->uri);
+            processor_env_init(request->pool, env, &translated->uri,
+                               request->content_length, request->body);
 
             body = processor_new(request->pool, body, NULL, env);
         }
-
-        if (request->body != NULL)
-            istream_close(request->body); /* XXX */
 
         http_server_response(request, HTTP_STATUS_OK, headers,
                              (off_t)-1, body);

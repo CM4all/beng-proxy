@@ -73,7 +73,10 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
 }
 
 istream_t
-embed_new(pool_t pool, const char *url, const struct widget *widget,
+embed_new(pool_t pool, http_method_t method, const char *url,
+          off_t request_content_length,
+          istream_t request_body,
+          const struct widget *widget,
           const struct processor_env *env)
 {
     struct embed *embed;
@@ -86,8 +89,9 @@ embed_new(pool_t pool, const char *url, const struct widget *widget,
     embed->delayed = istream_delayed_new(pool, embed_abort, embed);
 
     embed->url_stream = url_stream_new(pool,
-                                       HTTP_METHOD_GET, url, NULL,
-                                       0, NULL, /* XXX request body */
+                                       method, url, NULL,
+                                       request_content_length,
+                                       request_body,
                                        embed_http_client_callback, embed);
     if (embed->url_stream == NULL)
         istream_delayed_set(embed->delayed,

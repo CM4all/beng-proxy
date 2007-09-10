@@ -21,6 +21,10 @@ struct processor_env {
     /** semicolon-arguments in the external URI */
     strmap_t args;
 
+    off_t request_content_length;
+
+    istream_t request_body;
+
     /** which widget is focused, i.e. gets the request body and the
         query string? */
     const char *focus;
@@ -32,7 +36,9 @@ struct processor_env {
 
 void
 processor_env_init(pool_t pool, struct processor_env *env,
-                   const struct parsed_uri *uri);
+                   const struct parsed_uri *uri,
+                   off_t request_content_length,
+                   istream_t request_body);
 
 istream_t attr_malloc
 processor_new(pool_t pool, istream_t istream,

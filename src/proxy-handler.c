@@ -65,7 +65,8 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
-        processor_env_init(pt->request->pool, &pt->env, &pt->translated->uri);
+        /* XXX request body? */
+        processor_env_init(pt->request->pool, &pt->env, &pt->translated->uri, 0, NULL);
 
         pool_ref(pt->request->pool);
 
