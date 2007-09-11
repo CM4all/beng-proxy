@@ -824,8 +824,10 @@ http_server_response(struct http_server_request *request,
 
     if (headers == NULL)
         headers = growing_buffer_new(request->pool, 256);
-             
+
+#ifndef NO_DATE_HEADER
     header_write(headers, "date", http_date_format(time(NULL)));
+#endif
 
     if (content_length == (off_t)-1) {
         if (body != NULL && connection->keep_alive) {

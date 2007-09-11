@@ -15,9 +15,12 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
-#include <attr/xattr.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifndef NO_XATTR
+#include <attr/xattr.h>
+#endif
 
 static void
 make_etag(char *p, const struct stat *st)
@@ -47,8 +50,11 @@ file_callback(struct client_connection *connection,
     growing_buffer_t headers;
     istream_t body;
     struct stat st;
+#ifndef NO_XATTR
     ssize_t nbytes;
-    char buffer[64], content_type[256];
+    char content_type[256];
+#endif
+    char buffer[64];
 
     (void)connection;
 
@@ -105,6 +111,7 @@ file_callback(struct client_connection *connection,
     make_etag(buffer, &st);
     header_write(headers, "etag", buffer);
 
+#ifndef NO_XATTR
     nbytes = getxattr(translated->path, "user.Content-Type", /* XXX use fgetxattr() */
                       content_type, sizeof(content_type) - 1);
     if (nbytes > 0) {
@@ -113,7 +120,9 @@ file_callback(struct client_connection *connection,
         header_write(headers, "content-type", content_type);
     } else {
         content_type[0] = 0;
+#endif /* #ifndef NO_XATTR */
         header_write(headers, "content-type", "application/octet-stream");
+#ifndef NO_XATTR
     }
 
     if (strncmp(content_type, "text/html", 9) == 0) {
@@ -130,6 +139,7 @@ file_callback(struct client_connection *connection,
         http_server_response(request, HTTP_STATUS_OK, headers,
                              (off_t)-1, body);
     } else {
+#endif /* #ifndef NO_XATTR */
         if (request->method == HTTP_METHOD_POST) {
             istream_close(body);
             http_server_send_message(request,
@@ -141,8 +151,12 @@ file_callback(struct client_connection *connection,
         if (request->body != NULL)
             istream_close(request->body);
 
+#ifndef NO_LAST_MODIFIED_HEADER
         header_write(headers, "last-modified", http_date_format(st.st_mtime));
+#endif
 
         http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
+#ifndef NO_XATTR
     }
+#endif
 }
