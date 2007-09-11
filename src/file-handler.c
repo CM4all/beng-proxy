@@ -67,7 +67,7 @@ file_callback(struct client_connection *connection,
         return;
     }
 
-    ret = stat(translated->path, &st);
+    ret = lstat(translated->path, &st);
     if (ret != 0) {
         if (errno == ENOENT) {
             http_server_send_message(request,
