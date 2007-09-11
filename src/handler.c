@@ -23,6 +23,9 @@ translate(struct http_server_request *request)
     if (ret < 0)
         return NULL;
 
+    assert(translated->uri.base_length > 0);
+    assert(translated->uri.base[0] == '/');
+
     if (memcmp(request->uri, "/proxy/", 7) == 0) {
         /* XXX append query string */
         translated->path = p_strncat(request->pool,
@@ -42,8 +45,8 @@ translate(struct http_server_request *request)
     } else {
         /* XXX this is, of course, a huge security hole */
         translated->path = p_strncat(request->pool,
-                                     "/var/www/",
-                                     sizeof("/var/www/") - 1,
+                                     "/var/www",
+                                     sizeof("/var/www") - 1,
                                      translated->uri.base,
                                      translated->uri.base_length,
                                      NULL);
