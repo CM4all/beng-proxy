@@ -53,6 +53,48 @@ uri_unescape_inplace(char *src, size_t length)
     return end - src;
 }
 
+static size_t
+uri_path_canonicalize_inplace(char *src, size_t length)
+{
+    char *end = src + length, *current = src, *p;
+
+    if (src[0] != '/')
+        /* path must begin with slash */
+        return 0;
+
+    while ((p = memchr(current, '/', end - current - 1)) != NULL) {
+        if (p[1] == '/') {
+            /* remove double slash */
+            memmove(p + 1, p + 2, end - p - 2);
+            --end;
+            continue;
+        }
+
+        if (p[1] == '.') {
+            if (p >= end - 2) {
+                /* remove trailing "/." */
+                end = p + 1;
+                break;
+            }
+
+            if (p[2] == '/') {
+                /* remove "/./" */
+                memmove(p + 1, p + 3, end - p - 3);
+                end -= 2;
+                continue;
+            }
+
+            if (p[2] == '.')
+                /* no double dot after slash allowed */
+                return 0;
+        }
+
+        current = p + 1;
+    }
+
+    return end - src;
+}
+
 /* XXX this is quick and dirty */
 
 int
@@ -78,6 +120,10 @@ uri_parse(pool_t pool, struct parsed_uri *dest, const char *src)
 
     dest->base = p = p_strndup(pool, dest->base, dest->base_length);
     dest->base_length = uri_unescape_inplace(p, dest->base_length);
+    if (dest->base_length == 0)
+        return -1;
+
+    dest->base_length = uri_path_canonicalize_inplace(p, dest->base_length);
     if (dest->base_length == 0)
         return -1;
 
