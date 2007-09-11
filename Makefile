@@ -5,8 +5,8 @@ CFLAGS = -O0 -g -DPOISON -DDEBUG_POOL_REF -DSPLICE
 LDFLAGS =
 
 ifeq ($(PROFILE),1)
-CFLAGS += -UPOISON -UDEBUG_POOL_REF -DNDEBUG -DPROFILE -pg
-LDFLAGS += -lc_p -pg
+CFLAGS = -O3 -g -DNDEBUG -DSPLICE -DPROFILE -pg
+LDFLAGS = -lc_p -pg
 endif
 
 WARNING_CFLAGS += -Wall -W -pedantic -Werror -pedantic-errors -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef
@@ -89,7 +89,7 @@ test/%.o: test/%.c $(HEADERS)
 test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-profile: CFLAGS = -O0 -DNDEBUG -DSPLICE -DPROFILE -g -pg
+profile: CFLAGS = -O0 -DNDEBUG -DSPLICE -DPROFILE -g -pg -O3
 profile: LDFLAGS = -lc_p -pg
 profile: src/beng-proxy
 	./src/beng-proxy
