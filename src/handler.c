@@ -15,10 +15,13 @@ static struct translated *
 translate(struct http_server_request *request)
 {
     struct translated *translated;
+    int ret;
 
     translated = p_malloc(request->pool, sizeof(*translated));
 
-    uri_parse(&translated->uri, request->uri);
+    ret = uri_parse(request->pool, &translated->uri, request->uri);
+    if (ret < 0)
+        return NULL;
 
     if (memcmp(request->uri, "/proxy/", 7) == 0) {
         /* XXX append query string */

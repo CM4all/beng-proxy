@@ -18,8 +18,8 @@ struct parsed_uri {
     size_t query_length;
 };
 
-void
-uri_parse(struct parsed_uri *dest, const char *src);
+int
+uri_parse(pool_t pool, struct parsed_uri *dest, const char *src);
 
 const char *
 uri_absolute(pool_t pool, const char *base, const char *uri, size_t length);
