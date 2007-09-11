@@ -11,11 +11,10 @@
 #include <time.h>
 
 typedef struct tm xbrokentime;
-typedef int64_t xtime;
 
 #define LIBCORE__STDCALL(x) x
 
 LIBCORE__STDCALL(xbrokentime *)
-sysx_time_gmtime(xtime tm64, xbrokentime *tmrec);
+sysx_time_gmtime(time_t tm32, xbrokentime *tmrec);
 
 #endif

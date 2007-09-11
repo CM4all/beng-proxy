@@ -19,9 +19,9 @@ typedef int xbool;
 // ---------- macros -------------------------------------------
 */
 
-#define MILLIS_TO_1970 LIBCORE_d64C(62135596800000)
+#define SECONDS_TO_1970 LIBCORE_d64C(62135596800)
 
-#define MILLIS_IN_GREG LIBCORE_d64C(12622780800000)
+#define SECONDS_IN_GREG LIBCORE_d64C(12622780800)
 
 /* table driven for values <= 400 */
 #define LEAP_IN_GREG(y) ((leap_years[(y) >> 5] >> ((y) & 0x1f)) & 0x01)
@@ -174,24 +174,24 @@ static const xuint8 years_to_leap_days[401] = {
  * C. Dyreson and R. Snodgrass. (Chapter 4.3).
  */
 LIBCORE__STDCALL(xbrokentime *)
-sysx_time_gmtime(xtime tm64, xbrokentime *tmrec)
+sysx_time_gmtime(time_t tm32, xbrokentime *tmrec)
 {
 
-    long tm_greg, days, year, secs;
+    int tm_greg, days, year, secs;
 
     unsigned int leap;
 
-    tm64 += MILLIS_TO_1970;
-    tm_greg = (long) (tm64 / MILLIS_IN_GREG);
-    tm64 %= MILLIS_IN_GREG;
+    tm32 += SECONDS_TO_1970;
+    tm_greg = (int) (tm32 / SECONDS_IN_GREG);
+    tm32 %= SECONDS_IN_GREG;
 
-    if (tm64 < 0) {
+    if (tm32 < 0) {
         tm_greg--;
-        tm64 += MILLIS_IN_GREG;
+        tm32 += SECONDS_IN_GREG;
     }
 
-    days = (long) (tm64 / 86400000);
-    secs = (long) (tm64 % 86400000);
+    days = (int) (tm32 / 86400);
+    secs = (int) (tm32 % 86400);
 
     tmrec->tm_wday = (days + 1) % 7;
 
@@ -210,11 +210,10 @@ sysx_time_gmtime(xtime tm64, xbrokentime *tmrec)
     tmrec->tm_mday = day_to_day[days] >> 8 * leap & 0xff;
     tmrec->tm_yday = days;
 
-    tmrec->tm_hour = secs / 3600000;
-    secs %= 3600000;
-    tmrec->tm_min  = secs / 60000;
-    tmrec->tm_sec  = secs % 60000;
-    tmrec->tm_sec /= 1000;
+    tmrec->tm_hour = secs / 3600;
+    secs %= 3600;
+    tmrec->tm_min  = secs / 60;
+    tmrec->tm_sec  = secs % 60;
 
     return tmrec;
 }

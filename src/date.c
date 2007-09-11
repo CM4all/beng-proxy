@@ -55,7 +55,7 @@ void
 http_date_format_r(char *buffer, time_t t)
 {
     static struct tm tm_buffer;
-    const struct tm *tm = sysx_time_gmtime((xtime)t * 1000, &tm_buffer);
+    const struct tm *tm = sysx_time_gmtime(t, &tm_buffer);
 
     *(uint32_t*)buffer = *(const uint32_t*)wday_name(tm->tm_wday);
     buffer[4] = ' ';
