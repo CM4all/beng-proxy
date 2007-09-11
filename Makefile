@@ -94,6 +94,7 @@ profile: LDFLAGS = -lc_p -pg
 profile: src/beng-proxy
 	./src/beng-proxy
 
+# -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
 benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
 benchmark: src/beng-proxy
 	./src/beng-proxy
