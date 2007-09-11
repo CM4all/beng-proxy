@@ -58,6 +58,7 @@ SOURCES = src/main.c \
 	src/istream-hold.c \
 	src/uri.c \
 	src/args.c \
+	src/gmtime.c \
 	src/date.c \
 	src/strutil.c \
 	src/format.c \
