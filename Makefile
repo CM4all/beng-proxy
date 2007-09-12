@@ -32,6 +32,7 @@ SOURCES = src/main.c \
 	src/file-handler.c \
 	src/proxy-handler.c \
 	src/replace.c \
+	src/widget.c \
 	src/processor.c \
 	src/parser.c \
 	src/embed.c \

@@ -306,8 +306,9 @@ transform_url_attribute(processor_t processor, int focus)
 
     if (processor->widget->id == NULL ||
         processor->env->external_uri == NULL ||
-        processor->widget->base_uri == NULL ||
-        strncmp(new_uri, processor->widget->base_uri, strlen(processor->widget->base_uri)) != 0) {
+        processor->widget->class == NULL ||
+        processor->widget->class->uri == NULL ||
+        strncmp(new_uri, processor->widget->class->uri, strlen(processor->widget->class->uri)) != 0) {
         replace_attribute_value(processor,
                                 istream_string_new(processor->output.pool,
                                                    new_uri));
@@ -323,7 +324,7 @@ transform_url_attribute(processor_t processor, int focus)
        add the appropriate args. */
     args = args_format(processor->output.pool, processor->env->args,
                        processor->widget->id,
-                       new_uri + strlen(processor->widget->base_uri),
+                       new_uri + strlen(processor->widget->class->uri),
                        "focus",
                        focus ? processor->widget->id : NULL);
 
@@ -351,8 +352,10 @@ parser_attr_finished(struct parser *parser)
     case TAG_EMBED:
         if (parser->attr_name_length == 4 &&
             memcmp(parser->attr_name, "href", 4) == 0)
-            processor->embedded_widget->base_uri = p_strndup(processor->output.pool, parser->attr_value,
-                                                             parser->attr_value_length);
+            processor->embedded_widget->class
+                = get_widget_class(processor->output.pool,
+                                   p_strndup(processor->output.pool, parser->attr_value,
+                                             parser->attr_value_length));
         else if (parser->attr_name_length == 2 &&
                  memcmp(parser->attr_name, "id", 2) == 0)
             processor->embedded_widget->id = p_strndup(processor->output.pool, parser->attr_value,
@@ -388,18 +391,20 @@ parser_element_finished(struct parser *parser, off_t end)
     off_t request_content_length = 0;
     istream_t request_body = NULL, istream;
 
-    if (processor->tag != TAG_EMBED || processor->embedded_widget->base_uri == NULL)
+    if (processor->tag != TAG_EMBED ||
+        processor->embedded_widget->class == NULL ||
+        processor->embedded_widget->class->uri == NULL)
         return;
 
     widget = processor->embedded_widget;
     processor->embedded_widget = NULL;
 
-    widget->real_uri = widget->base_uri;
+    widget->real_uri = widget->class->uri;
 
     if (widget->id != NULL) {
         const char *append = strmap_get(processor->env->args, widget->id);
         if (append != NULL)
-            widget->real_uri = p_strcat(processor->output.pool, widget->base_uri, append, NULL);
+            widget->real_uri = p_strcat(processor->output.pool, widget->class->uri, append, NULL);
     }
 
     if (widget->id != NULL && processor->env->focus != NULL &&
