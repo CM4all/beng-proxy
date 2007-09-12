@@ -88,6 +88,8 @@ istream_invoke_free(istream_t istream)
     }
 }
 
+istream_t
+istream_null_new(pool_t pool);
 
 istream_t attr_malloc
 istream_memory_new(pool_t pool, const void *data, size_t length);
