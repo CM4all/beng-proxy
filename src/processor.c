@@ -394,13 +394,12 @@ embed_element_finished(processor_t processor)
     off_t request_content_length = 0;
     istream_t request_body = NULL, istream;
 
-    if (processor->embedded_widget->class == NULL ||
-        processor->embedded_widget->class->uri == NULL)
-        return istream_string_new(processor->output.pool,
-                                  "Error: no widget class specified");
-
     widget = processor->embedded_widget;
     processor->embedded_widget = NULL;
+
+    if (widget->class == NULL || widget->class->uri == NULL)
+        return istream_string_new(processor->output.pool,
+                                  "Error: no widget class specified");
 
     widget->real_uri = widget->class->uri;
 
