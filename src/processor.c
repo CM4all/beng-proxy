@@ -385,19 +385,13 @@ parser_attr_finished(struct parser *parser)
     }
 }
 
-void
-parser_element_finished(struct parser *parser, off_t end)
+static istream_t
+embed_element_finished(processor_t processor)
 {
-    processor_t processor = parser_to_processor(parser);
     struct widget *widget;
     http_method_t method = HTTP_METHOD_GET;
     off_t request_content_length = 0;
     istream_t request_body = NULL, istream;
-
-    if (processor->tag != TAG_EMBED ||
-        processor->embedded_widget->class == NULL ||
-        processor->embedded_widget->class->uri == NULL)
-        return;
 
     widget = processor->embedded_widget;
     processor->embedded_widget = NULL;
@@ -440,6 +434,21 @@ parser_element_finished(struct parser *parser, off_t end)
                               istream_string_new(processor->output.pool, "</div>"),
                               NULL);
 
+    return istream;
+}
+
+void
+parser_element_finished(struct parser *parser, off_t end)
+{
+    processor_t processor = parser_to_processor(parser);
+    istream_t istream;
+
+    if (processor->tag != TAG_EMBED ||
+        processor->embedded_widget->class == NULL ||
+        processor->embedded_widget->class->uri == NULL)
+        return;
+
+    istream = embed_element_finished(processor);
     replace_add(&processor->replace, processor->parser.element_offset,
                 end, istream);
 }
