@@ -17,6 +17,7 @@ struct widget_class {
 
 struct widget {
     struct list_head siblings, children;
+    struct widget *parent;
 
     const struct widget_class *class;
 
@@ -40,6 +41,7 @@ static inline void
 widget_init(struct widget *widget, const struct widget_class *class)
 {
     list_init(&widget->children);
+    widget->parent = NULL;
 
     widget->class = class;
     widget->id = NULL;

@@ -257,6 +257,7 @@ parser_element_start(struct parser *parser)
 
         list_add(&processor->embedded_widget->siblings,
                  &processor->widget->children);
+        processor->embedded_widget->parent = processor->widget;
     } else if (parser->element_name_length == 1 &&
                parser->element_name[0] == 'a') {
         processor->tag = TAG_A;
