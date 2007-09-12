@@ -390,7 +390,7 @@ parser_element_finished(struct parser *parser, off_t end)
         return;
 
     widget = processor->embedded_widget;
-    processor->widget = NULL;
+    processor->embedded_widget = NULL;
 
     widget->real_uri = widget->base_uri;
 
