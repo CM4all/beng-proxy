@@ -433,11 +433,6 @@ embed_element_finished(processor_t processor)
                         request_content_length, request_body,
                         widget,
                         processor->env);
-    istream = istream_cat_new(processor->output.pool,
-                              istream_string_new(processor->output.pool, "<div class='embed'>"),
-                              istream,
-                              istream_string_new(processor->output.pool, "</div>"),
-                              NULL);
 
     return istream;
 }
@@ -449,6 +444,14 @@ parser_element_finished(struct parser *parser, off_t end)
 
     if (processor->tag == TAG_EMBED) {
         istream_t istream = embed_element_finished(processor);
+        assert(istream != NULL);
+
+        istream = istream_cat_new(processor->output.pool,
+                                  istream_string_new(processor->output.pool, "<div class='embed'>"),
+                                  istream,
+                                  istream_string_new(processor->output.pool, "</div>"),
+                                  NULL);
+
         replace_add(&processor->replace, processor->parser.element_offset,
                     end, istream);
     }
