@@ -135,7 +135,8 @@ file_callback(struct client_connection *connection,
             processor_env_init(request->pool, env, &translated->uri,
                                request->content_length, request->body);
 
-            widget = p_calloc(request->pool, sizeof(*widget));
+            widget = p_malloc(request->pool, sizeof(*widget));
+            widget_init(widget, NULL);
 
             body = processor_new(request->pool, body, widget, env);
         }

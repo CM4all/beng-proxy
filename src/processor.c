@@ -251,8 +251,9 @@ parser_element_start(struct parser *parser)
     if (parser->element_name_length == 7 &&
         memcmp(parser->element_name, "c:embed", 7) == 0) {
         processor->tag = TAG_EMBED;
-        processor->embedded_widget = p_calloc(processor->output.pool,
+        processor->embedded_widget = p_malloc(processor->output.pool,
                                               sizeof(*processor->embedded_widget));
+        widget_init(processor->embedded_widget, NULL);
     } else if (parser->element_name_length == 1 &&
                parser->element_name[0] == 'a') {
         processor->tag = TAG_A;

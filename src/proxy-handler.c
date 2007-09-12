@@ -71,7 +71,8 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
         /* XXX request body? */
         processor_env_init(pt->request->pool, &pt->env, &pt->translated->uri, 0, NULL);
 
-        widget = p_calloc(pt->request->pool, sizeof(*widget));
+        widget = p_malloc(pt->request->pool, sizeof(*widget));
+        widget_init(widget, NULL);
 
         pool_ref(pt->request->pool);
 

@@ -32,4 +32,13 @@ get_widget_class(pool_t pool, const char *uri);
 int
 widget_class_includes_uri(const struct widget_class *class, const char *uri);
 
+
+static inline void
+widget_init(struct widget *widget, const struct widget_class *class)
+{
+    widget->class = class;
+    widget->id = NULL;
+    widget->real_uri = NULL;
+}
+
 #endif
