@@ -6,6 +6,9 @@
 
 #include "widget.h"
 
+#include <string.h>
+#include <assert.h>
+
 const struct widget_class *
 get_widget_class(pool_t pool, const char *uri)
 {
@@ -15,3 +18,14 @@ get_widget_class(pool_t pool, const char *uri)
 
     return wc;
 }
+
+int
+widget_class_includes_uri(const struct widget_class *class, const char *uri)
+{
+    assert(class != NULL);
+    assert(uri != NULL);
+
+    return class->uri != NULL &&
+        strncmp(uri, class->uri, strlen(class->uri)) == 0;
+}
+

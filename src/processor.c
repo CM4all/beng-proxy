@@ -307,8 +307,7 @@ transform_url_attribute(processor_t processor, int focus)
     if (processor->widget->id == NULL ||
         processor->env->external_uri == NULL ||
         processor->widget->class == NULL ||
-        processor->widget->class->uri == NULL ||
-        strncmp(new_uri, processor->widget->class->uri, strlen(processor->widget->class->uri)) != 0) {
+        widget_class_includes_uri(processor->widget->class, new_uri)) {
         replace_attribute_value(processor,
                                 istream_string_new(processor->output.pool,
                                                    new_uri));

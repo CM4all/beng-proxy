@@ -29,4 +29,7 @@ struct widget {
 const struct widget_class *
 get_widget_class(pool_t pool, const char *uri);
 
+int
+widget_class_includes_uri(const struct widget_class *class, const char *uri);
+
 #endif
