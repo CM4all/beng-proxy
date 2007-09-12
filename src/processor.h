@@ -42,7 +42,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
 
 istream_t attr_malloc
 processor_new(pool_t pool, istream_t istream,
-              const struct widget *widget,
+              struct widget *widget,
               const struct processor_env *env);
 
 #endif

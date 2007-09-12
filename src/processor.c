@@ -65,7 +65,7 @@ struct processor {
     struct istream output;
     istream_t input;
 
-    const struct widget *widget;
+    struct widget *widget;
     const struct processor_env *env;
 
     struct replace replace;
@@ -178,7 +178,7 @@ static const struct istream_handler processor_input_handler = {
 
 istream_t
 processor_new(pool_t pool, istream_t istream,
-              const struct widget *widget,
+              struct widget *widget,
               const struct processor_env *env)
 {
     processor_t processor;
@@ -254,6 +254,9 @@ parser_element_start(struct parser *parser)
         processor->embedded_widget = p_malloc(processor->output.pool,
                                               sizeof(*processor->embedded_widget));
         widget_init(processor->embedded_widget, NULL);
+
+        list_add(&processor->embedded_widget->siblings,
+                 &processor->widget->children);
     } else if (parser->element_name_length == 1 &&
                parser->element_name[0] == 'a') {
         processor->tag = TAG_A;
