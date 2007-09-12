@@ -186,6 +186,7 @@ processor_new(pool_t pool, istream_t istream,
 
     assert(istream != NULL);
     assert(istream->handler == NULL);
+    assert(widget != NULL);
 
 #ifdef NDEBUG
     pool_ref(pool);
@@ -282,7 +283,7 @@ static void
 make_url_attribute_absolute(processor_t processor)
 {
     const char *new_uri = uri_absolute(processor->output.pool,
-                                       processor->widget == NULL ? NULL : processor->widget->real_uri,
+                                       processor->widget->real_uri,
                                        processor->parser.attr_value,
                                        processor->parser.attr_value_length);
     if (new_uri != NULL)
@@ -295,7 +296,7 @@ static void
 transform_url_attribute(processor_t processor, int focus)
 {
     const char *new_uri = uri_absolute(processor->output.pool,
-                                       processor->widget == NULL ? NULL : processor->widget->real_uri,
+                                       processor->widget->real_uri,
                                        processor->parser.attr_value,
                                        processor->parser.attr_value_length);
     const char *args;
@@ -303,8 +304,9 @@ transform_url_attribute(processor_t processor, int focus)
     if (new_uri == NULL)
         return;
 
-    if (processor->widget == NULL ||  processor->widget->id == NULL ||
+    if (processor->widget->id == NULL ||
         processor->env->external_uri == NULL ||
+        processor->widget->base_uri == NULL ||
         strncmp(new_uri, processor->widget->base_uri, strlen(processor->widget->base_uri)) != 0) {
         replace_attribute_value(processor,
                                 istream_string_new(processor->output.pool,

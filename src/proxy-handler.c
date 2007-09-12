@@ -9,6 +9,7 @@
 #include "url-stream.h"
 #include "processor.h"
 #include "header-writer.h"
+#include "widget.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -65,12 +66,16 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
+        struct widget *widget;
+
         /* XXX request body? */
         processor_env_init(pt->request->pool, &pt->env, &pt->translated->uri, 0, NULL);
 
+        widget = p_calloc(pt->request->pool, sizeof(*widget));
+
         pool_ref(pt->request->pool);
 
-        body = processor_new(pt->request->pool, body, NULL, &pt->env);
+        body = processor_new(pt->request->pool, body, widget, &pt->env);
 
         pool_unref(pt->request->pool);
         if (body == NULL) {

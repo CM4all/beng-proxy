@@ -10,6 +10,7 @@
 #include "processor.h"
 #include "date.h"
 #include "format.h"
+#include "widget.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -128,12 +129,15 @@ file_callback(struct client_connection *connection,
     if (strncmp(content_type, "text/html", 9) == 0) {
         if (body != NULL) {
             struct processor_env *env;
+            struct widget *widget;
 
             env = p_malloc(request->pool, sizeof(*env));
             processor_env_init(request->pool, env, &translated->uri,
                                request->content_length, request->body);
 
-            body = processor_new(request->pool, body, NULL, env);
+            widget = p_calloc(request->pool, sizeof(*widget));
+
+            body = processor_new(request->pool, body, widget, env);
         }
 
         http_server_response(request, HTTP_STATUS_OK, headers,
