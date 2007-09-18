@@ -59,6 +59,17 @@ listener_event_callback(int fd, short event, void *ctx)
     pool_commit();
 }
 
+static attr_always_inline uint16_t
+my_htons(uint16_t x)
+{
+#ifdef __ICC
+    /* icc seriously doesn't like the htons() macro */
+    return (uint16_t)((x >> 8) | (x << 8));
+#else
+    return (uint16_t)htons((uint16_t)x);
+#endif
+}
+
 int
 listener_tcp_port_new(pool_t pool, int port,
                       listener_callback_t callback, void *ctx,
@@ -81,7 +92,7 @@ listener_tcp_port_new(pool_t pool, int port,
         memset(&sa6, 0, sizeof(sa6));
         sa6.sin6_family = AF_INET6;
         sa6.sin6_addr = in6addr_any;
-        sa6.sin6_port = htons(port);
+        sa6.sin6_port = my_htons((uint16_t)port);
     } else {
         /* fall back to IPv4 */
         listener->fd = socket(PF_INET, SOCK_STREAM, 0);
@@ -91,7 +102,7 @@ listener_tcp_port_new(pool_t pool, int port,
         memset(&sa4, 0, sizeof(sa4));
         sa4.sin_family = AF_INET;
         sa4.sin_addr.s_addr = INADDR_ANY;
-        sa4.sin_port = htons(port);
+        sa4.sin_port = my_htons((uint16_t)port);
 
         sa = (const struct sockaddr*)&sa4;
         addrlen = sizeof(sa4);
