@@ -57,7 +57,7 @@ struct http_client_connection {
             READ_HEADERS,
             READ_BODY
         } read_state;
-        int status;
+        http_status_t status;
         strmap_t headers;
         off_t content_length;
         istream_t body;
@@ -181,6 +181,7 @@ static const struct istream http_client_response_stream = {
 };
 
 
+/*
 static inline void
 http_client_cork(http_client_connection_t connection)
 {
@@ -214,6 +215,7 @@ http_client_uncork(http_client_connection_t connection)
     (void)connection;
 #endif
 }
+*/
 
 static void
 http_client_parse_status_line(http_client_connection_t connection,
@@ -242,7 +244,7 @@ http_client_parse_status_line(http_client_connection_t connection,
         return;
     }
 
-    connection->response.status = ((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0';
+    connection->response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
     if (unlikely(connection->response.status < 100 || connection->response.status > 599)) {
         http_client_connection_close(connection);
         return;

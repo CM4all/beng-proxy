@@ -106,7 +106,7 @@ url_stream_response_free(void *ctx)
     url_stream_t us = ctx;
 
     if (!us->got_response)
-        us->callback(0, NULL, 0, NULL, us->callback_ctx);
+        us->callback((http_status_t)0, NULL, 0, NULL, us->callback_ctx);
 }
 
 static const struct http_client_response_handler url_stream_response_handler = {
