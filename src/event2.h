@@ -101,7 +101,8 @@ event2_set(struct event2 *event, short mask)
 static inline void
 event2_or(struct event2 *event, short mask)
 {
-    event->new_mask |= mask;
+    /* icc complains when we use "|=" */
+    event->new_mask = (short)(event->new_mask | mask);
     if (event->locked == 0)
         event2_commit(event);
 }
@@ -109,7 +110,8 @@ event2_or(struct event2 *event, short mask)
 static inline void
 event2_nand(struct event2 *event, short mask)
 {
-    event->new_mask &= ~mask;
+    /* icc complains when we use "&=~" */
+    event->new_mask = (short)(event->new_mask & ~mask);
     if (event->locked == 0)
         event2_commit(event);
 }
