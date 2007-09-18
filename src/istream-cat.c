@@ -25,8 +25,6 @@ struct istream_cat {
 };
 
 
-static const char hex_digits[] = "0123456789abcdef";
-
 static size_t
 cat_input_data(const void *data, size_t length, void *ctx)
 {

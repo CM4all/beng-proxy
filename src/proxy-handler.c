@@ -97,10 +97,12 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
     proxy_transfer_close(pt);
 }
 
+/*
 static const char *const copy_headers[] = {
     "user-agent",
     NULL
 };
+*/
 
 void
 proxy_callback(struct client_connection *connection,
