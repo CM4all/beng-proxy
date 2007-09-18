@@ -101,6 +101,12 @@ benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
 benchmark: src/beng-proxy
 	./src/beng-proxy
 
+icc: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
+icc: WARNING_CFLAGS = -Wall -Werror -wd981
+icc: CC = /opt/intel/cce/10.0.023/bin/icc
+icc: src/beng-proxy
+	./src/beng-proxy
+
 valgrind: CFLAGS = -O0 -g -DPOISON -DVALGRIND
 valgrind: src/beng-proxy
 	valgrind --show-reachable=yes --leak-check=yes ./src/beng-proxy
