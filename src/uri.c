@@ -40,7 +40,7 @@ uri_unescape_inplace(char *src, size_t length)
             /* invalid hex digits */
             return 0;
 
-        ch = (digit1 << 4) | digit2;
+        ch = (char)((digit1 << 4) | digit2);
         if (ch == 0)
             /* no %00 hack allowed! */
             return 0;

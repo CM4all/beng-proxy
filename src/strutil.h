@@ -50,9 +50,10 @@ char_is_alphanumeric(char ch)
 static attr_always_inline char
 char_to_lower(char ch)
 {
-    return unlikely(char_is_capital_letter(ch))
-        ? ch + 'a' - 'A'
-        : ch;
+    if (unlikely(char_is_capital_letter(ch)))
+        return (char)(ch + 'a' - 'A');
+    else
+        return ch;
 }
 
 static attr_always_inline void
