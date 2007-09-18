@@ -32,7 +32,7 @@ p_strndup(pool_t pool, const char *src, size_t length)
 char * attr_malloc
 p_sprintf(pool_t pool, const char *fmt, ...)
 {
-#if __STDC_VERSION__ >= 199901L
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__ICC)
     size_t length;
     int attr_unused length2;
     va_list ap;
