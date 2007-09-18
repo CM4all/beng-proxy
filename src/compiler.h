@@ -11,6 +11,8 @@
 
 #if defined(__GNUC__) && __GNUC__ >= 4
 
+/* GCC 4.x */
+
 #ifdef ALWAYS_INLINE
 #define inline inline __attribute__((always_inline))
 #endif
@@ -26,6 +28,8 @@
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 #else
+
+/* generic C compiler */
 
 #define attr_always_inline inline
 
