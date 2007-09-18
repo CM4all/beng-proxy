@@ -102,7 +102,7 @@ benchmark: src/beng-proxy
 	./src/beng-proxy
 
 icc: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
-icc: WARNING_CFLAGS = -Wall -Werror -wd981
+icc: WARNING_CFLAGS = -std=gnu99 -x c -Wall -Werror -wd981
 icc: CC = /opt/intel/cce/10.0.023/bin/icc
 icc: src/beng-proxy
 	./src/beng-proxy
