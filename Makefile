@@ -83,10 +83,10 @@ src/beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS)
 
 $(OBJECTS): %.o: %.c $(HEADERS)
-	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(WARNING_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS)
+	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS)
 
 test/%.o: test/%.c $(HEADERS)
-	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(WARNING_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS) -Isrc
+	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS) -Isrc
 
 test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o
 	$(CC) -o $@ $^ $(LDFLAGS)
