@@ -11,6 +11,11 @@ endif
 
 WARNING_CFLAGS = -Wall -W -pedantic -Werror -pedantic-errors -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef
 
+ifeq ($(ICC),1)
+CC = /opt/intel/cce/10.0.023/bin/icc
+WARNING_CFLAGS = -std=gnu99 -x c -Wall -Werror -wd981
+endif
+
 MORE_CFLAGS = -DVERSION=\"$(VERSION)\"
 
 ALL_CFLAGS = $(CFLAGS) $(MORE_CFLAGS) $(WARNING_CFLAGS) 
@@ -99,12 +104,6 @@ profile: src/beng-proxy
 # -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
 benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
 benchmark: src/beng-proxy
-	./src/beng-proxy
-
-icc: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
-icc: WARNING_CFLAGS = -std=gnu99 -x c -Wall -Werror -wd981
-icc: CC = /opt/intel/cce/10.0.023/bin/icc
-icc: src/beng-proxy
 	./src/beng-proxy
 
 valgrind: CFLAGS = -O0 -g -DPOISON -DVALGRIND
