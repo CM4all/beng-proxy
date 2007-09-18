@@ -176,22 +176,22 @@ static const xuint8 years_to_leap_days[401] = {
 LIBCORE__STDCALL(xbrokentime *)
 sysx_time_gmtime(time_t tm32, xbrokentime *tmrec)
 {
-
+    int64_t tm64;
     int tm_greg, days, year, secs;
 
     unsigned int leap;
 
-    tm32 += SECONDS_TO_1970;
-    tm_greg = (int) (tm32 / SECONDS_IN_GREG);
-    tm32 %= SECONDS_IN_GREG;
+    tm64 = tm32 + SECONDS_TO_1970;
+    tm_greg = (int) (tm64 / SECONDS_IN_GREG);
+    tm64 %= SECONDS_IN_GREG;
 
-    if (tm32 < 0) {
+    if (tm64 < 0) {
         tm_greg--;
-        tm32 += SECONDS_IN_GREG;
+        tm64 += SECONDS_IN_GREG;
     }
 
-    days = (int) (tm32 / 86400);
-    secs = (int) (tm32 % 86400);
+    days = (int) (tm64 / 86400);
+    secs = (int) (tm64 % 86400);
 
     tmrec->tm_wday = (days + 1) % 7;
 
