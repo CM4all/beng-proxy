@@ -34,7 +34,7 @@ p_sprintf(pool_t pool, const char *fmt, ...)
 {
 #if __STDC_VERSION__ >= 199901L
     size_t length;
-    int length2;
+    int attr_unused length2;
     va_list ap;
     char *p;
 

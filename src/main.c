@@ -70,7 +70,8 @@ deinit_signals(struct instance *instance)
 
 int main(int argc, char **argv)
 {
-    int ret, ref;
+    int ret;
+    int attr_unused ref;
     static struct instance instance;
 
     (void)argc;

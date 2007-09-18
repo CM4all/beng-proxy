@@ -496,7 +496,7 @@ clear_memory(void *p, size_t size)
 {
 #if defined(__x86_64__)
     size_t n = (size + 7) / 8;
-    size_t dummy0, dummy1;
+    size_t attr_unused dummy0, dummy1;
     asm volatile("cld\n\t"
                  "rep stosq\n\t"
                  : "=&c"(dummy0), "=&D"(dummy1)
