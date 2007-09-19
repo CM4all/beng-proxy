@@ -4,6 +4,12 @@ CC = gcc
 CFLAGS = -O0 -g -DPOISON -DDEBUG_POOL_REF -DSPLICE
 LDFLAGS =
 
+ifeq ($(shell uname -m),x86_64)
+ARCH_CFLAGS = -march=athlon64
+else
+ARCH_CFLAGS = -march=pentium4
+endif
+
 ifeq ($(PROFILE),1)
 CFLAGS = -O3 -g -DNDEBUG -DSPLICE -DPROFILE -pg
 LDFLAGS = -lc_p -pg
@@ -13,12 +19,13 @@ WARNING_CFLAGS = -Wall -W -pedantic -Werror -pedantic-errors -std=gnu99 -Wmissin
 
 ifeq ($(ICC),1)
 CC = icc
+ARCH_CFLAGS = -march=pentium4
 WARNING_CFLAGS = -std=gnu99 -x c -Wall -Werror -wd981
 endif
 
 MORE_CFLAGS = -DVERSION=\"$(VERSION)\"
 
-ALL_CFLAGS = $(CFLAGS) $(MORE_CFLAGS) $(WARNING_CFLAGS) 
+ALL_CFLAGS = $(CFLAGS) $(ARCH_CFLAGS) $(MORE_CFLAGS) $(WARNING_CFLAGS) 
 
 LIBDAEMON_CFLAGS := $(shell pkg-config --cflags libcm4all-daemon)
 LIBDAEMON_LIBS := $(shell pkg-config --libs libcm4all-daemon)
