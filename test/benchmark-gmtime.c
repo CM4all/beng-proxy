@@ -1,4 +1,5 @@
 #include "gmtime.h"
+#include "libcore-gmtime.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +21,12 @@ int main(int argc, char **argv) {
             foo += tm.tm_sec + tm.tm_year + tm.tm_mday + tm.tm_mon + tm.tm_hour + tm.tm_min;
         }
     } else if (strcmp(argv[1], "babak") == 0) {
+        struct tm tm;
+        for (i = 10000000; i > 0; --i) {
+            sysx_time_gmtime_orig((xtime)now * 1000, &tm);
+            foo += tm.tm_sec + tm.tm_year + tm.tm_mday + tm.tm_mon + tm.tm_hour + tm.tm_min;
+        }
+    } else if (strcmp(argv[1], "beng") == 0) {
         struct tm tm;
         for (i = 10000000; i > 0; --i) {
             sysx_time_gmtime(now, &tm);

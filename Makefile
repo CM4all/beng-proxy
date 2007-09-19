@@ -104,7 +104,7 @@ $(OBJECTS): %.o: %.c $(HEADERS)
 test/%.o: test/%.c $(HEADERS)
 	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS) -Isrc
 
-test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o
+test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o test/libcore-gmtime.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 test/format-http-date: test/format-http-date.o src/gmtime.o src/date.o
