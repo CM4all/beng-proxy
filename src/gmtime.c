@@ -28,10 +28,6 @@ static const unsigned SECONDS_PER_DAY = 24 * 60 * 60;
 /* table driven for values <= 400 */
 #define LEAP_IN_GREG(y) ((leap_years[(y) >> 5] >> ((y) & 0x1f)) & 0x01)
 
-#define INRANGE_0(x, b) ((unsigned int) (x) < (b))
-
-#define INRANGE_1(x, b) ((x) > 0 && (x) < (b))
-
 /*
 // ---------- data ---------------------------------------------
 */
