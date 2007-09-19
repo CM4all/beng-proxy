@@ -8,6 +8,8 @@
 #include "gmtime.h"
 #include "compiler.h"
 
+#include <assert.h>
+
 typedef uint8_t xuint8;
 typedef uint16_t xuint16;
 typedef uint32_t xuint32;
@@ -178,27 +180,25 @@ LEAP_IN_GREG(unsigned year) {
 LIBCORE__STDCALL(xbrokentime *)
 sysx_time_gmtime(time_t tm32, xbrokentime *tmrec)
 {
-    int tm_greg, days, year, secs;
+    const unsigned utm32 = (unsigned)tm32; /* year 2037 problem! */
+    unsigned days, year, secs;
+    int tm_greg;
 
     unsigned int leap;
 
-    secs = (int)(tm32 % (time_t)SECONDS_PER_DAY);
-    days = (int)(tm32 / (time_t)SECONDS_PER_DAY);
-    days += DAYS_TO_1970;
+    secs = utm32 % SECONDS_PER_DAY;
+    days = utm32 / SECONDS_PER_DAY + DAYS_TO_1970;
     tm_greg = days / DAYS_IN_GREG;
     days %= DAYS_IN_GREG;
 
-    if (days < 0) {
-        tm_greg--;
-        days += DAYS_IN_GREG;
-    }
+    assert((int)days >= 0);
 
     tmrec->tm_wday = (days + 1) % 7;
 
     year = days / 365;
     days = days % 365 - years_to_leap_days[year];
 
-    if (days < 0) {
+    if ((int)days < 0) {
         year--;
         leap = LEAP_IN_GREG(year);
         days += 365 + leap;
