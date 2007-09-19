@@ -23,6 +23,8 @@ typedef int xbool;
 
 #define SECONDS_IN_GREG LIBCORE_d64C(12622780800)
 
+static const unsigned SECONDS_PER_DAY = 24 * 60 * 60;
+
 /* table driven for values <= 400 */
 #define LEAP_IN_GREG(y) ((leap_years[(y) >> 5] >> ((y) & 0x1f)) & 0x01)
 
@@ -190,8 +192,8 @@ sysx_time_gmtime(time_t tm32, xbrokentime *tmrec)
         tm64 += SECONDS_IN_GREG;
     }
 
-    days = (int) (tm64 / 86400);
-    secs = (int) (tm64 % 86400);
+    days = (int) (tm64 / SECONDS_PER_DAY);
+    secs = (int) (tm64 % SECONDS_PER_DAY);
 
     tmrec->tm_wday = (days + 1) % 7;
 
