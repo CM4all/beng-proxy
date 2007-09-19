@@ -7,7 +7,7 @@ LDFLAGS =
 MACHINE := $(shell uname -m)
 ifeq ($(MACHINE),x86_64)
 ARCH_CFLAGS = -march=athlon64
-else if ($(MACHINE),i686)
+else ifeq ($(MACHINE),i686)
 ARCH_CFLAGS = -march=pentium4
 else
 ARCH_CFLAGS =
