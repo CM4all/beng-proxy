@@ -4,10 +4,13 @@ CC = gcc
 CFLAGS = -O0 -g -DPOISON -DDEBUG_POOL_REF -DSPLICE
 LDFLAGS =
 
-ifeq ($(shell uname -m),x86_64)
+MACHINE := $(shell uname -m)
+ifeq ($(MACHINE),x86_64)
 ARCH_CFLAGS = -march=athlon64
-else
+else if ($(MACHINE),i686)
 ARCH_CFLAGS = -march=pentium4
+else
+ARCH_CFLAGS =
 endif
 
 ifeq ($(O),1)
