@@ -24,13 +24,13 @@ int main(int argc, char **argv) {
         struct tm tm;
         xtime xnow = (xtime)now * 1000;
         for (i = 10000000; i > 0; --i) {
-            sysx_time_gmtime_orig(xnow, &tm);
+            sysx_time_gmtime_orig(xnow + i, &tm);
             foo += tm.tm_sec + tm.tm_year + tm.tm_mday + tm.tm_mon + tm.tm_hour + tm.tm_min;
         }
     } else if (strcmp(argv[1], "beng") == 0) {
         struct tm tm;
         for (i = 10000000; i > 0; --i) {
-            sysx_time_gmtime(now, &tm);
+            sysx_time_gmtime(now + i, &tm);
             foo += tm.tm_sec + tm.tm_year + tm.tm_mday + tm.tm_mon + tm.tm_hour + tm.tm_min;
         }
     } else
