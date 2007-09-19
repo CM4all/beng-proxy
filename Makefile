@@ -93,7 +93,7 @@ OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 all: src/beng-proxy
 
 clean:
-	rm -f src/beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime
+	rm -f src/beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date
 
 src/beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS)
@@ -105,6 +105,9 @@ test/%.o: test/%.c $(HEADERS)
 	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS) -Isrc
 
 test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+test/format-http-date: test/format-http-date.o src/gmtime.o src/date.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -g -pg
