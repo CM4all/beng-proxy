@@ -162,7 +162,7 @@ static const xuint8 years_to_leap_days[401] = {
 };
 
 /* table driven for values <= 400 */
-static attr_always_inline xuint32
+static attr_always_inline unsigned
 LEAP_IN_GREG(unsigned year) {
     return (leap_years[year >> 5] >> (year & 0x1f)) & 0x01;
 }
