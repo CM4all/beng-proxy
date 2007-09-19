@@ -19,9 +19,9 @@ typedef int xbool;
 // ---------- macros -------------------------------------------
 */
 
-#define SECONDS_TO_1970 LIBCORE_d64C(62135596800)
+static const uint64_t SECONDS_TO_1970 = LIBCORE_d64C(62135596800);
 
-#define SECONDS_IN_GREG LIBCORE_d64C(12622780800)
+static const uint64_t SECONDS_IN_GREG = LIBCORE_d64C(12622780800);
 
 static const unsigned SECONDS_PER_DAY = 24 * 60 * 60;
 
