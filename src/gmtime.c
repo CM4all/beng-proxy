@@ -19,9 +19,9 @@ typedef int xbool;
 // ---------- macros -------------------------------------------
 */
 
-static const uint64_t SECONDS_TO_1970 = LIBCORE_d64C(62135596800);
+static const unsigned DAYS_TO_1970 = 719162;
 
-static const uint64_t SECONDS_IN_GREG = LIBCORE_d64C(12622780800);
+static const unsigned DAYS_IN_GREG = 146097;
 
 static const unsigned SECONDS_PER_DAY = 24 * 60 * 60;
 
@@ -178,22 +178,20 @@ static const xuint8 years_to_leap_days[401] = {
 LIBCORE__STDCALL(xbrokentime *)
 sysx_time_gmtime(time_t tm32, xbrokentime *tmrec)
 {
-    int64_t tm64;
     int tm_greg, days, year, secs;
 
     unsigned int leap;
 
-    tm64 = tm32 + SECONDS_TO_1970;
-    tm_greg = (int) (tm64 / SECONDS_IN_GREG);
-    tm64 %= SECONDS_IN_GREG;
+    secs = (int)(tm32 % (time_t)SECONDS_PER_DAY);
+    days = (int)(tm32 / (time_t)SECONDS_PER_DAY);
+    days += DAYS_TO_1970;
+    tm_greg = days / DAYS_IN_GREG;
+    days %= DAYS_IN_GREG;
 
-    if (tm64 < 0) {
+    if (days < 0) {
         tm_greg--;
-        tm64 += SECONDS_IN_GREG;
+        days += DAYS_IN_GREG;
     }
-
-    days = (int) (tm64 / SECONDS_PER_DAY);
-    secs = (int) (tm64 % SECONDS_PER_DAY);
 
     tmrec->tm_wday = (days + 1) % 7;
 
