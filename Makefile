@@ -103,7 +103,7 @@ test/%.o: test/%.c $(HEADERS)
 test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-profile: CFLAGS = -O0 -DNDEBUG -DSPLICE -DPROFILE -g -pg -O3
+profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -g -pg
 profile: LDFLAGS = -lc_p -pg
 profile: src/beng-proxy
 	./src/beng-proxy
