@@ -6,6 +6,7 @@
  */
 
 #include "gmtime.h"
+#include "compiler.h"
 
 typedef uint8_t xuint8;
 typedef uint16_t xuint16;
@@ -24,9 +25,6 @@ static const unsigned DAYS_TO_1970 = 719162;
 static const unsigned DAYS_IN_GREG = 146097;
 
 static const unsigned SECONDS_PER_DAY = 24 * 60 * 60;
-
-/* table driven for values <= 400 */
-#define LEAP_IN_GREG(y) ((leap_years[(y) >> 5] >> ((y) & 0x1f)) & 0x01)
 
 /*
 // ---------- data ---------------------------------------------
@@ -160,6 +158,12 @@ static const xuint8 years_to_leap_days[401] = {
     93, 93, 93, 94, 94, 94, 94, 95, 95, 95, 95, 96, 96, 96, 96,
     97
 };
+
+/* table driven for values <= 400 */
+static attr_always_inline xuint32
+LEAP_IN_GREG(unsigned year) {
+    return (leap_years[year >> 5] >> (year & 0x1f)) & 0x01;
+}
 
 /*
 // ---------- implementation (public) --------------------------
