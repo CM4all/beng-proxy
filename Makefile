@@ -10,6 +10,10 @@ else
 ARCH_CFLAGS = -march=pentium4
 endif
 
+ifeq ($(O),1)
+CFLAGS = -O3 -g -DNDEBUG -DSPLICE
+endif
+
 ifeq ($(PROFILE),1)
 CFLAGS = -O3 -g -DNDEBUG -DSPLICE -DPROFILE -pg
 LDFLAGS = -lc_p -pg
