@@ -16,14 +16,16 @@ static void
 replace_to_next_substitution(struct replace *replace, struct substitution *s)
 {
     assert(replace->first_substitution == s);
-    assert(replace->position == s->start);
+    assert(replace->quiet || replace->position == s->start);
     assert(s->istream == NULL);
     assert(s->start <= s->end);
 
-    replace->position = s->end;
+    if (!replace->quiet)
+        replace->position = s->end;
     replace->first_substitution = s->next;
 
-    assert(replace->first_substitution == NULL ||
+    assert(replace->quiet ||
+           replace->first_substitution == NULL ||
            replace->first_substitution->start >= replace->position);
 
     if (!replace->read_locked)
@@ -39,12 +41,12 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
     if (replace->fd >= 0)
         return 0;
 
-    assert(replace->position <= s->start);
+    assert(replace->quiet || replace->position <= s->start);
     assert(replace->first_substitution != NULL);
     assert(replace->first_substitution->start <= s->start);
 
     if (replace->first_substitution != s ||
-        replace->position < s->start)
+        (!replace->quiet && replace->position < s->start))
         return 0;
 
     return istream_invoke_data(replace->output, data, length);
@@ -61,7 +63,8 @@ replace_substitution_free(void *ctx)
     s->istream = NULL;
 
     if (replace->first_substitution != s ||
-        (replace->fd >= 0 || replace->position < s->start))
+        replace->fd >= 0 ||
+        (!replace->quiet && replace->position < s->start))
         return;
 
     replace_to_next_substitution(replace, s);
@@ -74,28 +77,33 @@ static const struct istream_handler replace_substitution_handler = {
 
 
 int
-replace_init(struct replace *replace, pool_t pool, istream_t output)
+replace_init(struct replace *replace, pool_t pool, istream_t output,
+             int quiet)
 {
     assert(replace != NULL);
 
     replace->pool = pool;
     replace->output = output;
 
+    replace->quiet = quiet;
     replace->fd = -1;
-    replace->source_length = 0;
+    if (!quiet)
+        replace->source_length = 0;
     replace->map = NULL;
 
     replace->first_substitution = NULL;
     replace->append_substitution_p = &replace->first_substitution;
     replace->read_locked = 0;
 
-    /* XXX */
-    replace->fd = open("/tmp/beng-replace.tmp", O_CREAT|O_EXCL|O_RDWR, 0777);
-    if (replace->fd < 0) {
-        perror("failed to create temporary file");
-        return -1;
+    if (!replace->quiet) {
+        /* XXX */
+        replace->fd = open("/tmp/beng-replace.tmp", O_CREAT|O_EXCL|O_RDWR, 0777);
+        if (replace->fd < 0) {
+            perror("failed to create temporary file");
+            return -1;
+        }
+        unlink("/tmp/beng-replace.tmp");
     }
-    unlink("/tmp/beng-replace.tmp");
 
     return 0;
 }
@@ -116,14 +124,20 @@ replace_destroy(struct replace *replace)
     }
 
     if (replace->fd >= 0) {
+        assert(!replace->quiet);
+
         close(replace->fd);
         replace->fd = -1;
     }
 
     if (replace->map != NULL) {
+        assert(!replace->quiet);
+
         munmap(replace->map, (size_t)replace->source_length);
         replace->map = NULL;
     }
+
+    replace->quiet = 0;
 
     if (replace->output != NULL)
         istream_free(&replace->output);
@@ -135,10 +149,14 @@ replace_feed(struct replace *replace, const void *data, size_t length)
     ssize_t nbytes;
 
     assert(replace != NULL);
-    assert(replace->fd >= 0);
     assert(replace->map == NULL);
     assert(data != NULL);
     assert(length > 0);
+
+    if (replace->quiet)
+        return length;
+
+    assert(replace->fd >= 0);
 
     nbytes = write(replace->fd, data, length);
     if (nbytes < 0) {
@@ -186,18 +204,17 @@ replace_setup_mmap(struct replace *replace)
         replace_destroy(replace);
         return;
     }
+
+    replace->position = 0;
 }
 
 void
 replace_eof(struct replace *replace)
 {
     assert(replace != NULL);
-    assert(replace->fd >= 0);
-    assert(replace->map == NULL);
 
-    replace_setup_mmap(replace);
-
-    replace->position = 0;
+    if (!replace->quiet)
+        replace_setup_mmap(replace);
 
     replace_read(replace);
 }
@@ -209,11 +226,11 @@ replace_add(struct replace *replace, off_t start, off_t end,
     struct substitution *s;
 
     assert(replace != NULL);
-    assert(replace->fd >= 0);
+    assert(replace->quiet || replace->fd >= 0);
     assert(replace->map == NULL);
     assert(start >= 0);
     assert(start <= end);
-    assert(end <= replace->source_length);
+    assert(replace->quiet || end <= replace->source_length);
 
     s = p_malloc(replace->pool, sizeof(*s));
     s->next = NULL;
@@ -237,7 +254,8 @@ static void
 replace_read_substitution(struct replace *replace)
 {
     while (replace->first_substitution != NULL &&
-           replace->position == replace->first_substitution->start) {
+           (replace->quiet ||
+            replace->position == replace->first_substitution->start)) {
         struct substitution *s = replace->first_substitution;
 
         replace->read_locked = 1;
@@ -262,8 +280,8 @@ replace_read(struct replace *replace)
     size_t rest, nbytes;
 
     assert(replace != NULL);
-    assert(replace->map != NULL);
-    assert(replace->position <= replace->source_length);
+    assert(replace->quiet || replace->map != NULL);
+    assert(replace->quiet || replace->position <= replace->source_length);
 
     if (replace->fd >= 0)
         return;
@@ -272,7 +290,9 @@ replace_read(struct replace *replace)
 
     replace_read_substitution(replace);
 
-    if (replace->first_substitution == NULL)
+    if (replace->quiet)
+        rest = 0;
+    else if (replace->first_substitution == NULL)
         rest = (size_t)(replace->source_length - replace->position);
     else if (replace->position < replace->first_substitution->start)
         rest = (size_t)(replace->first_substitution->start - replace->position);
@@ -288,12 +308,14 @@ replace_read(struct replace *replace)
         replace->position += nbytes;
     }
 
-    if (replace->map != NULL &&
-        replace->first_substitution == NULL &&
-        replace->position == replace->source_length) {
-
-        munmap(replace->map, (size_t)replace->source_length);
-        replace->map = NULL;
+    if (replace->first_substitution == NULL &&
+        (replace->quiet ||
+         (replace->map != NULL &&
+          replace->position == replace->source_length))) {
+        if (!replace->quiet) {
+            munmap(replace->map, (size_t)replace->source_length);
+            replace->map = NULL;
+        }
 
         pool_ref(replace->pool);
 

@@ -51,7 +51,7 @@ processor_output_stream_read(istream_t istream)
 {
     processor_t processor = istream_to_processor(istream);
 
-    if (processor->replace.fd >= 0)
+    if (processor->input != NULL)
         istream_read(processor->input);
     else
         replace_read(&processor->replace);
@@ -91,7 +91,8 @@ processor_input_data(const void *data, size_t length, void *ctx)
 
     parser_feed(&processor->parser, (const char*)data, nbytes);
 
-    if (processor->replace.source_length >= 8 * 1024 * 1024) {
+    if (!processor->replace.quiet &&
+        processor->replace.source_length >= 8 * 1024 * 1024) {
         fprintf(stderr, "file too large for processor\n");
         processor_close(processor);
         return 0;
@@ -168,7 +169,8 @@ processor_new(pool_t pool, istream_t istream,
     processor->env = env;
     processor->options = options;
 
-    ret = replace_init(&processor->replace, pool, &processor->output);
+    ret = replace_init(&processor->replace, pool, &processor->output,
+                       (options & PROCESSOR_QUIET) != 0);
     if (ret < 0) {
         istream_free(&processor->input);
         return NULL;
@@ -379,11 +381,12 @@ parser_element_finished(struct parser *parser, off_t end)
         istream_t istream = embed_element_finished(processor);
         assert(istream != NULL);
 
-        istream = istream_cat_new(processor->output.pool,
-                                  istream_string_new(processor->output.pool, "<div class='embed'>"),
-                                  istream,
-                                  istream_string_new(processor->output.pool, "</div>"),
-                                  NULL);
+        if ((processor->options & PROCESSOR_QUIET) == 0)
+            istream = istream_cat_new(processor->output.pool,
+                                      istream_string_new(processor->output.pool, "<div class='embed'>"),
+                                      istream,
+                                      istream_string_new(processor->output.pool, "</div>"),
+                                      NULL);
 
         replace_add(&processor->replace, processor->parser.element_offset,
                     end, istream);

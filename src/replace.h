@@ -20,6 +20,7 @@ struct replace {
     pool_t pool;
     istream_t output;
 
+    int quiet;
     int fd;
     off_t source_length, position;
     char *map;
@@ -30,7 +31,8 @@ struct replace {
 };
 
 int
-replace_init(struct replace *replace, pool_t pool, istream_t output);
+replace_init(struct replace *replace, pool_t pool, istream_t output,
+             int quiet);
 
 void
 replace_destroy(struct replace *replace);
