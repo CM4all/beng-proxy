@@ -27,6 +27,6 @@ url_stream_new(pool_t pool,
                url_stream_callback_t callback, void *ctx);
 
 void
-url_stream_close(url_stream_t connection);
+url_stream_close(url_stream_t us);
 
 #endif
