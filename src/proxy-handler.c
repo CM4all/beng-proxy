@@ -78,7 +78,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
         pool_ref(pt->request->pool);
 
-        body = processor_new(pt->request->pool, body, widget, &pt->env);
+        body = processor_new(pt->request->pool, body, widget, &pt->env, 0);
 
         pool_unref(pt->request->pool);
         if (body == NULL) {

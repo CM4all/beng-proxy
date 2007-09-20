@@ -68,6 +68,7 @@ struct processor {
 
     struct widget *widget;
     const struct processor_env *env;
+    unsigned options;
 
     struct replace replace;
 
@@ -180,7 +181,8 @@ static const struct istream_handler processor_input_handler = {
 istream_t
 processor_new(pool_t pool, istream_t istream,
               struct widget *widget,
-              const struct processor_env *env)
+              const struct processor_env *env,
+              unsigned options)
 {
     processor_t processor;
     int ret;
@@ -207,6 +209,7 @@ processor_new(pool_t pool, istream_t istream,
 
     processor->widget = widget;
     processor->env = env;
+    processor->options = options;
 
     ret = replace_init(&processor->replace, pool, &processor->output);
     if (ret < 0) {

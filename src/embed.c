@@ -14,6 +14,7 @@
 struct embed {
     struct widget *widget;
     const struct processor_env *env;
+    unsigned options;
 
     url_stream_t url_stream;
 
@@ -58,7 +59,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
         input = processor_new(embed->delayed->pool, body,
-                              embed->widget, embed->env);
+                              embed->widget, embed->env, embed->options);
         if (input == NULL) {
             istream_close(body);
             input = istream_string_new(embed->delayed->pool, "Failed to create processor object.");
@@ -77,7 +78,8 @@ embed_new(pool_t pool, http_method_t method, const char *url,
           off_t request_content_length,
           istream_t request_body,
           struct widget *widget,
-          const struct processor_env *env)
+          const struct processor_env *env,
+          unsigned options)
 {
     struct embed *embed;
 
@@ -86,6 +88,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     embed = p_malloc(pool, sizeof(*embed));
     embed->widget = widget;
     embed->env = env;
+    embed->options = options;
     embed->delayed = istream_delayed_new(pool, embed_abort, embed);
 
     embed->url_stream = url_stream_new(pool,
