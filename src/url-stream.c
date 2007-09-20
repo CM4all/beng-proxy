@@ -213,9 +213,10 @@ url_stream_close(url_stream_t us)
 {
     assert(us != NULL);
 
-    if (us->client_socket != NULL)
+    if (us->client_socket != NULL) {
         client_socket_free(&us->client_socket);
-    else if (us->http != NULL)
+        us->callback((http_status_t)0, NULL, 0, NULL, us->callback_ctx);
+    } else if (us->http != NULL)
         http_client_connection_close(us->http);
 
     if (us->pool != NULL) {
