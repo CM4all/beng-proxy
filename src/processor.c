@@ -379,9 +379,9 @@ parser_element_finished(struct parser *parser, off_t end)
 
     if (processor->tag == TAG_EMBED) {
         istream_t istream = embed_element_finished(processor);
-        assert(istream != NULL);
 
-        if ((processor->options & PROCESSOR_QUIET) == 0)
+        if (istream != NULL &&
+            (processor->options & PROCESSOR_QUIET) == 0)
             istream = istream_cat_new(processor->output.pool,
                                       istream_string_new(processor->output.pool, "<div class='embed'>"),
                                       istream,
