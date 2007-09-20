@@ -20,4 +20,8 @@ embed_new(pool_t pool, http_method_t method, const char *url,
           struct widget *widget,
           const struct processor_env *env);
 
+istream_t
+embed_widget_callback(pool_t pool, const struct processor_env *env,
+                      struct widget *widget);
+
 #endif

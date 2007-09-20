@@ -13,6 +13,11 @@
 #include <sys/types.h>
 
 struct widget;
+struct processor_env;
+
+typedef istream_t (*processor_widget_callback_t)(pool_t pool,
+                                                 const struct processor_env *env,
+                                                 struct widget *widget);
 
 struct processor_env {
     /** the URI which was requested by the beng-proxy client */
@@ -32,13 +37,16 @@ struct processor_env {
     struct session *session;
 
     char session_id_buffer[9];
+
+    processor_widget_callback_t widget_callback;
 };
 
 void
 processor_env_init(pool_t pool, struct processor_env *env,
                    const struct parsed_uri *uri,
                    off_t request_content_length,
-                   istream_t request_body);
+                   istream_t request_body,
+                   processor_widget_callback_t widget_callback);
 
 istream_t attr_malloc
 processor_new(pool_t pool, istream_t istream,

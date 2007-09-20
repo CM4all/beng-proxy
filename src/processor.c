@@ -25,7 +25,8 @@ void
 processor_env_init(pool_t pool, struct processor_env *env,
                    const struct parsed_uri *uri,
                    off_t request_content_length,
-                   istream_t request_body)
+                   istream_t request_body,
+                   processor_widget_callback_t widget_callback)
 {
     const char *session_id;
 
@@ -56,6 +57,8 @@ processor_env_init(pool_t pool, struct processor_env *env,
         session_id_format(env->session_id_buffer, env->session->id);
         strmap_addn(env->args, "session", env->session_id_buffer);
     }
+
+    env->widget_callback = widget_callback;
 }
 
 
@@ -390,9 +393,6 @@ static istream_t
 embed_element_finished(processor_t processor)
 {
     struct widget *widget;
-    http_method_t method = HTTP_METHOD_GET;
-    off_t request_content_length = 0;
-    istream_t request_body = NULL, istream;
 
     widget = processor->embedded_widget;
     processor->embedded_widget = NULL;
@@ -409,32 +409,7 @@ embed_element_finished(processor_t processor)
             widget->real_uri = p_strcat(processor->output.pool, widget->class->uri, append, NULL);
     }
 
-    if (widget->id != NULL && processor->env->focus != NULL &&
-        (processor->env->external_uri->query != NULL || processor->env->request_body != NULL) &&
-        strcmp(widget->id, processor->env->focus) == 0) {
-        /* we're in focus.  forward query string and request body. */
-        widget->real_uri = p_strncat(processor->output.pool,
-                                     widget->real_uri, strlen(widget->real_uri),
-                                     "?", 1,
-                                     processor->env->external_uri->query,
-                                     processor->env->external_uri->query_length,
-                                     NULL);
-
-        if (processor->env->request_body != NULL) {
-            method = HTTP_METHOD_POST; /* XXX which method? */
-            request_content_length = processor->env->request_content_length;
-            request_body = istream_hold_new(processor->output.pool, processor->env->request_body);
-            /* XXX what if there is no stream handler? or two? */
-        }
-    }
-
-    istream = embed_new(processor->output.pool,
-                        method, widget->real_uri,
-                        request_content_length, request_body,
-                        widget,
-                        processor->env);
-
-    return istream;
+    return processor->env->widget_callback(processor->output.pool, processor->env, widget);
 }
 
 void

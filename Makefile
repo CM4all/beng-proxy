@@ -55,6 +55,7 @@ SOURCES = src/main.c \
 	src/processor.c \
 	src/parser.c \
 	src/embed.c \
+	src/wembed.c \
 	src/socket-util.c \
 	src/listener.c \
 	src/client-socket.c \
