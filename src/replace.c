@@ -158,8 +158,8 @@ replace_feed(struct replace *replace, const void *data, size_t length)
     return (size_t)nbytes;
 }
 
-void
-replace_eof(struct replace *replace)
+static void
+replace_setup_mmap(struct replace *replace)
 {
     int ret;
 
@@ -186,6 +186,16 @@ replace_eof(struct replace *replace)
         replace_destroy(replace);
         return;
     }
+}
+
+void
+replace_eof(struct replace *replace)
+{
+    assert(replace != NULL);
+    assert(replace->fd >= 0);
+    assert(replace->map == NULL);
+
+    replace_setup_mmap(replace);
 
     replace->position = 0;
 
