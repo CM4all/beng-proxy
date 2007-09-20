@@ -13,7 +13,6 @@
 #include "args.h"
 #include "widget.h"
 
-#include <sys/mman.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
