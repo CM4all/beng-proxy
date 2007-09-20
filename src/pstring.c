@@ -12,6 +12,14 @@
 #include <stdio.h>
 
 char *
+p_memdup(pool_t pool, const void *src, size_t length)
+{
+    void *dest = p_malloc(pool, length);
+    memcpy(dest, src, length);
+    return dest;
+}
+
+char *
 p_strdup(pool_t pool, const char *src)
 {
     size_t length = strlen(src) + 1;

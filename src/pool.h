@@ -61,6 +61,9 @@ void * attr_malloc
 p_calloc(pool_t pool, size_t size);
 
 char * attr_malloc
+p_memdup(pool_t pool, const void *src, size_t length);
+
+char * attr_malloc
 p_strdup(pool_t pool, const char *src);
 
 char * attr_malloc
