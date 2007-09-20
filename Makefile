@@ -53,6 +53,7 @@ SOURCES = src/main.c \
 	src/replace.c \
 	src/widget.c \
 	src/processor.c \
+	src/penv.c \
 	src/parser.c \
 	src/embed.c \
 	src/wembed.c \
