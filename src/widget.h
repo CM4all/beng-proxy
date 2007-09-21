@@ -24,6 +24,8 @@ struct widget {
     /** the widget's instance id, as specified in the template */
     const char *id;
 
+    const char *append_uri;
+
     /** the URI which is actually retrieved - this is the same as
         base_uri, except when the user clicked on a relative link */
     const char *real_uri;
@@ -48,6 +50,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
 
     widget->class = class;
     widget->id = NULL;
+    widget->append_uri = NULL;
     widget->real_uri = NULL;
     widget->iframe = 0;
 }

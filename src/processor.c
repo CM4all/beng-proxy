@@ -376,8 +376,10 @@ embed_element_finished(processor_t processor)
 
     if (widget->id != NULL) {
         const char *append = strmap_get(processor->env->args, widget->id);
-        if (append != NULL)
+        if (append != NULL) {
+            widget->append_uri = append;
             widget->real_uri = p_strcat(processor->output.pool, widget->class->uri, append, NULL);
+        }
     }
 
     return processor->env->widget_callback(processor->output.pool, processor->env, widget);
