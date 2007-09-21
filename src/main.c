@@ -10,12 +10,20 @@
 #include "connection.h"
 #include "session.h"
 
+#include <daemon/daemonize.h>
+
 #include <assert.h>
+#include <unistd.h>
+#include <grp.h>
 #include <sys/signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <event.h>
+
+#ifndef NDEBUG
+int debug_mode = 0;
+#endif
 
 static void
 exit_event_callback(int fd, short event, void *ctx)
@@ -74,8 +82,18 @@ int main(int argc, char **argv)
     int attr_unused ref;
     static struct instance instance;
 
-    (void)argc;
-    (void)argv;
+#ifndef NDEBUG
+    if (geteuid() != 0)
+        debug_mode = 1;
+#endif
+
+    /* configuration */
+
+    instance.config.document_root = "/var/www";
+
+    parse_cmdline(&instance.config, argc, argv);
+
+    /* initialize */
 
     instance.event_base = event_init();
 
@@ -95,7 +113,41 @@ int main(int argc, char **argv)
         exit(2);
     }
 
+    /* daemonize */
+
+    ret = daemonize();
+    if (ret < 0)
+        exit(2);
+
+    /* change user */
+
+    if (instance.config.gid != 0) {
+        ret = setgroups(1, &instance.config.gid);
+        if (ret < 0) {
+            perror("setgroups() failed");
+            exit(2);
+        }
+
+        ret = setregid(instance.config.gid, instance.config.gid);
+        if (ret < 0) {
+            perror("setregid() failed");
+            exit(2);
+        }
+    }
+
+    if (instance.config.uid != 0) {
+        ret = setreuid(0, instance.config.uid);
+        if (ret < 0) {
+            perror("setreuid() failed");
+            exit(2);
+        }
+    }
+
+    /* main loop */
+
     event_dispatch();
+
+    /* cleanup */
 
     if (instance.listener != NULL)
         listener_free(&instance.listener);

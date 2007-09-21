@@ -40,6 +40,7 @@ http_listener_callback(int fd,
     pool = pool_new_linear(instance->pool, "client_connection", 16384);
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
+    connection->config = &instance->config;
 
     list_add(&connection->siblings, &instance->connections);
 

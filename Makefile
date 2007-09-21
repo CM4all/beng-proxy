@@ -44,6 +44,7 @@ LIBATTR_CFLAGS =
 LIBATTR_LIBS = -lattr
 
 SOURCES = src/main.c \
+	src/cmdline.c \
 	src/child.c \
 	src/session.c \
 	src/connection.c \

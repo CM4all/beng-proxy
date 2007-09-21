@@ -9,6 +9,7 @@
 
 #include "listener.h"
 #include "list.h"
+#include "config.h"
 
 #include <event.h>
 
@@ -19,6 +20,8 @@ struct child {
 
 struct instance {
     pool_t pool;
+
+    struct config config;
 
     struct event_base *event_base;
 

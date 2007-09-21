@@ -12,9 +12,12 @@
 
 #include <sys/socket.h>
 
+struct config;
+
 struct client_connection {
     struct list_head siblings;
     pool_t pool;
+    const struct config *config;
     http_server_connection_t http;
 };
 

@@ -6,13 +6,15 @@
 
 #include "connection.h"
 #include "handler.h"
+#include "config.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
 static struct translated *
-translate(struct http_server_request *request)
+translate(struct http_server_request *request,
+          const struct config *config)
 {
     struct translated *translated;
     int ret;
@@ -45,8 +47,8 @@ translate(struct http_server_request *request)
     } else {
         /* XXX this is, of course, a huge security hole */
         translated->path = p_strncat(request->pool,
-                                     "/var/www",
-                                     sizeof("/var/www") - 1,
+                                     config->document_root,
+                                     strlen(config->document_root),
                                      translated->uri.base,
                                      translated->uri.base_length,
                                      NULL);
@@ -67,7 +69,7 @@ my_http_server_connection_request(struct http_server_request *request,
     (void)request;
     (void)connection;
 
-    translated = translate(request);
+    translated = translate(request, connection->config);
     if (translated == NULL) {
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
