@@ -52,4 +52,12 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->iframe = 0;
 }
 
+static inline struct widget *
+widget_root(struct widget *widget)
+{
+    while (widget->parent != NULL)
+        widget = widget->parent;
+    return widget;
+}
+
 #endif
