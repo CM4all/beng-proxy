@@ -307,6 +307,13 @@ transform_url_attribute(processor_t processor, int focus)
                                                new_uri));
 }
 
+static int
+parse_bool(const char *p, size_t length)
+{
+    return length == 0 ||
+        p[0] == '1' || p[0] == 'y' || p[0] == 'Y';
+}
+
 void
 parser_attr_finished(struct parser *parser)
 {
@@ -327,6 +334,10 @@ parser_attr_finished(struct parser *parser)
                  memcmp(parser->attr_name, "id", 2) == 0)
             processor->embedded_widget->id = p_strndup(processor->output.pool, parser->attr_value,
                                                        parser->attr_value_length);
+        else if (parser->attr_name_length == 6 &&
+                 memcmp(parser->attr_name, "iframe", 6) == 0)
+            processor->embedded_widget->iframe = parse_bool(parser->attr_value,
+                                                            parser->attr_value_length);
         break;
 
     case TAG_IMG:

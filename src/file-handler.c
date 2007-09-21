@@ -12,6 +12,7 @@
 #include "format.h"
 #include "widget.h"
 #include "embed.h"
+#include "frame.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -136,6 +137,8 @@ file_callback(struct client_connection *connection,
             processor_env_init(request->pool, env, &translated->uri,
                                request->content_length, request->body,
                                embed_widget_callback);
+            if (env->frame != NULL) /* XXX */
+                env->widget_callback = frame_widget_callback;
 
             widget = p_malloc(request->pool, sizeof(*widget));
             widget_init(widget, NULL);

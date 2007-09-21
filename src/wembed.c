@@ -25,6 +25,23 @@ embed_widget_callback(pool_t pool, const struct processor_env *env,
     assert(env->widget_callback == embed_widget_callback);
     assert(widget != NULL);
 
+    if (widget->iframe) {
+        /* generate IFRAME element; the client will perform a second
+           request for the frame contents, see
+           frame_widget_callback() */
+        const char *iframe;
+
+        if (widget->id == NULL)
+            return istream_string_new(pool, "[framed widget without id]"); /* XXX */
+
+        iframe = p_strcat(pool, "<iframe src='",
+                          env->external_uri->base,
+                          ";frame=", widget->id,
+                          "'></iframe>",
+                          NULL);
+        return istream_string_new(pool, iframe);
+    }
+
     if (widget->id != NULL && env->focus != NULL &&
         (env->external_uri->query != NULL || env->request_body != NULL) &&
         strcmp(widget->id, env->focus) == 0) {

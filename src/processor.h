@@ -37,6 +37,9 @@ struct processor_env {
 
     istream_t request_body;
 
+    /** which widget is displayed in this frame? */
+    const char *frame;
+
     /** which widget is focused, i.e. gets the request body and the
         query string? */
     const char *focus;
