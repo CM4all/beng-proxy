@@ -148,8 +148,10 @@ pipe_input_eof(void *ctx)
     }
 
     if (p->piped == 0) {
+        pool_ref(p->output.pool);
         istream_invoke_eof(&p->output);
         istream_close(&p->output);
+        pool_unref(p->output.pool);
     }
 }
 
