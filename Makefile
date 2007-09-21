@@ -96,12 +96,12 @@ OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
 .PHONY: all clean
 
-all: src/beng-proxy
+all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date
+	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date
 
-src/beng-proxy: $(OBJECTS)
+src/cm4all-beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS)
 
 $(OBJECTS): %.o: %.c $(HEADERS)
@@ -118,17 +118,17 @@ test/format-http-date: test/format-http-date.o src/gmtime.o src/date.o
 
 profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -g -pg
 profile: LDFLAGS = -lc_p -pg
-profile: src/beng-proxy
-	./src/beng-proxy
+profile: src/cm4all-beng-proxy
+	./src/cm4all-beng-proxy
 
 # -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
 benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
-benchmark: src/beng-proxy
-	./src/beng-proxy
+benchmark: src/cm4all-beng-proxy
+	./src/cm4all-beng-proxy
 
 valgrind: CFLAGS = -O0 -g -DPOISON -DVALGRIND
-valgrind: src/beng-proxy
-	valgrind --show-reachable=yes --leak-check=yes ./src/beng-proxy
+valgrind: src/cm4all-beng-proxy
+	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy
 
 doc/beng.pdf: doc/beng.tex
 	cd $(dir $<) && pdflatex $(notdir $<)

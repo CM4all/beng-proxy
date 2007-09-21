@@ -16,7 +16,7 @@
 # Short-Description: Start or stop the CM4all BENG proxy daemon
 ### END INIT INFO
 
-test -f /usr/sbin/beng-proxy || exit 0
+test -f /usr/sbin/cm4all-beng-proxy || exit 0
 
 source /lib/lsb/init-functions
 
@@ -29,7 +29,7 @@ case "$1" in
     start)
 	log_begin_msg "Starting CM4all BENG proxy daemon"
         start-stop-daemon --start --quiet \
-            --exec /usr/sbin/beng-proxy \
+            --exec /usr/sbin/cm4all-beng-proxy \
             --pidfile "$PIDFILE" \
             -- \
             --pidfile "$PIDFILE" \
@@ -42,7 +42,7 @@ case "$1" in
             --retry 60 \
             --oknodo \
             --pidfile "$PIDFILE" \
-            --exec /usr/sbin/beng-proxy
+            --exec /usr/sbin/cm4all-beng-proxy
 	log_end_msg $?
 	;;
     restart|force-reload)
