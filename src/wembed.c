@@ -37,6 +37,8 @@ embed_widget_callback(pool_t pool, const struct processor_env *env,
         iframe = p_strcat(pool, "<iframe src='",
                           env->external_uri->base,
                           ";frame=", widget->id,
+                          "&", widget->id, "=",
+                          widget->append_uri == NULL ? "" : widget->append_uri,
                           "'></iframe>",
                           NULL);
         return istream_string_new(pool, iframe);

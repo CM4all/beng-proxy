@@ -7,6 +7,7 @@
 #include "embed.h"
 #include "url-stream.h"
 #include "processor.h"
+#include "widget.h"
 
 #include <assert.h>
 #include <string.h>
@@ -57,7 +58,10 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
     }
 
     value = strmap_get(headers, "content-type");
-    if (value != NULL && strncmp(value, "text/html", 9) == 0) {
+    if (embed->widget->iframe) {
+        /* XXX somehow propagate content-type header to http-server.c */
+        input = body;
+    } else if (value != NULL && strncmp(value, "text/html", 9) == 0) {
         input = processor_new(embed->delayed->pool, body,
                               embed->widget, embed->env, embed->options);
         if (input == NULL) {
@@ -67,7 +71,18 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
     } else {
         istream_close(body);
 
-        input = istream_string_new(embed->delayed->pool, "Not an HTML document");
+        if (embed->widget->id == NULL) {
+            input = NULL;
+        } else {
+            /* it cannot be inserted into the HTML stream, so put it into
+               an iframe */
+            embed->widget->iframe = 1;
+            input = embed->env->widget_callback(embed->delayed->pool,
+                                                embed->env, embed->widget);
+        }
+
+        if (input == NULL)
+            input = istream_string_new(embed->delayed->pool, "Not an HTML document");
     }
 
     istream_delayed_set(embed->delayed, input);

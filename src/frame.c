@@ -32,6 +32,8 @@ frame_widget_callback(pool_t pool, const struct processor_env *env,
         return NULL;
     }
 
+    widget->iframe = 1; /* set flag if it wasn't previously set */
+
     if (env->external_uri->query != NULL)
         widget->real_uri = p_strncat(pool,
                                      widget->real_uri, strlen(widget->real_uri),
