@@ -9,12 +9,7 @@
 
 #include "istream.h"
 
-struct substitution {
-    struct substitution *next;
-    struct replace *replace;
-    off_t start, end;
-    istream_t istream;
-};
+struct substitution;
 
 struct replace {
     pool_t pool;

@@ -12,6 +12,13 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+struct substitution {
+    struct substitution *next;
+    struct replace *replace;
+    off_t start, end;
+    istream_t istream;
+};
+
 static void
 replace_to_next_substitution(struct replace *replace, struct substitution *s)
 {
