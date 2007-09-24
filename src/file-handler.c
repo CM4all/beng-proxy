@@ -143,7 +143,7 @@ file_callback(struct client_connection *connection,
             widget = p_malloc(request->pool, sizeof(*widget));
             widget_init(widget, NULL);
 
-            body = processor_new(request->pool, body, widget, env, PROCESSOR_QUIET);
+            body = processor_new(request->pool, body, widget, env, 0);
         }
 
         http_server_response(request, HTTP_STATUS_OK, headers,
