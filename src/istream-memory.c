@@ -32,6 +32,9 @@ istream_memory_read(istream_t istream)
         nbytes = istream_invoke_data(istream, memory->data, memory->length);
         assert(nbytes <= memory->length);
 
+        if (memory->data == NULL)
+            return;
+
         memory->data += nbytes;
         memory->length -= nbytes;
     }
