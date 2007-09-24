@@ -7,6 +7,9 @@
 #LOGGER="/usr/bin/multilog t s1048576 /var/log/cm4all/beng-proxy"
 #LOGGER="logger -p daemon.info -t cm4all-beng-proxy"
 
+# Which user should workshop run as?
+#LOGGER_USER=cm4all-logger
+
 # Base directory for HTML documents.
 #DOCUMENT_ROOT=/var/www
 

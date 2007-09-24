@@ -11,9 +11,18 @@ if [ "$1" = "configure" ]; then
             cm4all-beng-proxy
     fi
 
+    if ! getent passwd cm4all-logger >/dev/null; then
+	adduser --quiet \
+            --system --ingroup nogroup \
+            --no-create-home \
+            --home /var/log/cm4all \
+            --shell /usr/sbin/nologin \
+            cm4all-logger
+    fi
+
     if ! [ -d /var/log/cm4all/beng-proxy ]; then
         mkdir /var/log/cm4all/beng-proxy
-        chown root:adm /var/log/cm4all/beng-proxy
+        chown cm4all-logger:adm /var/log/cm4all/beng-proxy
         chmod 2750 /var/log/cm4all/beng-proxy
     fi
 fi

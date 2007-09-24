@@ -47,6 +47,10 @@ static void usage(void) {
 #endif
          " -u name        switch to another user id\n"
 #ifdef __GLIBC__
+         " --logger-user name\n"
+#endif
+         " -U name        execute the logger program with this user id\n"
+#ifdef __GLIBC__
          " --document-root DIR\n"
 #endif
          " -r DIR         set the document root\n"
@@ -90,6 +94,7 @@ parse_cmdline(struct config *config, int argc, char **argv)
         {"logger", 1, 0, 'l'},
         {"pidfile", 1, 0, 'P'},
         {"user", 1, 0, 'u'},
+        {"logger-user", 1, 0, 'U'},
         {"document-root", 1, 0, 'r'},
         {0,0,0,0}
     };
@@ -143,6 +148,13 @@ parse_cmdline(struct config *config, int argc, char **argv)
             daemon_user_by_name(&daemon_config.user, optarg, NULL);
             if (!daemon_user_defined(&daemon_config.user))
                 arg_error(argv[0], "refusing to run as root");
+            break;
+
+        case 'U':
+            if (debug_mode)
+                arg_error(argv[0], "cannot specify a user in debug mode");
+
+            daemon_user_by_name(&daemon_config.logger_user, optarg, NULL);
             break;
 
         case 'r':
