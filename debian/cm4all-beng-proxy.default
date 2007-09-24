@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 
 # Which user should workshop run as?
-#DAEMON_USER=www-data
+#DAEMON_USER=cm4all-beng-proxy
 
 # Process which receives the daemon's log messages 
 #LOGGER="/usr/bin/multilog t s1048576 /var/log/cm4all/beng-proxy"

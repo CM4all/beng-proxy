@@ -21,7 +21,7 @@ test -f /usr/sbin/cm4all-beng-proxy || exit 0
 source /lib/lsb/init-functions
 
 PIDFILE=/var/run/cm4all/beng-proxy.pid
-DAEMON_USER=www-data
+DAEMON_USER=cm4all-beng-proxy
 LOGGER="/usr/bin/multilog t s1048576 /var/log/cm4all/beng-proxy"
 DOCUMENT_ROOT=/var/www
 OPTIONS=""

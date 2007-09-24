@@ -2,6 +2,15 @@
 # Author: Max Kellermann <mk@cm4all.com>
 
 if [ "$1" = "configure" ]; then
+    if ! getent passwd cm4all-beng-proxy >/dev/null; then
+	adduser --quiet \
+            --system --ingroup www-data \
+            --no-create-home \
+            --home /var/lib/cm4all/beng-proxy \
+            --shell /usr/sbin/nologin \
+            cm4all-beng-proxy
+    fi
+
     if ! [ -d /var/log/cm4all/beng-proxy ]; then
         mkdir /var/log/cm4all/beng-proxy
         chown root:adm /var/log/cm4all/beng-proxy
