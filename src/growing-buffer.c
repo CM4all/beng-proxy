@@ -33,6 +33,7 @@ growing_buffer_new(pool_t pool, size_t initial_size)
     gb->tail = &gb->first;
     gb->first.next = NULL;
     gb->first.length = 0;
+    gb->first.position = 0;
 
     return gb;
 }
@@ -52,6 +53,7 @@ growing_buffer_write(growing_buffer_t gb, size_t length)
         buffer = p_malloc(gb->pool, sizeof(*buffer) - sizeof(buffer->data) + grow);
         buffer->next = NULL;
         buffer->length = 0;
+        buffer->position = 0;
         gb->tail->next = buffer;
         gb->tail = buffer;
     }
@@ -102,7 +104,7 @@ istream_gb_read(istream_t istream)
             return;
         }
 
-        gb->current->position = 0;
+        assert(gb->current->position == 0);
     }
 
     nbytes = istream_invoke_data(istream, gb->current->data + gb->current->position,
@@ -118,7 +120,7 @@ istream_gb_read(istream_t istream)
             return;
         }
 
-        gb->current->position = 0;
+        assert(gb->current->position == 0);
     }
 }
 
@@ -146,8 +148,8 @@ growing_buffer_istream(growing_buffer_t gb)
     assert(gb->size > 0);
 
     gb->size = 0; /* "read mode" marker for assertions */
-    gb->first.position = 0;
-    gb->current = &gb->first;
+    assert(gb->first.position == 0);
+    assert(gb->current == &gb->first);
     gb->tail = NULL;
     gb->stream = istream_gb;
     gb->stream.pool = gb->pool;
