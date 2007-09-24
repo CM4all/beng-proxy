@@ -30,6 +30,9 @@ struct widget {
         base_uri, except when the user clicked on a relative link */
     const char *real_uri;
 
+    /** dimensions of the widget */
+    const char *width, *height;
+
     /** should this widget be displayed in an IFRAME? */
     int iframe;
 };
@@ -52,6 +55,8 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->id = NULL;
     widget->append_uri = NULL;
     widget->real_uri = NULL;
+    widget->width = NULL;
+    widget->height = NULL;
     widget->iframe = 0;
 }
 

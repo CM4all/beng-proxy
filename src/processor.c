@@ -12,6 +12,7 @@
 #include "uri.h"
 #include "args.h"
 #include "widget.h"
+#include "growing-buffer.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -338,6 +339,14 @@ parser_attr_finished(struct parser *parser)
                  memcmp(parser->attr_name, "iframe", 6) == 0)
             processor->embedded_widget->iframe = parse_bool(parser->attr_value,
                                                             parser->attr_value_length);
+        else if (parser->attr_name_length == 5 &&
+                 memcmp(parser->attr_name, "width", 5) == 0)
+            processor->embedded_widget->width = p_strndup(processor->output.pool, parser->attr_value,
+                                                          parser->attr_value_length);
+        else if (parser->attr_name_length == 6 &&
+                 memcmp(parser->attr_name, "height", 6) == 0)
+            processor->embedded_widget->height = p_strndup(processor->output.pool, parser->attr_value,
+                                                           parser->attr_value_length);
         break;
 
     case TAG_IMG:
@@ -380,13 +389,32 @@ embed_widget(pool_t pool, const struct processor_env *env, struct widget *widget
 }
 
 static istream_t
-embed_decorate(pool_t pool, istream_t istream)
+embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
 {
+    growing_buffer_t tag;
+
     assert(istream != NULL);
     assert(istream->handler == NULL);
 
+    tag = growing_buffer_new(pool, 256);
+    growing_buffer_write_string(tag, "<div class='embed' style='overflow:auto;");
+
+    if (widget->width != NULL) {
+        growing_buffer_write_string(tag, "width:");
+        growing_buffer_write_string(tag, widget->width);
+        growing_buffer_write_string(tag, ";");
+    }
+
+    if (widget->height != NULL) {
+        growing_buffer_write_string(tag, "height:");
+        growing_buffer_write_string(tag, widget->height);
+        growing_buffer_write_string(tag, ";");
+    }
+
+    growing_buffer_write_string(tag, "'>");
+
     return istream_cat_new(pool,
-                           istream_string_new(pool, "<div class='embed'>"),
+                           growing_buffer_istream(tag),
                            istream,
                            istream_string_new(pool, "</div>"),
                            NULL);
@@ -403,7 +431,7 @@ embed_element_finished(processor_t processor)
 
     istream = embed_widget(processor->output.pool, processor->env, widget);
     if (istream != NULL && (processor->options & PROCESSOR_QUIET) == 0)
-        istream = embed_decorate(processor->output.pool, istream);
+        istream = embed_decorate(processor->output.pool, istream, widget);
 
     return istream;
 }
