@@ -383,11 +383,20 @@ static istream_t
 embed_element_finished(processor_t processor)
 {
     struct widget *widget;
+    istream_t istream;
 
     widget = processor->embedded_widget;
     processor->embedded_widget = NULL;
 
-    return embed_widget(processor->output.pool, processor->env, widget);
+    istream = embed_widget(processor->output.pool, processor->env, widget);
+    if (istream != NULL || (processor->options & PROCESSOR_QUIET) == 0)
+        return istream;
+
+    return istream_cat_new(processor->output.pool,
+                           istream_string_new(processor->output.pool, "<div class='embed'>"),
+                           istream,
+                           istream_string_new(processor->output.pool, "</div>"),
+                           NULL);
 }
 
 void
@@ -397,15 +406,6 @@ parser_element_finished(struct parser *parser, off_t end)
 
     if (processor->tag == TAG_EMBED) {
         istream_t istream = embed_element_finished(processor);
-
-        if (istream != NULL &&
-            (processor->options & PROCESSOR_QUIET) == 0)
-            istream = istream_cat_new(processor->output.pool,
-                                      istream_string_new(processor->output.pool, "<div class='embed'>"),
-                                      istream,
-                                      istream_string_new(processor->output.pool, "</div>"),
-                                      NULL);
-
         replace_add(&processor->replace, processor->parser.element_offset,
                     end, istream);
     }
