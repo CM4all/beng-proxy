@@ -144,7 +144,6 @@ processor_new(pool_t pool, istream_t istream,
               unsigned options)
 {
     processor_t processor;
-    int ret;
 
     assert(istream != NULL);
     assert(istream->handler == NULL);
@@ -170,12 +169,8 @@ processor_new(pool_t pool, istream_t istream,
     processor->env = env;
     processor->options = options;
 
-    ret = replace_init(&processor->replace, pool, &processor->output,
-                       (options & PROCESSOR_QUIET) != 0);
-    if (ret < 0) {
-        istream_free(&processor->input);
-        return NULL;
-    }
+    replace_init(&processor->replace, pool, &processor->output,
+                 (options & PROCESSOR_QUIET) != 0);
 
     parser_init(&processor->parser);
 

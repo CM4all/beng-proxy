@@ -84,10 +84,6 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
         body = processor_new(pt->request->pool, body, widget, &pt->env, 0);
 
         pool_unref(pt->request->pool);
-        if (body == NULL) {
-            /* XXX */
-            abort();
-        }
 
         header_write(response_headers, "content-type", "text/html");
         content_length = (off_t)-1;

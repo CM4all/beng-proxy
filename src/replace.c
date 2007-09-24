@@ -5,12 +5,9 @@
  */
 
 #include "replace.h"
+#include "growing-buffer.h"
 
-#include <sys/mman.h>
 #include <assert.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdio.h>
 
 struct substitution {
     struct substitution *next;
@@ -27,8 +24,11 @@ replace_to_next_substitution(struct replace *replace, struct substitution *s)
     assert(s->istream == NULL);
     assert(s->start <= s->end);
 
-    if (!replace->quiet)
+    if (!replace->quiet) {
+        growing_buffer_consume(replace->buffer, s->end - s->start);
         replace->position = s->end;
+    }
+
     replace->first_substitution = s->next;
 
     assert(replace->quiet ||
@@ -45,7 +45,7 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
     struct substitution *s = ctx;
     struct replace *replace = s->replace;
 
-    if (replace->fd >= 0)
+    if (replace->reading_source)
         return 0;
 
     assert(replace->quiet || replace->position <= s->start);
@@ -70,7 +70,7 @@ replace_substitution_free(void *ctx)
     s->istream = NULL;
 
     if (replace->first_substitution != s ||
-        replace->fd >= 0 ||
+        replace->reading_source ||
         (!replace->quiet && replace->position < s->start))
         return;
 
@@ -83,7 +83,7 @@ static const struct istream_handler replace_substitution_handler = {
 };
 
 
-int
+void
 replace_init(struct replace *replace, pool_t pool, istream_t output,
              int quiet)
 {
@@ -93,26 +93,15 @@ replace_init(struct replace *replace, pool_t pool, istream_t output,
     replace->output = output;
 
     replace->quiet = quiet;
-    replace->fd = -1;
-    if (!quiet)
+    replace->reading_source = 1;
+    if (!quiet) {
         replace->source_length = 0;
-    replace->map = NULL;
+        replace->buffer = growing_buffer_new(pool, 8192);
+    }
 
     replace->first_substitution = NULL;
     replace->append_substitution_p = &replace->first_substitution;
     replace->read_locked = 0;
-
-    if (!replace->quiet) {
-        /* XXX */
-        replace->fd = open("/tmp/beng-replace.tmp", O_CREAT|O_EXCL|O_RDWR, 0777);
-        if (replace->fd < 0) {
-            perror("failed to create temporary file");
-            return -1;
-        }
-        unlink("/tmp/beng-replace.tmp");
-    }
-
-    return 0;
 }
 
 void
@@ -130,20 +119,6 @@ replace_destroy(struct replace *replace)
         }
     }
 
-    if (replace->fd >= 0) {
-        assert(!replace->quiet);
-
-        close(replace->fd);
-        replace->fd = -1;
-    }
-
-    if (replace->map != NULL) {
-        assert(!replace->quiet);
-
-        munmap(replace->map, (size_t)replace->source_length);
-        replace->map = NULL;
-    }
-
     replace->quiet = 0;
 
     if (replace->output != NULL)
@@ -153,66 +128,19 @@ replace_destroy(struct replace *replace)
 size_t
 replace_feed(struct replace *replace, const void *data, size_t length)
 {
-    ssize_t nbytes;
-
     assert(replace != NULL);
-    assert(replace->map == NULL);
     assert(data != NULL);
     assert(length > 0);
 
     if (replace->quiet)
         return length;
 
-    assert(replace->fd >= 0);
+    assert(replace->reading_source);
 
-    nbytes = write(replace->fd, data, length);
-    if (nbytes < 0) {
-        perror("write to temporary file failed");
-        replace_destroy(replace);
-        return 0;
-    }
+    growing_buffer_write_buffer(replace->buffer, data, length);
+    replace->source_length += (off_t)length;
 
-    if (nbytes == 0) {
-        fprintf(stderr, "disk full\n");
-        replace_destroy(replace);
-        return 0;
-    }
-
-    replace->source_length += (off_t)nbytes;
-
-    return (size_t)nbytes;
-}
-
-static void
-replace_setup_mmap(struct replace *replace)
-{
-    int ret;
-
-    assert(replace != NULL);
-    assert(replace->fd >= 0);
-    assert(replace->map == NULL);
-
-    replace->map = mmap(NULL, (size_t)replace->source_length,
-                        PROT_READ, MAP_PRIVATE, replace->fd,
-                        0);
-    if (replace->map == NULL) {
-        perror("mmap() failed");
-        replace_destroy(replace);
-        return;
-    }
-
-    madvise(replace->map, (size_t)replace->source_length,
-            MADV_SEQUENTIAL);
-
-    ret = close(replace->fd);
-    replace->fd = -1;
-    if (ret == (off_t)-1) {
-        perror("close() failed");
-        replace_destroy(replace);
-        return;
-    }
-
-    replace->position = 0;
+    return length;
 }
 
 void
@@ -220,8 +148,10 @@ replace_eof(struct replace *replace)
 {
     assert(replace != NULL);
 
-    if (!replace->quiet)
-        replace_setup_mmap(replace);
+    if (!replace->quiet) {
+        replace->reading_source = 0;
+        replace->position = 0;
+    }
 
     replace_read(replace);
 }
@@ -233,8 +163,7 @@ replace_add(struct replace *replace, off_t start, off_t end,
     struct substitution *s;
 
     assert(replace != NULL);
-    assert(replace->quiet || replace->fd >= 0);
-    assert(replace->map == NULL);
+    assert(replace->quiet || replace->reading_source);
     assert(start >= 0);
     assert(start <= end);
     assert(replace->quiet || end <= replace->source_length);
@@ -287,10 +216,9 @@ replace_read(struct replace *replace)
     size_t rest, nbytes;
 
     assert(replace != NULL);
-    assert(replace->quiet || replace->map != NULL);
     assert(replace->quiet || replace->position <= replace->source_length);
 
-    if (replace->fd >= 0)
+    if (replace->reading_source)
         return;
 
     pool_ref(replace->pool);
@@ -306,23 +234,30 @@ replace_read(struct replace *replace)
     else
         rest = 0;
 
-    if (replace->map != NULL && rest > 0) {
-        nbytes = istream_invoke_data(replace->output,
-                                     replace->map + replace->position,
-                                     rest);
-        assert(nbytes <= rest);
+    if (replace->buffer != NULL && rest > 0) {
+        const void *data;
+        size_t length;
 
+        data = growing_buffer_read(replace->buffer, &length);
+        assert(data != NULL);
+        assert(length > 0);
+
+        if (length > rest)
+            length = rest;
+
+        nbytes = istream_invoke_data(replace->output, data, length);
+        assert(nbytes <= length);
+
+        growing_buffer_consume(replace->buffer, nbytes);
         replace->position += nbytes;
     }
 
     if (replace->first_substitution == NULL &&
         (replace->quiet ||
-         (replace->map != NULL &&
+         (replace->buffer != NULL &&
           replace->position == replace->source_length))) {
-        if (!replace->quiet) {
-            munmap(replace->map, (size_t)replace->source_length);
-            replace->map = NULL;
-        }
+        if (!replace->quiet)
+            replace->buffer = NULL;
 
         pool_ref(replace->pool);
 

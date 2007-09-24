@@ -64,10 +64,6 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
     } else if (value != NULL && strncmp(value, "text/html", 9) == 0) {
         input = processor_new(embed->delayed->pool, body,
                               embed->widget, embed->env, embed->options);
-        if (input == NULL) {
-            istream_close(body);
-            input = istream_string_new(embed->delayed->pool, "Failed to create processor object.");
-        }
     } else {
         istream_close(body);
 

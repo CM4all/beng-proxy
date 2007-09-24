@@ -10,22 +10,22 @@
 #include "istream.h"
 
 struct substitution;
+struct growing_buffer;
 
 struct replace {
     pool_t pool;
     istream_t output;
 
-    int quiet;
-    int fd;
+    int quiet, reading_source;
+    struct growing_buffer *buffer;
     off_t source_length, position;
-    char *map;
 
     struct substitution *first_substitution, **append_substitution_p;
 
     int read_locked;
 };
 
-int
+void
 replace_init(struct replace *replace, pool_t pool, istream_t output,
              int quiet);
 
