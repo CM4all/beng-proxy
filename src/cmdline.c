@@ -104,10 +104,10 @@ parse_cmdline(struct config *config, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:U:");
 #endif
         if (ret == -1)
             break;
@@ -176,7 +176,6 @@ parse_cmdline(struct config *config, int argc, char **argv)
 
     /* check completeness */
 
-    /* non-root only for debugging */
     if (!debug_mode && !daemon_user_defined(&daemon_config.user))
         arg_error(argv[0], "no user name specified (-u)");
 }
