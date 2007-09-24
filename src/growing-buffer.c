@@ -78,6 +78,44 @@ growing_buffer_write_string(growing_buffer_t gb, const char *p)
     growing_buffer_write_buffer(gb, p, strlen(p));
 }
 
+const void *
+growing_buffer_read(growing_buffer_t gb, size_t *length_r)
+{
+    assert(gb->current != NULL);
+
+    while (gb->current->position == gb->current->length) {
+        assert(gb->current->position <= gb->current->length);
+        if (gb->current->next == NULL)
+            return NULL;
+        gb->current = gb->current->next;
+        assert(gb->current->position == 0);
+    }
+
+    assert(gb->current->position < gb->current->length);
+
+    *length_r = gb->current->length - gb->current->position;
+    return gb->current->data + gb->current->position;
+}
+
+void
+growing_buffer_consume(growing_buffer_t gb, size_t length)
+{
+    assert(gb->current != NULL);
+    assert(gb->current->position <= gb->current->length);
+    assert(gb->current->position + length <= gb->current->length);
+
+    gb->current->position += length;
+
+    if (gb->current->next == NULL &&
+        gb->current->position == gb->current->length) {
+        /* allow buffer recycling - we're on the last buffer, and
+           someone might still be writing to it.  if we clear it here,
+           the full buffer may be reused */
+        gb->current->position = 0;
+        gb->current->length = 0;
+    }
+}
+
 
 static inline growing_buffer_t
 istream_to_gb(istream_t istream)
@@ -89,7 +127,8 @@ static void
 istream_gb_read(istream_t istream)
 {
     growing_buffer_t gb = istream_to_gb(istream);
-    size_t nbytes;
+    const void *data;
+    size_t length, nbytes;
 
     assert(gb->pool == istream->pool);
     assert(gb->size == 0);
@@ -97,21 +136,17 @@ istream_gb_read(istream_t istream)
     assert(gb->current != NULL);
     assert(gb->current->position <= gb->current->length);
 
-    while (gb->current->position == gb->current->length) {
-        gb->current = gb->current->next;
-        if (gb->current == NULL) {
-            istream_invoke_eof(istream);
-            return;
-        }
-
-        assert(gb->current->position == 0);
+    data = growing_buffer_read(gb, &length);
+    if (data == NULL) {
+        gb->current = NULL;
+        istream_invoke_eof(istream);
+        return;
     }
 
-    nbytes = istream_invoke_data(istream, gb->current->data + gb->current->position,
-                                 gb->current->length - gb->current->position);
-    assert(nbytes <= gb->current->length - gb->current->position);
+    nbytes = istream_invoke_data(istream, data, length);
+    assert(nbytes <= length);
 
-    gb->current->position += nbytes;
+    growing_buffer_consume(gb, nbytes);
 
     while (gb->current->position == gb->current->length) {
         gb->current = gb->current->next;
