@@ -19,7 +19,7 @@ struct growing_buffer {
     pool_t pool;
     struct istream stream;
     size_t size;
-    struct buffer *current, first;
+    struct buffer *current, *tail, first;
 };
 
 growing_buffer_t attr_malloc
@@ -30,6 +30,7 @@ growing_buffer_new(pool_t pool, size_t initial_size)
     gb->pool = pool;
     gb->size = initial_size;
     gb->current = &gb->first;
+    gb->tail = &gb->first;
     gb->first.next = NULL;
     gb->first.length = 0;
 
@@ -39,7 +40,7 @@ growing_buffer_new(pool_t pool, size_t initial_size)
 void *
 growing_buffer_write(growing_buffer_t gb, size_t length)
 {
-    struct buffer *buffer = gb->current;
+    struct buffer *buffer = gb->tail;
     void *ret;
 
     assert(gb->size > 0);
@@ -51,8 +52,8 @@ growing_buffer_write(growing_buffer_t gb, size_t length)
         buffer = p_malloc(gb->pool, sizeof(*buffer) - sizeof(buffer->data) + grow);
         buffer->next = NULL;
         buffer->length = 0;
-        gb->current->next = buffer;
-        gb->current = buffer;
+        gb->tail->next = buffer;
+        gb->tail = buffer;
     }
 
     assert(buffer->length + length <= gb->size);
@@ -90,6 +91,7 @@ istream_gb_read(istream_t istream)
 
     assert(gb->pool == istream->pool);
     assert(gb->size == 0);
+    assert(gb->tail == NULL);
     assert(gb->current != NULL);
     assert(gb->current->position <= gb->current->length);
 
@@ -126,6 +128,7 @@ istream_gb_close(istream_t istream)
     growing_buffer_t gb = istream_to_gb(istream);
 
     assert(gb->size == 0);
+    assert(gb->tail == NULL);
 
     gb->current = NULL;
 
@@ -145,6 +148,7 @@ growing_buffer_istream(growing_buffer_t gb)
     gb->size = 0; /* "read mode" marker for assertions */
     gb->first.position = 0;
     gb->current = &gb->first;
+    gb->tail = NULL;
     gb->stream = istream_gb;
     gb->stream.pool = gb->pool;
 
