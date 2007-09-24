@@ -101,9 +101,23 @@ growing_buffer_consume(growing_buffer_t gb, size_t length)
 {
     assert(gb->current != NULL);
     assert(gb->current->position <= gb->current->length);
-    assert(gb->current->position + length <= gb->current->length);
 
-    gb->current->position += length;
+    while (length > 0) {
+        assert(gb->current != NULL);
+
+        if (gb->current->position + length < gb->current->length) {
+            gb->current->position += length;
+            length = 0;
+        } else {
+            length -= gb->current->length - gb->current->position;
+            gb->current->position = gb->current->length;
+
+            if (length > 0) {
+                assert(gb->current->next != NULL);
+                gb->current = gb->current->next;
+            }
+        }
+    }
 
     if (gb->current->next == NULL &&
         gb->current->position == gb->current->length) {
