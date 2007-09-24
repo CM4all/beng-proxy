@@ -361,6 +361,25 @@ parser_attr_finished(struct parser *parser)
 }
 
 static istream_t
+embed_widget(pool_t pool, const struct processor_env *env, struct widget *widget)
+{
+    if (widget->class == NULL || widget->class->uri == NULL)
+        return istream_string_new(pool, "Error: no widget class specified");
+
+    widget->real_uri = widget->class->uri;
+
+    if (widget->id != NULL) {
+        const char *append = strmap_get(env->args, widget->id);
+        if (append != NULL) {
+            widget->append_uri = append;
+            widget->real_uri = p_strcat(pool, widget->class->uri, append, NULL);
+        }
+    }
+
+    return env->widget_callback(pool, env, widget);
+}
+
+static istream_t
 embed_element_finished(processor_t processor)
 {
     struct widget *widget;
@@ -368,21 +387,7 @@ embed_element_finished(processor_t processor)
     widget = processor->embedded_widget;
     processor->embedded_widget = NULL;
 
-    if (widget->class == NULL || widget->class->uri == NULL)
-        return istream_string_new(processor->output.pool,
-                                  "Error: no widget class specified");
-
-    widget->real_uri = widget->class->uri;
-
-    if (widget->id != NULL) {
-        const char *append = strmap_get(processor->env->args, widget->id);
-        if (append != NULL) {
-            widget->append_uri = append;
-            widget->real_uri = p_strcat(processor->output.pool, widget->class->uri, append, NULL);
-        }
-    }
-
-    return processor->env->widget_callback(processor->output.pool, processor->env, widget);
+    return embed_widget(processor->output.pool, processor->env, widget);
 }
 
 void
