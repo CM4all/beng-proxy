@@ -22,10 +22,16 @@ source /lib/lsb/init-functions
 
 PIDFILE=/var/run/cm4all/beng-proxy.pid
 DAEMON_USER=www-data
+LOGGER="/usr/bin/multilog t s1048576 /var/log/cm4all/beng-proxy"
 DOCUMENT_ROOT=/var/www
 OPTIONS=""
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
+
+if test -z "$DAEMON_USER"; then
+    log_action_msg "No user configured in /etc/default/cm4all-beng-proxy"
+    exit 0
+fi
 
 case "$1" in
     start)
@@ -46,6 +52,7 @@ case "$1" in
             --retry 60 \
             --oknodo \
             --pidfile "$PIDFILE" \
+            --user "$DAEMON_USER" \
             --exec /usr/sbin/cm4all-beng-proxy
 	log_end_msg $?
 	;;

@@ -1,0 +1,14 @@
+# -*- shell-script -*-
+
+# Which user should workshop run as?
+#DAEMON_USER=www-data
+
+# Process which receives the daemon's log messages 
+#LOGGER="/usr/bin/multilog t s1048576 /var/log/cm4all/beng-proxy"
+#LOGGER="logger -p daemon.info -t cm4all-beng-proxy"
+
+# Base directory for HTML documents.
+#DOCUMENT_ROOT=/var/www
+
+# Other options
+#OPTIONS="-v"

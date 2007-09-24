@@ -1,0 +1,12 @@
+#! /bin/sh -e
+# Author: Max Kellermann <mk@cm4all.com>
+
+if [ "$1" = "configure" ]; then
+    if ! [ -d /var/log/cm4all/beng-proxy ]; then
+        mkdir /var/log/cm4all/beng-proxy
+        chown root:adm /var/log/cm4all/beng-proxy
+        chmod 2750 /var/log/cm4all/beng-proxy
+    fi
+fi
+
+#DEBHELPER#
