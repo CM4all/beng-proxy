@@ -34,18 +34,6 @@ static void usage(void) {
 #endif
          " -q             be quiet\n"
 #ifdef __GLIBC__
-         " --name NAME\n"
-#endif
-         " -N NAME        set the node name\n"
-#ifdef __GLIBC__
-         " --concurrency NUM\n"
-#endif
-         " -c NUM         set the maximum number of concurrent operators (default: 2)\n"
-#ifdef __GLIBC__
-         " --database CONNINFO\n"
-#endif
-         " -d CONNINFO    set the PostgreSQL connect string\n"
-#ifdef __GLIBC__
          " --logger program\n"
 #endif
          " -l program     specifies a logger program (executed by /bin/sh)\n"

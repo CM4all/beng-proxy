@@ -21,6 +21,8 @@ test -f /usr/sbin/cm4all-beng-proxy || exit 0
 source /lib/lsb/init-functions
 
 PIDFILE=/var/run/cm4all/beng-proxy.pid
+DAEMON_USER=www-data
+DOCUMENT_ROOT=/var/www
 OPTIONS=""
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
@@ -33,6 +35,8 @@ case "$1" in
             --pidfile "$PIDFILE" \
             -- \
             --pidfile "$PIDFILE" \
+            --user "$DAEMON_USER" \
+            --document-root "$DOCUMENT_ROOT" \
             $OPTIONS
 	log_end_msg $?
 	;;
