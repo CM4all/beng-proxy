@@ -47,10 +47,9 @@ growing_buffer_write(growing_buffer_t gb, size_t length)
     assert(gb->size > 0);
 
     if (buffer->length + length > gb->size) {
-        size_t grow = gb->size;
-        if (grow < length)
-            grow = length;
-        buffer = p_malloc(gb->pool, sizeof(*buffer) - sizeof(buffer->data) + grow);
+        if (gb->size < length)
+            gb->size = length; /* XXX round up? */
+        buffer = p_malloc(gb->pool, sizeof(*buffer) - sizeof(buffer->data) + gb->size);
         buffer->next = NULL;
         buffer->length = 0;
         buffer->position = 0;
