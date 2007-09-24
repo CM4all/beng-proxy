@@ -45,7 +45,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
     if (env->session == NULL) {
         env->session = session_new();
         session_id_format(env->session_id_buffer, env->session->id);
-        strmap_addn(env->args, "session", env->session_id_buffer);
+        strmap_put(env->args, "session", env->session_id_buffer, 1);
     }
 
     env->widget_callback = widget_callback;
