@@ -168,6 +168,10 @@ parse_cmdline(struct config *config, int argc, char **argv)
             parse_username(argv[0], optarg, &config->uid, &config->gid);
             break;
 
+        case 'r':
+            config->document_root = optarg;
+            break;
+
         case '?':
             arg_error(argv[0], NULL);
 
