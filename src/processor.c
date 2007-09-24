@@ -389,7 +389,7 @@ embed_element_finished(processor_t processor)
     processor->embedded_widget = NULL;
 
     istream = embed_widget(processor->output.pool, processor->env, widget);
-    if (istream != NULL || (processor->options & PROCESSOR_QUIET) == 0)
+    if (istream == NULL || (processor->options & PROCESSOR_QUIET) != 0)
         return istream;
 
     return istream_cat_new(processor->output.pool,
