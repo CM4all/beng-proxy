@@ -380,6 +380,19 @@ embed_widget(pool_t pool, const struct processor_env *env, struct widget *widget
 }
 
 static istream_t
+embed_decorate(pool_t pool, istream_t istream)
+{
+    assert(istream != NULL);
+    assert(istream->handler == NULL);
+
+    return istream_cat_new(pool,
+                           istream_string_new(pool, "<div class='embed'>"),
+                           istream,
+                           istream_string_new(pool, "</div>"),
+                           NULL);
+}
+
+static istream_t
 embed_element_finished(processor_t processor)
 {
     struct widget *widget;
@@ -389,14 +402,10 @@ embed_element_finished(processor_t processor)
     processor->embedded_widget = NULL;
 
     istream = embed_widget(processor->output.pool, processor->env, widget);
-    if (istream == NULL || (processor->options & PROCESSOR_QUIET) != 0)
-        return istream;
+    if (istream != NULL && (processor->options & PROCESSOR_QUIET) == 0)
+        istream = embed_decorate(processor->output.pool, istream);
 
-    return istream_cat_new(processor->output.pool,
-                           istream_string_new(processor->output.pool, "<div class='embed'>"),
-                           istream,
-                           istream_string_new(processor->output.pool, "</div>"),
-                           NULL);
+    return istream;
 }
 
 void
