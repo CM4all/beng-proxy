@@ -397,7 +397,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
     assert(istream->handler == NULL);
 
     tag = growing_buffer_new(pool, 256);
-    growing_buffer_write_string(tag, "<div class='embed' style='overflow:auto;");
+    growing_buffer_write_string(tag, "<div class='embed' style='overflow:auto; border:1px dotted red;");
 
     if (widget->width != NULL) {
         growing_buffer_write_string(tag, "width:");
