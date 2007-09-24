@@ -1,0 +1,8 @@
+#! /bin/sh -e
+# Author: Max Kellermann <mk@cm4all.com>
+
+#DEBHELPER#
+
+if [ "$1" = "purge" ]; then
+    rm -rf /var/log/cm4all/beng-proxy
+fi
