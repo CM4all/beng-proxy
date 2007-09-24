@@ -2,7 +2,7 @@ Source: cm4all-beng-proxy
 Section: non-free/web
 Priority: optional
 Maintainer: Max Kellermann <mk@cm4all.com>
-Build-Depends: debhelper (>= 5), gcc (>= 4.1), libcm4all-daemon-dev (>= 0.2), libevent-dev (>= 1.3c), libattr1-dev
+Build-Depends: debhelper (>= 5), gcc (>= 4.1), libcm4all-daemon-dev (>= 0.3), libevent-dev (>= 1.3c), libattr1-dev
 Standards-Version: 3.7.2
 
 Package: cm4all-beng-proxy

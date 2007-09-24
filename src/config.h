@@ -17,8 +17,6 @@ extern int debug_mode;
 
 struct config {
     const char *document_root;
-    uid_t uid;
-    gid_t gid;
 };
 
 void

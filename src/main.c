@@ -14,7 +14,6 @@
 
 #include <assert.h>
 #include <unistd.h>
-#include <grp.h>
 #include <sys/signal.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -118,30 +117,6 @@ int main(int argc, char **argv)
     ret = daemonize();
     if (ret < 0)
         exit(2);
-
-    /* change user */
-
-    if (instance.config.gid != 0) {
-        ret = setgroups(1, &instance.config.gid);
-        if (ret < 0) {
-            perror("setgroups() failed");
-            exit(2);
-        }
-
-        ret = setregid(instance.config.gid, instance.config.gid);
-        if (ret < 0) {
-            perror("setregid() failed");
-            exit(2);
-        }
-    }
-
-    if (instance.config.uid != 0) {
-        ret = setreuid(0, instance.config.uid);
-        if (ret < 0) {
-            perror("setreuid() failed");
-            exit(2);
-        }
-    }
 
     /* main loop */
 
