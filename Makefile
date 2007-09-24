@@ -120,16 +120,16 @@ test/format-http-date: test/format-http-date.o src/gmtime.o src/date.o
 profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -g -pg
 profile: LDFLAGS = -lc_p -pg
 profile: src/cm4all-beng-proxy
-	./src/cm4all-beng-proxy
+	./src/cm4all-beng-proxy -D
 
 # -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
 benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
 benchmark: src/cm4all-beng-proxy
-	./src/cm4all-beng-proxy
+	./src/cm4all-beng-proxy -D
 
 valgrind: CFLAGS = -O0 -g -DPOISON -DVALGRIND
 valgrind: src/cm4all-beng-proxy
-	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy
+	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy -D
 
 doc/beng.pdf: doc/beng.tex
 	cd $(dir $<) && pdflatex $(notdir $<)
