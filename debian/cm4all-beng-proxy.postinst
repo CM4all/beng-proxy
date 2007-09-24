@@ -21,7 +21,7 @@ if [ "$1" = "configure" ]; then
     fi
 
     if [ -d /var/log/cm4all/beng-proxy ]; then
-        chown -R cm4all-logger:adm /var/log/cm4all/beng-proxy
+        chown cm4all-logger:adm /var/log/cm4all/beng-proxy
         chmod 2750 /var/log/cm4all/beng-proxy
     fi
 fi
