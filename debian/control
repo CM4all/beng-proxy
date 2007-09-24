@@ -12,3 +12,12 @@ Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6),
 Description: HTTP proxy server
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
+
+Package: cm4all-beng-proxy-doc
+Architecture: any
+Section: non-free/doc
+Description: Documentation for cm4all-beng-proxy
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This package provides documentation.
