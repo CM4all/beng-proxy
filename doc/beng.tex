@@ -92,7 +92,7 @@ inserted in the form of XML processing instructions.
 To add a widget, insert the following command:
 
 \begin{verbatim*}
-<?cm4all-beng-widget name="foo"?>
+<c:embed id="foo" href="http://cfatest01.intern.cm-ag/date.py" />
 \end{verbatim*}
 
 The following attributes may be specified:
@@ -105,7 +105,7 @@ server URI \\
 \hline
 name & registered name of the widget server \\
 \hline
-uri & use an unregistered widget \\
+href & use an unregistered widget \\
 \hline
 dock & do not insert the widget here, but at the specified dock \\
 \hline
@@ -114,6 +114,8 @@ a slash \\
 \hline
 query\_string & optional query string to append to the widget URI
 (without the question mark) \\
+\hline
+hline & embed the widget in an HTML IFRAME \\
 \hline
 \end{tabular}
 
