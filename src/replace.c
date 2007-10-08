@@ -216,6 +216,7 @@ replace_read(struct replace *replace)
     size_t rest, nbytes;
 
     assert(replace != NULL);
+    assert(replace->output != NULL);
     assert(replace->quiet || replace->position <= replace->source_length);
 
     if (replace->reading_source)
@@ -224,6 +225,8 @@ replace_read(struct replace *replace)
     pool_ref(replace->pool);
 
     replace_read_substitution(replace);
+    if (replace->output == NULL)
+        return;
 
     if (replace->quiet)
         rest = 0;
