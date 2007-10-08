@@ -63,8 +63,12 @@ static attr_always_inline uint16_t
 my_htons(uint16_t x)
 {
 #ifdef __ICC
+#ifdef __LITTLE_ENDIAN
     /* icc seriously doesn't like the htons() macro */
     return (uint16_t)((x >> 8) | (x << 8));
+#else
+    return x;
+#endif
 #else
     return (uint16_t)htons((uint16_t)x);
 #endif
