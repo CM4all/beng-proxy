@@ -327,8 +327,8 @@ pool_increment_ref(pool_t pool, struct list_head *list,
 {
     struct pool_ref *ref;
 
-    for (ref = (struct pool_ref *)&pool->refs.next;
-         &ref->list_head != &pool->refs;
+    for (ref = (struct pool_ref *)&list->next;
+         &ref->list_head != list;
          ref = (struct pool_ref *)&ref->list_head.next) {
         if (ref->line == line && strcmp(ref->file, file) == 0) {
             ++ref->count;
