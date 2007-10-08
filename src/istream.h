@@ -9,6 +9,10 @@
 
 #include "pool.h"
 
+#ifndef NDEBUG
+#include <assert.h>
+#endif
+
 #include <sys/types.h>
 
 enum istream_direct {
@@ -34,6 +38,9 @@ struct istream {
     const struct istream_handler *handler;
     void *handler_ctx;
     istream_direct_t handler_direct;
+#ifndef NDEBUG
+    int reading;
+#endif
 
     void (*read)(istream_t istream);
     void (*close)(istream_t istream);
@@ -42,7 +49,20 @@ struct istream {
 static inline void
 istream_read(istream_t istream)
 {
+#ifndef NDEBUG
+    pool_t pool = istream->pool;
+
+    assert(istream->reading == 0);
+    pool_ref(pool);
+    istream->reading = 1;
+#endif
+
     istream->read(istream);
+
+#ifndef NDEBUG
+    istream->reading = 0;
+    pool_unref(pool);
+#endif
 }
 
 static inline void
