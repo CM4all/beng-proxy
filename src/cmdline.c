@@ -126,7 +126,7 @@ parse_cmdline(struct config *config, int argc, char **argv)
             break;
 
         case 'q':
-            daemon_verbose = 0;
+            daemon_log_config.verbose = 0;
             break;
 
         case 'D':
