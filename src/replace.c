@@ -213,6 +213,7 @@ replace_read_substitution(struct replace *replace)
 void
 replace_read(struct replace *replace)
 {
+    pool_t pool;
     size_t rest, nbytes;
 
     assert(replace != NULL);
@@ -223,10 +224,13 @@ replace_read(struct replace *replace)
         return;
 
     pool_ref(replace->pool);
+    pool = replace->pool;
 
     replace_read_substitution(replace);
-    if (replace->output == NULL)
+    if (replace->output == NULL) {
+        pool_unref(pool);
         return;
+    }
 
     if (replace->quiet)
         rest = 0;
