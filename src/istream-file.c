@@ -187,7 +187,7 @@ istream_file_read(istream_t istream)
 
     assert(file->stream.handler != NULL);
 
-    if ((istream->handler_direct & ISTREAM_FILE) == 0)
+    if ((file->stream.handler_direct & ISTREAM_FILE) == 0)
         istream_file_try_data(file);
     else
         istream_file_try_direct(file);

@@ -133,7 +133,7 @@ http_client_response_stream_close(istream_t istream)
     connection->response.headers = NULL;
     connection->response.body = NULL;
 
-    istream_invoke_free(istream);
+    istream_invoke_free(&connection->response.body_reader.output);
 
     if (!http_body_eof(&connection->response.body_reader))
         connection->keep_alive = 0;
@@ -582,7 +582,7 @@ http_client_connection_close(http_client_connection_t connection)
         istream_free(&connection->request.istream);
 
     if (connection->response.read_state == READ_BODY) {
-        http_client_response_stream_close(&connection->response.body_reader.output);
+        http_client_response_stream_close(http_body_istream(&connection->response.body_reader));
         assert(connection->response.read_state == READ_NONE);
     }
 

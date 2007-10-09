@@ -252,7 +252,7 @@ http_server_request_stream_close(istream_t istream)
     if (!http_body_eof(&connection->request.body_reader))
         connection->keep_alive = 0;
 
-    istream_invoke_free(istream);
+    istream_invoke_free(&connection->request.body_reader.output);
 
     http_body_deinit(&connection->request.body_reader);
 }
