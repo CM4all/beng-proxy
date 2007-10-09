@@ -182,11 +182,8 @@ processor_close(processor_t processor)
     processor->replace.output = NULL;
     replace_destroy(&processor->replace);
 
-    if (processor->input != NULL) {
-        pool_t pool = processor->input->pool;
-        istream_free(&processor->input);
-        pool_unref(pool);
-    }
+    if (processor->input != NULL)
+        istream_clear_unref(&processor->input);
 
     istream_invoke_free(&processor->output);
 
