@@ -137,7 +137,7 @@ istream_cat_read(istream_t istream)
         }
 
         cat->blocking = 1;
-        cat->current->istream->handler_direct = istream->handler_direct;
+        istream_handler_set_direct(cat->current->istream, cat->output.handler_direct);
         istream_read(cat->current->istream);
     } while (cat->current != NULL && !cat->blocking);
 
@@ -172,7 +172,7 @@ istream_cat_new(pool_t pool, ...)
 
     va_start(ap, pool);
     while ((istream = va_arg(ap, istream_t)) != NULL) {
-        assert(istream->handler == NULL);
+        assert(!istream_has_handler(istream));
         assert(num < MAX_INPUTS);
 
         input = &cat->inputs[num++];
@@ -188,5 +188,5 @@ istream_cat_new(pool_t pool, ...)
     }
     va_end(ap);
 
-    return &cat->output;
+    return istream_struct_cast(&cat->output);
 }

@@ -133,7 +133,7 @@ istream_delayed_new(pool_t pool, void (*abort_callback)(void *ctx),
     delayed->abort_callback = abort_callback;
     delayed->callback_ctx = callback_ctx;
 
-    return &delayed->output;
+    return istream_struct_cast(&delayed->output);
 }
 
 void
@@ -143,7 +143,7 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
 
     assert(delayed->input == NULL);
     assert(input != NULL);
-    assert(input->handler == NULL);
+    assert(!istream_has_handler(input));
 
     delayed->abort_callback = NULL;
     delayed->callback_ctx = NULL;

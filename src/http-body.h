@@ -25,7 +25,7 @@ struct http_body_reader {
 static inline istream_t
 http_body_istream(struct http_body_reader *body)
 {
-    return &body->output;
+    return istream_struct_cast(&body->output);
 }
 
 static inline int

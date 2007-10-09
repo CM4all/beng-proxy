@@ -82,7 +82,8 @@ static const struct istream_handler replace_substitution_handler = {
 
 
 void
-replace_init(struct replace *replace, pool_t pool, istream_t output,
+replace_init(struct replace *replace, pool_t pool,
+             struct istream *output,
              int quiet)
 {
     assert(replace != NULL);
@@ -120,7 +121,7 @@ replace_destroy(struct replace *replace)
     replace->quiet = 0;
 
     if (replace->output != NULL)
-        istream_free(&replace->output);
+        istream_free((istream_t*)&replace->output); /* XXX */
 }
 
 size_t

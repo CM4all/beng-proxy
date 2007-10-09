@@ -80,5 +80,5 @@ istream_memory_new(pool_t pool, const void *data, size_t length)
     memory->data = data;
     memory->length = length;
 
-    return &memory->stream;
+    return istream_struct_cast(&memory->stream);
 }

@@ -24,7 +24,7 @@ enum istream_direct {
 
 typedef unsigned istream_direct_t;
 
-typedef struct istream *istream_t;
+typedef struct istream_opaque *istream_t;
 
 /** data sink for an istream */
 struct istream_handler {
@@ -90,9 +90,29 @@ struct istream {
     void (*close)(istream_t istream);
 };
 
-static inline void
-istream_read(istream_t istream)
+static inline struct istream *
+_istream_opaque_cast(istream_t istream)
 {
+    return (struct istream *)istream;
+}
+
+static inline istream_t
+istream_struct_cast(struct istream *istream)
+{
+    return (istream_t)istream;
+}
+
+static inline pool_t
+istream_pool(istream_t _istream)
+{
+    struct istream *istream = _istream_opaque_cast(_istream);
+    return istream->pool;
+}
+
+static inline void
+istream_read(istream_t _istream)
+{
+    struct istream *istream = _istream_opaque_cast(_istream);
 #ifndef NDEBUG
     pool_t pool = istream->pool;
 
@@ -101,7 +121,7 @@ istream_read(istream_t istream)
     istream->reading = 1;
 #endif
 
-    istream->read(istream);
+    istream->read(_istream);
 
 #ifndef NDEBUG
     istream->reading = 0;
@@ -110,9 +130,11 @@ istream_read(istream_t istream)
 }
 
 static inline void
-istream_close(istream_t istream)
+istream_close(istream_t _istream)
 {
-    istream->close(istream);
+    struct istream *istream = _istream_opaque_cast(_istream);
+
+    istream->close(_istream);
 }
 
 static inline void
@@ -127,34 +149,57 @@ static inline void
 istream_free_unref(istream_t *istream_r)
 {
     istream_t istream = *istream_r;
-    pool_t pool = istream->pool;
+    pool_t pool = istream_pool(istream);
     *istream_r = NULL;
     istream_close(istream);
     pool_unref(pool);
 }
 
+static inline int
+istream_has_handler(istream_t _istream)
+{
+    struct istream *istream = _istream_opaque_cast(_istream);
+
+    return istream->handler != NULL;
+}
+
 
 static inline void
-istream_handler_set(istream_t istream,
+istream_handler_set(istream_t _istream,
                     const struct istream_handler *handler,
                     void *handler_ctx,
                     istream_direct_t handler_direct)
 {
+    struct istream *istream = _istream_opaque_cast(_istream);
+
     istream->handler = handler;
     istream->handler_ctx = handler_ctx;
     istream->handler_direct = handler_direct;
 }
 
 static inline void
-istream_handler_clear(istream_t istream)
+istream_handler_set_direct(istream_t _istream,
+                           istream_direct_t handler_direct)
 {
+    struct istream *istream = _istream_opaque_cast(_istream);
+
+    istream->handler_direct = handler_direct;
+}
+
+static inline void
+istream_handler_clear(istream_t _istream)
+{
+    struct istream *istream = _istream_opaque_cast(_istream);
+
     istream->handler = NULL;
 }
 
 static inline void
-istream_assign_ref(istream_t *istream_r, istream_t istream)
+istream_assign_ref(istream_t *istream_r, istream_t _istream)
 {
-    *istream_r = istream;
+    struct istream *istream = _istream_opaque_cast(_istream);
+
+    *istream_r = _istream;
     pool_ref(istream->pool);
 }
 
@@ -171,7 +216,7 @@ istream_assign_ref_handler(istream_t *istream_r, istream_t istream,
 static inline void
 istream_clear_unref(istream_t *istream_r)
 {
-    istream_t istream = *istream_r;
+    struct istream *istream = _istream_opaque_cast(*istream_r);
     *istream_r = NULL;
     pool_unref(istream->pool);
 }
@@ -179,34 +224,35 @@ istream_clear_unref(istream_t *istream_r)
 static inline void
 istream_clear_unref_handler(istream_t *istream_r)
 {
-    istream_t istream = *istream_r;
+    struct istream *istream = _istream_opaque_cast(*istream_r);
     *istream_r = NULL;
-    istream_handler_clear(istream);
+    istream_handler_clear(istream_struct_cast(istream));
     pool_unref(istream->pool);
 }
 
 
 static inline size_t
-istream_invoke_data(istream_t istream, const void *data, size_t length)
+istream_invoke_data(struct istream *istream, const void *data, size_t length)
 {
     return istream->handler->data(data, length, istream->handler_ctx);
 }
 
 static inline ssize_t
-istream_invoke_direct(istream_t istream, istream_direct_t type, int fd, size_t max_length)
+istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
+                      size_t max_length)
 {
     return istream->handler->direct(type, fd, max_length, istream->handler_ctx);
 }
 
 static inline void
-istream_invoke_eof(istream_t istream)
+istream_invoke_eof(struct istream *istream)
 {
     if (istream->handler->eof != NULL)
         istream->handler->eof(istream->handler_ctx);
 }
 
 static inline void
-istream_invoke_free(istream_t istream)
+istream_invoke_free(struct istream *istream)
 {
     if (istream->handler != NULL && istream->handler->free != NULL) {
         const struct istream_handler *handler = istream->handler;

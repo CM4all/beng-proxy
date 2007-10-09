@@ -183,7 +183,7 @@ istream_chunked_new(pool_t pool, istream_t input)
     struct istream_chunked *chunked = p_malloc(pool, sizeof(*chunked));
 
     assert(input != NULL);
-    assert(input->handler == NULL);
+    assert(!istream_has_handler(input));
 
     chunked->output = istream_chunked;
     chunked->output.pool = pool;
@@ -193,5 +193,5 @@ istream_chunked_new(pool_t pool, istream_t input)
                                &chunked_source_handler, chunked,
                                0);
 
-    return &chunked->output;
+    return istream_struct_cast(&chunked->output);
 }

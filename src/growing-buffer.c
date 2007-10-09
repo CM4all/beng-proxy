@@ -143,7 +143,7 @@ istream_gb_read(istream_t istream)
     const void *data;
     size_t length, nbytes;
 
-    assert(gb->pool == istream->pool);
+    assert(gb->pool == istream_pool(istream));
     assert(gb->size == 0);
     assert(gb->tail == NULL);
     assert(gb->current != NULL);
@@ -202,5 +202,5 @@ growing_buffer_istream(growing_buffer_t gb)
     gb->stream = istream_gb;
     gb->stream.pool = gb->pool;
 
-    return &gb->stream;
+    return istream_struct_cast(&gb->stream);
 }

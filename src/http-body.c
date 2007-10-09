@@ -74,7 +74,7 @@ http_body_consume_body(struct http_body_reader *body,
         body->rest == (off_t)-1 && body->dechunk_eof)
         /* the dechunker has detected the EOF chunk, and has
            propagated this fact to its handler */
-        istream_close(&body->output);
+        istream_close(istream_struct_cast(&body->output));
 }
 
 ssize_t

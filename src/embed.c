@@ -62,7 +62,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
         /* XXX somehow propagate content-type header to http-server.c */
         input = body;
     } else if (value != NULL && strncmp(value, "text/html", 9) == 0) {
-        input = processor_new(embed->delayed->pool, body,
+        input = processor_new(istream_pool(embed->delayed), body,
                               embed->widget, embed->env, embed->options);
     } else {
         istream_close(body);
@@ -73,12 +73,13 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
             /* it cannot be inserted into the HTML stream, so put it into
                an iframe */
             embed->widget->iframe = 1;
-            input = embed->env->widget_callback(embed->delayed->pool,
+            input = embed->env->widget_callback(istream_pool(embed->delayed),
                                                 embed->env, embed->widget);
         }
 
         if (input == NULL)
-            input = istream_string_new(embed->delayed->pool, "Not an HTML document");
+            input = istream_string_new(istream_pool(embed->delayed),
+                                       "Not an HTML document");
     }
 
     istream_delayed_set(embed->delayed, input);

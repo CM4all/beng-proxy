@@ -140,7 +140,7 @@ istream_hold_read(istream_t istream)
         /* eof() or free() was queued */
         hold_close(hold);
     else {
-        hold->input->handler_direct = hold->output.handler_direct;
+        istream_handler_set_direct(hold->input, hold->output.handler_direct);
         istream_read(hold->input);
     }
 }
@@ -179,5 +179,5 @@ istream_hold_new(pool_t pool, istream_t input)
                                &hold_input_handler, hold,
                                0);
 
-    return &hold->output;
+    return istream_struct_cast(&hold->output);
 }

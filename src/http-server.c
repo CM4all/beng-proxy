@@ -394,7 +394,7 @@ http_server_headers_finished(http_server_connection_t connection)
 
     assert(connection->request.request == NULL ||
            connection->request.request->body == NULL ||
-           connection->request.request->body->handler != NULL);
+           istream_has_handler(connection->request.request->body));
 }
 
 static void
@@ -722,7 +722,7 @@ http_server_response_stream_eof(void *ctx)
     assert(connection->request.request != NULL);
     assert(connection->response.writing);
     assert(connection->response.istream != NULL);
-    assert(connection->response.istream->pool != NULL);
+    assert(istream_pool(connection->response.istream) != NULL);
 
     pool_ref(connection->pool);
 

@@ -143,7 +143,7 @@ processor_new(pool_t pool, istream_t istream,
     processor_t processor;
 
     assert(istream != NULL);
-    assert(istream->handler == NULL);
+    assert(!istream_has_handler(istream));
     assert(widget != NULL);
 
 #ifdef NDEBUG
@@ -166,12 +166,13 @@ processor_new(pool_t pool, istream_t istream,
     processor->env = env;
     processor->options = options;
 
-    replace_init(&processor->replace, pool, &processor->output,
+    replace_init(&processor->replace, pool,
+                 &processor->output,
                  (options & PROCESSOR_QUIET) != 0);
 
     parser_init(&processor->parser);
 
-    return &processor->output;
+    return istream_struct_cast(&processor->output);
 }
 
 static void
@@ -383,7 +384,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
     growing_buffer_t tag;
 
     assert(istream != NULL);
-    assert(istream->handler == NULL);
+    assert(!istream_has_handler(istream));
 
     tag = growing_buffer_new(pool, 256);
     growing_buffer_write_string(tag, "<div class='embed' style='overflow:auto; border:1px dotted red;");

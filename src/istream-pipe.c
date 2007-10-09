@@ -208,7 +208,8 @@ istream_pipe_read(istream_t istream)
     struct istream_pipe *p = istream_to_pipe(istream);
 
     /* XXX is this update required? */
-    p->input->handler_direct = istream->handler_direct | SPLICE_SOURCE_TYPES;
+    istream_handler_set_direct(p->input,
+                               p->output.handler_direct | SPLICE_SOURCE_TYPES);
 
     if (unlikely(p->input == NULL)) {
         assert(p->piped > 0);
@@ -244,7 +245,7 @@ istream_pipe_new(pool_t pool, istream_t input)
     struct istream_pipe *p = p_malloc(pool, sizeof(*p));
 
     assert(input != NULL);
-    assert(input->handler == NULL);
+    assert(!istream_has_handler(input));
 
     p->output = istream_pipe;
     p->output.pool = pool;
@@ -256,7 +257,7 @@ istream_pipe_new(pool_t pool, istream_t input)
                                &pipe_input_handler, p,
                                SPLICE_SOURCE_TYPES);
 
-    return &p->output;
+    return istream_struct_cast(&p->output);
 }
 
 #endif

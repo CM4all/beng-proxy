@@ -224,5 +224,5 @@ istream_file_new(pool_t pool, const char *path, off_t length)
     file->stream = istream_file;
     file->stream.pool = pool;
 
-    return &file->stream;
+    return istream_struct_cast(&file->stream);
 }

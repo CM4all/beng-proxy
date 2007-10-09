@@ -202,7 +202,7 @@ istream_dechunk_new(pool_t pool, istream_t input,
     struct istream_dechunk *dechunk = p_malloc(pool, sizeof(*dechunk));
 
     assert(input != NULL);
-    assert(input->handler == NULL);
+    assert(!istream_has_handler(input));
 
     dechunk->output = istream_dechunk;
     dechunk->output.pool = pool;
@@ -214,5 +214,5 @@ istream_dechunk_new(pool_t pool, istream_t input,
                                &dechunk_input_handler, dechunk,
                                0);
 
-    return &dechunk->output;
+    return istream_struct_cast(&dechunk->output);
 }

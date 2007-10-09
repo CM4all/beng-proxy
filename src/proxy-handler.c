@@ -89,7 +89,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
         content_length = (off_t)-1;
     }
 
-    assert(body->handler == NULL);
+    assert(!istream_has_handler(body));
 
     http_server_response(pt->request, HTTP_STATUS_OK,
                          response_headers,

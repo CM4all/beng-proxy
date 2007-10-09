@@ -46,5 +46,5 @@ istream_null_new(pool_t pool)
     null->stream = istream_null;
     null->stream.pool = pool;
 
-    return &null->stream;
+    return istream_struct_cast(&null->stream);
 }

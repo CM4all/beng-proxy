@@ -14,7 +14,7 @@ struct growing_buffer;
 
 struct replace {
     pool_t pool;
-    istream_t output;
+    struct istream *output;
 
     int quiet, reading_source;
     struct growing_buffer *buffer;
@@ -26,7 +26,8 @@ struct replace {
 };
 
 void
-replace_init(struct replace *replace, pool_t pool, istream_t output,
+replace_init(struct replace *replace, pool_t pool,
+             struct istream *output,
              int quiet);
 
 void
