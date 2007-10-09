@@ -6,6 +6,12 @@
 
 #include "http.h"
 
+const char *http_method_to_string_data[HTTP_METHOD_INVALID] = {
+    [HTTP_METHOD_HEAD] = "HEAD",
+    [HTTP_METHOD_GET] = "GET",
+    [HTTP_METHOD_POST] = "POST",
+};
+
 const char *http_status_to_string_data[6][20] = {
     [2] = {
         [HTTP_STATUS_OK - 200] = "200 OK",

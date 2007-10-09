@@ -36,6 +36,18 @@ typedef enum {
 } http_status_t;
 
 
+extern const char *http_method_to_string_data[HTTP_METHOD_INVALID];
+
+static inline const char *
+http_method_to_string(http_method_t method)
+{
+    assert(method < sizeof(http_method_to_string_data) / sizeof(http_method_to_string_data[0]));
+    assert(http_method_to_string_data[method]);
+
+    return http_method_to_string_data[method];
+}
+
+
 extern const char *http_status_to_string_data[6][20];
 
 static inline const char *

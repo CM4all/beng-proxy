@@ -699,10 +699,10 @@ http_client_request(http_client_connection_t connection,
 
     /* request line */
 
-    (void)method; /* XXX */
     snprintf(connection->request.request_line_buffer,
              sizeof(connection->request.request_line_buffer),
-             "GET %s HTTP/1.1\r\nHost: localhost\r\n", uri);
+             "%s %s HTTP/1.1\r\nHost: localhost\r\n",
+             http_method_to_string(method), uri);
 
     request_line_stream
         = istream_string_new(connection->request.pool,
