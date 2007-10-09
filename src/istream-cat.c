@@ -64,9 +64,7 @@ cat_input_eof(void *ctx)
 
     assert(input->istream != NULL);
 
-    input->istream->handler = NULL;
-    pool_unref(input->istream->pool);
-    input->istream = NULL;
+    istream_clear_unref_handler(&input->istream);
 
     if (input == cat->current) {
         cat->current = input->next;
@@ -176,9 +174,9 @@ istream_cat_new(pool_t pool, ...)
         input->next = NULL;
         input->cat = cat;
 
-        istream_assign_ref(&input->istream, istream);
-        istream->handler = &cat_input_handler;
-        istream->handler_ctx = input;
+        istream_assign_ref_handler(&input->istream, istream,
+                                   &cat_input_handler, input,
+                                   0);
 
         *next_p = input;
         next_p = &input->next;
