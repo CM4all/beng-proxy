@@ -65,6 +65,7 @@ SOURCES = src/main.c \
 	src/buffered-io.c \
 	src/header-parser.c \
 	src/header-writer.c \
+	src/http.c \
 	src/http-body.c \
 	src/http-server.c \
 	src/http-client.c \

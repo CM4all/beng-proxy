@@ -7,6 +7,8 @@
 #ifndef __BENG_HTTP_H
 #define __BENG_HTTP_H
 
+#include <assert.h>
+
 typedef enum {
     HTTP_METHOD_NULL = 0,
     HTTP_METHOD_HEAD,
@@ -32,5 +34,17 @@ typedef enum {
     HTTP_STATUS_GATEWAY_TIMEOUT = 504,
     HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED = 505,
 } http_status_t;
+
+
+extern const char *http_status_to_string_data[6][20];
+
+static inline const char *
+http_status_to_string(http_status_t status)
+{
+    assert((status / 100) < sizeof(http_status_to_string_data) / sizeof(http_status_to_string_data[0]));
+    assert(status % 100 < sizeof(http_status_to_string_data[0]) / sizeof(http_status_to_string_data[0][0]));
+
+    return http_status_to_string_data[status / 100][status % 100];
+}
 
 #endif
