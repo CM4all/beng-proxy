@@ -9,10 +9,7 @@
 
 #include "pool.h"
 
-#ifndef NDEBUG
 #include <assert.h>
-#endif
-
 #include <sys/types.h>
 
 enum istream_direct {
@@ -93,12 +90,16 @@ struct istream {
 static inline struct istream *
 _istream_opaque_cast(istream_t istream)
 {
+    assert(istream != NULL);
+
     return (struct istream *)istream;
 }
 
 static inline istream_t
 istream_struct_cast(struct istream *istream)
 {
+    assert(istream != NULL);
+
     return (istream_t)istream;
 }
 
@@ -106,6 +107,9 @@ static inline pool_t
 istream_pool(istream_t _istream)
 {
     struct istream *istream = _istream_opaque_cast(_istream);
+
+    assert(istream->pool != NULL);
+
     return istream->pool;
 }
 
@@ -234,6 +238,12 @@ istream_clear_unref_handler(istream_t *istream_r)
 static inline size_t
 istream_invoke_data(struct istream *istream, const void *data, size_t length)
 {
+    assert(istream != NULL);
+    assert(istream->handler != NULL);
+    assert(istream->handler->data != NULL);
+    assert(data != NULL);
+    assert(length > 0);
+
     return istream->handler->data(data, length, istream->handler_ctx);
 }
 
@@ -241,12 +251,22 @@ static inline ssize_t
 istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
                       size_t max_length)
 {
+    assert(istream != NULL);
+    assert(istream->handler != NULL);
+    assert(istream->handler->direct != NULL);
+    assert((istream->handler_direct & type) != 0);
+    assert(fd >= 0);
+    assert(max_length > 0);
+
     return istream->handler->direct(type, fd, max_length, istream->handler_ctx);
 }
 
 static inline void
 istream_invoke_eof(struct istream *istream)
 {
+    assert(istream != NULL);
+    assert(istream->handler != NULL);
+
     if (istream->handler->eof != NULL)
         istream->handler->eof(istream->handler_ctx);
 }
@@ -254,6 +274,8 @@ istream_invoke_eof(struct istream *istream)
 static inline void
 istream_invoke_free(struct istream *istream)
 {
+    assert(istream != NULL);
+
     if (istream->handler != NULL && istream->handler->free != NULL) {
         const struct istream_handler *handler = istream->handler;
         void *handler_ctx = istream->handler_ctx;
