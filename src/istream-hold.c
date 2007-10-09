@@ -22,6 +22,27 @@ struct istream_hold {
 };
 
 
+static void
+hold_close(struct istream_hold *hold)
+{
+    if (hold->input_eof) {
+        /* perform queued eof() call */
+        hold->input_eof = 0;
+        istream_invoke_eof(&hold->output);
+    }
+
+    if (hold->input != NULL) {
+        /* the input object is still there; istream_close(hold->input)
+           will implicitly call istream_invoke_free(&hold->output)
+           through hold_input_free() */
+        istream_close(hold->input);
+        assert(hold->input == NULL);
+    } else {
+        istream_invoke_free(&hold->output);
+    }
+}
+
+
 /*
  * istream handler
  *
@@ -117,7 +138,7 @@ istream_hold_read(istream_t istream)
 
     if (unlikely(hold->input_eof || hold->input_free))
         /* eof() or free() was queued */
-        istream_close(istream);
+        hold_close(hold);
     else {
         hold->input->handler_direct = hold->output.handler_direct;
         istream_read(hold->input);
@@ -129,21 +150,7 @@ istream_hold_close(istream_t istream)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 
-    if (hold->input_eof) {
-        /* perform queued eof() call */
-        hold->input_eof = 0;
-        istream_invoke_eof(&hold->output);
-    }
-
-    if (hold->input != NULL) {
-        /* the input object is still there; istream_close(hold->input)
-           will implicitly call istream_invoke_free(&hold->output)
-           through hold_input_free() */
-        istream_close(hold->input);
-        assert(hold->input == NULL);
-    } else {
-        istream_invoke_free(&hold->output);
-    }
+    hold_close(hold);
 }
 
 static const struct istream istream_hold = {

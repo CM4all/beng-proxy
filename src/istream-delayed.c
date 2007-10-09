@@ -17,6 +17,29 @@ struct istream_delayed {
     void *callback_ctx;
 };
 
+
+static void
+delayed_close(struct istream_delayed *delayed)
+{
+    if (delayed->input != NULL) {
+        assert(delayed->abort_callback == NULL);
+
+        istream_close(delayed->input);
+        assert(delayed->input == NULL);
+    } else if (delayed->abort_callback != NULL) {
+        void (*abort_callback)(void *ctx) = delayed->abort_callback;
+        void *callback_ctx = delayed->callback_ctx;
+
+        delayed->abort_callback = NULL;
+        delayed->callback_ctx = NULL;
+
+        abort_callback(callback_ctx);
+    }
+
+    istream_invoke_free(&delayed->output);
+}
+
+
 static size_t
 delayed_input_data(const void *data, size_t length, void *ctx)
 {
@@ -43,7 +66,7 @@ delayed_input_eof(void *ctx)
 
     pool_ref(delayed->output.pool);
     istream_invoke_eof(&delayed->output);
-    istream_close(&delayed->output);
+    delayed_close(delayed);
     pool_unref(delayed->output.pool);
 }
 
@@ -86,22 +109,7 @@ istream_delayed_close(istream_t istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
-    if (delayed->input != NULL) {
-        assert(delayed->abort_callback == NULL);
-
-        istream_close(delayed->input);
-        assert(delayed->input == NULL);
-    } else if (delayed->abort_callback != NULL) {
-        void (*abort_callback)(void *ctx) = delayed->abort_callback;
-        void *callback_ctx = delayed->callback_ctx;
-
-        delayed->abort_callback = NULL;
-        delayed->callback_ctx = NULL;
-
-        abort_callback(callback_ctx);
-    }
-
-    istream_invoke_free(&delayed->output);
+    delayed_close(delayed);
 }
 
 static const struct istream istream_delayed = {

@@ -24,6 +24,29 @@ struct istream_pipe {
     size_t piped;
 };
 
+
+static void
+pipe_close(struct istream_pipe *p)
+{
+    if (p->input != NULL) {
+        pool_t pool = p->input->pool;
+        istream_free(&p->input);
+        pool_unref(pool);
+    }
+
+    if (p->fds[0] >= 0) {
+        close(p->fds[0]);
+        p->fds[0] = -1;
+    }
+
+    if (p->fds[1] >= 0) {
+        close(p->fds[1]);
+        p->fds[1] = -1;
+    }
+    
+    istream_invoke_free(&p->output);
+}
+
 static ssize_t
 pipe_consume(struct istream_pipe *p)
 {
@@ -35,7 +58,7 @@ pipe_consume(struct istream_pipe *p)
     nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
     if (unlikely(nbytes < 0 && errno != EAGAIN)) {
         int save_errno = errno;
-        istream_close(&p->output);
+        pipe_close(p);
         errno = save_errno;
         return -1;
     }
@@ -48,7 +71,7 @@ pipe_consume(struct istream_pipe *p)
             /* p->input has already reported EOF, and we have been
                waiting for the pipe buffer to become empty */
             istream_invoke_eof(&p->output);
-            istream_close(&p->output);
+            pipe_close(p);
         }
     }
 
@@ -110,7 +133,7 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         ret = pipe(p->fds);
         if (ret < 0) {
             perror("pipe() failed");
-            istream_close(&p->output);
+            pipe_close(p);
             return 0;
         }
     }
@@ -146,7 +169,7 @@ pipe_input_eof(void *ctx)
     if (p->piped == 0) {
         pool_ref(p->output.pool);
         istream_invoke_eof(&p->output);
-        istream_close(&p->output);
+        pipe_close(p);
         pool_unref(p->output.pool);
     }
 }
@@ -159,7 +182,7 @@ pipe_input_free(void *ctx)
     if (p->input != NULL) {
         istream_clear_unref(&p->input);
 
-        istream_close(&p->output);
+        pipe_close(p);
     }
 }
 
@@ -204,23 +227,7 @@ istream_pipe_close(istream_t istream)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
 
-    if (p->input != NULL) {
-        pool_t pool = p->input->pool;
-        istream_free(&p->input);
-        pool_unref(pool);
-    }
-
-    if (p->fds[0] >= 0) {
-        close(p->fds[0]);
-        p->fds[0] = -1;
-    }
-
-    if (p->fds[1] >= 0) {
-        close(p->fds[1]);
-        p->fds[1] = -1;
-    }
-    
-    istream_invoke_free(&p->output);
+    pipe_close(p);
 }
 
 static const struct istream istream_pipe = {

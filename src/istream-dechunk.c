@@ -27,6 +27,20 @@ struct istream_dechunk {
     void *ctx;
 };
 
+
+static void
+dechunk_close(struct istream_dechunk *dechunk)
+{
+    if (dechunk->input != NULL) {
+        pool_t pool = dechunk->input->pool;
+        istream_free(&dechunk->input);
+        pool_unref(pool);
+    }
+    
+    istream_invoke_free(&dechunk->output);
+}
+
+
 static void
 dechunk_eof_detected(struct istream_dechunk *dechunk)
 {
@@ -38,7 +52,7 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
 
     pool_ref(dechunk->output.pool);
     istream_invoke_eof(&dechunk->output);
-    istream_close(&dechunk->output);
+    dechunk_close(dechunk);
 
     if (dechunk->eof_callback != NULL)
         dechunk->eof_callback(dechunk->ctx);
@@ -71,7 +85,7 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
                 continue;
             } else {
                 fprintf(stderr, "chunk length expected\n");
-                istream_close(&dechunk->output);
+                dechunk_close(dechunk);
                 return position;
             }
 
@@ -119,7 +133,7 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
                 dechunk->state = NONE;
             } else if (data[position] != '\r') {
                 fprintf(stderr, "newline expected\n");
-                istream_close(&dechunk->output);
+                dechunk_close(dechunk);
                 return position;
             }
             ++position;
@@ -146,7 +160,7 @@ dechunk_input_free(void *ctx)
     if (dechunk->input != NULL) {
         istream_clear_unref(&dechunk->input);
 
-        istream_close(&dechunk->output);
+        dechunk_close(dechunk);
     }
 }
 
@@ -176,13 +190,7 @@ istream_dechunk_close(istream_t istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 
-    if (dechunk->input != NULL) {
-        pool_t pool = dechunk->input->pool;
-        istream_free(&dechunk->input);
-        pool_unref(pool);
-    }
-    
-    istream_invoke_free(&dechunk->output);
+    dechunk_close(dechunk);
 }
 
 static const struct istream istream_dechunk = {

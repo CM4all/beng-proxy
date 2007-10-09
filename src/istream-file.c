@@ -26,6 +26,17 @@ struct file {
     const char *path;
 };
 
+static void
+file_close(struct file *file)
+{
+    if (file->fd >= 0) {
+        close(file->fd);
+        file->fd = -1;
+    }
+
+    istream_invoke_free(&file->stream);
+}
+
 static inline struct file *
 istream_to_file(istream_t istream)
 {
@@ -64,7 +75,7 @@ istream_file_eof_detected(struct file *file)
 
     pool_ref(file->stream.pool);
     istream_invoke_eof(&file->stream);
-    istream_close(&file->stream);
+    file_close(file);
     pool_unref(file->stream.pool);
 }
 
@@ -106,13 +117,13 @@ istream_file_try_data(struct file *file)
         } else {
             fprintf(stderr, "premature end of file in '%s'\n",
                     file->path);
-            istream_close(&file->stream);
+            file_close(file);
         }
         return;
     } else if (nbytes == -1) {
         fprintf(stderr, "failed to read from '%s': %s\n",
                 file->path, strerror(errno));
-        istream_close(&file->stream);
+        file_close(file);
         return;
     } else if (nbytes > 0 && file->rest != (off_t)-1) {
         file->rest -= (off_t)nbytes;
@@ -159,13 +170,13 @@ istream_file_try_direct(struct file *file)
         } else {
             fprintf(stderr, "premature end of file in '%s'\n",
                     file->path);
-            istream_close(&file->stream);
+            file_close(file);
         }
     } else {
         /* XXX */
         fprintf(stderr, "failed to read from '%s': %s\n",
                 file->path, strerror(errno));
-        istream_close(&file->stream);
+        file_close(file);
     }
 }
 
@@ -187,12 +198,7 @@ istream_file_close(istream_t istream)
 {
     struct file *file = istream_to_file(istream);
 
-    if (file->fd >= 0) {
-        close(file->fd);
-        file->fd = -1;
-    }
-
-    istream_invoke_free(&file->stream);
+    file_close(file);
 }
 
 static const struct istream istream_file = {

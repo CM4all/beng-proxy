@@ -22,7 +22,7 @@ istream_null_read(istream_t istream)
     struct istream_null *null = istream_to_null(istream);
 
     istream_invoke_eof(&null->stream);
-    istream_close(istream);
+    istream_invoke_free(&null->stream);
 }
 
 static void

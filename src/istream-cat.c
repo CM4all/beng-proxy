@@ -25,6 +25,25 @@ struct istream_cat {
 };
 
 
+static void
+cat_close(struct istream_cat *cat)
+{
+    struct input *input;
+
+    while (cat->current != NULL) {
+        input = cat->current;
+        cat->current = input->next;
+        if (input->istream != NULL) {
+            pool_t pool = input->istream->pool;
+            istream_free(&input->istream);
+            pool_unref(pool);
+        }
+    }
+    
+    istream_invoke_free(&cat->output);
+}
+
+
 static size_t
 cat_input_data(const void *data, size_t length, void *ctx)
 {
@@ -71,7 +90,7 @@ cat_input_eof(void *ctx)
         if (cat->current == NULL) {
             pool_ref(cat->output.pool);
             istream_invoke_eof(&cat->output);
-            istream_close(&cat->output);
+            cat_close(cat);
             pool_unref(cat->output.pool);
         }
     }
@@ -84,7 +103,7 @@ cat_input_free(void *ctx)
     struct istream_cat *cat = input->cat;
 
     if (input->istream != NULL)
-        istream_close(&cat->output);
+        cat_close(cat);
 }
 
 static const struct istream_handler cat_input_handler = {
@@ -116,7 +135,7 @@ istream_cat_read(istream_t istream)
 
         if (cat->current == NULL) {
             istream_invoke_eof(&cat->output);
-            istream_close(&cat->output);
+            cat_close(cat);
             break;
         }
 
@@ -132,19 +151,8 @@ static void
 istream_cat_close(istream_t istream)
 {
     struct istream_cat *cat = istream_to_cat(istream);
-    struct input *input;
 
-    while (cat->current != NULL) {
-        input = cat->current;
-        cat->current = input->next;
-        if (input->istream != NULL) {
-            pool_t pool = input->istream->pool;
-            istream_free(&input->istream);
-            pool_unref(pool);
-        }
-    }
-    
-    istream_invoke_free(&cat->output);
+    cat_close(cat);
 }
 
 static const struct istream istream_cat = {
