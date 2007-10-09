@@ -152,11 +152,11 @@ istream_gb_read(istream_t istream)
     data = growing_buffer_read(gb, &length);
     if (data == NULL) {
         gb->current = NULL;
-        istream_invoke_eof(istream);
+        istream_invoke_eof(&gb->stream);
         return;
     }
 
-    nbytes = istream_invoke_data(istream, data, length);
+    nbytes = istream_invoke_data(&gb->stream, data, length);
     assert(nbytes <= length);
 
     growing_buffer_consume(gb, nbytes);
@@ -164,7 +164,7 @@ istream_gb_read(istream_t istream)
     while (gb->current->position == gb->current->length) {
         gb->current = gb->current->next;
         if (gb->current == NULL) {
-            istream_invoke_eof(istream);
+            istream_invoke_eof(&gb->stream);
             return;
         }
 
@@ -182,7 +182,7 @@ istream_gb_close(istream_t istream)
 
     gb->current = NULL;
 
-    istream_invoke_free(istream);
+    istream_invoke_free(&gb->stream);
 }
 
 static const struct istream istream_gb = {

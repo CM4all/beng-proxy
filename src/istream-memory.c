@@ -29,7 +29,7 @@ istream_memory_read(istream_t istream)
     assert(memory->data != NULL);
 
     if (memory->length > 0) {
-        nbytes = istream_invoke_data(istream, memory->data, memory->length);
+        nbytes = istream_invoke_data(&memory->stream, memory->data, memory->length);
         assert(nbytes <= memory->length);
 
         if (memory->data == NULL)
@@ -40,7 +40,7 @@ istream_memory_read(istream_t istream)
     }
 
     if (memory->length == 0) {
-        istream_invoke_eof(istream);
+        istream_invoke_eof(&memory->stream);
         istream_close(istream);
     }
 }
@@ -52,7 +52,7 @@ istream_memory_close(istream_t istream)
 
     memory->data = NULL;
 
-    istream_invoke_free(istream);
+    istream_invoke_free(&memory->stream);
 }
 
 static const struct istream istream_memory = {

@@ -192,7 +192,7 @@ istream_file_close(istream_t istream)
         file->fd = -1;
     }
 
-    istream_invoke_free(istream);
+    istream_invoke_free(&file->stream);
 }
 
 static const struct istream istream_file = {
