@@ -55,6 +55,7 @@ http_status_to_string(http_status_t status)
 {
     assert((status / 100) < sizeof(http_status_to_string_data) / sizeof(http_status_to_string_data[0]));
     assert(status % 100 < sizeof(http_status_to_string_data[0]) / sizeof(http_status_to_string_data[0][0]));
+    assert(http_status_to_string_data[status / 100][status % 100]);
 
     return http_status_to_string_data[status / 100][status % 100];
 }
