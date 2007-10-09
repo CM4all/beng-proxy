@@ -81,7 +81,11 @@ url_stream_connection_free(void *ctx)
     url_stream_t us = ctx;
 
     us->http = NULL;
-    url_stream_close(us);
+
+    /* self-destruct only after we provided a response to the
+       callback */
+    if (us->got_response)
+        url_stream_close(us);
 }
 
 static const struct http_client_connection_handler url_stream_connection_handler = {
