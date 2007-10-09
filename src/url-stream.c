@@ -215,7 +215,10 @@ url_stream_new(pool_t pool,
 void
 url_stream_close(url_stream_t us)
 {
+    pool_t pool;
+
     assert(us != NULL);
+    assert(us->pool != NULL);
 
     if (us->client_socket != NULL) {
         client_socket_free(&us->client_socket);
@@ -223,9 +226,7 @@ url_stream_close(url_stream_t us)
     } else if (us->http != NULL)
         http_client_connection_close(us->http);
 
-    if (us->pool != NULL) {
-        pool_t pool = us->pool;
-        us->pool = NULL;
-        pool_unref(pool);
-    }
+    pool = us->pool;
+    us->pool = NULL;
+    pool_unref(pool);
 }
