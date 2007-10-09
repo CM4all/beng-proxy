@@ -65,9 +65,7 @@ replace_substitution_free(void *ctx)
     struct substitution *s = ctx;
     struct replace *replace = s->replace;
 
-    assert(s->istream != NULL);
-    pool_unref(s->istream->pool);
-    s->istream = NULL;
+    istream_clear_unref(&s->istream);
 
     if (replace->first_substitution != s ||
         replace->reading_source ||
@@ -175,10 +173,9 @@ replace_add(struct replace *replace, off_t start, off_t end,
     s->end = end;
 
     if (istream != NULL) {
-        istream_assign_ref(&s->istream, istream);
-
-        istream->handler = &replace_substitution_handler;
-        istream->handler_ctx = s;
+        istream_assign_ref_handler(&s->istream, istream,
+                                   &replace_substitution_handler, s,
+                                   0);
     } else {
         s->istream = NULL;
     }
