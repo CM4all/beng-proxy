@@ -117,6 +117,11 @@ test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o test/libcore-gmtime.
 test/format-http-date: test/format-http-date.o src/gmtime.o src/date.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+debug: src/cm4all-beng-proxy
+	rm -f /tmp/cm4all-beng-proxy.gdb
+	echo -en "handle SIGPIPE noprint nostop\nrun -D\n" >/tmp/cm4all-beng-proxy.gdb
+	LD_LIBRARY_PATH=/usr/lib/debug:$(LD_LIBRARY_PATH) gdb -x /tmp/cm4all-beng-proxy.gdb $<
+
 profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -g -pg
 profile: LDFLAGS = -lc_p -pg
 profile: src/cm4all-beng-proxy
