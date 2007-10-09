@@ -584,6 +584,17 @@ http_client_connection_close(http_client_connection_t connection)
     if (connection->response.read_state == READ_BODY) {
         http_client_response_stream_close(http_body_istream(&connection->response.body_reader));
         assert(connection->response.read_state == READ_NONE);
+    } else if (connection->request.pool != NULL &&
+               connection->request.handler != NULL &&
+               connection->request.handler->free != NULL) {
+        /* we're not reading the response yet, but we nonetheless want
+           to notify the caller (callback) that the response object is
+           being freed */
+        const struct http_client_response_handler *handler = connection->request.handler;
+        void *handler_ctx = connection->request.handler_ctx;
+        connection->request.handler = NULL;
+        connection->request.handler_ctx = NULL;
+        handler->free(handler_ctx);
     }
 
     if (connection->request.pool != NULL) {
