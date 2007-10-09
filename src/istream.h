@@ -125,6 +125,23 @@ istream_free(istream_t *istream_r)
 
 
 static inline void
+istream_handler_set(istream_t istream,
+                    const struct istream_handler *handler,
+                    void *handler_ctx,
+                    istream_direct_t handler_direct)
+{
+    istream->handler = handler;
+    istream->handler_ctx = handler_ctx;
+    istream->handler_direct = handler_direct;
+}
+
+static inline void
+istream_handler_clear(istream_t istream)
+{
+    istream->handler = NULL;
+}
+
+static inline void
 istream_assign_ref(istream_t *istream_r, istream_t istream)
 {
     *istream_r = istream;
@@ -138,9 +155,7 @@ istream_assign_ref_handler(istream_t *istream_r, istream_t istream,
                            istream_direct_t handler_direct)
 {
     istream_assign_ref(istream_r, istream);
-    istream->handler = handler;
-    istream->handler_ctx = handler_ctx;
-    istream->handler_direct = handler_direct;
+    istream_handler_set(istream, handler, handler_ctx, handler_direct);
 }
 
 static inline void
@@ -156,7 +171,7 @@ istream_clear_unref_handler(istream_t *istream_r)
 {
     istream_t istream = *istream_r;
     *istream_r = NULL;
-    istream->handler = NULL;
+    istream_handler_clear(istream);
     pool_unref(istream->pool);
 }
 

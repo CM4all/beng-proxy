@@ -726,7 +726,7 @@ http_server_response_stream_eof(void *ctx)
 
     pool_ref(connection->pool);
 
-    connection->response.istream->handler = NULL;
+    istream_handler_clear(connection->response.istream);
     connection->response.istream = NULL;
 
     if (connection->request.read_state == READ_BODY) {
@@ -856,9 +856,9 @@ http_server_response(struct http_server_request *request,
 
     connection->response.istream = istream_cat_new(request->pool, status_stream,
                                                    header_stream, body, NULL);
-    connection->response.istream->handler = &http_server_response_stream_handler;
-    connection->response.istream->handler_direct = ISTREAM_DIRECT_SUPPORT;
-    connection->response.istream->handler_ctx = connection;
+    istream_handler_set(connection->response.istream,
+                        &http_server_response_stream_handler, connection,
+                        ISTREAM_DIRECT_SUPPORT);
 
     connection->response.writing = 1;
 
