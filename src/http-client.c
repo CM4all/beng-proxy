@@ -292,7 +292,7 @@ http_client_headers_finished(http_client_connection_t connection)
                        &http_client_response_stream, connection->request.pool,
                        connection->response.content_length);
 
-        connection->response.body = &connection->response.body_reader.output;
+        connection->response.body = http_body_istream(&connection->response.body_reader);
     } else {
         /* chunked */
 
@@ -304,7 +304,7 @@ http_client_headers_finished(http_client_connection_t connection)
 
         connection->response.body
             = istream_dechunk_new(connection->request.pool,
-                                  &connection->response.body_reader.output,
+                                  http_body_istream(&connection->response.body_reader),
                                   http_body_dechunked_eof, &connection->response.body_reader);
     }
 

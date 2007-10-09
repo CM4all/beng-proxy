@@ -42,7 +42,7 @@ http_body_consumed(struct http_body_reader *body, size_t nbytes)
     pool_ref(pool);
 
     istream_invoke_eof(&body->output);
-    istream_close(&body->output);
+    istream_close(http_body_istream(body));
 
     pool_unref(pool);
 }

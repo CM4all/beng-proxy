@@ -370,7 +370,7 @@ http_server_headers_finished(http_server_connection_t connection)
                            &http_server_request_stream, request->pool,
                            request->content_length);
 
-            request->body = &connection->request.body_reader.output;
+            request->body = http_body_istream(&connection->request.body_reader);
             connection->request.read_state = READ_BODY;
         }
     } else {
@@ -384,7 +384,7 @@ http_server_headers_finished(http_server_connection_t connection)
 
         request->body
             = istream_dechunk_new(request->pool,
-                                  &connection->request.body_reader.output,
+                                  http_body_istream(&connection->request.body_reader),
                                   http_body_dechunked_eof, &connection->request.body_reader);
 
         connection->request.read_state = READ_BODY;

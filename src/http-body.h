@@ -22,6 +22,12 @@ struct http_body_reader {
     int dechunk_eof;
 };
 
+static inline istream_t
+http_body_istream(struct http_body_reader *body)
+{
+    return &body->output;
+}
+
 static inline int
 http_body_eof(const struct http_body_reader *body)
 {
