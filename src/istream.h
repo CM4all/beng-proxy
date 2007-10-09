@@ -123,6 +123,44 @@ istream_free(istream_t *istream_r)
     istream_close(istream);
 }
 
+
+static inline void
+istream_assign_ref(istream_t *istream_r, istream_t istream)
+{
+    *istream_r = istream;
+    pool_ref(istream->pool);
+}
+
+static inline void
+istream_assign_ref_handler(istream_t *istream_r, istream_t istream,
+                           const struct istream_handler *handler,
+                           void *handler_ctx,
+                           istream_direct_t handler_direct)
+{
+    istream_assign_ref(istream_r, istream);
+    istream->handler = handler;
+    istream->handler_ctx = handler_ctx;
+    istream->handler_direct = handler_direct;
+}
+
+static inline void
+istream_clear_unref(istream_t *istream_r)
+{
+    istream_t istream = *istream_r;
+    *istream_r = NULL;
+    pool_unref(istream->pool);
+}
+
+static inline void
+istream_clear_unref_handler(istream_t *istream_r)
+{
+    istream_t istream = *istream_r;
+    *istream_r = NULL;
+    istream->handler = NULL;
+    pool_unref(istream->pool);
+}
+
+
 static inline size_t
 istream_invoke_data(istream_t istream, const void *data, size_t length)
 {

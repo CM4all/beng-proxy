@@ -110,9 +110,7 @@ processor_input_eof(void *ctx)
     assert(processor != NULL);
     assert(processor->input != NULL);
 
-    processor->input->handler = NULL;
-    pool_unref(processor->input->pool);
-    processor->input = NULL;
+    istream_clear_unref_handler(&processor->input);
 
     replace_eof(&processor->replace);
 }
@@ -124,8 +122,7 @@ processor_input_free(void *ctx)
 
     assert(processor->input != NULL);
 
-    pool_unref(processor->input->pool);
-    processor->input = NULL;
+    istream_clear_unref(&processor->input);
 
     processor_close(processor); /* XXX */
 }
@@ -160,10 +157,10 @@ processor_new(pool_t pool, istream_t istream,
     processor->output = processor_output_stream;
     processor->output.pool = pool;
 
-    processor->input = istream;
-    istream->handler = &processor_input_handler;
-    istream->handler_ctx = processor;
-    pool_ref(processor->input->pool);
+
+    istream_assign_ref_handler(&processor->input, istream,
+                               &processor_input_handler, processor,
+                               0);
 
     processor->widget = widget;
     processor->env = env;

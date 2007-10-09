@@ -34,8 +34,7 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     assert(dechunk->state == AFTER_SIZE);
     assert(dechunk->size == 0);
 
-    pool_unref(dechunk->input->pool);
-    dechunk->input = NULL;
+    istream_clear_unref(&dechunk->input);
 
     pool_ref(dechunk->output.pool);
     istream_invoke_eof(&dechunk->output);
@@ -145,8 +144,7 @@ dechunk_input_free(void *ctx)
     struct istream_dechunk *dechunk = ctx;
 
     if (dechunk->input != NULL) {
-        pool_unref(dechunk->input->pool);
-        dechunk->input = NULL;
+        istream_clear_unref(&dechunk->input);
 
         istream_close(&dechunk->output);
     }
@@ -203,14 +201,13 @@ istream_dechunk_new(pool_t pool, istream_t input,
 
     dechunk->output = istream_dechunk;
     dechunk->output.pool = pool;
-    dechunk->input = input;
     dechunk->state = NONE;
     dechunk->eof_callback = eof_callback;
     dechunk->ctx = ctx;
 
-    input->handler = &dechunk_input_handler;
-    input->handler_ctx = dechunk;
-    pool_ref(input->pool);
+    istream_assign_ref_handler(&dechunk->input, input,
+                               &dechunk_input_handler, dechunk,
+                               0);
 
     return &dechunk->output;
 }

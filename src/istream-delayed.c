@@ -38,9 +38,7 @@ delayed_input_eof(void *ctx)
 {
     struct istream_delayed *delayed = ctx;
 
-    delayed->input->handler = NULL;
-    pool_unref(delayed->input->pool);
-    delayed->input = NULL;
+    istream_clear_unref_handler(&delayed->input);
     delayed->input_eof = 1;
 
     pool_ref(delayed->output.pool);
@@ -56,8 +54,7 @@ delayed_input_free(void *ctx)
 
     if (!delayed->input_eof && delayed->input != NULL) {
         /* abort the transfer */
-        pool_unref(delayed->input->pool);
-        delayed->input = NULL;
+        istream_clear_unref(&delayed->input);
         /* XXX */
     }
 }
@@ -140,14 +137,12 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
     assert(input != NULL);
     assert(input->handler == NULL);
 
-    pool_ref(input->pool);
-    delayed->input = input;
     delayed->abort_callback = NULL;
     delayed->callback_ctx = NULL;
 
-    input->handler = &delayed_input_handler;
-    input->handler_ctx = delayed;
-    input->handler_direct = delayed->output.handler_direct;
+    istream_assign_ref_handler(&delayed->input, input,
+                               &delayed_input_handler, delayed,
+                               delayed->output.handler_direct);
 
     if (delayed->output.handler == NULL) /* allow this special case here */
         return;

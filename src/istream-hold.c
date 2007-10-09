@@ -70,10 +70,8 @@ hold_input_free(void *ctx)
 {
     struct istream_hold *hold = ctx;
 
-    if (hold->input != NULL) {
-        pool_unref(hold->input->pool);
-        hold->input = NULL;
-    }
+    if (hold->input != NULL)
+        istream_clear_unref(&hold->input);
 
     if (hold->output.handler == NULL) {
         /* queue the free() call */
@@ -167,13 +165,12 @@ istream_hold_new(pool_t pool, istream_t input)
     hold = p_malloc(pool, sizeof(*hold));
     hold->output = istream_hold;
     hold->output.pool = pool;
-    hold->input = input;
     hold->input_eof = 0;
     hold->input_free = 0;
 
-    input->handler = &hold_input_handler;
-    input->handler_ctx = hold;
-    pool_ref(input->pool);
+    istream_assign_ref_handler(&hold->input, input,
+                               &hold_input_handler, hold,
+                               0);
 
     return &hold->output;
 }

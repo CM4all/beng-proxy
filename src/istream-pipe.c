@@ -136,11 +136,7 @@ pipe_input_eof(void *ctx)
 {
     struct istream_pipe *p = ctx;
 
-    p->input->handler = NULL;
-    p->input->handler_ctx = NULL;
-
-    pool_unref(p->input->pool);
-    p->input = NULL;
+    istream_clear_unref_handler(&p->input);
 
     if (p->fds[1] >= 0) {
         close(p->fds[1]);
@@ -161,8 +157,7 @@ pipe_input_free(void *ctx)
     struct istream_pipe *p = ctx;
 
     if (p->input != NULL) {
-        pool_unref(p->input->pool);
-        p->input = NULL;
+        istream_clear_unref(&p->input);
 
         istream_close(&p->output);
     }
@@ -249,15 +244,13 @@ istream_pipe_new(pool_t pool, istream_t input)
 
     p->output = istream_pipe;
     p->output.pool = pool;
-    p->input = input;
     p->fds[0] = -1;
     p->fds[1] = -1;
     p->piped = 0;
 
-    input->handler = &pipe_input_handler;
-    input->handler_ctx = p;
-    input->handler_direct = SPLICE_SOURCE_TYPES;
-    pool_ref(input->pool);
+    istream_assign_ref_handler(&p->input, input,
+                               &pipe_input_handler, p,
+                               SPLICE_SOURCE_TYPES);
 
     return &p->output;
 }

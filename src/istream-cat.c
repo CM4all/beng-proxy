@@ -176,10 +176,9 @@ istream_cat_new(pool_t pool, ...)
         input->next = NULL;
         input->cat = cat;
 
-        input->istream = istream;
+        istream_assign_ref(&input->istream, istream);
         istream->handler = &cat_input_handler;
         istream->handler_ctx = input;
-        pool_ref(istream->pool);
 
         *next_p = input;
         next_p = &input->next;

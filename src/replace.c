@@ -173,13 +173,14 @@ replace_add(struct replace *replace, off_t start, off_t end,
     s->replace = replace;
     s->start = start;
     s->end = end;
-    s->istream = istream;
 
     if (istream != NULL) {
-        pool_ref(istream->pool);
+        istream_assign_ref(&s->istream, istream);
 
         istream->handler = &replace_substitution_handler;
         istream->handler_ctx = s;
+    } else {
+        s->istream = NULL;
     }
 
     *replace->append_substitution_p = s;

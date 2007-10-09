@@ -104,9 +104,7 @@ chunked_source_eof(void *ctx)
     assert(chunked->input != NULL);
     assert(chunked->buffer != NULL);
 
-    chunked->input->handler = NULL;
-    pool_unref(chunked->input->pool);
-    chunked->input = NULL;
+    istream_clear_unref_handler(&chunked->input);
 
     dest = fifo_buffer_write(chunked->buffer, &max_length);
     assert(dest != NULL && max_length >= 5); /* XXX */
@@ -123,8 +121,8 @@ chunked_source_free(void *ctx)
     struct istream_chunked *chunked = ctx;
 
     if (chunked->input != NULL) {
-        pool_unref(chunked->input->pool);
-        chunked->input = NULL;
+        istream_clear_unref(&chunked->input);
+
         chunked->buffer = NULL;
 
         istream_close(&chunked->output);
@@ -187,11 +185,10 @@ istream_chunked_new(pool_t pool, istream_t input)
     chunked->output = istream_chunked;
     chunked->output.pool = pool;
     chunked->buffer = fifo_buffer_new(pool, 4096);
-    chunked->input = input;
 
-    input->handler = &chunked_source_handler;
-    input->handler_ctx = chunked;
-    pool_ref(input->pool);
+    istream_assign_ref_handler(&chunked->input, input,
+                               &chunked_source_handler, chunked,
+                               0);
 
     return &chunked->output;
 }
