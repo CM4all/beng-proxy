@@ -258,7 +258,8 @@ replace_read(struct replace *replace)
         replace->position += nbytes;
     }
 
-    if (replace->first_substitution == NULL &&
+    if (replace->output != NULL &&
+        replace->first_substitution == NULL &&
         (replace->quiet ||
          (replace->buffer != NULL &&
           replace->position == replace->source_length))) {
