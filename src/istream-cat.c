@@ -33,11 +33,8 @@ cat_close(struct istream_cat *cat)
     while (cat->current != NULL) {
         input = cat->current;
         cat->current = input->next;
-        if (input->istream != NULL) {
-            pool_t pool = input->istream->pool;
-            istream_free(&input->istream);
-            pool_unref(pool);
-        }
+        if (input->istream != NULL)
+            istream_free_unref(&input->istream);
     }
     
     istream_invoke_free(&cat->output);

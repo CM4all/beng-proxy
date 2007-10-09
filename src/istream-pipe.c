@@ -28,11 +28,8 @@ struct istream_pipe {
 static void
 pipe_close(struct istream_pipe *p)
 {
-    if (p->input != NULL) {
-        pool_t pool = p->input->pool;
-        istream_free(&p->input);
-        pool_unref(pool);
-    }
+    if (p->input != NULL)
+        istream_free_unref(&p->input);
 
     if (p->fds[0] >= 0) {
         close(p->fds[0]);

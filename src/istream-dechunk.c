@@ -31,11 +31,8 @@ struct istream_dechunk {
 static void
 dechunk_close(struct istream_dechunk *dechunk)
 {
-    if (dechunk->input != NULL) {
-        pool_t pool = dechunk->input->pool;
-        istream_free(&dechunk->input);
-        pool_unref(pool);
-    }
+    if (dechunk->input != NULL)
+        istream_free_unref(&dechunk->input);
     
     istream_invoke_free(&dechunk->output);
 }

@@ -123,6 +123,16 @@ istream_free(istream_t *istream_r)
     istream_close(istream);
 }
 
+static inline void
+istream_free_unref(istream_t *istream_r)
+{
+    istream_t istream = *istream_r;
+    pool_t pool = istream->pool;
+    *istream_r = NULL;
+    istream_close(istream);
+    pool_unref(pool);
+}
+
 
 static inline void
 istream_handler_set(istream_t istream,

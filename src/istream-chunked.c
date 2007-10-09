@@ -20,11 +20,8 @@ struct istream_chunked {
 static void
 chunked_close(struct istream_chunked *chunked)
 {
-    if (chunked->input != NULL) {
-        pool_t pool = chunked->input->pool;
-        istream_free(&chunked->input);
-        pool_unref(pool);
-    }
+    if (chunked->input != NULL)
+        istream_free_unref(&chunked->input);
     
     chunked->buffer = NULL;
 
