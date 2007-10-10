@@ -34,6 +34,21 @@ deflate_close(struct istream_deflate *defl)
     istream_invoke_free(&defl->output);
 }
 
+static voidpf z_alloc
+(voidpf opaque, uInt items, uInt size)
+{
+    pool_t pool = opaque;
+
+    return p_malloc(pool, items * size);
+}
+
+static void
+z_free(voidpf opaque, voidpf address)
+{
+    (void)opaque;
+    (void)address;
+}
+
 static int
 deflate_initialize_z(struct istream_deflate *defl)
 {
@@ -42,9 +57,9 @@ deflate_initialize_z(struct istream_deflate *defl)
     if (defl->z_initialized)
         return Z_OK;
 
-    defl->z.zalloc = NULL;
-    defl->z.zfree = NULL;
-    defl->z.opaque = NULL;
+    defl->z.zalloc = z_alloc;
+    defl->z.zfree = z_free;
+    defl->z.opaque = defl->output.pool;
 
     err = deflateInit(&defl->z, Z_DEFAULT_COMPRESSION);
     if (err != Z_OK) {
