@@ -255,7 +255,7 @@ replace_read(struct replace *replace)
         return;
     }
 
-    if (replace->buffer != NULL && !replace->quiet) {
+    if (!replace->quiet) {
         size_t rest;
 
         if (replace->first_substitution == NULL)
