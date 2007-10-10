@@ -234,6 +234,30 @@ replace_read_from_buffer(struct replace *replace, size_t max_length)
     replace->position += nbytes;
 }
 
+static void
+replace_try_read_from_buffer(struct replace *replace)
+{
+    size_t max_length;
+
+    assert(replace != NULL);
+
+    if (replace->quiet)
+        return;
+
+    if (replace->first_substitution == NULL)
+        max_length = (size_t)(replace->source_length - replace->position);
+    else if (replace->position < replace->first_substitution->start)
+        max_length = (size_t)(replace->first_substitution->start - replace->position);
+    else
+        max_length = 0;
+
+    if (max_length == 0)
+        return;
+
+    if (max_length > 0)
+        replace_read_from_buffer(replace, max_length);
+}
+
 void
 replace_read(struct replace *replace)
 {
@@ -255,19 +279,7 @@ replace_read(struct replace *replace)
         return;
     }
 
-    if (!replace->quiet) {
-        size_t rest;
-
-        if (replace->first_substitution == NULL)
-            rest = (size_t)(replace->source_length - replace->position);
-        else if (replace->position < replace->first_substitution->start)
-            rest = (size_t)(replace->first_substitution->start - replace->position);
-        else
-            rest = 0;
-
-        if (rest > 0)
-            replace_read_from_buffer(replace, rest);
-    }
+    replace_try_read_from_buffer(replace);
 
     if (replace->output != NULL &&
         replace->first_substitution == NULL &&
