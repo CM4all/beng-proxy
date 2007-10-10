@@ -105,11 +105,14 @@ is valid for every request which modifies a resource - always reckon
 that \emph{beng-proxy} may request a resource multiple times, even
 without interaction of the browser.
 
-\subsection{Cookies}
+\subsection{Session tracking}
 
-Even when the browser does not support cookies, a widget may use them.
-\emph{beng-proxy} will take care of session tracking.  Cookies may not
-be set or read with JavaScript.
+A widget may use HTTP cookies for session tracking, even if the
+browser does not support it - \emph{beng-proxy} will take care of it.
+The widget should not include some kind of session identification in
+the URI.
+
+Cookies are not available in JavaScript.
 
 
 \section{The Beng Template Language}
