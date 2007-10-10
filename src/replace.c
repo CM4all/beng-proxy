@@ -185,7 +185,7 @@ replace_add(struct replace *replace, off_t start, off_t end,
     replace->append_substitution_p = &s->next;
 }
 
-static void
+static int
 replace_read_substitution(struct replace *replace)
 {
     while (replace->first_substitution != NULL &&
@@ -205,11 +205,13 @@ replace_read_substitution(struct replace *replace)
         /* we assume the substitution object is blocking if it hasn't
            reached EOF with this one call */
         if (s == replace->first_substitution)
-            return;
+            return 1;
     }
+
+    return 0;
 }
 
-static void
+static size_t
 replace_read_from_buffer(struct replace *replace, size_t max_length)
 {
     const void *data;
@@ -232,9 +234,11 @@ replace_read_from_buffer(struct replace *replace, size_t max_length)
 
     growing_buffer_consume(replace->buffer, nbytes);
     replace->position += nbytes;
+
+    return max_length - nbytes;
 }
 
-static void
+static size_t
 replace_try_read_from_buffer(struct replace *replace)
 {
     size_t max_length;
@@ -242,7 +246,7 @@ replace_try_read_from_buffer(struct replace *replace)
     assert(replace != NULL);
 
     if (replace->quiet)
-        return;
+        return 0;
 
     if (replace->first_substitution == NULL)
         max_length = (size_t)(replace->source_length - replace->position);
@@ -252,16 +256,17 @@ replace_try_read_from_buffer(struct replace *replace)
         max_length = 0;
 
     if (max_length == 0)
-        return;
+        return 0;
 
-    if (max_length > 0)
-        replace_read_from_buffer(replace, max_length);
+    return replace_read_from_buffer(replace, max_length);
 }
 
 void
 replace_read(struct replace *replace)
 {
     pool_t pool;
+    int blocking;
+    size_t rest;
 
     assert(replace != NULL);
     assert(replace->output != NULL);
@@ -273,32 +278,24 @@ replace_read(struct replace *replace)
     pool_ref(replace->pool);
     pool = replace->pool;
 
-    replace_read_substitution(replace);
-    if (replace->output == NULL) {
-        pool_unref(pool);
-        return;
-    }
+    while (1) {
+        blocking = replace_read_substitution(replace);
+        if (replace->output == NULL || blocking)
+            break;
 
-    replace_try_read_from_buffer(replace);
-    if (replace->output == NULL) {
-        pool_unref(pool);
-        return;
-    }
+        rest = replace_try_read_from_buffer(replace);
+        if (replace->output == NULL || rest > 0)
+            break;
 
-    if (replace->first_substitution == NULL &&
-        (replace->quiet ||
-         (replace->buffer != NULL &&
-          replace->position == replace->source_length))) {
-        if (!replace->quiet)
-            replace->buffer = NULL;
+        if (replace->first_substitution == NULL) {
+            if (!replace->quiet)
+                replace->buffer = NULL;
 
-        pool_ref(replace->pool);
+            istream_invoke_eof(replace->output);
+            replace_destroy(replace);
+            break;
+        }
+    } 
 
-        istream_invoke_eof(replace->output);
-        replace_destroy(replace);
-
-        pool_unref(replace->pool);
-    }
-
-    pool_unref(replace->pool);
+    pool_unref(pool);
 }
