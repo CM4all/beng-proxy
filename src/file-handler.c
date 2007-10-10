@@ -133,18 +133,26 @@ file_callback(struct client_connection *connection,
         if (body != NULL) {
             struct processor_env *env;
             struct widget *widget;
+            unsigned processor_options = 0;
 
             env = p_malloc(request->pool, sizeof(*env));
             processor_env_init(request->pool, env, &translated->uri,
                                request->content_length, request->body,
                                embed_widget_callback);
-            if (env->frame != NULL) /* XXX */
+            if (env->frame != NULL) { /* XXX */
                 env->widget_callback = frame_widget_callback;
+
+                /* do not show the template contents if the browser is
+                   only interested in one particular widget for
+                   displaying the frame */
+                processor_options |= PROCESSOR_QUIET;
+            }
 
             widget = p_malloc(request->pool, sizeof(*widget));
             widget_init(widget, NULL);
 
-            body = processor_new(request->pool, body, widget, env, 0);
+            body = processor_new(request->pool, body, widget, env,
+                                 processor_options);
 
 #ifndef NO_DEFLATE
             if (http_client_accepts_encoding(request->headers, "deflate")) {
