@@ -209,11 +209,36 @@ replace_read_substitution(struct replace *replace)
     }
 }
 
+static void
+replace_read_from_buffer(struct replace *replace, size_t max_length)
+{
+    const void *data;
+    size_t length, nbytes;
+
+    assert(replace != NULL);
+    assert(replace->buffer != NULL);
+    assert(replace->output != NULL);
+    assert(max_length > 0);
+
+    data = growing_buffer_read(replace->buffer, &length);
+    assert(data != NULL);
+    assert(length > 0);
+
+    if (length > max_length)
+        length = max_length;
+
+    nbytes = istream_invoke_data(replace->output, data, length);
+    assert(nbytes <= length);
+
+    growing_buffer_consume(replace->buffer, nbytes);
+    replace->position += nbytes;
+}
+
 void
 replace_read(struct replace *replace)
 {
     pool_t pool;
-    size_t rest, nbytes;
+    size_t rest;
 
     assert(replace != NULL);
     assert(replace->output != NULL);
@@ -240,23 +265,8 @@ replace_read(struct replace *replace)
     else
         rest = 0;
 
-    if (replace->buffer != NULL && rest > 0) {
-        const void *data;
-        size_t length;
-
-        data = growing_buffer_read(replace->buffer, &length);
-        assert(data != NULL);
-        assert(length > 0);
-
-        if (length > rest)
-            length = rest;
-
-        nbytes = istream_invoke_data(replace->output, data, length);
-        assert(nbytes <= length);
-
-        growing_buffer_consume(replace->buffer, nbytes);
-        replace->position += nbytes;
-    }
+    if (replace->buffer != NULL && rest > 0)
+        replace_read_from_buffer(replace, rest);
 
     if (replace->output != NULL &&
         replace->first_substitution == NULL &&
