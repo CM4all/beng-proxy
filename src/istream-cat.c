@@ -89,6 +89,8 @@ cat_input_eof(void *ctx)
             istream_invoke_eof(&cat->output);
             cat_close(cat);
             pool_unref(cat->output.pool);
+        } else {
+            istream_read(cat->current->istream);
         }
     }
 }
