@@ -77,7 +77,7 @@ struct istream {
     istream_direct_t handler_direct;
 
 #ifndef NDEBUG
-    int reading;
+    int reading, eof;
 #endif
 
     /** try to read from the stream */
@@ -266,6 +266,11 @@ istream_invoke_eof(struct istream *istream)
 {
     assert(istream != NULL);
     assert(istream->handler != NULL);
+    assert(!istream->eof);
+
+#ifndef NDEBUG
+    istream->eof = 1;
+#endif
 
     if (istream->handler->eof != NULL)
         istream->handler->eof(istream->handler_ctx);
