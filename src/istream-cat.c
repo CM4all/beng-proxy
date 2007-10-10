@@ -83,7 +83,10 @@ cat_input_eof(void *ctx)
     istream_clear_unref_handler(&input->istream);
 
     if (input == cat->current) {
-        cat->current = input->next;
+        do {
+            cat->current = cat->current->next;
+        } while (cat->current != NULL && cat->current->istream == NULL);
+
         if (cat->current == NULL) {
             pool_ref(cat->output.pool);
             istream_invoke_eof(&cat->output);
