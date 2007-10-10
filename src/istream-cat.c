@@ -40,6 +40,11 @@ cat_close(struct istream_cat *cat)
 }
 
 
+/*
+ * istream handler
+ *
+ */
+
 static size_t
 cat_input_data(const void *data, size_t length, void *ctx)
 {
@@ -110,6 +115,11 @@ static const struct istream_handler cat_input_handler = {
 };
 
 
+/*
+ * istream implementation
+ *
+ */
+
 static inline struct istream_cat *
 istream_to_cat(istream_t istream)
 {
@@ -156,6 +166,11 @@ static const struct istream istream_cat = {
     .close = istream_cat_close,
 };
 
+
+/*
+ * constructor
+ *
+ */
 
 istream_t
 istream_cat_new(pool_t pool, ...)
