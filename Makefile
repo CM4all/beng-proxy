@@ -69,6 +69,7 @@ SOURCES = src/main.c \
 	src/http-body.c \
 	src/http-server.c \
 	src/http-client.c \
+	src/http-util.c \
 	src/url-stream.c \
 	src/fifo-buffer.c \
 	src/growing-buffer.c \

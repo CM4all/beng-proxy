@@ -13,6 +13,7 @@
 #include "widget.h"
 #include "embed.h"
 #include "frame.h"
+#include "http-util.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -146,8 +147,10 @@ file_callback(struct client_connection *connection,
             body = processor_new(request->pool, body, widget, env, 0);
 
 #ifndef NO_DEFLATE
-            header_write(headers, "content-encoding", "deflate");
-            body = istream_deflate_new(request->pool, body);
+            if (http_client_accepts_encoding(request->headers, "deflate")) {
+                header_write(headers, "content-encoding", "deflate");
+                body = istream_deflate_new(request->pool, body);
+            }
 #endif
         }
 

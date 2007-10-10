@@ -12,6 +12,7 @@
 #include "widget.h"
 #include "embed.h"
 #include "frame.h"
+#include "http-util.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -84,8 +85,10 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
         body = processor_new(pt->request->pool, body, widget, &pt->env, 0);
 
 #ifndef NO_DEFLATE
-        header_write(response_headers, "content-encoding", "deflate");
-        body = istream_deflate_new(pt->request->pool, body);
+        if (http_client_accepts_encoding(pt->request->headers, "deflate")) {
+            header_write(response_headers, "content-encoding", "deflate");
+            body = istream_deflate_new(pt->request->pool, body);
+        }
 #endif
 
         pool_unref(pt->request->pool);
