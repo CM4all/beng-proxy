@@ -82,6 +82,7 @@ SOURCES = src/main.c \
 	src/istream-pipe.c \
 	src/istream-delayed.c \
 	src/istream-hold.c \
+	src/istream-deflate.c \
 	src/uri.c \
 	src/args.c \
 	src/gmtime.c \
@@ -104,7 +105,7 @@ clean:
 	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date
 
 src/cm4all-beng-proxy: $(OBJECTS)
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS) -lz
 
 $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS)

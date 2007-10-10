@@ -83,6 +83,11 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
         body = processor_new(pt->request->pool, body, widget, &pt->env, 0);
 
+#ifndef NO_DEFLATE
+        header_write(response_headers, "content-encoding", "deflate");
+        body = istream_deflate_new(pt->request->pool, body);
+#endif
+
         pool_unref(pt->request->pool);
 
         header_write(response_headers, "content-type", "text/html");

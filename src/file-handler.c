@@ -144,6 +144,11 @@ file_callback(struct client_connection *connection,
             widget_init(widget, NULL);
 
             body = processor_new(request->pool, body, widget, env, 0);
+
+#ifndef NO_DEFLATE
+            header_write(headers, "content-encoding", "deflate");
+            body = istream_deflate_new(request->pool, body);
+#endif
         }
 
         http_server_response(request, HTTP_STATUS_OK, headers,

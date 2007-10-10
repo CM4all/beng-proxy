@@ -322,4 +322,7 @@ istream_delayed_set(istream_t istream_delayed, istream_t input);
 istream_t
 istream_hold_new(pool_t pool, istream_t input);
 
+istream_t
+istream_deflate_new(pool_t pool, istream_t input);
+
 #endif
