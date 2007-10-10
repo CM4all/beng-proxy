@@ -280,9 +280,12 @@ replace_read(struct replace *replace)
     }
 
     replace_try_read_from_buffer(replace);
+    if (replace->output == NULL) {
+        pool_unref(pool);
+        return;
+    }
 
-    if (replace->output != NULL &&
-        replace->first_substitution == NULL &&
+    if (replace->first_substitution == NULL &&
         (replace->quiet ||
          (replace->buffer != NULL &&
           replace->position == replace->source_length))) {
