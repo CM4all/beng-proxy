@@ -92,7 +92,7 @@ replace_init(struct replace *replace, pool_t pool,
     replace->output = output;
 
     replace->quiet = quiet;
-    replace->reading_source = 1;
+    replace->reading_source = !quiet;
     if (!quiet) {
         replace->source_length = 0;
         replace->buffer = growing_buffer_new(pool, 8192);
