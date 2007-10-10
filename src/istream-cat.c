@@ -20,7 +20,6 @@ struct input {
 struct istream_cat {
     struct istream output;
     struct input *current;
-    int blocking;
     struct input inputs[MAX_INPUTS];
 };
 
@@ -46,18 +45,13 @@ cat_input_data(const void *data, size_t length, void *ctx)
 {
     struct input *input = ctx;
     struct istream_cat *cat = input->cat;
-    ssize_t nbytes;
 
     assert(input->istream != NULL);
 
     if (input != cat->current)
         return 0;
 
-    nbytes = istream_invoke_data(&cat->output, data, length);
-    if (nbytes == (ssize_t)length)
-        cat->blocking = 0;
-
-    return nbytes;
+    return istream_invoke_data(&cat->output, data, length);
 }
 
 static ssize_t
@@ -126,6 +120,7 @@ static void
 istream_cat_read(istream_t istream)
 {
     struct istream_cat *cat = istream_to_cat(istream);
+    struct input *prev;
 
     pool_ref(cat->output.pool);
 
@@ -139,10 +134,11 @@ istream_cat_read(istream_t istream)
             break;
         }
 
-        cat->blocking = 1;
         istream_handler_set_direct(cat->current->istream, cat->output.handler_direct);
+
+        prev = cat->current;
         istream_read(cat->current->istream);
-    } while (cat->current != NULL && !cat->blocking);
+    } while (cat->current != NULL && cat->current != prev);
 
     pool_unref(cat->output.pool);
 }
