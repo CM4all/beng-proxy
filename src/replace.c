@@ -238,7 +238,6 @@ void
 replace_read(struct replace *replace)
 {
     pool_t pool;
-    size_t rest;
 
     assert(replace != NULL);
     assert(replace->output != NULL);
@@ -256,17 +255,19 @@ replace_read(struct replace *replace)
         return;
     }
 
-    if (replace->quiet)
-        rest = 0;
-    else if (replace->first_substitution == NULL)
-        rest = (size_t)(replace->source_length - replace->position);
-    else if (replace->position < replace->first_substitution->start)
-        rest = (size_t)(replace->first_substitution->start - replace->position);
-    else
-        rest = 0;
+    if (replace->buffer != NULL && !replace->quiet) {
+        size_t rest;
 
-    if (replace->buffer != NULL && rest > 0)
-        replace_read_from_buffer(replace, rest);
+        if (replace->first_substitution == NULL)
+            rest = (size_t)(replace->source_length - replace->position);
+        else if (replace->position < replace->first_substitution->start)
+            rest = (size_t)(replace->first_substitution->start - replace->position);
+        else
+            rest = 0;
+
+        if (rest > 0)
+            replace_read_from_buffer(replace, rest);
+    }
 
     if (replace->output != NULL &&
         replace->first_substitution == NULL &&
