@@ -14,6 +14,8 @@
 #include "event2.h"
 #include "http-body.h"
 
+#include <daemon/log.h>
+
 #ifdef __linux
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -23,7 +25,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <stdio.h>
 #include <string.h>
 
 struct http_client_connection {
@@ -239,7 +240,7 @@ http_client_parse_status_line(http_client_connection_t connection,
 
     if (unlikely(length < 3 || !char_is_digit(line[0]) ||
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
-        fprintf(stderr, "no HTTP status found\n");
+        daemon_log(2, "no HTTP status found\n");
         http_client_connection_close(connection);
         return;
     }
@@ -273,7 +274,7 @@ http_client_headers_finished(http_client_connection_t connection)
         value = strmap_get(connection->response.headers, "content-length");
         if (unlikely(value == NULL)) {
             if (connection->keep_alive) {
-                fprintf(stderr, "no Content-Length header in HTTP response\n");
+                daemon_log(2, "no Content-Length header in HTTP response\n");
                 http_client_connection_close(connection);
                 return;
             }
@@ -282,7 +283,7 @@ http_client_headers_finished(http_client_connection_t connection)
         } else {
             connection->response.content_length = strtoul(value, &endptr, 10);
             if (unlikely(*endptr != 0 || connection->response.content_length < 0)) {
-                fprintf(stderr, "invalid Content-Length header in HTTP response\n");
+                daemon_log(2, "invalid Content-Length header in HTTP response\n");
                 http_client_connection_close(connection);
                 return;
             }
@@ -384,7 +385,7 @@ http_client_parse_headers(http_client_connection_t connection)
 
         if (connection->response.read_state == READ_BODY) {
             if (unlikely(connection->response.body_reader.output.handler == NULL)) {
-                fprintf(stderr, "WARNING: no handler for request\n");
+                daemon_log(2, "WARNING: no handler for request\n");
                 http_client_connection_close(connection);
                 return 0;
             }
@@ -436,7 +437,7 @@ http_client_try_response_direct(http_client_connection_t connection)
     nbytes = http_body_try_direct(&connection->response.body_reader, connection->fd);
     if (nbytes < 0) {
         /* XXX EAGAIN? */
-        perror("read error on HTTP connection");
+        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
         http_client_connection_close(connection);
         return;
     }
@@ -462,7 +463,7 @@ http_client_try_read_buffered(http_client_connection_t connection)
             return;
         }
 
-        perror("read error on HTTP connection");
+        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
         http_client_connection_close(connection);
         return;
     }
@@ -504,7 +505,7 @@ http_client_event_callback(int fd, short event, void *ctx)
     event2_lock(&connection->event);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        fprintf(stderr, "timeout\n");
+        daemon_log(4, "timeout\n");
         http_client_connection_close(connection);
     }
 
@@ -640,7 +641,8 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    perror("write error on HTTP client connection");
+    daemon_log(1, "write error on HTTP client connection: %s\n",
+               strerror(errno));
     http_client_connection_close(connection);
     return 0;
 }

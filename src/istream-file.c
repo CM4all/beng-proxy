@@ -8,12 +8,13 @@
 #include "fifo-buffer.h"
 #include "buffered-io.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
@@ -115,14 +116,14 @@ istream_file_try_data(struct file *file)
             if (rest == 0)
                 istream_file_eof_detected(file);
         } else {
-            fprintf(stderr, "premature end of file in '%s'\n",
-                    file->path);
+            daemon_log(1, "premature end of file in '%s'\n",
+                       file->path);
             file_close(file);
         }
         return;
     } else if (nbytes == -1) {
-        fprintf(stderr, "failed to read from '%s': %s\n",
-                file->path, strerror(errno));
+        daemon_log(1, "failed to read from '%s': %s\n",
+                   file->path, strerror(errno));
         file_close(file);
         return;
     } else if (nbytes > 0 && file->rest != (off_t)-1) {
@@ -157,7 +158,7 @@ istream_file_try_direct(struct file *file)
                                    istream_file_max_read(file));
     if (nbytes > 0 || nbytes == -2) {
         /* -2 means the callback wasn't able to consume any data right
-            now */
+           now */
         if (nbytes > 0 && file->rest != (off_t)-1) {
             file->rest -= (off_t)nbytes;
             assert(file->rest >= 0);
@@ -168,14 +169,14 @@ istream_file_try_direct(struct file *file)
         if (file->rest == (off_t)-1) {
             istream_file_eof_detected(file);
         } else {
-            fprintf(stderr, "premature end of file in '%s'\n",
-                    file->path);
+            daemon_log(1, "premature end of file in '%s'\n",
+                       file->path);
             file_close(file);
         }
     } else {
         /* XXX */
-        fprintf(stderr, "failed to read from '%s': %s\n",
-                file->path, strerror(errno));
+        daemon_log(1, "failed to read from '%s': %s\n",
+                   file->path, strerror(errno));
         file_close(file);
     }
 }
@@ -213,8 +214,8 @@ istream_file_new(pool_t pool, const char *path, off_t length)
 
     file->fd = open(path, O_RDONLY);
     if (file->fd < 0) {
-        fprintf(stderr, "failed to open '%s': %s\n",
-                path, strerror(errno));
+        daemon_log(1, "failed to open '%s': %s\n",
+                   path, strerror(errno));
         return NULL;
     }
 

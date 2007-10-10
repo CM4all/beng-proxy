@@ -7,6 +7,8 @@
 #include "listener.h"
 #include "socket-util.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 #include <stddef.h>
 #include <sys/socket.h>
@@ -41,13 +43,13 @@ listener_event_callback(int fd, short event, void *ctx)
     remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);
     if (remote_fd < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK)
-            perror("accept() failed");
+            daemon_log(1, "accept() failed: %s\n", strerror(errno));
         return;
     }
 
     ret = socket_set_nonblock(remote_fd);
     if (ret < 0) {
-        perror("fcntl(O_NONBLOCK) failed");
+        daemon_log(1, "fcntl(O_NONBLOCK) failed: %s\n", strerror(errno));
         close(remote_fd);
         return;
     }

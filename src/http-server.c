@@ -17,6 +17,8 @@
 #include "direct.h"
 #include "format.h"
 
+#include <daemon/log.h>
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -24,15 +26,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <stdio.h>
 #include <string.h>
 
 struct http_server_connection {
     pool_t pool;
 
     /*
-    struct sockaddr_storage remote_addr;
-    socklen_t remote_addrlen;
+      struct sockaddr_storage remote_addr;
+      socklen_t remote_addrlen;
     */
 
     /* I/O */
@@ -166,7 +167,7 @@ http_server_try_request_direct(http_server_connection_t connection)
     nbytes = http_body_try_direct(&connection->request.body_reader, connection->fd);
     if (nbytes < 0) {
         /* XXX EAGAIN? */
-        perror("read error on HTTP connection");
+        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
         http_server_connection_close(connection);
         return;
     }
@@ -276,7 +277,7 @@ http_server_parse_request_line(http_server_connection_t connection,
     switch (line[0]) {
     case 'G':
         if (likely(line[1] == 'E' && line[2] == 'T' && line[3] == ' ')) {
-                method = HTTP_METHOD_GET;
+            method = HTTP_METHOD_GET;
             line += 4;
         }
         break;
@@ -336,7 +337,7 @@ http_server_headers_finished(http_server_connection_t connection)
 
             request->content_length = strtoul(value, &endptr, 10);
             if (unlikely(*endptr != 0 || request->content_length < 0)) {
-                fprintf(stderr, "invalid Content-Length header in HTTP request\n");
+                daemon_log(2, "invalid Content-Length header in HTTP request\n");
                 http_server_connection_close(connection);
                 return;
             }
@@ -468,7 +469,7 @@ http_server_try_read_buffered(http_server_connection_t connection)
             return;
         }
 
-        perror("read error on HTTP connection");
+        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
         http_server_connection_close(connection);
         return;
     }
@@ -513,7 +514,7 @@ http_server_event_callback(int fd, short event, void *ctx)
     event2_lock(&connection->event);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        fprintf(stderr, "timeout\n");
+        daemon_log(4, "timeout\n");
         http_server_connection_close(connection);
     }
 
@@ -662,7 +663,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    perror("write error on HTTP connection");
+    daemon_log(1, "write error on HTTP connection: %s\n", strerror(errno));
     http_server_connection_close(connection);
     return 0;
 }

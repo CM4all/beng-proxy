@@ -8,13 +8,14 @@
 #include "list.h"
 #include "compiler.h"
 
+#include <daemon/log.h>
+
 #ifdef VALGRIND
 #include <valgrind/memcheck.h>
 #endif
 
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #if defined(__x86_64__) || defined(__PPC64__)
@@ -349,17 +350,17 @@ static void
 pool_dump_refs(pool_t pool)
 {
     const struct pool_ref *ref;
-    fprintf(stderr, "pool '%s'(%u) REF:\n", pool->name, pool->ref);
+    daemon_log(0, "pool '%s'(%u) REF:\n", pool->name, pool->ref);
     for (ref = (const struct pool_ref *)pool->refs.next;
          &ref->list_head != &pool->refs;
          ref = (const struct pool_ref *)ref->list_head.next) {
-        fprintf(stderr, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
+        daemon_log(0, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
     }
-    fprintf(stderr, "    UNREF:\n");
+    daemon_log(0, "    UNREF:\n");
     for (ref = (const struct pool_ref *)pool->unrefs.next;
          &ref->list_head != &pool->unrefs;
          ref = (const struct pool_ref *)ref->list_head.next) {
-        fprintf(stderr, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
+        daemon_log(0, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
     }
 }
 #endif
@@ -368,14 +369,14 @@ void
 #ifdef DEBUG_POOL_REF
 pool_ref_debug(pool_t pool, const char *file, unsigned line)
 #else
-pool_ref(pool_t pool)
+    pool_ref(pool_t pool)
 #endif
 {
     assert(pool->ref > 0);
     ++pool->ref;
 
 #ifdef POOL_TRACE_REF
-    fprintf(stderr, "pool_ref('%s')=%u\n", pool->name, pool->ref);
+    daemon_log(0, "pool_ref('%s')=%u\n", pool->name, pool->ref);
 #endif
 
 #ifdef DEBUG_POOL_REF
@@ -387,14 +388,14 @@ unsigned
 #ifdef DEBUG_POOL_REF
 pool_unref_debug(pool_t pool, const char *file, unsigned line)
 #else
-pool_unref(pool_t pool)
+    pool_unref(pool_t pool)
 #endif
 {
     assert(pool->ref > 0);
     --pool->ref;
 
 #ifdef POOL_TRACE_REF
-    fprintf(stderr, "pool_unref('%s')=%u\n", pool->name, pool->ref);
+    daemon_log(0, "pool_unref('%s')=%u\n", pool->name, pool->ref);
 #endif
 
 #ifdef DEBUG_POOL_REF
@@ -422,17 +423,17 @@ pool_commit(void)
     if (!list_empty(&trash)) {
         pool_t pool;
 
-        fprintf(stderr, "pool_commit(): there are unreleased pools in the trash:");
+        daemon_log(0, "pool_commit(): there are unreleased pools in the trash:\n");
 
         for (pool = (pool_t)trash.next; &pool->siblings != &trash;
              pool = (pool_t)pool->siblings.next) {
 #ifdef DEBUG_POOL_REF
             pool_dump_refs(pool);
 #else
-            fprintf(stderr, " '%s'(%u)", pool->name, pool->ref);
+            daemon_log(0, "- '%s'(%u)\n", pool->name, pool->ref);
 #endif
         }
-        fprintf(stderr, "\n");
+        daemon_log(0, "\n");
 
         abort();
     }
@@ -456,7 +457,7 @@ p_malloc_linear(pool_t pool, size_t size)
 
     if (unlikely(area->used + size > area->size)) {
         size_t new_area_size = area->size;
-        fprintf(stderr, "growing linear pool '%s'\n", pool->name);
+        daemon_log(0, "growing linear pool '%s'\n", pool->name);
         if (size > new_area_size)
             new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
         area = pool_get_linear_area(area, new_area_size);

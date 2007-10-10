@@ -9,9 +9,10 @@
 #include "http-client.h"
 #include "compiler.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 #include <errno.h>
-#include <stdio.h>
 #include <string.h>
 #include <netdb.h>
 
@@ -135,7 +136,7 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
                             us->content_length, us->body,
                             &url_stream_response_handler, us);
     } else {
-        fprintf(stderr, "failed to connect: %s\n", strerror(err));
+        daemon_log(1, "failed to connect: %s\n", strerror(err));
         /* XXX */
     }
 }
@@ -192,7 +193,7 @@ url_stream_new(pool_t pool,
     /* XXX make this asynchronous */
     ret = getaddrinfo_helper(host_and_port, 80, &hints, &ai);
     if (ret != 0) {
-        fprintf(stderr, "failed to resolve proxy host name\n");
+        daemon_log(1, "failed to resolve proxy host name\n");
         return NULL;
     }
 
@@ -203,7 +204,8 @@ url_stream_new(pool_t pool,
                             url_stream_client_socket_callback, us,
                             &us->client_socket);
     if (ret != 0) {
-        perror("client_socket_new() failed");
+        daemon_log(1, "client_socket_new() failed: %s\n",
+                   strerror(errno));
         return NULL;
     }
 

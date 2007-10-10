@@ -10,11 +10,14 @@
 #include "connection.h"
 #include "session.h"
 
+#include <daemon/log.h>
+
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
+#include <string.h>
+#include <errno.h>
 
 static struct child *
 find_child_by_pid(struct instance *instance, pid_t pid)
@@ -49,16 +52,16 @@ child_event_callback(int fd, short event, void *ctx)
         exit_status = WEXITSTATUS(status);
 
         if (WIFSIGNALED(status)) {
-            fprintf(stderr, "child %d died from signal %d%s\n",
-                    pid, WTERMSIG(status),
-                    WCOREDUMP(status) ? " (core dumped)" : "");
+            daemon_log(1, "child %d died from signal %d%s\n",
+                       pid, WTERMSIG(status),
+                       WCOREDUMP(status) ? " (core dumped)" : "");
             exit_status = -1;
         } else if (exit_status == 0)
-            fprintf(stderr, "child %d exited with success\n",
-                    pid);
+            daemon_log(1, "child %d exited with success\n",
+                       pid);
         else
-            fprintf(stderr, "child %d exited with status %d\n",
-                    pid, exit_status);
+            daemon_log(1, "child %d exited with status %d\n",
+                       pid, exit_status);
 
         list_remove(&child->siblings);
     }
@@ -76,7 +79,7 @@ create_child(struct instance *instance)
 
     pid = fork();
     if (pid < 0) {
-        perror("fork() failed");
+        daemon_log(1, "fork() failed: %s\n", strerror(errno));
     } else if (pid == 0) {
         deinit_signals(instance);
 
@@ -136,6 +139,6 @@ kill_children(struct instance *instance)
          child = (struct child*)child->siblings.next) {
         ret = kill(child->pid, SIGTERM);
         if (ret < 0)
-            perror("failed to kill child");
+            daemon_log(1, "failed to kill child: %s\n", strerror(errno));
     }
 }

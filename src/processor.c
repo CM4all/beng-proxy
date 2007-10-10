@@ -14,8 +14,9 @@
 #include "widget.h"
 #include "growing-buffer.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
-#include <stdio.h>
 #include <string.h>
 
 typedef struct processor *processor_t;
@@ -94,7 +95,7 @@ processor_input_data(const void *data, size_t length, void *ctx)
 
     if (!processor->replace.quiet &&
         processor->replace.source_length >= 8 * 1024 * 1024) {
-        fprintf(stderr, "file too large for processor\n");
+        daemon_log(2, "file too large for processor\n");
         processor_close(processor);
         return 0;
     }

@@ -7,8 +7,9 @@
 #include "istream.h"
 #include "fifo-buffer.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
-#include <stdio.h>
 #include <zlib.h>
 
 struct istream_deflate {
@@ -63,7 +64,7 @@ deflate_initialize_z(struct istream_deflate *defl)
 
     err = deflateInit(&defl->z, Z_DEFAULT_COMPRESSION);
     if (err != Z_OK) {
-        fprintf(stderr, "deflateInit(Z_FINISH) failed: %d\n", err);
+        daemon_log(2, "deflateInit(Z_FINISH) failed: %d\n", err);
         deflate_close(defl);
         return err;
     }
@@ -146,7 +147,7 @@ deflate_input_data(const void *data, size_t length, void *ctx)
 
     err = deflate(&defl->z, Z_NO_FLUSH);
     if (err != Z_OK) {
-        fprintf(stderr, "deflate() failed: %d\n", err);
+        daemon_log(2, "deflate() failed: %d\n", err);
         deflate_close(defl);
         return 0;
     }
@@ -186,7 +187,7 @@ deflate_input_eof(void *ctx)
 
     err = deflate(&defl->z, Z_FINISH);
     if (err != Z_STREAM_END) {
-        fprintf(stderr, "deflate(Z_FINISH) failed: %d\n", err);
+        daemon_log(2, "deflate(Z_FINISH) failed: %d\n", err);
         deflate_close(defl);
         return;
     }

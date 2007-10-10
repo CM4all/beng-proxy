@@ -9,10 +9,13 @@
 #include "istream.h"
 #include "splice.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 /* XXX ISTREAM_SOCKET is not yet supported by Linux 2.6.23 */
 #define SPLICE_SOURCE_TYPES (ISTREAM_FILE | ISTREAM_PIPE)
@@ -129,7 +132,7 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 
         ret = pipe(p->fds);
         if (ret < 0) {
-            perror("pipe() failed");
+            daemon_log(1, "pipe() failed: %s\n", strerror(errno));
             pipe_close(p);
             return 0;
         }

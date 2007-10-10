@@ -7,9 +7,10 @@
 #include "istream.h"
 #include "fifo-buffer.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 #include <string.h>
-#include <stdio.h>
 
 struct istream_dechunk {
     struct istream output;
@@ -81,7 +82,7 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
                 ++position;
                 continue;
             } else {
-                fprintf(stderr, "chunk length expected\n");
+                daemon_log(2, "chunk length expected\n");
                 dechunk_close(dechunk);
                 return position;
             }
@@ -129,7 +130,7 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
             if (data[position] == '\n') {
                 dechunk->state = NONE;
             } else if (data[position] != '\r') {
-                fprintf(stderr, "newline expected\n");
+                daemon_log(2, "newline expected\n");
                 dechunk_close(dechunk);
                 return position;
             }
