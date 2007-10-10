@@ -20,7 +20,7 @@ struct input {
 struct istream_cat {
     struct istream output;
     struct input *current;
-    int direct_mode, blocking;
+    int blocking;
     struct input inputs[MAX_INPUTS];
 };
 
@@ -126,8 +126,6 @@ static void
 istream_cat_read(istream_t istream)
 {
     struct istream_cat *cat = istream_to_cat(istream);
-
-    cat->direct_mode = 0;
 
     pool_ref(cat->output.pool);
 
