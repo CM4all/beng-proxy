@@ -19,6 +19,7 @@ struct input {
 
 struct istream_cat {
     struct istream output;
+    int reading;
     struct input *current;
     struct input inputs[MAX_INPUTS];
 };
@@ -91,7 +92,11 @@ cat_input_eof(void *ctx)
             istream_invoke_eof(&cat->output);
             cat_close(cat);
             pool_unref(cat->output.pool);
-        } else {
+        } else if (!cat->reading) {
+            /* only call istream_read() if this function was not
+               called from istream_cat_read() - in this case,
+               istream_cat_read() would provide the loop.  This is
+               advantageous because we avoid unnecessary recursing. */
             istream_read(cat->current->istream);
         }
     }
@@ -134,6 +139,8 @@ istream_cat_read(istream_t istream)
 
     pool_ref(cat->output.pool);
 
+    cat->reading = 1;
+
     do {
         while (cat->current != NULL && cat->current->istream == NULL)
             cat->current = cat->current->next;
@@ -149,6 +156,8 @@ istream_cat_read(istream_t istream)
         prev = cat->current;
         istream_read(cat->current->istream);
     } while (cat->current != NULL && cat->current != prev);
+
+    cat->reading = 0;
 
     pool_unref(cat->output.pool);
 }
@@ -183,6 +192,7 @@ istream_cat_new(pool_t pool, ...)
 
     cat->output = istream_cat;
     cat->output.pool = pool;
+    cat->reading = 0;
 
     va_start(ap, pool);
     while ((istream = va_arg(ap, istream_t)) != NULL) {
