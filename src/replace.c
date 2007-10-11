@@ -211,6 +211,12 @@ replace_read_substitution(struct replace *replace)
     return 0;
 }
 
+/**
+ * Copy data from the source buffer to the istream handler.
+ *
+ * @return 0 if the istream handler is not blocking; the number of
+ * bytes remaining in the buffer if it is blocking
+ */
 static size_t
 replace_read_from_buffer(struct replace *replace, size_t max_length)
 {
@@ -235,9 +241,15 @@ replace_read_from_buffer(struct replace *replace, size_t max_length)
     growing_buffer_consume(replace->buffer, nbytes);
     replace->position += nbytes;
 
-    return max_length - nbytes;
+    return length - nbytes;
 }
 
+/**
+ * Copy the next chunk from the source buffer to the istream handler.
+ *
+ * @return 0 if the istream handler is not blocking; the number of
+ * bytes remaining in the buffer if it is blocking
+ */
 static size_t
 replace_try_read_from_buffer(struct replace *replace)
 {
