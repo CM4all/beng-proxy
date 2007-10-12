@@ -77,7 +77,7 @@ struct istream {
     istream_direct_t handler_direct;
 
 #ifndef NDEBUG
-    int reading, eof;
+    int reading, eof, in_data;
 #endif
 
     /** try to read from the stream */
@@ -238,27 +238,53 @@ istream_clear_unref_handler(istream_t *istream_r)
 static inline size_t
 istream_invoke_data(struct istream *istream, const void *data, size_t length)
 {
+    size_t nbytes;
+
     assert(istream != NULL);
     assert(istream->handler != NULL);
     assert(istream->handler->data != NULL);
     assert(data != NULL);
     assert(length > 0);
+    assert(!istream->in_data);
 
-    return istream->handler->data(data, length, istream->handler_ctx);
+#ifndef NDEBUG
+    istream->in_data = 1;
+#endif
+
+    nbytes = istream->handler->data(data, length, istream->handler_ctx);
+
+#ifndef NDEBUG
+    istream->in_data = 0;
+#endif
+
+    return nbytes;
 }
 
 static inline ssize_t
 istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
                       size_t max_length)
 {
+    ssize_t nbytes;
+
     assert(istream != NULL);
     assert(istream->handler != NULL);
     assert(istream->handler->direct != NULL);
     assert((istream->handler_direct & type) != 0);
     assert(fd >= 0);
     assert(max_length > 0);
+    assert(!istream->in_data);
 
-    return istream->handler->direct(type, fd, max_length, istream->handler_ctx);
+#ifndef NDEBUG
+    istream->in_data = 1;
+#endif
+
+    nbytes = istream->handler->direct(type, fd, max_length, istream->handler_ctx);
+
+#ifndef NDEBUG
+    istream->in_data = 0;
+#endif
+
+    return nbytes;
 }
 
 static inline void
