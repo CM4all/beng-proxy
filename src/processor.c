@@ -147,6 +147,9 @@ processor_new(pool_t pool, istream_t istream,
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
 
+    istream = istream_subst_new(pool, istream,
+                                "&c:path;", widget_path(widget));
+
 #ifdef NDEBUG
     pool_ref(pool);
 #else
