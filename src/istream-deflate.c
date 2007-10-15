@@ -16,7 +16,7 @@ struct istream_deflate {
     struct istream output;
     istream_t input;
     fifo_buffer_t buffer;
-    int z_initialized;
+    int z_initialized, z_stream_end;
     z_stream z;
 };
 
@@ -86,7 +86,7 @@ deflate_try_write(struct istream_deflate *defl)
     if (nbytes > 0) {
         fifo_buffer_consume(defl->buffer, nbytes);
 
-        if (nbytes == length && defl->input == NULL)
+        if (nbytes == length && defl->input == NULL && defl->z_stream_end)
             istream_invoke_eof(&defl->output);
     }
 
@@ -117,8 +117,11 @@ deflate_try_finish(struct istream_deflate *defl)
     size_t max_length;
     int err;
 
+    assert(!defl->z_stream_end);
+
     dest_buffer = deflate_buffer_write(defl, &max_length);
-    assert(dest_buffer != NULL);
+    if (dest_buffer == NULL)
+        return;
 
     defl->z.next_out = dest_buffer;
     defl->z.avail_out = (uInt)max_length;
@@ -127,7 +130,9 @@ deflate_try_finish(struct istream_deflate *defl)
     defl->z.avail_in = 0;
 
     err = deflate(&defl->z, Z_FINISH);
-    if (err != Z_STREAM_END) {
+    if (err == Z_STREAM_END)
+        defl->z_stream_end = 1;
+    else if (err != Z_OK) {
         daemon_log(2, "deflate(Z_FINISH) failed: %d\n", err);
         deflate_close(defl);
         return;
@@ -135,7 +140,10 @@ deflate_try_finish(struct istream_deflate *defl)
 
     fifo_buffer_append(defl->buffer, max_length - (size_t)defl->z.avail_out);
 
-    deflate_try_write(defl);
+    if (defl->z_stream_end && fifo_buffer_empty(defl->buffer))
+        istream_invoke_eof(&defl->output);
+    else
+        deflate_try_write(defl);
 }
 
 
@@ -202,7 +210,9 @@ deflate_input_eof(void *ctx)
     if (err != Z_OK)
         return;
 
+    pool_ref(defl->output.pool);
     deflate_try_finish(defl);
+    pool_unref(defl->output.pool);
 }
 
 static void
@@ -240,10 +250,12 @@ istream_deflate_read(istream_t istream)
 {
     struct istream_deflate *defl = istream_to_deflate(istream);
 
-    if (fifo_buffer_empty(defl->buffer))
-        istream_read(defl->input);
-    else
+    if (!fifo_buffer_empty(defl->buffer))
         deflate_try_write(defl);
+    else if (defl->input == NULL)
+        deflate_try_finish(defl);
+    else
+        istream_read(defl->input);
 }
 
 static void
@@ -277,6 +289,7 @@ istream_deflate_new(pool_t pool, istream_t input)
     defl->output.pool = pool;
     defl->buffer = fifo_buffer_new(pool, 4096);
     defl->z_initialized = 0;
+    defl->z_stream_end = 0;
 
     istream_assign_ref_handler(&defl->input, input,
                                &deflate_input_handler, defl,
