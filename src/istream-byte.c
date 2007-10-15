@@ -15,7 +15,7 @@ struct istream_byte {
     istream_t input;
 };
 
-#include <stdio.h>
+
 /*
  * helper functions
  *
@@ -41,8 +41,6 @@ byte_source_data(const void *data, size_t length, void *ctx)
 {
     struct istream_byte *byte = ctx;
 
-    fprintf(stderr, "byte_source_data(%p, %zu)\n", (void*)byte, length);
-
     (void)length;
 
     return istream_invoke_data(&byte->output, data, 1);
@@ -52,8 +50,6 @@ static void
 byte_source_eof(void *ctx)
 {
     struct istream_byte *byte = ctx;
-
-    fprintf(stderr, "byte_source_eof(%p)\n", (void*)byte);
 
     assert(byte->input != NULL);
 
@@ -66,8 +62,6 @@ static void
 byte_source_free(void *ctx)
 {
     struct istream_byte *byte = ctx;
-
-    fprintf(stderr, "byte_source_free(%p)\n", (void*)byte);
 
     if (byte->input != NULL)
         istream_clear_unref(&byte->input);
