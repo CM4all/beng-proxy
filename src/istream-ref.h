@@ -17,6 +17,7 @@
 
 #ifdef DEBUG_POOL_REF
 #define istream_free_unref(...) istream_free_unref_debug(__VA_ARGS__, const char *file, unsigned line)
+#define istream_free_unref_handler(...) istream_free_unref_handler_debug(__VA_ARGS__, const char *file, unsigned line)
 #endif
 
 static inline void
@@ -29,7 +30,21 @@ istream_free_unref(istream_t *istream_r)
 
 #ifdef DEBUG_POOL_REF
 #undef istream_free_unref
+#define istream_free_unref(...) istream_free_unref_debug(__VA_ARGS__, file, line)
+#endif
+
+static inline void
+istream_free_unref_handler(istream_t *istream_r)
+{
+    istream_handler_clear(*istream_r);
+    istream_free_unref(istream_r);
+}
+
+#ifdef DEBUG_POOL_REF
+#undef istream_free_unref
 #define istream_free_unref(...) istream_free_unref_debug(__VA_ARGS__, __FILE__, __LINE__)
+#undef istream_free_unref_handler
+#define istream_free_unref_handler(...) istream_free_unref_handler_debug(__VA_ARGS__, __FILE__, __LINE__)
 #endif
 
 
