@@ -52,4 +52,7 @@ istream_t
 istream_subst_new(pool_t pool, istream_t input,
                   const char *a, const char *b);
 
+istream_t
+istream_byte_new(pool_t pool, istream_t input);
+
 #endif
