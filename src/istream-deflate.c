@@ -110,6 +110,34 @@ deflate_buffer_write(struct istream_deflate *defl, size_t *max_length_r)
     return fifo_buffer_write(defl->buffer, max_length_r);
 }
 
+static void
+deflate_try_finish(struct istream_deflate *defl)
+{
+    void *dest_buffer;
+    size_t max_length;
+    int err;
+
+    dest_buffer = deflate_buffer_write(defl, &max_length);
+    assert(dest_buffer != NULL);
+
+    defl->z.next_out = dest_buffer;
+    defl->z.avail_out = (uInt)max_length;
+
+    defl->z.next_in = NULL;
+    defl->z.avail_in = 0;
+
+    err = deflate(&defl->z, Z_FINISH);
+    if (err != Z_STREAM_END) {
+        daemon_log(2, "deflate(Z_FINISH) failed: %d\n", err);
+        deflate_close(defl);
+        return;
+    }
+
+    fifo_buffer_append(defl->buffer, max_length - (size_t)defl->z.avail_out);
+
+    deflate_try_write(defl);
+}
+
 
 /*
  * istream handler
@@ -165,36 +193,16 @@ static void
 deflate_input_eof(void *ctx)
 {
     struct istream_deflate *defl = ctx;
-    void *dest_buffer;
-    size_t max_length;
     int err;
 
     assert(defl->input != NULL);
     istream_clear_unref_handler(&defl->input);
 
-    dest_buffer = deflate_buffer_write(defl, &max_length);
-    assert(dest_buffer != NULL);
-
     err = deflate_initialize_z(defl);
     if (err != Z_OK)
         return;
 
-    defl->z.next_out = dest_buffer;
-    defl->z.avail_out = (uInt)max_length;
-
-    defl->z.next_in = NULL;
-    defl->z.avail_in = 0;
-
-    err = deflate(&defl->z, Z_FINISH);
-    if (err != Z_STREAM_END) {
-        daemon_log(2, "deflate(Z_FINISH) failed: %d\n", err);
-        deflate_close(defl);
-        return;
-    }
-
-    fifo_buffer_append(defl->buffer, max_length - (size_t)defl->z.avail_out);
-
-    deflate_try_write(defl);
+    deflate_try_finish(defl);
 }
 
 static void
