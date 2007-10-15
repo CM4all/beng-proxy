@@ -252,6 +252,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
 #endif
 
     nbytes = istream->handler->data(data, length, istream->handler_ctx);
+    assert(nbytes <= length);
 
 #ifndef NDEBUG
     istream->in_data = 0;
@@ -279,6 +280,7 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
 #endif
 
     nbytes = istream->handler->direct(type, fd, max_length, istream->handler_ctx);
+    assert(nbytes < 0 || (size_t)nbytes <= max_length);
 
 #ifndef NDEBUG
     istream->in_data = 0;
