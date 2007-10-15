@@ -83,6 +83,9 @@ deflate_try_write(struct istream_deflate *defl)
 
     data = fifo_buffer_read(defl->buffer, &length);
     nbytes = istream_invoke_data(&defl->output, data, length);
+    if (!defl->z_initialized)
+        return 0;
+
     if (nbytes > 0) {
         fifo_buffer_consume(defl->buffer, nbytes);
 
