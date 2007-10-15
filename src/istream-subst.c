@@ -269,6 +269,7 @@ subst_source_data(const void *_data, size_t length, void *ctx)
         /* discard possible match, expect the caller to give us the
            same possibly matching data chunk later */
 
+        subst->state = STATE_NONE;
         subst->a_match = 0;
 
         /* write chunk */
