@@ -266,15 +266,15 @@ subst_source_data(const void *_data, size_t length, void *ctx)
         chunk_length = end - data;
 
     if (chunk_length > 0) {
-        /* discard possible match, expect the caller to give us the
-           same possibly matching data chunk later */
-
-        subst->state = STATE_NONE;
-        subst->a_match = 0;
-
         /* write chunk */
 
-        total += istream_invoke_data(&subst->output, data, chunk_length);
+        nbytes = istream_invoke_data(&subst->output, data, chunk_length);
+        total += nbytes;
+
+        if (nbytes < chunk_length)
+            /* discard match because our attempt to write the chunk
+               before it blocked */
+            subst->state = STATE_NONE;
     }
 
     return total;
