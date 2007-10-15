@@ -8,8 +8,6 @@
  */
 
 #include "istream.h"
-#include "fifo-buffer.h"
-#include "format.h"
 
 #include <assert.h>
 #include <string.h>
