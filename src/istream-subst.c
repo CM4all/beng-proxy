@@ -402,7 +402,6 @@ istream_subst_new(pool_t pool, istream_t input,
     subst->b = b;
     subst->a_length = strlen(a);
     subst->b_length = strlen(b);
-    subst->a_match = 0;
     subst->state = STATE_NONE;
 
     assert(subst->a_length > 0);
