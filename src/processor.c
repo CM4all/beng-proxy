@@ -188,7 +188,7 @@ processor_close(processor_t processor)
     replace_destroy(&processor->replace);
 
     if (processor->input != NULL)
-        istream_clear_unref(&processor->input);
+        istream_free_unref_handler(&processor->input);
 
     istream_invoke_free(&processor->output);
 
