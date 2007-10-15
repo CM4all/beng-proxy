@@ -155,11 +155,10 @@ dechunk_input_free(void *ctx)
 {
     struct istream_dechunk *dechunk = ctx;
 
-    if (dechunk->input != NULL) {
+    if (dechunk->input != NULL)
         istream_clear_unref(&dechunk->input);
 
-        dechunk_close(dechunk);
-    }
+    dechunk_close(dechunk);
 }
 
 static const struct istream_handler dechunk_input_handler = {
