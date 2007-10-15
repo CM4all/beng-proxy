@@ -46,6 +46,16 @@ byte_source_data(const void *data, size_t length, void *ctx)
     return istream_invoke_data(&byte->output, data, 1);
 }
 
+static ssize_t
+byte_source_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+{
+    struct istream_byte *byte = ctx;
+
+    (void)max_length;
+
+    return istream_invoke_direct(&byte->output, type, fd, 1);
+}
+
 static void
 byte_source_eof(void *ctx)
 {
@@ -71,6 +81,7 @@ byte_source_free(void *ctx)
 
 static const struct istream_handler byte_input_handler = {
     .data = byte_source_data,
+    .direct = byte_source_direct,
     .eof = byte_source_eof,
     .free = byte_source_free,
 };
@@ -91,7 +102,9 @@ static void
 istream_byte_read(istream_t istream)
 {
     struct istream_byte *byte = istream_to_byte(istream);
-    
+
+    istream_handler_set_direct(byte->input, byte->output.handler_direct);
+
     istream_read(byte->input);
 }
 
