@@ -152,10 +152,8 @@ istream_free(istream_t *istream_r)
 static inline void
 istream_free_unref(istream_t *istream_r)
 {
-    istream_t istream = *istream_r;
-    pool_t pool = istream_pool(istream);
-    *istream_r = NULL;
-    istream_close(istream);
+    pool_t pool = istream_pool(*istream_r);
+    istream_free(istream_r);
     pool_unref(pool);
 }
 
