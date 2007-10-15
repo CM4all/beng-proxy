@@ -119,8 +119,8 @@ static size_t
 subst_source_data(const void *_data, size_t length, void *ctx)
 {
     struct istream_subst *subst = ctx;
-    const char *data = _data, *p = data, *end = p + length, *first = NULL;
-    size_t max_compare, chunk_length, nbytes, total = 0;
+    const char *data0 = _data, *data = data0, *p = data0, *end = p + length, *first = NULL;
+    size_t max_compare, chunk_length, nbytes;
 
     assert(subst->input != NULL);
     assert(subst->a != NULL);
@@ -128,14 +128,20 @@ subst_source_data(const void *_data, size_t length, void *ctx)
     /* find new match */
 
     do {
+        assert(data >= data0);
+        assert(p >= data);
+        assert(p <= end);
+
         switch (subst->state) {
         case STATE_NONE:
             /* find matching first char */
 
+            assert(first == NULL);
+
             first = memchr(p, subst->a[0], end - p);
             if (first == NULL)
                 /* no match, try to write and return */
-                return total + istream_invoke_data(&subst->output, data, end - data);
+                return (data - data0) + istream_invoke_data(&subst->output, data, end - data);
 
             subst->state = STATE_MATCH;
             subst->a_match = 1;
@@ -168,11 +174,10 @@ subst_source_data(const void *_data, size_t length, void *ctx)
                         if (subst->a == NULL)
                             return 0;
 
-                        total += nbytes;
                         if (nbytes < chunk_length) {
                             /* blocking */
                             subst->state = STATE_NONE;
-                            return total;
+                            return (data - data0) + nbytes;
                         }
                     }
 
@@ -185,10 +190,6 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
                     subst->state = STATE_INSERT;
                     subst->b_sent = 0;
-
-                    /* consume substituted input */
-
-                    total += subst->a_length;
                 }
             } else {
                 /* mismatch. reset match indicator and find new one */
@@ -201,11 +202,10 @@ subst_source_data(const void *_data, size_t length, void *ctx)
                     if (subst->a == NULL)
                         return 0;
 
-                    total += nbytes;
                     if (nbytes < chunk_length) {
                         /* blocking */
                         subst->state = STATE_NONE;
-                        return total;
+                        return (data - data0) + nbytes;
                     }
                 }
 
@@ -218,10 +218,6 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
                 subst->state = STATE_MISMATCH;
                 subst->a_sent = 0;
-
-                /* consume matched input */
-
-                total += subst->a_match;
             }
 
             break;
@@ -235,7 +231,7 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
             if (subst->state == STATE_INSERT)
                 /* blocking */
-                return total;
+                return data - data0;
 
             break;
 
@@ -249,7 +245,7 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
             if (subst->state == STATE_MISMATCH)
                 /* blocking */
-                return total;
+                return data - data0;
 
             break;
         }
@@ -269,7 +265,7 @@ subst_source_data(const void *_data, size_t length, void *ctx)
         /* write chunk */
 
         nbytes = istream_invoke_data(&subst->output, data, chunk_length);
-        total += nbytes;
+        data += nbytes;
 
         if (nbytes < chunk_length)
             /* discard match because our attempt to write the chunk
@@ -277,7 +273,7 @@ subst_source_data(const void *_data, size_t length, void *ctx)
             subst->state = STATE_NONE;
     }
 
-    return total;
+    return data - data0;
 }
 
 static void
