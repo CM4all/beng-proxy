@@ -84,6 +84,7 @@ SOURCES = src/main.c \
 	src/istream-delayed.c \
 	src/istream-hold.c \
 	src/istream-deflate.c \
+	src/istream-subst.c \
 	src/uri.c \
 	src/args.c \
 	src/gmtime.c \

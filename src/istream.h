@@ -356,4 +356,8 @@ istream_hold_new(pool_t pool, istream_t input);
 istream_t
 istream_deflate_new(pool_t pool, istream_t input);
 
+istream_t
+istream_subst_new(pool_t pool, istream_t input,
+                  const char *a, const char *b);
+
 #endif
