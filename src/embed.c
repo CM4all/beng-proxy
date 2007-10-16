@@ -58,10 +58,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
     }
 
     value = strmap_get(headers, "content-type");
-    if (embed->widget->iframe) {
-        /* XXX somehow propagate content-type header to http-server.c */
-        input = body;
-    } else if (value != NULL && strncmp(value, "text/html", 9) == 0) {
+    if (value != NULL && strncmp(value, "text/html", 9) == 0) {
         input = processor_new(istream_pool(embed->delayed), body,
                               embed->widget, embed->env, embed->options);
     } else {
