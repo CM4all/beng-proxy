@@ -178,6 +178,10 @@ replace_add(struct replace *replace, off_t start, off_t end,
     s->start = start;
     s->end = end;
 
+#ifndef NDEBUG
+    replace->last_substitution_end = end;
+#endif
+
     if (istream != NULL) {
         istream_assign_ref_handler(&s->istream, istream,
                                    &replace_substitution_handler, s,
