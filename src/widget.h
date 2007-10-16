@@ -35,6 +35,10 @@ struct widget {
 
     /** should this widget be displayed in an IFRAME? */
     unsigned iframe:1;
+
+    /** is this a dock where other widgets of this page may be
+        placed? */
+    unsigned dock:1;
 };
 
 
