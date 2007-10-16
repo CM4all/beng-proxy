@@ -23,6 +23,10 @@ struct replace {
     struct substitution *first_substitution, **append_substitution_p;
 
     int read_locked;
+
+#ifndef NDEBUG
+    off_t last_substitution_end;
+#endif
 };
 
 void

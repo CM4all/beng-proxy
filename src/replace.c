@@ -101,6 +101,10 @@ replace_init(struct replace *replace, pool_t pool,
     replace->first_substitution = NULL;
     replace->append_substitution_p = &replace->first_substitution;
     replace->read_locked = 0;
+
+#ifndef NDEBUG
+    replace->last_substitution_end = 0;
+#endif
 }
 
 void
@@ -166,6 +170,7 @@ replace_add(struct replace *replace, off_t start, off_t end,
     assert(start >= 0);
     assert(start <= end);
     assert(replace->quiet || end <= replace->source_length);
+    assert(start >= replace->last_substitution_end);
 
     s = p_malloc(replace->pool, sizeof(*s));
     s->next = NULL;
