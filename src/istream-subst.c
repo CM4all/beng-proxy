@@ -252,14 +252,16 @@ subst_source_data(const void *_data, size_t length, void *ctx)
     } while (p < end || subst->state == STATE_INSERT ||
              subst->state == STATE_MISMATCH);
 
-    if (first == NULL)
-        /* there was no match (maybe a partial match which mismatched
-           at a later stage): pass everything */
-        chunk_length = end - data;
-    else
+    if (first != NULL)
         /* we have found a partial match which we discard now, instead
            we will write the chunk right before this match */
         chunk_length = first - data;
+    else if (subst->state == STATE_INSERT || subst->state == STATE_MISMATCH)
+        chunk_length = 0;
+    else
+        /* there was no match (maybe a partial match which mismatched
+           at a later stage): pass everything */
+        chunk_length = end - data;
 
     if (chunk_length > 0) {
         /* write chunk */
@@ -267,13 +269,15 @@ subst_source_data(const void *_data, size_t length, void *ctx)
         nbytes = istream_invoke_data(&subst->output, data, chunk_length);
         data += nbytes;
 
-        if (nbytes < chunk_length)
+        if (nbytes < chunk_length) {
             /* discard match because our attempt to write the chunk
                before it blocked */
             subst->state = STATE_NONE;
+            return (data - data0) + nbytes;
+        }
     }
 
-    return data - data0;
+    return p - data0;
 }
 
 static void
