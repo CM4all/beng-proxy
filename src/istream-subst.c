@@ -385,7 +385,7 @@ istream_subst_read(istream_t istream)
         break;
     }
 
-    if (subst->a != NULL && subst->state == STATE_NONE)
+    if (subst->a != NULL && subst->state == STATE_NONE && subst->input == NULL)
         istream_invoke_eof(&subst->output);
 }
 
