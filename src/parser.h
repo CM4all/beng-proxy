@@ -50,6 +50,11 @@ struct parser {
     off_t element_offset;
     char element_name[64];
     size_t element_name_length;
+    enum {
+        TAG_OPEN,
+        TAG_CLOSE,
+        TAG_SHORT,
+    } tag_type;
 
     /* attribute */
     char attr_name[64];

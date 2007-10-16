@@ -31,6 +31,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             parser->element_offset = parser->position + (off_t)(p - start);
             parser->state = PARSER_ELEMENT_NAME;
             parser->element_name_length = 0;
+            parser->tag_type = TAG_OPEN;
             buffer = p + 1;
             break;
 
@@ -45,6 +46,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     }
 
                     parser->element_name[parser->element_name_length++] = char_to_lower(*buffer++);
+                } else if (*buffer == '/' && parser->element_name_length == 0) {
+                    parser->tag_type = TAG_CLOSE;
+                    ++buffer;
                 } else if ((char_is_whitespace(*buffer) || *buffer == '/' || *buffer == '>') &&
                            parser->element_name_length > 0) {
                     parser_element_start(parser);
@@ -63,6 +67,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 if (char_is_whitespace(*buffer)) {
                     ++buffer;
                 } else if (*buffer == '/') {
+                    parser->tag_type = TAG_SHORT;
                     parser->state = PARSER_SHORT;
                     ++buffer;
                     break;
