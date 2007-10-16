@@ -480,7 +480,7 @@ body_element_finished(processor_t processor, off_t end)
         processor->in_body = 1;
     } else {
         if ((processor->options & PROCESSOR_BODY) == 0 ||
-            !processor->in_body || processor->end_of_body != (off_t)-1)
+            processor->end_of_body != (off_t)-1)
             return;
 
         processor->end_of_body = processor->parser.element_offset;
