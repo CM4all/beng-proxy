@@ -24,6 +24,7 @@ typedef struct processor *processor_t;
 struct processor {
     struct istream output;
     istream_t input;
+    int had_input;
 
     struct widget *widget;
     const struct processor_env *env;
@@ -53,9 +54,12 @@ processor_output_stream_read(istream_t istream)
 {
     processor_t processor = istream_to_processor(istream);
 
-    if (processor->input != NULL)
-        istream_read(processor->input);
-    else
+    if (processor->input != NULL) {
+        do {
+            processor->had_input = 0;
+            istream_read(processor->input);
+        } while (processor->input != NULL && processor->had_input);
+    } else
         replace_read(&processor->replace);
 }
 
@@ -99,6 +103,8 @@ processor_input_data(const void *data, size_t length, void *ctx)
         processor_close(processor);
         return 0;
     }
+
+    processor->had_input = 1;
 
     return (size_t)nbytes;
 }
