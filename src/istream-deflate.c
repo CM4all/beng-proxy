@@ -18,6 +18,7 @@ struct istream_deflate {
     fifo_buffer_t buffer;
     int z_initialized, z_stream_end;
     z_stream z;
+    unsigned had_input:1, had_output:1;
 };
 
 
@@ -114,6 +115,61 @@ deflate_buffer_write(struct istream_deflate *defl, size_t *max_length_r)
 }
 
 static void
+deflate_try_flush(struct istream_deflate *defl)
+{
+    void *dest_buffer;
+    size_t max_length;
+    int err;
+
+    assert(!defl->z_stream_end);
+
+    dest_buffer = deflate_buffer_write(defl, &max_length);
+    if (dest_buffer == NULL)
+        return;
+
+    defl->z.next_out = dest_buffer;
+    defl->z.avail_out = (uInt)max_length;
+
+    defl->z.next_in = NULL;
+    defl->z.avail_in = 0;
+
+    err = deflate(&defl->z, Z_SYNC_FLUSH);
+    if (err != Z_OK) {
+        daemon_log(2, "deflate(Z_SYNC_FLUSH) failed: %d\n", err);
+        deflate_close(defl);
+        return;
+    }
+
+    fifo_buffer_append(defl->buffer, max_length - (size_t)defl->z.avail_out);
+
+    if (!fifo_buffer_empty(defl->buffer))
+        deflate_try_write(defl);
+}
+
+static void
+istream_deflate_force_read(struct istream_deflate *defl)
+{
+    int had_input = 0;
+
+    defl->had_output = 0;
+
+    while (1) {
+        defl->had_input = 0;
+        istream_read(defl->input);
+        if (defl->input == NULL || defl->had_output)
+            return;
+
+        if (!defl->had_input)
+            break;
+
+        had_input = 1;
+    }
+
+    if (had_input)
+        deflate_try_flush(defl);
+}
+
+static void
 deflate_try_finish(struct istream_deflate *defl)
 {
     void *dest_buffer;
@@ -177,6 +233,8 @@ deflate_input_data(const void *data, size_t length, void *ctx)
     if (err != Z_OK)
         return 0;
 
+    defl->had_input = 1;
+
     defl->z.next_out = dest_buffer;
     defl->z.avail_out = (uInt)max_length;
 
@@ -193,6 +251,7 @@ deflate_input_data(const void *data, size_t length, void *ctx)
 
     nbytes = max_length - (size_t)defl->z.avail_out;
     if (nbytes > 0) {
+        defl->had_output = 1;
         fifo_buffer_append(defl->buffer, nbytes);
         deflate_try_write(defl);
     }
@@ -258,7 +317,7 @@ istream_deflate_read(istream_t istream)
     else if (defl->input == NULL)
         deflate_try_finish(defl);
     else
-        istream_read(defl->input);
+        istream_deflate_force_read(defl);
 }
 
 static void
