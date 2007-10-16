@@ -80,7 +80,20 @@ struct istream {
     int reading, eof, in_data;
 #endif
 
-    /** try to read from the stream */
+    /**
+     * Try to read from the stream.  If the stream can read data
+     * without blocking, it must provide data.  It may invoke the
+     * callbacks any number of times, supposed that the handler itself
+     * doesn't block.
+     *
+     * If the stream does not provide data immediately (and it is not
+     * at EOF yet), it must install an event and invoke the handler
+     * later, whenever data becomes available.
+     *
+     * Whenever the handler reports it is blocking, the responsibility
+     * for calling back (and calling this function) is handed back to
+     * the istream handler.
+     */
     void (*read)(istream_t istream);
 
     /** close the stream and free resources */
