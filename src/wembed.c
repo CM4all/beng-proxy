@@ -67,5 +67,5 @@ embed_widget_callback(pool_t pool, const struct processor_env *env,
                      method, widget->real_uri,
                      request_content_length, request_body,
                      widget,
-                     env, 0);
+                     env, PROCESSOR_BODY);
 }

@@ -33,8 +33,11 @@ struct processor {
     struct replace replace;
 
     struct parser parser;
+    int in_body;
+    off_t end_of_body;
     enum {
         TAG_NONE,
+        TAG_BODY,
         TAG_EMBED,
         TAG_A,
         TAG_FORM,
@@ -119,6 +122,15 @@ processor_input_eof(void *ctx)
 
     istream_clear_unref_handler(&processor->input);
 
+    if (processor->end_of_body != (off_t)-1) {
+        /* remove everything between closing body tag and end of
+           file */
+        assert((processor->options & PROCESSOR_BODY) != 0);
+
+        replace_add(&processor->replace, processor->end_of_body,
+                    processor->replace.source_length, NULL);
+    }
+
     replace_eof(&processor->replace);
 }
 
@@ -182,6 +194,9 @@ processor_new(pool_t pool, istream_t istream,
 
     parser_init(&processor->parser);
 
+    processor->in_body = 0;
+    processor->end_of_body = (off_t)-1;
+
     return istream_struct_cast(&processor->output);
 }
 
@@ -212,7 +227,18 @@ parser_element_start(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
 
-    if (parser->element_name_length == 8 &&
+    if (parser->element_name_length == 4 &&
+        memcmp(parser->element_name, "body", 4) == 0) {
+        processor->tag = TAG_BODY;
+    } else if (!processor->in_body) {
+        /* no body detected yet, don't parse anything */
+        processor->tag = TAG_NONE;
+    } else if (processor->end_of_body != (off_t)-1) {
+        /* we have left the body, ignore the rest */
+        assert((processor->options & PROCESSOR_BODY) != 0);
+
+        processor->tag = TAG_NONE;
+    } else if (parser->element_name_length == 8 &&
         memcmp(parser->element_name, "c:widget", 8) == 0) {
         processor->tag = TAG_EMBED;
         processor->embedded_widget = p_malloc(processor->output.pool,
@@ -322,6 +348,9 @@ parser_attr_finished(struct parser *parser)
 
     switch (processor->tag) {
     case TAG_NONE:
+        break;
+
+    case TAG_BODY:
         break;
 
     case TAG_EMBED:
@@ -440,12 +469,35 @@ embed_element_finished(processor_t processor)
     return istream;
 }
 
+static void
+body_element_finished(processor_t processor, off_t end)
+{
+
+    if (processor->parser.tag_type != TAG_CLOSE) {
+        if (processor->in_body)
+            return;
+
+        if ((processor->options & PROCESSOR_BODY) != 0)
+            replace_add(&processor->replace, 0, end, NULL);
+
+        processor->in_body = 1;
+    } else {
+        if ((processor->options & PROCESSOR_BODY) == 0 ||
+            !processor->in_body || processor->end_of_body != (off_t)-1)
+            return;
+
+        processor->end_of_body = processor->parser.element_offset;
+    }
+}
+
 void
 parser_element_finished(struct parser *parser, off_t end)
 {
     processor_t processor = parser_to_processor(parser);
 
-    if (processor->tag == TAG_EMBED) {
+    if (processor->tag == TAG_BODY) {
+        body_element_finished(processor, end);
+    } else if (processor->tag == TAG_EMBED) {
         istream_t istream = embed_element_finished(processor);
         replace_add(&processor->replace, processor->parser.element_offset,
                     end, istream);
