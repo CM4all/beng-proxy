@@ -230,9 +230,6 @@ parser_element_start(struct parser *parser)
     if (parser->element_name_length == 4 &&
         memcmp(parser->element_name, "body", 4) == 0) {
         processor->tag = TAG_BODY;
-    } else if (!processor->in_body) {
-        /* no body detected yet, don't parse anything */
-        processor->tag = TAG_NONE;
     } else if (processor->end_of_body != (off_t)-1) {
         /* we have left the body, ignore the rest */
         assert((processor->options & PROCESSOR_BODY) != 0);
