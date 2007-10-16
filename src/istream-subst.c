@@ -15,6 +15,8 @@
 struct istream_subst {
     struct istream output;
     istream_t input;
+    unsigned had_input:1, had_output:1;
+
     const char *a, *b;
     size_t a_length, b_length;
     enum {
@@ -125,6 +127,8 @@ subst_source_data(const void *_data, size_t length, void *ctx)
     assert(subst->input != NULL);
     assert(subst->a != NULL);
 
+    subst->had_input = 1;
+
     /* find new match */
 
     do {
@@ -139,9 +143,11 @@ subst_source_data(const void *_data, size_t length, void *ctx)
             assert(first == NULL);
 
             first = memchr(p, subst->a[0], end - p);
-            if (first == NULL)
+            if (first == NULL) {
                 /* no match, try to write and return */
+                subst->had_output = 1;
                 return (data - data0) + istream_invoke_data(&subst->output, data, end - data);
+            }
 
             subst->state = STATE_MATCH;
             subst->a_match = 1;
@@ -168,6 +174,8 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
                     if (first != NULL && first > data) {
                         /* write the data chunk before the match */
+
+                        subst->had_output = 1;
 
                         chunk_length = first - data;
                         nbytes = istream_invoke_data(&subst->output, data, chunk_length);
@@ -196,6 +204,8 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
                 if (first != NULL && first > data) {
                     /* write the data chunk before the (mis-)match */
+
+                    subst->had_output = 1;
 
                     chunk_length = first - data;
                     nbytes = istream_invoke_data(&subst->output, data, chunk_length);
@@ -265,6 +275,8 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
     if (chunk_length > 0) {
         /* write chunk */
+
+        subst->had_output = 1;
 
         nbytes = istream_invoke_data(&subst->output, data, chunk_length);
         data += nbytes;
@@ -354,7 +366,14 @@ istream_subst_read(istream_t istream)
     case STATE_MATCH:
         assert(subst->input != NULL);
 
-        istream_read(subst->input);
+        subst->had_output = 0;
+
+        do {
+            subst->had_input = 0;
+            istream_read(subst->input);
+        } while (subst->input != NULL && subst->had_input &&
+                 !subst->had_output);
+
         return;
 
     case STATE_MISMATCH:
