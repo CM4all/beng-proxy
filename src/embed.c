@@ -62,6 +62,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
         input = processor_new(istream_pool(embed->delayed), body,
                               embed->widget, embed->env, embed->options);
     } else {
+        /* XXX cache body? */
         istream_close(body);
 
         if (embed->widget->id == NULL) {
