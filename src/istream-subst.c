@@ -253,13 +253,13 @@ subst_source_data(const void *_data, size_t length, void *ctx)
              subst->state == STATE_MISMATCH);
 
     if (first == NULL)
-        /* we have found a partial match which we discard now, instead
-           we will write the chunk right before this match */
-        chunk_length = first - data;
-    else
         /* there was no match (maybe a partial match which mismatched
            at a later stage): pass everything */
         chunk_length = end - data;
+    else
+        /* we have found a partial match which we discard now, instead
+           we will write the chunk right before this match */
+        chunk_length = first - data;
 
     if (chunk_length > 0) {
         /* write chunk */
