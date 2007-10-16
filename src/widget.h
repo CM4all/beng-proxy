@@ -34,7 +34,7 @@ struct widget {
     const char *width, *height;
 
     /** should this widget be displayed in an IFRAME? */
-    int iframe;
+    unsigned iframe:1;
 };
 
 
