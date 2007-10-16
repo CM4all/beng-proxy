@@ -66,6 +66,9 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
 
         if (embed->widget->id == NULL) {
             input = NULL;
+        } else if (embed->widget->iframe) {
+            /* XXX somehow pass content-type to out client */
+            input = NULL;
         } else {
             /* it cannot be inserted into the HTML stream, so put it into
                an iframe */
