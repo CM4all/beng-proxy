@@ -66,7 +66,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
         content_length = -1;
     }
 
-    if (embed->widget->iframe && embed->env->proxy_callback != NULL) {
+    if (embed->widget->proxy && embed->env->proxy_callback != NULL) {
         /* this is the request for IFRAME contents - send it directly
            to to http_server object, including headers */
         growing_buffer_t headers2;
@@ -86,13 +86,15 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
         return;
     }
 
-    if (input == body && !embed->widget->iframe && embed->widget->id != NULL) {
+    if (input == body && !embed->widget->proxy && embed->widget->id != NULL) {
         /* it cannot be inserted into the HTML stream, so put it into
            an iframe */
 
         istream_close(input);
 
-        embed->widget->iframe = 1;
+        if (embed->widget->display == WIDGET_DISPLAY_INLINE)
+            embed->widget->display = WIDGET_DISPLAY_IFRAME;
+
         input = embed->env->widget_callback(istream_pool(embed->delayed),
                                             embed->env, embed->widget);
     }

@@ -33,8 +33,15 @@ struct widget {
     /** dimensions of the widget */
     const char *width, *height;
 
-    /** should this widget be displayed in an IFRAME? */
-    unsigned iframe:1;
+    /** in which form should this widget be displayed? */
+    enum {
+        WIDGET_DISPLAY_INLINE,
+        WIDGET_DISPLAY_IFRAME,
+    } display;
+
+    /** is this the single widget in this whole request which should
+        be proxied? */
+    unsigned proxy:1;
 
     /** is this a dock where other widgets of this page may be
         placed? */
@@ -61,7 +68,8 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->real_uri = NULL;
     widget->width = NULL;
     widget->height = NULL;
-    widget->iframe = 0;
+    widget->display = WIDGET_DISPLAY_INLINE;
+    widget->proxy = 0;
     widget->dock = 0;
 }
 

@@ -361,11 +361,15 @@ parser_attr_finished(struct parser *parser)
                  memcmp(parser->attr_name, "id", 2) == 0)
             processor->embedded_widget->id = p_strndup(processor->output.pool, parser->attr_value,
                                                        parser->attr_value_length);
-        else if (parser->attr_name_length == 6 &&
-                 memcmp(parser->attr_name, "iframe", 6) == 0)
-            processor->embedded_widget->iframe = parse_bool(parser->attr_value,
-                                                            parser->attr_value_length);
-        else if (parser->attr_name_length == 4 &&
+        else if (parser->attr_name_length == 7 &&
+                 memcmp(parser->attr_name, "display", 7) == 0) {
+            if (parser->attr_value_length == 6 &&
+                memcmp(parser->attr_value, "inline", 6) == 0)
+                processor->embedded_widget->display = WIDGET_DISPLAY_INLINE;
+            else if (parser->attr_value_length == 6 &&
+                memcmp(parser->attr_value, "iframe", 6) == 0)
+                processor->embedded_widget->display = WIDGET_DISPLAY_IFRAME;
+        } else if (parser->attr_name_length == 4 &&
                  memcmp(parser->attr_name, "dock", 4) == 0)
             processor->embedded_widget->dock = parse_bool(parser->attr_value,
                                                           parser->attr_value_length);

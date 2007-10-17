@@ -25,7 +25,7 @@ embed_widget_callback(pool_t pool, const struct processor_env *env,
     assert(env->widget_callback == embed_widget_callback);
     assert(widget != NULL);
 
-    if (widget->iframe) {
+    if (widget->display == WIDGET_DISPLAY_IFRAME) {
         /* generate IFRAME element; the client will perform a second
            request for the frame contents, see
            frame_widget_callback() */
