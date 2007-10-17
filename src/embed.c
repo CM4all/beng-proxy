@@ -98,7 +98,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
 
         istream_close(input);
 
-        input = embed->env->widget_callback(istream_pool(embed->delayed),
+        input = embed->env->widget_callback(embed->env->pool,
                                             embed->env, embed->widget);
     }
 
@@ -132,7 +132,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     embed->options = options;
     embed->delayed = istream_delayed_new(pool, embed_abort, embed);
 
-    embed->url_stream = url_stream_new(pool,
+    embed->url_stream = url_stream_new(embed->env->pool,
                                        method, url, NULL,
                                        request_content_length,
                                        request_body,

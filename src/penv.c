@@ -18,6 +18,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
 {
     const char *session_id;
 
+    env->pool = pool;
     env->external_uri = uri;
 
     if (uri->args == NULL) {
