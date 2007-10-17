@@ -10,7 +10,6 @@
 #include "istream.h"
 #include "strmap.h"
 #include "http.h"
-#include "growing-buffer.h"
 
 #include <sys/types.h>
 
@@ -46,7 +45,7 @@ struct processor_env {
     const char *frame;
 
     void (*proxy_callback)(http_status_t status,
-                           growing_buffer_t headers,
+                           strmap_t headers,
                            off_t content_length, istream_t body,
                            void *ctx);
 

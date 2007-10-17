@@ -69,16 +69,9 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
     if (embed->widget->proxy && embed->env->proxy_callback != NULL) {
         /* this is the request for IFRAME contents - send it directly
            to to http_server object, including headers */
-        growing_buffer_t headers2;
-
-        headers2 = growing_buffer_new(istream_pool(embed->delayed), 2048);
-        if (content_type != NULL)
-            header_write(headers2, "content-type", content_type);
-
-        /* XXX copy more headers */
 
         pool_ref(istream_pool(embed->delayed));
-        embed->env->proxy_callback(HTTP_STATUS_OK, headers2,
+        embed->env->proxy_callback(HTTP_STATUS_OK, headers,
                                    content_length, input,
                                    embed->env->proxy_callback_ctx);
         pool_unref(istream_pool(embed->delayed));
