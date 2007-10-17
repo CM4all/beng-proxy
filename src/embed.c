@@ -89,10 +89,14 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
         /* it cannot be inserted into the HTML stream, so put it into
            an iframe */
 
-        istream_close(input);
+        if (embed->widget->display == WIDGET_DISPLAY_INLINE) {
+            if (content_type != NULL && strncmp(content_type, "image/", 6) == 0)
+                embed->widget->display = WIDGET_DISPLAY_IMG;
+            else
+                embed->widget->display = WIDGET_DISPLAY_IFRAME;
+        }
 
-        if (embed->widget->display == WIDGET_DISPLAY_INLINE)
-            embed->widget->display = WIDGET_DISPLAY_IFRAME;
+        istream_close(input);
 
         input = embed->env->widget_callback(istream_pool(embed->delayed),
                                             embed->env, embed->widget);

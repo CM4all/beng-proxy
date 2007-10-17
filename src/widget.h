@@ -37,6 +37,7 @@ struct widget {
     enum {
         WIDGET_DISPLAY_INLINE,
         WIDGET_DISPLAY_IFRAME,
+        WIDGET_DISPLAY_IMG,
     } display;
 
     /** is this the single widget in this whole request which should

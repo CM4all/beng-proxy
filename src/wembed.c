@@ -67,6 +67,26 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
     return istream_string_new(pool, iframe);
 }
 
+/** generate IMG element */
+static istream_t
+embed_img_widget(pool_t pool, const struct processor_env *env,
+                    struct widget *widget)
+{
+    const char *html;
+
+    if (widget->id == NULL)
+        return istream_string_new(pool, "[framed widget without id]"); /* XXX */
+
+    html = p_strcat(pool, "<img src='",
+                    env->external_uri->base,
+                    ";frame=", widget->id,
+                    "&", widget->id, "=",
+                    widget->append_uri == NULL ? "" : widget->append_uri,
+                    "'></img>",
+                    NULL);
+    return istream_string_new(pool, html);
+}
+
 istream_t
 embed_widget_callback(pool_t pool, const struct processor_env *env,
                       struct widget *widget)
@@ -82,6 +102,9 @@ embed_widget_callback(pool_t pool, const struct processor_env *env,
 
     case WIDGET_DISPLAY_IFRAME:
         return embed_iframe_widget(pool, env, widget);
+
+    case WIDGET_DISPLAY_IMG:
+        return embed_img_widget(pool, env, widget);
     }
 
     assert(0);

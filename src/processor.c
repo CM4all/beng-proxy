@@ -369,6 +369,9 @@ parser_attr_finished(struct parser *parser)
             else if (parser->attr_value_length == 6 &&
                 memcmp(parser->attr_value, "iframe", 6) == 0)
                 processor->embedded_widget->display = WIDGET_DISPLAY_IFRAME;
+            else if (parser->attr_value_length == 3 &&
+                memcmp(parser->attr_value, "img", 3) == 0)
+                processor->embedded_widget->display = WIDGET_DISPLAY_IMG;
         } else if (parser->attr_name_length == 4 &&
                  memcmp(parser->attr_name, "dock", 4) == 0)
             processor->embedded_widget->dock = parse_bool(parser->attr_value,
