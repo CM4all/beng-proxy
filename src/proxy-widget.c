@@ -116,6 +116,7 @@ widget_proxy_callback(http_status_t status,
 
 #ifndef NO_DEFLATE
     if (content_length == (off_t)-1 &&
+        strmap_get(headers, "content-encoding") == NULL &&
         http_client_accepts_encoding(wp->request->headers, "deflate")) {
         header_write(headers2, "content-encoding", "deflate");
         body = istream_deflate_new(wp->request->pool, body);
