@@ -108,4 +108,5 @@ embed_widget_callback(pool_t pool, const struct processor_env *env,
     }
 
     assert(0);
+    return NULL;
 }

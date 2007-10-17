@@ -124,8 +124,11 @@ replace_destroy(struct replace *replace)
 
     replace->quiet = 0;
 
-    if (replace->output != NULL)
-        istream_free((istream_t*)&replace->output); /* XXX */
+    if (replace->output != NULL) {
+        istream_t output = istream_struct_cast(replace->output);
+        replace->output = NULL;
+        istream_close(output);
+    }
 }
 
 size_t
