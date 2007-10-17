@@ -43,9 +43,6 @@ struct processor_env {
     /** which widget is displayed in this frame? */
     const char *frame;
 
-    /** which widget is being proxied in this frame? */
-    const char *proxy;
-
     /** which widget is focused, i.e. gets the request body and the
         query string? */
     const char *focus;
