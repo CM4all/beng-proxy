@@ -29,3 +29,16 @@ header_write(growing_buffer_t gb, const char *key, const char *value)
     *dest++ = '\r';
     *dest++ = '\n';
 }
+
+void
+headers_copy(strmap_t in, growing_buffer_t out, const char *const* keys)
+{
+    const char *value;
+
+    for (; *keys != NULL; ++keys) {
+        value = strmap_get(in, *keys);
+        if (value != NULL)
+            header_write(out, *keys, value);
+    }
+}
+

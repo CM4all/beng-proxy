@@ -101,8 +101,6 @@ widget_proxy_callback(http_status_t status,
 {
     struct widget_proxy *wp = ctx;
     growing_buffer_t headers2;
-    unsigned i;
-    const char *value;
     static const char *const copy_headers[] = {
         "content-type",
         "content-encoding",
@@ -110,12 +108,7 @@ widget_proxy_callback(http_status_t status,
     };
 
     headers2 = growing_buffer_new(wp->request->pool, 2048);
-
-    for (i = 0; copy_headers[i] != NULL; ++i) {
-        value = strmap_get(headers, copy_headers[i]);
-        if (value != NULL)
-            header_write(headers2, copy_headers[i], value);
-    }
+    headers_copy(headers, headers2, copy_headers);
 
     assert(wp->body != NULL);
     assert(wp->request != NULL);
