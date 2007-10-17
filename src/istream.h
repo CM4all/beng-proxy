@@ -179,6 +179,9 @@ istream_handler_set(istream_t _istream,
 {
     struct istream *istream = _istream_opaque_cast(_istream);
 
+    assert(handler != NULL);
+    assert(handler->data != NULL);
+
     istream->handler = handler;
     istream->handler_ctx = handler_ctx;
     istream->handler_direct = handler_direct;
