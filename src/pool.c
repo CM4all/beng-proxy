@@ -420,23 +420,24 @@ pool_unref_debug(pool_t pool, const char *file, unsigned line)
 void
 pool_commit(void)
 {
-    if (!list_empty(&trash)) {
-        pool_t pool;
+    pool_t pool;
 
-        daemon_log(0, "pool_commit(): there are unreleased pools in the trash:\n");
+    if (list_empty(&trash))
+        return;
 
-        for (pool = (pool_t)trash.next; &pool->siblings != &trash;
-             pool = (pool_t)pool->siblings.next) {
+    daemon_log(0, "pool_commit(): there are unreleased pools in the trash:\n");
+
+    for (pool = (pool_t)trash.next; &pool->siblings != &trash;
+         pool = (pool_t)pool->siblings.next) {
 #ifdef DEBUG_POOL_REF
-            pool_dump_refs(pool);
+        pool_dump_refs(pool);
 #else
-            daemon_log(0, "- '%s'(%u)\n", pool->name, pool->ref);
+        daemon_log(0, "- '%s'(%u)\n", pool->name, pool->ref);
 #endif
-        }
-        daemon_log(0, "\n");
-
-        abort();
     }
+    daemon_log(0, "\n");
+
+    abort();
 }
 #endif
 
