@@ -25,11 +25,16 @@ embed_widget_callback(pool_t pool, const struct processor_env *env,
     assert(env->widget_callback == embed_widget_callback);
     assert(widget != NULL);
 
-    if (widget->display == WIDGET_DISPLAY_IFRAME) {
+    switch (widget->display) {
+        const char *iframe;
+
+    case WIDGET_DISPLAY_INLINE:
+        break;
+
+    case WIDGET_DISPLAY_IFRAME:
         /* generate IFRAME element; the client will perform a second
            request for the frame contents, see
            frame_widget_callback() */
-        const char *iframe;
 
         if (widget->id == NULL)
             return istream_string_new(pool, "[framed widget without id]"); /* XXX */
