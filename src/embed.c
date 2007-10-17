@@ -43,7 +43,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
                            void *ctx)
 {
     struct embed *embed = ctx;
-    const char *value;
+    const char *content_type;
     istream_t input = body;
 
     (void)content_length;
@@ -58,8 +58,8 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
         return;
     }
 
-    value = strmap_get(headers, "content-type");
-    if (value != NULL && strncmp(value, "text/html", 9) == 0) {
+    content_type = strmap_get(headers, "content-type");
+    if (content_type != NULL && strncmp(content_type, "text/html", 9) == 0) {
         /* HTML resources must be processed */
         input = processor_new(istream_pool(embed->delayed), input,
                               embed->widget, embed->env, embed->options);
@@ -72,9 +72,8 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
         growing_buffer_t headers2;
 
         headers2 = growing_buffer_new(istream_pool(embed->delayed), 2048);
-        value = strmap_get(headers, "content-type");
-        if (value != NULL)
-            header_write(headers2, "content-type", value);
+        if (content_type != NULL)
+            header_write(headers2, "content-type", content_type);
 
         /* XXX copy more headers */
 
