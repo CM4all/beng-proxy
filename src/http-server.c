@@ -82,6 +82,7 @@ http_server_request_new(http_server_connection_t connection)
     assert(connection != NULL);
 
     pool = pool_new_linear(connection->pool, "http_server_request", 16384);
+    pool_set_major(pool);
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->connection = connection;

@@ -22,6 +22,17 @@ pool_new_libc(pool_t parent, const char *name);
 pool_t
 pool_new_linear(pool_t parent, const char *name, size_t initial_size);
 
+#ifdef NDEBUG
+
+#define pool_set_major(pool)
+
+#else
+
+void
+pool_set_major(pool_t pool);
+
+#endif
+
 #ifdef DEBUG_POOL_REF
 
 void

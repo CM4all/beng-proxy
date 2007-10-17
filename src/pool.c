@@ -64,6 +64,13 @@ struct pool {
     int trashed;
     enum pool_type type;
     const char *name;
+
+#ifndef NDEBUG
+    /** this is a major pool, i.e. pool commits are performed after
+        the major pool is freed */
+    int major;
+#endif
+
     union {
         struct libc_pool_chunk *libc;
         struct linear_pool_area *linear;
@@ -212,6 +219,9 @@ pool_new(pool_t parent, const char *name)
     pool->ref = 1;
     pool->trashed = 0;
     pool->name = name;
+#ifndef NDEBUG
+    pool->major = parent == NULL;
+#endif
 
     pool->parent = NULL;
     if (parent != NULL)
@@ -276,8 +286,16 @@ pool_new_linear(pool_t parent, const char *name, size_t initial_size)
     return pool;
 }
 
+void
+pool_set_major(pool_t pool)
+{
+    assert(list_empty(&pool->children));
+
+    pool->major = 1;
+}
+
 static void
-pool_destroy(pool_t pool)
+pool_destroy(pool_t pool, pool_t reparent_to)
 {
     assert(pool->ref == 0);
     assert(pool->parent == NULL);
@@ -290,8 +308,23 @@ pool_destroy(pool_t pool)
         pool_t child = (pool_t)pool->children.next;
         pool_remove_child(pool, child);
         assert(child->ref > 0);
-        list_add(&child->siblings, &trash);
-        child->trashed = 1;
+
+        if (reparent_to == NULL) {
+            /* children of major pools are put on trash, so they are
+               collected by pool_commit() */
+            assert(pool->major || pool->trashed);
+
+            list_add(&child->siblings, &trash);
+            child->trashed = 1;
+        } else {
+            /* reparent all children of the destroyed pool to its
+               parent, so they can live on - this reparenting never
+               traverses major pools */
+
+            assert(!pool->major && !pool->trashed);
+
+            pool_add_child(reparent_to, child);
+        }
     }
 #endif
 
@@ -403,12 +436,13 @@ pool_unref_debug(pool_t pool, const char *file, unsigned line)
 #endif
 
     if (pool->ref == 0) {
+        pool_t reparent_to = pool->major ? NULL : pool->parent;
         if (pool->parent != NULL)
             pool_remove_child(pool->parent, pool);
 #ifdef DUMP_POOL_UNREF
         pool_dump_refs(pool);
 #endif
-        pool_destroy(pool);
+        pool_destroy(pool, reparent_to);
         return 0;
     }
 
