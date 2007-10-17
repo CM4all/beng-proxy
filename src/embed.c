@@ -132,7 +132,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     embed->options = options;
     embed->delayed = istream_delayed_new(pool, embed_abort, embed);
 
-    embed->url_stream = url_stream_new(embed->env->pool,
+    embed->url_stream = url_stream_new(env->pool,
                                        method, url, NULL,
                                        request_content_length,
                                        request_body,
