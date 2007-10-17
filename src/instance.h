@@ -27,6 +27,8 @@ struct instance {
 
     listener_t listener;
     struct list_head connections;
+    unsigned num_connections;
+
     int should_exit;
     struct event sigterm_event, sigint_event, sigquit_event;
 

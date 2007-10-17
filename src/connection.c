@@ -16,8 +16,11 @@ remove_connection(struct client_connection *connection)
 {
     assert(connection != NULL);
     assert(connection->http != NULL);
+    assert(connection->instance != NULL);
+    assert(connection->instance->num_connections > 0);
 
     list_remove(&connection->siblings);
+    --connection->instance->num_connections;
 
     http_server_connection_free(&connection->http);
 
@@ -46,6 +49,7 @@ http_listener_callback(int fd,
     connection->config = &instance->config;
 
     list_add(&connection->siblings, &instance->connections);
+    ++connection->instance->num_connections;
 
     http_server_connection_new(pool, fd,
                                &my_http_server_connection_handler,
