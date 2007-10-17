@@ -8,6 +8,7 @@
 #include "url-stream.h"
 #include "processor.h"
 #include "widget.h"
+#include "header-writer.h"
 
 #include <assert.h>
 #include <string.h>
@@ -43,7 +44,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
 {
     struct embed *embed = ctx;
     const char *value;
-    istream_t input;
+    istream_t input = body;
 
     (void)content_length;
 
@@ -59,28 +60,50 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
 
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
-        input = processor_new(istream_pool(embed->delayed), body,
+        /* HTML resources must be processed */
+        input = processor_new(istream_pool(embed->delayed), input,
                               embed->widget, embed->env, embed->options);
-    } else {
-        /* XXX cache body? */
-        istream_close(body);
+        content_length = -1;
+    }
 
-        if (embed->widget->id == NULL) {
-            input = NULL;
-        } else if (embed->widget->iframe) {
-            /* XXX somehow pass content-type to out client */
-            input = NULL;
-        } else {
-            /* it cannot be inserted into the HTML stream, so put it into
-               an iframe */
-            embed->widget->iframe = 1;
-            input = embed->env->widget_callback(istream_pool(embed->delayed),
-                                                embed->env, embed->widget);
-        }
+    if (embed->widget->iframe && embed->env->proxy_callback != NULL) {
+        /* this is the request for IFRAME contents - send it directly
+           to to http_server object, including headers */
+        growing_buffer_t headers2;
 
-        if (input == NULL)
-            input = istream_string_new(istream_pool(embed->delayed),
-                                       "Not an HTML document");
+        headers2 = growing_buffer_new(istream_pool(embed->delayed), 2048);
+        value = strmap_get(headers, "content-type");
+        if (value != NULL)
+            header_write(headers2, "content-type", value);
+
+        /* XXX copy more headers */
+
+        pool_ref(istream_pool(embed->delayed));
+        embed->env->proxy_callback(HTTP_STATUS_OK, headers2,
+                                   content_length, input,
+                                   embed->env->proxy_callback_ctx);
+        pool_unref(istream_pool(embed->delayed));
+        return;
+    }
+
+    if (input == body && !embed->widget->iframe && embed->widget->id != NULL) {
+        /* it cannot be inserted into the HTML stream, so put it into
+           an iframe */
+
+        istream_close(input);
+
+        embed->widget->iframe = 1;
+        input = embed->env->widget_callback(istream_pool(embed->delayed),
+                                            embed->env, embed->widget);
+    }
+
+    if (input == body) {
+        /* still no sucess in framing this strange resource - insert
+           an error message instead of widget contents */
+
+        istream_close(input);
+        input = istream_string_new(istream_pool(embed->delayed),
+                                   "Not an HTML document");
     }
 
     istream_delayed_set(embed->delayed, input);

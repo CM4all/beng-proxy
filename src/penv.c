@@ -32,6 +32,8 @@ processor_env_init(pool_t pool, struct processor_env *env,
         session_id = strmap_get(env->args, "session");
     }
 
+    env->proxy_callback = NULL;
+
     env->request_content_length = request_content_length;
     env->request_body = request_body;
 

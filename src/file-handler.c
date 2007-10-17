@@ -14,6 +14,7 @@
 #include "embed.h"
 #include "frame.h"
 #include "http-util.h"
+#include "proxy-widget.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -153,6 +154,12 @@ file_callback(struct client_connection *connection,
 
             body = processor_new(request->pool, body, widget, env,
                                  processor_options);
+
+            if (env->frame != NULL) {
+                /* XXX */
+                widget_proxy_install(env, request, body);
+                return;
+            }
 
 #ifndef NO_DEFLATE
             if (http_client_accepts_encoding(request->headers, "deflate")) {

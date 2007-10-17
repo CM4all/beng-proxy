@@ -53,6 +53,7 @@ SOURCES = src/main.c \
 	src/proxy-handler.c \
 	src/replace.c \
 	src/widget.c \
+	src/proxy-widget.c \
 	src/processor.c \
 	src/penv.c \
 	src/parser.c \

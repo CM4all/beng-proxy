@@ -9,6 +9,8 @@
 
 #include "istream.h"
 #include "strmap.h"
+#include "http.h"
+#include "growing-buffer.h"
 
 #include <sys/types.h>
 
@@ -42,6 +44,13 @@ struct processor_env {
 
     /** which widget is displayed in this frame? */
     const char *frame;
+
+    void (*proxy_callback)(http_status_t status,
+                           growing_buffer_t headers,
+                           off_t content_length, istream_t body,
+                           void *ctx);
+
+    void *proxy_callback_ctx;
 
     /** which widget is focused, i.e. gets the request body and the
         query string? */

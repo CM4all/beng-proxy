@@ -13,6 +13,7 @@
 #include "embed.h"
 #include "frame.h"
 #include "http-util.h"
+#include "proxy-widget.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -91,6 +92,13 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
         body = processor_new(pt->request->pool, body, widget, &pt->env,
                              processor_options);
+        if (pt->env.frame != NULL) {
+            /* XXX */
+            widget_proxy_install(&pt->env, pt->request, body);
+            pool_unref(pt->request->pool);
+            proxy_transfer_close(pt);
+            return;
+        }
 
 #ifndef NO_DEFLATE
         if (http_client_accepts_encoding(pt->request->headers, "deflate")) {
