@@ -70,19 +70,27 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
     value = strmap_get(headers, "content-type");
     if (value != NULL && strncmp(value, "text/html", 9) == 0) {
         struct widget *widget;
+        unsigned processor_options = 0;
 
         /* XXX request body? */
         processor_env_init(pt->request->pool, &pt->env, &pt->translated->uri, 0, NULL,
                            embed_widget_callback);
-        if (pt->env.frame != NULL) /* XXX */
+        if (pt->env.frame != NULL) { /* XXX */
             pt->env.widget_callback = frame_widget_callback;
+
+            /* do not show the template contents if the browser is
+               only interested in one particular widget for
+               displaying the frame */
+            processor_options |= PROCESSOR_QUIET;
+        }
 
         widget = p_malloc(pt->request->pool, sizeof(*widget));
         widget_init(widget, NULL);
 
         pool_ref(pt->request->pool);
 
-        body = processor_new(pt->request->pool, body, widget, &pt->env, 0);
+        body = processor_new(pt->request->pool, body, widget, &pt->env,
+                             processor_options);
 
 #ifndef NO_DEFLATE
         if (http_client_accepts_encoding(pt->request->headers, "deflate")) {
