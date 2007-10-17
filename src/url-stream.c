@@ -174,6 +174,7 @@ url_stream_new(pool_t pool,
 
     if (memcmp(url, "http://", 7) != 0) {
         /* XXX */
+        url_stream_close(us);
         return NULL;
     }
 
@@ -181,6 +182,7 @@ url_stream_new(pool_t pool,
     slash = strchr(p, '/');
     if (slash == NULL || slash == p) {
         /* XXX */
+        url_stream_close(us);
         return NULL;
     }
 
@@ -194,6 +196,7 @@ url_stream_new(pool_t pool,
     ret = getaddrinfo_helper(host_and_port, 80, &hints, &ai);
     if (ret != 0) {
         daemon_log(1, "failed to resolve proxy host name\n");
+        url_stream_close(us);
         return NULL;
     }
 
@@ -206,6 +209,7 @@ url_stream_new(pool_t pool,
     if (ret != 0) {
         daemon_log(1, "client_socket_new() failed: %s\n",
                    strerror(errno));
+        url_stream_close(us);
         return NULL;
     }
 
