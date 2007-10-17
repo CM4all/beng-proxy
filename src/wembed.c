@@ -12,6 +12,27 @@
 #include <assert.h>
 #include <string.h>
 
+/** generate IFRAME element; the client will perform a second request
+    for the frame contents, see frame_widget_callback() */
+static istream_t
+embed_iframe_widget(pool_t pool, const struct processor_env *env,
+                    struct widget *widget)
+{
+    const char *iframe;
+
+    if (widget->id == NULL)
+        return istream_string_new(pool, "[framed widget without id]"); /* XXX */
+
+    iframe = p_strcat(pool, "<iframe src='",
+                      env->external_uri->base,
+                      ";frame=", widget->id,
+                      "&", widget->id, "=",
+                      widget->append_uri == NULL ? "" : widget->append_uri,
+                      "'></iframe>",
+                      NULL);
+    return istream_string_new(pool, iframe);
+}
+
 istream_t
 embed_widget_callback(pool_t pool, const struct processor_env *env,
                       struct widget *widget)
@@ -26,27 +47,11 @@ embed_widget_callback(pool_t pool, const struct processor_env *env,
     assert(widget != NULL);
 
     switch (widget->display) {
-        const char *iframe;
-
     case WIDGET_DISPLAY_INLINE:
         break;
 
     case WIDGET_DISPLAY_IFRAME:
-        /* generate IFRAME element; the client will perform a second
-           request for the frame contents, see
-           frame_widget_callback() */
-
-        if (widget->id == NULL)
-            return istream_string_new(pool, "[framed widget without id]"); /* XXX */
-
-        iframe = p_strcat(pool, "<iframe src='",
-                          env->external_uri->base,
-                          ";frame=", widget->id,
-                          "&", widget->id, "=",
-                          widget->append_uri == NULL ? "" : widget->append_uri,
-                          "'></iframe>",
-                          NULL);
-        return istream_string_new(pool, iframe);
+        return embed_iframe_widget(pool, env, widget);
     }
 
     if (widget->id != NULL && env->focus != NULL &&
