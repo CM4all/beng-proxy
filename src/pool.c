@@ -61,7 +61,11 @@ struct pool {
 #endif
     pool_t parent;
     unsigned ref;
+
+#ifndef NDEBUG
     int trashed;
+#endif
+
     enum pool_type type;
     const char *name;
 
@@ -217,7 +221,9 @@ pool_new(pool_t parent, const char *name)
     list_init(&pool->unrefs);
 #endif
     pool->ref = 1;
+#ifndef NDEBUG
     pool->trashed = 0;
+#endif
     pool->name = name;
 #ifndef NDEBUG
     pool->major = parent == NULL;
