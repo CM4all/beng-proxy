@@ -292,6 +292,7 @@ pool_new_linear(pool_t parent, const char *name, size_t initial_size)
     return pool;
 }
 
+#ifndef NDEBUG
 void
 pool_set_major(pool_t pool)
 {
@@ -299,12 +300,15 @@ pool_set_major(pool_t pool)
 
     pool->major = 1;
 }
+#endif
 
 static void
 pool_destroy(pool_t pool, pool_t reparent_to)
 {
     assert(pool->ref == 0);
     assert(pool->parent == NULL);
+
+    (void)reparent_to;
 
 #ifndef NDEBUG
     if (pool->trashed)
@@ -442,7 +446,11 @@ pool_unref_debug(pool_t pool, const char *file, unsigned line)
 #endif
 
     if (pool->ref == 0) {
+#ifdef NDEBUG
+        pool_t reparent_to = NULL;
+#else
         pool_t reparent_to = pool->major ? NULL : pool->parent;
+#endif
         if (pool->parent != NULL)
             pool_remove_child(pool->parent, pool);
 #ifdef DUMP_POOL_UNREF
