@@ -102,8 +102,12 @@ widget_proxy_callback(http_status_t status,
     struct widget_proxy *wp = ctx;
     growing_buffer_t headers2;
     static const char *const copy_headers[] = {
-        "content-type",
+        "age",
+        "etag",
         "content-encoding",
+        "content-type",
+        "retry-after",
+        "vary",
         NULL,
     };
 
