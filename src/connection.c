@@ -39,7 +39,9 @@ http_listener_callback(int fd,
 
     pool = pool_new_linear(instance->pool, "client_connection", 16384);
     pool_set_major(pool);
+
     connection = p_malloc(pool, sizeof(*connection));
+    connection->instance = instance;
     connection->pool = pool;
     connection->config = &instance->config;
 

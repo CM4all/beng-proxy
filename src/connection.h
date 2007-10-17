@@ -16,6 +16,7 @@ struct config;
 
 struct client_connection {
     struct list_head siblings;
+    struct instance *instance;
     pool_t pool;
     const struct config *config;
     http_server_connection_t http;
