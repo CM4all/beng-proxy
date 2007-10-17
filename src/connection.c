@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "connection.h"
 #include "instance.h"
 #include "http-server.h"
-#include "connection.h"
 #include "handler.h"
 
 #include <assert.h>
