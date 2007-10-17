@@ -23,11 +23,13 @@ processor_env_init(pool_t pool, struct processor_env *env,
     if (uri->args == NULL) {
         env->args = strmap_new(pool, 16);
         env->frame = NULL;
+        env->proxy = NULL;
         env->focus = NULL;
         session_id = NULL;
     } else {
         env->args = args_parse(pool, uri->args, uri->args_length);
         env->frame = strmap_get(env->args, "frame");
+        env->proxy = strmap_get(env->args, "proxy");
         env->focus = strmap_get(env->args, "focus");
         session_id = strmap_get(env->args, "session");
     }
