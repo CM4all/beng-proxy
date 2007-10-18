@@ -12,7 +12,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include <stdio.h>
+
 istream_t
 frame_widget_callback(pool_t pool, const struct processor_env *env,
                       struct widget *widget)
