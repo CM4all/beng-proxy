@@ -43,6 +43,7 @@ struct processor {
         TAG_FORM,
         TAG_IMG,
     } tag;
+    off_t widget_start_offset;
     struct widget *embedded_widget;
 };
 
@@ -200,6 +201,7 @@ processor_new(pool_t pool, istream_t istream,
 
     processor->in_body = 0;
     processor->end_of_body = (off_t)-1;
+    processor->embedded_widget = NULL;
 
     return istream_struct_cast(&processor->output);
 }
@@ -226,13 +228,25 @@ parser_to_processor(struct parser *parser)
     return (processor_t)(((char*)parser) - offsetof(struct processor, parser));
 }
 
+static void
+parser_element_start_in_widget(processor_t processor, struct parser *parser)
+{
+    if (parser->element_name_length == 8 &&
+        memcmp(parser->element_name, "c:widget", 8) == 0 &&
+        parser->tag_type == TAG_CLOSE) {
+        processor->tag = TAG_WIDGET;
+    } else {
+        processor->tag = TAG_NONE;
+    }
+}
+
 void
 parser_element_start(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
 
-    if (parser->embedded_widget != NULL) {
-        processor->tag = TAG_NONE;
+    if (processor->embedded_widget != NULL) {
+        parser_element_start_in_widget(processor, parser);
         return;
     }
 
@@ -246,6 +260,12 @@ parser_element_start(struct parser *parser)
         processor->tag = TAG_NONE;
     } else if (parser->element_name_length == 8 &&
         memcmp(parser->element_name, "c:widget", 8) == 0) {
+
+        if (parser->tag_type == TAG_CLOSE) {
+            assert(processor->embedded_widget == NULL);
+            return;
+        }
+
         processor->tag = TAG_WIDGET;
         processor->embedded_widget = p_malloc(processor->output.pool,
                                               sizeof(*processor->embedded_widget));
@@ -509,8 +529,19 @@ parser_element_finished(struct parser *parser, off_t end)
     if (processor->tag == TAG_BODY) {
         body_element_finished(processor, end);
     } else if (processor->tag == TAG_WIDGET) {
+        if (processor->parser.tag_type == TAG_OPEN ||
+            processor->parser.tag_type == TAG_SHORT)
+            processor->widget_start_offset = processor->parser.element_offset;
+        else if (processor->embedded_widget == NULL)
+            return;
+
+        assert(processor->embedded_widget != NULL);
+
+        if (processor->parser.tag_type == TAG_OPEN)
+            return;
+        
         istream_t istream = embed_element_finished(processor);
-        replace_add(&processor->replace, processor->parser.element_offset,
+        replace_add(&processor->replace, processor->widget_start_offset,
                     end, istream);
     }
 }
