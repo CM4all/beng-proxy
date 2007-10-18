@@ -49,6 +49,14 @@ struct widget {
     unsigned dock:1;
 };
 
+/** a reference to a widget inside a widget.  NULL means the current
+    (root) widget is being referenced */
+struct widget_ref {
+    const struct widget_ref *next;
+
+    const char *id;
+};
+
 
 const struct widget_class *
 get_widget_class(pool_t pool, const char *uri);
@@ -88,5 +96,12 @@ widget_path(const struct widget *widget)
     /* XXX */
     return widget->id == NULL ? "_" : widget->id;
 }
+
+const struct widget_ref *
+widget_ref_parse(pool_t pool, const char *p);
+
+int
+widget_ref_compare(pool_t pool, const struct widget *widget,
+                   const struct widget_ref *ref, int partial_ok);
 
 #endif

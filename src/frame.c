@@ -12,7 +12,7 @@
 
 #include <assert.h>
 #include <string.h>
-
+#include <stdio.h>
 istream_t
 frame_widget_callback(pool_t pool, const struct processor_env *env,
                       struct widget *widget)
@@ -20,6 +20,7 @@ frame_widget_callback(pool_t pool, const struct processor_env *env,
     http_method_t method = HTTP_METHOD_GET;
     off_t request_content_length = 0;
     istream_t request_body = NULL;
+    struct processor_env *env2;
 
     assert(pool != NULL);
     assert(env != NULL);
@@ -27,10 +28,19 @@ frame_widget_callback(pool_t pool, const struct processor_env *env,
     assert(widget != NULL);
 
     if (widget->id == NULL || env->frame == NULL ||
-        strcmp(widget->id, env->frame) != 0) {
+        !widget_ref_compare(pool, widget, env->frame, 1)) {
         /* XXX what if the focus is on a sub widget? */
         return NULL;
     }
+
+    if (!widget_ref_compare(pool, widget, env->frame, 0))
+        /* only partial match: this is the parent of the frame
+           widget */
+        return embed_new(pool,
+                         method, widget->real_uri,
+                         request_content_length, request_body,
+                         widget,
+                         env, PROCESSOR_QUIET);
 
     widget->proxy = 1; /* set flag if it wasn't previously set */
 
@@ -49,9 +59,15 @@ frame_widget_callback(pool_t pool, const struct processor_env *env,
         /* XXX what if there is no stream handler? or two? */
     }
 
+    /* install normal embed callback on cloned env */
+
+    env2 = processor_env_dup(pool, env);
+    env2->frame = NULL;
+    env2->widget_callback = embed_widget_callback;
+
     return embed_new(pool,
                      method, widget->real_uri,
                      request_content_length, request_body,
                      widget,
-                     env, 0);
+                     env2, 0);
 }

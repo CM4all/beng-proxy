@@ -8,6 +8,7 @@
 #include "args.h"
 #include "uri.h"
 #include "session.h"
+#include "widget.h"
 
 void
 processor_env_init(pool_t pool, struct processor_env *env,
@@ -27,8 +28,8 @@ processor_env_init(pool_t pool, struct processor_env *env,
         session_id = NULL;
     } else {
         env->args = args_parse(pool, uri->args, uri->args_length);
-        env->frame = strmap_get(env->args, "frame");
-        env->focus = strmap_get(env->args, "focus");
+        env->frame = widget_ref_parse(pool, strmap_get(env->args, "frame"));
+        env->focus = widget_ref_parse(pool, strmap_get(env->args, "focus"));
         session_id = strmap_get(env->args, "session");
     }
 

@@ -42,7 +42,7 @@ struct processor_env {
     istream_t request_body;
 
     /** which widget is displayed in this frame? */
-    const char *frame;
+    const struct widget_ref *frame;
 
     void (*proxy_callback)(http_status_t status,
                            strmap_t headers,
@@ -53,7 +53,7 @@ struct processor_env {
 
     /** which widget is focused, i.e. gets the request body and the
         query string? */
-    const char *focus;
+    const struct widget_ref *focus;
 
     struct session *session;
 
@@ -68,6 +68,12 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    off_t request_content_length,
                    istream_t request_body,
                    processor_widget_callback_t widget_callback);
+
+static inline struct processor_env *
+processor_env_dup(pool_t pool, const struct processor_env *env)
+{
+    return (struct processor_env *)p_memdup(pool, env, sizeof(*env));
+}
 
 istream_t attr_malloc
 processor_new(pool_t pool, istream_t istream,

@@ -22,7 +22,7 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
 
     if (widget->id != NULL && env->focus != NULL &&
         (env->external_uri->query != NULL || env->request_body != NULL) &&
-        strcmp(widget->id, env->focus) == 0) {
+        widget_ref_compare(pool, widget, env->focus, 0)) {
         /* we're in focus.  forward query string and request body. */
         widget->real_uri = p_strncat(pool,
                                      widget->real_uri, strlen(widget->real_uri),
