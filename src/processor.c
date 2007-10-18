@@ -46,8 +46,10 @@ struct processor {
     } tag;
     off_t widget_start_offset;
     struct widget *embedded_widget;
-    char widget_param_name[64];
-    char widget_param_value[64];
+    struct {
+        char name[64];
+        char value[64];
+    } widget_param;
     char widget_params[512];
     size_t widget_params_length;
 };
@@ -243,8 +245,8 @@ parser_element_start_in_widget(processor_t processor, struct parser *parser)
     } else if (parser->element_name_length == 5 &&
                memcmp(parser->element_name, "param", 5) == 0) {
         processor->tag = TAG_WIDGET_PARAM;
-        processor->widget_param_name[0] = 0;
-        processor->widget_param_value[0] = 0;
+        processor->widget_param.name[0] = 0;
+        processor->widget_param.value[0] = 0;
     } else {
         processor->tag = TAG_NONE;
     }
@@ -429,18 +431,18 @@ parser_attr_finished(struct parser *parser)
 
         if (parser->attr_name_length == 4 &&
             memcmp(parser->attr_name, "name", 4) == 0) {
-            if (parser->attr_value_length >= sizeof(processor->widget_param_name))
-                parser->attr_value_length = sizeof(processor->widget_param_name) - 1;
-            memcpy(processor->widget_param_name, parser->attr_value,
+            if (parser->attr_value_length >= sizeof(processor->widget_param.name))
+                parser->attr_value_length = sizeof(processor->widget_param.name) - 1;
+            memcpy(processor->widget_param.name, parser->attr_value,
                    parser->attr_value_length);
-            processor->widget_param_name[parser->attr_value_length] = 0;
+            processor->widget_param.name[parser->attr_value_length] = 0;
         } else if (parser->attr_name_length == 5 &&
                    memcmp(parser->attr_name, "value", 5) == 0) {
-            if (parser->attr_value_length >= sizeof(processor->widget_param_value))
-                parser->attr_value_length = sizeof(processor->widget_param_value) - 1;
-            memcpy(processor->widget_param_value, parser->attr_value,
+            if (parser->attr_value_length >= sizeof(processor->widget_param.value))
+                parser->attr_value_length = sizeof(processor->widget_param.value) - 1;
+            memcpy(processor->widget_param.value, parser->attr_value,
                    parser->attr_value_length);
-            processor->widget_param_value[parser->attr_value_length] = 0;
+            processor->widget_param.value[parser->attr_value_length] = 0;
         }
 
         break;
@@ -587,8 +589,8 @@ parser_element_finished(struct parser *parser, off_t end)
 
         /* XXX escape */
 
-        name_length = strlen(processor->widget_param_name);
-        value_length = strlen(processor->widget_param_value);
+        name_length = strlen(processor->widget_param.name);
+        value_length = strlen(processor->widget_param.value);
         if (name_length == 0 ||
             processor->widget_params_length + 1 + name_length + 1 + value_length >= sizeof(processor->widget_params))
             return;
@@ -597,13 +599,13 @@ parser_element_finished(struct parser *parser, off_t end)
             processor->widget_params[processor->widget_params_length++] = '&';
 
         memcpy(processor->widget_params + processor->widget_params_length,
-               processor->widget_param_name, name_length);
+               processor->widget_param.name, name_length);
         processor->widget_params_length += name_length;
 
         processor->widget_params[processor->widget_params_length++] = '=';
 
         memcpy(processor->widget_params + processor->widget_params_length,
-               processor->widget_param_value, value_length);
+               processor->widget_param.value, value_length);
         processor->widget_params_length += value_length;
     }
 }
