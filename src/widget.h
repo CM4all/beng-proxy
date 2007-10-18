@@ -90,11 +90,8 @@ widget_root(struct widget *widget)
     return widget;
 }
 
-static inline const char *
-widget_path(const struct widget *widget)
-{
-    return widget->id;
-}
+const char *
+widget_path(pool_t pool, const struct widget *widget);
 
 const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *p);

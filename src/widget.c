@@ -30,6 +30,47 @@ widget_class_includes_uri(const struct widget_class *class, const char *uri)
 }
 
 
+const char *
+widget_path(pool_t pool, const struct widget *widget)
+{
+    size_t length;
+    const struct widget *w;
+    char *path, *p;
+
+    assert(widget != NULL);
+
+    if (widget->parent == NULL)
+        return NULL;
+
+    for (w = widget, length = 0; w->parent != NULL; w = w->parent) {
+        if (w->id == NULL)
+            return NULL;
+        length += strlen(w->id) + 1;
+    }
+
+    if (length == 0)
+        return NULL;
+
+    path = p_malloc(pool, length);
+    p = path + length - 1;
+    *p-- = 0;
+
+    for (w = widget; w->parent != NULL; w = w->parent) {
+        length = strlen(w->id);
+        p -= length;
+        memcpy(p, w->id, length);
+        if (p > path) {
+            --p;
+            *p = '/';
+        }
+    }
+
+    assert(p == path);
+
+    return path;
+}
+
+
 const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *_p)
 {
