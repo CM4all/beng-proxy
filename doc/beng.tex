@@ -75,6 +75,26 @@ data.  All of it can be handed off to a widget.  To enable this,
 send the data to.
 
 
+\subsection{Local files}
+
+By default, \emph{beng-proxy} serves local files from
+\texttt{/var/www}.
+
+In contrast to most other web servers, \emph{beng-proxy} does not use
+the file name to determine the \texttt{Content-Type} response header.
+Instead, it reads this information from \textit{extended attributes}.
+The programs \texttt{getfattr} and \texttt{setfattr} (Debian package
+\texttt{attr}) enable you to read and write attributes:
+
+\begin{verbatim*}
+setfattr -n user.Content-Type -v "text/html; charset=utf8" \
+/var/www/index.html
+\end{verbatim*}
+
+Some file systems need explicit support for extended attributes.  On
+XFS, extended attributes are always enabled.
+
+
 \section{Widget protocol}
 
 A widget server is simply an HTTP server.  Its content type must be
