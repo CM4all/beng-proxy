@@ -160,13 +160,17 @@ processor_new(pool_t pool, istream_t istream,
               unsigned options)
 {
     processor_t processor;
+    const char *path;
 
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
 
+    path = widget_path(widget);
+    if (path == NULL)
+        path = "";
     istream = istream_subst_new(pool, istream,
-                                "&c:path;", widget_path(widget));
+                                "&c:path;", path);
 
 #ifdef NDEBUG
     pool_ref(pool);

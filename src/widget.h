@@ -93,8 +93,7 @@ widget_root(struct widget *widget)
 static inline const char *
 widget_path(const struct widget *widget)
 {
-    /* XXX */
-    return widget->id == NULL ? "_" : widget->id;
+    return widget->id;
 }
 
 const struct widget_ref *
