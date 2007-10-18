@@ -38,7 +38,7 @@ struct processor {
     enum {
         TAG_NONE,
         TAG_BODY,
-        TAG_EMBED,
+        TAG_WIDGET,
         TAG_A,
         TAG_FORM,
         TAG_IMG,
@@ -241,7 +241,7 @@ parser_element_start(struct parser *parser)
         processor->tag = TAG_NONE;
     } else if (parser->element_name_length == 8 &&
         memcmp(parser->element_name, "c:widget", 8) == 0) {
-        processor->tag = TAG_EMBED;
+        processor->tag = TAG_WIDGET;
         processor->embedded_widget = p_malloc(processor->output.pool,
                                               sizeof(*processor->embedded_widget));
         widget_init(processor->embedded_widget, NULL);
@@ -354,7 +354,9 @@ parser_attr_finished(struct parser *parser)
     case TAG_BODY:
         break;
 
-    case TAG_EMBED:
+    case TAG_WIDGET:
+        assert(processor->embedded_widget != NULL);
+
         if (parser->attr_name_length == 4 &&
             memcmp(parser->attr_name, "href", 4) == 0)
             processor->embedded_widget->class
@@ -501,7 +503,7 @@ parser_element_finished(struct parser *parser, off_t end)
 
     if (processor->tag == TAG_BODY) {
         body_element_finished(processor, end);
-    } else if (processor->tag == TAG_EMBED) {
+    } else if (processor->tag == TAG_WIDGET) {
         istream_t istream = embed_element_finished(processor);
         replace_add(&processor->replace, processor->parser.element_offset,
                     end, istream);
