@@ -10,4 +10,17 @@
 int
 socket_set_nonblock(int fd);
 
+#ifdef __linux
+int
+socket_set_cork(int fd, int value);
+#else
+int
+socket_set_cork(int fd, int value)
+{
+    (void)fd;
+    (void)value;
+    return 0;
+}
+#endif
+
 #endif

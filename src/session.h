@@ -9,12 +9,23 @@
 
 #include "pool.h"
 #include "list.h"
+#include "strmap.h"
 
 #include <time.h>
 
 typedef struct session *session_t;
 
 typedef unsigned session_id_t;
+
+struct cookie {
+    const char *name, *value;
+    time_t valid_until;
+};
+
+struct client_session {
+    const char *server;
+    strmap_t cookies;
+};
 
 struct session {
     struct list_head hash_siblings;

@@ -13,15 +13,12 @@
 #include "header-writer.h"
 #include "event2.h"
 #include "http-body.h"
+#include "socket-util.h"
 
 #include <daemon/log.h>
 
-#ifdef __linux
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#endif
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -192,8 +189,7 @@ http_client_cork(http_client_connection_t connection)
 #ifdef __linux
     if (!connection->cork) {
         connection->cork = 1;
-        setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK,
-                   &connection->cork, sizeof(connection->cork));
+        socket_set_cork(connection->fd, connection->cork);
     }
 #else
     (void)connection;
@@ -209,8 +205,7 @@ http_client_uncork(http_client_connection_t connection)
     if (connection->cork) {
         assert(connection->fd >= 0);
         connection->cork = 0;
-        setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK,
-                   &connection->cork, sizeof(connection->cork));
+        socket_set_cork(connection->fd, connection->cork);
     }
 #else
     (void)connection;

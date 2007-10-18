@@ -16,15 +16,13 @@
 #include "http-body.h"
 #include "direct.h"
 #include "format.h"
+#include "socket-util.h"
 
 #include <daemon/log.h>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
+#include <limits.h>
 #include <assert.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 
@@ -120,10 +118,7 @@ http_server_cork(http_server_connection_t connection)
 
     if (!connection->cork) {
         connection->cork = 1;
-#ifdef __linux
-        setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK,
-                   &connection->cork, sizeof(connection->cork));
-#endif
+        socket_set_cork(connection->fd, connection->cork);
     }
 }
 
@@ -135,10 +130,7 @@ http_server_uncork(http_server_connection_t connection)
     if (connection->cork) {
         assert(connection->fd >= 0);
         connection->cork = 0;
-#ifdef __linux
-        setsockopt(connection->fd, IPPROTO_TCP, TCP_CORK,
-                   &connection->cork, sizeof(connection->cork));
-#endif
+        socket_set_cork(connection->fd, connection->cork);
     }
 }
 

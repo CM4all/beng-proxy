@@ -10,6 +10,11 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
+#ifdef __linux
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
+
 int
 socket_set_nonblock(int fd)
 {
@@ -23,3 +28,12 @@ socket_set_nonblock(int fd)
 
     return fcntl(fd, F_SETFL, ret | O_NONBLOCK);
 }
+
+#ifdef __linux
+int
+socket_set_cork(int fd, int value)
+{
+    return setsockopt(fd, IPPROTO_TCP, TCP_CORK,
+                      &value, sizeof(value));
+}
+#endif
