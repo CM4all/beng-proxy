@@ -22,6 +22,7 @@
 
 #include <limits.h>
 #include <assert.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
