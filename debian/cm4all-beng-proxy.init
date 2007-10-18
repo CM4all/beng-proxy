@@ -24,6 +24,7 @@ PIDFILE=/var/run/cm4all/beng-proxy.pid
 DAEMON_USER=cm4all-beng-proxy
 LOGGER="/usr/bin/multilog t s1048576 /var/log/cm4all/beng-proxy"
 LOGGER_USER=cm4all-logger
+WORKERS=4
 DOCUMENT_ROOT=/var/www
 OPTIONS=""
 
@@ -45,6 +46,7 @@ case "$1" in
             --user "$DAEMON_USER" \
             --logger "$LOGGER" \
             --logger-user "$LOGGER_USER" \
+            --workers "$WORKERS" \
             --document-root "$DOCUMENT_ROOT" \
             $OPTIONS
 	log_end_msg $?

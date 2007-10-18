@@ -10,6 +10,9 @@
 # Which user should workshop run as?
 #LOGGER_USER=cm4all-logger
 
+# Number of worker processes; 0 = don't fork
+#WORKERS=4
+
 # Base directory for HTML documents.
 #DOCUMENT_ROOT=/var/www
 
