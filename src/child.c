@@ -64,6 +64,8 @@ child_event_callback(int fd, short event, void *ctx)
                        pid, exit_status);
 
         list_remove(&child->siblings);
+        assert(instance->num_children > 0);
+        --instance->num_children;
     }
 
     if (list_empty(&instance->children))
@@ -90,6 +92,7 @@ create_child(struct instance *instance)
             do
                 list_remove(instance->children.next);
             while (!list_empty(&instance->children));
+            instance->num_children = 0;
         }
 
         if (instance->listener != NULL)
@@ -123,6 +126,7 @@ create_child(struct instance *instance)
         child->pid = pid;
 
         list_add(&child->siblings, &instance->children);
+        ++instance->num_children;
     }
 
     return pid;

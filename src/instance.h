@@ -35,6 +35,7 @@ struct instance {
     /* child management */
     struct event child_event;
     struct list_head children;
+    unsigned num_children;
 };
 
 struct client_connection;
