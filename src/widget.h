@@ -43,10 +43,6 @@ struct widget {
     /** is this the single widget in this whole request which should
         be proxied? */
     unsigned proxy:1;
-
-    /** is this a dock where other widgets of this page may be
-        placed? */
-    unsigned dock:1;
 };
 
 /** a reference to a widget inside a widget.  NULL means the current
@@ -79,7 +75,6 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->height = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->proxy = 0;
-    widget->dock = 0;
 }
 
 static inline struct widget *

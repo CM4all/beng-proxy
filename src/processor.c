@@ -335,7 +335,7 @@ transform_url_attribute(processor_t processor, int focus)
                                                new_uri));
 }
 
-static int
+static inline int
 parse_bool(const char *p, size_t length)
 {
     return length == 0 ||
@@ -376,11 +376,7 @@ parser_attr_finished(struct parser *parser)
             else if (parser->attr_value_length == 3 &&
                 memcmp(parser->attr_value, "img", 3) == 0)
                 processor->embedded_widget->display = WIDGET_DISPLAY_IMG;
-        } else if (parser->attr_name_length == 4 &&
-                 memcmp(parser->attr_name, "dock", 4) == 0)
-            processor->embedded_widget->dock = parse_bool(parser->attr_value,
-                                                          parser->attr_value_length);
-        else if (parser->attr_name_length == 5 &&
+        } else if (parser->attr_name_length == 5 &&
                  memcmp(parser->attr_name, "width", 5) == 0)
             processor->embedded_widget->width = p_strndup(processor->output.pool, parser->attr_value,
                                                           parser->attr_value_length);
