@@ -8,7 +8,7 @@
 #define __BENG_SOCKET_UTIL_H
 
 int
-socket_set_nonblock(int fd);
+socket_enable_nonblock(int fd);
 
 #ifdef __linux
 

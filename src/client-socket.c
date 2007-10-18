@@ -103,7 +103,7 @@ client_socket_new(pool_t pool,
     if (client_socket->fd < 0)
         return -1;
 
-    ret = socket_set_nonblock(client_socket->fd);
+    ret = socket_enable_nonblock(client_socket->fd);
     if (ret < 0) {
         int save_errno = errno;
         close(client_socket->fd);

@@ -16,7 +16,7 @@
 #endif
 
 int
-socket_set_nonblock(int fd)
+socket_enable_nonblock(int fd)
 {
     int ret;
 
