@@ -97,6 +97,14 @@ setfattr -n user.Content-Type -v "text/html; charset=utf8" \
 Some file systems need explicit support for extended attributes.  On
 XFS, extended attributes are always enabled.
 
+\subsection{Directory index}
+
+For security (by obscurity) reasons, \emph{beng-proxy} has no code for
+generating directory listings.  If the request has a trailing slash,
+\emph{beng-proxy} looks for a file named \texttt{index} or
+\texttt{index.html} and serves it.  Without the trailing slash,
+\emph{beng-proxy} refuses to handle the request.
+
 
 \section{Widget protocol}
 
