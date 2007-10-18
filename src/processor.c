@@ -232,9 +232,9 @@ static void
 parser_element_start_in_widget(processor_t processor, struct parser *parser)
 {
     if (parser->element_name_length == 8 &&
-        memcmp(parser->element_name, "c:widget", 8) == 0 &&
-        parser->tag_type == TAG_CLOSE) {
-        processor->tag = TAG_WIDGET;
+        memcmp(parser->element_name, "c:widget", 8) == 0) {
+        if (parser->tag_type == TAG_CLOSE)
+            processor->tag = TAG_WIDGET;
     } else {
         processor->tag = TAG_NONE;
     }
