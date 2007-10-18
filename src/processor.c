@@ -231,6 +231,11 @@ parser_element_start(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
 
+    if (parser->embedded_widget != NULL) {
+        processor->tag = TAG_NONE;
+        return;
+    }
+
     if (parser->element_name_length == 4 &&
         memcmp(parser->element_name, "body", 4) == 0) {
         processor->tag = TAG_BODY;
