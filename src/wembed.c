@@ -52,14 +52,15 @@ static istream_t
 embed_iframe_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
-    const char *iframe;
+    const char *path, *iframe;
 
-    if (widget->id == NULL)
+    path = widget_path(widget);
+    if (path == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
     iframe = p_strcat(pool, "<iframe src='",
                       env->external_uri->base,
-                      ";frame=", widget->id,
+                      ";frame=", path,
                       "&", widget->id, "=",
                       widget->append_uri == NULL ? "" : widget->append_uri,
                       "'></iframe>",
@@ -72,14 +73,15 @@ static istream_t
 embed_img_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
-    const char *html;
+    const char *path, *html;
 
-    if (widget->id == NULL)
+    path = widget_path(widget);
+    if (path == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
     html = p_strcat(pool, "<img src='",
                     env->external_uri->base,
-                    ";frame=", widget->id,
+                    ";frame=", path,
                     "&", widget->id, "=",
                     widget->append_uri == NULL ? "" : widget->append_uri,
                     "'></img>",
