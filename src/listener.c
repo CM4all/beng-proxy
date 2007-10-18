@@ -54,6 +54,13 @@ listener_event_callback(int fd, short event, void *ctx)
         return;
     }
 
+    ret = socket_enable_nodelay(remote_fd);
+    if (ret < 0) {
+        daemon_log(1, "setsockopt(TCP_NODELAY) failed: %s\n", strerror(errno));
+        close(remote_fd);
+        return;
+    }
+
     listener->callback(remote_fd,
                        (const struct sockaddr*)&sa, sa_len,
                        listener->callback_ctx);

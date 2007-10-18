@@ -30,10 +30,20 @@ socket_set_nonblock(int fd)
 }
 
 #ifdef __linux
+
+int
+socket_enable_nodelay(int fd)
+{
+    int value = 1;
+    return setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
+                      &value, sizeof(value));
+}
+
 int
 socket_set_cork(int fd, int value)
 {
     return setsockopt(fd, IPPROTO_TCP, TCP_CORK,
                       &value, sizeof(value));
 }
+
 #endif

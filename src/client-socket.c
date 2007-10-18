@@ -111,6 +111,14 @@ client_socket_new(pool_t pool,
         return -1;
     }
 
+    ret = socket_enable_nodelay(client_socket->fd);
+    if (ret < 0) {
+        int save_errno = errno;
+        close(client_socket->fd);
+        errno = save_errno;
+        return -1;
+    }
+
     ret = connect(client_socket->fd, addr, addrlen);
     if (ret == 0) {
         struct timeval tv = {

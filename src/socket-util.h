@@ -11,9 +11,22 @@ int
 socket_set_nonblock(int fd);
 
 #ifdef __linux
+
+int
+socket_enable_nodelay(int fd);
+
 int
 socket_set_cork(int fd, int value);
+
 #else
+
+int
+socket_enable_nodelay(int fd)
+{
+    (void)fd;
+    return 0;
+}
+
 int
 socket_set_cork(int fd, int value)
 {
@@ -21,6 +34,7 @@ socket_set_cork(int fd, int value)
     (void)value;
     return 0;
 }
+
 #endif
 
 #endif
