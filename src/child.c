@@ -130,6 +130,8 @@ create_child(struct instance *instance)
     } else if (pid == 0) {
         deinit_signals(instance);
 
+        instance->config.num_workers = 0;
+
         event_del(&instance->child_event);
 
         if (!list_empty(&instance->children)) {
