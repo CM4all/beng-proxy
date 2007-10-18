@@ -54,7 +54,7 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
 {
     const char *path, *iframe;
 
-    path = widget_path(widget);
+    path = widget_path(pool, widget);
     if (path == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
@@ -75,7 +75,7 @@ embed_img_widget(pool_t pool, const struct processor_env *env,
 {
     const char *path, *html;
 
-    path = widget_path(widget);
+    path = widget_path(pool, widget);
     if (path == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 

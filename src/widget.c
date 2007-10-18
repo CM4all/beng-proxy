@@ -53,7 +53,7 @@ widget_path(pool_t pool, const struct widget *widget)
 
     path = p_malloc(pool, length);
     p = path + length - 1;
-    *p-- = 0;
+    *p = 0;
 
     for (w = widget; w->parent != NULL; w = w->parent) {
         length = strlen(w->id);

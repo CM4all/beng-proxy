@@ -166,7 +166,7 @@ processor_new(pool_t pool, istream_t istream,
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
 
-    path = widget_path(widget);
+    path = widget_path(pool, widget);
     if (path == NULL)
         path = "";
     istream = istream_subst_new(pool, istream,
