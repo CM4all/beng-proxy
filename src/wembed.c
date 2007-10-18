@@ -58,7 +58,11 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
     if (path == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
-    iframe = p_strcat(pool, "<iframe src='",
+    iframe = p_strcat(pool, "<iframe "
+                      "width='100%' height='100%' "
+                      "frameborder='0' marginheight='0' marginwidth='0' "
+                      "scrolling='no' "
+                      "src='",
                       env->external_uri->base,
                       ";frame=", path,
                       "&", widget->id, "=",
