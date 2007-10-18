@@ -44,6 +44,7 @@ exit_event_callback(int fd, short event, void *ctx)
     while (!list_empty(&instance->connections))
         remove_connection((struct client_connection*)instance->connections.next);
 
+    event_del(&instance->child_event);
     kill_children(instance);
 
     session_manager_deinit();

@@ -34,6 +34,47 @@ find_child_by_pid(struct instance *instance, pid_t pid)
 }
 
 static void
+schedule_respawn(struct instance *instance);
+
+static void
+respawn_event_callback(int fd, short event, void *ctx)
+{
+    struct instance *instance = (struct instance*)ctx;
+    pid_t pid;
+
+    (void)fd;
+    (void)event;
+
+    instance->respawn_event.ev_events = 0;
+
+    if (instance->should_exit ||
+        instance->num_children >= instance->config.num_workers)
+        return;
+
+    daemon_log(2, "respawning child\n");
+
+    pid = create_child(instance);
+    if (pid != 0)
+        schedule_respawn(instance);
+}
+
+static void
+schedule_respawn(struct instance *instance)
+{
+    if (!instance->should_exit &&
+        instance->num_children < instance->config.num_workers &&
+        instance->respawn_event.ev_events == 0) {
+        static struct timeval tv = {
+            .tv_sec = 1,
+            .tv_usec = 0,
+        };
+
+        evtimer_set(&instance->respawn_event, respawn_event_callback, instance);
+        evtimer_add(&instance->respawn_event, &tv);
+    }
+}
+
+static void
 child_event_callback(int fd, short event, void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
@@ -71,6 +112,8 @@ child_event_callback(int fd, short event, void *ctx)
     if (list_empty(&instance->children))
         event_del(&instance->child_event);
 
+    schedule_respawn(instance);
+
     pool_commit();
 }
 
@@ -78,6 +121,8 @@ pid_t
 create_child(struct instance *instance)
 {
     pid_t pid;
+
+    assert(instance->respawn_event.ev_events == 0);
 
     pid = fork();
     if (pid < 0) {

@@ -33,7 +33,7 @@ struct instance {
     struct event sigterm_event, sigint_event, sigquit_event;
 
     /* child management */
-    struct event child_event;
+    struct event child_event, respawn_event;
     struct list_head children;
     unsigned num_children;
 };
