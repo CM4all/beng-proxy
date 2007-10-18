@@ -39,12 +39,17 @@ struct processor {
         TAG_NONE,
         TAG_BODY,
         TAG_WIDGET,
+        TAG_WIDGET_PARAM,
         TAG_A,
         TAG_FORM,
         TAG_IMG,
     } tag;
     off_t widget_start_offset;
     struct widget *embedded_widget;
+    char widget_param_name[64];
+    char widget_param_value[64];
+    char widget_params[512];
+    size_t widget_params_length;
 };
 
 static inline processor_t
@@ -235,6 +240,11 @@ parser_element_start_in_widget(processor_t processor, struct parser *parser)
         memcmp(parser->element_name, "c:widget", 8) == 0) {
         if (parser->tag_type == TAG_CLOSE)
             processor->tag = TAG_WIDGET;
+    } else if (parser->element_name_length == 5 &&
+               memcmp(parser->element_name, "param", 5) == 0) {
+        processor->tag = TAG_WIDGET_PARAM;
+        processor->widget_param_name[0] = 0;
+        processor->widget_param_value[0] = 0;
     } else {
         processor->tag = TAG_NONE;
     }
@@ -270,6 +280,7 @@ parser_element_start(struct parser *parser)
         processor->embedded_widget = p_malloc(processor->output.pool,
                                               sizeof(*processor->embedded_widget));
         widget_init(processor->embedded_widget, NULL);
+        processor->widget_params_length = 0;
 
         list_add(&processor->embedded_widget->siblings,
                  &processor->widget->children);
@@ -413,6 +424,27 @@ parser_attr_finished(struct parser *parser)
                                                            parser->attr_value_length);
         break;
 
+    case TAG_WIDGET_PARAM:
+        assert(processor->embedded_widget != NULL);
+
+        if (parser->attr_name_length == 4 &&
+            memcmp(parser->attr_name, "name", 4) == 0) {
+            if (parser->attr_value_length >= sizeof(processor->widget_param_name))
+                parser->attr_value_length = sizeof(processor->widget_param_name) - 1;
+            memcpy(processor->widget_param_name, parser->attr_value,
+                   parser->attr_value_length);
+            processor->widget_param_name[parser->attr_value_length] = 0;
+        } else if (parser->attr_name_length == 5 &&
+                   memcmp(parser->attr_name, "value", 5) == 0) {
+            if (parser->attr_value_length >= sizeof(processor->widget_param_value))
+                parser->attr_value_length = sizeof(processor->widget_param_value) - 1;
+            memcpy(processor->widget_param_value, parser->attr_value,
+                   parser->attr_value_length);
+            processor->widget_param_value[parser->attr_value_length] = 0;
+        }
+
+        break;
+
     case TAG_IMG:
         if (parser->attr_name_length == 3 &&
             memcmp(parser->attr_name, "src", 3) == 0)
@@ -493,6 +525,11 @@ embed_element_finished(processor_t processor)
     widget = processor->embedded_widget;
     processor->embedded_widget = NULL;
 
+    if (processor->widget_params_length > 0)
+        widget->query_string = p_strndup(processor->output.pool,
+                                         processor->widget_params,
+                                         processor->widget_params_length);
+
     istream = embed_widget(processor->output.pool, processor->env, widget);
     if (istream != NULL && (processor->options & PROCESSOR_QUIET) == 0)
         istream = embed_decorate(processor->output.pool, istream, widget);
@@ -543,5 +580,30 @@ parser_element_finished(struct parser *parser, off_t end)
         istream_t istream = embed_element_finished(processor);
         replace_add(&processor->replace, processor->widget_start_offset,
                     end, istream);
+    } else if (processor->tag == TAG_WIDGET_PARAM) {
+        size_t name_length, value_length;
+
+        assert(processor->embedded_widget != NULL);
+
+        /* XXX escape */
+
+        name_length = strlen(processor->widget_param_name);
+        value_length = strlen(processor->widget_param_value);
+        if (name_length == 0 ||
+            processor->widget_params_length + 1 + name_length + 1 + value_length >= sizeof(processor->widget_params))
+            return;
+
+        if (processor->widget_params_length > 0)
+            processor->widget_params[processor->widget_params_length++] = '&';
+
+        memcpy(processor->widget_params + processor->widget_params_length,
+               processor->widget_param_name, name_length);
+        processor->widget_params_length += name_length;
+
+        processor->widget_params[processor->widget_params_length++] = '=';
+
+        memcpy(processor->widget_params + processor->widget_params_length,
+               processor->widget_param_value, value_length);
+        processor->widget_params_length += value_length;
     }
 }

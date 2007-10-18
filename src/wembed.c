@@ -39,6 +39,13 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
         }
     }
 
+    if (widget->query_string != NULL)
+        widget->real_uri = p_strcat(pool,
+                                    widget->real_uri,
+                                    strchr(widget->real_uri, '?') == NULL ? "?" : "&",
+                                    widget->query_string,
+                                    NULL);
+
     return embed_new(pool,
                      method, widget->real_uri,
                      request_content_length, request_body,

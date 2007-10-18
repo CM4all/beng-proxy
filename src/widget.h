@@ -40,6 +40,8 @@ struct widget {
         WIDGET_DISPLAY_IMG,
     } display;
 
+    const char *query_string;
+
     /** is this the single widget in this whole request which should
         be proxied? */
     unsigned proxy:1;
@@ -74,6 +76,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->width = NULL;
     widget->height = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
+    widget->query_string = NULL;
     widget->proxy = 0;
 }
 
