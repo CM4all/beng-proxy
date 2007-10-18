@@ -9,6 +9,7 @@ Package: cm4all-beng-proxy
 Architecture: any
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6),
  cm4all-thirdparty-multilog, adduser
+Suggests: attr
 Description: HTTP proxy server
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
