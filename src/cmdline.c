@@ -51,6 +51,10 @@ static void usage(void) {
 #endif
          " -U name        execute the logger program with this user id\n"
 #ifdef __GLIBC__
+         " --workers COUNT\n"
+#endif
+         " -w COUNT       set the number of worker processes; 0=don't fork\n"
+#ifdef __GLIBC__
          " --document-root DIR\n"
 #endif
          " -r DIR         set the document root\n"
@@ -85,6 +89,7 @@ void
 parse_cmdline(struct config *config, int argc, char **argv)
 {
     int ret;
+    char *endptr;
 #ifdef __GLIBC__
     static const struct option long_options[] = {
         {"help", 0, 0, 'h'},
@@ -95,6 +100,7 @@ parse_cmdline(struct config *config, int argc, char **argv)
         {"pidfile", 1, 0, 'P'},
         {"user", 1, 0, 'u'},
         {"logger-user", 1, 0, 'U'},
+        {"workers", 1, 0, 'w'},
         {"document-root", 1, 0, 'r'},
         {0,0,0,0}
     };
@@ -104,10 +110,10 @@ parse_cmdline(struct config *config, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:w:r:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:U:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:U:w:r:");
 #endif
         if (ret == -1)
             break;
@@ -155,6 +161,14 @@ parse_cmdline(struct config *config, int argc, char **argv)
                 arg_error(argv[0], "cannot specify a user in debug mode");
 
             daemon_user_by_name(&daemon_config.logger_user, optarg, NULL);
+            break;
+
+        case 'w':
+            config->num_workers = (unsigned)strtoul(optarg, &endptr, 10);
+            if (*endptr != 0)
+                arg_error(argv[0], "invalid number after --workers");
+            if (config->num_workers > 1024)
+                arg_error(argv[0], "too many workers configured");
             break;
 
         case 'r':

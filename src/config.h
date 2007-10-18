@@ -17,6 +17,8 @@ extern int debug_mode;
 
 struct config {
     const char *document_root;
+
+    unsigned num_workers;
 };
 
 void

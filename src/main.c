@@ -118,6 +118,21 @@ int main(int argc, char **argv)
     if (ret < 0)
         exit(2);
 
+    /* create worker processes */
+
+    if (instance.config.num_workers > 0) {
+        pid_t pid;
+
+        /* the master process shouldn't work */
+        listener_event_del(instance.listener);
+
+        while (instance.num_children < instance.config.num_workers) {
+            pid = create_child(&instance);
+            if (pid <= 0)
+                break;
+        }
+    }
+
     /* main loop */
 
     event_dispatch();
