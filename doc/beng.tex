@@ -94,7 +94,8 @@ setfattr -n user.Content-Type -v "text/html; charset=utf8" \
 /var/www/index.html
 \end{verbatim*}
 
-Some file systems need explicit support for extended attributes.  On
+Some file systems need explicit support for extended attributes (mount
+option \texttt{user\_xattr}).  On
 XFS, extended attributes are always enabled.
 
 \subsection{Directory index}
