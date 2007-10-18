@@ -116,10 +116,12 @@ http_server_cork(http_server_connection_t connection)
     assert(connection != NULL);
     assert(connection->fd >= 0);
 
+#ifdef __linux
     if (!connection->cork) {
         connection->cork = 1;
         socket_set_cork(connection->fd, connection->cork);
     }
+#endif
 }
 
 static inline void
@@ -127,11 +129,13 @@ http_server_uncork(http_server_connection_t connection)
 {
     assert(connection != NULL);
 
+#ifdef __linux
     if (connection->cork) {
         assert(connection->fd >= 0);
         connection->cork = 0;
         socket_set_cork(connection->fd, connection->cork);
     }
+#endif
 }
 
 
@@ -548,7 +552,9 @@ http_server_connection_new(pool_t pool, int fd,
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
     connection->response.writing = 0;
+#ifdef __linux
     connection->cork = 0;
+#endif
 
     connection->input = fifo_buffer_new(pool, 4096);
 
@@ -578,7 +584,9 @@ http_server_connection_close(http_server_connection_t connection)
         connection->fd = -1;
     }
 
+#ifdef __linux
     connection->cork = 0;
+#endif
 
     pool_ref(connection->pool);
 
