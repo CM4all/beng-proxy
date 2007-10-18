@@ -111,11 +111,11 @@ widget_proxy_callback(http_status_t status,
         NULL,
     };
 
-    headers2 = growing_buffer_new(wp->request->pool, 2048);
-    headers_copy(headers, headers2, copy_headers);
-
     assert(wp->body != NULL);
     assert(wp->request != NULL);
+
+    headers2 = growing_buffer_new(wp->request->pool, 2048);
+    headers_copy(headers, headers2, copy_headers);
 
     istream_free_unref_handler(&wp->body);
 
