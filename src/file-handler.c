@@ -86,6 +86,24 @@ file_callback(struct client_connection *connection,
         return;
     }
 
+    if (S_ISDIR(st.st_mode) && translated->path[strlen(translated->path) - 1] == '/') {
+        const char *path = p_strcat(request->pool, translated->path,
+                                    "/index", NULL);
+        struct stat st2;
+
+        ret = lstat(path, &st2);
+        if (ret < 0 || !S_ISREG(st2.st_mode)) {
+            path = p_strcat(request->pool, translated->path,
+                            "/index.html", NULL);
+            ret = lstat(path, &st2);
+        }
+
+        if (ret == 0 && S_ISREG(st2.st_mode)) {
+            st = st2;
+            translated->path = path;
+        }
+    }
+
     if (!S_ISREG(st.st_mode)) {
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
