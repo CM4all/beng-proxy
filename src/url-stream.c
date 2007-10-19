@@ -137,6 +137,7 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
                             &url_stream_response_handler, us);
     } else {
         daemon_log(1, "failed to connect: %s\n", strerror(err));
+        us->http = NULL;
         /* XXX */
     }
 }
