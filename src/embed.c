@@ -116,8 +116,32 @@ embed_new(pool_t pool, http_method_t method, const char *url,
           unsigned options)
 {
     struct embed *embed;
+    growing_buffer_t headers;
+    static const char *const copy_headers[] = {
+        "accept",
+        "accept-language",
+        "from",
+        NULL,
+    };
+    static const char *const copy_headers_with_body[] = {
+        "content-encoding",
+        "content-language",
+        "content-md5",
+        "content-range",
+        "content-type",
+        NULL,
+    };
 
     assert(url != NULL);
+
+    headers = growing_buffer_new(pool, 1024);
+    header_write(headers, "accept-charset", "utf-8");
+    header_write(headers, "connection", "close");
+    if (env->request_headers != NULL) {
+        headers_copy(env->request_headers, headers, copy_headers);
+        if (request_body != NULL)
+            headers_copy(env->request_headers, headers, copy_headers_with_body);
+    }
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->widget = widget;
@@ -126,7 +150,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     embed->delayed = istream_delayed_new(pool, embed_abort, embed);
 
     embed->url_stream = url_stream_new(pool,
-                                       method, url, NULL,
+                                       method, url, headers,
                                        request_content_length,
                                        request_body,
                                        embed_http_client_callback, embed);

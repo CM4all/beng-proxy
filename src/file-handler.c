@@ -156,6 +156,7 @@ file_callback(struct client_connection *connection,
 
             env = p_malloc(request->pool, sizeof(*env));
             processor_env_init(request->pool, env, &translated->uri,
+                               request->headers,
                                request->content_length, request->body,
                                embed_widget_callback);
             if (env->frame != NULL) { /* XXX */

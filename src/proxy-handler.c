@@ -74,7 +74,9 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
         unsigned processor_options = 0;
 
         /* XXX request body? */
-        processor_env_init(pt->request->pool, &pt->env, &pt->translated->uri, 0, NULL,
+        processor_env_init(pt->request->pool, &pt->env, &pt->translated->uri,
+                           pt->request->headers,
+                           0, NULL,
                            embed_widget_callback);
         if (pt->env.frame != NULL) { /* XXX */
             pt->env.widget_callback = frame_widget_callback;
