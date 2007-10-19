@@ -37,16 +37,29 @@ replace_init(struct replace *replace, pool_t pool,
 void
 replace_destroy(struct replace *replace);
 
+/**
+ * Read data from the source file.
+ */
 size_t
 replace_feed(struct replace *replace, const void *data, size_t length);
 
+/**
+ * End of source file reached.
+ */
 void
 replace_eof(struct replace *replace);
 
+/**
+ * Add a new substition.  Substitutions may not overlap.
+ */
 void
 replace_add(struct replace *replace, off_t start, off_t end,
             istream_t istream);
 
+/**
+ * Read data from the 'replace' object.  This function will call
+ * istream_invoke_data(replace->output).
+ */
 void
 replace_read(struct replace *replace);
 

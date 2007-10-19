@@ -16,6 +16,9 @@ struct substitution {
     istream_t istream;
 };
 
+/**
+ * Activate the next substitution object after s.
+ */
 static void
 replace_to_next_substitution(struct replace *replace, struct substitution *s)
 {
@@ -35,9 +38,17 @@ replace_to_next_substitution(struct replace *replace, struct substitution *s)
            replace->first_substitution == NULL ||
            replace->first_substitution->start >= replace->position);
 
+    /* don't recurse if we're being called
+       replace_read_substitution() */
     if (!replace->read_locked)
         replace_read(replace);
 }
+
+
+/*
+ * istream handler
+ *
+ */
 
 static size_t
 replace_substitution_data(const void *data, size_t length, void *ctx)
@@ -80,6 +91,11 @@ static const struct istream_handler replace_substitution_handler = {
     .free = replace_substitution_free,
 };
 
+
+/*
+ * constructor and destructor
+ *
+ */
 
 void
 replace_init(struct replace *replace, pool_t pool,
@@ -130,6 +146,12 @@ replace_destroy(struct replace *replace)
         istream_close(output);
     }
 }
+
+
+/*
+ * misc methods
+ *
+ */
 
 size_t
 replace_feed(struct replace *replace, const void *data, size_t length)
@@ -197,6 +219,9 @@ replace_add(struct replace *replace, off_t start, off_t end,
     replace->append_substitution_p = &s->next;
 }
 
+/**
+ * Read data from substitution objects.
+ */
 static int
 replace_read_substitution(struct replace *replace)
 {
@@ -302,6 +327,7 @@ replace_read(struct replace *replace)
     pool_ref(replace->pool);
     pool = replace->pool;
 
+    /* read until someone (input or output) blocks */
     while (1) {
         blocking = replace_read_substitution(replace);
         if (replace->output == NULL || blocking)
