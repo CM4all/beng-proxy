@@ -100,6 +100,7 @@ widget_proxy_callback(http_status_t status,
                       void *ctx)
 {
     struct widget_proxy *wp = ctx;
+    struct http_server_request *request;
     growing_buffer_t headers2;
     static const char *const copy_headers[] = {
         "age",
@@ -114,7 +115,10 @@ widget_proxy_callback(http_status_t status,
     assert(wp->body != NULL);
     assert(wp->request != NULL);
 
-    headers2 = growing_buffer_new(wp->request->pool, 2048);
+    request = wp->request;
+    wp->request = NULL;
+
+    headers2 = growing_buffer_new(request->pool, 2048);
     headers_copy(headers, headers2, copy_headers);
 
     istream_free_unref_handler(&wp->body);
@@ -122,14 +126,13 @@ widget_proxy_callback(http_status_t status,
 #ifndef NO_DEFLATE
     if (content_length == (off_t)-1 &&
         strmap_get(headers, "content-encoding") == NULL &&
-        http_client_accepts_encoding(wp->request->headers, "deflate")) {
+        http_client_accepts_encoding(request->headers, "deflate")) {
         header_write(headers2, "content-encoding", "deflate");
-        body = istream_deflate_new(wp->request->pool, body);
+        body = istream_deflate_new(request->pool, body);
     }
 #endif
 
-    http_server_response(wp->request, status, headers2, content_length, body);
-    wp->request = NULL;
+    http_server_response(request, status, headers2, content_length, body);
 }
 
 
