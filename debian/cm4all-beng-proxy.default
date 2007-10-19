@@ -10,6 +10,9 @@
 # Which user should workshop run as?
 #LOGGER_USER=cm4all-logger
 
+# Which port does beng-proxy listen on?
+#PORT=80
+
 # Number of worker processes; 0 = don't fork
 #WORKERS=4
 

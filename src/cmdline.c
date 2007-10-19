@@ -51,6 +51,10 @@ static void usage(void) {
 #endif
          " -U name        execute the logger program with this user id\n"
 #ifdef __GLIBC__
+         " --port PORT\n"
+#endif
+         " -p PORT        the TCP port beng-proxy listens on\n"
+#ifdef __GLIBC__
          " --workers COUNT\n"
 #endif
          " -w COUNT       set the number of worker processes; 0=don't fork\n"
@@ -100,6 +104,7 @@ parse_cmdline(struct config *config, int argc, char **argv)
         {"pidfile", 1, 0, 'P'},
         {"user", 1, 0, 'u'},
         {"logger-user", 1, 0, 'U'},
+        {"port", 1, 0, 'p'},
         {"workers", 1, 0, 'w'},
         {"document-root", 1, 0, 'r'},
         {0,0,0,0}
@@ -110,10 +115,10 @@ parse_cmdline(struct config *config, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:w:r:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:w:r:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:U:w:r:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:w:r:");
 #endif
         if (ret == -1)
             break;
@@ -161,6 +166,14 @@ parse_cmdline(struct config *config, int argc, char **argv)
                 arg_error(argv[0], "cannot specify a user in debug mode");
 
             daemon_user_by_name(&daemon_config.logger_user, optarg, NULL);
+            break;
+
+        case 'p':
+            config->port = (unsigned)strtoul(optarg, &endptr, 10);
+            if (*endptr != 0)
+                arg_error(argv[0], "invalid number after --port");
+            if (config->port == 0 || config->port > 0xffff)
+                arg_error(argv[0], "invalid port after --port");
             break;
 
         case 'w':

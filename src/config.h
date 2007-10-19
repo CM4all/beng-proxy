@@ -16,6 +16,8 @@ extern int debug_mode;
 #endif
 
 struct config {
+    unsigned port;
+
     const char *document_root;
 
     unsigned num_workers;

@@ -89,6 +89,10 @@ int main(int argc, char **argv)
 
     /* configuration */
 
+    if (debug_mode)
+        instance.config.port = 8080;
+    else
+        instance.config.port = 80;
     instance.config.document_root = "/var/www";
 
     parse_cmdline(&instance.config, argc, argv);
@@ -106,7 +110,8 @@ int main(int argc, char **argv)
     session_manager_init(instance.pool);
 
     ret = listener_tcp_port_new(instance.pool,
-                                8080, &http_listener_callback, &instance,
+                                instance.config.port,
+                                &http_listener_callback, &instance,
                                 &instance.listener);
     if (ret < 0) {
         perror("listener_tcp_port_new() failed");
