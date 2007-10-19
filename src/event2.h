@@ -61,9 +61,9 @@ event2_commit(struct event2 *event)
                       event->callback, event->ctx);
             event_add(&event->event,
                       event->tv != NULL ? &tv : NULL);
-
-            event->old_mask = event->new_mask;
         }
+
+        event->old_mask = event->new_mask;
     }
 }
 
