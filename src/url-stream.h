@@ -26,6 +26,10 @@ url_stream_new(pool_t pool,
                off_t content_length, istream_t body,
                url_stream_callback_t callback, void *ctx);
 
+/**
+ * Cancels the transfer.  You must not call this method after the
+ * callback has been invoked.
+ */
 void
 url_stream_close(url_stream_t us);
 

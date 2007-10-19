@@ -83,10 +83,7 @@ url_stream_connection_free(void *ctx)
 
     us->http = NULL;
 
-    /* self-destruct only after we provided a response to the
-       callback */
-    if (us->got_response)
-        url_stream_close(us);
+    url_stream_close(us);
 }
 
 static const struct http_client_connection_handler url_stream_connection_handler = {
@@ -111,6 +108,7 @@ url_stream_response_free(void *ctx)
     url_stream_t us = ctx;
 
     if (!us->got_response)
+        /* invoke callback only if it hasn't already been invoked */
         us->callback((http_status_t)0, NULL, 0, NULL, us->callback_ctx);
 }
 
@@ -124,10 +122,10 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
 {
     url_stream_t us = ctx;
 
-    client_socket_free(&us->client_socket);
-
     if (err == 0) {
         assert(fd >= 0);
+
+        client_socket_free(&us->client_socket);
 
         us->got_response = 0;
         us->http = http_client_connection_new(us->pool, fd,
@@ -137,8 +135,9 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
                             &url_stream_response_handler, us);
     } else {
         daemon_log(1, "failed to connect: %s\n", strerror(err));
+
         us->http = NULL;
-        /* XXX */
+        url_stream_close(us);
     }
 }
 
@@ -227,13 +226,16 @@ url_stream_close(url_stream_t us)
     assert(us != NULL);
     assert(us->pool != NULL);
 
+    pool = us->pool;
+    us->pool = NULL;
+
     if (us->client_socket != NULL) {
         client_socket_free(&us->client_socket);
         us->callback((http_status_t)0, NULL, 0, NULL, us->callback_ctx);
     } else if (us->http != NULL)
-        http_client_connection_close(us->http);
+        /* no need to invoke us->callback() here because
+           url_stream_connection_free() will do it */
+        http_client_connection_free(&us->http);
 
-    pool = us->pool;
-    us->pool = NULL;
     pool_unref(pool);
 }
