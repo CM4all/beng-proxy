@@ -38,6 +38,9 @@ void
 http_client_connection_close(http_client_connection_t connection);
 
 void
+http_client_connection_free(http_client_connection_t *connection_r);
+
+void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
                     growing_buffer_t headers,

@@ -610,6 +610,17 @@ http_client_connection_close(http_client_connection_t connection)
     pool_unref(connection->pool);
 }
 
+void
+http_client_connection_free(http_client_connection_t *connection_r)
+{
+    http_client_connection_t connection = *connection_r;
+    *connection_r = NULL;
+
+    assert(connection != NULL);
+
+    http_client_connection_close(connection);
+}
+
 
 /*
  * istream handler for the request
