@@ -215,4 +215,18 @@ provided by the browser.
 As usual: never trust user input!  The widget server cannot see if
 input came from the template or from the user's browser.
 
+\subsection{Variable substitutions}
+
+\emph{beng-proxy} defines special entities beginning with \texttt{c:}
+for its purposes.
+
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\texttt{\&c:path;} & the location of this widget \\
+\hline
+\texttt{\&c:prefix;} & XML id and Javascript prefix \\
+\hline
+\end{tabular}
+
+
 \end{document}

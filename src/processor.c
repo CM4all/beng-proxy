@@ -180,6 +180,8 @@ processor_new(pool_t pool, istream_t istream,
         path = "";
     istream = istream_subst_new(pool, istream,
                                 "&c:path;", path);
+    istream = istream_subst_new(pool, istream,
+                                "&c:prefix;", widget_prefix(pool, widget));
 
 #ifdef NDEBUG
     pool_ref(pool);

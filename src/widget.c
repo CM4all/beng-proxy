@@ -70,6 +70,43 @@ widget_path(pool_t pool, const struct widget *widget)
     return path;
 }
 
+const char *
+widget_prefix(pool_t pool, const struct widget *widget)
+{
+    size_t length;
+    const struct widget *w;
+    char *path, *p;
+
+    assert(widget != NULL);
+
+    for (w = widget, length = 3; w->parent != NULL; w = w->parent) {
+        if (w->id == NULL)
+            return NULL;
+        length += strlen(w->id) + 2;
+    }
+
+    path = p_malloc(pool, length);
+    p = path + length - 1;
+    *p = 0;
+
+    for (w = widget; w->parent != NULL; w = w->parent) {
+        p -= 2;
+        p[0] = '_';
+        p[1] = '_';
+        length = strlen(w->id);
+        p -= length;
+        memcpy(p, w->id, length);
+    }
+
+    p -= 2;
+    p[0] = '_';
+    p[1] = '_';
+
+    assert(p == path);
+
+    return path;
+}
+
 
 const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *_p)
