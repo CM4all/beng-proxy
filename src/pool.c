@@ -296,6 +296,7 @@ pool_new_linear(pool_t parent, const char *name, size_t initial_size)
 void
 pool_set_major(pool_t pool)
 {
+    assert(!pool->trashed);
     assert(list_empty(&pool->children));
 
     pool->major = 1;
