@@ -18,7 +18,8 @@ build: debian/stamp-build
 debian/stamp-build:
 	dh_testdir
 
-	$(MAKE) CFLAGS="$(CFLAGS)" all doc/beng.pdf
+	#$(MAKE) CFLAGS="$(CFLAGS)" all doc/beng.pdf
+	$(MAKE) all doc/beng.pdf
 
 	touch $@
 
