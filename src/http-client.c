@@ -734,7 +734,8 @@ http_client_request(http_client_connection_t connection,
 
     connection->request.istream = istream_cat_new(connection->request.pool,
                                                   request_line_stream,
-                                                  header_stream, body);
+                                                  header_stream, body,
+                                                  NULL);
     istream_handler_set(connection->request.istream,
                         &http_client_request_stream_handler, connection,
                         0);
