@@ -38,7 +38,7 @@ args_format(pool_t pool, strmap_t args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2)
 {
-    const struct pair *pair;
+    const struct strmap_pair *pair;
     size_t length = 0;
     char *ret, *p;
 

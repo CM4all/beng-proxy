@@ -11,7 +11,7 @@
 
 typedef struct strmap *strmap_t;
 
-struct pair {
+struct strmap_pair {
     const char *key, *value;
 };
 
@@ -33,7 +33,7 @@ strmap_get(strmap_t map, const char *key);
 void
 strmap_rewind(strmap_t map);
 
-const struct pair *
+const struct strmap_pair *
 strmap_next(strmap_t map);
 
 #endif

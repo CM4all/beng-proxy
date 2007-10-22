@@ -12,7 +12,7 @@
 
 struct slot {
     struct slot *next;
-    struct pair pair;
+    struct strmap_pair pair;
 };
 
 struct strmap {
@@ -181,7 +181,7 @@ strmap_rewind(strmap_t map)
     map->next_slot = 0;
 }
 
-const struct pair *
+const struct strmap_pair *
 strmap_next(strmap_t map)
 {
     if (map->current_slot != NULL && map->current_slot->next != NULL) {
