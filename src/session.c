@@ -93,7 +93,7 @@ session_id_parse(const char *p)
 void
 session_id_format(char dest[9], session_id_t id)
 {
-    snprintf(dest, sizeof(dest), "%08x", id);
+    snprintf(dest, 9, "%08x", id);
 }
 
 static session_id_t
