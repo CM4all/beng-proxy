@@ -112,6 +112,7 @@ session_new(void)
     session->pool = pool;
     session->id = session_generate_id();
     session->expires = time(NULL) + SESSION_TTL_NEW;
+    session->widgets = NULL;
 
     list_add(&session->hash_siblings, &session_manager.sessions);
     ++session_manager.num_sessions;
@@ -159,4 +160,62 @@ session_remove(session_t session)
 
     session->removed = 1;
     pool_unref(pool);
+}
+
+static struct widget_session *
+hashmap_r_get_widget_session(pool_t pool, hashmap_t *map_r,
+                             const char *id, int create)
+{
+    hashmap_t map = *map_r;
+    struct widget_session *ws;
+
+    assert(pool != NULL);
+    assert(map_r != NULL);
+    assert(id != NULL);
+
+    if (map == NULL) {
+        if (!create)
+            return NULL;
+
+        /* lazy initialisation */
+        *map_r = map = hashmap_new(pool, 16);
+    } else {
+        ws = (struct widget_session *)hashmap_get(map, id);
+        if (ws != NULL)
+            return ws;
+
+        if (!create)
+            return NULL;
+    }
+
+    ws = p_malloc(pool, sizeof(*ws));
+    ws->parent = NULL;
+    ws->pool = pool;
+    ws->id = p_strdup(pool, id);
+    ws->children = NULL;
+    ws->query_string = NULL;
+
+    hashmap_addn(map, ws->id, ws);
+    return ws;
+}
+
+struct widget_session *
+session_get_widget(session_t session, const char *id, int create)
+{
+    assert(session != NULL);
+    assert(id != NULL);
+
+    return hashmap_r_get_widget_session(session->pool, &session->widgets,
+                                        id, create);
+}
+
+struct widget_session *
+widget_session_get_child(struct widget_session *parent, const char *id,
+                         int create)
+{
+    assert(parent != NULL);
+    assert(id != NULL);
+
+    return hashmap_r_get_widget_session(parent->pool, &parent->children,
+                                        id, create);
 }

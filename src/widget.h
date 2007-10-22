@@ -42,6 +42,8 @@ struct widget {
 
     const char *query_string;
 
+    struct widget_session *session;
+
     /** is this the single widget in this whole request which should
         be proxied? */
     unsigned proxy:1;
@@ -77,6 +79,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->height = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->query_string = NULL;
+    widget->session = NULL;
     widget->proxy = 0;
 }
 
@@ -93,6 +96,9 @@ widget_path(pool_t pool, const struct widget *widget);
 
 const char *
 widget_prefix(pool_t pool, const struct widget *widget);
+
+struct widget_session *
+widget_get_session(struct widget *widget, int create);
 
 const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *p);

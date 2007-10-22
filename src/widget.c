@@ -5,6 +5,7 @@
  */
 
 #include "widget.h"
+#include "session.h"
 
 #include <string.h>
 #include <assert.h>

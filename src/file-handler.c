@@ -15,6 +15,7 @@
 #include "frame.h"
 #include "http-util.h"
 #include "proxy-widget.h"
+#include "session.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -170,6 +171,7 @@ file_callback(struct client_connection *connection,
 
             widget = p_malloc(request->pool, sizeof(*widget));
             widget_init(widget, NULL);
+            widget->session = session_get_widget(env->session, translated->path, 1);
 
             body = processor_new(request->pool, body, widget, env,
                                  processor_options);

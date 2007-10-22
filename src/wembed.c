@@ -20,6 +20,7 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
     http_method_t method = HTTP_METHOD_GET;
     off_t request_content_length = 0;
     istream_t request_body = NULL;
+    struct widget_session *ws;
 
     if (widget->id != NULL && env->focus != NULL &&
         (env->external_uri->query != NULL || env->request_body != NULL) &&
@@ -38,6 +39,28 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
             request_body = istream_hold_new(pool, env->request_body);
             /* XXX what if there is no stream handler? or two? */
         }
+
+        /* store query string in session */
+
+        ws = widget_get_session(widget, 1);
+        if (ws != NULL) {
+            if (env->external_uri->query == NULL)
+                ws->query_string = NULL;
+            else
+                ws->query_string = p_strndup(ws->pool,
+                                             env->external_uri->query,
+                                             env->external_uri->query_length);
+        }
+    } else {
+        /* get query string from session */
+
+        ws = widget_get_session(widget, 0);
+        if (ws != NULL && ws->query_string != NULL)
+            widget->real_uri = p_strcat(pool,
+                                        widget->real_uri,
+                                        "?",
+                                        ws->query_string,
+                                        NULL);
     }
 
     if (widget->query_string != NULL)

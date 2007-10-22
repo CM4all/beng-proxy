@@ -14,6 +14,7 @@
 #include "frame.h"
 #include "http-util.h"
 #include "proxy-widget.h"
+#include "session.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -89,6 +90,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
         widget = p_malloc(pt->request->pool, sizeof(*widget));
         widget_init(widget, NULL);
+        widget->session = session_get_widget(pt->env.session, pt->translated->uri.base, 1);
 
         pool_ref(pt->request->pool);
 
