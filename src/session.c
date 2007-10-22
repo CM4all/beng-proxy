@@ -194,6 +194,7 @@ hashmap_r_get_widget_session(pool_t pool, hashmap_t *map_r,
     ws->id = p_strdup(pool, id);
     ws->children = NULL;
     ws->query_string = NULL;
+    list_init(&ws->cookies);
 
     hashmap_addn(map, ws->id, ws);
     return ws;

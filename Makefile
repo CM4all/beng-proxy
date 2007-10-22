@@ -47,6 +47,7 @@ SOURCES = src/main.c \
 	src/cmdline.c \
 	src/child.c \
 	src/session.c \
+	src/cookie.c \
 	src/connection.c \
 	src/handler.c \
 	src/file-handler.c \

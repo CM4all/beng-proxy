@@ -9,6 +9,8 @@
 #include "processor.h"
 #include "widget.h"
 #include "header-writer.h"
+#include "session.h"
+#include "cookie.h"
 
 #include <assert.h>
 #include <string.h>
@@ -43,7 +45,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
                            void *ctx)
 {
     struct embed *embed = ctx;
-    const char *content_type;
+    const char *cookies, *content_type;
     istream_t input = body;
 
     (void)content_length;
@@ -64,6 +66,16 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
         input = processor_new(istream_pool(embed->delayed), input,
                               embed->widget, embed->env, embed->options);
         content_length = -1;
+    }
+
+    cookies = strmap_get(headers, "set-cookie2");
+    if (cookies == NULL)
+        cookies = strmap_get(headers, "set-cookie");
+    if (cookies != NULL) {
+        struct widget_session *ws = widget_get_session(embed->widget, 1);
+        if (ws != NULL)
+            cookie_list_set_cookie2(ws->pool, &ws->cookies,
+                                    cookies);
     }
 
     if (embed->widget->proxy && embed->env->proxy_callback != NULL) {
@@ -117,6 +129,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
 {
     struct embed *embed;
     growing_buffer_t headers;
+    struct widget_session *ws;
     static const char *const copy_headers[] = {
         "accept",
         "accept-language",
@@ -142,6 +155,10 @@ embed_new(pool_t pool, http_method_t method, const char *url,
         if (request_body != NULL)
             headers_copy(env->request_headers, headers, copy_headers_with_body);
     }
+
+    ws = widget_get_session(widget, 0);
+    if (ws != NULL)
+        cookie_list_http_header(headers, &ws->cookies);
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->widget = widget;

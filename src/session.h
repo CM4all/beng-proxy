@@ -20,22 +20,15 @@ typedef struct session *session_t;
 
 typedef unsigned session_id_t;
 
-struct cookie {
-    const char *name, *value;
-    time_t valid_until;
-};
-
 struct widget_session {
     struct widget_session *parent;
     pool_t pool;
     const char *id;
     hashmap_t children;
     const char *query_string;
-};
 
-struct client_session {
-    const char *server;
-    strmap_t cookies;
+    /* XXX move cookies to struct widget_server_session */
+    struct list_head cookies;
 };
 
 struct session {
