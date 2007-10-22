@@ -71,17 +71,17 @@ hashmap_addn(hashmap_t map, const char *key, void *value)
     slot->pair.value = value;
 }
 
-static inline const char *
+static inline void *
 hashmap_maybe_overwrite(struct slot *slot, void *value, int overwrite)
 {
-    const char *old = slot->pair.value;
+    void *old = slot->pair.value;
     assert(old != NULL);
     if (overwrite)
         slot->pair.value = value;
     return old;
 }
 
-const char *
+void *
 hashmap_put(hashmap_t map, const char *key, void *value, int overwrite)
 {
     unsigned hash = calc_hash(key);
@@ -114,7 +114,7 @@ hashmap_put(hashmap_t map, const char *key, void *value, int overwrite)
     return NULL;
 }
 
-const char *
+void *
 hashmap_remove(hashmap_t map, const char *key)
 {
     unsigned hash = calc_hash(key);
@@ -127,7 +127,7 @@ hashmap_remove(hashmap_t map, const char *key)
         return NULL;
 
     if (strcmp(prev->pair.key, key) == 0) {
-        const char *value = prev->pair.value;
+        void *value = prev->pair.value;
         if (prev->next == NULL) {
             prev->pair.key = NULL;
             prev->pair.value = NULL;
@@ -150,7 +150,7 @@ hashmap_remove(hashmap_t map, const char *key)
     return NULL;
 }
 
-const char *
+void *
 hashmap_get(hashmap_t map, const char *key)
 {
     unsigned hash = calc_hash(key);

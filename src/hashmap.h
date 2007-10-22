@@ -22,13 +22,13 @@ hashmap_new(pool_t pool, unsigned capacity);
 void
 hashmap_addn(hashmap_t map, const char *key, void *value);
 
-const char *
+void *
 hashmap_put(hashmap_t map, const char *key, void *value, int overwrite);
 
-const char *
+void *
 hashmap_remove(hashmap_t map, const char *key);
 
-const char *
+void *
 hashmap_get(hashmap_t map, const char *key);
 
 void
