@@ -8,6 +8,7 @@
 #include "uri.h"
 #include "processor.h"
 #include "widget.h"
+#include "session.h"
 
 #include <assert.h>
 #include <string.h>
@@ -71,7 +72,8 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
                       "scrolling='no' "
                       "src='",
                       env->external_uri->base,
-                      ";frame=", path,
+                      ";session=", env->session->id,
+                      "&frame=", path,
                       "&", widget->id, "=",
                       widget->append_uri == NULL ? "" : widget->append_uri,
                       "'></iframe>",
