@@ -61,12 +61,13 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
     const char *path, *iframe;
+    char session_id_buffer[9];
 
     path = widget_path(pool, widget);
     if (path == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
-    session_id_format(env->session_id_buffer, env->session->id);
+    session_id_format(session_id_buffer, env->session->id);
 
     iframe = p_strcat(pool, "<iframe "
                       "width='100%' height='100%' "
@@ -74,7 +75,7 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
                       "scrolling='no' "
                       "src='",
                       env->external_uri->base,
-                      ";session=", env->session_id_buffer,
+                      ";session=", session_id_buffer,
                       "&frame=", path,
                       "&", widget->id, "=",
                       widget->append_uri == NULL ? "" : widget->append_uri,
