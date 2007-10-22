@@ -90,14 +90,18 @@ embed_img_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
     const char *path, *html;
+    char session_id_buffer[9];
 
     path = widget_path(pool, widget);
     if (path == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
+    session_id_format(session_id_buffer, env->session->id);
+
     html = p_strcat(pool, "<img src='",
                     env->external_uri->base,
-                    ";frame=", path,
+                    ";session=", session_id_buffer,
+                    "&frame=", path,
                     "&", widget->id, "=",
                     widget->append_uri == NULL ? "" : widget->append_uri,
                     "'></img>",
