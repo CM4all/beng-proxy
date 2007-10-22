@@ -93,6 +93,7 @@ SOURCES = src/main.c \
 	src/date.c \
 	src/strutil.c \
 	src/format.c \
+	src/hashmap.c \
 	src/strmap.c \
 	src/pstring.c \
 	src/pool.c
