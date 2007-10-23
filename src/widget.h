@@ -24,10 +24,6 @@ struct widget {
     /** the widget's instance id, as specified in the template */
     const char *id;
 
-    /** the URI which is actually retrieved - this is the same as
-        base_uri, except when the user clicked on a relative link */
-    const char *real_uri;
-
     /** dimensions of the widget */
     const char *width, *height;
 
@@ -51,6 +47,10 @@ struct widget {
             be proxied? */
         unsigned proxy:1;
     } from_request;
+
+    /** the URI which is actually retrieved - this is the same as
+        base_uri, except when the user clicked on a relative link */
+    const char *real_uri;
 };
 
 /** a reference to a widget inside a widget.  NULL means the current
@@ -77,7 +77,6 @@ widget_init(struct widget *widget, const struct widget_class *class)
 
     widget->class = class;
     widget->id = NULL;
-    widget->real_uri = NULL;
     widget->width = NULL;
     widget->height = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
@@ -85,6 +84,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->from_request.path_info = NULL;
     widget->from_request.session = NULL;
     widget->from_request.proxy = 0;
+    widget->real_uri = NULL;
 }
 
 static inline struct widget *
