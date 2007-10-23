@@ -33,6 +33,11 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
                                      env->external_uri->query_length,
                                      NULL);
 
+        if (env->external_uri->query != NULL) {
+            assert(env->external_uri->query_length > 0);
+            widget->from_request.query_string = 1;
+        }
+
         if (env->request_body != NULL) {
             widget->from_request.body = 1;
             method = HTTP_METHOD_POST; /* XXX which method? */

@@ -43,6 +43,10 @@ struct widget {
 
         struct widget_session *session;
 
+        /** is there a query string being forwarded to the widget
+            server? */
+        unsigned query_string:1;
+
         /** is there a request body being forwarded to the widget
             server? */
         unsigned body:1;
