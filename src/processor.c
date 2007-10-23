@@ -489,24 +489,13 @@ parser_attr_finished(struct parser *parser)
 static istream_t
 embed_widget(pool_t pool, const struct processor_env *env, struct widget *widget)
 {
-    const char *path_info = NULL;
-
     if (widget->class == NULL || widget->class->uri == NULL)
         return istream_string_new(pool, "Error: no widget class specified");
 
-    widget->real_uri = widget->class->uri;
+    if (widget->id != NULL)
+        widget->from_request.path_info = strmap_get(env->args, widget->id);
 
-    if (widget->id != NULL) {
-        path_info = strmap_get(env->args, widget->id);
-        if (path_info != NULL)
-            widget->from_request.path_info = path_info;
-    }
-
-    if (path_info == NULL)
-        path_info = widget->path_info;
-
-    if (path_info != NULL)
-        widget->real_uri = p_strcat(pool, widget->real_uri, path_info, NULL);
+    widget_determine_real_uri(pool, env, widget);
 
     return env->widget_callback(pool, env, widget);
 }

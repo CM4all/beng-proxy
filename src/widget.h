@@ -10,6 +10,8 @@
 #include "pool.h"
 #include "list.h"
 
+struct processor_env;
+
 struct widget_class {
     /** the base URI of this widget, as specified in the template */
     const char *uri;
@@ -128,5 +130,9 @@ widget_ref_parse(pool_t pool, const char *p);
 int
 widget_ref_compare(pool_t pool, const struct widget *widget,
                    const struct widget_ref *ref, int partial_ok);
+
+void
+widget_determine_real_uri(pool_t pool, const struct processor_env *env,
+                          struct widget *widget);
 
 #endif

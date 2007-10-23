@@ -20,73 +20,15 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
     http_method_t method = HTTP_METHOD_GET;
     off_t request_content_length = 0;
     istream_t request_body = NULL;
-    struct widget_session *ws;
 
-    if (widget->id != NULL && env->focus != NULL &&
-        (env->external_uri->query != NULL || env->request_body != NULL) &&
-        widget_ref_compare(pool, widget, env->focus, 0)) {
-        /* we're in focus.  forward query string and request body. */
-        widget->from_request.focus = 1;
+    if (widget->from_request.body) {
+        assert(env->request_body != NULL);
 
-        widget->real_uri = p_strncat(pool,
-                                     widget->real_uri, strlen(widget->real_uri),
-                                     "?", 1,
-                                     env->external_uri->query,
-                                     env->external_uri->query_length,
-                                     NULL);
-
-        if (env->external_uri->query != NULL) {
-            assert(env->external_uri->query_length > 0);
-            widget->from_request.query_string = 1;
-        }
-
-        if (env->request_body != NULL) {
-            widget->from_request.body = 1;
-            method = HTTP_METHOD_POST; /* XXX which method? */
-            request_content_length = env->request_content_length;
-            request_body = istream_hold_new(pool, env->request_body);
-            /* XXX what if there is no stream handler? or two? */
-        }
-
-        /* store query string in session */
-
-        ws = widget_get_session(widget, 1);
-        if (ws != NULL) {
-            ws->path_info = widget->from_request.path_info;
-
-            if (env->external_uri->query == NULL)
-                ws->query_string = NULL;
-            else
-                ws->query_string = p_strndup(ws->pool,
-                                             env->external_uri->query,
-                                             env->external_uri->query_length);
-        }
-    } else {
-        /* get query string from session */
-
-        ws = widget_get_session(widget, 0);
-        if (ws != NULL) {
-            if (widget->path_info == NULL && ws->path_info != NULL)
-                widget->real_uri = p_strcat(pool,
-                                            widget->real_uri,
-                                            ws->path_info,
-                                            NULL);
-
-            if (ws->query_string != NULL)
-                widget->real_uri = p_strcat(pool,
-                                            widget->real_uri,
-                                            "?",
-                                            ws->query_string,
-                                            NULL);
-        }
+        method = HTTP_METHOD_POST; /* XXX which method? */
+        request_content_length = env->request_content_length;
+        request_body = istream_hold_new(pool, env->request_body);
+        /* XXX what if there is no stream handler? or two? */
     }
-
-    if (widget->query_string != NULL)
-        widget->real_uri = p_strcat(pool,
-                                    widget->real_uri,
-                                    strchr(widget->real_uri, '?') == NULL ? "?" : "&",
-                                    widget->query_string,
-                                    NULL);
 
     return embed_new(pool,
                      method, widget->real_uri,

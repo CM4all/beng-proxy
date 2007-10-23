@@ -56,6 +56,7 @@ SOURCES = src/main.c \
 	src/widget.c \
 	src/widget-ref.c \
 	src/widget-session.c \
+	src/widget-uri.c \
 	src/proxy-widget.c \
 	src/processor.c \
 	src/penv.c \
