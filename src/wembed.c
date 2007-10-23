@@ -63,12 +63,14 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
         /* get query string from session */
 
         ws = widget_get_session(widget, 0);
-        if (ws != NULL && ws->query_string != NULL)
-            widget->real_uri = p_strcat(pool,
-                                        widget->real_uri,
-                                        "?",
-                                        ws->query_string,
-                                        NULL);
+        if (ws != NULL) {
+            if (ws->query_string != NULL)
+                widget->real_uri = p_strcat(pool,
+                                            widget->real_uri,
+                                            "?",
+                                            ws->query_string,
+                                            NULL);
+        }
     }
 
     if (widget->query_string != NULL)
