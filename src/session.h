@@ -25,6 +25,8 @@ struct widget_session {
     pool_t pool;
     const char *id;
     hashmap_t children;
+
+    const char *path_info;
     const char *query_string;
 
     /* XXX move cookies to struct widget_server_session */

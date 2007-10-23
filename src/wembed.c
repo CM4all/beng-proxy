@@ -52,6 +52,8 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
 
         ws = widget_get_session(widget, 1);
         if (ws != NULL) {
+            ws->path_info = widget->from_request.path_info;
+
             if (env->external_uri->query == NULL)
                 ws->query_string = NULL;
             else
@@ -64,6 +66,12 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
 
         ws = widget_get_session(widget, 0);
         if (ws != NULL) {
+            if (widget->path_info == NULL && ws->path_info != NULL)
+                widget->real_uri = p_strcat(pool,
+                                            widget->real_uri,
+                                            ws->path_info,
+                                            NULL);
+
             if (ws->query_string != NULL)
                 widget->real_uri = p_strcat(pool,
                                             widget->real_uri,
