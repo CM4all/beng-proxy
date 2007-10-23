@@ -34,6 +34,7 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
                                      NULL);
 
         if (env->request_body != NULL) {
+            widget->from_request.body = 1;
             method = HTTP_METHOD_POST; /* XXX which method? */
             request_content_length = env->request_content_length;
             request_body = istream_hold_new(pool, env->request_body);

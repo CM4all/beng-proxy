@@ -43,6 +43,10 @@ struct widget {
 
         struct widget_session *session;
 
+        /** is there a request body being forwarded to the widget
+            server? */
+        unsigned body:1;
+
         /** is this the single widget in this whole request which should
             be proxied? */
         unsigned proxy:1;
@@ -83,6 +87,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->query_string = NULL;
     widget->from_request.path_info = NULL;
     widget->from_request.session = NULL;
+    widget->from_request.body = 0;
     widget->from_request.proxy = 0;
     widget->real_uri = NULL;
 }
