@@ -479,10 +479,10 @@ embed_widget(pool_t pool, const struct processor_env *env, struct widget *widget
     widget->real_uri = widget->class->uri;
 
     if (widget->id != NULL) {
-        const char *append = strmap_get(env->args, widget->id);
-        if (append != NULL) {
-            widget->from_request.append_uri = append;
-            widget->real_uri = p_strcat(pool, widget->real_uri, append, NULL);
+        const char *path_info = strmap_get(env->args, widget->id);
+        if (path_info != NULL) {
+            widget->from_request.path_info = path_info;
+            widget->real_uri = p_strcat(pool, widget->real_uri, path_info, NULL);
         }
     }
 

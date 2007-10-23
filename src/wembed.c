@@ -101,7 +101,7 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
                       ";session=", session_id_buffer,
                       "&frame=", path,
                       "&", widget->id, "=",
-                      widget->from_request.append_uri == NULL ? "" : widget->from_request.append_uri,
+                      widget->from_request.path_info == NULL ? "" : widget->from_request.path_info,
                       "'></iframe>",
                       NULL);
     return istream_string_new(pool, iframe);
@@ -126,7 +126,7 @@ embed_img_widget(pool_t pool, const struct processor_env *env,
                     ";session=", session_id_buffer,
                     "&frame=", path,
                     "&", widget->id, "=",
-                    widget->from_request.append_uri == NULL ? "" : widget->from_request.append_uri,
+                    widget->from_request.path_info == NULL ? "" : widget->from_request.path_info,
                     "'></img>",
                     NULL);
     return istream_string_new(pool, html);

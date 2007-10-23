@@ -43,7 +43,7 @@ struct widget {
 
     struct {
         /** the path_info provided by the browser (from processor_env.args) */
-        const char *append_uri;
+        const char *path_info;
 
         struct widget_session *session;
 
@@ -82,7 +82,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->height = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->query_string = NULL;
-    widget->from_request.append_uri = NULL;
+    widget->from_request.path_info = NULL;
     widget->from_request.session = NULL;
     widget->from_request.proxy = 0;
 }
