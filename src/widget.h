@@ -34,6 +34,9 @@ struct widget {
         WIDGET_DISPLAY_IMG,
     } display;
 
+    /** the path info as specified in the template */
+    const char *path_info;
+
     /** the query string as specified in the template */
     const char *query_string;
 
@@ -88,6 +91,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->width = NULL;
     widget->height = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
+    widget->path_info = NULL;
     widget->query_string = NULL;
     widget->from_request.path_info = NULL;
     widget->from_request.session = NULL;

@@ -39,6 +39,7 @@ struct processor {
         TAG_NONE,
         TAG_BODY,
         TAG_WIDGET,
+        TAG_WIDGET_PATH_INFO,
         TAG_WIDGET_PARAM,
         TAG_A,
         TAG_FORM,
@@ -245,6 +246,9 @@ parser_element_start_in_widget(processor_t processor, struct parser *parser)
         memcmp(parser->element_name, "c:widget", 8) == 0) {
         if (parser->tag_type == TAG_CLOSE)
             processor->tag = TAG_WIDGET;
+    } else if (parser->element_name_length == 9 &&
+               memcmp(parser->element_name, "path-info", 9) == 0) {
+        processor->tag = TAG_WIDGET_PATH_INFO;
     } else if (parser->element_name_length == 5 &&
                memcmp(parser->element_name, "param", 5) == 0) {
         processor->tag = TAG_WIDGET_PARAM;
@@ -334,7 +338,7 @@ transform_url_attribute(processor_t processor, int focus)
 {
     const char *new_uri = uri_absolute(processor->output.pool,
                                        processor->widget->real_uri,
-                                       processor->parser.attr_value,
+                                       processor->parser.attr_value,                              
                                        processor->parser.attr_value_length);
     const char *args;
 
@@ -450,6 +454,18 @@ parser_attr_finished(struct parser *parser)
 
         break;
 
+    case TAG_WIDGET_PATH_INFO:
+        assert(processor->embedded_widget != NULL);
+
+        if (parser->attr_name_length == 5 &&
+            memcmp(parser->attr_name, "value", 5) == 0) {
+            processor->embedded_widget->path_info
+                = p_strndup(processor->output.pool, parser->attr_value,
+                            parser->attr_value_length);
+        }
+
+        break;
+
     case TAG_IMG:
         if (parser->attr_name_length == 3 &&
             memcmp(parser->attr_name, "src", 3) == 0)
@@ -473,18 +489,24 @@ parser_attr_finished(struct parser *parser)
 static istream_t
 embed_widget(pool_t pool, const struct processor_env *env, struct widget *widget)
 {
+    const char *path_info = NULL;
+
     if (widget->class == NULL || widget->class->uri == NULL)
         return istream_string_new(pool, "Error: no widget class specified");
 
     widget->real_uri = widget->class->uri;
 
     if (widget->id != NULL) {
-        const char *path_info = strmap_get(env->args, widget->id);
-        if (path_info != NULL) {
+        path_info = strmap_get(env->args, widget->id);
+        if (path_info != NULL)
             widget->from_request.path_info = path_info;
-            widget->real_uri = p_strcat(pool, widget->real_uri, path_info, NULL);
-        }
     }
+
+    if (path_info == NULL)
+        path_info = widget->path_info;
+
+    if (path_info != NULL)
+        widget->real_uri = p_strcat(pool, widget->real_uri, path_info, NULL);
 
     return env->widget_callback(pool, env, widget);
 }
