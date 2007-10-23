@@ -36,7 +36,8 @@ args_parse(pool_t pool, const char *p, size_t length)
 const char *
 args_format(pool_t pool, strmap_t args,
             const char *replace_key, const char *replace_value,
-            const char *replace_key2, const char *replace_value2)
+            const char *replace_key2, const char *replace_value2,
+            const char *remove_key)
 {
     const struct strmap_pair *pair;
     size_t length = 0;
@@ -66,7 +67,8 @@ args_format(pool_t pool, strmap_t args,
 
         while ((pair = strmap_next(args)) != NULL) {
             if ((replace_key != NULL && strcmp(pair->key, replace_key)) == 0 ||
-                (replace_key2 != NULL && strcmp(pair->key, replace_key2) == 0))
+                (replace_key2 != NULL && strcmp(pair->key, replace_key2) == 0) ||
+                (remove_key != NULL && strcmp(pair->key, remove_key) == 0))
                 continue;
             if (p > ret)
                 *p++ = '&';

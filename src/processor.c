@@ -340,7 +340,7 @@ transform_url_attribute(processor_t processor, int focus)
                                        processor->widget->real_uri,
                                        processor->parser.attr_value,                              
                                        processor->parser.attr_value_length);
-    const char *args;
+    const char *args, *remove_key = NULL;
 
     if (new_uri == NULL)
         return;
@@ -359,6 +359,10 @@ transform_url_attribute(processor_t processor, int focus)
                          processor->parser.attr_value_length) != NULL)
         focus = 1;
 
+    if (processor->env->request_body != NULL ||
+        processor->env->external_uri->query != NULL)
+        remove_key = strmap_get(processor->env->args, "focus");
+
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
@@ -366,7 +370,8 @@ transform_url_attribute(processor_t processor, int focus)
                        processor->widget->id,
                        new_uri + strlen(processor->widget->class->uri),
                        "focus",
-                       focus ? processor->widget->id : NULL);
+                       focus ? processor->widget->id : NULL,
+                       remove_key);
 
     new_uri = p_strncat(processor->output.pool,
                         processor->env->external_uri->base,
