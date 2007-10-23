@@ -83,32 +83,44 @@ embed_inline_widget(pool_t pool, const struct processor_env *env,
                      env, PROCESSOR_BODY);
 }
 
+static const char *
+widget_frame_uri(pool_t pool, const struct processor_env *env,
+                 struct widget *widget)
+{
+    const char *path;
+    char session_id_buffer[9];
+
+    path = widget_path(pool, widget);
+    if (path == NULL)
+        return NULL;
+
+    session_id_format(session_id_buffer, env->session->id);
+
+    return p_strcat(pool, env->external_uri->base,
+                    ";session=", session_id_buffer,
+                    "&frame=", path,
+                    "&", widget->id, "=",
+                    widget->from_request.path_info == NULL ? "" : widget->from_request.path_info,
+                    NULL);
+}
+
 /** generate IFRAME element; the client will perform a second request
     for the frame contents, see frame_widget_callback() */
 static istream_t
 embed_iframe_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
-    const char *path, *iframe;
-    char session_id_buffer[9];
+    const char *uri, *iframe;
 
-    path = widget_path(pool, widget);
-    if (path == NULL)
+    uri = widget_frame_uri(pool, env, widget);
+    if (uri == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
-
-    session_id_format(session_id_buffer, env->session->id);
 
     iframe = p_strcat(pool, "<iframe "
                       "width='100%' height='100%' "
                       "frameborder='0' marginheight='0' marginwidth='0' "
                       "scrolling='no' "
-                      "src='",
-                      env->external_uri->base,
-                      ";session=", session_id_buffer,
-                      "&frame=", path,
-                      "&", widget->id, "=",
-                      widget->from_request.path_info == NULL ? "" : widget->from_request.path_info,
-                      "'></iframe>",
+                      "src='", uri, "'></iframe>",
                       NULL);
     return istream_string_new(pool, iframe);
 }
@@ -118,23 +130,13 @@ static istream_t
 embed_img_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
-    const char *path, *html;
-    char session_id_buffer[9];
+    const char *uri, *html;
 
-    path = widget_path(pool, widget);
-    if (path == NULL)
+    uri = widget_frame_uri(pool, env, widget);
+    if (uri == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
-    session_id_format(session_id_buffer, env->session->id);
-
-    html = p_strcat(pool, "<img src='",
-                    env->external_uri->base,
-                    ";session=", session_id_buffer,
-                    "&frame=", path,
-                    "&", widget->id, "=",
-                    widget->from_request.path_info == NULL ? "" : widget->from_request.path_info,
-                    "'></img>",
-                    NULL);
+    html = p_strcat(pool, "<img src='", uri, "'></img>", NULL);
     return istream_string_new(pool, html);
 }
 
