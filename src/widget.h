@@ -46,6 +46,9 @@ struct widget {
 
         struct widget_session *session;
 
+        /** is this widget focused? */
+        unsigned focus:1;
+
         /** is there a query string being forwarded to the widget
             server? */
         unsigned query_string:1;
@@ -95,6 +98,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->query_string = NULL;
     widget->from_request.path_info = NULL;
     widget->from_request.session = NULL;
+    widget->from_request.focus = 0;
     widget->from_request.query_string = 0;
     widget->from_request.body = 0;
     widget->from_request.proxy = 0;
