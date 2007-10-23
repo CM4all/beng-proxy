@@ -78,7 +78,7 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
                                     cookies);
     }
 
-    if (embed->widget->proxy && embed->env->proxy_callback != NULL) {
+    if (embed->widget->from_request.proxy && embed->env->proxy_callback != NULL) {
         /* this is the request for IFRAME contents - send it directly
            to to http_server object, including headers */
 
@@ -90,7 +90,8 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
         return;
     }
 
-    if (input == body && !embed->widget->proxy && embed->widget->id != NULL) {
+    if (input == body && !embed->widget->from_request.proxy &&
+        embed->widget->id != NULL) {
         /* it cannot be inserted into the HTML stream, so put it into
            an iframe */
 

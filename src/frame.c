@@ -42,7 +42,7 @@ frame_widget_callback(pool_t pool, const struct processor_env *env,
                          widget,
                          env, PROCESSOR_QUIET);
 
-    widget->proxy = 1; /* set flag if it wasn't previously set */
+    widget->from_request.proxy = 1; /* set flag if it wasn't previously set */
 
     if (env->external_uri->query != NULL)
         widget->real_uri = p_strncat(pool,

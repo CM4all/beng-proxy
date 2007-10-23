@@ -41,14 +41,16 @@ struct widget {
     /** the query string as specified in the template */
     const char *query_string;
 
-    /** the path_info provided by the browser (from processor_env.args) */
-    const char *append_uri;
+    struct {
+        /** the path_info provided by the browser (from processor_env.args) */
+        const char *append_uri;
 
-    struct widget_session *session;
+        struct widget_session *session;
 
-    /** is this the single widget in this whole request which should
-        be proxied? */
-    unsigned proxy:1;
+        /** is this the single widget in this whole request which should
+            be proxied? */
+        unsigned proxy:1;
+    } from_request;
 };
 
 /** a reference to a widget inside a widget.  NULL means the current
@@ -80,9 +82,9 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->height = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->query_string = NULL;
-    widget->append_uri = NULL;
-    widget->session = NULL;
-    widget->proxy = 0;
+    widget->from_request.append_uri = NULL;
+    widget->from_request.session = NULL;
+    widget->from_request.proxy = 0;
 }
 
 static inline struct widget *

@@ -481,7 +481,7 @@ embed_widget(pool_t pool, const struct processor_env *env, struct widget *widget
     if (widget->id != NULL) {
         const char *append = strmap_get(env->args, widget->id);
         if (append != NULL) {
-            widget->append_uri = append;
+            widget->from_request.append_uri = append;
             widget->real_uri = p_strcat(pool, widget->real_uri, append, NULL);
         }
     }

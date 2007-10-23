@@ -171,7 +171,7 @@ file_callback(struct client_connection *connection,
 
             widget = p_malloc(request->pool, sizeof(*widget));
             widget_init(widget, NULL);
-            widget->session = session_get_widget(env->session, translated->path, 1);
+            widget->from_request.session = session_get_widget(env->session, translated->path, 1);
 
             body = processor_new(request->pool, body, widget, env,
                                  processor_options);
