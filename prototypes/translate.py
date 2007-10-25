@@ -82,7 +82,6 @@ class Request:
 class Translation(Protocol):
     def connectionMade(self):
         print "Connected from", self.transport.client
-        self.transport.write('<hits>')
         self._request = None
         self._packet = None
 
