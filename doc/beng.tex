@@ -127,8 +127,8 @@ translation work for us.  \emph{beng-proxy} connects to a Unix socket
 to contact this translation server.
 
 A request may consist of several micro commands.  The request is
-initialized with the \texttt{TRANSLATE} command, which is followed by
-any number of commands which provide parameters.  After all parameters
+initialized with the \texttt{BEGIN} command, which is followed by any
+number of commands which provide parameters.  After all parameters
 have been transferred, the client sends the \texttt{END} command,
 which tells the translation server to execute the request.  The client
 now waits for the server's response, which has a similar structure.
@@ -139,11 +139,11 @@ side closes the connection.
 \subsubsection{Example conversation}
 
 \begin{itemize}
-\item client sends \texttt{TRANSLATE}
+\item client sends \texttt{BEGIN}
 \item client sends \texttt{HOST} ``www.example.com''
 \item client sends \texttt{URI} ``/foo/index.html''
 \item client sends \texttt{END}
-\item server sends \texttt{TRANSLATE}
+\item server sends \texttt{BEGIN}
 \item server sends \texttt{PATH} ``/var/www/foo/index.html''
 \item server sends \texttt{CONTENT\_TYPE} ``text/html; charset=utf8''
 \item server sends \texttt{END}
