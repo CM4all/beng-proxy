@@ -75,13 +75,24 @@ data.  All of it can be handed off to a widget.  To enable this,
 send the data to.
 
 
-\section{Local files}
+\section{Translation}
 
-By default, \emph{beng-proxy} serves local files from
-\texttt{/var/www}.
+\emph{beng-proxy} knows two ways to locate the resource a request URI
+points to:
 
+\begin{itemize}
+\item via an external translation server connected via Unix sockets
+\item static translation
+\end{itemize}
 
-\subsection{Content type}
+The latter is only for debugging.
+
+\subsection{Static translation}
+
+The URI path is appended to the document root (\texttt{/var/www} by
+default).
+
+\subsubsection{Content type}
 
 In contrast to most other web servers, \emph{beng-proxy} does not use
 the file name to determine the \texttt{Content-Type} response header.
@@ -98,7 +109,7 @@ Some file systems need explicit support for extended attributes (mount
 option \texttt{user\_xattr}).  On
 XFS, extended attributes are always enabled.
 
-\subsection{Directory index}
+\subsubsection{Directory index}
 
 For security (by obscurity) reasons, \emph{beng-proxy} has no code for
 generating directory listings.  If the request has a trailing slash,
