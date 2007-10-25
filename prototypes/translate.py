@@ -60,6 +60,12 @@ class Request:
     def packetReceived(self, packet):
         if packet.command == TRANSLATE_END:
             self.complete = True
+        elif packet.command == TRANSLATE_HOST:
+            self.host = packet.payload
+        elif packet.command == TRANSLATE_URI:
+            self.uri = packet.payload
+        elif packet.command == TRANSLATE_SESSION:
+            self.session = packet.payload
         else:
             print "Invalid command:", packet.command
 
