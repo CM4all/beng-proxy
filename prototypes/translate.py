@@ -55,11 +55,10 @@ class Request:
         self.host = None
         self.uri = None
         self.session = None
-        self.complete = False
 
     def packetReceived(self, packet):
         if packet.command == TRANSLATE_END:
-            self.complete = True
+            return True
         elif packet.command == TRANSLATE_HOST:
             self.host = packet.payload
         elif packet.command == TRANSLATE_URI:
@@ -68,6 +67,7 @@ class Request:
             self.session = packet.payload
         else:
             print "Invalid command:", packet.command
+        return False
 
 class Translation(Protocol):
     def connectionMade(self):
@@ -91,8 +91,7 @@ class Translation(Protocol):
         if packet.command == TRANSLATE_BEGIN:
             self._request = Request()
         elif self._request is not None:
-            self._request.packetReceived(packet)
-            if self._request.complete:
+            if self._request.packetReceived(packet):
                 self._handle_request(self._request)
                 self._request = None
         else:
@@ -107,7 +106,6 @@ class Translation(Protocol):
             if self._packet.complete:
                 self._handle_packet(self._packet)
                 self._packet = None
-            
 
     def connectionLost(self, reason):
         print "Disconnected from", self.transport.client
