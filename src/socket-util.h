@@ -37,4 +37,7 @@ socket_set_cork(int fd, int value)
 
 #endif
 
+int
+socket_unix_connect(const char *path);
+
 #endif
