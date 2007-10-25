@@ -31,23 +31,33 @@ class PacketReader:
         assert isinstance(data, str)
         # read header
         if len(self._header) < 4:
+            # append to header
             size = 4 - len(self._header)
             self._header += data[0:size]
             data = data[size:]
             if len(self._header) < 4:
                 return data
+
+            # header is finished, decode it
             self._length, self.command = struct.unpack('HH', self._header)
             self.payload = ''
             if self._length == 0:
+                # no payload, we're done
                 self.complete = True
                 return data
+
         # read payload
         if len(self.payload) < self._length:
+            # append to payload
             size = self._length - len(self.payload)
             self.payload += data[0:size]
             data = data[size:]
+
+            # done yet?
             if len(self.payload) == self._length:
                 self.complete = True
+
+        # return data chunk without the consumed part
         return data
 
 class Request:
