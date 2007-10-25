@@ -21,7 +21,8 @@ translate_callback(const struct translate_response *response,
     struct translated *translated;
     int ret;
 
-    if (response->status < 0 || response->path == NULL) {
+    if (response->status < 0 ||
+        (response->path == NULL && response->proxy == NULL)) {
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
@@ -38,9 +39,15 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
-    translated->path = response->path;
-
-    file_callback(request, translated);
+    if (response->path != NULL) {
+        translated->path = response->path;
+        file_callback(request, translated);
+    } else if (response->proxy != NULL) {
+        translated->path = response->proxy;
+        proxy_callback(request, translated);
+    } else {
+        assert(0);
+    }
 }
 
 static struct translated *
