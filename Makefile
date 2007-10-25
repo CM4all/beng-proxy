@@ -148,7 +148,7 @@ valgrind: src/cm4all-beng-proxy
 	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy -D
 
 doc/beng.pdf: doc/beng.tex
-	cd $(dir $<) && pdflatex $(notdir $<)
+	cd $(dir $<) && pdflatex $(notdir $<) && pdflatex $(notdir $<)
 
 doc/beng.dvi: doc/beng.tex
 	cd $(dir $<) && latex $(notdir $<)
