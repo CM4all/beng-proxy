@@ -130,8 +130,7 @@ A request may consist of several micro commands.  The request is
 initialized with the \texttt{BEGIN} command, which is followed by any
 number of commands which provide parameters.  After all parameters
 have been transferred, the client sends the \texttt{END} command,
-which tells the translation server to execute the request.  The client
-now waits for the server's response, which has a similar structure.
+waits for the server's response.
 
 The client can send any number of requests over the socket until one
 side closes the connection.
