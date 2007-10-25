@@ -114,10 +114,7 @@ my_http_server_connection_request(struct http_server_request *request,
         return;
     }
 
-    if (memcmp(translated->path, "http://", 7) == 0)
-        proxy_callback(request, translated);
-    else
-        file_callback(request, translated);
+    file_callback(request, translated);
 }
 
 static void
