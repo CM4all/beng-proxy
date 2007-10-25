@@ -92,7 +92,7 @@ class Translation(Protocol):
 
     def _handle_request(self, request):
         self._write_packet(TRANSLATE_BEGIN)
-        self._write_packet(TRANSLATE_PATH, '/var/www/beng.html')
+        self._write_packet(TRANSLATE_PATH, '/var/www' + request.uri)
         self._write_packet(TRANSLATE_PROCESS)
         self._write_packet(TRANSLATE_END)
 
