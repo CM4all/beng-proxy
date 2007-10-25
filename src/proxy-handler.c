@@ -134,14 +134,11 @@ static const char *const copy_headers[] = {
 */
 
 void
-proxy_callback(struct client_connection *connection,
-               struct http_server_request *request,
+proxy_callback(struct http_server_request *request,
                struct translated *translated)
 {
     struct proxy_transfer *pt;
     istream_t body;
-
-    (void)connection;
 
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->pool = request->pool;
