@@ -81,31 +81,12 @@ translate2(struct http_server_request *request,
     assert(translated->uri.base_length > 0);
     assert(translated->uri.base[0] == '/');
 
-    if (memcmp(request->uri, "/proxy/", 7) == 0) {
-        /* XXX append query string */
-        translated->path = p_strncat(request->pool,
-                                     "http://dory.intern.cm-ag/~max/",
-                                     sizeof("http://dory.intern.cm-ag/~max/") - 1,
-                                     translated->uri.base + 7,
-                                     translated->uri.base_length - 7,
-                                     NULL);
-    } else if (memcmp(request->uri, "/test/", 6) == 0) {
-        /* XXX append query string */
-        translated->path = p_strncat(request->pool,
-                                     "http://cfatest01.intern.cm-ag/",
-                                     sizeof("http://cfatest01.intern.cm-ag/") - 1,
-                                     translated->uri.base + 6,
-                                     translated->uri.base_length - 6,
-                                     NULL);
-    } else {
-        /* XXX this is, of course, a huge security hole */
-        translated->path = p_strncat(request->pool,
-                                     config->document_root,
-                                     strlen(config->document_root),
-                                     translated->uri.base,
-                                     translated->uri.base_length,
-                                     NULL);
-    }
+    translated->path = p_strncat(request->pool,
+                                 config->document_root,
+                                 strlen(config->document_root),
+                                 translated->uri.base,
+                                 translated->uri.base_length,
+                                 NULL);
 
     return translated;
 }
