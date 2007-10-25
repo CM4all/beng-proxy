@@ -49,7 +49,7 @@ binary-indep: build check
 	dh_install -i
 	dh_link -i
 	#dh_strip -i
-	dh_compress -i
+	dh_compress -i -X.pdf
 	dh_fixperms -i
 	dh_installdeb -i
 	dh_shlibdeps -i
