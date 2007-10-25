@@ -20,6 +20,8 @@ struct config {
 
     const char *document_root;
 
+    const char *translation_socket;
+
     unsigned num_workers;
 };
 

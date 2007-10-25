@@ -49,6 +49,7 @@ SOURCES = src/main.c \
 	src/session.c \
 	src/cookie.c \
 	src/connection.c \
+	src/translate.c \
 	src/handler.c \
 	src/file-handler.c \
 	src/proxy-handler.c \
@@ -127,6 +128,9 @@ test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o test/libcore-gmtime.
 
 test/format-http-date: test/format-http-date.o src/gmtime.o src/date.o
 	$(CC) -o $@ $^ $(LDFLAGS)
+
+test/request-translation: test/request-translation.o src/translate.o src/pool.o src/growing-buffer.o src/socket-util.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb

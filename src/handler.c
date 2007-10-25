@@ -7,23 +7,69 @@
 #include "connection.h"
 #include "handler.h"
 #include "config.h"
+#include "translate.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
-static struct translated *
-translate(struct http_server_request *request,
-          const struct config *config)
+static void
+translate_callback(const struct translate_response *response,
+                   void *ctx)
 {
+    struct http_server_request *request = ctx;
     struct translated *translated;
     int ret;
+
+    if (response->status < 0 || response->path == NULL) {
+        http_server_send_message(request,
+                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "Internal server error");
+        return;
+    }
 
     translated = p_malloc(request->pool, sizeof(*translated));
 
     ret = uri_parse(request->pool, &translated->uri, request->uri);
-    if (ret < 0)
+    if (ret < 0) {
+        http_server_send_message(request,
+                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "Internal server error");
+        return;
+    }
+
+    translated->path = response->path;
+
+    file_callback(request, translated);
+}
+
+static struct translated *
+translate2(struct http_server_request *request,
+           const struct config *config)
+{
+    struct translated *translated;
+    int ret;
+
+    if (config->translation_socket != NULL) {
+        struct translate_request tr = {
+            .host = strmap_get(request->headers, "host"),
+            .uri = request->uri,
+            /* XXX .session */
+        };
+
+        translate(request->pool, config, &tr, translate_callback, request);
         return NULL;
+    }
+
+    translated = p_malloc(request->pool, sizeof(*translated));
+
+    ret = uri_parse(request->pool, &translated->uri, request->uri);
+    if (ret < 0) {
+        http_server_send_message(request,
+                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "Internal server error");
+        return NULL;
+    }
 
     assert(translated->uri.base_length > 0);
     assert(translated->uri.base[0] == '/');
@@ -69,13 +115,9 @@ my_http_server_connection_request(struct http_server_request *request,
     (void)request;
     (void)connection;
 
-    translated = translate(request, connection->config);
-    if (translated == NULL) {
-        http_server_send_message(request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Internal server error");
+    translated = translate2(request, connection->config);
+    if (translated == NULL)
         return;
-    }
 
     if (translated == NULL || translated->path == NULL) {
         http_server_send_message(request,

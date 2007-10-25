@@ -62,6 +62,10 @@ static void usage(void) {
          " --document-root DIR\n"
 #endif
          " -r DIR         set the document root\n"
+#ifdef __GLIBC__
+         " --translation-socket PATH\n"
+#endif
+         " -t PATH        set the path to the translation server socket\n"
          "\n"
          );
 }
@@ -107,6 +111,7 @@ parse_cmdline(struct config *config, int argc, char **argv)
         {"port", 1, 0, 'p'},
         {"workers", 1, 0, 'w'},
         {"document-root", 1, 0, 'r'},
+        {"translation-socket", 1, 0, 't'},
         {0,0,0,0}
     };
 #endif
@@ -115,10 +120,10 @@ parse_cmdline(struct config *config, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:w:r:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:w:r:t:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:w:r:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:w:r:t:");
 #endif
         if (ret == -1)
             break;
@@ -186,6 +191,10 @@ parse_cmdline(struct config *config, int argc, char **argv)
 
         case 'r':
             config->document_root = optarg;
+            break;
+
+        case 't':
+            config->translation_socket = optarg;
             break;
 
         case '?':
