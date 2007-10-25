@@ -17,8 +17,7 @@ struct translated {
 extern const struct http_server_connection_handler my_http_server_connection_handler;
 
 void
-file_callback(struct client_connection *connection,
-              struct http_server_request *request,
+file_callback(struct http_server_request *request,
               struct translated *translated);
 
 void

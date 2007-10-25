@@ -48,8 +48,7 @@ make_etag(char *p, const struct stat *st)
 }
 
 void
-file_callback(struct client_connection *connection,
-              struct http_server_request *request,
+file_callback(struct http_server_request *request,
               struct translated *translated)
 {
     int ret;
@@ -61,8 +60,6 @@ file_callback(struct client_connection *connection,
     char content_type[256];
 #endif
     char buffer[64];
-
-    (void)connection;
 
     if (request->method != HTTP_METHOD_HEAD &&
         request->method != HTTP_METHOD_GET &&
