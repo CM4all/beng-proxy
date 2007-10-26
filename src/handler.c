@@ -10,6 +10,8 @@
 #include "translate.h"
 #include "uri.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -40,7 +42,10 @@ translate_callback(const struct translate_response *response,
     } else if (response->proxy != NULL) {
         proxy_callback(request, &ctx->uri, response->proxy);
     } else {
-        assert(0);
+        daemon_log(2, "empty response from translation server\n");
+        http_server_send_message(request,
+                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "Internal server error");
     }
 }
 
