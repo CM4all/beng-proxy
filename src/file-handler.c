@@ -85,20 +85,20 @@ file_callback(struct http_server_request *request,
     }
 
     if (S_ISDIR(st.st_mode) && translated->path[strlen(translated->path) - 1] == '/') {
-        const char *path = p_strcat(request->pool, translated->path,
-                                    "/index", NULL);
+        const char *path2 = p_strcat(request->pool, translated->path,
+                                     "/index", NULL);
         struct stat st2;
 
-        ret = lstat(path, &st2);
+        ret = lstat(path2, &st2);
         if (ret < 0 || !S_ISREG(st2.st_mode)) {
-            path = p_strcat(request->pool, translated->path,
-                            "/index.html", NULL);
-            ret = lstat(path, &st2);
+            path2 = p_strcat(request->pool, translated->path,
+                             "/index.html", NULL);
+            ret = lstat(path2, &st2);
         }
 
         if (ret == 0 && S_ISREG(st2.st_mode)) {
             st = st2;
-            translated->path = path;
+            translated->path = path2;
         }
     }
 
