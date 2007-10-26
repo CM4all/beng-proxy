@@ -16,6 +16,7 @@
 #include "http-util.h"
 #include "proxy-widget.h"
 #include "session.h"
+#include "translate.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -50,8 +51,9 @@ make_etag(char *p, const struct stat *st)
 void
 file_callback(struct http_server_request *request,
               const struct parsed_uri *uri,
-              const char *path)
+              const struct translate_response *tr)
 {
+    const char *path;
     int ret;
     growing_buffer_t headers;
     istream_t body;
@@ -61,6 +63,11 @@ file_callback(struct http_server_request *request,
     char content_type[256];
 #endif
     char buffer[64];
+
+    assert(tr != NULL);
+    assert(tr->path != NULL);
+
+    path = tr->path;
 
     if (request->method != HTTP_METHOD_HEAD &&
         request->method != HTTP_METHOD_GET &&

@@ -38,7 +38,7 @@ translate_callback(const struct translate_response *response,
     }
 
     if (response->path != NULL) {
-        file_callback(request, &ctx->uri, response->path);
+        file_callback(request, &ctx->uri, response);
     } else if (response->proxy != NULL) {
         proxy_callback(request, &ctx->uri, response->proxy);
     } else {
@@ -91,7 +91,8 @@ serve_document_root_file(struct http_server_request *request,
 {
     int ret;
     struct parsed_uri *uri;
-    const char *path, *index_file = NULL;
+    struct translate_response tr;
+    const char *index_file = NULL;
 
     uri = p_malloc(request->pool, sizeof(*uri));
     ret = request_uri_parse(request, uri);
@@ -104,15 +105,18 @@ serve_document_root_file(struct http_server_request *request,
     if (uri->base[uri->base_length - 1] == '/')
         index_file = "index.html";
 
-    path = p_strncat(request->pool,
-                     config->document_root,
-                     strlen(config->document_root),
-                     uri->base,
-                     uri->base_length,
-                     index_file, 10,
-                     NULL);
+    tr.status = HTTP_STATUS_OK;
+    tr.path = p_strncat(request->pool,
+                        config->document_root,
+                        strlen(config->document_root),
+                        uri->base,
+                        uri->base_length,
+                        index_file, 10,
+                        NULL);
+    tr.content_type = NULL;
+    tr.filter = NULL;
 
-    file_callback(request, uri, path);
+    file_callback(request, uri, &tr);
 }
 
 static void
