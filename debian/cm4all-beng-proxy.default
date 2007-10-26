@@ -19,5 +19,8 @@
 # Base directory for HTML documents.
 #DOCUMENT_ROOT=/var/www
 
+# Path of the translation server socket.
+#TRANSLATION_SOCKET=/var/run/cm4all/beng-proxy/translation.sock
+
 # Other options
 #OPTIONS="-v"

@@ -27,6 +27,7 @@ LOGGER_USER=cm4all-logger
 PORT=80
 WORKERS=4
 DOCUMENT_ROOT=/var/www
+TRANSLATION_SOCKET=
 OPTIONS=""
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
@@ -34,6 +35,10 @@ test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
 if test -z "$DAEMON_USER"; then
     log_action_msg "No user configured in /etc/default/cm4all-beng-proxy"
     exit 0
+fi
+
+if test -n "$TRANSLATION_SOCKET"; then
+    OPTIONS="$OPTIONS --translation-socket $TRANSLATION_SOCKET"
 fi
 
 case "$1" in
