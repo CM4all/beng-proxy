@@ -58,10 +58,6 @@ file_callback(struct http_server_request *request,
     growing_buffer_t headers;
     istream_t body;
     struct stat st;
-#ifndef NO_XATTR
-    ssize_t nbytes;
-    char content_type[256];
-#endif
     char buffer[64];
 
     assert(tr != NULL);
@@ -121,21 +117,27 @@ file_callback(struct http_server_request *request,
 
     make_etag(buffer, &st);
     header_write(headers, "etag", buffer);
-
-#ifndef NO_XATTR
-    nbytes = getxattr(path, "user.Content-Type", /* XXX use fgetxattr() */
-                      content_type, sizeof(content_type) - 1);
-    if (nbytes > 0) {
-        assert((size_t)nbytes < sizeof(content_type));
-        content_type[nbytes] = 0;
-        header_write(headers, "content-type", content_type);
+ 
+    if (tr->content_type != NULL) {
+        header_write(headers, "content-type", tr->content_type);
     } else {
-        content_type[0] = 0;
-#endif /* #ifndef NO_XATTR */
-        header_write(headers, "content-type", "application/octet-stream");
 #ifndef NO_XATTR
-    }
+        ssize_t nbytes;
+        char content_type[256];
+
+        nbytes = getxattr(path, "user.Content-Type", /* XXX use fgetxattr() */
+                          content_type, sizeof(content_type) - 1);
+        if (nbytes > 0) {
+            assert((size_t)nbytes < sizeof(content_type));
+            content_type[nbytes] = 0;
+            header_write(headers, "content-type", content_type);
+        } else {
 #endif /* #ifndef NO_XATTR */
+            header_write(headers, "content-type", "application/octet-stream");
+#ifndef NO_XATTR
+        }
+#endif /* #ifndef NO_XATTR */
+    }
 
     if (tr->process) {
         if (body != NULL) {
