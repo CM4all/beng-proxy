@@ -72,8 +72,8 @@ translate2(struct http_server_request *request,
     ret = uri_parse(request->pool, &translated->uri, request->uri);
     if (ret < 0) {
         http_server_send_message(request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Internal server error");
+                                 HTTP_STATUS_BAD_REQUEST,
+                                 "Malformed URI");
         return NULL;
     }
 
