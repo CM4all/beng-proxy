@@ -18,6 +18,7 @@ extern const struct http_server_connection_handler my_http_server_connection_han
 
 void
 file_callback(struct http_server_request *request,
+              const struct parsed_uri *uri,
               const char *path);
 
 void

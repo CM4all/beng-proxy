@@ -49,6 +49,7 @@ make_etag(char *p, const struct stat *st)
 
 void
 file_callback(struct http_server_request *request,
+              const struct parsed_uri *uri,
               const char *path)
 {
     int ret;
@@ -148,20 +149,9 @@ file_callback(struct http_server_request *request,
 
     if (strncmp(content_type, "text/html", 9) == 0) {
         if (body != NULL) {
-            struct parsed_uri *uri;
             struct processor_env *env;
             struct widget *widget;
             unsigned processor_options = 0;
-
-            uri = p_malloc(request->pool, sizeof(*uri));
-            ret = uri_parse(request->pool, uri, request->uri);
-            if (ret < 0) {
-                istream_close(body);
-                http_server_send_message(request,
-                                         HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                         "Internal server error");
-                return;
-            }
 
             env = p_malloc(request->pool, sizeof(*env));
             processor_env_init(request->pool, env, uri,

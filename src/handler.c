@@ -40,7 +40,7 @@ translate_callback(const struct translate_response *response,
     }
 
     if (response->path != NULL) {
-        file_callback(request, response->path);
+        file_callback(request, &translated->uri, response->path);
     } else if (response->proxy != NULL) {
         translated->path = response->proxy;
         proxy_callback(request, translated);
@@ -113,7 +113,7 @@ my_http_server_connection_request(struct http_server_request *request,
         return;
     }
 
-    file_callback(request, translated->path);
+    file_callback(request, &translated->uri, translated->path);
 }
 
 static void
