@@ -8,6 +8,7 @@
 #include "config.h"
 #include "socket-util.h"
 #include "growing-buffer.h"
+#include "compiler.h"
 
 #include <daemon/log.h>
 
@@ -35,7 +36,7 @@ enum {
 struct header {
     uint16_t length;
     uint16_t command;
-} __attribute__ ((packed));
+} attr_packed;
 
 struct packet_reader {
     struct header header;
