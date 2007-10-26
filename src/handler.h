@@ -8,6 +8,7 @@
 #define __BENG_HANDLER_H
 
 struct parsed_uri;
+struct http_server_request;
 
 extern const struct http_server_connection_handler my_http_server_connection_handler;
 

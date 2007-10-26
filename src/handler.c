@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "connection.h"
 #include "handler.h"
+#include "connection.h"
 #include "config.h"
 #include "translate.h"
 #include "uri.h"
