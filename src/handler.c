@@ -34,8 +34,8 @@ translate_callback(const struct translate_response *response,
     ret = uri_parse(request->pool, uri, request->uri);
     if (ret < 0) {
         http_server_send_message(request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Internal server error");
+                                 HTTP_STATUS_BAD_REQUEST,
+                                 "Malformed URI");
         return;
     }
 
