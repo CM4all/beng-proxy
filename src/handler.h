@@ -7,12 +7,7 @@
 #ifndef __BENG_HANDLER_H
 #define __BENG_HANDLER_H
 
-#include "uri.h"
-
-struct translated {
-    struct parsed_uri uri;
-    const char *path;
-};
+struct parsed_uri;
 
 extern const struct http_server_connection_handler my_http_server_connection_handler;
 

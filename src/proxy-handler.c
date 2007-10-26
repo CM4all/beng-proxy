@@ -15,6 +15,7 @@
 #include "http-util.h"
 #include "proxy-widget.h"
 #include "session.h"
+#include "uri.h"
 
 #include <assert.h>
 #include <errno.h>

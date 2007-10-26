@@ -8,6 +8,7 @@
 #include "handler.h"
 #include "config.h"
 #include "translate.h"
+#include "uri.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -18,7 +19,7 @@ translate_callback(const struct translate_response *response,
                    void *ctx)
 {
     struct http_server_request *request = ctx;
-    struct translated *translated;
+    struct parsed_uri *uri;
     int ret;
 
     if (response->status < 0 ||
@@ -29,9 +30,8 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
-    translated = p_malloc(request->pool, sizeof(*translated));
-
-    ret = uri_parse(request->pool, &translated->uri, request->uri);
+    uri = p_malloc(request->pool, sizeof(*uri));
+    ret = uri_parse(request->pool, uri, request->uri);
     if (ret < 0) {
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -40,9 +40,9 @@ translate_callback(const struct translate_response *response,
     }
 
     if (response->path != NULL) {
-        file_callback(request, &translated->uri, response->path);
+        file_callback(request, uri, response->path);
     } else if (response->proxy != NULL) {
-        proxy_callback(request, &translated->uri, response->proxy);
+        proxy_callback(request, uri, response->proxy);
     } else {
         assert(0);
     }
