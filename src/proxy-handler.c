@@ -25,7 +25,7 @@
 struct proxy_transfer {
     pool_t pool;
     struct http_server_request *request;
-    struct translated *translated;
+    const struct parsed_uri *external_uri;
     url_stream_t url_stream;
     struct processor_env env;
 };
@@ -75,7 +75,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
         unsigned processor_options = 0;
 
         /* XXX request body? */
-        processor_env_init(pt->request->pool, &pt->env, &pt->translated->uri,
+        processor_env_init(pt->request->pool, &pt->env, pt->external_uri,
                            pt->request->headers,
                            0, NULL,
                            embed_widget_callback);
@@ -90,7 +90,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
 
         widget = p_malloc(pt->request->pool, sizeof(*widget));
         widget_init(widget, NULL);
-        widget->from_request.session = session_get_widget(pt->env.session, pt->translated->uri.base, 1);
+        widget->from_request.session = session_get_widget(pt->env.session, pt->external_uri->base, 1);
 
         pool_ref(pt->request->pool);
 
@@ -135,7 +135,8 @@ static const char *const copy_headers[] = {
 
 void
 proxy_callback(struct http_server_request *request,
-               struct translated *translated)
+               const struct parsed_uri *external_uri,
+               const char *proxied_url)
 {
     struct proxy_transfer *pt;
     istream_t body;
@@ -143,7 +144,7 @@ proxy_callback(struct http_server_request *request,
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->pool = request->pool;
     pt->request = request;
-    pt->translated = translated;
+    pt->external_uri = external_uri;
 
     if (request->body == NULL)
         body = NULL;
@@ -151,7 +152,7 @@ proxy_callback(struct http_server_request *request,
         body = istream_hold_new(request->pool, request->body);
 
     pt->url_stream = url_stream_new(request->pool,
-                                    request->method, translated->path, NULL,
+                                    request->method, proxied_url, NULL,
                                     request->content_length, body,
                                     proxy_http_client_callback, pt);
     if (pt->url_stream == NULL) {

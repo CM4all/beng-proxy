@@ -42,8 +42,7 @@ translate_callback(const struct translate_response *response,
     if (response->path != NULL) {
         file_callback(request, &translated->uri, response->path);
     } else if (response->proxy != NULL) {
-        translated->path = response->proxy;
-        proxy_callback(request, translated);
+        proxy_callback(request, &translated->uri, response->proxy);
     } else {
         assert(0);
     }
