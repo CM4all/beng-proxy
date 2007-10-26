@@ -41,6 +41,10 @@ translate_callback(const struct translate_response *response,
         file_callback(request, &ctx->uri, response);
     } else if (response->proxy != NULL) {
         proxy_callback(request, &ctx->uri, response);
+    } else if (response->status != (http_status_t)0) {
+        http_server_send_message(request,
+                                 response->status,
+                                 ""); /* XXX which message? */
     } else {
         daemon_log(2, "empty response from translation server\n");
         http_server_send_message(request,
