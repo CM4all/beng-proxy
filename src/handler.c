@@ -114,7 +114,7 @@ serve_document_root_file(struct http_server_request *request,
             memcmp(uri->base + uri->base_length - 5, ".html", 5) == 0;
     }
 
-    tr.status = HTTP_STATUS_OK;
+    tr.status = 0;
     tr.path = p_strncat(request->pool,
                         config->document_root,
                         strlen(config->document_root),
