@@ -118,11 +118,10 @@ my_http_server_connection_request(struct http_server_request *request,
 
     assert(request != NULL);
 
-    if (connection->config->translation_socket == NULL) {
+    if (connection->config->translation_socket == NULL)
         serve_document_root_file(request, connection->config);
-    } else {
+    else
         ask_translation_server(request, connection->config);
-    }
 }
 
 static void
