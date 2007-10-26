@@ -14,13 +14,18 @@
 #include <stdio.h>
 #include <string.h>
 
+struct translate_ctx {
+    struct http_server_request *request;
+    struct parsed_uri uri;
+    struct translate_request tr;
+};
+
 static void
 translate_callback(const struct translate_response *response,
-                   void *ctx)
+                   void *_ctx)
 {
-    struct http_server_request *request = ctx;
-    struct parsed_uri *uri;
-    int ret;
+    struct translate_ctx *ctx = _ctx;
+    struct http_server_request *request = ctx->request;
 
     if (response->status < 0 ||
         (response->path == NULL && response->proxy == NULL)) {
@@ -30,8 +35,25 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
-    uri = p_malloc(request->pool, sizeof(*uri));
-    ret = uri_parse(request->pool, uri, request->uri);
+    if (response->path != NULL) {
+        file_callback(request, &ctx->uri, response->path);
+    } else if (response->proxy != NULL) {
+        proxy_callback(request, &ctx->uri, response->proxy);
+    } else {
+        assert(0);
+    }
+}
+
+static void
+ask_translation_server(struct http_server_request *request,
+                       const struct config *config)
+{
+    struct translate_ctx *ctx;
+    int ret;
+
+    ctx = p_malloc(request->pool, sizeof(*ctx));
+
+    ret = uri_parse(request->pool, &ctx->uri, request->uri);
     if (ret < 0) {
         http_server_send_message(request,
                                  HTTP_STATUS_BAD_REQUEST,
@@ -39,13 +61,12 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
-    if (response->path != NULL) {
-        file_callback(request, uri, response->path);
-    } else if (response->proxy != NULL) {
-        proxy_callback(request, uri, response->proxy);
-    } else {
-        assert(0);
-    }
+    ctx->request = request;
+    ctx->tr.host = strmap_get(request->headers, "host");
+    ctx->tr.uri = request->uri;
+    ctx->tr.session = NULL; /* XXX */
+
+    translate(request->pool, config, &ctx->tr, translate_callback, ctx);
 }
 
 static void
@@ -90,19 +111,10 @@ my_http_server_connection_request(struct http_server_request *request,
 
     assert(request != NULL);
 
-    (void)request;
-    (void)connection;
-
     if (connection->config->translation_socket == NULL) {
         serve_document_root_file(request, connection->config);
     } else {
-        struct translate_request tr = {
-            .host = strmap_get(request->headers, "host"),
-            .uri = request->uri,
-            /* XXX .session */
-        };
-
-        translate(request->pool, connection->config, &tr, translate_callback, request);
+        ask_translation_server(request, connection->config);
     }
 }
 
