@@ -21,6 +21,6 @@ file_callback(struct http_server_request *request,
 void
 proxy_callback(struct http_server_request *request,
                const struct parsed_uri *external_uri,
-               const char *proxied_url);
+               const struct translate_response *tr);
 
 #endif

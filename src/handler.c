@@ -40,7 +40,7 @@ translate_callback(const struct translate_response *response,
     if (response->path != NULL) {
         file_callback(request, &ctx->uri, response);
     } else if (response->proxy != NULL) {
-        proxy_callback(request, &ctx->uri, response->proxy);
+        proxy_callback(request, &ctx->uri, response);
     } else {
         daemon_log(2, "empty response from translation server\n");
         http_server_send_message(request,

@@ -16,6 +16,7 @@
 #include "proxy-widget.h"
 #include "session.h"
 #include "uri.h"
+#include "translate.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -137,7 +138,7 @@ static const char *const copy_headers[] = {
 void
 proxy_callback(struct http_server_request *request,
                const struct parsed_uri *external_uri,
-               const char *proxied_url)
+               const struct translate_response *tr)
 {
     struct proxy_transfer *pt;
     istream_t body;
@@ -153,7 +154,7 @@ proxy_callback(struct http_server_request *request,
         body = istream_hold_new(request->pool, request->body);
 
     pt->url_stream = url_stream_new(request->pool,
-                                    request->method, proxied_url, NULL,
+                                    request->method, tr->proxy, NULL,
                                     request->content_length, body,
                                     proxy_http_client_callback, pt);
     if (pt->url_stream == NULL) {
