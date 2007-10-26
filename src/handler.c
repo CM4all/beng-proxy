@@ -44,6 +44,21 @@ translate_callback(const struct translate_response *response,
     }
 }
 
+static int
+request_uri_parse(struct http_server_request *request,
+                  struct parsed_uri *dest)
+{
+    int ret;
+
+    ret = uri_parse(request->pool, dest, request->uri);
+    if (ret < 0)
+        http_server_send_message(request,
+                                 HTTP_STATUS_BAD_REQUEST,
+                                 "Malformed URI");
+
+    return ret;
+}
+
 static void
 ask_translation_server(struct http_server_request *request,
                        const struct config *config)
@@ -53,13 +68,9 @@ ask_translation_server(struct http_server_request *request,
 
     ctx = p_malloc(request->pool, sizeof(*ctx));
 
-    ret = uri_parse(request->pool, &ctx->uri, request->uri);
-    if (ret < 0) {
-        http_server_send_message(request,
-                                 HTTP_STATUS_BAD_REQUEST,
-                                 "Malformed URI");
+    ret = request_uri_parse(request, &ctx->uri);
+    if (ret < 0)
         return;
-    }
 
     ctx->request = request;
     ctx->tr.host = strmap_get(request->headers, "host");
@@ -78,13 +89,9 @@ serve_document_root_file(struct http_server_request *request,
     const char *path, *index_file = NULL;
 
     uri = p_malloc(request->pool, sizeof(*uri));
-    ret = uri_parse(request->pool, uri, request->uri);
-    if (ret < 0) {
-        http_server_send_message(request,
-                                 HTTP_STATUS_BAD_REQUEST,
-                                 "Malformed URI");
+    ret = request_uri_parse(request, uri);
+    if (ret < 0)
         return;
-    }
 
     assert(uri->base_length > 0);
     assert(uri->base[0] == '/');
