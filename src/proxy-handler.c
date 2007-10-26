@@ -145,6 +145,8 @@ proxy_callback(struct http_server_request *request,
     struct proxy_transfer *pt;
     istream_t body;
 
+    pool_ref(request->pool);
+
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->request = request;
     pt->external_uri = external_uri;
@@ -160,11 +162,9 @@ proxy_callback(struct http_server_request *request,
                                     request->content_length, body,
                                     proxy_http_client_callback, pt);
     if (pt->url_stream == NULL) {
+        proxy_transfer_close(pt);
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
-        return;
     }
-
-    pool_ref(pt->request->pool);
 }
