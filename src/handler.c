@@ -29,7 +29,7 @@ translate_callback(const struct translate_response *response,
     struct translate_ctx *ctx = _ctx;
     struct http_server_request *request = ctx->request;
 
-    if (response->status < 0 ||
+    if (response->status == (http_status_t)-1 ||
         (response->path == NULL && response->proxy == NULL)) {
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,

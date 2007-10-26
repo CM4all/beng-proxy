@@ -178,7 +178,7 @@ translate_handle_packet(struct translate_connection *connection,
                         size_t payload_length)
 {
     if (command == TRANSLATE_BEGIN) {
-        if (connection->response.status != -1) {
+        if (connection->response.status != (http_status_t)-1) {
             daemon_log(1, "double BEGIN from translation server\n");
             close(connection->fd);
             connection->fd = -1;
@@ -186,7 +186,7 @@ translate_handle_packet(struct translate_connection *connection,
             return;
         }
     } else {
-        if (connection->response.status == -1) {
+        if (connection->response.status == (http_status_t)-1) {
             daemon_log(1, "no BEGIN from translation server\n");
             close(connection->fd);
             connection->fd = -1;
@@ -402,7 +402,7 @@ translate(pool_t pool,
     connection->request = marshal_request(pool, request);
     connection->callback = callback;
     connection->ctx = ctx;
-    connection->response.status = -1;
+    connection->response.status = (http_status_t)-1;
 
     translate_try_write(connection);
 }

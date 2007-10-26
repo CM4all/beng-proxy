@@ -8,6 +8,7 @@
 #define __BENG_TRANSLATE_H
 
 #include "pool.h"
+#include "http.h"
 
 struct config;
 
@@ -18,7 +19,7 @@ struct translate_request {
 };
 
 struct translate_response {
-    int status;
+    http_status_t status;
     const char *path;
     const char *content_type;
     const char *proxy;
