@@ -59,6 +59,7 @@ file_callback(struct http_server_request *request,
     istream_t body;
     struct stat st;
     char buffer[64];
+    http_status_t status;
 
     assert(tr != NULL);
     assert(tr->path != NULL);
@@ -139,6 +140,8 @@ file_callback(struct http_server_request *request,
 #endif /* #ifndef NO_XATTR */
     }
 
+    status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
+
     if (tr->process) {
         if (body != NULL) {
             struct processor_env *env;
@@ -180,7 +183,7 @@ file_callback(struct http_server_request *request,
 #endif
         }
 
-        http_server_response(request, HTTP_STATUS_OK, headers,
+        http_server_response(request, status, headers,
                              (off_t)-1, body);
     } else {
         if (request->method == HTTP_METHOD_POST) {
@@ -198,6 +201,7 @@ file_callback(struct http_server_request *request,
         header_write(headers, "last-modified", http_date_format(st.st_mtime));
 #endif
 
-        http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
+        http_server_response(request, status, headers,
+                             st.st_size, body);
     }
 }
