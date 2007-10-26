@@ -135,6 +135,7 @@ file_callback(struct http_server_request *request,
         header_write(headers, "content-type", "application/octet-stream");
 #ifndef NO_XATTR
     }
+#endif /* #ifndef NO_XATTR */
 
     if (tr->process) {
         if (body != NULL) {
@@ -180,7 +181,6 @@ file_callback(struct http_server_request *request,
         http_server_response(request, HTTP_STATUS_OK, headers,
                              (off_t)-1, body);
     } else {
-#endif /* #ifndef NO_XATTR */
         if (request->method == HTTP_METHOD_POST) {
             istream_close(body);
             http_server_send_message(request,
@@ -197,7 +197,5 @@ file_callback(struct http_server_request *request,
 #endif
 
         http_server_response(request, HTTP_STATUS_OK, headers, st.st_size, body);
-#ifndef NO_XATTR
     }
-#endif
 }
