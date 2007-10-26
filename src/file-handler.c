@@ -85,24 +85,6 @@ file_callback(struct http_server_request *request,
         return;
     }
 
-    if (S_ISDIR(st.st_mode) && path[strlen(path) - 1] == '/') {
-        const char *path2 = p_strcat(request->pool, path,
-                                     "/index", NULL);
-        struct stat st2;
-
-        ret = lstat(path2, &st2);
-        if (ret < 0 || !S_ISREG(st2.st_mode)) {
-            path2 = p_strcat(request->pool, path,
-                             "/index.html", NULL);
-            ret = lstat(path2, &st2);
-        }
-
-        if (ret == 0 && S_ISREG(st2.st_mode)) {
-            st = st2;
-            path = path2;
-        }
-    }
-
     if (!S_ISREG(st.st_mode)) {
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,

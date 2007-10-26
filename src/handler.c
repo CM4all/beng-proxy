@@ -54,7 +54,7 @@ serve_document_root_file(struct http_server_request *request,
 {
     int ret;
     struct parsed_uri *uri;
-    const char *path;
+    const char *path, *index_file = NULL;
 
     uri = p_malloc(request->pool, sizeof(*uri));
     ret = uri_parse(request->pool, uri, request->uri);
@@ -68,11 +68,15 @@ serve_document_root_file(struct http_server_request *request,
     assert(uri->base_length > 0);
     assert(uri->base[0] == '/');
 
+    if (uri->base[uri->base_length - 1] == '/')
+        index_file = "index.html";
+
     path = p_strncat(request->pool,
                      config->document_root,
                      strlen(config->document_root),
                      uri->base,
                      uri->base_length,
+                     index_file, 10,
                      NULL);
 
     file_callback(request, uri, path);
