@@ -30,7 +30,7 @@ ARCH_CFLAGS = -march=pentium4
 WARNING_CFLAGS = -std=gnu99 -x c -Wall -Werror -wd981
 endif
 
-MORE_CFLAGS = -DVERSION=\"$(VERSION)\"
+MORE_CFLAGS = -DVERSION=\"$(VERSION)\" -Iinclude
 
 ALL_CFLAGS = $(CFLAGS) $(ARCH_CFLAGS) $(MORE_CFLAGS) $(WARNING_CFLAGS) 
 
@@ -103,7 +103,7 @@ SOURCES = src/main.c \
 	src/pstring.c \
 	src/pool.c
 
-HEADERS = $(wildcard src/*.h)
+HEADERS = $(wildcard src/*.h) $(wildcard include/beng-proxy/*.h)
 
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 

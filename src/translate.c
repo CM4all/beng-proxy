@@ -9,6 +9,7 @@
 #include "socket-util.h"
 #include "growing-buffer.h"
 #include "compiler.h"
+#include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
 
@@ -18,28 +19,8 @@
 #include <errno.h>
 #include <event.h>
 
-enum {
-    TRANSLATE_END = 1,
-    TRANSLATE_BEGIN = 2,
-    TRANSLATE_HOST = 3,
-    TRANSLATE_URI = 4,
-    TRANSLATE_STATUS = 5,
-    TRANSLATE_PATH = 6,
-    TRANSLATE_CONTENT_TYPE = 7,
-    TRANSLATE_PROXY = 8,
-    TRANSLATE_REDIRECT = 9,
-    TRANSLATE_FILTER = 10,
-    TRANSLATE_PROCESS = 11,
-    TRANSLATE_SESSION = 12,
-};
-
-struct header {
-    uint16_t length;
-    uint16_t command;
-} attr_packed;
-
 struct packet_reader {
-    struct header header;
+    struct beng_translation_header header;
     size_t header_position;
     char *payload;
     size_t payload_position;
@@ -72,7 +53,7 @@ static void
 write_packet(growing_buffer_t gb, uint16_t command,
              const char *payload)
 {
-    static struct header header;
+    static struct beng_translation_header header;
 
     header.length = payload == NULL ? 0 : strlen(payload);
     header.command = command;
