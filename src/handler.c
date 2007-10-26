@@ -48,45 +48,34 @@ translate_callback(const struct translate_response *response,
     }
 }
 
-static struct translated *
-translate2(struct http_server_request *request,
-           const struct config *config)
+static void
+serve_document_root_file(struct http_server_request *request,
+                         const struct config *config)
 {
-    struct translated *translated;
     int ret;
+    struct parsed_uri *uri;
+    const char *path;
 
-    if (config->translation_socket != NULL) {
-        struct translate_request tr = {
-            .host = strmap_get(request->headers, "host"),
-            .uri = request->uri,
-            /* XXX .session */
-        };
-
-        translate(request->pool, config, &tr, translate_callback, request);
-        return NULL;
-    }
-
-    translated = p_malloc(request->pool, sizeof(*translated));
-
-    ret = uri_parse(request->pool, &translated->uri, request->uri);
+    uri = p_malloc(request->pool, sizeof(*uri));
+    ret = uri_parse(request->pool, uri, request->uri);
     if (ret < 0) {
         http_server_send_message(request,
                                  HTTP_STATUS_BAD_REQUEST,
                                  "Malformed URI");
-        return NULL;
+        return;
     }
 
-    assert(translated->uri.base_length > 0);
-    assert(translated->uri.base[0] == '/');
+    assert(uri->base_length > 0);
+    assert(uri->base[0] == '/');
 
-    translated->path = p_strncat(request->pool,
-                                 config->document_root,
-                                 strlen(config->document_root),
-                                 translated->uri.base,
-                                 translated->uri.base_length,
-                                 NULL);
+    path = p_strncat(request->pool,
+                     config->document_root,
+                     strlen(config->document_root),
+                     uri->base,
+                     uri->base_length,
+                     NULL);
 
-    return translated;
+    file_callback(request, uri, path);
 }
 
 static void
@@ -94,25 +83,23 @@ my_http_server_connection_request(struct http_server_request *request,
                                   void *ctx)
 {
     struct client_connection *connection = ctx;
-    struct translated *translated;
 
     assert(request != NULL);
 
     (void)request;
     (void)connection;
 
-    translated = translate2(request, connection->config);
-    if (translated == NULL)
-        return;
+    if (connection->config->translation_socket == NULL) {
+        serve_document_root_file(request, connection->config);
+    } else {
+        struct translate_request tr = {
+            .host = strmap_get(request->headers, "host"),
+            .uri = request->uri,
+            /* XXX .session */
+        };
 
-    if (translated == NULL || translated->path == NULL) {
-        http_server_send_message(request,
-                                 HTTP_STATUS_NOT_FOUND,
-                                 "The requested resource does not exist.");
-        return;
+        translate(request->pool, connection->config, &tr, translate_callback, request);
     }
-
-    file_callback(request, &translated->uri, translated->path);
 }
 
 static void
