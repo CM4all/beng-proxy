@@ -145,7 +145,7 @@ profile: src/cm4all-beng-proxy
 # -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
 benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
 benchmark: src/cm4all-beng-proxy
-	./src/cm4all-beng-proxy -D -u max
+	./src/cm4all-beng-proxy -D -u max -p 8080
 
 valgrind: CFLAGS = -O0 -g -DPOISON -DVALGRIND
 valgrind: src/cm4all-beng-proxy
