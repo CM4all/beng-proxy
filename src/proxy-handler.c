@@ -25,7 +25,6 @@
 #include <stdlib.h>
 
 struct proxy_transfer {
-    pool_t pool;
     struct http_server_request *request;
     const struct parsed_uri *external_uri;
     const struct translate_response *tr;
@@ -36,9 +35,12 @@ struct proxy_transfer {
 static void
 proxy_transfer_close(struct proxy_transfer *pt)
 {
-    pool_t pool = pt->pool;
+    pool_t pool;
 
-    assert(pt->pool != NULL);
+    assert(pt->request != NULL);
+    assert(pt->request->pool != NULL);
+
+    pool = pt->request->pool;
 
     if (pt->url_stream != NULL) {
         url_stream_t url_stream = pt->url_stream;
@@ -47,7 +49,6 @@ proxy_transfer_close(struct proxy_transfer *pt)
     }
 
     pt->request = NULL;
-    pt->pool = NULL;
     pool_unref(pool);
 }
 
@@ -145,7 +146,6 @@ proxy_callback(struct http_server_request *request,
     istream_t body;
 
     pt = p_calloc(request->pool, sizeof(*pt));
-    pt->pool = request->pool;
     pt->request = request;
     pt->external_uri = external_uri;
     pt->tr = tr;
@@ -166,5 +166,5 @@ proxy_callback(struct http_server_request *request,
         return;
     }
 
-    pool_ref(pt->pool);
+    pool_ref(pt->request->pool);
 }
