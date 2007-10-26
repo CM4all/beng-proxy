@@ -49,7 +49,7 @@ make_etag(char *p, const struct stat *st)
 
 void
 file_callback(struct http_server_request *request,
-              struct translated *translated)
+              const char *path)
 {
     int ret;
     growing_buffer_t headers;
@@ -70,7 +70,7 @@ file_callback(struct http_server_request *request,
         return;
     }
 
-    ret = lstat(translated->path, &st);
+    ret = lstat(path, &st);
     if (ret != 0) {
         if (errno == ENOENT) {
             http_server_send_message(request,
@@ -84,21 +84,21 @@ file_callback(struct http_server_request *request,
         return;
     }
 
-    if (S_ISDIR(st.st_mode) && translated->path[strlen(translated->path) - 1] == '/') {
-        const char *path2 = p_strcat(request->pool, translated->path,
+    if (S_ISDIR(st.st_mode) && path[strlen(path) - 1] == '/') {
+        const char *path2 = p_strcat(request->pool, path,
                                      "/index", NULL);
         struct stat st2;
 
         ret = lstat(path2, &st2);
         if (ret < 0 || !S_ISREG(st2.st_mode)) {
-            path2 = p_strcat(request->pool, translated->path,
+            path2 = p_strcat(request->pool, path,
                              "/index.html", NULL);
             ret = lstat(path2, &st2);
         }
 
         if (ret == 0 && S_ISREG(st2.st_mode)) {
             st = st2;
-            translated->path = path2;
+            path = path2;
         }
     }
 
@@ -110,7 +110,7 @@ file_callback(struct http_server_request *request,
     }
 
     if (request->method != HTTP_METHOD_HEAD) {
-        body = istream_file_new(request->pool, translated->path, st.st_size);
+        body = istream_file_new(request->pool, path, st.st_size);
         if (body == NULL) {
             if (errno == ENOENT) {
                 http_server_send_message(request,
@@ -133,7 +133,7 @@ file_callback(struct http_server_request *request,
     header_write(headers, "etag", buffer);
 
 #ifndef NO_XATTR
-    nbytes = getxattr(translated->path, "user.Content-Type", /* XXX use fgetxattr() */
+    nbytes = getxattr(path, "user.Content-Type", /* XXX use fgetxattr() */
                       content_type, sizeof(content_type) - 1);
     if (nbytes > 0) {
         assert((size_t)nbytes < sizeof(content_type));
@@ -148,12 +148,23 @@ file_callback(struct http_server_request *request,
 
     if (strncmp(content_type, "text/html", 9) == 0) {
         if (body != NULL) {
+            struct parsed_uri *uri;
             struct processor_env *env;
             struct widget *widget;
             unsigned processor_options = 0;
 
+            uri = p_malloc(request->pool, sizeof(*uri));
+            ret = uri_parse(request->pool, uri, request->uri);
+            if (ret < 0) {
+                istream_close(body);
+                http_server_send_message(request,
+                                         HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                         "Internal server error");
+                return;
+            }
+
             env = p_malloc(request->pool, sizeof(*env));
-            processor_env_init(request->pool, env, &translated->uri,
+            processor_env_init(request->pool, env, uri,
                                request->headers,
                                request->content_length, request->body,
                                embed_widget_callback);
@@ -168,7 +179,7 @@ file_callback(struct http_server_request *request,
 
             widget = p_malloc(request->pool, sizeof(*widget));
             widget_init(widget, NULL);
-            widget->from_request.session = session_get_widget(env->session, translated->path, 1);
+            widget->from_request.session = session_get_widget(env->session, path, 1);
 
             body = processor_new(request->pool, body, widget, env,
                                  processor_options);
