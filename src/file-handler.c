@@ -136,7 +136,7 @@ file_callback(struct http_server_request *request,
 #ifndef NO_XATTR
     }
 
-    if (strncmp(content_type, "text/html", 9) == 0) {
+    if (tr->process) {
         if (body != NULL) {
             struct processor_env *env;
             struct widget *widget;

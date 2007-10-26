@@ -102,8 +102,13 @@ serve_document_root_file(struct http_server_request *request,
     assert(uri->base_length > 0);
     assert(uri->base[0] == '/');
 
-    if (uri->base[uri->base_length - 1] == '/')
+    if (uri->base[uri->base_length - 1] == '/') {
         index_file = "index.html";
+        tr.process = 1;
+    } else {
+        tr.process = uri->base_length > 5 &&
+            memcmp(uri->base + uri->base_length - 5, ".html", 5) == 0;
+    }
 
     tr.status = HTTP_STATUS_OK;
     tr.path = p_strncat(request->pool,
