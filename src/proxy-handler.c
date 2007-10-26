@@ -28,6 +28,7 @@ struct proxy_transfer {
     pool_t pool;
     struct http_server_request *request;
     const struct parsed_uri *external_uri;
+    const struct translate_response *tr;
     url_stream_t url_stream;
     struct processor_env env;
 };
@@ -56,8 +57,9 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
                            void *ctx)
 {
     struct proxy_transfer *pt = ctx;
-    const char *value;
     growing_buffer_t response_headers;
+
+    (void)headers;
 
     assert(pt->url_stream != NULL);
     pt->url_stream = NULL;
@@ -71,8 +73,7 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
     response_headers = growing_buffer_new(pt->request->pool, 2048);
     /* XXX copy headers */
 
-    value = strmap_get(headers, "content-type");
-    if (value != NULL && strncmp(value, "text/html", 9) == 0) {
+    if (pt->tr->process) {
         struct widget *widget;
         unsigned processor_options = 0;
 
@@ -147,6 +148,7 @@ proxy_callback(struct http_server_request *request,
     pt->pool = request->pool;
     pt->request = request;
     pt->external_uri = external_uri;
+    pt->tr = tr;
 
     if (request->body == NULL)
         body = NULL;
