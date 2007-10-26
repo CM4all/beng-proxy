@@ -8,8 +8,8 @@ from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, Factory
 import struct
 
-TRANSLATE_END = 1
-TRANSLATE_BEGIN = 2
+TRANSLATE_BEGIN = 1
+TRANSLATE_END = 2
 TRANSLATE_HOST = 3
 TRANSLATE_URI = 4
 TRANSLATE_STATUS = 5
