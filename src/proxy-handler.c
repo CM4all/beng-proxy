@@ -97,6 +97,7 @@ proxy_response_response(http_status_t status, strmap_t headers,
         /* XXX request body? */
         processor_env_init(pt->request->pool, &pt->env, pt->external_uri,
                            pt->request2->args,
+                           pt->request2->session,
                            pt->request->headers,
                            0, NULL,
                            embed_widget_callback);

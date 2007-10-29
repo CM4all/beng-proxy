@@ -13,25 +13,22 @@ void
 processor_env_init(pool_t pool, struct processor_env *env,
                    const struct parsed_uri *uri,
                    strmap_t args,
+                   struct session *session,
                    strmap_t request_headers,
                    off_t request_content_length,
                    istream_t request_body,
                    processor_widget_callback_t widget_callback)
 {
-    const char *session_id;
-
     env->external_uri = uri;
 
     if (args == NULL) {
         env->args = strmap_new(pool, 16);
         env->frame = NULL;
         env->focus = NULL;
-        session_id = NULL;
     } else {
         env->args = args;
         env->frame = widget_ref_parse(pool, strmap_get(env->args, "frame"));
         env->focus = widget_ref_parse(pool, strmap_get(env->args, "focus"));
-        session_id = strmap_get(env->args, "session");
     }
 
     env->proxy_callback = NULL;
@@ -40,12 +37,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
     env->request_content_length = request_content_length;
     env->request_body = request_body;
 
-    env->session = NULL;
-    if (session_id != NULL) {
-        session_id_t session_id2 = session_id_parse(session_id);
-        if (session_id2 != 0)
-            env->session = session_get(session_id2);
-    }
+    env->session = session;
 
     if (env->session == NULL) {
         env->session = session_new();
