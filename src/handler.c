@@ -84,6 +84,7 @@ ask_translation_server(struct http_server_request *request,
     int ret;
 
     request2 = p_malloc(request->pool, sizeof(*request2));
+    request2->request = request;
 
     ret = request_uri_parse(request, &request2->uri);
     if (ret < 0)
@@ -91,7 +92,6 @@ ask_translation_server(struct http_server_request *request,
 
     request_args_parse(request2);
 
-    request2->request = request;
     request2->translate.request.host = strmap_get(request->headers, "host");
     request2->translate.request.uri = p_strndup(request->pool,
                                                 request2->uri.base, request2->uri.base_length);
@@ -112,6 +112,8 @@ serve_document_root_file(struct http_server_request *request,
     const char *index_file = NULL;
 
     request2 = p_malloc(request->pool, sizeof(*request2));
+    request2->request = request;
+
     uri = &request2->uri;
 
     ret = request_uri_parse(request, &request2->uri);
@@ -123,7 +125,6 @@ serve_document_root_file(struct http_server_request *request,
 
     request_args_parse(request2);
 
-    request2->request = request;
     request2->translate.response = tr = p_malloc(request->pool,
                                                  sizeof(*request2->translate.response));
 
