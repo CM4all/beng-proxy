@@ -141,6 +141,7 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 
+    assert(delayed != NULL);
     assert(delayed->input == NULL);
     assert(input != NULL);
     assert(!istream_has_handler(input));
