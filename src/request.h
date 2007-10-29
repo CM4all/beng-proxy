@@ -18,6 +18,8 @@ struct request {
 
     strmap_t args;
 
+    struct session *session;
+
     struct {
         struct translate_request request;
         const struct translate_response *response;
