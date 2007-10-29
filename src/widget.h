@@ -12,11 +12,17 @@
 
 struct processor_env;
 
+/**
+ * A widget class is a server which provides a widget.
+ */
 struct widget_class {
     /** the base URI of this widget, as specified in the template */
     const char *uri;
 };
 
+/**
+ * A widget instance.
+ */
 struct widget {
     struct list_head siblings, children;
     struct widget *parent;
