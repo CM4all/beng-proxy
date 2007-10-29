@@ -33,6 +33,29 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
+    if (response->session != NULL) {
+        if (*response->session == 0) {
+            /* clear translate session */
+
+            if (request->session != NULL)
+                request->session->translate = NULL;
+        } else {
+            /* set new translate session */
+
+            if (request->session == NULL) {
+                /* create session if there is none yet */
+                request->session = session_new();
+                session_id_format(request->session_id_buffer, request->session->id);
+                strmap_put(request->args, "session", request->session_id_buffer, 1);
+            }
+
+            if (request->session->translate == NULL ||
+                strcmp(response->session, request->session->translate) != 0)
+                request->session->translate = p_strdup(request->session->pool,
+                                                       response->session);
+        }
+    }
+
     if (response->path != NULL) {
         file_callback(request);
     } else if (response->proxy != NULL) {

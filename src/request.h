@@ -18,6 +18,7 @@ struct request {
 
     strmap_t args;
 
+    char session_id_buffer[9];
     struct session *session;
 
     struct {
