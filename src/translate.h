@@ -16,6 +16,7 @@ struct translate_request {
     const char *host;
     const char *uri;
     const char *session;
+    const char *param;
 };
 
 struct translate_response {

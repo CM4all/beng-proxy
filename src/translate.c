@@ -76,6 +76,8 @@ marshal_request(pool_t pool, const struct translate_request *request)
         write_packet(gb, TRANSLATE_URI, request->uri);
     if (request->session != NULL && *request->session != 0)
         write_packet(gb, TRANSLATE_SESSION, request->session);
+    if (request->param != NULL)
+        write_packet(gb, TRANSLATE_PARAM, request->param);
     write_packet(gb, TRANSLATE_END, NULL);
 
     return gb;
