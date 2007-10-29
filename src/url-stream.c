@@ -27,11 +27,10 @@ struct url_stream {
 
     client_socket_t client_socket;
     http_client_connection_t http;
-    int got_response;
 
-    /* callback */
-    url_stream_callback_t callback;
-    void *callback_ctx;
+    /* handler */
+    const struct http_client_response_handler *handler;
+    void *handler_ctx;
 };
 
 static int
@@ -92,32 +91,6 @@ static const struct http_client_connection_handler url_stream_connection_handler
 };
 
 static void
-url_stream_response_response(http_status_t status, strmap_t headers,
-                             off_t content_length, istream_t body,
-                             void *ctx)
-{
-    url_stream_t us = ctx;
-
-    us->got_response = 1;
-    us->callback(status, headers, content_length, body, us->callback_ctx);
-}
-
-static void
-url_stream_response_free(void *ctx)
-{
-    url_stream_t us = ctx;
-
-    if (!us->got_response)
-        /* invoke callback only if it hasn't already been invoked */
-        us->callback((http_status_t)0, NULL, 0, NULL, us->callback_ctx);
-}
-
-static const struct http_client_response_handler url_stream_response_handler = {
-    .response = url_stream_response_response,
-    .free = url_stream_response_free,
-};
-
-static void
 url_stream_client_socket_callback(int fd, int err, void *ctx)
 {
     url_stream_t us = ctx;
@@ -127,12 +100,11 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
 
         client_socket_free(&us->client_socket);
 
-        us->got_response = 0;
         us->http = http_client_connection_new(us->pool, fd,
                                               &url_stream_connection_handler, us);
         http_client_request(us->http, us->method, us->uri, us->headers,
                             us->content_length, us->body,
-                            &url_stream_response_handler, us);
+                            us->handler, us->handler_ctx);
     } else {
         daemon_log(1, "failed to connect: %s\n", strerror(err));
 
@@ -146,7 +118,8 @@ url_stream_new(pool_t pool,
                http_method_t method, const char *url,
                growing_buffer_t headers,
                off_t content_length, istream_t body,
-               url_stream_callback_t callback, void *ctx)
+               const struct http_client_response_handler *handler,
+               void *handler_ctx)
 {
     url_stream_t us;
     int ret;
@@ -154,7 +127,8 @@ url_stream_new(pool_t pool,
     struct addrinfo hints, *ai;
 
     assert(url != NULL);
-    assert(callback != NULL);
+    assert(handler != NULL);
+    assert(handler->response != NULL);
 
 #ifdef NDEBUG
     pool_ref(pool);
@@ -169,8 +143,8 @@ url_stream_new(pool_t pool,
     us->content_length = content_length;
     us->body = body;
     us->client_socket = NULL;
-    us->callback = callback;
-    us->callback_ctx = ctx;
+    us->handler = handler;
+    us->handler_ctx = handler_ctx;
 
     if (memcmp(url, "http://", 7) != 0) {
         /* XXX */
@@ -231,9 +205,10 @@ url_stream_close(url_stream_t us)
 
     if (us->client_socket != NULL) {
         client_socket_free(&us->client_socket);
-        us->callback((http_status_t)0, NULL, 0, NULL, us->callback_ctx);
+        if (us->handler->free)
+            us->handler->free(us->handler_ctx);
     } else if (us->http != NULL)
-        /* no need to invoke us->callback() here because
+        /* no need to invoke us->handler->free() here because
            url_stream_connection_free() will do it */
         http_client_connection_free(&us->http);
 

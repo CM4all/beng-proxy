@@ -53,23 +53,18 @@ proxy_transfer_close(struct proxy_transfer *pt)
 }
 
 static void 
-proxy_http_client_callback(http_status_t status, strmap_t headers,
-                           off_t content_length, istream_t body,
-                           void *ctx)
+proxy_response_response(http_status_t status, strmap_t headers,
+                        off_t content_length, istream_t body,
+                        void *ctx)
 {
     struct proxy_transfer *pt = ctx;
     growing_buffer_t response_headers;
 
+    (void)status;
     (void)headers;
 
     assert(pt->url_stream != NULL);
     pt->url_stream = NULL;
-
-    if (status == 0) {
-        /* XXX */
-        proxy_transfer_close(pt);
-        return;
-    }
 
     response_headers = growing_buffer_new(pt->request->pool, 2048);
     /* XXX copy headers */
@@ -126,9 +121,23 @@ proxy_http_client_callback(http_status_t status, strmap_t headers,
     http_server_response(pt->request, HTTP_STATUS_OK,
                          response_headers,
                          content_length, body);
+}
+
+static void 
+proxy_response_free(void *ctx)
+{
+    struct proxy_transfer *pt = ctx;
+
+    pt->url_stream = NULL;
 
     proxy_transfer_close(pt);
 }
+
+static const struct http_client_response_handler proxy_response_handler = {
+    .response = proxy_response_response,
+    .free = proxy_response_free,
+};
+
 
 /*
 static const char *const copy_headers[] = {
@@ -160,7 +169,7 @@ proxy_callback(struct http_server_request *request,
     pt->url_stream = url_stream_new(request->pool,
                                     request->method, tr->proxy, NULL,
                                     request->content_length, body,
-                                    proxy_http_client_callback, pt);
+                                    &proxy_response_handler, pt);
     if (pt->url_stream == NULL) {
         proxy_transfer_close(pt);
         http_server_send_message(request,

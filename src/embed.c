@@ -11,6 +11,7 @@
 #include "header-writer.h"
 #include "session.h"
 #include "cookie.h"
+#include "http-client.h"
 
 #include <assert.h>
 #include <string.h>
@@ -40,25 +41,19 @@ embed_abort(void *ctx)
 }
 
 static void 
-embed_http_client_callback(http_status_t status, strmap_t headers,
-                           off_t content_length, istream_t body,
-                           void *ctx)
+embed_response_response(http_status_t status, strmap_t headers,
+                        off_t content_length, istream_t body,
+                        void *ctx)
 {
     struct embed *embed = ctx;
     const char *cookies, *content_type;
     istream_t input = body;
 
+    (void)status;
     (void)content_length;
 
     assert(embed->url_stream != NULL);
     embed->url_stream = NULL;
-
-    if (status == 0) {
-        /* XXX */
-        if (embed->delayed != NULL)
-            istream_free(&embed->delayed);
-        return;
-    }
 
     content_type = strmap_get(headers, "content-type");
     if (content_type != NULL && strncmp(content_type, "text/html", 9) == 0) {
@@ -120,6 +115,28 @@ embed_http_client_callback(http_status_t status, strmap_t headers,
     istream_delayed_set(embed->delayed, input);
 }
 
+static void 
+embed_response_free(void *ctx)
+{
+    struct embed *embed = ctx;
+
+    embed->url_stream = NULL;
+
+    if (embed->delayed != NULL)
+        istream_free(&embed->delayed);
+}
+
+static const struct http_client_response_handler embed_response_handler = {
+    .response = embed_response_response,
+    .free = embed_response_free,
+};
+
+
+/*
+ * constructor
+ *
+ */
+
 istream_t
 embed_new(pool_t pool, http_method_t method, const char *url,
           off_t request_content_length,
@@ -171,7 +188,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
                                        method, url, headers,
                                        request_content_length,
                                        request_body,
-                                       embed_http_client_callback, embed);
+                                       &embed_response_handler, embed);
     if (embed->url_stream == NULL)
         istream_delayed_set(embed->delayed,
                             istream_string_new(pool, "Failed to create url_stream object."));
