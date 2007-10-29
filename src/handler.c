@@ -85,6 +85,7 @@ ask_translation_server(struct http_server_request *request,
     ctx->tr.host = strmap_get(request->headers, "host");
     ctx->tr.uri = p_strndup(request->pool, ctx->uri.base, ctx->uri.base_length);
     ctx->tr.session = NULL; /* XXX */
+    ctx->tr.param = NULL; /* XXX */
 
     translate(request->pool, config, &ctx->tr, translate_callback, ctx);
 }
