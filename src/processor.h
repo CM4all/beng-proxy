@@ -67,6 +67,7 @@ struct processor_env {
 void
 processor_env_init(pool_t pool, struct processor_env *env,
                    const struct parsed_uri *uri,
+                   strmap_t args,
                    strmap_t request_headers,
                    off_t request_content_length,
                    istream_t request_body,

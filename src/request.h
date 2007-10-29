@@ -10,10 +10,14 @@
 
 #include "uri.h"
 #include "translate.h"
+#include "strmap.h"
 
 struct request {
     struct http_server_request *request;
     struct parsed_uri uri;
+
+    strmap_t args;
+
     struct {
         struct translate_request request;
         const struct translate_response *response;

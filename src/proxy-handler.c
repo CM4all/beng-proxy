@@ -24,6 +24,7 @@
 #include <stdlib.h>
 
 struct proxy_transfer {
+    struct request *request2;
     struct http_server_request *request;
     const struct parsed_uri *external_uri;
     const struct translate_response *tr;
@@ -95,6 +96,7 @@ proxy_response_response(http_status_t status, strmap_t headers,
 
         /* XXX request body? */
         processor_env_init(pt->request->pool, &pt->env, pt->external_uri,
+                           pt->request2->args,
                            pt->request->headers,
                            0, NULL,
                            embed_widget_callback);
@@ -174,6 +176,7 @@ proxy_callback(struct request *request2)
     pool_ref(request->pool);
 
     pt = p_calloc(request->pool, sizeof(*pt));
+    pt->request2 = request2;
     pt->request = request;
     pt->external_uri = external_uri;
     pt->tr = tr;

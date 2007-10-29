@@ -151,6 +151,7 @@ file_callback(struct request *request2)
 
             env = p_malloc(request->pool, sizeof(*env));
             processor_env_init(request->pool, env, uri,
+                               request2->args,
                                request->headers,
                                request->content_length, request->body,
                                embed_widget_callback);
