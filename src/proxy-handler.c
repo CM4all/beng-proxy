@@ -46,6 +46,14 @@ static const char *const copy_headers[] = {
     NULL,
 };
 
+static const char *const copy_headers_processed[] = {
+    "etag",
+    "content-language",
+    "content-type",
+    "vary",
+    NULL,
+};
+
 
 static void
 proxy_transfer_close(struct proxy_transfer *pt)
@@ -81,7 +89,6 @@ proxy_response_response(http_status_t status, strmap_t headers,
     pt->url_stream = NULL;
 
     response_headers = growing_buffer_new(pt->request->pool, 2048);
-    headers_copy(headers, response_headers, copy_headers);
 
     if (pt->tr->process) {
         struct widget *widget;
@@ -126,8 +133,11 @@ proxy_response_response(http_status_t status, strmap_t headers,
 
         pool_unref(pt->request->pool);
 
-        header_write(response_headers, "content-type", "text/html");
         content_length = (off_t)-1;
+
+        headers_copy(headers, response_headers, copy_headers_processed);
+    } else {
+        headers_copy(headers, response_headers, copy_headers);
     }
 
     assert(!istream_has_handler(body));
