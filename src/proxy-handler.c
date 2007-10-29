@@ -32,6 +32,21 @@ struct proxy_transfer {
     struct processor_env env;
 };
 
+static const char *const copy_headers[] = {
+    "age",
+    "etag",
+    "content-encoding",
+    "content-language",
+    "content-md5",
+    "content-range",
+    "content-type",
+    "last-modified",
+    "retry-after",
+    "vary",
+    NULL,
+};
+
+
 static void
 proxy_transfer_close(struct proxy_transfer *pt)
 {
@@ -61,13 +76,12 @@ proxy_response_response(http_status_t status, strmap_t headers,
     growing_buffer_t response_headers;
 
     (void)status;
-    (void)headers;
 
     assert(pt->url_stream != NULL);
     pt->url_stream = NULL;
 
     response_headers = growing_buffer_new(pt->request->pool, 2048);
-    /* XXX copy headers */
+    headers_copy(headers, response_headers, copy_headers);
 
     if (pt->tr->process) {
         struct widget *widget;
@@ -138,13 +152,6 @@ static const struct http_client_response_handler proxy_response_handler = {
     .free = proxy_response_free,
 };
 
-
-/*
-static const char *const copy_headers[] = {
-    "user-agent",
-    NULL
-};
-*/
 
 void
 proxy_callback(struct http_server_request *request,
