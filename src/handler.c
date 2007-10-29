@@ -64,6 +64,19 @@ request_uri_parse(struct http_server_request *request,
 }
 
 static void
+request_args_parse(struct request *request)
+{
+    if (request->uri.args == NULL) {
+        request->args = NULL;
+        request->translate.request.param = NULL;
+    } else {
+        request->args = args_parse(request->request->pool,
+                                   request->uri.args, request->uri.args_length);
+        request->translate.request.param = strmap_get(request->args, "translate");
+    }
+}
+
+static void
 ask_translation_server(struct http_server_request *request,
                        const struct config *config)
 {
@@ -76,14 +89,7 @@ ask_translation_server(struct http_server_request *request,
     if (ret < 0)
         return;
 
-    if (request2->uri.args == NULL) {
-        request2->args = NULL;
-        request2->translate.request.param = NULL;
-    } else {
-        request2->args = args_parse(request->pool,
-                                    request2->uri.args, request2->uri.args_length);
-        request2->translate.request.param = strmap_get(request2->args, "translate");
-    }
+    request_args_parse(request2);
 
     request2->request = request;
     request2->translate.request.host = strmap_get(request->headers, "host");
@@ -115,14 +121,7 @@ serve_document_root_file(struct http_server_request *request,
     assert(uri->base_length > 0);
     assert(uri->base[0] == '/');
 
-    if (request2->uri.args == NULL) {
-        request2->args = NULL;
-        request2->translate.request.param = NULL;
-    } else {
-        request2->args = args_parse(request->pool,
-                                    request2->uri.args, request2->uri.args_length);
-        request2->translate.request.param = strmap_get(request2->args, "translate");
-    }
+    request_args_parse(request2);
 
     request2->request = request;
     request2->translate.response = tr = p_malloc(request->pool,
