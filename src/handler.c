@@ -18,6 +18,17 @@
 #include <string.h>
 
 static void
+request_make_session(struct request *request)
+{
+    if (request->session != NULL)
+        return;
+
+    request->session = session_new();
+    session_id_format(request->session_id_buffer, request->session->id);
+    strmap_put(request->args, "session", request->session_id_buffer, 1);
+}
+
+static void
 translate_callback(const struct translate_response *response,
                    void *ctx)
 {
@@ -42,12 +53,7 @@ translate_callback(const struct translate_response *response,
         } else {
             /* set new translate session */
 
-            if (request->session == NULL) {
-                /* create session if there is none yet */
-                request->session = session_new();
-                session_id_format(request->session_id_buffer, request->session->id);
-                strmap_put(request->args, "session", request->session_id_buffer, 1);
-            }
+            request_make_session(request);
 
             if (request->session->translate == NULL ||
                 strcmp(response->session, request->session->translate) != 0)
