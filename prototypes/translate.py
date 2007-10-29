@@ -20,6 +20,7 @@ TRANSLATE_REDIRECT = 9
 TRANSLATE_FILTER = 10
 TRANSLATE_PROCESS = 11
 TRANSLATE_SESSION = 12
+TRANSLATE_PARAM = 12
 
 class PacketReader:
     def __init__(self):
@@ -75,6 +76,8 @@ class Request:
             self.uri = packet.payload
         elif packet.command == TRANSLATE_SESSION:
             self.session = packet.payload
+        elif packet.command == TRANSLATE_PARAM:
+            self.param = packet.payload
         else:
             print "Invalid command:", packet.command
         return False

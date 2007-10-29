@@ -22,6 +22,7 @@ enum beng_translation_command {
     TRANSLATE_FILTER = 10,
     TRANSLATE_PROCESS = 11,
     TRANSLATE_SESSION = 12,
+    TRANSLATE_PARAM = 13,
 };
 
 struct beng_translation_header {
