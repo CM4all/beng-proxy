@@ -4,8 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "connection.h"
 #include "handler.h"
+#include "request.h"
+#include "connection.h"
 #include "url-stream.h"
 #include "processor.h"
 #include "header-writer.h"
@@ -15,8 +16,6 @@
 #include "http-util.h"
 #include "proxy-widget.h"
 #include "session.h"
-#include "uri.h"
-#include "translate.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -164,10 +163,11 @@ static const struct http_client_response_handler proxy_response_handler = {
 
 
 void
-proxy_callback(struct http_server_request *request,
-               const struct parsed_uri *external_uri,
-               const struct translate_response *tr)
+proxy_callback(struct request *request2)
 {
+    struct http_server_request *request = request2->request;
+    const struct parsed_uri *external_uri = &request2->uri;
+    const struct translate_response *tr = request2->translate.response;
     struct proxy_transfer *pt;
     istream_t body;
 

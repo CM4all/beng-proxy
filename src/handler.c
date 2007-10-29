@@ -5,10 +5,9 @@
  */
 
 #include "handler.h"
+#include "request.h"
 #include "connection.h"
 #include "config.h"
-#include "translate.h"
-#include "uri.h"
 
 #include <daemon/log.h>
 
@@ -16,38 +15,33 @@
 #include <stdio.h>
 #include <string.h>
 
-struct translate_ctx {
-    struct http_server_request *request;
-    struct parsed_uri uri;
-    struct translate_request tr;
-};
-
 static void
 translate_callback(const struct translate_response *response,
-                   void *_ctx)
+                   void *ctx)
 {
-    struct translate_ctx *ctx = _ctx;
-    struct http_server_request *request = ctx->request;
+    struct request *request = ctx;
+
+    request->translate.response = response;
 
     if (response->status == (http_status_t)-1 ||
         (response->path == NULL && response->proxy == NULL)) {
-        http_server_send_message(request,
+        http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
         return;
     }
 
     if (response->path != NULL) {
-        file_callback(request, &ctx->uri, response);
+        file_callback(request);
     } else if (response->proxy != NULL) {
-        proxy_callback(request, &ctx->uri, response);
+        proxy_callback(request);
     } else if (response->status != (http_status_t)0) {
-        http_server_send_message(request,
+        http_server_send_message(request->request,
                                  response->status,
                                  ""); /* XXX which message? */
     } else {
         daemon_log(2, "empty response from translation server\n");
-        http_server_send_message(request,
+        http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
     }
@@ -72,61 +66,69 @@ static void
 ask_translation_server(struct http_server_request *request,
                        const struct config *config)
 {
-    struct translate_ctx *ctx;
+    struct request *request2;
     int ret;
 
-    ctx = p_malloc(request->pool, sizeof(*ctx));
+    request2 = p_malloc(request->pool, sizeof(*request));
 
-    ret = request_uri_parse(request, &ctx->uri);
+    ret = request_uri_parse(request, &request2->uri);
     if (ret < 0)
         return;
 
-    ctx->request = request;
-    ctx->tr.host = strmap_get(request->headers, "host");
-    ctx->tr.uri = p_strndup(request->pool, ctx->uri.base, ctx->uri.base_length);
-    ctx->tr.session = NULL; /* XXX */
-    ctx->tr.param = NULL; /* XXX */
+    request2->request = request;
+    request2->translate.request.host = strmap_get(request->headers, "host");
+    request2->translate.request.uri = p_strndup(request->pool,
+                                                request2->uri.base, request2->uri.base_length);
+    request2->translate.request.session = NULL; /* XXX */
+    request2->translate.request.param = NULL; /* XXX */
 
-    translate(request->pool, config, &ctx->tr, translate_callback, ctx);
+    translate(request->pool, config, &request2->translate.request,
+              translate_callback, request2);
 }
 
 static void
 serve_document_root_file(struct http_server_request *request,
                          const struct config *config)
 {
+    struct request *request2;
     int ret;
     struct parsed_uri *uri;
-    struct translate_response tr;
+    struct translate_response *tr;
     const char *index_file = NULL;
 
-    uri = p_malloc(request->pool, sizeof(*uri));
-    ret = request_uri_parse(request, uri);
+    request2 = p_malloc(request->pool, sizeof(*request));
+    uri = &request2->uri;
+
+    ret = request_uri_parse(request, &request2->uri);
     if (ret < 0)
         return;
 
     assert(uri->base_length > 0);
     assert(uri->base[0] == '/');
 
+    request2->translate.response = tr = p_malloc(request->pool,
+                                                 sizeof(*request2->translate.response));
+
     if (uri->base[uri->base_length - 1] == '/') {
         index_file = "index.html";
-        tr.process = 1;
+        tr->process = 1;
     } else {
-        tr.process = uri->base_length > 5 &&
+        tr->process = uri->base_length > 5 &&
             memcmp(uri->base + uri->base_length - 5, ".html", 5) == 0;
     }
 
-    tr.status = 0;
-    tr.path = p_strncat(request->pool,
-                        config->document_root,
-                        strlen(config->document_root),
-                        uri->base,
-                        uri->base_length,
-                        index_file, 10,
-                        NULL);
-    tr.content_type = NULL;
-    tr.filter = NULL;
+    tr->status = 0;
+    tr->path = p_strncat(request->pool,
+                         config->document_root,
+                         strlen(config->document_root),
+                         uri->base,
+                         uri->base_length,
+                         index_file, 10,
+                         NULL);
+    tr->content_type = NULL;
+    tr->filter = NULL;
 
-    file_callback(request, uri, &tr);
+    file_callback(request2);
 }
 
 static void

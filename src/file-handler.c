@@ -4,8 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "connection.h"
 #include "handler.h"
+#include "request.h"
+#include "connection.h"
 #include "header-writer.h"
 #include "processor.h"
 #include "date.h"
@@ -16,7 +17,6 @@
 #include "http-util.h"
 #include "proxy-widget.h"
 #include "session.h"
-#include "translate.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -49,10 +49,11 @@ make_etag(char *p, const struct stat *st)
 }
 
 void
-file_callback(struct http_server_request *request,
-              const struct parsed_uri *uri,
-              const struct translate_response *tr)
+file_callback(struct request *request2)
 {
+    struct http_server_request *request = request2->request;
+    const struct parsed_uri *uri = &request2->uri;
+    const struct translate_response *tr = request2->translate.response;
     const char *path;
     int ret;
     growing_buffer_t headers;

@@ -7,20 +7,14 @@
 #ifndef __BENG_HANDLER_H
 #define __BENG_HANDLER_H
 
-struct parsed_uri;
-struct http_server_request;
-struct translate_response;
+struct request;
 
 extern const struct http_server_connection_handler my_http_server_connection_handler;
 
 void
-file_callback(struct http_server_request *request,
-              const struct parsed_uri *uri,
-              const struct translate_response *tr);
+file_callback(struct request *request);
 
 void
-proxy_callback(struct http_server_request *request,
-               const struct parsed_uri *external_uri,
-               const struct translate_response *tr);
+proxy_callback(struct request *request);
 
 #endif
