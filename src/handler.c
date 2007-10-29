@@ -76,18 +76,20 @@ ask_translation_server(struct http_server_request *request,
     if (ret < 0)
         return;
 
-    if (request2->uri.args == NULL)
+    if (request2->uri.args == NULL) {
         request2->args = NULL;
-    else
+        request2->translate.request.param = NULL;
+    } else {
         request2->args = args_parse(request->pool,
                                     request2->uri.args, request2->uri.args_length);
+        request2->translate.request.param = strmap_get(request2->args, "translate");
+    }
 
     request2->request = request;
     request2->translate.request.host = strmap_get(request->headers, "host");
     request2->translate.request.uri = p_strndup(request->pool,
                                                 request2->uri.base, request2->uri.base_length);
     request2->translate.request.session = NULL; /* XXX */
-    request2->translate.request.param = NULL; /* XXX */
 
     translate(request->pool, config, &request2->translate.request,
               translate_callback, request2);
