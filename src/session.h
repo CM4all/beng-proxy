@@ -61,6 +61,10 @@ struct session {
     /** an opaque string for the translation server */
     const char *translate;
 
+    /** the user name which is logged in (NULL if anonymous), provided
+        by the translation server */
+    const char *user;
+
     /** a map of widget path to struct widget_session */
     hashmap_t widgets;
 };

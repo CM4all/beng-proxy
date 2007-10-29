@@ -62,6 +62,24 @@ translate_callback(const struct translate_response *response,
         }
     }
 
+    if (response->user != NULL) {
+        if (*response->user == 0) {
+            /* log out */
+
+            if (request->session != NULL)
+                request->session->user = NULL;
+        } else {
+            /* log in */
+
+            request_make_session(request);
+
+            if (request->session->user == NULL ||
+                strcmp(response->user, request->session->user) != 0)
+                request->session->user = p_strdup(request->session->pool,
+                                                  response->user);
+        }
+    }
+
     if (response->path != NULL) {
         file_callback(request);
     } else if (response->proxy != NULL) {

@@ -28,6 +28,7 @@ struct translate_response {
     const char *filter;
     int process;
     const char *session;
+    const char *user;
 };
 
 typedef void (*translate_callback_t)(const struct translate_response *response,

@@ -244,6 +244,10 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_SESSION:
         connection->response.session = payload;
         break;
+
+    case TRANSLATE_USER:
+        connection->response.user = payload;
+        break;
     }
 }
 

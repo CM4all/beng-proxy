@@ -26,6 +26,8 @@ translate_callback(const struct translate_response *response,
         printf("process=true\n");
     if (response->session != NULL)
         printf("session=%s\n", response->session);
+    if (response->user != NULL)
+        printf("user=%s\n", response->user);
 }
 
 int main(int argc, char **argv) {
