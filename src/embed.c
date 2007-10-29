@@ -50,7 +50,6 @@ embed_response_response(http_status_t status, strmap_t headers,
     istream_t input = body;
 
     (void)status;
-    (void)content_length;
 
     assert(embed->url_stream != NULL);
     embed->url_stream = NULL;
