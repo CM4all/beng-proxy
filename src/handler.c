@@ -115,10 +115,14 @@ serve_document_root_file(struct http_server_request *request,
     assert(uri->base_length > 0);
     assert(uri->base[0] == '/');
 
-    if (uri->args == NULL)
+    if (request2->uri.args == NULL) {
         request2->args = NULL;
-    else
-        request2->args = args_parse(request->pool, uri->args, uri->args_length);
+        request2->translate.request.param = NULL;
+    } else {
+        request2->args = args_parse(request->pool,
+                                    request2->uri.args, request2->uri.args_length);
+        request2->translate.request.param = strmap_get(request2->args, "translate");
+    }
 
     request2->request = request;
     request2->translate.response = tr = p_malloc(request->pool,
