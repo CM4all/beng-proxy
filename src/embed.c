@@ -27,7 +27,7 @@ struct embed {
 };
 
 static void
-embed_abort(void *ctx)
+embed_delayed_abort(void *ctx)
 {
     struct embed *embed = (struct embed *)ctx;
 
@@ -181,7 +181,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     embed->widget = widget;
     embed->env = env;
     embed->options = options;
-    embed->delayed = istream_delayed_new(pool, embed_abort, embed);
+    embed->delayed = istream_delayed_new(pool, embed_delayed_abort, embed);
 
     embed->url_stream = url_stream_new(pool,
                                        method, url, headers,
