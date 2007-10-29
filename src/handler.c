@@ -106,6 +106,7 @@ serve_document_root_file(struct http_server_request *request,
     assert(uri->base_length > 0);
     assert(uri->base[0] == '/');
 
+    request2->request = request;
     request2->translate.response = tr = p_malloc(request->pool,
                                                  sizeof(*request2->translate.response));
 
