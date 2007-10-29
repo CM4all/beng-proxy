@@ -65,6 +65,20 @@ request_uri_parse(struct http_server_request *request,
 }
 
 static void
+request_get_session(struct request *request, const char *session_id)
+{
+    session_id_t session_id2 = session_id_parse(session_id);
+
+    assert(request != NULL);
+    assert(request->session == NULL);
+
+    if (session_id2 == 0)
+        return;
+
+    request->session = session_get(session_id2);
+}
+
+static void
 request_args_parse(struct request *request)
 {
     const char *session_id;
@@ -82,11 +96,8 @@ request_args_parse(struct request *request)
     request->translate.request.param = strmap_get(request->args, "translate");
 
     session_id = strmap_get(request->args, "session");
-    if (session_id != NULL) {
-        session_id_t session_id2 = session_id_parse(session_id);
-        if (session_id2 != 0)
-            request->session = session_get(session_id2);
-    }
+    if (session_id != NULL)
+        request_get_session(request, session_id);
 }
 
 static void
