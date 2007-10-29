@@ -17,6 +17,8 @@
 #include <string.h>
 
 struct embed {
+    pool_t pool;
+
     struct widget *widget;
     const struct processor_env *env;
     unsigned options;
@@ -47,7 +49,7 @@ embed_response_response(http_status_t status, strmap_t headers,
 {
     struct embed *embed = ctx;
     const char *cookies, *content_type;
-    istream_t input = body;
+    istream_t input = body, delayed;
 
     (void)status;
 
@@ -72,17 +74,21 @@ embed_response_response(http_status_t status, strmap_t headers,
                                     cookies);
     }
 
+    pool_ref(embed->pool);
+
     if (embed->widget->from_request.proxy && embed->env->proxy_callback != NULL) {
         /* this is the request for IFRAME contents - send it directly
            to to http_server object, including headers */
 
-        pool_ref(istream_pool(embed->delayed));
         embed->env->proxy_callback(HTTP_STATUS_OK, headers,
                                    content_length, input,
                                    embed->env->proxy_callback_ctx);
-        pool_unref(istream_pool(embed->delayed));
+        pool_unref(embed->pool);
         return;
     }
+
+    delayed = embed->delayed;
+    embed->delayed = NULL;
 
     if (input == body && !embed->widget->from_request.proxy &&
         embed->widget->id != NULL) {
@@ -98,7 +104,7 @@ embed_response_response(http_status_t status, strmap_t headers,
 
         istream_close(input);
 
-        input = embed->env->widget_callback(istream_pool(embed->delayed),
+        input = embed->env->widget_callback(embed->pool,
                                             embed->env, embed->widget);
     }
 
@@ -111,7 +117,9 @@ embed_response_response(http_status_t status, strmap_t headers,
                                    "Not an HTML document");
     }
 
-    istream_delayed_set(embed->delayed, input);
+    istream_delayed_set(delayed, input);
+
+    pool_unref(embed->pool);
 }
 
 static void 
@@ -123,6 +131,8 @@ embed_response_free(void *ctx)
 
     if (embed->delayed != NULL)
         istream_free(&embed->delayed);
+
+    pool_unref(embed->pool);
 }
 
 static const struct http_client_response_handler embed_response_handler = {
@@ -178,6 +188,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
         cookie_list_http_header(headers, &ws->cookies);
 
     embed = p_malloc(pool, sizeof(*embed));
+    embed->pool = pool;
     embed->widget = widget;
     embed->env = env;
     embed->options = options;
@@ -191,6 +202,8 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     if (embed->url_stream == NULL)
         istream_delayed_set(embed->delayed,
                             istream_string_new(pool, "Failed to create url_stream object."));
+    else
+        pool_ref(embed->pool);
 
     return embed->delayed;
 }
