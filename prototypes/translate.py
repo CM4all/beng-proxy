@@ -20,7 +20,7 @@ TRANSLATE_REDIRECT = 9
 TRANSLATE_FILTER = 10
 TRANSLATE_PROCESS = 11
 TRANSLATE_SESSION = 12
-TRANSLATE_PARAM = 12
+TRANSLATE_PARAM = 13
 
 class PacketReader:
     def __init__(self):
@@ -66,6 +66,7 @@ class Request:
         self.host = None
         self.uri = None
         self.session = None
+        self.param = None
 
     def packetReceived(self, packet):
         if packet.command == TRANSLATE_END:
