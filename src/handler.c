@@ -119,7 +119,7 @@ request_args_parse(struct request *request)
 
     request->args = args_parse(request->request->pool,
                                request->uri.args, request->uri.args_length);
-    request->translate.request.param = strmap_get(request->args, "translate");
+    request->translate.request.param = strmap_remove(request->args, "translate");
 
     session_id = strmap_get(request->args, "session");
     if (session_id != NULL)
