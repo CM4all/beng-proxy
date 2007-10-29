@@ -69,7 +69,7 @@ ask_translation_server(struct http_server_request *request,
     struct request *request2;
     int ret;
 
-    request2 = p_malloc(request->pool, sizeof(*request));
+    request2 = p_malloc(request->pool, sizeof(*request2));
 
     ret = request_uri_parse(request, &request2->uri);
     if (ret < 0)
@@ -96,7 +96,7 @@ serve_document_root_file(struct http_server_request *request,
     struct translate_response *tr;
     const char *index_file = NULL;
 
-    request2 = p_malloc(request->pool, sizeof(*request));
+    request2 = p_malloc(request->pool, sizeof(*request2));
     uri = &request2->uri;
 
     ret = request_uri_parse(request, &request2->uri);
