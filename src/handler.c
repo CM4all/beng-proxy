@@ -76,6 +76,9 @@ request_get_session(struct request *request, const char *session_id)
         return;
 
     request->session = session_get(session_id2);
+
+    if (request->session != NULL)
+        request->translate.request.session = request->session->translate;
 }
 
 static void
@@ -119,8 +122,8 @@ ask_translation_server(struct http_server_request *request,
     request2->translate.request.host = strmap_get(request->headers, "host");
     request2->translate.request.uri = p_strndup(request->pool,
                                                 request2->uri.base, request2->uri.base_length);
-    request2->translate.request.param = NULL; /* XXX */
-    request2->translate.request.session = NULL; /* XXX */
+    request2->translate.request.param = NULL;
+    request2->translate.request.session = NULL;
 
     request_args_parse(request2);
 

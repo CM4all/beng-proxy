@@ -112,6 +112,7 @@ session_new(void)
     session->pool = pool;
     session->id = session_generate_id();
     session->expires = time(NULL) + SESSION_TTL_NEW;
+    session->translate = NULL;
     session->widgets = NULL;
 
     list_add(&session->hash_siblings, &session_manager.sessions);

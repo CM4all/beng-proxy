@@ -40,6 +40,8 @@ struct session {
     time_t expires;
     unsigned removed:1;
 
+    const char *translate;
+
     hashmap_t widgets;
 };
 
