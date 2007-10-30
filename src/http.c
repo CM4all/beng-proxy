@@ -19,6 +19,13 @@ const char *http_status_to_string_data[6][20] = {
         [HTTP_STATUS_NO_CONTENT - 200] = "204 No Content",
         [HTTP_STATUS_PARTIAL_CONTENT - 200] = "206 Partial Content",
     },
+    [3] = {
+        [HTTP_STATUS_MOVED_PERMANENTLY - 300] = "301 Moved Permanently",
+        [HTTP_STATUS_FOUND - 300] = "302 Found",
+        [HTTP_STATUS_SEE_OTHER - 300] = "303 See Other",
+        [HTTP_STATUS_NOT_MODIFIED - 300] = "304 Not Modified",
+        [HTTP_STATUS_TEMPORARY_REDIRECT - 300] = "307 Temporary Redirect",
+    },
     [4] = {
         [HTTP_STATUS_BAD_REQUEST - 400] = "400 Bad Request",
         [HTTP_STATUS_UNAUTHORIZED - 400] = "401 Unauthorized",

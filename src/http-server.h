@@ -56,4 +56,9 @@ void
 http_server_send_message(struct http_server_request *request,
                          http_status_t status, const char *msg);
 
+void
+http_server_send_redirect(struct http_server_request *request,
+                          http_status_t status, const char *location,
+                          const char *msg);
+
 #endif

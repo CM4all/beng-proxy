@@ -848,3 +848,26 @@ http_server_send_message(struct http_server_request *request,
                          length,
                          istream_memory_new(request->pool, msg, length));
 }
+
+void
+http_server_send_redirect(struct http_server_request *request,
+                          http_status_t status, const char *location,
+                          const char *msg)
+{
+    growing_buffer_t headers = growing_buffer_new(request->pool, 1024);
+    size_t length;
+
+    assert(request != NULL);
+    assert(status >= 300 && status < 400);
+    assert(location != NULL);
+
+    if (msg == NULL)
+        msg = "redirection";
+    length = strlen(msg);
+
+    header_write(headers, "location", location);
+
+    http_server_response(request, status, headers,
+                         length,
+                         istream_memory_new(request->pool, msg, length));
+}

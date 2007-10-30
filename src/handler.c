@@ -26,7 +26,8 @@ translate_callback(const struct translate_response *response,
     request->translate.response = response;
 
     if (response->status == (http_status_t)-1 ||
-        (response->path == NULL && response->proxy == NULL)) {
+        (response->path == NULL && response->proxy == NULL &&
+         response->redirect == NULL)) {
         http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
@@ -73,6 +74,9 @@ translate_callback(const struct translate_response *response,
         file_callback(request);
     } else if (response->proxy != NULL) {
         proxy_callback(request);
+    } else if (response->redirect != NULL) {
+        http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
+                                  response->redirect, NULL);
     } else if (response->status != (http_status_t)0) {
         http_server_send_message(request->request,
                                  response->status,
