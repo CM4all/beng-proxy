@@ -18,17 +18,6 @@
 #include <string.h>
 
 static void
-request_make_session(struct request *request)
-{
-    if (request->session != NULL)
-        return;
-
-    request->session = session_new();
-    session_id_format(request->session_id_buffer, request->session->id);
-    strmap_put(request->args, "session", request->session_id_buffer, 1);
-}
-
-static void
 translate_callback(const struct translate_response *response,
                    void *ctx)
 {
@@ -109,23 +98,6 @@ request_uri_parse(struct http_server_request *request,
                                  "Malformed URI");
 
     return ret;
-}
-
-static void
-request_get_session(struct request *request, const char *session_id)
-{
-    session_id_t session_id2 = session_id_parse(session_id);
-
-    assert(request != NULL);
-    assert(request->session == NULL);
-
-    if (session_id2 == 0)
-        return;
-
-    request->session = session_get(session_id2);
-
-    if (request->session != NULL)
-        request->translate.request.session = request->session->translate;
 }
 
 static void

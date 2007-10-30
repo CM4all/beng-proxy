@@ -27,4 +27,10 @@ struct request {
     } translate;
 };
 
+void
+request_get_session(struct request *request, const char *session_id);
+
+struct session *
+request_make_session(struct request *request);
+
 #endif

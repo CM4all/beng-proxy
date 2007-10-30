@@ -50,6 +50,7 @@ SOURCES = src/main.c \
 	src/cookie.c \
 	src/connection.c \
 	src/translate.c \
+	src/request.c \
 	src/handler.c \
 	src/file-handler.c \
 	src/proxy-handler.c \
