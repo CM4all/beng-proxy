@@ -8,6 +8,7 @@
 #include "session.h"
 #include "processor.h"
 #include "uri.h"
+#include "args.h"
 
 #include <string.h>
 #include <assert.h>
@@ -128,4 +129,48 @@ widget_absolute_uri(pool_t pool, const struct widget *widget,
 {
     return uri_absolute(pool, widget->real_uri,
                         relative_uri, relative_uri_length);
+}
+
+const char *
+widget_external_uri(pool_t pool,
+                    const struct parsed_uri *external_uri,
+                    strmap_t args,
+                    const struct widget *widget,
+                    const char *relative_uri, size_t relative_uri_length,
+                    int focus, int remove_old_focus)
+{
+    const char *new_uri = widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
+    const char *args2, *remove_key = NULL;
+
+    if (new_uri == NULL ||
+        widget->id == NULL ||
+        external_uri == NULL ||
+        widget->class == NULL ||
+        !widget_class_includes_uri(widget->class, new_uri))
+        return new_uri;
+
+    if (!focus && memchr(relative_uri, '?', relative_uri_length) != NULL)
+        /* switch on focus if the relative URI contains a query
+           string */
+        focus = 1;
+
+    if (remove_old_focus || external_uri->query != NULL)
+        remove_key = strmap_get(args, "focus");
+
+    /* the URI is relative to the widget's base URI.  Convert the URI
+       into an absolute URI to the template page on this server and
+       add the appropriate args. */
+    args2 = args_format(pool, args,
+                        widget->id,
+                        new_uri + strlen(widget->class->uri),
+                        "focus",
+                        focus ? widget->id : NULL,
+                        remove_key);
+
+    return p_strncat(pool,
+                     external_uri->base,
+                     external_uri->base_length,
+                     ";", 1,
+                     args2, strlen(args2),
+                     NULL);
 }

@@ -336,49 +336,17 @@ make_url_attribute_absolute(processor_t processor)
 static void
 transform_url_attribute(processor_t processor, int focus)
 {
-    const char *new_uri = widget_absolute_uri(processor->output.pool,
-                                              processor->widget,
-                                              processor->parser.attr_value,
-                                              processor->parser.attr_value_length);
-    const char *args, *remove_key = NULL;
-
+    const char *new_uri
+        = widget_external_uri(processor->output.pool,
+                              processor->env->external_uri,
+                              processor->env->args,
+                              processor->widget,
+                              processor->parser.attr_value,
+                              processor->parser.attr_value_length,
+                              focus,
+                              processor->env->request_body != NULL);
     if (new_uri == NULL)
         return;
-
-    if (processor->widget->id == NULL ||
-        processor->env->external_uri == NULL ||
-        processor->widget->class == NULL ||
-        !widget_class_includes_uri(processor->widget->class, new_uri)) {
-        replace_attribute_value(processor,
-                                istream_string_new(processor->output.pool,
-                                                   new_uri));
-        return;
-    }
-
-    if (!focus && memchr(processor->parser.attr_value, '?',
-                         processor->parser.attr_value_length) != NULL)
-        focus = 1;
-
-    if (processor->env->request_body != NULL ||
-        processor->env->external_uri->query != NULL)
-        remove_key = strmap_get(processor->env->args, "focus");
-
-    /* the URI is relative to the widget's base URI.  Convert the URI
-       into an absolute URI to the template page on this server and
-       add the appropriate args. */
-    args = args_format(processor->output.pool, processor->env->args,
-                       processor->widget->id,
-                       new_uri + strlen(processor->widget->class->uri),
-                       "focus",
-                       focus ? processor->widget->id : NULL,
-                       remove_key);
-
-    new_uri = p_strncat(processor->output.pool,
-                        processor->env->external_uri->base,
-                        processor->env->external_uri->base_length,
-                        ";", 1,
-                        args, strlen(args),
-                        NULL);
 
     replace_attribute_value(processor,
                             istream_string_new(processor->output.pool,

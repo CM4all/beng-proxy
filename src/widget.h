@@ -9,8 +9,10 @@
 
 #include "pool.h"
 #include "list.h"
+#include "strmap.h"
 
 struct processor_env;
+struct parsed_uri;
 
 /**
  * A widget class is a server which provides a widget.
@@ -144,5 +146,13 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
 const char *
 widget_absolute_uri(pool_t pool, const struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length);
+
+const char *
+widget_external_uri(pool_t pool,
+                    const struct parsed_uri *external_uri,
+                    strmap_t args,
+                    const struct widget *widget,
+                    const char *relative_uri, size_t relative_uri_length,
+                    int focus, int remove_old_focus);
 
 #endif
