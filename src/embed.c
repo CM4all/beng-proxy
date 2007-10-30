@@ -19,6 +19,8 @@
 struct embed {
     pool_t pool;
 
+    unsigned num_redirects;
+
     struct widget *widget;
     const struct processor_env *env;
     unsigned options;
@@ -42,19 +44,69 @@ embed_delayed_abort(void *ctx)
     assert(embed->url_stream == NULL);
 }
 
+static const struct http_client_response_handler embed_response_handler;
+
 static void 
 embed_response_response(http_status_t status, strmap_t headers,
                         off_t content_length, istream_t body,
                         void *ctx)
 {
     struct embed *embed = ctx;
-    const char *cookies, *content_type;
+    const char *location, *cookies, *content_type;
     istream_t input = body, delayed;
 
     (void)status;
 
     assert(embed->url_stream != NULL);
     embed->url_stream = NULL;
+
+    location = strmap_get(headers, "location");
+    if (location != NULL && embed->num_redirects < 8) {
+        const char *new_uri;
+
+        if (strncmp(location, "http://localhost/", 17) == 0)
+            /* XXX hack */
+            location += 16;
+        else if (strncmp(location, "http://www.localhost/", 21) == 0)
+            /* XXX hack */
+            location += 20;
+
+        new_uri = widget_absolute_uri(embed->pool, embed->widget,
+                                      location, strlen(location));
+        if (new_uri == NULL)
+            new_uri = p_strdup(embed->pool, location);
+
+        location = new_uri;
+
+        new_uri = widget_class_relative_uri(embed->widget->class, new_uri);
+        if (new_uri != NULL) {
+            embed->widget->from_request.path_info = new_uri;
+
+            ++embed->num_redirects;
+
+            delayed = embed->delayed;
+            embed->delayed = NULL;
+
+            istream_close(input);
+
+            embed->delayed = delayed;
+            pool_ref(embed->pool);
+
+            widget_determine_real_uri(embed->pool, embed->env, embed->widget);
+
+            embed->url_stream = url_stream_new(embed->pool,
+                                               HTTP_METHOD_GET, location, /*XXX headers*/ NULL,
+                                               0, NULL,
+                                               &embed_response_handler, embed);
+            if (embed->url_stream == NULL) {
+                istream_delayed_set(embed->delayed,
+                                    istream_string_new(embed->pool, "Failed to create url_stream object."));
+                pool_unref(embed->pool);
+            }
+
+            return;
+        }
+    }
 
     content_type = strmap_get(headers, "content-type");
     if (content_type != NULL && strncmp(content_type, "text/html", 9) == 0) {
@@ -189,6 +241,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
+    embed->num_redirects = 0;
     embed->widget = widget;
     embed->env = env;
     embed->options = options;
