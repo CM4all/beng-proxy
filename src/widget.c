@@ -35,7 +35,7 @@ widget_class_relative_uri(const struct widget_class *class, const char *uri)
     if (strncmp(uri, class->uri, class_uri_length) != 0)
         return NULL;
 
-    return class->uri + class_uri_length;
+    return uri + class_uri_length;
 }
 
 int
