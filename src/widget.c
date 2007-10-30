@@ -19,6 +19,25 @@ get_widget_class(pool_t pool, const char *uri)
     return wc;
 }
 
+const char *
+widget_class_relative_uri(const struct widget_class *class, const char *uri)
+{
+    size_t class_uri_length;
+
+    assert(class != NULL);
+    assert(uri != NULL);
+
+    if (class->uri == NULL)
+        return NULL;
+
+    class_uri_length = strlen(class->uri);
+
+    if (strncmp(uri, class->uri, class_uri_length) != 0)
+        return NULL;
+
+    return class->uri + class_uri_length;
+}
+
 int
 widget_class_includes_uri(const struct widget_class *class, const char *uri)
 {

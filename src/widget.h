@@ -89,6 +89,9 @@ struct widget_ref {
 const struct widget_class *
 get_widget_class(pool_t pool, const char *uri);
 
+const char *
+widget_class_relative_uri(const struct widget_class *class, const char *uri);
+
 int
 widget_class_includes_uri(const struct widget_class *class, const char *uri);
 

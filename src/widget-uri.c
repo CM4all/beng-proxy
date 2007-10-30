@@ -140,14 +140,18 @@ widget_external_uri(pool_t pool,
                     int focus, int remove_old_focus)
 {
     const char *new_uri = widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
+    const char *relative_uri;
     const char *args2, *remove_key = NULL;
 
     if (new_uri == NULL ||
         widget->id == NULL ||
         external_uri == NULL ||
-        widget->class == NULL ||
-        !widget_class_includes_uri(widget->class, new_uri))
+        widget->class == NULL)
         return new_uri;
+
+    relative_uri = widget_class_relative_uri(widget->class, new_uri);
+    if (relative_uri == NULL)
+        return NULL;
 
     if (!focus && memchr(relative_uri, '?', relative_uri_length) != NULL)
         /* switch on focus if the relative URI contains a query
@@ -161,8 +165,7 @@ widget_external_uri(pool_t pool,
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format(pool, args,
-                        widget->id,
-                        new_uri + strlen(widget->class->uri),
+                        widget->id, relative_uri,
                         "focus",
                         focus ? widget->id : NULL,
                         remove_key);
