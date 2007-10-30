@@ -143,6 +143,7 @@ url_stream_new(pool_t pool,
     us->content_length = content_length;
     us->body = body;
     us->client_socket = NULL;
+    us->http = NULL;
     us->handler = handler;
     us->handler_ctx = handler_ctx;
 
