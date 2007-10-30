@@ -323,10 +323,10 @@ replace_attribute_value(processor_t processor, istream_t value)
 static void
 make_url_attribute_absolute(processor_t processor)
 {
-    const char *new_uri = uri_absolute(processor->output.pool,
-                                       processor->widget->real_uri,
-                                       processor->parser.attr_value,
-                                       processor->parser.attr_value_length);
+    const char *new_uri = widget_absolute_uri(processor->output.pool,
+                                              processor->widget,
+                                              processor->parser.attr_value,
+                                              processor->parser.attr_value_length);
     if (new_uri != NULL)
         replace_attribute_value(processor,
                                 istream_string_new(processor->output.pool,
@@ -336,10 +336,10 @@ make_url_attribute_absolute(processor_t processor)
 static void
 transform_url_attribute(processor_t processor, int focus)
 {
-    const char *new_uri = uri_absolute(processor->output.pool,
-                                       processor->widget->real_uri,
-                                       processor->parser.attr_value,                              
-                                       processor->parser.attr_value_length);
+    const char *new_uri = widget_absolute_uri(processor->output.pool,
+                                              processor->widget,
+                                              processor->parser.attr_value,
+                                              processor->parser.attr_value_length);
     const char *args, *remove_key = NULL;
 
     if (new_uri == NULL)

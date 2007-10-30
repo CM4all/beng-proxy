@@ -141,4 +141,8 @@ void
 widget_determine_real_uri(pool_t pool, const struct processor_env *env,
                           struct widget *widget);
 
+const char *
+widget_absolute_uri(pool_t pool, const struct widget *widget,
+                    const char *relative_uri, size_t relative_uri_length);
+
 #endif

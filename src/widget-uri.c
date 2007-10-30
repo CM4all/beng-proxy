@@ -121,3 +121,11 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
                                     widget->query_string,
                                     NULL);
 }
+
+const char *
+widget_absolute_uri(pool_t pool, const struct widget *widget,
+                    const char *relative_uri, size_t relative_uri_length)
+{
+    return uri_absolute(pool, widget->real_uri,
+                        relative_uri, relative_uri_length);
+}
