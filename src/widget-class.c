@@ -32,10 +32,16 @@ widget_class_relative_uri(const struct widget_class *class, const char *uri)
 
     class_uri_length = strlen(class->uri);
 
-    if (strncmp(uri, class->uri, class_uri_length) != 0)
-        return NULL;
+    if (strncmp(uri, class->uri, class_uri_length) == 0)
+        return uri + class_uri_length;
 
-    return uri + class_uri_length;
+    /* special case: http://hostname without trailing slash */
+    if (strncmp(uri, class->uri, class_uri_length - 1) == 0 &&
+        uri[class_uri_length - 1] == 0 &&
+        strrchr(uri, '/') < uri + 7)
+        return "";
+
+    return NULL;
 }
 
 int
