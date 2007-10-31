@@ -194,7 +194,7 @@ embed_response_response(http_status_t status, strmap_t headers,
         /* this is the request for IFRAME contents - send it directly
            to to http_server object, including headers */
 
-        embed->env->proxy_callback(HTTP_STATUS_OK, headers,
+        embed->env->proxy_callback(status, headers,
                                    content_length, input,
                                    embed->env->proxy_callback_ctx);
         pool_unref(embed->pool);
