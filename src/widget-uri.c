@@ -23,7 +23,9 @@ connect_widget_session(const struct processor_env *env,
         widget->from_request.body) {
         /* reset state because we got a new state with this request */
 
-        ws->path_info = p_strdup(ws->pool, widget->from_request.path_info);
+        ws->path_info = widget->from_request.path_info == NULL
+            ? NULL
+            : p_strdup(ws->pool, widget->from_request.path_info);
 
         if (widget->from_request.query_string) {
             ws->query_string = p_strndup(ws->pool,
