@@ -164,13 +164,13 @@ session_remove(session_t session)
 }
 
 static struct widget_session *
-hashmap_r_get_widget_session(pool_t pool, hashmap_t *map_r,
+hashmap_r_get_widget_session(session_t session, hashmap_t *map_r,
                              const char *id, int create)
 {
     hashmap_t map = *map_r;
     struct widget_session *ws;
 
-    assert(pool != NULL);
+    assert(session != NULL);
     assert(map_r != NULL);
     assert(id != NULL);
 
@@ -179,7 +179,7 @@ hashmap_r_get_widget_session(pool_t pool, hashmap_t *map_r,
             return NULL;
 
         /* lazy initialisation */
-        *map_r = map = hashmap_new(pool, 16);
+        *map_r = map = hashmap_new(session->pool, 16);
     } else {
         ws = (struct widget_session *)hashmap_get(map, id);
         if (ws != NULL)
@@ -189,10 +189,9 @@ hashmap_r_get_widget_session(pool_t pool, hashmap_t *map_r,
             return NULL;
     }
 
-    ws = p_malloc(pool, sizeof(*ws));
+    ws = p_malloc(session->pool, sizeof(*ws));
     ws->parent = NULL;
-    ws->pool = pool;
-    ws->id = p_strdup(pool, id);
+    ws->id = p_strdup(session->pool, id);
     ws->children = NULL; 
     ws->path_info = NULL;
     ws->query_string = NULL;
@@ -208,7 +207,7 @@ session_get_widget(session_t session, const char *id, int create)
     assert(session != NULL);
     assert(id != NULL);
 
-    return hashmap_r_get_widget_session(session->pool, &session->widgets,
+    return hashmap_r_get_widget_session(session, &session->widgets,
                                         id, create);
 }
 
@@ -217,8 +216,9 @@ widget_session_get_child(struct widget_session *parent, const char *id,
                          int create)
 {
     assert(parent != NULL);
+    assert(parent->session != NULL);
     assert(id != NULL);
 
-    return hashmap_r_get_widget_session(parent->pool, &parent->children,
+    return hashmap_r_get_widget_session(parent->session, &parent->children,
                                         id, create);
 }
