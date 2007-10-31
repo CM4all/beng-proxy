@@ -91,6 +91,7 @@ embed_redirect(struct embed *embed, const char *location,
 {
     const char *new_uri;
     istream_t delayed;
+    growing_buffer_t headers;
 
     if (embed->num_redirects >= 8)
         return 0;
@@ -120,8 +121,10 @@ embed_redirect(struct embed *embed, const char *location,
 
     widget_determine_real_uri(embed->pool, embed->env, embed->widget);
 
+    headers = embed_request_headers(embed, 0);
+
     embed->url_stream = url_stream_new(embed->pool,
-                                       HTTP_METHOD_GET, location, /*XXX headers*/ NULL,
+                                       HTTP_METHOD_GET, location, headers,
                                        0, NULL,
                                        &embed_response_handler, embed);
     if (embed->url_stream == NULL) {
