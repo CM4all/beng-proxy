@@ -77,6 +77,9 @@ embed_request_headers(struct embed *embed, int with_body)
     else if (embed->env->request_headers != NULL)
         headers_copy(embed->env->request_headers, headers, language_headers);
 
+    if (session != NULL && session->user != NULL)
+        header_write(headers, "x-cm4all-beng-user", session->user);
+
     return headers;
 }
 
