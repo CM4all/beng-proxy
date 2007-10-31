@@ -709,7 +709,7 @@ http_client_request(http_client_connection_t connection,
 
     snprintf(connection->request.request_line_buffer,
              sizeof(connection->request.request_line_buffer),
-             "%s %s HTTP/1.1\r\nHost: localhost\r\n",
+             "%s %s HTTP/1.1\r\n",
              http_method_to_string(method), uri);
 
     request_line_stream

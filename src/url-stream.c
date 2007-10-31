@@ -8,6 +8,7 @@
 #include "client-socket.h"
 #include "http-client.h"
 #include "compiler.h"
+#include "header-writer.h"
 
 #include <daemon/log.h>
 
@@ -162,6 +163,7 @@ url_stream_new(pool_t pool,
     }
 
     host_and_port = p_strndup(us->pool, p, slash - p);
+    header_write(us->headers, "host", host_and_port);
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_INET;
