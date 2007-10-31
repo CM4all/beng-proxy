@@ -27,3 +27,10 @@ widget_get_session(struct widget *widget, int create)
     return widget->from_request.session
         = widget_session_get_child(parent, widget->id, create);
 }
+
+struct session *
+widget_get_session2(struct widget *widget)
+{
+    struct widget_session *ws = widget_get_session(widget_root(widget), 0);
+    return ws == NULL ? NULL : ws->session;
+}
