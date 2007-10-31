@@ -70,6 +70,24 @@ translate_callback(const struct translate_response *response,
         }
     }
 
+    if (response->language != NULL) {
+        if (*response->language == 0) {
+            /* reset language setting */
+
+            if (request->session != NULL)
+                request->session->language = NULL;
+        } else {
+            /* override language */
+
+            request_make_session(request);
+
+            if (request->session->language == NULL ||
+                strcmp(response->language, request->session->language) != 0)
+                request->session->language = p_strdup(request->session->pool,
+                                                      response->language);
+        }
+    }
+
     if (response->path != NULL) {
         file_callback(request);
     } else if (response->proxy != NULL) {

@@ -248,6 +248,10 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_USER:
         connection->response.user = payload;
         break;
+
+    case TRANSLATE_LANGUAGE:
+        connection->response.language = payload;
+        break;
     }
 }
 

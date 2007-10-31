@@ -24,6 +24,7 @@ enum beng_translation_command {
     TRANSLATE_SESSION = 12,
     TRANSLATE_PARAM = 13,
     TRANSLATE_USER = 14,
+    TRANSLATE_LANGUAGE = 15,
 };
 
 struct beng_translation_header {

@@ -32,8 +32,12 @@ struct embed {
 
 static const char *const copy_headers[] = {
     "accept",
-    "accept-language",
     "from",
+    NULL,
+};
+
+static const char *const language_headers[] = {
+    "accept-language",
     NULL,
 };
 
@@ -51,6 +55,7 @@ embed_request_headers(struct embed *embed, int with_body)
 {
     growing_buffer_t headers;
     struct widget_session *ws;
+    struct session *session;
 
     headers = growing_buffer_new(embed->pool, 1024);
     header_write(headers, "accept-charset", "utf-8");
@@ -65,6 +70,12 @@ embed_request_headers(struct embed *embed, int with_body)
     ws = widget_get_session(embed->widget, 0);
     if (ws != NULL)
         cookie_list_http_header(headers, &ws->cookies);
+
+    session = widget_get_session2(embed->widget);
+    if (session != NULL && session->language != NULL)
+        header_write(headers, "accept-language", session->language);
+    else if (embed->env->request_headers != NULL)
+        headers_copy(embed->env->request_headers, headers, language_headers);
 
     return headers;
 }

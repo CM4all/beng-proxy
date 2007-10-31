@@ -68,6 +68,10 @@ struct session {
         by the translation server */
     const char *user;
 
+    /** optional  for the "Accept-Language" header, provided
+        by the translation server */
+    const char *language;
+
     /** a map of widget path to struct widget_session */
     hashmap_t widgets;
 };
