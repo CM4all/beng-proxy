@@ -30,6 +30,45 @@ struct embed {
     istream_t delayed;
 };
 
+static const char *const copy_headers[] = {
+    "accept",
+    "accept-language",
+    "from",
+    NULL,
+};
+
+static const char *const copy_headers_with_body[] = {
+    "content-encoding",
+    "content-language",
+    "content-md5",
+    "content-range",
+    "content-type",
+    NULL,
+};
+
+static growing_buffer_t
+embed_request_headers(struct embed *embed, int with_body)
+{
+    growing_buffer_t headers;
+    struct widget_session *ws;
+
+    headers = growing_buffer_new(embed->pool, 1024);
+    header_write(headers, "accept-charset", "utf-8");
+    header_write(headers, "connection", "close");
+
+    if (embed->env->request_headers != NULL) {
+        headers_copy(embed->env->request_headers, headers, copy_headers);
+        if (with_body)
+            headers_copy(embed->env->request_headers, headers, copy_headers_with_body);
+    }
+
+    ws = widget_get_session(embed->widget, 0);
+    if (ws != NULL)
+        cookie_list_http_header(headers, &ws->cookies);
+
+    return headers;
+}
+
 static void
 embed_delayed_abort(void *ctx)
 {
@@ -212,36 +251,8 @@ embed_new(pool_t pool, http_method_t method, const char *url,
 {
     struct embed *embed;
     growing_buffer_t headers;
-    struct widget_session *ws;
-    static const char *const copy_headers[] = {
-        "accept",
-        "accept-language",
-        "from",
-        NULL,
-    };
-    static const char *const copy_headers_with_body[] = {
-        "content-encoding",
-        "content-language",
-        "content-md5",
-        "content-range",
-        "content-type",
-        NULL,
-    };
 
     assert(url != NULL);
-
-    headers = growing_buffer_new(pool, 1024);
-    header_write(headers, "accept-charset", "utf-8");
-    header_write(headers, "connection", "close");
-    if (env->request_headers != NULL) {
-        headers_copy(env->request_headers, headers, copy_headers);
-        if (request_body != NULL)
-            headers_copy(env->request_headers, headers, copy_headers_with_body);
-    }
-
-    ws = widget_get_session(widget, 0);
-    if (ws != NULL)
-        cookie_list_http_header(headers, &ws->cookies);
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
@@ -250,6 +261,8 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     embed->env = env;
     embed->options = options;
     embed->delayed = istream_delayed_new(pool, embed_delayed_abort, embed);
+
+    headers = embed_request_headers(embed, request_body != NULL);
 
     embed->url_stream = url_stream_new(pool,
                                        method, url, headers,
