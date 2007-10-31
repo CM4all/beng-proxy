@@ -46,6 +46,54 @@ embed_delayed_abort(void *ctx)
 
 static const struct http_client_response_handler embed_response_handler;
 
+static int
+embed_redirect(struct embed *embed, const char *location,
+               istream_t body)
+{
+    const char *new_uri;
+    istream_t delayed;
+
+    if (embed->num_redirects >= 8)
+        return 0;
+
+    new_uri = widget_absolute_uri(embed->pool, embed->widget,
+                                  location, strlen(location));
+    if (new_uri == NULL)
+        new_uri = p_strdup(embed->pool, location);
+
+    location = new_uri;
+
+    new_uri = widget_class_relative_uri(embed->widget->class, new_uri);
+    if (new_uri == NULL)
+        return 0;
+
+    embed->widget->from_request.path_info = new_uri;
+
+    ++embed->num_redirects;
+
+    delayed = embed->delayed;
+    embed->delayed = NULL;
+
+    istream_close(body);
+
+    embed->delayed = delayed;
+    pool_ref(embed->pool);
+
+    widget_determine_real_uri(embed->pool, embed->env, embed->widget);
+
+    embed->url_stream = url_stream_new(embed->pool,
+                                       HTTP_METHOD_GET, location, /*XXX headers*/ NULL,
+                                       0, NULL,
+                                       &embed_response_handler, embed);
+    if (embed->url_stream == NULL) {
+        istream_delayed_set(embed->delayed,
+                            istream_string_new(embed->pool, "Failed to create url_stream object."));
+        pool_unref(embed->pool);
+    }
+
+    return 1;
+}
+
 static void 
 embed_response_response(http_status_t status, strmap_t headers,
                         off_t content_length, istream_t body,
@@ -61,45 +109,8 @@ embed_response_response(http_status_t status, strmap_t headers,
     embed->url_stream = NULL;
 
     location = strmap_get(headers, "location");
-    if (location != NULL && embed->num_redirects < 8) {
-        const char *new_uri;
-
-        new_uri = widget_absolute_uri(embed->pool, embed->widget,
-                                      location, strlen(location));
-        if (new_uri == NULL)
-            new_uri = p_strdup(embed->pool, location);
-
-        location = new_uri;
-
-        new_uri = widget_class_relative_uri(embed->widget->class, new_uri);
-        if (new_uri != NULL) {
-            embed->widget->from_request.path_info = new_uri;
-
-            ++embed->num_redirects;
-
-            delayed = embed->delayed;
-            embed->delayed = NULL;
-
-            istream_close(input);
-
-            embed->delayed = delayed;
-            pool_ref(embed->pool);
-
-            widget_determine_real_uri(embed->pool, embed->env, embed->widget);
-
-            embed->url_stream = url_stream_new(embed->pool,
-                                               HTTP_METHOD_GET, location, /*XXX headers*/ NULL,
-                                               0, NULL,
-                                               &embed_response_handler, embed);
-            if (embed->url_stream == NULL) {
-                istream_delayed_set(embed->delayed,
-                                    istream_string_new(embed->pool, "Failed to create url_stream object."));
-                pool_unref(embed->pool);
-            }
-
-            return;
-        }
-    }
+    if (location != NULL && embed_redirect(embed, location, body))
+        return;
 
     content_type = strmap_get(headers, "content-type");
     if (content_type != NULL && strncmp(content_type, "text/html", 9) == 0) {
