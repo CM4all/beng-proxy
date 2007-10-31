@@ -56,6 +56,12 @@ struct processor {
     size_t widget_params_length;
 };
 
+
+/*
+ * istream implementation
+ *
+ */
+
 static inline processor_t
 istream_to_processor(istream_t istream)
 {
@@ -91,6 +97,12 @@ static const struct istream processor_output_stream = {
     .read = processor_output_stream_read,
     .close = processor_output_stream_close,
 };
+
+
+/*
+ * istream handler
+ *
+ */
 
 static size_t
 processor_input_data(const void *data, size_t length, void *ctx)
@@ -163,6 +175,11 @@ static const struct istream_handler processor_input_handler = {
 };
 
 
+/*
+ * constructor
+ *
+ */
+
 istream_t
 processor_new(pool_t pool, istream_t istream,
               struct widget *widget,
@@ -232,6 +249,12 @@ processor_close(processor_t processor)
 
     pool_unref(processor->output.pool);
 }
+
+
+/*
+ * parser callbacks
+ *
+ */
 
 static inline processor_t
 parser_to_processor(struct parser *parser)
