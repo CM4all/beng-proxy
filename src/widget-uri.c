@@ -142,11 +142,13 @@ widget_external_uri(pool_t pool,
     const char *new_uri = widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
     const char *args2, *remove_key = NULL;
 
-    if (new_uri == NULL ||
-        widget->id == NULL ||
+    if (widget->id == NULL ||
         external_uri == NULL ||
         widget->class == NULL)
         return new_uri;
+
+    if (new_uri == NULL)
+        new_uri = p_strndup(pool, relative_uri, relative_uri_length);
 
     new_uri = widget_class_relative_uri(widget->class, new_uri);
     if (new_uri == NULL)
