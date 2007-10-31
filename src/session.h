@@ -27,6 +27,7 @@ struct widget_session {
     struct widget_session *parent;
 
     session_t session;
+
     pool_t pool;
 
     /** local id of this widget; must not be NULL since widgets
