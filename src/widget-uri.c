@@ -49,13 +49,12 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
     const char *path_info = widget->path_info;
 
     assert(widget != NULL);
-    assert(widget->from_request.path_info == NULL);
 
     widget->real_uri = widget->class->uri;
 
     /* determine path_info */
 
-    if (widget->id != NULL)
+    if (widget->id != NULL && widget->from_request.path_info == NULL)
         widget->from_request.path_info = strmap_get(env->args, widget->id);
 
     /* are we focused? */
