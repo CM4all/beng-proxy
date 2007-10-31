@@ -140,7 +140,11 @@ url_stream_new(pool_t pool,
     us = p_malloc(pool, sizeof(*us));
     us->pool = pool;
     us->method = method;
+
     us->headers = headers;
+    if (us->headers == NULL)
+        us->headers = growing_buffer_new(pool, 512);
+
     us->content_length = content_length;
     us->body = body;
     us->client_socket = NULL;
