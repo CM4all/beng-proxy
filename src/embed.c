@@ -164,9 +164,11 @@ embed_response_response(http_status_t status, strmap_t headers,
     assert(embed->url_stream != NULL);
     embed->url_stream = NULL;
 
-    location = strmap_get(headers, "location");
-    if (location != NULL && embed_redirect(embed, location, body))
-        return;
+    if (status >= 300 && status < 400) {
+        location = strmap_get(headers, "location");
+        if (location != NULL && embed_redirect(embed, location, body))
+            return;
+    }
 
     content_type = strmap_get(headers, "content-type");
     if (content_type != NULL && strncmp(content_type, "text/html", 9) == 0) {
