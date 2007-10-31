@@ -64,13 +64,6 @@ embed_response_response(http_status_t status, strmap_t headers,
     if (location != NULL && embed->num_redirects < 8) {
         const char *new_uri;
 
-        if (strncmp(location, "http://localhost/", 17) == 0)
-            /* XXX hack */
-            location += 16;
-        else if (strncmp(location, "http://www.localhost/", 21) == 0)
-            /* XXX hack */
-            location += 20;
-
         new_uri = widget_absolute_uri(embed->pool, embed->widget,
                                       location, strlen(location));
         if (new_uri == NULL)
