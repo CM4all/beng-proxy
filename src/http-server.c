@@ -365,10 +365,6 @@ http_server_headers_finished(http_server_connection_t connection)
     }
 
     connection->handler->request(connection->request.request, connection->handler_ctx);
-
-    assert(connection->request.request == NULL ||
-           connection->request.request->body == NULL ||
-           istream_has_handler(connection->request.request->body));
 }
 
 static void

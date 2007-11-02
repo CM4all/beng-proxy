@@ -172,7 +172,6 @@ proxy_callback(struct request *request2)
     const struct parsed_uri *external_uri = &request2->uri;
     const struct translate_response *tr = request2->translate.response;
     struct proxy_transfer *pt;
-    istream_t body;
 
     pool_ref(request->pool);
 
@@ -182,14 +181,9 @@ proxy_callback(struct request *request2)
     pt->external_uri = external_uri;
     pt->tr = tr;
 
-    if (request->body == NULL)
-        body = NULL;
-    else
-        body = istream_hold_new(request->pool, request->body);
-
     pt->url_stream = url_stream_new(request->pool,
                                     request->method, tr->proxy, NULL,
-                                    request->content_length, body,
+                                    request->content_length, request->body,
                                     &proxy_response_handler, pt);
     if (pt->url_stream == NULL) {
         proxy_transfer_close(pt);
