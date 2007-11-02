@@ -188,7 +188,6 @@ processor_new(pool_t pool, istream_t istream,
               const struct processor_env *env,
               unsigned options)
 {
-    pool_t widget_pool = pool;
     processor_t processor;
     const char *path;
 
@@ -215,7 +214,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->output = processor_output_stream;
     processor->output.pool = pool;
 
-    processor->widget_pool = widget_pool;
+    processor->widget_pool = env->pool;
 
     istream_assign_ref_handler(&processor->input, istream,
                                &processor_input_handler, processor,

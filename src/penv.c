@@ -19,6 +19,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    istream_t request_body,
                    processor_widget_callback_t widget_callback)
 {
+    env->pool = pool;
     env->external_uri = uri;
 
     if (args == NULL) {

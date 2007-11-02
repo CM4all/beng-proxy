@@ -31,6 +31,8 @@ typedef istream_t (*processor_widget_callback_t)(pool_t pool,
                                                  struct widget *widget);
 
 struct processor_env {
+    pool_t pool;
+
     /** the URI which was requested by the beng-proxy client */
     const struct parsed_uri *external_uri;
 
@@ -65,7 +67,8 @@ struct processor_env {
 };
 
 void
-processor_env_init(pool_t pool, struct processor_env *env,
+processor_env_init(pool_t pool,
+                   struct processor_env *env,
                    const struct parsed_uri *uri,
                    strmap_t args,
                    struct session *session,
