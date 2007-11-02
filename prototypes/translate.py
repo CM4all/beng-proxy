@@ -97,8 +97,8 @@ class Translation(Protocol):
         self.transport.write(payload)
 
     def _handle_request(self, request):
-        if request.session: print "- session =", request.session
-        if request.param: print "- param =", request.param
+        if request.session is not None: print "- session =", request.session
+        if request.param is not None: print "- param =", request.param
         self._write_packet(TRANSLATE_BEGIN)
         self._write_packet(TRANSLATE_PATH, '/var/www' + request.uri)
         self._write_packet(TRANSLATE_PROCESS)
