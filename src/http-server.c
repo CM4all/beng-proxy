@@ -146,6 +146,10 @@ http_server_consume_body(http_server_connection_t connection)
     assert(connection != NULL);
     assert(connection->request.read_state == READ_BODY);
 
+    if (!istream_has_handler(http_body_istream(&connection->request.body_reader)))
+        /* the handler is not yet connected */
+        return;
+
     http_body_consume_body(&connection->request.body_reader, connection->input);
 
     if (!http_server_connection_valid(connection))
