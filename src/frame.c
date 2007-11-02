@@ -47,7 +47,7 @@ frame_widget_callback(pool_t pool, const struct processor_env *env,
     if (env->external_uri->query != NULL)
         widget->real_uri = p_strncat(pool,
                                      widget->real_uri, strlen(widget->real_uri),
-                                     "?", 1,
+                                     "?", (size_t)1,
                                      env->external_uri->query,
                                      env->external_uri->query_length,
                                      NULL);

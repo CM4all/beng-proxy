@@ -216,7 +216,7 @@ serve_document_root_file(struct http_server_request *request,
                          strlen(config->document_root),
                          uri->base,
                          uri->base_length,
-                         index_file, 10,
+                         index_file, (size_t)10,
                          NULL);
     tr->content_type = NULL;
     tr->filter = NULL;

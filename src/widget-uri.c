@@ -93,7 +93,7 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
             widget->real_uri = p_strncat(pool,
                                          widget->real_uri, strlen(widget->real_uri),
                                          path_info, strlen(path_info),
-                                         "?", 1,
+                                         "?", (size_t)1,
                                          env->external_uri->query,
                                          env->external_uri->query_length,
                                          NULL);
@@ -183,7 +183,7 @@ widget_external_uri(pool_t pool,
     return p_strncat(pool,
                      external_uri->base,
                      external_uri->base_length,
-                     ";", 1,
+                     ";", (size_t)1,
                      args2, strlen(args2),
                      NULL);
 }
