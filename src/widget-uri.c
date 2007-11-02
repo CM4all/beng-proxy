@@ -140,6 +140,50 @@ widget_absolute_uri(pool_t pool, const struct widget *widget,
                         relative_uri, relative_uri_length);
 }
 
+static const char *
+widget_proxy_uri(pool_t pool,
+                 const struct parsed_uri *external_uri,
+                 strmap_t args,
+                 const struct widget *widget)
+{
+    const char *path, *args2;
+
+    path = widget_path(pool, widget);
+
+    args2 = args_format(pool, args,
+                        "frame", path,
+                        "focus", path,
+                        NULL);
+
+    return p_strncat(pool,
+                     external_uri->base,
+                     external_uri->base_length,
+                     ";", 1,
+                     args2, strlen(args2),
+                     NULL);
+}
+
+const char *
+widget_translation_uri(pool_t pool,
+                       const struct parsed_uri *external_uri,
+                       strmap_t args,
+                       const char *translation)
+{
+    const char *args2;
+
+    args2 = args_format(pool, args,
+                        "translate", translation,
+                        NULL, NULL,
+                        "frame");
+
+    return p_strncat(pool,
+                     external_uri->base,
+                     external_uri->base_length,
+                     ";", 1,
+                     args2, strlen(args2),
+                     NULL);
+}
+
 const char *
 widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
@@ -148,8 +192,22 @@ widget_external_uri(pool_t pool,
                     const char *relative_uri, size_t relative_uri_length,
                     int focus, int remove_old_focus)
 {
-    const char *new_uri = widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
+    const char *new_uri;
     const char *args2, *remove_key = NULL;
+
+    if (relative_uri_length == 6 &&
+        memcmp(relative_uri, ";proxy", 6) == 0)
+        /* XXX this special URL syntax should be redesigned */
+        return widget_proxy_uri(pool, external_uri, args, widget);
+
+    if (relative_uri_length >= 11 &&
+        memcmp(relative_uri, ";translate=", 11) == 0)
+        /* XXX this special URL syntax should be redesigned */
+        return widget_translation_uri(pool, external_uri, args,
+                                      p_strndup(pool, relative_uri + 11,
+                                                relative_uri_length - 11));
+
+    new_uri = widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
 
     if (widget->id == NULL ||
         external_uri == NULL ||

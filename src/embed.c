@@ -100,7 +100,8 @@ embed_delayed_abort(void *ctx)
 static const struct http_client_response_handler embed_response_handler;
 
 static int
-embed_redirect(struct embed *embed, const char *location,
+embed_redirect(struct embed *embed,
+               strmap_t request_headers, const char *location,
                istream_t body)
 {
     const char *new_uri;
@@ -109,6 +110,14 @@ embed_redirect(struct embed *embed, const char *location,
 
     if (embed->num_redirects >= 8)
         return 0;
+
+    if (strncmp(location, ";translate=", 11) == 0) {
+        /* XXX this special URL syntax should be redesigned */
+        location = widget_translation_uri(embed->pool, embed->env->external_uri,
+                                          embed->env->args, location + 11);
+        strmap_put(request_headers, "location", location, 1);
+        return 0;
+    }
 
     new_uri = widget_absolute_uri(embed->pool, embed->widget,
                                   location, strlen(location));
@@ -166,7 +175,7 @@ embed_response_response(http_status_t status, strmap_t headers,
 
     if (status >= 300 && status < 400) {
         location = strmap_get(headers, "location");
-        if (location != NULL && embed_redirect(embed, location, body))
+        if (location != NULL && embed_redirect(embed, headers, location, body))
             return;
     }
 

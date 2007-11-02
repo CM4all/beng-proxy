@@ -154,6 +154,12 @@ widget_absolute_uri(pool_t pool, const struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length);
 
 const char *
+widget_translation_uri(pool_t pool,
+                       const struct parsed_uri *external_uri,
+                       strmap_t args,
+                       const char *translation);
+
+const char *
 widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     strmap_t args,
