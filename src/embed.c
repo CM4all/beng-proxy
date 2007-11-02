@@ -56,6 +56,7 @@ embed_request_headers(struct embed *embed, int with_body)
     growing_buffer_t headers;
     struct widget_session *ws;
     struct session *session;
+    const char *p;
 
     headers = growing_buffer_new(embed->pool, 1024);
     header_write(headers, "accept-charset", "utf-8");
@@ -79,6 +80,11 @@ embed_request_headers(struct embed *embed, int with_body)
 
     if (session != NULL && session->user != NULL)
         header_write(headers, "x-cm4all-beng-user", session->user);
+
+    p = strmap_get(embed->env->request_headers, "user-agent");
+    if (p == NULL)
+        p = "beng-proxy v" VERSION;
+    header_write(headers, "user-agent", p);
 
     return headers;
 }

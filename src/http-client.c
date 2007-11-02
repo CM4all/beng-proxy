@@ -721,9 +721,6 @@ http_client_request(http_client_connection_t connection,
     if (headers == NULL)
         headers = growing_buffer_new(connection->request.pool, 256);
 
-    /* XXX what if this header already exists? */
-    header_write(headers, "user-agent", "beng-proxy v" VERSION);
-
     if (body != NULL) {
         if (content_length == (off_t)-1) {
             header_write(headers, "transfer-encoding", "chunked");
