@@ -99,8 +99,26 @@ class Translation(Protocol):
     def _handle_request(self, request):
         if request.session is not None: print "- session =", request.session
         if request.param is not None: print "- param =", request.param
+
+        if request.param is not None:
+            # log in or log out; "real" authentification is missing
+            # here.  We're logging out if request.param is an empty
+            # string.
+            user = session = request.param
+        elif request.session is not None:
+            # user is already authenticated
+            user = request.session
+            session = None
+        else:
+            # 
+            user = session = None
+
         self._write_packet(TRANSLATE_BEGIN)
         self._write_packet(TRANSLATE_PATH, '/var/www' + request.uri)
+        if user is not None:
+            self._write_packet(TRANSLATE_USER, user)
+        if session is not None:
+            self._write_packet(TRANSLATE_SESSION, session)
         self._write_packet(TRANSLATE_PROCESS)
         self._write_packet(TRANSLATE_END)
 
