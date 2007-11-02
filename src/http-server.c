@@ -345,7 +345,7 @@ http_server_headers_finished(http_server_connection_t connection)
             }
 
             http_body_init(&connection->request.body_reader,
-                           &http_server_request_stream, request->pool,
+                           &http_server_request_stream, connection->pool,
                            request->content_length);
 
             request->body = http_body_istream(&connection->request.body_reader);

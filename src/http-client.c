@@ -285,7 +285,7 @@ http_client_headers_finished(http_client_connection_t connection)
         }
 
         http_body_init(&connection->response.body_reader,
-                       &http_client_response_stream, connection->request.pool,
+                       &http_client_response_stream, connection->pool,
                        connection->response.content_length);
 
         connection->response.body = http_body_istream(&connection->response.body_reader);
@@ -295,7 +295,7 @@ http_client_headers_finished(http_client_connection_t connection)
         connection->response.content_length = (off_t)-1;
 
         http_body_init(&connection->response.body_reader,
-                       &http_client_response_stream, connection->request.pool,
+                       &http_client_response_stream, connection->pool,
                        connection->response.content_length);
 
         connection->response.body
