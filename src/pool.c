@@ -488,6 +488,35 @@ pool_commit(void)
 
     abort();
 }
+
+static int
+linear_pool_area_contains(const struct linear_pool_area *area,
+                          const void *ptr, size_t size)
+{
+    return size <= area->used &&
+        ptr >= (const void*)area->data &&
+        ptr <= (const void*)(area->data + area->used - size);
+}
+
+int
+pool_contains(pool_t pool, const void *ptr, size_t size)
+{
+    const struct linear_pool_area *area;
+
+    assert(pool != NULL);
+    assert(ptr != NULL);
+    assert(size > 0);
+
+    if (pool->type != POOL_LINEAR)
+        return 1;
+
+    for (area = pool->current_area.linear; area != NULL; area = area->prev)
+        if (linear_pool_area_contains(area, ptr, size))
+            return 1;
+
+    return 0;
+}
+
 #endif
 
 static void *

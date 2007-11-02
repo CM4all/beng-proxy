@@ -63,6 +63,9 @@ pool_commit(void)
 #else
 void
 pool_commit(void);
+
+int
+pool_contains(pool_t pool, const void *ptr, size_t size);
 #endif
 
 void * attr_malloc

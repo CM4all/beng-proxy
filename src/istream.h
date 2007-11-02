@@ -179,6 +179,7 @@ istream_handler_set(istream_t _istream,
 {
     struct istream *istream = _istream_opaque_cast(_istream);
 
+    assert(pool_contains(istream->pool, istream, sizeof(*istream)));
     assert(handler != NULL);
     assert(handler->data != NULL);
 

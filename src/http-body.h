@@ -10,6 +10,7 @@
 #include "istream.h"
 #include "fifo-buffer.h"
 
+#include <assert.h>
 #include <stddef.h>
 
 #ifdef VALGRIND
@@ -53,6 +54,8 @@ http_body_init(struct http_body_reader *body,
                const struct istream *stream, pool_t pool,
                off_t content_length)
 {
+    assert(pool_contains(pool, body, sizeof(*body)));
+
     body->output = *stream;
     body->output.pool = pool;
     body->rest = content_length;
