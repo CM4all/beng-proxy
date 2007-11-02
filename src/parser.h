@@ -69,6 +69,7 @@ static inline void
 parser_init(struct parser *parser)
 {
     parser->state = PARSER_NONE;
+    parser->position = 0;
 }
 
 void
