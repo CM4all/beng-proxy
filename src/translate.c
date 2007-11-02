@@ -288,7 +288,7 @@ translate_try_read(struct translate_connection *connection)
 
         translate_handle_packet(connection,
                                 connection->reader.header.command,
-                                connection->reader.payload,
+                                connection->reader.payload == NULL ? "" : connection->reader.payload,
                                 connection->reader.header.length);
         packet_reader_init(&connection->reader);
     } while (connection->fd >= 0);
