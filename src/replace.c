@@ -109,8 +109,8 @@ replace_init(struct replace *replace, pool_t pool,
 
     replace->quiet = quiet;
     replace->reading_source = !quiet;
+    replace->source_length = 0;
     if (!quiet) {
-        replace->source_length = 0;
         replace->buffer = growing_buffer_new(pool, 8192);
     }
 
@@ -160,12 +160,12 @@ replace_feed(struct replace *replace, const void *data, size_t length)
     assert(data != NULL);
     assert(length > 0);
 
-    if (replace->quiet)
-        return length;
+    if (!replace->quiet) {
+        assert(replace->reading_source);
 
-    assert(replace->reading_source);
+        growing_buffer_write_buffer(replace->buffer, data, length);
+    }
 
-    growing_buffer_write_buffer(replace->buffer, data, length);
     replace->source_length += (off_t)length;
 
     return length;
