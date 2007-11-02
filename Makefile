@@ -153,7 +153,7 @@ benchmark: src/cm4all-beng-proxy
 
 valgrind: CFLAGS = -O0 -g -DPOISON -DVALGRIND
 valgrind: src/cm4all-beng-proxy
-	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy -D
+	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy $(DEBUG_ARGS)
 
 doc/beng.pdf: doc/beng.tex
 	cd $(dir $<) && pdflatex $(notdir $<) && pdflatex $(notdir $<)
