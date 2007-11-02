@@ -38,6 +38,9 @@ processor_env_init(pool_t pool, struct processor_env *env,
     env->request_content_length = request_content_length;
     env->request_body = request_body;
 
+    if (env->request_body != NULL)
+        env->request_body = istream_hold_new(pool, env->request_body);
+
     env->session = session;
 
     if (env->session == NULL) {

@@ -55,7 +55,7 @@ frame_widget_callback(pool_t pool, const struct processor_env *env,
     if (env->request_body != NULL) {
         method = HTTP_METHOD_POST; /* XXX which method? */
         request_content_length = env->request_content_length;
-        request_body = istream_hold_new(pool, env->request_body);
+        request_body = env->request_body;
         /* XXX what if there is no stream handler? or two? */
     }
 
