@@ -26,6 +26,8 @@ struct processor {
     istream_t input;
     int had_input;
 
+    pool_t widget_pool;
+
     struct widget *widget;
     const struct processor_env *env;
     unsigned options;
@@ -186,6 +188,7 @@ processor_new(pool_t pool, istream_t istream,
               const struct processor_env *env,
               unsigned options)
 {
+    pool_t widget_pool = pool;
     processor_t processor;
     const char *path;
 
@@ -212,6 +215,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->output = processor_output_stream;
     processor->output.pool = pool;
 
+    processor->widget_pool = widget_pool;
 
     istream_assign_ref_handler(&processor->input, istream,
                                &processor_input_handler, processor,
@@ -309,7 +313,7 @@ parser_element_start(struct parser *parser)
         }
 
         processor->tag = TAG_WIDGET;
-        processor->embedded_widget = p_malloc(processor->output.pool,
+        processor->embedded_widget = p_malloc(processor->widget_pool,
                                               sizeof(*processor->embedded_widget));
         widget_init(processor->embedded_widget, NULL);
         processor->widget_params_length = 0;
@@ -406,7 +410,7 @@ parser_attr_finished(struct parser *parser)
                                              parser->attr_value_length));
         else if (parser->attr_name_length == 2 &&
                  memcmp(parser->attr_name, "id", 2) == 0)
-            processor->embedded_widget->id = p_strndup(processor->output.pool, parser->attr_value,
+            processor->embedded_widget->id = p_strndup(processor->widget_pool, parser->attr_value,
                                                        parser->attr_value_length);
         else if (parser->attr_name_length == 7 &&
                  memcmp(parser->attr_name, "display", 7) == 0) {
@@ -421,11 +425,11 @@ parser_attr_finished(struct parser *parser)
                 processor->embedded_widget->display = WIDGET_DISPLAY_IMG;
         } else if (parser->attr_name_length == 5 &&
                  memcmp(parser->attr_name, "width", 5) == 0)
-            processor->embedded_widget->width = p_strndup(processor->output.pool, parser->attr_value,
+            processor->embedded_widget->width = p_strndup(processor->widget_pool, parser->attr_value,
                                                           parser->attr_value_length);
         else if (parser->attr_name_length == 6 &&
                  memcmp(parser->attr_name, "height", 6) == 0)
-            processor->embedded_widget->height = p_strndup(processor->output.pool, parser->attr_value,
+            processor->embedded_widget->height = p_strndup(processor->widget_pool, parser->attr_value,
                                                            parser->attr_value_length);
         break;
 
@@ -456,7 +460,7 @@ parser_attr_finished(struct parser *parser)
         if (parser->attr_name_length == 5 &&
             memcmp(parser->attr_name, "value", 5) == 0) {
             processor->embedded_widget->path_info
-                = p_strndup(processor->output.pool, parser->attr_value,
+                = p_strndup(processor->widget_pool, parser->attr_value,
                             parser->attr_value_length);
         }
 
