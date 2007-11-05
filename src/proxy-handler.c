@@ -25,7 +25,6 @@
 
 struct proxy_transfer {
     struct request *request;
-    const struct parsed_uri *external_uri;
     const struct translate_response *tr;
     url_stream_t url_stream;
     struct processor_env env;
@@ -113,7 +112,7 @@ proxy_response_response(http_status_t status, strmap_t headers,
         /* XXX request body? */
         processor_env_init(request->pool, &pt->env,
                            request_absolute_uri(request),
-                           pt->external_uri,
+                           &pt->request->uri,
                            pt->request->args,
                            pt->request->session,
                            request->headers,
@@ -130,7 +129,7 @@ proxy_response_response(http_status_t status, strmap_t headers,
 
         widget = p_malloc(request->pool, sizeof(*widget));
         widget_init(widget, NULL);
-        widget->from_request.session = session_get_widget(pt->env.session, pt->external_uri->base, 1);
+        widget->from_request.session = session_get_widget(pt->env.session, pt->request->uri.base, 1);
 
         pool_ref(request->pool);
 
@@ -187,7 +186,6 @@ void
 proxy_callback(struct request *request2)
 {
     struct http_server_request *request = request2->request;
-    const struct parsed_uri *external_uri = &request2->uri;
     const struct translate_response *tr = request2->translate.response;
     struct proxy_transfer *pt;
 
@@ -195,7 +193,6 @@ proxy_callback(struct request *request2)
 
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->request = request2;
-    pt->external_uri = external_uri;
     pt->tr = tr;
 
     pt->url_stream = url_stream_new(request->pool,
