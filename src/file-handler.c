@@ -164,6 +164,7 @@ file_callback(struct request *request2)
             unsigned processor_options = 0;
 
             processor_env_init(request->pool, &request2->env,
+                               request->remote_host,
                                request_absolute_uri(request),
                                uri,
                                request2->args,

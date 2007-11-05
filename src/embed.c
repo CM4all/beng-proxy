@@ -86,6 +86,19 @@ embed_request_headers(struct embed *embed, int with_body)
         p = "beng-proxy v" VERSION;
     header_write(headers, "user-agent", p);
 
+    p = strmap_get(embed->env->request_headers, "x-forwarded-for");
+    if (p == NULL) {
+        if (embed->env->remote_host != NULL)
+            header_write(headers, "x-forwarded-for", embed->env->remote_host);
+    } else {
+        if (embed->env->remote_host == NULL)
+            header_write(headers, "x-forwarded-for", p);
+        else
+            header_write(headers, "x-forwarded-for",
+                         p_strcat(embed->pool, p, ", ",
+                                  embed->env->remote_host, NULL));
+    }
+
     return headers;
 }
 

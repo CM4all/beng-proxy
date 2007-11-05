@@ -101,6 +101,7 @@ proxy_response_response(http_status_t status, strmap_t headers,
 
         /* XXX request body? */
         processor_env_init(request->pool, &request2->env,
+                           request->remote_host,
                            request_absolute_uri(request),
                            &request2->uri,
                            request2->args,
