@@ -24,8 +24,7 @@
 #include <stdlib.h>
 
 struct proxy_transfer {
-    struct request *request2;
-    struct http_server_request *request;
+    struct request *request;
     const struct parsed_uri *external_uri;
     const struct translate_response *tr;
     url_stream_t url_stream;
@@ -61,9 +60,10 @@ proxy_transfer_close(struct proxy_transfer *pt)
     pool_t pool;
 
     assert(pt->request != NULL);
-    assert(pt->request->pool != NULL);
+    assert(pt->request->request != NULL);
+    assert(pt->request->request->pool != NULL);
 
-    pool = pt->request->pool;
+    pool = pt->request->request->pool;
 
     if (pt->url_stream != NULL) {
         url_stream_t url_stream = pt->url_stream;
@@ -96,6 +96,7 @@ proxy_response_response(http_status_t status, strmap_t headers,
                         void *ctx)
 {
     struct proxy_transfer *pt = ctx;
+    struct http_server_request *request = pt->request->request;
     growing_buffer_t response_headers;
 
     (void)status;
@@ -103,19 +104,19 @@ proxy_response_response(http_status_t status, strmap_t headers,
     assert(pt->url_stream != NULL);
     pt->url_stream = NULL;
 
-    response_headers = growing_buffer_new(pt->request->pool, 2048);
+    response_headers = growing_buffer_new(request->pool, 2048);
 
     if (pt->tr->process) {
         struct widget *widget;
         unsigned processor_options = 0;
 
         /* XXX request body? */
-        processor_env_init(pt->request->pool, &pt->env,
-                           request_absolute_uri(pt->request),
+        processor_env_init(request->pool, &pt->env,
+                           request_absolute_uri(request),
                            pt->external_uri,
-                           pt->request2->args,
-                           pt->request2->session,
-                           pt->request->headers,
+                           pt->request->args,
+                           pt->request->session,
+                           request->headers,
                            0, NULL,
                            embed_widget_callback);
         if (pt->env.frame != NULL) { /* XXX */
@@ -127,30 +128,30 @@ proxy_response_response(http_status_t status, strmap_t headers,
             processor_options |= PROCESSOR_QUIET;
         }
 
-        widget = p_malloc(pt->request->pool, sizeof(*widget));
+        widget = p_malloc(request->pool, sizeof(*widget));
         widget_init(widget, NULL);
         widget->from_request.session = session_get_widget(pt->env.session, pt->external_uri->base, 1);
 
-        pool_ref(pt->request->pool);
+        pool_ref(request->pool);
 
-        body = processor_new(pt->request->pool, body, widget, &pt->env,
+        body = processor_new(request->pool, body, widget, &pt->env,
                              processor_options);
         if (pt->env.frame != NULL) {
             /* XXX */
-            widget_proxy_install(&pt->env, pt->request, body);
-            pool_unref(pt->request->pool);
+            widget_proxy_install(&pt->env, request, body);
+            pool_unref(request->pool);
             proxy_transfer_close(pt);
             return;
         }
 
 #ifndef NO_DEFLATE
-        if (http_client_accepts_encoding(pt->request->headers, "deflate")) {
+        if (http_client_accepts_encoding(request->headers, "deflate")) {
             header_write(response_headers, "content-encoding", "deflate");
-            body = istream_deflate_new(pt->request->pool, body);
+            body = istream_deflate_new(request->pool, body);
         }
 #endif
 
-        pool_unref(pt->request->pool);
+        pool_unref(request->pool);
 
         content_length = (off_t)-1;
 
@@ -161,7 +162,7 @@ proxy_response_response(http_status_t status, strmap_t headers,
 
     assert(!istream_has_handler(body));
 
-    http_server_response(pt->request, HTTP_STATUS_OK,
+    http_server_response(request, HTTP_STATUS_OK,
                          response_headers,
                          content_length, body);
 }
@@ -193,8 +194,7 @@ proxy_callback(struct request *request2)
     pool_ref(request->pool);
 
     pt = p_calloc(request->pool, sizeof(*pt));
-    pt->request2 = request2;
-    pt->request = request;
+    pt->request = request2;
     pt->external_uri = external_uri;
     pt->tr = tr;
 
