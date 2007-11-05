@@ -7,7 +7,6 @@
 #include "handler.h"
 #include "request.h"
 #include "connection.h"
-#include "url-stream.h"
 #include "header-writer.h"
 #include "widget.h"
 #include "embed.h"
@@ -24,7 +23,6 @@
 
 struct proxy_transfer {
     struct request *request;
-    url_stream_t url_stream;
 };
 
 static const char *const copy_headers[] = {
@@ -61,9 +59,9 @@ proxy_transfer_close(struct proxy_transfer *pt)
 
     pool = pt->request->request->pool;
 
-    if (pt->url_stream != NULL) {
-        url_stream_t url_stream = pt->url_stream;
-        pt->url_stream = NULL;
+    if (pt->request->url_stream != NULL) {
+        url_stream_t url_stream = pt->request->url_stream;
+        pt->request->url_stream = NULL;
         url_stream_close(url_stream);
     }
 
@@ -97,8 +95,8 @@ proxy_response_response(http_status_t status, strmap_t headers,
 
     (void)status;
 
-    assert(pt->url_stream != NULL);
-    pt->url_stream = NULL;
+    assert(pt->request->url_stream != NULL);
+    pt->request->url_stream = NULL;
 
     response_headers = growing_buffer_new(request->pool, 2048);
 
@@ -168,7 +166,7 @@ proxy_response_free(void *ctx)
 {
     struct proxy_transfer *pt = ctx;
 
-    pt->url_stream = NULL;
+    pt->request->url_stream = NULL;
 
     proxy_transfer_close(pt);
 }
@@ -191,11 +189,11 @@ proxy_callback(struct request *request2)
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->request = request2;
 
-    pt->url_stream = url_stream_new(request->pool,
-                                    request->method, tr->proxy, NULL,
-                                    request->content_length, request->body,
-                                    &proxy_response_handler, pt);
-    if (pt->url_stream == NULL) {
+    pt->request->url_stream = url_stream_new(request->pool,
+                                             request->method, tr->proxy, NULL,
+                                             request->content_length, request->body,
+                                             &proxy_response_handler, pt);
+    if (pt->request->url_stream == NULL) {
         proxy_transfer_close(pt);
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
