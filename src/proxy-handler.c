@@ -21,10 +21,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct proxy_transfer {
-    struct request *request;
-};
-
 static const char *const copy_headers[] = {
     "age",
     "etag",
@@ -49,23 +45,22 @@ static const char *const copy_headers_processed[] = {
 
 
 static void
-proxy_transfer_close(struct proxy_transfer *pt)
+proxy_transfer_close(struct request *request)
 {
     pool_t pool;
 
-    assert(pt->request != NULL);
-    assert(pt->request->request != NULL);
-    assert(pt->request->request->pool != NULL);
+    assert(request != NULL);
+    assert(request->request != NULL);
+    assert(request->request->pool != NULL);
 
-    pool = pt->request->request->pool;
+    pool = request->request->pool;
 
-    if (pt->request->url_stream != NULL) {
-        url_stream_t url_stream = pt->request->url_stream;
-        pt->request->url_stream = NULL;
+    if (request->url_stream != NULL) {
+        url_stream_t url_stream = request->url_stream;
+        request->url_stream = NULL;
         url_stream_close(url_stream);
     }
 
-    pt->request = NULL;
     pool_unref(pool);
 }
 
@@ -89,32 +84,32 @@ proxy_response_response(http_status_t status, strmap_t headers,
                         off_t content_length, istream_t body,
                         void *ctx)
 {
-    struct proxy_transfer *pt = ctx;
-    struct http_server_request *request = pt->request->request;
+    struct request *request2 = ctx;
+    struct http_server_request *request = request2->request;
     growing_buffer_t response_headers;
 
     (void)status;
 
-    assert(pt->request->url_stream != NULL);
-    pt->request->url_stream = NULL;
+    assert(request2->url_stream != NULL);
+    request2->url_stream = NULL;
 
     response_headers = growing_buffer_new(request->pool, 2048);
 
-    if (pt->request->translate.response->process) {
+    if (request2->translate.response->process) {
         struct widget *widget;
         unsigned processor_options = 0;
 
         /* XXX request body? */
-        processor_env_init(request->pool, &pt->request->env,
+        processor_env_init(request->pool, &request2->env,
                            request_absolute_uri(request),
-                           &pt->request->uri,
-                           pt->request->args,
-                           pt->request->session,
+                           &request2->uri,
+                           request2->args,
+                           request2->session,
                            request->headers,
                            0, NULL,
                            embed_widget_callback);
-        if (pt->request->env.frame != NULL) { /* XXX */
-            pt->request->env.widget_callback = frame_widget_callback;
+        if (request2->env.frame != NULL) { /* XXX */
+            request2->env.widget_callback = frame_widget_callback;
 
             /* do not show the template contents if the browser is
                only interested in one particular widget for
@@ -124,17 +119,17 @@ proxy_response_response(http_status_t status, strmap_t headers,
 
         widget = p_malloc(request->pool, sizeof(*widget));
         widget_init(widget, NULL);
-        widget->from_request.session = session_get_widget(pt->request->env.session, pt->request->uri.base, 1);
+        widget->from_request.session = session_get_widget(request2->env.session, request2->uri.base, 1);
 
         pool_ref(request->pool);
 
-        body = processor_new(request->pool, body, widget, &pt->request->env,
+        body = processor_new(request->pool, body, widget, &request2->env,
                              processor_options);
-        if (pt->request->env.frame != NULL) {
+        if (request2->env.frame != NULL) {
             /* XXX */
-            widget_proxy_install(&pt->request->env, request, body);
+            widget_proxy_install(&request2->env, request, body);
             pool_unref(request->pool);
-            proxy_transfer_close(pt);
+            proxy_transfer_close(request2);
             return;
         }
 
@@ -164,11 +159,11 @@ proxy_response_response(http_status_t status, strmap_t headers,
 static void 
 proxy_response_free(void *ctx)
 {
-    struct proxy_transfer *pt = ctx;
+    struct request *request = ctx;
 
-    pt->request->url_stream = NULL;
+    request->url_stream = NULL;
 
-    proxy_transfer_close(pt);
+    proxy_transfer_close(request);
 }
 
 static const struct http_client_response_handler proxy_response_handler = {
@@ -182,19 +177,15 @@ proxy_callback(struct request *request2)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
-    struct proxy_transfer *pt;
 
     pool_ref(request->pool);
 
-    pt = p_calloc(request->pool, sizeof(*pt));
-    pt->request = request2;
-
-    pt->request->url_stream = url_stream_new(request->pool,
-                                             request->method, tr->proxy, NULL,
-                                             request->content_length, request->body,
-                                             &proxy_response_handler, pt);
-    if (pt->request->url_stream == NULL) {
-        proxy_transfer_close(pt);
+    request2->url_stream = url_stream_new(request->pool,
+                                          request->method, tr->proxy, NULL,
+                                          request->content_length, request->body,
+                                          &proxy_response_handler, request2);
+    if (request2->url_stream == NULL) {
+        proxy_transfer_close(request2);
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
