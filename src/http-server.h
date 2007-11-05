@@ -20,6 +20,7 @@ typedef struct http_server_connection *http_server_connection_t;
 struct http_server_request {
     pool_t pool;
     http_server_connection_t connection;
+    const char *remote_host;
 
     /* request metadata */
     http_method_t method;
@@ -39,6 +40,7 @@ struct http_server_connection_handler {
 
 void
 http_server_connection_new(pool_t pool, int fd,
+                           const char *remote_host,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
                            http_server_connection_t *connection_r);

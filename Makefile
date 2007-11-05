@@ -68,6 +68,7 @@ SOURCES = src/main.c \
 	src/wembed.c \
 	src/frame.c \
 	src/socket-util.c \
+	src/address.c \
 	src/listener.c \
 	src/client-socket.c \
 	src/buffered-io.c \

@@ -44,6 +44,10 @@ struct http_server_connection {
     const struct http_server_connection_handler *handler;
     void *handler_ctx;
 
+    /* info */
+
+    const char *remote_host;
+
     /* request */
     struct {
         enum {
@@ -85,6 +89,7 @@ http_server_request_new(http_server_connection_t connection)
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->connection = connection;
+    request->remote_host = connection->remote_host;
     request->headers = strmap_new(pool, 64);
 
     return request;
@@ -531,6 +536,7 @@ http_server_event_callback(int fd, short event, void *ctx)
 
 void
 http_server_connection_new(pool_t pool, int fd,
+                           const char *remote_host,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
                            http_server_connection_t *connection_r)
@@ -550,6 +556,7 @@ http_server_connection_new(pool_t pool, int fd,
     connection->fd = fd;
     connection->handler = handler;
     connection->handler_ctx = ctx;
+    connection->remote_host = remote_host;
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
     connection->response.writing = 0;

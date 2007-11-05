@@ -8,6 +8,7 @@
 #include "instance.h"
 #include "http-server.h"
 #include "handler.h"
+#include "address.h"
 
 #include <assert.h>
 
@@ -52,6 +53,7 @@ http_listener_callback(int fd,
     ++connection->instance->num_connections;
 
     http_server_connection_new(pool, fd,
+                               address_to_string(pool, addr, addrlen),
                                &my_http_server_connection_handler,
                                connection,
                                &connection->http);

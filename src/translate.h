@@ -13,6 +13,7 @@
 struct config;
 
 struct translate_request {
+    const char *remote_host;
     const char *host;
     const char *uri;
     const char *session;

@@ -70,6 +70,8 @@ marshal_request(pool_t pool, const struct translate_request *request)
 
     gb = growing_buffer_new(pool, 512);
     write_packet(gb, TRANSLATE_BEGIN, NULL);
+    if (request->remote_host != NULL)
+        write_packet(gb, TRANSLATE_REMOTE_HOST, request->remote_host);
     if (request->host != NULL)
         write_packet(gb, TRANSLATE_HOST, request->host);
     if (request->uri != NULL)
