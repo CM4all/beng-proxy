@@ -192,6 +192,16 @@ embed_response_response(http_status_t status, strmap_t headers,
     assert(embed->url_stream != NULL);
     embed->url_stream = NULL;
 
+    cookies = strmap_get(headers, "set-cookie2");
+    if (cookies == NULL)
+        cookies = strmap_get(headers, "set-cookie");
+    if (cookies != NULL) {
+        struct widget_session *ws = widget_get_session(embed->widget, 1);
+        if (ws != NULL)
+            cookie_list_set_cookie2(ws->pool, &ws->cookies,
+                                    cookies);
+    }
+
     if (status >= 300 && status < 400) {
         location = strmap_get(headers, "location");
         if (location != NULL && embed_redirect(embed, headers, location, body))
@@ -204,16 +214,6 @@ embed_response_response(http_status_t status, strmap_t headers,
         input = processor_new(istream_pool(embed->delayed), input,
                               embed->widget, embed->env, embed->options);
         content_length = -1;
-    }
-
-    cookies = strmap_get(headers, "set-cookie2");
-    if (cookies == NULL)
-        cookies = strmap_get(headers, "set-cookie");
-    if (cookies != NULL) {
-        struct widget_session *ws = widget_get_session(embed->widget, 1);
-        if (ws != NULL)
-            cookie_list_set_cookie2(ws->pool, &ws->cookies,
-                                    cookies);
     }
 
     pool_ref(embed->pool);
