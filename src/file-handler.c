@@ -160,12 +160,10 @@ file_callback(struct request *request2)
 
     if (tr->process) {
         if (body != NULL) {
-            struct processor_env *env;
             struct widget *widget;
             unsigned processor_options = 0;
 
-            env = p_malloc(request->pool, sizeof(*env));
-            processor_env_init(request->pool, env,
+            processor_env_init(request->pool, &request2->env,
                                request_absolute_uri(request),
                                uri,
                                request2->args,
@@ -173,8 +171,8 @@ file_callback(struct request *request2)
                                request->headers,
                                request->content_length, request->body,
                                embed_widget_callback);
-            if (env->frame != NULL) { /* XXX */
-                env->widget_callback = frame_widget_callback;
+            if (request2->env.frame != NULL) { /* XXX */
+                request2->env.widget_callback = frame_widget_callback;
 
                 /* do not show the template contents if the browser is
                    only interested in one particular widget for
@@ -184,14 +182,14 @@ file_callback(struct request *request2)
 
             widget = p_malloc(request->pool, sizeof(*widget));
             widget_init(widget, NULL);
-            widget->from_request.session = session_get_widget(env->session, path, 1);
+            widget->from_request.session = session_get_widget(request2->env.session, path, 1);
 
-            body = processor_new(request->pool, body, widget, env,
+            body = processor_new(request->pool, body, widget, &request2->env,
                                  processor_options);
 
-            if (env->frame != NULL) {
+            if (request2->env.frame != NULL) {
                 /* XXX */
-                widget_proxy_install(env, request, body);
+                widget_proxy_install(&request2->env, request, body);
                 return;
             }
 

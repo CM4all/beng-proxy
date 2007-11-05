@@ -11,6 +11,7 @@
 #include "uri.h"
 #include "translate.h"
 #include "strmap.h"
+#include "processor.h"
 
 struct request {
     struct http_server_request *request;
@@ -25,6 +26,8 @@ struct request {
         struct translate_request request;
         const struct translate_response *response;
     } translate;
+
+    struct processor_env env;
 };
 
 void

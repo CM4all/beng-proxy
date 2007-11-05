@@ -8,7 +8,6 @@
 #include "request.h"
 #include "connection.h"
 #include "url-stream.h"
-#include "processor.h"
 #include "header-writer.h"
 #include "widget.h"
 #include "embed.h"
@@ -26,7 +25,6 @@
 struct proxy_transfer {
     struct request *request;
     url_stream_t url_stream;
-    struct processor_env env;
 };
 
 static const char *const copy_headers[] = {
@@ -109,7 +107,7 @@ proxy_response_response(http_status_t status, strmap_t headers,
         unsigned processor_options = 0;
 
         /* XXX request body? */
-        processor_env_init(request->pool, &pt->env,
+        processor_env_init(request->pool, &pt->request->env,
                            request_absolute_uri(request),
                            &pt->request->uri,
                            pt->request->args,
@@ -117,8 +115,8 @@ proxy_response_response(http_status_t status, strmap_t headers,
                            request->headers,
                            0, NULL,
                            embed_widget_callback);
-        if (pt->env.frame != NULL) { /* XXX */
-            pt->env.widget_callback = frame_widget_callback;
+        if (pt->request->env.frame != NULL) { /* XXX */
+            pt->request->env.widget_callback = frame_widget_callback;
 
             /* do not show the template contents if the browser is
                only interested in one particular widget for
@@ -128,15 +126,15 @@ proxy_response_response(http_status_t status, strmap_t headers,
 
         widget = p_malloc(request->pool, sizeof(*widget));
         widget_init(widget, NULL);
-        widget->from_request.session = session_get_widget(pt->env.session, pt->request->uri.base, 1);
+        widget->from_request.session = session_get_widget(pt->request->env.session, pt->request->uri.base, 1);
 
         pool_ref(request->pool);
 
-        body = processor_new(request->pool, body, widget, &pt->env,
+        body = processor_new(request->pool, body, widget, &pt->request->env,
                              processor_options);
-        if (pt->env.frame != NULL) {
+        if (pt->request->env.frame != NULL) {
             /* XXX */
-            widget_proxy_install(&pt->env, request, body);
+            widget_proxy_install(&pt->request->env, request, body);
             pool_unref(request->pool);
             proxy_transfer_close(pt);
             return;
