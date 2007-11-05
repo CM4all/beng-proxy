@@ -160,6 +160,7 @@ ask_translation_server(struct http_server_request *request,
 
     request2->args = NULL;
     request2->session = NULL;
+    request2->translate.request.remote_host = request->remote_host;
     request2->translate.request.host = strmap_get(request->headers, "host");
     request2->translate.request.uri = p_strndup(request->pool,
                                                 request2->uri.base, request2->uri.base_length);
