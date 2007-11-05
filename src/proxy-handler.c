@@ -25,7 +25,6 @@
 
 struct proxy_transfer {
     struct request *request;
-    const struct translate_response *tr;
     url_stream_t url_stream;
     struct processor_env env;
 };
@@ -105,7 +104,7 @@ proxy_response_response(http_status_t status, strmap_t headers,
 
     response_headers = growing_buffer_new(request->pool, 2048);
 
-    if (pt->tr->process) {
+    if (pt->request->translate.response->process) {
         struct widget *widget;
         unsigned processor_options = 0;
 
@@ -193,7 +192,6 @@ proxy_callback(struct request *request2)
 
     pt = p_calloc(request->pool, sizeof(*pt));
     pt->request = request2;
-    pt->tr = tr;
 
     pt->url_stream = url_stream_new(request->pool,
                                     request->method, tr->proxy, NULL,
