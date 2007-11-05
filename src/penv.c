@@ -11,6 +11,7 @@
 
 void
 processor_env_init(pool_t pool, struct processor_env *env,
+                   const char *absolute_uri,
                    const struct parsed_uri *uri,
                    strmap_t args,
                    struct session *session,
@@ -20,6 +21,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    processor_widget_callback_t widget_callback)
 {
     env->pool = pool;
+    env->absolute_uri = absolute_uri;
     env->external_uri = uri;
 
     if (args == NULL) {

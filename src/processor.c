@@ -203,6 +203,10 @@ processor_new(pool_t pool, istream_t istream,
     istream = istream_subst_new(pool, istream,
                                 "&c:prefix;", widget_prefix(pool, widget));
 
+    if (env->absolute_uri != NULL)
+        istream = istream_subst_new(pool, istream,
+                                    "&c:uri;", env->absolute_uri);
+
 #ifdef NDEBUG
     pool_ref(pool);
 #else

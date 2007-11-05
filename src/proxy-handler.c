@@ -75,6 +75,21 @@ proxy_transfer_close(struct proxy_transfer *pt)
     pool_unref(pool);
 }
 
+static const char *
+request_absolute_uri(struct http_server_request *request)
+{
+    const char *host = strmap_get(request->headers, "host");
+
+    if (host == NULL)
+        return NULL;
+
+    return p_strcat(request->pool,
+                    "http://",
+                    host,
+                    request->uri,
+                    NULL);
+}
+
 static void 
 proxy_response_response(http_status_t status, strmap_t headers,
                         off_t content_length, istream_t body,
@@ -95,7 +110,9 @@ proxy_response_response(http_status_t status, strmap_t headers,
         unsigned processor_options = 0;
 
         /* XXX request body? */
-        processor_env_init(pt->request->pool, &pt->env, pt->external_uri,
+        processor_env_init(pt->request->pool, &pt->env,
+                           request_absolute_uri(pt->request),
+                           pt->external_uri,
                            pt->request2->args,
                            pt->request2->session,
                            pt->request->headers,

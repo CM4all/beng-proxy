@@ -48,6 +48,21 @@ make_etag(char *p, const struct stat *st)
     *p = 0;
 }
 
+static const char *
+request_absolute_uri(struct http_server_request *request)
+{
+    const char *host = strmap_get(request->headers, "host");
+
+    if (host == NULL)
+        return NULL;
+
+    return p_strcat(request->pool,
+                    "http://",
+                    host,
+                    request->uri,
+                    NULL);
+}
+
 void
 file_callback(struct request *request2)
 {
@@ -150,7 +165,9 @@ file_callback(struct request *request2)
             unsigned processor_options = 0;
 
             env = p_malloc(request->pool, sizeof(*env));
-            processor_env_init(request->pool, env, uri,
+            processor_env_init(request->pool, env,
+                               request_absolute_uri(request),
+                               uri,
                                request2->args,
                                request2->session,
                                request->headers,
