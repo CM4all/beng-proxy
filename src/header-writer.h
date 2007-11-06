@@ -16,4 +16,7 @@ header_write(growing_buffer_t gb, const char *key, const char *value);
 void
 headers_copy(strmap_t in, growing_buffer_t out, const char *const* keys);
 
+void
+headers_copy_all(strmap_t in, growing_buffer_t out);
+
 #endif

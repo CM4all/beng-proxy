@@ -42,3 +42,13 @@ headers_copy(strmap_t in, growing_buffer_t out, const char *const* keys)
     }
 }
 
+void
+headers_copy_all(strmap_t in, growing_buffer_t out)
+{
+    const struct strmap_pair *pair;
+
+    strmap_rewind(in);
+
+    while ((pair = strmap_next(in)) != NULL)
+        header_write(out, pair->key, pair->value);
+}
