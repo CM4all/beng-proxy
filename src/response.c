@@ -80,6 +80,82 @@ request_absolute_uri(struct http_server_request *request)
 
 
 /*
+ * processor invocation
+ *
+ */
+
+static void
+response_invoke_processor(struct request *request2,
+                          http_status_t status, strmap_t headers,
+                          istream_t body)
+{
+    struct http_server_request *request = request2->request;
+    growing_buffer_t response_headers;
+    struct widget *widget;
+    unsigned processor_options = 0;
+
+    assert(!request2->response_sent);
+    assert(request2->translate.response->process);
+    assert(!istream_has_handler(body));
+
+    response_headers = growing_buffer_new(request->pool, 2048);
+
+    /* XXX request body? */
+    processor_env_init(request->pool, &request2->env,
+                       request->remote_host,
+                       request_absolute_uri(request),
+                       &request2->uri,
+                       request2->args,
+                       request2->session,
+                       request->headers,
+                       0, NULL,
+                       embed_widget_callback);
+    if (request2->env.frame != NULL) { /* XXX */
+        request2->env.widget_callback = frame_widget_callback;
+
+        /* do not show the template contents if the browser is
+           only interested in one particular widget for
+           displaying the frame */
+        processor_options |= PROCESSOR_QUIET;
+    }
+
+    widget = p_malloc(request->pool, sizeof(*widget));
+    widget_init(widget, NULL);
+    widget->from_request.session = session_get_widget(request2->env.session, request2->uri.base, 1);
+
+    pool_ref(request->pool);
+
+    body = processor_new(request->pool, body, widget, &request2->env,
+                             processor_options);
+    if (request2->env.frame != NULL) {
+        /* XXX */
+        widget_proxy_install(&request2->env, request, body);
+        pool_unref(request->pool);
+        response_close(request2);
+        return;
+    }
+
+#ifndef NO_DEFLATE
+    if (http_client_accepts_encoding(request->headers, "deflate")) {
+        header_write(response_headers, "content-encoding", "deflate");
+        body = istream_deflate_new(request->pool, body);
+    }
+#endif
+
+    pool_unref(request->pool);
+
+    headers_copy(headers, response_headers, copy_headers_processed);
+
+    assert(!istream_has_handler(body));
+
+    request2->response_sent = 1;
+    http_server_response(request, status,
+                         response_headers,
+                         -1, body);
+}
+
+
+/*
  * HTTP response handler
  *
  */
@@ -94,65 +170,16 @@ response_response(http_status_t status, strmap_t headers,
     growing_buffer_t response_headers;
 
     assert(!request2->response_sent);
+    assert(!istream_has_handler(body));
 
     response_headers = growing_buffer_new(request->pool, 2048);
 
     if (request2->translate.response->process) {
-        struct widget *widget;
-        unsigned processor_options = 0;
-
-        /* XXX request body? */
-        processor_env_init(request->pool, &request2->env,
-                           request->remote_host,
-                           request_absolute_uri(request),
-                           &request2->uri,
-                           request2->args,
-                           request2->session,
-                           request->headers,
-                           0, NULL,
-                           embed_widget_callback);
-        if (request2->env.frame != NULL) { /* XXX */
-            request2->env.widget_callback = frame_widget_callback;
-
-            /* do not show the template contents if the browser is
-               only interested in one particular widget for
-               displaying the frame */
-            processor_options |= PROCESSOR_QUIET;
-        }
-
-        widget = p_malloc(request->pool, sizeof(*widget));
-        widget_init(widget, NULL);
-        widget->from_request.session = session_get_widget(request2->env.session, request2->uri.base, 1);
-
-        pool_ref(request->pool);
-
-        body = processor_new(request->pool, body, widget, &request2->env,
-                             processor_options);
-        if (request2->env.frame != NULL) {
-            /* XXX */
-            widget_proxy_install(&request2->env, request, body);
-            pool_unref(request->pool);
-            response_close(request2);
-            return;
-        }
-
-#ifndef NO_DEFLATE
-        if (http_client_accepts_encoding(request->headers, "deflate")) {
-            header_write(response_headers, "content-encoding", "deflate");
-            body = istream_deflate_new(request->pool, body);
-        }
-#endif
-
-        pool_unref(request->pool);
-
-        content_length = (off_t)-1;
-
-        headers_copy(headers, response_headers, copy_headers_processed);
-    } else {
-        headers_copy(headers, response_headers, copy_headers);
+        response_invoke_processor(request2, status, headers, body);
+        return;
     }
 
-    assert(!istream_has_handler(body));
+    headers_copy(headers, response_headers, copy_headers);
 
     request2->response_sent = 1;
     http_server_response(request, status,
