@@ -86,14 +86,12 @@ request_absolute_uri(struct http_server_request *request)
 
 static void 
 response_response(http_status_t status, strmap_t headers,
-                off_t content_length, istream_t body,
-                void *ctx)
+                  off_t content_length, istream_t body,
+                  void *ctx)
 {
     struct request *request2 = ctx;
     struct http_server_request *request = request2->request;
     growing_buffer_t response_headers;
-
-    (void)status;
 
     assert(!request2->response_sent);
 
@@ -157,7 +155,7 @@ response_response(http_status_t status, strmap_t headers,
     assert(!istream_has_handler(body));
 
     request2->response_sent = 1;
-    http_server_response(request, HTTP_STATUS_OK,
+    http_server_response(request, status,
                          response_headers,
                          content_length, body);
 }
