@@ -1,5 +1,5 @@
 /*
- * Serve HTTP requests from the local VFS.
+ * Serve HTTP requests from another HTTP server.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
