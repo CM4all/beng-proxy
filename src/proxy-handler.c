@@ -7,6 +7,7 @@
 #include "handler.h"
 #include "request.h"
 #include "http-server.h"
+#include "url-stream.h"
 
 void
 proxy_callback(struct request *request2)

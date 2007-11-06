@@ -12,7 +12,6 @@
 #include "translate.h"
 #include "strmap.h"
 #include "processor.h"
-#include "url-stream.h"
 
 struct request {
     struct http_server_request *request;
@@ -30,7 +29,7 @@ struct request {
 
     struct processor_env env;
 
-    url_stream_t url_stream;
+    struct url_stream *url_stream;
 
     unsigned response_sent;
 };
