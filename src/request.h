@@ -31,6 +31,8 @@ struct request {
     struct processor_env env;
 
     url_stream_t url_stream;
+
+    unsigned response_sent;
 };
 
 void
@@ -38,5 +40,8 @@ request_get_session(struct request *request, const char *session_id);
 
 struct session *
 request_make_session(struct request *request);
+
+
+extern const struct http_response_handler response_handler;
 
 #endif

@@ -197,6 +197,7 @@ serve_document_root_file(struct http_server_request *request,
 
     request2->args = NULL;
     request2->session = NULL;
+    request2->response_sent = 0;
 
     request_args_parse(request2);
 
