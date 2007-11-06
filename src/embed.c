@@ -116,7 +116,7 @@ embed_delayed_abort(void *ctx)
     assert(embed->url_stream == NULL);
 }
 
-static const struct http_client_response_handler embed_response_handler;
+static const struct http_response_handler embed_response_handler;
 
 static int
 embed_redirect(struct embed *embed,
@@ -277,7 +277,7 @@ embed_response_free(void *ctx)
     pool_unref(embed->pool);
 }
 
-static const struct http_client_response_handler embed_response_handler = {
+static const struct http_response_handler embed_response_handler = {
     .response = embed_response_response,
     .free = embed_response_free,
 };

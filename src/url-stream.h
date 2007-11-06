@@ -20,7 +20,7 @@ url_stream_new(pool_t pool,
                http_method_t method, const char *url,
                growing_buffer_t headers,
                off_t content_length, istream_t body,
-               const struct http_client_response_handler *handler,
+               const struct http_response_handler *handler,
                void *handler_ctx);
 
 /**

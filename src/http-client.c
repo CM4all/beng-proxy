@@ -43,7 +43,7 @@ struct http_client_connection {
         char request_line_buffer[1024];
         char content_length_buffer[32];
 
-        const struct http_client_response_handler *handler;
+        const struct http_response_handler *handler;
         void *handler_ctx;
     } request;
 
@@ -140,7 +140,7 @@ http_client_response_stream_close(istream_t istream)
 
     if (connection->request.handler != NULL &&
         connection->request.handler->free != NULL) {
-        const struct http_client_response_handler *handler = connection->request.handler;
+        const struct http_response_handler *handler = connection->request.handler;
         void *handler_ctx = connection->request.handler_ctx;
         connection->request.handler = NULL;
         connection->request.handler_ctx = NULL;
@@ -586,7 +586,7 @@ http_client_connection_close(http_client_connection_t connection)
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
            being freed */
-        const struct http_client_response_handler *handler = connection->request.handler;
+        const struct http_response_handler *handler = connection->request.handler;
         void *handler_ctx = connection->request.handler_ctx;
         connection->request.handler = NULL;
         connection->request.handler_ctx = NULL;
@@ -689,7 +689,7 @@ http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
                     growing_buffer_t headers,
                     off_t content_length, istream_t body,
-                    const struct http_client_response_handler *handler,
+                    const struct http_response_handler *handler,
                     void *ctx)
 {
     istream_t request_line_stream, header_stream;

@@ -167,7 +167,7 @@ proxy_response_free(void *ctx)
     proxy_transfer_close(request);
 }
 
-static const struct http_client_response_handler proxy_response_handler = {
+static const struct http_response_handler proxy_response_handler = {
     .response = proxy_response_response,
     .free = proxy_response_free,
 };

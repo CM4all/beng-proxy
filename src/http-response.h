@@ -13,7 +13,7 @@
 
 #include <stddef.h>
 
-struct http_client_response_handler {
+struct http_response_handler {
     void (*response)(http_status_t status, strmap_t headers,
                      off_t content_length, istream_t body,
                      void *ctx);
