@@ -58,9 +58,7 @@ http_response_handler_invoke_free(struct http_response_handler_ref *ref)
     const struct http_response_handler *handler;
 
     assert(ref != NULL);
-
-    if (ref->handler == NULL)
-        return;
+    assert(ref->handler != NULL);
 
     handler = ref->handler;
     ref->handler = NULL;
