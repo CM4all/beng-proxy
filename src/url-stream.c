@@ -29,9 +29,7 @@ struct url_stream {
     client_socket_t client_socket;
     http_client_connection_t http;
 
-    /* handler */
-    const struct http_response_handler *handler;
-    void *handler_ctx;
+    struct http_response_handler_ref handler;
 };
 
 static int
@@ -105,7 +103,7 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
                                               &url_stream_connection_handler, us);
         http_client_request(us->http, us->method, us->uri, us->headers,
                             us->content_length, us->body,
-                            us->handler, us->handler_ctx);
+                            us->handler.handler, us->handler.ctx);
     } else {
         daemon_log(1, "failed to connect: %s\n", strerror(err));
 
@@ -149,8 +147,7 @@ url_stream_new(pool_t pool,
     us->body = body;
     us->client_socket = NULL;
     us->http = NULL;
-    us->handler = handler;
-    us->handler_ctx = handler_ctx;
+    http_response_handler_set(&us->handler, handler, handler_ctx);
 
     if (memcmp(url, "http://", 7) != 0) {
         /* XXX */
@@ -212,8 +209,7 @@ url_stream_close(url_stream_t us)
 
     if (us->client_socket != NULL) {
         client_socket_free(&us->client_socket);
-        if (us->handler->free)
-            us->handler->free(us->handler_ctx);
+        http_response_handler_invoke_free(&us->handler);
     } else if (us->http != NULL)
         /* no need to invoke us->handler->free() here because
            url_stream_connection_free() will do it */

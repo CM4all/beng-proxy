@@ -11,6 +11,7 @@
 #include "istream.h"
 #include "http.h"
 
+#include <assert.h>
 #include <stddef.h>
 
 struct http_response_handler {
@@ -19,5 +20,53 @@ struct http_response_handler {
                      void *ctx);
     void (*free)(void *ctx);
 };
+
+struct http_response_handler_ref {
+    const struct http_response_handler *handler;
+    void *ctx;
+};
+
+static inline void
+http_response_handler_set(struct http_response_handler_ref *ref,
+                          const struct http_response_handler *handler,
+                          void *ctx)
+{
+    assert(ref != NULL);
+    assert(handler != NULL);
+    assert(handler->response != NULL);
+
+    ref->handler = handler;
+    ref->ctx = ctx;
+}
+
+static inline void
+http_response_handler_invoke_response(struct http_response_handler_ref *ref,
+                                      http_status_t status, strmap_t headers,
+                                      off_t content_length, istream_t body)
+{
+    assert(ref != NULL);
+    assert(ref->handler != NULL);
+    assert(ref->handler->response != NULL);
+
+    ref->handler->response(status, headers, content_length, body,
+                           ref->ctx);
+}
+
+static inline void
+http_response_handler_invoke_free(struct http_response_handler_ref *ref)
+{
+    const struct http_response_handler *handler;
+
+    assert(ref != NULL);
+
+    if (ref->handler == NULL)
+        return;
+
+    handler = ref->handler;
+    ref->handler = NULL;
+
+    if (handler->free != NULL)
+        handler->free(ref->ctx);
+}
 
 #endif

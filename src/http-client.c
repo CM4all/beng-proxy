@@ -43,8 +43,7 @@ struct http_client_connection {
         char request_line_buffer[1024];
         char content_length_buffer[32];
 
-        const struct http_response_handler *handler;
-        void *handler_ctx;
+        struct http_response_handler_ref handler;
     } request;
 
     /* response */
@@ -138,14 +137,7 @@ http_client_response_stream_close(istream_t istream)
 
     http_body_deinit(&connection->response.body_reader);
 
-    if (connection->request.handler != NULL &&
-        connection->request.handler->free != NULL) {
-        const struct http_response_handler *handler = connection->request.handler;
-        void *handler_ctx = connection->request.handler_ctx;
-        connection->request.handler = NULL;
-        connection->request.handler_ctx = NULL;
-        handler->free(handler_ctx);
-    }
+    http_response_handler_invoke_free(&connection->request.handler);
 
     if (connection->request.pool != NULL) {
         pool_unref(connection->request.pool);
@@ -372,11 +364,11 @@ http_client_parse_headers(http_client_connection_t connection)
         connection->response.read_state != READ_HEADERS) {
         assert(connection->response.read_state == READ_BODY);
 
-        connection->request.handler->response(connection->response.status,
+        http_response_handler_invoke_response(&connection->request.handler,
+                                              connection->response.status,
                                               connection->response.headers,
                                               connection->response.content_length,
-                                              connection->response.body,
-                                              connection->request.handler_ctx);
+                                              connection->response.body);
 
         if (connection->response.read_state == READ_BODY) {
             if (unlikely(connection->response.body_reader.output.handler == NULL)) {
@@ -580,17 +572,11 @@ http_client_connection_close(http_client_connection_t connection)
     if (connection->response.read_state == READ_BODY) {
         http_client_response_stream_close(http_body_istream(&connection->response.body_reader));
         assert(connection->response.read_state == READ_NONE);
-    } else if (connection->request.pool != NULL &&
-               connection->request.handler != NULL &&
-               connection->request.handler->free != NULL) {
+    } else if (connection->request.pool != NULL) {
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
            being freed */
-        const struct http_response_handler *handler = connection->request.handler;
-        void *handler_ctx = connection->request.handler_ctx;
-        connection->request.handler = NULL;
-        connection->request.handler_ctx = NULL;
-        handler->free(handler_ctx);
+        http_response_handler_invoke_free(&connection->request.handler);
     }
 
     if (connection->request.pool != NULL) {
@@ -702,8 +688,7 @@ http_client_request(http_client_connection_t connection,
     assert(handler->response != NULL);
 
     connection->request.pool = pool_new_linear(connection->pool, "http_client_request", 8192);
-    connection->request.handler = handler;
-    connection->request.handler_ctx = ctx;
+    http_response_handler_set(&connection->request.handler, handler, ctx);
 
     /* request line */
 
