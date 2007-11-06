@@ -98,6 +98,8 @@ response_invoke_processor(struct request *request2,
     assert(request2->translate.response->process);
     assert(!istream_has_handler(body));
 
+    request->url_stream = NULL;
+
     response_headers = growing_buffer_new(request->pool, 2048);
 
     /* XXX request body? */
