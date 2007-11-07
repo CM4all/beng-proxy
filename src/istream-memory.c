@@ -49,6 +49,7 @@ istream_memory_close(istream_t istream)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 
+    memory->data = NULL;
     istream_invoke_abort(&memory->stream);
 }
 
