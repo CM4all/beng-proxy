@@ -133,6 +133,8 @@ istream_read(istream_t _istream)
 #ifndef NDEBUG
     pool_t pool = istream->pool;
 
+    assert(!istream->eof);
+
     assert(istream->reading == 0);
     pool_ref(pool);
     istream->reading = 1;
