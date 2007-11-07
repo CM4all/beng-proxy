@@ -98,6 +98,7 @@ SOURCES = src/main.c \
 	src/istream-subst.c \
 	src/istream-byte.c \
 	src/istream-fail.c \
+	src/istream-head.c \
 	src/uri.c \
 	src/args.c \
 	src/gmtime.c \

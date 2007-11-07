@@ -58,4 +58,7 @@ istream_subst_new(pool_t pool, istream_t input,
 istream_t
 istream_byte_new(pool_t pool, istream_t input);
 
+istream_t
+istream_head_new(pool_t pool, istream_t input, size_t size);
+
 #endif
