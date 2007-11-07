@@ -119,7 +119,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date
+	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/t-istream-chunked test/t-istream-dechunk
 
 src/cm4all-beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS) -lz
@@ -127,7 +127,7 @@ src/cm4all-beng-proxy: $(OBJECTS)
 $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS)
 
-test/%.o: test/%.c $(HEADERS)
+test/%.o: test/%.c $(HEADERS) $(wildcard test/*.h)
 	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS) -Isrc
 
 test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o test/libcore-gmtime.o
@@ -138,6 +138,17 @@ test/format-http-date: test/format-http-date.o src/gmtime.o src/date.o
 
 test/request-translation: test/request-translation.o src/translate.o src/pool.o src/growing-buffer.o src/socket-util.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
+
+FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate
+FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
+
+$(FILTER_TESTS): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-%.o src/fifo-buffer.o src/format.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) -lz
+
+$(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES)): check-filter-%: test/t-istream-%
+	exec $<
+
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES))
 
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb

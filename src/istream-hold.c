@@ -18,19 +18,13 @@
 struct istream_hold {
     struct istream output;
     istream_t input;
-    int input_eof, input_free;
+    int input_eof, input_aborted;
 };
 
 
 static void
 hold_close(struct istream_hold *hold)
 {
-    if (hold->input_eof) {
-        /* perform queued eof() call */
-        hold->input_eof = 0;
-        istream_invoke_eof(&hold->output);
-    }
-
     if (hold->input != NULL) {
         /* the input object is still there; istream_close(hold->input)
            will implicitly call istream_invoke_free(&hold->output)
@@ -38,7 +32,7 @@ hold_close(struct istream_hold *hold)
         istream_close(hold->input);
         assert(hold->input == NULL);
     } else {
-        istream_invoke_free(&hold->output);
+        istream_invoke_abort(&hold->output);
     }
 }
 
@@ -76,6 +70,9 @@ hold_input_eof(void *ctx)
     struct istream_hold *hold = ctx;
 
     assert(!hold->input_eof);
+    assert(!hold->input_aborted);
+
+    istream_clear_unref(&hold->input);
 
     if (hold->output.handler == NULL) {
         /* queue the eof() call */
@@ -87,34 +84,29 @@ hold_input_eof(void *ctx)
 }
 
 static void
-hold_input_free(void *ctx)
+hold_input_abort(void *ctx)
 {
     struct istream_hold *hold = ctx;
 
-    if (hold->input != NULL)
-        istream_clear_unref(&hold->input);
+    assert(!hold->input_eof);
+    assert(!hold->input_aborted);
+
+    istream_clear_unref(&hold->input);
 
     if (hold->output.handler == NULL) {
-        /* queue the free() call */
-        hold->input_free = 1;
+        /* queue the abort() call */
+        hold->input_aborted = 1;
         return;
     }
 
-    if (hold->input_eof) {
-        /* perform queued eof() call */
-        hold->input_eof = 0;
-        istream_invoke_eof(&hold->output);
-    }
-
-    hold->input_free = 0;
-    istream_invoke_free(&hold->output);
+    istream_invoke_abort(&hold->output);
 }
 
 static const struct istream_handler hold_input_handler = {
     .data = hold_input_data,
     .direct = hold_input_direct,
     .eof = hold_input_eof,
-    .free = hold_input_free,
+    .abort = hold_input_abort,
 };
 
 
@@ -136,9 +128,10 @@ istream_hold_read(istream_t istream)
 
     assert(hold->output.handler != NULL);
 
-    if (unlikely(hold->input_eof || hold->input_free))
-        /* eof() or free() was queued */
-        hold_close(hold);
+    if (unlikely(hold->input_eof))
+        istream_invoke_eof(&hold->output);
+    else if (unlikely(hold->input_aborted))
+        istream_invoke_abort(&hold->output);
     else {
         istream_handler_set_direct(hold->input, hold->output.handler_direct);
         istream_read(hold->input);
@@ -173,7 +166,7 @@ istream_hold_new(pool_t pool, istream_t input)
     hold->output = istream_hold;
     hold->output.pool = pool;
     hold->input_eof = 0;
-    hold->input_free = 0;
+    hold->input_aborted = 0;
 
     istream_assign_ref_handler(&hold->input, input,
                                &hold_input_handler, hold,

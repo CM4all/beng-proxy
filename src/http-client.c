@@ -133,7 +133,7 @@ http_client_response_stream_close(istream_t istream)
     connection->response.headers = NULL;
     connection->response.body = NULL;
 
-    istream_invoke_free(&connection->response.body_reader.output);
+    istream_invoke_abort(&connection->response.body_reader.output);
 
     connection->keep_alive = 0;
 
@@ -696,18 +696,19 @@ http_client_request_stream_eof(void *ctx)
 }
 
 static void
-http_client_request_stream_free(void *ctx)
+http_client_request_stream_abort(void *ctx)
 {
     http_client_connection_t connection = ctx;
 
-    if (connection->request.istream != NULL)
-        http_client_connection_close(connection);
+    assert(connection->request.istream != NULL);
+
+    http_client_connection_close(connection);
 }
 
 static const struct istream_handler http_client_request_stream_handler = {
     .data = http_client_request_stream_data,
     .eof = http_client_request_stream_eof,
-    .free = http_client_request_stream_free,
+    .abort = http_client_request_stream_abort,
 };
 
 

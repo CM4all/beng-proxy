@@ -55,11 +55,12 @@ struct istream_handler {
     void (*eof)(void *ctx);
 
     /**
-     * The istream is being disposed.
+     * The istream has ended unexpectedly, e.g. an I/O error, or a
+     * client called istream_close() prematurely.
      *
      * @param ctx the istream_handler context pointer
      */
-    void (*free)(void *ctx);
+    void (*abort)(void *ctx);
 };
 
 /** an input stream */

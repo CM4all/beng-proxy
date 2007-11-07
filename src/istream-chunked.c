@@ -20,12 +20,13 @@ struct istream_chunked {
 static void
 chunked_close(struct istream_chunked *chunked)
 {
-    if (chunked->input != NULL)
-        istream_free_unref(&chunked->input);
-    
+    assert(chunked->input != NULL);
+
+    istream_free_unref(&chunked->input);
+
     chunked->buffer = NULL;
 
-    istream_invoke_free(&chunked->output);
+    istream_invoke_abort(&chunked->output);
 }
 
 static void
@@ -39,7 +40,6 @@ chunked_eof_detected(struct istream_chunked *chunked)
 
     pool_ref(chunked->output.pool);
     istream_invoke_eof(&chunked->output);
-    chunked_close(chunked);
     pool_unref(chunked->output.pool);
 }
 
@@ -127,12 +127,11 @@ chunked_source_eof(void *ctx)
 }
 
 static void
-chunked_source_free(void *ctx)
+chunked_source_abort(void *ctx)
 {
     struct istream_chunked *chunked = ctx;
 
-    if (chunked->input != NULL)
-        istream_clear_unref(&chunked->input);
+    istream_clear_unref(&chunked->input);
 
     chunked_close(chunked);
 }
@@ -140,7 +139,7 @@ chunked_source_free(void *ctx)
 static const struct istream_handler chunked_source_handler = {
     .data = chunked_source_data,
     .eof = chunked_source_eof,
-    .free = chunked_source_free,
+    .abort = chunked_source_abort,
 };
 
 

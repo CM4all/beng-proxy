@@ -15,15 +15,6 @@ struct istream_memory {
 };
 
 
-static void
-memory_close(struct istream_memory *memory)
-{
-    memory->data = NULL;
-
-    istream_invoke_free(&memory->stream);
-}
-
-
 static inline struct istream_memory *
 istream_to_memory(istream_t istream)
 {
@@ -49,10 +40,8 @@ istream_memory_read(istream_t istream)
         memory->length -= nbytes;
     }
 
-    if (memory->length == 0) {
+    if (memory->length == 0)
         istream_invoke_eof(&memory->stream);
-        memory_close(memory);
-    }
 }
 
 static void
@@ -60,7 +49,7 @@ istream_memory_close(istream_t istream)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 
-    memory_close(memory);
+    istream_invoke_abort(&memory->stream);
 }
 
 static const struct istream istream_memory = {

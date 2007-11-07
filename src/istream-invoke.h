@@ -78,20 +78,21 @@ istream_invoke_eof(struct istream *istream)
 }
 
 static inline void
-istream_invoke_free(struct istream *istream)
+istream_invoke_abort(struct istream *istream)
 {
     assert(istream != NULL);
+    assert(!istream->eof);
 
 #ifndef NDEBUG
     istream->eof = 1;
 #endif
 
-    if (istream->handler != NULL && istream->handler->free != NULL) {
+    if (istream->handler != NULL && istream->handler->abort != NULL) {
         const struct istream_handler *handler = istream->handler;
         void *handler_ctx = istream->handler_ctx;
         istream->handler = NULL;
         istream->handler_ctx = NULL;
-        handler->free(handler_ctx);
+        handler->abort(handler_ctx);
     }
 }
 

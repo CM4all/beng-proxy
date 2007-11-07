@@ -31,9 +31,6 @@ struct istream_pipe {
 static void
 pipe_close(struct istream_pipe *p)
 {
-    if (p->input != NULL)
-        istream_free_unref(&p->input);
-
     if (p->fds[0] >= 0) {
         close(p->fds[0]);
         p->fds[0] = -1;
@@ -43,8 +40,17 @@ pipe_close(struct istream_pipe *p)
         close(p->fds[1]);
         p->fds[1] = -1;
     }
-    
-    istream_invoke_free(&p->output);
+}
+
+static void
+pipe_abort(struct istream_pipe *p)
+{
+    pipe_close(p);
+
+    if (p->input == NULL)
+        istream_invoke_abort(&p->output);
+    else
+        istream_free_unref(&p->input);
 }
 
 static ssize_t
@@ -58,7 +64,7 @@ pipe_consume(struct istream_pipe *p)
     nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
     if (unlikely(nbytes < 0 && errno != EAGAIN)) {
         int save_errno = errno;
-        pipe_close(p);
+        pipe_abort(p);
         errno = save_errno;
         return -1;
     }
@@ -175,22 +181,23 @@ pipe_input_eof(void *ctx)
 }
 
 static void
-pipe_input_free(void *ctx)
+pipe_input_abort(void *ctx)
 {
     struct istream_pipe *p = ctx;
 
-    if (p->input != NULL) {
+    if (p->input != NULL)
         istream_clear_unref(&p->input);
 
-        pipe_close(p);
-    }
+    pipe_close(p);
+
+    istream_invoke_abort(&p->output);
 }
 
 static const struct istream_handler pipe_input_handler = {
     .data = pipe_input_data,
     .direct = pipe_input_direct,
     .eof = pipe_input_eof,
-    .free = pipe_input_free,
+    .abort = pipe_input_abort,
 };
 
 
@@ -228,7 +235,7 @@ istream_pipe_close(istream_t istream)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
 
-    pipe_close(p);
+    pipe_abort(p);
 }
 
 static const struct istream istream_pipe = {

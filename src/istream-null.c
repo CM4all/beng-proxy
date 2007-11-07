@@ -22,7 +22,6 @@ istream_null_read(istream_t istream)
     struct istream_null *null = istream_to_null(istream);
 
     istream_invoke_eof(&null->stream);
-    istream_invoke_free(&null->stream);
 }
 
 static void
@@ -30,7 +29,7 @@ istream_null_close(istream_t istream)
 {
     struct istream_null *null = istream_to_null(istream);
 
-    istream_invoke_free(&null->stream);
+    istream_invoke_abort(&null->stream);
 }
 
 static const struct istream istream_null = {

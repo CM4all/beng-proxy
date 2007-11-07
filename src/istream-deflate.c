@@ -25,15 +25,21 @@ struct istream_deflate {
 static void
 deflate_close(struct istream_deflate *defl)
 {
-    if (defl->input != NULL)
-        istream_free_unref(&defl->input);
-
     if (defl->z_initialized) {
         defl->z_initialized = 0;
         deflateEnd(&defl->z);
     }
+}
 
-    istream_invoke_free(&defl->output);
+static void
+deflate_abort(struct istream_deflate *defl)
+{
+    deflate_close(defl);
+
+    if (defl->input == NULL)
+        istream_invoke_abort(&defl->output);
+    else
+        istream_free_unref(&defl->input);
 }
 
 static voidpf z_alloc
@@ -95,8 +101,10 @@ deflate_try_write(struct istream_deflate *defl)
     if (nbytes > 0) {
         fifo_buffer_consume(defl->buffer, nbytes);
 
-        if (nbytes == length && defl->input == NULL && defl->z_stream_end)
+        if (nbytes == length && defl->input == NULL && defl->z_stream_end) {
+            deflate_close(defl);
             istream_invoke_eof(&defl->output);
+        }
     }
 
     return nbytes;
@@ -204,9 +212,10 @@ deflate_try_finish(struct istream_deflate *defl)
 
     fifo_buffer_append(defl->buffer, max_length - (size_t)defl->z.avail_out);
 
-    if (defl->z_stream_end && fifo_buffer_empty(defl->buffer))
+    if (defl->z_stream_end && fifo_buffer_empty(defl->buffer)) {
+        deflate_close(defl);
         istream_invoke_eof(&defl->output);
-    else
+    } else
         deflate_try_write(defl);
 }
 
@@ -275,7 +284,7 @@ deflate_input_eof(void *ctx)
     int err;
 
     assert(defl->input != NULL);
-    istream_clear_unref_handler(&defl->input);
+    istream_clear_unref(&defl->input);
 
     err = deflate_initialize_z(defl);
     if (err != Z_OK)
@@ -287,21 +296,21 @@ deflate_input_eof(void *ctx)
 }
 
 static void
-deflate_input_free(void *ctx)
+deflate_input_abort(void *ctx)
 {
     struct istream_deflate *defl = ctx;
 
-    if (defl->input != NULL) {
-        istream_clear_unref(&defl->input);
+    istream_clear_unref(&defl->input);
 
-        deflate_close(defl);
-    }
+    deflate_close(defl);
+
+    istream_invoke_abort(&defl->output);
 }
 
 static const struct istream_handler deflate_input_handler = {
     .data = deflate_input_data,
     .eof = deflate_input_eof,
-    .free = deflate_input_free,
+    .abort = deflate_input_abort,
 };
 
 
@@ -334,7 +343,7 @@ istream_deflate_close(istream_t istream)
 {
     struct istream_deflate *defl = istream_to_deflate(istream);
 
-    deflate_close(defl);
+    deflate_abort(defl);
 }
 
 static const struct istream istream_deflate = {

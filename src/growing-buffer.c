@@ -182,7 +182,7 @@ istream_gb_close(istream_t istream)
 
     gb->current = NULL;
 
-    istream_invoke_free(&gb->stream);
+    istream_invoke_abort(&gb->stream);
 }
 
 static const struct istream istream_gb = {

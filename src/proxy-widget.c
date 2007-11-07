@@ -54,7 +54,7 @@ proxy_source_eof(void *ctx)
     /* the processor must invoke widget_proxy_callback() before it
        reports EOF */
 
-    istream_clear_unref_handler(&wp->body);
+    istream_clear_unref(&wp->body);
 
     if (wp->request != NULL) {
         http_server_send_message(wp->request, HTTP_STATUS_NOT_FOUND,
@@ -64,7 +64,7 @@ proxy_source_eof(void *ctx)
 }
 
 static void
-proxy_source_free(void *ctx)
+proxy_source_abort(void *ctx)
 {
     struct widget_proxy *wp = ctx;
 
@@ -84,7 +84,7 @@ proxy_source_free(void *ctx)
 static const struct istream_handler proxy_body_handler = {
     .data = proxy_source_data,
     .eof = proxy_source_eof,
-    .free = proxy_source_free,
+    .abort = proxy_source_abort,
 };
 
 

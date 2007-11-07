@@ -71,7 +71,7 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
 }
 
 static void
-replace_substitution_free(void *ctx)
+replace_substitution_eof(void *ctx)
 {
     struct substitution *s = ctx;
     struct replace *replace = s->replace;
@@ -88,7 +88,10 @@ replace_substitution_free(void *ctx)
 
 static const struct istream_handler replace_substitution_handler = {
     .data = replace_substitution_data,
-    .free = replace_substitution_free,
+    .eof = replace_substitution_eof,
+
+    /* XXX display error message on abort()? */
+    .abort = replace_substitution_eof,
 };
 
 

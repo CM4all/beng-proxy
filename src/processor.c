@@ -59,6 +59,36 @@ struct processor {
 };
 
 
+static void
+processor_close(processor_t processor)
+{
+    assert(processor != NULL);
+
+    processor->replace.output = NULL;
+    replace_destroy(&processor->replace);
+
+    if (processor->input != NULL)
+        istream_free_unref_handler(&processor->input);
+
+    pool_unref(processor->output.pool);
+}
+
+static void
+processor_abort(processor_t processor)
+{
+    assert(processor != NULL);
+
+    processor->replace.output = NULL;
+    replace_destroy(&processor->replace);
+
+    if (processor->input != NULL)
+        istream_free_unref_handler(&processor->input);
+
+    istream_invoke_abort(&processor->output);
+
+    pool_unref(processor->output.pool);
+}
+
 /*
  * istream implementation
  *
@@ -85,14 +115,11 @@ processor_output_stream_read(istream_t istream)
 }
 
 static void
-processor_close(processor_t processor);
-
-static void
 processor_output_stream_close(istream_t istream)
 {
     processor_t processor = istream_to_processor(istream);
 
-    processor_close(processor);
+    processor_abort(processor);
 }
 
 static const struct istream processor_output_stream = {
@@ -138,7 +165,7 @@ processor_input_data(const void *data, size_t length, void *ctx)
     if (!processor->replace.quiet &&
         processor->replace.source_length >= 8 * 1024 * 1024) {
         daemon_log(2, "file too large for processor\n");
-        processor_close(processor);
+        processor_abort(processor);
         return 0;
     }
 
@@ -155,7 +182,7 @@ processor_input_eof(void *ctx)
     assert(processor != NULL);
     assert(processor->input != NULL);
 
-    istream_clear_unref_handler(&processor->input);
+    istream_clear_unref(&processor->input);
 
     if (processor->end_of_body != (off_t)-1) {
         /* remove everything between closing body tag and end of
@@ -170,7 +197,7 @@ processor_input_eof(void *ctx)
 }
 
 static void
-processor_input_free(void *ctx)
+processor_input_abort(void *ctx)
 {
     processor_t processor = ctx;
 
@@ -178,13 +205,13 @@ processor_input_free(void *ctx)
 
     istream_clear_unref(&processor->input);
 
-    processor_close(processor); /* XXX */
+    processor_abort(processor); /* XXX */
 }
 
 static const struct istream_handler processor_input_handler = {
     .data = processor_input_data,
     .eof = processor_input_eof,
-    .free = processor_input_free,
+    .abort = processor_input_abort,
 };
 
 
@@ -251,22 +278,6 @@ processor_new(pool_t pool, istream_t istream,
     processor->embedded_widget = NULL;
 
     return istream_struct_cast(&processor->output);
-}
-
-static void
-processor_close(processor_t processor)
-{
-    assert(processor != NULL);
-
-    processor->replace.output = NULL;
-    replace_destroy(&processor->replace);
-
-    if (processor->input != NULL)
-        istream_free_unref_handler(&processor->input);
-
-    istream_invoke_free(&processor->output);
-
-    pool_unref(processor->output.pool);
 }
 
 

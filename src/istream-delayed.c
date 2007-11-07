@@ -12,7 +12,6 @@
 struct istream_delayed {
     struct istream output;
     istream_t input;
-    int input_eof;
     void (*abort_callback)(void *ctx);
     void *callback_ctx;
 };
@@ -34,9 +33,9 @@ delayed_close(struct istream_delayed *delayed)
         delayed->callback_ctx = NULL;
 
         abort_callback(callback_ctx);
-    }
 
-    istream_invoke_free(&delayed->output);
+        istream_invoke_abort(&delayed->output);
+    }
 }
 
 
@@ -62,31 +61,24 @@ delayed_input_eof(void *ctx)
     struct istream_delayed *delayed = ctx;
 
     istream_clear_unref_handler(&delayed->input);
-    delayed->input_eof = 1;
 
-    pool_ref(delayed->output.pool);
     istream_invoke_eof(&delayed->output);
-    delayed_close(delayed);
-    pool_unref(delayed->output.pool);
 }
 
 static void
-delayed_input_free(void *ctx)
+delayed_input_abort(void *ctx)
 {
     struct istream_delayed *delayed = ctx;
 
-    if (!delayed->input_eof && delayed->input != NULL) {
-        /* abort the transfer */
-        istream_clear_unref(&delayed->input);
-        /* XXX */
-    }
+    istream_clear_unref(&delayed->input);
+    istream_invoke_abort(&delayed->output);
 }
 
 static const struct istream_handler delayed_input_handler = {
     .data = delayed_input_data,
     .direct = delayed_input_direct,
     .eof = delayed_input_eof,
-    .free = delayed_input_free,
+    .abort = delayed_input_abort,
 };
 
 static inline struct istream_delayed *
@@ -129,7 +121,6 @@ istream_delayed_new(pool_t pool, void (*abort_callback)(void *ctx),
     delayed->output = istream_delayed;
     delayed->output.pool = pool;
     delayed->input = NULL;
-    delayed->input_eof = 0;
     delayed->abort_callback = abort_callback;
     delayed->callback_ctx = callback_ctx;
 

@@ -19,7 +19,7 @@ struct input {
 
 struct istream_cat {
     struct istream output;
-    int reading;
+    unsigned reading, closing;
     struct input *current;
     struct input inputs[MAX_INPUTS];
 };
@@ -30,6 +30,11 @@ cat_close(struct istream_cat *cat)
 {
     struct input *input;
 
+    if (cat->closing)
+        return;
+
+    cat->closing = 1;
+
     while (cat->current != NULL) {
         input = cat->current;
         cat->current = input->next;
@@ -37,7 +42,7 @@ cat_close(struct istream_cat *cat)
             istream_free_unref(&input->istream);
     }
     
-    istream_invoke_free(&cat->output);
+    istream_invoke_abort(&cat->output);
 }
 
 
@@ -88,10 +93,7 @@ cat_input_eof(void *ctx)
         } while (cat->current != NULL && cat->current->istream == NULL);
 
         if (cat->current == NULL) {
-            pool_ref(cat->output.pool);
             istream_invoke_eof(&cat->output);
-            cat_close(cat);
-            pool_unref(cat->output.pool);
         } else if (!cat->reading) {
             /* only call istream_read() if this function was not
                called from istream_cat_read() - in this case,
@@ -103,20 +105,21 @@ cat_input_eof(void *ctx)
 }
 
 static void
-cat_input_free(void *ctx)
+cat_input_abort(void *ctx)
 {
     struct input *input = ctx;
     struct istream_cat *cat = input->cat;
 
-    if (input->istream != NULL)
-        cat_close(cat);
+    istream_clear_unref(&input->istream);
+
+    cat_close(cat);
 }
 
 static const struct istream_handler cat_input_handler = {
     .data = cat_input_data,
     .direct = cat_input_direct,
     .eof = cat_input_eof,
-    .free = cat_input_free,
+    .abort = cat_input_abort,
 };
 
 
@@ -147,7 +150,6 @@ istream_cat_read(istream_t istream)
 
         if (cat->current == NULL) {
             istream_invoke_eof(&cat->output);
-            cat_close(cat);
             break;
         }
 
@@ -193,6 +195,7 @@ istream_cat_new(pool_t pool, ...)
     cat->output = istream_cat;
     cat->output.pool = pool;
     cat->reading = 0;
+    cat->closing = 0;
 
     va_start(ap, pool);
     while ((istream = va_arg(ap, istream_t)) != NULL) {

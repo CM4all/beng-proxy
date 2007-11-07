@@ -43,17 +43,6 @@ struct istream_subst {
  *
  */
 
-static void
-subst_close(struct istream_subst *subst)
-{
-    if (subst->input != NULL)
-        istream_free_unref(&subst->input);
-
-    subst->a = NULL;
-
-    istream_invoke_free(&subst->output);
-}
-
 /** write data from subst->b */
 static size_t
 subst_try_write_b(struct istream_subst *subst)
@@ -300,7 +289,7 @@ subst_source_eof(void *ctx)
     assert(subst->input != NULL);
     assert(subst->a != NULL);
 
-    istream_clear_unref_handler(&subst->input);
+    istream_clear_unref(&subst->input);
 
     switch (subst->state) {
     case STATE_NONE:
@@ -328,20 +317,19 @@ subst_source_eof(void *ctx)
 }
 
 static void
-subst_source_free(void *ctx)
+subst_source_abort(void *ctx)
 {
     struct istream_subst *subst = ctx;
 
-    if (subst->input != NULL)
-        istream_clear_unref(&subst->input);
+    istream_clear_unref(&subst->input);
 
-    subst_close(subst);
+    istream_invoke_abort(&subst->output);
 }
 
 static const struct istream_handler subst_source_handler = {
     .data = subst_source_data,
     .eof = subst_source_eof,
-    .free = subst_source_free,
+    .abort = subst_source_abort,
 };
 
 
@@ -394,7 +382,10 @@ istream_subst_close(istream_t istream)
 {
     struct istream_subst *subst = istream_to_subst(istream);
 
-    subst_close(subst);
+    if (subst->input == NULL)
+        istream_invoke_abort(&subst->output);
+    else
+        istream_free_unref(&subst->input);
 }
 
 static const struct istream istream_subst = {

@@ -17,21 +17,6 @@ struct istream_byte {
 
 
 /*
- * helper functions
- *
- */
-
-static void
-byte_close(struct istream_byte *byte)
-{
-    if (byte->input != NULL)
-        istream_free_unref(&byte->input);
-
-    istream_invoke_free(&byte->output);
-}
-
-
-/*
  * istream handler
  *
  */
@@ -69,21 +54,22 @@ byte_source_eof(void *ctx)
 }
 
 static void
-byte_source_free(void *ctx)
+byte_source_abort(void *ctx)
 {
     struct istream_byte *byte = ctx;
 
-    if (byte->input != NULL)
-        istream_clear_unref(&byte->input);
+    assert(byte->input != NULL);
 
-    byte_close(byte);
+    istream_clear_unref(&byte->input);
+
+    istream_invoke_abort(&byte->output);
 }
 
 static const struct istream_handler byte_input_handler = {
     .data = byte_source_data,
     .direct = byte_source_direct,
     .eof = byte_source_eof,
-    .free = byte_source_free,
+    .abort = byte_source_abort,
 };
 
 
@@ -113,7 +99,9 @@ istream_byte_close(istream_t istream)
 {
     struct istream_byte *byte = istream_to_byte(istream);
 
-    byte_close(byte);
+    assert(byte->input != NULL);
+
+    istream_free_unref(&byte->input);
 }
 
 static const struct istream istream_byte = {
