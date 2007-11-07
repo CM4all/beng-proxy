@@ -128,6 +128,7 @@ url_stream_new(pool_t pool,
     assert(url != NULL);
     assert(handler != NULL);
     assert(handler->response != NULL);
+    assert(body == NULL || !istream_has_handler(body));
 
 #ifdef NDEBUG
     pool_ref(pool);
