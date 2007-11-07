@@ -18,18 +18,6 @@ struct istream_chunked {
 };
 
 static void
-chunked_close(struct istream_chunked *chunked)
-{
-    assert(chunked->input != NULL);
-
-    istream_free_unref(&chunked->input);
-
-    chunked->buffer = NULL;
-
-    istream_invoke_abort(&chunked->output);
-}
-
-static void
 chunked_eof_detected(struct istream_chunked *chunked)
 {
     assert(chunked->input == NULL);
@@ -132,8 +120,7 @@ chunked_source_abort(void *ctx)
     struct istream_chunked *chunked = ctx;
 
     istream_clear_unref(&chunked->input);
-
-    chunked_close(chunked);
+    istream_invoke_abort(&chunked->output);
 }
 
 static const struct istream_handler chunked_source_handler = {
@@ -165,7 +152,10 @@ istream_chunked_close(istream_t istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
 
-    chunked_close(chunked);
+    if (chunked->input == NULL)
+        istream_invoke_abort(&chunked->output);
+    else
+        istream_free_unref(&chunked->input);
 }
 
 static const struct istream istream_chunked = {
