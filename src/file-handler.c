@@ -48,26 +48,10 @@ make_etag(char *p, const struct stat *st)
     *p = 0;
 }
 
-static const char *
-request_absolute_uri(struct http_server_request *request)
-{
-    const char *host = strmap_get(request->headers, "host");
-
-    if (host == NULL)
-        return NULL;
-
-    return p_strcat(request->pool,
-                    "http://",
-                    host,
-                    request->uri,
-                    NULL);
-}
-
 void
 file_callback(struct request *request2)
 {
     struct http_server_request *request = request2->request;
-    const struct parsed_uri *uri = &request2->uri;
     const struct translate_response *tr = request2->translate.response;
     const char *path;
     int ret;
@@ -158,53 +142,7 @@ file_callback(struct request *request2)
 
     status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
-    if (tr->process) {
-        if (body != NULL) {
-            struct widget *widget;
-            unsigned processor_options = 0;
-
-            processor_env_init(request->pool, &request2->env,
-                               request->remote_host,
-                               request_absolute_uri(request),
-                               uri,
-                               request2->args,
-                               request2->session,
-                               request->headers,
-                               request->content_length, request->body,
-                               embed_widget_callback);
-            if (request2->env.frame != NULL) { /* XXX */
-                request2->env.widget_callback = frame_widget_callback;
-
-                /* do not show the template contents if the browser is
-                   only interested in one particular widget for
-                   displaying the frame */
-                processor_options |= PROCESSOR_QUIET;
-            }
-
-            widget = p_malloc(request->pool, sizeof(*widget));
-            widget_init(widget, NULL);
-            widget->from_request.session = session_get_widget(request2->env.session, path, 1);
-
-            body = processor_new(request->pool, body, widget, &request2->env,
-                                 processor_options);
-
-            if (request2->env.frame != NULL) {
-                /* XXX */
-                widget_proxy_install(&request2->env, request, body);
-                return;
-            }
-
-#ifndef NO_DEFLATE
-            if (http_client_accepts_encoding(request->headers, "deflate")) {
-                header_write(headers, "content-encoding", "deflate");
-                body = istream_deflate_new(request->pool, body);
-            }
-#endif
-        }
-
-        http_server_response(request, status, headers,
-                             (off_t)-1, body);
-    } else {
+    if (!tr->process) {
         if (request->method == HTTP_METHOD_POST) {
             istream_close(body);
             http_server_send_message(request,
@@ -213,14 +151,15 @@ file_callback(struct request *request2)
             return;
         }
 
-        if (request->body != NULL)
-            istream_close(request->body);
-
 #ifndef NO_LAST_MODIFIED_HEADER
         header_write(headers, "last-modified", http_date_format(st.st_mtime));
 #endif
 
-        http_server_response(request, status, headers,
-                             st.st_size, body);
+        if (request->body != NULL)
+            istream_close(request->body);
     }
+
+    response_dispatch(request2, 
+                      status, headers,
+                      st.st_size, body);
 }

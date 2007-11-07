@@ -59,8 +59,6 @@ response_close(struct request *request)
         http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
-
-    pool_unref(pool);
 }
 
 static const char *
@@ -86,21 +84,24 @@ request_absolute_uri(struct http_server_request *request)
 
 static void
 response_invoke_processor(struct request *request2,
-                          http_status_t status, strmap_t headers,
+                          http_status_t status, growing_buffer_t response_headers,
                           istream_t body)
 {
     struct http_server_request *request = request2->request;
-    growing_buffer_t response_headers;
     struct widget *widget;
     unsigned processor_options = 0;
+    pool_t pool;
 
     assert(!request2->response_sent);
+    assert(!request2->processed);
     assert(request2->translate.response->process);
     assert(!istream_has_handler(body));
 
-    request2->url_stream = NULL;
+    pool = request->pool;
 
-    response_headers = growing_buffer_new(request->pool, 2048);
+    request2->processed = 1;
+
+    request2->url_stream = NULL;
 
     /* XXX request body? */
     processor_env_init(request->pool, &request2->env,
@@ -125,15 +126,15 @@ response_invoke_processor(struct request *request2,
     widget_init(widget, NULL);
     widget->from_request.session = session_get_widget(request2->env.session, request2->uri.base, 1);
 
-    pool_ref(request->pool);
-
     body = processor_new(request->pool, body, widget, &request2->env,
                              processor_options);
     if (request2->env.frame != NULL) {
         /* XXX */
+        pool_ref(pool);
         widget_proxy_install(&request2->env, request, body);
-        pool_unref(request->pool);
+        request2->response_sent = 1;
         response_close(request2);
+        pool_unref(pool);
         return;
     }
 
@@ -144,16 +145,32 @@ response_invoke_processor(struct request *request2,
     }
 #endif
 
-    pool_unref(request->pool);
-
-    headers_copy(headers, response_headers, copy_headers_processed);
-
     assert(!istream_has_handler(body));
 
-    request2->response_sent = 1;
-    http_server_response(request, status,
-                         response_headers,
-                         -1, body);
+    response_dispatch(request2, status, response_headers, -1, body);
+}
+
+
+/*
+ * dispatch
+ *
+ */
+
+void
+response_dispatch(struct request *request2,
+                  http_status_t status, struct growing_buffer *headers,
+                  off_t content_length, istream_t body)
+{
+    assert(!request2->response_sent);
+
+    if (request2->translate.response->process && !request2->processed) {
+        response_invoke_processor(request2, status, headers, body);
+    } else {
+        request2->response_sent = 1;
+        http_server_response(request2->request,
+                             status, headers,
+                             content_length, body);
+    }
 }
 
 
@@ -175,18 +192,14 @@ response_response(http_status_t status, strmap_t headers,
     assert(!istream_has_handler(body));
 
     response_headers = growing_buffer_new(request->pool, 2048);
+    if (request2->translate.response->process && !request2->processed)
+        headers_copy(headers, response_headers, copy_headers_processed);
+    else
+        headers_copy(headers, response_headers, copy_headers);
 
-    if (request2->translate.response->process) {
-        response_invoke_processor(request2, status, headers, body);
-        return;
-    }
-
-    headers_copy(headers, response_headers, copy_headers);
-
-    request2->response_sent = 1;
-    http_server_response(request, status,
-                         response_headers,
-                         content_length, body);
+    response_dispatch(request2,
+                      status, response_headers,
+                      content_length, body);
 }
 
 static void 
@@ -197,6 +210,8 @@ response_free(void *ctx)
     request->url_stream = NULL;
 
     response_close(request);
+
+    pool_unref(request->request->pool);
 }
 
 const struct http_response_handler response_handler = {
