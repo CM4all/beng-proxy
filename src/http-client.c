@@ -101,6 +101,7 @@ http_client_response_stream_read(istream_t istream)
     assert(connection->fd >= 0);
     assert(connection->response.read_state == READ_BODY);
     assert(connection->response.body_reader.output.handler != NULL);
+    assert(http_response_handler_cleared(&connection->request.handler));
 
     pool_ref(connection->pool);
 
@@ -123,6 +124,7 @@ http_client_response_stream_close(istream_t istream)
     assert(connection->response.read_state == READ_BODY);
     assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
+    assert(http_response_handler_cleared(&connection->request.handler));
 
     event2_nand(&connection->event, EV_READ);
 
@@ -136,8 +138,6 @@ http_client_response_stream_close(istream_t istream)
         connection->keep_alive = 0;
 
     http_body_deinit(&connection->response.body_reader);
-
-    http_response_handler_invoke_abort(&connection->request.handler);
 
     if (connection->request.pool != NULL) {
         pool_unref(connection->request.pool);

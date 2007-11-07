@@ -51,7 +51,9 @@ http_response_handler_invoke_response(struct http_response_handler_ref *ref,
     assert(ref->handler->response != NULL);
 
     handler = ref->handler;
+#ifndef NDEBUG
     ref->handler = NULL;
+#endif
 
     handler->response(status, headers, content_length, body,
                       ref->ctx);
@@ -63,15 +65,23 @@ http_response_handler_invoke_abort(struct http_response_handler_ref *ref)
     const struct http_response_handler *handler;
 
     assert(ref != NULL);
-
-    if (ref->handler == NULL)
-        return;
+    assert(ref->handler != NULL);
+    assert(ref->handler->abort != NULL);
 
     handler = ref->handler;
+#ifndef NDEBUG
     ref->handler = NULL;
+#endif
 
-    if (handler->abort != NULL)
-        handler->abort(ref->ctx);
+    handler->abort(ref->ctx);
 }
+
+#ifndef NDEBUG
+static inline int
+http_response_handler_cleared(const struct http_response_handler_ref *ref)
+{
+    return ref->handler == NULL;
+}
+#endif
 
 #endif
