@@ -216,8 +216,6 @@ embed_response_response(http_status_t status, strmap_t headers,
         content_length = -1;
     }
 
-    pool_ref(embed->pool);
-
     if (embed->widget->from_request.proxy && embed->env->proxy_callback != NULL) {
         /* this is the request for IFRAME contents - send it directly
            to to http_server object, including headers */
@@ -265,7 +263,7 @@ embed_response_response(http_status_t status, strmap_t headers,
 }
 
 static void 
-embed_response_free(void *ctx)
+embed_response_abort(void *ctx)
 {
     struct embed *embed = ctx;
 
@@ -279,7 +277,7 @@ embed_response_free(void *ctx)
 
 static const struct http_response_handler embed_response_handler = {
     .response = embed_response_response,
-    .free = embed_response_free,
+    .abort = embed_response_abort,
 };
 
 

@@ -42,13 +42,9 @@ static const char *const copy_headers_processed[] = {
 static void
 response_close(struct request *request)
 {
-    pool_t pool;
-
     assert(request != NULL);
     assert(request->request != NULL);
     assert(request->request->pool != NULL);
-
-    pool = request->request->pool;
 
     if (request->url_stream != NULL) {
         url_stream_t url_stream = request->url_stream;
@@ -209,10 +205,15 @@ response_response(http_status_t status, strmap_t headers,
 {
     struct request *request2 = ctx;
     struct http_server_request *request = request2->request;
+    pool_t pool = request->pool;
     growing_buffer_t response_headers;
 
     assert(!request2->response_sent);
+    assert(request2->url_stream != NULL || request2->filter != NULL);
     assert(!istream_has_handler(body));
+
+    request2->url_stream = NULL;
+    request2->filter = NULL;
 
     response_headers = growing_buffer_new(request->pool, 2048);
     if (request2->translate.response->process && !request2->processed)
@@ -223,34 +224,23 @@ response_response(http_status_t status, strmap_t headers,
     response_dispatch(request2,
                       status, response_headers,
                       content_length, body);
+
+    pool_unref(pool);
 }
 
 static void 
-response_free(void *ctx)
+response_abort(void *ctx)
 {
     struct request *request = ctx;
+    pool_t pool = request->request->pool;
 
-    if (request->url_stream != NULL) {
-        request->url_stream = NULL;
+    assert(request->url_stream != NULL || request->filter != NULL);
 
-        pool_unref(request->request->pool);
-
-        if (request->filter == NULL) {
-            response_close(request);
-        }
-    } else if (request->filter != NULL) {
-        pool_t pool = request->request->pool;
-
-        request->filter = NULL;
-
-        response_close(request);
-        pool_unref(pool);
-    } else {
-        assert(0);
-    }
+    response_close(request);
+    pool_unref(pool);
 }
 
 const struct http_response_handler response_handler = {
     .response = response_response,
-    .free = response_free,
+    .abort = response_abort,
 };

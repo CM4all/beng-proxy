@@ -137,7 +137,7 @@ http_client_response_stream_close(istream_t istream)
 
     http_body_deinit(&connection->response.body_reader);
 
-    http_response_handler_invoke_free(&connection->request.handler);
+    http_response_handler_invoke_abort(&connection->request.handler);
 
     if (connection->request.pool != NULL) {
         pool_unref(connection->request.pool);
@@ -576,7 +576,7 @@ http_client_connection_close(http_client_connection_t connection)
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
            being freed */
-        http_response_handler_invoke_free(&connection->request.handler);
+        http_response_handler_invoke_abort(&connection->request.handler);
     }
 
     if (connection->request.pool != NULL) {

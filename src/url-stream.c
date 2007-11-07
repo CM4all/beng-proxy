@@ -222,7 +222,7 @@ url_stream_close(url_stream_t us)
 
     if (us->client_socket != NULL) {
         client_socket_free(&us->client_socket);
-        http_response_handler_invoke_free(&us->handler);
+        http_response_handler_invoke_abort(&us->handler);
     } else if (us->http != NULL)
         /* no need to invoke us->handler->free() here because
            url_stream_connection_free() will do it */
