@@ -104,6 +104,9 @@ url_stream_client_socket_callback(int fd, int err, void *ctx)
         http_client_request(us->http, us->method, us->uri, us->headers,
                             us->content_length, us->body,
                             us->handler.handler, us->handler.ctx);
+
+        if (us->body != NULL)
+            istream_clear_unref(&us->body);
     } else {
         daemon_log(1, "failed to connect: %s\n", strerror(err));
 
@@ -145,7 +148,13 @@ url_stream_new(pool_t pool,
         us->headers = growing_buffer_new(pool, 512);
 
     us->content_length = content_length;
-    us->body = body;
+    if (body == NULL)
+        us->body = NULL;
+    else
+        /* XXX remove istream_hold(), it is only here because
+           http-client.c resets istream->pool after the response is
+           ready */
+        istream_assign_ref(&us->body, istream_hold_new(pool, body));
     us->client_socket = NULL;
     us->http = NULL;
     http_response_handler_set(&us->handler, handler, handler_ctx);
@@ -207,6 +216,9 @@ url_stream_close(url_stream_t us)
 
     pool = us->pool;
     us->pool = NULL;
+
+    if (us->body != NULL)
+        istream_clear_unref(&us->body);
 
     if (us->client_socket != NULL) {
         client_socket_free(&us->client_socket);

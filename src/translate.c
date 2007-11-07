@@ -239,6 +239,10 @@ translate_handle_packet(struct translate_connection *connection,
         connection->response.redirect = payload;
         break;
 
+    case TRANSLATE_FILTER:
+        connection->response.filter = payload;
+        break;
+
     case TRANSLATE_PROCESS:
         connection->response.process = 1;
         break;

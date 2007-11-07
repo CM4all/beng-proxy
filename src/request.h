@@ -31,7 +31,9 @@ struct request {
 
     struct url_stream *url_stream;
 
-    unsigned processed, response_sent;
+    struct filter *filter;
+
+    unsigned filtered, processed, response_sent;
 };
 
 void

@@ -81,6 +81,7 @@ SOURCES = src/main.c \
 	src/http-client.c \
 	src/http-util.c \
 	src/url-stream.c \
+	src/filter.c \
 	src/fifo-buffer.c \
 	src/growing-buffer.c \
 	src/istream-memory.c \

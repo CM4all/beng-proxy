@@ -160,6 +160,7 @@ ask_translation_server(struct http_server_request *request,
 
     request2->args = NULL;
     request2->session = NULL;
+    request2->filtered = 0;
     request2->processed = 0;
     request2->response_sent = 0;
     request2->translate.request.remote_host = request->remote_host;
@@ -199,6 +200,7 @@ serve_document_root_file(struct http_server_request *request,
 
     request2->args = NULL;
     request2->session = NULL;
+    request2->filtered = 0;
     request2->processed = 0;
     request2->response_sent = 0;
 

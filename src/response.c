@@ -14,6 +14,7 @@
 #include "http-util.h"
 #include "proxy-widget.h"
 #include "session.h"
+#include "filter.h"
 
 static const char *const copy_headers[] = {
     "age",
@@ -163,7 +164,29 @@ response_dispatch(struct request *request2,
 {
     assert(!request2->response_sent);
 
-    if (request2->translate.response->process && !request2->processed) {
+    if (request2->translate.response->filter != NULL && !request2->filtered) {
+        struct http_server_request *request = request2->request;
+
+        request2->filtered = 1;
+
+        pool_ref(request->pool);
+
+        request2->filter = filter_new(request->pool,
+                                      request2->translate.response->filter,
+                                      headers,
+                                      content_length, body,
+                                      &response_handler, request2);
+        if (request2->filter == NULL) {
+            if (body != NULL)
+                istream_close(body);
+            if (request->body != NULL)
+                istream_close(request->body);
+
+            http_server_send_message(request,
+                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                     "Internal server error");
+        }
+    } else if (request2->translate.response->process && !request2->processed) {
         response_invoke_processor(request2, status, headers, body);
     } else {
         request2->response_sent = 1;
@@ -207,11 +230,24 @@ response_free(void *ctx)
 {
     struct request *request = ctx;
 
-    request->url_stream = NULL;
+    if (request->url_stream != NULL) {
+        request->url_stream = NULL;
 
-    response_close(request);
+        pool_unref(request->request->pool);
 
-    pool_unref(request->request->pool);
+        if (request->filter == NULL) {
+            response_close(request);
+        }
+    } else if (request->filter != NULL) {
+        pool_t pool = request->request->pool;
+
+        request->filter = NULL;
+
+        response_close(request);
+        pool_unref(pool);
+    } else {
+        assert(0);
+    }
 }
 
 const struct http_response_handler response_handler = {
