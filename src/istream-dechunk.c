@@ -100,7 +100,7 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
             if (data[position++] == '\n') {
                 if (dechunk->size == 0) {
                     dechunk_eof_detected(dechunk);
-                    return position + 1;
+                    return position;
                 }
 
                 dechunk->state = DATA;
