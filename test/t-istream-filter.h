@@ -113,6 +113,27 @@ int main(int argc, char **argv) {
 
     pool_commit();
 
+    /* fail after 1 byte of input */
+
+    should_exit = 0;
+
+    pool = pool_new_linear(root_pool, "test", 8192);
+
+    istream = create_test(pool,
+                          istream_cat_new(pool,
+                                          istream_head_new(pool, create_input(pool), 1),
+                                          istream_fail_new(pool),
+                                          NULL));
+    istream_handler_set(istream, &my_istream_handler, NULL, 0);
+
+    pool_unref(pool);
+    pool_commit();
+
+    while (!should_exit)
+        istream_read(istream);
+
+    pool_commit();
+
     /* cleanup */
 
     pool_unref(root_pool);
