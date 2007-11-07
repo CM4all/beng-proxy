@@ -101,6 +101,17 @@ static const struct istream processor_output_stream = {
 };
 
 
+static void
+replace_output_eof(struct istream *istream)
+{
+    processor_t processor = istream_to_processor(istream_struct_cast(istream));
+
+    assert(processor->input == NULL);
+
+    processor_close(processor);
+}
+
+
 /*
  * istream handler
  *
@@ -230,6 +241,7 @@ processor_new(pool_t pool, istream_t istream,
 
     replace_init(&processor->replace, pool,
                  &processor->output,
+                 replace_output_eof,
                  (options & PROCESSOR_QUIET) != 0);
 
     parser_init(&processor->parser);

@@ -82,6 +82,10 @@ istream_invoke_free(struct istream *istream)
 {
     assert(istream != NULL);
 
+#ifndef NDEBUG
+    istream->eof = 1;
+#endif
+
     if (istream->handler != NULL && istream->handler->free != NULL) {
         const struct istream_handler *handler = istream->handler;
         void *handler_ctx = istream->handler_ctx;

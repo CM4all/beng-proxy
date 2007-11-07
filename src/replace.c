@@ -100,12 +100,14 @@ static const struct istream_handler replace_substitution_handler = {
 void
 replace_init(struct replace *replace, pool_t pool,
              struct istream *output,
+             void (*output_eof)(struct istream *output),
              int quiet)
 {
     assert(replace != NULL);
 
     replace->pool = pool;
     replace->output = output;
+    replace->output_eof = output_eof;
 
     replace->quiet = quiet;
     replace->reading_source = !quiet;
@@ -342,7 +344,7 @@ replace_read(struct replace *replace)
                 replace->buffer = NULL;
 
             istream_invoke_eof(replace->output);
-            replace_destroy(replace);
+            replace->output_eof(replace->output);
             break;
         }
     } 

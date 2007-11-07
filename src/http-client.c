@@ -369,17 +369,52 @@ http_client_parse_headers(http_client_connection_t connection)
                                               connection->response.headers,
                                               connection->response.content_length,
                                               connection->response.body);
-
-        if (connection->response.read_state == READ_BODY) {
-            if (unlikely(connection->response.body_reader.output.handler == NULL)) {
-                daemon_log(2, "WARNING: no handler for request\n");
-                http_client_connection_close(connection);
-                return 0;
-            }
-        }
     }
 
     return 1;
+}
+
+static void
+http_client_response_stream_eof(http_client_connection_t connection)
+{
+    assert(connection->response.read_state == READ_BODY);
+    assert(connection->request.pool != NULL);
+    assert(connection->request.istream == NULL);
+    assert(http_response_handler_cleared(&connection->request.handler));
+    assert(http_body_eof(&connection->response.body_reader));
+
+    event2_nand(&connection->event, EV_READ);
+
+    connection->response.read_state = READ_NONE;
+    connection->response.headers = NULL;
+    connection->response.body = NULL;
+
+    http_body_deinit(&connection->response.body_reader);
+
+    if (connection->request.pool != NULL) {
+        pool_unref(connection->request.pool);
+        connection->request.pool = NULL;
+    }
+
+#ifdef VALGRIND
+    VALGRIND_MAKE_MEM_UNDEFINED(&connection->request, sizeof(connection->request));
+    VALGRIND_MAKE_MEM_UNDEFINED(&connection->response, sizeof(connection->response));
+    connection->request.pool = NULL;
+    connection->request.istream = NULL;
+    connection->response.read_state = READ_NONE;
+    connection->response.body_reader.output.pool = NULL;
+#endif
+
+    if (!connection->keep_alive && http_client_connection_valid(connection)) {
+        http_client_connection_close(connection);
+        return;
+    }
+
+    if (http_client_connection_valid(connection) &&
+        connection->handler != NULL &&
+        connection->handler->idle != NULL) {
+        connection->handler->idle(connection->handler_ctx);
+    }
 }
 
 static void
@@ -392,6 +427,12 @@ http_client_consume_body(http_client_connection_t connection)
 
     if (!http_client_connection_valid(connection))
         return;
+
+    if (http_body_eof(&connection->response.body_reader)) {
+        http_client_response_stream_eof(connection);
+        if (!http_client_connection_valid(connection))
+            return;
+    }
 
     event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
 }

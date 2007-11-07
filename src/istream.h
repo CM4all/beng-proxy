@@ -151,6 +151,8 @@ istream_close(istream_t _istream)
 {
     struct istream *istream = _istream_opaque_cast(_istream);
 
+    assert(!istream->eof);
+
     istream->close(_istream);
 }
 

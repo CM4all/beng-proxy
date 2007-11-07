@@ -42,7 +42,6 @@ http_body_consumed(struct http_body_reader *body, size_t nbytes)
     pool_ref(pool);
 
     istream_invoke_eof(&body->output);
-    istream_close(http_body_istream(body));
 
     pool_unref(pool);
 }
@@ -69,12 +68,6 @@ http_body_consume_body(struct http_body_reader *body,
         fifo_buffer_consume(buffer, consumed);
         http_body_consumed(body, consumed);
     }
-
-    if (http_body_valid(body) &&
-        body->rest == (off_t)-1 && body->dechunk_eof)
-        /* the dechunker has detected the EOF chunk, and has
-           propagated this fact to its handler */
-        istream_close(istream_struct_cast(&body->output));
 }
 
 ssize_t
