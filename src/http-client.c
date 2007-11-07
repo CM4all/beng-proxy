@@ -125,6 +125,7 @@ http_client_response_stream_close(istream_t istream)
     assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
     assert(http_response_handler_cleared(&connection->request.handler));
+    assert(!http_body_eof(&connection->response.body_reader));
 
     event2_nand(&connection->event, EV_READ);
 
@@ -134,8 +135,7 @@ http_client_response_stream_close(istream_t istream)
 
     istream_invoke_free(&connection->response.body_reader.output);
 
-    if (!http_body_eof(&connection->response.body_reader))
-        connection->keep_alive = 0;
+    connection->keep_alive = 0;
 
     http_body_deinit(&connection->response.body_reader);
 
