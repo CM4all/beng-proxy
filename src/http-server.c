@@ -224,6 +224,7 @@ http_server_request_stream_close(istream_t istream)
         return;
 
     assert(connection->request.read_state == READ_BODY);
+    assert(!http_body_eof(&connection->request.body_reader));
 
     event2_nand(&connection->event, EV_READ);
 
@@ -232,8 +233,7 @@ http_server_request_stream_close(istream_t istream)
     if (connection->request.request != NULL)
         connection->request.request->body = NULL;
 
-    if (!http_body_eof(&connection->request.body_reader))
-        connection->keep_alive = 0;
+    connection->keep_alive = 0;
 
     istream_invoke_free(&connection->request.body_reader.output);
 
