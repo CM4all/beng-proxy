@@ -19,7 +19,7 @@ struct input {
 
 struct istream_cat {
     struct istream output;
-    unsigned reading, closing;
+    unsigned reading;
     struct input *current;
     struct input inputs[MAX_INPUTS];
 };
@@ -30,16 +30,11 @@ cat_close(struct istream_cat *cat)
 {
     struct input *input;
 
-    if (cat->closing)
-        return;
-
-    cat->closing = 1;
-
     while (cat->current != NULL) {
         input = cat->current;
         cat->current = input->next;
         if (input->istream != NULL)
-            istream_free_unref(&input->istream);
+            istream_free_unref_handler(&input->istream);
     }
     
     istream_invoke_abort(&cat->output);
@@ -195,7 +190,6 @@ istream_cat_new(pool_t pool, ...)
     cat->output = istream_cat;
     cat->output.pool = pool;
     cat->reading = 0;
-    cat->closing = 0;
 
     va_start(ap, pool);
     while ((istream = va_arg(ap, istream_t)) != NULL) {
