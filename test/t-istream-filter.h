@@ -1,4 +1,4 @@
-static int should_exit = 0;
+static int got_data, should_exit;
 
 /*
  * istream handler
@@ -11,6 +11,7 @@ my_istream_data(const void *data, size_t length, void *ctx)
     (void)data;
     (void)ctx;
     printf("data(%zu)\n", length);
+    got_data = 1;
     return length;
 }
 
@@ -20,6 +21,7 @@ my_istream_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     (void)fd;
     (void)ctx;
     printf("direct(%u, %zu)\n", type, max_length);
+    got_data = 1;
     return max_length;
 }
 
@@ -48,6 +50,21 @@ static const struct istream_handler my_istream_handler = {
 
 
 /*
+ * utils
+ *
+ */
+
+static void
+istream_read_expect(istream_t istream)
+{
+    assert(!should_exit);
+    got_data = 0;
+    istream_read(istream);
+    assert(should_exit || got_data);
+}
+
+
+/*
  * main
  *
  */
@@ -65,6 +82,7 @@ int main(int argc, char **argv) {
     /* normal run */
 
     should_exit = 0;
+    got_data = 0;
 
     pool = pool_new_linear(root_pool, "test", 8192);
 
@@ -75,7 +93,7 @@ int main(int argc, char **argv) {
     pool_commit();
 
     while (!should_exit)
-        istream_read(istream);
+        istream_read_expect(istream);
 
     pool_commit();
 
@@ -92,7 +110,7 @@ int main(int argc, char **argv) {
     pool_commit();
 
     while (!should_exit)
-        istream_read(istream);
+        istream_read_expect(istream);
 
     pool_commit();
 
@@ -109,7 +127,7 @@ int main(int argc, char **argv) {
     pool_commit();
 
     while (!should_exit)
-        istream_read(istream);
+        istream_read_expect(istream);
 
     pool_commit();
 
@@ -130,7 +148,7 @@ int main(int argc, char **argv) {
     pool_commit();
 
     while (!should_exit)
-        istream_read(istream);
+        istream_read_expect(istream);
 
     pool_commit();
 
@@ -181,7 +199,7 @@ int main(int argc, char **argv) {
     pool_commit();
 
     while (!should_exit)
-        istream_read(istream);
+        istream_read_expect(istream);
 
     pool_commit();
 
