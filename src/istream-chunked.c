@@ -152,10 +152,10 @@ istream_chunked_close(istream_t istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
 
-    if (chunked->input == NULL)
-        istream_invoke_abort(&chunked->output);
-    else
-        istream_free_unref(&chunked->input);
+    if (chunked->input != NULL)
+        istream_free_unref_handler(&chunked->input);
+
+    istream_invoke_abort(&chunked->output);
 }
 
 static const struct istream istream_chunked = {

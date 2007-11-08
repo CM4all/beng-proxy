@@ -382,10 +382,10 @@ istream_subst_close(istream_t istream)
 {
     struct istream_subst *subst = istream_to_subst(istream);
 
-    if (subst->input == NULL)
-        istream_invoke_abort(&subst->output);
-    else
-        istream_free_unref(&subst->input);
+    if (subst->input != NULL)
+        istream_free_unref_handler(&subst->input);
+
+    istream_invoke_abort(&subst->output);
 }
 
 static const struct istream istream_subst = {

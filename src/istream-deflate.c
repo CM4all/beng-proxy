@@ -36,10 +36,10 @@ deflate_abort(struct istream_deflate *defl)
 {
     deflate_close(defl);
 
-    if (defl->input == NULL)
-        istream_invoke_abort(&defl->output);
-    else
-        istream_free_unref(&defl->input);
+    if (defl->input != NULL)
+        istream_free_unref_handler(&defl->input);
+
+    istream_invoke_abort(&defl->output);
 }
 
 static voidpf z_alloc
