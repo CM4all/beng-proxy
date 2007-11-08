@@ -146,6 +146,8 @@ int main(int argc, char **argv) {
     pool_unref(pool);
     pool_commit();
 
+    assert(!should_exit);
+
     /* abort with handler */
 
     should_exit = 0;
@@ -159,6 +161,8 @@ int main(int argc, char **argv) {
 
     pool_unref(pool);
     pool_commit();
+
+    assert(should_exit);
 
     /* abort after 1 byte of output */
 
