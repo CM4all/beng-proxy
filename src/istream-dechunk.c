@@ -23,6 +23,7 @@ struct istream_dechunk {
         AFTER_DATA
     } state;
     size_t size;
+    unsigned had_input:1, had_output:1;
 
     void (*eof_callback)(void *ctx);
     void *ctx;
@@ -65,6 +66,8 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
     size_t position = 0, digit, size, nbytes;
 
     assert(dechunk->input != NULL);
+
+    dechunk->had_input = 1;
 
     while (position < length) {
         switch (dechunk->state) {
@@ -112,6 +115,7 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
             size = length - position;
             if (size > dechunk->size)
                 size = dechunk->size;
+            dechunk->had_output = 1;
             nbytes = istream_invoke_data(&dechunk->output, data + position, size);
             assert(nbytes <= size);
 
@@ -177,7 +181,13 @@ istream_dechunk_read(istream_t istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 
-    istream_read(dechunk->input);
+    dechunk->had_output = 0;
+
+    do {
+        dechunk->had_input = 0;
+        istream_read(dechunk->input);
+    } while (dechunk->input != NULL && dechunk->had_input &&
+             !dechunk->had_output);
 }
 
 static void
