@@ -134,6 +134,32 @@ int main(int argc, char **argv) {
 
     pool_commit();
 
+    /* abort without handler */
+
+    should_exit = 0;
+
+    pool = pool_new_linear(root_pool, "test", 8192);
+
+    istream = create_test(pool, create_input(pool));
+    istream_close(istream);
+
+    pool_unref(pool);
+    pool_commit();
+
+    /* abort with handler */
+
+    should_exit = 0;
+
+    pool = pool_new_linear(root_pool, "test", 8192);
+
+    istream = create_test(pool, create_input(pool));
+    istream_handler_set(istream, &my_istream_handler, NULL, 0);
+
+    istream_close(istream);
+
+    pool_unref(pool);
+    pool_commit();
+
     /* abort after 1 byte of output */
 
     should_exit = 0;
