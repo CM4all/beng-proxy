@@ -100,7 +100,6 @@ response_invoke_processor(struct request *request2,
 
     request2->url_stream = NULL;
 
-    /* XXX request body? */
     processor_env_init(request->pool, &request2->env,
                        request->remote_host,
                        request_absolute_uri(request),
@@ -108,7 +107,7 @@ response_invoke_processor(struct request *request2,
                        request2->args,
                        request2->session,
                        request->headers,
-                       0, NULL,
+                       request->content_length, request->body,
                        embed_widget_callback);
     if (request2->env.frame != NULL) { /* XXX */
         request2->env.widget_callback = frame_widget_callback;
