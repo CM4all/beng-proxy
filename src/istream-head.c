@@ -41,6 +41,7 @@ head_source_data(const void *data, size_t length, void *ctx)
         if (head->rest == 0) {
             istream_free_unref_handler(&head->input);
             istream_invoke_eof(&head->output);
+            return 0;
         }
     }
 
