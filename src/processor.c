@@ -47,6 +47,7 @@ struct processor {
         TAG_A,
         TAG_FORM,
         TAG_IMG,
+        TAG_SCRIPT,
     } tag;
     off_t widget_start_offset;
     struct widget *embedded_widget;
@@ -57,6 +58,9 @@ struct processor {
     } widget_param;
     char widget_params[512];
     size_t widget_params_length;
+
+    growing_buffer_t script;
+    off_t script_start_offset;
 };
 
 
@@ -277,10 +281,25 @@ processor_new(pool_t pool, istream_t istream,
     processor->in_body = 0;
     processor->end_of_body = (off_t)-1;
     processor->embedded_widget = NULL;
+    processor->script = NULL;
 
     return istream_struct_cast(&processor->output);
 }
 
+
+static void
+processor_finish_script(processor_t processor, off_t end)
+{
+    assert(processor->script != NULL);
+    assert(processor->script_start_offset <= end);
+
+    if (processor->script_start_offset < end)
+        replace_add(&processor->replace,
+                    processor->script_start_offset, end,
+                    growing_buffer_istream(processor->script));
+
+    processor->script = NULL;
+}
 
 /*
  * parser callbacks
@@ -317,6 +336,9 @@ void
 parser_element_start(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
+
+    if (processor->script != NULL)
+        processor_finish_script(processor, processor->parser.element_offset);
 
     if (processor->embedded_widget != NULL) {
         parser_element_start_in_widget(processor, parser);
@@ -357,6 +379,10 @@ parser_element_start(struct parser *parser)
     } else if (parser->element_name_length == 3 &&
                memcmp(parser->element_name, "img", 3) == 0) {
         processor->tag = TAG_IMG;
+    } else if (parser->element_name_length == 6 &&
+               memcmp(parser->element_name, "script", 6) == 0) {
+        if (parser->tag_type == TAG_OPEN)
+            processor->tag = TAG_SCRIPT;
     } else {
         processor->tag = TAG_NONE;
     }
@@ -526,6 +552,9 @@ parser_attr_finished(struct parser *parser)
             memcmp(parser->attr_name, "action", 6) == 0)
             transform_url_attribute(processor, 1);
         break;
+
+    case TAG_SCRIPT:
+        break;
     }
 }
 
@@ -661,14 +690,18 @@ parser_element_finished(struct parser *parser, off_t end)
                processor->widget_param.value,
                processor->widget_param.value_length);
         processor->widget_params_length += processor->widget_param.value_length;
+    } else if (processor->tag == TAG_SCRIPT) {
+        processor->script = growing_buffer_new(processor->output.pool, 4096);
+        processor->script_start_offset = end;
     }
 }
 
 void
 parser_cdata(struct parser *parser, const char *p, size_t length)
 {
-    (void)parser;
-    (void)p;
-    (void)length;
+    processor_t processor = parser_to_processor(parser);
+
+    if (processor->script != NULL)
+        growing_buffer_write_buffer(processor->script, p, length);
 }
 
