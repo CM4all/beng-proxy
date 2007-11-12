@@ -204,8 +204,10 @@ embed_response_response(http_status_t status, strmap_t headers,
 
     if (status >= 300 && status < 400) {
         location = strmap_get(headers, "location");
-        if (location != NULL && embed_redirect(embed, headers, location, body))
+        if (location != NULL && embed_redirect(embed, headers, location, body)) {
+            pool_unref(embed->pool);
             return;
+        }
     }
 
     content_type = strmap_get(headers, "content-type");
