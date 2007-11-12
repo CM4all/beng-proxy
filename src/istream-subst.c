@@ -8,6 +8,7 @@
  */
 
 #include "istream.h"
+#include "strref.h"
 
 #include <assert.h>
 #include <string.h>
@@ -17,8 +18,8 @@ struct istream_subst {
     istream_t input;
     unsigned had_input:1, had_output:1;
 
-    const char *a, *b;
-    size_t a_length, b_length;
+    struct strref a, b;
+
     enum {
         /** searching the first matching character */
         STATE_NONE,
@@ -50,15 +51,15 @@ subst_try_write_b(struct istream_subst *subst)
     size_t length, nbytes;
 
     assert(subst->state == STATE_INSERT);
-    assert(subst->a_match == subst->a_length);
+    assert(subst->a_match == subst->a.length);
 
-    length = subst->b_length - subst->b_sent;
+    length = subst->b.length - subst->b_sent;
     if (length == 0) {
         subst->state = STATE_NONE;
         return 0;
     }
 
-    nbytes = istream_invoke_data(&subst->output, subst->b + subst->b_sent, length);
+    nbytes = istream_invoke_data(&subst->output, subst->b.data + subst->b_sent, length);
     assert(nbytes <= length);
 
     /* note progress */
@@ -87,7 +88,7 @@ subst_try_write_a(struct istream_subst *subst)
         return 0;
     }
 
-    nbytes = istream_invoke_data(&subst->output, subst->a + subst->a_sent, length);
+    nbytes = istream_invoke_data(&subst->output, subst->a.data + subst->a_sent, length);
     assert(nbytes <= length);
 
     /* note progress */
@@ -114,7 +115,6 @@ subst_source_data(const void *_data, size_t length, void *ctx)
     size_t max_compare, chunk_length, nbytes;
 
     assert(subst->input != NULL);
-    assert(subst->a != NULL);
 
     subst->had_input = 1;
 
@@ -131,7 +131,7 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
             assert(first == NULL);
 
-            first = memchr(p, subst->a[0], end - p);
+            first = memchr(p, subst->a.data[0], end - p);
             if (first == NULL) {
                 /* no match, try to write and return */
                 subst->had_output = 1;
@@ -148,17 +148,17 @@ subst_source_data(const void *_data, size_t length, void *ctx)
             /* now see if the rest matches; note that max_compare may be
                0, but that isn't a problem */
 
-            max_compare = subst->a_length - subst->a_match;
+            max_compare = subst->a.length - subst->a_match;
             if ((size_t)(end - p) < max_compare)
                 max_compare = (size_t)(end - p);
 
-            if (memcmp(p, subst->a + subst->a_match, max_compare) == 0) {
+            if (memcmp(p, subst->a.data + subst->a_match, max_compare) == 0) {
                 /* all data (which is available) matches */
 
                 subst->a_match += max_compare;
                 p += max_compare;
 
-                if (subst->a_match == subst->a_length) {
+                if (subst->a_match == subst->a.length) {
                     /* full match */
 
                     if (first != NULL && first > data) {
@@ -168,9 +168,6 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
                         chunk_length = first - data;
                         nbytes = istream_invoke_data(&subst->output, data, chunk_length);
-                        if (subst->a == NULL)
-                            return 0;
-
                         if (nbytes < chunk_length) {
                             /* blocking */
                             subst->state = STATE_NONE;
@@ -198,9 +195,6 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
                     chunk_length = first - data;
                     nbytes = istream_invoke_data(&subst->output, data, chunk_length);
-                    if (subst->a == NULL)
-                        return 0;
-
                     if (nbytes < chunk_length) {
                         /* blocking */
                         subst->state = STATE_NONE;
@@ -225,8 +219,6 @@ subst_source_data(const void *_data, size_t length, void *ctx)
             /* there is a previous full match, copy data from subst->b */
 
             subst_try_write_b(subst);
-            if (subst->a == NULL)
-                return 0;
 
             if (subst->state == STATE_INSERT)
                 /* blocking */
@@ -239,8 +231,6 @@ subst_source_data(const void *_data, size_t length, void *ctx)
                backtrack and copy data from the beginning of subst->a */
 
             subst_try_write_a(subst);
-            if (subst->a == NULL)
-                return 0;
 
             if (subst->state == STATE_MISMATCH)
                 /* blocking */
@@ -287,7 +277,6 @@ subst_source_eof(void *ctx)
     struct istream_subst *subst = ctx;
 
     assert(subst->input != NULL);
-    assert(subst->a != NULL);
 
     istream_clear_unref(&subst->input);
 
@@ -312,7 +301,7 @@ subst_source_eof(void *ctx)
         break;
     }
 
-    if (subst->a != NULL && subst->state == STATE_NONE)
+    if (subst->state == STATE_NONE)
         istream_invoke_eof(&subst->output);
 }
 
@@ -373,7 +362,7 @@ istream_subst_read(istream_t istream)
         break;
     }
 
-    if (subst->a != NULL && subst->state == STATE_NONE && subst->input == NULL)
+    if (subst->state == STATE_NONE && subst->input == NULL)
         istream_invoke_eof(&subst->output);
 }
 
@@ -412,13 +401,11 @@ istream_subst_new(pool_t pool, istream_t input,
 
     subst->output = istream_subst;
     subst->output.pool = pool;
-    subst->a = a;
-    subst->b = b;
-    subst->a_length = strlen(a);
-    subst->b_length = strlen(b);
+    strref_set_c(&subst->a, a);
+    strref_set_c(&subst->b, b);
     subst->state = STATE_NONE;
 
-    assert(subst->a_length > 0);
+    assert(!strref_is_empty(&subst->a));
 
     istream_assign_ref_handler(&subst->input, input,
                                &subst_source_handler, subst,
