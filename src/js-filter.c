@@ -1,0 +1,132 @@
+/*
+ * This istream filter reads JavaScript code and performs some
+ * transformations on it (to be implemented).
+ *
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#include "js-filter.h"
+
+#include <assert.h>
+
+struct js_filter {
+    struct istream output;
+    istream_t input;
+    unsigned had_input:1, had_output:1;
+};
+
+
+/*
+ * istream handler
+ *
+ */
+
+static size_t
+js_source_data(const void *data, size_t length, void *ctx)
+{
+    struct js_filter *js = ctx;
+
+    js->had_input = 1;
+
+    /* XXX insert filtering code here */
+
+    js->had_output = 1;
+    return istream_invoke_data(&js->output, data, length);
+}
+
+static void
+js_source_eof(void *ctx)
+{
+    struct js_filter *js = ctx;
+
+    assert(js->input != NULL);
+
+    istream_clear_unref(&js->input);
+    istream_invoke_eof(&js->output);
+}
+
+static void
+js_source_abort(void *ctx)
+{
+    struct js_filter *js = ctx;
+
+    assert(js->input != NULL);
+
+    istream_clear_unref(&js->input);
+    istream_invoke_abort(&js->output);
+}
+
+static const struct istream_handler js_input_handler = {
+    .data = js_source_data,
+    .eof = js_source_eof,
+    .abort = js_source_abort,
+};
+
+
+/*
+ * istream implementation
+ *
+ */
+
+static inline struct js_filter *
+istream_to_js(istream_t istream)
+{
+    return (struct js_filter *)(((char*)istream) - offsetof(struct js_filter, output));
+}
+
+static void
+js_filter_read(istream_t istream)
+{
+    struct js_filter *js = istream_to_js(istream);
+
+    /* the following loop ensures that this istream implementation
+       provides data unless its input is blocking or finished, as
+       demanded by the istream API specification */
+
+    js->had_output = 0;
+
+    do {
+        js->had_input = 0;
+        istream_read(js->input);
+    } while (js->input != NULL && js->had_input &&
+             !js->had_output);
+}
+
+static void
+js_filter_close(istream_t istream)
+{
+    struct js_filter *js = istream_to_js(istream);
+
+    assert(js->input != NULL);
+
+    istream_free_unref(&js->input);
+}
+
+static const struct istream js_filter = {
+    .read = js_filter_read,
+    .close = js_filter_close,
+};
+
+
+/*
+ * constructor
+ *
+ */
+
+istream_t
+js_filter_new(pool_t pool, istream_t input)
+{
+    struct js_filter *js = p_malloc(pool, sizeof(*js));
+
+    assert(input != NULL);
+    assert(!istream_has_handler(input));
+
+    js->output = js_filter;
+    js->output.pool = pool;
+
+    istream_assign_ref_handler(&js->input, input,
+                               &js_input_handler, js,
+                               0);
+
+    return istream_struct_cast(&js->output);
+}
