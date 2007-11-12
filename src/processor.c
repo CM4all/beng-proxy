@@ -13,6 +13,7 @@
 #include "args.h"
 #include "widget.h"
 #include "growing-buffer.h"
+#include "js-filter.h"
 
 #include <daemon/log.h>
 
@@ -417,6 +418,22 @@ void
 parser_attr_finished(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
+
+    if (parser->attr_name_length > 2 &&
+        parser->attr_name[0] == 'o' &&
+        parser->attr_name[1] == 'n' &&
+        parser->attr_value_length > 0) {
+        char *value = p_memdup(processor->output.pool,
+                               parser->attr_value,
+                               parser->attr_value_length);
+        istream_t value_stream = istream_memory_new(processor->output.pool,
+                                                    value,
+                                                    parser->attr_value_length);
+        replace_attribute_value(processor,
+                                js_filter_new(processor->output.pool,
+                                              value_stream));
+        return;
+    }
 
     switch (processor->tag) {
     case TAG_NONE:
