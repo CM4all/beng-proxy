@@ -81,6 +81,9 @@ void
 parser_attr_finished(struct parser *parser);
 
 void
+parser_cdata(struct parser *parser, const char *p, size_t length);
+
+void
 parser_feed(struct parser *parser, const char *start, size_t length);
 
 #endif

@@ -663,3 +663,12 @@ parser_element_finished(struct parser *parser, off_t end)
         processor->widget_params_length += processor->widget_param.value_length;
     }
 }
+
+void
+parser_cdata(struct parser *parser, const char *p, size_t length)
+{
+    (void)parser;
+    (void)p;
+    (void)length;
+}
+
