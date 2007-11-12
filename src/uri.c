@@ -110,42 +110,38 @@ uri_parse(pool_t pool, struct parsed_uri *dest, const char *src)
     else
         semicolon = memchr(src, ';', qmark - src);
 
-    dest->base = src;
+    dest->base.data = src;
     if (semicolon != NULL)
-        dest->base_length = semicolon - src;
+        dest->base.length = semicolon - src;
     else if (qmark != NULL)
-        dest->base_length = qmark - src;
+        dest->base.length = qmark - src;
     else
-        dest->base_length = strlen(src);
+        dest->base.length = strlen(src);
 
-    dest->base = p = p_strndup(pool, dest->base, dest->base_length);
-    dest->base_length = uri_unescape_inplace(p, dest->base_length);
-    if (dest->base_length == 0)
+    dest->base.data = p = strref_dup(pool, &dest->base);
+    dest->base.length = uri_unescape_inplace(p, dest->base.length);
+    if (dest->base.length == 0)
         return -1;
 
-    dest->base_length = uri_path_canonicalize_inplace(p, dest->base_length);
-    if (dest->base_length == 0)
+    dest->base.length = uri_path_canonicalize_inplace(p, dest->base.length);
+    if (dest->base.length == 0)
         return -1;
 
     if (semicolon == NULL) {
-        dest->args = NULL;
-        dest->args_length = 0;
+        strref_clear(&dest->args);
     } else {
         /* XXX second semicolon for stuff being forwared? */
-        dest->args = semicolon + 1;
+        dest->args.data = semicolon + 1;
         if (qmark == NULL)
-            dest->args_length = strlen(dest->args);
+            dest->args.length = strlen(dest->args.data);
         else
-            dest->args_length = qmark - dest->args;
+            dest->args.length = qmark - dest->args.data;
     }
 
-    if (qmark == NULL) {
-        dest->query = NULL;
-        dest->query_length = 0;
-    } else {
-        dest->query = qmark + 1;
-        dest->query_length = strlen(dest->query);
-    }
+    if (qmark == NULL)
+        strref_clear(&dest->query);
+    else
+        strref_set_c(&dest->query, qmark + 1);
 
     return 0;
 }

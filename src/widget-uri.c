@@ -28,9 +28,8 @@ connect_widget_session(const struct processor_env *env,
             : p_strdup(ws->pool, widget->from_request.path_info);
 
         if (widget->from_request.query_string) {
-            ws->query_string = p_strndup(ws->pool,
-                                         env->external_uri->query,
-                                         env->external_uri->query_length);
+            ws->query_string = strref_dup(ws->pool,
+                                          &env->external_uri->query);
         } else {
             ws->query_string = NULL;
         }
@@ -64,10 +63,8 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
         /* we're in focus.  forward query string and request body. */
         widget->from_request.focus = 1;
 
-        if (env->external_uri->query != NULL) {
-            assert(env->external_uri->query_length > 0);
+        if (!strref_is_empty(&env->external_uri->query))
             widget->from_request.query_string = 1;
-        }
 
         if (env->request_body != NULL)
             widget->from_request.body = 1;
@@ -94,8 +91,8 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
                                          widget->real_uri, strlen(widget->real_uri),
                                          path_info, strlen(path_info),
                                          "?", (size_t)1,
-                                         env->external_uri->query,
-                                         env->external_uri->query_length,
+                                         env->external_uri->query.data,
+                                         env->external_uri->query.length,
                                          NULL);
         else if (*path_info != 0)
             widget->real_uri = p_strcat(pool,
@@ -156,8 +153,8 @@ widget_proxy_uri(pool_t pool,
                         NULL);
 
     return p_strncat(pool,
-                     external_uri->base,
-                     external_uri->base_length,
+                     external_uri->base.data,
+                     external_uri->base.length,
                      ";", (size_t)1,
                      args2, strlen(args2),
                      NULL);
@@ -177,8 +174,8 @@ widget_translation_uri(pool_t pool,
                         "frame");
 
     return p_strncat(pool,
-                     external_uri->base,
-                     external_uri->base_length,
+                     external_uri->base.data,
+                     external_uri->base.length,
                      ";", (size_t)1,
                      args2, strlen(args2),
                      NULL);
@@ -226,7 +223,7 @@ widget_external_uri(pool_t pool,
            string */
         focus = 1;
 
-    if (remove_old_focus || external_uri->query != NULL)
+    if (remove_old_focus || !strref_is_empty(&external_uri->query))
         remove_key = strmap_get(args, "focus");
 
     /* the URI is relative to the widget's base URI.  Convert the URI
@@ -239,8 +236,8 @@ widget_external_uri(pool_t pool,
                         remove_key);
 
     return p_strncat(pool,
-                     external_uri->base,
-                     external_uri->base_length,
+                     external_uri->base.data,
+                     external_uri->base.length,
                      ";", (size_t)1,
                      args2, strlen(args2),
                      NULL);

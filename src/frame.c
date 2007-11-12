@@ -44,12 +44,12 @@ frame_widget_callback(pool_t pool, const struct processor_env *env,
 
     widget->from_request.proxy = 1; /* set flag if it wasn't previously set */
 
-    if (env->external_uri->query != NULL)
+    if (!strref_is_empty(&env->external_uri->query))
         widget->real_uri = p_strncat(pool,
                                      widget->real_uri, strlen(widget->real_uri),
                                      "?", (size_t)1,
-                                     env->external_uri->query,
-                                     env->external_uri->query_length,
+                                     env->external_uri->query.data,
+                                     env->external_uri->query.length,
                                      NULL);
 
     if (env->request_body != NULL) {

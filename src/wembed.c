@@ -50,7 +50,8 @@ widget_frame_uri(pool_t pool, const struct processor_env *env,
 
     session_id_format(session_id_buffer, env->session->id);
 
-    return p_strcat(pool, env->external_uri->base,
+    return p_strcat(pool,
+                    strref_dup(pool, &env->external_uri->base),
                     ";session=", session_id_buffer,
                     "&frame=", path,
                     "&", widget->id, "=",

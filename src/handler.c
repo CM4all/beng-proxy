@@ -130,13 +130,13 @@ request_args_parse(struct request *request)
     assert(request != NULL);
     assert(request->args == NULL);
 
-    if (request->uri.args == NULL) {
+    if (strref_is_empty(&request->uri.args)) {
         request->args = NULL;
         return;
     }
 
     request->args = args_parse(request->request->pool,
-                               request->uri.args, request->uri.args_length);
+                               request->uri.args.data, request->uri.args.length);
     request->translate.request.param = strmap_remove(request->args, "translate");
 
     session_id = strmap_get(request->args, "session");
@@ -165,8 +165,8 @@ ask_translation_server(struct http_server_request *request,
     request2->response_sent = 0;
     request2->translate.request.remote_host = request->remote_host;
     request2->translate.request.host = strmap_get(request->headers, "host");
-    request2->translate.request.uri = p_strndup(request->pool,
-                                                request2->uri.base, request2->uri.base_length);
+    request2->translate.request.uri = strref_dup(request->pool,
+                                                 &request2->uri.base);
     request2->translate.request.param = NULL;
     request2->translate.request.session = NULL;
 
@@ -195,8 +195,8 @@ serve_document_root_file(struct http_server_request *request,
     if (ret < 0)
         return;
 
-    assert(uri->base_length > 0);
-    assert(uri->base[0] == '/');
+    assert(!strref_is_empty(&uri->base));
+    assert(uri->base.data[0] == '/');
 
     request2->args = NULL;
     request2->session = NULL;
@@ -209,20 +209,19 @@ serve_document_root_file(struct http_server_request *request,
     request2->translate.response = tr = p_malloc(request->pool,
                                                  sizeof(*request2->translate.response));
 
-    if (uri->base[uri->base_length - 1] == '/') {
+    if (uri->base.data[uri->base.length - 1] == '/') {
         index_file = "index.html";
         tr->process = 1;
     } else {
-        tr->process = uri->base_length > 5 &&
-            memcmp(uri->base + uri->base_length - 5, ".html", 5) == 0;
+        tr->process = strref_ends_with_n(&uri->base, ".html", 5);
     }
 
     tr->status = 0;
     tr->path = p_strncat(request->pool,
                          config->document_root,
                          strlen(config->document_root),
-                         uri->base,
-                         uri->base_length,
+                         uri->base.data,
+                         uri->base.length,
                          index_file, (size_t)10,
                          NULL);
     tr->content_type = NULL;
