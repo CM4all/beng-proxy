@@ -270,8 +270,13 @@ deflate_input_data(const void *data, size_t length, void *ctx)
 
         pool_ref(defl->output.pool);
         deflate_try_write(defl);
-        if (pool_unref(defl->output.pool) == 0)
+
+        if (!defl->z_initialized) {
+            pool_unref(defl->output.pool);
             return 0;
+        }
+
+        pool_unref(defl->output.pool);
     }
 
     return length - (size_t)defl->z.avail_in;

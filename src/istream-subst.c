@@ -24,6 +24,9 @@ struct istream_subst {
         /** searching the first matching character */
         STATE_NONE,
 
+        /** the istream has been closed */
+        STATE_CLOSED,
+
         /** at least the first character was found, checking for the
             rest */
         STATE_MATCH,
@@ -135,7 +138,11 @@ subst_source_data(const void *_data, size_t length, void *ctx)
             if (first == NULL) {
                 /* no match, try to write and return */
                 subst->had_output = 1;
-                return (data - data0) + istream_invoke_data(&subst->output, data, end - data);
+                nbytes = istream_invoke_data(&subst->output, data, end - data);
+                if (nbytes == 0 && subst->state == STATE_CLOSED)
+                    return 0;
+
+                return (data - data0) + nbytes;
             }
 
             subst->state = STATE_MATCH;
@@ -143,6 +150,9 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
             p = first + 1;
             break;
+
+        case STATE_CLOSED:
+            assert(0);
 
         case STATE_MATCH:
             /* now see if the rest matches; note that max_compare may be
@@ -168,6 +178,9 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
                         chunk_length = first - data;
                         nbytes = istream_invoke_data(&subst->output, data, chunk_length);
+                        if (nbytes == 0 && subst->state == STATE_CLOSED)
+                            return 0;
+
                         if (nbytes < chunk_length) {
                             /* blocking */
                             subst->state = STATE_NONE;
@@ -195,6 +208,9 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
                     chunk_length = first - data;
                     nbytes = istream_invoke_data(&subst->output, data, chunk_length);
+                    if (nbytes == 0 && subst->state == STATE_CLOSED)
+                        return 0;
+
                     if (nbytes < chunk_length) {
                         /* blocking */
                         subst->state = STATE_NONE;
@@ -220,6 +236,9 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
             subst_try_write_b(subst);
 
+            if (subst->state == STATE_CLOSED)
+                return 0;
+
             if (subst->state == STATE_INSERT)
                 /* blocking */
                 return data - data0;
@@ -231,6 +250,9 @@ subst_source_data(const void *_data, size_t length, void *ctx)
                backtrack and copy data from the beginning of subst->a */
 
             subst_try_write_a(subst);
+
+            if (subst->state == STATE_CLOSED)
+                return 0;
 
             if (subst->state == STATE_MISMATCH)
                 /* blocking */
@@ -258,6 +280,9 @@ subst_source_data(const void *_data, size_t length, void *ctx)
         subst->had_output = 1;
 
         nbytes = istream_invoke_data(&subst->output, data, chunk_length);
+        if (nbytes == 0 && subst->state == STATE_CLOSED)
+            return 0;
+
         data += nbytes;
 
         if (nbytes < chunk_length) {
@@ -284,6 +309,9 @@ subst_source_eof(void *ctx)
     case STATE_NONE:
         break;
 
+    case STATE_CLOSED:
+        assert(0);
+
     case STATE_MATCH:
         /* we're in the middle of a match, technically making this a
            mismatch because we reach end of file before end of
@@ -301,14 +329,18 @@ subst_source_eof(void *ctx)
         break;
     }
 
-    if (subst->state == STATE_NONE)
+    if (subst->state == STATE_NONE) {
         istream_invoke_eof(&subst->output);
+        subst->state = STATE_CLOSED;
+    }
 }
 
 static void
 subst_source_abort(void *ctx)
 {
     struct istream_subst *subst = ctx;
+
+    subst->state = STATE_CLOSED;
 
     istream_clear_unref(&subst->input);
 
@@ -353,6 +385,9 @@ istream_subst_read(istream_t istream)
 
         return;
 
+    case STATE_CLOSED:
+        assert(0);
+
     case STATE_MISMATCH:
         subst_try_write_a(subst);
         break;
@@ -362,14 +397,18 @@ istream_subst_read(istream_t istream)
         break;
     }
 
-    if (subst->state == STATE_NONE && subst->input == NULL)
+    if (subst->state == STATE_NONE && subst->input == NULL) {
+        subst->state = STATE_CLOSED;
         istream_invoke_eof(&subst->output);
+    }
 }
 
 static void
 istream_subst_close(istream_t istream)
 {
     struct istream_subst *subst = istream_to_subst(istream);
+
+    subst->state = STATE_CLOSED;
 
     if (subst->input != NULL)
         istream_free_unref_handler(&subst->input);

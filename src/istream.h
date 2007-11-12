@@ -27,6 +27,7 @@ typedef struct istream_opaque *istream_t;
 struct istream_handler {
     /**
      * Data is available as a buffer.
+     * This function must return 0 if it has closed the stream.
      *
      * @param data the buffer
      * @param length the number of bytes available in the buffer, greater than 0
@@ -37,6 +38,7 @@ struct istream_handler {
 
     /**
      * Data is available in a file descriptor.
+     * This function must return 0 if it has closed the stream.
      *
      * @param type what kind of file descriptor?
      * @param fd the file descriptor

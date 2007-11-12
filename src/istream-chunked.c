@@ -17,6 +17,13 @@ struct istream_chunked {
     fifo_buffer_t buffer;
 };
 
+
+static int
+chunked_is_closed(const struct istream_chunked *chunked)
+{
+    return chunked->buffer == NULL;
+}
+
 static void
 chunked_eof_detected(struct istream_chunked *chunked)
 {
@@ -94,6 +101,8 @@ chunked_source_data(const void *data, size_t length, void *ctx)
     fifo_buffer_append(chunked->buffer, 4 + 2 + length + 2);
 
     chunked_try_write(chunked);
+    if (chunked_is_closed(chunked))
+        return 0;
 
     return length;
 }
@@ -123,6 +132,8 @@ static void
 chunked_source_abort(void *ctx)
 {
     struct istream_chunked *chunked = ctx;
+
+    chunked->buffer = NULL;
 
     istream_clear_unref(&chunked->input);
     istream_invoke_abort(&chunked->output);
@@ -161,6 +172,8 @@ static void
 istream_chunked_close(istream_t istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
+
+    chunked->buffer = NULL;
 
     if (chunked->input != NULL)
         istream_free_unref_handler(&chunked->input);

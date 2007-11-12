@@ -17,6 +17,7 @@ struct istream_dechunk {
     istream_t input;
     enum {
         NONE,
+        CLOSED,
         SIZE,
         AFTER_SIZE,
         DATA,
@@ -33,6 +34,8 @@ struct istream_dechunk {
 static void
 dechunk_close(struct istream_dechunk *dechunk)
 {
+    dechunk->state = CLOSED;
+
     if (dechunk->input != NULL)
         istream_free_unref_handler(&dechunk->input);
     
@@ -92,7 +95,7 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
             } else {
                 daemon_log(2, "chunk length expected\n");
                 dechunk_close(dechunk);
-                return position;
+                return 0;
             }
 
             if (dechunk->state == NONE) {
@@ -104,11 +107,15 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
             dechunk->size = dechunk->size * 0x10 + digit;
             break;
 
+        case CLOSED:
+            assert(0);
+            break;
+
         case AFTER_SIZE:
             if (data[position++] == '\n') {
                 if (dechunk->size == 0) {
                     dechunk_eof_detected(dechunk);
-                    return position;
+                    return dechunk->state == CLOSED ? 0 : position;
                 }
 
                 dechunk->state = DATA;
@@ -126,7 +133,7 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
             assert(nbytes <= size);
 
             if (nbytes == 0)
-                return position;
+                return dechunk->state == CLOSED ? 0 : position;
 
             dechunk->size -= nbytes;
             if (dechunk->size == 0)
@@ -141,7 +148,7 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
             } else if (data[position] != '\r') {
                 daemon_log(2, "newline expected\n");
                 dechunk_close(dechunk);
-                return position;
+                return 0;
             }
             ++position;
             break;
