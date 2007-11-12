@@ -214,6 +214,8 @@ istream_file_new(pool_t pool, const char *path, off_t length)
 {
     struct file *file = p_malloc(pool, sizeof(*file));
 
+    assert(length >= -1);
+
     file->fd = open(path, O_RDONLY);
     if (file->fd < 0) {
         daemon_log(1, "failed to open '%s': %s\n",
