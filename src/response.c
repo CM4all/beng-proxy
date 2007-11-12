@@ -120,7 +120,11 @@ response_invoke_processor(struct request *request2,
 
     widget = p_malloc(request->pool, sizeof(*widget));
     widget_init(widget, NULL);
-    widget->from_request.session = session_get_widget(request2->env.session, request2->uri.base, 1);
+    widget->from_request.session = session_get_widget(request2->env.session,
+                                                      p_strndup(request->pool,
+                                                                request2->uri.base,
+                                                                request2->uri.base_length),
+                                                      1);
 
     body = processor_new(request->pool, body, widget, &request2->env,
                              processor_options);
