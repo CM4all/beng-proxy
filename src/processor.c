@@ -286,6 +286,13 @@ processor_new(pool_t pool, istream_t istream,
     return istream_struct_cast(&processor->output);
 }
 
+static inline int
+processor_is_quiet(processor_t processor)
+{
+    return processor->replace.quiet ||
+        ((processor->options & PROCESSOR_BODY) != 0 && !processor->in_body);
+}
+
 
 static void
 processor_finish_script(processor_t processor, off_t end)
@@ -382,7 +389,8 @@ parser_element_start(struct parser *parser)
         processor->tag = TAG_IMG;
     } else if (parser->element_name_length == 6 &&
                memcmp(parser->element_name, "script", 6) == 0) {
-        if (parser->tag_type == TAG_OPEN)
+        if (!processor_is_quiet(processor) &&
+            parser->tag_type == TAG_OPEN)
             processor->tag = TAG_SCRIPT;
     } else {
         processor->tag = TAG_NONE;
@@ -446,7 +454,8 @@ parser_attr_finished(struct parser *parser)
 {
     processor_t processor = parser_to_processor(parser);
 
-    if (parser->attr_name_length > 2 &&
+    if (!processor_is_quiet(processor) &&
+        parser->attr_name_length > 2 &&
         parser->attr_name[0] == 'o' &&
         parser->attr_name[1] == 'n' &&
         parser->attr_value_length > 0) {
