@@ -179,7 +179,7 @@ widget_translation_uri(pool_t pool,
     return p_strncat(pool,
                      external_uri->base,
                      external_uri->base_length,
-                     ";", 1,
+                     ";", (size_t)1,
                      args2, strlen(args2),
                      NULL);
 }
