@@ -296,7 +296,8 @@ processor_finish_script(processor_t processor, off_t end)
     if (processor->script_start_offset < end)
         replace_add(&processor->replace,
                     processor->script_start_offset, end,
-                    growing_buffer_istream(processor->script));
+                    js_filter_new(processor->output.pool,
+                                  growing_buffer_istream(processor->script)));
 
     processor->script = NULL;
 }
