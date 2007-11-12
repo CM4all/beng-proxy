@@ -54,6 +54,11 @@ chunked_try_write(struct istream_chunked *chunked)
 }
 
 
+/*
+ * istream handler
+ *
+ */
+
 static size_t
 chunked_source_data(const void *data, size_t length, void *ctx)
 {
@@ -130,6 +135,11 @@ static const struct istream_handler chunked_source_handler = {
 };
 
 
+/*
+ * istream implementation
+ *
+ */
+
 static inline struct istream_chunked *
 istream_to_chunked(istream_t istream)
 {
@@ -162,6 +172,12 @@ static const struct istream istream_chunked = {
     .read = istream_chunked_read,
     .close = istream_chunked_close,
 };
+
+
+/*
+ * constructor
+ *
+ */
 
 istream_t
 istream_chunked_new(pool_t pool, istream_t input)

@@ -58,6 +58,12 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     pool_unref(dechunk->output.pool);
 }
 
+
+/*
+ * istream handler
+ *
+ */
+
 static size_t
 dechunk_input_data(const void *data0, size_t length, void *ctx)
 {
@@ -170,6 +176,11 @@ static const struct istream_handler dechunk_input_handler = {
 };
 
 
+/*
+ * istream implementation
+ *
+ */
+
 static inline struct istream_dechunk *
 istream_to_dechunk(istream_t istream)
 {
@@ -202,6 +213,12 @@ static const struct istream istream_dechunk = {
     .read = istream_dechunk_read,
     .close = istream_dechunk_close,
 };
+
+
+/*
+ * constructor
+ *
+ */
 
 istream_t
 istream_dechunk_new(pool_t pool, istream_t input,
