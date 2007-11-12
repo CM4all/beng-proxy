@@ -10,13 +10,15 @@
 #include "pool.h"
 #include "list.h"
 #include "growing-buffer.h"
+#include "strref.h"
 
 #include <time.h>
 
 struct cookie {
     struct list_head siblings;
 
-    const char *name, *value;
+    struct strref name;
+    struct strref value;
     time_t valid_until;
 };
 

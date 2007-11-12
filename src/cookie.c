@@ -6,80 +6,76 @@
 
 #include "cookie.h"
 #include "strutil.h"
+#include "strref.h"
 
 #include <assert.h>
 #include <string.h>
 
 static struct cookie *
-cookie_list_find(struct list_head *head, const char *name)
+cookie_list_find(struct list_head *head, const char *name, size_t name_length)
 {
     struct cookie *cookie;
 
     for (cookie = (struct cookie *)head->next;
          &cookie->siblings != head;
          cookie = (struct cookie *)cookie->siblings.next)
-        if (strcmp(cookie->name, name) == 0)
+        if (strref_cmp(&cookie->name, name, name_length) == 0)
             return cookie;
 
     return NULL;
 }
 
 static attr_always_inline void
-ltrim(const char **p_r, size_t *length_r)
+ltrim(struct strref *s)
 {
-    while (*length_r > 0 && char_is_whitespace(**p_r)) {
-        ++(*p_r);
-        --(*length_r);
+    while (s->length > 0 && char_is_whitespace(s->data[0])) {
+        ++s->data;
+        --s->length;
     }
 }
 
 static attr_always_inline void
-rtrim(const char **p_r, size_t *length_r)
+rtrim(struct strref *s)
 {
-    while (*length_r > 0 && char_is_whitespace((*p_r)[*length_r - 1]))
-        --(*length_r);
+    while (s->length > 0 && char_is_whitespace(strref_last(s)))
+        --s->length;
 }
 
 static attr_always_inline void
-trim(const char **p_r, size_t *length_r)
+trim(struct strref *s)
 {
-    ltrim(p_r, length_r);
-    rtrim(p_r, length_r);
+    ltrim(s);
+    rtrim(s);
 }
 
 static void
 parse_cookie2(pool_t pool, struct list_head *head,
               const char *input, size_t input_length)
 {
-    const char *equals, *name, *value;
-    size_t name_length, value_length;
+    const char *equals;
+    struct strref name, value;
     struct cookie *cookie;
 
     equals = memchr(input, '=', input_length);
     if (equals == NULL)
         return;
 
-    name = input;
-    name_length = equals - input;
-    trim(&name, &name_length);
-    if (name_length == 0)
+    strref_set(&name, input, equals - input);
+    trim(&name);
+    if (strref_is_empty(&name))
         return;
 
-    if ((name_length == 7 && strncasecmp(name, "expires", 7) == 0) ||
-        (name_length == 6 && strncasecmp(name, "domain", 6) == 0) ||
-        (name_length == 4 && strncasecmp(name, "path", 4) == 0))
+    if (strref_cmp(&name, "expires", 7) == 0 ||
+        strref_cmp(&name, "domain", 6) == 0 ||
+        strref_cmp(&name, "path", 4) == 0)
         return; /* XXX */
 
-    value = equals + 1;
-    value_length = input + input_length - value;
-    trim(&value, &value_length);
+    strref_set(&value, equals + 1, input + input_length - equals - 1);
+    trim(&value);
 
-    name = p_strndup(pool, name, name_length);
-    value = value_length == 0 ? NULL : p_strndup(pool, value, value_length);
-
-    cookie = cookie_list_find(head, name);
+    cookie = cookie_list_find(head, name.data, name.length);
     if (cookie == NULL) {
-        if (value == NULL)
+        if (strref_is_empty(&value))
             return;
 
         cookie = p_malloc(pool, sizeof(*cookie));
@@ -121,10 +117,10 @@ cookie_list_http_header(growing_buffer_t gb, struct list_head *head)
     for (cookie = (struct cookie *)head->next;
          &cookie->siblings != head;
          cookie = (struct cookie *)cookie->siblings.next) {
-        growing_buffer_write_string(gb, cookie->name);
+        growing_buffer_write_buffer(gb, cookie->name.data, cookie->name.length);
         growing_buffer_write_string(gb, "=");
         /* XXX escape? */
-        growing_buffer_write_string(gb, cookie->value);
+        growing_buffer_write_buffer(gb, cookie->value.data, cookie->value.length);
         growing_buffer_write_string(gb, "; ");
     }
 

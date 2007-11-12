@@ -29,6 +29,13 @@ strref_clear(struct strref *s)
 }
 
 static attr_always_inline void
+strref_set(struct strref *s, const char *p, size_t length)
+{
+    s->length = length;
+    s->data = p;
+}
+
+static attr_always_inline void
 strref_set_c(struct strref *s, const char *p)
 {
     s->length = strlen(p);
@@ -41,10 +48,24 @@ strref_is_empty(const struct strref *s)
     return s->length == 0;
 }
 
+static attr_always_inline char
+strref_last(const struct strref *s)
+{
+    return s->data[s->length - 1];
+}
+
 static attr_always_inline char *
 strref_dup(pool_t pool, const struct strref *s)
 {
     return p_strndup(pool, s->data, s->length);
+}
+
+static attr_always_inline int
+strref_cmp(const struct strref *s,
+           const char *p, size_t length)
+{
+    return s->length == length &&
+        memcmp(s->data, p, length);
 }
 
 static attr_always_inline int
