@@ -378,6 +378,10 @@ parser_element_start(struct parser *parser)
         list_add(&processor->embedded_widget->siblings,
                  &processor->widget->children);
         processor->embedded_widget->parent = processor->widget;
+    } else if (processor_is_quiet(processor)) {
+        /* since we are not going to print anything, we don't need to
+           parse the rest anyway */
+        processor->tag = TAG_NONE;
     } else if (parser->element_name_length == 1 &&
                parser->element_name[0] == 'a') {
         processor->tag = TAG_A;
@@ -389,8 +393,7 @@ parser_element_start(struct parser *parser)
         processor->tag = TAG_IMG;
     } else if (parser->element_name_length == 6 &&
                memcmp(parser->element_name, "script", 6) == 0) {
-        if (!processor_is_quiet(processor) &&
-            parser->tag_type == TAG_OPEN)
+        if (parser->tag_type == TAG_OPEN)
             processor->tag = TAG_SCRIPT;
     } else {
         processor->tag = TAG_NONE;
