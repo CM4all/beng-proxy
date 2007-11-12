@@ -24,6 +24,7 @@
 #define attr_const __attribute__((const))
 #define attr_unused __attribute__((unused))
 #define attr_packed __attribute__((packed))
+#define attr_noreturn __attribute__((noreturn))
 #define attr_printf(string_index, first_to_check) __attribute__((format(printf, string_index, first_to_check)))
 
 #define likely(x) __builtin_expect(!!(x), 1)
@@ -40,6 +41,7 @@
 #define attr_const
 #define attr_unused
 #define attr_packed
+#define attr_noreturn
 #define attr_printf(string_index, first_to_check)
 
 #define likely(x)	(x)
