@@ -1,3 +1,7 @@
+struct ctx {
+    istream_t input;
+};
+
 static int got_data, should_exit;
 
 /*
@@ -6,12 +10,20 @@ static int got_data, should_exit;
  */
 
 static size_t
-my_istream_data(const void *data, size_t length, void *ctx)
+my_istream_data(const void *data, size_t length, void *_ctx)
 {
+    struct ctx *ctx = _ctx;
+
     (void)data;
     (void)ctx;
     printf("data(%zu)\n", length);
     got_data = 1;
+
+    if (ctx != NULL) {
+        istream_free(&ctx->input);
+        return 0;
+    }
+
     return length;
 }
 
@@ -73,6 +85,7 @@ istream_read_expect(istream_t istream)
 int main(int argc, char **argv) {
     pool_t root_pool, pool;
     istream_t istream;
+    struct ctx ctx;
 
     (void)argc;
     (void)argv;
@@ -181,6 +194,23 @@ int main(int argc, char **argv) {
     pool_commit();
 
     assert(should_exit);
+
+    /* abort in handler */
+
+    should_exit = 0;
+
+    pool = pool_new_linear(root_pool, "test", 8192);
+
+    ctx.input = create_test(pool, create_input(pool));
+    istream_handler_set(ctx.input, &my_istream_handler, &ctx, 0);
+
+    while (!should_exit)
+        istream_read_expect(ctx.input);
+
+    assert(ctx.input == NULL);
+
+    pool_unref(pool);
+    pool_commit();
 
     /* abort after 1 byte of output */
 
