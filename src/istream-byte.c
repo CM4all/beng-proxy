@@ -8,7 +8,6 @@
 #include "istream.h"
 
 #include <assert.h>
-#include <string.h>
 
 struct istream_byte {
     struct istream output;
