@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <string.h>
 #include <netdb.h>
+#include <sys/un.h>
 
 struct url_stream {
     pool_t pool;
@@ -125,8 +126,6 @@ url_stream_new(pool_t pool,
 {
     url_stream_t us;
     int ret;
-    const char *p, *slash, *host_and_port;
-    struct addrinfo hints, *ai;
 
     assert(url != NULL);
     assert(handler != NULL);
@@ -159,50 +158,91 @@ url_stream_new(pool_t pool,
     us->http = NULL;
     http_response_handler_set(&us->handler, handler, handler_ctx);
 
-    if (memcmp(url, "http://", 7) != 0) {
+    if (memcmp(url, "http://", 7) == 0) {
+        /* HTTP over TCP */
+        const char *p, *slash, *host_and_port;
+        struct addrinfo hints, *ai;
+
+        p = url + 7;
+        slash = strchr(p, '/');
+        if (slash == NULL || slash == p) {
+            /* XXX */
+            url_stream_close(us);
+            return NULL;
+        }
+
+        host_and_port = p_strndup(us->pool, p, slash - p);
+        header_write(us->headers, "host", host_and_port);
+
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = PF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+
+        /* XXX make this asynchronous */
+        ret = getaddrinfo_helper(host_and_port, 80, &hints, &ai);
+        if (ret != 0) {
+            daemon_log(1, "failed to resolve proxy host name\n");
+            url_stream_close(us);
+            return NULL;
+        }
+
+        us->uri = slash;
+
+        ret = client_socket_new(us->pool,
+                                PF_INET, SOCK_STREAM, 0,
+                                ai->ai_addr, ai->ai_addrlen,
+                                url_stream_client_socket_callback, us,
+                                &us->client_socket);
+        if (ret != 0) {
+            daemon_log(1, "client_socket_new() failed: %s\n",
+                       strerror(errno));
+            url_stream_close(us);
+            return NULL;
+        }
+
+        freeaddrinfo(ai);
+    } else if (memcmp(url, "unix:/", 6) == 0) {
+        /* HTTP over Unix socket */
+        const char *p, *qmark;
+        size_t path_length;
+        struct sockaddr_un sun;
+
+        p = url + 5;
+        us->uri = p;
+
+        qmark = strchr(p, '?');
+        if (qmark == NULL)
+            path_length = strlen(p);
+        else
+            path_length = qmark - p;
+
+        if (path_length >= sizeof(sun.sun_path)) {
+            daemon_log(1, "client_socket_new() failed: unix socket path is too long\n");
+            url_stream_close(us);
+            return NULL;
+        }
+
+        sun.sun_family = AF_UNIX;
+        memcpy(sun.sun_path, p, path_length);
+        sun.sun_path[path_length] = 0;
+
+        ret = client_socket_new(us->pool,
+                                PF_UNIX, SOCK_STREAM, 0,
+                                (const struct sockaddr*)&sun, sizeof(sun),
+                                url_stream_client_socket_callback, us,
+                                &us->client_socket);
+        if (ret != 0) {
+            daemon_log(1, "client_socket_new('%.*s') failed: %s\n",
+                       (int)path_length, p,
+                       strerror(errno));
+            url_stream_close(us);
+            return NULL;
+        }
+    } else {
         /* XXX */
         url_stream_close(us);
         return NULL;
     }
-
-    p = url + 7;
-    slash = strchr(p, '/');
-    if (slash == NULL || slash == p) {
-        /* XXX */
-        url_stream_close(us);
-        return NULL;
-    }
-
-    host_and_port = p_strndup(us->pool, p, slash - p);
-    header_write(us->headers, "host", host_and_port);
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-
-    /* XXX make this asynchronous */
-    ret = getaddrinfo_helper(host_and_port, 80, &hints, &ai);
-    if (ret != 0) {
-        daemon_log(1, "failed to resolve proxy host name\n");
-        url_stream_close(us);
-        return NULL;
-    }
-
-    us->uri = slash;
-
-    ret = client_socket_new(us->pool,
-                            PF_INET, SOCK_STREAM, 0,
-                            ai->ai_addr, ai->ai_addrlen,
-                            url_stream_client_socket_callback, us,
-                            &us->client_socket);
-    if (ret != 0) {
-        daemon_log(1, "client_socket_new() failed: %s\n",
-                   strerror(errno));
-        url_stream_close(us);
-        return NULL;
-    }
-
-    freeaddrinfo(ai);
 
     return us;
 }
