@@ -57,6 +57,10 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser_element_start(parser);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
+                } else if (*buffer == '!' && parser->element_name_length == 0) {
+                    parser->state = PARSER_DECLARATION_NAME;
+                    ++buffer;
+                    break;
                 } else {
                     parser->state = PARSER_NONE;
                     break;
@@ -218,6 +222,53 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         case PARSER_INSIDE:
             /* XXX */
             parser->state = PARSER_NONE;
+            break;
+
+        case PARSER_DECLARATION_NAME:
+            /* copy declaration element name */
+            while (buffer < end) {
+                if (char_is_alphanumeric(*buffer) || *buffer == ':' ||
+                    *buffer == '-' || *buffer == '_' || *buffer == '[') {
+                    if (parser->element_name_length == sizeof(parser->element_name)) {
+                        /* name buffer overflowing */
+                        parser->state = PARSER_NONE;
+                        break;
+                    }
+
+                    parser->element_name[parser->element_name_length++] = char_to_lower(*buffer++);
+
+                    if (parser->element_name_length == 7 &&
+                        memcmp(parser->element_name, "[cdata[", 7) == 0) {
+                        parser->state = PARSER_CDATA_SECTION;
+                        parser->cdend_match = 0;
+                        break;
+                    }
+                } else {
+                    parser->state = PARSER_NONE;
+                    break;
+                }
+            }
+
+            break;
+
+        case PARSER_CDATA_SECTION:
+            /* copy CDATA section contents */
+
+            /* XXX this loop can be optimized with memchr() */
+            while (buffer < end) {
+                if (*buffer == ']' && parser->cdend_match < 2) {
+                    ++buffer;
+                    ++parser->cdend_match;
+                } else if (*buffer == '>' && parser->cdend_match == 2) {
+                    ++buffer;
+                    parser->state = PARSER_NONE;
+                    break;
+                } else {
+                    ++buffer;
+                    parser->cdend_match = 0;
+                }
+            }
+
             break;
         }
     }

@@ -39,6 +39,12 @@ enum parser_state {
 
     /** inside the element, currently unused */
     PARSER_INSIDE,
+
+    /** parsing a declaration name beginning with "<!" */
+    PARSER_DECLARATION_NAME,
+
+    /** within a CDATA section */
+    PARSER_CDATA_SECTION,
 };
 
 struct parser {
@@ -63,6 +69,10 @@ struct parser {
     char attr_value[1024];
     size_t attr_value_length;
     off_t attr_value_start, attr_value_end;
+
+    /** in a CDATA section, how many characters have been matching
+        CDEnd ("]]>")? */
+    size_t cdend_match;
 };
 
 static inline void
