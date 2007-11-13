@@ -255,19 +255,38 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             /* copy CDATA section contents */
 
             /* XXX this loop can be optimized with memchr() */
+            p = buffer;
             while (buffer < end) {
                 if (*buffer == ']' && parser->cdend_match < 2) {
-                    ++buffer;
+                    if (buffer > p) {
+                        /* flush buffer */
+                        parser_cdata(parser, p, buffer - p, 0);
+                        p = buffer;
+                    }
+
+                    p = ++buffer;
                     ++parser->cdend_match;
                 } else if (*buffer == '>' && parser->cdend_match == 2) {
-                    ++buffer;
+                    p = ++buffer;
                     parser->state = PARSER_NONE;
                     break;
                 } else {
+                    if (parser->cdend_match > 0) {
+                        /* we had a partial match, and now we have to
+                           restore the data we already skipped */
+                        assert(parser->cdend_match < 3);
+
+                        parser_cdata(parser, "]]", parser->cdend_match, 0);
+                        parser->cdend_match = 0;
+                        p = buffer;
+                    }
+
                     ++buffer;
-                    parser->cdend_match = 0;
                 }
             }
+
+            if (buffer > p)
+                parser_cdata(parser, p, buffer - p, 0);
 
             break;
         }
