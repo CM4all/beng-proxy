@@ -714,6 +714,8 @@ parser_cdata(struct parser *parser, const char *p, size_t length, int escaped)
 {
     processor_t processor = parser_to_processor(parser);
 
+    (void)escaped;
+
     if (processor->script != NULL)
         growing_buffer_write_buffer(processor->script, p, length);
 }
