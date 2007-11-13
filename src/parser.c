@@ -29,7 +29,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 return;
 
             if (p > buffer)
-                parser_cdata(parser, buffer, p - buffer);
+                parser_cdata(parser, buffer, p - buffer, 1);
 
             parser->element_offset = parser->position + (off_t)(p - start);
             parser->state = PARSER_ELEMENT_NAME;

@@ -710,7 +710,7 @@ parser_element_finished(struct parser *parser, off_t end)
 }
 
 void
-parser_cdata(struct parser *parser, const char *p, size_t length)
+parser_cdata(struct parser *parser, const char *p, size_t length, int escaped)
 {
     processor_t processor = parser_to_processor(parser);
 
