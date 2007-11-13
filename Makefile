@@ -145,6 +145,9 @@ test/request-translation: test/request-translation.o src/translate.o src/pool.o 
 test/js: test/js.o src/js-filter.o src/pool.o src/istream-file.o src/fifo-buffer.o src/buffered-io.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
+test/t-parser-cdata: test/t-parser-cdata.o src/parser.o src/istream-file.o src/pool.o src/fifo-buffer.o src/buffered-io.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
 FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate
 FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
 
