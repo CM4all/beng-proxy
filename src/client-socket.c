@@ -80,6 +80,7 @@ client_socket_event_callback(int fd, short event, void *ctx)
 
 int
 client_socket_new(pool_t pool,
+                  int domain, int type, int protocol,
                   const struct sockaddr *addr, socklen_t addrlen,
                   client_socket_callback_t callback, void *ctx,
                   client_socket_t *client_socket_r)
@@ -99,7 +100,7 @@ client_socket_new(pool_t pool,
     client_socket->callback = callback;
     client_socket->callback_ctx = ctx;
 
-    client_socket->fd = socket(PF_INET, SOCK_STREAM, 0);
+    client_socket->fd = socket(domain, type, protocol);
     if (client_socket->fd < 0)
         return -1;
 

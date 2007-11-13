@@ -17,6 +17,7 @@ typedef void (*client_socket_callback_t)(int fd, int err, void *ctx);
 
 int
 client_socket_new(pool_t pool,
+                  int domain, int type, int protocol,
                   const struct sockaddr *addr, socklen_t addrlen,
                   client_socket_callback_t callback, void *ctx,
                   client_socket_t *client_socket_r);

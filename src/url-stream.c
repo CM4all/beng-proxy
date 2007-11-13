@@ -191,6 +191,7 @@ url_stream_new(pool_t pool,
     us->uri = slash;
 
     ret = client_socket_new(us->pool,
+                            PF_INET, SOCK_STREAM, 0,
                             ai->ai_addr, ai->ai_addrlen,
                             url_stream_client_socket_callback, us,
                             &us->client_socket);
