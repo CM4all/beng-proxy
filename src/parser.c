@@ -26,7 +26,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             /* find first character */
             p = memchr(buffer, '<', end - buffer);
             if (p == NULL)
-                return;
+                p = end;
 
             if (p > buffer)
                 parser_cdata(parser, buffer, p - buffer, 1);
