@@ -62,6 +62,7 @@ SOURCES = src/main.c \
 	src/widget-session.c \
 	src/widget-uri.c \
 	src/proxy-widget.c \
+	src/html-escape.c \
 	src/js-filter.c \
 	src/processor.c \
 	src/penv.c \
@@ -147,6 +148,9 @@ test/js: test/js.o src/js-filter.o src/pool.o src/istream-file.o src/fifo-buffer
 
 test/t-parser-cdata: test/t-parser-cdata.o src/parser.o src/istream-file.o src/pool.o src/fifo-buffer.o src/buffered-io.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
+test/t-html-unescape: test/t-html-unescape.o src/html-escape.o
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate
 FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
