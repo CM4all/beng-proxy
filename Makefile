@@ -123,7 +123,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/t-istream-chunked test/t-istream-dechunk
+	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/t-istream-chunked test/t-istream-dechunk test/t-html-unescape test/t-html-unescape
 
 src/cm4all-beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS) -lz
@@ -150,6 +150,9 @@ test/t-parser-cdata: test/t-parser-cdata.o src/parser.o src/istream-file.o src/p
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
 test/t-html-unescape: test/t-html-unescape.o src/html-escape.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+test/t-html-escape: test/t-html-escape.o src/html-escape.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate

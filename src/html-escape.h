@@ -15,9 +15,18 @@ struct strref;
  * Resolve character entity references.
  *
  * @param s the buffer to be unescaped
- * @return the number of unescaped bytes or 0 if there were no entities
+ * @return the number of bytes consumed from the input or 0 if there were no entities
  */
 size_t
 html_unescape(struct strref *s);
+
+/**
+ * Escape special characters as HTML entities.
+ *
+ * @param s the buffer to be escaped
+ * @return the number of bytes consumed from the input or 0 if there were no entities
+ */
+size_t
+html_escape(struct strref *s);
 
 #endif

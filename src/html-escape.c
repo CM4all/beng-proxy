@@ -119,3 +119,37 @@ html_unescape(struct strref *s)
 
     return rest_to_buffer(&u, end, s->data, s);
 }
+
+size_t
+html_escape(struct strref *s)
+{
+    struct unescape u = {
+        .first_unconsumed_src = s->data,
+        .dest_pos = 0,
+    };
+
+    const char *end = s->data + s->length;
+    const char *cursor = s->data;
+
+    for (cursor = s->data; cursor < end; ++cursor) {
+        switch (*cursor) {
+        case '&':
+            replace(&u, cursor, cursor + 1, "&amp;", 5);
+            break;
+
+        case '<':
+            replace(&u, cursor, cursor + 1, "&lt;", 4);
+            break;
+
+        case '>':
+            replace(&u, cursor, cursor + 1, "&gt;", 4);
+            break;
+
+        case '"':
+            replace(&u, cursor, cursor + 1, "&quot;", 6);
+            break;
+        }
+    }
+
+    return rest_to_buffer(&u, end, s->data, s);
+}
