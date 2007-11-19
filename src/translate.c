@@ -404,7 +404,7 @@ translate(pool_t pool,
         return;
     }
 
-    ret = socket_enable_nonblock(fd);
+    ret = socket_set_nonblock(fd, 1);
     if (fd < 0) {
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));

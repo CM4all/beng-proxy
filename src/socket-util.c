@@ -19,7 +19,7 @@
 #endif
 
 int
-socket_enable_nonblock(int fd)
+socket_set_nonblock(int fd, int value)
 {
     int ret;
 
@@ -29,7 +29,12 @@ socket_enable_nonblock(int fd)
     if (ret < 0)
         return ret;
 
-    return fcntl(fd, F_SETFL, ret | O_NONBLOCK);
+    if (value)
+        ret |= O_NONBLOCK;
+    else
+        ret &= ~O_NONBLOCK;
+
+    return fcntl(fd, F_SETFL, ret);
 }
 
 #ifdef __linux

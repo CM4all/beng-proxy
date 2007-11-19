@@ -47,7 +47,7 @@ listener_event_callback(int fd, short event, void *ctx)
         return;
     }
 
-    ret = socket_enable_nonblock(remote_fd);
+    ret = socket_set_nonblock(remote_fd, 1);
     if (ret < 0) {
         daemon_log(1, "fcntl(O_NONBLOCK) failed: %s\n", strerror(errno));
         close(remote_fd);
@@ -146,7 +146,7 @@ listener_tcp_port_new(pool_t pool, int port,
         return -1;
     }
 
-    ret = socket_enable_nonblock(listener->fd);
+    ret = socket_set_nonblock(listener->fd, 1);
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
