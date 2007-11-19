@@ -54,7 +54,7 @@ listener_event_callback(int fd, short event, void *ctx)
         return;
     }
 
-    ret = socket_enable_nodelay(remote_fd);
+    ret = socket_set_nodelay(remote_fd, 1);
     if (ret < 0) {
         daemon_log(1, "setsockopt(TCP_NODELAY) failed: %s\n", strerror(errno));
         close(remote_fd);

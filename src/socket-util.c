@@ -40,9 +40,8 @@ socket_set_nonblock(int fd, int value)
 #ifdef __linux
 
 int
-socket_enable_nodelay(int fd)
+socket_set_nodelay(int fd, int value)
 {
-    int value = 1;
     return setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
                       &value, sizeof(value));
 }

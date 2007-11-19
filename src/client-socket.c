@@ -112,7 +112,7 @@ client_socket_new(pool_t pool,
         return -1;
     }
 
-    ret = socket_enable_nodelay(client_socket->fd);
+    ret = socket_set_nodelay(client_socket->fd, 1);
     if (ret < 0) {
         int save_errno = errno;
         close(client_socket->fd);

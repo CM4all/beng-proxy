@@ -13,7 +13,7 @@ socket_set_nonblock(int fd, int value);
 #ifdef __linux
 
 int
-socket_enable_nodelay(int fd);
+socket_set_nodelay(int fd, int value);
 
 int
 socket_set_cork(int fd, int value);
