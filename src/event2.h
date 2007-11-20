@@ -10,6 +10,7 @@
 
 #include "compiler.h"
 
+#include <sys/types.h>
 #include <assert.h>
 #include <event.h>
 
