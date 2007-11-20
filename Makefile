@@ -86,6 +86,7 @@ SOURCES = src/main.c \
 	src/filter.c \
 	src/fifo-buffer.c \
 	src/growing-buffer.c \
+	src/duplex.c \
 	src/istream-memory.c \
 	src/istream-null.c \
 	src/istream-string.c \
@@ -123,7 +124,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/t-istream-chunked test/t-istream-dechunk test/t-html-unescape test/t-html-unescape
+	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/t-istream-chunked test/t-istream-dechunk test/t-html-unescape test/t-html-unescape test/t-http-server-mirror
 
 src/cm4all-beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS) -lz
@@ -154,6 +155,9 @@ test/t-html-unescape: test/t-html-unescape.o src/html-escape.o
 
 test/t-html-escape: test/t-html-escape.o src/html-escape.o
 	$(CC) -o $@ $^ $(LDFLAGS)
+
+test/t-http-server-mirror: test/t-http-server-mirror.o src/http-server.o src/fifo-buffer.o src/duplex.o src/pool.o src/pstring.o src/buffered-io.o src/strmap.o src/header-writer.o src/istream-dechunk.o src/istream-chunked.o src/istream-pipe.o src/istream-memory.o src/istream-cat.o src/http-body.o src/date.o src/socket-util.o src/growing-buffer.o src/http.o src/header-parser.o src/format.o src/strutil.o src/gmtime.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
 FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate
 FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
