@@ -30,11 +30,6 @@
 struct http_server_connection {
     pool_t pool;
 
-    /*
-      struct sockaddr_storage remote_addr;
-      socklen_t remote_addrlen;
-    */
-
     /* I/O */
     int fd;
     struct event2 event;
