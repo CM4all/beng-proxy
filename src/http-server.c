@@ -436,7 +436,9 @@ http_server_consume_input(http_server_connection_t connection)
 {
     if (connection->request.read_state == READ_START ||
         connection->request.read_state == READ_HEADERS) {
-        if (http_server_parse_headers(connection))
+        if (http_server_parse_headers(connection) &&
+            (connection->request.read_state == READ_BODY ||
+             connection->request.read_state == READ_END))
             connection->handler->request(connection->request.request,
                                          connection->handler_ctx);
     } else if (connection->request.read_state == READ_BODY) {
