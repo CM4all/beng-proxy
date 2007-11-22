@@ -483,10 +483,12 @@ static void
 http_server_try_read(http_server_connection_t connection)
 {
     if (connection->request.read_state == READ_BODY &&
-        (connection->request.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 &&
-        fifo_buffer_empty(connection->input))
-        http_server_try_request_direct(connection);
-    else
+        (connection->request.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) {
+        if (fifo_buffer_empty(connection->input))
+            http_server_try_request_direct(connection);
+        else
+            http_server_consume_body(connection);
+    } else
         http_server_try_read_buffered(connection);
 }
 
