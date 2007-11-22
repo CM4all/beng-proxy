@@ -434,20 +434,13 @@ http_server_parse_headers(http_server_connection_t connection)
 static void
 http_server_consume_input(http_server_connection_t connection)
 {
-    while (1) {
-        if (connection->request.read_state == READ_START ||
-            connection->request.read_state == READ_HEADERS) {
-            if (http_server_parse_headers(connection) == 0)
-                break;
-
+    if (connection->request.read_state == READ_START ||
+        connection->request.read_state == READ_HEADERS) {
+        if (http_server_parse_headers(connection))
             connection->handler->request(connection->request.request,
                                          connection->handler_ctx);
-        } else if (connection->request.read_state == READ_BODY) {
-            http_server_consume_body(connection);
-            break;
-        } else {
-            break;
-        }
+    } else if (connection->request.read_state == READ_BODY) {
+        http_server_consume_body(connection);
     }
 }
 
