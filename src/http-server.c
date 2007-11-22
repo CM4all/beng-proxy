@@ -364,8 +364,6 @@ http_server_headers_finished(http_server_connection_t connection)
 
         connection->request.read_state = READ_BODY;
     }
-
-    connection->handler->request(connection->request.request, connection->handler_ctx);
 }
 
 static void
@@ -441,6 +439,9 @@ http_server_consume_input(http_server_connection_t connection)
             connection->request.read_state == READ_HEADERS) {
             if (http_server_parse_headers(connection) == 0)
                 break;
+
+            connection->handler->request(connection->request.request,
+                                         connection->handler_ctx);
         } else if (connection->request.read_state == READ_BODY) {
             http_server_consume_body(connection);
             break;
