@@ -168,7 +168,10 @@ $(FILTER_TESTS): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-mem
 $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES)): check-filter-%: test/t-istream-%
 	exec $<
 
-check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES))
+check-http-server: test/t-http-server-mirror
+	./test/t-http-server.py
+
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES)) check-http-server
 
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb
