@@ -21,6 +21,8 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    istream_t request_body,
                    processor_widget_callback_t widget_callback)
 {
+    assert(request_body == NULL || !istream_has_handler(request_body));
+
     env->pool = pool;
     env->remote_host = remote_host;
     env->absolute_uri = absolute_uri;
