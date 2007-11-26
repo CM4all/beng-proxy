@@ -699,8 +699,6 @@ http_server_response_stream_eof(void *ctx)
     assert(connection->response.istream != NULL);
     assert(istream_pool(connection->response.istream) != NULL);
 
-    pool_ref(connection->pool);
-
     connection->response.writing = 0;
 
     if (connection->request.read_state == READ_BODY) {
@@ -723,8 +721,6 @@ http_server_response_stream_eof(void *ctx)
            the connection */
         http_server_connection_close(connection);
     }
-
-    pool_unref(connection->pool);
 }
 
 static void
