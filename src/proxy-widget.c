@@ -89,12 +89,12 @@ static const struct istream_handler proxy_body_handler = {
 
 
 /*
- * processor_env.proxy_callback
+ * processor_env.response_handler
  *
  */
 
 static void
-widget_proxy_callback(http_status_t status,
+widget_proxy_response(http_status_t status,
                       strmap_t headers,
                       off_t content_length, istream_t body,
                       void *ctx)
@@ -140,6 +140,28 @@ widget_proxy_callback(http_status_t status,
     http_server_response(request, status, headers2, content_length, body);
 }
 
+static void
+widget_proxy_abort(void *ctx)
+{
+    struct widget_proxy *wp = ctx;
+    struct http_server_request *request;
+
+    assert(wp->body != NULL);
+    assert(wp->request != NULL);
+
+    request = wp->request;
+    wp->request = NULL;
+
+    /* XXX better message */
+    http_server_send_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                             "Internal server error");
+}
+
+static struct http_response_handler widget_proxy_handler = {
+    .response = widget_proxy_response,
+    .abort = widget_proxy_abort,
+};
+
 
 /*
  * constructor
@@ -154,13 +176,14 @@ widget_proxy_install(struct processor_env *env,
     struct widget_proxy *wp = p_malloc(request->pool, sizeof(*wp));
 
     assert(env->frame != NULL);
+    assert(!http_response_handler_defined(&env->response_handler));
 
     wp->request = request;
     istream_assign_ref_handler(&wp->body, body, &proxy_body_handler,
                                wp, 0);
 
-    env->proxy_callback = widget_proxy_callback;
-    env->proxy_callback_ctx = wp;
+    http_response_handler_set(&env->response_handler,
+                              &widget_proxy_handler, wp);
 
     istream_read(wp->body);
 }

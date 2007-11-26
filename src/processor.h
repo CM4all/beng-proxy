@@ -10,6 +10,7 @@
 #include "istream.h"
 #include "strmap.h"
 #include "http.h"
+#include "http-response.h"
 
 #include <sys/types.h>
 
@@ -52,12 +53,7 @@ struct processor_env {
     /** which widget is displayed in this frame? */
     const struct widget_ref *frame;
 
-    void (*proxy_callback)(http_status_t status,
-                           strmap_t headers,
-                           off_t content_length, istream_t body,
-                           void *ctx);
-
-    void *proxy_callback_ctx;
+    struct http_response_handler_ref response_handler;
 
     /** which widget is focused, i.e. gets the request body and the
         query string? */

@@ -38,7 +38,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
         env->focus = widget_ref_parse(pool, strmap_get(env->args, "focus"));
     }
 
-    env->proxy_callback = NULL;
+    http_response_handler_clear(&env->response_handler);
 
     env->request_headers = request_headers;
     env->request_content_length = request_content_length;

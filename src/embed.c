@@ -218,13 +218,14 @@ embed_response_response(http_status_t status, strmap_t headers,
         content_length = -1;
     }
 
-    if (embed->widget->from_request.proxy && embed->env->proxy_callback != NULL) {
+    if (embed->widget->from_request.proxy &&
+        http_response_handler_defined(&embed->env->response_handler)) {
         /* this is the request for IFRAME contents - send it directly
            to to http_server object, including headers */
 
-        embed->env->proxy_callback(status, headers,
-                                   content_length, input,
-                                   embed->env->proxy_callback_ctx);
+        http_response_handler_invoke_response(&embed->env->response_handler,
+                                              status, headers,
+                                              content_length, input);
         pool_unref(embed->pool);
         return;
     }

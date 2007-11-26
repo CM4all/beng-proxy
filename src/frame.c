@@ -65,6 +65,8 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
     env2->frame = NULL;
     env2->widget_callback = embed_widget_callback;
 
+    http_response_handler_clear(&env->response_handler);
+
     return embed_new(pool,
                      method, widget->real_uri,
                      request_content_length, request_body,
