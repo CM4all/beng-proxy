@@ -195,7 +195,7 @@ http_server_request_stream_read(istream_t istream)
     assert(connection != NULL);
     assert(connection->fd >= 0);
     assert(connection->request.read_state == READ_BODY);
-    assert(connection->request.body_reader.output.handler != NULL);
+    assert(istream_has_handler(http_body_istream(&connection->request.body_reader)));
 
     pool_ref(connection->pool);
 
