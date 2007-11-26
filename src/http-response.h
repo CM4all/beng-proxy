@@ -29,6 +29,8 @@ struct http_response_handler_ref {
 static inline int
 http_response_handler_defined(const struct http_response_handler_ref *ref)
 {
+    assert(ref != NULL);
+
     return ref->handler != NULL;
 }
 
