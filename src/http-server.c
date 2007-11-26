@@ -51,6 +51,10 @@ struct http_server_connection {
             READ_BODY,
             READ_END
         } read_state;
+
+        /** did the client send an "Expect: 100-continue" header? */
+        int expect_100_continue;
+
         struct http_server_request *request;
 
         struct http_body_reader body_reader;
@@ -58,7 +62,7 @@ struct http_server_connection {
 
     /* response */
     struct {
-        int writing;
+        int writing, writing_100_continue;
         char status_buffer[64];
         char content_length_buffer[32];
         istream_t istream;
@@ -156,12 +160,19 @@ http_server_consume_body(http_server_connection_t connection)
 }
 
 static void
+http_server_maybe_send_100_continue(http_server_connection_t connection);
+
+static void
 http_server_try_request_direct(http_server_connection_t connection)
 {
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
     assert(connection->request.read_state == READ_BODY);
+
+    http_server_maybe_send_100_continue(connection);
+    if (!http_server_connection_valid(connection))
+        return;
 
     nbytes = http_body_try_direct(&connection->request.body_reader, connection->fd);
     if (nbytes < 0) {
@@ -347,6 +358,10 @@ http_server_headers_finished(http_server_connection_t connection)
 
             request->body = http_body_istream(&connection->request.body_reader);
             connection->request.read_state = READ_BODY;
+
+            value = strmap_get(request->headers, "expect");
+            connection->request.expect_100_continue = value != NULL &&
+                strcmp(value, "100-continue") == 0;
         }
     } else {
         /* chunked */
@@ -363,6 +378,10 @@ http_server_headers_finished(http_server_connection_t connection)
                                   http_body_dechunked_eof, &connection->request.body_reader);
 
         connection->request.read_state = READ_BODY;
+
+        value = strmap_get(request->headers, "expect");
+        connection->request.expect_100_continue = value != NULL &&
+            strcmp(value, "100-continue") == 0;
     }
 }
 
@@ -450,6 +469,12 @@ static void
 http_server_try_read_buffered(http_server_connection_t connection)
 {
     ssize_t nbytes;
+
+    if (connection->request.read_state == READ_BODY) {
+        http_server_maybe_send_100_continue(connection);
+        if (!http_server_connection_valid(connection))
+            return;
+    }
 
     nbytes = read_to_buffer(connection->fd, connection->input, INT_MAX);
     assert(nbytes != -2);
@@ -701,7 +726,17 @@ http_server_response_stream_eof(void *ctx)
 
     connection->response.writing = 0;
 
-    if (connection->request.read_state == READ_BODY) {
+    if (connection->response.writing_100_continue) {
+        /* connection->response.istream contained the string "100
+           Continue", and not a full response - return here, because
+           we do not want the request/response pair to be
+           destructed */
+        event2_nand(&connection->event, EV_WRITE);
+        return;
+    }
+
+    if (connection->request.read_state == READ_BODY &&
+        !connection->request.expect_100_continue) {
         /* We are still reading the request body, which we don't need
            anymore.  To discard it, we simply close the connection by
            disabling keepalive; this seems cheaper than redirecting
@@ -743,6 +778,30 @@ static const struct istream_handler http_server_response_stream_handler = {
 };
 
 
+static void
+http_server_maybe_send_100_continue(http_server_connection_t connection)
+{
+    assert(connection->fd >= 0);
+    assert(connection->request.read_state == READ_BODY);
+    assert(!connection->response.writing);
+
+    if (!connection->request.expect_100_continue)
+        return;
+
+    connection->request.expect_100_continue = 0;
+
+    connection->response.istream = istream_string_new(connection->request.request->pool,
+                                                      "100 Continue\r\n\r\n");
+    istream_handler_set(connection->response.istream,
+                        &http_server_response_stream_handler, connection,
+                        ISTREAM_DIRECT_SUPPORT);
+
+    connection->response.writing = 1;
+    connection->response.writing_100_continue = 1;
+
+    http_server_try_write(connection);
+}
+
 static size_t
 format_status_line(char *p, http_status_t status)
 {
@@ -775,6 +834,7 @@ http_server_response(struct http_server_request *request,
 
     assert(connection->request.request == request);
     assert(!connection->response.writing);
+    /* XXX what if we weren't able to send "100 Continue" yet? */
 
     status_stream
         = istream_memory_new(request->pool,
@@ -821,6 +881,7 @@ http_server_response(struct http_server_request *request,
                         ISTREAM_DIRECT_SUPPORT);
 
     connection->response.writing = 1;
+    connection->response.writing_100_continue = 0;
 
     pool_ref(connection->pool);
 
