@@ -18,11 +18,11 @@ embed_new(pool_t pool, http_method_t method, const char *url,
           off_t request_content_length,
           istream_t request_body,
           struct widget *widget,
-          const struct processor_env *env,
+          struct processor_env *env,
           unsigned options);
 
 istream_t
-embed_widget_callback(pool_t pool, const struct processor_env *env,
+embed_widget_callback(pool_t pool, struct processor_env *env,
                       struct widget *widget);
 
 #endif

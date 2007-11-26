@@ -22,7 +22,7 @@ struct embed {
     unsigned num_redirects;
 
     struct widget *widget;
-    const struct processor_env *env;
+    struct processor_env *env;
     unsigned options;
 
     url_stream_t url_stream;
@@ -293,7 +293,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
           off_t request_content_length,
           istream_t request_body,
           struct widget *widget,
-          const struct processor_env *env,
+          struct processor_env *env,
           unsigned options)
 {
     struct embed *embed;

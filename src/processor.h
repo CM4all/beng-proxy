@@ -27,7 +27,7 @@ struct widget;
 struct processor_env;
 
 typedef istream_t (*processor_widget_callback_t)(pool_t pool,
-                                                 const struct processor_env *env,
+                                                 struct processor_env *env,
                                                  struct widget *widget);
 
 struct processor_env {
@@ -92,7 +92,7 @@ processor_env_dup(pool_t pool, const struct processor_env *env)
 istream_t attr_malloc
 processor_new(pool_t pool, istream_t istream,
               struct widget *widget,
-              const struct processor_env *env,
+              struct processor_env *env,
               unsigned options);
 
 #endif

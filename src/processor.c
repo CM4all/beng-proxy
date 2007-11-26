@@ -30,7 +30,7 @@ struct processor {
     pool_t widget_pool;
 
     struct widget *widget;
-    const struct processor_env *env;
+    struct processor_env *env;
     unsigned options;
 
     struct replace replace;
@@ -228,7 +228,7 @@ static const struct istream_handler processor_input_handler = {
 istream_t
 processor_new(pool_t pool, istream_t istream,
               struct widget *widget,
-              const struct processor_env *env,
+              struct processor_env *env,
               unsigned options)
 {
     processor_t processor;
@@ -572,7 +572,7 @@ parser_attr_finished(struct parser *parser)
 }
 
 static istream_t
-embed_widget(pool_t pool, const struct processor_env *env, struct widget *widget)
+embed_widget(pool_t pool, struct processor_env *env, struct widget *widget)
 {
     if (widget->class == NULL || widget->class->uri == NULL)
         return istream_string_new(pool, "Error: no widget class specified");

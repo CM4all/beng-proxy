@@ -14,7 +14,7 @@
 #include <string.h>
 
 static istream_t
-embed_inline_widget(pool_t pool, const struct processor_env *env,
+embed_inline_widget(pool_t pool, struct processor_env *env,
                     struct widget *widget)
 {
     http_method_t method = HTTP_METHOD_GET;
@@ -96,7 +96,7 @@ embed_img_widget(pool_t pool, const struct processor_env *env,
 }
 
 istream_t
-embed_widget_callback(pool_t pool, const struct processor_env *env,
+embed_widget_callback(pool_t pool, struct processor_env *env,
                       struct widget *widget)
 {
     assert(pool != NULL);
