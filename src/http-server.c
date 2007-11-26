@@ -701,7 +701,6 @@ http_server_response_stream_eof(void *ctx)
 
     pool_ref(connection->pool);
 
-    istream_handler_clear(connection->response.istream);
     connection->response.istream = NULL;
 
     if (connection->request.read_state == READ_BODY) {
