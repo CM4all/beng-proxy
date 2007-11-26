@@ -255,7 +255,7 @@ embed_response_response(http_status_t status, strmap_t headers,
            an error message instead of widget contents */
 
         istream_close(input);
-        input = istream_string_new(istream_pool(embed->delayed),
+        input = istream_string_new(istream_pool(delayed),
                                    "Not an HTML document");
     }
 
