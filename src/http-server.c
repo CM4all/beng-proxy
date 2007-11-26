@@ -701,7 +701,7 @@ http_server_response_stream_eof(void *ctx)
 
     pool_ref(connection->pool);
 
-    connection->response.istream = NULL;
+    connection->response.writing = 0;
 
     if (connection->request.read_state == READ_BODY) {
         /* We are still reading the request body, which we don't need
@@ -714,7 +714,6 @@ http_server_response_stream_eof(void *ctx)
     http_server_request_free(&connection->request.request);
 
     connection->request.read_state = READ_START;
-    connection->response.writing = 0;
 
     if (connection->keep_alive) {
         /* set up events for next request */
