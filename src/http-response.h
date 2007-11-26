@@ -26,6 +26,12 @@ struct http_response_handler_ref {
     void *ctx;
 };
 
+static inline int
+http_response_handler_defined(const struct http_response_handler_ref *ref)
+{
+    return ref->handler != NULL;
+}
+
 static inline void
 http_response_handler_clear(struct http_response_handler_ref *ref)
 {
@@ -83,13 +89,5 @@ http_response_handler_invoke_abort(struct http_response_handler_ref *ref)
 
     handler->abort(ref->ctx);
 }
-
-#ifndef NDEBUG
-static inline int
-http_response_handler_cleared(const struct http_response_handler_ref *ref)
-{
-    return ref->handler == NULL;
-}
-#endif
 
 #endif
