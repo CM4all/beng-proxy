@@ -124,7 +124,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js $(FILTER_TESTS) test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-processor
+	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-processor
 
 src/cm4all-beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS) -lz
@@ -168,13 +168,16 @@ FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
 $(FILTER_TESTS): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS) -lz
 
-$(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES)): check-filter-%: test/t-istream-%
+test/t-istream-processor: test/t-istream-processor.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/fifo-buffer.o src/format.o src/uri.o src/session.o src/strmap.o src/hashmap.o src/pstring.o src/penv.o src/processor.o src/istream-subst.o src/widget.o src/growing-buffer.o src/js-filter.o src/replace.o src/widget-ref.o src/widget-uri.o src/args.o src/widget-session.o src/parser.o src/widget-class.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
+
+$(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor): check-filter-%: test/t-istream-%
 	exec $<
 
 check-http-server: test/t-http-server-mirror
 	./test/t-http-server.py
 
-check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES)) check-http-server
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) check-http-server
 
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb
