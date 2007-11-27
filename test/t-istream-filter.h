@@ -2,6 +2,13 @@
 
 #include <stdio.h>
 
+#ifndef FILTER_CLEANUP
+static void
+cleanup(void)
+{
+}
+#endif
+
 struct ctx {
     istream_t input;
 };
@@ -117,6 +124,8 @@ int main(int argc, char **argv) {
 
     pool_commit();
 
+    cleanup();
+
     /* now with istream_byte */
 
     should_exit = 0;
@@ -134,6 +143,8 @@ int main(int argc, char **argv) {
 
     pool_commit();
 
+    cleanup();
+
     /* now with fail */
 
     should_exit = 0;
@@ -150,6 +161,8 @@ int main(int argc, char **argv) {
         istream_read_expect(istream);
 
     pool_commit();
+
+    cleanup();
 
     /* fail after 1 byte of input */
 
@@ -172,6 +185,8 @@ int main(int argc, char **argv) {
 
     pool_commit();
 
+    cleanup();
+
     /* abort without handler */
 
     should_exit = 0;
@@ -185,6 +200,8 @@ int main(int argc, char **argv) {
     pool_commit();
 
     assert(!should_exit);
+
+    cleanup();
 
     /* abort with handler */
 
@@ -202,6 +219,8 @@ int main(int argc, char **argv) {
 
     assert(should_exit);
 
+    cleanup();
+
     /* abort in handler */
 
     should_exit = 0;
@@ -218,6 +237,8 @@ int main(int argc, char **argv) {
 
     pool_unref(pool);
     pool_commit();
+
+    cleanup();
 
     /* abort after 1 byte of output */
 
@@ -239,6 +260,8 @@ int main(int argc, char **argv) {
         istream_read_expect(istream);
 
     pool_commit();
+
+    cleanup();
 
     /* cleanup */
 
