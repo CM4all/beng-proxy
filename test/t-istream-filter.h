@@ -1,3 +1,5 @@
+#include <event.h>
+
 struct ctx {
     istream_t input;
 };
@@ -83,12 +85,15 @@ istream_read_expect(istream_t istream)
 
 
 int main(int argc, char **argv) {
+    struct event_base *event_base;
     pool_t root_pool, pool;
     istream_t istream;
     struct ctx ctx;
 
     (void)argc;
     (void)argv;
+
+    event_base = event_init();
 
     root_pool = pool_new_libc(NULL, "root");
 
@@ -239,4 +244,6 @@ int main(int argc, char **argv) {
     pool_commit();
 
     pool_recycler_clear();
+
+    event_base_free(event_base);
 }

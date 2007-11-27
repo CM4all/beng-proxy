@@ -166,7 +166,7 @@ FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate
 FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
 
 $(FILTER_TESTS): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) -lz
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS) -lz
 
 $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES)): check-filter-%: test/t-istream-%
 	exec $<
