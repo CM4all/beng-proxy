@@ -1,5 +1,7 @@
 #include <event.h>
 
+#include <stdio.h>
+
 struct ctx {
     istream_t input;
 };

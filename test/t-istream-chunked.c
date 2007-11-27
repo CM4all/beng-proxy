@@ -1,7 +1,5 @@
 #include "istream.h"
 
-#include <stdio.h>
-
 static istream_t
 create_input(pool_t pool)
 {
