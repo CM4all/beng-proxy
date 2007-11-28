@@ -163,7 +163,12 @@ dechunk_input_eof(void *ctx)
 {
     struct istream_dechunk *dechunk = ctx;
 
-    (void)dechunk;
+    istream_clear_unref(&dechunk->input);
+
+    if (dechunk->state != NONE) {
+        daemon_log(2, "premature EOF in dechunker");
+        dechunk_close(dechunk);
+    }
 }
 
 static void
