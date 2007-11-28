@@ -110,6 +110,8 @@ SOURCES = src/main.c \
 	src/format.c \
 	src/hashmap.c \
 	src/strmap.c \
+	src/stock.c \
+	src/hstock.c \
 	src/pstring.c \
 	src/pool.c
 
