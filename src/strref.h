@@ -92,6 +92,16 @@ strref_right(struct strref *dest, const struct strref *src, const char *start)
     strref_set2(dest, start, strref_end(src));
 }
 
+static attr_always_inline void
+strref_trunc(struct strref *s, const char *end)
+{
+    assert(s != NULL);
+    assert(s->data != NULL || s->length == 0);
+    assert(end >= s->data && end <= strref_end(s));
+
+    s->length = end - s->data;
+}
+
 static inline int
 strref_is_null(const struct strref *s)
 {
