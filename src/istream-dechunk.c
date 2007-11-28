@@ -50,7 +50,7 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     assert(dechunk->state == AFTER_SIZE);
     assert(dechunk->size == 0);
 
-    istream_clear_unref(&dechunk->input);
+    istream_clear_unref_handler(&dechunk->input);
 
     pool_ref(dechunk->output.pool);
     istream_invoke_eof(&dechunk->output);
