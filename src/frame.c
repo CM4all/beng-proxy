@@ -65,6 +65,9 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
     env2->frame = NULL;
     env2->widget_callback = embed_widget_callback;
 
+    /* clear the response_handler in the original env, because it is
+       reserved for us, and the other widgets should not use it
+       anymore */
     http_response_handler_clear(&env->response_handler);
 
     return embed_new(pool,
