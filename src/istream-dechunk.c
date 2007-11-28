@@ -37,7 +37,7 @@ dechunk_close(struct istream_dechunk *dechunk)
     dechunk->state = CLOSED;
 
     if (dechunk->input != NULL)
-        istream_free_unref_handler(&dechunk->input);
+        istream_clear_unref_handler(&dechunk->input);
     
     istream_invoke_abort(&dechunk->output);
 }
