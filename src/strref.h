@@ -51,10 +51,20 @@ strref_set_c(struct strref *s, const char *p)
     s->data = p;
 }
 
+static inline int
+strref_is_null(const struct strref *s)
+{
+    assert(s != NULL);
+    assert(s->data != NULL || s->length == 0);
+
+    return s->data == NULL;
+}
+
 static attr_always_inline int
 strref_is_empty(const struct strref *s)
 {
     assert(s != NULL);
+    assert(s->data != NULL || s->length == 0);
 
     return s->length == 0;
 }
