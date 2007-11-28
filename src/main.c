@@ -9,6 +9,8 @@
 #include "instance.h"
 #include "connection.h"
 #include "session.h"
+#include "translate.h"
+#include "stock.h"
 
 #include <daemon/daemonize.h>
 
@@ -48,6 +50,9 @@ exit_event_callback(int fd, short event, void *ctx)
     kill_children(instance);
 
     session_manager_deinit();
+
+    if (instance->translate_stock != NULL)
+        stock_free(&instance->translate_stock);
 }
 
 void
@@ -117,6 +122,9 @@ int main(int argc, char **argv)
         perror("listener_tcp_port_new() failed");
         exit(2);
     }
+
+    instance.translate_stock = translate_stock_new(instance.pool,
+                                                   instance.config.translation_socket);
 
     /* daemonize */
 

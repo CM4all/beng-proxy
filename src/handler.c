@@ -10,6 +10,7 @@
 #include "config.h"
 #include "args.h"
 #include "session.h"
+#include "instance.h"
 
 #include <daemon/log.h>
 
@@ -146,7 +147,7 @@ request_args_parse(struct request *request)
 
 static void
 ask_translation_server(struct http_server_request *request,
-                       const struct config *config)
+                       struct stock *stock)
 {
     struct request *request2;
     int ret;
@@ -172,7 +173,7 @@ ask_translation_server(struct http_server_request *request,
 
     request_args_parse(request2);
 
-    translate(request->pool, config, &request2->translate.request,
+    translate(request->pool, stock, &request2->translate.request,
               translate_callback, request2);
 }
 
@@ -241,7 +242,7 @@ my_http_server_connection_request(struct http_server_request *request,
     if (connection->config->translation_socket == NULL)
         serve_document_root_file(request, connection->config);
     else
-        ask_translation_server(request, connection->config);
+        ask_translation_server(request, connection->instance->translate_stock);
 }
 
 static void

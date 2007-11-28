@@ -10,7 +10,7 @@
 #include "pool.h"
 #include "http.h"
 
-struct config;
+struct stock;
 
 struct translate_request {
     const char *remote_host;
@@ -36,9 +36,12 @@ struct translate_response {
 typedef void (*translate_callback_t)(const struct translate_response *response,
                                      void *ctx);
 
+struct stock *
+translate_stock_new(pool_t pool, const char *translation_socket);
+
 void
 translate(pool_t pool,
-          const struct config *config,
+          struct stock *stock,
           const struct translate_request *request,
           translate_callback_t callback,
           void *ctx);

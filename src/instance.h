@@ -36,6 +36,9 @@ struct instance {
     struct event child_event, respawn_event;
     struct list_head children;
     unsigned num_children;
+
+    /* stock */
+    struct stock *translate_stock;
 };
 
 struct client_connection;

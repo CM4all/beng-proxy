@@ -5,10 +5,11 @@
  */
 
 #include "translate.h"
-#include "config.h"
+#include "stock.h"
 #include "socket-util.h"
 #include "growing-buffer.h"
 #include "compiler.h"
+#include "stock.h"
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
@@ -28,6 +29,7 @@ struct packet_reader {
 
 struct translate_connection {
     pool_t pool;
+    struct stock *stock;
     int fd;
     struct event event;
     growing_buffer_t request;
@@ -201,7 +203,7 @@ translate_handle_packet(struct translate_connection *connection,
 
     switch (command) {
     case TRANSLATE_END:
-        close(connection->fd);
+        stock_put(connection->stock, (void*)(size_t)connection->fd, 0);
         connection->fd = -1;
 
         connection->callback(&connection->response, connection->ctx);
@@ -371,49 +373,108 @@ translate_try_write(struct translate_connection *connection)
 
 
 /*
- * constructor
+ * stock class
  *
  */
 
-void
-translate(pool_t pool,
-          const struct config *config,
-          const struct translate_request *request,
-          translate_callback_t callback,
-          void *ctx)
+static void *
+translate_stock_create(void *ctx, const char *uri)
 {
     int fd, ret;
-    struct translate_connection *connection;
 
-    assert(pool != NULL);
-    assert(config != NULL);
-    assert(request != NULL);
-    assert(request->uri != NULL);
-    assert(callback != NULL);
+    (void)ctx;
 
-    if (config->translation_socket == NULL) {
-        callback(&error, ctx);
-        return;
-    }
-
-    fd = socket_unix_connect(config->translation_socket);
+    fd = socket_unix_connect(uri);
     if (fd < 0) {
         daemon_log(1, "failed to connect to %s: %s\n",
-                   config->translation_socket, strerror(errno));
-        callback(&error, ctx);
-        return;
+                   uri, strerror(errno));
+        return NULL;
     }
 
     ret = socket_set_nonblock(fd, 1);
     if (fd < 0) {
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));
+        return NULL;
+    }
+
+    return (void*)(size_t)fd;
+}
+
+static int
+translate_stock_validate(void *ctx, void *object)
+{
+    int fd = (int)(size_t)object;
+
+    assert(fd > 0);
+
+    (void)ctx;
+
+    return 1;
+}
+
+static void
+translate_stock_destroy(void *ctx, void *object)
+{
+    int fd = (int)(size_t)object;
+
+    assert(fd > 0);
+
+    (void)ctx;
+
+    close(fd);
+}
+
+static struct stock_class translate_stock_class = {
+    .create = translate_stock_create,
+    .validate = translate_stock_validate,
+    .destroy = translate_stock_destroy,
+};
+
+
+/*
+ * constructor
+ *
+ */
+
+struct stock *
+translate_stock_new(pool_t pool, const char *translation_socket)
+{
+    return stock_new(pool, &translate_stock_class, NULL, translation_socket);
+}
+
+void
+translate(pool_t pool,
+          struct stock *stock,
+          const struct translate_request *request,
+          translate_callback_t callback,
+          void *ctx)
+{
+    void *object;
+    int fd;
+    struct translate_connection *connection;
+
+    assert(pool != NULL);
+    assert(request != NULL);
+    assert(request->uri != NULL);
+    assert(callback != NULL);
+
+    if (stock == NULL) {
         callback(&error, ctx);
         return;
     }
 
+    object = stock_get(stock);
+    if (object == NULL) {
+        callback(&error, ctx);
+        return;
+    }
+
+    fd = (int)(size_t)object;
+
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
+    connection->stock = stock;
     connection->fd = fd;
     connection->request = marshal_request(pool, request);
     connection->callback = callback;
