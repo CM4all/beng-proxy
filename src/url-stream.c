@@ -80,6 +80,9 @@ url_stream_connection_free(void *ctx)
 {
     url_stream_t us = ctx;
 
+    if (us->http == NULL)
+        return;
+
     us->http = NULL;
 
     url_stream_close(us);
