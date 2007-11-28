@@ -100,7 +100,8 @@ istream_byte_close(istream_t istream)
 
     assert(byte->input != NULL);
 
-    istream_free_unref(&byte->input);
+    istream_free_unref_handler(&byte->input);
+    istream_invoke_abort(&byte->output);
 }
 
 static const struct istream istream_byte = {

@@ -99,7 +99,8 @@ js_filter_close(istream_t istream)
 
     assert(js->input != NULL);
 
-    istream_free_unref(&js->input);
+    istream_free_unref_handler(&js->input);
+    istream_invoke_abort(&js->output);
 }
 
 static const struct istream js_filter = {
