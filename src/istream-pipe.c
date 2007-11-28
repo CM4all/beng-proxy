@@ -165,7 +165,7 @@ pipe_input_eof(void *ctx)
 {
     struct istream_pipe *p = ctx;
 
-    istream_clear_unref_handler(&p->input);
+    istream_clear_unref(&p->input);
 
     if (p->fds[1] >= 0) {
         close(p->fds[1]);

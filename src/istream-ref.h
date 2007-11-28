@@ -81,7 +81,6 @@ istream_assign_ref_handler(istream_t *istream_r, istream_t istream,
 
 #ifdef DEBUG_POOL_REF
 #define istream_clear_unref(...) istream_clear_unref_debug(__VA_ARGS__, const char *file, unsigned line)
-#define istream_clear_unref_handler(...) istream_clear_unref_handler_debug(__VA_ARGS__, const char *file, unsigned line)
 #endif
 
 static inline void
@@ -89,15 +88,6 @@ istream_clear_unref(istream_t *istream_r)
 {
     struct istream *istream = _istream_opaque_cast(*istream_r);
     *istream_r = NULL;
-    x_pool_unref(istream->pool);
-}
-
-static inline void
-istream_clear_unref_handler(istream_t *istream_r)
-{
-    struct istream *istream = _istream_opaque_cast(*istream_r);
-    *istream_r = NULL;
-    istream_handler_clear(istream_struct_cast(istream));
     x_pool_unref(istream->pool);
 }
 
@@ -109,8 +99,6 @@ istream_clear_unref_handler(istream_t *istream_r)
 #define istream_assign_ref_handler(...) istream_assign_ref_handler_debug(__VA_ARGS__, __FILE__, __LINE__)
 #undef istream_clear_unref
 #define istream_clear_unref(...) istream_clear_unref_debug(__VA_ARGS__, __FILE__, __LINE__)
-#undef istream_clear_unref_handler
-#define istream_clear_unref_handler(...) istream_clear_unref_handler_debug(__VA_ARGS__, __FILE__, __LINE__)
 #endif
 
 #undef x_pool_ref

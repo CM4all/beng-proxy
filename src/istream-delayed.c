@@ -60,8 +60,7 @@ delayed_input_eof(void *ctx)
 {
     struct istream_delayed *delayed = ctx;
 
-    istream_clear_unref_handler(&delayed->input);
-
+    istream_clear_unref(&delayed->input);
     istream_invoke_eof(&delayed->output);
 }
 

@@ -117,7 +117,7 @@ chunked_source_eof(void *ctx)
     assert(chunked->input != NULL);
     assert(chunked->buffer != NULL);
 
-    istream_clear_unref_handler(&chunked->input);
+    istream_clear_unref(&chunked->input);
 
     dest = fifo_buffer_write(chunked->buffer, &max_length);
     assert(dest != NULL && max_length >= 5); /* XXX */

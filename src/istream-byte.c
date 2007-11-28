@@ -47,8 +47,7 @@ byte_source_eof(void *ctx)
 
     assert(byte->input != NULL);
 
-    istream_clear_unref_handler(&byte->input);
-
+    istream_clear_unref(&byte->input);
     istream_invoke_eof(&byte->output);
 }
 

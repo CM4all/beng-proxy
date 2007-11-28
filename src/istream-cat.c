@@ -80,7 +80,7 @@ cat_input_eof(void *ctx)
 
     assert(input->istream != NULL);
 
-    istream_clear_unref_handler(&input->istream);
+    istream_clear_unref(&input->istream);
 
     if (input == cat->current) {
         do {

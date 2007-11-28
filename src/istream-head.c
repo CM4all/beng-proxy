@@ -79,7 +79,7 @@ head_source_eof(void *ctx)
 {
     struct istream_head *head = ctx;
 
-    istream_clear_unref_handler(&head->input);
+    istream_clear_unref(&head->input);
     istream_invoke_eof(&head->output);
 }
 
