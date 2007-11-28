@@ -70,14 +70,13 @@ static inline void
 istream_invoke_eof(struct istream *istream)
 {
     assert(istream != NULL);
-    assert(istream->handler != NULL);
     assert(!istream->eof);
 
 #ifndef NDEBUG
     istream->eof = 1;
 #endif
 
-    if (istream->handler->eof != NULL)
+    if (istream->handler != NULL && istream->handler->eof != NULL)
         istream->handler->eof(istream->handler_ctx);
 }
 
