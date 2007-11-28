@@ -96,8 +96,10 @@ strref_cmp(const struct strref *s,
     assert(s->data != NULL || s->length == 0);
     assert(p != NULL || length == 0);
 
-    return s->length == length &&
-        memcmp(s->data, p, length);
+    if (s->length != length)
+        return 1; /* XXX -1 or 1? */
+
+    return memcmp(s->data, p, length);
 }
 
 static attr_always_inline int
