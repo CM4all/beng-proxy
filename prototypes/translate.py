@@ -70,6 +70,7 @@ class Request:
         self.uri = None
         self.session = None
         self.param = None
+        self.remote_host = None
 
     def packetReceived(self, packet):
         if packet.command == TRANSLATE_END:
@@ -82,6 +83,8 @@ class Request:
             self.session = packet.payload
         elif packet.command == TRANSLATE_PARAM:
             self.param = packet.payload
+        elif packet.command == TRANSLATE_REMOTE_HOST:
+            self.remote_host = packet.payload
         else:
             print "Invalid command:", packet.command
         return False
