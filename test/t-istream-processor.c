@@ -10,7 +10,7 @@
 static istream_t
 create_input(pool_t pool)
 {
-    return istream_string_new(pool, "foo &c:url; ");
+    return istream_string_new(pool, "foo &c:url; <c:widget id=\"foo\" href=\"http://localhost:8080/foo\"/>");
 }
 
 static istream_t
