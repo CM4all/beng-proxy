@@ -229,6 +229,10 @@ translate_handle_packet(struct translate_connection *connection,
         connection->response.path = payload;
         break;
 
+    case TRANSLATE_PATH_INFO:
+        connection->response.path_info = payload;
+        break;
+
     case TRANSLATE_CONTENT_TYPE:
         connection->response.content_type = payload;
         break;

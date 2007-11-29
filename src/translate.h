@@ -23,6 +23,7 @@ struct translate_request {
 struct translate_response {
     http_status_t status;
     const char *path;
+    const char *path_info;
     const char *content_type;
     const char *proxy;
     const char *redirect;
