@@ -570,6 +570,29 @@ p_malloc(pool_t pool, size_t size)
     return internal_malloc(pool, align_size(size));
 }
 
+static void
+p_free_libc(pool_t pool, void *ptr)
+{
+    struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)(((char*)ptr) -
+                                                               offsetof(struct libc_pool_chunk, data));
+
+    (void)pool;
+
+    list_remove(&chunk->siblings);
+    free(chunk);
+}
+
+void
+p_free(pool_t pool, void *ptr)
+{
+    assert(pool != NULL);
+    assert(ptr != NULL);
+    assert(pool_contains(pool, ptr, 1));
+
+    if (pool->type == POOL_LIBC)
+        p_free_libc(pool, ptr);
+}
+
 static inline void
 clear_memory(void *p, size_t size)
 {
