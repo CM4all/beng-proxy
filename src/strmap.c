@@ -132,7 +132,9 @@ strmap_remove(strmap_t map, const char *key)
             prev->pair.key = NULL;
             prev->pair.value = NULL;
         } else {
-            *prev = *prev->next;
+            slot = prev->next;
+            *prev = *slot;
+            p_free(map->pool, slot);
         }
         return value;
     }
@@ -142,8 +144,10 @@ strmap_remove(strmap_t map, const char *key)
         assert(slot->pair.value != NULL);
 
         if (strcmp(slot->pair.key, key) == 0) {
+            const char *value = slot->pair.value;
             prev->next = slot->next;
-            return slot->pair.value;
+            p_free(map->pool, slot);
+            return value;
         }
     }
 
