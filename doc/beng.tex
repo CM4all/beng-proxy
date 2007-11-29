@@ -143,6 +143,7 @@ side closes the connection.
 
 \begin{itemize}
 \item client sends \texttt{BEGIN}
+\item client sends \texttt{REMOTE\_HOST} ``192.168.1.77''
 \item client sends \texttt{HOST} ``www.example.com''
 \item client sends \texttt{URI} ``/foo/index.html''
 \item client sends \texttt{END}
@@ -175,6 +176,8 @@ just the raw string, without terminating zero.
 \subsubsection{Request}
 
 \begin{tabular}{|l|p{10cm}|}
+\hline
+\texttt{REMOTE\_HOST} & the client's IP address or host name \\
 \hline
 \texttt{HOST} & the \texttt{Host} HTTP request header \\
 \hline
