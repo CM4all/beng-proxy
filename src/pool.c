@@ -36,7 +36,7 @@ enum pool_type {
 };
 
 struct libc_pool_chunk {
-    struct libc_pool_chunk *next;
+    struct list_head siblings;
     unsigned char data[sizeof(size_t)];
 };
 
@@ -76,7 +76,7 @@ struct pool {
 #endif
 
     union {
-        struct libc_pool_chunk *libc;
+        struct list_head libc;
         struct linear_pool_area *linear;
         struct pool *recycler;
     } current_area;
@@ -241,7 +241,7 @@ pool_new_libc(pool_t parent, const char *name)
 {
     pool_t pool = pool_new(parent, name);
     pool->type = POOL_LIBC;
-    pool->current_area.libc = NULL;
+    list_init(&pool->current_area.libc);
     return pool;
 }
 
@@ -341,9 +341,9 @@ pool_destroy(pool_t pool, pool_t reparent_to)
 
     switch (pool->type) {
     case POOL_LIBC:
-        while (pool->current_area.libc != NULL) {
-            struct libc_pool_chunk *chunk = pool->current_area.libc;
-            pool->current_area.libc = chunk->next;
+        while (!list_empty(&pool->current_area.libc)) {
+            struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)pool->current_area.libc.next;
+            list_remove(&chunk->siblings);
             free(chunk);
         }
         break;
@@ -523,8 +523,7 @@ static void *
 p_malloc_libc(pool_t pool, size_t size)
 {
     struct libc_pool_chunk *chunk = xmalloc(sizeof(*chunk) - sizeof(chunk->data) + size);
-    chunk->next = pool->current_area.libc;
-    pool->current_area.libc = chunk;
+    list_add(&chunk->siblings, &pool->current_area.libc);
     return chunk->data;
 }
 
