@@ -130,3 +130,27 @@ stock_put(struct stock_item *item, int destroy)
         ++stock->num_idle;
     }
 }
+
+void
+stock_del(struct stock_item *item)
+{
+    struct stock *stock;
+
+    assert(item != NULL);
+    assert(item->is_idle);
+
+    stock = item->stock;
+
+    assert(stock != NULL);
+    assert(stock->num_idle > 0);
+    assert(!list_empty(&stock->idle));
+    assert(pool_contains(stock->pool, item, stock->class->item_size));
+    assert(item->list_head.next->prev == &item->list_head);
+    assert(item->list_head.prev->next == &item->list_head);
+
+    list_remove(&item->list_head);
+    --stock->num_idle;
+
+    stock->class->destroy(stock->class_ctx, item);
+    p_free(stock->pool, item);
+}
