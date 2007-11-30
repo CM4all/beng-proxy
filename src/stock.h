@@ -1,7 +1,10 @@
 /*
  * Objects in stock.  May be used for connection pooling.
  *
- * The 'stock' class holds a number of idle objects.
+ * The 'stock' class holds a number of idle objects.  The 'hstock'
+ * class is a hash table of any number of 'stock' objects, each with a
+ * different URI.  The URI may be a hostname:port pair for HTTP client
+ * connections.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
