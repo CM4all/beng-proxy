@@ -1,6 +1,8 @@
 /*
  * Objects in stock.  May be used for connection pooling.
  *
+ * The 'stock' class holds a number of idle objects.
+ *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
