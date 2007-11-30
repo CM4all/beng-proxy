@@ -19,6 +19,7 @@
 struct stock_item {
     struct list_head list_head;
     struct stock *stock;
+    int is_idle;
 };
 
 struct stock_class {

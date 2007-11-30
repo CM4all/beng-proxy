@@ -83,8 +83,12 @@ stock_get(struct stock *stock)
         list_remove(&item->list_head);
         --stock->num_idle;
 
-        if (stock->class->validate(stock->class_ctx, item))
+        assert(item->is_idle);
+
+        if (stock->class->validate(stock->class_ctx, item)) {
+            item->is_idle = 0;
             return item;
+        }
 
         stock->class->destroy(stock->class_ctx, item);
         p_free(stock->pool, item);
@@ -92,6 +96,7 @@ stock_get(struct stock *stock)
 
     item = p_malloc(stock->pool, stock->class->item_size);
     item->stock = stock;
+    item->is_idle = 0;
 
     ret = stock->class->create(stock->class_ctx, item, stock->uri);
     if (!ret) {
@@ -108,6 +113,7 @@ stock_put(struct stock_item *item, int destroy)
     struct stock *stock;
 
     assert(item != NULL);
+    assert(!item->is_idle);
 
     stock = item->stock;
 
@@ -119,6 +125,7 @@ stock_put(struct stock_item *item, int destroy)
         stock->class->destroy(stock->class_ctx, item);
         p_free(stock->pool, item);
     } else {
+        item->is_idle = 1;
         list_add(&item->list_head, &stock->idle);
         ++stock->num_idle;
     }
