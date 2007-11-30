@@ -22,6 +22,13 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx)
 {
     struct hstock *hstock;
 
+    assert(pool != NULL);
+    assert(class != NULL);
+    assert(class->item_size > sizeof(struct stock_item));
+    assert(class->create != NULL);
+    assert(class->validate != NULL);
+    assert(class->destroy != NULL);
+
     pool = pool_new_linear(pool, "hstock", 1024);
     hstock = p_malloc(pool, sizeof(*hstock));
     hstock->pool = pool;
@@ -37,6 +44,9 @@ hstock_free(struct hstock **hstock_r)
 {
     struct hstock *hstock;
     const struct hashmap_pair *pair;
+
+    assert(hstock_r != NULL);
+    assert(*hstock_r != NULL);
 
     hstock = *hstock_r;
     *hstock_r = NULL;
@@ -55,7 +65,11 @@ hstock_free(struct hstock **hstock_r)
 struct stock_item *
 hstock_get(struct hstock *hstock, const char *uri)
 {
-    struct stock *stock = (struct stock *)hashmap_get(hstock->stocks, uri);
+    struct stock *stock;
+
+    assert(hstock != NULL);
+
+    stock = (struct stock *)hashmap_get(hstock->stocks, uri);
 
     if (stock == NULL) {
         stock = stock_new(hstock->pool, hstock->class, hstock->class_ctx, uri);
@@ -71,6 +85,7 @@ hstock_put(struct hstock *hstock, const char *uri, struct stock_item *object, in
     struct stock *stock = (struct stock *)hashmap_get(hstock->stocks, uri);
 
     assert(stock != NULL);
+    assert(object != NULL);
 
     stock_put(stock, object, destroy);
 }

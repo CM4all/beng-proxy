@@ -24,7 +24,12 @@ stock_new(pool_t pool, const struct stock_class *class,
 {
     struct stock *stock;
 
+    assert(pool != NULL);
+    assert(class != NULL);
     assert(class->item_size > sizeof(struct stock_item));
+    assert(class->create != NULL);
+    assert(class->validate != NULL);
+    assert(class->destroy != NULL);
 
     pool = pool_new_linear(pool, "stock", 1024);
     stock = p_malloc(pool, sizeof(*stock));
@@ -41,7 +46,12 @@ stock_new(pool_t pool, const struct stock_class *class,
 void
 stock_free(struct stock **stock_r)
 {
-    struct stock *stock = *stock_r;
+    struct stock *stock;
+
+    assert(stock_r != NULL);
+    assert(*stock_r != NULL);
+
+    stock = *stock_r;
     *stock_r = NULL;
 
     while (stock->num_idle > 0) {
@@ -63,6 +73,8 @@ stock_get(struct stock *stock)
 {
     struct stock_item *item;
     int ret;
+
+    assert(stock != NULL);
 
     while (stock->num_idle > 0) {
         assert(!list_empty(&stock->idle));
@@ -90,7 +102,8 @@ stock_get(struct stock *stock)
 void
 stock_put(struct stock *stock, struct stock_item *item, int destroy)
 {
-    (void)destroy;
+    assert(stock != NULL);
+    assert(item != NULL);
 
     if (destroy || stock->num_idle >= 8 ||
         !stock->class->validate(stock->class_ctx, item)) {
