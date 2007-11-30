@@ -8,11 +8,18 @@
 #define __BENG_STOCK_H
 
 #include "pool.h"
+#include "list.h"
+
+struct stock_item {
+    struct list_head list_head;
+};
 
 struct stock_class {
-    void *(*create)(void *ctx, const char *uri);
-    int (*validate)(void *ctx, void *object);
-    void (*destroy)(void *ctx, void *object);
+    size_t item_size;
+
+    int (*create)(void *ctx, struct stock_item *item, const char *uri);
+    int (*validate)(void *ctx, struct stock_item *item);
+    void (*destroy)(void *ctx, struct stock_item *item);
 };
 
 
@@ -27,11 +34,11 @@ stock_new(pool_t pool, const struct stock_class *class,
 void
 stock_free(struct stock **stock_r);
 
-void *
+struct stock_item *
 stock_get(struct stock *stock);
 
 void
-stock_put(struct stock *stock, void *object, int destroy);
+stock_put(struct stock *stock, struct stock_item *item, int destroy);
 
 
 /* hstock.c */
@@ -44,11 +51,12 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx);
 void
 hstock_free(struct hstock **hstock_r);
 
-void *
+struct stock_item *
 hstock_get(struct hstock *hstock, const char *uri);
 
 void
-hstock_put(struct hstock *hstock, const char *uri, void *object, int destroy);
+hstock_put(struct hstock *hstock, const char *uri, struct stock_item *item,
+           int destroy);
 
 
 #endif

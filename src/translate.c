@@ -28,6 +28,8 @@ struct packet_reader {
 };
 
 struct translate_connection {
+    struct stock_item stock_item;
+
     pool_t pool;
     struct stock *stock;
     int fd;
@@ -203,10 +205,9 @@ translate_handle_packet(struct translate_connection *connection,
 
     switch (command) {
     case TRANSLATE_END:
-        stock_put(connection->stock, (void*)(size_t)connection->fd, 0);
-        connection->fd = -1;
-
         connection->callback(&connection->response, connection->ctx);
+        stock_put(connection->stock, &connection->stock_item, 0);
+        connection->stock = NULL;
         break;
 
     case TRANSLATE_BEGIN:
@@ -303,7 +304,7 @@ translate_try_read(struct translate_connection *connection)
                                 connection->reader.payload == NULL ? "" : connection->reader.payload,
                                 connection->reader.header.length);
         packet_reader_init(&connection->reader);
-    } while (connection->fd >= 0);
+    } while (connection->fd >= 0 && connection->stock != NULL);
 }
 
 
@@ -381,55 +382,57 @@ translate_try_write(struct translate_connection *connection)
  *
  */
 
-static void *
-translate_stock_create(void *ctx, const char *uri)
+static int
+translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
 {
-    int fd, ret;
+    struct translate_connection *connection = (struct translate_connection *)item;
+    int ret;
 
     (void)ctx;
 
-    fd = socket_unix_connect(uri);
-    if (fd < 0) {
+    connection->fd = socket_unix_connect(uri);
+    if (connection->fd < 0) {
         daemon_log(1, "failed to connect to %s: %s\n",
                    uri, strerror(errno));
-        return NULL;
+        return 0;
     }
 
-    ret = socket_set_nonblock(fd, 1);
-    if (fd < 0) {
+    ret = socket_set_nonblock(connection->fd, 1);
+    if (connection->fd < 0) {
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));
-        return NULL;
+        close(connection->fd);
+        return 0;
     }
-
-    return (void*)(size_t)fd;
-}
-
-static int
-translate_stock_validate(void *ctx, void *object)
-{
-    int fd = (int)(size_t)object;
-
-    assert(fd > 0);
-
-    (void)ctx;
 
     return 1;
 }
 
-static void
-translate_stock_destroy(void *ctx, void *object)
+static int
+translate_stock_validate(void *ctx, struct stock_item *item)
 {
-    int fd = (int)(size_t)object;
-
-    assert(fd > 0);
+    struct translate_connection *connection = (struct translate_connection *)item;
 
     (void)ctx;
 
-    close(fd);
+    return connection->fd >= 0;
+}
+
+static void
+translate_stock_destroy(void *ctx, struct stock_item *item)
+{
+    struct translate_connection *connection = (struct translate_connection *)item;
+
+    (void)ctx;
+
+    if (connection->fd >= 0) {
+        close(connection->fd);
+        connection->fd = -1;
+    }
 }
 
 static struct stock_class translate_stock_class = {
+    .item_size = sizeof(struct translate_connection),
     .create = translate_stock_create,
     .validate = translate_stock_validate,
     .destroy = translate_stock_destroy,
@@ -454,8 +457,6 @@ translate(pool_t pool,
           translate_callback_t callback,
           void *ctx)
 {
-    void *object;
-    int fd;
     struct translate_connection *connection;
 
     assert(pool != NULL);
@@ -468,18 +469,14 @@ translate(pool_t pool,
         return;
     }
 
-    object = stock_get(stock);
-    if (object == NULL) {
+    connection = (struct translate_connection *)stock_get(stock);
+    if (connection == NULL) {
         callback(&error, ctx);
         return;
     }
 
-    fd = (int)(size_t)object;
-
-    connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
     connection->stock = stock;
-    connection->fd = fd;
     connection->request = marshal_request(pool, request);
     connection->callback = callback;
     connection->ctx = ctx;

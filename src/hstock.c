@@ -52,7 +52,7 @@ hstock_free(struct hstock **hstock_r)
     pool_unref(hstock->pool);
 }
 
-void *
+struct stock_item *
 hstock_get(struct hstock *hstock, const char *uri)
 {
     struct stock *stock = (struct stock *)hashmap_get(hstock->stocks, uri);
@@ -66,7 +66,7 @@ hstock_get(struct hstock *hstock, const char *uri)
 }
 
 void
-hstock_put(struct hstock *hstock, const char *uri, void *object, int destroy)
+hstock_put(struct hstock *hstock, const char *uri, struct stock_item *object, int destroy)
 {
     struct stock *stock = (struct stock *)hashmap_get(hstock->stocks, uri);
 

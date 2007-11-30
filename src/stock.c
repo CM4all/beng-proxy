@@ -5,14 +5,8 @@
  */
 
 #include "stock.h"
-#include "list.h"
 
 #include <assert.h>
-
-struct stock_item {
-    struct list_head list_head;
-    void *object;
-};
 
 struct stock {
     pool_t pool;
@@ -29,6 +23,8 @@ stock_new(pool_t pool, const struct stock_class *class,
           void *class_ctx, const char *uri)
 {
     struct stock *stock;
+
+    assert(class->item_size > sizeof(struct stock_item));
 
     pool = pool_new_linear(pool, "stock", 1024);
     stock = p_malloc(pool, sizeof(*stock));
@@ -56,43 +52,50 @@ stock_free(struct stock **stock_r)
         list_remove(&item->list_head);
         --stock->num_idle;
 
-        stock->class->destroy(stock->class_ctx, item->object);
+        stock->class->destroy(stock->class_ctx, item);
     }
 
     pool_unref(stock->pool);
 }
 
-void *
+struct stock_item *
 stock_get(struct stock *stock)
 {
-    while (stock->num_idle > 0) {
-        struct stock_item *item = (struct stock_item *)stock->idle.next;
+    struct stock_item *item;
+    int ret;
 
+    while (stock->num_idle > 0) {
         assert(!list_empty(&stock->idle));
 
+        item = (struct stock_item *)stock->idle.next;
         list_remove(&item->list_head);
         --stock->num_idle;
 
-        if (stock->class->validate(stock->class_ctx, item->object))
-            return item->object;
+        if (stock->class->validate(stock->class_ctx, item))
+            return item;
         else
-            stock->class->destroy(stock->class_ctx, item->object);
+            stock->class->destroy(stock->class_ctx, item);
     }
 
-    return stock->class->create(stock->class_ctx, stock->uri);
+    item = p_malloc(stock->pool, stock->class->item_size);
+    ret = stock->class->create(stock->class_ctx, item, stock->uri);
+    if (!ret) {
+        p_free(stock->pool, item);
+        return NULL;
+    }
+
+    return item;
 }
 
 void
-stock_put(struct stock *stock, void *object, int destroy)
+stock_put(struct stock *stock, struct stock_item *item, int destroy)
 {
     (void)destroy;
 
     if (destroy || stock->num_idle >= 8 ||
-        !stock->class->validate(stock->class_ctx, object)) {
-        stock->class->destroy(stock->class_ctx, object);
+        !stock->class->validate(stock->class_ctx, item)) {
+        stock->class->destroy(stock->class_ctx, item);
     } else {
-        struct stock_item *item = p_malloc(stock->pool, sizeof(*item));
-        item->object = object;
         list_add(&item->list_head, &stock->idle);
         ++stock->num_idle;
     }
