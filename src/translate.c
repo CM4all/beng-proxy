@@ -207,7 +207,7 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_END:
         connection->callback(&connection->response, connection->ctx);
         stock_put(connection->stock, &connection->stock_item, 0);
-        connection->stock = NULL;
+        connection->pool = NULL;
         break;
 
     case TRANSLATE_BEGIN:
@@ -304,7 +304,7 @@ translate_try_read(struct translate_connection *connection)
                                 connection->reader.payload == NULL ? "" : connection->reader.payload,
                                 connection->reader.header.length);
         packet_reader_init(&connection->reader);
-    } while (connection->fd >= 0 && connection->stock != NULL);
+    } while (connection->fd >= 0 && connection->pool != NULL);
 }
 
 
