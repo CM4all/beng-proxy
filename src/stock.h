@@ -48,6 +48,12 @@ stock_get(struct stock *stock);
 void
 stock_put(struct stock_item *item, int destroy);
 
+static inline int
+stock_item_is_idle(const struct stock_item *item)
+{
+    return item->is_idle;
+}
+
 
 /* hstock.c */
 
