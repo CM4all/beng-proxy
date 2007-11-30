@@ -170,6 +170,7 @@ translate_read_event_callback(int fd, short event, void *ctx)
         daemon_log(1, "read timeout on translation server\n");
         close(fd);
         connection->callback(&error, connection->ctx);
+        stock_put(&connection->stock_item, 1);
         return;
     }
 
@@ -189,6 +190,7 @@ translate_handle_packet(struct translate_connection *connection,
             close(connection->fd);
             connection->fd = -1;
             connection->callback(&error, connection->ctx);
+            stock_put(&connection->stock_item, 1);
             return;
         }
     } else {
@@ -197,6 +199,7 @@ translate_handle_packet(struct translate_connection *connection,
             close(connection->fd);
             connection->fd = -1;
             connection->callback(&error, connection->ctx);
+            stock_put(&connection->stock_item, 1);
             return;
         }
     }
@@ -217,6 +220,7 @@ translate_handle_packet(struct translate_connection *connection,
             close(connection->fd);
             connection->fd = -1;
             connection->callback(&error, connection->ctx);
+            stock_put(&connection->stock_item, 1);
             return;
         }
 
@@ -288,11 +292,13 @@ translate_try_read(struct translate_connection *connection)
                        strerror(errno));
             close(connection->fd);
             connection->callback(&error, connection->ctx);
+            stock_put(&connection->stock_item, 1);
             return;
         } else if (ret == 0) {
             daemon_log(1, "translation server aborted the connection\n");
             close(connection->fd);
             connection->callback(&error, connection->ctx);
+            stock_put(&connection->stock_item, 1);
             return;
         }
 
@@ -322,6 +328,7 @@ translate_write_event_callback(int fd, short event, void *ctx)
         daemon_log(1, "write timeout on translation server\n");
         close(fd);
         connection->callback(&error, connection->ctx);
+        stock_put(&connection->stock_item, 1);
         return;
     }
 
@@ -348,6 +355,7 @@ translate_try_write(struct translate_connection *connection)
                    strerror(errno));
         close(connection->fd);
         connection->callback(&error, connection->ctx);
+        stock_put(&connection->stock_item, 1);
         return;
     }
 
