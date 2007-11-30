@@ -16,16 +16,23 @@
 #include "pool.h"
 #include "list.h"
 
+struct stock_item;
+
+typedef void (*stock_callback_t)(void *ctx, struct stock_item *item);
+
 struct stock_item {
     struct list_head list_head;
     struct stock *stock;
     int is_idle;
+
+    stock_callback_t callback;
+    void *callback_ctx;
 };
 
 struct stock_class {
     size_t item_size;
 
-    int (*create)(void *ctx, struct stock_item *item, const char *uri);
+    void (*create)(void *ctx, struct stock_item *item, const char *uri);
     int (*validate)(void *ctx, struct stock_item *item);
     void (*destroy)(void *ctx, struct stock_item *item);
 };
@@ -42,8 +49,11 @@ stock_new(pool_t pool, const struct stock_class *class,
 void
 stock_free(struct stock **stock_r);
 
-struct stock_item *
-stock_get(struct stock *stock);
+void
+stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx);
+
+void
+stock_available(struct stock_item *item, int success);
 
 void
 stock_put(struct stock_item *item, int destroy);
@@ -68,8 +78,9 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx);
 void
 hstock_free(struct hstock **hstock_r);
 
-struct stock_item *
-hstock_get(struct hstock *hstock, const char *uri);
+void
+hstock_get(struct hstock *hstock, const char *uri,
+           stock_callback_t callback, void *callback_ctx);
 
 void
 hstock_put(struct hstock *hstock, const char *uri, struct stock_item *item,

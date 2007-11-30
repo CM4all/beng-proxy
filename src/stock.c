@@ -68,11 +68,10 @@ stock_free(struct stock **stock_r)
     pool_unref(stock->pool);
 }
 
-struct stock_item *
-stock_get(struct stock *stock)
+void
+stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
 {
     struct stock_item *item;
-    int ret;
 
     assert(stock != NULL);
 
@@ -87,7 +86,8 @@ stock_get(struct stock *stock)
 
         if (stock->class->validate(stock->class_ctx, item)) {
             item->is_idle = 0;
-            return item;
+            callback(callback_ctx, item);
+            return;
         }
 
         stock->class->destroy(stock->class_ctx, item);
@@ -97,14 +97,25 @@ stock_get(struct stock *stock)
     item = p_malloc(stock->pool, stock->class->item_size);
     item->stock = stock;
     item->is_idle = 0;
+    item->callback = callback;
+    item->callback_ctx = callback_ctx;
 
-    ret = stock->class->create(stock->class_ctx, item, stock->uri);
-    if (!ret) {
+    stock->class->create(stock->class_ctx, item, stock->uri);
+}
+
+void
+stock_available(struct stock_item *item, int success)
+{
+    struct stock *stock = item->stock;
+
+    if (success) {
+        item->callback(item->callback_ctx, item);
+    } else {
+        item->callback(item->callback_ctx, NULL);
+
+        stock->class->destroy(stock->class_ctx, item);
         p_free(stock->pool, item);
-        return NULL;
     }
-
-    return item;
 }
 
 void

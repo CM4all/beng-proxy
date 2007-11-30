@@ -26,6 +26,14 @@ struct packet_reader {
     size_t payload_position;
 };
 
+struct translate_request_and_callback {
+    pool_t pool;
+    const struct translate_request *request;
+
+    translate_callback_t callback;
+    void *callback_ctx;
+};
+
 struct translate_connection {
     struct stock_item stock_item;
 
@@ -421,7 +429,7 @@ translate_try_write(struct translate_connection *connection)
  *
  */
 
-static int
+static void
 translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
 {
     struct translate_connection *connection = (struct translate_connection *)item;
@@ -433,7 +441,8 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
     if (connection->fd < 0) {
         daemon_log(1, "failed to connect to %s: %s\n",
                    uri, strerror(errno));
-        return 0;
+        stock_available(item, 0);
+        return;
     }
 
     ret = socket_set_nonblock(connection->fd, 1);
@@ -441,12 +450,13 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));
         close(connection->fd);
-        return 0;
+        stock_available(item, 0);
+        return;
     }
 
     connection->event.ev_events = 0;
 
-    return 1;
+    stock_available(item, 1);
 }
 
 static int
@@ -494,6 +504,29 @@ translate_stock_new(pool_t pool, const char *translation_socket)
     return stock_new(pool, &translate_stock_class, NULL, translation_socket);
 }
 
+static void
+translate_stock_callback(void *ctx, struct stock_item *item)
+{
+    struct translate_request_and_callback *request2 = ctx;
+    struct translate_connection *connection = (struct translate_connection *)item;
+
+    if (item == NULL) {
+        request2->callback(&error, request2->callback_ctx);
+        return;
+    }
+
+    if (connection->event.ev_events != 0)
+        event_del(&connection->event);
+
+    connection->pool = request2->pool;
+    connection->request = marshal_request(connection->pool, request2->request);
+    connection->callback = request2->callback;
+    connection->ctx = request2->callback_ctx;
+    connection->response.status = (http_status_t)-1;
+
+    translate_try_write(connection);
+}
+
 void
 translate(pool_t pool,
           struct stock *stock,
@@ -501,7 +534,7 @@ translate(pool_t pool,
           translate_callback_t callback,
           void *ctx)
 {
-    struct translate_connection *connection;
+    struct translate_request_and_callback *request2;
 
     assert(pool != NULL);
     assert(request != NULL);
@@ -513,20 +546,11 @@ translate(pool_t pool,
         return;
     }
 
-    connection = (struct translate_connection *)stock_get(stock);
-    if (connection == NULL) {
-        callback(&error, ctx);
-        return;
-    }
+    request2 = p_malloc(pool, sizeof(*request2));
+    request2->pool = pool;
+    request2->request = request;
+    request2->callback = callback;
+    request2->callback_ctx = ctx;
 
-    if (connection->event.ev_events != 0)
-        event_del(&connection->event);
-
-    connection->pool = pool;
-    connection->request = marshal_request(pool, request);
-    connection->callback = callback;
-    connection->ctx = ctx;
-    connection->response.status = (http_status_t)-1;
-
-    translate_try_write(connection);
+    stock_get(stock, translate_stock_callback, request2);
 }
