@@ -3,8 +3,9 @@
  *
  * The 'stock' class holds a number of idle objects.  The 'hstock'
  * class is a hash table of any number of 'stock' objects, each with a
- * different URI.  The URI may be a hostname:port pair for HTTP client
- * connections.
+ * different URI.  The URI may be something like a hostname:port pair
+ * for HTTP client connections - it is not used by this class, but
+ * passed to the stock_class.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
