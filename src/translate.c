@@ -204,6 +204,8 @@ translate_read_event_callback(int fd, short event, void *ctx)
 {
     struct translate_connection *connection = ctx;
 
+    (void)fd;
+
     if (event == EV_TIMEOUT) {
         daemon_log(1, "read timeout on translation server\n");
         connection->callback(&error, connection->ctx);
@@ -356,6 +358,8 @@ static void
 translate_write_event_callback(int fd, short event, void *ctx)
 {
     struct translate_connection *connection = ctx;
+
+    (void)fd;
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "write timeout on translation server\n");
