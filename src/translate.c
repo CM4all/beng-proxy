@@ -154,6 +154,36 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
 
 
 /*
+ * idle event
+ */
+
+static void
+translate_idle_event_callback(int fd, short event, void *ctx)
+{
+    struct translate_connection *connection = ctx;
+    unsigned char buffer;
+    ssize_t nbytes;
+
+    /* whatever happens here, we must close the translation server
+       connection: this connection is idle, there is no request, but
+       there is something on the socket */
+
+    (void)event;
+
+    nbytes = read(fd, &buffer, sizeof(buffer));
+    if (nbytes < 0)
+        daemon_log(1, "read error from translation server: %s\n",
+                   strerror(errno));
+    else if (nbytes == 0)
+        daemon_log(3, "translation server closed the connection\n");
+    else
+        daemon_log(1, "translation server sent unrequested data\n");
+
+    stock_del(&connection->stock_item);
+}
+
+
+/*
  * receive response
  *
  */
@@ -208,6 +238,10 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_END:
         connection->callback(&connection->response, connection->ctx);
         stock_put(&connection->stock_item, 0);
+
+        event_set(&connection->event, connection->fd, EV_READ,
+                  translate_idle_event_callback, connection);
+        event_add(&connection->event, NULL);
         break;
 
     case TRANSLATE_BEGIN:
@@ -410,6 +444,8 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
         return 0;
     }
 
+    connection->event.ev_events = 0;
+
     return 1;
 }
 
@@ -429,6 +465,9 @@ translate_stock_destroy(void *ctx, struct stock_item *item)
     struct translate_connection *connection = (struct translate_connection *)item;
 
     (void)ctx;
+
+    if (stock_item_is_idle(item) && connection->event.ev_events != 0)
+        event_del(&connection->event);
 
     if (connection->fd >= 0) {
         close(connection->fd);
@@ -479,6 +518,9 @@ translate(pool_t pool,
         callback(&error, ctx);
         return;
     }
+
+    if (connection->event.ev_events != 0)
+        event_del(&connection->event);
 
     connection->pool = pool;
     connection->request = marshal_request(pool, request);
