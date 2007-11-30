@@ -18,6 +18,7 @@
 
 struct stock_item {
     struct list_head list_head;
+    struct stock *stock;
 };
 
 struct stock_class {
@@ -44,7 +45,7 @@ struct stock_item *
 stock_get(struct stock *stock);
 
 void
-stock_put(struct stock *stock, struct stock_item *item, int destroy);
+stock_put(struct stock_item *item, int destroy);
 
 
 /* hstock.c */

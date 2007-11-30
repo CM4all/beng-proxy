@@ -86,6 +86,7 @@ hstock_put(struct hstock *hstock, const char *uri, struct stock_item *object, in
 
     assert(stock != NULL);
     assert(object != NULL);
+    assert(stock == object->stock);
 
-    stock_put(stock, object, destroy);
+    stock_put(object, destroy);
 }

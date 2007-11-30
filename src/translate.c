@@ -9,7 +9,6 @@
 #include "socket-util.h"
 #include "growing-buffer.h"
 #include "compiler.h"
-#include "stock.h"
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
@@ -31,7 +30,6 @@ struct translate_connection {
     struct stock_item stock_item;
 
     pool_t pool;
-    struct stock *stock;
     int fd;
     struct event event;
     growing_buffer_t request;
@@ -206,7 +204,7 @@ translate_handle_packet(struct translate_connection *connection,
     switch (command) {
     case TRANSLATE_END:
         connection->callback(&connection->response, connection->ctx);
-        stock_put(connection->stock, &connection->stock_item, 0);
+        stock_put(&connection->stock_item, 0);
         connection->pool = NULL;
         break;
 
@@ -476,7 +474,6 @@ translate(pool_t pool,
     }
 
     connection->pool = pool;
-    connection->stock = stock;
     connection->request = marshal_request(pool, request);
     connection->callback = callback;
     connection->ctx = ctx;

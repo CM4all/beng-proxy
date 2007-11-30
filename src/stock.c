@@ -91,6 +91,8 @@ stock_get(struct stock *stock)
     }
 
     item = p_malloc(stock->pool, stock->class->item_size);
+    item->stock = stock;
+
     ret = stock->class->create(stock->class_ctx, item, stock->uri);
     if (!ret) {
         p_free(stock->pool, item);
@@ -101,10 +103,15 @@ stock_get(struct stock *stock)
 }
 
 void
-stock_put(struct stock *stock, struct stock_item *item, int destroy)
+stock_put(struct stock_item *item, int destroy)
 {
-    assert(stock != NULL);
+    struct stock *stock;
+
     assert(item != NULL);
+
+    stock = item->stock;
+
+    assert(stock != NULL);
     assert(pool_contains(stock->pool, item, stock->class->item_size));
 
     if (destroy || stock->num_idle >= 8 ||
