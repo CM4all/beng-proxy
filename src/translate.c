@@ -206,7 +206,6 @@ translate_read_event_callback(int fd, short event, void *ctx)
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "read timeout on translation server\n");
-        close(fd);
         connection->callback(&error, connection->ctx);
         stock_put(&connection->stock_item, 1);
         return;
@@ -225,8 +224,6 @@ translate_handle_packet(struct translate_connection *connection,
     if (command == TRANSLATE_BEGIN) {
         if (connection->response.status != (http_status_t)-1) {
             daemon_log(1, "double BEGIN from translation server\n");
-            close(connection->fd);
-            connection->fd = -1;
             connection->callback(&error, connection->ctx);
             stock_put(&connection->stock_item, 1);
             return;
@@ -234,8 +231,6 @@ translate_handle_packet(struct translate_connection *connection,
     } else {
         if (connection->response.status == (http_status_t)-1) {
             daemon_log(1, "no BEGIN from translation server\n");
-            close(connection->fd);
-            connection->fd = -1;
             connection->callback(&error, connection->ctx);
             stock_put(&connection->stock_item, 1);
             return;
@@ -259,8 +254,6 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_STATUS:
         if (payload_length != 2) {
             daemon_log(1, "size mismatch in STATUS packet from translation server\n");
-            close(connection->fd);
-            connection->fd = -1;
             connection->callback(&error, connection->ctx);
             stock_put(&connection->stock_item, 1);
             return;
@@ -332,13 +325,11 @@ translate_try_read(struct translate_connection *connection)
         } else if (ret == -1) {
             daemon_log(1, "read error from translation server: %s\n",
                        strerror(errno));
-            close(connection->fd);
             connection->callback(&error, connection->ctx);
             stock_put(&connection->stock_item, 1);
             return;
         } else if (ret == 0) {
             daemon_log(1, "translation server aborted the connection\n");
-            close(connection->fd);
             connection->callback(&error, connection->ctx);
             stock_put(&connection->stock_item, 1);
             return;
@@ -368,7 +359,6 @@ translate_write_event_callback(int fd, short event, void *ctx)
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "write timeout on translation server\n");
-        close(fd);
         connection->callback(&error, connection->ctx);
         stock_put(&connection->stock_item, 1);
         return;
@@ -395,7 +385,6 @@ translate_try_write(struct translate_connection *connection)
     if (nbytes < 0 && errno != EAGAIN) {
         daemon_log(1, "write error on translation server: %s\n",
                    strerror(errno));
-        close(connection->fd);
         connection->callback(&error, connection->ctx);
         stock_put(&connection->stock_item, 1);
         return;
@@ -437,6 +426,8 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
 
     (void)ctx;
 
+    connection->event.ev_events = 0;
+
     connection->fd = socket_unix_connect(uri);
     if (connection->fd < 0) {
         daemon_log(1, "failed to connect to %s: %s\n",
@@ -449,12 +440,9 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
     if (connection->fd < 0) {
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));
-        close(connection->fd);
         stock_available(item, 0);
         return;
     }
-
-    connection->event.ev_events = 0;
 
     stock_available(item, 1);
 }
