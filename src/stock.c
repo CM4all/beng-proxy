@@ -85,8 +85,9 @@ stock_get(struct stock *stock)
 
         if (stock->class->validate(stock->class_ctx, item))
             return item;
-        else
-            stock->class->destroy(stock->class_ctx, item);
+
+        stock->class->destroy(stock->class_ctx, item);
+        p_free(stock->pool, item);
     }
 
     item = p_malloc(stock->pool, stock->class->item_size);
@@ -109,6 +110,7 @@ stock_put(struct stock *stock, struct stock_item *item, int destroy)
     if (destroy || stock->num_idle >= 8 ||
         !stock->class->validate(stock->class_ctx, item)) {
         stock->class->destroy(stock->class_ctx, item);
+        p_free(stock->pool, item);
     } else {
         list_add(&item->list_head, &stock->idle);
         ++stock->num_idle;
