@@ -104,6 +104,7 @@ stock_put(struct stock *stock, struct stock_item *item, int destroy)
 {
     assert(stock != NULL);
     assert(item != NULL);
+    assert(pool_contains(stock->pool, item, stock->class->item_size));
 
     if (destroy || stock->num_idle >= 8 ||
         !stock->class->validate(stock->class_ctx, item)) {
