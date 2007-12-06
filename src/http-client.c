@@ -304,6 +304,7 @@ http_client_handle_line(http_client_connection_t connection,
                         const char *line, size_t length)
 {
     assert(connection != NULL);
+    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
@@ -329,6 +330,7 @@ http_client_parse_headers(http_client_connection_t connection)
     size_t length;
 
     assert(connection != NULL);
+    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
@@ -441,6 +443,7 @@ static void
 http_client_consume_headers(http_client_connection_t connection)
 {
     assert(connection != NULL);
+    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
