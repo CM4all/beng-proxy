@@ -10,6 +10,7 @@
 #include "connection.h"
 #include "session.h"
 #include "translate.h"
+#include "url-stock.h"
 #include "stock.h"
 
 #include <daemon/daemonize.h>
@@ -53,6 +54,9 @@ exit_event_callback(int fd, short event, void *ctx)
 
     if (instance->translate_stock != NULL)
         stock_free(&instance->translate_stock);
+
+    if (instance->http_client_stock != NULL)
+        hstock_free(&instance->http_client_stock);
 }
 
 void
@@ -125,6 +129,7 @@ int main(int argc, char **argv)
 
     instance.translate_stock = translate_stock_new(instance.pool,
                                                    instance.config.translation_socket);
+    instance.http_client_stock = url_hstock_new(instance.pool);
 
     /* daemonize */
 

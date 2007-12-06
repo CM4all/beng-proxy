@@ -15,6 +15,7 @@ struct filter {
 
 filter_t attr_malloc
 filter_new(pool_t pool,
+           struct hstock *http_client_stock,
            const char *url,
            growing_buffer_t headers,
            off_t content_length, istream_t body,
@@ -28,7 +29,8 @@ filter_new(pool_t pool,
     assert(handler->response != NULL);
 
     filter = p_malloc(pool, sizeof(*filter));
-    filter->us = url_stream_new(pool, HTTP_METHOD_POST, url,
+    filter->us = url_stream_new(pool, http_client_stock,
+                                HTTP_METHOD_POST, url,
                                 headers, content_length, body,
                                 handler, handler_ctx);
     if (filter->us == NULL)

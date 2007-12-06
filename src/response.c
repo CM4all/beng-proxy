@@ -101,6 +101,7 @@ response_invoke_processor(struct request *request2,
     request2->url_stream = NULL;
 
     processor_env_init(request->pool, &request2->env,
+                       request2->http_client_stock,
                        request->remote_host,
                        request_absolute_uri(request),
                        &request2->uri,
@@ -170,6 +171,7 @@ response_dispatch(struct request *request2,
         pool_ref(request->pool);
 
         request2->filter = filter_new(request->pool,
+                                      request2->http_client_stock,
                                       request2->translate.response->filter,
                                       headers,
                                       content_length, body,

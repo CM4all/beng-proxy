@@ -11,12 +11,16 @@
 #include "strmap.h"
 #include "growing-buffer.h"
 #include "istream.h"
-#include "http-client.h"
+#include "http.h"
+
+struct hstock;
+struct http_response_handler;
 
 typedef struct url_stream *url_stream_t;
 
 url_stream_t attr_malloc
 url_stream_new(pool_t pool,
+               struct hstock *http_client_stock,
                http_method_t method, const char *url,
                growing_buffer_t headers,
                off_t content_length, istream_t body,

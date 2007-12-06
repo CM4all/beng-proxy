@@ -34,6 +34,8 @@ typedef istream_t (*processor_widget_callback_t)(pool_t pool,
 struct processor_env {
     pool_t pool;
 
+    struct hstock *http_client_stock;
+
     const char *remote_host;
 
     const char *absolute_uri;
@@ -69,6 +71,7 @@ struct processor_env {
 void
 processor_env_init(pool_t pool,
                    struct processor_env *env,
+                   struct hstock *http_client_stock,
                    const char *remote_host,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,

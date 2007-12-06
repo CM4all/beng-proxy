@@ -60,7 +60,6 @@ embed_request_headers(struct embed *embed, int with_body)
 
     headers = growing_buffer_new(embed->pool, 1024);
     header_write(headers, "accept-charset", "utf-8");
-    header_write(headers, "connection", "close");
 
     if (embed->env->request_headers != NULL) {
         headers_copy(embed->env->request_headers, headers, copy_headers);
@@ -166,6 +165,7 @@ embed_redirect(struct embed *embed,
     headers = embed_request_headers(embed, 0);
 
     embed->url_stream = url_stream_new(embed->pool,
+                                       embed->env->http_client_stock,
                                        HTTP_METHOD_GET, location, headers,
                                        0, NULL,
                                        &embed_response_handler, embed);
@@ -313,6 +313,7 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     headers = embed_request_headers(embed, request_body != NULL);
 
     embed->url_stream = url_stream_new(pool,
+                                       env->http_client_stock,
                                        method, url, headers,
                                        request_content_length,
                                        request_body,

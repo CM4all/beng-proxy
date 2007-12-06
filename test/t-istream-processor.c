@@ -46,6 +46,7 @@ create_test(pool_t pool, istream_t input)
     session_manager_init(pool);
 
     processor_env_init(pool, &env,
+                       NULL,
                        "localhost:8080",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,

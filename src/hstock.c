@@ -74,7 +74,7 @@ hstock_get(struct hstock *hstock, const char *uri,
 
     if (stock == NULL) {
         stock = stock_new(hstock->pool, hstock->class, hstock->class_ctx, uri);
-        hashmap_put(hstock->stocks, uri, stock, 1);
+        hashmap_put(hstock->stocks, p_strdup(hstock->pool, uri), stock, 1);
     }
 
     return stock_get(stock, callback, callback_ctx);

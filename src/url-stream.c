@@ -9,14 +9,15 @@
 #include "http-client.h"
 #include "compiler.h"
 #include "header-writer.h"
+#include "url-stock.h"
+#include "stock.h"
+#include "async.h"
 
 #include <daemon/log.h>
 
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
-#include <netdb.h>
-#include <sys/un.h>
 
 struct url_stream {
     pool_t pool;
@@ -27,100 +28,43 @@ struct url_stream {
     off_t content_length;
     istream_t body;
 
-    client_socket_t client_socket;
-    http_client_connection_t http;
+    struct async_operation *async;
+    struct stock_item *stock_item;
 
     struct http_response_handler_ref handler;
 };
 
-static int
-getaddrinfo_helper(const char *host_and_port, int default_port,
-                   const struct addrinfo *hints,
-                   struct addrinfo **aip) {
-    const char *colon, *host, *port;
-    char buffer[256];
-
-    colon = strchr(host_and_port, ':');
-    if (colon == NULL) {
-        snprintf(buffer, sizeof(buffer), "%d", default_port);
-
-        host = host_and_port;
-        port = buffer;
-    } else {
-        size_t len = colon - host_and_port;
-
-        if (len >= sizeof(buffer)) {
-            errno = ENAMETOOLONG;
-            return EAI_SYSTEM;
-        }
-
-        memcpy(buffer, host_and_port, len);
-        buffer[len] = 0;
-
-        host = buffer;
-        port = colon + 1;
-    }
-
-    if (strcmp(host, "*") == 0)
-        host = "0.0.0.0";
-
-    return getaddrinfo(host, port, hints, aip);
-}
-
 static void
-url_stream_connection_idle(void *ctx)
+url_stream_stock_callback(void *ctx, struct stock_item *item)
 {
     url_stream_t us = ctx;
 
-    http_client_connection_close(us->http);
-}
+    assert(us->stock_item == NULL);
 
-static void
-url_stream_connection_free(void *ctx)
-{
-    url_stream_t us = ctx;
+    us->async = NULL;
 
-    if (us->http == NULL)
+    if (item == NULL) {
+        http_response_handler_invoke_abort(&us->handler);
+        pool_unref(us->pool);
         return;
-
-    us->http = NULL;
-
-    url_stream_close(us);
-}
-
-static const struct http_client_connection_handler url_stream_connection_handler = {
-    .idle = url_stream_connection_idle,
-    .free = url_stream_connection_free,
-};
-
-static void
-url_stream_client_socket_callback(int fd, int err, void *ctx)
-{
-    url_stream_t us = ctx;
-
-    if (err == 0) {
-        assert(fd >= 0);
-
-        client_socket_free(&us->client_socket);
-
-        us->http = http_client_connection_new(us->pool, fd,
-                                              &url_stream_connection_handler, us);
-        http_client_request(us->http, us->method, us->uri, us->headers,
-                            us->content_length, us->body,
-                            us->handler.handler, us->handler.ctx);
-
-        if (us->body != NULL)
-            istream_clear_unref(&us->body);
-    } else {
-        daemon_log(1, "failed to connect: %s\n", strerror(err));
-
-        us->http = NULL;
-        url_stream_close(us);
     }
+
+    us->stock_item = item;
+
+    http_client_request(url_stock_item_get(item),
+                        us->method, us->uri, us->headers,
+                        us->content_length, us->body,
+                        us->handler.handler, us->handler.ctx);
+
+    if (us->body != NULL)
+        istream_clear_unref(&us->body);
+
+    pool_unref(us->pool);
 }
 
 url_stream_t attr_malloc
 url_stream_new(pool_t pool,
+               struct hstock *http_client_stock,
                http_method_t method, const char *url,
                growing_buffer_t headers,
                off_t content_length, istream_t body,
@@ -128,7 +72,7 @@ url_stream_new(pool_t pool,
                void *handler_ctx)
 {
     url_stream_t us;
-    int ret;
+    const char *host_and_port;
 
     assert(url != NULL);
     assert(handler != NULL);
@@ -157,14 +101,13 @@ url_stream_new(pool_t pool,
            http-client.c resets istream->pool after the response is
            ready */
         istream_assign_ref(&us->body, istream_hold_new(pool, body));
-    us->client_socket = NULL;
-    us->http = NULL;
+    us->async = NULL;
+    us->stock_item = NULL;
     http_response_handler_set(&us->handler, handler, handler_ctx);
 
     if (memcmp(url, "http://", 7) == 0) {
         /* HTTP over TCP */
-        const char *p, *slash, *host_and_port;
-        struct addrinfo hints, *ai;
+        const char *p, *slash;
 
         p = url + 7;
         slash = strchr(p, '/');
@@ -177,74 +120,29 @@ url_stream_new(pool_t pool,
         host_and_port = p_strndup(us->pool, p, slash - p);
         header_write(us->headers, "host", host_and_port);
 
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = PF_INET;
-        hints.ai_socktype = SOCK_STREAM;
-
-        /* XXX make this asynchronous */
-        ret = getaddrinfo_helper(host_and_port, 80, &hints, &ai);
-        if (ret != 0) {
-            daemon_log(1, "failed to resolve proxy host name\n");
-            url_stream_close(us);
-            return NULL;
-        }
-
         us->uri = slash;
-
-        ret = client_socket_new(us->pool,
-                                PF_INET, SOCK_STREAM, 0,
-                                ai->ai_addr, ai->ai_addrlen,
-                                url_stream_client_socket_callback, us,
-                                &us->client_socket);
-        freeaddrinfo(ai);
-        if (ret != 0) {
-            daemon_log(1, "client_socket_new() failed: %s\n",
-                       strerror(errno));
-            url_stream_close(us);
-            return NULL;
-        }
     } else if (memcmp(url, "unix:/", 6) == 0) {
         /* HTTP over Unix socket */
         const char *p, *qmark;
-        size_t path_length;
-        struct sockaddr_un sun;
 
         p = url + 5;
         us->uri = p;
 
         qmark = strchr(p, '?');
         if (qmark == NULL)
-            path_length = strlen(p);
+            host_and_port = p;
         else
-            path_length = qmark - p;
-
-        if (path_length >= sizeof(sun.sun_path)) {
-            daemon_log(1, "client_socket_new() failed: unix socket path is too long\n");
-            url_stream_close(us);
-            return NULL;
-        }
-
-        sun.sun_family = AF_UNIX;
-        memcpy(sun.sun_path, p, path_length);
-        sun.sun_path[path_length] = 0;
-
-        ret = client_socket_new(us->pool,
-                                PF_UNIX, SOCK_STREAM, 0,
-                                (const struct sockaddr*)&sun, sizeof(sun),
-                                url_stream_client_socket_callback, us,
-                                &us->client_socket);
-        if (ret != 0) {
-            daemon_log(1, "client_socket_new('%.*s') failed: %s\n",
-                       (int)path_length, p,
-                       strerror(errno));
-            url_stream_close(us);
-            return NULL;
-        }
+            host_and_port = p_strndup(us->pool, p, qmark - p);
     } else {
         /* XXX */
         url_stream_close(us);
         return NULL;
     }
+
+    header_write(us->headers, "connection", "keep-alive");
+
+    us->async = hstock_get(http_client_stock, host_and_port,
+                           url_stream_stock_callback, us);
 
     return us;
 }
@@ -263,13 +161,13 @@ url_stream_close(url_stream_t us)
     if (us->body != NULL)
         istream_clear_unref(&us->body);
 
-    if (us->client_socket != NULL) {
-        client_socket_free(&us->client_socket);
-        http_response_handler_invoke_abort(&us->handler);
-    } else if (us->http != NULL)
-        /* no need to invoke us->handler->free() here because
-           url_stream_connection_free() will do it */
-        http_client_connection_free(&us->http);
+    if (us->async != NULL) {
+        async_abort(us->async);
+        return;
+    }
 
+    assert(us->stock_item != NULL);
+
+    http_client_connection_close(url_stock_item_get(us->stock_item));
     pool_unref(pool);
 }

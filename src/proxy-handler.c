@@ -18,6 +18,7 @@ proxy_callback(struct request *request2)
     pool_ref(request->pool);
 
     request2->url_stream = url_stream_new(request->pool,
+                                          request2->http_client_stock,
                                           request->method, tr->proxy, NULL,
                                           request->content_length, request->body,
                                           &response_handler, request2);

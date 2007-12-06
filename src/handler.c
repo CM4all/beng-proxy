@@ -208,6 +208,7 @@ my_http_server_connection_request(struct http_server_request *request,
     assert(request != NULL);
 
     request2 = p_malloc(request->pool, sizeof(*request2));
+    request2->http_client_stock = connection->instance->http_client_stock;
     request2->request = request;
 
     ret = request_uri_parse(request, &request2->uri);
