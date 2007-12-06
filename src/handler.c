@@ -146,24 +146,11 @@ request_args_parse(struct request *request)
 }
 
 static void
-ask_translation_server(struct http_server_request *request,
+ask_translation_server(struct request *request2,
                        struct stock *stock)
 {
-    struct request *request2;
-    int ret;
+    struct http_server_request *request = request2->request;
 
-    request2 = p_malloc(request->pool, sizeof(*request2));
-    request2->request = request;
-
-    ret = request_uri_parse(request, &request2->uri);
-    if (ret < 0)
-        return;
-
-    request2->args = NULL;
-    request2->session = NULL;
-    request2->filtered = 0;
-    request2->processed = 0;
-    request2->response_sent = 0;
     request2->translate.request.remote_host = request->remote_host;
     request2->translate.request.host = strmap_get(request->headers, "host");
     request2->translate.request.uri = strref_dup(request->pool,
@@ -171,41 +158,20 @@ ask_translation_server(struct http_server_request *request,
     request2->translate.request.param = NULL;
     request2->translate.request.session = NULL;
 
-    request_args_parse(request2);
-
     translate(request->pool, stock, &request2->translate.request,
               translate_callback, request2);
 }
 
 static void
-serve_document_root_file(struct http_server_request *request,
+serve_document_root_file(struct request *request2,
                          const struct config *config)
 {
-    struct request *request2;
-    int ret;
+    struct http_server_request *request = request2->request;
     struct parsed_uri *uri;
     struct translate_response *tr;
     const char *index_file = NULL;
 
-    request2 = p_malloc(request->pool, sizeof(*request2));
-    request2->request = request;
-
     uri = &request2->uri;
-
-    ret = request_uri_parse(request, &request2->uri);
-    if (ret < 0)
-        return;
-
-    assert(!strref_is_empty(&uri->base));
-    assert(uri->base.data[0] == '/');
-
-    request2->args = NULL;
-    request2->session = NULL;
-    request2->filtered = 0;
-    request2->processed = 0;
-    request2->response_sent = 0;
-
-    request_args_parse(request2);
 
     request2->translate.response = tr = p_malloc(request->pool,
                                                  sizeof(*request2->translate.response));
@@ -236,13 +202,33 @@ my_http_server_connection_request(struct http_server_request *request,
                                   void *ctx)
 {
     struct client_connection *connection = ctx;
+    struct request *request2;
+    int ret;
 
     assert(request != NULL);
 
+    request2 = p_malloc(request->pool, sizeof(*request2));
+    request2->request = request;
+
+    ret = request_uri_parse(request, &request2->uri);
+    if (ret < 0)
+        return;
+
+    assert(!strref_is_empty(&request2->uri.base));
+    assert(request2->uri.base.data[0] == '/');
+
+    request2->args = NULL;
+    request2->session = NULL;
+    request2->filtered = 0;
+    request2->processed = 0;
+    request2->response_sent = 0;
+
+    request_args_parse(request2);
+
     if (connection->config->translation_socket == NULL)
-        serve_document_root_file(request, connection->config);
+        serve_document_root_file(request2, connection->config);
     else
-        ask_translation_server(request, connection->instance->translate_stock);
+        ask_translation_server(request2, connection->instance->translate_stock);
 }
 
 static void
