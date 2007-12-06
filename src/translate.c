@@ -422,7 +422,7 @@ translate_try_write(struct translate_connection *connection)
  *
  */
 
-static void
+static struct async_operation *
 translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
 {
     struct translate_connection *connection = (struct translate_connection *)item;
@@ -437,7 +437,7 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
         daemon_log(1, "failed to connect to %s: %s\n",
                    uri, strerror(errno));
         stock_available(item, 0);
-        return;
+        return NULL;
     }
 
     ret = socket_set_nonblock(connection->fd, 1);
@@ -445,10 +445,11 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));
         stock_available(item, 0);
-        return;
+        return NULL;
     }
 
     stock_available(item, 1);
+    return NULL;
 }
 
 static int

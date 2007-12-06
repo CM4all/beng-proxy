@@ -68,7 +68,7 @@ stock_free(struct stock **stock_r)
     pool_unref(stock->pool);
 }
 
-void
+struct async_operation *
 stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
 {
     struct stock_item *item;
@@ -87,7 +87,7 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
         if (stock->class->validate(stock->class_ctx, item)) {
             item->is_idle = 0;
             callback(callback_ctx, item);
-            return;
+            return NULL;
         }
 
         stock->class->destroy(stock->class_ctx, item);
@@ -100,7 +100,7 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
     item->callback = callback;
     item->callback_ctx = callback_ctx;
 
-    stock->class->create(stock->class_ctx, item, stock->uri);
+    return stock->class->create(stock->class_ctx, item, stock->uri);
 }
 
 void

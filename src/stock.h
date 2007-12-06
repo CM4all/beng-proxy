@@ -32,7 +32,7 @@ struct stock_item {
 struct stock_class {
     size_t item_size;
 
-    void (*create)(void *ctx, struct stock_item *item, const char *uri);
+    struct async_operation *(*create)(void *ctx, struct stock_item *item, const char *uri);
     int (*validate)(void *ctx, struct stock_item *item);
     void (*destroy)(void *ctx, struct stock_item *item);
 };
@@ -49,7 +49,7 @@ stock_new(pool_t pool, const struct stock_class *class,
 void
 stock_free(struct stock **stock_r);
 
-void
+struct async_operation *
 stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx);
 
 void
