@@ -23,6 +23,7 @@ typedef void (*stock_callback_t)(void *ctx, struct stock_item *item);
 struct stock_item {
     struct list_head list_head;
     struct stock *stock;
+    pool_t pool;
     int is_idle;
 
     stock_callback_t callback;
@@ -32,6 +33,7 @@ struct stock_item {
 struct stock_class {
     size_t item_size;
 
+    pool_t (*pool)(void *ctx, pool_t parent, const char *uri);
     struct async_operation *(*create)(void *ctx, struct stock_item *item, const char *uri);
     int (*validate)(void *ctx, struct stock_item *item);
     void (*destroy)(void *ctx, struct stock_item *item);

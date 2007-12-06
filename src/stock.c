@@ -71,6 +71,7 @@ stock_free(struct stock **stock_r)
 struct async_operation *
 stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
 {
+    pool_t pool;
     struct stock_item *item;
 
     assert(stock != NULL);
@@ -91,11 +92,17 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
         }
 
         stock->class->destroy(stock->class_ctx, item);
-        p_free(stock->pool, item);
+        p_free(item->pool, item);
     }
 
-    item = p_malloc(stock->pool, stock->class->item_size);
+    if (stock->class->pool == NULL)
+        pool = stock->pool;
+    else
+        pool = stock->class->pool(stock->class_ctx, stock->pool, stock->uri);
+
+    item = p_malloc(pool, stock->class->item_size);
     item->stock = stock;
+    item->pool = pool;
     item->is_idle = 0;
     item->callback = callback;
     item->callback_ctx = callback_ctx;
@@ -114,7 +121,7 @@ stock_available(struct stock_item *item, int success)
         item->callback(item->callback_ctx, NULL);
 
         stock->class->destroy(stock->class_ctx, item);
-        p_free(stock->pool, item);
+        p_free(item->pool, item);
     }
 }
 
@@ -129,12 +136,12 @@ stock_put(struct stock_item *item, int destroy)
     stock = item->stock;
 
     assert(stock != NULL);
-    assert(pool_contains(stock->pool, item, stock->class->item_size));
+    assert(pool_contains(item->pool, item, stock->class->item_size));
 
     if (destroy || stock->num_idle >= 8 ||
         !stock->class->validate(stock->class_ctx, item)) {
         stock->class->destroy(stock->class_ctx, item);
-        p_free(stock->pool, item);
+        p_free(item->pool, item);
     } else {
         item->is_idle = 1;
         list_add(&item->list_head, &stock->idle);
@@ -155,7 +162,7 @@ stock_del(struct stock_item *item)
     assert(stock != NULL);
     assert(stock->num_idle > 0);
     assert(!list_empty(&stock->idle));
-    assert(pool_contains(stock->pool, item, stock->class->item_size));
+    assert(pool_contains(item->pool, item, stock->class->item_size));
     assert(item->list_head.next->prev == &item->list_head);
     assert(item->list_head.prev->next == &item->list_head);
 
@@ -163,5 +170,5 @@ stock_del(struct stock_item *item)
     --stock->num_idle;
 
     stock->class->destroy(stock->class_ctx, item);
-    p_free(stock->pool, item);
+    p_free(item->pool, item);
 }
