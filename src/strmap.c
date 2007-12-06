@@ -98,7 +98,7 @@ strmap_put(strmap_t map, const char *key, const char *value, int overwrite)
     } else if (strcmp(prev->pair.key, key) == 0)
         return strmap_maybe_overwrite(prev, value, overwrite);
 
-    for (slot = prev->next; slot != NULL; slot = prev->next) {
+    for (slot = prev->next; slot != NULL; slot = slot->next) {
         assert(slot->pair.key != NULL);
         assert(slot->pair.value != NULL);
 
@@ -139,7 +139,7 @@ strmap_remove(strmap_t map, const char *key)
         return value;
     }
 
-    for (slot = prev->next; slot != NULL; slot = prev->next) {
+    for (slot = prev->next; slot != NULL; slot = slot->next) {
         assert(slot->pair.key != NULL);
         assert(slot->pair.value != NULL);
 

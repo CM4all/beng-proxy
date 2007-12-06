@@ -98,7 +98,7 @@ hashmap_put(hashmap_t map, const char *key, void *value, int overwrite)
     } else if (strcmp(prev->pair.key, key) == 0)
         return hashmap_maybe_overwrite(prev, value, overwrite);
 
-    for (slot = prev->next; slot != NULL; slot = prev->next) {
+    for (slot = prev->next; slot != NULL; slot = slot->next) {
         assert(slot->pair.key != NULL);
         assert(slot->pair.value != NULL);
 
@@ -139,7 +139,7 @@ hashmap_remove(hashmap_t map, const char *key)
         return value;
     }
 
-    for (slot = prev->next; slot != NULL; slot = prev->next) {
+    for (slot = prev->next; slot != NULL; slot = slot->next) {
         assert(slot->pair.key != NULL);
         assert(slot->pair.value != NULL);
 
