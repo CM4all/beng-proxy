@@ -80,7 +80,7 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx);
 void
 hstock_free(struct hstock **hstock_r);
 
-void
+struct async_operation *
 hstock_get(struct hstock *hstock, const char *uri,
            stock_callback_t callback, void *callback_ctx);
 
