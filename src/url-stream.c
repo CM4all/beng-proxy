@@ -196,14 +196,13 @@ url_stream_new(pool_t pool,
                                 ai->ai_addr, ai->ai_addrlen,
                                 url_stream_client_socket_callback, us,
                                 &us->client_socket);
+        freeaddrinfo(ai);
         if (ret != 0) {
             daemon_log(1, "client_socket_new() failed: %s\n",
                        strerror(errno));
             url_stream_close(us);
             return NULL;
         }
-
-        freeaddrinfo(ai);
     } else if (memcmp(url, "unix:/", 6) == 0) {
         /* HTTP over Unix socket */
         const char *p, *qmark;
