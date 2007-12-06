@@ -36,7 +36,7 @@ stock_new(pool_t pool, const struct stock_class *class,
     stock->pool = pool;
     stock->class = class;
     stock->class_ctx = class_ctx;
-    stock->uri = uri;
+    stock->uri = uri == NULL ? NULL : p_strdup(pool, uri);
     stock->num_idle = 0;
     list_init(&stock->idle);
 
