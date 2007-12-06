@@ -68,6 +68,15 @@ stock_free(struct stock **stock_r)
     pool_unref(stock->pool);
 }
 
+static void
+destroy_item(struct stock *stock, struct stock_item *item)
+{
+    assert(pool_contains(item->pool, item, stock->class->item_size));
+
+    stock->class->destroy(stock->class_ctx, item);
+    p_free(item->pool, item);
+}
+
 struct async_operation *
 stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
 {
@@ -91,8 +100,7 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
             return NULL;
         }
 
-        stock->class->destroy(stock->class_ctx, item);
-        p_free(item->pool, item);
+        destroy_item(stock, item);
     }
 
     if (stock->class->pool == NULL)
@@ -119,9 +127,7 @@ stock_available(struct stock_item *item, int success)
         item->callback(item->callback_ctx, item);
     } else {
         item->callback(item->callback_ctx, NULL);
-
-        stock->class->destroy(stock->class_ctx, item);
-        p_free(item->pool, item);
+        destroy_item(stock, item);
     }
 }
 
@@ -140,8 +146,7 @@ stock_put(struct stock_item *item, int destroy)
 
     if (destroy || stock->num_idle >= 8 ||
         !stock->class->validate(stock->class_ctx, item)) {
-        stock->class->destroy(stock->class_ctx, item);
-        p_free(item->pool, item);
+        destroy_item(stock, item);
     } else {
         item->is_idle = 1;
         list_add(&item->list_head, &stock->idle);
@@ -169,6 +174,5 @@ stock_del(struct stock_item *item)
     list_remove(&item->list_head);
     --stock->num_idle;
 
-    stock->class->destroy(stock->class_ctx, item);
-    p_free(item->pool, item);
+    destroy_item(stock, item);
 }
