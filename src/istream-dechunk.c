@@ -21,7 +21,9 @@ struct istream_dechunk {
         SIZE,
         AFTER_SIZE,
         DATA,
-        AFTER_DATA
+        AFTER_DATA,
+        TRAILER,
+        TRAILER_DATA
     } state;
     size_t size;
     unsigned had_input:1, had_output:1;
@@ -47,7 +49,7 @@ static void
 dechunk_eof_detected(struct istream_dechunk *dechunk)
 {
     assert(dechunk->input != NULL);
-    assert(dechunk->state == AFTER_SIZE);
+    assert(dechunk->state == TRAILER);
     assert(dechunk->size == 0);
 
     istream_clear_unref_handler(&dechunk->input);
@@ -113,12 +115,10 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
 
         case AFTER_SIZE:
             if (data[position++] == '\n') {
-                if (dechunk->size == 0) {
-                    dechunk_eof_detected(dechunk);
-                    return dechunk->state == CLOSED ? 0 : position;
-                }
-
-                dechunk->state = DATA;
+                if (dechunk->size == 0)
+                    dechunk->state = TRAILER;
+                else
+                    dechunk->state = DATA;
             }
             break;
 
@@ -151,6 +151,23 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
                 return 0;
             }
             ++position;
+            break;
+
+        case TRAILER:
+            if (data[position] == '\n') {
+                dechunk_eof_detected(dechunk);
+                return dechunk->state == CLOSED ? 0 : position + 1;
+            } else if (data[position] == '\r') {
+                ++position;
+            } else {
+                ++position;
+                dechunk->state = TRAILER_DATA;
+            }
+            break;
+
+        case TRAILER_DATA:
+            if (data[position++] == '\n')
+                dechunk->state = TRAILER;
             break;
         }
     }
