@@ -13,6 +13,8 @@
 #ifndef __BENG_ABORT_H
 #define __BENG_ABORT_H
 
+#include <assert.h>
+
 struct async_operation_class {
     void (*abort)(struct async_operation *ao);
 };
