@@ -450,6 +450,9 @@ http_client_consume_headers(http_client_connection_t connection)
     do {
         if (http_client_parse_headers(connection) == 0)
             break;
+
+        if (!http_client_connection_valid(connection))
+            return;
     } while (connection->response.read_state == READ_STATUS ||
              connection->response.read_state == READ_HEADERS);
 
