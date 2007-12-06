@@ -74,7 +74,11 @@ destroy_item(struct stock *stock, struct stock_item *item)
     assert(pool_contains(item->pool, item, stock->class->item_size));
 
     stock->class->destroy(stock->class_ctx, item);
-    p_free(item->pool, item);
+
+    if (item->pool == stock->pool)
+        p_free(stock->pool, item);
+    else
+        pool_unref(item->pool);
 }
 
 struct async_operation *
