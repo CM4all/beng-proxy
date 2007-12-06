@@ -63,6 +63,9 @@ stock_free(struct stock **stock_r)
         --stock->num_idle;
 
         stock->class->destroy(stock->class_ctx, item);
+
+        if (item->pool != stock->pool)
+            pool_unref(item->pool);
     }
 
     pool_unref(stock->pool);
