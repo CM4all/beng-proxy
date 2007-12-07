@@ -29,7 +29,7 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx)
     assert(class->validate != NULL);
     assert(class->destroy != NULL);
 
-    pool = pool_new_linear(pool, "hstock", 1024);
+    pool = pool_new_linear(pool, "hstock", 4096);
     hstock = p_malloc(pool, sizeof(*hstock));
     hstock->pool = pool;
     hstock->class = class;
