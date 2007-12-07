@@ -7,8 +7,6 @@
 #ifndef __BENG_URL_STREAM_H
 #define __BENG_URL_STREAM_H
 
-#include "pool.h"
-#include "strmap.h"
 #include "growing-buffer.h"
 #include "istream.h"
 #include "http.h"
