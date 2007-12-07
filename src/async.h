@@ -13,6 +13,8 @@
 #ifndef __BENG_ABORT_H
 #define __BENG_ABORT_H
 
+#include "compiler.h"
+
 #include <assert.h>
 
 struct async_operation_class {
@@ -27,7 +29,7 @@ struct async_operation {
 };
 
 static inline void
-async_poison(struct async_operation *ao)
+async_poison(struct async_operation *ao attr_unused)
 {
 #ifndef NDEBUG
     ao->aborted = -1;
