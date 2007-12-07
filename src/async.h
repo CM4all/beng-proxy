@@ -17,6 +17,8 @@
 
 #include <assert.h>
 
+struct async_operation;
+
 struct async_operation_class {
     void (*abort)(struct async_operation *ao);
 };
