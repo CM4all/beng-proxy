@@ -28,6 +28,46 @@ struct url_stream {
     struct http_response_handler_ref handler;
 };
 
+
+/*
+ * http response handler
+ *
+ */
+
+static void 
+url_stream_response(http_status_t status, strmap_t headers,
+                    off_t content_length, istream_t body,
+                    void *ctx)
+{
+    struct url_stream *us = ctx;
+
+    http_response_handler_invoke_response(&us->handler, status, headers,
+                                          content_length, body);
+
+    pool_unref(us->pool);
+}
+
+static void 
+url_stream_response_abort(void *ctx)
+{
+    struct url_stream *us = ctx;
+
+    http_response_handler_invoke_abort(&us->handler);
+
+    pool_unref(us->pool);
+}
+
+static const struct http_response_handler url_stream_response_handler = {
+    .response = url_stream_response,
+    .abort = url_stream_response_abort,
+};
+
+
+/*
+ * stock callback
+ *
+ */
+
 static void
 url_stream_stock_callback(void *ctx, struct stock_item *item)
 {
@@ -48,13 +88,17 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
     http_client_request(url_stock_item_get(item),
                         us->method, us->uri, us->headers,
                         us->content_length, us->body,
-                        us->handler.handler, us->handler.ctx);
+                        &url_stream_response_handler, us);
 
     if (us->body != NULL)
         istream_clear_unref(&us->body);
-
-    pool_unref(us->pool);
 }
+
+
+/*
+ * constructor
+ *
+ */
 
 url_stream_t attr_malloc
 url_stream_new(pool_t pool,
