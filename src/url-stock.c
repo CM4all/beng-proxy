@@ -212,6 +212,8 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri)
         size_t path_length;
         struct sockaddr_un sun;
 
+        path_length = strlen(uri);
+
         if (path_length >= sizeof(sun.sun_path)) {
             daemon_log(1, "client_socket_new() failed: unix socket path is too long\n");
             stock_available(item, 0);
@@ -219,7 +221,7 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri)
         }
 
         sun.sun_family = AF_UNIX;
-        strcpy(sun.sun_path, uri);
+        memcpy(sun.sun_path, uri, path_length + 1);
 
         ret = client_socket_new(connection->stock_item.pool,
                                 PF_UNIX, SOCK_STREAM, 0,
