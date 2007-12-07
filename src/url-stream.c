@@ -5,18 +5,12 @@
  */
 
 #include "url-stream.h"
-#include "client-socket.h"
-#include "http-client.h"
 #include "compiler.h"
 #include "header-writer.h"
 #include "url-stock.h"
 #include "stock.h"
 #include "async.h"
 
-#include <daemon/log.h>
-
-#include <assert.h>
-#include <errno.h>
 #include <string.h>
 
 struct url_stream {
