@@ -81,13 +81,16 @@ hstock_get(struct hstock *hstock, const char *uri,
 }
 
 void
-hstock_put(struct hstock *hstock, const char *uri, struct stock_item *object, int destroy)
+hstock_put(struct hstock *hstock attr_unused, const char *uri attr_unused,
+           struct stock_item *object, int destroy)
 {
+#ifndef NDEBUG
     struct stock *stock = (struct stock *)hashmap_get(hstock->stocks, uri);
 
     assert(stock != NULL);
     assert(object != NULL);
     assert(stock == object->stock);
+#endif
 
     stock_put(object, destroy);
 }
