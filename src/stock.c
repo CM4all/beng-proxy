@@ -5,6 +5,7 @@
  */
 
 #include "stock.h"
+#include "async.h"
 
 #include <assert.h>
 
@@ -84,13 +85,15 @@ destroy_item(struct stock *stock, struct stock_item *item)
         pool_unref(item->pool);
 }
 
-struct async_operation *
-stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
+void
+stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx,
+          struct async_operation_ref *async_ref)
 {
     pool_t pool;
     struct stock_item *item;
 
     assert(stock != NULL);
+    assert(!async_ref_defined(async_ref));
 
     while (stock->num_idle > 0) {
         assert(!list_empty(&stock->idle));
@@ -104,7 +107,7 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
         if (stock->class->validate(stock->class_ctx, item)) {
             item->is_idle = 0;
             callback(callback_ctx, item);
-            return NULL;
+            return;
         }
 
         destroy_item(stock, item);
@@ -122,7 +125,7 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx)
     item->callback = callback;
     item->callback_ctx = callback_ctx;
 
-    return stock->class->create(stock->class_ctx, item, stock->uri);
+    stock->class->create(stock->class_ctx, item, stock->uri, async_ref);
 }
 
 void

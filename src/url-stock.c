@@ -166,8 +166,9 @@ url_stock_pool(void *ctx, pool_t parent, const char *uri)
     return pool_new_linear(parent, "url_stock", 8192);
 }
 
-static struct async_operation *
-url_stock_create(void *ctx, struct stock_item *item, const char *uri)
+static void
+url_stock_create(void *ctx, struct stock_item *item, const char *uri,
+                 struct async_operation_ref *async_ref)
 {
     struct url_connection *connection = (struct url_connection *)item;
     int ret;
@@ -192,7 +193,7 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri)
         if (ret != 0) {
             daemon_log(1, "failed to resolve proxy host name\n");
             stock_available(item, 0);
-            return NULL;
+            return;
         }
 
         ret = client_socket_new(connection->stock_item.pool,
@@ -205,7 +206,7 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri)
             daemon_log(1, "client_socket_new() failed: %s\n",
                        strerror(errno));
             stock_available(item, 0);
-            return NULL;
+            return;
         }
     } else {
         /* HTTP over Unix socket */
@@ -217,7 +218,7 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri)
         if (path_length >= sizeof(sun.sun_path)) {
             daemon_log(1, "client_socket_new() failed: unix socket path is too long\n");
             stock_available(item, 0);
-            return NULL;
+            return;
         }
 
         sun.sun_family = AF_UNIX;
@@ -232,13 +233,13 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri)
             daemon_log(1, "client_socket_new('%s') failed: %s\n",
                        uri, strerror(errno));
             stock_available(item, 0);
-            return NULL;
+            return;
         }
     }
 
     async_init(&connection->create_operation,
                &url_create_operation);
-    return &connection->create_operation;
+    async_ref_set(async_ref, &connection->create_operation);
 }
 
 static int

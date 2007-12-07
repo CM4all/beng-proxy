@@ -422,8 +422,9 @@ translate_try_write(struct translate_connection *connection)
  *
  */
 
-static struct async_operation *
-translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
+static void
+translate_stock_create(void *ctx, struct stock_item *item, const char *uri,
+                       struct async_operation_ref *async_ref attr_unused)
 {
     struct translate_connection *connection = (struct translate_connection *)item;
     int ret;
@@ -437,7 +438,7 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
         daemon_log(1, "failed to connect to %s: %s\n",
                    uri, strerror(errno));
         stock_available(item, 0);
-        return NULL;
+        return;
     }
 
     ret = socket_set_nonblock(connection->fd, 1);
@@ -445,11 +446,11 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri)
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));
         stock_available(item, 0);
-        return NULL;
+        return;
     }
 
     stock_available(item, 1);
-    return NULL;
+    return;
 }
 
 static int
@@ -545,5 +546,5 @@ translate(pool_t pool,
     request2->callback = callback;
     request2->callback_ctx = ctx;
 
-    stock_get(stock, translate_stock_callback, request2);
+    stock_get(stock, translate_stock_callback, request2, NULL);
 }

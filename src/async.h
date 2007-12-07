@@ -30,6 +30,10 @@ struct async_operation {
 #endif
 };
 
+struct async_operation_ref {
+    struct async_operation *operation;
+};
+
 static inline void
 async_poison(struct async_operation *ao attr_unused)
 {
@@ -49,8 +53,46 @@ async_init(struct async_operation *ao,
 }
 
 static inline void
-async_abort(struct async_operation *ao)
+async_ref_clear(struct async_operation_ref *ref)
 {
+    assert(ref != NULL);
+
+    ref->operation = NULL;
+}
+
+static inline int
+async_ref_defined(const struct async_operation_ref *ref)
+{
+    assert(ref != NULL);
+
+    return ref->operation != NULL;
+}
+
+static inline void
+async_ref_poison(struct async_operation_ref *ref attr_unused)
+{
+    assert(ref != NULL);
+
+#ifndef NDEBUG
+    ref->operation = (struct async_operation *)0x03030303;
+#endif
+}
+
+static inline void
+async_ref_set(struct async_operation_ref *ref,
+              struct async_operation *ao)
+{
+    assert(ref != NULL);
+    assert(ao != NULL);
+    assert(!ao->aborted);
+
+    ref->operation = ao;
+}
+
+static inline void
+async_operation_abort(struct async_operation *ao)
+{
+    assert(ao != NULL);
     assert(!ao->aborted);
 
 #ifndef NDEBUG
@@ -58,6 +100,21 @@ async_abort(struct async_operation *ao)
 #endif
 
     ao->class.abort(ao);
+}
+
+static inline void
+async_abort(struct async_operation_ref *ref)
+{
+    struct async_operation *ao;
+
+    assert(ref != NULL);
+
+    ao = ref->operation;
+#ifndef NDEBUG
+    ref->operation = NULL;
+#endif
+
+    async_operation_abort(ao);
 }
 
 #endif

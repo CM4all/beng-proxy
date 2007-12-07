@@ -28,7 +28,7 @@ struct url_stream {
     off_t content_length;
     istream_t body;
 
-    struct async_operation *async;
+    struct async_operation_ref async;
     struct stock_item *stock_item;
 
     struct http_response_handler_ref handler;
@@ -41,7 +41,7 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
 
     assert(us->stock_item == NULL);
 
-    us->async = NULL;
+    async_ref_clear(&us->async);
 
     if (item == NULL) {
         http_response_handler_invoke_abort(&us->handler);
@@ -101,7 +101,7 @@ url_stream_new(pool_t pool,
            http-client.c resets istream->pool after the response is
            ready */
         istream_assign_ref(&us->body, istream_hold_new(pool, body));
-    us->async = NULL;
+    async_ref_clear(&us->async);
     us->stock_item = NULL;
     http_response_handler_set(&us->handler, handler, handler_ctx);
 
@@ -141,9 +141,11 @@ url_stream_new(pool_t pool,
 
     header_write(us->headers, "connection", "keep-alive");
 
-    us->async = hstock_get(http_client_stock, host_and_port,
-                           url_stream_stock_callback, us);
+    hstock_get(http_client_stock, host_and_port,
+               url_stream_stock_callback, us,
+               &us->async);
 
+    /* XXX check if "us" is still valid */
     return us;
 }
 
@@ -161,8 +163,8 @@ url_stream_close(url_stream_t us)
     if (us->body != NULL)
         istream_clear_unref(&us->body);
 
-    if (us->async != NULL) {
-        async_abort(us->async);
+    if (async_ref_defined(&us->async)) {
+        async_abort(&us->async);
         return;
     }
 

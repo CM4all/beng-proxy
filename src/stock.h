@@ -16,6 +16,7 @@
 #include "pool.h"
 #include "list.h"
 
+struct async_operation_ref;
 struct stock_item;
 
 typedef void (*stock_callback_t)(void *ctx, struct stock_item *item);
@@ -34,7 +35,8 @@ struct stock_class {
     size_t item_size;
 
     pool_t (*pool)(void *ctx, pool_t parent, const char *uri);
-    struct async_operation *(*create)(void *ctx, struct stock_item *item, const char *uri);
+    void (*create)(void *ctx, struct stock_item *item, const char *uri,
+                   struct async_operation_ref *async_ref);
     int (*validate)(void *ctx, struct stock_item *item);
     void (*destroy)(void *ctx, struct stock_item *item);
 };
@@ -51,8 +53,9 @@ stock_new(pool_t pool, const struct stock_class *class,
 void
 stock_free(struct stock **stock_r);
 
-struct async_operation *
-stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx);
+void
+stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx,
+          struct async_operation_ref *async_ref);
 
 void
 stock_available(struct stock_item *item, int success);
@@ -80,9 +83,10 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx);
 void
 hstock_free(struct hstock **hstock_r);
 
-struct async_operation *
+void
 hstock_get(struct hstock *hstock, const char *uri,
-           stock_callback_t callback, void *callback_ctx);
+           stock_callback_t callback, void *callback_ctx,
+           struct async_operation_ref *async_ref);
 
 void
 hstock_put(struct hstock *hstock, const char *uri, struct stock_item *item,
