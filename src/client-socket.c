@@ -94,9 +94,6 @@ client_socket_new(pool_t pool,
     assert(client_socket_r != NULL);
 
     client_socket = p_calloc(pool, sizeof(*client_socket));
-    if (client_socket == NULL)
-        return -1;
-
     client_socket->callback = callback;
     client_socket->callback_ctx = ctx;
 
