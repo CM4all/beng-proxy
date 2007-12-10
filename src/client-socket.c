@@ -23,7 +23,7 @@
 
 struct client_socket {
     struct async_operation operation;
-    int fd, s_err;
+    int fd;
     struct event event;
     client_socket_callback_t callback;
     void *callback_ctx;
