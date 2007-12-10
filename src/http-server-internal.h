@@ -66,6 +66,12 @@ http_server_connection_valid(http_server_connection_t connection)
     return connection->fd >= 0;
 }
 
+struct http_server_request *
+http_server_request_new(http_server_connection_t connection);
+
+void
+http_server_maybe_send_100_continue(http_server_connection_t connection);
+
 void
 http_server_try_read(http_server_connection_t connection);
 
