@@ -591,6 +591,13 @@ p_free(pool_t pool, void *ptr)
 
     if (pool->type == POOL_LIBC)
         p_free_libc(pool, ptr);
+#ifdef VALGRIND
+    else
+        /* we don't know the exact size of this buffer, so we only
+           mark the first ALIGN bytes */
+        VALGRIND_MAKE_MEM_NOACCESS(ptr, ALIGN);
+#endif
+        
 }
 
 static inline void
