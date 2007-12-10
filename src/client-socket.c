@@ -146,7 +146,7 @@ client_socket_new(pool_t pool,
             .tv_usec = 0,
         };
 
-        client_socket = p_calloc(pool, sizeof(*client_socket));
+        client_socket = p_malloc(pool, sizeof(*client_socket));
         client_socket->fd = fd;
         client_socket->callback = callback;
         client_socket->callback_ctx = ctx;
