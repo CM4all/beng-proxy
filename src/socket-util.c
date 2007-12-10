@@ -58,10 +58,12 @@ socket_set_cork(int fd, int value)
 int
 socket_unix_connect(const char *path)
 {
+    size_t path_length;
     int fd, ret;
     struct sockaddr_un sa;
 
-    if (strlen(path) >= sizeof(sa.sun_path)) {
+    path_length = strlen(path);
+    if (path_length >= sizeof(sa.sun_path)) {
         errno = EINVAL;
         return -1;
     }
@@ -71,7 +73,7 @@ socket_unix_connect(const char *path)
         return -1;
 
     sa.sun_family = AF_UNIX;
-    strcpy(sa.sun_path, path);
+    memcpy(sa.sun_path, path, path_length);
 
     ret = connect(fd, (struct sockaddr*)&sa, sizeof(sa));
     if (ret < 0) {
