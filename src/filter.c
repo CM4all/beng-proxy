@@ -6,9 +6,6 @@
 
 #include "filter.h"
 #include "url-stream.h"
-#include "async.h"
-
-#include <assert.h>
 
 void
 filter_new(pool_t pool,
