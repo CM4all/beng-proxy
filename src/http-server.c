@@ -783,10 +783,11 @@ http_server_maybe_send_100_continue(http_server_connection_t connection)
 {
     assert(connection->fd >= 0);
     assert(connection->request.read_state == READ_BODY);
-    assert(!connection->response.writing);
 
     if (!connection->request.expect_100_continue)
         return;
+
+    assert(!connection->response.writing);
 
     connection->request.expect_100_continue = 0;
 
