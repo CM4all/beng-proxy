@@ -60,4 +60,12 @@ struct http_server_connection {
 #endif
 };
 
+void
+http_server_request_free(struct http_server_request **request_r);
+
+void
+http_server_connection_close(http_server_connection_t connection);
+
+extern const struct istream_handler http_server_response_stream_handler;
+
 #endif
