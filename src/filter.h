@@ -10,26 +10,19 @@
 #include "pool.h"
 #include "growing-buffer.h"
 #include "istream.h"
-#include "http-client.h"
 
 struct hstock;
+struct http_response_handler;
+struct async_operation_ref;
 
-typedef struct filter *filter_t;
-
-filter_t attr_malloc
+void
 filter_new(pool_t pool,
            struct hstock *http_client_stock,
            const char *url,
            growing_buffer_t headers,
            off_t content_length, istream_t body,
            const struct http_response_handler *handler,
-           void *handler_ctx);
-
-/**
- * Cancels the transfer.  You must not call this method after the
- * callback has been invoked.
- */
-void
-filter_close(filter_t us);
+           void *handler_ctx,
+           struct async_operation_ref *async_ref);
 
 #endif

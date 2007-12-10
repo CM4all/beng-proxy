@@ -167,22 +167,13 @@ response_dispatch(struct request *request2,
 
         pool_ref(request->pool);
 
-        request2->filter = filter_new(request->pool,
-                                      request2->http_client_stock,
-                                      request2->translate.response->filter,
-                                      headers,
-                                      content_length, body,
-                                      &response_handler, request2);
-        if (request2->filter == NULL) {
-            if (body != NULL)
-                istream_close(body);
-            if (request->body != NULL)
-                istream_close(request->body);
-
-            http_server_send_message(request,
-                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                     "Internal server error");
-        }
+        filter_new(request->pool,
+                   request2->http_client_stock,
+                   request2->translate.response->filter,
+                   headers,
+                   content_length, body,
+                   &response_handler, request2,
+                   &request2->filter);
     } else if (request2->translate.response->process && !request2->processed) {
         response_invoke_processor(request2, status, headers, body);
     } else {
@@ -210,11 +201,12 @@ response_response(http_status_t status, strmap_t headers,
     growing_buffer_t response_headers;
 
     assert(!request2->response_sent);
-    assert(async_ref_defined(&request2->url_stream) || request2->filter != NULL);
+    assert(async_ref_defined(&request2->url_stream) ||
+           async_ref_defined(&request2->filter));
     assert(!istream_has_handler(body));
 
     async_ref_clear(&request2->url_stream);
-    request2->filter = NULL;
+    async_ref_clear(&request2->filter);
 
     response_headers = growing_buffer_new(request->pool, 2048);
     if (request2->translate.response->process && !request2->processed)
@@ -235,7 +227,8 @@ response_abort(void *ctx)
     struct request *request = ctx;
     pool_t pool = request->request->pool;
 
-    assert(async_ref_defined(&request->url_stream) || request->filter != NULL);
+    assert(async_ref_defined(&request->url_stream) ||
+           async_ref_defined(&request->filter));
 
     response_close(request);
     pool_unref(pool);

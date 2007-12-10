@@ -32,9 +32,7 @@ struct request {
 
     struct processor_env env;
 
-    struct async_operation_ref url_stream;
-
-    struct filter *filter;
+    struct async_operation_ref url_stream, filter;
 
     unsigned filtered, processed, response_sent;
 };
