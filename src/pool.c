@@ -7,12 +7,9 @@
 #include "pool.h"
 #include "list.h"
 #include "compiler.h"
+#include "valgrind.h"
 
 #include <daemon/log.h>
-
-#ifdef VALGRIND
-#include <valgrind/memcheck.h>
-#endif
 
 #include <assert.h>
 #include <stdlib.h>
@@ -145,17 +142,13 @@ pool_recycler_put_linear(struct linear_pool_area *area)
 
     if (recycler.num_linear_areas < RECYCLER_MAX_LINEAR_AREAS &&
         area->size <= RECYCLER_MAX_LINEAR_SIZE) {
-#ifdef VALGRIND
         VALGRIND_MAKE_MEM_NOACCESS(area->data, area->size);
-#endif
 
         area->prev = recycler.linear_areas;
         recycler.linear_areas = area;
         ++recycler.num_linear_areas;
     } else {
-#ifdef VALGRIND
         VALGRIND_MAKE_MEM_UNDEFINED(area, sizeof(*area) - sizeof(area->data) + area->size);
-#endif
 
         free(area);
     }
@@ -259,9 +252,7 @@ pool_new_linear_area(struct linear_pool_area *prev, size_t size)
     memset(area->data, 0x01, area->size);
 #endif
 
-#ifdef VALGRIND
     VALGRIND_MAKE_MEM_NOACCESS(area->data, area->size);
-#endif
 
     return area;
 }
@@ -551,9 +542,7 @@ p_malloc_linear(pool_t pool, size_t size)
     p = area->data + area->used;
     area->used += size;
 
-#ifdef VALGRIND
     VALGRIND_MAKE_MEM_UNDEFINED(p, size);
-#endif
 
     return p;
 }
@@ -597,13 +586,10 @@ p_free(pool_t pool, void *ptr)
 
     if (pool->type == POOL_LIBC)
         p_free_libc(pool, ptr);
-#ifdef VALGRIND
     else
         /* we don't know the exact size of this buffer, so we only
            mark the first ALIGN bytes */
         VALGRIND_MAKE_MEM_NOACCESS(ptr, ALIGN);
-#endif
-        
 }
 
 static inline void

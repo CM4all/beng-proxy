@@ -9,13 +9,10 @@
 
 #include "istream.h"
 #include "fifo-buffer.h"
+#include "valgrind.h"
 
 #include <assert.h>
 #include <stddef.h>
-
-#ifdef VALGRIND
-#include <valgrind/memcheck.h>
-#endif
 
 struct http_body_reader {
     struct istream output;
@@ -65,9 +62,7 @@ http_body_init(struct http_body_reader *body,
 static inline void
 http_body_deinit(struct http_body_reader *body)
 {
-#ifdef VALGRIND
     VALGRIND_MAKE_MEM_UNDEFINED(body, sizeof(*body));
-#endif
 
     body->output.pool = NULL;
 }
