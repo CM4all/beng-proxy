@@ -7,7 +7,6 @@
  */
 
 #include "http-server-internal.h"
-#include "direct.h"
 
 void
 http_server_consume_body(http_server_connection_t connection)
