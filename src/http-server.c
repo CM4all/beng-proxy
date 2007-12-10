@@ -4,16 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-server.h"
-#include "fifo-buffer.h"
+#include "http-server-internal.h"
 #include "strutil.h"
 #include "compiler.h"
 #include "buffered-io.h"
 #include "header-parser.h"
 #include "header-writer.h"
-#include "event2.h"
 #include "date.h"
-#include "http-body.h"
 #include "direct.h"
 #include "format.h"
 #include "socket-util.h"
@@ -26,54 +23,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-
-struct http_server_connection {
-    pool_t pool;
-
-    /* I/O */
-    int fd;
-    struct event2 event;
-    fifo_buffer_t input;
-
-    /* handler */
-    const struct http_server_connection_handler *handler;
-    void *handler_ctx;
-
-    /* info */
-
-    const char *remote_host;
-
-    /* request */
-    struct {
-        enum {
-            READ_START,
-            READ_HEADERS,
-            READ_BODY,
-            READ_END
-        } read_state;
-
-        /** did the client send an "Expect: 100-continue" header? */
-        int expect_100_continue;
-
-        struct http_server_request *request;
-
-        struct http_body_reader body_reader;
-    } request;
-
-    /* response */
-    struct {
-        int writing, writing_100_continue;
-        char status_buffer[64];
-        char content_length_buffer[32];
-        istream_t istream;
-    } response;
-
-    /* connection settings */
-    int keep_alive;
-#ifdef __linux
-    int cork;
-#endif
-};
 
 static struct http_server_request *
 http_server_request_new(http_server_connection_t connection)
