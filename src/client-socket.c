@@ -73,12 +73,9 @@ client_socket_event_callback(int fd, short event, void *ctx)
 
     (void)event;
 
-    assert(client_socket->fd >= 0);
+    assert(client_socket->fd == fd);
 
     async_poison(&client_socket->operation);
-
-    fd = client_socket->fd;
-    client_socket->fd = -1;
 
     if (event & EV_TIMEOUT) {
         close(fd);
