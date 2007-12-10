@@ -11,18 +11,15 @@
 
 #include <sys/socket.h>
 
-typedef struct client_socket *client_socket_t;
+struct async_operation_ref;
 
 typedef void (*client_socket_callback_t)(int fd, int err, void *ctx);
 
-int
+void
 client_socket_new(pool_t pool,
                   int domain, int type, int protocol,
                   const struct sockaddr *addr, socklen_t addrlen,
                   client_socket_callback_t callback, void *ctx,
-                  client_socket_t *client_socket_r);
-
-void
-client_socket_free(client_socket_t *client_socket_r);
+                  struct async_operation_ref *async_ref);
 
 #endif

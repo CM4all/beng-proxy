@@ -23,7 +23,7 @@ struct url_connection {
 
     struct async_operation create_operation;
 
-    client_socket_t client_socket;
+    struct async_operation_ref client_socket;
     http_client_connection_t http;
 };
 
@@ -80,9 +80,9 @@ url_create_abort(struct async_operation *ao)
     struct url_connection *connection = async_to_url_connection(ao);
 
     assert(connection != NULL);
-    assert(connection->client_socket != NULL);
+    assert(async_ref_defined(&connection->client_socket));
 
-    client_socket_free(&connection->client_socket);
+    async_abort(&connection->client_socket);
     stock_available(&connection->stock_item, 0);
 }
 
@@ -136,10 +136,10 @@ url_client_socket_callback(int fd, int err, void *ctx)
 {
     struct url_connection *connection = ctx;
 
+    async_ref_clear(&connection->client_socket);
+
     if (err == 0) {
         assert(fd >= 0);
-
-        client_socket_free(&connection->client_socket);
 
         connection->http = http_client_connection_new(connection->stock_item.pool, fd,
                                                       &url_http_connection_handler, connection);
@@ -177,8 +177,12 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri,
 
     (void)ctx;
 
-    connection->client_socket = NULL;
+    async_ref_clear(&connection->client_socket);
     connection->http = NULL;
+
+    async_init(&connection->create_operation,
+               &url_create_operation);
+    async_ref_set(async_ref, &connection->create_operation);
 
     if (uri[0] != '/') {
         /* HTTP over TCP */
@@ -196,18 +200,12 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri,
             return;
         }
 
-        ret = client_socket_new(connection->stock_item.pool,
-                                PF_INET, SOCK_STREAM, 0,
-                                ai->ai_addr, ai->ai_addrlen,
-                                url_client_socket_callback, connection,
-                                &connection->client_socket);
+        client_socket_new(connection->stock_item.pool,
+                          PF_INET, SOCK_STREAM, 0,
+                          ai->ai_addr, ai->ai_addrlen,
+                          url_client_socket_callback, connection,
+                          &connection->client_socket);
         freeaddrinfo(ai);
-        if (ret != 0) {
-            daemon_log(1, "client_socket_new() failed: %s\n",
-                       strerror(errno));
-            stock_available(item, 0);
-            return;
-        }
     } else {
         /* HTTP over Unix socket */
         size_t path_length;
@@ -224,22 +222,12 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri,
         sun.sun_family = AF_UNIX;
         memcpy(sun.sun_path, uri, path_length + 1);
 
-        ret = client_socket_new(connection->stock_item.pool,
-                                PF_UNIX, SOCK_STREAM, 0,
-                                (const struct sockaddr*)&sun, sizeof(sun),
-                                url_client_socket_callback, connection,
-                                &connection->client_socket);
-        if (ret != 0) {
-            daemon_log(1, "client_socket_new('%s') failed: %s\n",
-                       uri, strerror(errno));
-            stock_available(item, 0);
-            return;
-        }
+        client_socket_new(connection->stock_item.pool,
+                          PF_UNIX, SOCK_STREAM, 0,
+                          (const struct sockaddr*)&sun, sizeof(sun),
+                          url_client_socket_callback, connection,
+                          &connection->client_socket);
     }
-
-    async_init(&connection->create_operation,
-               &url_create_operation);
-    async_ref_set(async_ref, &connection->create_operation);
 }
 
 static int
@@ -259,8 +247,8 @@ url_stock_destroy(void *ctx, struct stock_item *item)
 
     (void)ctx;
 
-    if (connection->client_socket != NULL)
-        client_socket_free(&connection->client_socket);
+    if (async_ref_defined(&connection->client_socket))
+        async_abort(&connection->client_socket);
     else if (connection->http != NULL)
         http_client_connection_free(&connection->http);
 }

@@ -6,6 +6,7 @@
 
 #include "client-socket.h"
 #include "socket-util.h"
+#include "async.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -21,31 +22,51 @@
 #include <event.h>
 
 struct client_socket {
+    struct async_operation operation;
     int fd, s_err;
     struct event event;
     client_socket_callback_t callback;
     void *callback_ctx;
 };
 
-static void
-client_socket_timer_callback(int fd, short event, void *ctx)
+
+/*
+ * async operation
+ *
+ */
+
+static struct client_socket *
+async_to_client_socket(struct async_operation *ao)
 {
-    client_socket_t client_socket = ctx;
-
-    (void)event;
-
-    fd = client_socket->fd;
-    client_socket->fd = -1;
-
-    client_socket->callback(fd, client_socket->s_err,
-                            client_socket->callback_ctx);
-    
+    return (struct client_socket*)(((char*)ao) - offsetof(struct client_socket, operation));
 }
+
+static void
+client_socket_abort(struct async_operation *ao)
+{
+    struct client_socket *client_socket = async_to_client_socket(ao);
+
+    assert(client_socket != NULL);
+    assert(client_socket->fd >= 0);
+
+    event_del(&client_socket->event);
+    close(client_socket->fd);
+}
+
+static struct async_operation_class client_socket_operation = {
+    .abort = client_socket_abort,
+};
+
+
+/*
+ * libevent callback
+ *
+ */
 
 static void
 client_socket_event_callback(int fd, short event, void *ctx)
 {
-    client_socket_t client_socket = ctx;
+    struct client_socket *client_socket = ctx;
     int ret;
     int s_err = 0;
     socklen_t s_err_size = sizeof(s_err);
@@ -53,6 +74,8 @@ client_socket_event_callback(int fd, short event, void *ctx)
     (void)event;
 
     assert(client_socket->fd >= 0);
+
+    async_poison(&client_socket->operation);
 
     fd = client_socket->fd;
     client_socket->fd = -1;
@@ -78,96 +101,71 @@ client_socket_event_callback(int fd, short event, void *ctx)
     pool_commit();
 }
 
-int
+
+/*
+ * constructor
+ *
+ */
+
+void
 client_socket_new(pool_t pool,
                   int domain, int type, int protocol,
                   const struct sockaddr *addr, socklen_t addrlen,
                   client_socket_callback_t callback, void *ctx,
-                  client_socket_t *client_socket_r)
+                  struct async_operation_ref *async_ref)
 {
-    client_socket_t client_socket;
+    struct client_socket *client_socket;
     int ret;
 
     assert(addr != NULL);
     assert(addrlen > 0);
     assert(callback != NULL);
-    assert(client_socket_r != NULL);
 
     client_socket = p_calloc(pool, sizeof(*client_socket));
     client_socket->callback = callback;
     client_socket->callback_ctx = ctx;
 
     client_socket->fd = socket(domain, type, protocol);
-    if (client_socket->fd < 0)
-        return -1;
+    if (client_socket->fd < 0) {
+        callback(-1, errno, ctx);
+        return;
+    }
 
     ret = socket_set_nonblock(client_socket->fd, 1);
     if (ret < 0) {
         int save_errno = errno;
         close(client_socket->fd);
-        errno = save_errno;
-        return -1;
+        callback(-1, save_errno, ctx);
+        return;
     }
 
     ret = socket_set_nodelay(client_socket->fd, 1);
     if (ret < 0) {
         int save_errno = errno;
         close(client_socket->fd);
-        errno = save_errno;
-        return -1;
+        callback(-1, save_errno, ctx);
+        return;
     }
 
     ret = connect(client_socket->fd, addr, addrlen);
     if (ret == 0) {
-        struct timeval tv = {
-            .tv_sec = 0,
-            .tv_usec = 0,
-        };
-
-        evtimer_set(&client_socket->event, client_socket_timer_callback,
-                    client_socket);
-        evtimer_add(&client_socket->event, &tv);
+        callback(client_socket->fd, 0, ctx);
     } else if (errno == EINPROGRESS) {
         struct timeval tv = {
             .tv_sec = 30,
             .tv_usec = 0,
         };
 
+        async_init(&client_socket->operation, &client_socket_operation);
+        async_ref_set(async_ref, &client_socket->operation);
+
         event_set(&client_socket->event, client_socket->fd,
                   EV_WRITE|EV_TIMEOUT, client_socket_event_callback,
                   client_socket);
         event_add(&client_socket->event, &tv);
     } else {
-        struct timeval tv = {
-            .tv_sec = 0,
-            .tv_usec = 0,
-        };
-
-        client_socket->s_err = errno;
-
+        int save_errno = errno;
         close(client_socket->fd);
-        client_socket->fd = -1;
-
-        evtimer_set(&client_socket->event, client_socket_timer_callback,
-                    client_socket);
-        evtimer_add(&client_socket->event, &tv);
-    }
-
-    *client_socket_r = client_socket;
-    return 0;
-}
-
-void
-client_socket_free(client_socket_t *client_socket_r)
-{
-    client_socket_t client_socket = *client_socket_r;
-    *client_socket_r = NULL;
-
-    assert(client_socket != NULL);
-
-    if (client_socket->fd >= 0) {
-        event_del(&client_socket->event);
-        close(client_socket->fd);
-        client_socket->fd = -1;
+        callback(-1, save_errno, ctx);
     }
 }
