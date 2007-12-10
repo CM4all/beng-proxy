@@ -282,6 +282,11 @@ pool_get_linear_area(struct linear_pool_area *prev, size_t size)
 pool_t
 pool_new_linear(pool_t parent, const char *name, size_t initial_size)
 {
+#ifdef POOL_LIBC_ONLY
+    (void)initial_size;
+
+    return pool_new_libc(parent, name);
+#else
     pool_t pool = pool_new(parent, name);
     pool->type = POOL_LINEAR;
 
@@ -290,6 +295,7 @@ pool_new_linear(pool_t parent, const char *name, size_t initial_size)
     assert(parent != NULL);
 
     return pool;
+#endif
 }
 
 #ifndef NDEBUG
