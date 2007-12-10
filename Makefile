@@ -144,8 +144,8 @@ test/benchmark-gmtime: test/benchmark-gmtime.o src/gmtime.o test/libcore-gmtime.
 test/format-http-date: test/format-http-date.o src/gmtime.o src/date.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-test/request-translation: test/request-translation.o src/translate.o src/pool.o src/growing-buffer.o src/socket-util.o
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS)
+test/request-translation: test/request-translation.o src/translate.o src/pool.o src/growing-buffer.o src/socket-util.o src/stock.o src/pstring.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test/js: test/js.o src/js-filter.o src/pool.o src/istream-file.o src/fifo-buffer.o src/buffered-io.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)

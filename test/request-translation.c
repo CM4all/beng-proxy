@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
         .uri = "/foo/index.html",
     };
     pool_t pool;
+    struct stock *translate_stock;
 
     (void)argc;
     (void)argv;
@@ -47,7 +48,8 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
 
-    translate(pool, &config, &request, translate_callback, NULL);
+    translate_stock = translate_stock_new(pool, config.translation_socket);
+    translate(pool, translate_stock, &request, translate_callback, NULL);
 
     event_dispatch();
 }
