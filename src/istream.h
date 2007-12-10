@@ -81,6 +81,9 @@ struct istream {
 
 #ifndef NDEBUG
     int reading, eof, in_data;
+
+    /** how much data was available in the previous invocation? */
+    size_t data_available;
 #endif
 
     /**

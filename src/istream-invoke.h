@@ -20,6 +20,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
     assert(length > 0);
     assert(!istream->in_data);
     assert(!istream->eof);
+    assert(length >= istream->data_available);
 
 #ifndef NDEBUG
     istream->in_data = 1;
@@ -31,6 +32,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
 
 #ifndef NDEBUG
     istream->in_data = 0;
+    istream->data_available = length - nbytes;
 #endif
 
     return nbytes;
