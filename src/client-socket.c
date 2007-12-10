@@ -64,14 +64,12 @@ static struct async_operation_class client_socket_operation = {
  */
 
 static void
-client_socket_event_callback(int fd, short event, void *ctx)
+client_socket_event_callback(int fd, short event attr_unused, void *ctx)
 {
     struct client_socket *client_socket = ctx;
     int ret;
     int s_err = 0;
     socklen_t s_err_size = sizeof(s_err);
-
-    (void)event;
 
     assert(client_socket->fd == fd);
 
