@@ -46,11 +46,8 @@ response_close(struct request *request)
     assert(request->request != NULL);
     assert(request->request->pool != NULL);
 
-    if (request->url_stream != NULL) {
-        url_stream_t url_stream = request->url_stream;
-        request->url_stream = NULL;
-        url_stream_close(url_stream);
-    }
+    if (async_ref_defined(&request->url_stream))
+        async_abort(&request->url_stream);
 
     if (!request->response_sent)
         http_server_send_message(request->request,
@@ -98,7 +95,7 @@ response_invoke_processor(struct request *request2,
 
     request2->processed = 1;
 
-    request2->url_stream = NULL;
+    async_ref_clear(&request2->url_stream);
 
     processor_env_init(request->pool, &request2->env,
                        request2->http_client_stock,
@@ -213,10 +210,10 @@ response_response(http_status_t status, strmap_t headers,
     growing_buffer_t response_headers;
 
     assert(!request2->response_sent);
-    assert(request2->url_stream != NULL || request2->filter != NULL);
+    assert(async_ref_defined(&request2->url_stream) || request2->filter != NULL);
     assert(!istream_has_handler(body));
 
-    request2->url_stream = NULL;
+    async_ref_clear(&request2->url_stream);
     request2->filter = NULL;
 
     response_headers = growing_buffer_new(request->pool, 2048);
@@ -238,7 +235,7 @@ response_abort(void *ctx)
     struct request *request = ctx;
     pool_t pool = request->request->pool;
 
-    assert(request->url_stream != NULL || request->filter != NULL);
+    assert(async_ref_defined(&request->url_stream) || request->filter != NULL);
 
     response_close(request);
     pool_unref(pool);

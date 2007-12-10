@@ -17,15 +17,10 @@ proxy_callback(struct request *request2)
 
     pool_ref(request->pool);
 
-    request2->url_stream = url_stream_new(request->pool,
-                                          request2->http_client_stock,
-                                          request->method, tr->proxy, NULL,
-                                          request->content_length, request->body,
-                                          &response_handler, request2);
-    if (request2->url_stream == NULL) {
-        pool_unref(request->pool);
-        http_server_send_message(request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Internal server error");
-    }
+    url_stream_new(request->pool,
+                   request2->http_client_stock,
+                   request->method, tr->proxy, NULL,
+                   request->content_length, request->body,
+                   &response_handler, request2,
+                   &request2->url_stream);
 }

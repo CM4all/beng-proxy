@@ -12,6 +12,7 @@
 #include "translate.h"
 #include "strmap.h"
 #include "processor.h"
+#include "async.h"
 
 struct request {
     struct hstock *http_client_stock;
@@ -31,7 +32,7 @@ struct request {
 
     struct processor_env env;
 
-    struct url_stream *url_stream;
+    struct async_operation_ref url_stream;
 
     struct filter *filter;
 

@@ -12,6 +12,7 @@
 #include "session.h"
 #include "cookie.h"
 #include "http-client.h"
+#include "async.h"
 
 #include <assert.h>
 #include <string.h>
@@ -25,7 +26,7 @@ struct embed {
     struct processor_env *env;
     unsigned options;
 
-    url_stream_t url_stream;
+    struct async_operation_ref url_stream;
 
     istream_t delayed;
 };
@@ -106,13 +107,12 @@ embed_delayed_abort(void *ctx)
 {
     struct embed *embed = (struct embed *)ctx;
 
-    if (embed->url_stream == NULL)
+    if (!async_ref_defined(&embed->url_stream))
         return;
 
     embed->delayed = NULL;
 
-    url_stream_close(embed->url_stream);
-    assert(embed->url_stream == NULL);
+    async_abort(&embed->url_stream);
 }
 
 static const struct http_response_handler embed_response_handler;
@@ -164,16 +164,12 @@ embed_redirect(struct embed *embed,
 
     headers = embed_request_headers(embed, 0);
 
-    embed->url_stream = url_stream_new(embed->pool,
-                                       embed->env->http_client_stock,
-                                       HTTP_METHOD_GET, location, headers,
-                                       0, NULL,
-                                       &embed_response_handler, embed);
-    if (embed->url_stream == NULL) {
-        istream_delayed_set(embed->delayed,
-                            istream_string_new(embed->pool, "Failed to create url_stream object."));
-        pool_unref(embed->pool);
-    }
+    url_stream_new(embed->pool,
+                   embed->env->http_client_stock,
+                   HTTP_METHOD_GET, location, headers,
+                   0, NULL,
+                   &embed_response_handler, embed,
+                   &embed->url_stream);
 
     return 1;
 }
@@ -189,8 +185,8 @@ embed_response_response(http_status_t status, strmap_t headers,
 
     (void)status;
 
-    assert(embed->url_stream != NULL);
-    embed->url_stream = NULL;
+    assert(async_ref_defined(&embed->url_stream));
+    async_ref_clear(&embed->url_stream);
 
     cookies = strmap_get(headers, "set-cookie2");
     if (cookies == NULL)
@@ -270,7 +266,7 @@ embed_response_abort(void *ctx)
 {
     struct embed *embed = ctx;
 
-    embed->url_stream = NULL;
+    async_ref_clear(&embed->url_stream);
 
     if (embed->delayed != NULL)
         istream_free(&embed->delayed);
@@ -312,17 +308,16 @@ embed_new(pool_t pool, http_method_t method, const char *url,
 
     headers = embed_request_headers(embed, request_body != NULL);
 
-    embed->url_stream = url_stream_new(pool,
-                                       env->http_client_stock,
-                                       method, url, headers,
-                                       request_content_length,
-                                       request_body,
-                                       &embed_response_handler, embed);
-    if (embed->url_stream == NULL)
-        istream_delayed_set(embed->delayed,
-                            istream_string_new(pool, "Failed to create url_stream object."));
-    else
-        pool_ref(embed->pool);
+    pool_ref(embed->pool);
 
+    url_stream_new(pool,
+                   env->http_client_stock,
+                   method, url, headers,
+                   request_content_length,
+                   request_body,
+                   &embed_response_handler, embed,
+                   &embed->url_stream);
+
+    /* XXX has the embed_response_handler already been called? */
     return embed->delayed;
 }

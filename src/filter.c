@@ -6,11 +6,12 @@
 
 #include "filter.h"
 #include "url-stream.h"
+#include "async.h"
 
 #include <assert.h>
 
 struct filter {
-    url_stream_t us;
+    struct async_operation_ref url_stream;
 };
 
 filter_t attr_malloc
@@ -29,26 +30,21 @@ filter_new(pool_t pool,
     assert(handler->response != NULL);
 
     filter = p_malloc(pool, sizeof(*filter));
-    filter->us = url_stream_new(pool, http_client_stock,
-                                HTTP_METHOD_POST, url,
-                                headers, content_length, body,
-                                handler, handler_ctx);
-    if (filter->us == NULL)
-        return NULL;
+    url_stream_new(pool, http_client_stock,
+                   HTTP_METHOD_POST, url,
+                   headers, content_length, body,
+                   handler, handler_ctx,
+                   &filter->url_stream);
 
+    /* XXX has the response_handler already been called? */
     return filter;
 }
 
 void
 filter_close(filter_t filter)
 {
-    url_stream_t us;
-
     assert(filter != NULL);
-    assert(filter->us != NULL);
+    assert(async_ref_defined(&filter->url_stream));
 
-    us = filter->us;
-    filter->us = NULL;
-
-    url_stream_close(us);
+    async_abort(&filter->url_stream);
 }
