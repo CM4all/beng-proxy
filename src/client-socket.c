@@ -114,47 +114,48 @@ client_socket_new(pool_t pool,
                   client_socket_callback_t callback, void *ctx,
                   struct async_operation_ref *async_ref)
 {
-    struct client_socket *client_socket;
-    int ret;
+    int fd, ret;
 
     assert(addr != NULL);
     assert(addrlen > 0);
     assert(callback != NULL);
 
-    client_socket = p_calloc(pool, sizeof(*client_socket));
-    client_socket->callback = callback;
-    client_socket->callback_ctx = ctx;
-
-    client_socket->fd = socket(domain, type, protocol);
-    if (client_socket->fd < 0) {
+    fd = socket(domain, type, protocol);
+    if (fd < 0) {
         callback(-1, errno, ctx);
         return;
     }
 
-    ret = socket_set_nonblock(client_socket->fd, 1);
+    ret = socket_set_nonblock(fd, 1);
     if (ret < 0) {
         int save_errno = errno;
-        close(client_socket->fd);
+        close(fd);
         callback(-1, save_errno, ctx);
         return;
     }
 
-    ret = socket_set_nodelay(client_socket->fd, 1);
+    ret = socket_set_nodelay(fd, 1);
     if (ret < 0) {
         int save_errno = errno;
-        close(client_socket->fd);
+        close(fd);
         callback(-1, save_errno, ctx);
         return;
     }
 
-    ret = connect(client_socket->fd, addr, addrlen);
+    ret = connect(fd, addr, addrlen);
     if (ret == 0) {
-        callback(client_socket->fd, 0, ctx);
+        callback(fd, 0, ctx);
     } else if (errno == EINPROGRESS) {
+        struct client_socket *client_socket;
         struct timeval tv = {
             .tv_sec = 30,
             .tv_usec = 0,
         };
+
+        client_socket = p_calloc(pool, sizeof(*client_socket));
+        client_socket->fd = fd;
+        client_socket->callback = callback;
+        client_socket->callback_ctx = ctx;
 
         async_init(&client_socket->operation, &client_socket_operation);
         async_ref_set(async_ref, &client_socket->operation);
@@ -165,7 +166,7 @@ client_socket_new(pool_t pool,
         event_add(&client_socket->event, &tv);
     } else {
         int save_errno = errno;
-        close(client_socket->fd);
+        close(fd);
         callback(-1, save_errno, ctx);
     }
 }
