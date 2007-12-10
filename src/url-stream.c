@@ -10,6 +10,7 @@
 #include "url-stock.h"
 #include "stock.h"
 #include "async.h"
+#include "valgrind.h"
 
 #include <string.h>
 
@@ -49,6 +50,7 @@ url_stream_response(http_status_t status, strmap_t headers,
                                           content_length, body);
 
     pool_unref(us->pool);
+    VALGRIND_MAKE_MEM_NOACCESS(us, sizeof(*us));
 }
 
 static void 
@@ -59,6 +61,7 @@ url_stream_response_abort(void *ctx)
     http_response_handler_invoke_abort(&us->handler);
 
     pool_unref(us->pool);
+    VALGRIND_MAKE_MEM_NOACCESS(us, sizeof(*us));
 }
 
 static const struct http_response_handler url_stream_response_handler = {

@@ -7,6 +7,7 @@
 #include "client-socket.h"
 #include "socket-util.h"
 #include "async.h"
+#include "valgrind.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -91,6 +92,8 @@ client_socket_event_callback(int fd, short event attr_unused, void *ctx)
         close(fd);
         client_socket->callback(-1, s_err, client_socket->callback_ctx);
     }
+
+    VALGRIND_MAKE_MEM_NOACCESS(client_socket, sizeof(*client_socket));
 
     pool_commit();
 }

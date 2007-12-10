@@ -5,6 +5,7 @@
  */
 
 #include "growing-buffer.h"
+#include "valgrind.h"
 
 #include <assert.h>
 #include <string.h>
