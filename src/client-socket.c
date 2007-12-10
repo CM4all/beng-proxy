@@ -85,13 +85,12 @@ client_socket_event_callback(int fd, short event attr_unused, void *ctx)
     if (ret < 0)
         s_err = errno;
 
-    if (s_err != 0) {
+    if (s_err == 0) {
+        client_socket->callback(fd, 0, client_socket->callback_ctx);
+    } else {
         close(fd);
         client_socket->callback(-1, s_err, client_socket->callback_ctx);
-        return;
     }
-
-    client_socket->callback(fd, 0, client_socket->callback_ctx);
 
     pool_commit();
 }
