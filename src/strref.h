@@ -60,6 +60,21 @@ strref_set(struct strref *s, const char *p, size_t length)
 }
 
 static attr_always_inline void
+strref_set_dup(pool_t pool, struct strref *dest, const struct strref *src)
+{
+    assert(dest != NULL);
+    assert(src != NULL);
+    assert(src->length == 0 || src->data != NULL);
+
+    if (src->length == 0) {
+        dest->length = 0;
+    } else {
+        dest->length = src->length;
+        dest->data = p_memdup(pool, src->data, src->length);
+    }
+}
+
+static attr_always_inline void
 strref_set_c(struct strref *s, const char *p)
 {
     assert(s != NULL);

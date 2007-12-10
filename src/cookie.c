@@ -79,13 +79,13 @@ parse_cookie2(pool_t pool, struct list_head *head,
             return;
 
         cookie = p_malloc(pool, sizeof(*cookie));
-        cookie->name = name;
+        strref_set_dup(pool, &cookie->name, &name);
         cookie->valid_until = (time_t)-1; /* XXX */
 
         list_add(&cookie->siblings, head);
     }
 
-    cookie->value = value;
+    strref_set_dup(pool, &cookie->value, &value);
 }
 
 void
