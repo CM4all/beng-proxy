@@ -80,6 +80,7 @@ SOURCES = src/main.c \
 	src/http.c \
 	src/http-body.c \
 	src/http-server.c \
+	src/http-server-request.c \
 	src/http-server-response.c \
 	src/http-client.c \
 	src/http-util.c \

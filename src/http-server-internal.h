@@ -60,11 +60,25 @@ struct http_server_connection {
 #endif
 };
 
+static inline int
+http_server_connection_valid(http_server_connection_t connection)
+{
+    return connection->fd >= 0;
+}
+
+void
+http_server_try_read(http_server_connection_t connection);
+
 void
 http_server_request_free(struct http_server_request **request_r);
 
 void
 http_server_connection_close(http_server_connection_t connection);
+
+void
+http_server_consume_body(http_server_connection_t connection);
+
+const struct istream http_server_request_stream;
 
 extern const struct istream_handler http_server_response_stream_handler;
 
