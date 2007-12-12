@@ -107,6 +107,7 @@ SOURCES = src/main.c \
 	src/istream-fail.c \
 	src/istream-head.c \
 	src/uri.c \
+	src/uri-escape.c \
 	src/args.c \
 	src/gmtime.c \
 	src/date.c \

@@ -16,6 +16,9 @@ struct parsed_uri {
     struct strref query;
 };
 
+size_t
+uri_escape(char *dest, const char *src, size_t src_length);
+
 int
 uri_parse(pool_t pool, struct parsed_uri *dest, const char *src);
 

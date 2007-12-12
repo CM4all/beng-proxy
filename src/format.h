@@ -32,6 +32,12 @@ format_4digit(char *dest, unsigned number)
 }
 
 static attr_always_inline void
+format_uint8_hex_fixed(char dest[2], uint8_t number) {
+    dest[0] = hex_digits[(number >> 4) & 0xf];
+    dest[1] = hex_digits[number & 0xf];
+}
+
+static attr_always_inline void
 format_uint16_hex_fixed(char dest[4], uint16_t number) {
     dest[0] = hex_digits[(number >> 12) & 0xf];
     dest[1] = hex_digits[(number >> 8) & 0xf];

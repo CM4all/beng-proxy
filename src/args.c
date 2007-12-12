@@ -5,6 +5,7 @@
  */
 
 #include "args.h"
+#include "uri.h"
 
 #include <string.h>
 
@@ -49,14 +50,14 @@ args_format(pool_t pool, strmap_t args,
         strmap_rewind(args);
 
         while ((pair = strmap_next(args)) != NULL)
-            length += strlen(pair->key) + 1 + strlen(pair->value) + 1;
+            length += strlen(pair->key) + 1 + strlen(pair->value) * 3 + 1;
     }
 
     if (replace_key != NULL && replace_value != NULL)
-        length += strlen(replace_key) + 1 + strlen(replace_value) + 1;
+        length += strlen(replace_key) + 1 + strlen(replace_value) * 3 + 1;
 
     if (replace_key2 != NULL && replace_value2 != NULL)
-        length += strlen(replace_key2) + 1 + strlen(replace_value2) + 1;
+        length += strlen(replace_key2) + 1 + strlen(replace_value2) * 3 + 1;
 
     /* allocate memory, format it */
 
@@ -76,9 +77,7 @@ args_format(pool_t pool, strmap_t args,
             memcpy(p, pair->key, length);
             p += length;
             *p++ = '=';
-            length = strlen(pair->value);
-            memcpy(p, pair->value, length);
-            p += length;
+            p += uri_escape(p, pair->value, strlen(pair->value));
         }
     }
 
@@ -89,9 +88,7 @@ args_format(pool_t pool, strmap_t args,
         memcpy(p, replace_key, length);
         p += length;
         *p++ = '=';
-        length = strlen(replace_value);
-        memcpy(p, replace_value, length);
-        p += length;
+        p += uri_escape(p, replace_value, strlen(replace_value));
     }
 
     if (replace_key2 != NULL && replace_value2 != NULL) {
@@ -101,9 +98,7 @@ args_format(pool_t pool, strmap_t args,
         memcpy(p, replace_key2, length);
         p += length;
         *p++ = '=';
-        length = strlen(replace_value2);
-        memcpy(p, replace_value2, length);
-        p += length;
+        p += uri_escape(p, replace_value2, strlen(replace_value2));
     }
 
     *p = 0;
