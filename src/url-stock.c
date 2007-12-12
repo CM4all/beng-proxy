@@ -20,6 +20,7 @@
 
 struct url_connection {
     struct stock_item stock_item;
+    const char *uri;
 
     struct async_operation create_operation;
 
@@ -145,7 +146,8 @@ url_client_socket_callback(int fd, int err, void *ctx)
                                                       &url_http_connection_handler, connection);
         stock_available(&connection->stock_item, 1);
     } else {
-        daemon_log(1, "failed to connect: %s\n", strerror(err));
+        daemon_log(1, "failed to connect to '%s': %s\n",
+                   connection->uri, strerror(err));
 
         stock_available(&connection->stock_item, 0);
     }
@@ -183,6 +185,8 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri,
     async_init(&connection->create_operation,
                &url_create_operation);
     async_ref_set(async_ref, &connection->create_operation);
+
+    connection->uri = uri;
 
     if (uri[0] != '/') {
         /* HTTP over TCP */
