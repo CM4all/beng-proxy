@@ -26,7 +26,8 @@ args_parse(pool_t pool, const char *p, size_t length)
         if (equals > p) {
             size_t value_length = and - equals - 1;
             char *value = p_strndup(pool, equals + 1, value_length);
-            uri_unescape_inplace(value, value_length);
+            value_length = uri_unescape_inplace(value, value_length);
+            value[value_length] = 0;
 
             strmap_addn(args,
                         p_strndup(pool, p, equals - p),
