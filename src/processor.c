@@ -36,7 +36,7 @@ struct processor {
     struct replace replace;
 
     struct parser parser;
-    int in_body;
+    int in_html, in_body;
     off_t end_of_body;
     enum {
         TAG_NONE,
@@ -196,7 +196,8 @@ processor_input_eof(void *ctx)
 
         replace_add(&processor->replace, processor->end_of_body,
                     processor->replace.source_length, NULL);
-    } else if ((processor->options & PROCESSOR_BODY) != 0 && !processor->in_body) {
+    } else if ((processor->options & PROCESSOR_BODY) != 0 &&
+               processor->in_html && !processor->in_body) {
         /* no body */
 
         replace_add(&processor->replace, 0,
@@ -285,6 +286,7 @@ processor_new(pool_t pool, istream_t istream,
 
     parser_init(&processor->parser);
 
+    processor->in_html = 0;
     processor->in_body = 0;
     processor->end_of_body = (off_t)-1;
     processor->embedded_widget = NULL;
@@ -384,6 +386,10 @@ parser_element_start(struct parser *parser)
     if (parser->element_name_length == 4 &&
         memcmp(parser->element_name, "body", 4) == 0) {
         processor->tag = TAG_BODY;
+    } else if (parser->element_name_length == 4 &&
+               memcmp(parser->element_name, "html", 4) == 0) {
+        processor->in_html = 1;
+        processor->tag = TAG_NONE;
     } else if (processor->end_of_body != (off_t)-1) {
         /* we have left the body, ignore the rest */
         assert((processor->options & PROCESSOR_BODY) != 0);
@@ -409,7 +415,15 @@ parser_element_start(struct parser *parser)
     } else if (processor_is_quiet(processor)) {
         /* since we are not going to print anything, we don't need to
            parse the rest anyway */
-        processor->tag = TAG_NONE;
+
+        if (processor->in_html)
+            processor->tag = TAG_NONE;
+        else {
+            /* fall back to returning everything if there is no HTML
+               tag */
+            processor->in_body = 1;
+            parser_element_start_in_body(processor, parser);
+        }
     } else {
         parser_element_start_in_body(processor, parser);
     }
