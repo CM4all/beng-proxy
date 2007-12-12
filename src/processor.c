@@ -328,6 +328,27 @@ parser_to_processor(struct parser *parser)
 }
 
 static void
+parser_element_start_in_body(processor_t processor, struct parser *parser)
+{
+    if (parser->element_name_length == 1 &&
+        parser->element_name[0] == 'a') {
+        processor->tag = TAG_A;
+    } else if (parser->element_name_length == 4 &&
+               memcmp(parser->element_name, "form", 4) == 0) {
+        processor->tag = TAG_FORM;
+    } else if (parser->element_name_length == 3 &&
+               memcmp(parser->element_name, "img", 3) == 0) {
+        processor->tag = TAG_IMG;
+    } else if (parser->element_name_length == 6 &&
+               memcmp(parser->element_name, "script", 6) == 0) {
+        if (parser->tag_type == TAG_OPEN)
+            processor->tag = TAG_SCRIPT;
+    } else {
+        processor->tag = TAG_NONE;
+    }
+}
+
+static void
 parser_element_start_in_widget(processor_t processor, struct parser *parser)
 {
     if (parser->element_name_length == 8 &&
@@ -389,21 +410,8 @@ parser_element_start(struct parser *parser)
         /* since we are not going to print anything, we don't need to
            parse the rest anyway */
         processor->tag = TAG_NONE;
-    } else if (parser->element_name_length == 1 &&
-               parser->element_name[0] == 'a') {
-        processor->tag = TAG_A;
-    } else if (parser->element_name_length == 4 &&
-               memcmp(parser->element_name, "form", 4) == 0) {
-        processor->tag = TAG_FORM;
-    } else if (parser->element_name_length == 3 &&
-               memcmp(parser->element_name, "img", 3) == 0) {
-        processor->tag = TAG_IMG;
-    } else if (parser->element_name_length == 6 &&
-               memcmp(parser->element_name, "script", 6) == 0) {
-        if (parser->tag_type == TAG_OPEN)
-            processor->tag = TAG_SCRIPT;
     } else {
-        processor->tag = TAG_NONE;
+        parser_element_start_in_body(processor, parser);
     }
 }
 
