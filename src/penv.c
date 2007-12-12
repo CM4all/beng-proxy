@@ -30,13 +30,10 @@ processor_env_init(pool_t pool, struct processor_env *env,
     env->absolute_uri = absolute_uri;
     env->external_uri = uri;
 
-    if (args == NULL) {
+    if (args == NULL)
         env->args = strmap_new(pool, 16);
-        env->focus = NULL;
-    } else {
+    else
         env->args = args;
-        env->focus = widget_ref_parse(pool, strmap_get(env->args, "focus"));
-    }
 
     http_response_handler_clear(&env->response_handler);
 

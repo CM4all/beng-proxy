@@ -54,10 +54,6 @@ struct processor_env {
 
     struct http_response_handler_ref response_handler;
 
-    /** which widget is focused, i.e. gets the request body and the
-        query string? */
-    const struct widget_ref *focus;
-
     struct session *session;
 
     char session_id_buffer[9];

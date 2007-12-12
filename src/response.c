@@ -117,7 +117,6 @@ response_invoke_processor(struct request *request2,
 
     widget->from_request.proxy_ref = widget_ref_parse(request->pool,
                                                       strmap_get(request2->env.args, "frame"));
-
     if (widget->from_request.proxy_ref != NULL) {
         request2->env.widget_callback = frame_widget_callback;
 
@@ -127,7 +126,8 @@ response_invoke_processor(struct request *request2,
         processor_options |= PROCESSOR_QUIET;
     }
 
-    widget->from_request.focus_ref = request2->env.focus;
+    widget->from_request.focus_ref = widget_ref_parse(request->pool,
+                                                      strmap_get(request2->env.args, "focus"));
 
     body = processor_new(request->pool, body, widget, &request2->env,
                              processor_options);
