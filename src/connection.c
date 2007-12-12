@@ -37,10 +37,6 @@ http_listener_callback(int fd,
     pool_t pool;
     struct client_connection *connection;
 
-    (void)addr;
-    (void)addrlen;
-    (void)ctx;
-
     pool = pool_new_linear(instance->pool, "client_connection", 16384);
     pool_set_major(pool);
 
