@@ -23,6 +23,9 @@ struct config {
     const char *translation_socket;
 
     unsigned num_workers;
+
+    /** maximum number of simultaneous connections */
+    unsigned max_connnections;
 };
 
 void

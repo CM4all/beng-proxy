@@ -10,7 +10,10 @@
 #include "handler.h"
 #include "address.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
+#include <unistd.h>
 
 void
 remove_connection(struct client_connection *connection)
@@ -36,6 +39,14 @@ http_listener_callback(int fd,
     struct instance *instance = (struct instance*)ctx;
     pool_t pool;
     struct client_connection *connection;
+
+    if (instance->num_connections >= instance->config.max_connnections) {
+        /* XXX rather drop an existing connection? */
+        daemon_log(1, "too many connections (%u), dropping\n",
+                   instance->num_connections);
+        close(fd);
+        return;
+    }
 
     pool = pool_new_linear(instance->pool, "client_connection", 16384);
     pool_set_major(pool);

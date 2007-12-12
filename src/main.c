@@ -89,7 +89,11 @@ int main(int argc, char **argv)
 {
     int ret;
     int attr_unused ref;
-    static struct instance instance;
+    static struct instance instance = {
+        .config = {
+            .max_connnections = 1024,
+        },
+    };
 
 #ifndef NDEBUG
     if (geteuid() != 0)
