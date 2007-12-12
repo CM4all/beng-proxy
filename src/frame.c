@@ -11,36 +11,15 @@
 #include "widget.h"
 
 #include <assert.h>
-#include <string.h>
 
-istream_t
-frame_widget_callback(pool_t pool, struct processor_env *env,
-                      struct widget *widget)
+static istream_t
+frame_top_widget(pool_t pool, struct processor_env *env,
+                 struct widget *widget)
 {
     http_method_t method = HTTP_METHOD_GET;
     off_t request_content_length = 0;
     istream_t request_body = NULL;
     struct processor_env *env2;
-
-    assert(pool != NULL);
-    assert(env != NULL);
-    assert(env->widget_callback == frame_widget_callback);
-    assert(widget != NULL);
-
-    if (widget->id == NULL || env->frame == NULL ||
-        !widget_ref_compare(pool, widget, env->frame, 1)) {
-        /* XXX what if the focus is on a sub widget? */
-        return NULL;
-    }
-
-    if (!widget_ref_compare(pool, widget, env->frame, 0))
-        /* only partial match: this is the parent of the frame
-           widget */
-        return embed_new(pool,
-                         method, widget->real_uri,
-                         0, NULL,
-                         widget,
-                         env, PROCESSOR_QUIET);
 
     widget->from_request.proxy = 1; /* set flag if it wasn't previously set */
 
@@ -77,4 +56,31 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
                      request_content_length, request_body,
                      widget,
                      env2, 0);
+}
+
+istream_t
+frame_widget_callback(pool_t pool, struct processor_env *env,
+                      struct widget *widget)
+{
+    assert(pool != NULL);
+    assert(env != NULL);
+    assert(env->widget_callback == frame_widget_callback);
+    assert(widget != NULL);
+
+    if (widget->id == NULL || env->frame == NULL ||
+        !widget_ref_compare(pool, widget, env->frame, 1)) {
+        /* XXX what if the focus is on a sub widget? */
+        return NULL;
+    }
+
+    if (!widget_ref_compare(pool, widget, env->frame, 0))
+        /* only partial match: this is the parent of the frame
+           widget */
+        return embed_new(pool,
+                         HTTP_METHOD_GET, widget->real_uri,
+                         0, NULL,
+                         widget,
+                         env, PROCESSOR_QUIET);
+
+    return frame_top_widget(pool, env, widget);
 }
