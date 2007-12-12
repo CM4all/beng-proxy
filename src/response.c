@@ -84,14 +84,11 @@ response_invoke_processor(struct request *request2,
     struct http_server_request *request = request2->request;
     struct widget *widget;
     unsigned processor_options = 0;
-    pool_t pool;
 
     assert(!request2->response_sent);
     assert(!request2->processed);
     assert(request2->translate.response->process);
     assert(!istream_has_handler(body));
-
-    pool = request->pool;
 
     request2->processed = 1;
 
@@ -133,11 +130,11 @@ response_invoke_processor(struct request *request2,
                              processor_options);
     if (widget->from_request.proxy_ref != NULL) {
         /* XXX */
-        pool_ref(pool);
+        pool_ref(request->pool);
         widget_proxy_install(&request2->env, request, body);
         request2->response_sent = 1;
         response_close(request2);
-        pool_unref(pool);
+        pool_unref(request->pool);
         return;
     }
 
