@@ -330,8 +330,8 @@ subst_source_eof(void *ctx)
     }
 
     if (subst->state == STATE_NONE) {
-        istream_invoke_eof(&subst->output);
         subst->state = STATE_CLOSED;
+        istream_invoke_eof(&subst->output);
     }
 }
 
