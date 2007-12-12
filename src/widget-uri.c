@@ -58,8 +58,10 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
 
     /* are we focused? */
 
-    if (widget->id != NULL && env->focus != NULL &&
-        widget_ref_compare(pool, widget, env->focus, 0)) {
+    if (widget->id != NULL && widget->parent != NULL &&
+        widget->parent->from_request.focus_ref != NULL &&
+        strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
+        widget->parent->from_request.focus_ref->next == NULL) {
         /* we're in focus.  forward query string and request body. */
         widget->from_request.focus = 1;
 
@@ -72,6 +74,19 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
         /* store query string in session */
 
         ws = widget_get_session(widget, 1);
+    } else if (widget->id != NULL && widget->parent != NULL &&
+               widget->parent->from_request.focus_ref != NULL &&
+               strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
+               widget->parent->from_request.focus_ref->next == NULL) {
+        /* we are the parent (or grant-parent) of the focused widget.
+           store the relative focus_ref. */
+
+        widget->from_request.focus_ref = widget->parent->from_request.focus_ref->next;
+        widget->parent->from_request.focus_ref = NULL;
+        
+        /* get query string from session */
+
+        ws = widget_get_session(widget, 0);
     } else {
         /* get query string from session */
 
