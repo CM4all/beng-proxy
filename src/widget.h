@@ -56,6 +56,8 @@ struct widget {
 
         struct widget_session *session;
 
+        const struct widget_ref *proxy_ref;
+
         const struct widget_ref *focus_ref;
 
         /** is this widget focused? */
@@ -113,6 +115,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->query_string = NULL;
     widget->from_request.path_info = NULL;
     widget->from_request.session = NULL;
+    widget->from_request.proxy_ref = NULL;
     widget->from_request.focus_ref = NULL;
     widget->from_request.focus = 0;
     widget->from_request.query_string = 0;

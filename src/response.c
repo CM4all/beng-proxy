@@ -122,6 +122,7 @@ response_invoke_processor(struct request *request2,
                                                       strref_dup(request->pool,
                                                                  &request2->uri.base),
                                                       1);
+    widget->from_request.proxy_ref = request2->env.frame;
     widget->from_request.focus_ref = request2->env.focus;
 
     body = processor_new(request->pool, body, widget, &request2->env,

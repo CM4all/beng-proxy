@@ -67,13 +67,10 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
     assert(env->widget_callback == frame_widget_callback);
     assert(widget != NULL);
 
-    if (widget->id == NULL || env->frame == NULL ||
-        !widget_ref_compare(pool, widget, env->frame, 1)) {
-        /* XXX what if the focus is on a sub widget? */
-        return NULL;
-    }
-
-    if (!widget_ref_compare(pool, widget, env->frame, 0))
+    if (widget->from_request.proxy)
+        /* this widget is being proxied */
+        return frame_top_widget(pool, env, widget);
+    else if (widget->from_request.proxy_ref != NULL)
         /* only partial match: this is the parent of the frame
            widget */
         return embed_new(pool,
@@ -81,6 +78,7 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
                          0, NULL,
                          widget,
                          env, PROCESSOR_QUIET);
-
-    return frame_top_widget(pool, env, widget);
+    else
+        /* this widget is none of our business */
+        return NULL;
 }

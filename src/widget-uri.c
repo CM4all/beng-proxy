@@ -56,6 +56,19 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
     if (widget->id != NULL && widget->from_request.path_info == NULL)
         widget->from_request.path_info = strmap_get(env->args, widget->id);
 
+    /* is this widget being proxied? */
+
+    if (widget->id != NULL && widget->parent != NULL &&
+        widget->parent->from_request.proxy_ref != NULL &&
+        strcmp(widget->id, widget->parent->from_request.proxy_ref->id) == 0) {
+        widget->from_request.proxy_ref = widget->parent->from_request.proxy_ref->next;
+
+        if (widget->from_request.proxy_ref == NULL)
+            widget->from_request.proxy = 1;
+        else
+            widget->parent->from_request.proxy_ref = NULL;
+    }
+
     /* are we focused? */
 
     if (widget->id != NULL && widget->parent != NULL &&
