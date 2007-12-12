@@ -127,7 +127,7 @@ response_invoke_processor(struct request *request2,
                                                       strmap_get(request2->env.args, "focus"));
 
     body = processor_new(request->pool, body, widget, &request2->env,
-                             processor_options);
+                         processor_options);
     if (widget->from_request.proxy_ref != NULL) {
         /* XXX */
         pool_ref(request->pool);
