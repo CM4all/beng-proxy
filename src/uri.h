@@ -19,6 +19,9 @@ struct parsed_uri {
 size_t
 uri_escape(char *dest, const char *src, size_t src_length);
 
+size_t
+uri_unescape_inplace(char *src, size_t length);
+
 int
 uri_parse(pool_t pool, struct parsed_uri *dest, const char *src);
 
