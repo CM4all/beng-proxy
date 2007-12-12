@@ -115,18 +115,16 @@ response_invoke_processor(struct request *request2,
                                                                  &request2->uri.base),
                                                       1);
 
-    if (request2->env.args != NULL) {
-        widget->from_request.proxy_ref = widget_ref_parse(request->pool,
-                                                          strmap_get(request2->env.args, "frame"));
+    widget->from_request.proxy_ref = widget_ref_parse(request->pool,
+                                                      strmap_get(request2->env.args, "frame"));
 
-        if (widget->from_request.proxy_ref != NULL) {
-            request2->env.widget_callback = frame_widget_callback;
+    if (widget->from_request.proxy_ref != NULL) {
+        request2->env.widget_callback = frame_widget_callback;
 
-            /* do not show the template contents if the browser is
-               only interested in one particular widget for
-               displaying the frame */
-            processor_options |= PROCESSOR_QUIET;
-        }
+        /* do not show the template contents if the browser is
+           only interested in one particular widget for
+           displaying the frame */
+        processor_options |= PROCESSOR_QUIET;
     }
 
     widget->from_request.focus_ref = request2->env.focus;
