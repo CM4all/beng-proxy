@@ -107,14 +107,6 @@ response_invoke_processor(struct request *request2,
                        request->headers,
                        request->content_length, request->body,
                        embed_widget_callback);
-    if (request2->env.frame != NULL) { /* XXX */
-        request2->env.widget_callback = frame_widget_callback;
-
-        /* do not show the template contents if the browser is
-           only interested in one particular widget for
-           displaying the frame */
-        processor_options |= PROCESSOR_QUIET;
-    }
 
     widget = p_malloc(request->pool, sizeof(*widget));
     widget_init(widget, NULL);
@@ -122,12 +114,26 @@ response_invoke_processor(struct request *request2,
                                                       strref_dup(request->pool,
                                                                  &request2->uri.base),
                                                       1);
-    widget->from_request.proxy_ref = request2->env.frame;
+
+    if (request2->env.args != NULL) {
+        widget->from_request.proxy_ref = widget_ref_parse(request->pool,
+                                                          strmap_get(request2->env.args, "frame"));
+
+        if (widget->from_request.proxy_ref != NULL) {
+            request2->env.widget_callback = frame_widget_callback;
+
+            /* do not show the template contents if the browser is
+               only interested in one particular widget for
+               displaying the frame */
+            processor_options |= PROCESSOR_QUIET;
+        }
+    }
+
     widget->from_request.focus_ref = request2->env.focus;
 
     body = processor_new(request->pool, body, widget, &request2->env,
                              processor_options);
-    if (request2->env.frame != NULL) {
+    if (widget->from_request.proxy_ref != NULL) {
         /* XXX */
         pool_ref(pool);
         widget_proxy_install(&request2->env, request, body);

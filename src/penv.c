@@ -32,11 +32,9 @@ processor_env_init(pool_t pool, struct processor_env *env,
 
     if (args == NULL) {
         env->args = strmap_new(pool, 16);
-        env->frame = NULL;
         env->focus = NULL;
     } else {
         env->args = args;
-        env->frame = widget_ref_parse(pool, strmap_get(env->args, "frame"));
         env->focus = widget_ref_parse(pool, strmap_get(env->args, "focus"));
     }
 

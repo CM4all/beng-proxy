@@ -175,7 +175,6 @@ widget_proxy_install(struct processor_env *env,
 {
     struct widget_proxy *wp = p_malloc(request->pool, sizeof(*wp));
 
-    assert(env->frame != NULL);
     assert(!http_response_handler_defined(&env->response_handler));
 
     wp->request = request;

@@ -52,9 +52,6 @@ struct processor_env {
 
     istream_t request_body;
 
-    /** which widget is displayed in this frame? */
-    const struct widget_ref *frame;
-
     struct http_response_handler_ref response_handler;
 
     /** which widget is focused, i.e. gets the request body and the
