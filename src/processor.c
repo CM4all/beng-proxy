@@ -435,8 +435,7 @@ transform_url_attribute(processor_t processor, int focus)
                               processor->widget,
                               processor->parser.attr_value,
                               processor->parser.attr_value_length,
-                              focus,
-                              processor->env->request_body != NULL);
+                              focus);
     if (new_uri == NULL)
         return;
 
