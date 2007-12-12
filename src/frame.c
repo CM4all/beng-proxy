@@ -38,7 +38,7 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
            widget */
         return embed_new(pool,
                          method, widget->real_uri,
-                         request_content_length, request_body,
+                         0, NULL,
                          widget,
                          env, PROCESSOR_QUIET);
 
