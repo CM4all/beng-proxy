@@ -214,8 +214,7 @@ widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     strmap_t args,
                     const struct widget *widget,
-                    const char *relative_uri, size_t relative_uri_length,
-                    int focus)
+                    const char *relative_uri, size_t relative_uri_length)
 {
     const char *new_uri;
     const char *args2;
@@ -246,18 +245,12 @@ widget_external_uri(pool_t pool,
     if (new_uri == NULL)
         return NULL;
 
-    if (!focus && memchr(relative_uri, '?', relative_uri_length) != NULL)
-        /* switch on focus if the relative URI contains a query
-           string */
-        focus = 1;
-
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format(pool, args,
                         widget->id, new_uri,
-                        "focus",
-                        focus ? widget->id : NULL,
+                        "focus", widget->id,
                         NULL);
 
     return p_strncat(pool,

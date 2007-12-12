@@ -426,7 +426,7 @@ make_url_attribute_absolute(processor_t processor)
 }
 
 static void
-transform_url_attribute(processor_t processor, int focus)
+transform_url_attribute(processor_t processor)
 {
     const char *new_uri
         = widget_external_uri(processor->output.pool,
@@ -434,8 +434,7 @@ transform_url_attribute(processor_t processor, int focus)
                               processor->env->args,
                               processor->widget,
                               processor->parser.attr_value,
-                              processor->parser.attr_value_length,
-                              focus);
+                              processor->parser.attr_value_length);
     if (new_uri == NULL)
         return;
 
@@ -556,13 +555,13 @@ parser_attr_finished(struct parser *parser)
     case TAG_A:
         if (parser->attr_name_length == 4 &&
             memcmp(parser->attr_name, "href", 4) == 0)
-            transform_url_attribute(processor, 0);
+            transform_url_attribute(processor);
         break;
 
     case TAG_FORM:
         if (parser->attr_name_length == 6 &&
             memcmp(parser->attr_name, "action", 6) == 0)
-            transform_url_attribute(processor, 1);
+            transform_url_attribute(processor);
         break;
 
     case TAG_SCRIPT:
