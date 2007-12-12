@@ -51,11 +51,6 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
 
     widget->real_uri = widget->class->uri;
 
-    /* determine path_info */
-
-    if (widget->id != NULL && widget->from_request.path_info == NULL)
-        widget->from_request.path_info = strmap_get(env->args, widget->id);
-
     /* is this widget being proxied? */
 
     if (widget->id != NULL && widget->parent != NULL &&
@@ -105,6 +100,11 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
 
         ws = widget_get_session(widget, 0);
     }
+
+    /* determine path_info */
+
+    if (widget->from_request.focus && widget->from_request.path_info == NULL)
+        widget->from_request.path_info = strmap_remove(env->args, "path");
 
     /* append path_info and query_string to widget->real_uri */
 
@@ -249,8 +249,8 @@ widget_external_uri(pool_t pool,
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format(pool, args,
-                        widget->id, new_uri,
                         "focus", widget->id,
+                        "path", new_uri,
                         NULL);
 
     return p_strncat(pool,
