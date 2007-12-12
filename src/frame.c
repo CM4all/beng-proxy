@@ -52,7 +52,9 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
                                      env->external_uri->query.length,
                                      NULL);
 
-    if (env->request_body != NULL) {
+    if (widget->from_request.body) {
+        assert(env->request_body != NULL);
+
         method = HTTP_METHOD_POST; /* XXX which method? */
         request_content_length = env->request_content_length;
         request_body = env->request_body;
