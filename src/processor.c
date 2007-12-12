@@ -196,6 +196,13 @@ processor_input_eof(void *ctx)
 
         replace_add(&processor->replace, processor->end_of_body,
                     processor->replace.source_length, NULL);
+    } else if ((processor->options & PROCESSOR_BODY) != 0 && !processor->in_body) {
+        /* no body */
+
+        replace_add(&processor->replace, 0,
+                    processor->replace.source_length,
+                    istream_string_new(processor->output.pool,
+                                       "<!-- the widget has no HTML body -->"));
     }
 
     replace_eof(&processor->replace);
