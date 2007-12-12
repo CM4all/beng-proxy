@@ -6,7 +6,6 @@
 
 #include "widget.h"
 
-#include <assert.h>
 #include <string.h>
 
 const struct widget_ref *
@@ -44,63 +43,4 @@ widget_ref_parse(pool_t pool, const char *_p)
     }
 
     return root;
-}
-
-static const struct widget_ref *
-widget_widget_ref(pool_t pool, const struct widget *widget)
-{
-    /* XXX this is a waste of memory */
-    struct widget_ref *wr = NULL, *next;
-
-    assert(widget != NULL);
-
-    while (widget->parent != NULL) {
-        if (widget->id == NULL)
-            return NULL;
-
-        next = wr;
-        wr = p_malloc(pool, sizeof(*wr));
-        wr->next = next;
-        wr->id = widget->id;
-
-        widget = widget->parent;
-    }
-
-    return wr;
-}
-
-static int
-widget_ref_compare2(const struct widget_ref *a, const struct widget_ref *b,
-                    int partial_ok)
-{
-    while (a != NULL) {
-        if (b == NULL || strcmp(a->id, b->id) != 0)
-            return 0;
-
-        a = a->next;
-        b = b->next;
-    }
-
-    return partial_ok || b == NULL;
-}
-
-int
-widget_ref_compare(pool_t pool, const struct widget *widget,
-                   const struct widget_ref *ref, int partial_ok)
-{
-    const struct widget_ref *ref2;
-
-    assert(widget != NULL);
-
-    if (ref == NULL)
-        return widget->parent == NULL;
-
-    if (widget->parent == NULL)
-        return partial_ok;
-
-    ref2 = widget_widget_ref(pool, widget);
-    if (ref2 == NULL)
-        return 0;
-
-    return widget_ref_compare2(ref2, ref, partial_ok);
 }

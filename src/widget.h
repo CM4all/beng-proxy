@@ -147,10 +147,6 @@ widget_get_session2(struct widget *widget);
 const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *p);
 
-int
-widget_ref_compare(pool_t pool, const struct widget *widget,
-                   const struct widget_ref *ref, int partial_ok);
-
 void
 widget_determine_real_uri(pool_t pool, const struct processor_env *env,
                           struct widget *widget);
