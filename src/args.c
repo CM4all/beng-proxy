@@ -23,10 +23,15 @@ args_parse(pool_t pool, const char *p, size_t length)
         else
             ++next;
         equals = memchr(p, '=', and - p);
-        if (equals > p)
+        if (equals > p) {
+            size_t value_length = and - equals - 1;
+            char *value = p_strndup(pool, equals + 1, value_length);
+            uri_unescape_inplace(value, value_length);
+
             strmap_addn(args,
                         p_strndup(pool, p, equals - p),
-                        p_strndup(pool, equals + 1, and - equals - 1));
+                        value);
+        }
 
         p = next;
     } while (p != NULL);
