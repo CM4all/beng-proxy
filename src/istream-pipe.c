@@ -50,7 +50,7 @@ pipe_abort(struct istream_pipe *p)
     if (p->input == NULL)
         istream_invoke_abort(&p->output);
     else
-        istream_free_unref(&p->input);
+        istream_close(p->input);
 }
 
 static ssize_t
@@ -185,11 +185,9 @@ pipe_input_abort(void *ctx)
 {
     struct istream_pipe *p = ctx;
 
-    if (p->input != NULL)
-        istream_clear_unref(&p->input);
-
     pipe_close(p);
 
+    istream_clear_unref(&p->input);
     istream_invoke_abort(&p->output);
 }
 
