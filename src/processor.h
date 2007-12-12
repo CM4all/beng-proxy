@@ -82,7 +82,7 @@ processor_env_init(pool_t pool,
                    istream_t request_body,
                    processor_widget_callback_t widget_callback);
 
-static inline struct processor_env *
+static inline struct processor_env * attr_malloc
 processor_env_dup(pool_t pool, const struct processor_env *env)
 {
     return (struct processor_env *)p_memdup(pool, env, sizeof(*env));
