@@ -59,7 +59,6 @@ byte_source_abort(void *ctx)
     assert(byte->input != NULL);
 
     istream_clear_unref(&byte->input);
-
     istream_invoke_abort(&byte->output);
 }
 

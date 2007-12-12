@@ -343,7 +343,6 @@ subst_source_abort(void *ctx)
     subst->state = STATE_CLOSED;
 
     istream_clear_unref(&subst->input);
-
     istream_invoke_abort(&subst->output);
 }
 
