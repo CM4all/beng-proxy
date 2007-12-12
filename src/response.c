@@ -124,7 +124,7 @@ response_invoke_processor(struct request *request2,
     }
 
     widget->from_request.focus_ref = widget_ref_parse(request->pool,
-                                                      strmap_get(request2->env.args, "focus"));
+                                                      strmap_remove(request2->env.args, "focus"));
 
     body = processor_new(request->pool, body, widget, &request2->env,
                          processor_options);
