@@ -217,7 +217,7 @@ response_response(http_status_t status, strmap_t headers,
     assert(!request2->response_sent);
     assert(async_ref_defined(&request2->url_stream) ||
            async_ref_defined(&request2->filter));
-    assert(!istream_has_handler(body));
+    assert(body == NULL || !istream_has_handler(body));
 
     async_ref_clear(&request2->url_stream);
     async_ref_clear(&request2->filter);
