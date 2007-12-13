@@ -235,6 +235,16 @@ To send a standard error page, the translation server sends a response
 containing only the \texttt{STATUS} parameter with the desired HTTP
 status.
 
+\subsubsection{Proxying requests}
+
+When proxying HTTP requests with the a \texttt{PROXY} packet,
+\emph{beng-proxy} forwards the request to the specified location,
+including the HTTP method and the request body.  There is one
+exception: if \texttt{PROCESS} is enabled and the original HTTP method
+is \texttt{POST}, the other HTTP server receives a \texttt{GET}
+request without a body, because the focused widget is going to receive
+the request body.
+
 \subsubsection{Filters}
 \label{filter}
 

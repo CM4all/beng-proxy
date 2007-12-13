@@ -9,6 +9,14 @@
 #include "session.h"
 #include "http-server.h"
 
+int
+response_dispatcher_wants_body(struct request *request)
+{
+    return request->request->method == HTTP_METHOD_POST &&
+        http_server_request_has_body(request->request) &&
+        request->translate.response->process;
+}
+
 void
 request_get_session(struct request *request, const char *session_id)
 {

@@ -82,6 +82,8 @@ response_invoke_processor(struct request *request2,
                           istream_t body)
 {
     struct http_server_request *request = request2->request;
+    off_t request_content_length;
+    istream_t request_body;
     struct widget *widget;
     unsigned processor_options = 0;
 
@@ -94,6 +96,15 @@ response_invoke_processor(struct request *request2,
 
     async_ref_clear(&request2->url_stream);
 
+    if (http_server_request_has_body(request) && !request2->body_consumed) {
+        request_content_length = request->content_length;
+        request_body = request->body;
+        request2->body_consumed = 1;
+    } else {
+        request_content_length = 0;
+        request_body = NULL;
+    }
+
     processor_env_init(request->pool, &request2->env,
                        request2->http_client_stock,
                        request->remote_host,
@@ -102,7 +113,7 @@ response_invoke_processor(struct request *request2,
                        request2->args,
                        request2->session,
                        request->headers,
-                       request->content_length, request->body,
+                       request_content_length, request_body,
                        embed_widget_callback);
 
     widget = p_malloc(request->pool, sizeof(*widget));

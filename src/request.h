@@ -34,8 +34,11 @@ struct request {
 
     struct async_operation_ref url_stream, filter;
 
-    unsigned filtered, processed, response_sent;
+    unsigned body_consumed, filtered, processed, response_sent;
 };
+
+int
+response_dispatcher_wants_body(struct request *request);
 
 void
 request_get_session(struct request *request, const char *session_id);

@@ -220,6 +220,7 @@ my_http_server_connection_request(struct http_server_request *request,
 
     request2->args = NULL;
     request2->session = NULL;
+    request2->body_consumed = 0;
     request2->filtered = 0;
     request2->processed = 0;
     request2->response_sent = 0;
