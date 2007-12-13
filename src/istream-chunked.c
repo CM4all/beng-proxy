@@ -15,6 +15,7 @@ struct istream_chunked {
     struct istream output;
     istream_t input;
     fifo_buffer_t buffer;
+    size_t missing_from_current_chunk;
 };
 
 
@@ -60,6 +61,40 @@ chunked_try_write(struct istream_chunked *chunked)
     }
 }
 
+static size_t
+chunked_start_chunk(struct istream_chunked *chunked, size_t length, char *dest)
+{
+    assert(chunked->missing_from_current_chunk == 0);
+
+    if (length > 0x1000)
+        /* maximum chunk size is 4kB for now */
+        length = 0x1000;
+
+    chunked->missing_from_current_chunk = length;
+
+    format_uint16_hex_fixed(dest, (uint16_t)length);
+    dest[4] = '\r';
+    dest[5] = '\n';
+
+    return 6;
+}
+
+static void
+chunked_start_chunk2(struct istream_chunked *chunked, size_t length)
+{
+    char *dest;
+    size_t max_length, header_length;
+
+    dest = fifo_buffer_write(chunked->buffer, &max_length);
+    assert(dest != NULL);
+    assert(max_length > 6);
+
+    header_length = chunked_start_chunk(chunked, length, dest);
+    assert(header_length <= max_length);
+
+    fifo_buffer_append(chunked->buffer, header_length);
+}
+
 
 /*
  * istream handler
@@ -71,7 +106,7 @@ chunked_source_data(const void *data, size_t length, void *ctx)
 {
     struct istream_chunked *chunked = ctx;
     char *dest;
-    size_t max_length;
+    size_t max_length, dest_length;
 
     assert(chunked->input != NULL);
 
@@ -88,17 +123,29 @@ chunked_source_data(const void *data, size_t length, void *ctx)
             return 0;
     }
 
+
+    if (chunked->missing_from_current_chunk == 0)
+        dest_length = chunked_start_chunk(chunked, length, dest);
+    else
+        dest_length = 0;
+
+    if (length > chunked->missing_from_current_chunk)
+        length = chunked->missing_from_current_chunk;
+
     if (length > max_length - 4 - 2 - 2 - 5)
         length = max_length - 4 - 2 - 2 - 5;
 
-    format_uint16_hex_fixed(dest, (uint16_t)length);
-    dest[4] = '\r';
-    dest[5] = '\n';
-    memcpy(dest + 4 + 2, data, length);
-    dest[4 + 2 + length] = '\r';
-    dest[4 + 2 + length + 1] = '\n';
+    memcpy(dest + dest_length, data, length);
+    dest_length += length;
 
-    fifo_buffer_append(chunked->buffer, 4 + 2 + length + 2);
+    chunked->missing_from_current_chunk -= length;
+    if (chunked->missing_from_current_chunk == 0) {
+        dest[dest_length] = '\r';
+        dest[dest_length + 1] = '\n';
+        dest_length += 2;
+    }
+
+    fifo_buffer_append(chunked->buffer, dest_length);
 
     chunked_try_write(chunked);
     if (chunked_is_closed(chunked))
@@ -164,8 +211,15 @@ istream_chunked_read(istream_t istream)
 
     if (chunked->input == NULL)
         chunked_try_write(chunked);
-    else
+    else {
+        if (chunked->missing_from_current_chunk == 0) {
+            off_t available = istream_available(chunked->input, 1);
+            if (available != (off_t)-1 && available > 0)
+                chunked_start_chunk2(chunked, available);
+        }
+
         istream_read(chunked->input);
+    }
 }
 
 static void
@@ -203,6 +257,7 @@ istream_chunked_new(pool_t pool, istream_t input)
     chunked->output = istream_chunked;
     chunked->output.pool = pool;
     chunked->buffer = fifo_buffer_new(pool, 4096);
+    chunked->missing_from_current_chunk = 0;
 
     istream_assign_ref_handler(&chunked->input, input,
                                &chunked_source_handler, chunked,
