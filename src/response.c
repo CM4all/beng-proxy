@@ -90,9 +90,14 @@ response_invoke_processor(struct request *request2,
     assert(!request2->response_sent);
     assert(!request2->processed);
     assert(request2->translate.response->process);
-    assert(!istream_has_handler(body));
+    assert(body == NULL || !istream_has_handler(body));
 
     request2->processed = 1;
+
+    if (body == NULL) {
+        response_dispatch(request2, status, response_headers, -1, NULL);
+        return;
+    }
 
     async_ref_clear(&request2->url_stream);
 
