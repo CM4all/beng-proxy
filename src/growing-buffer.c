@@ -137,6 +137,25 @@ istream_to_gb(istream_t istream)
     return (growing_buffer_t)(((char*)istream) - offsetof(struct growing_buffer, stream));
 }
 
+static off_t
+istream_gb_available(istream_t istream, int partial attr_unused)
+{
+    growing_buffer_t gb = istream_to_gb(istream);
+    struct buffer *buffer;
+    off_t available = 0;
+
+    assert(gb->pool == istream_pool(istream));
+    assert(gb->size == 0);
+    assert(gb->tail == NULL);
+    assert(gb->current != NULL);
+    assert(gb->current->position <= gb->current->length);
+
+    for (buffer = gb->current; buffer != NULL; buffer = buffer->next)
+        available += buffer->length - buffer->position;
+
+    return available;
+}
+
 static void
 istream_gb_read(istream_t istream)
 {
@@ -187,6 +206,7 @@ istream_gb_close(istream_t istream)
 }
 
 static const struct istream istream_gb = {
+    .available = istream_gb_available,
     .read = istream_gb_read,
     .close = istream_gb_close,
 };
