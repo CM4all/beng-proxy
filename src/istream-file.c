@@ -50,6 +50,31 @@ istream_to_file(istream_t istream)
     return (struct file *)(((char*)istream) - offsetof(struct file, stream));
 }
 
+static off_t
+istream_file_available(istream_t istream, int partial)
+{
+    struct file *file = istream_to_file(istream);
+    off_t available = 0;
+
+    if (file->rest != (off_t)-1)
+        available = file->rest;
+    else if (!partial)
+        return (off_t)-1;
+    else
+        available = 0;
+
+    if (file->buffer != NULL) {
+        const void *data;
+        size_t length;
+
+        data = fifo_buffer_read(file->buffer, &length);
+        if (data != NULL)
+            available += length;
+    }
+
+    return available;
+}
+
 /**
  * @return the number of bytes still in the buffer
  */
@@ -205,6 +230,7 @@ istream_file_close(istream_t istream)
 }
 
 static const struct istream istream_file = {
+    .available = istream_file_available,
     .read = istream_file_read,
     .close = istream_file_close,
 };

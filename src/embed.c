@@ -166,8 +166,7 @@ embed_redirect(struct embed *embed,
 
     url_stream_new(embed->pool,
                    embed->env->http_client_stock,
-                   HTTP_METHOD_GET, location, headers,
-                   0, NULL,
+                   HTTP_METHOD_GET, location, headers, NULL,
                    &embed_response_handler, embed,
                    &embed->url_stream);
 
@@ -175,8 +174,7 @@ embed_redirect(struct embed *embed,
 }
 
 static void 
-embed_response_response(http_status_t status, strmap_t headers,
-                        off_t content_length, istream_t body,
+embed_response_response(http_status_t status, strmap_t headers, istream_t body,
                         void *ctx)
 {
     struct embed *embed = ctx;
@@ -207,12 +205,10 @@ embed_response_response(http_status_t status, strmap_t headers,
     }
 
     content_type = strmap_get(headers, "content-type");
-    if (content_type != NULL && strncmp(content_type, "text/html", 9) == 0) {
+    if (content_type != NULL && strncmp(content_type, "text/html", 9) == 0)
         /* HTML resources must be processed */
         input = processor_new(istream_pool(embed->delayed), input,
                               embed->widget, embed->env, embed->options);
-        content_length = -1;
-    }
 
     if (embed->widget->from_request.proxy &&
         http_response_handler_defined(&embed->env->response_handler)) {
@@ -220,8 +216,7 @@ embed_response_response(http_status_t status, strmap_t headers,
            to to http_server object, including headers */
 
         http_response_handler_invoke_response(&embed->env->response_handler,
-                                              status, headers,
-                                              content_length, input);
+                                              status, headers, input);
         pool_unref(embed->pool);
         return;
     }
@@ -287,7 +282,6 @@ static const struct http_response_handler embed_response_handler = {
 
 istream_t
 embed_new(pool_t pool, http_method_t method, const char *url,
-          off_t request_content_length,
           istream_t request_body,
           struct widget *widget,
           struct processor_env *env,
@@ -313,7 +307,6 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     url_stream_new(pool,
                    env->http_client_stock,
                    method, url, headers,
-                   request_content_length,
                    request_body,
                    &embed_response_handler, embed,
                    &embed->url_stream);

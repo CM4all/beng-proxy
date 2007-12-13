@@ -27,7 +27,6 @@ struct http_server_request {
     char *uri;
     strmap_t headers;
 
-    off_t content_length;
     istream_t body;
 };
 
@@ -51,14 +50,14 @@ http_server_connection_free(http_server_connection_t *connection_r);
 static inline int
 http_server_request_has_body(const struct http_server_request *request)
 {
-    return request->content_length != 0;
+    return request->body != NULL;
 }
 
 void
 http_server_response(struct http_server_request *request,
                      http_status_t status,
                      growing_buffer_t headers,
-                     off_t content_length, istream_t body);
+                     istream_t body);
 
 void
 http_server_send_message(struct http_server_request *request,

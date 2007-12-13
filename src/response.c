@@ -82,7 +82,6 @@ response_invoke_processor(struct request *request2,
                           istream_t body)
 {
     struct http_server_request *request = request2->request;
-    off_t request_content_length;
     istream_t request_body;
     struct widget *widget;
     unsigned processor_options = 0;
@@ -95,18 +94,16 @@ response_invoke_processor(struct request *request2,
     request2->processed = 1;
 
     if (body == NULL) {
-        response_dispatch(request2, status, response_headers, -1, NULL);
+        response_dispatch(request2, status, response_headers, NULL);
         return;
     }
 
     async_ref_clear(&request2->url_stream);
 
     if (http_server_request_has_body(request) && !request2->body_consumed) {
-        request_content_length = request->content_length;
         request_body = request->body;
         request2->body_consumed = 1;
     } else {
-        request_content_length = 0;
         request_body = NULL;
     }
 
@@ -118,7 +115,7 @@ response_invoke_processor(struct request *request2,
                        request2->args,
                        request2->session,
                        request->headers,
-                       request_content_length, request_body,
+                       request_body,
                        embed_widget_callback);
 
     widget = p_malloc(request->pool, sizeof(*widget));
@@ -163,7 +160,7 @@ response_invoke_processor(struct request *request2,
 
     assert(!istream_has_handler(body));
 
-    response_dispatch(request2, status, response_headers, -1, body);
+    response_dispatch(request2, status, response_headers, body);
 }
 
 
@@ -175,7 +172,7 @@ response_invoke_processor(struct request *request2,
 void
 response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
-                  off_t content_length, istream_t body)
+                  istream_t body)
 {
     assert(!request2->response_sent);
 
@@ -190,7 +187,7 @@ response_dispatch(struct request *request2,
                    request2->http_client_stock,
                    request2->translate.response->filter,
                    headers,
-                   content_length, body,
+                   body,
                    &response_handler, request2,
                    &request2->filter);
     } else if (request2->translate.response->process && !request2->processed) {
@@ -198,8 +195,7 @@ response_dispatch(struct request *request2,
     } else {
         request2->response_sent = 1;
         http_server_response(request2->request,
-                             status, headers,
-                             content_length, body);
+                             status, headers, body);
     }
 }
 
@@ -211,7 +207,7 @@ response_dispatch(struct request *request2,
 
 static void 
 response_response(http_status_t status, strmap_t headers,
-                  off_t content_length, istream_t body,
+                  istream_t body,
                   void *ctx)
 {
     struct request *request2 = ctx;
@@ -235,7 +231,7 @@ response_response(http_status_t status, strmap_t headers,
 
     response_dispatch(request2,
                       status, response_headers,
-                      content_length, body);
+                      body);
 
     pool_unref(pool);
 }

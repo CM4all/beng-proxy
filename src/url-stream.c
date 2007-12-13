@@ -22,7 +22,6 @@ struct url_stream {
     http_method_t method;
     const char *uri;
     growing_buffer_t headers;
-    off_t content_length;
     istream_t body;
 
     struct async_operation async;
@@ -41,13 +40,12 @@ struct url_stream {
 
 static void 
 url_stream_response(http_status_t status, strmap_t headers,
-                    off_t content_length, istream_t body,
+                    istream_t body,
                     void *ctx)
 {
     struct url_stream *us = ctx;
 
-    http_response_handler_invoke_response(&us->handler, status, headers,
-                                          content_length, body);
+    http_response_handler_invoke_response(&us->handler, status, headers, body);
 
     pool_unref(us->pool);
     VALGRIND_MAKE_MEM_NOACCESS(us, sizeof(*us));
@@ -93,8 +91,7 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
     us->stock_item = item;
 
     http_client_request(url_stock_item_get(item),
-                        us->method, us->uri, us->headers,
-                        us->content_length, us->body,
+                        us->method, us->uri, us->headers, us->body,
                         &url_stream_response_handler, us);
 
     if (us->body != NULL)
@@ -149,7 +146,7 @@ url_stream_new(pool_t pool,
                struct hstock *http_client_stock,
                http_method_t method, const char *url,
                growing_buffer_t headers,
-               off_t content_length, istream_t body,
+               istream_t body,
                const struct http_response_handler *handler,
                void *handler_ctx,
                struct async_operation_ref *async_ref)
@@ -176,7 +173,6 @@ url_stream_new(pool_t pool,
     if (us->headers == NULL)
         us->headers = growing_buffer_new(pool, 512);
 
-    us->content_length = content_length;
     if (body == NULL)
         us->body = NULL;
     else

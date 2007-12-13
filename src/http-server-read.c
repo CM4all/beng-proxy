@@ -91,14 +91,14 @@ http_server_headers_finished(http_server_connection_t connection)
         if (value == NULL) {
             /* no body at all */
 
-            request->content_length = 0;
             request->body = NULL;
             connection->request.read_state = READ_END;
         } else {
+            off_t content_length;
             char *endptr;
 
-            request->content_length = strtoul(value, &endptr, 10);
-            if (unlikely(*endptr != 0 || request->content_length < 0)) {
+            content_length = strtoul(value, &endptr, 10);
+            if (unlikely(*endptr != 0 || content_length < 0)) {
                 daemon_log(2, "invalid Content-Length header in HTTP request\n");
                 http_server_connection_close(connection);
                 return;
@@ -106,7 +106,7 @@ http_server_headers_finished(http_server_connection_t connection)
 
             http_body_init(&connection->request.body_reader,
                            &http_server_request_stream, connection->pool,
-                           request->content_length);
+                           content_length);
 
             request->body = http_body_istream(&connection->request.body_reader);
             connection->request.read_state = READ_BODY;
@@ -118,11 +118,9 @@ http_server_headers_finished(http_server_connection_t connection)
     } else {
         /* chunked */
 
-        request->content_length = (off_t)-1;
-
         http_body_init(&connection->request.body_reader,
                        &http_server_request_stream, request->pool,
-                       request->content_length);
+                       -1);
 
         request->body
             = istream_dechunk_new(request->pool,

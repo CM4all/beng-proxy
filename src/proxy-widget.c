@@ -94,9 +94,7 @@ static const struct istream_handler proxy_body_handler = {
  */
 
 static void
-widget_proxy_response(http_status_t status,
-                      strmap_t headers,
-                      off_t content_length, istream_t body,
+widget_proxy_response(http_status_t status, strmap_t headers, istream_t body,
                       void *ctx)
 {
     struct widget_proxy *wp = ctx;
@@ -129,7 +127,7 @@ widget_proxy_response(http_status_t status,
     istream_free_unref_handler(&wp->body);
 
 #ifndef NO_DEFLATE
-    if (content_length == (off_t)-1 &&
+    if (istream_available(body, 0) == (off_t)-1 &&
         strmap_get(headers, "content-encoding") == NULL &&
         http_client_accepts_encoding(request->headers, "deflate")) {
         header_write(headers2, "content-encoding", "deflate");
@@ -137,7 +135,7 @@ widget_proxy_response(http_status_t status,
     }
 #endif
 
-    http_server_response(request, status, headers2, content_length, body);
+    http_server_response(request, status, headers2, body);
 }
 
 static void

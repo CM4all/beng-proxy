@@ -48,8 +48,6 @@ struct processor_env {
 
     strmap_t request_headers;
 
-    off_t request_content_length;
-
     istream_t request_body;
 
     struct http_response_handler_ref response_handler;
@@ -71,7 +69,6 @@ processor_env_init(pool_t pool,
                    strmap_t args,
                    struct session *session,
                    strmap_t request_headers,
-                   off_t request_content_length,
                    istream_t request_body,
                    processor_widget_callback_t widget_callback);
 

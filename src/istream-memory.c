@@ -21,6 +21,14 @@ istream_to_memory(istream_t istream)
     return (struct istream_memory *)(((char*)istream) - offsetof(struct istream_memory, stream));
 }
 
+static off_t
+istream_memory_available(istream_t istream, int partial attr_unused)
+{
+    struct istream_memory *memory = istream_to_memory(istream);
+
+    return memory->length;
+}
+
 static void
 istream_memory_read(istream_t istream)
 {
@@ -54,6 +62,7 @@ istream_memory_close(istream_t istream)
 }
 
 static const struct istream istream_memory = {
+    .available = istream_memory_available,
     .read = istream_memory_read,
     .close = istream_memory_close,
 };

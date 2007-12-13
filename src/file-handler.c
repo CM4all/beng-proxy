@@ -96,22 +96,18 @@ file_callback(struct request *request2)
         return;
     }
 
-    if (request->method != HTTP_METHOD_HEAD) {
-        body = istream_file_new(request->pool, path, st.st_size);
-        if (body == NULL) {
-            if (errno == ENOENT) {
-                http_server_send_message(request,
-                                         HTTP_STATUS_NOT_FOUND,
-                                         "The requested file does not exist.");
-            } else {
-                http_server_send_message(request,
-                                         HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                         "Internal server error");
-            }
-            return;
+    body = istream_file_new(request->pool, path, st.st_size);
+    if (body == NULL) {
+        if (errno == ENOENT) {
+            http_server_send_message(request,
+                                     HTTP_STATUS_NOT_FOUND,
+                                     "The requested file does not exist.");
+        } else {
+            http_server_send_message(request,
+                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                     "Internal server error");
         }
-    } else {
-        body = NULL;
+        return;
     }
 
     headers = growing_buffer_new(request->pool, 2048);
@@ -159,7 +155,5 @@ file_callback(struct request *request2)
             istream_close(request->body);
     }
 
-    response_dispatch(request2, 
-                      status, headers,
-                      st.st_size, body);
+    response_dispatch(request2, status, headers, body);
 }

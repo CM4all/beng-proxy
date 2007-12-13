@@ -18,7 +18,6 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    strmap_t args,
                    struct session *session,
                    strmap_t request_headers,
-                   off_t request_content_length,
                    istream_t request_body,
                    processor_widget_callback_t widget_callback)
 {
@@ -38,7 +37,6 @@ processor_env_init(pool_t pool, struct processor_env *env,
     http_response_handler_clear(&env->response_handler);
 
     env->request_headers = request_headers;
-    env->request_content_length = request_content_length;
     env->request_body = request_body;
 
     env->session = session;

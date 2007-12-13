@@ -15,7 +15,6 @@ struct processor_env;
 
 istream_t
 embed_new(pool_t pool, http_method_t method, const char *url,
-          off_t request_content_length,
           istream_t request_body,
           struct widget *widget,
           struct processor_env *env,

@@ -33,7 +33,7 @@ void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
                     growing_buffer_t headers,
-                    off_t content_length, istream_t body,
+                    istream_t body,
                     const struct http_response_handler *handler,
                     void *ctx);
 

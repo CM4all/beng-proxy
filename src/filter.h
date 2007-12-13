@@ -20,7 +20,7 @@ filter_new(pool_t pool,
            struct hstock *http_client_stock,
            const char *url,
            growing_buffer_t headers,
-           off_t content_length, istream_t body,
+           istream_t body,
            const struct http_response_handler *handler,
            void *handler_ctx,
            struct async_operation_ref *async_ref);

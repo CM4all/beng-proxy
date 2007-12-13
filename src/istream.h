@@ -87,6 +87,17 @@ struct istream {
 #endif
 
     /**
+     * How much data is available? 
+     *
+     * @param partial if false, the stream must provide the data size
+     * until the end of the stream; for partial, a minimum estimate is
+     * ok
+     * @return the number of bytes available or -1 if the object does
+     * not know
+     */
+    off_t (*available)(istream_t istream, int partial);
+
+    /**
      * Try to read from the stream.  If the stream can read data
      * without blocking, it must provide data.  It may invoke the
      * callbacks any number of times, supposed that the handler itself
@@ -133,6 +144,34 @@ istream_pool(istream_t _istream)
     assert(istream->pool != NULL);
 
     return istream->pool;
+}
+
+static inline off_t
+istream_available(istream_t _istream, int partial)
+{
+    struct istream *istream = _istream_opaque_cast(_istream);
+#ifndef NDEBUG
+    pool_t pool = istream->pool;
+    off_t available;
+
+    assert(!istream->eof);
+
+    assert(istream->reading == 0);
+    pool_ref(pool);
+    istream->reading = 1;
+#endif
+
+    if (istream->available == NULL)
+        available = (off_t)-1;
+    else
+        available = istream->available(_istream, partial);
+
+#ifndef NDEBUG
+    istream->reading = 0;
+    pool_unref(pool);
+#endif
+
+    return available;
 }
 
 static inline void

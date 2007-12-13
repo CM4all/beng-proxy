@@ -56,7 +56,6 @@ struct http_client_connection {
         } read_state;
         http_status_t status;
         strmap_t headers;
-        off_t content_length;
         istream_t body;
         struct http_body_reader body_reader;
     } response;
@@ -92,6 +91,19 @@ response_stream_to_connection(istream_t istream)
     return (http_client_connection_t)(((char*)istream) - offsetof(struct http_client_connection, response.body_reader.output));
 }
 
+static off_t
+http_client_response_stream_available(istream_t istream, int partial attr_unused)
+{
+    http_client_connection_t connection = response_stream_to_connection(istream);
+
+    assert(connection != NULL);
+    assert(connection->fd >= 0);
+    assert(connection->response.read_state == READ_BODY);
+    assert(!http_response_handler_defined(&connection->request.handler));
+
+    return http_body_available(&connection->response.body_reader);
+}
+
 static void
 http_client_response_stream_read(istream_t istream)
 {
@@ -106,6 +118,8 @@ http_client_response_stream_read(istream_t istream)
     pool_ref(connection->pool);
 
     http_client_consume_body(connection);
+
+    assert(!fifo_buffer_full(connection->input));
 
     if (connection->response.read_state == READ_BODY)
         http_client_try_read(connection);
@@ -166,6 +180,7 @@ http_client_response_stream_close(istream_t istream)
 }
 
 static const struct istream http_client_response_stream = {
+    .available = http_client_response_stream_available,
     .read = http_client_response_stream_read,
     .close = http_client_response_stream_close,
 };
@@ -257,6 +272,7 @@ http_client_headers_finished(http_client_connection_t connection)
     value = strmap_get(connection->response.headers, "transfer-encoding");
     if (value == NULL || strcasecmp(value, "chunked") != 0) {
         /* not chunked */
+        off_t content_length;
 
         value = strmap_get(connection->response.headers, "content-length");
         if (unlikely(value == NULL)) {
@@ -265,11 +281,10 @@ http_client_headers_finished(http_client_connection_t connection)
                 http_client_connection_close(connection);
                 return;
             }
-
-            connection->response.content_length = (off_t)-1;
+            content_length = (off_t)-1;
         } else {
-            connection->response.content_length = strtoul(value, &endptr, 10);
-            if (unlikely(*endptr != 0 || connection->response.content_length < 0)) {
+            content_length = strtoul(value, &endptr, 10);
+            if (unlikely(*endptr != 0 || content_length < 0)) {
                 daemon_log(2, "invalid Content-Length header in HTTP response\n");
                 http_client_connection_close(connection);
                 return;
@@ -278,17 +293,15 @@ http_client_headers_finished(http_client_connection_t connection)
 
         http_body_init(&connection->response.body_reader,
                        &http_client_response_stream, connection->pool,
-                       connection->response.content_length);
+                       content_length);
 
         connection->response.body = http_body_istream(&connection->response.body_reader);
     } else {
         /* chunked */
 
-        connection->response.content_length = (off_t)-1;
-
         http_body_init(&connection->response.body_reader,
                        &http_client_response_stream, connection->pool,
-                       connection->response.content_length);
+                       (off_t)-1);
 
         connection->response.body
             = istream_dechunk_new(connection->request.pool,
@@ -369,7 +382,6 @@ http_client_parse_headers(http_client_connection_t connection)
         http_response_handler_invoke_response(&connection->request.handler,
                                               connection->response.status,
                                               connection->response.headers,
-                                              connection->response.content_length,
                                               connection->response.body);
     }
 
@@ -722,7 +734,7 @@ void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
                     growing_buffer_t headers,
-                    off_t content_length, istream_t body,
+                    istream_t body,
                     const struct http_response_handler *handler,
                     void *ctx)
 {
@@ -755,6 +767,7 @@ http_client_request(http_client_connection_t connection,
         headers = growing_buffer_new(connection->request.pool, 256);
 
     if (body != NULL) {
+        off_t content_length = istream_available(body, 0);
         if (content_length == (off_t)-1) {
             header_write(headers, "transfer-encoding", "chunked");
             body = istream_chunked_new(connection->request.pool, body);

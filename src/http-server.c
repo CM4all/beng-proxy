@@ -286,9 +286,10 @@ void
 http_server_response(struct http_server_request *request,
                      http_status_t status,
                      growing_buffer_t headers,
-                     off_t content_length, istream_t body)
+                     istream_t body)
 {
     http_server_connection_t connection = request->connection;
+    off_t content_length;
     istream_t status_stream, header_stream;
 
     assert(connection->request.request == request);
@@ -308,6 +309,8 @@ http_server_response(struct http_server_request *request,
     header_write(headers, "date", http_date_format(time(NULL)));
 #endif
 
+    content_length = body == NULL
+        ? 0 : istream_available(body, 0);
     if (content_length == (off_t)-1) {
         if (body != NULL && connection->keep_alive) {
             header_write(headers, "transfer-encoding", "chunked");
@@ -318,6 +321,9 @@ http_server_response(struct http_server_request *request,
         header_write(headers, "content-length",
                      connection->response.content_length_buffer);
     }
+
+    if (request->method == HTTP_METHOD_HEAD && body != NULL)
+        istream_free(&body);
 
 #ifdef __linux
 #ifdef SPLICE
@@ -353,11 +359,8 @@ void
 http_server_send_message(struct http_server_request *request,
                          http_status_t status, const char *msg)
 {
-    size_t length = strlen(msg);
-
     http_server_response(request, status, NULL,
-                         length,
-                         istream_memory_new(request->pool, msg, length));
+                         istream_string_new(request->pool, msg));
 }
 
 void
@@ -366,7 +369,6 @@ http_server_send_redirect(struct http_server_request *request,
                           const char *msg)
 {
     growing_buffer_t headers = growing_buffer_new(request->pool, 1024);
-    size_t length;
 
     assert(request != NULL);
     assert(status >= 300 && status < 400);
@@ -374,11 +376,9 @@ http_server_send_redirect(struct http_server_request *request,
 
     if (msg == NULL)
         msg = "redirection";
-    length = strlen(msg);
 
     header_write(headers, "location", location);
 
     http_server_response(request, status, headers,
-                         length,
-                         istream_memory_new(request->pool, msg, length));
+                         istream_string_new(request->pool, msg));
 }

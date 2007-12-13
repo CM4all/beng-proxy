@@ -52,7 +52,7 @@ struct growing_buffer;
 void
 response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
-                  off_t content_length, istream_t body);
+                  istream_t body);
 
 extern const struct http_response_handler response_handler;
 

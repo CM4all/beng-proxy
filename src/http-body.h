@@ -33,6 +33,12 @@ http_body_eof(const struct http_body_reader *body)
         (body->rest == (off_t)-1 && body->dechunk_eof);
 }
 
+static inline off_t
+http_body_available(const struct http_body_reader *body)
+{
+    return body->rest;
+}
+
 void
 http_body_consume_body(struct http_body_reader *body,
                        fifo_buffer_t buffer);

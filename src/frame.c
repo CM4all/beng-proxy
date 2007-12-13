@@ -17,7 +17,6 @@ frame_top_widget(pool_t pool, struct processor_env *env,
                  struct widget *widget)
 {
     http_method_t method = HTTP_METHOD_GET;
-    off_t request_content_length = 0;
     istream_t request_body = NULL;
     struct processor_env *env2;
 
@@ -35,7 +34,6 @@ frame_top_widget(pool_t pool, struct processor_env *env,
         assert(env->request_body != NULL);
 
         method = HTTP_METHOD_POST; /* XXX which method? */
-        request_content_length = env->request_content_length;
         request_body = env->request_body;
         /* XXX what if there is no stream handler? or two? */
     }
@@ -52,7 +50,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     return embed_new(pool,
                      method, widget->real_uri,
-                     request_content_length, request_body,
+                     request_body,
                      widget,
                      env2, 0);
 }
@@ -73,8 +71,7 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
         /* only partial match: this is the parent of the frame
            widget */
         return embed_new(pool,
-                         HTTP_METHOD_GET, widget->real_uri,
-                         0, NULL,
+                         HTTP_METHOD_GET, widget->real_uri, NULL,
                          widget,
                          env, PROCESSOR_QUIET);
     else
