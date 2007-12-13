@@ -241,6 +241,8 @@ replace_available(const struct replace *replace)
             if (l != (off_t)-1)
                 length += l;
         }
+
+        position = subst->end;
     }
 
     return length;
