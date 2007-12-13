@@ -85,7 +85,7 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
     } else if (widget->id != NULL && widget->parent != NULL &&
                widget->parent->from_request.focus_ref != NULL &&
                strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
-               widget->parent->from_request.focus_ref->next == NULL) {
+               widget->parent->from_request.focus_ref->next != NULL) {
         /* we are the parent (or grant-parent) of the focused widget.
            store the relative focus_ref. */
 
