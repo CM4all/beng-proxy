@@ -256,28 +256,38 @@ deflate_input_data(const void *data, size_t length, void *ctx)
     defl->z.next_in = deconst.output;
     defl->z.avail_in = (uInt)length;
 
-    err = deflate(&defl->z, Z_NO_FLUSH);
-    if (err != Z_OK) {
-        daemon_log(2, "deflate() failed: %d\n", err);
-        deflate_close(defl);
-        return 0;
-    }
-
-    nbytes = max_length - (size_t)defl->z.avail_out;
-    if (nbytes > 0) {
-        defl->had_output = 1;
-        fifo_buffer_append(defl->buffer, nbytes);
-
-        pool_ref(defl->output.pool);
-        deflate_try_write(defl);
-
-        if (!defl->z_initialized) {
-            pool_unref(defl->output.pool);
+    do {
+        err = deflate(&defl->z, Z_NO_FLUSH);
+        if (err != Z_OK) {
+            daemon_log(2, "deflate() failed: %d\n", err);
+            deflate_close(defl);
             return 0;
         }
 
-        pool_unref(defl->output.pool);
-    }
+        nbytes = max_length - (size_t)defl->z.avail_out;
+        if (nbytes > 0) {
+            defl->had_output = 1;
+            fifo_buffer_append(defl->buffer, nbytes);
+
+            pool_ref(defl->output.pool);
+            deflate_try_write(defl);
+
+            if (!defl->z_initialized) {
+                pool_unref(defl->output.pool);
+                return 0;
+            }
+
+            pool_unref(defl->output.pool);
+        } else
+            break;
+
+        dest_buffer = deflate_buffer_write(defl, &max_length);
+        if (dest_buffer == NULL || max_length < 64) /* reserve space for end-of-stream marker */
+            break;
+
+        defl->z.next_out = dest_buffer;
+        defl->z.avail_out = (uInt)max_length;
+    } while (defl->z.avail_in > 0);
 
     return length - (size_t)defl->z.avail_in;
 }
