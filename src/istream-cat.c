@@ -129,6 +129,30 @@ istream_to_cat(istream_t istream)
     return (struct istream_cat *)(((char*)istream) - offsetof(struct istream_cat, output));
 }
 
+static off_t
+istream_cat_available(istream_t istream, int partial)
+{
+    struct istream_cat *cat = istream_to_cat(istream);
+    struct input *input;
+    off_t available = 0, a;
+
+    for (input = cat->current; input != NULL; input = input->next) {
+        if (input->istream == NULL)
+            continue;
+
+        a = istream_available(input->istream, partial);
+        if (a != (off_t)-1)
+            available += a;
+        else if (!partial)
+            /* if the caller wants the exact number of bytes, and
+               one input cannot provide it, we cannot provide it
+               either */
+            return (off_t)-1;
+    }
+
+    return available;
+}
+
 static void
 istream_cat_read(istream_t istream)
 {
@@ -168,6 +192,7 @@ istream_cat_close(istream_t istream)
 }
 
 static const struct istream istream_cat = {
+    .available = istream_cat_available,
     .read = istream_cat_read,
     .close = istream_cat_close,
 };
