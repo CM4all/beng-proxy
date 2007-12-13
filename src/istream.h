@@ -84,6 +84,8 @@ struct istream {
 
     /** how much data was available in the previous invocation? */
     size_t data_available;
+
+    off_t available_check;
 #endif
 
     /**
@@ -169,6 +171,11 @@ istream_available(istream_t _istream, int partial)
 #ifndef NDEBUG
     istream->reading = 0;
     pool_unref(pool);
+
+    assert(partial || available == (off_t)-1 ||
+           available >= istream->available_check);
+    if (available > istream->available_check)
+        istream->available_check = available;
 #endif
 
     return available;

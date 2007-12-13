@@ -33,6 +33,13 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
 #ifndef NDEBUG
     istream->in_data = 0;
     istream->data_available = length - nbytes;
+
+    if (istream->available_check > 0) {
+        if ((ssize_t)nbytes < 0 || (ssize_t)nbytes > istream->available_check)
+            istream->available_check = 0;
+        else 
+            istream->available_check -= nbytes;
+    }
 #endif
 
     return nbytes;
@@ -63,6 +70,13 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
 
 #ifndef NDEBUG
     istream->in_data = 0;
+
+    if (nbytes > 0) {
+        if (nbytes > istream->available_check)
+            istream->available_check = 0;
+        else 
+            istream->available_check -= nbytes;
+    }
 #endif
 
     return nbytes;
@@ -73,6 +87,7 @@ istream_invoke_eof(struct istream *istream)
 {
     assert(istream != NULL);
     assert(!istream->eof);
+    assert(istream->available_check == 0);
 
 #ifndef NDEBUG
     istream->eof = 1;
