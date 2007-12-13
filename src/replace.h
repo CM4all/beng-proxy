@@ -58,6 +58,9 @@ void
 replace_add(struct replace *replace, off_t start, off_t end,
             istream_t istream);
 
+off_t
+replace_available(const struct replace *replace);
+
 /**
  * Read data from the 'replace' object.  This function will call
  * istream_invoke_data(replace->output).

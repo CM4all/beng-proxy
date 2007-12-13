@@ -105,6 +105,17 @@ istream_to_processor(istream_t istream)
     return (processor_t)(((char*)istream) - offsetof(struct processor, output));
 }
 
+static off_t
+processor_output_stream_available(istream_t istream, int partial)
+{
+    processor_t processor = istream_to_processor(istream);
+
+    if (partial)
+        return replace_available(&processor->replace);
+    else
+        return (off_t)-1;
+}
+
 static void
 processor_output_stream_read(istream_t istream)
 {
@@ -128,6 +139,7 @@ processor_output_stream_close(istream_t istream)
 }
 
 static const struct istream processor_output_stream = {
+    .available = processor_output_stream_available,
     .read = processor_output_stream_read,
     .close = processor_output_stream_close,
 };

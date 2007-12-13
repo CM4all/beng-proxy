@@ -224,6 +224,28 @@ replace_add(struct replace *replace, off_t start, off_t end,
     replace->append_substitution_p = &s->next;
 }
 
+off_t
+replace_available(const struct replace *replace)
+{
+    const struct substitution *subst;
+    off_t length = 0, position = replace->position, l;
+
+    for (subst = replace->first_substitution; subst != NULL; subst = subst->next) {
+        assert(replace->quiet || position <= subst->start);
+
+        if (!replace->quiet)
+            length += subst->start - position;
+
+        if (subst->istream != NULL) {
+            l = istream_available(subst->istream, 1);
+            if (l != (off_t)-1)
+                length += l;
+        }
+    }
+
+    return l;
+}
+
 /**
  * Read data from substitution objects.
  */
