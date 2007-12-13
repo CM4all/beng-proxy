@@ -243,7 +243,7 @@ replace_available(const struct replace *replace)
         }
     }
 
-    return l;
+    return length;
 }
 
 /**
