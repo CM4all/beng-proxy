@@ -46,7 +46,7 @@ format_uint16_hex_fixed(char dest[4], uint16_t number) {
 }
 
 static attr_always_inline void
-format_uint32_hex_fixed(char dest[8], uint16_t number) {
+format_uint32_hex_fixed(char dest[8], uint32_t number) {
     dest[0] = hex_digits[(number >> 28) & 0xf];
     dest[1] = hex_digits[(number >> 24) & 0xf];
     dest[2] = hex_digits[(number >> 20) & 0xf];
