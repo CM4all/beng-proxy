@@ -86,6 +86,17 @@ istream_to_delayed(istream_t istream)
     return (struct istream_delayed *)(((char*)istream) - offsetof(struct istream_delayed, output));
 }
 
+static off_t
+istream_delayed_available(istream_t istream, int partial)
+{
+    struct istream_delayed *delayed = istream_to_delayed(istream);
+
+    if (delayed->input == NULL)
+        return (off_t)-1;
+    else
+        return istream_available(delayed->input, partial);
+}
+
 static void
 istream_delayed_read(istream_t istream)
 {
@@ -104,6 +115,7 @@ istream_delayed_close(istream_t istream)
 }
 
 static const struct istream istream_delayed = {
+    .available = istream_delayed_available,
     .read = istream_delayed_read,
     .close = istream_delayed_close,
 };
