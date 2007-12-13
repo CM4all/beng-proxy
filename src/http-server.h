@@ -48,6 +48,12 @@ http_server_connection_new(pool_t pool, int fd,
 void
 http_server_connection_free(http_server_connection_t *connection_r);
 
+static inline int
+http_server_request_has_body(const struct http_server_request *request)
+{
+    return request->content_length != 0;
+}
+
 void
 http_server_response(struct http_server_request *request,
                      http_status_t status,
