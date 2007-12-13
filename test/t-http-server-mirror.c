@@ -12,7 +12,6 @@ my_request(struct http_server_request *request, void *ctx)
 
     http_server_response(request, HTTP_STATUS_OK,
                          NULL,
-                         request->content_length,
                          request->body);
 }
 

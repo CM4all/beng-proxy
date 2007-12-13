@@ -53,7 +53,6 @@ create_test(pool_t pool, istream_t input)
                        NULL,
                        NULL,
                        NULL,
-                       0,
                        NULL,
                        my_embed_widget_callback);
 
