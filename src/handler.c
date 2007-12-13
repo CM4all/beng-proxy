@@ -137,6 +137,7 @@ request_args_parse(struct request *request)
     request->args = args_parse(request->request->pool,
                                request->uri.args.data, request->uri.args.length);
     request->translate.request.param = strmap_remove(request->args, "translate");
+    request->translate.request.session = NULL;
 
     session_id = strmap_get(request->args, "session");
     if (session_id != NULL)
@@ -153,8 +154,6 @@ ask_translation_server(struct request *request2,
     request2->translate.request.host = strmap_get(request->headers, "host");
     request2->translate.request.uri = strref_dup(request->pool,
                                                  &request2->uri.base);
-    request2->translate.request.param = NULL;
-    request2->translate.request.session = NULL;
 
     translate(request->pool, stock, &request2->translate.request,
               translate_callback, request2);
