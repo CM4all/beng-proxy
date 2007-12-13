@@ -15,8 +15,6 @@
 #include <daemon/log.h>
 
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
 
 static void
 translate_callback(const struct translate_response *response,

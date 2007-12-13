@@ -5,10 +5,10 @@
  */
 
 #include "session.h"
+#include "format.h"
 
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <event.h>
 
 #define SESSION_TTL_NEW 120
@@ -93,7 +93,8 @@ session_id_parse(const char *p)
 void
 session_id_format(char dest[9], session_id_t id)
 {
-    snprintf(dest, 9, "%08x", id);
+    format_uint32_hex_fixed(dest, id);
+    dest[8] = 0;
 }
 
 static session_id_t

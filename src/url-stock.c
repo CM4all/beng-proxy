@@ -14,7 +14,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
-#include <stdio.h>
 #include <netdb.h>
 #include <sys/un.h>
 

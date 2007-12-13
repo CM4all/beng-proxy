@@ -45,6 +45,18 @@ format_uint16_hex_fixed(char dest[4], uint16_t number) {
     dest[3] = hex_digits[number & 0xf];
 }
 
+static attr_always_inline void
+format_uint32_hex_fixed(char dest[8], uint16_t number) {
+    dest[0] = hex_digits[(number >> 28) & 0xf];
+    dest[1] = hex_digits[(number >> 24) & 0xf];
+    dest[2] = hex_digits[(number >> 20) & 0xf];
+    dest[3] = hex_digits[(number >> 16) & 0xf];
+    dest[4] = hex_digits[(number >> 12) & 0xf];
+    dest[5] = hex_digits[(number >> 8) & 0xf];
+    dest[6] = hex_digits[(number >> 4) & 0xf];
+    dest[7] = hex_digits[number & 0xf];
+}
+
 /**
  * Format a 64 bit unsigned integer into a decimal string.
  */
