@@ -544,6 +544,14 @@ parser_attr_finished(struct parser *parser)
             else if (parser->attr_value_length == 3 &&
                 memcmp(parser->attr_value, "img", 3) == 0)
                 processor->embedded_widget->display = WIDGET_DISPLAY_IMG;
+        } else if (parser->attr_name_length == 7 &&
+                   memcmp(parser->attr_name, "session", 7) == 0) {
+            if (parser->attr_value_length == 8 &&
+                memcmp(parser->attr_value, "resource", 8) == 0)
+                processor->embedded_widget->session = WIDGET_SESSION_RESOURCE;
+            else if (parser->attr_value_length == 4 &&
+                memcmp(parser->attr_value, "site", 4) == 0)
+                processor->embedded_widget->session = WIDGET_SESSION_SITE;
         } else if (parser->attr_name_length == 5 &&
                  memcmp(parser->attr_name, "width", 5) == 0)
             processor->embedded_widget->width = p_strndup(processor->widget_pool, parser->attr_value,

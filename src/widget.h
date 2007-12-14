@@ -50,6 +50,15 @@ struct widget {
     /** the query string as specified in the template */
     const char *query_string;
 
+    /** what is the scope of session data? */
+    enum {
+        /** each resource has its own set of widget sessions */
+        WIDGET_SESSION_RESOURCE,
+
+        /** all resources on this site share the same widget sessions */
+        WIDGET_SESSION_SITE,
+    } session;
+
     struct {
         /** the path_info provided by the browser (from processor_env.args) */
         const char *path_info;
@@ -113,6 +122,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->path_info = NULL;
     widget->query_string = NULL;
+    widget->session = WIDGET_SESSION_RESOURCE;
     widget->from_request.path_info = NULL;
     widget->from_request.session = NULL;
     widget->from_request.proxy_ref = NULL;
