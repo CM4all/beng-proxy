@@ -131,6 +131,8 @@ request_args_parse(struct request *request)
 
     if (strref_is_empty(&request->uri.args)) {
         request->args = NULL;
+        request->translate.request.param = NULL;
+        request->translate.request.session = NULL;
         return;
     }
 
