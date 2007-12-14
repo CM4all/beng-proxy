@@ -133,7 +133,7 @@ class Translation(Protocol):
             self._write_packet(TRANSLATE_USER, user)
         if session is not None:
             self._write_packet(TRANSLATE_SESSION, session)
-        self._write_packet(TRANSLATE_FILTER, 'http://cfatest01.intern.cm-ag/filter.py')
+        #self._write_packet(TRANSLATE_FILTER, 'http://cfatest01.intern.cm-ag/filter.py')
         self._write_packet(TRANSLATE_PROCESS)
         self._write_packet(TRANSLATE_END)
 
