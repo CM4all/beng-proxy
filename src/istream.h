@@ -152,9 +152,9 @@ static inline off_t
 istream_available(istream_t _istream, int partial)
 {
     struct istream *istream = _istream_opaque_cast(_istream);
+    off_t available;
 #ifndef NDEBUG
     pool_t pool = istream->pool;
-    off_t available;
 
     assert(!istream->eof);
 
