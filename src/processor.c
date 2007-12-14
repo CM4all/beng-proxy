@@ -633,12 +633,22 @@ static istream_t
 embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
 {
     growing_buffer_t tag;
+    const char *prefix;
 
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
 
     tag = growing_buffer_new(pool, 256);
-    growing_buffer_write_string(tag, "<div class='embed' style='overflow:auto; margin:5pt; border:1px dotted red;");
+    growing_buffer_write_string(tag, "<div class=\"embed\"");
+
+    prefix = widget_prefix(pool, widget);
+    if (prefix != NULL) {
+        growing_buffer_write_string(tag, " id=\"beng_widget_");
+        growing_buffer_write_string(tag, prefix);
+        growing_buffer_write_string(tag, "\"");
+    }
+
+    growing_buffer_write_string(tag, " style='overflow:auto; margin:5pt; border:1px dotted red;");
 
     if (widget->width != NULL) {
         growing_buffer_write_string(tag, "width:");
