@@ -93,13 +93,13 @@ int main(int argc, char **argv) {
     session_manager_init(pool);
 
     processor_env_init(pool, &env,
+                       NULL,
                        "localhost:8080",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
                        NULL,
+                       session_new(),
                        NULL,
-                       NULL,
-                       0,
                        NULL,
                        embed_widget_callback);
 
