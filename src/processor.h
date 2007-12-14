@@ -54,8 +54,6 @@ struct processor_env {
 
     struct session *session;
 
-    char session_id_buffer[9];
-
     processor_widget_callback_t widget_callback;
 };
 
