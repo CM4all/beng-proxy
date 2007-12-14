@@ -119,8 +119,16 @@ class Translation(Protocol):
             # 
             user = session = None
 
+        if request.uri == '/beng-proxy.js':
+            from sys import argv
+            from os.path import abspath, dirname, join
+            path = join(dirname(dirname(abspath(argv[0]))), 'js/beng-proxy.js')
+            print path
+        else:
+            path = '/var/www' + request.uri
+
         self._write_packet(TRANSLATE_BEGIN)
-        self._write_packet(TRANSLATE_PATH, '/var/www' + request.uri)
+        self._write_packet(TRANSLATE_PATH, path)
         if user is not None:
             self._write_packet(TRANSLATE_USER, user)
         if session is not None:
