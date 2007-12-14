@@ -21,6 +21,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    istream_t request_body,
                    processor_widget_callback_t widget_callback)
 {
+    assert(session != NULL);
     assert(request_body == NULL || !istream_has_handler(request_body));
 
     env->pool = pool;
@@ -40,12 +41,6 @@ processor_env_init(pool_t pool, struct processor_env *env,
     env->request_body = request_body;
 
     env->session = session;
-
-    if (env->session == NULL) {
-        env->session = session_new();
-        session_id_format(env->session_id_buffer, env->session->id);
-        strmap_put(env->args, "session", env->session_id_buffer, 1);
-    }
 
     env->widget_callback = widget_callback;
 }

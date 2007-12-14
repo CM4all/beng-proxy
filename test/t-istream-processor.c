@@ -51,7 +51,7 @@ create_test(pool_t pool, istream_t input)
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
                        NULL,
-                       NULL,
+                       session_new(),
                        NULL,
                        NULL,
                        my_embed_widget_callback);

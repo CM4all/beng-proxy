@@ -107,6 +107,8 @@ response_invoke_processor(struct request *request2,
         request_body = NULL;
     }
 
+    request_make_session(request2);
+
     processor_env_init(request->pool, &request2->env,
                        request2->http_client_stock,
                        request->remote_host,
