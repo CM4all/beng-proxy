@@ -52,7 +52,8 @@ frame_top_widget(pool_t pool, struct processor_env *env,
                      method, widget->real_uri,
                      request_body,
                      widget,
-                     env2, 0);
+                     env2,
+                     PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT);
 }
 
 istream_t

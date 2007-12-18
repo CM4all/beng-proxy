@@ -136,6 +136,8 @@ response_invoke_processor(struct request *request2,
            only interested in one particular widget for
            displaying the frame */
         processor_options |= PROCESSOR_QUIET;
+    } else {
+        processor_options |= PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT;
     }
 
     widget->from_request.focus_ref = widget_ref_parse(request->pool,

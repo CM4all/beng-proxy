@@ -31,7 +31,7 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
     return embed_new(pool,
                      method, widget->real_uri, request_body,
                      widget,
-                     env, PROCESSOR_BODY);
+                     env, PROCESSOR_BODY | PROCESSOR_JSCRIPT);
 }
 
 static const char *

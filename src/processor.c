@@ -36,7 +36,7 @@ struct processor {
     struct replace replace;
 
     struct parser parser;
-    int in_html, in_body;
+    int in_html, in_head, in_body;
     off_t end_of_body;
     enum {
         TAG_NONE,
@@ -240,6 +240,68 @@ static const struct istream_handler processor_input_handler = {
 };
 
 
+static void
+growing_buffer_write_jscript_string(growing_buffer_t gb, const char *s)
+{
+    if (s == NULL)
+        growing_buffer_write_string(gb, "null");
+    else {
+        growing_buffer_write_string(gb, "\"");
+        growing_buffer_write_string(gb, s); /* XXX escape */
+        growing_buffer_write_string(gb, "\"");
+    }
+}
+
+static istream_t
+processor_jscript(processor_t processor)
+{
+    growing_buffer_t gb = growing_buffer_new(processor->output.pool, 512);
+    const char *prefix, *parent_prefix;
+
+    assert((processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_QUIET)) == PROCESSOR_JSCRIPT);
+
+    growing_buffer_write_string(gb, "<script type=\"text/javascript\">\n");
+
+    if ((processor->options & PROCESSOR_JSCRIPT_ROOT) != 0) {
+        const char *session_id;
+
+        growing_buffer_write_string(gb, "var rootWidget = new beng_root_widget(beng_proxy(\"");
+
+        session_id = strmap_get(processor->env->args, "session");
+        if (session_id != NULL)
+            growing_buffer_write_string(gb, session_id);
+
+        growing_buffer_write_string(gb, "\"));\n");
+    }
+
+    prefix = widget_prefix(processor->output.pool, processor->widget);
+
+    if (prefix != NULL) {
+        growing_buffer_write_string(gb, "var ");
+        growing_buffer_write_string(gb, prefix);
+        growing_buffer_write_string(gb, "widget = ");
+
+        if (processor->widget->parent == NULL) {
+            growing_buffer_write_string(gb, "rootWidget;\n");
+        } else {
+            growing_buffer_write_string(gb, "new beng_widget(");
+
+            parent_prefix = widget_prefix(processor->output.pool,
+                                          processor->widget->parent);
+            assert(parent_prefix != NULL);
+
+            growing_buffer_write_string(gb, parent_prefix);
+            growing_buffer_write_string(gb, "widget, ");
+            growing_buffer_write_jscript_string(gb, processor->widget->id);
+            growing_buffer_write_string(gb, ");\n");
+        }
+    }
+
+    growing_buffer_write_string(gb, "</script>\n");
+
+    return growing_buffer_istream(gb);
+}
+
 /*
  * constructor
  *
@@ -299,10 +361,15 @@ processor_new(pool_t pool, istream_t istream,
     parser_init(&processor->parser);
 
     processor->in_html = 0;
+    processor->in_head = 0;
     processor->in_body = 0;
     processor->end_of_body = (off_t)-1;
     processor->embedded_widget = NULL;
     processor->script = NULL;
+
+    if ((processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_BODY|PROCESSOR_QUIET)) == (PROCESSOR_JSCRIPT|PROCESSOR_BODY))
+        replace_add(&processor->replace, 0, 0,
+                    processor_jscript(processor));
 
     return istream_struct_cast(&processor->output);
 }
@@ -402,6 +469,17 @@ parser_element_start(struct parser *parser)
                memcmp(parser->element_name, "html", 4) == 0) {
         processor->in_html = 1;
         processor->tag = TAG_NONE;
+    } else if (processor->in_html && !processor->in_head &&
+               !processor->in_body &&
+               (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_BODY|PROCESSOR_QUIET)) == PROCESSOR_JSCRIPT &&
+               parser->element_name_length == 4 &&
+               parser->tag_type == TAG_CLOSE &&
+               memcmp(parser->element_name, "head", 4) == 0) {
+        replace_add(&processor->replace,
+                    processor->parser.element_offset,
+                    processor->parser.element_offset,
+                    processor_jscript(processor));
+        processor->in_head = 1;
     } else if (processor->end_of_body != (off_t)-1) {
         /* we have left the body, ignore the rest */
         assert((processor->options & PROCESSOR_BODY) != 0);

@@ -22,6 +22,12 @@ enum processor_options {
 
     /** only output the HTML body */
     PROCESSOR_BODY = 0x2,
+
+    /** generate JavaScript code */
+    PROCESSOR_JSCRIPT = 0x4,
+
+    /** generate JavaScript code for the root widget */
+    PROCESSOR_JSCRIPT_ROOT = 0x8,
 };
 
 struct widget;
