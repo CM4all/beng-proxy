@@ -417,4 +417,49 @@ this variable for redirecting \\
 \end{tabular}
 
 
+\section{The Beng JavaScript API}
+
+For convenience, \emph{beng-proxy} provides an optional JavaScript API
+for widget authors.  They may use it to inspect and manipulate the
+widget.  An example for a common operation is reloading a widget
+without reloading the whole page.
+
+\emph{beng-proxy} provides a global variable named
+\texttt{rootWidget}, which can be used to obtain pointers to other
+widget objects.
+
+The JavaScript widget class provides the following API (pseudo code):
+
+\begin{verbatim*}
+class Widget {
+  Widget parent;
+  Widget getWidget(string path);
+  string translateURI(string uri, bool proxy);
+  XMLHTTPRequest get(string uri, function onreadystatechange);
+  XMLHTTPRequest reload(string uri);
+  Element getElement();
+}
+\end{verbatim*}
+
+To get the current widget object, write the following:
+
+\begin{verbatim*}
+var widget = rootWidget.getWidget("&c:path");
+\end{verbatim*}
+
+The method \texttt{getElement()} gives you the enclosing element of
+the widget (if any).  You may use it to modify the widget's contents.
+
+\texttt{reload()} is a convenience method which sends a HTTP
+\texttt{GET} request to the widget server (indirectly via
+\emph{beng-proxy}) and replaces the current widget contents with the
+response body.  This method is ``F5 safe'', i.e. the new contents will
+persist even when the user reloads the whole page (assuming an
+idempotent widget server).
+
+If you want more control over this operation, you may use
+\texttt{get()} to send a \texttt{GET} request with a custom callback
+function, or \texttt{translateURI} to translate a relative widget
+server URI to an absolute URL to \emph{beng-proxy}.
+
 \end{document}
