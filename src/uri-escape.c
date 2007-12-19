@@ -41,9 +41,9 @@ parse_hexdigit(char ch)
     if (char_is_digit(ch))
         return ch - '0';
     else if (ch >= 'a' && ch <= 'f')
-        return ch - 'a' + 0x10;
+        return ch - 'a' + 0xa;
     else if (ch >= 'A' && ch <= 'F')
-        return ch - 'A' + 0x10;
+        return ch - 'A' + 0xa;
     else
         return -1;
 }
