@@ -131,7 +131,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-processor
+	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-processor
 
 src/cm4all-beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS) -lz
@@ -152,6 +152,9 @@ test/request-translation: test/request-translation.o src/translate.o src/pool.o 
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test/js: test/js.o src/js-filter.o src/pool.o src/istream-file.o src/fifo-buffer.o src/buffered-io.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
+test/run-subst: test/run-subst.o src/istream-subst.o src/pool.o src/istream-file.o src/fifo-buffer.o src/buffered-io.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
 test/t-parser-cdata: test/t-parser-cdata.o src/parser.o src/istream-file.o src/pool.o src/fifo-buffer.o src/buffered-io.o
