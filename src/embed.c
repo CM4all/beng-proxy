@@ -81,7 +81,10 @@ embed_request_headers(struct embed *embed, int with_body)
     if (session != NULL && session->user != NULL)
         header_write(headers, "x-cm4all-beng-user", session->user);
 
-    p = strmap_get(embed->env->request_headers, "user-agent");
+    if (embed->env->request_headers == NULL)
+        p = NULL;
+    else
+        p = strmap_get(embed->env->request_headers, "user-agent");
     if (p == NULL)
         p = "beng-proxy v" VERSION;
     header_write(headers, "user-agent", p);
