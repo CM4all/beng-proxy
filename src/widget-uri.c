@@ -45,9 +45,11 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
                           struct widget *widget)
 {
     struct widget_session *ws;
-    const char *path_info = widget->path_info;
+    const char *path_info;
 
     assert(widget != NULL);
+
+    path_info = widget->path_info;
 
     widget->real_uri = widget->class->uri;
 

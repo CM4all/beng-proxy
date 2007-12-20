@@ -368,7 +368,7 @@ http_server_send_redirect(struct http_server_request *request,
                           http_status_t status, const char *location,
                           const char *msg)
 {
-    growing_buffer_t headers = growing_buffer_new(request->pool, 1024);
+    growing_buffer_t headers;
 
     assert(request != NULL);
     assert(status >= 300 && status < 400);
@@ -377,6 +377,7 @@ http_server_send_redirect(struct http_server_request *request,
     if (msg == NULL)
         msg = "redirection";
 
+    headers = growing_buffer_new(request->pool, 1024);
     header_write(headers, "location", location);
 
     http_server_response(request, status, headers,

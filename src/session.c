@@ -168,13 +168,14 @@ static struct widget_session *
 hashmap_r_get_widget_session(session_t session, hashmap_t *map_r,
                              const char *id, int create)
 {
-    hashmap_t map = *map_r;
+    hashmap_t map;
     struct widget_session *ws;
 
     assert(session != NULL);
     assert(map_r != NULL);
     assert(id != NULL);
 
+    map = *map_r;
     if (map == NULL) {
         if (!create)
             return NULL;
