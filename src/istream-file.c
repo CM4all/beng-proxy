@@ -123,7 +123,7 @@ istream_file_try_data(struct file *file)
     ssize_t nbytes;
 
     if (file->buffer == NULL) {
-        if (file->rest == (off_t)-1 || file->rest > 0)
+        if (file->rest != 0)
             file->buffer = fifo_buffer_new(file->stream.pool, 4096);
         rest = 0;
     } else
