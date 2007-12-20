@@ -314,7 +314,7 @@ processor_new(pool_t pool, istream_t istream,
               unsigned options)
 {
     processor_t processor;
-    const char *path;
+    const char *path, *prefix;
 
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
@@ -325,8 +325,12 @@ processor_new(pool_t pool, istream_t istream,
         path = "";
     istream = istream_subst_new(pool, istream,
                                 "&c:path;", path);
+
+    prefix = widget_prefix(pool, widget);
+    if (prefix == NULL)
+        prefix = "";
     istream = istream_subst_new(pool, istream,
-                                "&c:prefix;", widget_prefix(pool, widget));
+                                "&c:prefix;", prefix);
 
     if (env->absolute_uri != NULL)
         istream = istream_subst_new(pool, istream,
