@@ -68,7 +68,7 @@ format_uint64(char dest[32], uint64_t number)
     *p = 0;
     do {
         --p;
-        *p = '0' + (number % 10);
+        *p = '0' + (char)(number % 10);
         number /= 10;
     } while (number != 0);
 
