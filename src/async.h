@@ -34,6 +34,7 @@
 #include "compiler.h"
 
 #include <assert.h>
+#include <stddef.h>
 
 struct async_operation;
 

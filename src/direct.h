@@ -7,6 +7,10 @@
 #ifndef __BENG_DIRECT_H
 #define __BENG_DIRECT_H
 
+#include "istream.h"
+
+#include <assert.h>
+
 #ifdef __linux
 #include <sys/sendfile.h>
 

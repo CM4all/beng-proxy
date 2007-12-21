@@ -14,8 +14,6 @@
 #include <stdarg.h>
 #include <getopt.h>
 #include <string.h>
-#include <errno.h>
-#include <unistd.h>
 
 static void usage(void) {
     puts("usage: cm4all-beng-proxy [options]\n\n"

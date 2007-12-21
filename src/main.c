@@ -4,7 +4,6 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-server.h"
 #include "pool.h"
 #include "instance.h"
 #include "connection.h"

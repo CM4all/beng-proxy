@@ -5,7 +5,6 @@
  */
 
 #include "uri.h"
-#include "strutil.h"
 
 #include <string.h>
 

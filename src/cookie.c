@@ -8,7 +8,6 @@
 #include "strutil.h"
 #include "strref.h"
 
-#include <assert.h>
 #include <string.h>
 
 static struct cookie *

@@ -30,6 +30,8 @@ enum processor_options {
     PROCESSOR_JSCRIPT_ROOT = 0x8,
 };
 
+struct hstock;
+struct parsed_uri;
 struct widget;
 struct processor_env;
 

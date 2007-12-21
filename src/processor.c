@@ -8,7 +8,6 @@
 #include "parser.h"
 #include "strutil.h"
 #include "replace.h"
-#include "embed.h"
 #include "uri.h"
 #include "args.h"
 #include "widget.h"

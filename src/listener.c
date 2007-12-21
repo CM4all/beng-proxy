@@ -13,8 +13,6 @@
 #include <stddef.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <fcntl.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>

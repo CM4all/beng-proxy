@@ -11,7 +11,6 @@
 #include "header-writer.h"
 #include "session.h"
 #include "cookie.h"
-#include "http-client.h"
 #include "async.h"
 
 #include <assert.h>
