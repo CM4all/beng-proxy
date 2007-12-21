@@ -454,7 +454,7 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri,
     }
 
     ret = socket_set_nonblock(connection->fd, 1);
-    if (connection->fd < 0) {
+    if (ret < 0) {
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));
         stock_available(item, 0);
