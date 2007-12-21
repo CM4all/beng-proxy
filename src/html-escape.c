@@ -129,7 +129,7 @@ html_escape(struct strref *s)
     };
 
     const char *end = s->data + s->length;
-    const char *cursor = s->data;
+    const char *cursor;
 
     for (cursor = s->data; cursor < end; ++cursor) {
         switch (*cursor) {
