@@ -43,12 +43,14 @@ struct linear_pool_area {
     unsigned char data[sizeof(size_t)];
 };
 
+#ifdef DEBUG_POOL_REF
 struct pool_ref {
     struct list_head list_head;
     const char *file;
     unsigned line;
     unsigned count;
 };
+#endif
 
 struct pool {
     struct list_head siblings, children;
