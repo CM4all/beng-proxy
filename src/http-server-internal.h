@@ -84,7 +84,7 @@ http_server_connection_close(http_server_connection_t connection);
 void
 http_server_consume_body(http_server_connection_t connection);
 
-const struct istream http_server_request_stream;
+extern const struct istream http_server_request_stream;
 
 extern const struct istream_handler http_server_response_stream_handler;
 
