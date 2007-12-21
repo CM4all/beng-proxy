@@ -8,7 +8,6 @@
 #include "parser.h"
 #include "strutil.h"
 #include "replace.h"
-#include "uri.h"
 #include "args.h"
 #include "widget.h"
 #include "growing-buffer.h"

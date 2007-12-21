@@ -11,18 +11,13 @@
 #include "processor.h"
 #include "date.h"
 #include "format.h"
-#include "widget.h"
 #include "embed.h"
-#include "frame.h"
-#include "proxy-widget.h"
 #include "session.h"
 
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <unistd.h>
 #include <string.h>
-#include <stdio.h>
 
 #ifndef NO_XATTR
 #include <attr/xattr.h>

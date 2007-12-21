@@ -13,7 +13,6 @@
 #include "header-writer.h"
 #include "event2.h"
 #include "http-body.h"
-#include "socket-util.h"
 
 #include <daemon/log.h>
 

@@ -5,7 +5,6 @@
  */
 
 #include "http-server-internal.h"
-#include "strutil.h"
 #include "compiler.h"
 #include "buffered-io.h"
 #include "header-writer.h"

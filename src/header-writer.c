@@ -6,7 +6,6 @@
 
 #include "header-writer.h"
 
-#include <assert.h>
 #include <string.h>
 
 void

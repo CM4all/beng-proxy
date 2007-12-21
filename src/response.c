@@ -7,7 +7,6 @@
 #include "request.h"
 #include "http-server.h"
 #include "header-writer.h"
-#include "url-stream.h"
 #include "widget.h"
 #include "embed.h"
 #include "frame.h"

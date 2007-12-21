@@ -9,8 +9,6 @@
 
 #include "compiler.h"
 
-#include <stddef.h>
-
 static attr_always_inline int
 char_is_whitespace(char ch)
 {

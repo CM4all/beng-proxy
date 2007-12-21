@@ -7,7 +7,6 @@
 #include "processor.h"
 #include "uri.h"
 #include "session.h"
-#include "widget.h"
 
 void
 processor_env_init(pool_t pool, struct processor_env *env,
