@@ -12,6 +12,7 @@
 #include "translate.h"
 #include "url-stock.h"
 #include "stock.h"
+#include "compiler.h"
 
 #include <daemon/daemonize.h>
 
@@ -59,6 +60,12 @@ exit_event_callback(int fd, short event, void *ctx)
         hstock_free(&instance->http_client_stock);
 }
 
+static void
+reload_event_callback(int fd attr_unused, short event attr_unused, void *ctx attr_unused)
+{
+    daemonize_reopen_logfile();
+}
+
 void
 init_signals(struct instance *instance)
 {
@@ -75,6 +82,10 @@ init_signals(struct instance *instance)
     event_set(&instance->sigquit_event, SIGQUIT, EV_SIGNAL|EV_PERSIST,
               exit_event_callback, instance);
     event_add(&instance->sigquit_event, NULL);
+
+    event_set(&instance->sighup_event, SIGHUP, EV_SIGNAL|EV_PERSIST,
+              reload_event_callback, instance);
+    event_add(&instance->sighup_event, NULL);
 }
 
 void

@@ -31,6 +31,7 @@ struct instance {
 
     int should_exit;
     struct event sigterm_event, sigint_event, sigquit_event;
+    struct event sighup_event;
 
     /* child management */
     struct event child_event, respawn_event;
