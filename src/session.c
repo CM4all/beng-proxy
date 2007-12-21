@@ -19,7 +19,7 @@ static struct timeval cleanup_interval = {
     .tv_usec = 0,
 };
 
-struct {
+static struct {
     pool_t pool;
     struct list_head sessions; /* XXX use hash table */
     unsigned num_sessions;
