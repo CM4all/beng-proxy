@@ -26,7 +26,7 @@ ipv64_normalize_mapped(const struct sockaddr *addr, socklen_t *len) {
     a4.sin_family = AF_INET;
     *len = sizeof(a4);
     memcpy(&a4.sin_addr, &inaddr, sizeof(inaddr));
-    a4.sin_port = port;                 
+    a4.sin_port = (in_port_t)port;
 
     return (const struct sockaddr *)&a4;
 }                                                  
