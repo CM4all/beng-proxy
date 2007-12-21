@@ -260,11 +260,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             p = buffer;
             while (buffer < end) {
                 if (*buffer == ']' && parser->cdend_match < 2) {
-                    if (buffer > p) {
+                    if (buffer > p)
                         /* flush buffer */
                         parser_cdata(parser, p, buffer - p, 0);
-                        p = buffer;
-                    }
 
                     p = ++buffer;
                     ++parser->cdend_match;

@@ -27,7 +27,7 @@ header_write(growing_buffer_t gb, const char *key, const char *value)
     memcpy(dest, value, value_length);
     dest += value_length;
     *dest++ = '\r';
-    *dest++ = '\n';
+    *dest = '\n';
 }
 
 void

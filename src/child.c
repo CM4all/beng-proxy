@@ -96,7 +96,6 @@ child_event_callback(int fd, short event, void *ctx)
             daemon_log(1, "child %d died from signal %d%s\n",
                        pid, WTERMSIG(status),
                        WCOREDUMP(status) ? " (core dumped)" : "");
-            exit_status = -1;
         } else if (exit_status == 0)
             daemon_log(1, "child %d exited with success\n",
                        pid);
