@@ -65,7 +65,15 @@ write_packet(growing_buffer_t gb, uint16_t command,
 {
     static struct beng_translation_header header;
 
-    header.length = payload == NULL ? 0 : strlen(payload);
+    if (payload == NULL) {
+        header.length = 0;
+    } else {
+        size_t length = strlen(payload);
+        if (length > 0xffff)
+            length = 0xffff;
+        header.length = (uint16_t)length;
+    }
+
     header.command = command;
 
     growing_buffer_write_buffer(gb, &header, sizeof(header));
