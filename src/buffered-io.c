@@ -83,7 +83,17 @@ buffered_quick_write(int fd, fifo_buffer_t output_buffer,
         return nbytes;
     } else {
         /* don't quick-write */
-        fifo_buffer_append(output_buffer, length);
-        return 0;
+        char *dest;
+        size_t max_length;
+
+        dest = fifo_buffer_write(output_buffer, &max_length);
+        if (dest == NULL)
+            return 0;
+
+        if (length > max_length)
+            length = max_length;
+
+        memcpy(dest, data, length);
+        return (ssize_t)length;
     }
 }
