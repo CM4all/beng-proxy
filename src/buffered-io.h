@@ -31,8 +31,4 @@ read_to_buffer(int fd, fifo_buffer_t buffer, size_t length);
 ssize_t
 write_from_buffer(int fd, fifo_buffer_t buffer);
 
-ssize_t
-buffered_quick_write(int fd, fifo_buffer_t output_buffer,
-                     const void *data, size_t length);
-
 #endif
