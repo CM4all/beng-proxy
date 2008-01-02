@@ -564,13 +564,6 @@ transform_url_attribute(processor_t processor)
                                                new_uri));
 }
 
-static inline int
-parse_bool(const char *p, size_t length)
-{
-    return length == 0 ||
-        p[0] == '1' || p[0] == 'y' || p[0] == 'Y';
-}
-
 void
 parser_attr_finished(struct parser *parser)
 {
