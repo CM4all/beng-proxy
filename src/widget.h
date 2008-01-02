@@ -129,6 +129,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->decoration.tag = NULL;
     widget->decoration.width = NULL;
     widget->decoration.height = NULL;
+    widget->decoration.style = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->path_info = NULL;
     widget->query_string = NULL;
