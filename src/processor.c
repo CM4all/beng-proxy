@@ -569,12 +569,11 @@ parser_widget_attr_finished(struct parser *parser, struct widget *widget,
                             pool_t pool)
 {
     if (parser->attr_name_length == 4 &&
-        memcmp(parser->attr_name, "href", 4) == 0)
-        widget->class
-            = get_widget_class(pool,
-                               p_strndup(pool, parser->attr_value,
-                                         parser->attr_value_length));
-    else if (parser->attr_name_length == 2 &&
+        memcmp(parser->attr_name, "href", 4) == 0) {
+        const char *class_name = p_strndup(pool, parser->attr_value,
+                                           parser->attr_value_length);
+        widget->class = get_widget_class(pool, class_name);
+    } else if (parser->attr_name_length == 2 &&
              memcmp(parser->attr_name, "id", 2) == 0)
         widget->id = p_strndup(pool, parser->attr_value,
                                parser->attr_value_length);
@@ -599,19 +598,16 @@ parser_widget_attr_finished(struct parser *parser, struct widget *widget,
             widget->session = WIDGET_SESSION_SITE;
     } else if (parser->attr_name_length == 3 &&
                memcmp(parser->attr_name, "tag", 3) == 0)
-        widget->decoration.tag
-            = p_strndup(pool, parser->attr_value,
-                        parser->attr_value_length);
+        widget->decoration.tag = p_strndup(pool, parser->attr_value,
+                                           parser->attr_value_length);
     else if (parser->attr_name_length == 5 &&
              memcmp(parser->attr_name, "width", 5) == 0)
-        widget->decoration.width
-            = p_strndup(pool, parser->attr_value,
-                        parser->attr_value_length);
+        widget->decoration.width = p_strndup(pool, parser->attr_value,
+                                             parser->attr_value_length);
     else if (parser->attr_name_length == 6 &&
              memcmp(parser->attr_name, "height", 6) == 0)
-        widget->decoration.height
-            = p_strndup(pool, parser->attr_value,
-                        parser->attr_value_length);
+        widget->decoration.height = p_strndup(pool, parser->attr_value,
+                                              parser->attr_value_length);
 }
 
 void
