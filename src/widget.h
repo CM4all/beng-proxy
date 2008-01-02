@@ -34,6 +34,10 @@ struct widget {
     /** the widget's instance id, as specified in the template */
     const char *id;
 
+    /** which SGML tag is rendered as container for this widget?  NULL
+        means unset, empty string means don't generate anything */
+    const char *tag;
+
     /** dimensions of the widget */
     const char *width, *height;
 
@@ -117,6 +121,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
 
     widget->class = class;
     widget->id = NULL;
+    widget->tag = NULL;
     widget->width = NULL;
     widget->height = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;

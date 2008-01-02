@@ -632,7 +632,11 @@ parser_attr_finished(struct parser *parser)
             else if (parser->attr_value_length == 4 &&
                 memcmp(parser->attr_value, "site", 4) == 0)
                 processor->embedded_widget->session = WIDGET_SESSION_SITE;
-        } else if (parser->attr_name_length == 5 &&
+        } else if (parser->attr_name_length == 3 &&
+                 memcmp(parser->attr_name, "tag", 3) == 0)
+            processor->embedded_widget->tag = p_strndup(processor->widget_pool, parser->attr_value,
+                                                        parser->attr_value_length);
+        else if (parser->attr_name_length == 5 &&
                  memcmp(parser->attr_name, "width", 5) == 0)
             processor->embedded_widget->width = p_strndup(processor->widget_pool, parser->attr_value,
                                                           parser->attr_value_length);
@@ -718,8 +722,13 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
 
+    if (widget->tag != NULL && widget->tag[0] == 0)
+        return istream;
+
     tag = growing_buffer_new(pool, 256);
-    growing_buffer_write_string(tag, "<div class=\"embed\"");
+    growing_buffer_write_string(tag, "<");
+    growing_buffer_write_string(tag, widget->tag == NULL ? "div" : widget->tag);
+    growing_buffer_write_string(tag, " class=\"embed\"");
 
     prefix = widget_prefix(pool, widget);
     if (prefix != NULL) {
@@ -747,7 +756,9 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
     return istream_cat_new(pool,
                            growing_buffer_istream(tag),
                            istream,
-                           istream_string_new(pool, "</div>"),
+                           istream_string_new(pool, p_strcat(pool, "</",
+                                                             widget->tag == NULL ? "div" : widget->tag,
+                                                             ">", NULL)),
                            NULL);
 }
 
