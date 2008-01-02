@@ -564,6 +564,56 @@ transform_url_attribute(processor_t processor)
                                                new_uri));
 }
 
+static void
+parser_widget_attr_finished(struct parser *parser, struct widget *widget,
+                            pool_t pool)
+{
+    if (parser->attr_name_length == 4 &&
+        memcmp(parser->attr_name, "href", 4) == 0)
+        widget->class
+            = get_widget_class(pool,
+                               p_strndup(pool, parser->attr_value,
+                                         parser->attr_value_length));
+    else if (parser->attr_name_length == 2 &&
+             memcmp(parser->attr_name, "id", 2) == 0)
+        widget->id = p_strndup(pool, parser->attr_value,
+                               parser->attr_value_length);
+    else if (parser->attr_name_length == 7 &&
+             memcmp(parser->attr_name, "display", 7) == 0) {
+        if (parser->attr_value_length == 6 &&
+            memcmp(parser->attr_value, "inline", 6) == 0)
+            widget->display = WIDGET_DISPLAY_INLINE;
+        else if (parser->attr_value_length == 6 &&
+                 memcmp(parser->attr_value, "iframe", 6) == 0)
+            widget->display = WIDGET_DISPLAY_IFRAME;
+        else if (parser->attr_value_length == 3 &&
+                 memcmp(parser->attr_value, "img", 3) == 0)
+            widget->display = WIDGET_DISPLAY_IMG;
+    } else if (parser->attr_name_length == 7 &&
+               memcmp(parser->attr_name, "session", 7) == 0) {
+        if (parser->attr_value_length == 8 &&
+            memcmp(parser->attr_value, "resource", 8) == 0)
+            widget->session = WIDGET_SESSION_RESOURCE;
+        else if (parser->attr_value_length == 4 &&
+                 memcmp(parser->attr_value, "site", 4) == 0)
+            widget->session = WIDGET_SESSION_SITE;
+    } else if (parser->attr_name_length == 3 &&
+               memcmp(parser->attr_name, "tag", 3) == 0)
+        widget->decoration.tag
+            = p_strndup(pool, parser->attr_value,
+                        parser->attr_value_length);
+    else if (parser->attr_name_length == 5 &&
+             memcmp(parser->attr_name, "width", 5) == 0)
+        widget->decoration.width
+            = p_strndup(pool, parser->attr_value,
+                        parser->attr_value_length);
+    else if (parser->attr_name_length == 6 &&
+             memcmp(parser->attr_name, "height", 6) == 0)
+        widget->decoration.height
+            = p_strndup(pool, parser->attr_value,
+                        parser->attr_value_length);
+}
+
 void
 parser_attr_finished(struct parser *parser)
 {
@@ -596,50 +646,8 @@ parser_attr_finished(struct parser *parser)
     case TAG_WIDGET:
         assert(processor->embedded_widget != NULL);
 
-        if (parser->attr_name_length == 4 &&
-            memcmp(parser->attr_name, "href", 4) == 0)
-            processor->embedded_widget->class
-                = get_widget_class(processor->output.pool,
-                                   p_strndup(processor->output.pool, parser->attr_value,
-                                             parser->attr_value_length));
-        else if (parser->attr_name_length == 2 &&
-                 memcmp(parser->attr_name, "id", 2) == 0)
-            processor->embedded_widget->id = p_strndup(processor->widget_pool, parser->attr_value,
-                                                       parser->attr_value_length);
-        else if (parser->attr_name_length == 7 &&
-                 memcmp(parser->attr_name, "display", 7) == 0) {
-            if (parser->attr_value_length == 6 &&
-                memcmp(parser->attr_value, "inline", 6) == 0)
-                processor->embedded_widget->display = WIDGET_DISPLAY_INLINE;
-            else if (parser->attr_value_length == 6 &&
-                memcmp(parser->attr_value, "iframe", 6) == 0)
-                processor->embedded_widget->display = WIDGET_DISPLAY_IFRAME;
-            else if (parser->attr_value_length == 3 &&
-                memcmp(parser->attr_value, "img", 3) == 0)
-                processor->embedded_widget->display = WIDGET_DISPLAY_IMG;
-        } else if (parser->attr_name_length == 7 &&
-                   memcmp(parser->attr_name, "session", 7) == 0) {
-            if (parser->attr_value_length == 8 &&
-                memcmp(parser->attr_value, "resource", 8) == 0)
-                processor->embedded_widget->session = WIDGET_SESSION_RESOURCE;
-            else if (parser->attr_value_length == 4 &&
-                memcmp(parser->attr_value, "site", 4) == 0)
-                processor->embedded_widget->session = WIDGET_SESSION_SITE;
-        } else if (parser->attr_name_length == 3 &&
-                 memcmp(parser->attr_name, "tag", 3) == 0)
-            processor->embedded_widget->decoration.tag
-                = p_strndup(processor->widget_pool, parser->attr_value,
-                            parser->attr_value_length);
-        else if (parser->attr_name_length == 5 &&
-                 memcmp(parser->attr_name, "width", 5) == 0)
-            processor->embedded_widget->decoration.width
-                = p_strndup(processor->widget_pool, parser->attr_value,
-                            parser->attr_value_length);
-        else if (parser->attr_name_length == 6 &&
-                 memcmp(parser->attr_name, "height", 6) == 0)
-            processor->embedded_widget->decoration.height
-                = p_strndup(processor->widget_pool, parser->attr_value,
-                            parser->attr_value_length);
+        parser_widget_attr_finished(parser, processor->embedded_widget,
+                                    processor->widget_pool);
         break;
 
     case TAG_WIDGET_PARAM:
