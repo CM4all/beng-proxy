@@ -608,6 +608,10 @@ parser_widget_attr_finished(struct parser *parser, struct widget *widget,
              memcmp(parser->attr_name, "height", 6) == 0)
         widget->decoration.height = p_strndup(pool, parser->attr_value,
                                               parser->attr_value_length);
+    else if (parser->attr_name_length == 5 &&
+             memcmp(parser->attr_name, "style", 5) == 0)
+        widget->decoration.style = p_strndup(pool, parser->attr_value,
+                                             parser->attr_value_length);
 }
 
 void
@@ -754,6 +758,9 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
         growing_buffer_write_string(tag, widget->decoration.height);
         growing_buffer_write_string(tag, ";");
     }
+
+    if (widget->decoration.style != NULL)
+        growing_buffer_write_string(tag, widget->decoration.style);
 
     growing_buffer_write_string(tag, "'>");
 

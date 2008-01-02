@@ -41,6 +41,9 @@ struct widget {
 
         /** dimensions of the widget */
         const char *width, *height;
+
+        /** custom CSS */
+        const char *style;
     } decoration;
 
     /** in which form should this widget be displayed? */
