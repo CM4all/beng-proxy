@@ -93,6 +93,7 @@ deinit_signals(struct instance *instance)
     event_del(&instance->sigterm_event);
     event_del(&instance->sigint_event);
     event_del(&instance->sigquit_event);
+    event_del(&instance->sighup_event);
 }
 
 int main(int argc, char **argv)
