@@ -717,17 +717,21 @@ static istream_t
 embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
 {
     growing_buffer_t tag;
-    const char *prefix;
+    const char *tag_name, *prefix;
 
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
 
-    if (widget->tag != NULL && widget->tag[0] == 0)
+    tag_name = widget->tag;
+    if (tag_name != NULL && tag_name[0] == 0)
         return istream;
+
+    if (tag_name == NULL)
+        tag_name = "div";
 
     tag = growing_buffer_new(pool, 256);
     growing_buffer_write_string(tag, "<");
-    growing_buffer_write_string(tag, widget->tag == NULL ? "div" : widget->tag);
+    growing_buffer_write_string(tag, tag_name);
     growing_buffer_write_string(tag, " class=\"embed\"");
 
     prefix = widget_prefix(pool, widget);
@@ -757,7 +761,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
                            growing_buffer_istream(tag),
                            istream,
                            istream_string_new(pool, p_strcat(pool, "</",
-                                                             widget->tag == NULL ? "div" : widget->tag,
+                                                             tag_name,
                                                              ">", NULL)),
                            NULL);
 }
