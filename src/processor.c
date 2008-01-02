@@ -634,16 +634,19 @@ parser_attr_finished(struct parser *parser)
                 processor->embedded_widget->session = WIDGET_SESSION_SITE;
         } else if (parser->attr_name_length == 3 &&
                  memcmp(parser->attr_name, "tag", 3) == 0)
-            processor->embedded_widget->tag = p_strndup(processor->widget_pool, parser->attr_value,
-                                                        parser->attr_value_length);
+            processor->embedded_widget->decoration.tag
+                = p_strndup(processor->widget_pool, parser->attr_value,
+                            parser->attr_value_length);
         else if (parser->attr_name_length == 5 &&
                  memcmp(parser->attr_name, "width", 5) == 0)
-            processor->embedded_widget->width = p_strndup(processor->widget_pool, parser->attr_value,
-                                                          parser->attr_value_length);
+            processor->embedded_widget->decoration.width
+                = p_strndup(processor->widget_pool, parser->attr_value,
+                            parser->attr_value_length);
         else if (parser->attr_name_length == 6 &&
                  memcmp(parser->attr_name, "height", 6) == 0)
-            processor->embedded_widget->height = p_strndup(processor->widget_pool, parser->attr_value,
-                                                           parser->attr_value_length);
+            processor->embedded_widget->decoration.height
+                = p_strndup(processor->widget_pool, parser->attr_value,
+                            parser->attr_value_length);
         break;
 
     case TAG_WIDGET_PARAM:
@@ -722,7 +725,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
 
-    tag_name = widget->tag;
+    tag_name = widget->decoration.tag;
     if (tag_name != NULL && tag_name[0] == 0)
         return istream;
 
@@ -743,15 +746,15 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
 
     growing_buffer_write_string(tag, " style='overflow:auto; margin:5pt; border:1px dotted red;");
 
-    if (widget->width != NULL) {
+    if (widget->decoration.width != NULL) {
         growing_buffer_write_string(tag, "width:");
-        growing_buffer_write_string(tag, widget->width);
+        growing_buffer_write_string(tag, widget->decoration.width);
         growing_buffer_write_string(tag, ";");
     }
 
-    if (widget->height != NULL) {
+    if (widget->decoration.height != NULL) {
         growing_buffer_write_string(tag, "height:");
-        growing_buffer_write_string(tag, widget->height);
+        growing_buffer_write_string(tag, widget->decoration.height);
         growing_buffer_write_string(tag, ";");
     }
 

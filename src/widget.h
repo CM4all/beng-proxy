@@ -34,12 +34,14 @@ struct widget {
     /** the widget's instance id, as specified in the template */
     const char *id;
 
-    /** which SGML tag is rendered as container for this widget?  NULL
-        means unset, empty string means don't generate anything */
-    const char *tag;
+    struct {
+        /** which SGML tag is rendered as container for this widget?  NULL
+            means unset, empty string means don't generate anything */
+        const char *tag;
 
-    /** dimensions of the widget */
-    const char *width, *height;
+        /** dimensions of the widget */
+        const char *width, *height;
+    } decoration;
 
     /** in which form should this widget be displayed? */
     enum {
@@ -121,9 +123,9 @@ widget_init(struct widget *widget, const struct widget_class *class)
 
     widget->class = class;
     widget->id = NULL;
-    widget->tag = NULL;
-    widget->width = NULL;
-    widget->height = NULL;
+    widget->decoration.tag = NULL;
+    widget->decoration.width = NULL;
+    widget->decoration.height = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->path_info = NULL;
     widget->query_string = NULL;
