@@ -215,7 +215,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     if (embed->widget->from_request.proxy &&
         http_response_handler_defined(&embed->env->response_handler)) {
         /* this is the request for IFRAME contents - send it directly
-           to to http_server object, including headers */
+           to the http_server object, including headers */
 
         http_response_handler_invoke_response(&embed->env->response_handler,
                                               status, headers, input);
