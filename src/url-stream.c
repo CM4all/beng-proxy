@@ -5,6 +5,7 @@
  */
 
 #include "url-stream.h"
+#include "http-response.h"
 #include "compiler.h"
 #include "header-writer.h"
 #include "url-stock.h"

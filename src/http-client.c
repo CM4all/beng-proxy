@@ -5,6 +5,7 @@
  */
 
 #include "http-client.h"
+#include "http-response.h"
 #include "fifo-buffer.h"
 #include "strutil.h"
 #include "compiler.h"

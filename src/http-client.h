@@ -9,7 +9,9 @@
 
 #include "pool.h"
 #include "growing-buffer.h"
-#include "http-response.h"
+#include "http.h"
+
+struct http_response_handler;
 
 typedef struct http_client_connection *http_client_connection_t;
 
