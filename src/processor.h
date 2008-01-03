@@ -12,8 +12,6 @@
 #include "http.h"
 #include "http-response.h"
 
-#include <sys/types.h>
-
 /** options for processor_new() */
 enum processor_options {
     /** don't output anything from the input, don't generate <DIV>
