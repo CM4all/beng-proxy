@@ -291,6 +291,17 @@ query string.
 ``External URIs'' are not relative, they should
 load in a new browser window.
 
+\subsection{Redirection}
+
+Widgets can send the usual HTTP redirection responses (status
+\texttt{3xx}).  The new location must be below the widget's base URI.
+
+\emph{beng-proxy} is currently limited to sending a \texttt{GET}
+request following the redirect, because it does not save the request
+body.  This is always correct for ``303 See Other'', but may not be
+for the other redirection types.  Widget servers should therefore
+always redirect with ``303 See Other'' as follow-up to a POST request.
+
 \subsection{POSTing}
 
 Making the browser send a request body with a POST request is
