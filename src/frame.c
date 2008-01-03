@@ -22,14 +22,6 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     assert(widget->from_request.proxy);
 
-    if (!strref_is_empty(&env->external_uri->query))
-        widget->real_uri = p_strncat(pool,
-                                     widget->real_uri, strlen(widget->real_uri),
-                                     "?", (size_t)1,
-                                     env->external_uri->query.data,
-                                     env->external_uri->query.length,
-                                     NULL);
-
     if (widget->from_request.body) {
         assert(env->request_body != NULL);
 
