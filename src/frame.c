@@ -6,7 +6,6 @@
 
 #include "frame.h"
 #include "embed.h"
-#include "uri.h"
 #include "processor.h"
 #include "widget.h"
 
