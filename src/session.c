@@ -156,6 +156,8 @@ session_get(session_id_t id)
 
     for (session = (session_t)head->next; session != (session_t)head;
          session = (session_t)session->hash_siblings.next) {
+        assert(session_slot(session->id) == head);
+
         if (session->id == id) {
             session->expires = time(NULL) + SESSION_TTL;
             return session;
