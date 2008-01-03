@@ -10,6 +10,7 @@
 #include "pool.h"
 #include "list.h"
 #include "strmap.h"
+#include "http.h"
 
 struct processor_env;
 struct parsed_uri;
@@ -81,6 +82,8 @@ struct widget {
         /** is this widget focused? */
         unsigned focus:1;
 
+        http_method_t method;
+
         /** is there a query string being forwarded to the widget
             server? */
         unsigned query_string:1;
@@ -139,6 +142,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->from_request.proxy_ref = NULL;
     widget->from_request.focus_ref = NULL;
     widget->from_request.focus = 0;
+    widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.query_string = 0;
     widget->from_request.body = 0;
     widget->from_request.proxy = 0;

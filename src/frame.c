@@ -15,7 +15,6 @@ static istream_t
 frame_top_widget(pool_t pool, struct processor_env *env,
                  struct widget *widget)
 {
-    http_method_t method = HTTP_METHOD_GET;
     istream_t request_body = NULL;
     struct processor_env *env2;
 
@@ -24,7 +23,6 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     if (widget->from_request.body) {
         assert(env->request_body != NULL);
 
-        method = HTTP_METHOD_POST; /* XXX which method? */
         request_body = env->request_body;
         /* XXX what if there is no stream handler? or two? */
     }
@@ -40,7 +38,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     http_response_handler_clear(&env->response_handler);
 
     return embed_new(pool,
-                     method, widget->real_uri,
+                     widget->from_request.method, widget->real_uri,
                      request_body,
                      widget,
                      env2,

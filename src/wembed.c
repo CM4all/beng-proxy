@@ -17,19 +17,17 @@ static istream_t
 embed_inline_widget(pool_t pool, struct processor_env *env,
                     struct widget *widget)
 {
-    http_method_t method = HTTP_METHOD_GET;
     istream_t request_body = NULL;
 
     if (widget->from_request.body) {
         assert(env->request_body != NULL);
 
-        method = HTTP_METHOD_POST; /* XXX which method? */
         request_body = env->request_body;
         /* XXX what if there is no stream handler? or two? */
     }
 
     return embed_new(pool,
-                     method, widget->real_uri, request_body,
+                     widget->from_request.body, widget->real_uri, request_body,
                      widget,
                      env, PROCESSOR_BODY | PROCESSOR_JSCRIPT);
 }

@@ -78,8 +78,11 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
         if (!strref_is_empty(&env->external_uri->query))
             widget->from_request.query_string = 1;
 
-        if (env->request_body != NULL)
+        if (env->request_body != NULL) {
+            /* XXX which method? */
+            widget->from_request.method = HTTP_METHOD_POST;
             widget->from_request.body = 1;
+        }
 
         /* store query string in session */
 
