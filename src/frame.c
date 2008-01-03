@@ -20,7 +20,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     istream_t request_body = NULL;
     struct processor_env *env2;
 
-    widget->from_request.proxy = 1; /* set flag if it wasn't previously set */
+    assert(widget->from_request.proxy);
 
     if (!strref_is_empty(&env->external_uri->query))
         widget->real_uri = p_strncat(pool,
