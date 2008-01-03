@@ -226,8 +226,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     delayed = embed->delayed;
     embed->delayed = NULL;
 
-    if (input == body && !embed->widget->from_request.proxy &&
-        embed->widget->id != NULL) {
+    if (input == body && embed->widget->id != NULL) {
         /* it cannot be inserted into the HTML stream, so put it into
            an iframe */
 
