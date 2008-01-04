@@ -27,7 +27,7 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
     }
 
     return embed_new(pool,
-                     widget->from_request.body, widget->real_uri, request_body,
+                     widget->from_request.method, widget->real_uri, request_body,
                      widget,
                      env, PROCESSOR_BODY | PROCESSOR_JSCRIPT);
 }
