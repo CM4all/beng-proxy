@@ -84,9 +84,8 @@ function beng_widget_get(uri, onreadystatechange) {
     return req;
 }
 
-function beng_widget_reload(uri) {
-    var widget = this;
-    var req = this.get(uri, function() {
+function beng_widget_reload_inline(widget, uri) {
+    var req = widget.get(uri, function() {
             if (req == null)
                 return;
             if (req.readyState == 4 && req.status >= 200 && req.status < 300) {
@@ -96,6 +95,29 @@ function beng_widget_reload(uri) {
             }
         });
     return req;
+}
+
+function beng_widget_reload_iframe(widget, iframe, uri) {
+    var url = widget.translateURI(uri, true);
+    if (url == null)
+        return null;
+
+    iframe.src = url;
+    return null;
+}
+
+function beng_widget_reload(uri) {
+    if (this.path == null)
+        return null;
+
+    var iframe_id = "beng_iframe___" + this.path.replace(/\//g, "__") + "__";
+    alert(iframe_id);
+    var iframe = document.getElementById(iframe_id);
+    alert(iframe);
+    if (iframe != null)
+        return beng_widget_reload_iframe(this, iframe, uri);
+
+    return beng_widget_reload_inline(this, uri);
 }
 
 function beng_widget(parent, id) {
