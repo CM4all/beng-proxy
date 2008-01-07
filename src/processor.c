@@ -62,6 +62,21 @@ struct processor {
 };
 
 
+static int
+processor_option_jscript(const struct processor *processor)
+{
+    return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_QUIET))
+        == PROCESSOR_JSCRIPT;
+}
+
+static int
+processor_option_jscript_root(const struct processor *processor)
+{
+    return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT|PROCESSOR_QUIET))
+        == (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT);
+}
+
+
 static void
 processor_close(processor_t processor)
 {
@@ -237,20 +252,6 @@ static const struct istream_handler processor_input_handler = {
     .abort = processor_input_abort,
 };
 
-
-static int
-processor_option_jscript(const struct processor *processor)
-{
-    return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_QUIET))
-        == PROCESSOR_JSCRIPT;
-}
-
-static int
-processor_option_jscript_root(const struct processor *processor)
-{
-    return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT|PROCESSOR_QUIET))
-        == (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT);
-}
 
 static void
 growing_buffer_write_jscript_string(growing_buffer_t gb, const char *s)
