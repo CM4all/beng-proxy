@@ -238,6 +238,20 @@ static const struct istream_handler processor_input_handler = {
 };
 
 
+static int
+processor_option_jscript(const struct processor *processor)
+{
+    return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_QUIET))
+        == PROCESSOR_JSCRIPT;
+}
+
+static int
+processor_option_jscript_root(const struct processor *processor)
+{
+    return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT|PROCESSOR_QUIET))
+        == (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT);
+}
+
 static void
 growing_buffer_write_jscript_string(growing_buffer_t gb, const char *s)
 {
@@ -283,11 +297,11 @@ processor_jscript(processor_t processor)
 {
     growing_buffer_t gb = growing_buffer_new(processor->output.pool, 512);
 
-    assert((processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_QUIET)) == PROCESSOR_JSCRIPT);
+    assert(processor_option_jscript(processor));
 
     growing_buffer_write_string(gb, "<script type=\"text/javascript\">\n");
 
-    if ((processor->options & PROCESSOR_JSCRIPT_ROOT) != 0) {
+    if (processor_option_jscript_root(processor)) {
         const char *session_id;
 
         growing_buffer_write_string(gb, "var rootWidget = new beng_root_widget(beng_proxy(\"");
