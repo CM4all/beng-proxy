@@ -21,10 +21,10 @@ widget_determine_real_uri(pool_t pool, struct widget *widget)
 
     if (widget->from_request.path_info != NULL)
         path_info = widget->from_request.path_info;
-    else if (widget->path_info == NULL)
-        path_info = "";
-    else
+    else if (widget->path_info != NULL)
         path_info = widget->path_info;
+    else
+        path_info = "";
 
     if (!strref_is_empty(&widget->from_request.query_string))
         widget->real_uri = p_strncat(pool,
