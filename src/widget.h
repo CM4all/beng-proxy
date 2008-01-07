@@ -173,6 +173,9 @@ const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *p);
 
 void
+widget_copy_from_request(struct widget *widget, const struct processor_env *env);
+
+void
 widget_determine_real_uri(pool_t pool, const struct processor_env *env,
                           struct widget *widget);
 

@@ -699,6 +699,7 @@ embed_widget(pool_t pool, struct processor_env *env, struct widget *widget)
     if (widget->class == NULL || widget->class->uri == NULL)
         return istream_string_new(pool, "Error: no widget class specified");
 
+    widget_copy_from_request(widget, env);
     widget_determine_real_uri(pool, env, widget);
 
     return env->widget_callback(pool, env, widget);

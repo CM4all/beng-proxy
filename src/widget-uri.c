@@ -13,33 +13,6 @@
 #include <string.h>
 #include <assert.h>
 
-static void
-connect_widget_session(const struct processor_env *env,
-                       struct widget *widget, struct widget_session *ws)
-{
-    if (widget->from_request.focus ||
-        widget->from_request.path_info != NULL || 
-        widget->from_request.query_string ||
-        widget->from_request.body) {
-        /* reset state because we got a new state with this request */
-
-        ws->path_info = widget->from_request.path_info == NULL
-            ? NULL
-            : p_strdup(ws->pool, widget->from_request.path_info);
-
-        if (widget->from_request.query_string) {
-            ws->query_string = strref_dup(ws->pool,
-                                          &env->external_uri->query);
-        } else {
-            ws->query_string = NULL;
-        }
-    } else {
-        /* copy state from session to widget */
-
-        widget->from_request.path_info = ws->path_info;
-    }
-}
-
 void
 widget_determine_real_uri(pool_t pool, const struct processor_env *env,
                           struct widget *widget)
@@ -49,75 +22,16 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
 
     assert(widget != NULL);
 
-    path_info = widget->path_info;
-
     widget->real_uri = widget->class->uri;
 
-    /* is this widget being proxied? */
-
-    if (widget->id != NULL && widget->parent != NULL &&
-        widget->parent->from_request.proxy_ref != NULL &&
-        strcmp(widget->id, widget->parent->from_request.proxy_ref->id) == 0) {
-        widget->from_request.proxy_ref = widget->parent->from_request.proxy_ref->next;
-
-        if (widget->from_request.proxy_ref == NULL)
-            widget->from_request.proxy = 1;
-        else
-            widget->parent->from_request.proxy_ref = NULL;
-    }
-
-    /* are we focused? */
-
-    if (widget->id != NULL && widget->parent != NULL &&
-        widget->parent->from_request.focus_ref != NULL &&
-        strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
-        widget->parent->from_request.focus_ref->next == NULL) {
-        /* we're in focus.  forward query string and request body. */
-        widget->from_request.focus = 1;
-
-        if (!strref_is_empty(&env->external_uri->query))
-            widget->from_request.query_string = 1;
-
-        if (env->request_body != NULL) {
-            /* XXX which method? */
-            widget->from_request.method = HTTP_METHOD_POST;
-            widget->from_request.body = 1;
-        }
-
-        /* store query string in session */
-
-        ws = widget_get_session(widget, 1);
-    } else if (widget->id != NULL && widget->parent != NULL &&
-               widget->parent->from_request.focus_ref != NULL &&
-               strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
-               widget->parent->from_request.focus_ref->next != NULL) {
-        /* we are the parent (or grant-parent) of the focused widget.
-           store the relative focus_ref. */
-
-        widget->from_request.focus_ref = widget->parent->from_request.focus_ref->next;
-        widget->parent->from_request.focus_ref = NULL;
-        
-        /* get query string from session */
-
-        ws = widget_get_session(widget, 0);
-    } else {
-        /* get query string from session */
-
-        ws = widget_get_session(widget, 0);
-    }
-
-    /* determine path_info */
-
-    if (widget->from_request.focus && widget->from_request.path_info == NULL)
-        widget->from_request.path_info = strmap_remove(env->args, "path");
-
-    /* append path_info and query_string to widget->real_uri */
-
+    ws = widget_get_session(widget, 0);
     if (ws == NULL) {
         if (widget->from_request.path_info != NULL)
             path_info = widget->from_request.path_info;
-        else if (path_info == NULL)
+        else if (widget->path_info == NULL)
             path_info = "";
+        else
+            path_info = widget->path_info;
 
         if (widget->from_request.query_string)
             widget->real_uri = p_strncat(pool,
@@ -133,12 +47,12 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
                                         path_info,
                                         NULL);
     } else {
-        connect_widget_session(env, widget, ws);
-
         if (ws->path_info != NULL)
             path_info = ws->path_info;
-        else if (path_info == NULL)
+        else if (widget->path_info == NULL)
             path_info = "";
+        else
+            path_info = widget->path_info;
 
         if (ws->query_string != NULL)
             widget->real_uri = p_strcat(pool,
