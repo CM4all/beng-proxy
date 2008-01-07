@@ -9,6 +9,7 @@
 #include "processor.h"
 #include "widget.h"
 #include "session.h"
+#include "growing-buffer.h"
 
 #include <assert.h>
 #include <string.h>
@@ -60,21 +61,26 @@ static istream_t
 embed_iframe_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
-    const char *uri, *prefix, *iframe;
+    const char *uri, *prefix;
+    struct growing_buffer *gb;
 
     uri = widget_frame_uri(pool, env, widget);
     prefix = widget_prefix(pool, widget);
     if (uri == NULL || prefix == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
-    iframe = p_strcat(pool, "<iframe "
-                      " id=\"beng_iframe_", prefix, "\"",
-                      "width='100%' height='100%' "
-                      "frameborder='0' marginheight='0' marginwidth='0' "
-                      "scrolling='no' "
-                      "src='", uri, "'></iframe>",
-                      NULL);
-    return istream_string_new(pool, iframe);
+    gb = growing_buffer_new(pool, 512);
+    growing_buffer_write_string(gb, "<iframe id=\"beng_iframe_");
+    growing_buffer_write_string(gb, prefix);
+    growing_buffer_write_string(gb, "\""
+                                "width='100%' height='100%' "
+                                "frameborder='0' marginheight='0' marginwidth='0' "
+                                "scrolling='no' "
+                                "src='");
+    growing_buffer_write_string(gb, uri);
+    growing_buffer_write_string(gb, "'></iframe>");
+
+    return growing_buffer_istream(gb);
 }
 
 /** generate IMG element */
@@ -82,17 +88,22 @@ static istream_t
 embed_img_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
-    const char *uri, *prefix, *html;
+    const char *uri, *prefix;
+    struct growing_buffer *gb;
 
     uri = widget_frame_uri(pool, env, widget);
     prefix = widget_prefix(pool, widget);
     if (uri == NULL || prefix == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
-    html = p_strcat(pool, "<img "
-                    " id=\"beng_img_", prefix, "\"",
-                    "src=\"", uri, "\"></img>", NULL);
-    return istream_string_new(pool, html);
+    gb = growing_buffer_new(pool, 512);
+    growing_buffer_write_string(gb, "<img  id=\"beng_img_");
+    growing_buffer_write_string(gb, prefix);
+    growing_buffer_write_string(gb, "\" src=\"");
+    growing_buffer_write_string(gb, uri);
+    growing_buffer_write_string(gb, "\"></img>");
+
+    return growing_buffer_istream(gb);
 }
 
 istream_t
