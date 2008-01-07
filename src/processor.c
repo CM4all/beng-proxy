@@ -250,11 +250,38 @@ growing_buffer_write_jscript_string(growing_buffer_t gb, const char *s)
     }
 }
 
+static void
+widget_jscript(growing_buffer_t gb, const struct widget *widget, pool_t pool)
+{
+    const char *prefix, *parent_prefix;
+
+    prefix = widget_prefix(pool, widget);
+    if (prefix == NULL)
+        return;
+
+    growing_buffer_write_string(gb, "var ");
+    growing_buffer_write_string(gb, prefix);
+    growing_buffer_write_string(gb, "widget = ");
+
+    if (widget->parent == NULL) {
+        growing_buffer_write_string(gb, "rootWidget;\n");
+    } else {
+        growing_buffer_write_string(gb, "new beng_widget(");
+
+        parent_prefix = widget_prefix(pool, widget->parent);
+        assert(parent_prefix != NULL);
+
+        growing_buffer_write_string(gb, parent_prefix);
+        growing_buffer_write_string(gb, "widget, ");
+        growing_buffer_write_jscript_string(gb, widget->id);
+        growing_buffer_write_string(gb, ");\n");
+    }
+}
+
 static istream_t
 processor_jscript(processor_t processor)
 {
     growing_buffer_t gb = growing_buffer_new(processor->output.pool, 512);
-    const char *prefix, *parent_prefix;
 
     assert((processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_QUIET)) == PROCESSOR_JSCRIPT);
 
@@ -272,28 +299,7 @@ processor_jscript(processor_t processor)
         growing_buffer_write_string(gb, "\"));\n");
     }
 
-    prefix = widget_prefix(processor->output.pool, processor->widget);
-
-    if (prefix != NULL) {
-        growing_buffer_write_string(gb, "var ");
-        growing_buffer_write_string(gb, prefix);
-        growing_buffer_write_string(gb, "widget = ");
-
-        if (processor->widget->parent == NULL) {
-            growing_buffer_write_string(gb, "rootWidget;\n");
-        } else {
-            growing_buffer_write_string(gb, "new beng_widget(");
-
-            parent_prefix = widget_prefix(processor->output.pool,
-                                          processor->widget->parent);
-            assert(parent_prefix != NULL);
-
-            growing_buffer_write_string(gb, parent_prefix);
-            growing_buffer_write_string(gb, "widget, ");
-            growing_buffer_write_jscript_string(gb, processor->widget->id);
-            growing_buffer_write_string(gb, ");\n");
-        }
-    }
+    widget_jscript(gb, processor->widget, processor->output.pool);
 
     growing_buffer_write_string(gb, "</script>\n");
 
