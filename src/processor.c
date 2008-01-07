@@ -12,6 +12,7 @@
 #include "widget.h"
 #include "growing-buffer.h"
 #include "js-filter.h"
+#include "js-generator.h"
 
 #include <daemon/log.h>
 
@@ -272,46 +273,6 @@ static const struct istream_handler processor_input_handler = {
 };
 
 
-static void
-growing_buffer_write_jscript_string(growing_buffer_t gb, const char *s)
-{
-    if (s == NULL)
-        growing_buffer_write_string(gb, "null");
-    else {
-        growing_buffer_write_string(gb, "\"");
-        growing_buffer_write_string(gb, s); /* XXX escape */
-        growing_buffer_write_string(gb, "\"");
-    }
-}
-
-static void
-widget_jscript(growing_buffer_t gb, const struct widget *widget, pool_t pool)
-{
-    const char *prefix, *parent_prefix;
-
-    prefix = widget_prefix(pool, widget);
-    if (prefix == NULL)
-        return;
-
-    growing_buffer_write_string(gb, "var ");
-    growing_buffer_write_string(gb, prefix);
-    growing_buffer_write_string(gb, "widget = ");
-
-    if (widget->parent == NULL) {
-        growing_buffer_write_string(gb, "rootWidget;\n");
-    } else {
-        growing_buffer_write_string(gb, "new beng_widget(");
-
-        parent_prefix = widget_prefix(pool, widget->parent);
-        assert(parent_prefix != NULL);
-
-        growing_buffer_write_string(gb, parent_prefix);
-        growing_buffer_write_string(gb, "widget, ");
-        growing_buffer_write_jscript_string(gb, widget->id);
-        growing_buffer_write_string(gb, ");\n");
-    }
-}
-
 static istream_t
 processor_jscript(processor_t processor)
 {
@@ -321,19 +282,10 @@ processor_jscript(processor_t processor)
 
     growing_buffer_write_string(gb, "<script type=\"text/javascript\">\n");
 
-    if (processor_option_jscript_root(processor)) {
-        const char *session_id;
+    if (processor_option_jscript_root(processor))
+        js_generate_root_widget(gb, strmap_get(processor->env->args, "session"));
 
-        growing_buffer_write_string(gb, "var rootWidget = new beng_root_widget(beng_proxy(\"");
-
-        session_id = strmap_get(processor->env->args, "session");
-        if (session_id != NULL)
-            growing_buffer_write_string(gb, session_id);
-
-        growing_buffer_write_string(gb, "\"));\n");
-    }
-
-    widget_jscript(gb, processor->widget, processor->output.pool);
+    js_generate_widget(gb, processor->widget, processor->output.pool);
 
     growing_buffer_write_string(gb, "</script>\n");
 

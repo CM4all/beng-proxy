@@ -64,6 +64,7 @@ SOURCES = src/main.c \
 	src/proxy-widget.c \
 	src/html-escape.c \
 	src/js-filter.c \
+	src/js-generator.c \
 	src/processor.c \
 	src/penv.c \
 	src/parser.c \
