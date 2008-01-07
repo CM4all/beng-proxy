@@ -63,6 +63,18 @@ struct processor {
 
 
 static int
+processor_option_quiet(const struct processor *processor)
+{
+    return (processor->options & PROCESSOR_QUIET) != 0;
+}
+
+static int
+processor_option_body(const struct processor *processor)
+{
+    return (processor->options & PROCESSOR_BODY) != 0;
+}
+
+static int
 processor_option_jscript(const struct processor *processor)
 {
     return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_QUIET))
@@ -74,6 +86,13 @@ processor_option_jscript_root(const struct processor *processor)
 {
     return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT|PROCESSOR_QUIET))
         == (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT);
+}
+
+static inline int
+processor_is_quiet(processor_t processor)
+{
+    return processor->replace.quiet ||
+        (processor_option_body(processor) && !processor->in_body);
 }
 
 
@@ -217,11 +236,11 @@ processor_input_eof(void *ctx)
     if (processor->end_of_body != (off_t)-1) {
         /* remove everything between closing body tag and end of
            file */
-        assert((processor->options & PROCESSOR_BODY) != 0);
+        assert(processor_option_body(processor));
 
         replace_add(&processor->replace, processor->end_of_body,
                     processor->replace.source_length, NULL);
-    } else if ((processor->options & PROCESSOR_BODY) != 0 &&
+    } else if (processor_option_body(processor) &&
                processor->in_html && !processor->in_body) {
         /* no body */
 
@@ -379,7 +398,7 @@ processor_new(pool_t pool, istream_t istream,
     replace_init(&processor->replace, pool,
                  &processor->output,
                  replace_output_eof,
-                 (options & PROCESSOR_QUIET) != 0);
+                 processor_option_quiet(processor));
 
     parser_init(&processor->parser);
 
@@ -390,18 +409,12 @@ processor_new(pool_t pool, istream_t istream,
     processor->embedded_widget = NULL;
     processor->script = NULL;
 
-    if ((processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_BODY|PROCESSOR_QUIET)) == (PROCESSOR_JSCRIPT|PROCESSOR_BODY))
+    if (processor_option_jscript(processor) &&
+        processor_option_body(processor))
         replace_add(&processor->replace, 0, 0,
                     processor_jscript(processor));
 
     return istream_struct_cast(&processor->output);
-}
-
-static inline int
-processor_is_quiet(processor_t processor)
-{
-    return processor->replace.quiet ||
-        ((processor->options & PROCESSOR_BODY) != 0 && !processor->in_body);
 }
 
 
@@ -494,7 +507,8 @@ parser_element_start(struct parser *parser)
         processor->tag = TAG_NONE;
     } else if (processor->in_html && !processor->in_head &&
                !processor->in_body &&
-               (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_BODY|PROCESSOR_QUIET)) == PROCESSOR_JSCRIPT &&
+               processor_option_jscript(processor) &&
+               !processor_option_body(processor) &&
                parser->element_name_length == 4 &&
                parser->tag_type == TAG_CLOSE &&
                memcmp(parser->element_name, "head", 4) == 0) {
@@ -505,7 +519,7 @@ parser_element_start(struct parser *parser)
         processor->in_head = 1;
     } else if (processor->end_of_body != (off_t)-1) {
         /* we have left the body, ignore the rest */
-        assert((processor->options & PROCESSOR_BODY) != 0);
+        assert(processor_option_body(processor));
 
         processor->tag = TAG_NONE;
     } else if (parser->element_name_length == 8 &&
@@ -809,7 +823,7 @@ embed_element_finished(processor_t processor)
                                          processor->widget_params_length);
 
     istream = embed_widget(processor->output.pool, processor->env, widget);
-    if (istream != NULL && (processor->options & PROCESSOR_QUIET) == 0)
+    if (istream != NULL && !processor_option_quiet(processor))
         istream = embed_decorate(processor->output.pool, istream, widget);
 
     return istream;
@@ -823,12 +837,12 @@ body_element_finished(processor_t processor, off_t end)
         if (processor->in_body)
             return;
 
-        if ((processor->options & PROCESSOR_BODY) != 0)
+        if (processor_option_body(processor))
             replace_add(&processor->replace, 0, end, NULL);
 
         processor->in_body = 1;
     } else {
-        if ((processor->options & PROCESSOR_BODY) == 0 ||
+        if (!processor_option_body(processor) ||
             processor->end_of_body != (off_t)-1)
             return;
 
