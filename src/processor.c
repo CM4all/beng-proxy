@@ -700,7 +700,7 @@ embed_widget(pool_t pool, struct processor_env *env, struct widget *widget)
         return istream_string_new(pool, "Error: no widget class specified");
 
     widget_copy_from_request(widget, env);
-    widget_determine_real_uri(pool, env, widget);
+    widget_determine_real_uri(pool, widget);
 
     return env->widget_callback(pool, env, widget);
 }

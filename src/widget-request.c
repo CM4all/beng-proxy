@@ -14,22 +14,24 @@
 #include <assert.h>
 
 static void
-widget_to_session(struct widget_session *ws, const struct widget *widget,
-                  const struct parsed_uri *external_uri)
+widget_to_session(struct widget_session *ws, const struct widget *widget)
 {
     ws->path_info = widget->from_request.path_info == NULL
         ? NULL
         : p_strdup(ws->pool, widget->from_request.path_info);
 
-    ws->query_string = widget->from_request.query_string
-        ? strref_dup(ws->pool, &external_uri->query)
-        : NULL;
+    ws->query_string = strref_is_empty(&widget->from_request.query_string)
+        ? NULL
+        : strref_dup(ws->pool, &widget->from_request.query_string);
 }
 
 static void
 session_to_widget(struct widget *widget, const struct widget_session *ws)
 {
     widget->from_request.path_info = ws->path_info;
+
+    if (ws->query_string != NULL)
+        strref_set_c(&widget->from_request.query_string, ws->query_string);
 }
 
 void
@@ -42,10 +44,10 @@ widget_copy_from_request(struct widget *widget, const struct processor_env *env)
     assert(widget->from_request.path_info == NULL);
     assert(!widget->from_request.focus);
     assert(widget->from_request.path_info == NULL);
+    assert(strref_is_empty(&widget->from_request.query_string));
     assert(widget->from_request.proxy_ref == NULL);
     assert(widget->from_request.focus_ref == NULL);
     assert(widget->from_request.method == HTTP_METHOD_GET);
-    assert(!widget->from_request.query_string);
     assert(!widget->from_request.body);
     assert(!widget->from_request.proxy);
 
@@ -72,9 +74,7 @@ widget_copy_from_request(struct widget *widget, const struct processor_env *env)
         widget->from_request.focus = 1;
 
         widget->from_request.path_info = strmap_remove(env->args, "path");
-
-        if (!strref_is_empty(&env->external_uri->query))
-            widget->from_request.query_string = 1;
+        widget->from_request.query_string = env->external_uri->query;
 
         if (env->request_body != NULL) {
             /* XXX which method? */
@@ -86,7 +86,7 @@ widget_copy_from_request(struct widget *widget, const struct processor_env *env)
 
         ws = widget_get_session(widget, 1);
         if (ws != NULL)
-            widget_to_session(ws, widget, env->external_uri);
+            widget_to_session(ws, widget);
     } else if (widget->id != NULL && widget->parent != NULL &&
                widget->parent->from_request.focus_ref != NULL &&
                strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&

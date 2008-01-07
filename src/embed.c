@@ -170,7 +170,7 @@ embed_redirect(struct embed *embed,
     embed->delayed = delayed;
     pool_ref(embed->pool);
 
-    widget_determine_real_uri(embed->pool, embed->env, embed->widget);
+    widget_determine_real_uri(embed->pool, embed->widget);
 
     headers = embed_request_headers(embed, 0);
 

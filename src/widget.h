@@ -10,6 +10,7 @@
 #include "pool.h"
 #include "list.h"
 #include "strmap.h"
+#include "strref.h"
 #include "http.h"
 
 struct processor_env;
@@ -73,6 +74,10 @@ struct widget {
         /** the path_info provided by the browser (from processor_env.args) */
         const char *path_info;
 
+        /** the query string provided by the browser (from
+            processor_env.external_uri.query_string) */
+        struct strref query_string;
+
         struct widget_session *session;
 
         const struct widget_ref *proxy_ref;
@@ -83,10 +88,6 @@ struct widget {
         unsigned focus:1;
 
         http_method_t method;
-
-        /** is there a query string being forwarded to the widget
-            server? */
-        unsigned query_string:1;
 
         /** is there a request body being forwarded to the widget
             server? */
@@ -138,12 +139,12 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->query_string = NULL;
     widget->session = WIDGET_SESSION_RESOURCE;
     widget->from_request.path_info = NULL;
+    strref_clear(&widget->from_request.query_string);
     widget->from_request.session = NULL;
     widget->from_request.proxy_ref = NULL;
     widget->from_request.focus_ref = NULL;
     widget->from_request.focus = 0;
     widget->from_request.method = HTTP_METHOD_GET;
-    widget->from_request.query_string = 0;
     widget->from_request.body = 0;
     widget->from_request.proxy = 0;
     widget->real_uri = NULL;
@@ -176,8 +177,7 @@ void
 widget_copy_from_request(struct widget *widget, const struct processor_env *env);
 
 void
-widget_determine_real_uri(pool_t pool, const struct processor_env *env,
-                          struct widget *widget);
+widget_determine_real_uri(pool_t pool, struct widget *widget);
 
 const char *
 widget_absolute_uri(pool_t pool, const struct widget *widget,

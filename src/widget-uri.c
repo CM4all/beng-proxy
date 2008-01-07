@@ -6,7 +6,6 @@
 
 #include "widget.h"
 #include "session.h"
-#include "processor.h"
 #include "uri.h"
 #include "args.h"
 
@@ -14,8 +13,7 @@
 #include <assert.h>
 
 void
-widget_determine_real_uri(pool_t pool, const struct processor_env *env,
-                          struct widget *widget)
+widget_determine_real_uri(pool_t pool, struct widget *widget)
 {
     struct widget_session *ws;
     const char *path_info;
@@ -32,20 +30,6 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
             path_info = "";
         else
             path_info = widget->path_info;
-
-        if (widget->from_request.query_string)
-            widget->real_uri = p_strncat(pool,
-                                         widget->real_uri, strlen(widget->real_uri),
-                                         path_info, strlen(path_info),
-                                         "?", (size_t)1,
-                                         env->external_uri->query.data,
-                                         env->external_uri->query.length,
-                                         NULL);
-        else if (*path_info != 0)
-            widget->real_uri = p_strcat(pool,
-                                        widget->real_uri,
-                                        path_info,
-                                        NULL);
     } else {
         if (ws->path_info != NULL)
             path_info = ws->path_info;
@@ -53,20 +37,21 @@ widget_determine_real_uri(pool_t pool, const struct processor_env *env,
             path_info = "";
         else
             path_info = widget->path_info;
-
-        if (ws->query_string != NULL)
-            widget->real_uri = p_strcat(pool,
-                                        widget->real_uri,
-                                        path_info,
-                                        "?",
-                                        ws->query_string,
-                                        NULL);
-        else if (*path_info != 0)
-            widget->real_uri = p_strcat(pool,
-                                        widget->real_uri,
-                                        path_info,
-                                        NULL);
     }
+
+    if (!strref_is_empty(&widget->from_request.query_string))
+        widget->real_uri = p_strncat(pool,
+                                     widget->real_uri, strlen(widget->real_uri),
+                                     path_info, strlen(path_info),
+                                     "?", (size_t)1,
+                                     widget->from_request.query_string.data,
+                                     widget->from_request.query_string.length,
+                                     NULL);
+    else if (*path_info != 0)
+        widget->real_uri = p_strcat(pool,
+                                    widget->real_uri,
+                                    path_info,
+                                    NULL);
 
     if (widget->query_string != NULL)
         widget->real_uri = p_strcat(pool,
