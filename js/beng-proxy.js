@@ -111,9 +111,7 @@ function beng_widget_reload(uri) {
         return null;
 
     var iframe_id = "beng_iframe___" + this.path.replace(/\//g, "__") + "__";
-    alert(iframe_id);
     var iframe = document.getElementById(iframe_id);
-    alert(iframe);
     if (iframe != null)
         return beng_widget_reload_iframe(this, iframe, uri);
 
