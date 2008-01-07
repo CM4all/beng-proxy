@@ -110,3 +110,32 @@ widget_copy_from_request(struct widget *widget, const struct processor_env *env)
             session_to_widget(widget, ws);
     }
 }
+
+void
+widget_copy_from_location(struct widget *widget, const char *location,
+                          pool_t pool)
+{
+    struct widget_session *ws;
+    const char *qmark;
+
+    assert(widget != NULL);
+    assert(widget != NULL);
+
+    widget->from_request.method = HTTP_METHOD_GET;
+    widget->from_request.body = 0;
+
+    qmark = strchr(location, '?');
+    if (qmark == NULL) {
+        widget->from_request.path_info = location;
+        strref_clear(&widget->from_request.query_string);
+    } else {
+        widget->from_request.path_info
+            = p_strndup(pool, location, qmark - location);
+        strref_set_c(&widget->from_request.query_string,
+                     qmark + 1);
+    }
+
+    ws = widget_get_session(widget, 1);
+    if (ws != NULL)
+        widget_to_session(ws, widget);
+}

@@ -177,6 +177,10 @@ void
 widget_copy_from_request(struct widget *widget, const struct processor_env *env);
 
 void
+widget_copy_from_location(struct widget *widget, const char *location,
+                          pool_t pool);
+
+void
 widget_determine_real_uri(pool_t pool, struct widget *widget);
 
 const char *

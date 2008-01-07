@@ -124,7 +124,7 @@ embed_redirect(struct embed *embed,
                strmap_t request_headers, const char *location,
                istream_t body)
 {
-    const char *new_uri, *qmark;
+    const char *new_uri;
     istream_t delayed;
     growing_buffer_t headers;
 
@@ -150,15 +150,8 @@ embed_redirect(struct embed *embed,
     if (new_uri == NULL)
         return 0;
 
-    qmark = strchr(new_uri, '?');
-    if (qmark == NULL) {
-        embed->widget->from_request.path_info = new_uri;
-    } else {
-        embed->widget->from_request.path_info
-            = p_strndup(embed->pool, new_uri, qmark - new_uri);
-
-        /* XXX copy query string */
-    }
+    widget_copy_from_location(embed->widget, new_uri, embed->pool);
+    widget_determine_real_uri(embed->pool, embed->widget);
 
     ++embed->num_redirects;
 
