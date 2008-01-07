@@ -5,39 +5,26 @@
  */
 
 #include "widget.h"
-#include "session.h"
 #include "uri.h"
 #include "args.h"
 
-#include <string.h>
 #include <assert.h>
 
 void
 widget_determine_real_uri(pool_t pool, struct widget *widget)
 {
-    struct widget_session *ws;
     const char *path_info;
 
     assert(widget != NULL);
 
     widget->real_uri = widget->class->uri;
 
-    ws = widget_get_session(widget, 0);
-    if (ws == NULL) {
-        if (widget->from_request.path_info != NULL)
-            path_info = widget->from_request.path_info;
-        else if (widget->path_info == NULL)
-            path_info = "";
-        else
-            path_info = widget->path_info;
-    } else {
-        if (ws->path_info != NULL)
-            path_info = ws->path_info;
-        else if (widget->path_info == NULL)
-            path_info = "";
-        else
-            path_info = widget->path_info;
-    }
+    if (widget->from_request.path_info != NULL)
+        path_info = widget->from_request.path_info;
+    else if (widget->path_info == NULL)
+        path_info = "";
+    else
+        path_info = widget->path_info;
 
     if (!strref_is_empty(&widget->from_request.query_string))
         widget->real_uri = p_strncat(pool,
