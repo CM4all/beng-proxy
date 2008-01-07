@@ -10,6 +10,7 @@
 #include "widget.h"
 #include "session.h"
 #include "growing-buffer.h"
+#include "js-generator.h"
 
 #include <assert.h>
 #include <string.h>
@@ -80,6 +81,10 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
     growing_buffer_write_string(gb, uri);
     growing_buffer_write_string(gb, "'></iframe>");
 
+    growing_buffer_write_string(gb, "<script type=\"text/javascript\">\n");
+    js_generate_widget(gb, widget, pool);
+    growing_buffer_write_string(gb, "</script>\n");
+
     return growing_buffer_istream(gb);
 }
 
@@ -102,6 +107,10 @@ embed_img_widget(pool_t pool, const struct processor_env *env,
     growing_buffer_write_string(gb, "\" src=\"");
     growing_buffer_write_string(gb, uri);
     growing_buffer_write_string(gb, "\"></img>");
+
+    growing_buffer_write_string(gb, "<script type=\"text/javascript\">\n");
+    js_generate_widget(gb, widget, pool);
+    growing_buffer_write_string(gb, "</script>\n");
 
     return growing_buffer_istream(gb);
 }
