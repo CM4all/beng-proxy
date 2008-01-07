@@ -762,11 +762,10 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
     assert(!istream_has_handler(istream));
 
     tag_name = widget->decoration.tag;
-    if (tag_name != NULL && tag_name[0] == 0)
-        return istream;
-
     if (tag_name == NULL)
         tag_name = "div";
+    else if (tag_name[0] == 0)
+        return istream;
 
     tag = growing_buffer_new(pool, 256);
     growing_buffer_write_string(tag, "<");
