@@ -60,13 +60,15 @@ static istream_t
 embed_iframe_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
-    const char *uri, *iframe;
+    const char *uri, *prefix, *iframe;
 
     uri = widget_frame_uri(pool, env, widget);
-    if (uri == NULL)
+    prefix = widget_prefix(pool, widget);
+    if (uri == NULL || prefix == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
     iframe = p_strcat(pool, "<iframe "
+                      " id=\"beng_iframe_", prefix, "\"",
                       "width='100%' height='100%' "
                       "frameborder='0' marginheight='0' marginwidth='0' "
                       "scrolling='no' "
@@ -80,13 +82,16 @@ static istream_t
 embed_img_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {
-    const char *uri, *html;
+    const char *uri, *prefix, *html;
 
     uri = widget_frame_uri(pool, env, widget);
-    if (uri == NULL)
+    prefix = widget_prefix(pool, widget);
+    if (uri == NULL || prefix == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
-    html = p_strcat(pool, "<img src='", uri, "'></img>", NULL);
+    html = p_strcat(pool, "<img "
+                    " id=\"beng_img_", prefix, "\"",
+                    "src=\"", uri, "\"></img>", NULL);
     return istream_string_new(pool, html);
 }
 
