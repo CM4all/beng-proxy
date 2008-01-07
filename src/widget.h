@@ -84,9 +84,6 @@ struct widget {
 
         const struct widget_ref *focus_ref;
 
-        /** is this widget focused? */
-        unsigned focus:1;
-
         http_method_t method;
 
         /** is there a request body being forwarded to the widget
@@ -143,7 +140,6 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->from_request.session = NULL;
     widget->from_request.proxy_ref = NULL;
     widget->from_request.focus_ref = NULL;
-    widget->from_request.focus = 0;
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = 0;
     widget->from_request.proxy = 0;

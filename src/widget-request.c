@@ -42,7 +42,6 @@ widget_copy_from_request(struct widget *widget, const struct processor_env *env)
     assert(widget != NULL);
     assert(widget->real_uri == NULL);
     assert(widget->from_request.path_info == NULL);
-    assert(!widget->from_request.focus);
     assert(widget->from_request.path_info == NULL);
     assert(strref_is_empty(&widget->from_request.query_string));
     assert(widget->from_request.proxy_ref == NULL);
@@ -71,8 +70,6 @@ widget_copy_from_request(struct widget *widget, const struct processor_env *env)
         strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
         widget->parent->from_request.focus_ref->next == NULL) {
         /* we're in focus.  forward query string and request body. */
-        widget->from_request.focus = 1;
-
         widget->from_request.path_info = strmap_remove(env->args, "path");
         widget->from_request.query_string = env->external_uri->query;
 
