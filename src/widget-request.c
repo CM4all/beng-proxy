@@ -16,9 +16,15 @@
 static void
 widget_to_session(struct widget_session *ws, const struct widget *widget)
 {
+    if (ws->path_info != NULL)
+        p_free(ws->pool, ws->path_info);
+
     ws->path_info = widget->from_request.path_info == NULL
         ? NULL
         : p_strdup(ws->pool, widget->from_request.path_info);
+
+    if (ws->query_string != NULL)
+        p_free(ws->pool, ws->query_string);
 
     ws->query_string = strref_is_empty(&widget->from_request.query_string)
         ? NULL

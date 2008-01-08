@@ -36,10 +36,10 @@ struct widget_session {
     hashmap_t children;
 
     /** last relative URI */
-    const char *path_info;
+    char *path_info;
 
     /** last query string */
-    const char *query_string;
+    char *query_string;
 
     /* XXX move cookies to struct widget_server_session */
     struct list_head cookies;
