@@ -19,17 +19,9 @@ static istream_t
 embed_inline_widget(pool_t pool, struct processor_env *env,
                     struct widget *widget)
 {
-    istream_t request_body = NULL;
-
-    if (widget->from_request.body) {
-        assert(env->request_body != NULL);
-
-        request_body = env->request_body;
-        /* XXX what if there is no stream handler? or two? */
-    }
-
     return embed_new(pool,
-                     widget->from_request.method, widget->real_uri, request_body,
+                     widget->from_request.method, widget->real_uri,
+                     widget->from_request.body,
                      widget,
                      env, PROCESSOR_BODY | PROCESSOR_JSCRIPT);
 }

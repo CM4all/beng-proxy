@@ -35,7 +35,7 @@ session_to_widget(struct widget *widget, const struct widget_session *ws)
 }
 
 void
-widget_copy_from_request(struct widget *widget, const struct processor_env *env)
+widget_copy_from_request(struct widget *widget, struct processor_env *env)
 {
     struct widget_session *ws;
 
@@ -47,7 +47,7 @@ widget_copy_from_request(struct widget *widget, const struct processor_env *env)
     assert(widget->from_request.proxy_ref == NULL);
     assert(widget->from_request.focus_ref == NULL);
     assert(widget->from_request.method == HTTP_METHOD_GET);
-    assert(!widget->from_request.body);
+    assert(widget->from_request.body == NULL);
     assert(!widget->from_request.proxy);
 
     /* is this widget being proxied? */
@@ -76,7 +76,8 @@ widget_copy_from_request(struct widget *widget, const struct processor_env *env)
         if (env->request_body != NULL) {
             /* XXX which method? */
             widget->from_request.method = HTTP_METHOD_POST;
-            widget->from_request.body = 1;
+            widget->from_request.body = env->request_body;
+            env->request_body = NULL;
         }
 
         /* store query string in session */
@@ -119,7 +120,7 @@ widget_copy_from_location(struct widget *widget, const char *location,
     assert(widget != NULL);
 
     widget->from_request.method = HTTP_METHOD_GET;
-    widget->from_request.body = 0;
+    widget->from_request.body = NULL;
 
     qmark = strchr(location, '?');
     if (qmark == NULL) {

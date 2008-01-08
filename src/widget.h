@@ -12,6 +12,7 @@
 #include "strmap.h"
 #include "strref.h"
 #include "http.h"
+#include "istream.h"
 
 struct processor_env;
 struct parsed_uri;
@@ -86,9 +87,8 @@ struct widget {
 
         http_method_t method;
 
-        /** is there a request body being forwarded to the widget
-            server? */
-        unsigned body:1;
+        /** the request body (from processor_env.body) */
+        istream_t body;
 
         /** is this the single widget in this whole request which should
             be proxied? */
@@ -141,7 +141,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     strref_clear(&widget->from_request.query_string);
     widget->from_request.session = NULL;
     widget->from_request.method = HTTP_METHOD_GET;
-    widget->from_request.body = 0;
+    widget->from_request.body = NULL;
     widget->from_request.proxy = 0;
     widget->real_uri = NULL;
 }
@@ -170,7 +170,7 @@ const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *p);
 
 void
-widget_copy_from_request(struct widget *widget, const struct processor_env *env);
+widget_copy_from_request(struct widget *widget, struct processor_env *env);
 
 void
 widget_copy_from_location(struct widget *widget, const char *location,

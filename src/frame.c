@@ -15,17 +15,9 @@ static istream_t
 frame_top_widget(pool_t pool, struct processor_env *env,
                  struct widget *widget)
 {
-    istream_t request_body = NULL;
     struct processor_env *env2;
 
     assert(widget->from_request.proxy);
-
-    if (widget->from_request.body) {
-        assert(env->request_body != NULL);
-
-        request_body = env->request_body;
-        /* XXX what if there is no stream handler? or two? */
-    }
 
     /* install normal embed callback on cloned env */
 
@@ -39,7 +31,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     return embed_new(pool,
                      widget->from_request.method, widget->real_uri,
-                     request_body,
+                     widget->from_request.body,
                      widget,
                      env2,
                      PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT);
