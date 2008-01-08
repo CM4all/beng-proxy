@@ -5,7 +5,6 @@
  */
 
 #include "embed.h"
-#include "uri.h"
 #include "processor.h"
 #include "widget.h"
 #include "growing-buffer.h"
