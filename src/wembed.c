@@ -8,7 +8,6 @@
 #include "uri.h"
 #include "processor.h"
 #include "widget.h"
-#include "session.h"
 #include "growing-buffer.h"
 #include "js-generator.h"
 
@@ -30,23 +29,8 @@ static const char *
 widget_frame_uri(pool_t pool, const struct processor_env *env,
                  struct widget *widget)
 {
-    const char *path;
-    char session_id_buffer[9];
-
-    path = widget_path(pool, widget);
-    if (path == NULL)
-        return NULL;
-
-    session_id_format(session_id_buffer, env->session->id);
-
-    return p_strcat(pool,
-                    strref_dup(pool, &env->external_uri->base),
-                    ";session=", session_id_buffer,
-                    "&frame=", path,
-                    widget->from_request.path_info == NULL ? NULL : "&focus=", path,
-                    "&path=",
-                    widget->from_request.path_info,
-                    NULL);
+    return widget_proxy_uri(pool, env->external_uri,
+                            env->args, widget);
 }
 
 /** generate IFRAME element; the client will perform a second request

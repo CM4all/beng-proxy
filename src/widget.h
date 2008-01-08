@@ -190,6 +190,12 @@ widget_translation_uri(pool_t pool,
                        const char *translation);
 
 const char *
+widget_proxy_uri(pool_t pool,
+                 const struct parsed_uri *external_uri,
+                 strmap_t args,
+                 const struct widget *widget);
+
+const char *
 widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     strmap_t args,

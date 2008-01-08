@@ -56,7 +56,7 @@ widget_absolute_uri(pool_t pool, const struct widget *widget,
                         relative_uri, relative_uri_length);
 }
 
-static const char *
+const char *
 widget_proxy_uri(pool_t pool,
                  const struct parsed_uri *external_uri,
                  strmap_t args,
