@@ -49,6 +49,9 @@ const char *
 widget_absolute_uri(pool_t pool, const struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length)
 {
+    if (widget->class == NULL)
+        return NULL;
+
     return uri_absolute(pool, widget_real_uri(widget),
                         relative_uri, relative_uri_length);
 }
