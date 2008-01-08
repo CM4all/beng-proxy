@@ -89,5 +89,12 @@ widget_prefix(pool_t pool, const struct widget *widget)
 void
 widget_cancel(struct widget *widget)
 {
-    (void)widget;
+    if (widget->body != NULL) {
+        /* we are not going to consume the request body, so abort
+           it */
+
+        assert(!istream_has_handler(widget->body));
+
+        istream_free(&widget->body);
+    }
 }
