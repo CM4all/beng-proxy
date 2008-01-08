@@ -13,31 +13,24 @@
 void
 widget_determine_real_uri(pool_t pool, struct widget *widget)
 {
-    const char *path_info;
-
     assert(widget != NULL);
+    assert(widget->from_request.path_info != NULL);
 
     widget->real_uri = widget->class->uri;
-
-    if (widget->from_request.path_info != NULL)
-        path_info = widget->from_request.path_info;
-    else if (widget->path_info != NULL)
-        path_info = widget->path_info;
-    else
-        path_info = "";
 
     if (!strref_is_empty(&widget->from_request.query_string))
         widget->real_uri = p_strncat(pool,
                                      widget->real_uri, strlen(widget->real_uri),
-                                     path_info, strlen(path_info),
+                                     widget->from_request.path_info,
+                                     strlen(widget->from_request.path_info),
                                      "?", (size_t)1,
                                      widget->from_request.query_string.data,
                                      widget->from_request.query_string.length,
                                      NULL);
-    else if (*path_info != 0)
+    else if (widget->from_request.path_info != 0)
         widget->real_uri = p_strcat(pool,
                                     widget->real_uri,
-                                    path_info,
+                                    widget->from_request.path_info,
                                     NULL);
 
     if (widget->query_string != NULL)

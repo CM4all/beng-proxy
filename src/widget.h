@@ -132,7 +132,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->decoration.height = NULL;
     widget->decoration.style = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
-    widget->path_info = NULL;
+    widget->path_info = "";
     widget->query_string = NULL;
     widget->session = WIDGET_SESSION_RESOURCE;
     widget->from_request.proxy_ref = NULL;

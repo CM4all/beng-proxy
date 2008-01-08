@@ -107,6 +107,11 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
         if (ws != NULL)
             session_to_widget(widget, ws);
     }
+
+    if (widget->from_request.path_info == NULL)
+        widget->from_request.path_info = widget->path_info;
+
+    assert(widget->from_request.path_info != NULL);
 }
 
 void
