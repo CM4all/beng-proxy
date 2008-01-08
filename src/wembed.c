@@ -102,7 +102,7 @@ embed_img_widget(pool_t pool, const struct processor_env *env,
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
     gb = growing_buffer_new(pool, 512);
-    growing_buffer_write_string(gb, "<img  id=\"beng_img_");
+    growing_buffer_write_string(gb, "<img id=\"beng_img_");
     growing_buffer_write_string(gb, prefix);
     growing_buffer_write_string(gb, "\" src=\"");
     growing_buffer_write_string(gb, uri);
