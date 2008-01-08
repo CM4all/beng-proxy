@@ -53,7 +53,8 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
         /* only partial match: this is the parent of the frame
            widget */
         return embed_new(pool,
-                         HTTP_METHOD_GET, widget->real_uri, NULL,
+                         widget->from_request.method, widget->real_uri,
+                         widget->from_request.body,
                          widget,
                          env, PROCESSOR_QUIET);
     else {
