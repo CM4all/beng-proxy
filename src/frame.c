@@ -9,6 +9,8 @@
 #include "processor.h"
 #include "widget.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 
 static istream_t
@@ -53,27 +55,30 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
     assert(env->widget_callback == frame_widget_callback);
     assert(widget != NULL);
 
-    if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
-        /* the request body is not consumed yet, but the focus is not
-           within the frame: discard the body, because it cannot ever
-           be used */
-        assert(!istream_has_handler(env->request_body));
-
-        istream_free(&env->request_body);
-    }
-
     if (widget->from_request.proxy)
         /* this widget is being proxied */
         return frame_top_widget(pool, env, widget);
-    else if (widget->from_request.proxy_ref != NULL)
+    else if (widget->from_request.proxy_ref != NULL) {
         /* only partial match: this is the parent of the frame
            widget */
+
+        if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
+            /* the request body is not consumed yet, but the focus is not
+               within the frame: discard the body, because it cannot ever
+               be used */
+            assert(!istream_has_handler(env->request_body));
+
+            daemon_log(4, "discarding non-framed request body\n");
+
+            istream_free(&env->request_body);
+        }
+
         return embed_new(pool,
                          widget->from_request.method, widget->real_uri,
                          widget->from_request.body,
                          widget,
                          env, PROCESSOR_QUIET);
-    else {
+    } else {
         /* this widget is none of our business */
         widget_cancel(widget);
         return NULL;
