@@ -64,7 +64,9 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
                          HTTP_METHOD_GET, widget->real_uri, NULL,
                          widget,
                          env, PROCESSOR_QUIET);
-    else
+    else {
         /* this widget is none of our business */
+        widget_cancel(widget);
         return NULL;
+    }
 }

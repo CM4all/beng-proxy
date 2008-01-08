@@ -129,9 +129,11 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
         return embed_inline_widget(pool, env, widget);
 
     case WIDGET_DISPLAY_IFRAME:
+        widget_cancel(widget);
         return embed_iframe_widget(pool, env, widget);
 
     case WIDGET_DISPLAY_IMG:
+        widget_cancel(widget);
         return embed_img_widget(pool, env, widget);
     }
 

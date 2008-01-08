@@ -196,4 +196,15 @@ widget_external_uri(pool_t pool,
                     const struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length);
 
+/**
+ * Free important resources associated with the widget.  A widget
+ * callback must call this function on a widget which it will not
+ * send a HTTP request to.
+ */
+static inline void
+widget_cancel(struct widget *widget)
+{
+    (void)widget;
+}
+
 #endif
