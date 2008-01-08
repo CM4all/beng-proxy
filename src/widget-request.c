@@ -8,7 +8,6 @@
 #include "session.h"
 #include "processor.h"
 #include "uri.h"
-#include "args.h"
 
 #include <string.h>
 #include <assert.h>
