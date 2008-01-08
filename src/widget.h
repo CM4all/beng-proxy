@@ -207,10 +207,7 @@ widget_external_uri(pool_t pool,
  * callback must call this function on a widget which it will not
  * send a HTTP request to.
  */
-static inline void
-widget_cancel(struct widget *widget)
-{
-    (void)widget;
-}
+void
+widget_cancel(struct widget *widget);
 
 #endif

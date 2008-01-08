@@ -85,3 +85,9 @@ widget_prefix(pool_t pool, const struct widget *widget)
 
     return path;
 }
+
+void
+widget_cancel(struct widget *widget)
+{
+    (void)widget;
+}
