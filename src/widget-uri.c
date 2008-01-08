@@ -13,32 +13,36 @@
 void
 widget_determine_real_uri(pool_t pool, struct widget *widget)
 {
+    const char *uri;
+
     assert(widget != NULL);
     assert(widget->from_request.path_info != NULL);
 
-    widget->real_uri = widget->class->uri;
+    uri = widget->class->uri;
 
     if (!strref_is_empty(&widget->from_request.query_string))
-        widget->real_uri = p_strncat(pool,
-                                     widget->real_uri, strlen(widget->real_uri),
-                                     widget->from_request.path_info,
-                                     strlen(widget->from_request.path_info),
-                                     "?", (size_t)1,
-                                     widget->from_request.query_string.data,
-                                     widget->from_request.query_string.length,
-                                     NULL);
+        uri = p_strncat(pool,
+                        uri, strlen(uri),
+                        widget->from_request.path_info,
+                        strlen(widget->from_request.path_info),
+                        "?", (size_t)1,
+                        widget->from_request.query_string.data,
+                        widget->from_request.query_string.length,
+                        NULL);
     else if (widget->from_request.path_info != 0)
-        widget->real_uri = p_strcat(pool,
-                                    widget->real_uri,
-                                    widget->from_request.path_info,
-                                    NULL);
+        uri = p_strcat(pool,
+                       uri,
+                       widget->from_request.path_info,
+                       NULL);
 
     if (widget->query_string != NULL)
-        widget->real_uri = p_strcat(pool,
-                                    widget->real_uri,
-                                    strchr(widget->real_uri, '?') == NULL ? "?" : "&",
-                                    widget->query_string,
-                                    NULL);
+        uri = p_strcat(pool,
+                       uri,
+                       strchr(uri, '?') == NULL ? "?" : "&",
+                       widget->query_string,
+                       NULL);
+
+    widget->real_uri = uri;
 }
 
 const char *
