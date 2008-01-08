@@ -169,9 +169,15 @@ widget_get_session2(struct widget *widget);
 const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *p);
 
+/**
+ * Copy parameters from the request to the widget.
+ */
 void
 widget_copy_from_request(struct widget *widget, struct processor_env *env);
 
+/**
+ * Overwrite request data, copy values from a HTTP redirect location.
+ */
 void
 widget_copy_from_location(struct widget *widget, const char *location,
                           pool_t pool);

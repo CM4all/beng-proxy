@@ -12,6 +12,7 @@
 #include <string.h>
 #include <assert.h>
 
+/** copy data from the widget to its associated session */
 static void
 widget_to_session(struct widget_session *ws, const struct widget *widget)
 {
@@ -24,6 +25,7 @@ widget_to_session(struct widget_session *ws, const struct widget *widget)
         : strref_dup(ws->pool, &widget->from_request.query_string);
 }
 
+/** restore data from the session */
 static void
 session_to_widget(struct widget *widget, const struct widget_session *ws)
 {
