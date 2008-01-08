@@ -14,9 +14,7 @@ struct widget;
 struct processor_env;
 
 istream_t
-embed_new(pool_t pool, http_method_t method, const char *url,
-          istream_t request_body,
-          struct widget *widget,
+embed_new(pool_t pool, struct widget *widget,
           struct processor_env *env,
           unsigned options);
 

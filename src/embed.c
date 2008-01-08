@@ -281,16 +281,15 @@ static const struct http_response_handler embed_response_handler = {
  */
 
 istream_t
-embed_new(pool_t pool, http_method_t method, const char *url,
-          istream_t request_body,
-          struct widget *widget,
+embed_new(pool_t pool, struct widget *widget,
           struct processor_env *env,
           unsigned options)
 {
     struct embed *embed;
     growing_buffer_t headers;
 
-    assert(url != NULL);
+    assert(widget != NULL);
+    assert(widget->real_uri != NULL);
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
@@ -300,14 +299,14 @@ embed_new(pool_t pool, http_method_t method, const char *url,
     embed->options = options;
     embed->delayed = istream_delayed_new(pool, embed_delayed_abort, embed);
 
-    headers = embed_request_headers(embed, request_body != NULL);
+    headers = embed_request_headers(embed, widget->from_request.body != NULL);
 
     pool_ref(embed->pool);
 
     url_stream_new(pool,
                    env->http_client_stock,
-                   method, url, headers,
-                   request_body,
+                   widget->from_request.method, widget->real_uri, headers,
+                   widget->from_request.body,
                    &embed_response_handler, embed,
                    &embed->url_stream);
 

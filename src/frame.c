@@ -38,10 +38,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
        anymore */
     http_response_handler_clear(&env->response_handler);
 
-    return embed_new(pool,
-                     widget->from_request.method, widget->real_uri,
-                     widget->from_request.body,
-                     widget,
+    return embed_new(pool, widget,
                      env2,
                      PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT);
 }
@@ -73,10 +70,7 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
             istream_free(&env->request_body);
         }
 
-        return embed_new(pool,
-                         widget->from_request.method, widget->real_uri,
-                         widget->from_request.body,
-                         widget,
+        return embed_new(pool, widget,
                          env, PROCESSOR_QUIET);
     } else {
         /* this widget is none of our business */

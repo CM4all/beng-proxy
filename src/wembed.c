@@ -17,10 +17,7 @@ static istream_t
 embed_inline_widget(pool_t pool, struct processor_env *env,
                     struct widget *widget)
 {
-    return embed_new(pool,
-                     widget->from_request.method, widget->real_uri,
-                     widget->from_request.body,
-                     widget,
+    return embed_new(pool, widget,
                      env, PROCESSOR_BODY | PROCESSOR_JSCRIPT);
 }
 
