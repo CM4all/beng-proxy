@@ -24,6 +24,13 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     env2 = processor_env_dup(pool, env);
     env2->widget_callback = embed_widget_callback;
 
+    /* clear the requrst body in the original env - the function
+       frame_widget_callback() has already discarded a request body
+       that is not being used within the frame, and if
+       env->request_body is still set, this means that the body is for
+       the frame */
+    env->request_body = NULL;
+
     /* clear the response_handler in the original env, because it is
        reserved for us, and the other widgets should not use it
        anymore */
@@ -45,6 +52,15 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
     assert(env != NULL);
     assert(env->widget_callback == frame_widget_callback);
     assert(widget != NULL);
+
+    if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
+        /* the request body is not consumed yet, but the focus is not
+           within the frame: discard the body, because it cannot ever
+           be used */
+        assert(!istream_has_handler(env->request_body));
+
+        istream_free(&env->request_body);
+    }
 
     if (widget->from_request.proxy)
         /* this widget is being proxied */
