@@ -65,6 +65,8 @@ widget_proxy_uri(pool_t pool,
     const char *path, *args2;
 
     path = widget_path(pool, widget);
+    if (path == NULL)
+        return NULL;
 
     args2 = args_format(pool, args,
                         "frame", path,
