@@ -43,8 +43,9 @@ widget_frame_uri(pool_t pool, const struct processor_env *env,
                     strref_dup(pool, &env->external_uri->base),
                     ";session=", session_id_buffer,
                     "&frame=", path,
-                    "&", widget->id, "=",
-                    widget->from_request.path_info == NULL ? "" : widget->from_request.path_info,
+                    widget->from_request.path_info == NULL ? NULL : "&focus=", path,
+                    "&path=",
+                    widget->from_request.path_info,
                     NULL);
 }
 
