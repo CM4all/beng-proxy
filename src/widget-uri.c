@@ -68,7 +68,7 @@ widget_proxy_uri(pool_t pool,
 
     args2 = args_format(pool, args,
                         "frame", path,
-                        "focus", path,
+                        NULL, NULL,
                         NULL);
 
     return p_strncat(pool,
