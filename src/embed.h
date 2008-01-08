@@ -1,5 +1,5 @@
 /*
- * Embed a processed HTML document
+ * Query a widget and embed its HTML text after processing.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
