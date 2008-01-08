@@ -289,7 +289,6 @@ embed_new(pool_t pool, struct widget *widget,
     growing_buffer_t headers;
 
     assert(widget != NULL);
-    assert(widget->real_uri != NULL);
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
@@ -305,7 +304,7 @@ embed_new(pool_t pool, struct widget *widget,
 
     url_stream_new(pool,
                    env->http_client_stock,
-                   widget->from_request.method, widget->real_uri, headers,
+                   widget->from_request.method, widget_real_uri(widget), headers,
                    widget->from_request.body,
                    &embed_response_handler, embed,
                    &embed->url_stream);

@@ -41,7 +41,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
     struct widget_session *ws;
 
     assert(widget != NULL);
-    assert(widget->real_uri == NULL);
+    assert(widget->lazy.real_uri == NULL);
     assert(widget->from_request.path_info == NULL);
     assert(widget->from_request.path_info == NULL);
     assert(strref_is_empty(&widget->from_request.query_string));

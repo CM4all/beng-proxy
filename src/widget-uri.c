@@ -42,14 +42,14 @@ widget_determine_real_uri(pool_t pool, struct widget *widget)
                        widget->query_string,
                        NULL);
 
-    widget->real_uri = uri;
+    widget->lazy.real_uri = uri;
 }
 
 const char *
 widget_absolute_uri(pool_t pool, const struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length)
 {
-    return uri_absolute(pool, widget->real_uri,
+    return uri_absolute(pool, widget_real_uri(widget),
                         relative_uri, relative_uri_length);
 }
 

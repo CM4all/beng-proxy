@@ -14,6 +14,8 @@
 #include "http.h"
 #include "istream.h"
 
+#include <assert.h>
+
 struct processor_env;
 struct parsed_uri;
 
@@ -95,9 +97,11 @@ struct widget {
         unsigned proxy:1;
     } from_request;
 
-    /** the URI which is actually retrieved - this is the same as
-        base_uri, except when the user clicked on a relative link */
-    const char *real_uri;
+    struct {
+        /** the URI which is actually retrieved - this is the same as
+            base_uri, except when the user clicked on a relative link */
+        const char *real_uri;
+    } lazy;
 };
 
 /** a reference to a widget inside a widget.  NULL means the current
@@ -143,7 +147,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
     widget->from_request.proxy = 0;
-    widget->real_uri = NULL;
+    widget->lazy.real_uri = NULL;
 }
 
 static inline struct widget *
@@ -184,6 +188,14 @@ widget_copy_from_location(struct widget *widget, const char *location,
 
 void
 widget_determine_real_uri(pool_t pool, struct widget *widget);
+
+static inline const char *
+widget_real_uri(const struct widget *widget)
+{
+    assert(widget->lazy.real_uri != NULL);
+
+    return widget->lazy.real_uri;
+}
 
 const char *
 widget_absolute_uri(pool_t pool, const struct widget *widget,
