@@ -19,6 +19,7 @@ parser_invoke_attr_finished(struct parser *parser)
     strref_set(&parser->attr.value, parser->attr_value, parser->attr_value_length);
 
     parser_attr_finished(parser, &parser->attr);
+    VALGRIND_MAKE_MEM_UNDEFINED(&parser->attr, sizeof(parser->attr));
 }
 
 void
