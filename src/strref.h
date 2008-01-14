@@ -169,6 +169,14 @@ strref_cmp(const struct strref *s,
 }
 
 static attr_always_inline int
+strref_cmp_c(const struct strref *s, const char *p)
+{
+    assert(p != NULL);
+
+    return strref_cmp(s, p, strlen(p));
+}
+
+static attr_always_inline int
 strref_cmp2(const struct strref *a, const struct strref *b)
 {
     assert(a != NULL);
