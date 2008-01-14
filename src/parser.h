@@ -53,9 +53,9 @@ struct parser {
     off_t position;
 
     /* element */
-    off_t element_offset;
-    char element_name[64];
-    size_t element_name_length;
+    off_t tag_offset;
+    char tag_name[64];
+    size_t tag_name_length;
     enum {
         TAG_OPEN,
         TAG_CLOSE,

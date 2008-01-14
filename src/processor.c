@@ -399,17 +399,17 @@ parser_to_processor(struct parser *parser)
 static void
 parser_element_start_in_body(processor_t processor, struct parser *parser)
 {
-    if (parser->element_name_length == 1 &&
-        parser->element_name[0] == 'a') {
+    if (parser->tag_name_length == 1 &&
+        parser->tag_name[0] == 'a') {
         processor->tag = TAG_A;
-    } else if (parser->element_name_length == 4 &&
-               memcmp(parser->element_name, "form", 4) == 0) {
+    } else if (parser->tag_name_length == 4 &&
+               memcmp(parser->tag_name, "form", 4) == 0) {
         processor->tag = TAG_FORM;
-    } else if (parser->element_name_length == 3 &&
-               memcmp(parser->element_name, "img", 3) == 0) {
+    } else if (parser->tag_name_length == 3 &&
+               memcmp(parser->tag_name, "img", 3) == 0) {
         processor->tag = TAG_IMG;
-    } else if (parser->element_name_length == 6 &&
-               memcmp(parser->element_name, "script", 6) == 0) {
+    } else if (parser->tag_name_length == 6 &&
+               memcmp(parser->tag_name, "script", 6) == 0) {
         if (parser->tag_type == TAG_OPEN)
             processor->tag = TAG_SCRIPT;
     } else {
@@ -420,15 +420,15 @@ parser_element_start_in_body(processor_t processor, struct parser *parser)
 static void
 parser_element_start_in_widget(processor_t processor, struct parser *parser)
 {
-    if (parser->element_name_length == 8 &&
-        memcmp(parser->element_name, "c:widget", 8) == 0) {
+    if (parser->tag_name_length == 8 &&
+        memcmp(parser->tag_name, "c:widget", 8) == 0) {
         if (parser->tag_type == TAG_CLOSE)
             processor->tag = TAG_WIDGET;
-    } else if (parser->element_name_length == 9 &&
-               memcmp(parser->element_name, "path-info", 9) == 0) {
+    } else if (parser->tag_name_length == 9 &&
+               memcmp(parser->tag_name, "path-info", 9) == 0) {
         processor->tag = TAG_WIDGET_PATH_INFO;
-    } else if (parser->element_name_length == 5 &&
-               memcmp(parser->element_name, "param", 5) == 0) {
+    } else if (parser->tag_name_length == 5 &&
+               memcmp(parser->tag_name, "param", 5) == 0) {
         processor->tag = TAG_WIDGET_PARAM;
         processor->widget_param.name_length = 0;
         processor->widget_param.value_length = 0;
@@ -443,30 +443,30 @@ parser_element_start(struct parser *parser)
     processor_t processor = parser_to_processor(parser);
 
     if (processor->script != NULL)
-        processor_finish_script(processor, processor->parser.element_offset);
+        processor_finish_script(processor, processor->parser.tag_offset);
 
     if (processor->embedded_widget != NULL) {
         parser_element_start_in_widget(processor, parser);
         return;
     }
 
-    if (parser->element_name_length == 4 &&
-        memcmp(parser->element_name, "body", 4) == 0) {
+    if (parser->tag_name_length == 4 &&
+        memcmp(parser->tag_name, "body", 4) == 0) {
         processor->tag = TAG_BODY;
-    } else if (parser->element_name_length == 4 &&
-               memcmp(parser->element_name, "html", 4) == 0) {
+    } else if (parser->tag_name_length == 4 &&
+               memcmp(parser->tag_name, "html", 4) == 0) {
         processor->in_html = 1;
         processor->tag = TAG_NONE;
     } else if (processor->in_html && !processor->in_head &&
                !processor->in_body &&
                processor_option_jscript(processor) &&
                !processor_option_body(processor) &&
-               parser->element_name_length == 4 &&
+               parser->tag_name_length == 4 &&
                parser->tag_type == TAG_CLOSE &&
-               memcmp(parser->element_name, "head", 4) == 0) {
+               memcmp(parser->tag_name, "head", 4) == 0) {
         replace_add(&processor->replace,
-                    processor->parser.element_offset,
-                    processor->parser.element_offset,
+                    processor->parser.tag_offset,
+                    processor->parser.tag_offset,
                     processor_jscript(processor));
         processor->in_head = 1;
     } else if (processor->end_of_body != (off_t)-1) {
@@ -474,8 +474,8 @@ parser_element_start(struct parser *parser)
         assert(processor_option_body(processor));
 
         processor->tag = TAG_NONE;
-    } else if (parser->element_name_length == 8 &&
-        memcmp(parser->element_name, "c:widget", 8) == 0) {
+    } else if (parser->tag_name_length == 8 &&
+        memcmp(parser->tag_name, "c:widget", 8) == 0) {
 
         if (parser->tag_type == TAG_CLOSE) {
             assert(processor->embedded_widget == NULL);
@@ -798,7 +798,7 @@ body_element_finished(processor_t processor, off_t end)
             processor->end_of_body != (off_t)-1)
             return;
 
-        processor->end_of_body = processor->parser.element_offset;
+        processor->end_of_body = processor->parser.tag_offset;
     }
 }
 
@@ -812,7 +812,7 @@ parser_element_finished(struct parser *parser, off_t end)
     } else if (processor->tag == TAG_WIDGET) {
         if (processor->parser.tag_type == TAG_OPEN ||
             processor->parser.tag_type == TAG_SHORT)
-            processor->widget_start_offset = processor->parser.element_offset;
+            processor->widget_start_offset = processor->parser.tag_offset;
         else if (processor->embedded_widget == NULL)
             return;
 

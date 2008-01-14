@@ -33,9 +33,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             if (p > buffer)
                 parser_cdata(parser, buffer, p - buffer, 1);
 
-            parser->element_offset = parser->position + (off_t)(p - start);
+            parser->tag_offset = parser->position + (off_t)(p - start);
             parser->state = PARSER_ELEMENT_NAME;
-            parser->element_name_length = 0;
+            parser->tag_name_length = 0;
             parser->tag_type = TAG_OPEN;
             buffer = p + 1;
             break;
@@ -44,22 +44,22 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             /* copy element name */
             while (buffer < end) {
                 if (char_is_alphanumeric(*buffer) || *buffer == ':' || *buffer == '-' || *buffer == '_') {
-                    if (parser->element_name_length == sizeof(parser->element_name)) {
+                    if (parser->tag_name_length == sizeof(parser->tag_name)) {
                         /* name buffer overflowing */
                         parser->state = PARSER_NONE;
                         break;
                     }
 
-                    parser->element_name[parser->element_name_length++] = char_to_lower(*buffer++);
-                } else if (*buffer == '/' && parser->element_name_length == 0) {
+                    parser->tag_name[parser->tag_name_length++] = char_to_lower(*buffer++);
+                } else if (*buffer == '/' && parser->tag_name_length == 0) {
                     parser->tag_type = TAG_CLOSE;
                     ++buffer;
                 } else if ((char_is_whitespace(*buffer) || *buffer == '/' || *buffer == '>') &&
-                           parser->element_name_length > 0) {
+                           parser->tag_name_length > 0) {
                     parser_element_start(parser);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
-                } else if (*buffer == '!' && parser->element_name_length == 0) {
+                } else if (*buffer == '!' && parser->tag_name_length == 0) {
                     parser->state = PARSER_DECLARATION_NAME;
                     ++buffer;
                     break;
@@ -231,16 +231,16 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             while (buffer < end) {
                 if (char_is_alphanumeric(*buffer) || *buffer == ':' ||
                     *buffer == '-' || *buffer == '_' || *buffer == '[') {
-                    if (parser->element_name_length == sizeof(parser->element_name)) {
+                    if (parser->tag_name_length == sizeof(parser->tag_name)) {
                         /* name buffer overflowing */
                         parser->state = PARSER_NONE;
                         break;
                     }
 
-                    parser->element_name[parser->element_name_length++] = char_to_lower(*buffer++);
+                    parser->tag_name[parser->tag_name_length++] = char_to_lower(*buffer++);
 
-                    if (parser->element_name_length == 7 &&
-                        memcmp(parser->element_name, "[cdata[", 7) == 0) {
+                    if (parser->tag_name_length == 7 &&
+                        memcmp(parser->tag_name, "[cdata[", 7) == 0) {
                         parser->state = PARSER_CDATA_SECTION;
                         parser->cdend_match = 0;
                         break;
