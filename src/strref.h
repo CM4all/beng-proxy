@@ -176,6 +176,8 @@ strref_cmp_c(const struct strref *s, const char *p)
     return strref_cmp(s, p, strlen(p));
 }
 
+#define strref_cmp_literal(s, l) strref_cmp((s), (l), sizeof(l) - 1)
+
 static attr_always_inline int
 strref_cmp2(const struct strref *a, const struct strref *b)
 {
