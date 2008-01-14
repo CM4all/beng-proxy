@@ -61,6 +61,11 @@ struct parser_tag {
     enum parser_tag_type type;
 };
 
+struct parser_attr {
+    off_t value_start, value_end;
+    struct strref name, value;
+};
+
 struct parser {
     /* internal state */
     enum parser_state state;
@@ -77,7 +82,7 @@ struct parser {
     char attr_value_delimiter;
     char attr_value[1024];
     size_t attr_value_length;
-    off_t attr_value_start, attr_value_end;
+    struct parser_attr attr;
 
     /** in a CDATA section, how many characters have been matching
         CDEnd ("]]>")? */
@@ -97,9 +102,7 @@ void
 parser_element_finished(struct parser *parser, const struct parser_tag *tag);
 
 void
-parser_attr_finished(struct parser *parser,
-                     const struct strref *name,
-                     const struct strref *value);
+parser_attr_finished(struct parser *parser, const struct parser_attr *attr);
 
 void
 parser_cdata(struct parser *parser, const char *p, size_t length, int escaped);

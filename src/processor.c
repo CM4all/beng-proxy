@@ -500,44 +500,47 @@ parser_element_start(struct parser *parser, const struct parser_tag *tag)
 }
 
 static void
-replace_attribute_value(processor_t processor, istream_t value)
+replace_attribute_value(processor_t processor,
+                        const struct parser_attr *attr,
+                        istream_t value)
 {
     assert(processor->parser.state == PARSER_ATTR_VALUE ||
            processor->parser.state == PARSER_ATTR_VALUE_COMPAT);
 
     replace_add(&processor->replace,
-                processor->parser.attr_value_start,
-                processor->parser.attr_value_end,
+                attr->value_start, attr->value_end,
                 value);
 }
 
 static void
-make_url_attribute_absolute(processor_t processor, const struct strref *value)
+make_url_attribute_absolute(processor_t processor,
+                            const struct parser_attr *attr)
 {
     const char *new_uri = widget_absolute_uri(processor->output.pool,
                                               processor->widget,
-                                              value->data,
-                                              value->length);
+                                              attr->value.data,
+                                              attr->value.length);
     if (new_uri != NULL)
-        replace_attribute_value(processor,
+        replace_attribute_value(processor, attr,
                                 istream_string_new(processor->output.pool,
                                                    new_uri));
 }
 
 static void
-transform_url_attribute(processor_t processor, const struct strref *value)
+transform_url_attribute(processor_t processor,
+                        const struct parser_attr *attr)
 {
     const char *new_uri
         = widget_external_uri(processor->output.pool,
                               processor->env->external_uri,
                               processor->env->args,
                               processor->widget,
-                              value->data,
-                              value->length);
+                              attr->value.data,
+                              attr->value.length);
     if (new_uri == NULL)
         return;
 
-    replace_attribute_value(processor,
+    replace_attribute_value(processor, attr,
                             istream_string_new(processor->output.pool,
                                                new_uri));
 }
@@ -577,19 +580,18 @@ parser_widget_attr_finished(struct widget *widget,
 
 void
 parser_attr_finished(struct parser *parser,
-                     const struct strref *name,
-                     const struct strref *value)
+                     const struct parser_attr *attr)
 {
     processor_t processor = parser_to_processor(parser);
 
     if (!processor_is_quiet(processor) &&
-        name->length > 2 &&
-        name->data[0] == 'o' && name->data[1] == 'n' &&
-        !strref_is_empty(value)) {
+        attr->name.length > 2 &&
+        attr->name.data[0] == 'o' && attr->name.data[1] == 'n' &&
+        !strref_is_empty(&attr->value)) {
         istream_t value_stream = istream_memory_new(processor->output.pool,
-                                                    strref_dup(processor->output.pool, value),
-                                                    value->length);
-        replace_attribute_value(processor,
+                                                    strref_dup(processor->output.pool, &attr->value),
+                                                    attr->value.length);
+        replace_attribute_value(processor, attr,
                                 js_filter_new(processor->output.pool,
                                               value_stream));
         return;
@@ -607,19 +609,19 @@ parser_attr_finished(struct parser *parser,
 
         parser_widget_attr_finished(processor->embedded_widget,
                                     processor->widget_pool,
-                                    name, value);
+                                    &attr->name, &attr->value);
         break;
 
     case TAG_WIDGET_PARAM:
         assert(processor->embedded_widget != NULL);
 
-        if (strref_cmp_literal(name, "name") == 0) {
+        if (strref_cmp_literal(&attr->name, "name") == 0) {
             if (parser->attr_value_length > sizeof(processor->widget_param.name))
                 parser->attr_value_length = sizeof(processor->widget_param.name);
             processor->widget_param.name_length = parser->attr_value_length;
             memcpy(processor->widget_param.name, parser->attr_value,
                    parser->attr_value_length);
-        } else if (strref_cmp_literal(name, "value") == 0) {
+        } else if (strref_cmp_literal(&attr->name, "value") == 0) {
             if (parser->attr_value_length > sizeof(processor->widget_param.value))
                 parser->attr_value_length = sizeof(processor->widget_param.value);
             processor->widget_param.value_length = parser->attr_value_length;
@@ -632,26 +634,26 @@ parser_attr_finished(struct parser *parser,
     case TAG_WIDGET_PATH_INFO:
         assert(processor->embedded_widget != NULL);
 
-        if (strref_cmp_literal(name, "value") == 0) {
+        if (strref_cmp_literal(&attr->name, "value") == 0) {
             processor->embedded_widget->path_info
-                = strref_dup(processor->widget_pool, value);
+                = strref_dup(processor->widget_pool, &attr->value);
         }
 
         break;
 
     case TAG_IMG:
-        if (strref_cmp_literal(name, "src") == 0)
-            make_url_attribute_absolute(processor, value);
+        if (strref_cmp_literal(&attr->name, "src") == 0)
+            make_url_attribute_absolute(processor, attr);
         break;
 
     case TAG_A:
-        if (strref_cmp_literal(name, "href") == 0)
-            transform_url_attribute(processor, value);
+        if (strref_cmp_literal(&attr->name, "href") == 0)
+            transform_url_attribute(processor, attr);
         break;
 
     case TAG_FORM:
-        if (strref_cmp_literal(name, "action") == 0)
-            transform_url_attribute(processor, value);
+        if (strref_cmp_literal(&attr->name, "action") == 0)
+            transform_url_attribute(processor, attr);
         break;
 
     case TAG_SCRIPT:
