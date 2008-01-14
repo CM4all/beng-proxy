@@ -94,7 +94,9 @@ void
 parser_element_finished(struct parser *parser, off_t end);
 
 void
-parser_attr_finished(struct parser *parser);
+parser_attr_finished(struct parser *parser,
+                     const struct strref *name,
+                     const struct strref *value);
 
 void
 parser_cdata(struct parser *parser, const char *p, size_t length, int escaped);

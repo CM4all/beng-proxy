@@ -545,71 +545,52 @@ transform_url_attribute(processor_t processor)
 }
 
 static void
-parser_widget_attr_finished(struct parser *parser, struct widget *widget,
-                            pool_t pool)
+parser_widget_attr_finished(struct widget *widget,
+                            pool_t pool,
+                            const struct strref *name,
+                            const struct strref *value)
 {
-    if (parser->attr_name_length == 4 &&
-        memcmp(parser->attr_name, "href", 4) == 0) {
-        const char *class_name = p_strndup(pool, parser->attr_value,
-                                           parser->attr_value_length);
+    if (strref_cmp_literal(name, "href") == 0) {
+        const char *class_name = strref_dup(pool, value);
         widget->class = get_widget_class(pool, class_name);
-    } else if (parser->attr_name_length == 2 &&
-             memcmp(parser->attr_name, "id", 2) == 0)
-        widget->id = p_strndup(pool, parser->attr_value,
-                               parser->attr_value_length);
-    else if (parser->attr_name_length == 7 &&
-             memcmp(parser->attr_name, "display", 7) == 0) {
-        if (parser->attr_value_length == 6 &&
-            memcmp(parser->attr_value, "inline", 6) == 0)
+    } else if (strref_cmp_literal(name, "id") == 0)
+        widget->id = strref_dup(pool, value);
+    else if (strref_cmp_literal(name, "display") == 0) {
+        if (strref_cmp_literal(value, "inline") == 0)
             widget->display = WIDGET_DISPLAY_INLINE;
-        else if (parser->attr_value_length == 6 &&
-                 memcmp(parser->attr_value, "iframe", 6) == 0)
+        else if (strref_cmp_literal(value, "iframe") == 0)
             widget->display = WIDGET_DISPLAY_IFRAME;
-        else if (parser->attr_value_length == 3 &&
-                 memcmp(parser->attr_value, "img", 3) == 0)
+        else if (strref_cmp_literal(value, "img") == 0)
             widget->display = WIDGET_DISPLAY_IMG;
-    } else if (parser->attr_name_length == 7 &&
-               memcmp(parser->attr_name, "session", 7) == 0) {
-        if (parser->attr_value_length == 8 &&
-            memcmp(parser->attr_value, "resource", 8) == 0)
+    } else if (strref_cmp_literal(name, "session") == 0) {
+        if (strref_cmp_literal(value, "resource") == 0)
             widget->session = WIDGET_SESSION_RESOURCE;
-        else if (parser->attr_value_length == 4 &&
-                 memcmp(parser->attr_value, "site", 4) == 0)
+        else if (strref_cmp_literal(value, "site") == 0)
             widget->session = WIDGET_SESSION_SITE;
-    } else if (parser->attr_name_length == 3 &&
-               memcmp(parser->attr_name, "tag", 3) == 0)
-        widget->decoration.tag = p_strndup(pool, parser->attr_value,
-                                           parser->attr_value_length);
-    else if (parser->attr_name_length == 5 &&
-             memcmp(parser->attr_name, "width", 5) == 0)
-        widget->decoration.width = p_strndup(pool, parser->attr_value,
-                                             parser->attr_value_length);
-    else if (parser->attr_name_length == 6 &&
-             memcmp(parser->attr_name, "height", 6) == 0)
-        widget->decoration.height = p_strndup(pool, parser->attr_value,
-                                              parser->attr_value_length);
-    else if (parser->attr_name_length == 5 &&
-             memcmp(parser->attr_name, "style", 5) == 0)
-        widget->decoration.style = p_strndup(pool, parser->attr_value,
-                                             parser->attr_value_length);
+    } else if (strref_cmp_literal(name, "tag") == 0)
+        widget->decoration.tag = strref_dup(pool, value);
+    else if (strref_cmp_literal(name, "width") == 0)
+        widget->decoration.width = strref_dup(pool, value);
+    else if (strref_cmp_literal(name, "height") == 0)
+        widget->decoration.height = strref_dup(pool, value);
+    else if (strref_cmp_literal(name, "style") == 0)
+        widget->decoration.style = strref_dup(pool, value);
 }
 
 void
-parser_attr_finished(struct parser *parser)
+parser_attr_finished(struct parser *parser,
+                     const struct strref *name,
+                     const struct strref *value)
 {
     processor_t processor = parser_to_processor(parser);
 
     if (!processor_is_quiet(processor) &&
-        parser->attr_name_length > 2 &&
-        parser->attr_name[0] == 'o' &&
-        parser->attr_name[1] == 'n' &&
-        parser->attr_value_length > 0) {
-        char *value = p_memdup(processor->output.pool,
-                               parser->attr_value,
-                               parser->attr_value_length);
+        name->length > 2 &&
+        name->data[0] == 'o' && name->data[1] == 'n' &&
+        !strref_is_empty(value)) {
         istream_t value_stream = istream_memory_new(processor->output.pool,
-                                                    value,
-                                                    parser->attr_value_length);
+                                                    strref_dup(processor->output.pool, value),
+                                                    value->length);
         replace_attribute_value(processor,
                                 js_filter_new(processor->output.pool,
                                               value_stream));
@@ -626,22 +607,21 @@ parser_attr_finished(struct parser *parser)
     case TAG_WIDGET:
         assert(processor->embedded_widget != NULL);
 
-        parser_widget_attr_finished(parser, processor->embedded_widget,
-                                    processor->widget_pool);
+        parser_widget_attr_finished(processor->embedded_widget,
+                                    processor->widget_pool,
+                                    name, value);
         break;
 
     case TAG_WIDGET_PARAM:
         assert(processor->embedded_widget != NULL);
 
-        if (parser->attr_name_length == 4 &&
-            memcmp(parser->attr_name, "name", 4) == 0) {
+        if (strref_cmp_literal(name, "name") == 0) {
             if (parser->attr_value_length > sizeof(processor->widget_param.name))
                 parser->attr_value_length = sizeof(processor->widget_param.name);
             processor->widget_param.name_length = parser->attr_value_length;
             memcpy(processor->widget_param.name, parser->attr_value,
                    parser->attr_value_length);
-        } else if (parser->attr_name_length == 5 &&
-                   memcmp(parser->attr_name, "value", 5) == 0) {
+        } else if (strref_cmp_literal(name, "value") == 0) {
             if (parser->attr_value_length > sizeof(processor->widget_param.value))
                 parser->attr_value_length = sizeof(processor->widget_param.value);
             processor->widget_param.value_length = parser->attr_value_length;
@@ -654,30 +634,25 @@ parser_attr_finished(struct parser *parser)
     case TAG_WIDGET_PATH_INFO:
         assert(processor->embedded_widget != NULL);
 
-        if (parser->attr_name_length == 5 &&
-            memcmp(parser->attr_name, "value", 5) == 0) {
+        if (strref_cmp_literal(name, "value") == 0) {
             processor->embedded_widget->path_info
-                = p_strndup(processor->widget_pool, parser->attr_value,
-                            parser->attr_value_length);
+                = strref_dup(processor->widget_pool, value);
         }
 
         break;
 
     case TAG_IMG:
-        if (parser->attr_name_length == 3 &&
-            memcmp(parser->attr_name, "src", 3) == 0)
+        if (strref_cmp_literal(name, "src") == 0)
             make_url_attribute_absolute(processor);
         break;
 
     case TAG_A:
-        if (parser->attr_name_length == 4 &&
-            memcmp(parser->attr_name, "href", 4) == 0)
+        if (strref_cmp_literal(name, "href") == 0)
             transform_url_attribute(processor);
         break;
 
     case TAG_FORM:
-        if (parser->attr_name_length == 6 &&
-            memcmp(parser->attr_name, "action", 6) == 0)
+        if (strref_cmp_literal(name, "action") == 0)
             transform_url_attribute(processor);
         break;
 

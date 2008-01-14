@@ -11,6 +11,17 @@
 #include <assert.h>
 #include <string.h>
 
+static void
+parser_invoke_attr_finished(struct parser *parser)
+{
+    struct strref name, value;
+
+    strref_set(&name, parser->attr_name, parser->attr_name_length);
+    strref_set(&value, parser->attr_value, parser->attr_value_length);
+
+    parser_attr_finished(parser, &name, &value);
+}
+
 void
 parser_feed(struct parser *parser, const char *start, size_t length)
 {
@@ -117,7 +128,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->state = PARSER_AFTER_ATTR_NAME;
                     break;
                 } else {
-                    parser_attr_finished(parser);
+                    parser_invoke_attr_finished(parser);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 }
@@ -135,7 +146,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 } else if (char_is_whitespace(*buffer)) {
                     ++buffer;
                 } else {
-                    parser_attr_finished(parser);
+                    parser_invoke_attr_finished(parser);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 }
@@ -168,7 +179,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 if (*buffer == parser->attr_value_delimiter) {
                     parser->attr_value_end = parser->position + (off_t)(buffer - start);
                     ++buffer;
-                    parser_attr_finished(parser);
+                    parser_invoke_attr_finished(parser);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else {
@@ -197,7 +208,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->attr_value[parser->attr_value_length++] = *buffer++;
                 } else {
                     parser->attr_value_end = parser->position + (off_t)(buffer - start);
-                    parser_attr_finished(parser);
+                    parser_invoke_attr_finished(parser);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 }
