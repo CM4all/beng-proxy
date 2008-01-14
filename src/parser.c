@@ -23,13 +23,15 @@ parser_invoke_attr_finished(struct parser *parser)
 }
 
 void
-parser_feed(struct parser *parser, const char *start, size_t length)
+parser_feed(struct parser *parser, off_t position, const char *start, size_t length)
 {
     const char *buffer = start, *end = start + length, *p;
 
     assert(parser != NULL);
     assert(buffer != NULL);
     assert(length > 0);
+
+    parser->position = position;
 
     while (buffer < end) {
         switch (parser->state) {

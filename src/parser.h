@@ -108,6 +108,6 @@ void
 parser_cdata(struct parser *parser, const char *p, size_t length, int escaped);
 
 void
-parser_feed(struct parser *parser, const char *start, size_t length);
+parser_feed(struct parser *parser, off_t position, const char *start, size_t length);
 
 #endif
