@@ -49,6 +49,12 @@ enum parser_state {
     PARSER_CDATA_SECTION,
 };
 
+enum parser_tag_type {
+    TAG_OPEN,
+    TAG_CLOSE,
+    TAG_SHORT,
+};
+
 struct parser {
     /* internal state */
     enum parser_state state;
@@ -58,11 +64,7 @@ struct parser {
     off_t tag_offset;
     char tag_name[64];
     size_t tag_name_length;
-    enum {
-        TAG_OPEN,
-        TAG_CLOSE,
-        TAG_SHORT,
-    } tag_type;
+    enum parser_tag_type tag_type;
 
     /* attribute */
     char attr_name[64];
