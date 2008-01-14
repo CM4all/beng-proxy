@@ -56,7 +56,10 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     ++buffer;
                 } else if ((char_is_whitespace(*buffer) || *buffer == '/' || *buffer == '>') &&
                            parser->tag_name_length > 0) {
-                    parser_element_start(parser);
+                    struct strref name;
+                    strref_set(&name, parser->tag_name, parser->tag_name_length);
+                        
+                    parser_element_start(parser, &name);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else if (*buffer == '!' && parser->tag_name_length == 0) {

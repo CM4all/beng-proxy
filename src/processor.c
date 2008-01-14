@@ -438,7 +438,7 @@ parser_element_start_in_widget(processor_t processor, struct parser *parser)
 }
 
 void
-parser_element_start(struct parser *parser)
+parser_element_start(struct parser *parser, const struct strref *name)
 {
     processor_t processor = parser_to_processor(parser);
 
@@ -450,20 +450,17 @@ parser_element_start(struct parser *parser)
         return;
     }
 
-    if (parser->tag_name_length == 4 &&
-        memcmp(parser->tag_name, "body", 4) == 0) {
+    if (strref_cmp_literal(name, "body") == 0) {
         processor->tag = TAG_BODY;
-    } else if (parser->tag_name_length == 4 &&
-               memcmp(parser->tag_name, "html", 4) == 0) {
+    } else if (strref_cmp_literal(name, "html") == 0) {
         processor->in_html = 1;
         processor->tag = TAG_NONE;
     } else if (processor->in_html && !processor->in_head &&
                !processor->in_body &&
                processor_option_jscript(processor) &&
                !processor_option_body(processor) &&
-               parser->tag_name_length == 4 &&
                parser->tag_type == TAG_CLOSE &&
-               memcmp(parser->tag_name, "head", 4) == 0) {
+               strref_cmp_literal(name, "head") == 0) {
         replace_add(&processor->replace,
                     processor->parser.tag_offset,
                     processor->parser.tag_offset,
@@ -474,9 +471,7 @@ parser_element_start(struct parser *parser)
         assert(processor_option_body(processor));
 
         processor->tag = TAG_NONE;
-    } else if (parser->tag_name_length == 8 &&
-        memcmp(parser->tag_name, "c:widget", 8) == 0) {
-
+    } else if (strref_cmp_literal(name, "c:widget") == 0) {
         if (parser->tag_type == TAG_CLOSE) {
             assert(processor->embedded_widget == NULL);
             return;

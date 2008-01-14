@@ -9,6 +9,8 @@
 
 #include <sys/types.h>
 
+#include "strref.h"
+
 enum parser_state {
     PARSER_NONE,
 
@@ -82,7 +84,7 @@ parser_init(struct parser *parser)
 }
 
 void
-parser_element_start(struct parser *parser);
+parser_element_start(struct parser *parser, const struct strref *name);
 
 void
 parser_element_finished(struct parser *parser, off_t end);
