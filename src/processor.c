@@ -616,17 +616,17 @@ parser_attr_finished(struct parser *parser,
         assert(processor->embedded_widget != NULL);
 
         if (strref_cmp_literal(&attr->name, "name") == 0) {
-            if (parser->attr_value_length > sizeof(processor->widget_param.name))
-                parser->attr_value_length = sizeof(processor->widget_param.name);
-            processor->widget_param.name_length = parser->attr_value_length;
-            memcpy(processor->widget_param.name, parser->attr_value,
-                   parser->attr_value_length);
+            size_t length = attr->value.length;
+            if (length > sizeof(processor->widget_param.name))
+                length = sizeof(processor->widget_param.name);
+            processor->widget_param.name_length = length;
+            memcpy(processor->widget_param.name, attr->value.data, length);
         } else if (strref_cmp_literal(&attr->name, "value") == 0) {
-            if (parser->attr_value_length > sizeof(processor->widget_param.value))
-                parser->attr_value_length = sizeof(processor->widget_param.value);
-            processor->widget_param.value_length = parser->attr_value_length;
-            memcpy(processor->widget_param.value, parser->attr_value,
-                   parser->attr_value_length);
+            size_t length = attr->value.length;
+            if (length > sizeof(processor->widget_param.value))
+                length = sizeof(processor->widget_param.value);
+            processor->widget_param.value_length = length;
+            memcpy(processor->widget_param.value, attr->value.data, length);
         }
 
         break;
