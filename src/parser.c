@@ -59,7 +59,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     struct strref name;
                     strref_set(&name, parser->tag_name, parser->tag_name_length);
                         
-                    parser_element_start(parser, &name);
+                    parser_element_start(parser, parser->tag_offset,
+                                         parser->tag_type, &name);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else if (*buffer == '!' && parser->tag_name_length == 0) {

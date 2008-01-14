@@ -86,7 +86,9 @@ parser_init(struct parser *parser)
 }
 
 void
-parser_element_start(struct parser *parser, const struct strref *name);
+parser_element_start(struct parser *parser, off_t offset,
+                     enum parser_tag_type type,
+                     const struct strref *name);
 
 void
 parser_element_finished(struct parser *parser, off_t end);
