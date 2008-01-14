@@ -397,20 +397,18 @@ parser_to_processor(struct parser *parser)
 }
 
 static void
-parser_element_start_in_body(processor_t processor, struct parser *parser)
+parser_element_start_in_body(processor_t processor,
+                             enum parser_tag_type type,
+                             const struct strref *name)
 {
-    if (parser->tag_name_length == 1 &&
-        parser->tag_name[0] == 'a') {
+    if (strref_cmp_literal(name, "a") == 0) {
         processor->tag = TAG_A;
-    } else if (parser->tag_name_length == 4 &&
-               memcmp(parser->tag_name, "form", 4) == 0) {
+    } else if (strref_cmp_literal(name, "form") == 0) {
         processor->tag = TAG_FORM;
-    } else if (parser->tag_name_length == 3 &&
-               memcmp(parser->tag_name, "img", 3) == 0) {
+    } else if (strref_cmp_literal(name, "img") == 0) {
         processor->tag = TAG_IMG;
-    } else if (parser->tag_name_length == 6 &&
-               memcmp(parser->tag_name, "script", 6) == 0) {
-        if (parser->tag_type == TAG_OPEN)
+    } else if (strref_cmp_literal(name, "script") == 0) {
+        if (type == TAG_OPEN)
             processor->tag = TAG_SCRIPT;
     } else {
         processor->tag = TAG_NONE;
@@ -418,17 +416,16 @@ parser_element_start_in_body(processor_t processor, struct parser *parser)
 }
 
 static void
-parser_element_start_in_widget(processor_t processor, struct parser *parser)
+parser_element_start_in_widget(processor_t processor,
+                               enum parser_tag_type type,
+                               const struct strref *name)
 {
-    if (parser->tag_name_length == 8 &&
-        memcmp(parser->tag_name, "c:widget", 8) == 0) {
-        if (parser->tag_type == TAG_CLOSE)
+    if (strref_cmp_literal(name, "c:widget") == 0) {
+        if (type == TAG_CLOSE)
             processor->tag = TAG_WIDGET;
-    } else if (parser->tag_name_length == 9 &&
-               memcmp(parser->tag_name, "path-info", 9) == 0) {
+    } else if (strref_cmp_literal(name, "path-info") == 0) {
         processor->tag = TAG_WIDGET_PATH_INFO;
-    } else if (parser->tag_name_length == 5 &&
-               memcmp(parser->tag_name, "param", 5) == 0) {
+    } else if (strref_cmp_literal(name, "param") == 0) {
         processor->tag = TAG_WIDGET_PARAM;
         processor->widget_param.name_length = 0;
         processor->widget_param.value_length = 0;
@@ -448,7 +445,7 @@ parser_element_start(struct parser *parser, off_t offset,
         processor_finish_script(processor, offset);
 
     if (processor->embedded_widget != NULL) {
-        parser_element_start_in_widget(processor, parser);
+        parser_element_start_in_widget(processor, type, name);
         return;
     }
 
@@ -497,10 +494,10 @@ parser_element_start(struct parser *parser, off_t offset,
             /* fall back to returning everything if there is no HTML
                tag */
             processor->in_body = 1;
-            parser_element_start_in_body(processor, parser);
+            parser_element_start_in_body(processor, type, name);
         }
     } else {
-        parser_element_start_in_body(processor, parser);
+        parser_element_start_in_body(processor, type, name);
     }
 }
 
