@@ -7,6 +7,7 @@
 #include "parser.h"
 #include "strutil.h"
 #include "compiler.h"
+#include "valgrind.h"
 
 #include <assert.h>
 #include <string.h>
@@ -98,6 +99,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     ++buffer;
                     parser->tag.end = parser->position + (off_t)(buffer - start);
                     parser_element_finished(parser, &parser->tag);
+                    VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
                     break;
                 } else if (char_is_letter(*buffer)) {
                     parser->state = PARSER_ATTR_NAME;
@@ -224,12 +226,14 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     ++buffer;
                     parser->tag.end = parser->position + (off_t)(buffer - start);
                     parser_element_finished(parser, &parser->tag);
+                    VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
                     break;
                 } else {
                     /* ignore this syntax error and just close the
                        element tag */
                     parser->tag.end = parser->position + (off_t)(buffer - start);
                     parser_element_finished(parser, &parser->tag);
+                    VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
                     parser->state = PARSER_NONE;
                     break;
                 }
