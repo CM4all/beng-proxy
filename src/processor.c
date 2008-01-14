@@ -514,12 +514,12 @@ replace_attribute_value(processor_t processor, istream_t value)
 }
 
 static void
-make_url_attribute_absolute(processor_t processor)
+make_url_attribute_absolute(processor_t processor, const struct strref *value)
 {
     const char *new_uri = widget_absolute_uri(processor->output.pool,
                                               processor->widget,
-                                              processor->parser.attr_value,
-                                              processor->parser.attr_value_length);
+                                              value->data,
+                                              value->length);
     if (new_uri != NULL)
         replace_attribute_value(processor,
                                 istream_string_new(processor->output.pool,
@@ -527,15 +527,15 @@ make_url_attribute_absolute(processor_t processor)
 }
 
 static void
-transform_url_attribute(processor_t processor)
+transform_url_attribute(processor_t processor, const struct strref *value)
 {
     const char *new_uri
         = widget_external_uri(processor->output.pool,
                               processor->env->external_uri,
                               processor->env->args,
                               processor->widget,
-                              processor->parser.attr_value,
-                              processor->parser.attr_value_length);
+                              value->data,
+                              value->length);
     if (new_uri == NULL)
         return;
 
@@ -643,17 +643,17 @@ parser_attr_finished(struct parser *parser,
 
     case TAG_IMG:
         if (strref_cmp_literal(name, "src") == 0)
-            make_url_attribute_absolute(processor);
+            make_url_attribute_absolute(processor, value);
         break;
 
     case TAG_A:
         if (strref_cmp_literal(name, "href") == 0)
-            transform_url_attribute(processor);
+            transform_url_attribute(processor, value);
         break;
 
     case TAG_FORM:
         if (strref_cmp_literal(name, "action") == 0)
-            transform_url_attribute(processor);
+            transform_url_attribute(processor, value);
         break;
 
     case TAG_SCRIPT:
