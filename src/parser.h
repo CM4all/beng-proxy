@@ -55,16 +55,21 @@ enum parser_tag_type {
     TAG_SHORT,
 };
 
+struct parser_tag {
+    off_t start, end;
+    struct strref name;
+    enum parser_tag_type type;
+};
+
 struct parser {
     /* internal state */
     enum parser_state state;
     off_t position;
 
     /* element */
-    off_t tag_offset;
+    struct parser_tag tag;
     char tag_name[64];
     size_t tag_name_length;
-    enum parser_tag_type tag_type;
 
     /* attribute */
     char attr_name[64];
@@ -86,12 +91,10 @@ parser_init(struct parser *parser)
 }
 
 void
-parser_element_start(struct parser *parser, off_t offset,
-                     enum parser_tag_type type,
-                     const struct strref *name);
+parser_element_start(struct parser *parser, const struct parser_tag *tag);
 
 void
-parser_element_finished(struct parser *parser, off_t end);
+parser_element_finished(struct parser *parser, const struct parser_tag *tag);
 
 void
 parser_attr_finished(struct parser *parser,

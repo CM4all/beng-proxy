@@ -44,10 +44,10 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             if (p > buffer)
                 parser_cdata(parser, buffer, p - buffer, 1);
 
-            parser->tag_offset = parser->position + (off_t)(p - start);
+            parser->tag.start = parser->position + (off_t)(p - start);
             parser->state = PARSER_ELEMENT_NAME;
             parser->tag_name_length = 0;
-            parser->tag_type = TAG_OPEN;
+            parser->tag.type = TAG_OPEN;
             buffer = p + 1;
             break;
 
@@ -63,15 +63,13 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
                     parser->tag_name[parser->tag_name_length++] = char_to_lower(*buffer++);
                 } else if (*buffer == '/' && parser->tag_name_length == 0) {
-                    parser->tag_type = TAG_CLOSE;
+                    parser->tag.type = TAG_CLOSE;
                     ++buffer;
                 } else if ((char_is_whitespace(*buffer) || *buffer == '/' || *buffer == '>') &&
                            parser->tag_name_length > 0) {
-                    struct strref name;
-                    strref_set(&name, parser->tag_name, parser->tag_name_length);
-                        
-                    parser_element_start(parser, parser->tag_offset,
-                                         parser->tag_type, &name);
+                    strref_set(&parser->tag.name, parser->tag_name, parser->tag_name_length);
+
+                    parser_element_start(parser, &parser->tag);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else if (*buffer == '!' && parser->tag_name_length == 0) {
@@ -91,14 +89,15 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 if (char_is_whitespace(*buffer)) {
                     ++buffer;
                 } else if (*buffer == '/') {
-                    parser->tag_type = TAG_SHORT;
+                    parser->tag.type = TAG_SHORT;
                     parser->state = PARSER_SHORT;
                     ++buffer;
                     break;
                 } else if (*buffer == '>') {
                     parser->state = PARSER_INSIDE;
                     ++buffer;
-                    parser_element_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser->tag.end = parser->position + (off_t)(buffer - start);
+                    parser_element_finished(parser, &parser->tag);
                     break;
                 } else if (char_is_letter(*buffer)) {
                     parser->state = PARSER_ATTR_NAME;
@@ -223,12 +222,14 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 } else if (*buffer == '>') {
                     parser->state = PARSER_NONE;
                     ++buffer;
-                    parser_element_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser->tag.end = parser->position + (off_t)(buffer - start);
+                    parser_element_finished(parser, &parser->tag);
                     break;
                 } else {
                     /* ignore this syntax error and just close the
                        element tag */
-                    parser_element_finished(parser, parser->position + (off_t)(buffer - start));
+                    parser->tag.end = parser->position + (off_t)(buffer - start);
+                    parser_element_finished(parser, &parser->tag);
                     parser->state = PARSER_NONE;
                     break;
                 }

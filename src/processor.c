@@ -435,33 +435,31 @@ parser_element_start_in_widget(processor_t processor,
 }
 
 void
-parser_element_start(struct parser *parser, off_t offset,
-                     enum parser_tag_type type,
-                     const struct strref *name)
+parser_element_start(struct parser *parser, const struct parser_tag *tag)
 {
     processor_t processor = parser_to_processor(parser);
 
     if (processor->script != NULL)
-        processor_finish_script(processor, offset);
+        processor_finish_script(processor, tag->start);
 
     if (processor->embedded_widget != NULL) {
-        parser_element_start_in_widget(processor, type, name);
+        parser_element_start_in_widget(processor, tag->type, &tag->name);
         return;
     }
 
-    if (strref_cmp_literal(name, "body") == 0) {
+    if (strref_cmp_literal(&tag->name, "body") == 0) {
         processor->tag = TAG_BODY;
-    } else if (strref_cmp_literal(name, "html") == 0) {
+    } else if (strref_cmp_literal(&tag->name, "html") == 0) {
         processor->in_html = 1;
         processor->tag = TAG_NONE;
     } else if (processor->in_html && !processor->in_head &&
                !processor->in_body &&
                processor_option_jscript(processor) &&
                !processor_option_body(processor) &&
-               type == TAG_CLOSE &&
-               strref_cmp_literal(name, "head") == 0) {
+               tag->type == TAG_CLOSE &&
+               strref_cmp_literal(&tag->name, "head") == 0) {
         replace_add(&processor->replace,
-                    offset, offset,
+                    tag->start, tag->start,
                     processor_jscript(processor));
         processor->in_head = 1;
     } else if (processor->end_of_body != (off_t)-1) {
@@ -469,8 +467,8 @@ parser_element_start(struct parser *parser, off_t offset,
         assert(processor_option_body(processor));
 
         processor->tag = TAG_NONE;
-    } else if (strref_cmp_literal(name, "c:widget") == 0) {
-        if (type == TAG_CLOSE) {
+    } else if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
+        if (tag->type == TAG_CLOSE) {
             assert(processor->embedded_widget == NULL);
             return;
         }
@@ -494,10 +492,10 @@ parser_element_start(struct parser *parser, off_t offset,
             /* fall back to returning everything if there is no HTML
                tag */
             processor->in_body = 1;
-            parser_element_start_in_body(processor, type, name);
+            parser_element_start_in_body(processor, tag->type, &tag->name);
         }
     } else {
-        parser_element_start_in_body(processor, type, name);
+        parser_element_start_in_body(processor, tag->type, &tag->name);
     }
 }
 
@@ -750,15 +748,15 @@ embed_element_finished(processor_t processor)
 }
 
 static void
-body_element_finished(processor_t processor, off_t end)
+body_element_finished(processor_t processor, const struct parser_tag *tag)
 {
 
-    if (processor->parser.tag_type != TAG_CLOSE) {
+    if (tag->type != TAG_CLOSE) {
         if (processor->in_body)
             return;
 
         if (processor_option_body(processor))
-            replace_add(&processor->replace, 0, end, NULL);
+            replace_add(&processor->replace, 0, tag->end, NULL);
 
         processor->in_body = 1;
     } else {
@@ -766,32 +764,31 @@ body_element_finished(processor_t processor, off_t end)
             processor->end_of_body != (off_t)-1)
             return;
 
-        processor->end_of_body = processor->parser.tag_offset;
+        processor->end_of_body = tag->start;
     }
 }
 
 void
-parser_element_finished(struct parser *parser, off_t end)
+parser_element_finished(struct parser *parser, const struct parser_tag *tag)
 {
     processor_t processor = parser_to_processor(parser);
 
     if (processor->tag == TAG_BODY) {
-        body_element_finished(processor, end);
+        body_element_finished(processor, tag);
     } else if (processor->tag == TAG_WIDGET) {
-        if (processor->parser.tag_type == TAG_OPEN ||
-            processor->parser.tag_type == TAG_SHORT)
-            processor->widget_start_offset = processor->parser.tag_offset;
+        if (tag->type == TAG_OPEN || tag->type == TAG_SHORT)
+            processor->widget_start_offset = tag->start;
         else if (processor->embedded_widget == NULL)
             return;
 
         assert(processor->embedded_widget != NULL);
 
-        if (processor->parser.tag_type == TAG_OPEN)
+        if (tag->type == TAG_OPEN)
             return;
         
         istream_t istream = embed_element_finished(processor);
         replace_add(&processor->replace, processor->widget_start_offset,
-                    end, istream);
+                    tag->end, istream);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
         assert(processor->embedded_widget != NULL);
 
@@ -819,7 +816,7 @@ parser_element_finished(struct parser *parser, off_t end)
         processor->widget_params_length += processor->widget_param.value_length;
     } else if (processor->tag == TAG_SCRIPT) {
         processor->script = growing_buffer_new(processor->output.pool, 4096);
-        processor->script_start_offset = end;
+        processor->script_start_offset = tag->end;
     }
 }
 
