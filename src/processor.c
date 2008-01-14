@@ -505,9 +505,6 @@ replace_attribute_value(processor_t processor,
                         const struct parser_attr *attr,
                         istream_t value)
 {
-    assert(processor->parser.state == PARSER_ATTR_VALUE ||
-           processor->parser.state == PARSER_ATTR_VALUE_COMPAT);
-
     replace_add(&processor->replace,
                 attr->value_start, attr->value_end,
                 value);
