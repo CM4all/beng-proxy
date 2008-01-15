@@ -66,6 +66,13 @@ struct parser_attr {
     struct strref name, value;
 };
 
+struct parser_handler {
+    void (*tag_start)(const struct parser_tag *tag, void *ctx);
+    void (*tag_finished)(const struct parser_tag *tag, void *ctx);
+    void (*attr_finished)(const struct parser_attr *attr, void *ctx);
+    void (*cdata)(const char *p, size_t length, int escaped, void *ctx);
+};
+
 struct parser {
     /* internal state */
     enum parser_state state;
@@ -87,25 +94,19 @@ struct parser {
     /** in a CDATA section, how many characters have been matching
         CDEnd ("]]>")? */
     size_t cdend_match;
+
+    const struct parser_handler *handler;
+    void *handler_ctx;
 };
 
 static inline void
-parser_init(struct parser *parser)
+parser_init(struct parser *parser, const struct parser_handler *handler,
+            void *handler_ctx)
 {
     parser->state = PARSER_NONE;
+    parser->handler = handler;
+    parser->handler_ctx = handler_ctx;
 }
-
-void
-parser_element_start(struct parser *parser, const struct parser_tag *tag);
-
-void
-parser_element_finished(struct parser *parser, const struct parser_tag *tag);
-
-void
-parser_attr_finished(struct parser *parser, const struct parser_attr *attr);
-
-void
-parser_cdata(struct parser *parser, const char *p, size_t length, int escaped);
 
 void
 parser_feed(struct parser *parser, off_t position, const char *start, size_t length);

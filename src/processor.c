@@ -298,6 +298,9 @@ processor_jscript(processor_t processor)
  *
  */
 
+static void
+processor_parser_init(processor_t processor);
+
 istream_t
 processor_new(pool_t pool, istream_t istream,
               struct widget *widget,
@@ -353,7 +356,7 @@ processor_new(pool_t pool, istream_t istream,
                  replace_output_eof,
                  processor_option_quiet(processor));
 
-    parser_init(&processor->parser);
+    processor_parser_init(processor);
 
     processor->in_html = 0;
     processor->in_head = 0;
@@ -390,12 +393,6 @@ processor_finish_script(processor_t processor, off_t end)
  * parser callbacks
  *
  */
-
-static inline processor_t
-parser_to_processor(struct parser *parser)
-{
-    return (processor_t)(((char*)parser) - offsetof(struct processor, parser));
-}
 
 static void
 parser_element_start_in_body(processor_t processor,
@@ -435,10 +432,10 @@ parser_element_start_in_widget(processor_t processor,
     }
 }
 
-void
-parser_element_start(struct parser *parser, const struct parser_tag *tag)
+static void
+processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 {
-    processor_t processor = parser_to_processor(parser);
+    processor_t processor = ctx;
 
     if (processor->script != NULL)
         processor_finish_script(processor, tag->start);
@@ -576,11 +573,10 @@ parser_widget_attr_finished(struct widget *widget,
         widget->decoration.style = strref_dup(pool, value);
 }
 
-void
-parser_attr_finished(struct parser *parser,
-                     const struct parser_attr *attr)
+static void
+processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
-    processor_t processor = parser_to_processor(parser);
+    processor_t processor = ctx;
 
     if (!processor_is_quiet(processor) &&
         attr->name.length > 2 &&
@@ -768,10 +764,10 @@ body_element_finished(processor_t processor, const struct parser_tag *tag)
     }
 }
 
-void
-parser_element_finished(struct parser *parser, const struct parser_tag *tag)
+static void
+processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
-    processor_t processor = parser_to_processor(parser);
+    processor_t processor = ctx;
 
     if (processor->tag == TAG_BODY) {
         body_element_finished(processor, tag);
@@ -820,10 +816,10 @@ parser_element_finished(struct parser *parser, const struct parser_tag *tag)
     }
 }
 
-void
-parser_cdata(struct parser *parser, const char *p, size_t length, int escaped)
+static void
+processor_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 {
-    processor_t processor = parser_to_processor(parser);
+    processor_t processor = ctx;
 
     (void)escaped;
 
@@ -831,3 +827,15 @@ parser_cdata(struct parser *parser, const char *p, size_t length, int escaped)
         growing_buffer_write_buffer(processor->script, p, length);
 }
 
+static const struct parser_handler processor_parser_handler = {
+    .tag_start = processor_parser_tag_start,
+    .tag_finished = processor_parser_tag_finished,
+    .attr_finished = processor_parser_attr_finished,
+    .cdata = processor_parser_cdata,
+};
+
+static void
+processor_parser_init(processor_t processor)
+{
+    parser_init(&processor->parser, &processor_parser_handler, processor);
+}

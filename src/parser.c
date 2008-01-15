@@ -18,7 +18,7 @@ parser_invoke_attr_finished(struct parser *parser)
     strref_set(&parser->attr.name, parser->attr_name, parser->attr_name_length);
     strref_set(&parser->attr.value, parser->attr_value, parser->attr_value_length);
 
-    parser_attr_finished(parser, &parser->attr);
+    parser->handler->attr_finished(&parser->attr, parser->handler_ctx);
     VALGRIND_MAKE_MEM_UNDEFINED(&parser->attr, sizeof(parser->attr));
 }
 
@@ -39,12 +39,14 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
             /* find first character */
             p = memchr(buffer, '<', end - buffer);
             if (p == NULL) {
-                parser_cdata(parser, buffer, end - buffer, 1);
+                parser->handler->cdata(buffer, end - buffer, 1,
+                                       parser->handler_ctx);
                 return;
             }
 
             if (p > buffer)
-                parser_cdata(parser, buffer, p - buffer, 1);
+                parser->handler->cdata(buffer, p - buffer, 1,
+                                       parser->handler_ctx);
 
             parser->tag.start = parser->position + (off_t)(p - start);
             parser->state = PARSER_ELEMENT_NAME;
@@ -71,7 +73,8 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
                            parser->tag_name_length > 0) {
                     strref_set(&parser->tag.name, parser->tag_name, parser->tag_name_length);
 
-                    parser_element_start(parser, &parser->tag);
+                    parser->handler->tag_start(&parser->tag,
+                                               parser->handler_ctx);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else if (*buffer == '!' && parser->tag_name_length == 0) {
@@ -99,7 +102,8 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
                     parser->state = PARSER_INSIDE;
                     ++buffer;
                     parser->tag.end = parser->position + (off_t)(buffer - start);
-                    parser_element_finished(parser, &parser->tag);
+                    parser->handler->tag_finished(&parser->tag,
+                                                  parser->handler_ctx);
                     VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
                     break;
                 } else if (char_is_letter(*buffer)) {
@@ -226,14 +230,16 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
                     parser->state = PARSER_NONE;
                     ++buffer;
                     parser->tag.end = parser->position + (off_t)(buffer - start);
-                    parser_element_finished(parser, &parser->tag);
+                    parser->handler->tag_finished(&parser->tag,
+                                                  parser->handler_ctx);
                     VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
                     break;
                 } else {
                     /* ignore this syntax error and just close the
                        element tag */
                     parser->tag.end = parser->position + (off_t)(buffer - start);
-                    parser_element_finished(parser, &parser->tag);
+                    parser->handler->tag_finished(&parser->tag,
+                                                  parser->handler_ctx);
                     VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
                     parser->state = PARSER_NONE;
                     break;
@@ -283,7 +289,8 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
                 if (*buffer == ']' && parser->cdend_match < 2) {
                     if (buffer > p)
                         /* flush buffer */
-                        parser_cdata(parser, p, buffer - p, 0);
+                        parser->handler->cdata(p, buffer - p, 0,
+                                               parser->handler_ctx);
 
                     p = ++buffer;
                     ++parser->cdend_match;
@@ -297,7 +304,8 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
                            restore the data we already skipped */
                         assert(parser->cdend_match < 3);
 
-                        parser_cdata(parser, "]]", parser->cdend_match, 0);
+                        parser->handler->cdata("]]", parser->cdend_match, 0,
+                                               parser->handler_ctx);
                         parser->cdend_match = 0;
                         p = buffer;
                     }
@@ -307,7 +315,8 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
             }
 
             if (buffer > p)
-                parser_cdata(parser, p, buffer - p, 0);
+                parser->handler->cdata(p, buffer - p, 0,
+                                       parser->handler_ctx);
 
             break;
         }
