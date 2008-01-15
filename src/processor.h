@@ -29,6 +29,9 @@ enum processor_options {
 
     /** enable the c:embed element */
     PROCESSOR_CONTAINER = 0x10,
+
+    /** apply js_filter on JavaScript code */
+    PROCESSOR_JS_FILTER = 0x20,
 };
 
 struct hstock;

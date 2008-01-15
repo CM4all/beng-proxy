@@ -406,7 +406,8 @@ parser_element_start_in_body(processor_t processor,
     } else if (strref_cmp_literal(name, "img") == 0) {
         processor->tag = TAG_IMG;
     } else if (strref_cmp_literal(name, "script") == 0) {
-        if (type == TAG_OPEN)
+        if (type == TAG_OPEN &&
+            (processor->options & PROCESSOR_JS_FILTER) != 0)
             processor->tag = TAG_SCRIPT;
     } else {
         processor->tag = TAG_NONE;
@@ -582,6 +583,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     processor_t processor = ctx;
 
     if (!processor_is_quiet(processor) &&
+        (processor->options & PROCESSOR_JS_FILTER) != 0 &&
         attr->name.length > 2 &&
         attr->name.data[0] == 'o' && attr->name.data[1] == 'n' &&
         !strref_is_empty(&attr->value)) {
