@@ -18,6 +18,12 @@ parser_new(struct pool *pool, const struct parser_handler *handler, void *handle
 {
     struct parser *parser = p_malloc(pool, sizeof(*parser));
 
+    assert(handler != NULL);
+    assert(handler->tag_start != NULL);
+    assert(handler->tag_finished != NULL);
+    assert(handler->attr_finished != NULL);
+    assert(handler->cdata != NULL);
+
     parser->state = PARSER_NONE;
     parser->handler = handler;
     parser->handler_ctx = handler_ctx;
