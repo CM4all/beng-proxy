@@ -47,6 +47,17 @@ static istream_t
 frame_parent_widget(pool_t pool, struct processor_env *env,
                     struct widget *widget)
 {
+    if (!widget->class->is_container) {
+        /* this widget cannot possibly be the parent of a framed
+           widget if it is not a container */
+        daemon_log(4, "frame within non-container requested\n");
+
+        if (env->request_body != NULL)
+            istream_free(&env->request_body);
+
+        return NULL;
+    }
+
     if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
         /* the request body is not consumed yet, but the focus is not
            within the frame: discard the body, because it cannot ever
@@ -70,6 +81,7 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
     assert(env != NULL);
     assert(env->widget_callback == frame_widget_callback);
     assert(widget != NULL);
+    assert(widget->class != NULL);
 
     if (widget->from_request.proxy)
         /* this widget is being proxied */

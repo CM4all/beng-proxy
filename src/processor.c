@@ -471,6 +471,9 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             return;
         }
 
+        if ((processor->options & PROCESSOR_CONTAINER) == 0)
+            return;
+
         processor->tag = TAG_WIDGET;
         processor->embedded_widget = p_malloc(processor->widget_pool,
                                               sizeof(*processor->embedded_widget));

@@ -26,6 +26,9 @@ enum processor_options {
 
     /** generate JavaScript code for the root widget */
     PROCESSOR_JSCRIPT_ROOT = 0x8,
+
+    /** enable the c:embed element */
+    PROCESSOR_CONTAINER = 0x10,
 };
 
 struct hstock;

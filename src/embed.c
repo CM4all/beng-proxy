@@ -290,6 +290,10 @@ embed_new(pool_t pool, struct widget *widget,
 
     assert(widget != NULL);
     assert(widget->class != NULL);
+    assert((options & PROCESSOR_CONTAINER) == 0);
+
+    if (widget->class->is_container)
+        options |= PROCESSOR_CONTAINER;
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;

@@ -56,7 +56,7 @@ create_test(pool_t pool, istream_t input)
                        NULL,
                        my_embed_widget_callback);
 
-    return processor_new(pool, input, &widget, &env, 0);
+    return processor_new(pool, input, &widget, &env, PROCESSOR_CONTAINER);
 }
 
 static void

@@ -83,7 +83,7 @@ response_invoke_processor(struct request *request2,
     struct http_server_request *request = request2->request;
     istream_t request_body;
     struct widget *widget;
-    unsigned processor_options = 0;
+    unsigned processor_options = PROCESSOR_CONTAINER;
 
     assert(!request2->response_sent);
     assert(!request2->processed);

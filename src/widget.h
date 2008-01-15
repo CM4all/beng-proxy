@@ -32,6 +32,9 @@ struct widget_class {
 
     /** which API is used by the widget */
     enum widget_type type;
+
+    /** can this widget contain other widgets? */
+    unsigned is_container:1;
 };
 
 /**
