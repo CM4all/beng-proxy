@@ -289,6 +289,7 @@ embed_new(pool_t pool, struct widget *widget,
     growing_buffer_t headers;
 
     assert(widget != NULL);
+    assert(widget->class != NULL);
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
