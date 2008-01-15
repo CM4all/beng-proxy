@@ -7,9 +7,12 @@
 #ifndef __BENG_PARSER_H
 #define __BENG_PARSER_H
 
+#include "strref.h"
+#include "compiler.h"
+
 #include <sys/types.h>
 
-#include "strref.h"
+struct pool;
 
 enum parser_state {
     PARSER_NONE,
@@ -99,14 +102,8 @@ struct parser {
     void *handler_ctx;
 };
 
-static inline void
-parser_init(struct parser *parser, const struct parser_handler *handler,
-            void *handler_ctx)
-{
-    parser->state = PARSER_NONE;
-    parser->handler = handler;
-    parser->handler_ctx = handler_ctx;
-}
+struct parser * attr_malloc
+parser_new(pool_t pool, const struct parser_handler *handler, void *handler_ctx);
 
 void
 parser_feed(struct parser *parser, off_t position, const char *start, size_t length);

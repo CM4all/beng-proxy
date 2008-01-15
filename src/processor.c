@@ -34,7 +34,7 @@ struct processor {
 
     struct replace replace;
 
-    struct parser parser;
+    struct parser *parser;
     int in_html, in_head, in_body;
     off_t end_of_body;
     enum {
@@ -211,7 +211,7 @@ processor_input_data(const void *data, size_t length, void *ctx)
     if (nbytes == 0)
         return 0;
 
-    parser_feed(&processor->parser, position, (const char*)data, nbytes);
+    parser_feed(processor->parser, position, (const char*)data, nbytes);
 
     if (!processor->replace.quiet &&
         processor->replace.source_length >= 8 * 1024 * 1024) {
@@ -837,5 +837,6 @@ static const struct parser_handler processor_parser_handler = {
 static void
 processor_parser_init(processor_t processor)
 {
-    parser_init(&processor->parser, &processor_parser_handler, processor);
+    processor->parser = parser_new(processor->output.pool,
+                                   &processor_parser_handler, processor);
 }
