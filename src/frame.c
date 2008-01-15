@@ -43,6 +43,25 @@ frame_top_widget(pool_t pool, struct processor_env *env,
                      PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT);
 }
 
+static istream_t
+frame_parent_widget(pool_t pool, struct processor_env *env,
+                    struct widget *widget)
+{
+    if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
+        /* the request body is not consumed yet, but the focus is not
+           within the frame: discard the body, because it cannot ever
+           be used */
+        assert(!istream_has_handler(env->request_body));
+
+        daemon_log(4, "discarding non-framed request body\n");
+
+        istream_free(&env->request_body);
+    }
+
+    return embed_new(pool, widget,
+                     env, PROCESSOR_QUIET);
+}
+
 istream_t
 frame_widget_callback(pool_t pool, struct processor_env *env,
                       struct widget *widget)
@@ -55,24 +74,11 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
     if (widget->from_request.proxy)
         /* this widget is being proxied */
         return frame_top_widget(pool, env, widget);
-    else if (widget->from_request.proxy_ref != NULL) {
+    else if (widget->from_request.proxy_ref != NULL)
         /* only partial match: this is the parent of the frame
            widget */
-
-        if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
-            /* the request body is not consumed yet, but the focus is not
-               within the frame: discard the body, because it cannot ever
-               be used */
-            assert(!istream_has_handler(env->request_body));
-
-            daemon_log(4, "discarding non-framed request body\n");
-
-            istream_free(&env->request_body);
-        }
-
-        return embed_new(pool, widget,
-                         env, PROCESSOR_QUIET);
-    } else {
+        return frame_parent_widget(pool, env, widget);
+    else {
         /* this widget is none of our business */
         widget_cancel(widget);
         return NULL;
