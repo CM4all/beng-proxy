@@ -180,7 +180,7 @@ FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
 $(FILTER_TESTS): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS) -lz
 
-test/t-istream-processor: test/t-istream-processor.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/fifo-buffer.o src/format.o src/uri.o src/uri-escape.o src/session.o src/strmap.o src/hashmap.o src/pstring.o src/penv.o src/processor.o src/istream-subst.o src/widget.o src/growing-buffer.o src/js-filter.o src/replace.o src/widget-ref.o src/widget-uri.o src/args.o src/widget-session.o src/parser.o src/widget-class.o
+test/t-istream-processor: test/t-istream-processor.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/fifo-buffer.o src/format.o src/uri.o src/uri-escape.o src/session.o src/strmap.o src/hashmap.o src/pstring.o src/penv.o src/processor.o src/js-generator.o src/widget-request.o src/istream-subst.o src/widget.o src/growing-buffer.o src/js-filter.o src/replace.o src/widget-ref.o src/widget-uri.o src/args.o src/widget-session.o src/parser.o src/widget-class.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test/t-istream-js: test/t-istream-js.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/js-filter.o src/fifo-buffer.o src/format.o
