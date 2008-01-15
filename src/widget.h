@@ -19,12 +19,19 @@
 struct processor_env;
 struct parsed_uri;
 
+enum widget_type {
+    WIDGET_TYPE_BENG,
+};
+
 /**
  * A widget class is a server which provides a widget.
  */
 struct widget_class {
     /** the base URI of this widget, as specified in the template */
     const char *uri;
+
+    /** which API is used by the widget */
+    enum widget_type type;
 };
 
 /**

@@ -15,6 +15,7 @@ get_widget_class(pool_t pool, const char *uri)
     struct widget_class *wc = p_malloc(pool, sizeof(*wc));
 
     wc->uri = uri;
+    wc->type = WIDGET_TYPE_BENG;
 
     return wc;
 }
