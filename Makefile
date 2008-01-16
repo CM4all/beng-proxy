@@ -108,6 +108,7 @@ SOURCES = src/main.c \
 	src/istream-byte.c \
 	src/istream-fail.c \
 	src/istream-head.c \
+	src/istream-tee.c \
 	src/uri.c \
 	src/uri-escape.c \
 	src/args.c \
