@@ -13,6 +13,32 @@
 #include <assert.h>
 #include <string.h>
 
+struct parser {
+    /* internal state */
+    enum parser_state state;
+    off_t position;
+
+    /* element */
+    struct parser_tag tag;
+    char tag_name[64];
+    size_t tag_name_length;
+
+    /* attribute */
+    char attr_name[64];
+    size_t attr_name_length;
+    char attr_value_delimiter;
+    char attr_value[1024];
+    size_t attr_value_length;
+    struct parser_attr attr;
+
+    /** in a CDATA section, how many characters have been matching
+        CDEnd ("]]>")? */
+    size_t cdend_match;
+
+    const struct parser_handler *handler;
+    void *handler_ctx;
+};
+
 struct parser * attr_malloc
 parser_new(struct pool *pool, const struct parser_handler *handler, void *handler_ctx)
 {
