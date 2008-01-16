@@ -44,6 +44,6 @@ struct parser * attr_malloc
 parser_new(pool_t pool, const struct parser_handler *handler, void *handler_ctx);
 
 void
-parser_feed(struct parser *parser, off_t position, const char *start, size_t length);
+parser_feed(struct parser *parser, const char *start, size_t length);
 
 #endif

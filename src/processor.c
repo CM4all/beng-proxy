@@ -198,20 +198,17 @@ static size_t
 processor_input_data(const void *data, size_t length, void *ctx)
 {
     processor_t processor = ctx;
-    off_t position;
     size_t nbytes;
 
     assert(processor != NULL);
     assert(data != NULL);
     assert(length > 0);
 
-    position = processor->replace.source_length;
-
     nbytes = replace_feed(&processor->replace, data, length);
     if (nbytes == 0)
         return 0;
 
-    parser_feed(processor->parser, position, (const char*)data, nbytes);
+    parser_feed(processor->parser, (const char*)data, nbytes);
 
     if (!processor->replace.quiet &&
         processor->replace.source_length >= 8 * 1024 * 1024) {

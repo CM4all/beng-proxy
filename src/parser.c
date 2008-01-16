@@ -88,15 +88,13 @@ parser_invoke_attr_finished(struct parser *parser)
 }
 
 void
-parser_feed(struct parser *parser, off_t position, const char *start, size_t length)
+parser_feed(struct parser *parser, const char *start, size_t length)
 {
     const char *buffer = start, *end = start + length, *p;
 
     assert(parser != NULL);
     assert(buffer != NULL);
     assert(length > 0);
-
-    parser->position = position;
 
     while (buffer < end) {
         switch (parser->state) {
@@ -106,6 +104,7 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
             if (p == NULL) {
                 parser->handler->cdata(buffer, end - buffer, 1,
                                        parser->handler_ctx);
+                parser->position += (off_t)(end - start);
                 return;
             }
 
@@ -386,6 +385,8 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
             break;
         }
     }
+
+    parser->position += (off_t)(end - start);
 }
 
 
@@ -406,6 +407,7 @@ parser_new(struct pool *pool, const struct parser_handler *handler, void *handle
     assert(handler->cdata != NULL);
 
     parser->state = PARSER_NONE;
+    parser->position = 0;
     parser->handler = handler;
     parser->handler_ctx = handler_ctx;
 
