@@ -61,4 +61,10 @@ istream_byte_new(pool_t pool, istream_t input);
 istream_t
 istream_head_new(pool_t pool, istream_t input, size_t size);
 
+istream_t
+istream_tee_new(pool_t pool, istream_t input);
+
+istream_t
+istream_tee_second(istream_t istream);
+
 #endif
