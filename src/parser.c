@@ -77,24 +77,6 @@ struct parser {
     void *handler_ctx;
 };
 
-struct parser * attr_malloc
-parser_new(struct pool *pool, const struct parser_handler *handler, void *handler_ctx)
-{
-    struct parser *parser = p_malloc(pool, sizeof(*parser));
-
-    assert(handler != NULL);
-    assert(handler->tag_start != NULL);
-    assert(handler->tag_finished != NULL);
-    assert(handler->attr_finished != NULL);
-    assert(handler->cdata != NULL);
-
-    parser->state = PARSER_NONE;
-    parser->handler = handler;
-    parser->handler_ctx = handler_ctx;
-
-    return parser;
-}
-
 static void
 parser_invoke_attr_finished(struct parser *parser)
 {
@@ -404,4 +386,28 @@ parser_feed(struct parser *parser, off_t position, const char *start, size_t len
             break;
         }
     }
+}
+
+
+/*
+ * constructor
+ *
+ */
+
+struct parser * attr_malloc
+parser_new(struct pool *pool, const struct parser_handler *handler, void *handler_ctx)
+{
+    struct parser *parser = p_malloc(pool, sizeof(*parser));
+
+    assert(handler != NULL);
+    assert(handler->tag_start != NULL);
+    assert(handler->tag_finished != NULL);
+    assert(handler->attr_finished != NULL);
+    assert(handler->cdata != NULL);
+
+    parser->state = PARSER_NONE;
+    parser->handler = handler;
+    parser->handler_ctx = handler_ctx;
+
+    return parser;
 }
