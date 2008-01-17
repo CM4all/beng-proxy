@@ -256,7 +256,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     pool_unref(embed->pool);
 }
 
-static void 
+static void
 embed_response_abort(void *ctx)
 {
     struct embed *embed = ctx;
