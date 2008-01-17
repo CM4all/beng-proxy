@@ -89,7 +89,7 @@ parser_invoke_attr_finished(struct parser *parser)
     VALGRIND_MAKE_MEM_UNDEFINED(&parser->attr, sizeof(parser->attr));
 }
 
-static void
+static size_t
 parser_feed(struct parser *parser, const char *start, size_t length)
 {
     const char *buffer = start, *end = start + length, *p;
@@ -107,7 +107,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 parser->handler->cdata(buffer, end - buffer, 1,
                                        parser->handler_ctx);
                 parser->position += (off_t)(end - start);
-                return;
+                return length;
             }
 
             if (p > buffer)
@@ -388,7 +388,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         }
     }
 
-    parser->position += (off_t)(end - start);
+    parser->position += length;
+    return length;
 }
 
 
@@ -402,8 +403,7 @@ parser_input_data(const void *data, size_t length, void *ctx)
 {
     struct parser *parser = ctx;
 
-    parser_feed(parser, data, length);
-    return length;
+    return parser_feed(parser, data, length);
 }
 
 static void
