@@ -94,7 +94,7 @@ processor_option_jscript_root(const struct processor *processor)
 static inline int
 processor_is_quiet(processor_t processor)
 {
-    return (processor->options & PROCESSOR_QUIET) != 0 ||
+    return processor_option_quiet(processor) ||
         (processor_option_body(processor) && !processor->in_body);
 }
 
@@ -212,7 +212,7 @@ processor_input_data(const void *data, size_t length, void *ctx)
 
     parser_feed(processor->parser, (const char*)data, nbytes);
 
-    if ((processor->options & PROCESSOR_QUIET) == 0 &&
+    if (!processor_option_quiet(processor) &&
         processor->replace.source_length >= 8 * 1024 * 1024) {
         daemon_log(2, "file too large for processor\n");
         processor_abort(processor);
