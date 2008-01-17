@@ -252,6 +252,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     }
 
     istream_delayed_set(delayed, input);
+    istream_read(input);
 
     pool_unref(embed->pool);
 }

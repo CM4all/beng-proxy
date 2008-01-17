@@ -154,9 +154,4 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
     istream_assign_ref_handler(&delayed->input, input,
                                &delayed_input_handler, delayed,
                                delayed->output.handler_direct);
-
-    if (delayed->output.handler == NULL) /* allow this special case here */
-        return;
-
-    istream_read(input);
 }
