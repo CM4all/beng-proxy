@@ -465,3 +465,14 @@ parser_new(struct pool *pool, istream_t input,
 
     return parser;
 }
+
+void
+parser_close(struct parser *parser)
+{
+    assert(parser != NULL);
+
+    if (parser->input != NULL)
+        istream_free(&parser->input);
+    else
+        parser->handler->abort(parser->handler_ctx);
+}
