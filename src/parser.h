@@ -50,4 +50,7 @@ parser_new(pool_t pool, istream_t input,
 void
 parser_close(struct parser *parser);
 
+void
+parser_read(struct parser *parser);
+
 #endif

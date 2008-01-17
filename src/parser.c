@@ -513,3 +513,13 @@ parser_close(struct parser *parser)
     else
         parser->handler->abort(parser->handler_ctx);
 }
+
+void
+parser_read(struct parser *parser)
+{
+    assert(parser != NULL);
+    assert(parser->input != NULL);
+
+    istream_read(parser->input);
+}
+
