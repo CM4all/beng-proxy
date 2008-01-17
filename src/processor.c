@@ -22,6 +22,8 @@
 typedef struct processor *processor_t;
 
 struct processor {
+    pool_t pool;
+
     struct istream output;
     istream_t input;
     int had_input;
@@ -108,7 +110,7 @@ processor_close(processor_t processor)
     if (processor->input != NULL)
         istream_free_unref_handler(&processor->input);
 
-    pool_unref(processor->output.pool);
+    pool_unref(processor->pool);
 }
 
 static void
@@ -124,7 +126,7 @@ processor_abort(processor_t processor)
 
     istream_invoke_abort(&processor->output);
 
-    pool_unref(processor->output.pool);
+    pool_unref(processor->pool);
 }
 
 /*
@@ -245,7 +247,7 @@ processor_input_eof(void *ctx)
 
         replace_add(&processor->replace, 0,
                     processor->replace.source_length,
-                    istream_string_new(processor->output.pool,
+                    istream_string_new(processor->pool,
                                        "<!-- the widget has no HTML body -->"));
     }
 
@@ -274,7 +276,7 @@ static const struct istream_handler processor_input_handler = {
 static istream_t
 processor_jscript(processor_t processor)
 {
-    growing_buffer_t gb = growing_buffer_new(processor->output.pool, 512);
+    growing_buffer_t gb = growing_buffer_new(processor->pool, 512);
 
     assert(processor_option_jscript(processor));
 
@@ -283,7 +285,7 @@ processor_jscript(processor_t processor)
     if (processor_option_jscript_root(processor))
         js_generate_root_widget(gb, strmap_get(processor->env->args, "session"));
 
-    js_generate_widget(gb, processor->widget, processor->output.pool);
+    js_generate_widget(gb, processor->widget, processor->pool);
 
     growing_buffer_write_string(gb, "</script>\n");
 
@@ -335,6 +337,7 @@ processor_new(pool_t pool, istream_t istream,
 
     processor = p_malloc(pool, sizeof(*processor));
 
+    processor->pool = pool;
     processor->output = processor_output_stream;
     processor->output.pool = pool;
 
@@ -380,7 +383,7 @@ processor_finish_script(processor_t processor, off_t end)
     if (processor->script_start_offset < end)
         replace_add(&processor->replace,
                     processor->script_start_offset, end,
-                    js_filter_new(processor->output.pool,
+                    js_filter_new(processor->pool,
                                   growing_buffer_istream(processor->script)));
 
     processor->script = NULL;
@@ -512,13 +515,13 @@ static void
 make_url_attribute_absolute(processor_t processor,
                             const struct parser_attr *attr)
 {
-    const char *new_uri = widget_absolute_uri(processor->output.pool,
+    const char *new_uri = widget_absolute_uri(processor->pool,
                                               processor->widget,
                                               attr->value.data,
                                               attr->value.length);
     if (new_uri != NULL)
         replace_attribute_value(processor, attr,
-                                istream_string_new(processor->output.pool,
+                                istream_string_new(processor->pool,
                                                    new_uri));
 }
 
@@ -527,7 +530,7 @@ transform_url_attribute(processor_t processor,
                         const struct parser_attr *attr)
 {
     const char *new_uri
-        = widget_external_uri(processor->output.pool,
+        = widget_external_uri(processor->pool,
                               processor->env->external_uri,
                               processor->env->args,
                               processor->widget,
@@ -537,7 +540,7 @@ transform_url_attribute(processor_t processor,
         return;
 
     replace_attribute_value(processor, attr,
-                            istream_string_new(processor->output.pool,
+                            istream_string_new(processor->pool,
                                                new_uri));
 }
 
@@ -584,11 +587,11 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         attr->name.length > 2 &&
         attr->name.data[0] == 'o' && attr->name.data[1] == 'n' &&
         !strref_is_empty(&attr->value)) {
-        istream_t value_stream = istream_memory_new(processor->output.pool,
-                                                    strref_dup(processor->output.pool, &attr->value),
+        istream_t value_stream = istream_memory_new(processor->pool,
+                                                    strref_dup(processor->pool, &attr->value),
                                                     attr->value.length);
         replace_attribute_value(processor, attr,
-                                js_filter_new(processor->output.pool,
+                                js_filter_new(processor->pool,
                                               value_stream));
         return;
     }
@@ -734,13 +737,13 @@ embed_element_finished(processor_t processor)
     processor->embedded_widget = NULL;
 
     if (processor->widget_params_length > 0)
-        widget->query_string = p_strndup(processor->output.pool,
+        widget->query_string = p_strndup(processor->pool,
                                          processor->widget_params,
                                          processor->widget_params_length);
 
-    istream = embed_widget(processor->output.pool, processor->env, widget);
+    istream = embed_widget(processor->pool, processor->env, widget);
     if (istream != NULL && !processor_option_quiet(processor))
-        istream = embed_decorate(processor->output.pool, istream, widget);
+        istream = embed_decorate(processor->pool, istream, widget);
 
     return istream;
 }
@@ -813,7 +816,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
                processor->widget_param.value_length);
         processor->widget_params_length += processor->widget_param.value_length;
     } else if (processor->tag == TAG_SCRIPT) {
-        processor->script = growing_buffer_new(processor->output.pool, 4096);
+        processor->script = growing_buffer_new(processor->pool, 4096);
         processor->script_start_offset = tag->end;
     }
 }
@@ -839,6 +842,6 @@ static const struct parser_handler processor_parser_handler = {
 static void
 processor_parser_init(processor_t processor)
 {
-    processor->parser = parser_new(processor->output.pool,
+    processor->parser = parser_new(processor->pool,
                                    &processor_parser_handler, processor);
 }
