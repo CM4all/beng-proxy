@@ -179,6 +179,9 @@ istream_gb_read(istream_t istream)
     nbytes = istream_invoke_data(&gb->stream, data, length);
     assert(nbytes <= length);
 
+    if (nbytes == 0)
+        return;
+
     growing_buffer_consume(gb, nbytes);
 
     while (gb->current->position == gb->current->length) {
