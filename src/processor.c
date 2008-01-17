@@ -607,7 +607,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         if (tag->type == TAG_OPEN)
             return;
-        
+
         istream_t istream = embed_element_finished(processor);
         processor_replace_add(processor, processor->widget_start_offset,
                               tag->end, istream);
@@ -642,7 +642,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     }
 }
 
-static void
+static size_t
 processor_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 {
     processor_t processor = ctx;
@@ -651,6 +651,8 @@ processor_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 
     if (processor->script != NULL)
         growing_buffer_write_buffer(processor->script, p, length);
+
+    return length;
 }
 
 static void
