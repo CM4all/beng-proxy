@@ -126,21 +126,12 @@ processor_jscript(processor_t processor)
  *
  */
 
-static void
-processor_parser_init(processor_t processor, istream_t input);
-
-istream_t
-processor_new(pool_t pool, istream_t istream,
-              struct widget *widget,
-              struct processor_env *env,
-              unsigned options)
+static istream_t
+processor_subst_beng_widget(pool_t pool, istream_t istream,
+                            struct widget *widget,
+                            const struct processor_env *env)
 {
-    processor_t processor;
     const char *path, *prefix;
-
-    assert(istream != NULL);
-    assert(!istream_has_handler(istream));
-    assert(widget != NULL);
 
     path = widget_path(pool, widget);
     if (path == NULL)
@@ -157,6 +148,30 @@ processor_new(pool_t pool, istream_t istream,
     if (env->absolute_uri != NULL)
         istream = istream_subst_new(pool, istream,
                                     "&c:uri;", env->absolute_uri);
+
+    return istream;
+}
+
+static void
+processor_parser_init(processor_t processor, istream_t input);
+
+istream_t
+processor_new(pool_t pool, istream_t istream,
+              struct widget *widget,
+              struct processor_env *env,
+              unsigned options)
+{
+    processor_t processor;
+
+    assert(istream != NULL);
+    assert(!istream_has_handler(istream));
+    assert(widget != NULL);
+
+    switch (widget->class == NULL ? WIDGET_TYPE_BENG : widget->class->type) {
+    case WIDGET_TYPE_BENG:
+        istream = processor_subst_beng_widget(pool, istream, widget, env);
+        break;
+    }
 
 #ifdef NDEBUG
     pool_ref(pool);
