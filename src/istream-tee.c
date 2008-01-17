@@ -29,7 +29,7 @@ tee_source_data(const void *data, size_t length, void *ctx)
     if (nbytes1 == 0)
         return 0;
 
-    nbytes2 = istream_invoke_data(&tee->output1, data, nbytes1);
+    nbytes2 = istream_invoke_data(&tee->output2, data, nbytes1);
 
     /* XXX it is currently asserted that the second handler will
        always consume all data; later, buffering should probably be
