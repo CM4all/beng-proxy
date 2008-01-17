@@ -65,4 +65,10 @@ http_status_to_string(http_status_t status)
     return http_status_to_string_data[status / 100][status % 100];
 }
 
+static inline int
+http_status_is_success(http_status_t status)
+{
+    return status >= 200 && status < 300;
+}
+
 #endif
