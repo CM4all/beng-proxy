@@ -509,7 +509,7 @@ parser_close(struct parser *parser)
     assert(parser != NULL);
     assert(parser->input != NULL);
 
-    istream_close(&parser->input);
+    istream_close(parser->input);
 }
 
 void
