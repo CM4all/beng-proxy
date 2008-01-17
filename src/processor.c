@@ -129,6 +129,14 @@ processor_abort(processor_t processor)
     pool_unref(processor->pool);
 }
 
+static void
+processor_replace_add(processor_t processor, off_t start, off_t end,
+                      istream_t istream)
+{
+    replace_add(&processor->replace, start, end, istream);
+}
+
+
 /*
  * istream implementation
  *
@@ -239,16 +247,16 @@ processor_input_eof(void *ctx)
            file */
         assert(processor_option_body(processor));
 
-        replace_add(&processor->replace, processor->end_of_body,
-                    processor->replace.source_length, NULL);
+        processor_replace_add(processor, processor->end_of_body,
+                              processor->replace.source_length, NULL);
     } else if (processor_option_body(processor) &&
                processor->in_html && !processor->in_body) {
         /* no body */
 
-        replace_add(&processor->replace, 0,
-                    processor->replace.source_length,
-                    istream_string_new(processor->pool,
-                                       "<!-- the widget has no HTML body -->"));
+        processor_replace_add(processor, 0,
+                              processor->replace.source_length,
+                              istream_string_new(processor->pool,
+                                                 "<!-- the widget has no HTML body -->"));
     }
 
     replace_eof(&processor->replace);
@@ -367,8 +375,8 @@ processor_new(pool_t pool, istream_t istream,
 
     if (processor_option_jscript(processor) &&
         processor_option_body(processor))
-        replace_add(&processor->replace, 0, 0,
-                    processor_jscript(processor));
+        processor_replace_add(processor, 0, 0,
+                              processor_jscript(processor));
 
     return istream_struct_cast(&processor->output);
 }
@@ -381,10 +389,10 @@ processor_finish_script(processor_t processor, off_t end)
     assert(processor->script_start_offset <= end);
 
     if (processor->script_start_offset < end)
-        replace_add(&processor->replace,
-                    processor->script_start_offset, end,
-                    js_filter_new(processor->pool,
-                                  growing_buffer_istream(processor->script)));
+        processor_replace_add(processor,
+                              processor->script_start_offset, end,
+                              js_filter_new(processor->pool,
+                                            growing_buffer_istream(processor->script)));
 
     processor->script = NULL;
 }
@@ -457,9 +465,9 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                !processor_option_body(processor) &&
                tag->type == TAG_CLOSE &&
                strref_cmp_literal(&tag->name, "head") == 0) {
-        replace_add(&processor->replace,
-                    tag->start, tag->start,
-                    processor_jscript(processor));
+        processor_replace_add(processor,
+                              tag->start, tag->start,
+                              processor_jscript(processor));
         processor->in_head = 1;
     } else if (processor->end_of_body != (off_t)-1) {
         /* we have left the body, ignore the rest */
@@ -506,9 +514,9 @@ replace_attribute_value(processor_t processor,
                         const struct parser_attr *attr,
                         istream_t value)
 {
-    replace_add(&processor->replace,
-                attr->value_start, attr->value_end,
-                value);
+    processor_replace_add(processor,
+                          attr->value_start, attr->value_end,
+                          value);
 }
 
 static void
@@ -757,7 +765,7 @@ body_element_finished(processor_t processor, const struct parser_tag *tag)
             return;
 
         if (processor_option_body(processor))
-            replace_add(&processor->replace, 0, tag->end, NULL);
+            processor_replace_add(processor, 0, tag->end, NULL);
 
         processor->in_body = 1;
     } else {
@@ -788,8 +796,8 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
             return;
         
         istream_t istream = embed_element_finished(processor);
-        replace_add(&processor->replace, processor->widget_start_offset,
-                    tag->end, istream);
+        processor_replace_add(processor, processor->widget_start_offset,
+                              tag->end, istream);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
         assert(processor->embedded_widget != NULL);
 
