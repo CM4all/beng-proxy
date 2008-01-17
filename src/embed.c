@@ -12,6 +12,7 @@
 #include "session.h"
 #include "cookie.h"
 #include "async.h"
+#include "google-gadget.h"
 
 #include <assert.h>
 #include <string.h>
@@ -292,6 +293,10 @@ embed_new(pool_t pool, struct widget *widget,
     assert(widget != NULL);
     assert(widget->class != NULL);
     assert((options & PROCESSOR_CONTAINER) == 0);
+
+    if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET)
+        /* XXX put this check somewhere else */
+        return embed_google_gadget(pool, env, widget);
 
     if (widget->class->is_container)
         options |= PROCESSOR_CONTAINER;

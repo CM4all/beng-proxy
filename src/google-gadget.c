@@ -1,0 +1,422 @@
+/*
+ * Emulation layer for Google gadgets.
+ *
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#include "google-gadget.h"
+#include "widget.h"
+#include "istream.h"
+#include "async.h"
+#include "url-stream.h"
+#include "http-response.h"
+#include "parser.h"
+#include "processor.h"
+
+struct google_gadget {
+    pool_t pool;
+    struct processor_env *env;
+    struct widget *widget;
+
+    istream_t delayed;
+
+    struct async_operation_ref async;
+
+    struct parser *parser;
+
+    struct {
+        enum {
+            TAG_NONE,
+            TAG_CONTENT,
+        } tag;
+
+        enum {
+            TYPE_NONE,
+            TYPE_URL,
+            TYPE_HTML,
+        } type;
+
+        unsigned sending_content:1;
+
+        const char *url;
+    } from_parser;
+
+    struct istream output;
+};
+
+
+static void
+google_send_error(struct google_gadget *gw, const char *msg)
+{
+    istream_delayed_set(gw->delayed,
+                        istream_string_new(gw->pool, msg));
+    gw->delayed = NULL;
+
+    if (gw->parser != NULL)
+        parser_close(gw->parser);
+    else if (async_ref_defined(&gw->async))
+        async_abort(&gw->async);
+}
+
+
+/*
+ * url_stream handler (HTML contents)
+ *
+ */
+
+static void
+google_gadget_content_response(http_status_t status, strmap_t headers,
+                               istream_t body, void *ctx)
+{
+    struct google_gadget *gw = ctx;
+    const char *p;
+
+    assert(gw->delayed != NULL);
+
+    async_ref_clear(&gw->async);
+
+    if (!http_status_is_success(status)) {
+        if (body != NULL)
+            istream_close(body);
+
+        google_send_error(gw, "content server reported error");
+        return;
+    }
+
+    p = strmap_get(headers, "content-type");
+    if (p == NULL || strncmp(p, "text/html", 9) != 0 || body == NULL) {
+        if (body != NULL)
+            istream_close(body);
+
+        google_send_error(gw, "text/html expected");
+        return;
+    }
+
+    istream_delayed_set(gw->delayed, body);
+    gw->delayed = NULL;
+}
+
+static void
+google_gadget_content_abort(void *ctx)
+{
+    struct google_gadget *gw = ctx;
+
+    assert(gw->delayed != NULL);
+
+    async_ref_clear(&gw->async);
+
+    istream_free(&gw->delayed);
+    pool_unref(gw->pool);
+}
+
+static const struct http_response_handler google_gadget_content_handler = {
+    .response = google_gadget_content_response,
+    .abort = google_gadget_content_abort,
+};
+
+
+/*
+ * istream implementation which serves the CDATA section in <Content/>
+ *
+ */
+
+static inline struct google_gadget *
+istream_to_google_gadget(istream_t istream)
+{
+    return (struct google_gadget *)(((char*)istream) - offsetof(struct google_gadget, output));
+}
+
+static void
+istream_google_html_read(istream_t istream)
+{
+    struct google_gadget *gw = istream_to_google_gadget(istream);
+
+    assert(gw->parser != NULL);
+    assert(gw->from_parser.sending_content);
+
+    parser_read(gw->parser);
+}
+
+static void
+istream_google_html_close(istream_t istream)
+{
+    struct google_gadget *gw = istream_to_google_gadget(istream);
+
+    assert(gw->parser != NULL);
+    assert(gw->from_parser.sending_content);
+
+    parser_close(gw->parser);
+}
+
+static const struct istream istream_google_html = {
+    .read = istream_google_html_read,
+    .close = istream_google_html_close,
+};
+
+
+/*
+ * produce output
+ *
+ */
+
+static void
+google_content_tag_finished(struct google_gadget *gw,
+                            const struct parser_tag *tag)
+{
+    switch (gw->from_parser.type) {
+    case TYPE_NONE:
+        break;
+
+    case TYPE_HTML:
+        gw->from_parser.sending_content = 1;
+
+        if (tag->type == TAG_OPEN) {
+            gw->output = istream_google_html;
+            gw->output.pool = gw->pool;
+            istream_delayed_set(gw->delayed, istream_struct_cast(&gw->output));
+        } else {
+            /* it's TAG_SHORT, handle that gracefully */
+            istream_delayed_set(gw->delayed, istream_null_new(gw->pool));
+        }
+
+        gw->delayed = NULL;
+
+        return;
+
+    case TYPE_URL:
+        url_stream_new(gw->pool, gw->env->http_client_stock,
+                       HTTP_METHOD_GET, gw->from_parser.url,
+                       NULL, NULL,
+                       &google_gadget_content_handler, gw,
+                       &gw->async);
+
+        return;
+    }
+
+    google_send_error(gw, "malformed google gadget");
+}
+
+
+/*
+ * parser callbacks
+ *
+ */
+
+static void
+google_parser_tag_start(const struct parser_tag *tag, void *ctx)
+{
+    struct google_gadget *gw = ctx;
+
+    if (gw->from_parser.sending_content) {
+        gw->from_parser.sending_content = 0;
+        istream_invoke_eof(&gw->output);
+    }
+
+    if (strref_cmp_literal(&tag->name, "content") == 0) {
+        gw->from_parser.tag = TAG_CONTENT;
+    } else {
+        gw->from_parser.tag = TAG_NONE;
+    }
+}
+
+static void
+google_parser_tag_finished(const struct parser_tag *tag, void *ctx)
+{
+    struct google_gadget *gw = ctx;
+
+    if (tag->type != TAG_CLOSE &&
+        gw->from_parser.tag == TAG_CONTENT &&
+        gw->delayed != NULL) {
+        gw->from_parser.tag = TAG_NONE;
+        google_content_tag_finished(gw, tag);
+    } else {
+        gw->from_parser.tag = TAG_NONE;
+    }
+}
+
+static void
+google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
+{
+    struct google_gadget *gw = ctx;
+
+    switch (gw->from_parser.tag) {
+    case TAG_NONE:
+        break;
+
+    case TAG_CONTENT:
+        if (strref_cmp_literal(&attr->name, "type") == 0) {
+            if (strref_cmp_literal(&attr->value, "url") == 0)
+                gw->from_parser.type = TYPE_URL;
+            else if (strref_cmp_literal(&attr->value, "html") == 0)
+                gw->from_parser.type = TYPE_HTML;
+            else {
+                google_send_error(gw, "unknown type attribute");
+                return;
+            }
+        } else if (gw->from_parser.type == TYPE_URL &&
+                   strref_cmp_literal(&attr->name, "href") == 0) {
+            gw->from_parser.url = strref_dup(gw->pool, &attr->value);
+        }
+
+        break;
+    }
+}
+
+static size_t
+google_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
+{
+    struct google_gadget *gw = ctx;
+
+    if (!escaped && gw->from_parser.sending_content)
+        return istream_invoke_data(&gw->output, p, length);
+    else
+        return length;
+}
+
+static void
+google_parser_eof(void *ctx, off_t attr_unused length)
+{
+    struct google_gadget *gw = ctx;
+
+    gw->parser = NULL;
+
+    if (gw->from_parser.sending_content) {
+        gw->from_parser.sending_content = 0;
+        istream_invoke_eof(&gw->output);
+    } else if (gw->delayed != NULL && !async_ref_defined(&gw->async))
+        google_send_error(gw, "google gadget did not contain a valid Content element");
+
+    pool_unref(gw->pool);
+}
+
+static void
+google_parser_abort(void *ctx)
+{
+    struct google_gadget *gw = ctx;
+
+    gw->parser = NULL;
+
+    if (gw->from_parser.sending_content) {
+        gw->from_parser.sending_content = 0;
+        istream_invoke_abort(&gw->output);
+    } else if (gw->delayed != NULL)
+        google_send_error(gw, "google gadget retrieval aborted");
+
+    pool_unref(gw->pool);
+}
+
+static const struct parser_handler google_parser_handler = {
+    .tag_start = google_parser_tag_start,
+    .tag_finished = google_parser_tag_finished,
+    .attr_finished = google_parser_attr_finished,
+    .cdata = google_parser_cdata,
+    .eof = google_parser_eof,
+    .abort = google_parser_abort,
+};
+
+
+/*
+ * url_stream handler (gadget description)
+ *
+ */
+
+static void
+google_gadget_http_response(http_status_t status, strmap_t headers,
+                            istream_t body, void *ctx)
+{
+    struct google_gadget *gw = ctx;
+    const char *p;
+
+    assert(gw->delayed != NULL);
+
+    async_ref_clear(&gw->async);
+
+    if (!http_status_is_success(status)) {
+        if (body != NULL)
+            istream_close(body);
+
+        google_send_error(gw, "widget server reported error");
+        return;
+    }
+
+    p = strmap_get(headers, "content-type");
+    if (p == NULL || strncmp(p, "text/xml", 8) != 0 || body == NULL) {
+        if (body != NULL)
+            istream_close(body);
+
+        google_send_error(gw, "text/xml expected");
+        return;
+    }
+
+    gw->from_parser.tag = TAG_NONE;
+    gw->from_parser.type = TYPE_NONE;
+    gw->from_parser.sending_content = 0;
+    gw->parser = parser_new(gw->pool, body,
+                            &google_parser_handler, gw);
+    istream_read(body);
+}
+
+static void
+google_gadget_http_abort(void *ctx)
+{
+    struct google_gadget *gw = ctx;
+
+    assert(gw->delayed != NULL);
+
+    async_ref_clear(&gw->async);
+
+    istream_free(&gw->delayed);
+
+    pool_unref(gw->pool);
+}
+
+static const struct http_response_handler google_gadget_handler = {
+    .response = google_gadget_http_response,
+    .abort = google_gadget_http_abort,
+};
+
+static void
+google_delayed_abort(void *ctx)
+{
+    struct google_gadget *gw = ctx;
+
+    gw->delayed = NULL;
+
+    if (gw->parser != NULL)
+        parser_close(gw->parser);
+    else if (async_ref_defined(&gw->async))
+        async_abort(&gw->async);
+}
+
+
+/*
+ * constructor
+ *
+ */
+
+istream_t
+embed_google_gadget(pool_t pool, struct processor_env *env,
+                    struct widget *widget)
+{
+    struct google_gadget *gw;
+
+    assert(widget != NULL);
+    assert(widget->class != NULL);
+
+    pool_ref(pool);
+
+    gw = p_malloc(pool, sizeof(*gw));
+    gw->pool = pool;
+    gw->env = env;
+    gw->widget = widget;
+    gw->delayed = istream_delayed_new(pool, google_delayed_abort, gw);
+    gw->parser = NULL;
+
+    url_stream_new(pool, env->http_client_stock,
+                   HTTP_METHOD_GET, widget->class->uri,
+                   NULL, NULL,
+                   &google_gadget_handler, gw,
+                   &gw->async);
+
+    return gw->delayed;
+}

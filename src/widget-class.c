@@ -18,6 +18,12 @@ get_widget_class(pool_t pool, const char *uri)
     wc->type = WIDGET_TYPE_BENG;
     wc->is_container = 1;
 
+    /* XXX */
+    if (strstr(uri, ".xml") != NULL) {
+        wc->type = WIDGET_TYPE_GOOGLE_GADGET;
+        wc->is_container = 0;
+    }
+
     return wc;
 }
 

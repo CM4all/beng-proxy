@@ -72,6 +72,7 @@ SOURCES = src/main.c \
 	src/embed.c \
 	src/wembed.c \
 	src/frame.c \
+	src/google-gadget.c \
 	src/socket-util.c \
 	src/address.c \
 	src/listener.c \
