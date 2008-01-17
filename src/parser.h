@@ -9,6 +9,7 @@
 
 #include "strref.h"
 #include "compiler.h"
+#include "istream.h"
 
 #include <sys/types.h>
 
@@ -36,14 +37,17 @@ struct parser_handler {
     void (*tag_finished)(const struct parser_tag *tag, void *ctx);
     void (*attr_finished)(const struct parser_attr *attr, void *ctx);
     void (*cdata)(const char *p, size_t length, int escaped, void *ctx);
+    void (*eof)(void *ctx, off_t length);
+    void (*abort)(void *ctx);
 };
 
 struct parser;
 
 struct parser * attr_malloc
-parser_new(pool_t pool, const struct parser_handler *handler, void *handler_ctx);
+parser_new(pool_t pool, istream_t input,
+           const struct parser_handler *handler, void *handler_ctx);
 
 void
-parser_feed(struct parser *parser, const char *start, size_t length);
+parser_close(struct parser *parser);
 
 #endif

@@ -52,9 +52,11 @@ enum parser_state {
 };
 
 struct parser {
+    istream_t input;
+    off_t position;
+
     /* internal state */
     enum parser_state state;
-    off_t position;
 
     /* element */
     struct parser_tag tag;
@@ -87,7 +89,7 @@ parser_invoke_attr_finished(struct parser *parser)
     VALGRIND_MAKE_MEM_UNDEFINED(&parser->attr, sizeof(parser->attr));
 }
 
-void
+static void
 parser_feed(struct parser *parser, const char *start, size_t length)
 {
     const char *buffer = start, *end = start + length, *p;
@@ -391,12 +393,56 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
 
 /*
+ * istream handler
+ *
+ */
+
+static size_t
+parser_input_data(const void *data, size_t length, void *ctx)
+{
+    struct parser *parser = ctx;
+
+    parser_feed(parser, data, length);
+    return length;
+}
+
+static void
+parser_input_eof(void *ctx)
+{
+    struct parser *parser = ctx;
+
+    assert(parser->input != NULL);
+
+    istream_clear_unref(&parser->input);
+    parser->handler->eof(parser->handler_ctx, parser->position);
+}
+
+static void
+parser_input_abort(void *ctx)
+{
+    struct parser *parser = ctx;
+
+    assert(parser->input != NULL);
+
+    istream_clear_unref(&parser->input);
+    parser->handler->abort(parser->handler_ctx);
+}
+
+static const struct istream_handler parser_input_handler = {
+    .data = parser_input_data,
+    .eof = parser_input_eof,
+    .abort = parser_input_abort,
+};
+
+
+/*
  * constructor
  *
  */
 
 struct parser * attr_malloc
-parser_new(struct pool *pool, const struct parser_handler *handler, void *handler_ctx)
+parser_new(struct pool *pool, istream_t input,
+           const struct parser_handler *handler, void *handler_ctx)
 {
     struct parser *parser = p_malloc(pool, sizeof(*parser));
 
@@ -405,9 +451,15 @@ parser_new(struct pool *pool, const struct parser_handler *handler, void *handle
     assert(handler->tag_finished != NULL);
     assert(handler->attr_finished != NULL);
     assert(handler->cdata != NULL);
+    assert(handler->eof != NULL);
+    assert(handler->abort != NULL);
 
-    parser->state = PARSER_NONE;
+    istream_assign_ref_handler(&parser->input, input,
+                               &parser_input_handler, parser,
+                               0);
+
     parser->position = 0;
+    parser->state = PARSER_NONE;
     parser->handler = handler;
     parser->handler_ctx = handler_ctx;
 

@@ -4,8 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "replace.h"
+#include "istream.h"
 #include "growing-buffer.h"
+
+#include <daemon/log.h>
 
 #include <assert.h>
 
@@ -15,6 +17,41 @@ struct substitution {
     off_t start, end;
     istream_t istream;
 };
+
+struct replace {
+    struct istream output;
+    istream_t input;
+
+    int had_input;
+
+    int quiet, writing;
+    struct growing_buffer *buffer;
+    off_t source_length, position;
+
+    struct substitution *first_substitution, **append_substitution_p;
+
+    int read_locked;
+
+#ifndef NDEBUG
+    off_t last_substitution_end;
+#endif
+};
+
+/** is this substitution object the last chunk in this stream, i.e. is
+    there no source data following it? */
+static inline int
+substitution_is_tail(const struct substitution *s)
+{
+    assert(s != NULL);
+    assert(s->replace != NULL);
+    assert(s->end <= s->replace->source_length);
+
+    return s->next == NULL && (s->replace->quiet ||
+                               s->end == s->replace->source_length);
+}
+
+static void
+replace_read(struct replace *replace);
 
 /**
  * Activate the next substitution object after s.
@@ -38,6 +75,11 @@ replace_to_next_substitution(struct replace *replace, struct substitution *s)
            replace->first_substitution == NULL ||
            replace->first_substitution->start >= replace->position);
 
+    if (substitution_is_tail(s)) {
+        istream_invoke_eof(&replace->output);
+        return;
+    }
+
     /* don't recurse if we're being called
        replace_read_substitution() */
     if (!replace->read_locked)
@@ -56,7 +98,7 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
     struct substitution *s = ctx;
     struct replace *replace = s->replace;
 
-    if (replace->reading_source)
+    if (!replace->writing)
         return 0;
 
     assert(replace->quiet || replace->position <= s->start);
@@ -67,7 +109,7 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
         (!replace->quiet && replace->position < s->start))
         return 0;
 
-    return istream_invoke_data(replace->output, data, length);
+    return istream_invoke_data(&replace->output, data, length);
 }
 
 static void
@@ -79,7 +121,7 @@ replace_substitution_eof(void *ctx)
     istream_clear_unref(&s->istream);
 
     if (replace->first_substitution != s ||
-        replace->reading_source ||
+        !replace->writing ||
         (!replace->quiet && replace->position < s->start))
         return;
 
@@ -96,39 +138,11 @@ static const struct istream_handler replace_substitution_handler = {
 
 
 /*
- * constructor and destructor
+ * destructor
  *
  */
 
-void
-replace_init(struct replace *replace, pool_t pool,
-             struct istream *output,
-             void (*output_eof)(struct istream *output),
-             int quiet)
-{
-    assert(replace != NULL);
-
-    replace->pool = pool;
-    replace->output = output;
-    replace->output_eof = output_eof;
-
-    replace->quiet = quiet;
-    replace->reading_source = !quiet;
-    replace->source_length = 0;
-    if (!quiet) {
-        replace->buffer = growing_buffer_new(pool, 8192);
-    }
-
-    replace->first_substitution = NULL;
-    replace->append_substitution_p = &replace->first_substitution;
-    replace->read_locked = 0;
-
-#ifndef NDEBUG
-    replace->last_substitution_end = 0;
-#endif
-}
-
-void
+static void
 replace_destroy(struct replace *replace)
 {
     assert(replace != NULL);
@@ -137,18 +151,8 @@ replace_destroy(struct replace *replace)
         struct substitution *s = replace->first_substitution;
         replace->first_substitution = s->next;
 
-        if (s->istream != NULL) {
-            istream_close(s->istream);
-            assert(s->istream == NULL);
-        }
-    }
-
-    replace->quiet = 0;
-
-    if (replace->output != NULL) {
-        istream_t output = istream_struct_cast(replace->output);
-        replace->output = NULL;
-        istream_close(output);
+        if (s->istream != NULL)
+            istream_free_unref_handler(&s->istream);
     }
 }
 
@@ -158,7 +162,7 @@ replace_destroy(struct replace *replace)
  *
  */
 
-size_t
+static size_t
 replace_feed(struct replace *replace, const void *data, size_t length)
 {
     assert(replace != NULL);
@@ -166,7 +170,11 @@ replace_feed(struct replace *replace, const void *data, size_t length)
     assert(length > 0);
 
     if (!replace->quiet) {
-        assert(replace->reading_source);
+        if (replace->source_length >= 8 * 1024 * 1024) {
+            daemon_log(2, "file too large for processor\n");
+            istream_close(replace->input);
+            return 0;
+        }
 
         growing_buffer_write_buffer(replace->buffer, data, length);
     }
@@ -176,33 +184,19 @@ replace_feed(struct replace *replace, const void *data, size_t length)
     return length;
 }
 
-void
-replace_eof(struct replace *replace)
-{
-    assert(replace != NULL);
-
-    if (!replace->quiet) {
-        replace->reading_source = 0;
-        replace->position = 0;
-    }
-
-    replace_read(replace);
-}
-
-void
+static void
 replace_add(struct replace *replace, off_t start, off_t end,
             istream_t istream)
 {
     struct substitution *s;
 
     assert(replace != NULL);
-    assert(replace->quiet || replace->reading_source);
+    assert(replace->quiet || !replace->writing);
     assert(start >= 0);
     assert(start <= end);
-    assert(replace->quiet || end <= replace->source_length);
     assert(start >= replace->last_substitution_end);
 
-    s = p_malloc(replace->pool, sizeof(*s));
+    s = p_malloc(replace->output.pool, sizeof(*s));
     s->next = NULL;
     s->replace = replace;
     s->start = start;
@@ -224,7 +218,7 @@ replace_add(struct replace *replace, off_t start, off_t end,
     replace->append_substitution_p = &s->next;
 }
 
-off_t
+static off_t
 replace_available(const struct replace *replace)
 {
     const struct substitution *subst;
@@ -291,7 +285,6 @@ replace_read_from_buffer(struct replace *replace, size_t max_length)
 
     assert(replace != NULL);
     assert(replace->buffer != NULL);
-    assert(replace->output != NULL);
     assert(max_length > 0);
 
     data = growing_buffer_read(replace->buffer, &length);
@@ -301,7 +294,7 @@ replace_read_from_buffer(struct replace *replace, size_t max_length)
     if (length > max_length)
         length = max_length;
 
-    nbytes = istream_invoke_data(replace->output, data, length);
+    nbytes = istream_invoke_data(&replace->output, data, length);
     assert(nbytes <= length);
 
     growing_buffer_consume(replace->buffer, nbytes);
@@ -319,7 +312,7 @@ replace_read_from_buffer(struct replace *replace, size_t max_length)
 static size_t
 replace_try_read_from_buffer(struct replace *replace)
 {
-    size_t max_length;
+    size_t max_length, rest;
 
     assert(replace != NULL);
 
@@ -336,10 +329,14 @@ replace_try_read_from_buffer(struct replace *replace)
     if (max_length == 0)
         return 0;
 
-    return replace_read_from_buffer(replace, max_length);
+    rest = replace_read_from_buffer(replace, max_length);
+    if (rest == 0 && replace->first_substitution == NULL)
+        istream_invoke_eof(&replace->output);
+
+    return rest;
 }
 
-void
+static void
 replace_read(struct replace *replace)
 {
     pool_t pool;
@@ -347,34 +344,198 @@ replace_read(struct replace *replace)
     size_t rest;
 
     assert(replace != NULL);
-    assert(replace->output != NULL);
     assert(replace->quiet || replace->position <= replace->source_length);
+    assert(replace->writing);
 
-    if (replace->reading_source)
-        return;
-
-    pool_ref(replace->pool);
-    pool = replace->pool;
+    pool_ref(replace->output.pool);
+    pool = replace->output.pool;
 
     /* read until someone (input or output) blocks */
-    while (1) {
+    do {
         blocking = replace_read_substitution(replace);
-        if (replace->output == NULL || blocking)
+        if (blocking)
             break;
 
         rest = replace_try_read_from_buffer(replace);
-        if (replace->output == NULL || rest > 0)
+        if (rest > 0)
             break;
-
-        if (replace->first_substitution == NULL) {
-            if (!replace->quiet)
-                replace->buffer = NULL;
-
-            istream_invoke_eof(replace->output);
-            replace->output_eof(replace->output);
-            break;
-        }
-    } 
+    } while (replace->first_substitution != NULL);
 
     pool_unref(pool);
+}
+
+static void
+replace_read_check_empty(struct replace *replace)
+{
+    assert(replace != NULL);
+    assert(replace->writing);
+    assert(replace->input == NULL);
+
+    if (replace->quiet && replace->first_substitution == NULL)
+        istream_invoke_eof(&replace->output);
+    else
+        replace_read(replace);
+}
+
+
+/*
+ * input handler
+ *
+ */
+
+static size_t
+replace_source_data(const void *data, size_t length, void *ctx)
+{
+    struct replace *replace = ctx;
+
+    replace->had_input = 1;
+
+    return replace_feed(replace, data, length);
+}
+
+static void
+replace_source_eof(void *ctx)
+{
+    struct replace *replace = ctx;
+
+    istream_clear_unref(&replace->input);
+
+    if (replace->writing)
+        replace_read_check_empty(replace);
+}
+
+static void
+replace_source_abort(void *ctx)
+{
+    struct replace *replace = ctx;
+
+    replace_destroy(replace);
+    istream_clear_unref(&replace->input);
+    istream_invoke_abort(&replace->output);
+}
+
+static const struct istream_handler replace_input_handler = {
+    .data = replace_source_data,
+    .eof = replace_source_eof,
+    .abort = replace_source_abort,
+};
+
+
+/*
+ * istream implementation
+ *
+ */
+
+static inline struct replace *
+istream_to_replace(istream_t istream)
+{
+    return (struct replace *)(((char*)istream) - offsetof(struct replace, output));
+}
+
+static off_t
+istream_replace_available(istream_t istream, int partial)
+{
+    struct replace *replace = istream_to_replace(istream);
+
+    /* XXX optimize */
+
+    if (partial && replace->writing)
+        return replace_available(replace);
+    else
+        return (off_t)-1;
+}
+
+static void
+istream_replace_read(istream_t istream)
+{
+    struct replace *replace = istream_to_replace(istream);
+
+    if (replace->input != NULL) {
+        do {
+            replace->had_input = 0;
+            istream_read(replace->input);
+        } while (replace->input != NULL && replace->had_input);
+    } else if (replace->writing)
+        replace_read(replace);
+}
+
+static void
+istream_replace_close(istream_t istream)
+{
+    struct replace *replace = istream_to_replace(istream);
+
+    replace_destroy(replace);
+
+    if (replace->input == NULL)
+        istream_invoke_abort(&replace->output);
+    else
+        istream_close(replace->input);
+}
+
+static const struct istream istream_replace = {
+    .available = istream_replace_available,
+    .read = istream_replace_read,
+    .close = istream_replace_close,
+};
+
+
+/*
+ * constructor
+ *
+ */
+
+istream_t
+istream_replace_new(pool_t pool, istream_t input, int quiet)
+{
+    struct replace *replace = p_malloc(pool, sizeof(*replace));
+
+    assert(input != NULL);
+    assert(!istream_has_handler(input));
+
+    replace->output = istream_replace;
+    replace->output.pool = pool;
+
+    istream_assign_ref_handler(&replace->input, input,
+                               &replace_input_handler, replace,
+                               0);
+
+    replace->quiet = quiet;
+    replace->writing = 0;
+    replace->source_length = 0;
+
+    if (!quiet)
+        replace->buffer = growing_buffer_new(pool, 8192);
+
+    replace->first_substitution = NULL;
+    replace->append_substitution_p = &replace->first_substitution;
+    replace->read_locked = 0;
+
+#ifndef NDEBUG
+    replace->last_substitution_end = 0;
+#endif
+
+    return istream_struct_cast(&replace->output);
+}
+
+void
+istream_replace_add(istream_t istream, off_t start, off_t end,
+                    istream_t contents)
+{
+    struct replace *replace = istream_to_replace(istream);
+
+    replace_add(replace, start, end, contents);
+}
+
+void
+istream_replace_finish(istream_t istream)
+{
+    struct replace *replace = istream_to_replace(istream);
+
+    assert(!replace->writing);
+
+    replace->writing = 1;
+    replace->position = 0;
+
+    if (replace->input == NULL)
+        replace_read_check_empty(replace);
 }

@@ -7,7 +7,6 @@
 #include "processor.h"
 #include "parser.h"
 #include "strutil.h"
-#include "replace.h"
 #include "args.h"
 #include "widget.h"
 #include "growing-buffer.h"
@@ -24,8 +23,6 @@ typedef struct processor *processor_t;
 struct processor {
     pool_t pool;
 
-    struct istream output;
-    istream_t input;
     int had_input;
 
     pool_t widget_pool;
@@ -34,7 +31,7 @@ struct processor {
     struct processor_env *env;
     unsigned options;
 
-    struct replace replace;
+    istream_t replace;
 
     struct parser *parser;
     int in_html, in_head, in_body;
@@ -98,188 +95,12 @@ processor_is_quiet(processor_t processor)
         (processor_option_body(processor) && !processor->in_body);
 }
 
-
-static void
-processor_close(processor_t processor)
-{
-    assert(processor != NULL);
-
-    processor->replace.output = NULL;
-    replace_destroy(&processor->replace);
-
-    if (processor->input != NULL)
-        istream_free_unref_handler(&processor->input);
-
-    pool_unref(processor->pool);
-}
-
-static void
-processor_abort(processor_t processor)
-{
-    assert(processor != NULL);
-
-    processor->replace.output = NULL;
-    replace_destroy(&processor->replace);
-
-    if (processor->input != NULL)
-        istream_free_unref_handler(&processor->input);
-
-    istream_invoke_abort(&processor->output);
-
-    pool_unref(processor->pool);
-}
-
 static void
 processor_replace_add(processor_t processor, off_t start, off_t end,
                       istream_t istream)
 {
-    replace_add(&processor->replace, start, end, istream);
+    istream_replace_add(processor->replace, start, end, istream);
 }
-
-
-/*
- * istream implementation
- *
- */
-
-static inline processor_t
-istream_to_processor(istream_t istream)
-{
-    return (processor_t)(((char*)istream) - offsetof(struct processor, output));
-}
-
-static off_t
-processor_output_stream_available(istream_t istream, int partial)
-{
-    processor_t processor = istream_to_processor(istream);
-
-    if (partial)
-        return replace_available(&processor->replace);
-    else
-        return (off_t)-1;
-}
-
-static void
-processor_output_stream_read(istream_t istream)
-{
-    processor_t processor = istream_to_processor(istream);
-
-    if (processor->input != NULL) {
-        do {
-            processor->had_input = 0;
-            istream_read(processor->input);
-        } while (processor->input != NULL && processor->had_input);
-    } else
-        replace_read(&processor->replace);
-}
-
-static void
-processor_output_stream_close(istream_t istream)
-{
-    processor_t processor = istream_to_processor(istream);
-
-    processor_abort(processor);
-}
-
-static const struct istream processor_output_stream = {
-    .available = processor_output_stream_available,
-    .read = processor_output_stream_read,
-    .close = processor_output_stream_close,
-};
-
-
-static void
-replace_output_eof(struct istream *istream)
-{
-    processor_t processor = istream_to_processor(istream_struct_cast(istream));
-
-    assert(processor->input == NULL);
-
-    processor_close(processor);
-}
-
-
-/*
- * istream handler
- *
- */
-
-static size_t
-processor_input_data(const void *data, size_t length, void *ctx)
-{
-    processor_t processor = ctx;
-    size_t nbytes;
-
-    assert(processor != NULL);
-    assert(data != NULL);
-    assert(length > 0);
-
-    nbytes = replace_feed(&processor->replace, data, length);
-    if (nbytes == 0)
-        return 0;
-
-    parser_feed(processor->parser, (const char*)data, nbytes);
-
-    if (!processor_option_quiet(processor) &&
-        processor->replace.source_length >= 8 * 1024 * 1024) {
-        daemon_log(2, "file too large for processor\n");
-        processor_abort(processor);
-        return 0;
-    }
-
-    processor->had_input = 1;
-
-    return (size_t)nbytes;
-}
-
-static void
-processor_input_eof(void *ctx)
-{
-    processor_t processor = ctx;
-
-    assert(processor != NULL);
-    assert(processor->input != NULL);
-
-    istream_clear_unref(&processor->input);
-
-    if (processor->end_of_body != (off_t)-1) {
-        /* remove everything between closing body tag and end of
-           file */
-        assert(processor_option_body(processor));
-
-        processor_replace_add(processor, processor->end_of_body,
-                              processor->replace.source_length, NULL);
-    } else if (processor_option_body(processor) &&
-               processor->in_html && !processor->in_body) {
-        /* no body */
-
-        processor_replace_add(processor, 0,
-                              processor->replace.source_length,
-                              istream_string_new(processor->pool,
-                                                 "<!-- the widget has no HTML body -->"));
-    }
-
-    replace_eof(&processor->replace);
-}
-
-static void
-processor_input_abort(void *ctx)
-{
-    processor_t processor = ctx;
-
-    assert(processor->input != NULL);
-
-    istream_clear_unref(&processor->input);
-
-    processor_abort(processor); /* XXX */
-}
-
-static const struct istream_handler processor_input_handler = {
-    .data = processor_input_data,
-    .eof = processor_input_eof,
-    .abort = processor_input_abort,
-};
-
 
 static istream_t
 processor_jscript(processor_t processor)
@@ -306,7 +127,7 @@ processor_jscript(processor_t processor)
  */
 
 static void
-processor_parser_init(processor_t processor);
+processor_parser_init(processor_t processor, istream_t input);
 
 istream_t
 processor_new(pool_t pool, istream_t istream,
@@ -346,25 +167,12 @@ processor_new(pool_t pool, istream_t istream,
     processor = p_malloc(pool, sizeof(*processor));
 
     processor->pool = pool;
-    processor->output = processor_output_stream;
-    processor->output.pool = pool;
 
     processor->widget_pool = env->pool;
-
-    istream_assign_ref_handler(&processor->input, istream,
-                               &processor_input_handler, processor,
-                               0);
 
     processor->widget = widget;
     processor->env = env;
     processor->options = options;
-
-    replace_init(&processor->replace, pool,
-                 &processor->output,
-                 replace_output_eof,
-                 processor_option_quiet(processor));
-
-    processor_parser_init(processor);
 
     processor->in_html = 0;
     processor->in_head = 0;
@@ -373,12 +181,17 @@ processor_new(pool_t pool, istream_t istream,
     processor->embedded_widget = NULL;
     processor->script = NULL;
 
+    istream = istream_tee_new(pool, istream);
+    processor_parser_init(processor, istream);
+    processor->replace = istream_replace_new(pool, istream_tee_second(istream),
+                                             processor_option_quiet(processor));
+
     if (processor_option_jscript(processor) &&
         processor_option_body(processor))
         processor_replace_add(processor, 0, 0,
                               processor_jscript(processor));
 
-    return istream_struct_cast(&processor->output);
+    return processor->replace;
 }
 
 
@@ -840,16 +653,58 @@ processor_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
         growing_buffer_write_buffer(processor->script, p, length);
 }
 
+static void
+processor_parser_eof(void *ctx, off_t length)
+{
+    processor_t processor = ctx;
+
+    assert(processor->parser != NULL);
+
+    processor->parser = NULL;
+
+    if (processor->end_of_body != (off_t)-1) {
+        /* remove everything between closing body tag and end of
+           file */
+        assert(processor_option_body(processor));
+
+        processor_replace_add(processor, processor->end_of_body,
+                              length, NULL);
+    } else if (processor_option_body(processor) &&
+               processor->in_html && !processor->in_body) {
+        /* no body */
+
+        processor_replace_add(processor, 0, length,
+                              istream_string_new(processor->pool,
+                                                 "<!-- the widget has no HTML body -->"));
+    }
+
+    istream_replace_finish(processor->replace);
+
+    pool_unref(processor->pool);
+}
+
+static void
+processor_parser_abort(void *ctx)
+{
+    processor_t processor = ctx;
+
+    /* XXX */
+
+    pool_unref(processor->pool);
+}
+
 static const struct parser_handler processor_parser_handler = {
     .tag_start = processor_parser_tag_start,
     .tag_finished = processor_parser_tag_finished,
     .attr_finished = processor_parser_attr_finished,
     .cdata = processor_parser_cdata,
+    .eof = processor_parser_eof,
+    .abort = processor_parser_abort,
 };
 
 static void
-processor_parser_init(processor_t processor)
+processor_parser_init(processor_t processor, istream_t input)
 {
-    processor->parser = parser_new(processor->pool,
+    processor->parser = parser_new(processor->pool, input,
                                    &processor_parser_handler, processor);
 }

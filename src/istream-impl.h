@@ -67,4 +67,14 @@ istream_tee_new(pool_t pool, istream_t input);
 istream_t
 istream_tee_second(istream_t istream);
 
+istream_t
+istream_replace_new(pool_t pool, istream_t input, int quiet);
+
+void
+istream_replace_add(istream_t istream, off_t start, off_t end,
+                    istream_t contents);
+
+void
+istream_replace_finish(istream_t istream);
+
 #endif
