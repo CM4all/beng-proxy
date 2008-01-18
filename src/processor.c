@@ -295,6 +295,8 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 {
     processor_t processor = ctx;
 
+    processor->tag = TAG_NONE;
+
     if (processor->script != NULL)
         processor_finish_script(processor, tag->start);
 
