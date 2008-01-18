@@ -159,9 +159,11 @@ processor_subst_google_gadget(pool_t pool, istream_t istream,
     const char *prefix;
 
     prefix = widget_prefix(pool, widget);
-    if (prefix != NULL)
+    if (prefix != NULL) {
+        const char *module_id = p_strcat(pool, prefix, "widget", NULL);
         istream = istream_subst_new(pool, istream,
-                                    "__MODULE_ID__", prefix);
+                                    "__MODULE_ID__", module_id);
+    }
 
     return istream;
 }
