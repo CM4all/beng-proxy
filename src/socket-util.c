@@ -75,6 +75,12 @@ socket_unix_connect(const char *path)
     sa.sun_family = AF_UNIX;
     memcpy(sa.sun_path, path, path_length);
 
+#ifdef VALGRIND
+    /* valgrind warns about uninitialized memory in the tail of
+       sa.sun_path */
+    memset(sa.sun_path + path_length, 0, sizeof(sa.sun_path) - path_length);
+#endif
+
     ret = connect(fd, (struct sockaddr*)&sa, sizeof(sa));
     if (ret < 0) {
         int save_errno = errno;
