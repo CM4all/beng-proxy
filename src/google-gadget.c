@@ -48,14 +48,18 @@ struct google_gadget {
 static void
 google_send_error(struct google_gadget *gw, const char *msg)
 {
-    istream_delayed_set(gw->delayed,
-                        istream_string_new(gw->pool, msg));
+    istream_t response = istream_string_new(gw->pool, msg);
+    istream_delayed_set(gw->delayed, response);
     gw->delayed = NULL;
 
     if (gw->parser != NULL)
         parser_close(gw->parser);
     else if (async_ref_defined(&gw->async))
         async_abort(&gw->async);
+
+    pool_unref(gw->pool);
+
+    istream_read(response);
 }
 
 
