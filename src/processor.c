@@ -152,6 +152,20 @@ processor_subst_beng_widget(pool_t pool, istream_t istream,
     return istream;
 }
 
+static istream_t
+processor_subst_google_gadget(pool_t pool, istream_t istream,
+                              struct widget *widget)
+{
+    const char *prefix;
+
+    prefix = widget_prefix(pool, widget);
+    if (prefix != NULL)
+        istream = istream_subst_new(pool, istream,
+                                    "__MODULE_ID__", prefix);
+
+    return istream;
+}
+
 static void
 processor_parser_init(processor_t processor, istream_t input);
 
@@ -170,6 +184,10 @@ processor_new(pool_t pool, istream_t istream,
     switch (widget->class == NULL ? WIDGET_TYPE_BENG : widget->class->type) {
     case WIDGET_TYPE_BENG:
         istream = processor_subst_beng_widget(pool, istream, widget, env);
+        break;
+
+    case WIDGET_TYPE_GOOGLE_GADGET:
+        istream = processor_subst_google_gadget(pool, istream, widget);
         break;
     }
 
