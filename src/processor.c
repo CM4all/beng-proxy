@@ -222,7 +222,8 @@ processor_new(pool_t pool, istream_t istream,
                                              processor_option_quiet(processor));
 
     if (processor_option_jscript(processor) &&
-        processor_option_body(processor))
+        (processor_option_body(processor) ||
+         (widget->class != NULL && widget->class->type == WIDGET_TYPE_GOOGLE_GADGET)))
         processor_replace_add(processor, 0, 0,
                               processor_jscript(processor));
 
