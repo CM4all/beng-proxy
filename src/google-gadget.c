@@ -344,7 +344,9 @@ google_gadget_http_response(http_status_t status, strmap_t headers,
     }
 
     p = strmap_get(headers, "content-type");
-    if (p == NULL || strncmp(p, "text/xml", 8) != 0 || body == NULL) {
+    if (p == NULL || body == NULL ||
+        (strncmp(p, "text/xml", 8) != 0 &&
+         strncmp(p, "application/xml", 15) != 0)) {
         if (body != NULL)
             istream_close(body);
 
