@@ -9,6 +9,12 @@
 #include <string.h>
 #include <assert.h>
 
+const struct widget_class root_widget_class = {
+    .uri = NULL,
+    .type = WIDGET_TYPE_BENG,
+    .is_container = 1,
+};
+
 const struct widget_class *
 get_widget_class(pool_t pool, const char *uri)
 {

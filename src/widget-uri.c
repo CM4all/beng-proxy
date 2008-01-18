@@ -49,7 +49,7 @@ const char *
 widget_absolute_uri(pool_t pool, const struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length)
 {
-    if (widget->class == NULL)
+    if (widget->class == &root_widget_class)
         return NULL;
 
     return uri_absolute(pool, widget_real_uri(widget),
@@ -128,7 +128,7 @@ widget_external_uri(pool_t pool,
 
     if (widget->id == NULL ||
         external_uri == NULL ||
-        widget->class == NULL)
+        widget->class == &root_widget_class)
         return new_uri;
 
     if (new_uri == NULL)

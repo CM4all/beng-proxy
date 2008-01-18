@@ -120,7 +120,7 @@ response_invoke_processor(struct request *request2,
                        embed_widget_callback);
 
     widget = p_malloc(request->pool, sizeof(*widget));
-    widget_init(widget, NULL);
+    widget_init(widget, &root_widget_class);
     widget->from_request.session = session_get_widget(request2->env.session,
                                                       strref_dup(request->pool,
                                                                  &request2->uri.base),

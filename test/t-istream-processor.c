@@ -20,7 +20,7 @@ my_embed_widget_callback(pool_t pool, struct processor_env *env,
     (void)env;
 
     return istream_string_new(pool,
-                              widget->class != NULL && widget->class->uri != NULL
+                              widget->class->uri != NULL
                               ? widget->class->uri : "bar");
 }
 

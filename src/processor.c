@@ -183,7 +183,7 @@ processor_new(pool_t pool, istream_t istream,
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
 
-    switch (widget->class == NULL ? WIDGET_TYPE_BENG : widget->class->type) {
+    switch (widget->class->type) {
     case WIDGET_TYPE_BENG:
         istream = processor_subst_beng_widget(pool, istream, widget, env);
         break;
@@ -223,7 +223,7 @@ processor_new(pool_t pool, istream_t istream,
 
     if (processor_option_jscript(processor) &&
         (processor_option_body(processor) ||
-         (widget->class != NULL && widget->class->type == WIDGET_TYPE_GOOGLE_GADGET)))
+         widget->class->type == WIDGET_TYPE_GOOGLE_GADGET))
         processor_replace_add(processor, 0, 0,
                               processor_jscript(processor));
 
