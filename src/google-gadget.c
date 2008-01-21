@@ -43,8 +43,14 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
     assert(gg != NULL);
     assert(gg->delayed != NULL);
 
-    istream_delayed_set(gg->delayed, google_gadget_process(gg, istream));
-    gg->delayed = NULL;
+    if (gg->has_locale && gg->waiting_for_locale) {
+        assert(gg->raw == NULL);
+
+        gg->raw = istream;
+    } else {
+        istream_delayed_set(gg->delayed, google_gadget_process(gg, istream));
+        gg->delayed = NULL;
+    }
 }
 
 
@@ -143,6 +149,35 @@ static const struct istream istream_google_html = {
 
 
 /*
+ * msg callbacks
+ *
+ */
+
+void
+google_gadget_msg_eof(struct google_gadget *gg)
+{
+    /* XXX */
+    (void)gg;
+
+    assert(gg->has_locale && gg->waiting_for_locale);
+
+    gg->waiting_for_locale = 0;
+
+    if (gg->raw != NULL) {
+        gg_set_content(gg, gg->raw);
+        istream_read(gg->raw);
+    }
+}
+
+void
+google_gadget_msg_abort(struct google_gadget *gg)
+{
+    /* XXX */
+    google_gadget_msg_eof(gg);
+}
+
+
+/*
  * produce output
  *
  */
@@ -200,7 +235,12 @@ google_parser_tag_start(const struct parser_tag *tag, void *ctx)
         istream_invoke_eof(&gw->output);
     }
 
-    if (strref_cmp_literal(&tag->name, "content") == 0) {
+    if (!gw->has_locale && tag->type != TAG_CLOSE &&
+        strref_cmp_literal(&tag->name, "locale") == 0) {
+        gw->from_parser.tag = TAG_LOCALE;
+        gw->has_locale = 1;
+        gw->waiting_for_locale = 0;
+    } else if (strref_cmp_literal(&tag->name, "content") == 0) {
         gw->from_parser.tag = TAG_CONTENT;
     } else {
         gw->from_parser.tag = TAG_NONE;
@@ -231,6 +271,16 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     case TAG_NONE:
         break;
 
+    case TAG_LOCALE:
+        if (strref_cmp_literal(&attr->name, "messages") == 0 &&
+            !strref_is_empty(&attr->value) &&
+            gw->delayed != NULL) {
+            google_gadget_msg_load(gw, strref_dup(gw->pool, &attr->value));
+            gw->waiting_for_locale = 1;
+            gw->raw = NULL;
+        }
+        break;
+
     case TAG_CONTENT:
         if (strref_cmp_literal(&attr->name, "type") == 0) {
             if (strref_cmp_literal(&attr->value, "url") == 0)
@@ -255,9 +305,11 @@ google_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 {
     struct google_gadget *gw = ctx;
 
-    if (!escaped && gw->from_parser.sending_content)
+    if (!escaped && gw->from_parser.sending_content) {
+        if (gw->has_locale && gw->waiting_for_locale)
+            return 0;
         return istream_invoke_data(&gw->output, p, length);
-    else
+    } else
         return length;
 }
 
@@ -400,7 +452,9 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     gw->env = env;
     gw->widget = widget;
     gw->delayed = istream_delayed_new(pool, google_delayed_abort, gw);
+    gw->subst = istream_subst_new(pool, gw->delayed);
     gw->parser = NULL;
+    gw->has_locale = 0;
 
     url_stream_new(pool, env->http_client_stock,
                    HTTP_METHOD_GET, widget->class->uri,
@@ -408,5 +462,5 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
                    &google_gadget_handler, gw,
                    &gw->async);
 
-    return gw->delayed;
+    return gw->subst;
 }

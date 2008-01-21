@@ -15,7 +15,7 @@ struct google_gadget {
     struct processor_env *env;
     struct widget *widget;
 
-    istream_t delayed;
+    istream_t delayed, subst, raw;
 
     struct async_operation_ref async;
 
@@ -24,6 +24,7 @@ struct google_gadget {
     struct {
         enum {
             TAG_NONE,
+            TAG_LOCALE,
             TAG_CONTENT,
         } tag;
 
@@ -38,7 +39,27 @@ struct google_gadget {
         const char *url;
     } from_parser;
 
+    unsigned has_locale:1, waiting_for_locale:1;
+
+    struct {
+        struct parser *parser;
+        unsigned in_msg_tag;
+        const char *key, *value;
+    } msg;
+
     struct istream output;
 };
+
+void
+google_gadget_msg_eof(struct google_gadget *gg);
+
+void
+google_gadget_msg_abort(struct google_gadget *gg);
+
+void
+google_gadget_msg_load(struct google_gadget *gg, const char *url);
+
+void
+google_gadget_msg_close(struct google_gadget *gg);
 
 #endif
