@@ -257,9 +257,7 @@ parser_element_start_in_body(processor_t processor,
     } else if (strref_cmp_literal(name, "img") == 0) {
         processor->tag = TAG_IMG;
     } else if (strref_cmp_literal(name, "script") == 0) {
-        if (type == TAG_OPEN &&
-            (processor->options & PROCESSOR_JS_FILTER) != 0)
-            processor->tag = TAG_SCRIPT;
+        processor->tag = TAG_SCRIPT;
     } else {
         processor->tag = TAG_NONE;
     }
@@ -509,6 +507,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_SCRIPT:
+        if (strref_cmp_literal(&attr->name, "src") == 0)
+            make_url_attribute_absolute(processor, attr);
         break;
     }
 }
@@ -668,7 +668,9 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
                processor->widget_param.value,
                processor->widget_param.value_length);
         processor->widget_params_length += processor->widget_param.value_length;
-    } else if (processor->tag == TAG_SCRIPT) {
+    } else if (processor->tag == TAG_SCRIPT &&
+               tag->type == TAG_OPEN &&
+               (processor->options & PROCESSOR_JS_FILTER) != 0) {
         processor->script = growing_buffer_new(processor->pool, 4096);
         processor->script_start_offset = tag->end;
     }
