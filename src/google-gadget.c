@@ -37,6 +37,16 @@ google_gadget_process(const struct google_gadget *gw, istream_t istream)
                          PROCESSOR_JSCRIPT);
 }
 
+static void
+gg_set_content(struct google_gadget *gg, istream_t istream)
+{
+    assert(gg != NULL);
+    assert(gg->delayed != NULL);
+
+    istream_delayed_set(gg->delayed, google_gadget_process(gg, istream));
+    gg->delayed = NULL;
+}
+
 
 /*
  * url_stream handler (HTML contents)
@@ -71,8 +81,7 @@ google_gadget_content_response(http_status_t status, strmap_t headers,
         return;
     }
 
-    istream_delayed_set(gw->delayed, google_gadget_process(gw, body));
-    gw->delayed = NULL;
+    gg_set_content(gw, body);
 }
 
 static void
@@ -150,13 +159,10 @@ google_content_tag_finished(struct google_gadget *gw,
         gw->from_parser.sending_content = 1;
 
         if (tag->type == TAG_OPEN) {
-            istream_t istream;
-
             gw->output = istream_google_html;
             gw->output.pool = gw->pool;
 
-            istream = google_gadget_process(gw, istream_struct_cast(&gw->output));
-            istream_delayed_set(gw->delayed, istream);
+            gg_set_content(gw, istream_struct_cast(&gw->output));
         } else {
             /* it's TAG_SHORT, handle that gracefully */
             istream_delayed_set(gw->delayed, istream_null_new(gw->pool));
