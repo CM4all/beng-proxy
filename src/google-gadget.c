@@ -166,9 +166,8 @@ google_content_tag_finished(struct google_gadget *gw,
         } else {
             /* it's TAG_SHORT, handle that gracefully */
             istream_delayed_set(gw->delayed, istream_null_new(gw->pool));
+            gw->delayed = NULL;
         }
-
-        gw->delayed = NULL;
 
         return;
 
