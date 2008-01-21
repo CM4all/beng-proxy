@@ -247,7 +247,6 @@ processor_finish_script(processor_t processor, off_t end)
 
 static void
 parser_element_start_in_body(processor_t processor,
-                             enum parser_tag_type type,
                              const struct strref *name)
 {
     if (strref_cmp_literal(name, "a") == 0) {
@@ -345,10 +344,10 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             /* fall back to returning everything if there is no HTML
                tag */
             processor->in_body = 1;
-            parser_element_start_in_body(processor, tag->type, &tag->name);
+            parser_element_start_in_body(processor, &tag->name);
         }
     } else {
-        parser_element_start_in_body(processor, tag->type, &tag->name);
+        parser_element_start_in_body(processor, &tag->name);
     }
 }
 
