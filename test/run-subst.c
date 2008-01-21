@@ -65,18 +65,23 @@ static const struct istream_handler my_istream_handler = {
 int main(int argc, char **argv) {
     pool_t root_pool, pool;
     istream_t istream;
-
-    if (argc != 3) {
-        fprintf(stderr, "usage: %s A B\n", argv[0]);
-        return 1;
-    }
+    int i;
 
     root_pool = pool_new_libc(NULL, "root");
 
     pool = pool_new_linear(root_pool, "test", 8192);
 
-    istream = istream_subst_new(pool, istream_file_new(pool, "/dev/stdin", (off_t)-1),
-                                argv[1], argv[2]);
+    istream = istream_subst_new(pool, istream_file_new(pool, "/dev/stdin", (off_t)-1));
+
+    for (i = 1; i < argc; i += 2) {
+        if (argc < i + 2) {
+            fprintf(stderr, "usage: %s [A1 B1 A2 B2 ...]\n", argv[0]);
+            return 1;
+        }
+
+        istream_subst_add(istream, argv[i], argv[i + 1]);
+    }
+
     istream_handler_set(istream, &my_istream_handler, NULL, 0);
 
     pool_unref(pool);

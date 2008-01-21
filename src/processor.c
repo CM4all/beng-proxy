@@ -126,7 +126,7 @@ processor_jscript(processor_t processor)
  *
  */
 
-static istream_t
+static void
 processor_subst_beng_widget(pool_t pool, istream_t istream,
                             struct widget *widget,
                             const struct processor_env *env)
@@ -136,23 +136,18 @@ processor_subst_beng_widget(pool_t pool, istream_t istream,
     path = widget_path(pool, widget);
     if (path == NULL)
         path = "";
-    istream = istream_subst_new(pool, istream,
-                                "&c:path;", path);
+    istream_subst_add(istream, "&c:path;", path);
 
     prefix = widget_prefix(pool, widget);
     if (prefix == NULL)
         prefix = "";
-    istream = istream_subst_new(pool, istream,
-                                "&c:prefix;", prefix);
+    istream_subst_add(istream, "&c:prefix;", prefix);
 
     if (env->absolute_uri != NULL)
-        istream = istream_subst_new(pool, istream,
-                                    "&c:uri;", env->absolute_uri);
-
-    return istream;
+        istream_subst_add(istream, "&c:uri;", env->absolute_uri);
 }
 
-static istream_t
+static void
 processor_subst_google_gadget(pool_t pool, istream_t istream,
                               struct widget *widget)
 {
@@ -161,11 +156,8 @@ processor_subst_google_gadget(pool_t pool, istream_t istream,
     prefix = widget_prefix(pool, widget);
     if (prefix != NULL) {
         const char *module_id = p_strcat(pool, prefix, "widget", NULL);
-        istream = istream_subst_new(pool, istream,
-                                    "__MODULE_ID__", module_id);
+        istream_subst_add(istream, "__MODULE_ID__", module_id);
     }
-
-    return istream;
 }
 
 static void
@@ -183,13 +175,15 @@ processor_new(pool_t pool, istream_t istream,
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
 
+    istream = istream_subst_new(pool, istream);
+
     switch (widget->class->type) {
     case WIDGET_TYPE_BENG:
-        istream = processor_subst_beng_widget(pool, istream, widget, env);
+        processor_subst_beng_widget(pool, istream, widget, env);
         break;
 
     case WIDGET_TYPE_GOOGLE_GADGET:
-        istream = processor_subst_google_gadget(pool, istream, widget);
+        processor_subst_google_gadget(pool, istream, widget);
         break;
     }
 

@@ -9,7 +9,9 @@ create_input(pool_t pool)
 static istream_t
 create_test(pool_t pool, istream_t input)
 {
-    return istream_subst_new(pool, input, "foo", "bar");
+    istream_t istream = istream_subst_new(pool, input);
+    istream_subst_add(istream, "foo", "bar");
+    return istream;
 }
 
 #include "t-istream-filter.h"

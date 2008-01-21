@@ -13,12 +13,25 @@
 #include <assert.h>
 #include <string.h>
 
+/* ternary search tree */
+struct subst_node {
+    struct subst_node *parent, *left, *right, *equals;
+    char ch;
+
+    struct {
+        const char *a;
+        size_t b_length;
+        char b[1];
+    } leaf;
+};
+
 struct istream_subst {
     struct istream output;
     istream_t input;
     unsigned had_input:1, had_output:1;
 
-    struct strref a, b;
+    struct subst_node *root;
+    const struct subst_node *match;
 
     enum {
         /** searching the first matching character */
@@ -47,6 +60,120 @@ struct istream_subst {
  *
  */
 
+/** iterates over the current depth */
+static struct subst_node *
+subst_next_non_leaf_node(struct subst_node *node, struct subst_node *root)
+{
+    /* dive into left wing first */
+    if (node->left != NULL && node->left->ch != 0)
+        return node->left;
+
+    /* if left does not exist, go right */
+    if (node->right != NULL && node->right->ch != 0)
+        return node->right;
+
+    /* this subtree is finished, go up */
+    while (1) {
+        /* don't go above our root */
+        if (node == root)
+            return NULL;
+
+        assert(node->parent != NULL);
+
+        if (node->parent->left == node) {
+            node = node->parent;
+
+            /* only go to parent->right if we came from
+               parent->left */
+            if (node->right != NULL && node->right->ch != 0)
+                return node;
+        } else {
+            node = node->parent;
+        }
+    }
+}
+
+/** find the first occurence of a "first character" in the buffer */
+static const char *
+subst_find_first_char(struct istream_subst *subst,
+                      const char *data, size_t length)
+{
+    struct subst_node *node = subst->root;
+    const char *p, *min = NULL;
+
+    while (node != NULL) {
+        assert(node->ch != 0);
+
+        p = memchr(data, node->ch, length);
+        if (p != NULL && (min == NULL || p < min)) {
+            assert(node->equals != NULL);
+            subst->match = node->equals;
+            min = p;
+        }
+
+        node = subst_next_non_leaf_node(node, subst->root);
+    }
+
+    return min;
+}
+
+/** find a character in the tree */
+static const struct subst_node *
+subst_find_char(const struct subst_node *node, char ch)
+{
+    assert(node != NULL);
+    assert(ch != 0);
+
+    do {
+        if (node->ch == ch) {
+            assert(node->equals != NULL);
+            return node->equals;
+        }
+
+        if (ch < node->ch)
+            node = node->left;
+        else
+            node = node->right;
+    } while (node != NULL);
+
+    return NULL;
+}
+
+/** find the leaf ending the current search word */
+static const struct subst_node *
+subst_find_leaf(const struct subst_node *node)
+{
+    assert(node != NULL);
+
+    do {
+        if (node->ch == 0)
+            return node;
+
+        if (0 < node->ch)
+            node = node->left;
+        else
+            node = node->right;
+    } while (node != NULL);
+
+    return NULL;
+}
+
+/** find any leaf which begins with the current partial match, used to
+    find a buffer which is partially re-inserted into the data
+    stream */
+static const struct subst_node *
+subst_find_any_leaf(const struct subst_node *node)
+{
+    while (1) {
+        assert(node != NULL);
+
+        if (node->ch == 0)
+            return node;
+
+        node = node->equals;
+    } 
+}
+
 /** write data from subst->b */
 static size_t
 subst_try_write_b(struct istream_subst *subst)
@@ -54,15 +181,20 @@ subst_try_write_b(struct istream_subst *subst)
     size_t length, nbytes;
 
     assert(subst->state == STATE_INSERT);
-    assert(subst->a_match == subst->a.length);
+    assert(subst->a_match > 0);
+    assert(subst->match != NULL);
+    assert(subst->match->ch == 0);
+    assert(subst->a_match == strlen(subst->match->leaf.a));
 
-    length = subst->b.length - subst->b_sent;
+    length = subst->match->leaf.b_length - subst->b_sent;
     if (length == 0) {
         subst->state = STATE_NONE;
         return 0;
     }
 
-    nbytes = istream_invoke_data(&subst->output, subst->b.data + subst->b_sent, length);
+    nbytes = istream_invoke_data(&subst->output,
+                                 subst->match->leaf.b + subst->b_sent,
+                                 length);
     assert(nbytes <= length);
 
     /* note progress */
@@ -84,6 +216,8 @@ subst_try_write_a(struct istream_subst *subst)
     assert(subst->state == STATE_MISMATCH);
     assert(subst->a_match > 0);
     assert(subst->a_sent <= subst->a_match);
+    assert(subst->match->ch == 0);
+    assert(strlen(subst->match->leaf.a) >= subst->a_match);
 
     length = subst->a_match - subst->a_sent;
     if (length == 0) {
@@ -91,7 +225,9 @@ subst_try_write_a(struct istream_subst *subst)
         return 0;
     }
 
-    nbytes = istream_invoke_data(&subst->output, subst->a.data + subst->a_sent, length);
+    nbytes = istream_invoke_data(&subst->output,
+                                 subst->match->leaf.a + subst->a_sent,
+                                 length);
     assert(nbytes <= length);
 
     /* note progress */
@@ -115,7 +251,8 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 {
     struct istream_subst *subst = ctx;
     const char *data0 = _data, *data = data0, *p = data0, *end = p + length, *first = NULL;
-    size_t max_compare, chunk_length, nbytes;
+    size_t chunk_length, nbytes;
+    const struct subst_node *node;
 
     assert(subst->input != NULL);
 
@@ -134,7 +271,7 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
             assert(first == NULL);
 
-            first = memchr(p, subst->a.data[0], end - p);
+            first = subst_find_first_char(subst, p, end - p);
             if (first == NULL) {
                 /* no match, try to write and return */
                 subst->had_output = 1;
@@ -149,6 +286,8 @@ subst_source_data(const void *_data, size_t length, void *ctx)
             subst->a_match = 1;
 
             p = first + 1;
+
+            /* XXX check if match is full */
             break;
 
         case STATE_CLOSED:
@@ -158,18 +297,19 @@ subst_source_data(const void *_data, size_t length, void *ctx)
             /* now see if the rest matches; note that max_compare may be
                0, but that isn't a problem */
 
-            max_compare = subst->a.length - subst->a_match;
-            if ((size_t)(end - p) < max_compare)
-                max_compare = (size_t)(end - p);
+            node = subst_find_char(subst->match, *p);
+            if (node != NULL) {
+                /* next character matches */
 
-            if (memcmp(p, subst->a.data + subst->a_match, max_compare) == 0) {
-                /* all data (which is available) matches */
+                ++subst->a_match;
+                ++p;
+                subst->match = node;
 
-                subst->a_match += max_compare;
-                p += max_compare;
-
-                if (subst->a_match == subst->a.length) {
+                node = subst_find_leaf(node);
+                if (node != NULL) {
                     /* full match */
+
+                    subst->match = node;
 
                     if (first != NULL && first > data) {
                         /* write the data chunk before the match */
@@ -227,6 +367,12 @@ subst_source_data(const void *_data, size_t length, void *ctx)
 
                 subst->state = STATE_MISMATCH;
                 subst->a_sent = 0;
+
+                /* seek any leaf to get a valid match->leaf.a which we
+                   can use to re-insert the partial match into the
+                   stream */
+
+                subst->match = subst_find_any_leaf(subst->match);
             }
 
             break;
@@ -427,27 +573,86 @@ static const struct istream istream_subst = {
  */
 
 istream_t
-istream_subst_new(pool_t pool, istream_t input,
-                  const char *a, const char *b)
+istream_subst_new(pool_t pool, istream_t input)
 {
     struct istream_subst *subst = p_malloc(pool, sizeof(*subst));
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
-    assert(a != NULL);
-    assert(b != NULL);
 
     subst->output = istream_subst;
     subst->output.pool = pool;
-    strref_set_c(&subst->a, a);
-    strref_set_c(&subst->b, b);
+    subst->root = NULL;
     subst->state = STATE_NONE;
-
-    assert(!strref_is_empty(&subst->a));
 
     istream_assign_ref_handler(&subst->input, input,
                                &subst_source_handler, subst,
                                0);
 
     return istream_struct_cast(&subst->output);
+}
+
+int
+istream_subst_add(istream_t istream, const char *a0, const char *b)
+{
+    struct istream_subst *subst = istream_to_subst(istream);
+    struct subst_node **pp, *p, *parent = NULL;
+    const char *a = a0;
+    size_t b_length;
+
+    assert(subst != NULL);
+    assert(a0 != NULL);
+    assert(*a0 != 0);
+
+    pp = &subst->root;
+    do {
+        p = *pp;
+        if (p == NULL) {
+            /* create new tree node */
+
+            p = p_malloc(subst->output.pool, sizeof(*p) - sizeof(p->leaf));
+            p->parent = parent;
+            p->left = NULL;
+            p->right = NULL;
+            p->equals = NULL;
+            p->ch = *a++;
+
+            *pp = parent = p;
+            pp = &p->equals;
+        } else if (*a < p->ch) {
+            pp = &p->left;
+            parent = p;
+        } else if (*a > p->ch) {
+            pp = &p->right;
+            parent = p;
+        } else {
+            /* tree node exists and matches, enter new level (next
+               character) */
+            pp = &p->equals;
+            parent = p;
+            ++a;
+        }
+    } while (*a);
+
+    /* this keyword already exists */
+    if (*pp != NULL)
+        return 0;
+
+    b_length = b == NULL ? 0 : strlen(b);
+
+    /* create new leaf node */
+
+    p = p_malloc(subst->output.pool, sizeof(*p) + b_length - sizeof(p->leaf.b));
+    p->parent = parent;
+    p->left = NULL;
+    p->right = NULL;
+    p->equals = NULL;
+    p->ch = 0;
+    p->leaf.a = a0;
+    p->leaf.b_length = b_length;
+    memcpy(p->leaf.b, b, b_length);
+
+    *pp = p;
+
+    return 1;
 }
