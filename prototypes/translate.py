@@ -124,6 +124,11 @@ class Translation(Protocol):
             from os.path import abspath, dirname, join
             path = join(dirname(dirname(abspath(argv[0]))), 'js/beng-proxy.js')
             print path
+        elif request.uri == '/google-gadget.js':
+            from sys import argv
+            from os.path import abspath, dirname, join
+            path = join(dirname(dirname(abspath(argv[0]))), 'js/google-gadget.js')
+            print path
         else:
             path = '/var/www' + request.uri
 
