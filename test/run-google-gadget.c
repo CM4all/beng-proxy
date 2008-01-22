@@ -2,6 +2,7 @@
 #include "widget.h"
 #include "processor.h"
 #include "url-stock.h"
+#include "stock.h"
 #include "uri.h"
 #include "session.h"
 #include "embed.h"
@@ -125,6 +126,9 @@ int main(int argc, char **argv) {
     istream_read(istream);
 
     event_dispatch();
+
+    session_manager_deinit();
+    hstock_free(&env.http_client_stock);
 
     pool_unref(root_pool);
     pool_commit();
