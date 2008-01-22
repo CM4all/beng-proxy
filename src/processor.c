@@ -57,6 +57,7 @@ struct processor {
     char widget_params[512];
     size_t widget_params_length;
 
+    int in_script;
     growing_buffer_t script;
     off_t script_start_offset;
 };
@@ -208,7 +209,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->in_body = 0;
     processor->end_of_body = (off_t)-1;
     processor->embedded_widget = NULL;
-    processor->script = NULL;
+    processor->in_script = 0;
 
     istream = istream_tee_new(pool, istream);
     processor_parser_init(processor, istream);
@@ -228,6 +229,7 @@ processor_new(pool_t pool, istream_t istream,
 static void
 processor_finish_script(processor_t processor, off_t end)
 {
+    assert(processor->in_script);
     assert(processor->script != NULL);
     assert(processor->script_start_offset <= end);
 
@@ -237,6 +239,7 @@ processor_finish_script(processor_t processor, off_t end)
                               js_filter_new(processor->pool,
                                             growing_buffer_istream(processor->script)));
 
+    processor->in_script = 0;
     processor->script = NULL;
 }
 
@@ -288,7 +291,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     processor->tag = TAG_NONE;
 
-    if (processor->script != NULL)
+    if (processor->in_script && processor->script != NULL)
         processor_finish_script(processor, tag->start);
 
     if (processor->embedded_widget != NULL) {
@@ -670,6 +673,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     } else if (processor->tag == TAG_SCRIPT &&
                tag->type == TAG_OPEN &&
                (processor->options & PROCESSOR_JS_FILTER) != 0) {
+        processor->in_script = 1;
         processor->script = growing_buffer_new(processor->pool, 4096);
         processor->script_start_offset = tag->end;
     }
@@ -682,7 +686,7 @@ processor_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 
     (void)escaped;
 
-    if (processor->script != NULL)
+    if (processor->in_script && processor->script != NULL)
         growing_buffer_write_buffer(processor->script, p, length);
 
     return length;
