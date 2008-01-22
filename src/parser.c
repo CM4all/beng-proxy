@@ -159,7 +159,6 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 }
 
                 parser->state = PARSER_SCRIPT;
-                ++buffer;
             }
 
             break;
