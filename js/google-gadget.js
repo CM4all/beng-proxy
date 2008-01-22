@@ -46,6 +46,10 @@ function _IG_GetCachedUrl(url) {
     return url;
 }
 
+function _IG_GetImageUrl(url) {
+    return url;
+}
+
 function _IG_AdjustIFrameHeight() {
 }
 
