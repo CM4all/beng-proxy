@@ -16,6 +16,12 @@
 enum parser_state {
     PARSER_NONE,
 
+    /** within a SCRIPT element; only accept "</" to break out */
+    PARSER_SCRIPT,
+
+    /** found '<' within a SCRIPT element */
+    PARSER_SCRIPT_ELEMENT_NAME,
+
     /** parsing an element name */
     PARSER_ELEMENT_NAME,
 
@@ -102,6 +108,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
     while (buffer < end) {
         switch (parser->state) {
         case PARSER_NONE:
+        case PARSER_SCRIPT:
             /* find first character */
             p = memchr(buffer, '<', end - buffer);
             if (p == NULL) {
@@ -127,10 +134,34 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             }
 
             parser->tag.start = parser->position + (off_t)(p - start);
-            parser->state = PARSER_ELEMENT_NAME;
+            parser->state = parser->state == PARSER_NONE
+                ? PARSER_ELEMENT_NAME
+                : PARSER_SCRIPT_ELEMENT_NAME;
             parser->tag_name_length = 0;
             parser->tag.type = TAG_OPEN;
             buffer = p + 1;
+            break;
+
+        case PARSER_SCRIPT_ELEMENT_NAME:
+            if (*buffer == '/') {
+                parser->state = PARSER_ELEMENT_NAME;
+                parser->tag.type = TAG_CLOSE;
+                ++buffer;
+            } else {
+                nbytes = parser->handler->cdata("<", 1, 1,
+                                                parser->handler_ctx);
+                assert(nbytes <= (size_t)(end - buffer));
+
+                if (nbytes == 0) {
+                    nbytes = buffer - start;
+                    parser->position += nbytes;
+                    return nbytes;
+                }
+
+                parser->state = PARSER_SCRIPT;
+                ++buffer;
+            }
+
             break;
 
         case PARSER_ELEMENT_NAME:
@@ -521,3 +552,11 @@ parser_read(struct parser *parser)
     istream_read(parser->input);
 }
 
+void
+parser_script(struct parser *parser)
+{
+    assert(parser != NULL);
+    assert(parser->state == PARSER_NONE || parser->state == PARSER_INSIDE);
+
+    parser->state = PARSER_SCRIPT;
+}

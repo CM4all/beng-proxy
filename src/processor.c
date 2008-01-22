@@ -677,6 +677,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     } else if (processor->tag == TAG_SCRIPT &&
                tag->type == TAG_OPEN) {
         processor->in_script = 1;
+        parser_script(processor->parser);
 
         if ((processor->options & PROCESSOR_JS_FILTER) != 0) {
             processor->script = growing_buffer_new(processor->pool, 4096);

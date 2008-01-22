@@ -53,4 +53,7 @@ parser_close(struct parser *parser);
 void
 parser_read(struct parser *parser);
 
+void
+parser_script(struct parser *parser);
+
 #endif
