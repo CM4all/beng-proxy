@@ -207,6 +207,9 @@ google_content_tag_finished(struct google_gadget *gw,
         return;
 
     case TYPE_URL:
+        if (gw->from_parser.url == NULL)
+            break;
+
         gw->widget->class = get_widget_class(gw->pool, gw->from_parser.url);
         widget_determine_real_uri(gw->pool, gw->widget);
 
@@ -286,9 +289,10 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
     case TAG_CONTENT:
         if (strref_cmp_literal(&attr->name, "type") == 0) {
-            if (strref_cmp_literal(&attr->value, "url") == 0)
+            if (strref_cmp_literal(&attr->value, "url") == 0) {
                 gw->from_parser.type = TYPE_URL;
-            else if (strref_cmp_literal(&attr->value, "html") == 0)
+                gw->from_parser.url = NULL;
+            } else if (strref_cmp_literal(&attr->value, "html") == 0)
                 gw->from_parser.type = TYPE_HTML;
             else {
                 google_send_error(gw, "unknown type attribute");
