@@ -671,11 +671,15 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
                processor->widget_param.value_length);
         processor->widget_params_length += processor->widget_param.value_length;
     } else if (processor->tag == TAG_SCRIPT &&
-               tag->type == TAG_OPEN &&
-               (processor->options & PROCESSOR_JS_FILTER) != 0) {
+               tag->type == TAG_OPEN) {
         processor->in_script = 1;
-        processor->script = growing_buffer_new(processor->pool, 4096);
-        processor->script_start_offset = tag->end;
+
+        if ((processor->options & PROCESSOR_JS_FILTER) != 0) {
+            processor->script = growing_buffer_new(processor->pool, 4096);
+            processor->script_start_offset = tag->end;
+        } else {
+            processor->script = NULL;
+        }
     }
 }
 
