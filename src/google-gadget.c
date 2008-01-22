@@ -207,6 +207,9 @@ google_content_tag_finished(struct google_gadget *gw,
         return;
 
     case TYPE_URL:
+        gw->widget->class = get_widget_class(gw->pool, gw->from_parser.url);
+        widget_determine_real_uri(gw->pool, gw->widget);
+
         url_stream_new(gw->pool, gw->env->http_client_stock,
                        HTTP_METHOD_GET, gw->from_parser.url,
                        NULL, NULL,
