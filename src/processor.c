@@ -230,7 +230,12 @@ static void
 processor_finish_script(processor_t processor, off_t end)
 {
     assert(processor->in_script);
-    assert(processor->script != NULL);
+
+    processor->in_script = 0;
+
+    if (processor->script == NULL)
+        return;
+
     assert(processor->script_start_offset <= end);
 
     if (processor->script_start_offset < end)
@@ -239,7 +244,6 @@ processor_finish_script(processor_t processor, off_t end)
                               js_filter_new(processor->pool,
                                             growing_buffer_istream(processor->script)));
 
-    processor->in_script = 0;
     processor->script = NULL;
 }
 
@@ -291,7 +295,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     processor->tag = TAG_NONE;
 
-    if (processor->in_script && processor->script != NULL)
+    if (processor->in_script)
         processor_finish_script(processor, tag->start);
 
     if (processor->embedded_widget != NULL) {
