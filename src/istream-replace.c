@@ -300,6 +300,8 @@ replace_read_from_buffer(struct replace *replace, size_t max_length)
     growing_buffer_consume(replace->buffer, nbytes);
     replace->position += nbytes;
 
+    assert(replace->position <= replace->source_length);
+
     return length - nbytes;
 }
 
@@ -330,8 +332,24 @@ replace_try_read_from_buffer(struct replace *replace)
         return 0;
 
     rest = replace_read_from_buffer(replace, max_length);
-    if (rest == 0 && replace->first_substitution == NULL)
+    if (rest == 0 && replace->position == replace->source_length &&
+        replace->first_substitution == NULL)
         istream_invoke_eof(&replace->output);
+
+    return rest;
+}
+
+static size_t
+replace_try_read_from_buffer_loop(struct replace *replace)
+{
+    size_t rest;
+
+    do {
+        rest = replace_try_read_from_buffer(replace);
+    } while (rest == 0 &&
+             replace->position < replace->source_length &&
+             (replace->first_substitution == NULL ||
+              replace->position < replace->first_substitution->start));
 
     return rest;
 }
@@ -356,7 +374,7 @@ replace_read(struct replace *replace)
         if (blocking)
             break;
 
-        rest = replace_try_read_from_buffer(replace);
+        rest = replace_try_read_from_buffer_loop(replace);
         if (rest > 0)
             break;
     } while (replace->first_substitution != NULL);
