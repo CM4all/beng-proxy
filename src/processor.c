@@ -295,8 +295,14 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     processor->tag = TAG_NONE;
 
-    if (processor->in_script)
+    if (processor->in_script) {
+        /* workaround for bugged scripts: ignore all closing tags
+           except </SCRIPT> */
+        if (strref_cmp_literal(&tag->name, "script") != 0)
+            return;
+
         processor_finish_script(processor, tag->start);
+    }
 
     if (processor->embedded_widget != NULL) {
         parser_element_start_in_widget(processor, tag->type, &tag->name);
