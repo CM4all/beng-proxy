@@ -1,3 +1,9 @@
+//
+// The beng-proxy JavaScript library.
+//
+// Author: Max Kellermann <mk@cm4all.com>
+//
+
 function beng_proxy_request() {
     var req = null;
     if (window.XMLHttpRequest) {
