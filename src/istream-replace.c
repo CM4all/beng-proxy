@@ -386,7 +386,7 @@ istream_replace_available(istream_t istream, int partial)
 {
     struct replace *replace = istream_to_replace(istream);
     const struct substitution *subst;
-    off_t length, position, l;
+    off_t length, position = 0, l;
 
     if (!partial && !replace->finished)
         /* we don't know yet how many substitutions will come, so we
