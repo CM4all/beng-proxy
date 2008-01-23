@@ -159,30 +159,6 @@ replace_destroy(struct replace *replace)
  *
  */
 
-static off_t
-replace_available(const struct replace *replace)
-{
-    const struct substitution *subst;
-    off_t length = 0, position = replace->position, l;
-
-    for (subst = replace->first_substitution; subst != NULL; subst = subst->next) {
-        assert(replace->buffer == NULL || position <= subst->start);
-
-        if (replace->buffer != NULL)
-            length += subst->start - position;
-
-        if (subst->istream != NULL) {
-            l = istream_available(subst->istream, 1);
-            if (l != (off_t)-1)
-                length += l;
-        }
-
-        position = subst->end;
-    }
-
-    return length;
-}
-
 /**
  * Read data from substitution objects.
  */
@@ -412,13 +388,28 @@ static off_t
 istream_replace_available(istream_t istream, int partial)
 {
     struct replace *replace = istream_to_replace(istream);
+    const struct substitution *subst;
+    off_t length = 0, position = replace->position, l;
 
-    /* XXX optimize */
-
-    if (partial && replace->writing)
-        return replace_available(replace);
-    else
+    if (!partial || !replace->writing)
         return (off_t)-1;
+
+    for (subst = replace->first_substitution; subst != NULL; subst = subst->next) {
+        assert(replace->buffer == NULL || position <= subst->start);
+
+        if (replace->buffer != NULL)
+            length += subst->start - position;
+
+        if (subst->istream != NULL) {
+            l = istream_available(subst->istream, 1);
+            if (l != (off_t)-1)
+                length += l;
+        }
+
+        position = subst->end;
+    }
+
+    return length;
 }
 
 static void
