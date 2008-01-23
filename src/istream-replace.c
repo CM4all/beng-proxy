@@ -389,10 +389,30 @@ istream_replace_available(istream_t istream, int partial)
 {
     struct replace *replace = istream_to_replace(istream);
     const struct substitution *subst;
-    off_t length = 0, position = replace->position, l;
+    off_t length, position, l;
 
-    if (!partial || !replace->writing)
+    if (!partial && !replace->writing)
+        /* we don't know yet how many substitutions will come, so we
+           cannot calculate the exact rest */
         return (off_t)-1;
+
+    /* get available bytes from replace->input */
+
+    if (replace->input != NULL) {
+        length = istream_available(replace->input, partial);
+        if (length == (off_t)-1) {
+            if (!partial)
+                return (off_t)-1;
+            length = 0;
+        }
+    } else
+        length = 0;
+
+    /* add available bytes from substitutions (and the source buffers
+       before the substitutions) */
+
+    if (replace->buffer != NULL)
+        position = replace->position;
 
     for (subst = replace->first_substitution; subst != NULL; subst = subst->next) {
         assert(replace->buffer == NULL || position <= subst->start);
@@ -401,13 +421,21 @@ istream_replace_available(istream_t istream, int partial)
             length += subst->start - position;
 
         if (subst->istream != NULL) {
-            l = istream_available(subst->istream, 1);
+            l = istream_available(subst->istream, partial);
             if (l != (off_t)-1)
                 length += l;
+            else if (!partial)
+                return (off_t)-1;
         }
 
-        position = subst->end;
+        if (replace->buffer != NULL)
+            position = subst->end;
     }
+
+    /* add available bytes from tail (if known yet) */
+
+    if (replace->buffer != NULL && replace->writing)
+        length += replace->source_length - position;
 
     return length;
 }
