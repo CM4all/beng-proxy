@@ -23,8 +23,6 @@ struct replace {
     struct istream output;
     istream_t input;
 
-    int had_input;
-
     int finished;
     struct growing_buffer *buffer;
     off_t source_length, position;
@@ -330,8 +328,6 @@ replace_source_data(const void *data, size_t length, void *ctx)
 {
     struct replace *replace = ctx;
 
-    replace->had_input = 1;
-
     if (replace->buffer != NULL) {
         if (replace->source_length >= 8 * 1024 * 1024) {
             daemon_log(2, "file too large for processor\n");
@@ -446,12 +442,9 @@ istream_replace_read(istream_t istream)
 {
     struct replace *replace = istream_to_replace(istream);
 
-    if (replace->input != NULL) {
-        do {
-            replace->had_input = 0;
-            istream_read(replace->input);
-        } while (replace->input != NULL && replace->had_input);
-    } else if (replace->finished)
+    if (replace->input != NULL)
+        istream_read(replace->input);
+    else if (replace->finished)
         replace_read(replace);
 }
 
