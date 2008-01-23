@@ -253,7 +253,8 @@ replace_try_read_from_buffer(struct replace *replace)
 
     rest = replace_read_from_buffer(replace, max_length);
     if (rest == 0 && replace->position == replace->source_length &&
-        replace->first_substitution == NULL)
+        replace->first_substitution == NULL &&
+        replace->input == NULL)
         istream_invoke_eof(&replace->output);
 
     return rest;
