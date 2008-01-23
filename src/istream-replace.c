@@ -6,6 +6,7 @@
 
 #include "istream.h"
 #include "growing-buffer.h"
+#include "valgrind.h"
 
 #include <daemon/log.h>
 
@@ -62,7 +63,7 @@ replace_to_next_substitution(struct replace *replace, struct substitution *s)
     assert(replace->first_substitution == s);
     assert(replace->buffer == NULL || replace->position == s->start);
     assert(s->istream == NULL);
-    assert(s->start <= s->end);
+    assert(replace->buffer == NULL || s->start <= s->end);
 
     if (replace->buffer != NULL) {
         growing_buffer_consume(replace->buffer, s->end - s->start);
@@ -362,9 +363,8 @@ replace_source_data(const void *data, size_t length, void *ctx)
         }
 
         growing_buffer_write_buffer(replace->buffer, data, length);
+        replace->source_length += (off_t)length;
     }
-
-    replace->source_length += (off_t)length;
 
     return length;
 }
@@ -479,6 +479,10 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
 
     if (quiet) {
         replace->buffer = NULL;
+        VALGRIND_MAKE_MEM_NOACCESS(&replace->source_length,
+                                   sizeof(replace->source_length));
+        VALGRIND_MAKE_MEM_NOACCESS(&replace->position,
+                                   sizeof(replace->position));
     } else {
         replace->buffer = growing_buffer_new(pool, 8192);
         replace->source_length = 0;
@@ -503,7 +507,7 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
     struct replace *replace = istream_to_replace(istream);
     struct substitution *s;
 
-    assert(replace->buffer == NULL || !replace->writing);
+    assert(!replace->writing);
     assert(start >= 0);
     assert(start <= end);
     assert(start >= replace->last_substitution_end);
@@ -514,8 +518,14 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
     s = p_malloc(replace->output.pool, sizeof(*s));
     s->next = NULL;
     s->replace = replace;
-    s->start = start;
-    s->end = end;
+
+    if (replace->buffer != NULL) {
+        s->start = start;
+        s->end = end;
+    } else {
+        VALGRIND_MAKE_MEM_NOACCESS(&s->start, sizeof(s->start));
+        VALGRIND_MAKE_MEM_NOACCESS(&s->end, sizeof(s->end));
+    }
 
 #ifndef NDEBUG
     replace->last_substitution_end = end;
