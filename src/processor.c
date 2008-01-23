@@ -117,6 +117,9 @@ processor_jscript(processor_t processor)
 
     js_generate_widget(gb, processor->widget, processor->pool);
 
+    if ((processor->options & PROCESSOR_JSCRIPT_PREFS) != 0)
+        js_generate_preferences(gb, processor->widget, processor->pool);
+
     growing_buffer_write_string(gb, "</script>\n");
 
     return growing_buffer_istream(gb);

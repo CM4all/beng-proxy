@@ -7,6 +7,7 @@
 #include "js-generator.h"
 #include "growing-buffer.h"
 #include "widget.h"
+#include "session.h"
 
 static void
 growing_buffer_write_jscript_string(growing_buffer_t gb, const char *s)
@@ -58,6 +59,25 @@ js_generate_root_widget(struct growing_buffer *gb, const char *session_id)
         growing_buffer_write_string(gb, session_id);
 
     growing_buffer_write_string(gb, "\"));\n");
+}
+
+void
+js_generate_preferences(struct growing_buffer *gb, const struct widget *widget,
+                        pool_t pool)
+{
+    const char *prefix, *query_string;
+
+    if (widget->from_request.session != NULL)
+        query_string = widget->from_request.session->query_string;
+
+    prefix = widget_prefix(pool, widget);
+    if (prefix == NULL)
+        return;
+
+    growing_buffer_write_string(gb, prefix);
+    growing_buffer_write_string(gb, "widget._query_string = ");
+    growing_buffer_write_jscript_string(gb, query_string);
+    growing_buffer_write_string(gb, ";\n");
 }
 
 istream_t

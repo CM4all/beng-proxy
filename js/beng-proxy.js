@@ -27,18 +27,20 @@ function beng_proxy_request() {
     }
 }
 
-function beng_proxy_make_uri(focus, path, proxy) {
+function beng_proxy_make_uri(focus, path, proxy, save) {
     var uri = this.uri + ";session=" + escape(this.session);
     if (focus != null) {
         uri += "&focus=" + escape(focus);
         if (proxy)
             uri += "&frame=" + escape(focus);
+        if (save)
+            uri += "&save=1";
         if (path != null) {
             var query_string = null;
-            var qmark = id.indexOf("?");
+            var qmark = path.indexOf("?");
             if (qmark >= 0) {
                 query_string = path.substring(qmark);
-                path = path.subtring(0, qmark);
+                path = path.substring(0, qmark);
             }
             uri += "&path=" + escape(path);
             if (query_string != null)
@@ -79,15 +81,15 @@ function beng_root_widget(proxy) {
     return this;
 }
 
-function beng_widget_translate_uri(uri, proxy) {
+function beng_widget_translate_uri(uri, proxy, save) {
     if (this.path == null)
         return null;
 
-    return this.proxy.make_uri(this.path, uri, proxy);
+    return this.proxy.make_uri(this.path, uri, proxy, save);
 }
 
-function beng_widget_get(uri, onreadystatechange) {
-    var url = this.translateURI(uri, true);
+function beng_widget_get(uri, onreadystatechange, save) {
+    var url = this.translateURI(uri, true, save);
     if (url == null)
         return null;
     var req = beng_proxy_request();

@@ -4,20 +4,38 @@
 // Author: Max Kellermann <mk@cm4all.com>
 //
 
-function _IG_Prefs(prefix) {
-    this.getInt = function() {
-        return 0;
+function _IG_Prefs(path) {
+    this.widget = rootWidget.getWidget(path);
+    this.values = new Array();
+
+    values = this.widget._query_string.split('&');
+    for (i in values) {
+        var key = values[i], value;
+        i = key.indexOf('=');
+        if (i >= 0) {
+            value = key.substring(i + 1);
+            key = key.substring(0, i);
+        } else
+            value = "";
+        this.values[unescape(key)] = unescape(value);
     }
 
-    this.getBool = function() {
-        return true;
+    this.getInt = function(name) {
+        return parseInt(this.getString(name));
     }
 
-    this.getString = function() {
-        return "";
+    this.getBool = function(name) {
+        var value = this.getString(name);
+        return value == "1" || value == "yes" || value == "true";
+    }
+
+    this.getString = function(name) {
+        return this.values[name];
     }
 
     this.set = function(name, value) {
+        this.values[name] = value;
+        this.widget.get("?" + escape(name) + "=" + escape(value), null, true);
     }
 
     return this;

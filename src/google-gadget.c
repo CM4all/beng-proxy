@@ -34,7 +34,7 @@ google_gadget_process(const struct google_gadget *gw, istream_t istream)
 {
     return processor_new(gw->pool, istream,
                          gw->widget, gw->env,
-                         PROCESSOR_JSCRIPT);
+                         PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_PREFS);
 }
 
 static void
@@ -448,9 +448,23 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
                     struct widget *widget)
 {
     struct google_gadget *gw;
+    const char *path;
 
     assert(widget != NULL);
     assert(widget->class != NULL);
+
+    if (widget->from_request.proxy && strmap_get(env->args, "save") != NULL) {
+        /* the preferences have been saved by
+           widget_copy_from_request(); try to respond with "204 No
+           Content" now */
+        if (http_response_handler_defined(&env->response_handler)) {
+            http_response_handler_invoke_response(&env->response_handler,
+                                                  HTTP_STATUS_NO_CONTENT, NULL,
+                                                  NULL);
+            return NULL;
+        } else
+            return istream_null_new(pool);
+    }
 
     pool_ref(pool);
 
@@ -462,6 +476,12 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     gw->subst = istream_subst_new(pool, gw->delayed);
     gw->parser = NULL;
     gw->has_locale = 0;
+
+    path = widget_path(pool, widget);
+    if (path != NULL)
+        istream_subst_add(gw->subst,
+                          "new _IG_Prefs()",
+                          p_strcat(pool, "new _IG_Prefs(\"", path, "\")"));
 
     url_stream_new(pool, env->http_client_stock,
                    HTTP_METHOD_GET, widget->class->uri,

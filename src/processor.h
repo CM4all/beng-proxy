@@ -32,6 +32,9 @@ enum processor_options {
 
     /** apply js_filter on JavaScript code */
     PROCESSOR_JS_FILTER = 0x20,
+
+    /** generate JavaScript code which provides preferences data */
+    PROCESSOR_JSCRIPT_PREFS = 0x40,
 };
 
 struct hstock;
