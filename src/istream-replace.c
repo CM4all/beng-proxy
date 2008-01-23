@@ -291,9 +291,7 @@ replace_try_read_from_buffer(struct replace *replace)
     size_t max_length, rest;
 
     assert(replace != NULL);
-
-    if (replace->buffer == NULL)
-        return 0;
+    assert(replace->buffer != NULL);
 
     if (replace->first_substitution == NULL) {
         if (!replace->writing)
@@ -322,6 +320,9 @@ static size_t
 replace_try_read_from_buffer_loop(struct replace *replace)
 {
     size_t rest;
+
+    if (replace->buffer == NULL)
+        return 0;
 
     do {
         rest = replace_try_read_from_buffer(replace);
