@@ -399,7 +399,7 @@ istream_replace_available(istream_t istream, int partial)
 
     /* get available bytes from replace->input */
 
-    if (replace->input != NULL) {
+    if (replace->input != NULL && replace->writing) {
         length = istream_available(replace->input, partial);
         if (length == (off_t)-1) {
             if (!partial)
