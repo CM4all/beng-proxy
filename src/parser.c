@@ -102,6 +102,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
     size_t nbytes;
 
     assert(parser != NULL);
+    assert(parser->input != NULL);
     assert(buffer != NULL);
     assert(length > 0);
 
@@ -116,6 +117,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                 parser->handler_ctx);
                 assert(nbytes <= (size_t)(end - buffer));
 
+                if (parser->input == NULL)
+                    return 0;
+
                 nbytes += buffer - start;
                 parser->position += (off_t)nbytes;
                 return nbytes;
@@ -125,6 +129,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 nbytes = parser->handler->cdata(buffer, p - buffer, 1,
                                                 parser->handler_ctx);
                 assert(nbytes <= (size_t)(p - buffer));
+
+                if (parser->input == NULL)
+                    return 0;
 
                 if (nbytes < (size_t)(p - buffer)) {
                     nbytes += buffer - start;
@@ -151,6 +158,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 nbytes = parser->handler->cdata("<", 1, 1,
                                                 parser->handler_ctx);
                 assert(nbytes <= (size_t)(end - buffer));
+
+                if (parser->input == NULL)
+                    return 0;
 
                 if (nbytes == 0) {
                     nbytes = buffer - start;
@@ -183,6 +193,10 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
                     parser->handler->tag_start(&parser->tag,
                                                parser->handler_ctx);
+
+                    if (parser->input == NULL)
+                        return 0;
+
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else if (*buffer == '!' && parser->tag_name_length == 0) {
@@ -213,6 +227,10 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->handler->tag_finished(&parser->tag,
                                                   parser->handler_ctx);
                     VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
+
+                    if (parser->input == NULL)
+                        return 0;
+
                     break;
                 } else if (char_is_letter(*buffer)) {
                     parser->state = PARSER_ATTR_NAME;
@@ -341,6 +359,10 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->handler->tag_finished(&parser->tag,
                                                   parser->handler_ctx);
                     VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
+
+                    if (parser->input == NULL)
+                        return 0;
+
                     break;
                 } else {
                     /* ignore this syntax error and just close the
@@ -350,6 +372,10 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                   parser->handler_ctx);
                     VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
                     parser->state = PARSER_NONE;
+
+                    if (parser->input == NULL)
+                        return 0;
+
                     break;
                 }
             } while (buffer < end);
@@ -401,6 +427,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                         parser->handler_ctx);
                         assert(nbytes <= (size_t)(buffer - p));
 
+                        if (parser->input == NULL)
+                            return 0;
+
                         if (nbytes < (size_t)(buffer - p)) {
                             nbytes += p - start;
                             parser->position += (off_t)nbytes;
@@ -424,6 +453,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                         parser->handler_ctx);
                         assert(nbytes <= parser->cdend_match);
 
+                        if (parser->input == NULL)
+                            return 0;
+
                         parser->cdend_match -= nbytes;
 
                         if (parser->cdend_match > 0) {
@@ -444,6 +476,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                 parser->handler_ctx);
                 assert(nbytes <= (size_t)(buffer - p));
 
+                if (parser->input == NULL)
+                    return 0;
+
                 if (nbytes < (size_t)(buffer - p)) {
                     nbytes += p - start;
                     parser->position += (off_t)nbytes;
@@ -454,6 +489,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             break;
         }
     }
+
+    assert(parser->input != NULL);
 
     parser->position += length;
     return length;
