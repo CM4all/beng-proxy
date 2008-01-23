@@ -510,10 +510,14 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
                                0);
 
     replace->writing = 0;
-    replace->buffer = quiet
-        ? NULL
-        : growing_buffer_new(pool, 8192);
-    replace->source_length = 0;
+
+    if (quiet) {
+        replace->buffer = NULL;
+    } else {
+        replace->buffer = growing_buffer_new(pool, 8192);
+        replace->source_length = 0;
+        replace->position = 0;
+    }
 
     replace->first_substitution = NULL;
     replace->append_substitution_p = &replace->first_substitution;
@@ -541,9 +545,11 @@ istream_replace_finish(istream_t istream)
     struct replace *replace = istream_to_replace(istream);
 
     assert(!replace->writing);
+    assert(replace->buffer == NULL || replace->position == 0 ||
+           (replace->first_substitution != NULL &&
+            replace->position <= replace->first_substitution->start));
 
     replace->writing = 1;
-    replace->position = 0;
 
     if (replace->input == NULL)
         replace_read_check_empty(replace);
