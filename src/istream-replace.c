@@ -158,28 +158,6 @@ replace_destroy(struct replace *replace)
  *
  */
 
-static size_t
-replace_feed(struct replace *replace, const void *data, size_t length)
-{
-    assert(replace != NULL);
-    assert(data != NULL);
-    assert(length > 0);
-
-    if (!replace->quiet) {
-        if (replace->source_length >= 8 * 1024 * 1024) {
-            daemon_log(2, "file too large for processor\n");
-            istream_close(replace->input);
-            return 0;
-        }
-
-        growing_buffer_write_buffer(replace->buffer, data, length);
-    }
-
-    replace->source_length += (off_t)length;
-
-    return length;
-}
-
 static void
 replace_add(struct replace *replace, off_t start, off_t end,
             istream_t istream)
@@ -409,7 +387,19 @@ replace_source_data(const void *data, size_t length, void *ctx)
 
     replace->had_input = 1;
 
-    return replace_feed(replace, data, length);
+    if (!replace->quiet) {
+        if (replace->source_length >= 8 * 1024 * 1024) {
+            daemon_log(2, "file too large for processor\n");
+            istream_close(replace->input);
+            return 0;
+        }
+
+        growing_buffer_write_buffer(replace->buffer, data, length);
+    }
+
+    replace->source_length += (off_t)length;
+
+    return length;
 }
 
 static void
