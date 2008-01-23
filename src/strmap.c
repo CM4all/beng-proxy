@@ -120,6 +120,7 @@ strmap_remove(strmap_t map, const char *key)
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;
 
+    assert(map != NULL);
     assert(key != NULL);
 
     prev = &map->slots[hash % map->capacity];
@@ -157,9 +158,13 @@ strmap_remove(strmap_t map, const char *key)
 const char *
 strmap_get(strmap_t map, const char *key)
 {
-    unsigned hash = calc_hash(key);
+    unsigned hash;
     struct slot *slot;
 
+    assert(map != NULL);
+    assert(key != NULL);
+
+    hash = calc_hash(key);
     slot = &map->slots[hash % map->capacity];
     if (slot->pair.key != NULL && strcmp(slot->pair.key, key) == 0) {
         assert(slot->pair.value != NULL);
@@ -181,6 +186,8 @@ strmap_get(strmap_t map, const char *key)
 void
 strmap_rewind(strmap_t map)
 {
+    assert(map != NULL);
+
     map->current_slot = NULL;
     map->next_slot = 0;
 }
@@ -188,6 +195,8 @@ strmap_rewind(strmap_t map)
 const struct strmap_pair *
 strmap_next(strmap_t map)
 {
+    assert(map != NULL);
+
     if (map->current_slot != NULL && map->current_slot->next != NULL) {
         map->current_slot = map->current_slot->next;
         return &map->current_slot->pair;
