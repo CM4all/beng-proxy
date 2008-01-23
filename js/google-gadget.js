@@ -17,6 +17,9 @@ function _IG_Prefs(prefix) {
         return "";
     }
 
+    this.set = function(name, value) {
+    }
+
     return this;
 }
 
