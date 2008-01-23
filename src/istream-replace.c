@@ -24,7 +24,7 @@ struct replace {
 
     int had_input;
 
-    int quiet, writing;
+    int writing;
     struct growing_buffer *buffer;
     off_t source_length, position;
 
@@ -46,7 +46,7 @@ substitution_is_tail(const struct substitution *s)
     assert(s->replace != NULL);
     assert(s->end <= s->replace->source_length);
 
-    return s->next == NULL && (s->replace->quiet ||
+    return s->next == NULL && (s->replace->buffer == NULL ||
                                s->end == s->replace->source_length);
 }
 
@@ -60,18 +60,18 @@ static void
 replace_to_next_substitution(struct replace *replace, struct substitution *s)
 {
     assert(replace->first_substitution == s);
-    assert(replace->quiet || replace->position == s->start);
+    assert(replace->buffer == NULL || replace->position == s->start);
     assert(s->istream == NULL);
     assert(s->start <= s->end);
 
-    if (!replace->quiet) {
+    if (replace->buffer != NULL) {
         growing_buffer_consume(replace->buffer, s->end - s->start);
         replace->position = s->end;
     }
 
     replace->first_substitution = s->next;
 
-    assert(replace->quiet ||
+    assert(replace->buffer == NULL ||
            replace->first_substitution == NULL ||
            replace->first_substitution->start >= replace->position);
 
@@ -98,12 +98,12 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
     struct substitution *s = ctx;
     struct replace *replace = s->replace;
 
-    assert(replace->quiet || replace->position <= s->start);
+    assert(replace->buffer == NULL || replace->position <= s->start);
     assert(replace->first_substitution != NULL);
     assert(replace->first_substitution->start <= s->start);
 
     if (replace->first_substitution != s ||
-        (!replace->quiet && replace->position < s->start))
+        (replace->buffer != NULL && replace->position < s->start))
         return 0;
 
     return istream_invoke_data(&replace->output, data, length);
@@ -118,7 +118,7 @@ replace_substitution_eof(void *ctx)
     istream_clear_unref(&s->istream);
 
     if (replace->first_substitution != s ||
-        (!replace->quiet && replace->position < s->start))
+        (replace->buffer != NULL && replace->position < s->start))
         return;
 
     replace_to_next_substitution(replace, s);
@@ -165,7 +165,7 @@ replace_add(struct replace *replace, off_t start, off_t end,
     struct substitution *s;
 
     assert(replace != NULL);
-    assert(replace->quiet || !replace->writing);
+    assert(replace->buffer == NULL || !replace->writing);
     assert(start >= 0);
     assert(start <= end);
     assert(start >= replace->last_substitution_end);
@@ -199,9 +199,9 @@ replace_available(const struct replace *replace)
     off_t length = 0, position = replace->position, l;
 
     for (subst = replace->first_substitution; subst != NULL; subst = subst->next) {
-        assert(replace->quiet || position <= subst->start);
+        assert(replace->buffer == NULL || position <= subst->start);
 
-        if (!replace->quiet)
+        if (replace->buffer != NULL)
             length += subst->start - position;
 
         if (subst->istream != NULL) {
@@ -223,7 +223,7 @@ static int
 replace_read_substitution(struct replace *replace)
 {
     while (replace->first_substitution != NULL &&
-           (replace->quiet ||
+           (replace->buffer == NULL ||
             replace->position == replace->first_substitution->start)) {
         struct substitution *s = replace->first_substitution;
 
@@ -292,7 +292,7 @@ replace_try_read_from_buffer(struct replace *replace)
 
     assert(replace != NULL);
 
-    if (replace->quiet)
+    if (replace->buffer == NULL)
         return 0;
 
     if (replace->first_substitution == NULL) {
@@ -341,7 +341,7 @@ replace_read(struct replace *replace)
     size_t rest;
 
     assert(replace != NULL);
-    assert(replace->quiet || replace->position <= replace->source_length);
+    assert(replace->buffer == NULL || replace->position <= replace->source_length);
     assert(replace->writing);
 
     pool_ref(replace->output.pool);
@@ -368,7 +368,7 @@ replace_read_check_empty(struct replace *replace)
     assert(replace->writing);
     assert(replace->input == NULL);
 
-    if (replace->quiet && replace->first_substitution == NULL)
+    if (replace->buffer == NULL && replace->first_substitution == NULL)
         istream_invoke_eof(&replace->output);
     else
         replace_read(replace);
@@ -387,7 +387,7 @@ replace_source_data(const void *data, size_t length, void *ctx)
 
     replace->had_input = 1;
 
-    if (!replace->quiet) {
+    if (replace->buffer != NULL) {
         if (replace->source_length >= 8 * 1024 * 1024) {
             daemon_log(2, "file too large for processor\n");
             istream_close(replace->input);
@@ -508,12 +508,11 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
                                &replace_input_handler, replace,
                                0);
 
-    replace->quiet = quiet;
     replace->writing = 0;
+    replace->buffer = quiet
+        ? NULL
+        : growing_buffer_new(pool, 8192);
     replace->source_length = 0;
-
-    if (!quiet)
-        replace->buffer = growing_buffer_new(pool, 8192);
 
     replace->first_substitution = NULL;
     replace->append_substitution_p = &replace->first_substitution;
