@@ -98,9 +98,6 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
     struct substitution *s = ctx;
     struct replace *replace = s->replace;
 
-    if (!replace->writing)
-        return 0;
-
     assert(replace->quiet || replace->position <= s->start);
     assert(replace->first_substitution != NULL);
     assert(replace->first_substitution->start <= s->start);
@@ -121,7 +118,6 @@ replace_substitution_eof(void *ctx)
     istream_clear_unref(&s->istream);
 
     if (replace->first_substitution != s ||
-        !replace->writing ||
         (!replace->quiet && replace->position < s->start))
         return;
 
@@ -321,9 +317,14 @@ replace_try_read_from_buffer(struct replace *replace)
     if (replace->quiet)
         return 0;
 
-    if (replace->first_substitution == NULL)
+    if (replace->first_substitution == NULL) {
+        if (!replace->writing)
+            /* block after the last substitution, unless the caller
+               has already set the "writing" flag */
+            return 1;
+
         max_length = (size_t)(replace->source_length - replace->position);
-    else if (replace->position < replace->first_substitution->start)
+    } else if (replace->position < replace->first_substitution->start)
         max_length = (size_t)(replace->first_substitution->start - replace->position);
     else
         max_length = 0;
