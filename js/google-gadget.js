@@ -54,6 +54,7 @@ function _IG_AdjustIFrameHeight() {
 }
 
 function _IG_RegisterOnloadHandler(load) {
+    beng_register_onload(load);
 }
 
 function _gel(id) {

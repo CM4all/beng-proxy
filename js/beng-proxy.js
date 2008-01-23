@@ -152,3 +152,16 @@ function beng_widget(parent, id) {
 
     return this;
 }
+
+var _beng_onload_list = Array();
+
+function _beng_onload() {
+    var x;
+    for (x in _beng_onload_list) {
+        _beng_onload_list[x]();
+    }
+}
+
+function beng_register_onload(onload) {
+    _beng_onload_list.push(onload);
+}

@@ -57,7 +57,7 @@ struct processor {
     char widget_params[512];
     size_t widget_params_length;
 
-    int in_script;
+    unsigned in_script:1, script_tail:1;
     growing_buffer_t script;
     off_t script_start_offset;
 };
@@ -210,6 +210,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->end_of_body = (off_t)-1;
     processor->embedded_widget = NULL;
     processor->in_script = 0;
+    processor->script_tail = 0;
 
     istream = istream_tee_new(pool, istream);
     processor_parser_init(processor, istream);
@@ -311,6 +312,13 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     if (strref_cmp_literal(&tag->name, "body") == 0) {
         processor->tag = TAG_BODY;
+
+        if (tag->type == TAG_CLOSE && !processor->script_tail &&
+            processor_option_jscript_root(processor)) {
+            istream_replace_add(processor->replace, tag->start, tag->start,
+                                js_generate_tail(processor->pool));
+            processor->script_tail = 1;
+        }
     } else if (strref_cmp_literal(&tag->name, "html") == 0) {
         processor->in_html = 1;
         processor->tag = TAG_NONE;
@@ -730,6 +738,10 @@ processor_parser_eof(void *ctx, off_t length)
         processor_replace_add(processor, 0, length,
                               istream_string_new(processor->pool,
                                                  "<!-- the widget has no HTML body -->"));
+    } else if (!processor->script_tail &&
+               processor_option_jscript_root(processor)) {
+        istream_replace_add(processor->replace, length, length,
+                            js_generate_tail(processor->pool));
     }
 
     istream_replace_finish(processor->replace);

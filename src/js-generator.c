@@ -59,3 +59,11 @@ js_generate_root_widget(struct growing_buffer *gb, const char *session_id)
 
     growing_buffer_write_string(gb, "\"));\n");
 }
+
+istream_t
+js_generate_tail(pool_t pool)
+{
+    return istream_string_new(pool, "<script type=\"text/javascript\">\n"
+                              "_beng_onload();\n"
+                              "</script>");
+}

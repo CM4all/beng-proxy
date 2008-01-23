@@ -8,6 +8,7 @@
 #define __BENG_JS_GENERATOR_H
 
 #include "pool.h"
+#include "istream.h"
 
 struct growing_buffer;
 struct widget;
@@ -18,5 +19,8 @@ js_generate_widget(struct growing_buffer *gb, const struct widget *widget,
 
 void
 js_generate_root_widget(struct growing_buffer *gb, const char *session_id);
+
+istream_t
+js_generate_tail(pool_t pool);
 
 #endif
