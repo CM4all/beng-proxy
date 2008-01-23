@@ -25,7 +25,7 @@ struct replace {
 
     int had_input;
 
-    int writing;
+    int finished;
     struct growing_buffer *buffer;
     off_t source_length, position;
 
@@ -237,9 +237,9 @@ replace_try_read_from_buffer(struct replace *replace)
     assert(replace->buffer != NULL);
 
     if (replace->first_substitution == NULL) {
-        if (!replace->writing)
+        if (!replace->finished)
             /* block after the last substitution, unless the caller
-               has already set the "writing" flag */
+               has already set the "finished" flag */
             return 1;
 
         max_length = (size_t)(replace->source_length - replace->position);
@@ -287,7 +287,7 @@ replace_read(struct replace *replace)
 
     assert(replace != NULL);
     assert(replace->buffer == NULL || replace->position <= replace->source_length);
-    assert(replace->writing);
+    assert(replace->finished);
 
     pool_ref(replace->output.pool);
     pool = replace->output.pool;
@@ -310,7 +310,7 @@ static void
 replace_read_check_empty(struct replace *replace)
 {
     assert(replace != NULL);
-    assert(replace->writing);
+    assert(replace->finished);
     assert(replace->input == NULL);
 
     if (replace->buffer == NULL && replace->first_substitution == NULL)
@@ -353,7 +353,7 @@ replace_source_eof(void *ctx)
 
     istream_clear_unref(&replace->input);
 
-    if (replace->writing)
+    if (replace->finished)
         replace_read_check_empty(replace);
 }
 
@@ -392,14 +392,14 @@ istream_replace_available(istream_t istream, int partial)
     const struct substitution *subst;
     off_t length, position, l;
 
-    if (!partial && !replace->writing)
+    if (!partial && !replace->finished)
         /* we don't know yet how many substitutions will come, so we
            cannot calculate the exact rest */
         return (off_t)-1;
 
     /* get available bytes from replace->input */
 
-    if (replace->input != NULL && replace->writing) {
+    if (replace->input != NULL && replace->finished) {
         length = istream_available(replace->input, partial);
         if (length == (off_t)-1) {
             if (!partial)
@@ -435,7 +435,7 @@ istream_replace_available(istream_t istream, int partial)
 
     /* add available bytes from tail (if known yet) */
 
-    if (replace->buffer != NULL && replace->writing)
+    if (replace->buffer != NULL && replace->finished)
         length += replace->source_length - position;
 
     return length;
@@ -451,7 +451,7 @@ istream_replace_read(istream_t istream)
             replace->had_input = 0;
             istream_read(replace->input);
         } while (replace->input != NULL && replace->had_input);
-    } else if (replace->writing)
+    } else if (replace->finished)
         replace_read(replace);
 }
 
@@ -495,7 +495,7 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
                                &replace_input_handler, replace,
                                0);
 
-    replace->writing = 0;
+    replace->finished = 0;
 
     if (quiet) {
         replace->buffer = NULL;
@@ -527,7 +527,7 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
     struct replace *replace = istream_to_replace(istream);
     struct substitution *s;
 
-    assert(!replace->writing);
+    assert(!replace->finished);
     assert(start >= 0);
     assert(start <= end);
     assert(start >= replace->last_substitution_end);
@@ -569,12 +569,12 @@ istream_replace_finish(istream_t istream)
 {
     struct replace *replace = istream_to_replace(istream);
 
-    assert(!replace->writing);
+    assert(!replace->finished);
     assert(replace->buffer == NULL || replace->position == 0 ||
            (replace->first_substitution != NULL &&
             replace->position <= replace->first_substitution->start));
 
-    replace->writing = 1;
+    replace->finished = 1;
 
     if (replace->input == NULL)
         replace_read_check_empty(replace);
