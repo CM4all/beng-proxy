@@ -44,7 +44,7 @@ substitution_is_tail(const struct substitution *s)
 {
     assert(s != NULL);
     assert(s->replace != NULL);
-    assert(s->end <= s->replace->source_length);
+    assert(s->replace->buffer == NULL || s->end <= s->replace->source_length);
 
     return s->next == NULL && (s->replace->buffer == NULL ||
                                s->end == s->replace->source_length);
@@ -157,40 +157,6 @@ replace_destroy(struct replace *replace)
  * misc methods
  *
  */
-
-static void
-replace_add(struct replace *replace, off_t start, off_t end,
-            istream_t istream)
-{
-    struct substitution *s;
-
-    assert(replace != NULL);
-    assert(replace->buffer == NULL || !replace->writing);
-    assert(start >= 0);
-    assert(start <= end);
-    assert(start >= replace->last_substitution_end);
-
-    s = p_malloc(replace->output.pool, sizeof(*s));
-    s->next = NULL;
-    s->replace = replace;
-    s->start = start;
-    s->end = end;
-
-#ifndef NDEBUG
-    replace->last_substitution_end = end;
-#endif
-
-    if (istream != NULL) {
-        istream_assign_ref_handler(&s->istream, istream,
-                                   &replace_substitution_handler, s,
-                                   0);
-    } else {
-        s->istream = NULL;
-    }
-
-    *replace->append_substitution_p = s;
-    replace->append_substitution_p = &s->next;
-}
 
 static off_t
 replace_available(const struct replace *replace)
@@ -535,8 +501,33 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
                     istream_t contents)
 {
     struct replace *replace = istream_to_replace(istream);
+    struct substitution *s;
 
-    replace_add(replace, start, end, contents);
+    assert(replace->buffer == NULL || !replace->writing);
+    assert(start >= 0);
+    assert(start <= end);
+    assert(start >= replace->last_substitution_end);
+
+    s = p_malloc(replace->output.pool, sizeof(*s));
+    s->next = NULL;
+    s->replace = replace;
+    s->start = start;
+    s->end = end;
+
+#ifndef NDEBUG
+    replace->last_substitution_end = end;
+#endif
+
+    if (contents == NULL) {
+        s->istream = NULL;
+    } else {
+        istream_assign_ref_handler(&s->istream, contents,
+                                   &replace_substitution_handler, s,
+                                   0);
+    }
+
+    *replace->append_substitution_p = s;
+    replace->append_substitution_p = &s->next;
 }
 
 void
