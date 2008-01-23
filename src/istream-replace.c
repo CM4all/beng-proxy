@@ -508,6 +508,9 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
     assert(start <= end);
     assert(start >= replace->last_substitution_end);
 
+    if (start == end && contents == NULL)
+        return;
+
     s = p_malloc(replace->output.pool, sizeof(*s));
     s->next = NULL;
     s->replace = replace;
