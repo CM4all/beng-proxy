@@ -33,8 +33,17 @@ function beng_proxy_make_uri(focus, path, proxy) {
         uri += "&focus=" + escape(focus);
         if (proxy)
             uri += "&frame=" + escape(focus);
-        if (path != null)
+        if (path != null) {
+            var query_string = null;
+            var qmark = id.indexOf("?");
+            if (qmark >= 0) {
+                query_string = path.substring(qmark);
+                path = path.subtring(0, qmark);
+            }
             uri += "&path=" + escape(path);
+            if (query_string != null)
+                uri += query_string;
+        }
     }
     return uri;
 }
