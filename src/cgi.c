@@ -309,11 +309,51 @@ static void attr_noreturn
 cgi_run(const char *path,
         http_method_t method, const char *uri, struct strmap *headers)
 {
-    (void)method;
-    (void)uri;
-    (void)headers;
+    char buffer[4096];
+    const char *qmark;
+    const struct strmap_pair *pair;
+    size_t i;
 
     clearenv();
+
+    setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
+    setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
+    setenv("REQUEST_METHOD", http_method_to_string(method), 1);
+    setenv("SCRIPT_FILENAME", path, 1);
+    setenv("PATH_TRANSLATED", path, 1);
+    setenv("REQUEST_URI", uri, 1);
+
+    qmark = strchr(uri, '?');
+    if (qmark == NULL) {
+        setenv("SCRIPT_NAME", uri, 1); /* XXX path_info */
+        setenv("QUERY_STRING", "", 1);
+    } else {
+        char *d = strdup(path);
+
+        if (d != NULL) {
+            d[qmark - path] = 0;
+            setenv("SCRIPT_NAME", d, 1); /* XXX path_info */
+        }
+
+        setenv("QUERY_STRING", qmark + 1, 1);
+    }
+
+    memcpy(buffer, "HTTP_", 5);
+    strmap_rewind(headers);
+    while ((pair = strmap_next(headers)) != NULL) {
+        for (i = 0; i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
+            if (char_is_minuscule_letter(pair->key[i]))
+                buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
+            else if (char_is_capital_letter(pair->key[i]) ||
+                     char_is_digit(pair->key[i]))
+                buffer[5 + i] = pair->key[i];
+            else
+                buffer[5 + i] = '_';
+        }
+
+        buffer[5 + i] = 0;
+        setenv(buffer, pair->value, 1);
+    }
 
     execl(path, path, NULL);
     fprintf(stderr, "exec('%s') failed: %s\n",
