@@ -67,8 +67,9 @@ js_generate_preferences(struct growing_buffer *gb, const struct widget *widget,
 {
     const char *prefix, *query_string;
 
-    if (widget->from_request.session != NULL)
-        query_string = widget->from_request.session->query_string;
+    query_string = widget->from_request.session == NULL
+        ? NULL
+        : widget->from_request.session->query_string;
 
     prefix = widget_prefix(pool, widget);
     if (prefix == NULL)
