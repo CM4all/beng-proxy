@@ -24,6 +24,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 struct cgi {
     struct istream output;
@@ -308,13 +309,13 @@ static void attr_noreturn
 cgi_run(const char *path,
         http_method_t method, const char *uri, struct strmap *headers)
 {
-    char *const envp[1] = { NULL };
-
     (void)method;
     (void)uri;
     (void)headers;
 
-    execle(path, path, NULL, envp);
+    clearenv();
+
+    execl(path, path, NULL);
     fprintf(stderr, "exec('%s') failed: %s\n",
             path, strerror(errno));
     _exit(2);
