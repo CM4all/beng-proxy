@@ -304,6 +304,22 @@ static struct async_operation_class cgi_async_operation = {
  *
  */
 
+static void attr_noreturn
+cgi_run(const char *path,
+        http_method_t method, const char *uri, struct strmap *headers)
+{
+    char *const envp[1] = { NULL };
+
+    (void)method;
+    (void)uri;
+    (void)headers;
+
+    execle(path, path, NULL, envp);
+    fprintf(stderr, "exec('%s') failed: %s\n",
+            path, strerror(errno));
+    _exit(2);
+}
+
 void
 cgi_new(pool_t pool,
         const char *path,
@@ -317,10 +333,6 @@ cgi_new(pool_t pool,
     pid_t pid;
     istream_t input;
 
-    (void)method;
-    (void)uri;
-    (void)headers;
-
     http_response_handler_set(&cgi->handler, handler, handler_ctx);
 
     pid = beng_fork(pool, body, &input);
@@ -329,13 +341,8 @@ cgi_new(pool_t pool,
         return;
     }
 
-    if (pid == 0) {
-        char *const envp[1] = { NULL };
-        execle(path, path, NULL, envp);
-        fprintf(stderr, "exec('%s') failed: %s\n",
-                path, strerror(errno));
-        _exit(2);
-    }
+    if (pid == 0)
+        cgi_run(path, method, uri, headers);
 
     cgi->output = istream_cgi;
     cgi->output.pool = pool;
