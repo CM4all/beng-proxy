@@ -356,7 +356,10 @@ void
 http_server_send_message(struct http_server_request *request,
                          http_status_t status, const char *msg)
 {
-    http_server_response(request, status, NULL,
+    growing_buffer_t headers = growing_buffer_new(request->pool, 40);
+    header_write(headers, "content-type", "text/plain");
+
+    http_server_response(request, status, headers,
                          istream_string_new(request->pool, msg));
 }
 
