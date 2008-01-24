@@ -29,6 +29,7 @@ enum beng_translation_command {
     TRANSLATE_PATH_INFO = 17,
     TRANSLATE_SITE = 18,
     TRANSLATE_CGI = 19,
+    TRANSLATE_DOCUMENT_ROOT = 20,
 };
 
 struct beng_translation_header {

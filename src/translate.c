@@ -319,6 +319,10 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_CGI:
         connection->response.cgi = 1;
         break;
+
+    case TRANSLATE_DOCUMENT_ROOT:
+        connection->response.document_root = payload;
+        break;
     }
 }
 

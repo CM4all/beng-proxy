@@ -25,6 +25,7 @@ struct translate_response {
     const char *path;
     const char *path_info;
     const char *site;
+    const char *document_root;
     const char *content_type;
     const char *proxy;
     const char *redirect;

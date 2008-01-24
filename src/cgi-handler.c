@@ -50,7 +50,9 @@ cgi_handler(struct request *request2)
     else
         script_name = remove_tail(request->pool, script_name, path_info);
 
-    document_root = "/var/www";
+    document_root = tr->document_root;
+    if (document_root == NULL)
+        document_root = "/var/www";
 
     cgi_new(request->pool, tr->path,
             request->method, request->uri,

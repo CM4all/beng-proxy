@@ -28,6 +28,7 @@ TRANSLATE_REMOTE_HOST = 16
 TRANSLATE_PATH_INFO = 17
 TRANSLATE_SITE = 18
 TRANSLATE_CGI = 19
+TRANSLATE_DOCUMENT_ROOT = 20
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
 
@@ -139,6 +140,7 @@ class Translation(Protocol):
         cgi = cgi_re.search(path, 1)
 
         self._write_packet(TRANSLATE_BEGIN)
+        self._write_packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
         self._write_packet(TRANSLATE_PATH, path)
         if cgi:
             self._write_packet(TRANSLATE_CGI)
