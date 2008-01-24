@@ -4,6 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#ifndef __ISTREAM_BUFFER_H
+#define __ISTREAM_BUFFER_H
+
 #include "istream.h"
 #include "fifo-buffer.h"
 
@@ -24,3 +27,5 @@ istream_buffer_consume(struct istream *istream, fifo_buffer_t buffer)
     fifo_buffer_consume(buffer, consumed);
     return length - consumed;
 }
+
+#endif
