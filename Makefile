@@ -93,6 +93,7 @@ SOURCES = src/main.c \
 	src/http-util.c \
 	src/url-stock.c \
 	src/url-stream.c \
+	src/cgi.c \
 	src/filter.c \
 	src/fifo-buffer.c \
 	src/growing-buffer.c \
