@@ -4,8 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream.h"
-#include "fifo-buffer.h"
+#include "istream-buffer.h"
 #include "format.h"
 
 #include <assert.h>
@@ -42,23 +41,13 @@ chunked_eof_detected(struct istream_chunked *chunked)
 static void
 chunked_try_write(struct istream_chunked *chunked)
 {
-    const char *data;
-    size_t length, nbytes;
+    size_t rest;
 
     assert(chunked->buffer != NULL);
 
-    data = fifo_buffer_read(chunked->buffer, &length);
-    if (data == NULL)
-        return;
-
-    nbytes = istream_invoke_data(&chunked->output, data, length);
-    assert(nbytes <= length);
-
-    if (nbytes > 0) {
-        fifo_buffer_consume(chunked->buffer, nbytes);
-        if (nbytes == length && chunked->input == NULL)
-            chunked_eof_detected(chunked);
-    }
+    rest = istream_buffer_consume(&chunked->output, chunked->buffer);
+    if (rest == 0 && chunked->input == NULL)
+        chunked_eof_detected(chunked);
 }
 
 static size_t
