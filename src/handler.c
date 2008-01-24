@@ -88,7 +88,10 @@ translate_callback(const struct translate_response *response,
     }
 
     if (response->path != NULL) {
-        file_callback(request);
+        if (response->cgi)
+            cgi_handler(request);
+        else
+            file_callback(request);
     } else if (response->proxy != NULL) {
         proxy_callback(request);
     } else if (response->redirect != NULL) {

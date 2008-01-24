@@ -315,6 +315,10 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_LANGUAGE:
         connection->response.language = payload;
         break;
+
+    case TRANSLATE_CGI:
+        connection->response.cgi = 1;
+        break;
     }
 }
 

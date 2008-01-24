@@ -29,7 +29,7 @@ struct translate_response {
     const char *proxy;
     const char *redirect;
     const char *filter;
-    int process;
+    int process, cgi;
     const char *session;
     const char *user;
     const char *language;

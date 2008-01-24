@@ -56,6 +56,7 @@ SOURCES = src/main.c \
 	src/response.c \
 	src/handler.c \
 	src/file-handler.c \
+	src/cgi-handler.c \
 	src/proxy-handler.c \
 	src/istream-replace.c \
 	src/widget.c \

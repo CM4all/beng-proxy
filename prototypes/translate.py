@@ -4,6 +4,7 @@
 #
 # Author: Max Kellermann <mk@cm4all.com>
 
+import re
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, Factory
 import struct
@@ -26,6 +27,9 @@ TRANSLATE_LANGUAGE = 15
 TRANSLATE_REMOTE_HOST = 16
 TRANSLATE_PATH_INFO = 17
 TRANSLATE_SITE = 18
+TRANSLATE_CGI = 19
+
+cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
 
 class PacketReader:
     def __init__(self):
@@ -132,14 +136,19 @@ class Translation(Protocol):
         else:
             path = '/var/www' + request.uri
 
+        cgi = cgi_re.search(path, 1)
+
         self._write_packet(TRANSLATE_BEGIN)
         self._write_packet(TRANSLATE_PATH, path)
+        if cgi:
+            self._write_packet(TRANSLATE_CGI)
         if user is not None:
             self._write_packet(TRANSLATE_USER, user)
         if session is not None:
             self._write_packet(TRANSLATE_SESSION, session)
         #self._write_packet(TRANSLATE_FILTER, 'http://cfatest01.intern.cm-ag/filter.py')
-        self._write_packet(TRANSLATE_PROCESS)
+        if not cgi:
+            self._write_packet(TRANSLATE_PROCESS)
         self._write_packet(TRANSLATE_END)
 
     def _handle_packet(self, packet):
