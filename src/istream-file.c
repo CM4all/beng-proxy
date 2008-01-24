@@ -4,8 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream.h"
-#include "fifo-buffer.h"
+#include "istream-buffer.h"
 #include "buffered-io.h"
 
 #include <daemon/log.h>
@@ -80,20 +79,7 @@ istream_file_available(istream_t istream, int partial)
 static size_t
 istream_file_invoke_data(struct file *file)
 {
-    const void *data;
-    size_t length, consumed;
-
-    assert(file->buffer != NULL);
-    
-    data = fifo_buffer_read(file->buffer, &length);
-    if (data == NULL)
-        return 0;
-
-    consumed = istream_invoke_data(&file->stream, data, length);
-    assert(consumed <= length);
-
-    fifo_buffer_consume(file->buffer, consumed);
-    return length - consumed;
+    return istream_buffer_consume(&file->stream, file->buffer);
 }
 
 static void
