@@ -54,6 +54,15 @@ char_to_lower(char ch)
         return ch;
 }
 
+static attr_always_inline char
+char_to_upper(char ch)
+{
+    if (unlikely(char_is_minuscule_letter(ch)))
+        return (char)(ch - 'a' + 'A');
+    else
+        return ch;
+}
+
 static attr_always_inline void
 char_to_lower_inplace(char *ch_r)
 {
@@ -61,7 +70,17 @@ char_to_lower_inplace(char *ch_r)
         *ch_r += 'a' - 'A';
 }
 
+static attr_always_inline void
+char_to_upper_inplace(char *ch_r)
+{
+    if (unlikely(char_is_minuscule_letter(*ch_r)))
+        *ch_r -= 'a' - 'A';
+}
+
 void
 str_to_lower(char *s);
+
+void
+str_to_upper(char *s);
 
 #endif
