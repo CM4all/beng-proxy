@@ -307,12 +307,21 @@ static struct async_operation_class cgi_async_operation = {
 
 static void attr_noreturn
 cgi_run(const char *path,
-        http_method_t method, const char *uri, struct strmap *headers)
+        http_method_t method, const char *uri,
+        const char *script_name, const char *path_info,
+        const char *query_string,
+        const char *document_root,
+        struct strmap *headers)
 {
-    char buffer[4096];
-    const char *qmark;
     const struct strmap_pair *pair;
+    char buffer[512] = "HTTP_";
     size_t i;
+
+    assert(path != NULL);
+    assert(uri != NULL);
+    assert(script_name != NULL);
+    assert(path_info != NULL);
+    assert(query_string != NULL);
 
     clearenv();
 
@@ -322,23 +331,11 @@ cgi_run(const char *path,
     setenv("SCRIPT_FILENAME", path, 1);
     setenv("PATH_TRANSLATED", path, 1);
     setenv("REQUEST_URI", uri, 1);
+    setenv("SCRIPT_NAME", script_name, 1);
+    setenv("PATH_INFO", path_info, 1);
+    setenv("QUERY_STRING", query_string, 1);
+    setenv("DOCUMENT_ROOT", document_root, 1);
 
-    qmark = strchr(uri, '?');
-    if (qmark == NULL) {
-        setenv("SCRIPT_NAME", uri, 1); /* XXX path_info */
-        setenv("QUERY_STRING", "", 1);
-    } else {
-        char *d = strdup(path);
-
-        if (d != NULL) {
-            d[qmark - path] = 0;
-            setenv("SCRIPT_NAME", d, 1); /* XXX path_info */
-        }
-
-        setenv("QUERY_STRING", qmark + 1, 1);
-    }
-
-    memcpy(buffer, "HTTP_", 5);
     strmap_rewind(headers);
     while ((pair = strmap_next(headers)) != NULL) {
         for (i = 0; i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
@@ -365,6 +362,9 @@ void
 cgi_new(pool_t pool,
         const char *path,
         http_method_t method, const char *uri,
+        const char *script_name, const char *path_info,
+        const char *query_string,
+        const char *document_root,
         struct strmap *headers, istream_t body,
         const struct http_response_handler *handler,
         void *handler_ctx,
@@ -383,7 +383,9 @@ cgi_new(pool_t pool,
     }
 
     if (pid == 0)
-        cgi_run(path, method, uri, headers);
+        cgi_run(path, method, uri,
+                script_name, path_info, query_string, document_root,
+                headers);
 
     cgi->output = istream_cgi;
     cgi->output.pool = pool;
