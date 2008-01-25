@@ -23,6 +23,8 @@ struct replace {
     struct istream output;
     istream_t input;
 
+    unsigned had_input:1, had_output:1;
+
     int finished;
     struct growing_buffer *buffer;
     off_t source_length, position;
@@ -105,6 +107,7 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
         (replace->buffer != NULL && replace->position < s->start))
         return 0;
 
+    replace->had_output = 1;
     return istream_invoke_data(&replace->output, data, length);
 }
 
@@ -209,6 +212,7 @@ replace_read_from_buffer(struct replace *replace, size_t max_length)
     if (length > max_length)
         length = max_length;
 
+    replace->had_output = 1;
     nbytes = istream_invoke_data(&replace->output, data, length);
     assert(nbytes <= length);
 
@@ -328,6 +332,8 @@ replace_source_data(const void *data, size_t length, void *ctx)
 {
     struct replace *replace = ctx;
 
+    replace->had_input = 1;
+
     if (replace->buffer != NULL) {
         if (replace->source_length >= 8 * 1024 * 1024) {
             daemon_log(2, "file too large for processor\n");
@@ -445,6 +451,8 @@ istream_replace_read(istream_t istream)
     struct replace *replace = istream_to_replace(istream);
     int ret;
 
+    replace->had_output = 0;
+
     ret = replace_read_substitution(replace);
     if (ret)
         return;
@@ -456,8 +464,14 @@ istream_replace_read(istream_t istream)
             return;
     }
 
-    if (replace->input != NULL)
+    if (replace->had_output || replace->input == NULL)
+        return;
+
+    do {
+        replace->had_input = 0;
         istream_read(replace->input);
+    } while (replace->had_input && !replace->had_output &&
+             replace->input != NULL);
 }
 
 static void
