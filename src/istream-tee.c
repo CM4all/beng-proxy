@@ -46,9 +46,13 @@ tee_source_eof(void *ctx)
 
     assert(tee->input != NULL);
 
+    pool_ref(tee->output1.pool);
+
     istream_clear_unref(&tee->input);
     istream_invoke_eof(&tee->output1);
     istream_invoke_eof(&tee->output2);
+
+    pool_unref(tee->output1.pool);
 }
 
 static void
@@ -58,9 +62,13 @@ tee_source_abort(void *ctx)
 
     assert(tee->input != NULL);
 
+    pool_ref(tee->output1.pool);
+
     istream_clear_unref(&tee->input);
     istream_invoke_abort(&tee->output1);
     istream_invoke_abort(&tee->output2);
+
+    pool_unref(tee->output1.pool);
 }
 
 static const struct istream_handler tee_input_handler = {
