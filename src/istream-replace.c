@@ -345,6 +345,10 @@ replace_source_data(const void *data, size_t length, void *ctx)
         replace->source_length += (off_t)length;
 
         replace_try_read_from_buffer_loop(replace);
+        if (replace->input == NULL)
+            /* the istream API mandates that we must return 0 if the
+               stream is finished */
+            return 0;
     }
 
     return length;
