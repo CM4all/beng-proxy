@@ -441,11 +441,21 @@ static void
 istream_replace_read(istream_t istream)
 {
     struct replace *replace = istream_to_replace(istream);
+    int ret;
+
+    ret = replace_read_substitution(replace);
+    if (ret)
+        return;
+
+    if (replace->buffer != NULL &&
+        (replace->first_substitution != NULL || replace->finished)) {
+        size_t rest = replace_try_read_from_buffer_loop(replace);
+        if (rest > 0)
+            return;
+    }
 
     if (replace->input != NULL)
         istream_read(replace->input);
-    else if (replace->finished)
-        replace_read(replace);
 }
 
 static void
