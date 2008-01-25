@@ -34,7 +34,7 @@ tee_source_data(const void *data, size_t length, void *ctx)
     /* XXX it is currently asserted that the second handler will
        always consume all data; later, buffering should probably be
        added */
-    assert(nbytes2 == nbytes1);
+    assert(nbytes2 == nbytes1 || (nbytes2 == 0 && tee->input == NULL));
 
     return nbytes2;
 }
