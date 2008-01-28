@@ -38,12 +38,21 @@ struct istream_replace {
 #endif
 };
 
+/**
+ * Return true if the replace object is at the specified position.
+ * This is ignored (returns true) if this replace object is in "quiet"
+ * mode (buffer==NULL).
+ */
 static inline int
 replace_is_at_position(const struct istream_replace *replace, off_t at)
 {
     return replace->buffer == NULL || replace->position == at;
 }
 
+/**
+ * Is this substitution object is active, i.e. its data is the next
+ * being written?
+ */
 static inline int
 substitution_is_active(const struct substitution *s)
 {
@@ -58,8 +67,10 @@ substitution_is_active(const struct substitution *s)
         replace_is_at_position(replace, s->start);
 }
 
-/** is this substitution object the last chunk in this stream, i.e. is
-    there no source data following it? */
+/**
+ * Is this substitution object the last chunk in this stream, i.e. is
+ * there no source data following it?
+ */
 static inline int
 substitution_is_tail(const struct substitution *s)
 {
@@ -286,6 +297,7 @@ replace_try_read_from_buffer_loop(struct istream_replace *replace)
     if (replace->buffer == NULL)
         return 0;
 
+    /* this loop is required to cross the growing_buffer borders */
     do {
         rest = replace_try_read_from_buffer(replace);
     } while (rest == 0 &&
