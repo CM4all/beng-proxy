@@ -38,15 +38,29 @@ struct replace {
 #endif
 };
 
+static inline int
+substitution_is_active(const struct substitution *s)
+{
+    const struct replace *replace = s->replace;
+
+    assert(replace != NULL);
+    assert(replace->first_substitution != NULL);
+    assert(replace->first_substitution->start <= s->start);
+    assert(s->replace->buffer == NULL || s->start >= replace->position);
+
+    return s == replace->first_substitution &&
+        (replace->buffer == NULL || replace->position == s->start);
+}
+
 /** is this substitution object the last chunk in this stream, i.e. is
     there no source data following it? */
 static inline int
 substitution_is_tail(const struct substitution *s)
 {
-    struct replace *replace = s->replace;
+    const struct replace *replace = s->replace;
 
-    assert(s->replace != NULL);
-    assert(s->replace->buffer == NULL || s->end <= s->replace->source_length);
+    assert(replace != NULL);
+    assert(replace->buffer == NULL || s->end <= replace->source_length);
 
     return s->next == NULL && replace->input == NULL && replace->finished &&
         (replace->buffer == NULL || s->end == replace->source_length);
@@ -104,16 +118,11 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
     struct substitution *s = ctx;
     struct replace *replace = s->replace;
 
-    assert(replace->buffer == NULL || replace->position <= s->start);
-    assert(replace->first_substitution != NULL);
-    assert(replace->first_substitution->start <= s->start);
-
-    if (replace->first_substitution != s ||
-        (replace->buffer != NULL && replace->position < s->start))
+    if (substitution_is_active(s)) {
+        replace->had_output = 1;
+        return istream_invoke_data(&replace->output, data, length);
+    } else
         return 0;
-
-    replace->had_output = 1;
-    return istream_invoke_data(&replace->output, data, length);
 }
 
 static void
@@ -124,11 +133,8 @@ replace_substitution_eof(void *ctx)
 
     istream_clear_unref(&s->istream);
 
-    if (replace->first_substitution != s ||
-        (replace->buffer != NULL && replace->position < s->start))
-        return;
-
-    replace_to_next_substitution(replace, s);
+    if (substitution_is_active(s))
+        replace_to_next_substitution(replace, s);
 }
 
 static const struct istream_handler replace_substitution_handler = {
