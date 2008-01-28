@@ -39,6 +39,12 @@ struct istream_replace {
 };
 
 static inline int
+replace_is_at_position(const struct istream_replace *replace, off_t at)
+{
+    return replace->buffer == NULL || replace->position == at;
+}
+
+static inline int
 substitution_is_active(const struct substitution *s)
 {
     const struct istream_replace *replace = s->replace;
@@ -49,7 +55,7 @@ substitution_is_active(const struct substitution *s)
     assert(s->replace->buffer == NULL || s->start >= replace->position);
 
     return s == replace->first_substitution &&
-        (replace->buffer == NULL || replace->position == s->start);
+        replace_is_at_position(replace, s->start);
 }
 
 /** is this substitution object the last chunk in this stream, i.e. is
@@ -76,7 +82,7 @@ static void
 replace_to_next_substitution(struct istream_replace *replace, struct substitution *s)
 {
     assert(replace->first_substitution == s);
-    assert(replace->buffer == NULL || replace->position == s->start);
+    assert(replace_is_at_position(replace, s->start));
     assert(s->istream == NULL);
     assert(replace->buffer == NULL || s->start <= s->end);
 
@@ -178,8 +184,7 @@ static int
 replace_read_substitution(struct istream_replace *replace)
 {
     while (replace->first_substitution != NULL &&
-           (replace->buffer == NULL ||
-            replace->position == replace->first_substitution->start)) {
+           replace_is_at_position(replace, replace->first_substitution->start)) {
         struct substitution *s = replace->first_substitution;
 
         replace->read_locked = 1;
