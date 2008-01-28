@@ -1,5 +1,5 @@
 /*
- * This istream filter adds HTTP chunking.
+ * Concatenate several istreams.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
