@@ -72,6 +72,10 @@ replace_to_next_substitution(struct replace *replace, struct substitution *s)
     }
 
     replace->first_substitution = s->next;
+    if (replace->first_substitution == NULL) {
+        assert(replace->append_substitution_p == &s->next);
+        replace->append_substitution_p = &replace->first_substitution;
+    }
 
     assert(replace->buffer == NULL ||
            replace->first_substitution == NULL ||
