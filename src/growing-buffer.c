@@ -169,29 +169,19 @@ istream_gb_read(istream_t istream)
     assert(gb->current != NULL);
     assert(gb->current->position <= gb->current->length);
 
-    data = growing_buffer_read(gb, &length);
-    if (data == NULL) {
-        gb->current = NULL;
-        istream_invoke_eof(&gb->stream);
-        return;
-    }
-
-    nbytes = istream_invoke_data(&gb->stream, data, length);
-    assert(nbytes <= length);
-
-    if (nbytes == 0)
-        return;
-
-    growing_buffer_consume(gb, nbytes);
-
-    while (gb->current->position == gb->current->length) {
-        gb->current = gb->current->next;
-        if (gb->current == NULL) {
+    /* this loop is required to cross the buffer borders */
+    while (1) {
+        data = growing_buffer_read(gb, &length);
+        if (data == NULL) {
+            gb->current = NULL;
             istream_invoke_eof(&gb->stream);
             return;
         }
 
-        assert(gb->current->position == 0);
+        nbytes = istream_invoke_data(&gb->stream, data, length);
+        growing_buffer_consume(gb, nbytes);
+        if (nbytes < length)
+            return;
     }
 }
 
