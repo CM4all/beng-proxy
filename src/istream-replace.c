@@ -43,12 +43,13 @@ struct replace {
 static inline int
 substitution_is_tail(const struct substitution *s)
 {
-    assert(s != NULL);
+    struct replace *replace = s->replace;
+
     assert(s->replace != NULL);
     assert(s->replace->buffer == NULL || s->end <= s->replace->source_length);
 
-    return s->next == NULL && (s->replace->buffer == NULL ||
-                               s->end == s->replace->source_length);
+    return s->next == NULL && (replace->buffer == NULL ||
+                               s->end == replace->source_length);
 }
 
 static void
