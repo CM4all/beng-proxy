@@ -621,9 +621,6 @@ istream_replace_finish(istream_t istream)
     struct istream_replace *replace = istream_to_replace(istream);
 
     assert(!replace->finished);
-    assert(replace->buffer == NULL || replace->position == 0 ||
-           (replace->first_substitution != NULL &&
-            replace->position <= replace->first_substitution->start));
 
     replace->finished = 1;
 
