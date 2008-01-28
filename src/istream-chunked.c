@@ -152,6 +152,7 @@ chunked_source_eof(void *ctx)
 
     assert(chunked->input != NULL);
     assert(chunked->buffer != NULL);
+    assert(chunked->missing_from_current_chunk == 0);
 
     istream_clear_unref(&chunked->input);
 
