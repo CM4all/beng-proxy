@@ -89,6 +89,7 @@ int main(int argc, char **argv) {
     widget_class.uri = NULL;
 
     widget_init(&widget, &widget_class);
+    widget_determine_real_uri(pool, &widget);
 
     session_manager_init(pool);
 
