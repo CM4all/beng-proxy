@@ -154,7 +154,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->session = WIDGET_SESSION_RESOURCE;
     widget->from_request.proxy_ref = NULL;
     widget->from_request.focus_ref = NULL;
-    widget->from_request.path_info = "";
+    widget->from_request.path_info = NULL;
     strref_clear(&widget->from_request.query_string);
     widget->from_request.session = NULL;
     widget->from_request.method = HTTP_METHOD_GET;
