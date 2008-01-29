@@ -3,6 +3,7 @@
 #include "embed.h"
 #include "widget.h"
 #include "session.h"
+#include "url-stock.h"
 
 #include <event.h>
 
@@ -90,7 +91,7 @@ int main(int argc, char **argv) {
     session_manager_init(pool);
 
     processor_env_init(pool, &env,
-                       NULL,
+                       url_hstock_new(pool),
                        "localhost:8080",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
@@ -104,8 +105,11 @@ int main(int argc, char **argv) {
                               &widget, &env, PROCESSOR_CONTAINER);
     istream_handler_set(processor, &my_istream_handler, NULL, 0);
                               
-    while (!should_exit)
-        istream_read(processor);
+    istream_read(processor);
+
+    event_dispatch();
+
+    assert(should_exit);
 
     session_manager_deinit();
 
