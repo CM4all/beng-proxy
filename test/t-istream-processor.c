@@ -30,7 +30,6 @@ create_test(pool_t pool, istream_t input)
     int ret;
     const char *uri;
     static struct parsed_uri parsed_uri;
-    static struct widget_class widget_class;
     static struct widget widget;
     static struct processor_env env;
 
@@ -39,9 +38,7 @@ create_test(pool_t pool, istream_t input)
     if (ret != 0)
         abort();
 
-    widget_class.uri = NULL;
-
-    widget_init(&widget, &widget_class);
+    widget_init(&widget, &root_widget_class);
 
     session_manager_init(pool);
 

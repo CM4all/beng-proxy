@@ -67,7 +67,6 @@ int main(int argc, char **argv) {
     const char *uri;
     int ret;
     struct parsed_uri parsed_uri;
-    struct widget_class widget_class;
     struct widget widget;
     struct processor_env env;
     istream_t processor;
@@ -86,9 +85,7 @@ int main(int argc, char **argv) {
         exit(2);
     }
 
-    widget_class.uri = NULL;
-
-    widget_init(&widget, &widget_class);
+    widget_init(&widget, &root_widget_class);
     widget_determine_real_uri(pool, &widget);
 
     session_manager_init(pool);
