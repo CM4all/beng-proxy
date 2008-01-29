@@ -49,7 +49,6 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
     assert(widget != NULL);
     assert(widget->lazy.real_uri == NULL);
     assert(widget->from_request.path_info == NULL);
-    assert(widget->from_request.path_info == NULL);
     assert(strref_is_empty(&widget->from_request.query_string));
     assert(widget->from_request.proxy_ref == NULL);
     assert(widget->from_request.focus_ref == NULL);
