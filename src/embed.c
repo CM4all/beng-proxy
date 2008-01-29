@@ -51,6 +51,17 @@ static const char *const copy_headers_with_body[] = {
     NULL,
 };
 
+static const char *
+get_env_request_header(const struct processor_env *env, const char *key)
+{
+    assert(env != NULL);
+
+    if (env->request_headers == NULL)
+        return NULL;
+
+    return strmap_get(env->request_headers, key);
+}
+
 static growing_buffer_t
 embed_request_headers(struct embed *embed, int with_body)
 {
@@ -81,15 +92,12 @@ embed_request_headers(struct embed *embed, int with_body)
     if (session != NULL && session->user != NULL)
         header_write(headers, "x-cm4all-beng-user", session->user);
 
-    if (embed->env->request_headers == NULL)
-        p = NULL;
-    else
-        p = strmap_get(embed->env->request_headers, "user-agent");
+    p = get_env_request_header(embed->env, "user-agent");
     if (p == NULL)
         p = "beng-proxy v" VERSION;
     header_write(headers, "user-agent", p);
 
-    p = strmap_get(embed->env->request_headers, "x-forwarded-for");
+    p = get_env_request_header(embed->env, "x-forwarded-for");
     if (p == NULL) {
         if (embed->env->remote_host != NULL)
             header_write(headers, "x-forwarded-for", embed->env->remote_host);
