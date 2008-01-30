@@ -113,6 +113,7 @@ SOURCES = src/main.c \
 	src/istream-subst.c \
 	src/istream-byte.c \
 	src/istream-fail.c \
+	src/istream-later.c \
 	src/istream-head.c \
 	src/istream-tee.c \
 	src/fork.c \
