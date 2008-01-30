@@ -55,10 +55,11 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     istream_clear_unref_handler(&dechunk->input);
 
     pool_ref(dechunk->output.pool);
-    istream_invoke_eof(&dechunk->output);
 
     if (dechunk->eof_callback != NULL)
         dechunk->eof_callback(dechunk->ctx);
+
+    istream_invoke_eof(&dechunk->output);
 
     pool_unref(dechunk->output.pool);
 }
