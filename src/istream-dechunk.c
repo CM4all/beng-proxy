@@ -23,7 +23,8 @@ struct istream_dechunk {
         DATA,
         AFTER_DATA,
         TRAILER,
-        TRAILER_DATA
+        TRAILER_DATA,
+        EOF_DETECTED
     } state;
     size_t size;
     unsigned had_input:1, had_output:1;
@@ -51,6 +52,8 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     assert(dechunk->input != NULL);
     assert(dechunk->state == TRAILER);
     assert(dechunk->size == 0);
+
+    dechunk->state = EOF_DETECTED;
 
     istream_clear_unref_handler(&dechunk->input);
 
@@ -170,6 +173,10 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
             if (data[position++] == '\n')
                 dechunk->state = TRAILER;
             break;
+
+        case EOF_DETECTED:
+            assert(0);
+            return 0;
         }
     }
 
