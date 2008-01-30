@@ -256,8 +256,10 @@ int main(int argc, char **argv) {
     pool_unref(pool);
     pool_commit();
 
-    while (!should_exit)
+    while (!should_exit) {
         istream_read_expect(istream);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
 
     pool_commit();
 
