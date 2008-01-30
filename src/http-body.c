@@ -94,6 +94,7 @@ http_body_dechunked_eof(void *ctx)
     struct http_body_reader *body = ctx;
 
     assert(http_body_valid(body));
+    assert(body->rest == (off_t)-1);
 
     body->dechunk_eof = 1;
 }

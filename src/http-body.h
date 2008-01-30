@@ -62,7 +62,8 @@ http_body_init(struct http_body_reader *body,
     body->output = *stream;
     body->output.pool = pool;
     body->rest = content_length;
-    body->dechunk_eof = 0;
+    if (content_length == (off_t)-1)
+        body->dechunk_eof = 0;
 }
 
 static inline void
