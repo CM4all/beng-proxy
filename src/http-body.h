@@ -17,7 +17,6 @@
 struct http_body_reader {
     struct istream output;
     off_t rest;
-    int dechunk_eof;
 };
 
 static inline istream_t
@@ -29,8 +28,7 @@ http_body_istream(struct http_body_reader *body)
 static inline int
 http_body_eof(const struct http_body_reader *body)
 {
-    return body->rest == 0 ||
-        (body->rest == (off_t)-1 && body->dechunk_eof);
+    return body->rest == 0;
 }
 
 static inline off_t
@@ -62,8 +60,6 @@ http_body_init(struct http_body_reader *body,
     body->output = *stream;
     body->output.pool = pool;
     body->rest = content_length;
-    if (content_length == (off_t)-1)
-        body->dechunk_eof = 0;
 }
 
 static inline void
