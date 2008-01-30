@@ -44,23 +44,10 @@ http_body_consume_body(struct http_body_reader *body,
 ssize_t
 http_body_try_direct(struct http_body_reader *body, int fd);
 
-/**
- * Callback for istream_dechunk_new().
- */
-void
-http_body_dechunked_eof(void *ctx);
-
-static inline void
+istream_t
 http_body_init(struct http_body_reader *body,
-               const struct istream *stream, pool_t pool,
-               off_t content_length)
-{
-    assert(pool_contains(pool, body, sizeof(*body)));
-
-    body->output = *stream;
-    body->output.pool = pool;
-    body->rest = content_length;
-}
+               const struct istream *stream, pool_t stream_pool,
+               pool_t pool, off_t content_length);
 
 static inline void
 http_body_deinit(struct http_body_reader *body)

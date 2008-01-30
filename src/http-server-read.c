@@ -104,11 +104,11 @@ http_server_headers_finished(http_server_connection_t connection)
                 return;
             }
 
-            http_body_init(&connection->request.body_reader,
-                           &http_server_request_stream, connection->pool,
-                           content_length);
+            request->body = http_body_init(&connection->request.body_reader,
+                                           &http_server_request_stream,
+                                           connection->pool, request->pool,
+                                           content_length);
 
-            request->body = http_body_istream(&connection->request.body_reader);
             connection->request.read_state = READ_BODY;
 
             value = strmap_get(request->headers, "expect");
@@ -118,14 +118,10 @@ http_server_headers_finished(http_server_connection_t connection)
     } else {
         /* chunked */
 
-        http_body_init(&connection->request.body_reader,
-                       &http_server_request_stream, request->pool,
-                       -1);
-
-        request->body
-            = istream_dechunk_new(request->pool,
-                                  http_body_istream(&connection->request.body_reader),
-                                  http_body_dechunked_eof, &connection->request.body_reader);
+        request->body = http_body_init(&connection->request.body_reader,
+                                       &http_server_request_stream,
+                                       connection->pool, request->pool,
+                                       -1);
 
         connection->request.read_state = READ_BODY;
 

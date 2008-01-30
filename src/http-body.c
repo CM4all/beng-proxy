@@ -50,6 +50,7 @@ void
 http_body_consume_body(struct http_body_reader *body,
                        fifo_buffer_t buffer)
 {
+    const int chunked = body->rest == (off_t)-1;
     const void *data;
     size_t length, consumed;
 
@@ -66,7 +67,8 @@ http_body_consume_body(struct http_body_reader *body,
 
     if (consumed > 0) {
         fifo_buffer_consume(buffer, consumed);
-        http_body_consumed(body, consumed);
+        if (!chunked || body->rest != 0)
+            http_body_consumed(body, consumed);
     }
 }
 
@@ -88,7 +90,7 @@ http_body_try_direct(struct http_body_reader *body, int fd)
     return nbytes;
 }
 
-void
+static void
 http_body_dechunked_eof(void *ctx)
 {
     struct http_body_reader *body = ctx;
@@ -97,4 +99,25 @@ http_body_dechunked_eof(void *ctx)
     assert(body->rest == (off_t)-1);
 
     body->rest = 0;
+}
+
+istream_t
+http_body_init(struct http_body_reader *body,
+               const struct istream *stream, pool_t stream_pool,
+               pool_t pool, off_t content_length)
+{
+    istream_t istream;
+
+    assert(pool_contains(stream_pool, body, sizeof(*body)));
+
+    body->output = *stream;
+    body->output.pool = stream_pool;
+    body->rest = content_length;
+
+    istream = http_body_istream(body);
+    if (content_length == (off_t)-1)
+        istream = istream_dechunk_new(pool, istream,
+                                      http_body_dechunked_eof, body);
+
+    return istream;
 }
