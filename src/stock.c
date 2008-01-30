@@ -87,7 +87,7 @@ stock_free(struct stock **stock_r)
     assert(list_empty(&stock->idle));
 
     while (stock->num_busy > 0) {
-        struct stock_item *item = (struct stock_item *)stock->idle.next;
+        struct stock_item *item = (struct stock_item *)stock->busy.next;
 
         assert(!list_empty(&stock->busy));
 
