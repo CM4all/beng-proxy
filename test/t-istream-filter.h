@@ -119,8 +119,10 @@ int main(int argc, char **argv) {
     pool_unref(pool);
     pool_commit();
 
-    while (!should_exit)
+    while (!should_exit) {
         istream_read_expect(istream);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
 
     pool_commit();
 
@@ -138,8 +140,10 @@ int main(int argc, char **argv) {
     pool_unref(pool);
     pool_commit();
 
-    while (!should_exit)
+    while (!should_exit) {
         istream_read_expect(istream);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
 
     pool_commit();
 
@@ -157,8 +161,10 @@ int main(int argc, char **argv) {
     pool_unref(pool);
     pool_commit();
 
-    while (!should_exit)
+    while (!should_exit) {
         istream_read_expect(istream);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
 
     pool_commit();
 
@@ -180,8 +186,10 @@ int main(int argc, char **argv) {
     pool_unref(pool);
     pool_commit();
 
-    while (!should_exit)
+    while (!should_exit) {
         istream_read_expect(istream);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
 
     pool_commit();
 
@@ -230,8 +238,10 @@ int main(int argc, char **argv) {
     ctx.input = create_test(pool, create_input(pool));
     istream_handler_set(ctx.input, &my_istream_handler, &ctx, 0);
 
-    while (!should_exit)
-        istream_read_expect(ctx.input);
+    while (!should_exit) {
+        istream_read_expect(istream);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
 
     assert(ctx.input == NULL);
 
