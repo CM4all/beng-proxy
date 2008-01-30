@@ -1,10 +1,10 @@
-#include "processor.h"
-#include "uri.h"
-#include "embed.h"
 #include "widget.h"
-#include "session.h"
+#include "processor.h"
 #include "url-stock.h"
 #include "stock.h"
+#include "uri.h"
+#include "session.h"
+#include "embed.h"
 
 #include <event.h>
 
@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <string.h>
 
-static struct hstock *url_stock;
+static int should_exit;
 
 /*
  * istream handler
@@ -47,8 +47,7 @@ static void
 my_istream_eof(void *ctx)
 {
     (void)ctx;
-    fprintf(stderr, "in my_istream_eof()\n");
-    hstock_free(&url_stock);
+    should_exit = 1;
 }
 
 static void attr_noreturn
@@ -64,22 +63,32 @@ static const struct istream_handler my_istream_handler = {
     .abort = my_istream_abort,
 };
 
+
+/*
+ * main
+ *
+ */
+
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t pool;
+    pool_t root_pool, pool;
+    istream_t istream;
     const char *uri;
     int ret;
     struct parsed_uri parsed_uri;
     struct widget widget;
     struct processor_env env;
-    istream_t processor;
-
-    (void)argc;
-    (void)argv;
 
     event_base = event_init();
 
-    pool = pool_new_libc(NULL, "root");
+    if (argc != 2) {
+        fprintf(stderr, "usage: %s URL\n", argv[0]);
+        return 1;
+    }
+
+    root_pool = pool_new_libc(NULL, "root");
+
+    pool = pool_new_linear(root_pool, "test", 8192);
 
     uri = "/beng.html";
     ret = uri_parse(pool, &parsed_uri, uri);
@@ -88,13 +97,13 @@ int main(int argc, char **argv) {
         exit(2);
     }
 
-    widget_init(&widget, &root_widget_class);
+    widget_init(&widget, get_widget_class(pool, argv[1]));
 
     session_manager_init(pool);
 
     processor_env_init(pool, &env,
-                       url_stock = url_hstock_new(pool),
-                       "localhost:8080",
+                       url_hstock_new(pool),
+                       "localhost",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
                        NULL,
@@ -103,18 +112,26 @@ int main(int argc, char **argv) {
                        NULL,
                        embed_widget_callback);
 
-    processor = processor_new(pool, istream_file_new(pool, "/dev/stdin", (off_t)-1),
-                              &widget, &env, PROCESSOR_CONTAINER);
-    istream_handler_set(processor, &my_istream_handler, NULL, 0);
-                              
-    istream_read(processor);
+    widget_copy_from_request(&widget, &env);
+    widget_determine_real_uri(pool, &widget);
+
+    istream = embed_widget_callback(pool, &env, &widget);
+
+    istream_handler_set(istream, &my_istream_handler, NULL, 0);
+
+    pool_unref(pool);
+    pool_commit();
+
+    istream_read(istream);
 
     event_dispatch();
 
     session_manager_deinit();
+    hstock_free(&env.http_client_stock);
 
-    pool_unref(pool);
+    pool_unref(root_pool);
     pool_commit();
+
     pool_recycler_clear();
 
     event_base_free(event_base);
