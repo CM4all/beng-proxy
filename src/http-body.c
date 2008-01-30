@@ -30,8 +30,12 @@ http_body_consumed(struct http_body_reader *body, size_t nbytes)
 {
     pool_t pool = body->output.pool;
 
-    if (body->rest == (off_t)-1)
+    if (body->rest == (off_t)-1) {
+        if (istream_dechunk_eof(body->dechunk))
+            body->rest = 0;
+
         return;
+    }
 
     assert((off_t)nbytes <= body->rest);
 
@@ -90,17 +94,6 @@ http_body_try_direct(struct http_body_reader *body, int fd)
     return nbytes;
 }
 
-static void
-http_body_dechunked_eof(void *ctx)
-{
-    struct http_body_reader *body = ctx;
-
-    assert(http_body_valid(body));
-    assert(body->rest == (off_t)-1);
-
-    body->rest = 0;
-}
-
 istream_t
 http_body_init(struct http_body_reader *body,
                const struct istream *stream, pool_t stream_pool,
@@ -116,8 +109,7 @@ http_body_init(struct http_body_reader *body,
 
     istream = http_body_istream(body);
     if (content_length == (off_t)-1)
-        istream = istream_dechunk_new(pool, istream,
-                                      http_body_dechunked_eof, body);
+        istream = body->dechunk = istream_dechunk_new(pool, istream);
 
     return istream;
 }

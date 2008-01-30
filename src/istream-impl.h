@@ -32,8 +32,10 @@ istream_t
 istream_chunked_new(pool_t pool, istream_t input);
 
 istream_t
-istream_dechunk_new(pool_t pool, istream_t input,
-                    void (*eof_callback)(void *ctx), void *ctx);
+istream_dechunk_new(pool_t pool, istream_t input);
+
+int
+istream_dechunk_eof(istream_t istream);
 
 istream_t
 istream_cat_new(pool_t pool, ...);
