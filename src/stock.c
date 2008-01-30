@@ -44,6 +44,19 @@ stock_new(pool_t pool, const struct stock_class *class,
     return stock;
 }
 
+static void
+destroy_item(struct stock *stock, struct stock_item *item)
+{
+    assert(pool_contains(item->pool, item, stock->class->item_size));
+
+    stock->class->destroy(stock->class_ctx, item);
+
+    if (item->pool == stock->pool)
+        p_free(stock->pool, item);
+    else
+        pool_unref(item->pool);
+}
+
 void
 stock_free(struct stock **stock_r)
 {
@@ -63,26 +76,10 @@ stock_free(struct stock **stock_r)
         list_remove(&item->list_head);
         --stock->num_idle;
 
-        stock->class->destroy(stock->class_ctx, item);
-
-        if (item->pool != stock->pool)
-            pool_unref(item->pool);
+        destroy_item(stock, item);
     }
 
     pool_unref(stock->pool);
-}
-
-static void
-destroy_item(struct stock *stock, struct stock_item *item)
-{
-    assert(pool_contains(item->pool, item, stock->class->item_size));
-
-    stock->class->destroy(stock->class_ctx, item);
-
-    if (item->pool == stock->pool)
-        p_free(stock->pool, item);
-    else
-        pool_unref(item->pool);
 }
 
 void
