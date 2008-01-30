@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <string.h>
 
-static int should_exit;
+static struct hstock *url_stock;
 
 /*
  * istream handler
@@ -47,7 +47,8 @@ static void
 my_istream_eof(void *ctx)
 {
     (void)ctx;
-    should_exit = 1;
+    hstock_free(&url_stock);
+    session_manager_deinit();
 }
 
 static void attr_noreturn
@@ -102,7 +103,7 @@ int main(int argc, char **argv) {
     session_manager_init(pool);
 
     processor_env_init(pool, &env,
-                       url_hstock_new(pool),
+                       url_stock = url_hstock_new(pool),
                        "localhost",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
@@ -119,15 +120,13 @@ int main(int argc, char **argv) {
 
     istream_handler_set(istream, &my_istream_handler, NULL, 0);
 
-    pool_unref(pool);
     pool_commit();
 
     istream_read(istream);
 
     event_dispatch();
 
-    session_manager_deinit();
-    hstock_free(&env.http_client_stock);
+    pool_unref(pool);
 
     pool_unref(root_pool);
     pool_commit();
