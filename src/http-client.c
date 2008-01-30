@@ -292,7 +292,7 @@ http_client_headers_finished(http_client_connection_t connection)
         }
 
         http_body_init(&connection->response.body_reader,
-                       &http_client_response_stream, connection->request.pool,
+                       &http_client_response_stream, connection->pool,
                        content_length);
 
         connection->response.body = http_body_istream(&connection->response.body_reader);
@@ -300,7 +300,7 @@ http_client_headers_finished(http_client_connection_t connection)
         /* chunked */
 
         http_body_init(&connection->response.body_reader,
-                       &http_client_response_stream, connection->request.pool,
+                       &http_client_response_stream, connection->pool,
                        (off_t)-1);
 
         connection->response.body
