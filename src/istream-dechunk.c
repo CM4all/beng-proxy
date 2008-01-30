@@ -37,12 +37,13 @@ struct istream_dechunk {
 static void
 dechunk_close(struct istream_dechunk *dechunk)
 {
-    dechunk->state = CLOSED;
+    assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
-    if (dechunk->input != NULL)
-        istream_clear_unref_handler(&dechunk->input);
-    
-    istream_invoke_abort(&dechunk->output);
+    if (dechunk->input == NULL) {
+        dechunk->state = CLOSED;
+        istream_invoke_abort(&dechunk->output);
+    } else
+        istream_close(dechunk->input);
 }
 
 
@@ -188,12 +189,14 @@ dechunk_input_eof(void *ctx)
 {
     struct istream_dechunk *dechunk = ctx;
 
-    istream_clear_unref(&dechunk->input);
+    assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
-    if (dechunk->state != EOF_DETECTED) {
-        daemon_log(2, "premature EOF in dechunker");
-        dechunk_close(dechunk);
-    }
+    daemon_log(2, "premature EOF in dechunker");
+
+    dechunk->state = CLOSED;
+
+    istream_clear_unref(&dechunk->input);
+    istream_invoke_abort(&dechunk->output);
 }
 
 static void
@@ -201,9 +204,12 @@ dechunk_input_abort(void *ctx)
 {
     struct istream_dechunk *dechunk = ctx;
 
-    istream_clear_unref(&dechunk->input);
+    assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
-    dechunk_close(dechunk);
+    dechunk->state = CLOSED;
+
+    istream_clear_unref(&dechunk->input);
+    istream_invoke_abort(&dechunk->output);
 }
 
 static const struct istream_handler dechunk_input_handler = {
@@ -242,6 +248,8 @@ static void
 istream_dechunk_close(istream_t istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
+
+    assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
     dechunk_close(dechunk);
 }
