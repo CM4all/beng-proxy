@@ -78,6 +78,7 @@ http_server_headers_finished(http_server_connection_t connection)
 {
     struct http_server_request *request = connection->request.request;
     const char *value;
+    off_t content_length;
 
     value = strmap_get(request->headers, "connection");
     connection->keep_alive = value != NULL &&
@@ -93,8 +94,9 @@ http_server_headers_finished(http_server_connection_t connection)
 
             request->body = NULL;
             connection->request.read_state = READ_END;
+
+            return;
         } else {
-            off_t content_length;
             char *endptr;
 
             content_length = strtoul(value, &endptr, 10);
@@ -103,32 +105,23 @@ http_server_headers_finished(http_server_connection_t connection)
                 http_server_connection_close(connection);
                 return;
             }
-
-            request->body = http_body_init(&connection->request.body_reader,
-                                           &http_server_request_stream,
-                                           connection->pool, request->pool,
-                                           content_length);
-
-            connection->request.read_state = READ_BODY;
-
-            value = strmap_get(request->headers, "expect");
-            connection->request.expect_100_continue = value != NULL &&
-                strcmp(value, "100-continue") == 0;
         }
     } else {
         /* chunked */
 
-        request->body = http_body_init(&connection->request.body_reader,
-                                       &http_server_request_stream,
-                                       connection->pool, request->pool,
-                                       -1);
-
-        connection->request.read_state = READ_BODY;
-
-        value = strmap_get(request->headers, "expect");
-        connection->request.expect_100_continue = value != NULL &&
-            strcmp(value, "100-continue") == 0;
+        content_length = (off_t)-1;
     }
+
+    request->body = http_body_init(&connection->request.body_reader,
+                                   &http_server_request_stream,
+                                   connection->pool, request->pool,
+                                   content_length);
+
+    connection->request.read_state = READ_BODY;
+
+    value = strmap_get(request->headers, "expect");
+    connection->request.expect_100_continue = value != NULL &&
+        strcmp(value, "100-continue") == 0;
 }
 
 static void

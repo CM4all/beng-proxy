@@ -264,6 +264,7 @@ http_client_headers_finished(http_client_connection_t connection)
 {
     const char *header_connection, *value;
     char *endptr;
+    off_t content_length;
 
     header_connection = strmap_get(connection->response.headers, "connection");
     connection->keep_alive = header_connection != NULL &&
@@ -272,7 +273,6 @@ http_client_headers_finished(http_client_connection_t connection)
     value = strmap_get(connection->response.headers, "transfer-encoding");
     if (value == NULL || strcasecmp(value, "chunked") != 0) {
         /* not chunked */
-        off_t content_length;
 
         value = strmap_get(connection->response.headers, "content-length");
         if (unlikely(value == NULL)) {
@@ -290,23 +290,18 @@ http_client_headers_finished(http_client_connection_t connection)
                 return;
             }
         }
-
-        connection->response.body
-            = http_body_init(&connection->response.body_reader,
-                             &http_client_response_stream,
-                             connection->pool,
-                             connection->request.pool,
-                             content_length);
     } else {
         /* chunked */
 
-        connection->response.body
-            = http_body_init(&connection->response.body_reader,
-                             &http_client_response_stream,
-                             connection->pool,
-                             connection->request.pool,
-                             (off_t)-1);
+        content_length = (off_t)-1;
     }
+
+    connection->response.body
+        = http_body_init(&connection->response.body_reader,
+                         &http_client_response_stream,
+                         connection->pool,
+                         connection->request.pool,
+                         content_length);
 
     connection->response.read_state = READ_BODY;
 }
