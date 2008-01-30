@@ -190,7 +190,7 @@ dechunk_input_eof(void *ctx)
 
     istream_clear_unref(&dechunk->input);
 
-    if (dechunk->state != NONE) {
+    if (dechunk->state != EOF_DETECTED) {
         daemon_log(2, "premature EOF in dechunker");
         dechunk_close(dechunk);
     }
