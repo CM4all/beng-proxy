@@ -294,7 +294,7 @@ replace_try_read_from_buffer(struct istream_replace *replace)
         max_length = (size_t)(replace->source_length - replace->position);
         assert(max_length > 0);
     } else {
-        assert(replace->first_substitution->start >= replace->position);
+        assert(replace->position <= replace->first_substitution->start);
 
         max_length = (size_t)(replace->first_substitution->start - replace->position);
         if (max_length == 0)
