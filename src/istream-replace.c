@@ -272,13 +272,14 @@ replace_try_read_from_buffer(struct istream_replace *replace)
             return 1;
 
         max_length = (size_t)(replace->source_length - replace->position);
-    } else if (replace->position < replace->first_substitution->start)
-        max_length = (size_t)(replace->first_substitution->start - replace->position);
-    else
-        max_length = 0;
+        assert(max_length > 0);
+    } else {
+        assert(replace->first_substitution->start >= replace->position);
 
-    if (max_length == 0)
-        return 0;
+        max_length = (size_t)(replace->first_substitution->start - replace->position);
+        if (max_length == 0)
+            return 0;
+    }
 
     rest = replace_read_from_buffer(replace, max_length);
     if (rest == 0 && replace->position == replace->source_length &&
