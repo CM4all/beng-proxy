@@ -271,6 +271,27 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
     return length - nbytes;
 }
 
+static size_t
+replace_read_from_buffer_loop(struct istream_replace *replace, off_t end)
+{
+    size_t max_length, rest;
+
+    assert(replace != NULL);
+    assert(replace->buffer != NULL);
+    assert(end > replace->position);
+    assert(end <= replace->source_length);
+
+    /* this loop is required to cross the growing_buffer borders */
+    do {
+        max_length = (size_t)(end - replace->position);
+        rest = replace_read_from_buffer(replace, max_length);
+
+        assert(replace->position <= end);
+    } while (rest == 0 && replace->position < end);
+
+    return rest;
+}
+
 /**
  * Copy the next chunk from the source buffer to the istream handler.
  *
@@ -280,7 +301,8 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
 static size_t
 replace_try_read_from_buffer(struct istream_replace *replace)
 {
-    size_t max_length, rest;
+    off_t end;
+    size_t rest;
 
     assert(replace != NULL);
     assert(replace->buffer != NULL);
@@ -291,40 +313,22 @@ replace_try_read_from_buffer(struct istream_replace *replace)
                has already set the "finished" flag */
             return 1;
 
-        max_length = (size_t)(replace->source_length - replace->position);
-        assert(max_length > 0);
-    } else {
-        assert(replace->position <= replace->first_substitution->start);
+        assert(replace->position < replace->source_length);
 
-        max_length = (size_t)(replace->first_substitution->start - replace->position);
-        if (max_length == 0)
+        end = replace->source_length;
+    } else {
+        end = replace->first_substitution->start;
+        assert(end >= replace->position);
+
+        if (end == replace->position)
             return 0;
     }
 
-    rest = replace_read_from_buffer(replace, max_length);
+    rest = replace_read_from_buffer_loop(replace, end);
     if (rest == 0 && replace->position == replace->source_length &&
         replace->first_substitution == NULL &&
         replace->input == NULL)
         istream_invoke_eof(&replace->output);
-
-    return rest;
-}
-
-static size_t
-replace_try_read_from_buffer_loop(struct istream_replace *replace)
-{
-    size_t rest;
-
-    if (replace->buffer == NULL)
-        return 0;
-
-    /* this loop is required to cross the growing_buffer borders */
-    do {
-        rest = replace_try_read_from_buffer(replace);
-    } while (rest == 0 &&
-             replace->position < replace->source_length &&
-             (replace->first_substitution == NULL ||
-              replace->position < replace->first_substitution->start));
 
     return rest;
 }
@@ -349,7 +353,7 @@ replace_read(struct istream_replace *replace)
         if (blocking || replace_is_eof(replace))
             break;
 
-        rest = replace_try_read_from_buffer_loop(replace);
+        rest = replace_try_read_from_buffer(replace);
         if (rest > 0)
             break;
     } while (replace->first_substitution != NULL);
@@ -393,7 +397,7 @@ replace_source_data(const void *data, size_t length, void *ctx)
         growing_buffer_write_buffer(replace->buffer, data, length);
         replace->source_length += (off_t)length;
 
-        replace_try_read_from_buffer_loop(replace);
+        replace_try_read_from_buffer(replace);
         if (replace->input == NULL)
             /* the istream API mandates that we must return 0 if the
                stream is finished */
@@ -512,7 +516,7 @@ istream_replace_read(istream_t istream)
 
     if (replace->buffer != NULL &&
         (replace->first_substitution != NULL || replace->finished)) {
-        size_t rest = replace_try_read_from_buffer_loop(replace);
+        size_t rest = replace_try_read_from_buffer(replace);
         if (rest > 0)
             return;
     }
