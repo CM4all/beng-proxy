@@ -101,7 +101,7 @@ istream_file_max_read(const struct file *file)
         return INT_MAX;
 }
 
-static int
+static void
 istream_file_try_data(struct file *file)
 {
     size_t rest;
@@ -117,7 +117,7 @@ istream_file_try_data(struct file *file)
     if (file->rest == 0) {
         if (rest == 0)
             istream_file_eof_detected(file);
-        return 0;
+        return;
     }
 
     nbytes = read_to_buffer(file->fd, file->buffer,
@@ -132,12 +132,12 @@ istream_file_try_data(struct file *file)
                        file->path);
             file_abort(file);
         }
-        return 0;
+        return;
     } else if (nbytes == -1) {
         daemon_log(1, "failed to read from '%s': %s\n",
                    file->path, strerror(errno));
         file_abort(file);
-        return 0;
+        return;
     } else if (nbytes > 0 && file->rest != (off_t)-1) {
         file->rest -= (off_t)nbytes;
         assert(file->rest >= 0);
@@ -146,15 +146,11 @@ istream_file_try_data(struct file *file)
     assert(!fifo_buffer_empty(file->buffer));
 
     rest = istream_file_invoke_data(file);
-    if (rest == 0 && file->rest == 0) {
+    if (rest == 0 && file->rest == 0)
         istream_file_eof_detected(file);
-        return 0;
-    }
-
-    return rest == 0;
 }
 
-static int
+static void
 istream_file_try_direct(struct file *file)
 {
     ssize_t nbytes;
@@ -163,11 +159,11 @@ istream_file_try_direct(struct file *file)
 
     /* first consume the rest of the buffer */
     if (file->buffer != NULL && istream_file_invoke_data(file) > 0)
-        return 0;
+        return;
 
     if (file->rest == 0) {
         istream_file_eof_detected(file);
-        return 0;
+        return;
     }
 
     nbytes = istream_invoke_direct(&file->stream, ISTREAM_FILE, file->fd,
@@ -178,13 +174,9 @@ istream_file_try_direct(struct file *file)
         if (nbytes > 0 && file->rest != (off_t)-1) {
             file->rest -= (off_t)nbytes;
             assert(file->rest >= 0);
-            if (file->rest == 0) {
+            if (file->rest == 0)
                 istream_file_eof_detected(file);
-                return 0;
-            }
         }
-
-        return 1;
     } else if (nbytes == 0) {
         if (file->rest == (off_t)-1) {
             istream_file_eof_detected(file);
@@ -193,14 +185,11 @@ istream_file_try_direct(struct file *file)
                        file->path);
             file_abort(file);
         }
-
-        return 0;
     } else {
         /* XXX */
         daemon_log(1, "failed to read from '%s': %s\n",
                    file->path, strerror(errno));
         file_abort(file);
-        return 0;
     }
 }
 
@@ -208,16 +197,13 @@ static void
 istream_file_read(istream_t istream)
 {
     struct file *file = istream_to_file(istream);
-    int ret;
 
     assert(file->stream.handler != NULL);
 
-    do {
-        if ((file->stream.handler_direct & ISTREAM_FILE) == 0)
-            ret = istream_file_try_data(file);
-        else
-            ret = istream_file_try_direct(file);
-    } while (ret);
+    if ((file->stream.handler_direct & ISTREAM_FILE) == 0)
+        istream_file_try_data(file);
+    else
+        istream_file_try_direct(file);
 }
 
 static void
