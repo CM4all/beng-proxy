@@ -191,15 +191,15 @@ processor_new(pool_t pool, istream_t istream,
         break;
     }
 
-#ifdef NDEBUG
-    pool_ref(pool);
-#else
-    pool = pool_new_linear(pool, "processor", 16384);
-#endif
 
     processor = p_malloc(pool, sizeof(*processor));
 
+#ifdef NDEBUG
     processor->pool = pool;
+    pool_ref(pool);
+#else
+    processor->pool = pool_new_linear(pool, "processor", 16384);
+#endif
 
     processor->widget_pool = env->pool;
 
