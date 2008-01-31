@@ -15,6 +15,7 @@
 #include <string.h>
 
 static struct hstock *url_stock;
+static int is_eof = 0;
 
 /*
  * istream handler
@@ -49,6 +50,7 @@ my_istream_eof(void *ctx)
     (void)ctx;
     fprintf(stderr, "in my_istream_eof()\n");
     hstock_free(&url_stock);
+    is_eof = 1;
 }
 
 static void attr_noreturn
@@ -109,7 +111,8 @@ int main(int argc, char **argv) {
                               
     istream_read(processor);
 
-    event_dispatch();
+    if (!is_eof)
+        event_dispatch();
 
     session_manager_deinit();
 
