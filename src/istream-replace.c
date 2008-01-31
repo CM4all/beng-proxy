@@ -80,8 +80,9 @@ substitution_is_active(const struct substitution *s)
 
     assert(replace != NULL);
     assert(replace->first_substitution != NULL);
-    assert(replace->first_substitution->start <= s->start);
-    assert(s->replace->buffer == NULL || s->start >= replace->position);
+    assert(replace->buffer == NULL ||
+           replace->first_substitution->start <= s->start);
+    assert(replace->buffer == NULL || s->start >= replace->position);
 
     return s == replace->first_substitution &&
         replace_is_at_position(replace, s->start);
