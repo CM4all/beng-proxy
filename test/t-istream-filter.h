@@ -219,8 +219,8 @@ test_abort_in_handler(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    ctx.input = create_test(pool, create_input(pool));
-    istream_handler_set(ctx.input, &my_istream_handler, &ctx, 0);
+    ctx.input = istream = create_test(pool, create_input(pool));
+    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
 
     while (!should_exit) {
         istream_read_expect(istream);
