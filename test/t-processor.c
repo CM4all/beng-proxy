@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
                        embed_widget_callback);
 
     processor = processor_new(pool, istream_file_new(pool, "/dev/stdin", (off_t)-1),
-                              &widget, &env, PROCESSOR_CONTAINER);
+                              &widget, &env, PROCESSOR_CONTAINER|PROCESSOR_QUIET);
     istream_handler_set(processor, &my_istream_handler, NULL, 0);
                               
     istream_read(processor);

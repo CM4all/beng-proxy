@@ -343,7 +343,6 @@ replace_read(struct istream_replace *replace)
 
     assert(replace != NULL);
     assert(replace->buffer == NULL || replace->position <= replace->source_length);
-    assert(replace->finished);
 
     pool_ref(replace->output.pool);
     pool = replace->output.pool;
@@ -507,20 +506,10 @@ static void
 istream_replace_read(istream_t istream)
 {
     struct istream_replace *replace = istream_to_replace(istream);
-    int ret;
 
     replace->had_output = 0;
 
-    ret = replace_read_substitution(replace);
-    if (ret)
-        return;
-
-    if (replace->buffer != NULL &&
-        (replace->first_substitution != NULL || replace->finished)) {
-        size_t rest = replace_try_read_from_buffer(replace);
-        if (rest > 0)
-            return;
-    }
+    replace_read(replace);
 
     if (replace->had_output || replace->input == NULL)
         return;

@@ -218,7 +218,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     if (content_type != NULL && strncmp(content_type, "text/html", 9) == 0)
         /* HTML resources must be processed */
         input = processor_new(istream_pool(embed->delayed), input,
-                              embed->widget, embed->env, embed->options);
+                              embed->widget, embed->env, /*embed->options*/PROCESSOR_BODY);
 
     if (embed->widget->from_request.proxy &&
         http_response_handler_defined(&embed->env->response_handler)) {
