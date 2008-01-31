@@ -10,10 +10,9 @@ cleanup(void)
 #endif
 
 struct ctx {
-    istream_t input;
+    int got_data, eof;
+    istream_t abort_istream;
 };
-
-static int got_data, should_exit;
 
 /*
  * istream handler
@@ -26,12 +25,12 @@ my_istream_data(const void *data, size_t length, void *_ctx)
     struct ctx *ctx = _ctx;
 
     (void)data;
-    (void)ctx;
-    printf("data(%zu)\n", length);
-    got_data = 1;
 
-    if (ctx != NULL) {
-        istream_free(&ctx->input);
+    printf("data(%zu)\n", length);
+    ctx->got_data = 1;
+
+    if (ctx->abort_istream != NULL) {
+        istream_free(&ctx->abort_istream);
         return 0;
     }
 
@@ -39,29 +38,39 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 }
 
 static ssize_t
-my_istream_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+my_istream_direct(istream_direct_t type, int fd, size_t max_length, void *_ctx)
 {
+    struct ctx *ctx = _ctx;
+
     (void)fd;
-    (void)ctx;
+
     printf("direct(%u, %zu)\n", type, max_length);
-    got_data = 1;
+    ctx->got_data = 1;
+
+    if (ctx->abort_istream != NULL) {
+        istream_free(&ctx->abort_istream);
+        return 0;
+    }
+
     return max_length;
 }
 
 static void
-my_istream_eof(void *ctx)
+my_istream_eof(void *_ctx)
 {
-    (void)ctx;
+    struct ctx *ctx = _ctx;
+
     printf("eof\n");
-    should_exit = 1;
+    ctx->eof = 1;
 }
 
 static void
-my_istream_abort(void *ctx)
+my_istream_abort(void *_ctx)
 {
-    (void)ctx;
+    struct ctx *ctx = _ctx;
+
     printf("abort\n");
-    should_exit = 1;
+    ctx->eof = 1;
 }
 
 static const struct istream_handler my_istream_handler = {
@@ -78,25 +87,26 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static void
-istream_read_expect(istream_t istream)
+istream_read_expect(struct ctx *ctx, istream_t istream)
 {
-    assert(!should_exit);
-    got_data = 0;
+    assert(!ctx->eof);
+
+    ctx->got_data = 0;
     istream_read(istream);
-    assert(should_exit || got_data);
+    assert(ctx->eof || ctx->got_data);
 }
 
 static void
-run_istream(istream_t istream)
+run_istream_ctx(struct ctx *ctx, istream_t istream)
 {
     pool_t pool = istream_pool(istream);
 
-    should_exit = 0;
+    ctx->eof = 0;
 
-    istream_handler_set(istream, &my_istream_handler, NULL, 0);
+    istream_handler_set(istream, &my_istream_handler, ctx, 0);
 
-    while (!should_exit) {
-        istream_read_expect(istream);
+    while (!ctx->eof) {
+        istream_read_expect(ctx, istream);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -104,6 +114,16 @@ run_istream(istream_t istream)
     pool_commit();
 
     cleanup();
+}
+
+static void
+run_istream(istream_t istream)
+{
+    struct ctx ctx = {
+        .abort_istream = NULL,
+    };
+
+    run_istream_ctx(&ctx, istream);
 }
 
 
@@ -170,8 +190,6 @@ test_abort_without_handler(pool_t pool)
 {
     istream_t istream;
 
-    should_exit = 0;
-
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, create_input(pool));
@@ -179,8 +197,6 @@ test_abort_without_handler(pool_t pool)
 
     pool_unref(pool);
     pool_commit();
-
-    assert(!should_exit);
 
     cleanup();
 }
@@ -189,21 +205,23 @@ test_abort_without_handler(pool_t pool)
 static void
 test_abort_with_handler(pool_t pool)
 {
+    struct ctx ctx = {
+        .abort_istream = NULL,
+        .eof = 0,
+    };
     istream_t istream;
-
-    should_exit = 0;
 
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, create_input(pool));
-    istream_handler_set(istream, &my_istream_handler, NULL, 0);
+    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
 
     istream_close(istream);
 
     pool_unref(pool);
     pool_commit();
 
-    assert(should_exit);
+    assert(ctx.eof);
 
     cleanup();
 }
@@ -212,22 +230,21 @@ test_abort_with_handler(pool_t pool)
 static void
 test_abort_in_handler(pool_t pool)
 {
-    istream_t istream;
-    struct ctx ctx;
-
-    should_exit = 0;
+    struct ctx ctx = {
+        .eof = 0,
+    };
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    ctx.input = istream = create_test(pool, create_input(pool));
-    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
+    ctx.abort_istream = create_test(pool, create_input(pool));
+    istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);
 
-    while (!should_exit) {
-        istream_read_expect(istream);
+    while (!ctx.eof) {
+        istream_read_expect(&ctx, ctx.abort_istream);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
-    assert(ctx.input == NULL);
+    assert(ctx.abort_istream == NULL);
 
     pool_unref(pool);
     pool_commit();
@@ -254,16 +271,17 @@ test_abort_1byte(pool_t pool)
 static void
 test_later(pool_t pool)
 {
+    struct ctx ctx = {
+        .eof = 0,
+    };
     istream_t istream;
-
-    should_exit = 0;
 
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_later_new(pool, create_input(pool)));
-    istream_handler_set(istream, &my_istream_handler, NULL, 0);
+    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
 
-    while (!should_exit) {
+    while (!ctx.eof) {
         istream_read(istream);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
