@@ -555,8 +555,7 @@ http_client_event_callback(int fd, short event, void *ctx)
     if (http_client_connection_valid(connection) && (event & EV_READ) != 0)
         http_client_try_read(connection);
 
-    if (likely(http_client_connection_valid(connection)))
-        event2_unlock(&connection->event);
+    event2_unlock(&connection->event);
 
     pool_unref(connection->pool);
     pool_commit();
@@ -794,8 +793,7 @@ http_client_request(http_client_connection_t connection,
 
     istream_read(connection->request.istream);
 
-    if (likely(http_client_connection_valid(connection)))
-        event2_unlock(&connection->event);
+    event2_unlock(&connection->event);
 
     pool_unref(connection->pool);
 }

@@ -116,8 +116,7 @@ http_server_event_callback(int fd, short event, void *ctx)
     if (http_server_connection_valid(connection) && (event & EV_READ) != 0)
         http_server_try_read(connection);
 
-    if (likely(http_server_connection_valid(connection)))
-        event2_unlock(&connection->event);
+    event2_unlock(&connection->event);
 
     pool_unref(connection->pool);
     pool_commit();
