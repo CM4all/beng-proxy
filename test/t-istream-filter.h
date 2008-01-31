@@ -130,9 +130,6 @@ test_byte(pool_t pool)
 {
     istream_t istream;
 
-    should_exit = 0;
-    got_data = 0;
-
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_byte_new(pool, create_input(pool)));
@@ -145,9 +142,6 @@ test_fail(pool_t pool)
 {
     istream_t istream;
 
-    should_exit = 0;
-    got_data = 0;
-
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_fail_new(pool));
@@ -159,9 +153,6 @@ static void
 test_fail_1byte(pool_t pool)
 {
     istream_t istream;
-
-    should_exit = 0;
-    got_data = 0;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -250,8 +241,6 @@ test_abort_1byte(pool_t pool)
 {
     istream_t istream;
 
-    should_exit = 0;
-
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = istream_head_new(pool,
@@ -268,7 +257,6 @@ test_later(pool_t pool)
     istream_t istream;
 
     should_exit = 0;
-    got_data = 0;
 
     pool = pool_new_linear(pool, "test", 8192);
 
