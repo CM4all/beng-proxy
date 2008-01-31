@@ -343,7 +343,9 @@ replace_read_check_empty(struct istream_replace *replace)
     assert(replace->finished);
     assert(replace->input == NULL);
 
-    if (replace->buffer == NULL && replace->first_substitution == NULL)
+    if (replace->first_substitution == NULL &&
+        (replace->buffer == NULL ||
+         replace->position == replace->source_length))
         istream_invoke_eof(&replace->output);
     else
         replace_read(replace);
