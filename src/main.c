@@ -148,9 +148,11 @@ int main(int argc, char **argv)
 
     /* daemonize */
 
+#ifndef PROFILE
     ret = daemonize();
     if (ret < 0)
         exit(2);
+#endif
 
     /* create worker processes */
 
