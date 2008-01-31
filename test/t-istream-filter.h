@@ -89,11 +89,15 @@ static const struct istream_handler my_istream_handler = {
 static void
 istream_read_expect(struct ctx *ctx, istream_t istream)
 {
+    int ret;
+
     assert(!ctx->eof);
 
     ctx->got_data = 0;
     istream_read(istream);
-    assert(ctx->eof || ctx->got_data);
+
+    ret = event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    assert(ctx->eof || ctx->got_data || ret == 0);
 }
 
 static void
@@ -105,10 +109,8 @@ run_istream_ctx(struct ctx *ctx, istream_t istream)
 
     istream_handler_set(istream, &my_istream_handler, ctx, 0);
 
-    while (!ctx->eof) {
+    while (!ctx->eof)
         istream_read_expect(ctx, istream);
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-    }
 
     pool_unref(pool);
     pool_commit();
@@ -271,25 +273,12 @@ test_abort_1byte(pool_t pool)
 static void
 test_later(pool_t pool)
 {
-    struct ctx ctx = {
-        .eof = 0,
-    };
     istream_t istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_later_new(pool, create_input(pool)));
-    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
-
-    while (!ctx.eof) {
-        istream_read(istream);
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-    }
-
-    pool_unref(pool);
-    pool_commit();
-
-    cleanup();
+    run_istream(istream);
 }
 
 
