@@ -50,6 +50,7 @@ my_istream_eof(void *ctx)
     (void)ctx;
     fprintf(stderr, "in my_istream_eof()\n");
     hstock_free(&url_stock);
+    session_manager_deinit();
     is_eof = 1;
 }
 
@@ -113,8 +114,6 @@ int main(int argc, char **argv) {
 
     if (!is_eof)
         event_dispatch();
-
-    session_manager_deinit();
 
     pool_unref(pool);
     pool_commit();
