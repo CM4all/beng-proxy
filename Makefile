@@ -40,7 +40,7 @@ LIBDAEMON_CFLAGS := $(shell pkg-config --cflags libcm4all-daemon)
 LIBDAEMON_LIBS := $(shell pkg-config --libs libcm4all-daemon)
 
 LIBEVENT_CFLAGS =
-LIBEVENT_LIBS = -L/usr/local/lib -levent
+LIBEVENT_LIBS = -levent
 
 LIBATTR_CFLAGS =
 LIBATTR_LIBS = -lattr
