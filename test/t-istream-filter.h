@@ -88,6 +88,38 @@ istream_read_expect(istream_t istream)
 
 
 /*
+ * tests
+ *
+ */
+
+/** test with istream_later filter */
+static void
+test_later(pool_t root_pool)
+{
+    pool_t pool;
+    istream_t istream;
+
+    should_exit = 0;
+    got_data = 0;
+
+    pool = pool_new_linear(root_pool, "test", 8192);
+
+    istream = create_test(pool, istream_later_new(pool, create_input(pool)));
+    istream_handler_set(istream, &my_istream_handler, NULL, 0);
+
+    while (!should_exit) {
+        istream_read(istream);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
+
+    pool_unref(pool);
+    pool_commit();
+
+    cleanup();
+}
+
+
+/*
  * main
  *
  */
@@ -274,6 +306,9 @@ int main(int argc, char **argv) {
     pool_commit();
 
     cleanup();
+
+
+    test_later(root_pool);
 
     /* cleanup */
 
