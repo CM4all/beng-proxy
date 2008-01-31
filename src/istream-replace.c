@@ -50,6 +50,26 @@ replace_is_at_position(const struct istream_replace *replace, off_t at)
 }
 
 /**
+ * Is the buffer at the end-of-file position?
+ */
+static inline int
+replace_buffer_eof(const struct istream_replace *replace)
+{
+    return replace->buffer == NULL ||
+        replace->position == replace->source_length;
+}
+
+/**
+ * Is the object at end-of-file?
+ */
+static inline int
+replace_is_eof(const struct istream_replace *replace)
+{
+    return replace->first_substitution == NULL &&
+        replace_buffer_eof(replace);
+}
+
+/**
  * Is this substitution object is active, i.e. its data is the next
  * being written?
  */
@@ -344,9 +364,7 @@ replace_read_check_empty(struct istream_replace *replace)
     assert(replace->finished);
     assert(replace->input == NULL);
 
-    if (replace->first_substitution == NULL &&
-        (replace->buffer == NULL ||
-         replace->position == replace->source_length))
+    if (replace_is_eof(replace))
         istream_invoke_eof(&replace->output);
     else
         replace_read(replace);
