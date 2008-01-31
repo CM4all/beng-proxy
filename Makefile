@@ -217,7 +217,7 @@ debug: src/cm4all-beng-proxy
 profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -g -pg
 profile: LDFLAGS = -lc_p -pg
 profile: src/cm4all-beng-proxy
-	./src/cm4all-beng-proxy -D -u max
+	./src/cm4all-beng-proxy -D -u max -p 8080
 
 # -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
 benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
