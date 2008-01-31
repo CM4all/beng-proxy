@@ -94,15 +94,14 @@ istream_read_expect(istream_t istream)
 
 /** test with istream_later filter */
 static void
-test_later(pool_t root_pool)
+test_later(pool_t pool)
 {
-    pool_t pool;
     istream_t istream;
 
     should_exit = 0;
     got_data = 0;
 
-    pool = pool_new_linear(root_pool, "test", 8192);
+    pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_later_new(pool, create_input(pool)));
     istream_handler_set(istream, &my_istream_handler, NULL, 0);
