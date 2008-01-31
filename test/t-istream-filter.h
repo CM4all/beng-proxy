@@ -86,6 +86,26 @@ istream_read_expect(istream_t istream)
     assert(should_exit || got_data);
 }
 
+static void
+run_istream(istream_t istream)
+{
+    pool_t pool = istream_pool(istream);
+
+    should_exit = 0;
+
+    istream_handler_set(istream, &my_istream_handler, NULL, 0);
+
+    while (!should_exit) {
+        istream_read_expect(istream);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
+
+    pool_unref(pool);
+    pool_commit();
+
+    cleanup();
+}
+
 
 /*
  * tests
@@ -98,25 +118,10 @@ test_normal(pool_t pool)
 {
     istream_t istream;
 
-    should_exit = 0;
-    got_data = 0;
-
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, create_input(pool));
-    istream_handler_set(istream, &my_istream_handler, NULL, 0);
-
-    pool_unref(pool);
-    pool_commit();
-
-    while (!should_exit) {
-        istream_read_expect(istream);
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-    }
-
-    pool_commit();
-
-    cleanup();
+    run_istream(istream);
 }
 
 /** test with istream_byte */
@@ -131,19 +136,7 @@ test_byte(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_byte_new(pool, create_input(pool)));
-    istream_handler_set(istream, &my_istream_handler, NULL, 0);
-
-    pool_unref(pool);
-    pool_commit();
-
-    while (!should_exit) {
-        istream_read_expect(istream);
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-    }
-
-    pool_commit();
-
-    cleanup();
+    run_istream(istream);
 }
 
 /** input fails */
@@ -158,19 +151,7 @@ test_fail(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_fail_new(pool));
-    istream_handler_set(istream, &my_istream_handler, NULL, 0);
-
-    pool_unref(pool);
-    pool_commit();
-
-    while (!should_exit) {
-        istream_read_expect(istream);
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-    }
-
-    pool_commit();
-
-    cleanup();
+    run_istream(istream);
 }
 
 /** input fails after the first byte */
@@ -189,19 +170,7 @@ test_fail_1byte(pool_t pool)
                                           istream_head_new(pool, create_input(pool), 1),
                                           istream_fail_new(pool),
                                           NULL));
-    istream_handler_set(istream, &my_istream_handler, NULL, 0);
-
-    pool_unref(pool);
-    pool_commit();
-
-    while (!should_exit) {
-        istream_read_expect(istream);
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-    }
-
-    pool_commit();
-
-    cleanup();
+    run_istream(istream);
 }
 
 /** abort without handler */
@@ -289,20 +258,7 @@ test_abort_1byte(pool_t pool)
                                create_test(pool,
                                            create_input(pool)),
                                1);
-
-    istream_handler_set(istream, &my_istream_handler, NULL, 0);
-
-    pool_unref(pool);
-    pool_commit();
-
-    while (!should_exit) {
-        istream_read_expect(istream);
-        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
-    }
-
-    pool_commit();
-
-    cleanup();
+    run_istream(istream);
 }
 
 /** test with istream_later filter */
