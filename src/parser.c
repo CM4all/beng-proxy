@@ -58,6 +58,8 @@ enum parser_state {
 };
 
 struct parser {
+    pool_t pool;
+
     istream_t input;
     off_t position;
 
@@ -506,8 +508,13 @@ static size_t
 parser_input_data(const void *data, size_t length, void *ctx)
 {
     struct parser *parser = ctx;
+    size_t nbytes;
 
-    return parser_feed(parser, data, length);
+    pool_ref(parser->pool);
+    nbytes = parser_feed(parser, data, length);
+    pool_unref(parser->pool);
+
+    return nbytes;
 }
 
 static void
@@ -557,6 +564,8 @@ parser_new(struct pool *pool, istream_t input,
     assert(handler->cdata != NULL);
     assert(handler->eof != NULL);
     assert(handler->abort != NULL);
+
+    parser->pool = pool;
 
     istream_assign_ref_handler(&parser->input, input,
                                &parser_input_handler, parser,
