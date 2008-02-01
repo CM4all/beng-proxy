@@ -616,7 +616,9 @@ http_client_connection_close(http_client_connection_t connection)
         pool_unref(connection->pool);
     }
 
+#ifdef __linux
     connection->cork = 0;
+#endif
 
     if (connection->request.istream != NULL)
         istream_free(&connection->request.istream);
