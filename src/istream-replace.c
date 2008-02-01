@@ -23,15 +23,13 @@ struct istream_replace {
     struct istream output;
     istream_t input;
 
+    unsigned finished:1, read_locked:1;
     unsigned had_input:1, had_output:1;
 
-    int finished;
     struct growing_buffer *buffer;
     off_t source_length, position;
 
     struct substitution *first_substitution, **append_substitution_p;
-
-    int read_locked;
 
 #ifndef NDEBUG
     off_t last_substitution_end;
@@ -547,6 +545,7 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
                                0);
 
     replace->finished = 0;
+    replace->read_locked = 0;
 
     if (quiet) {
         replace->buffer = NULL;
@@ -562,7 +561,6 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
 
     replace->first_substitution = NULL;
     replace->append_substitution_p = &replace->first_substitution;
-    replace->read_locked = 0;
 
 #ifndef NDEBUG
     replace->last_substitution_end = 0;
