@@ -110,7 +110,7 @@ parse_cmdline(struct config *config, int argc, char **argv)
         {"workers", 1, NULL, 'w'},
         {"document-root", 1, NULL, 'r'},
         {"translation-socket", 1, NULL, 't'},
-        {0,0,0,0}
+        {NULL,0,NULL,0}
     };
 #endif
 
