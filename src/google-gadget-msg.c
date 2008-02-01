@@ -83,7 +83,8 @@ gg_msg_parser_cdata(const char *p, size_t length, int escaped attr_unused, void 
         else
             gg->msg.value = p_strncat(gg->pool,
                                       gg->msg.value, strlen(gg->msg.value),
-                                      p, length);
+                                      p, length,
+                                      NULL);
     }
 
     return length;
