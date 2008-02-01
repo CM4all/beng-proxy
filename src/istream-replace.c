@@ -99,7 +99,7 @@ static void
 replace_to_next_substitution(struct istream_replace *replace, struct substitution *s)
 {
     assert(replace->first_substitution == s);
-    assert(replace_is_at_position(replace, s->start));
+    assert(substitution_is_active(s));
     assert(s->istream == NULL);
     assert(replace->buffer == NULL || s->start <= s->end);
 
