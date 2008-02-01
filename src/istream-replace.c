@@ -114,6 +114,8 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
         replace->append_substitution_p = &replace->first_substitution;
     }
 
+    p_free(replace->output.pool, s);
+
     assert(replace->buffer == NULL ||
            replace->first_substitution == NULL ||
            replace->first_substitution->start >= replace->position);
