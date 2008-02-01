@@ -21,7 +21,7 @@ socket_set_cork(int fd, int value);
 #else
 
 static inline int
-socket_set_nodelay(int fd)
+socket_set_nodelay(int fd, int value)
 {
     (void)fd;
     return 0;
