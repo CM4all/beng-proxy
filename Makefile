@@ -45,6 +45,11 @@ LIBEVENT_LIBS = -levent
 LIBATTR_CFLAGS =
 LIBATTR_LIBS = -lattr
 
+SPARSE_FLAGS = $(MORE_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBEVENT_CFLAGS) \
+	-Wdecl -Wdefault-bitfield-sign -Wdo-while -Wenum-mismatch \
+	-Wnon-pointer-null -Wptr-subtraction-blows -Wreturn-void \
+	-Wshadow -Wtypesign 
+
 SOURCES = src/main.c \
 	src/cmdline.c \
 	src/child.c \
@@ -227,6 +232,11 @@ benchmark: src/cm4all-beng-proxy
 valgrind: CFLAGS = -O0 -g -DPOISON -DVALGRIND -DPOOL_LIBC_ONLY
 valgrind: src/cm4all-beng-proxy
 	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy $(DEBUG_ARGS)
+
+$(addprefix sparse-,$(SOURCES)): sparse-%: %
+	sparse $(SPARSE_FLAGS) $<
+
+sparse: $(addprefix sparse-,$(SOURCES))
 
 doc/beng.pdf: doc/beng.tex
 	cd $(dir $<) && pdflatex $(notdir $<) && pdflatex $(notdir $<)
