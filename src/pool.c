@@ -135,7 +135,7 @@ pool_recycler_clear(void)
 static void
 pool_recycler_put_linear(struct linear_pool_area *area)
 {
-    assert(area != 0);
+    assert(area != NULL);
     assert(area->size > 0);
 
 #ifdef POISON
