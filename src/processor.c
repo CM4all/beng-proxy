@@ -653,6 +653,8 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     if (processor->tag == TAG_BODY) {
         body_element_finished(processor, tag);
     } else if (processor->tag == TAG_WIDGET) {
+        istream_t istream;
+
         if (tag->type == TAG_OPEN || tag->type == TAG_SHORT)
             processor->widget_start_offset = tag->start;
         else if (processor->embedded_widget == NULL)
@@ -663,7 +665,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         if (tag->type == TAG_OPEN)
             return;
 
-        istream_t istream = embed_element_finished(processor);
+        istream = embed_element_finished(processor);
         processor_replace_add(processor, processor->widget_start_offset,
                               tag->end, istream);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
