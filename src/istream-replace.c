@@ -65,7 +65,8 @@ replace_buffer_eof(const struct istream_replace *replace)
 static inline int
 replace_is_eof(const struct istream_replace *replace)
 {
-    return replace->first_substitution == NULL &&
+    return replace->input == NULL && replace->finished &&
+        replace->first_substitution == NULL &&
         replace_buffer_eof(replace);
 }
 
@@ -117,7 +118,7 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
            replace->first_substitution == NULL ||
            replace->first_substitution->start >= replace->position);
 
-    if (replace->input == NULL && replace_is_eof(replace)) {
+    if (replace_is_eof(replace)) {
         istream_invoke_eof(&replace->output);
         return;
     }
