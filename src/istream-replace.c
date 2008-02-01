@@ -339,9 +339,7 @@ replace_read(struct istream_replace *replace)
             break;
 
         rest = replace_try_read_from_buffer(replace);
-        if (rest > 0)
-            break;
-    } while (replace->first_substitution != NULL);
+    } while (rest == 0 && replace->first_substitution != NULL);
 
     pool_unref(pool);
 }
