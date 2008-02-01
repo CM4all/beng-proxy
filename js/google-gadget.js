@@ -8,16 +8,18 @@ function _IG_Prefs(path) {
     this.widget = rootWidget.getWidget(path);
     this.values = new Array();
 
-    values = this.widget._query_string.split('&');
-    for (i in values) {
-        var key = values[i], value;
-        i = key.indexOf('=');
-        if (i >= 0) {
-            value = key.substring(i + 1);
-            key = key.substring(0, i);
-        } else
-            value = "";
-        this.values[unescape(key)] = unescape(value);
+    if (this.widget._query_string != null) {
+        values = this.widget._query_string.split('&');
+        for (i in values) {
+            var key = values[i], value;
+            i = key.indexOf('=');
+            if (i >= 0) {
+                value = key.substring(i + 1);
+                key = key.substring(0, i);
+            } else
+                value = "";
+            this.values[unescape(key)] = unescape(value);
+        }
     }
 
     this.getInt = function(name) {
