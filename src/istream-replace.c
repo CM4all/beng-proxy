@@ -86,7 +86,7 @@ substitution_is_active(const struct substitution *s)
     assert(replace->buffer == NULL || s->start >= replace->position);
 
     return s == replace->first_substitution &&
-        replace_is_at_position(replace, s->start);
+        (replace->buffer == NULL || replace->position == s->start);
 }
 
 static void
@@ -203,7 +203,7 @@ static int
 replace_read_substitution(struct istream_replace *replace)
 {
     while (replace->first_substitution != NULL &&
-           replace_is_at_position(replace, replace->first_substitution->start)) {
+           substitution_is_active(replace->first_substitution)) {
         struct substitution *s = replace->first_substitution;
 
         replace->read_locked = 1;
