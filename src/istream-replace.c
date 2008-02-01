@@ -88,22 +88,6 @@ substitution_is_active(const struct substitution *s)
         replace_is_at_position(replace, s->start);
 }
 
-/**
- * Is this substitution object the last chunk in this stream, i.e. is
- * there no source data following it?
- */
-static inline int
-substitution_is_tail(const struct substitution *s)
-{
-    const struct istream_replace *replace = s->replace;
-
-    assert(replace != NULL);
-    assert(replace->buffer == NULL || s->end <= replace->source_length);
-
-    return s->next == NULL && replace->input == NULL && replace->finished &&
-        (replace->buffer == NULL || s->end == replace->source_length);
-}
-
 static void
 replace_read(struct istream_replace *replace);
 
@@ -133,7 +117,7 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
            replace->first_substitution == NULL ||
            replace->first_substitution->start >= replace->position);
 
-    if (substitution_is_tail(s)) {
+    if (replace->input == NULL && replace_is_eof(replace)) {
         istream_invoke_eof(&replace->output);
         return;
     }
