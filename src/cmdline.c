@@ -98,18 +98,18 @@ parse_cmdline(struct config *config, int argc, char **argv)
     char *endptr;
 #ifdef __GLIBC__
     static const struct option long_options[] = {
-        {"help", 0, 0, 'h'},
-        {"version", 0, 0, 'V'},
-        {"verbose", 0, 0, 'v'},
-        {"quiet", 0, 0, 'q'},
-        {"logger", 1, 0, 'l'},
-        {"pidfile", 1, 0, 'P'},
-        {"user", 1, 0, 'u'},
-        {"logger-user", 1, 0, 'U'},
-        {"port", 1, 0, 'p'},
-        {"workers", 1, 0, 'w'},
-        {"document-root", 1, 0, 'r'},
-        {"translation-socket", 1, 0, 't'},
+        {"help", 0, NULL, 'h'},
+        {"version", 0, NULL, 'V'},
+        {"verbose", 0, NULL, 'v'},
+        {"quiet", 0, NULL, 'q'},
+        {"logger", 1, NULL, 'l'},
+        {"pidfile", 1, NULL, 'P'},
+        {"user", 1, NULL, 'u'},
+        {"logger-user", 1, NULL, 'U'},
+        {"port", 1, NULL, 'p'},
+        {"workers", 1, NULL, 'w'},
+        {"document-root", 1, NULL, 'r'},
+        {"translation-socket", 1, NULL, 't'},
         {0,0,0,0}
     };
 #endif
