@@ -29,7 +29,7 @@ widget_determine_real_uri(pool_t pool, struct widget *widget)
                         widget->from_request.query_string.data,
                         widget->from_request.query_string.length,
                         NULL);
-    else if (widget->from_request.path_info != 0)
+    else if (widget->from_request.path_info != NULL)
         uri = p_strcat(pool,
                        uri,
                        widget->from_request.path_info,
