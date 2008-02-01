@@ -20,14 +20,14 @@ socket_set_cork(int fd, int value);
 
 #else
 
-int
+static inline int
 socket_enable_nodelay(int fd)
 {
     (void)fd;
     return 0;
 }
 
-int
+static inline int
 socket_set_cork(int fd, int value)
 {
     (void)fd;
