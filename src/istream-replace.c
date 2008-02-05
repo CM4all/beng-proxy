@@ -179,6 +179,9 @@ replace_destroy(struct istream_replace *replace)
 {
     assert(replace != NULL);
 
+    /* source_length -1 is the "destroyed" marker */
+    replace->source_length = (off_t)-1;
+
     while (replace->first_substitution != NULL) {
         struct substitution *s = replace->first_substitution;
         replace->first_substitution = s->next;
@@ -248,6 +251,10 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
     replace->had_output = 1;
     nbytes = istream_invoke_data(&replace->output, data, length);
     assert(nbytes <= length);
+
+    if (nbytes == 0 && replace->source_length == (off_t)-1)
+        /* istream_replace has been closed */
+        return 1;
 
     growing_buffer_consume(replace->buffer, nbytes);
     replace->position += nbytes;
@@ -335,7 +342,8 @@ replace_read(struct istream_replace *replace)
     /* read until someone (input or output) blocks */
     do {
         blocking = replace_read_substitution(replace);
-        if (blocking || replace_buffer_eof(replace))
+        if (blocking || replace_buffer_eof(replace) ||
+            replace->source_length == (off_t)-1)
             break;
 
         rest = replace_try_read_from_buffer(replace);
