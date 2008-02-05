@@ -26,7 +26,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     env2 = processor_env_dup(pool, env);
     env2->widget_callback = embed_widget_callback;
 
-    /* clear the requrst body in the original env - the function
+    /* clear the request body in the original env - the function
        frame_widget_callback() has already discarded a request body
        that is not being used within the frame, and if
        env->request_body is still set, this means that the body is for
