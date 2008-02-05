@@ -134,7 +134,7 @@ A request may consist of several micro commands.  The request is
 initialized with the \texttt{BEGIN} command, which is followed by any
 number of commands which provide parameters.  After all parameters
 have been transferred, the client sends the \texttt{END} command,
-waits for the server's response.
+and waits for the server's response.
 
 The client can send any number of requests over the socket until one
 side closes the connection.
@@ -170,7 +170,7 @@ struct beng_proxy_translate_packet {
 The \texttt{length} only refers to the payload.  The maximum supported
 payload size is 65535 bytes.
 
-Most parameters are ASCII strings; in this case the payload contains
+Most parameters are ASCII strings; in this case, the payload contains
 just the raw string, without terminating zero.
 
 \subsubsection{Request}
