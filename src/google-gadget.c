@@ -11,6 +11,20 @@
 #include "http-response.h"
 #include "parser.h"
 #include "processor.h"
+#include "embed.h"
+
+static const struct widget_class *
+gg_class(pool_t pool, const char *uri)
+{
+    /* XXX merge this method with get_widget_class() */
+    struct widget_class *wc = p_malloc(pool, sizeof(*wc));
+
+    wc->uri = uri;
+    wc->type = WIDGET_TYPE_GOOGLE_GADGET;
+    wc->is_container = 0;
+
+    return wc;
+}
 
 static void
 google_send_error(struct google_gadget *gw, const char *msg)
@@ -211,15 +225,13 @@ google_content_tag_finished(struct google_gadget *gw,
         if (gw->from_parser.url == NULL)
             break;
 
-        gw->widget->class = get_widget_class(gw->pool, gw->from_parser.url);
+        gw->widget->display = WIDGET_DISPLAY_IFRAME;
+        gw->widget->class = gg_class(gw->pool, gw->from_parser.url);
         widget_determine_real_uri(gw->pool, gw->widget);
 
-        url_stream_new(gw->pool, gw->env->http_client_stock,
-                       HTTP_METHOD_GET, gw->from_parser.url,
-                       NULL, NULL,
-                       &google_gadget_content_handler, gw,
-                       &gw->async);
-
+        istream_delayed_set(gw->delayed,
+                            embed_widget_callback(gw->pool, gw->env, gw->widget));
+        gw->delayed = NULL;
         return;
     }
 

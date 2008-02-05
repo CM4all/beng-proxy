@@ -25,6 +25,11 @@ static const char *
 widget_frame_uri(pool_t pool, const struct processor_env *env,
                  struct widget *widget)
 {
+    if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET &&
+        widget->display == WIDGET_DISPLAY_IFRAME)
+        /* XXX append preferences to query_string? */
+        return widget->class->uri;
+
     return widget_proxy_uri(pool, env->external_uri,
                             env->args, widget);
 }
