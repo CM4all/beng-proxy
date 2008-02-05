@@ -179,6 +179,10 @@ istream_gb_read(istream_t istream)
         }
 
         nbytes = istream_invoke_data(&gb->stream, data, length);
+        if (nbytes == 0 && gb->current == NULL)
+            /* growing_buffer has been closed */
+            return;
+
         growing_buffer_consume(gb, nbytes);
         if (nbytes < length)
             return;
