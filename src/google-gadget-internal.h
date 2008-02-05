@@ -32,6 +32,7 @@ struct google_gadget {
             TYPE_NONE,
             TYPE_URL,
             TYPE_HTML,
+            TYPE_HTML_INLINE,
         } type;
 
         unsigned sending_content:1;

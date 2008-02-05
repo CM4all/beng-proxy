@@ -191,6 +191,7 @@ google_content_tag_finished(struct google_gadget *gw,
         break;
 
     case TYPE_HTML:
+    case TYPE_HTML_INLINE:
         gw->from_parser.sending_content = 1;
 
         if (tag->type == TAG_OPEN) {
@@ -294,6 +295,8 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
                 gw->from_parser.url = NULL;
             } else if (strref_cmp_literal(&attr->value, "html") == 0)
                 gw->from_parser.type = TYPE_HTML;
+            else if (strref_cmp_literal(&attr->value, "html-inline") == 0)
+                gw->from_parser.type = TYPE_HTML_INLINE;
             else {
                 google_send_error(gw, "unknown type attribute");
                 return;
