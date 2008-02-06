@@ -208,7 +208,7 @@ google_content_tag_finished(struct google_gadget *gw,
         if (gw->from_parser.url == NULL)
             break;
 
-        gw->widget->display = WIDGET_DISPLAY_IFRAME;
+        gw->widget->display = WIDGET_DISPLAY_EXTERNAL;
         gw->widget->class = gg_class(gw->pool, gw->from_parser.url);
         widget_determine_real_uri(gw->pool, gw->widget);
 

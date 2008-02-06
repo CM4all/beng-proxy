@@ -67,6 +67,9 @@ struct widget {
         WIDGET_DISPLAY_INLINE,
         WIDGET_DISPLAY_IFRAME,
         WIDGET_DISPLAY_IMG,
+
+        /** external URL in IFRAME */
+        WIDGET_DISPLAY_EXTERNAL,
     } display;
 
     /** the path info as specified in the template */

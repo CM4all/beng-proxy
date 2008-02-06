@@ -25,9 +25,8 @@ static const char *
 widget_frame_uri(pool_t pool, const struct processor_env *env,
                  struct widget *widget)
 {
-    if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET &&
-        widget->display == WIDGET_DISPLAY_IFRAME)
-        /* XXX append preferences to query_string? */
+    if (widget->display == WIDGET_DISPLAY_EXTERNAL)
+        /* XXX append google gadget preferences to query_string? */
         return widget->class->uri;
 
     return widget_proxy_uri(pool, env->external_uri,
@@ -45,6 +44,7 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
 
     uri = widget_frame_uri(pool, env, widget);
     prefix = widget_prefix(pool, widget);
+    /* XXX don't require prefix for WIDGET_DISPLAY_EXTERNAL */
     if (uri == NULL || prefix == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 
@@ -107,6 +107,7 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
         return embed_inline_widget(pool, env, widget);
 
     case WIDGET_DISPLAY_IFRAME:
+    case WIDGET_DISPLAY_EXTERNAL:
         widget_cancel(widget);
         return embed_iframe_widget(pool, env, widget);
 
