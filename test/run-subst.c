@@ -73,13 +73,13 @@ int main(int argc, char **argv) {
 
     istream = istream_subst_new(pool, istream_file_new(pool, "/dev/stdin", (off_t)-1));
 
-    for (i = 1; i < argc; i += 2) {
-        if (argc < i + 2) {
-            fprintf(stderr, "usage: %s [A1 B1 A2 B2 ...]\n", argv[0]);
-            return 1;
-        }
-
+    for (i = 1; i <= argc - 2; i += 2) {
         istream_subst_add(istream, argv[i], argv[i + 1]);
+    }
+
+    if (i < argc) {
+        fprintf(stderr, "usage: %s [A1 B1 A2 B2 ...]\n", argv[0]);
+        return 1;
     }
 
     istream_handler_set(istream, &my_istream_handler, NULL, 0);
