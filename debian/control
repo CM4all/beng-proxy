@@ -17,6 +17,16 @@ Description: HTTP proxy server
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
 
+Package: cm4all-beng-proxy-dbg
+Section: non-free/devel
+Architecture: any
+Depends: cm4all-beng-proxy (= ${binary:Version})
+Description: HTTP proxy server
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This package provides the debugging symbols.
+
 Package: libcm4all-beng-proxy-js
 Architecture: all
 Enhances: cm4all-beng-proxy

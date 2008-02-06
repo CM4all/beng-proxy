@@ -65,7 +65,7 @@ binary-arch: build check
 	dh_installinit -a
 	dh_install -a
 	dh_link -a
-	#dh_strip -a
+	dh_strip -a --dbg-package=cm4all-beng-proxy-dbg
 	dh_compress -a
 	dh_fixperms -a
 	dh_installdeb -a
