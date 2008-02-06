@@ -60,19 +60,41 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
     if (gg->has_locale && gg->waiting_for_locale) {
         assert(gg->raw == NULL);
 
-        gg->raw = istream;
-    } else if (gg->widget->from_request.proxy &&
-               http_response_handler_defined(&gg->env->response_handler)) {
-        strmap_t headers = strmap_new(gg->pool, 8);
+        if (istream == NULL) {
+            /* XXX abort locale */
+        } else {
+            /* wait until locale is finished */
+            gg->raw = istream;
+            return;
+        }
+    }
+
+    if (gg->widget->from_request.proxy &&
+        http_response_handler_defined(&gg->env->response_handler)) {
+        http_status_t status;
+        strmap_t headers;
 
         gg->delayed = NULL;
 
-        strmap_addn(headers, "content-type", "text/html; charset=utf-8");
+        if (istream == NULL) {
+            status = HTTP_STATUS_NO_CONTENT;
+            headers = NULL;
+        } else {
+            status = HTTP_STATUS_OK;
+            headers = strmap_new(gg->pool, 4);
+            strmap_addn(headers, "content-type", "text/html; charset=utf-8");
+            istream = google_gadget_process(gg, istream);
+        }
+
         http_response_handler_invoke_response(&gg->env->response_handler,
-                                              HTTP_STATUS_OK, headers,
-                                              google_gadget_process(gg, istream));
+                                              status, headers, istream);
     } else {
-        istream_delayed_set(gg->delayed, google_gadget_process(gg, istream));
+        if (istream == NULL)
+            istream = istream_null_new(gg->pool);
+        else
+            istream = google_gadget_process(gg, istream);
+
+        istream_delayed_set(gg->delayed, istream);
         gg->delayed = NULL;
     }
 }
@@ -170,8 +192,8 @@ google_content_tag_finished(struct google_gadget *gw,
             gg_set_content(gw, istream_struct_cast(&gw->output));
         } else {
             /* it's TAG_SHORT, handle that gracefully */
-            istream_delayed_set(gw->delayed, istream_null_new(gw->pool));
-            gw->delayed = NULL;
+
+            gg_set_content(gw, NULL);
         }
 
         return;
