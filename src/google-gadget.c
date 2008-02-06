@@ -217,6 +217,8 @@ google_content_tag_finished(struct google_gadget *gw,
         istream_delayed_set(gw->delayed, istream);
         gw->delayed = NULL;
 
+        parser_close(gw->parser);
+
         istream_read(istream);
         return;
     }
