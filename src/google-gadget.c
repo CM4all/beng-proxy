@@ -61,6 +61,16 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
         assert(gg->raw == NULL);
 
         gg->raw = istream;
+    } else if (gg->widget->from_request.proxy &&
+               http_response_handler_defined(&gg->env->response_handler)) {
+        strmap_t headers = strmap_new(gg->pool, 8);
+
+        gg->delayed = NULL;
+
+        strmap_addn(headers, "content-type", "text/html; charset=utf-8");
+        http_response_handler_invoke_response(&gg->env->response_handler,
+                                              HTTP_STATUS_OK, headers,
+                                              google_gadget_process(gg, istream));
     } else {
         istream_delayed_set(gg->delayed, google_gadget_process(gg, istream));
         gg->delayed = NULL;
