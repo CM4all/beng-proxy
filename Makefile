@@ -117,6 +117,7 @@ SOURCES = src/main.c \
 	src/istream-deflate.c \
 	src/istream-subst.c \
 	src/istream-byte.c \
+	src/istream-trace.c \
 	src/istream-fail.c \
 	src/istream-later.c \
 	src/istream-head.c \
