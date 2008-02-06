@@ -54,7 +54,7 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
     assert(istream != NULL);
     assert(istream->handler != NULL);
     assert(istream->handler->direct != NULL);
-    assert((istream->handler_direct & type) != 0);
+    assert((istream->handler_direct & type) == type);
     assert(fd >= 0);
     assert(max_length > 0);
     assert(!istream->in_data);
