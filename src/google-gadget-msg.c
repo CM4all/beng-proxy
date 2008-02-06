@@ -185,6 +185,8 @@ static const struct http_response_handler gg_msg_http_handler = {
 void
 google_gadget_msg_load(struct google_gadget *gg, const char *url)
 {
+    gg->msg.parser = NULL;
+
     url_stream_new(gg->pool, gg->env->http_client_stock,
                    HTTP_METHOD_GET, url,
                    NULL, NULL,
@@ -197,6 +199,8 @@ google_gadget_msg_close(struct google_gadget *gg)
 {
     if (gg->msg.parser != NULL)
         parser_close(gg->msg.parser);
+    else if (async_ref_defined(&gg->async))
+        async_abort(&gg->async);
 
     assert(gg->msg.parser == NULL);
 }

@@ -328,6 +328,9 @@ google_parser_eof(void *ctx, off_t attr_unused length)
 
     gw->parser = NULL;
 
+    if (gw->has_locale && gw->waiting_for_locale)
+        google_gadget_msg_close(gw);
+
     if (gw->from_parser.sending_content) {
         gw->from_parser.sending_content = 0;
         istream_invoke_eof(&gw->output);
@@ -343,6 +346,9 @@ google_parser_abort(void *ctx)
     struct google_gadget *gw = ctx;
 
     gw->parser = NULL;
+
+    if (gw->has_locale && gw->waiting_for_locale)
+        google_gadget_msg_close(gw);
 
     if (gw->from_parser.sending_content) {
         gw->from_parser.sending_content = 0;
