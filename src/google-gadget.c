@@ -44,11 +44,12 @@ google_send_error(struct google_gadget *gw, const char *msg)
 }
 
 static istream_t
-google_gadget_process(const struct google_gadget *gw, istream_t istream)
+google_gadget_process(const struct google_gadget *gw, istream_t istream,
+                      unsigned options)
 {
     return processor_new(gw->pool, istream,
                          gw->widget, gw->env,
-                         PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_PREFS);
+                         options);
 }
 
 static void
@@ -83,7 +84,10 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
             status = HTTP_STATUS_OK;
             headers = strmap_new(gg->pool, 4);
             strmap_addn(headers, "content-type", "text/html; charset=utf-8");
-            istream = google_gadget_process(gg, istream);
+            istream = google_gadget_process(gg, istream,
+                                            PROCESSOR_JSCRIPT|
+                                            PROCESSOR_JSCRIPT_ROOT|
+                                            PROCESSOR_JSCRIPT_PREFS);
         }
 
         http_response_handler_invoke_response(&gg->env->response_handler,
@@ -92,7 +96,9 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
         if (istream == NULL)
             istream = istream_null_new(gg->pool);
         else
-            istream = google_gadget_process(gg, istream);
+            istream = google_gadget_process(gg, istream,
+                                            PROCESSOR_JSCRIPT|
+                                            PROCESSOR_JSCRIPT_PREFS);
 
         istream_delayed_set(gg->delayed, istream);
         gg->delayed = NULL;
