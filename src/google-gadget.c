@@ -183,6 +183,8 @@ static void
 google_content_tag_finished(struct google_gadget *gw,
                             const struct parser_tag *tag)
 {
+    istream_t istream;
+
     switch (gw->from_parser.type) {
     case TYPE_NONE:
         break;
@@ -211,9 +213,11 @@ google_content_tag_finished(struct google_gadget *gw,
         gw->widget->class = gg_class(gw->pool, gw->from_parser.url);
         widget_determine_real_uri(gw->pool, gw->widget);
 
-        istream_delayed_set(gw->delayed,
-                            embed_widget_callback(gw->pool, gw->env, gw->widget));
+        istream = embed_widget_callback(gw->pool, gw->env, gw->widget);
+        istream_delayed_set(gw->delayed, istream);
         gw->delayed = NULL;
+
+        istream_read(istream);
         return;
     }
 
