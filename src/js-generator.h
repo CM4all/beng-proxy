@@ -18,6 +18,9 @@ js_generate_widget(struct growing_buffer *gb, const struct widget *widget,
                    pool_t pool);
 
 void
+js_generate_includes(struct growing_buffer *gb);
+
+void
 js_generate_root_widget(struct growing_buffer *gb, const char *session_id);
 
 void

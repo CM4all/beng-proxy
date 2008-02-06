@@ -124,15 +124,10 @@ class Translation(Protocol):
             # 
             user = session = None
 
-        if request.uri == '/beng-proxy.js':
+        if request.uri[:19] == '/cm4all-beng-proxy/':
             from sys import argv
             from os.path import abspath, dirname, join
-            path = join(dirname(dirname(abspath(argv[0]))), 'js/beng-proxy.js')
-            print path
-        elif request.uri == '/google-gadget.js':
-            from sys import argv
-            from os.path import abspath, dirname, join
-            path = join(dirname(dirname(abspath(argv[0]))), 'js/google-gadget.js')
+            path = join(dirname(dirname(abspath(argv[0]))), 'js/' + request.uri[19:])
             print path
         else:
             path = '/var/www' + request.uri

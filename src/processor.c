@@ -110,6 +110,9 @@ processor_jscript(processor_t processor)
 
     assert(processor_option_jscript(processor));
 
+    if (processor_option_jscript_root(processor))
+        js_generate_includes(gb);
+
     growing_buffer_write_string(gb, "<script type=\"text/javascript\">\n");
 
     if (processor_option_jscript_root(processor))

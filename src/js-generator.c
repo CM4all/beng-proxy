@@ -51,6 +51,14 @@ js_generate_widget(struct growing_buffer *gb, const struct widget *widget,
 }
 
 void
+js_generate_includes(struct growing_buffer *gb)
+{
+    /* XXX make the URL configurable */
+    growing_buffer_write_string(gb, "<script type=\"text/javascript\" src=\"/cm4all-beng-proxy/beng-proxy.js\"></script>\n"
+                                "<script type=\"text/javascript\" src=\"/cm4all-beng-proxy/google-gadget.js\"></script>\n");
+}
+
+void
 js_generate_root_widget(struct growing_buffer *gb, const char *session_id)
 {
     growing_buffer_write_string(gb, "var rootWidget = new beng_root_widget(beng_proxy(\"");
