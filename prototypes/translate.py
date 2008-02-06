@@ -126,9 +126,12 @@ class Translation(Protocol):
 
         if request.uri[:19] == '/cm4all-beng-proxy/':
             from sys import argv
-            from os.path import abspath, dirname, join
-            path = join(dirname(dirname(abspath(argv[0]))), 'js/' + request.uri[19:])
-            print path
+            if len(argv) >= 3:
+                path = argv[2]
+            else:
+                from os.path import abspath, dirname, join
+                path = join(dirname(dirname(abspath(argv[0]))), 'js/')
+            path += request.uri[19:]
         else:
             path = '/var/www' + request.uri
 
@@ -175,5 +178,10 @@ factory = Factory()
 factory.protocol = Translation
 
 if __name__ == '__main__':
-    reactor.listenUNIX('/tmp/beng-proxy-translate', factory)
+    from sys import argv
+    if len(argv) >= 2:
+        path = argv[1]
+    else:
+        path = '/tmp/beng-proxy-translate'
+    reactor.listenUNIX(path, factory)
     reactor.run()
