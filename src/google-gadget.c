@@ -69,61 +69,6 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
 
 
 /*
- * url_stream handler (HTML contents)
- *
- */
-
-static void
-google_gadget_content_response(http_status_t status, strmap_t headers,
-                               istream_t body, void *ctx)
-{
-    struct google_gadget *gw = ctx;
-    const char *p;
-
-    assert(gw->delayed != NULL);
-
-    async_ref_clear(&gw->async);
-
-    if (!http_status_is_success(status)) {
-        if (body != NULL)
-            istream_close(body);
-
-        google_send_error(gw, "content server reported error");
-        return;
-    }
-
-    p = strmap_get(headers, "content-type");
-    if (p == NULL || strncmp(p, "text/html", 9) != 0 || body == NULL) {
-        if (body != NULL)
-            istream_close(body);
-
-        google_send_error(gw, "text/html expected");
-        return;
-    }
-
-    gg_set_content(gw, body);
-}
-
-static void
-google_gadget_content_abort(void *ctx)
-{
-    struct google_gadget *gw = ctx;
-
-    assert(gw->delayed != NULL);
-
-    async_ref_clear(&gw->async);
-
-    istream_free(&gw->delayed);
-    pool_unref(gw->pool);
-}
-
-static const struct http_response_handler google_gadget_content_handler = {
-    .response = google_gadget_content_response,
-    .abort = google_gadget_content_abort,
-};
-
-
-/*
  * istream implementation which serves the CDATA section in <Content/>
  *
  */
