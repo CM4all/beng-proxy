@@ -24,7 +24,7 @@ source /lib/lsb/init-functions
 PIDFILE=/var/run/cm4all/beng-proxy-translation-prototype.pid
 DAEMON_USER=root
 LOGFILE=/var/log/cm4all/beng-proxy-translation-prototype.log
-TRANSLATION_SOCKET=/var/run/cm4all/beng-proxy/translation.sock
+TRANSLATION_SOCKET=/var/run/cm4all/beng-proxy-translation.sock
 
 case "$1" in
     start)
