@@ -51,7 +51,7 @@ Description: Development files for cm4all-beng-proxy
 Package: cm4all-beng-proxy-translation-prototype
 Architecture: all
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, cm4all-utils,
- libcm4all-beng-proxy-js (= ${source:Version})
+ libcm4all-beng-proxy-js (= ${source:Version}), python-twisted
 Provides: cm4all-beng-proxy-translation
 Enhances: cm4all-beng-proxy
 Description: Translation server prototype
