@@ -421,6 +421,9 @@ google_delayed_abort(void *ctx)
 {
     struct google_gadget *gw = ctx;
 
+    if (gw->delayed == NULL)
+        return;
+
     gw->delayed = NULL;
 
     if (gw->parser != NULL)
