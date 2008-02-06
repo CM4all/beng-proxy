@@ -15,6 +15,7 @@ struct google_gadget {
     struct processor_env *env;
     struct widget *widget;
 
+    struct async_operation delayed_operation;
     istream_t delayed, subst, raw;
 
     struct async_operation_ref async;

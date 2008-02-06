@@ -5,6 +5,7 @@
  */
 
 #include "istream.h"
+#include "async.h"
 
 #include <assert.h>
 #include <string.h>
@@ -12,8 +13,7 @@
 struct istream_delayed {
     struct istream output;
     istream_t input;
-    void (*abort_callback)(void *ctx);
-    void *callback_ctx;
+    struct async_operation_ref async;
 };
 
 
@@ -21,19 +21,12 @@ static void
 delayed_close(struct istream_delayed *delayed)
 {
     if (delayed->input != NULL) {
-        assert(delayed->abort_callback == NULL);
+        assert(!async_ref_defined(&delayed->async));
 
         istream_close(delayed->input);
         assert(delayed->input == NULL);
-    } else if (delayed->abort_callback != NULL) {
-        void (*abort_callback)(void *ctx) = delayed->abort_callback;
-        void *callback_ctx = delayed->callback_ctx;
-
-        delayed->abort_callback = NULL;
-        delayed->callback_ctx = NULL;
-
-        abort_callback(callback_ctx);
-
+    } else if (async_ref_defined(&delayed->async)) {
+        async_abort(&delayed->async);
         istream_invoke_abort(&delayed->output);
     }
 }
@@ -121,19 +114,15 @@ static const struct istream istream_delayed = {
 };
 
 istream_t
-istream_delayed_new(pool_t pool, void (*abort_callback)(void *ctx),
-                    void *callback_ctx)
+istream_delayed_new(pool_t pool, struct async_operation *async)
 {
     struct istream_delayed *delayed;
-
-    assert(abort_callback != NULL);
 
     delayed = p_malloc(pool, sizeof(*delayed));
     delayed->output = istream_delayed;
     delayed->output.pool = pool;
     delayed->input = NULL;
-    delayed->abort_callback = abort_callback;
-    delayed->callback_ctx = callback_ctx;
+    async_ref_set(&delayed->async, async);
 
     return istream_struct_cast(&delayed->output);
 }
@@ -147,9 +136,9 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
     assert(delayed->input == NULL);
     assert(input != NULL);
     assert(!istream_has_handler(input));
+    assert(async_ref_defined(&delayed->async));
 
-    delayed->abort_callback = NULL;
-    delayed->callback_ctx = NULL;
+    async_ref_clear(&delayed->async);
 
     istream_assign_ref_handler(&delayed->input, input,
                                &delayed_input_handler, delayed,

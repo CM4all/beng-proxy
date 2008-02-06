@@ -28,6 +28,7 @@ struct embed {
 
     struct async_operation_ref url_stream;
 
+    struct async_operation delayed_operation;
     istream_t delayed;
 };
 
@@ -113,10 +114,22 @@ embed_request_headers(struct embed *embed, int with_body)
     return headers;
 }
 
-static void
-embed_delayed_abort(void *ctx)
+
+/*
+ * async operation
+ *
+ */
+
+static struct embed *
+async_to_embed(struct async_operation *ao)
 {
-    struct embed *embed = (struct embed *)ctx;
+    return (struct embed*)(((char*)ao) - offsetof(struct embed, delayed_operation));
+}
+
+static void
+embed_delayed_abort(struct async_operation *ao)
+{
+    struct embed *embed = async_to_embed(ao);
 
     if (!async_ref_defined(&embed->url_stream))
         return;
@@ -125,6 +138,11 @@ embed_delayed_abort(void *ctx)
 
     async_abort(&embed->url_stream);
 }
+
+static struct async_operation_class embed_delayed_operation = {
+    .abort = embed_delayed_abort,
+};
+
 
 static const struct http_response_handler embed_response_handler;
 
@@ -315,7 +333,9 @@ embed_new(pool_t pool, struct widget *widget,
     embed->widget = widget;
     embed->env = env;
     embed->options = options;
-    embed->delayed = istream_delayed_new(pool, embed_delayed_abort, embed);
+
+    async_init(&embed->delayed_operation, &embed_delayed_operation);
+    embed->delayed = istream_delayed_new(pool, &embed->delayed_operation);
 
     headers = embed_request_headers(embed, widget->from_request.body != NULL);
 

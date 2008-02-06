@@ -422,10 +422,22 @@ static const struct http_response_handler google_gadget_handler = {
     .abort = google_gadget_http_abort,
 };
 
-static void
-google_delayed_abort(void *ctx)
+
+/*
+ * async operation
+ *
+ */
+
+static struct google_gadget *
+async_to_gg(struct async_operation *ao)
 {
-    struct google_gadget *gw = ctx;
+    return (struct google_gadget*)(((char*)ao) - offsetof(struct google_gadget, delayed_operation));
+}
+
+static void
+gg_delayed_abort(struct async_operation *ao)
+{
+    struct google_gadget *gw = async_to_gg(ao);
 
     if (gw->delayed == NULL)
         return;
@@ -437,6 +449,10 @@ google_delayed_abort(void *ctx)
     else if (async_ref_defined(&gw->async))
         async_abort(&gw->async);
 }
+
+static struct async_operation_class gg_delayed_operation = {
+    .abort = gg_delayed_abort,
+};
 
 
 /*
@@ -473,7 +489,10 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     gw->pool = pool;
     gw->env = env;
     gw->widget = widget;
-    gw->delayed = istream_delayed_new(pool, google_delayed_abort, gw);
+
+    async_init(&gw->delayed_operation, &gg_delayed_operation);
+    gw->delayed = istream_delayed_new(pool, &gw->delayed_operation);
+
     gw->subst = istream_subst_new(pool, gw->delayed);
     gw->parser = NULL;
     gw->has_locale = 0;

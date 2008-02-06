@@ -8,6 +8,8 @@
 #ifndef __BENG_ISTREAM_IMPL_H
 #define __BENG_ISTREAM_IMPL_H
 
+struct async_operation;
+
 istream_t
 istream_null_new(pool_t pool);
 
@@ -44,8 +46,7 @@ istream_t
 istream_cat_new(pool_t pool, ...);
 
 istream_t
-istream_delayed_new(pool_t pool, void (*abort_callback)(void *ctx),
-                    void *callback_ctx);
+istream_delayed_new(pool_t pool, struct async_operation *async);
 
 void
 istream_delayed_set(istream_t istream_delayed, istream_t input);
