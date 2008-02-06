@@ -192,11 +192,24 @@ google_content_tag_finished(struct google_gadget *gw,
     case TYPE_HTML:
     case TYPE_HTML_INLINE:
         if (tag->type == TAG_OPEN) {
-            gw->from_parser.sending_content = 1;
-            gw->output = istream_google_html;
-            gw->output.pool = gw->pool;
+            if (gw->widget->from_request.proxy ||
+                gw->from_parser.type == TYPE_HTML_INLINE) {
+                gw->from_parser.sending_content = 1;
+                gw->output = istream_google_html;
+                gw->output.pool = gw->pool;
 
-            gg_set_content(gw, istream_struct_cast(&gw->output));
+                gg_set_content(gw, istream_struct_cast(&gw->output));
+            } else {
+                gw->widget->display = WIDGET_DISPLAY_IFRAME;
+
+                istream = embed_widget_callback(gw->pool, gw->env, gw->widget);
+                istream_delayed_set(gw->delayed, istream);
+                gw->delayed = NULL;
+
+                parser_close(gw->parser);
+
+                istream_read(istream);
+            }
         } else {
             /* it's TAG_SHORT, handle that gracefully */
 
