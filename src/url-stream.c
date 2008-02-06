@@ -46,6 +46,7 @@ url_stream_response(http_status_t status, strmap_t headers,
 {
     struct url_stream *us = ctx;
 
+    async_poison(&us->async);
     http_response_handler_invoke_response(&us->handler, status, headers, body);
 
     pool_unref(us->pool);
@@ -57,6 +58,7 @@ url_stream_response_abort(void *ctx)
 {
     struct url_stream *us = ctx;
 
+    async_poison(&us->async);
     http_response_handler_invoke_abort(&us->handler);
 
     pool_unref(us->pool);
@@ -84,6 +86,7 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
     async_ref_clear(&us->stock_get_operation);
 
     if (item == NULL) {
+        async_poison(&us->async);
         http_response_handler_invoke_abort(&us->handler);
         pool_unref(us->pool);
         return;
@@ -192,6 +195,7 @@ url_stream_new(pool_t pool,
         p = url + 7;
         slash = strchr(p, '/');
         if (slash == NULL || slash == p) {
+            async_poison(&us->async);
             http_response_handler_invoke_abort(&us->handler);
             pool_unref(us->pool);
             return;
@@ -214,6 +218,7 @@ url_stream_new(pool_t pool,
         else
             host_and_port = p_strndup(us->pool, p, qmark - p);
     } else {
+        async_poison(&us->async);
         http_response_handler_invoke_abort(&us->handler);
         pool_unref(us->pool);
         return;
