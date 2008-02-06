@@ -27,7 +27,7 @@ LOGGER_USER=cm4all-logger
 PORT=80
 WORKERS=4
 DOCUMENT_ROOT=/var/www
-TRANSLATION_SOCKET=
+TRANSLATION_SOCKET=/var/run/cm4all/beng-proxy-translation.sock
 OPTIONS=""
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
