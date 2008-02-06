@@ -122,7 +122,11 @@ istream_delayed_new(pool_t pool, struct async_operation *async)
     delayed->output = istream_delayed;
     delayed->output.pool = pool;
     delayed->input = NULL;
-    async_ref_set(&delayed->async, async);
+
+    if (async == NULL)
+        async_ref_clear(&delayed->async);
+    else
+        async_ref_set(&delayed->async, async);
 
     return istream_struct_cast(&delayed->output);
 }
@@ -136,7 +140,6 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
     assert(delayed->input == NULL);
     assert(input != NULL);
     assert(!istream_has_handler(input));
-    assert(async_ref_defined(&delayed->async));
 
     async_ref_clear(&delayed->async);
 
