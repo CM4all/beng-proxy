@@ -1,6 +1,6 @@
 Source: cm4all-beng-proxy
 Section: non-free/web
-Priority: optional
+Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 5), gcc (>= 4.1), libcm4all-daemon-dev (>= 0.3), libevent-dev (>= 1.3c), libattr1-dev, tetex-extra (>= 3.0)
 Standards-Version: 3.7.3
