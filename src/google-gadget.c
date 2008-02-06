@@ -59,15 +59,7 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
     assert(gg->delayed != NULL);
 
     if (gg->has_locale && gg->waiting_for_locale) {
-        assert(gg->raw == NULL);
-
-        if (istream == NULL) {
             /* XXX abort locale */
-        } else {
-            /* wait until locale is finished */
-            gg->raw = istream;
-            return;
-        }
     }
 
     if (gg->widget->from_request.proxy &&
@@ -154,16 +146,13 @@ void
 google_gadget_msg_eof(struct google_gadget *gg)
 {
     /* XXX */
-    (void)gg;
 
     assert(gg->has_locale && gg->waiting_for_locale);
 
     gg->waiting_for_locale = 0;
 
-    if (gg->raw != NULL) {
-        gg_set_content(gg, gg->raw);
-        istream_read(gg->raw);
-    }
+    if (gg->parser != NULL)
+        parser_read(gg->parser);
 }
 
 void
@@ -297,7 +286,6 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             gw->delayed != NULL) {
             google_gadget_msg_load(gw, strref_dup(gw->pool, &attr->value));
             gw->waiting_for_locale = 1;
-            gw->raw = NULL;
         }
         break;
 
