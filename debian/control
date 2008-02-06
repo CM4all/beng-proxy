@@ -48,6 +48,19 @@ Description: Development files for cm4all-beng-proxy
  This package provides C headers for developing extensions and
  services for cm4all-beng-proxy.
 
+Package: cm4all-beng-proxy-translation-prototype
+Architecture: all
+Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, cm4all-utils,
+ libcm4all-beng-proxy-js (= ${source:Version})
+Provides: cm4all-beng-proxy-translation
+Enhances: cm4all-beng-proxy
+Description: Translation server prototype
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This package contains a prototype for the beng-proxy translation
+ server.
+
 Package: cm4all-beng-proxy-doc
 Architecture: all
 Section: non-free/doc
