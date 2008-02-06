@@ -189,9 +189,8 @@ google_content_tag_finished(struct google_gadget *gw,
 
     case TYPE_HTML:
     case TYPE_HTML_INLINE:
-        gw->from_parser.sending_content = 1;
-
         if (tag->type == TAG_OPEN) {
+            gw->from_parser.sending_content = 1;
             gw->output = istream_google_html;
             gw->output.pool = gw->pool;
 
