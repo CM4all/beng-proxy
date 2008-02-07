@@ -68,6 +68,9 @@ function _IG_FetchXmlContent(url, callback) {
     return req;
 }
 
+function _IG_SetTitle(title) {
+}
+
 function _IG_GetCachedUrl(url) {
     return url;
 }
