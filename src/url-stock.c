@@ -198,7 +198,7 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri,
         /* XXX make this asynchronous */
         ret = getaddrinfo_helper(uri, 80, &hints, &ai);
         if (ret != 0) {
-            daemon_log(1, "failed to resolve proxy host name\n");
+            daemon_log(1, "failed to resolve host name '%s'\n", uri);
             stock_available(item, 0);
             return;
         }
