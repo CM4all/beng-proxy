@@ -240,16 +240,9 @@ subst_try_write_a(struct istream_subst *subst)
     return nbytes;
 }
 
-
-/*
- * istream handler
- *
- */
-
 static size_t
-subst_source_data(const void *_data, size_t length, void *ctx)
+subst_feed(struct istream_subst *subst, const void *_data, size_t length)
 {
-    struct istream_subst *subst = ctx;
     const char *data0 = _data, *data = data0, *p = data0, *end = p + length, *first = NULL;
     size_t chunk_length, nbytes;
     const struct subst_node *node;
@@ -440,6 +433,19 @@ subst_source_data(const void *_data, size_t length, void *ctx)
     }
 
     return p - data0;
+}
+
+/*
+ * istream handler
+ *
+ */
+
+static size_t
+subst_source_data(const void *data, size_t length, void *ctx)
+{
+    struct istream_subst *subst = ctx;
+
+    return subst_feed(subst, data, length);
 }
 
 static void
