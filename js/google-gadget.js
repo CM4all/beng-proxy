@@ -38,6 +38,12 @@ function _IG_Prefs(widget) {
         return this.values[name];
     }
 
+    this.getArray = function(name) {
+        var value = new Array();
+        // XXX
+        return value;
+    }
+
     this.set = function(name, value) {
         this.values[name] = value;
         this.widget.get("?" + escape(name) + "=" + escape(value), null, true);
