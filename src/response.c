@@ -225,7 +225,7 @@ response_dispatch(struct request *request2,
  *
  */
 
-static void 
+static void
 response_response(http_status_t status, strmap_t headers,
                   istream_t body,
                   void *ctx)
@@ -257,7 +257,7 @@ response_response(http_status_t status, strmap_t headers,
     pool_unref(pool);
 }
 
-static void 
+static void
 response_abort(void *ctx)
 {
     struct request *request = ctx;
