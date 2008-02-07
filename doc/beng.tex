@@ -264,6 +264,9 @@ resource as response.
 If the filter URL starts with a slash, \emph{beng-proxy} assumes it is
 the absolute path to a Unix socket.
 
+There may be more than one filter; the order of the \texttt{PROCESS}
+and \texttt{FILTER} packets is important.
+
 \subsubsection{Sessions}
 \label{sessions}
 
