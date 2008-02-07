@@ -108,6 +108,9 @@ function _IG_RegisterOnloadHandler(load) {
     beng_register_onload(load);
 }
 
+function _IG_AddDOMEventHandler(window, event, handler) {
+}
+
 function _gel(id) {
     return document.getElementById(id);
 }
