@@ -165,6 +165,9 @@ processor_subst_google_gadget(pool_t pool, istream_t istream,
         const char *module_id = p_strcat(pool, prefix, "widget", NULL);
         istream_subst_add(istream, "__MODULE_ID__", module_id);
     }
+
+    istream_subst_add(istream, "__BIDI_START_EDGE__", "left");
+    istream_subst_add(istream, "__BIDI_END_EDGE__", "right");
 }
 
 static void
