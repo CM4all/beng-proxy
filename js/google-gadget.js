@@ -52,6 +52,22 @@ function _IG_Analytics(foo, bar) {
 function urchinTracker(page) {
 }
 
+function _IG_FetchContent(url, callback) {
+    var req = beng_proxy_request();
+    if (req == null)
+        return null;
+    req.onreadystatechange = function() {
+        if (req.readyState == 4 && req.status >= 200 && req.status < 300) {
+            callback(req.responseText);
+        } else {
+            callback(null);
+        }
+    }
+    req.open("GET", url, true);
+    req.send(null);
+    return req;
+}
+
 function _IG_FetchXmlContent(url, callback) {
     var req = beng_proxy_request();
     if (req == null)
