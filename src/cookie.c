@@ -64,9 +64,9 @@ parse_cookie2(pool_t pool, struct list_head *head,
     if (strref_is_empty(&name))
         return;
 
-    if (strref_cmp(&name, "expires", 7) == 0 ||
-        strref_cmp(&name, "domain", 6) == 0 ||
-        strref_cmp(&name, "path", 4) == 0)
+    if (strref_cmp_literal(&name, "expires") == 0 ||
+        strref_cmp_literal(&name, "domain") == 0 ||
+        strref_cmp_literal(&name, "path") == 0)
         return; /* XXX */
 
     strref_set(&value, equals + 1, input + input_length - equals - 1);

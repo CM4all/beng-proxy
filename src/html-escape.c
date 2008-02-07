@@ -104,13 +104,13 @@ html_unescape(struct strref *s)
 
         entity.length = semicolon - entity.data;
 
-        if (strref_cmp(&entity, "amp", 4) == 0)
+        if (strref_cmp_literal(&entity, "amp") == 0)
             replace(&u, p, semicolon + 1, "&", 1);
-        else if (strref_cmp(&entity, "quot", 4) == 0)
+        else if (strref_cmp_literal(&entity, "quot") == 0)
             replace(&u, p, semicolon + 1, "\"", 1);
-        else if (strref_cmp(&entity, "lt", 2) == 0)
+        else if (strref_cmp_literal(&entity, "lt") == 0)
             replace(&u, p, semicolon + 1, "<", 1);
-        else if (strref_cmp(&entity, "gt", 2) == 0)
+        else if (strref_cmp_literal(&entity, "gt") == 0)
             replace(&u, p, semicolon + 1, ">", 1);
         /* XXX support more entities */
 
