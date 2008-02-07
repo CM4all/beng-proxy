@@ -285,8 +285,8 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         if (strref_cmp_literal(&attr->name, "messages") == 0 &&
             !strref_is_empty(&attr->value) &&
             gw->delayed != NULL) {
-            google_gadget_msg_load(gw, strref_dup(gw->pool, &attr->value));
             gw->waiting_for_locale = 1;
+            google_gadget_msg_load(gw, strref_dup(gw->pool, &attr->value));
         }
         break;
 
