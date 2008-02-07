@@ -157,8 +157,6 @@ response_invoke_processor(struct request *request2,
     }
 #endif
 
-    assert(!istream_has_handler(body));
-
     response_dispatch(request2, status, response_headers, body);
 }
 
@@ -177,6 +175,7 @@ response_dispatch(struct request *request2,
         = request2->translate.transformation;
 
     assert(!request2->response_sent);
+    assert(body == NULL || !istream_has_handler(body));
 
     if (transformation)
         request2->translate.transformation = transformation->next;
