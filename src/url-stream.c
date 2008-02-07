@@ -132,7 +132,6 @@ url_stream_abort(struct async_operation *ao)
     assert(us->stock_item != NULL);
 
     http_client_connection_close(url_stock_item_get(us->stock_item));
-    pool_unref(us->pool);
 }
 
 static struct async_operation_class url_stream_async_operation = {
