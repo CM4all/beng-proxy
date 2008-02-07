@@ -145,8 +145,14 @@ request_args_parse(struct request *request)
     request->translate.request.session = NULL;
 
     session_id = strmap_get(request->args, "session");
-    if (session_id != NULL)
-        request_get_session(request, session_id);
+    if (session_id != NULL) {
+        if (request->session == NULL)
+            request_get_session(request, session_id);
+        else
+            /* the session has already been set up with cookies - we
+               don't need the session id in request->args anymore */
+            strmap_remove(request->args, "session");
+    }
 }
 
 static void
@@ -221,12 +227,14 @@ my_http_server_connection_request(struct http_server_request *request,
     assert(request2->uri.base.data[0] == '/');
 
     request2->args = NULL;
+    request2->cookies = NULL;
     request2->session = NULL;
     request2->body_consumed = 0;
     request2->filtered = 0;
     request2->processed = 0;
     request2->response_sent = 0;
 
+    request_get_cookie_session(request2);
     request_args_parse(request2);
 
     if (connection->config->translation_socket == NULL)

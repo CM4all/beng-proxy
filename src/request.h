@@ -22,6 +22,7 @@ struct request {
 
     strmap_t args;
 
+    struct strmap *cookies;
     char session_id_buffer[9];
     struct session *session;
 
@@ -42,6 +43,9 @@ response_dispatcher_wants_body(struct request *request);
 
 void
 request_get_session(struct request *request, const char *session_id);
+
+void
+request_get_cookie_session(struct request *request);
 
 struct session *
 request_make_session(struct request *request);

@@ -8,6 +8,7 @@
 #include "request.h"
 #include "session.h"
 #include "http-server.h"
+#include "cookie.h"
 
 int
 response_dispatcher_wants_body(struct request *request)
@@ -15,6 +16,24 @@ response_dispatcher_wants_body(struct request *request)
     return request->request->method == HTTP_METHOD_POST &&
         http_server_request_has_body(request->request) &&
         request->translate.response->process;
+}
+
+static struct strmap *
+request_get_cookies(struct request *request)
+{
+    const char *cookie;
+
+    if (request->cookies != NULL)
+        return request->cookies;
+
+    cookie = strmap_get(request->request->headers, "cookie");
+    if (cookie == NULL)
+        return NULL;
+
+    request->cookies = strmap_new(request->request->pool, 8);
+    cookie_map_parse(request->cookies, cookie, request->request->pool);
+
+    return request->cookies;
 }
 
 void
@@ -34,6 +53,24 @@ request_get_session(struct request *request, const char *session_id)
 
     if (request->session != NULL)
         request->translate.request.session = request->session->translate;
+}
+
+void
+request_get_cookie_session(struct request *request)
+{
+    struct strmap *cookies = request_get_cookies(request);
+    const char *session_id;
+
+    assert(request->session == NULL);
+
+    if (cookies == NULL)
+        return;
+
+    session_id = strmap_get(cookies, "beng_proxy_session");
+    if (session_id == NULL)
+        return;
+
+    request_get_session(request, session_id);
 }
 
 struct session *

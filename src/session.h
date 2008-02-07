@@ -61,6 +61,9 @@ struct session {
     /** is this session removed from session_manager? */
     unsigned removed:1;
 
+    /** has a HTTP cookie with this session id already been sent? */
+    unsigned cookie_sent:1;
+
     /** an opaque string for the translation server */
     const char *translate;
 

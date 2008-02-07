@@ -196,6 +196,19 @@ response_dispatch(struct request *request2,
     } else if (request2->translate.response->process && !request2->processed) {
         response_invoke_processor(request2, status, headers, body);
     } else {
+        if (request2->session != NULL &&
+            !request2->session->cookie_sent) {
+            char session_id[9];
+            session_id_format(session_id, request2->session->id);
+
+            header_write(headers, "set-cookie",
+                         p_strcat(request2->request->pool,
+                                  "beng_proxy_session=\"", session_id,
+                                  "\"; Version=\"1\"; Path=\"/\"", NULL));
+
+            request2->session->cookie_sent = 1;
+        }
+
         request2->response_sent = 1;
         http_server_response(request2->request,
                              status, headers, body);

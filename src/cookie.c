@@ -7,6 +7,7 @@
 #include "cookie.h"
 #include "strutil.h"
 #include "strref.h"
+#include "strmap.h"
 
 #include <string.h>
 
@@ -124,4 +125,51 @@ cookie_list_http_header(growing_buffer_t gb, struct list_head *head)
     }
 
     growing_buffer_write_string(gb, "\r\n");
+}
+
+void
+cookie_map_parse(struct strmap *cookies, const char *p, pool_t pool)
+{
+    const char *name, *value, *end;
+
+    assert(cookies != NULL);
+    assert(p != NULL);
+
+    while (1) {
+        value = strchr(p, '=');
+        if (value == NULL)
+            break;
+
+        name = p_strndup(pool, p, value - p);
+
+        ++value;
+
+        if (*value == '"') {
+            ++value;
+
+            end = strchr(value, '"');
+            if (end == NULL)
+                break;
+
+            value = p_strndup(pool, value, end - value);
+
+            end = strchr(value, ';');
+        } else {
+            end = strchr(value, ';');
+
+            if (end == NULL)
+                value = p_strdup(pool, value);
+            else
+                value = p_strndup(pool, value, end - value);
+        }
+
+        strmap_addn(cookies, name, value);
+
+        if (end == NULL)
+            break;
+
+        p = end + 1;
+        while (*p != 0 && char_is_whitespace(*p))
+            ++p;
+    }
 }
