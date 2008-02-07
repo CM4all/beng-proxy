@@ -61,6 +61,18 @@ Description: Translation server prototype
  This package contains a prototype for the beng-proxy translation
  server.
 
+Package: cm4all-beng-proxy-demo
+Architecture: all
+Depends: cm4all-beng-proxy, cm4all-beng-proxy-translation-prototype
+Recommends: cm4all-beng-proxy-dbg, cm4all-beng-proxy-doc
+Description: Demo package for cm4all-beng-proxy
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ Install this package if you want to test cm4all-beng-proxy.  It
+ installs a translation server prototype and a small demo HTML page in
+ /var/www.
+
 Package: cm4all-beng-proxy-doc
 Architecture: all
 Section: non-free/doc
