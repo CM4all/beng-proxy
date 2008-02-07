@@ -438,11 +438,10 @@ google_gadget_http_abort(void *ctx)
 {
     struct google_gadget *gw = ctx;
 
-    assert(gw->delayed != NULL);
-
     async_ref_clear(&gw->async);
 
-    istream_free(&gw->delayed);
+    if (gw->delayed != NULL)
+        istream_free(&gw->delayed);
 
     pool_unref(gw->pool);
 }
