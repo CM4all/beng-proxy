@@ -204,7 +204,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->pool = pool;
     pool_ref(pool);
 #else
-    processor->pool = pool_new_linear(pool, "processor", 16384);
+    processor->pool = pool_new_linear(pool, "processor", 32768);
 #endif
 
     processor->widget_pool = env->pool;
