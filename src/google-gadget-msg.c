@@ -11,6 +11,22 @@
 #include "url-stream.h"
 #include "http-response.h"
 #include "processor.h"
+#include "strutil.h"
+
+static const char *
+gg_msg_strip(pool_t pool, const char *value)
+{
+    size_t length;
+
+    while (*value != 0 && char_is_whitespace(*value))
+        ++value;
+
+    length = strlen(value);
+    while (length > 0 && char_is_whitespace(value[length - 1]))
+        --length;
+
+    return p_strndup(pool, value, length);
+}
 
 static void
 gg_msg_finish(struct google_gadget *gg)
@@ -19,7 +35,8 @@ gg_msg_finish(struct google_gadget *gg)
         return;
 
     if (gg->msg.key != NULL)
-        istream_subst_add(gg->subst, gg->msg.key, gg->msg.value);
+        istream_subst_add(gg->subst, gg->msg.key,
+                          gg_msg_strip(gg->pool, gg->msg.value));
 
     gg->msg.in_msg_tag = 0;
 }
