@@ -19,7 +19,8 @@ proxy_callback(struct request *request2)
 
     pool_ref(request->pool);
 
-    if (response_dispatcher_wants_body(request2)) {
+    if (http_server_request_has_body(request) &&
+        (response_dispatcher_wants_body(request2) || request2->body_consumed)) {
         method = HTTP_METHOD_GET;
         body = NULL;
     } else {

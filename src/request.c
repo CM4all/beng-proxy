@@ -11,11 +11,27 @@
 #include "cookie.h"
 
 int
+request_processor_enabled(struct request *request)
+{
+    const struct translate_transformation *transformation;
+
+    for (transformation = request->translate.response->transformation;
+         transformation != NULL;
+         transformation = transformation->next)
+        if (transformation->type == TRANSFORMATION_PROCESS)
+            return 1;
+
+    return 0;
+}
+
+int
 response_dispatcher_wants_body(struct request *request)
 {
+    assert(http_server_request_has_body(request->request));
+    assert(!request->body_consumed);
+
     return request->request->method == HTTP_METHOD_POST &&
-        http_server_request_has_body(request->request) &&
-        request->translate.response->process;
+        request_processor_enabled(request);
 }
 
 static struct strmap *

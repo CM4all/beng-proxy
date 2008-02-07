@@ -29,14 +29,18 @@ struct request {
     struct {
         struct translate_request request;
         const struct translate_response *response;
+        const struct translate_transformation *transformation;
     } translate;
 
     struct processor_env env;
 
     struct async_operation_ref url_stream, filter;
 
-    unsigned body_consumed, filtered, processed, response_sent;
+    unsigned body_consumed, response_sent;
 };
+
+int
+request_processor_enabled(struct request *request);
 
 int
 response_dispatcher_wants_body(struct request *request);

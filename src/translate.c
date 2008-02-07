@@ -47,6 +47,7 @@ struct translate_connection {
 
     struct packet_reader reader;
     struct translate_response response;
+    struct translate_transformation **transformation_tail;
 };
 
 static struct translate_response error = {
@@ -226,11 +227,27 @@ translate_read_event_callback(int fd, short event, void *ctx)
     pool_unref(connection->pool);
 }
 
+static struct translate_transformation *
+translate_add_transformation(struct translate_connection *connection)
+{
+    /* XXX wrong pool */
+    struct translate_transformation *transformation
+        = p_malloc(connection->pool, sizeof(*transformation));
+
+    transformation->next = NULL;
+    *connection->transformation_tail = transformation;
+    connection->transformation_tail = &transformation->next;
+
+    return transformation;
+}
+
 static void
 translate_handle_packet(struct translate_connection *connection,
                         unsigned command, const char *payload,
                         size_t payload_length)
 {
+    struct translate_transformation *transformation;
+
     if (command == TRANSLATE_BEGIN) {
         if (connection->response.status != (http_status_t)-1) {
             daemon_log(1, "double BEGIN from translation server\n");
@@ -259,6 +276,7 @@ translate_handle_packet(struct translate_connection *connection,
 
     case TRANSLATE_BEGIN:
         memset(&connection->response, 0, sizeof(connection->response));
+        connection->transformation_tail= &connection->response.transformation;
         break;
 
     case TRANSLATE_STATUS:
@@ -297,11 +315,18 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_FILTER:
-        connection->response.filter = payload;
+        if (payload != NULL) {
+            /* XXX wrong pool */
+            transformation = translate_add_transformation(connection);
+            transformation->type = TRANSFORMATION_FILTER;
+            transformation->filter = payload;
+        }
         break;
 
     case TRANSLATE_PROCESS:
-        connection->response.process = 1;
+        /* XXX wrong pool */
+        transformation = translate_add_transformation(connection);
+        transformation->type = TRANSFORMATION_PROCESS;
         break;
 
     case TRANSLATE_SESSION:

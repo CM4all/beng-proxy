@@ -86,11 +86,7 @@ response_invoke_processor(struct request *request2,
     unsigned processor_options = PROCESSOR_CONTAINER;
 
     assert(!request2->response_sent);
-    assert(!request2->processed);
-    assert(request2->translate.response->process);
     assert(body == NULL || !istream_has_handler(body));
-
-    request2->processed = 1;
 
     if (body == NULL) {
         response_dispatch(request2, status, response_headers, NULL);
@@ -177,23 +173,31 @@ response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
                   istream_t body)
 {
+    const struct translate_transformation *transformation
+        = request2->translate.transformation;
+
     assert(!request2->response_sent);
 
-    if (request2->translate.response->filter != NULL && !request2->filtered) {
+    if (transformation)
+        request2->translate.transformation = transformation->next;
+
+    if (transformation != NULL &&
+        transformation->type == TRANSFORMATION_FILTER) {
         struct http_server_request *request = request2->request;
 
-        request2->filtered = 1;
+        assert(transformation->filter != NULL);
 
         pool_ref(request->pool);
 
         filter_new(request->pool,
                    request2->http_client_stock,
-                   request2->translate.response->filter,
+                   transformation->filter,
                    headers,
                    body,
                    &response_handler, request2,
                    &request2->filter);
-    } else if (request2->translate.response->process && !request2->processed) {
+    } else if (transformation != NULL &&
+               transformation->type == TRANSFORMATION_PROCESS) {
         response_invoke_processor(request2, status, headers, body);
     } else {
         if (request2->session != NULL &&
@@ -240,7 +244,8 @@ response_response(http_status_t status, strmap_t headers,
     async_ref_clear(&request2->filter);
 
     response_headers = growing_buffer_new(request->pool, 2048);
-    if (request2->translate.response->process && !request2->processed)
+    if (request2->translate.transformation != NULL &&
+        request2->translate.transformation->type == TRANSFORMATION_PROCESS)
         headers_copy(headers, response_headers, copy_headers_processed);
     else
         headers_copy(headers, response_headers, copy_headers);

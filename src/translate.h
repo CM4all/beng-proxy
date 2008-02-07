@@ -20,6 +20,17 @@ struct translate_request {
     const char *param;
 };
 
+struct translate_transformation {
+    struct translate_transformation *next;
+
+    enum {
+        TRANSFORMATION_PROCESS,
+        TRANSFORMATION_FILTER,
+    } type;
+
+    const char *filter;
+};
+
 struct translate_response {
     http_status_t status;
     const char *path;
@@ -29,11 +40,12 @@ struct translate_response {
     const char *content_type;
     const char *proxy;
     const char *redirect;
-    const char *filter;
-    int process, cgi;
+    int cgi;
     const char *session;
     const char *user;
     const char *language;
+
+    struct translate_transformation *transformation;
 };
 
 typedef void (*translate_callback_t)(const struct translate_response *response,

@@ -23,6 +23,7 @@ translate_callback(const struct translate_response *response,
     struct request *request = ctx;
 
     request->translate.response = response;
+    request->translate.transformation = response->transformation;
 
     if (response->status == (http_status_t)-1 ||
         (response->path == NULL && response->proxy == NULL &&
@@ -178,6 +179,7 @@ serve_document_root_file(struct request *request2,
     struct parsed_uri *uri;
     struct translate_response *tr;
     const char *index_file = NULL;
+    int process;
 
     uri = &request2->uri;
 
@@ -186,10 +188,18 @@ serve_document_root_file(struct request *request2,
 
     if (uri->base.data[uri->base.length - 1] == '/') {
         index_file = "index.html";
-        tr->process = 1;
+        process = 1;
     } else {
-        tr->process = strref_ends_with_n(&uri->base, ".html", 5);
+        process = strref_ends_with_n(&uri->base, ".html", 5);
     }
+
+    if (process) {
+        struct translate_transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
+        transformation->next = NULL;
+        transformation->type = TRANSFORMATION_PROCESS;
+        request2->translate.transformation = transformation;
+    } else
+        request2->translate.transformation = NULL;
 
     tr->status = 0;
     tr->path = p_strncat(request->pool,
@@ -200,7 +210,6 @@ serve_document_root_file(struct request *request2,
                          index_file, (size_t)10,
                          NULL);
     tr->content_type = NULL;
-    tr->filter = NULL;
 
     file_callback(request2);
 }
@@ -230,8 +239,6 @@ my_http_server_connection_request(struct http_server_request *request,
     request2->cookies = NULL;
     request2->session = NULL;
     request2->body_consumed = 0;
-    request2->filtered = 0;
-    request2->processed = 0;
     request2->response_sent = 0;
 
     request_get_cookie_session(request2);

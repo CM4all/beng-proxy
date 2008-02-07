@@ -132,7 +132,7 @@ file_callback(struct request *request2)
 
     status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
-    if (!tr->process) {
+    if (!request_processor_enabled(request2)) {
         if (request->method == HTTP_METHOD_POST) {
             istream_close(body);
             http_server_send_message(request,
