@@ -30,7 +30,6 @@ static const char *const copy_headers[] = {
 };
 
 static const char *const copy_headers_processed[] = {
-    "etag",
     "content-language",
     "content-type",
     "vary",
