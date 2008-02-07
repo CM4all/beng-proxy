@@ -519,7 +519,8 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     if (path != NULL)
         istream_subst_add(gw->subst,
                           "new _IG_Prefs()",
-                          p_strcat(pool, "new _IG_Prefs(\"", path, "\")"));
+                          p_strcat(pool, "new _IG_Prefs(\"", path, "\")"),
+                          NULL);
 
     url_stream_new(pool, env->http_client_stock,
                    HTTP_METHOD_GET, widget->class->uri,
