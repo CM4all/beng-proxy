@@ -640,6 +640,10 @@ body_element_finished(processor_t processor, const struct parser_tag *tag)
 
         if (processor_option_body(processor))
             processor_replace_add(processor, 0, tag->end, NULL);
+        else if (!processor->in_head && processor_option_jscript(processor))
+            processor_replace_add(processor,
+                                  tag->end, tag->end,
+                                  processor_jscript(processor));
 
         processor->in_body = 1;
     } else {
