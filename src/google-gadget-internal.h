@@ -36,7 +36,7 @@ struct google_gadget {
             TYPE_HTML_INLINE,
         } type;
 
-        unsigned sending_content:1;
+        unsigned sending_content:1, in_parser:1;
 
         const char *url;
     } from_parser;

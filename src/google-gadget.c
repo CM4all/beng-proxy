@@ -152,7 +152,7 @@ google_gadget_msg_eof(struct google_gadget *gg)
 
     gg->waiting_for_locale = 0;
 
-    if (gg->parser != NULL)
+    if (gg->parser != NULL && !gg->from_parser.in_parser)
         parser_read(gg->parser);
 }
 
@@ -262,6 +262,8 @@ google_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
     struct google_gadget *gw = ctx;
 
+    gw->from_parser.in_parser = 1;
+
     if (tag->type != TAG_CLOSE &&
         gw->from_parser.tag == TAG_CONTENT &&
         gw->delayed != NULL) {
@@ -270,12 +272,16 @@ google_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     } else {
         gw->from_parser.tag = TAG_NONE;
     }
+
+    gw->from_parser.in_parser = 0;
 }
 
 static void
 google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
     struct google_gadget *gw = ctx;
+
+    gw->from_parser.in_parser = 1;
 
     switch (gw->from_parser.tag) {
     case TAG_NONE:
@@ -301,6 +307,7 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
                 gw->from_parser.type = TYPE_HTML_INLINE;
             else {
                 google_send_error(gw, "unknown type attribute");
+                gw->from_parser.in_parser = 0;
                 return;
             }
         } else if (gw->from_parser.type == TYPE_URL &&
@@ -310,6 +317,8 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
         break;
     }
+
+    gw->from_parser.in_parser = 0;
 }
 
 static size_t
@@ -411,6 +420,7 @@ google_gadget_http_response(http_status_t status, strmap_t headers,
     gw->from_parser.tag = TAG_NONE;
     gw->from_parser.type = TYPE_NONE;
     gw->from_parser.sending_content = 0;
+    gw->from_parser.in_parser = 0;
     gw->parser = parser_new(gw->pool, body,
                             &google_parser_handler, gw);
     istream_read(body);
