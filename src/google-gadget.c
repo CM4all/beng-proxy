@@ -291,8 +291,15 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         if (strref_cmp_literal(&attr->name, "messages") == 0 &&
             !strref_is_empty(&attr->value) &&
             gw->delayed != NULL) {
+            const char *url;
+
             gw->waiting_for_locale = 1;
-            google_gadget_msg_load(gw, strref_dup(gw->pool, &attr->value));
+
+            url = widget_absolute_uri(gw->pool, gw->widget,
+                                      attr->value.data, attr->value.length);
+            if (url == NULL)
+                url = strref_dup(gw->pool, &attr->value);
+            google_gadget_msg_load(gw, url);
         }
         break;
 
