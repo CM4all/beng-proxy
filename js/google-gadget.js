@@ -4,8 +4,11 @@
 // Author: Max Kellermann <mk@cm4all.com>
 //
 
-function _IG_Prefs(path) {
-    this.widget = rootWidget.getWidget(path);
+function _IG_Prefs(widget) {
+    if (typeof(widget) == "object")
+        this.widget = widget;
+    else
+        rootWidget.getWidget(widget);
     this.values = new Array();
 
     if (this.widget._query_string != null) {
