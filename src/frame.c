@@ -18,6 +18,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
                  struct widget *widget)
 {
     struct processor_env *env2;
+    unsigned options;
 
     assert(widget->from_request.proxy);
 
@@ -38,9 +39,27 @@ frame_top_widget(pool_t pool, struct processor_env *env,
        anymore */
     http_response_handler_clear(&env->response_handler);
 
+    switch (widget->display) {
+    case WIDGET_DISPLAY_INLINE:
+        /* an inline widget is used in a "frame" request - this is
+           probably JS requesting new contents for a widget */
+        options = PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT;
+        break;
+
+    case WIDGET_DISPLAY_IFRAME:
+        options = PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT;
+        break;
+
+    case WIDGET_DISPLAY_IMG:
+        options = 0;
+        break;
+
+    case WIDGET_DISPLAY_EXTERNAL:
+        return NULL; /* XXX */
+    }
+
     return embed_new(pool, widget,
-                     env2,
-                     PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT);
+                     env2, options);
 }
 
 static istream_t
