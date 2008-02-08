@@ -1,4 +1,5 @@
 #include "istream.h"
+#include "async.h"
 
 #include <stdio.h>
 
@@ -9,16 +10,25 @@ create_input(pool_t pool)
 }
 
 static void
-my_abort_callback(void *ctx)
+my_delayed_abort(struct async_operation *ao)
 {
-    (void)ctx;
+    (void)ao;
     printf("delayed_abort\n");
 }
+
+static struct async_operation_class my_delayed_operation = {
+    .abort = my_delayed_abort,
+};
 
 static istream_t
 create_test(pool_t pool, istream_t input)
 {
-    istream_t istream = istream_delayed_new(pool, my_abort_callback, NULL);
+    istream_t istream;
+    static struct async_operation async;
+
+    async_init(&async, &my_delayed_operation);
+    istream = istream_delayed_new(pool, &async);
+
     istream_delayed_set(istream, input);
     return istream;
 }
