@@ -147,3 +147,16 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
                                &delayed_input_handler, delayed,
                                delayed->output.handler_direct);
 }
+
+void
+istream_delayed_set_eof(istream_t i_delayed)
+{
+    struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
+
+    assert(delayed != NULL);
+    assert(delayed->input == NULL);
+
+    async_ref_poison(&delayed->async);
+
+    istream_invoke_eof(&delayed->output);
+}
