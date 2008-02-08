@@ -260,15 +260,19 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     switch (embed->widget->display) {
     case WIDGET_DISPLAY_INLINE:
     case WIDGET_DISPLAY_IFRAME:
-        if (content_type == NULL || strncmp(content_type, "text/html", 9) != 0) {
-            istream_close(body);
-            embed_send_error(embed, "text/html expected");
-            pool_unref(embed->pool);
-            return;
+        if (!embed->widget->from_request.raw) {
+            if (content_type == NULL ||
+                strncmp(content_type, "text/html", 9) != 0) {
+                istream_close(body);
+                embed_send_error(embed, "text/html expected");
+                pool_unref(embed->pool);
+                return;
+            }
+
+            body = processor_new(istream_pool(embed->delayed), body,
+                                 embed->widget, embed->env, embed->options);
         }
 
-        body = processor_new(istream_pool(embed->delayed), body,
-                              embed->widget, embed->env, embed->options);
         break;
 
     case WIDGET_DISPLAY_IMG:
