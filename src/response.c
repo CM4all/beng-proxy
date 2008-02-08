@@ -125,11 +125,6 @@ response_invoke_processor(struct request *request2,
                                                       strmap_get(request2->env.args, "frame"));
     if (widget->from_request.proxy_ref != NULL) {
         request2->env.widget_callback = frame_widget_callback;
-
-        /* do not show the template contents if the browser is
-           only interested in one particular widget for
-           displaying the frame */
-        processor_options |= PROCESSOR_QUIET;
     } else {
         processor_options |= PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT;
     }

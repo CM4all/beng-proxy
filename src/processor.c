@@ -66,7 +66,7 @@ struct processor {
 static int
 processor_option_quiet(const struct processor *processor)
 {
-    return (processor->options & PROCESSOR_QUIET) != 0;
+    return processor->widget->from_request.proxy_ref != NULL;
 }
 
 static int
@@ -78,14 +78,15 @@ processor_option_body(const struct processor *processor)
 static int
 processor_option_jscript(const struct processor *processor)
 {
-    return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_QUIET))
-        == PROCESSOR_JSCRIPT;
+    return !processor_option_quiet(processor) &&
+        (processor->options & PROCESSOR_JSCRIPT) != 0;
 }
 
 static int
 processor_option_jscript_root(const struct processor *processor)
 {
-    return (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT|PROCESSOR_QUIET))
+    return !processor_option_quiet(processor) &&
+        (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT))
         == (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT);
 }
 

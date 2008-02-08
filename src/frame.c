@@ -89,7 +89,7 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
     }
 
     return embed_new(pool, widget,
-                     env, PROCESSOR_QUIET);
+                     env, 0);
 }
 
 istream_t

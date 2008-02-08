@@ -14,10 +14,6 @@
 
 /** options for processor_new() */
 enum processor_options {
-    /** don't output anything from the input, don't generate <DIV>
-        etc. */
-    PROCESSOR_QUIET = 0x1,
-
     /** only output the HTML body */
     PROCESSOR_BODY = 0x2,
 
