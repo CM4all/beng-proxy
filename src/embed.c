@@ -232,8 +232,6 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     const char *location, *cookies, *content_type;
     istream_t delayed;
 
-    (void)status;
-
     assert(async_ref_defined(&embed->url_stream));
     async_ref_clear(&embed->url_stream);
 
@@ -260,7 +258,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     switch (embed->widget->display) {
     case WIDGET_DISPLAY_INLINE:
     case WIDGET_DISPLAY_IFRAME:
-        if (!embed->widget->from_request.raw) {
+        if (!embed->widget->from_request.raw && body != NULL) {
             if (content_type == NULL ||
                 strncmp(content_type, "text/html", 9) != 0) {
                 istream_close(body);
@@ -297,8 +295,11 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     delayed = embed->delayed;
     embed->delayed = NULL;
 
-    istream_delayed_set(delayed, body);
-    istream_read(body);
+    if (body != NULL) {
+        istream_delayed_set(delayed, body);
+        istream_read(body);
+    } else
+        istream_delayed_set_eof(delayed);
 
     pool_unref(embed->pool);
 }
