@@ -201,13 +201,36 @@ embed_redirect(struct embed *embed,
     return 1;
 }
 
+static void
+embed_send_error(struct embed *embed, const char *msg)
+{
+    istream_t body = istream_string_new(embed->pool, msg);
+
+    assert(embed->delayed != NULL);
+
+    if (embed->widget->from_request.proxy &&
+        http_response_handler_defined(&embed->env->response_handler)) {
+        struct strmap *headers = strmap_new(embed->pool, 4);
+
+        strmap_addn(headers, "content-type", "text/plain");
+        http_response_handler_invoke_response(&embed->env->response_handler,
+                                              HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                              headers, body);
+    } else {
+        istream_delayed_set(embed->delayed, body);
+        embed->delayed = NULL;
+
+        istream_read(body);
+    }
+}
+
 static void 
 embed_response_response(http_status_t status, strmap_t headers, istream_t body,
                         void *ctx)
 {
     struct embed *embed = ctx;
     const char *location, *cookies, *content_type;
-    istream_t input = body, delayed;
+    istream_t delayed;
 
     (void)status;
 
@@ -233,10 +256,28 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     }
 
     content_type = strmap_get(headers, "content-type");
-    if (content_type != NULL && strncmp(content_type, "text/html", 9) == 0)
-        /* HTML resources must be processed */
-        input = processor_new(istream_pool(embed->delayed), input,
+
+    switch (embed->widget->display) {
+    case WIDGET_DISPLAY_INLINE:
+    case WIDGET_DISPLAY_IFRAME:
+        if (content_type == NULL || strncmp(content_type, "text/html", 9) != 0) {
+            istream_close(body);
+            embed_send_error(embed, "text/html expected");
+            pool_unref(embed->pool);
+            return;
+        }
+
+        body = processor_new(istream_pool(embed->delayed), body,
                               embed->widget, embed->env, embed->options);
+        break;
+
+    case WIDGET_DISPLAY_IMG:
+        break;
+
+    case WIDGET_DISPLAY_EXTERNAL:
+        assert(0);
+        break;
+    }
 
     if (embed->widget->from_request.proxy &&
         http_response_handler_defined(&embed->env->response_handler)) {
@@ -244,7 +285,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
            to the http_server object, including headers */
 
         http_response_handler_invoke_response(&embed->env->response_handler,
-                                              status, headers, input);
+                                              status, headers, body);
         pool_unref(embed->pool);
         return;
     }
@@ -252,34 +293,8 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
     delayed = embed->delayed;
     embed->delayed = NULL;
 
-    if (input == body && embed->widget->id != NULL) {
-        /* it cannot be inserted into the HTML stream, so put it into
-           an iframe */
-
-        if (embed->widget->display == WIDGET_DISPLAY_INLINE) {
-            if (content_type != NULL && strncmp(content_type, "image/", 6) == 0)
-                embed->widget->display = WIDGET_DISPLAY_IMG;
-            else
-                embed->widget->display = WIDGET_DISPLAY_IFRAME;
-        }
-
-        istream_close(input);
-
-        input = embed->env->widget_callback(embed->pool,
-                                            embed->env, embed->widget);
-    }
-
-    if (input == body) {
-        /* still no sucess in framing this strange resource - insert
-           an error message instead of widget contents */
-
-        istream_close(input);
-        input = istream_string_new(istream_pool(delayed),
-                                   "Not an HTML document");
-    }
-
-    istream_delayed_set(delayed, input);
-    istream_read(input);
+    istream_delayed_set(delayed, body);
+    istream_read(body);
 
     pool_unref(embed->pool);
 }
@@ -323,6 +338,8 @@ embed_new(pool_t pool, struct widget *widget,
     if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET)
         /* XXX put this check somewhere else */
         return embed_google_gadget(pool, env, widget);
+
+    assert(widget->display != WIDGET_DISPLAY_EXTERNAL);
 
     if (widget->class->is_container)
         options |= PROCESSOR_CONTAINER;
