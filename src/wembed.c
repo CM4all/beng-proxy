@@ -126,10 +126,12 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
     case WIDGET_DISPLAY_EXTERNAL:
         widget_cancel(widget);
         istream = embed_iframe_widget(pool, env, widget);
+        break;
 
     case WIDGET_DISPLAY_IMG:
         widget_cancel(widget);
         istream = embed_img_widget(pool, env, widget);
+        break;
     }
 
     http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_OK,
