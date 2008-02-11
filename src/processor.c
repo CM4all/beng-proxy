@@ -859,6 +859,8 @@ processor_parser_abort(void *ctx)
 {
     processor_t processor = ctx;
 
+    processor->parser = NULL;
+
     /* XXX */
 
     pool_unref(processor->pool);
