@@ -121,6 +121,14 @@ istream_to_hold(istream_t istream)
     return (struct istream_hold *)(((char*)istream) - offsetof(struct istream_hold, output));
 }
 
+static off_t
+istream_hold_available(istream_t istream, int partial)
+{
+    struct istream_hold *hold = istream_to_hold(istream);
+
+    return istream_available(hold->input, partial);
+}
+
 static void
 istream_hold_read(istream_t istream)
 {
@@ -147,6 +155,7 @@ istream_hold_close(istream_t istream)
 }
 
 static const struct istream istream_hold = {
+    .available = istream_hold_available,
     .read = istream_hold_read,
     .close = istream_hold_close,
 };
