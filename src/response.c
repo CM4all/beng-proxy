@@ -137,6 +137,8 @@ response_invoke_processor(struct request *request2,
                       &request2->url_stream);
 
         istream_read(body);
+
+        pool_unref(request->pool);
     } else {
         processor_options |= PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT;
 
