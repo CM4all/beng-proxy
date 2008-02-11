@@ -193,18 +193,19 @@ processor_new(pool_t pool, istream_t istream,
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
 
-    istream = istream_subst_new(pool, istream);
+    if (widget->from_request.proxy_ref == NULL) {
+        istream = istream_subst_new(pool, istream);
 
-    switch (widget->class->type) {
-    case WIDGET_TYPE_BENG:
-        processor_subst_beng_widget(pool, istream, widget, env);
-        break;
+        switch (widget->class->type) {
+        case WIDGET_TYPE_BENG:
+            processor_subst_beng_widget(pool, istream, widget, env);
+            break;
 
-    case WIDGET_TYPE_GOOGLE_GADGET:
-        processor_subst_google_gadget(pool, istream, widget);
-        break;
+        case WIDGET_TYPE_GOOGLE_GADGET:
+            processor_subst_google_gadget(pool, istream, widget);
+            break;
+        }
     }
-
 
     processor = p_malloc(pool, sizeof(*processor));
 
