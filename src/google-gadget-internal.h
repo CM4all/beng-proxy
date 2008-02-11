@@ -9,6 +9,7 @@
 
 #include "google-gadget.h"
 #include "async.h"
+#include "http-response.h"
 
 struct google_gadget {
     pool_t pool;
@@ -17,6 +18,8 @@ struct google_gadget {
 
     struct async_operation delayed_operation;
     istream_t delayed, subst;
+
+    struct http_response_handler_ref response_handler;
 
     struct async_operation_ref async;
 

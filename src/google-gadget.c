@@ -38,6 +38,9 @@ google_gadget_process(const struct google_gadget *gw, istream_t istream,
 static void
 gg_set_content(struct google_gadget *gg, istream_t istream, int process)
 {
+    http_status_t status;
+    strmap_t headers;
+
     assert(gg != NULL);
     assert(gg->delayed != NULL);
 
@@ -45,58 +48,50 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
             /* XXX abort locale */
     }
 
-    if (gg->widget->from_request.proxy &&
-        http_response_handler_defined(&gg->env->response_handler)) {
-        http_status_t status;
-        strmap_t headers;
-
-        if (istream == NULL) {
-            status = HTTP_STATUS_NO_CONTENT;
-            headers = NULL;
-        } else {
-            status = HTTP_STATUS_OK;
-            headers = strmap_new(gg->pool, 4);
-            strmap_addn(headers, "content-type", "text/html; charset=utf-8");
-
-            if (process)
-                istream = google_gadget_process(gg, istream,
-                                                PROCESSOR_JSCRIPT|
-                                                PROCESSOR_JSCRIPT_ROOT|
-                                                PROCESSOR_JSCRIPT_PREFS);
-        }
-
-        if (process && istream != NULL) {
-            istream_delayed_set(gg->delayed, istream);
-            gg->delayed = NULL;
-
-            http_response_handler_invoke_response(&gg->env->response_handler,
-                                                  status, headers, gg->subst);
-        } else {
-            gg->delayed = NULL;
-            istream_free(&gg->subst);
-
-            http_response_handler_invoke_response(&gg->env->response_handler,
-                                                  status, headers, istream);
-        }
+    if (istream == NULL) {
+        status = HTTP_STATUS_NO_CONTENT;
+        headers = NULL;
     } else {
-        if (istream == NULL)
-            istream = istream_null_new(gg->pool);
-        else if (process)
-            istream = google_gadget_process(gg, istream,
-                                            PROCESSOR_JSCRIPT|
-                                            PROCESSOR_JSCRIPT_PREFS);
+        unsigned options = PROCESSOR_JSCRIPT|
+            PROCESSOR_JSCRIPT_PREFS;
 
+        if (gg->widget->from_request.proxy)
+            options |= PROCESSOR_JSCRIPT_ROOT;
+
+        status = HTTP_STATUS_OK;
+        headers = strmap_new(gg->pool, 4);
+        strmap_addn(headers, "content-type", "text/html; charset=utf-8");
+
+        if (process)
+            istream = google_gadget_process(gg, istream, options);
+    }
+
+    if (process && istream != NULL) {
         istream_delayed_set(gg->delayed, istream);
         gg->delayed = NULL;
+        istream = gg->subst;
+    } else {
+        gg->delayed = NULL;
+        istream_free(&gg->subst);
     }
+
+    http_response_handler_invoke_response(&gg->response_handler,
+                                          status, headers, istream);
 }
 
 static void
 google_send_error(struct google_gadget *gg, const char *msg)
 {
+    struct strmap *headers = strmap_new(gg->pool, 4);
     istream_t response = istream_string_new(gg->pool, msg);
 
-    gg_set_content(gg, response, 0);
+    gg->delayed = NULL;
+    istream_free(&gg->subst);
+
+    strmap_addn(headers, "content-type", "text/plain");
+    http_response_handler_invoke_response(&gg->response_handler,
+                                          HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                          headers, response);
 
     if (gg->parser != NULL)
         parser_close(gg->parser);
@@ -104,8 +99,6 @@ google_send_error(struct google_gadget *gg, const char *msg)
         async_abort(&gg->async);
 
     pool_unref(gg->pool);
-
-    istream_read(response);
 }
 
 
@@ -206,8 +199,6 @@ google_content_tag_finished(struct google_gadget *gw,
                 gg_set_content(gw, istream, 0);
 
                 parser_close(gw->parser);
-
-                istream_read(istream);
             }
         } else {
             /* it's TAG_SHORT, handle that gracefully */
@@ -229,8 +220,6 @@ google_content_tag_finished(struct google_gadget *gw,
         gg_set_content(gw, istream, 0);
 
         parser_close(gw->parser);
-
-        istream_read(istream);
         return;
     }
 
@@ -497,9 +486,12 @@ static struct async_operation_class gg_delayed_operation = {
  *
  */
 
-istream_t
+void
 embed_google_gadget(pool_t pool, struct processor_env *env,
-                    struct widget *widget)
+                    struct widget *widget,
+                    const struct http_response_handler *handler,
+                    void *handler_ctx,
+                    struct async_operation_ref *async_ref)
 {
     struct google_gadget *gw;
     const char *path;
@@ -508,16 +500,11 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     assert(widget->class != NULL);
 
     if (widget->from_request.proxy && strmap_get(env->args, "save") != NULL) {
-        /* the preferences have been saved by
-           widget_copy_from_request(); try to respond with "204 No
-           Content" now */
-        if (http_response_handler_defined(&env->response_handler)) {
-            http_response_handler_invoke_response(&env->response_handler,
-                                                  HTTP_STATUS_NO_CONTENT, NULL,
-                                                  NULL);
-            return NULL;
-        } else
-            return istream_null_new(pool);
+        struct http_response_handler_ref handler_ref;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
+                                              NULL, NULL);
+        return;
     }
 
     pool_ref(pool);
@@ -528,12 +515,9 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     gw->widget = widget;
 
     async_init(&gw->delayed_operation, &gg_delayed_operation);
+    async_ref_set(async_ref, &gw->delayed_operation);
 
-    if (gw->widget->from_request.proxy &&
-        http_response_handler_defined(&gw->env->response_handler))
-        gw->delayed = istream_delayed_new(pool, NULL);
-    else
-        gw->delayed = istream_delayed_new(pool, &gw->delayed_operation);
+    gw->delayed = istream_delayed_new(pool, NULL);
 
     gw->subst = istream_subst_new(pool, gw->delayed);
     gw->parser = NULL;
@@ -546,15 +530,11 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
                           p_strcat(pool, "new _IG_Prefs(\"", path, "\")",
                                    NULL));
 
+    http_response_handler_set(&gw->response_handler, handler, handler_ctx);
+
     url_stream_new(pool, env->http_client_stock,
                    HTTP_METHOD_GET, widget->class->uri,
                    NULL, NULL,
                    &google_gadget_handler, gw,
                    &gw->async);
-
-    if (gw->widget->from_request.proxy &&
-        http_response_handler_defined(&gw->env->response_handler)) {
-        return istream_delayed_new(pool, &gw->delayed_operation);
-    } else
-        return gw->subst;
 }

@@ -13,6 +13,7 @@
 #include "cookie.h"
 #include "async.h"
 #include "google-gadget.h"
+#include "widget-stream.h"
 
 #include <assert.h>
 #include <string.h>
@@ -340,9 +341,19 @@ embed_new(pool_t pool, struct widget *widget,
     assert(widget->class != NULL);
     assert((options & PROCESSOR_CONTAINER) == 0);
 
-    if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET)
+    if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET) {
         /* XXX put this check somewhere else */
-        return embed_google_gadget(pool, env, widget);
+        struct widget_stream *ws = widget_stream_new(pool);
+
+        if (widget->from_request.proxy &&
+            http_response_handler_defined(&env->response_handler))
+            ws->response_handler = &env->response_handler;
+
+        embed_google_gadget(pool, env, widget,
+                            &widget_stream_response_handler, ws,
+                            &ws->async_ref);
+        return ws->delayed;
+    }
 
     assert(widget->display != WIDGET_DISPLAY_EXTERNAL);
 

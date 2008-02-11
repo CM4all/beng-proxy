@@ -11,9 +11,14 @@
 
 struct processor_env;
 struct widget;
+struct http_response_handler;
+struct async_operation_ref;
 
-istream_t
+void
 embed_google_gadget(pool_t pool, struct processor_env *env,
-                    struct widget *widget);
+                    struct widget *widget,
+                    const struct http_response_handler *handler,
+                    void *handler_ctx,
+                    struct async_operation_ref *async_ref);
 
 #endif
