@@ -236,12 +236,16 @@ response_response(http_status_t status, strmap_t headers,
     async_ref_clear(&request2->url_stream);
     async_ref_clear(&request2->filter);
 
-    response_headers = growing_buffer_new(request->pool, 2048);
-    if (request2->translate.transformation != NULL &&
-        request2->translate.transformation->type == TRANSFORMATION_PROCESS)
-        headers_copy(headers, response_headers, copy_headers_processed);
-    else
-        headers_copy(headers, response_headers, copy_headers);
+    if (headers == NULL) {
+        response_headers = growing_buffer_new(request->pool, 1024);
+    } else {
+        response_headers = growing_buffer_new(request->pool, 2048);
+        if (request2->translate.transformation != NULL &&
+            request2->translate.transformation->type == TRANSFORMATION_PROCESS)
+            headers_copy(headers, response_headers, copy_headers_processed);
+        else
+            headers_copy(headers, response_headers, copy_headers);
+    }
 
     response_dispatch(request2,
                       status, response_headers,
