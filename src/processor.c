@@ -70,7 +70,7 @@ struct processor {
 static int
 processor_option_quiet(const struct processor *processor)
 {
-    return processor->widget->from_request.proxy_ref != NULL;
+    return processor->replace == NULL;
 }
 
 static int
