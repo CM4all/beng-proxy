@@ -62,15 +62,14 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
         headers = strmap_new(gg->pool, 4);
         strmap_addn(headers, "content-type", "text/html; charset=utf-8");
 
-        if (process)
-            istream = google_gadget_process(gg, istream, options);
+        if (process) {
+            istream_delayed_set(gg->delayed, istream);
+            gg->delayed = NULL;
+            istream = google_gadget_process(gg, gg->subst, options);
+        }
     }
 
-    if (process && istream != NULL) {
-        istream_delayed_set(gg->delayed, istream);
-        gg->delayed = NULL;
-        istream = gg->subst;
-    } else {
+    if (!process || istream == NULL) {
         gg->delayed = NULL;
         istream_free(&gg->subst);
     }
