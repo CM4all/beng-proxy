@@ -457,11 +457,11 @@ static const struct http_response_handler google_gadget_handler = {
 static struct google_gadget *
 async_to_gg(struct async_operation *ao)
 {
-    return (struct google_gadget*)(((char*)ao) - offsetof(struct google_gadget, delayed_operation));
+    return (struct google_gadget*)(((char*)ao) - offsetof(struct google_gadget, async_operation));
 }
 
 static void
-gg_delayed_abort(struct async_operation *ao)
+gg_async_abort(struct async_operation *ao)
 {
     struct google_gadget *gw = async_to_gg(ao);
 
@@ -476,8 +476,8 @@ gg_delayed_abort(struct async_operation *ao)
         async_abort(&gw->async);
 }
 
-static struct async_operation_class gg_delayed_operation = {
-    .abort = gg_delayed_abort,
+static struct async_operation_class gg_async_operation = {
+    .abort = gg_async_abort,
 };
 
 
@@ -514,8 +514,8 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     gw->env = env;
     gw->widget = widget;
 
-    async_init(&gw->delayed_operation, &gg_delayed_operation);
-    async_ref_set(async_ref, &gw->delayed_operation);
+    async_init(&gw->async_operation, &gg_async_operation);
+    async_ref_set(async_ref, &gw->async_operation);
 
     gw->delayed = istream_delayed_new(pool, NULL);
 
