@@ -19,21 +19,19 @@ ws_response(http_status_t status, struct strmap *headers,
     struct widget_stream *ws = ctx;
     istream_t delayed;
 
+    (void)status;
+    (void)headers;
+
     assert(ws->delayed != NULL);
 
     delayed = ws->delayed;
     ws->delayed = NULL;
 
-    if (ws->response_handler == NULL) {
-        if (body == NULL)
-            istream_delayed_set_eof(delayed);
-        else {
-            istream_delayed_set(delayed, body);
-            istream_read(delayed);
-        }
-    } else {
-        http_response_handler_invoke_response(ws->response_handler,
-                                              status, headers, body);
+    if (body == NULL)
+        istream_delayed_set_eof(delayed);
+    else {
+        istream_delayed_set(delayed, body);
+        istream_read(delayed);
     }
 }
 
@@ -45,9 +43,6 @@ ws_abort(void *ctx)
     assert(ws->delayed != NULL);
 
     istream_free(&ws->delayed);
-
-    if (ws->response_handler != NULL)
-        http_response_handler_invoke_abort(ws->response_handler);
 }
 
 const struct http_response_handler widget_stream_response_handler = {
@@ -90,8 +85,6 @@ struct widget_stream *
 widget_stream_new(pool_t pool)
 {
     struct widget_stream *ws = p_malloc(pool, sizeof(*ws));
-
-    ws->response_handler = NULL;
 
     async_init(&ws->async, &ws_delayed_operation);
     ws->delayed = istream_delayed_new(pool, &ws->async);
