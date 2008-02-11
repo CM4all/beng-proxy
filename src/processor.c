@@ -32,6 +32,8 @@ struct processor {
     struct processor_env *env;
     unsigned options;
 
+    unsigned response_sent:1;
+
     istream_t replace;
 
     struct parser *parser;
@@ -276,6 +278,8 @@ processor_new(pool_t pool, istream_t istream,
     if (widget->from_request.proxy_ref == NULL) {
         struct http_response_handler_ref response_handler;
 
+        processor->response_sent = 1;
+
         if (processor_option_jscript(processor) &&
             (processor_option_body(processor) ||
              widget->class->type == WIDGET_TYPE_GOOGLE_GADGET))
@@ -288,6 +292,8 @@ processor_new(pool_t pool, istream_t istream,
                                               HTTP_STATUS_OK, NULL,
                                               processor->replace);
     } else {
+        processor->response_sent = 0;
+
         http_response_handler_set(&processor->response_handler,
                                   handler, handler_ctx);
 
@@ -620,6 +626,7 @@ embed_widget(processor_t processor, struct processor_env *env,
     widget_determine_real_uri(pool, widget);
 
     if (widget->from_request.proxy) {
+        processor->response_sent = 1;
         env->widget_callback(pool, env, widget,
                              processor->response_handler.handler,
                              processor->response_handler.ctx,
@@ -851,6 +858,11 @@ processor_parser_eof(void *ctx, off_t length)
     if (processor->replace != NULL)
         istream_replace_finish(processor->replace);
 
+    if (!processor->response_sent)
+        http_response_handler_invoke_response(&processor->response_handler,
+                                              HTTP_STATUS_NOT_FOUND, NULL,
+                                              istream_string_new(processor->pool, "Widget not found"));
+
     pool_unref(processor->pool);
 }
 
@@ -861,7 +873,10 @@ processor_parser_abort(void *ctx)
 
     processor->parser = NULL;
 
-    /* XXX */
+    if (!processor->response_sent)
+        http_response_handler_invoke_response(&processor->response_handler,
+                                              HTTP_STATUS_NOT_FOUND, NULL,
+                                              istream_string_new(processor->pool, "Widget not found"));
 
     pool_unref(processor->pool);
 }
