@@ -55,17 +55,17 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
         status = HTTP_STATUS_NO_CONTENT;
         headers = NULL;
     } else {
-        unsigned options = PROCESSOR_JSCRIPT|
-            PROCESSOR_JSCRIPT_PREFS;
-
-        if (gg->widget->from_request.proxy)
-            options |= PROCESSOR_JSCRIPT_ROOT;
-
         status = HTTP_STATUS_OK;
         headers = strmap_new(gg->pool, 4);
         strmap_addn(headers, "content-type", "text/html; charset=utf-8");
 
         if (process) {
+            unsigned options = PROCESSOR_JSCRIPT|
+                PROCESSOR_JSCRIPT_PREFS;
+
+            if (gg->widget->from_request.proxy)
+                options |= PROCESSOR_JSCRIPT_ROOT;
+
             istream_delayed_set(gg->delayed, istream);
             gg->delayed = NULL;
             google_gadget_process(gg, gg->subst, options);
