@@ -26,23 +26,6 @@ gg_class(pool_t pool, const char *uri)
     return wc;
 }
 
-static void
-google_send_error(struct google_gadget *gw, const char *msg)
-{
-    istream_t response = istream_string_new(gw->pool, msg);
-    istream_delayed_set(gw->delayed, response);
-    gw->delayed = NULL;
-
-    if (gw->parser != NULL)
-        parser_close(gw->parser);
-    else if (async_ref_defined(&gw->async))
-        async_abort(&gw->async);
-
-    pool_unref(gw->pool);
-
-    istream_read(response);
-}
-
 static istream_t
 google_gadget_process(const struct google_gadget *gw, istream_t istream,
                       unsigned options)
@@ -106,6 +89,23 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
         istream_delayed_set(gg->delayed, istream);
         gg->delayed = NULL;
     }
+}
+
+static void
+google_send_error(struct google_gadget *gg, const char *msg)
+{
+    istream_t response = istream_string_new(gg->pool, msg);
+
+    gg_set_content(gg, response, 0);
+
+    if (gg->parser != NULL)
+        parser_close(gg->parser);
+    else if (async_ref_defined(&gg->async))
+        async_abort(&gg->async);
+
+    pool_unref(gg->pool);
+
+    istream_read(response);
 }
 
 
@@ -203,8 +203,7 @@ google_content_tag_finished(struct google_gadget *gw,
                 gw->widget->display = WIDGET_DISPLAY_IFRAME;
 
                 istream = embed_widget_callback(gw->pool, gw->env, gw->widget);
-                istream_delayed_set(gw->delayed, istream);
-                gw->delayed = NULL;
+                gg_set_content(gw, istream, 0);
 
                 parser_close(gw->parser);
 
@@ -227,8 +226,7 @@ google_content_tag_finished(struct google_gadget *gw,
         widget_determine_real_uri(gw->pool, gw->widget);
 
         istream = embed_widget_callback(gw->pool, gw->env, gw->widget);
-        istream_delayed_set(gw->delayed, istream);
-        gw->delayed = NULL;
+        gg_set_content(gw, istream, 0);
 
         parser_close(gw->parser);
 
