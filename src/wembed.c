@@ -35,7 +35,7 @@ widget_frame_uri(pool_t pool, const struct processor_env *env,
 
 /** generate IFRAME element; the client will perform a second request
     for the frame contents, see frame_widget_callback() */
-static istream_t
+istream_t
 embed_iframe_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget)
 {

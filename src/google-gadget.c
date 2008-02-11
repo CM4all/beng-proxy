@@ -195,7 +195,7 @@ google_content_tag_finished(struct google_gadget *gw,
             } else {
                 gw->widget->display = WIDGET_DISPLAY_IFRAME;
 
-                istream = embed_widget_callback(gw->pool, gw->env, gw->widget);
+                istream = embed_iframe_widget(gw->pool, gw->env, gw->widget);
                 gg_set_content(gw, istream, 0);
 
                 parser_close(gw->parser);
@@ -216,7 +216,7 @@ google_content_tag_finished(struct google_gadget *gw,
         gw->widget->class = gg_class(gw->pool, gw->from_parser.url);
         widget_determine_real_uri(gw->pool, gw->widget);
 
-        istream = embed_widget_callback(gw->pool, gw->env, gw->widget);
+        istream = embed_iframe_widget(gw->pool, gw->env, gw->widget);
         gg_set_content(gw, istream, 0);
 
         parser_close(gw->parser);
