@@ -53,7 +53,7 @@ google_gadget_process(const struct google_gadget *gw, istream_t istream,
 }
 
 static void
-gg_set_content(struct google_gadget *gg, istream_t istream)
+gg_set_content(struct google_gadget *gg, istream_t istream, int process)
 {
     assert(gg != NULL);
     assert(gg->delayed != NULL);
@@ -74,10 +74,12 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
             status = HTTP_STATUS_OK;
             headers = strmap_new(gg->pool, 4);
             strmap_addn(headers, "content-type", "text/html; charset=utf-8");
-            istream = google_gadget_process(gg, istream,
-                                            PROCESSOR_JSCRIPT|
-                                            PROCESSOR_JSCRIPT_ROOT|
-                                            PROCESSOR_JSCRIPT_PREFS);
+
+            if (process)
+                istream = google_gadget_process(gg, istream,
+                                                PROCESSOR_JSCRIPT|
+                                                PROCESSOR_JSCRIPT_ROOT|
+                                                PROCESSOR_JSCRIPT_PREFS);
         }
 
         istream_delayed_set(gg->delayed, istream);
@@ -88,7 +90,7 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
     } else {
         if (istream == NULL)
             istream = istream_null_new(gg->pool);
-        else
+        else if (process)
             istream = google_gadget_process(gg, istream,
                                             PROCESSOR_JSCRIPT|
                                             PROCESSOR_JSCRIPT_PREFS);
@@ -188,7 +190,7 @@ google_content_tag_finished(struct google_gadget *gw,
                 gw->output = istream_google_html;
                 gw->output.pool = gw->pool;
 
-                gg_set_content(gw, istream_struct_cast(&gw->output));
+                gg_set_content(gw, istream_struct_cast(&gw->output), 1);
             } else {
                 gw->widget->display = WIDGET_DISPLAY_IFRAME;
 
@@ -203,7 +205,7 @@ google_content_tag_finished(struct google_gadget *gw,
         } else {
             /* it's TAG_SHORT, handle that gracefully */
 
-            gg_set_content(gw, NULL);
+            gg_set_content(gw, NULL, 0);
         }
 
         return;
