@@ -620,12 +620,14 @@ embed_widget(processor_t processor, struct processor_env *env,
         return istream_string_new(pool, "Error: no widget class specified");
 
     widget_copy_from_request(widget, env);
-    if (!widget->from_request.proxy && processor->replace == NULL)
+    if (!widget->from_request.proxy &&
+        widget->from_request.proxy_ref == NULL &&
+        processor->replace == NULL)
         return NULL;
 
     widget_determine_real_uri(pool, widget);
 
-    if (widget->from_request.proxy) {
+    if (widget->from_request.proxy || widget->from_request.proxy_ref != NULL) {
         processor->response_sent = 1;
         env->widget_callback(pool, env, widget,
                              processor->response_handler.handler,
