@@ -62,6 +62,8 @@ struct processor {
     growing_buffer_t script;
     off_t script_start_offset;
 
+    struct async_operation async;
+
     struct http_response_handler_ref response_handler;
     struct async_operation_ref *async_ref;
 };
@@ -175,6 +177,37 @@ processor_subst_google_gadget(pool_t pool, istream_t istream,
     istream_subst_add(istream, "__BIDI_END_EDGE__", "right");
 }
 
+
+/*
+ * async operation
+ *
+ */
+
+static struct processor *
+async_to_processor(struct async_operation *ao)
+{
+    return (struct processor*)(((char*)ao) - offsetof(struct processor, async));
+}
+
+static void
+processor_async_abort(struct async_operation *ao)
+{
+    struct processor *processor = async_to_processor(ao);
+
+    if (processor->parser != NULL)
+        parser_close(processor->parser);
+}
+
+static struct async_operation_class processor_async_operation = {
+    .abort = processor_async_abort,
+};
+
+
+/*
+ * constructor
+ *
+ */
+
 static void
 processor_parser_init(processor_t processor, istream_t input);
 
@@ -257,8 +290,10 @@ processor_new(pool_t pool, istream_t istream,
     } else {
         http_response_handler_set(&processor->response_handler,
                                   handler, handler_ctx);
+
+        async_init(&processor->async, &processor_async_operation);
+        async_ref_set(async_ref, &processor->async);
         processor->async_ref = async_ref;
-        /* XXX fill async_ref */
     }
 }
 
