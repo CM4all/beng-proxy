@@ -874,9 +874,7 @@ processor_parser_abort(void *ctx)
     processor->parser = NULL;
 
     if (!processor->response_sent)
-        http_response_handler_invoke_message(&processor->response_handler, processor->pool,
-                                             HTTP_STATUS_NOT_FOUND,
-                                             "Widget not found");
+        http_response_handler_invoke_abort(&processor->response_handler);
 
     pool_unref(processor->pool);
 }
