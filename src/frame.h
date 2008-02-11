@@ -11,10 +11,15 @@
 
 struct widget;
 struct processor_env;
+struct http_response_handler;
+struct async_operation_ref;
 
-istream_t
+void
 frame_widget_callback(pool_t pool, struct processor_env *env,
-                      struct widget *widget);
+                      struct widget *widget,
+                      const struct http_response_handler *handler,
+                      void *handler_ctx,
+                      struct async_operation_ref *async_ref);
 
 istream_t
 frame_widget_html_iframe(pool_t pool, const struct processor_env *env,

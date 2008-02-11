@@ -13,12 +13,16 @@
 #include <assert.h>
 #include <string.h>
 
-static istream_t
+static void
 embed_inline_widget(pool_t pool, struct processor_env *env,
-                    struct widget *widget)
+                    struct widget *widget,
+                    const struct http_response_handler *handler,
+                    void *handler_ctx,
+                    struct async_operation_ref *async_ref)
 {
-    return embed_new(pool, widget,
-                     env, PROCESSOR_BODY | PROCESSOR_JSCRIPT);
+    embed_new(pool, widget,
+              env, PROCESSOR_BODY | PROCESSOR_JSCRIPT,
+              handler, handler_ctx, async_ref);
 }
 
 static const char *
@@ -93,29 +97,41 @@ embed_img_widget(pool_t pool, const struct processor_env *env,
     return growing_buffer_istream(gb);
 }
 
-istream_t
+void
 embed_widget_callback(pool_t pool, struct processor_env *env,
-                      struct widget *widget)
+                      struct widget *widget,
+                      const struct http_response_handler *handler,
+                      void *handler_ctx,
+                      struct async_operation_ref *async_ref)
 {
+    struct http_response_handler_ref handler_ref;
+    istream_t istream;
+
     assert(pool != NULL);
     assert(env != NULL);
     assert(env->widget_callback == embed_widget_callback);
     assert(widget != NULL);
 
+    (void)async_ref;
+
+    http_response_handler_set(&handler_ref, handler, handler_ctx);
+
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
-        return embed_inline_widget(pool, env, widget);
+        embed_inline_widget(pool, env, widget,
+                            handler, handler_ctx, async_ref);
+        return;
 
     case WIDGET_DISPLAY_IFRAME:
     case WIDGET_DISPLAY_EXTERNAL:
         widget_cancel(widget);
-        return embed_iframe_widget(pool, env, widget);
+        istream = embed_iframe_widget(pool, env, widget);
 
     case WIDGET_DISPLAY_IMG:
         widget_cancel(widget);
-        return embed_img_widget(pool, env, widget);
+        istream = embed_img_widget(pool, env, widget);
     }
 
-    assert(0);
-    return NULL;
+    http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_OK,
+                                          NULL, istream);
 }

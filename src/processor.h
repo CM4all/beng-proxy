@@ -37,10 +37,14 @@ struct hstock;
 struct parsed_uri;
 struct widget;
 struct processor_env;
+struct async_operation_ref;
 
-typedef istream_t (*processor_widget_callback_t)(pool_t pool,
-                                                 struct processor_env *env,
-                                                 struct widget *widget);
+typedef void (*processor_widget_callback_t)(pool_t pool,
+                                            struct processor_env *env,
+                                            struct widget *widget,
+                                            const struct http_response_handler *handler,
+                                            void *handler_ctx,
+                                            struct async_operation_ref *async_ref);
 
 struct processor_env {
     pool_t pool;

@@ -27,10 +27,10 @@ ws_response(http_status_t status, struct strmap *headers,
     if (ws->response_handler == NULL) {
         if (body == NULL)
             istream_delayed_set_eof(delayed);
-        else
+        else {
             istream_delayed_set(delayed, body);
-
-        istream_read(delayed);
+            istream_read(delayed);
+        }
     } else {
         http_response_handler_invoke_response(ws->response_handler,
                                               status, headers, body);

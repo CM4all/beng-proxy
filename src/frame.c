@@ -13,9 +13,12 @@
 
 #include <assert.h>
 
-static istream_t
+static void
 frame_top_widget(pool_t pool, struct processor_env *env,
-                 struct widget *widget)
+                 struct widget *widget,
+                 const struct http_response_handler *handler,
+                 void *handler_ctx,
+                 struct async_operation_ref *async_ref)
 {
     struct processor_env *env2;
     unsigned options;
@@ -34,11 +37,6 @@ frame_top_widget(pool_t pool, struct processor_env *env,
        the frame */
     env->request_body = NULL;
 
-    /* clear the response_handler in the original env, because it is
-       reserved for us, and the other widgets should not use it
-       anymore */
-    http_response_handler_clear(&env->response_handler);
-
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
         /* an inline widget is used in a "frame" request - this is
@@ -55,26 +53,40 @@ frame_top_widget(pool_t pool, struct processor_env *env,
         break;
 
     case WIDGET_DISPLAY_EXTERNAL:
-        return NULL; /* XXX */
+        {
+            struct http_response_handler_ref handler_ref;
+            http_response_handler_set(&handler_ref, handler, handler_ctx);
+            http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
+                                                  NULL, NULL);
+        }
+        return;
     }
 
-    return embed_new(pool, widget,
-                     env2, options);
+    embed_new(pool, widget,
+              env2, options,
+              handler, handler_ctx, async_ref);
 }
 
-static istream_t
+static void
 frame_parent_widget(pool_t pool, struct processor_env *env,
-                    struct widget *widget)
+                    struct widget *widget,
+                    const struct http_response_handler *handler,
+                    void *handler_ctx,
+                    struct async_operation_ref *async_ref)
 {
     if (!widget->class->is_container) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
+        struct http_response_handler_ref handler_ref;
+
         daemon_log(4, "frame within non-container requested\n");
 
         if (env->request_body != NULL)
             istream_free(&env->request_body);
 
-        return NULL;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_abort(&handler_ref);
+        return;
     }
 
     if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
@@ -88,13 +100,17 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         istream_free(&env->request_body);
     }
 
-    return embed_new(pool, widget,
-                     env, 0);
+    embed_new(pool, widget,
+              env, 0,
+              handler, handler_ctx, async_ref);
 }
 
-istream_t
+void
 frame_widget_callback(pool_t pool, struct processor_env *env,
-                      struct widget *widget)
+                      struct widget *widget,
+                      const struct http_response_handler *handler,
+                      void *handler_ctx,
+                      struct async_operation_ref *async_ref)
 {
     assert(pool != NULL);
     assert(env != NULL);
@@ -104,14 +120,21 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
 
     if (widget->from_request.proxy)
         /* this widget is being proxied */
-        return frame_top_widget(pool, env, widget);
+        frame_top_widget(pool, env, widget,
+                         handler, handler_ctx, async_ref);
     else if (widget->from_request.proxy_ref != NULL)
         /* only partial match: this is the parent of the frame
            widget */
-        return frame_parent_widget(pool, env, widget);
+        frame_parent_widget(pool, env, widget,
+                            handler, handler_ctx, async_ref);
     else {
+        struct http_response_handler_ref handler_ref;
+
         /* this widget is none of our business */
         widget_cancel(widget);
-        return NULL;
+
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
+                                              NULL, NULL);
     }
 }

@@ -27,10 +27,8 @@ struct embed {
     struct processor_env *env;
     unsigned options;
 
-    struct async_operation_ref url_stream;
-
-    struct async_operation delayed_operation;
-    istream_t delayed;
+    struct http_response_handler_ref handler_ref;
+    struct async_operation_ref *async_ref;
 };
 
 static const char *const copy_headers[] = {
@@ -115,36 +113,6 @@ embed_request_headers(struct embed *embed, int with_body)
     return headers;
 }
 
-
-/*
- * async operation
- *
- */
-
-static struct embed *
-async_to_embed(struct async_operation *ao)
-{
-    return (struct embed*)(((char*)ao) - offsetof(struct embed, delayed_operation));
-}
-
-static void
-embed_delayed_abort(struct async_operation *ao)
-{
-    struct embed *embed = async_to_embed(ao);
-
-    if (!async_ref_defined(&embed->url_stream))
-        return;
-
-    embed->delayed = NULL;
-
-    async_abort(&embed->url_stream);
-}
-
-static struct async_operation_class embed_delayed_operation = {
-    .abort = embed_delayed_abort,
-};
-
-
 static const struct http_response_handler embed_response_handler;
 
 static int
@@ -153,7 +121,6 @@ embed_redirect(struct embed *embed,
                istream_t body)
 {
     const char *new_uri;
-    istream_t delayed;
     growing_buffer_t headers;
 
     if (embed->num_redirects >= 8)
@@ -183,12 +150,7 @@ embed_redirect(struct embed *embed,
 
     ++embed->num_redirects;
 
-    delayed = embed->delayed;
-    embed->delayed = NULL;
-
     istream_close(body);
-
-    embed->delayed = delayed;
     pool_ref(embed->pool);
 
     headers = embed_request_headers(embed, 0);
@@ -197,7 +159,7 @@ embed_redirect(struct embed *embed,
                    embed->env->http_client_stock,
                    HTTP_METHOD_GET, location, headers, NULL,
                    &embed_response_handler, embed,
-                   &embed->url_stream);
+                   embed->async_ref);
 
     return 1;
 }
@@ -205,24 +167,13 @@ embed_redirect(struct embed *embed,
 static void
 embed_send_error(struct embed *embed, const char *msg)
 {
+    struct strmap *headers = strmap_new(embed->pool, 4);
     istream_t body = istream_string_new(embed->pool, msg);
 
-    assert(embed->delayed != NULL);
-
-    if (embed->widget->from_request.proxy &&
-        http_response_handler_defined(&embed->env->response_handler)) {
-        struct strmap *headers = strmap_new(embed->pool, 4);
-
-        strmap_addn(headers, "content-type", "text/plain");
-        http_response_handler_invoke_response(&embed->env->response_handler,
-                                              HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                              headers, body);
-    } else {
-        istream_delayed_set(embed->delayed, body);
-        embed->delayed = NULL;
-
-        istream_read(body);
-    }
+    strmap_addn(headers, "content-type", "text/plain");
+    http_response_handler_invoke_response(&embed->handler_ref,
+                                          HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                          headers, body);
 }
 
 static void 
@@ -231,10 +182,6 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
 {
     struct embed *embed = ctx;
     const char *location, *cookies, *content_type;
-    istream_t delayed;
-
-    assert(async_ref_defined(&embed->url_stream));
-    async_ref_clear(&embed->url_stream);
 
     cookies = strmap_get(headers, "set-cookie2");
     if (cookies == NULL)
@@ -268,8 +215,9 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
                 return;
             }
 
-            body = processor_new(istream_pool(embed->delayed), body,
+            body = processor_new(istream_pool(body), body,
                                  embed->widget, embed->env, embed->options);
+            
         }
 
         break;
@@ -282,26 +230,8 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
         break;
     }
 
-    if (embed->widget->from_request.proxy &&
-        http_response_handler_defined(&embed->env->response_handler)) {
-        /* this is the request for IFRAME contents - send it directly
-           to the http_server object, including headers */
-
-        http_response_handler_invoke_response(&embed->env->response_handler,
-                                              status, headers, body);
-        pool_unref(embed->pool);
-        return;
-    }
-
-    delayed = embed->delayed;
-    embed->delayed = NULL;
-
-    if (body != NULL) {
-        istream_delayed_set(delayed, body);
-        istream_read(body);
-    } else
-        istream_delayed_set_eof(delayed);
-
+    http_response_handler_invoke_response(&embed->handler_ref,
+                                          status, headers, body);
     pool_unref(embed->pool);
 }
 
@@ -310,11 +240,7 @@ embed_response_abort(void *ctx)
 {
     struct embed *embed = ctx;
 
-    async_ref_clear(&embed->url_stream);
-
-    if (embed->delayed != NULL)
-        istream_free(&embed->delayed);
-
+    http_response_handler_invoke_abort(&embed->handler_ref);
     pool_unref(embed->pool);
 }
 
@@ -329,10 +255,13 @@ static const struct http_response_handler embed_response_handler = {
  *
  */
 
-istream_t
+void
 embed_new(pool_t pool, struct widget *widget,
           struct processor_env *env,
-          unsigned options)
+          unsigned options,
+          const struct http_response_handler *handler,
+          void *handler_ctx,
+          struct async_operation_ref *async_ref)
 {
     struct embed *embed;
     growing_buffer_t headers;
@@ -343,16 +272,9 @@ embed_new(pool_t pool, struct widget *widget,
 
     if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET) {
         /* XXX put this check somewhere else */
-        struct widget_stream *ws = widget_stream_new(pool);
-
-        if (widget->from_request.proxy &&
-            http_response_handler_defined(&env->response_handler))
-            ws->response_handler = &env->response_handler;
-
         embed_google_gadget(pool, env, widget,
-                            &widget_stream_response_handler, ws,
-                            &ws->async_ref);
-        return ws->delayed;
+                            handler, handler_ctx, async_ref);
+        return;
     }
 
     assert(widget->display != WIDGET_DISPLAY_EXTERNAL);
@@ -367,20 +289,16 @@ embed_new(pool_t pool, struct widget *widget,
     embed->env = env;
     embed->options = options;
 
-    async_init(&embed->delayed_operation, &embed_delayed_operation);
-    embed->delayed = istream_delayed_new(pool, &embed->delayed_operation);
-
     headers = embed_request_headers(embed, widget->from_request.body != NULL);
 
     pool_ref(embed->pool);
+
+    http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
+    embed->async_ref = async_ref;
 
     url_stream_new(pool,
                    env->http_client_stock,
                    widget->from_request.method, widget_real_uri(widget), headers,
                    widget->from_request.body,
-                   &embed_response_handler, embed,
-                   &embed->url_stream);
-
-    /* XXX has the embed_response_handler already been called? */
-    return embed->delayed;
+                   &embed_response_handler, embed, async_ref);
 }

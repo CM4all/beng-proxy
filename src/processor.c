@@ -12,6 +12,7 @@
 #include "growing-buffer.h"
 #include "js-filter.h"
 #include "js-generator.h"
+#include "widget-stream.h"
 
 #include <daemon/log.h>
 
@@ -546,13 +547,27 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 static istream_t
 embed_widget(pool_t pool, struct processor_env *env, struct widget *widget)
 {
+    struct widget_stream *ws;
+    istream_t hold;
+
     if (widget->class == NULL || widget->class->uri == NULL)
         return istream_string_new(pool, "Error: no widget class specified");
 
     widget_copy_from_request(widget, env);
     widget_determine_real_uri(pool, widget);
 
-    return env->widget_callback(pool, env, widget);
+    ws = widget_stream_new(pool);
+    if (widget->from_request.proxy &&
+        http_response_handler_defined(&env->response_handler))
+        ws->response_handler = &env->response_handler;
+
+    hold = istream_hold_new(pool, ws->delayed);
+
+    env->widget_callback(pool, env, widget,
+                         &widget_stream_response_handler, ws,
+                         &ws->async_ref);
+
+    return hold;
 }
 
 static istream_t
