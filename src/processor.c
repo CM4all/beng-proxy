@@ -859,9 +859,9 @@ processor_parser_eof(void *ctx, off_t length)
         istream_replace_finish(processor->replace);
 
     if (!processor->response_sent)
-        http_response_handler_invoke_response(&processor->response_handler,
-                                              HTTP_STATUS_NOT_FOUND, NULL,
-                                              istream_string_new(processor->pool, "Widget not found"));
+        http_response_handler_invoke_message(&processor->response_handler, processor->pool,
+                                             HTTP_STATUS_NOT_FOUND,
+                                             "Widget not found");
 
     pool_unref(processor->pool);
 }
@@ -874,9 +874,9 @@ processor_parser_abort(void *ctx)
     processor->parser = NULL;
 
     if (!processor->response_sent)
-        http_response_handler_invoke_response(&processor->response_handler,
-                                              HTTP_STATUS_NOT_FOUND, NULL,
-                                              istream_string_new(processor->pool, "Widget not found"));
+        http_response_handler_invoke_message(&processor->response_handler, processor->pool,
+                                             HTTP_STATUS_NOT_FOUND,
+                                             "Widget not found");
 
     pool_unref(processor->pool);
 }
