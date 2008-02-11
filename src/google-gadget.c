@@ -82,11 +82,19 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
                                                 PROCESSOR_JSCRIPT_PREFS);
         }
 
-        istream_delayed_set(gg->delayed, istream);
-        gg->delayed = NULL;
+        if (process && istream != NULL) {
+            istream_delayed_set(gg->delayed, istream);
+            gg->delayed = NULL;
 
-        http_response_handler_invoke_response(&gg->env->response_handler,
-                                              status, headers, gg->subst);
+            http_response_handler_invoke_response(&gg->env->response_handler,
+                                                  status, headers, gg->subst);
+        } else {
+            gg->delayed = NULL;
+            istream_free(&gg->subst);
+
+            http_response_handler_invoke_response(&gg->env->response_handler,
+                                                  status, headers, istream);
+        }
     } else {
         if (istream == NULL)
             istream = istream_null_new(gg->pool);
