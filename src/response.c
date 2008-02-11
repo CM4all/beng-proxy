@@ -133,7 +133,7 @@ response_invoke_processor(struct request *request2,
 
         processor_new(request->pool, body, widget, &request2->env,
                       processor_options,
-                      &response_handler, request2, /* XXX use proxy-widget.c */
+                      &widget_proxy_handler, request,
                       &request2->url_stream);
 
         istream_read(body);
