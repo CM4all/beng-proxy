@@ -26,13 +26,16 @@ gg_class(pool_t pool, const char *uri)
     return wc;
 }
 
-static istream_t
-google_gadget_process(const struct google_gadget *gw, istream_t istream,
+static void
+google_gadget_process(struct google_gadget *gg, istream_t istream,
                       unsigned options)
 {
-    return processor_new(gw->pool, istream,
-                         gw->widget, gw->env,
-                         options);
+    processor_new(gg->pool, istream,
+                  gg->widget, gg->env,
+                  options,
+                  gg->response_handler.handler,
+                  gg->response_handler.ctx,
+                  &gg->async);
 }
 
 static void
@@ -65,14 +68,13 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
         if (process) {
             istream_delayed_set(gg->delayed, istream);
             gg->delayed = NULL;
-            istream = google_gadget_process(gg, gg->subst, options);
+            google_gadget_process(gg, gg->subst, options);
+            return;
         }
     }
 
-    if (!process || istream == NULL) {
-        gg->delayed = NULL;
-        istream_free(&gg->subst);
-    }
+    gg->delayed = NULL;
+    istream_free(&gg->subst);
 
     http_response_handler_invoke_response(&gg->response_handler,
                                           status, headers, istream);

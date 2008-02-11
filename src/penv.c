@@ -34,8 +34,6 @@ processor_env_init(pool_t pool, struct processor_env *env,
     else
         env->args = args;
 
-    http_response_handler_clear(&env->response_handler);
-
     env->request_headers = request_headers;
     env->request_body = request_body;
 

@@ -61,6 +61,9 @@ struct processor {
     unsigned in_script:1, script_tail:1;
     growing_buffer_t script;
     off_t script_start_offset;
+
+    struct http_response_handler_ref response_handler;
+    struct async_operation_ref *async_ref;
 };
 
 
@@ -175,11 +178,14 @@ processor_subst_google_gadget(pool_t pool, istream_t istream,
 static void
 processor_parser_init(processor_t processor, istream_t input);
 
-istream_t
+void
 processor_new(pool_t pool, istream_t istream,
               struct widget *widget,
               struct processor_env *env,
-              unsigned options)
+              unsigned options,
+              const struct http_response_handler *handler,
+              void *handler_ctx,
+              struct async_operation_ref *async_ref)
 {
     processor_t processor;
 
@@ -223,18 +229,36 @@ processor_new(pool_t pool, istream_t istream,
     processor->in_script = 0;
     processor->script_tail = 0;
 
-    istream = istream_tee_new(pool, istream);
+    if (widget->from_request.proxy_ref == NULL) {
+        istream = istream_tee_new(pool, istream);
+        processor->replace = istream_replace_new(pool, istream_tee_second(istream),
+                                                 processor_option_quiet(processor));
+    } else {
+        processor->replace = NULL;
+    }
+
     processor_parser_init(processor, istream);
-    processor->replace = istream_replace_new(pool, istream_tee_second(istream),
-                                             processor_option_quiet(processor));
 
-    if (processor_option_jscript(processor) &&
-        (processor_option_body(processor) ||
-         widget->class->type == WIDGET_TYPE_GOOGLE_GADGET))
-        processor_replace_add(processor, 0, 0,
-                              processor_jscript(processor));
+    if (widget->from_request.proxy_ref == NULL) {
+        struct http_response_handler_ref response_handler;
 
-    return processor->replace;
+        if (processor_option_jscript(processor) &&
+            (processor_option_body(processor) ||
+             widget->class->type == WIDGET_TYPE_GOOGLE_GADGET))
+            processor_replace_add(processor, 0, 0,
+                                  processor_jscript(processor));
+
+        http_response_handler_set(&response_handler,
+                                  handler, handler_ctx);
+        http_response_handler_invoke_response(&response_handler,
+                                              HTTP_STATUS_OK, NULL,
+                                              processor->replace);
+    } else {
+        http_response_handler_set(&processor->response_handler,
+                                  handler, handler_ctx);
+        processor->async_ref = async_ref;
+        /* XXX fill async_ref */
+    }
 }
 
 
@@ -545,29 +569,39 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 }
 
 static istream_t
-embed_widget(pool_t pool, struct processor_env *env, struct widget *widget)
+embed_widget(processor_t processor, struct processor_env *env,
+             struct widget *widget)
 {
-    struct widget_stream *ws;
-    istream_t hold;
+    pool_t pool = processor->pool;
 
     if (widget->class == NULL || widget->class->uri == NULL)
         return istream_string_new(pool, "Error: no widget class specified");
 
     widget_copy_from_request(widget, env);
+    if (!widget->from_request.proxy && processor->replace == NULL)
+        return NULL;
+
     widget_determine_real_uri(pool, widget);
 
-    ws = widget_stream_new(pool);
-    if (widget->from_request.proxy &&
-        http_response_handler_defined(&env->response_handler))
-        ws->response_handler = &env->response_handler;
+    if (widget->from_request.proxy) {
+        env->widget_callback(pool, env, widget,
+                             processor->response_handler.handler,
+                             processor->response_handler.ctx,
+                             processor->async_ref);
+        return NULL;
+    } else {
+        struct widget_stream *ws;
+        istream_t hold;
 
-    hold = istream_hold_new(pool, ws->delayed);
+        ws = widget_stream_new(pool);
+        hold = istream_hold_new(pool, ws->delayed);
 
-    env->widget_callback(pool, env, widget,
-                         &widget_stream_response_handler, ws,
-                         &ws->async_ref);
+        env->widget_callback(pool, env, widget,
+                             &widget_stream_response_handler, ws,
+                             &ws->async_ref);
 
-    return hold;
+        return hold;
+    }
 }
 
 static istream_t
@@ -639,7 +673,7 @@ embed_element_finished(processor_t processor)
                                          processor->widget_params,
                                          processor->widget_params_length);
 
-    istream = embed_widget(processor->pool, processor->env, widget);
+    istream = embed_widget(processor, processor->env, widget);
     if (istream != NULL && !processor_option_quiet(processor))
         istream = embed_decorate(processor->pool, istream, widget);
 
@@ -692,8 +726,11 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
             return;
 
         istream = embed_element_finished(processor);
-        processor_replace_add(processor, processor->widget_start_offset,
-                              tag->end, istream);
+        assert(istream == NULL || processor->replace != NULL);
+
+        if (processor->replace != NULL)
+            processor_replace_add(processor, processor->widget_start_offset,
+                                  tag->end, istream);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
         assert(processor->embedded_widget != NULL);
 
@@ -775,7 +812,8 @@ processor_parser_eof(void *ctx, off_t length)
                             js_generate_tail(processor->pool));
     }
 
-    istream_replace_finish(processor->replace);
+    if (processor->replace != NULL)
+        istream_replace_finish(processor->replace);
 
     pool_unref(processor->pool);
 }

@@ -65,8 +65,6 @@ struct processor_env {
 
     istream_t request_body;
 
-    struct http_response_handler_ref response_handler;
-
     struct session *session;
 
     processor_widget_callback_t widget_callback;
@@ -91,10 +89,13 @@ processor_env_dup(pool_t pool, const struct processor_env *env)
     return (struct processor_env *)p_memdup(pool, env, sizeof(*env));
 }
 
-istream_t attr_malloc
+void
 processor_new(pool_t pool, istream_t istream,
               struct widget *widget,
               struct processor_env *env,
-              unsigned options);
+              unsigned options,
+              const struct http_response_handler *handler,
+              void *handler_ctx,
+              struct async_operation_ref *async_ref);
 
 #endif

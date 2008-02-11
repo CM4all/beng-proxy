@@ -101,6 +101,8 @@ response_invoke_processor(struct request *request2,
         request_body = NULL;
     }
 
+    pool_ref(request->pool);
+
     request_make_session(request2);
 
     processor_env_init(request->pool, &request2->env,
@@ -121,37 +123,37 @@ response_invoke_processor(struct request *request2,
                                                                  &request2->uri.base),
                                                       1);
 
+    widget->from_request.focus_ref = widget_ref_parse(request->pool,
+                                                      strmap_remove(request2->env.args, "focus"));
+
     widget->from_request.proxy_ref = widget_ref_parse(request->pool,
                                                       strmap_get(request2->env.args, "frame"));
     if (widget->from_request.proxy_ref != NULL) {
         request2->env.widget_callback = frame_widget_callback;
+
+        processor_new(request->pool, body, widget, &request2->env,
+                      processor_options,
+                      &response_handler, request2, /* XXX use proxy-widget.c */
+                      &request2->url_stream);
+
+        istream_read(body);
     } else {
         processor_options |= PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT;
+
+        processor_new(request->pool, body, widget, &request2->env,
+                      processor_options,
+                      &response_handler, request2,
+                      &request2->url_stream);
     }
 
-    widget->from_request.focus_ref = widget_ref_parse(request->pool,
-                                                      strmap_remove(request2->env.args, "focus"));
-
-    body = processor_new(request->pool, body, widget, &request2->env,
-                         processor_options);
-    if (widget->from_request.proxy_ref != NULL) {
-        /* XXX */
-        pool_ref(request->pool);
-        widget_proxy_install(&request2->env, request, body);
-        request2->response_sent = 1;
-        response_close(request2);
-        pool_unref(request->pool);
-        return;
-    }
-
+    /*
 #ifndef NO_DEFLATE
     if (http_client_accepts_encoding(request->headers, "deflate")) {
         header_write(response_headers, "content-encoding", "deflate");
         body = istream_deflate_new(request->pool, body);
     }
 #endif
-
-    response_dispatch(request2, status, response_headers, body);
+    */
 }
 
 
