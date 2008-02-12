@@ -367,6 +367,20 @@ pool_destroy(pool_t pool, pool_t reparent_to)
     }
 #endif
 
+#ifdef DEBUG_POOL_REF
+    while (!list_empty(&pool->refs)) {
+        struct list_head *next = pool->refs.next;
+        list_remove(next);
+        free(next);
+    }
+
+    while (!list_empty(&pool->unrefs)) {
+        struct list_head *next = pool->unrefs.next;
+        list_remove(next);
+        free(next);
+    }
+#endif
+
     switch (pool->type) {
     case POOL_LIBC:
         while (!list_empty(&pool->current_area.libc)) {
@@ -400,6 +414,8 @@ pool_increment_ref(pool_t pool, struct list_head *list,
 {
     struct pool_ref *ref;
 
+    (void)pool;
+
     for (ref = (struct pool_ref *)list->next;
          &ref->list_head != list;
          ref = (struct pool_ref *)ref->list_head.next) {
@@ -409,7 +425,7 @@ pool_increment_ref(pool_t pool, struct list_head *list,
         }
     }
 
-    ref = p_malloc(pool, sizeof(*ref));
+    ref = xmalloc(sizeof(*ref));
     ref->file = file;
     ref->line = line;
     ref->count = 1;
