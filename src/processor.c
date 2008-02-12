@@ -673,7 +673,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
     tag = growing_buffer_new(pool, 256);
     growing_buffer_write_string(tag, "<");
     growing_buffer_write_string(tag, tag_name);
-    growing_buffer_write_string(tag, " class=\"embed\"");
+    growing_buffer_write_string(tag, " class=\"widget\"");
 
     prefix = widget_prefix(widget);
     if (prefix != NULL) {
