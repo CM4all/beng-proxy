@@ -234,6 +234,8 @@ istream_dechunk_read(istream_t istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 
+    pool_ref(dechunk->output.pool);
+
     dechunk->had_output = 0;
 
     do {
@@ -241,6 +243,8 @@ istream_dechunk_read(istream_t istream)
         istream_read(dechunk->input);
     } while (dechunk->input != NULL && dechunk->had_input &&
              !dechunk->had_output);
+
+    pool_unref(dechunk->output.pool);
 }
 
 static void

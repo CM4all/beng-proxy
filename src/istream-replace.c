@@ -125,8 +125,11 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
 
     /* don't recurse if we're being called
        replace_read_substitution() */
-    if (!replace->read_locked)
+    if (!replace->read_locked) {
+        pool_ref(replace->output.pool);
         replace_read(replace);
+        pool_unref(replace->output.pool);
+    }
 }
 
 
@@ -329,15 +332,11 @@ replace_try_read_from_buffer(struct istream_replace *replace)
 static void
 replace_read(struct istream_replace *replace)
 {
-    pool_t pool;
     int blocking;
     size_t rest;
 
     assert(replace != NULL);
     assert(replace->buffer == NULL || replace->position <= replace->source_length);
-
-    pool_ref(replace->output.pool);
-    pool = replace->output.pool;
 
     /* read until someone (input or output) blocks */
     do {
@@ -348,8 +347,6 @@ replace_read(struct istream_replace *replace)
 
         rest = replace_try_read_from_buffer(replace);
     } while (rest == 0 && replace->first_substitution != NULL);
-
-    pool_unref(pool);
 }
 
 static void
@@ -361,8 +358,11 @@ replace_read_check_empty(struct istream_replace *replace)
 
     if (replace_is_eof(replace))
         istream_invoke_eof(&replace->output);
-    else
+    else {
+        pool_ref(replace->output.pool);
         replace_read(replace);
+        pool_unref(replace->output.pool);
+    }
 }
 
 
@@ -498,18 +498,24 @@ istream_replace_read(istream_t istream)
 {
     struct istream_replace *replace = istream_to_replace(istream);
 
+    pool_ref(replace->output.pool);
+
     replace->had_output = 0;
 
     replace_read(replace);
 
-    if (replace->had_output || replace->input == NULL)
+    if (replace->had_output || replace->input == NULL) {
+        pool_unref(replace->output.pool);
         return;
+    }
 
     do {
         replace->had_input = 0;
         istream_read(replace->input);
     } while (replace->had_input && !replace->had_output &&
              replace->input != NULL);
+
+    pool_unref(replace->output.pool);
 }
 
 static void
