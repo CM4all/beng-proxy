@@ -278,6 +278,7 @@ processor_new(pool_t pool, istream_t istream,
 
     if (widget->from_request.proxy_ref == NULL) {
         struct http_response_handler_ref response_handler;
+        strmap_t headers;
 
         processor->response_sent = 1;
 
@@ -287,10 +288,13 @@ processor_new(pool_t pool, istream_t istream,
             processor_replace_add(processor, 0, 0,
                                   processor_jscript(processor));
 
+        headers = strmap_new(processor->pool, 4);
+        strmap_addn(headers, "content-type", "text/html; charset=utf-8");
+
         http_response_handler_set(&response_handler,
                                   handler, handler_ctx);
         http_response_handler_invoke_response(&response_handler,
-                                              HTTP_STATUS_OK, NULL,
+                                              HTTP_STATUS_OK, headers,
                                               processor->replace);
     } else {
         processor->response_sent = 0;
