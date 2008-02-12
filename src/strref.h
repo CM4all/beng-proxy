@@ -200,6 +200,17 @@ strref_cmp2(const struct strref *a, const struct strref *b)
 }
 
 static attr_always_inline int
+strref_starts_with_n(const struct strref *s,
+                     const char *p, size_t length)
+{
+    assert(s != NULL);
+    assert(s->data != NULL || s->length == 0);
+
+    return s->length >= length &&
+        memcmp(s->data, p, length) == 0;
+}
+
+static attr_always_inline int
 strref_ends_with_n(const struct strref *s,
                    const char *p, size_t length)
 {
