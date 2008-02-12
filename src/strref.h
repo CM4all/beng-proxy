@@ -117,6 +117,18 @@ strref_trunc(struct strref *s, const char *end)
     s->length = end - s->data;
 }
 
+static attr_always_inline void
+strref_skip(struct strref *s, size_t nbytes)
+{
+    assert(s != NULL);
+    assert(nbytes > 0);
+    assert(s->data != NULL && s->length > 0);
+    assert(nbytes <= s->length);
+
+    s->length -= nbytes;
+    s->data += nbytes;
+}
+
 static inline int
 strref_is_null(const struct strref *s)
 {
