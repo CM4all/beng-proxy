@@ -568,8 +568,8 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
         for (info = (struct allocation_info *)pool->allocations.prev;
              info != (struct allocation_info *)&pool->allocations;
              info = (struct allocation_info *)info->siblings.prev) {
-            daemon_log(6, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
             sum += info->size;
+            daemon_log(6, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
         }
         daemon_log(6, "+ %s:%u %zu => %zu\n", file, line, size - LINEAR_PREFIX, sum + size - LINEAR_PREFIX);
 #endif
