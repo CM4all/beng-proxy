@@ -23,6 +23,12 @@ struct istream_cat {
 };
 
 
+static inline int
+cat_is_current(struct istream_cat *cat, struct input *input)
+{
+    return cat->current == input;
+}
+
 static void
 cat_close(struct istream_cat *cat)
 {
@@ -52,7 +58,7 @@ cat_input_data(const void *data, size_t length, void *ctx)
 
     assert(input->istream != NULL);
 
-    if (input != cat->current)
+    if (!cat_is_current(cat, input))
         return 0;
 
     return istream_invoke_data(&cat->output, data, length);
@@ -65,7 +71,7 @@ cat_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     struct istream_cat *cat = input->cat;
 
     assert(input->istream != NULL);
-    assert(input == cat->current);
+    assert(cat_is_current(cat, input))
 
     return istream_invoke_direct(&cat->output, type, fd, max_length);
 }
@@ -80,7 +86,7 @@ cat_input_eof(void *ctx)
 
     istream_clear_unref(&input->istream);
 
-    if (input == cat->current) {
+    if (cat_is_current(cat, input)) {
         do {
             cat->current = cat->current->next;
         } while (cat->current != NULL && cat->current->istream == NULL);
