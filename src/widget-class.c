@@ -5,7 +5,7 @@
  */
 
 /* XXX remove memrchr() usage */
-#ifndef
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #include <features.h>
 #endif
