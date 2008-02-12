@@ -130,7 +130,7 @@ processor_jscript(processor_t processor)
     js_generate_widget(gb, processor->widget, processor->pool);
 
     if ((processor->options & PROCESSOR_JSCRIPT_PREFS) != 0)
-        js_generate_preferences(gb, processor->widget, processor->pool);
+        js_generate_preferences(gb, processor->widget);
 
     growing_buffer_write_string(gb, "</script>\n");
 
@@ -143,13 +143,11 @@ processor_jscript(processor_t processor)
  */
 
 static void
-processor_subst_beng_widget(pool_t pool, istream_t istream,
+processor_subst_beng_widget(istream_t istream,
                             struct widget *widget,
                             const struct processor_env *env)
 {
     const char *path, *prefix;
-
-    (void)pool;
 
     path = widget_path(widget);
     if (path == NULL)
@@ -237,7 +235,7 @@ processor_new(pool_t pool, istream_t istream,
 
         switch (widget->class->type) {
         case WIDGET_TYPE_BENG:
-            processor_subst_beng_widget(pool, istream, widget, env);
+            processor_subst_beng_widget(istream, widget, env);
             break;
 
         case WIDGET_TYPE_GOOGLE_GADGET:

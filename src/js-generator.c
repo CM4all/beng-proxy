@@ -73,12 +73,9 @@ js_generate_root_widget(struct growing_buffer *gb, const char *session_id)
 }
 
 void
-js_generate_preferences(struct growing_buffer *gb, const struct widget *widget,
-                        pool_t pool)
+js_generate_preferences(struct growing_buffer *gb, const struct widget *widget)
 {
     const char *prefix, *query_string;
-
-    (void)pool;
 
     query_string = widget->from_request.session == NULL
         ? NULL
