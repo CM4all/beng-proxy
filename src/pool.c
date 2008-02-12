@@ -552,16 +552,16 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
 
     if (unlikely(area->used + size > area->size)) {
         size_t new_area_size = area->size;
-        daemon_log(0, "growing linear pool '%s'\n", pool->name);
+        daemon_log(5, "growing linear pool '%s'\n", pool->name);
 #ifdef DEBUG_POOL_GROW
         sum = 0;
         for (info = (struct allocation_info *)pool->allocations.prev;
              info != (struct allocation_info *)&pool->allocations;
              info = (struct allocation_info *)info->siblings.prev) {
-            daemon_log(0, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
+            daemon_log(6, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
             sum += info->size;
         }
-        daemon_log(0, "+ %s:%u %zu => %zu\n", file, line, size - LINEAR_PREFIX, sum + size - LINEAR_PREFIX);
+        daemon_log(6, "+ %s:%u %zu => %zu\n", file, line, size - LINEAR_PREFIX, sum + size - LINEAR_PREFIX);
 #endif
         if (size > new_area_size)
             new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
