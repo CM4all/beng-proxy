@@ -215,7 +215,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
                 return;
             }
 
-            processor_new(istream_pool(body), body,
+            processor_new(embed->pool, body,
                           embed->widget, embed->env, embed->options,
                           embed->handler_ref.handler,
                           embed->handler_ref.ctx,
