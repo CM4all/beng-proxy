@@ -71,7 +71,7 @@ cat_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     struct istream_cat *cat = input->cat;
 
     assert(input->istream != NULL);
-    assert(cat_is_current(cat, input))
+    assert(cat_is_current(cat, input));
 
     return istream_invoke_direct(&cat->output, type, fd, max_length);
 }
