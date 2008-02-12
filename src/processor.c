@@ -600,7 +600,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_A:
-        if (strref_cmp_literal(&attr->name, "href") == 0)
+        if (strref_cmp_literal(&attr->name, "href") == 0 &&
+            !strref_starts_with_n(&attr->value, "javascript:", 11))
             transform_url_attribute(processor, attr);
         break;
 
