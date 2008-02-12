@@ -60,13 +60,18 @@ pool_contains(pool_t pool, const void *ptr, size_t size);
 #endif
 
 void * attr_malloc
-p_malloc(pool_t pool, size_t size);
+p_malloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
+
+#define p_malloc(pool, size) p_malloc_impl(pool, size TRACE_ARGS)
+#define p_malloc_fwd(pool, size) p_malloc_impl(pool, size TRACE_ARGS_FWD)
 
 void
 p_free(pool_t pool, void *ptr);
 
 void * attr_malloc
-p_calloc(pool_t pool, size_t size);
+p_calloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
+
+#define p_calloc(pool, size) p_calloc_impl(pool, size TRACE_ARGS)
 
 char * attr_malloc
 p_memdup(pool_t pool, const void *src, size_t length);
@@ -75,7 +80,9 @@ char * attr_malloc
 p_strdup(pool_t pool, const char *src);
 
 char * attr_malloc
-p_strndup(pool_t pool, const char *src, size_t length);
+p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL);
+
+#define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
 
 char * attr_malloc attr_printf(2, 3)
 p_sprintf(pool_t pool, const char *fmt, ...);

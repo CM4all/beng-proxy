@@ -29,9 +29,9 @@ p_strdup(pool_t pool, const char *src)
 }
 
 char *
-p_strndup(pool_t pool, const char *src, size_t length)
+p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL)
 {
-    char *dest = p_malloc(pool, length + 1);
+    char *dest = p_malloc_fwd(pool, length + 1);
     memcpy(dest, src, length);
     dest[length] = 0;
     return dest;

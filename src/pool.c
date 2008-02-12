@@ -27,6 +27,18 @@
 #define RECYCLER_MAX_LINEAR_AREAS 256
 #define RECYCLER_MAX_LINEAR_SIZE 65536
 
+#ifdef DEBUG_POOL_GROW
+struct allocation_info {
+    struct list_head siblings;
+    const char *file;
+    unsigned line;
+    size_t size;
+};
+#define LINEAR_PREFIX sizeof(struct allocation_info)
+#else
+#define LINEAR_PREFIX 0
+#endif
+
 enum pool_type {
     POOL_LIBC,
     POOL_LINEAR,
@@ -79,6 +91,10 @@ struct pool {
         struct linear_pool_area *linear;
         struct pool *recycler;
     } current_area;
+
+#ifdef DEBUG_POOL_GROW
+    struct list_head allocations;
+#endif
 };
 
 #ifndef NDEBUG
@@ -227,6 +243,10 @@ pool_new(pool_t parent, const char *name)
     pool->parent = NULL;
     if (parent != NULL)
         pool_add_child(parent, pool);
+
+#ifdef DEBUG_POOL_GROW
+    list_init(&pool->allocations);
+#endif
 
     return pool;
 }
@@ -519,14 +539,30 @@ p_malloc_libc(pool_t pool, size_t size)
 }
 
 static void *
-p_malloc_linear(pool_t pool, size_t size)
+p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
 {
     struct linear_pool_area *area = pool->current_area.linear;
     void *p;
+#ifdef DEBUG_POOL_GROW
+    struct allocation_info *info;
+    size_t sum;
+#endif
+
+    size += LINEAR_PREFIX;
 
     if (unlikely(area->used + size > area->size)) {
         size_t new_area_size = area->size;
         daemon_log(0, "growing linear pool '%s'\n", pool->name);
+#ifdef DEBUG_POOL_GROW
+        sum = 0;
+        for (info = (struct allocation_info *)pool->allocations.prev;
+             info != (struct allocation_info *)&pool->allocations;
+             info = (struct allocation_info *)info->siblings.prev) {
+            daemon_log(0, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
+            sum += info->size;
+        }
+        daemon_log(0, "+ %s:%u %zu => %zu\n", file, line, size - LINEAR_PREFIX, sum + size - LINEAR_PREFIX);
+#endif
         if (size > new_area_size)
             new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
         area = pool_get_linear_area(area, new_area_size);
@@ -538,25 +574,33 @@ p_malloc_linear(pool_t pool, size_t size)
 
     VALGRIND_MAKE_MEM_UNDEFINED(p, size);
 
-    return p;
+#ifdef DEBUG_POOL_GROW
+    info = p;
+    info->file = file;
+    info->line = line;
+    info->size = size - LINEAR_PREFIX;
+    list_add(&info->siblings, &pool->allocations);
+#endif
+
+    return (char*)p + LINEAR_PREFIX;
 }
 
 static void *
-internal_malloc(pool_t pool, size_t size)
+internal_malloc(pool_t pool, size_t size TRACE_ARGS_DECL)
 {
     assert(pool != NULL);
 
     if (likely(pool->type == POOL_LINEAR))
-        return p_malloc_linear(pool, size);
+        return p_malloc_linear(pool, size TRACE_ARGS_FWD);
 
     assert(pool->type == POOL_LIBC);
     return p_malloc_libc(pool, size);
 }
 
 void *
-p_malloc(pool_t pool, size_t size)
+p_malloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL)
 {
-    return internal_malloc(pool, align_size(size));
+    return internal_malloc(pool, align_size(size) TRACE_ARGS_FWD);
 }
 
 static void
@@ -604,9 +648,9 @@ clear_memory(void *p, size_t size)
 }
 
 void *
-p_calloc(pool_t pool, size_t size)
+p_calloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL)
 {
-    void *p = internal_malloc(pool, align_size(size));
+    void *p = internal_malloc(pool, align_size(size) TRACE_ARGS_FWD);
     clear_memory(p, size);
     return p;
 }
