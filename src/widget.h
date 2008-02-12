@@ -115,6 +115,10 @@ struct widget {
     } from_request;
 
     struct {
+        const char *path;
+
+        const char *prefix;
+
         /** the URI which is actually retrieved - this is the same as
             base_uri, except when the user clicked on a relative link */
         const char *real_uri;
@@ -167,6 +171,8 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->from_request.body = NULL;
     widget->from_request.proxy = 0;
     widget->from_request.raw = 0;
+    widget->lazy.path = NULL;
+    widget->lazy.prefix = NULL;
     widget->lazy.real_uri = NULL;
 }
 
@@ -181,11 +187,19 @@ widget_root(struct widget *widget)
     return widget;
 }
 
-const char *
-widget_path(pool_t pool, const struct widget *widget);
+static inline const char *
+widget_path(pool_t pool, const struct widget *widget)
+{
+    (void)pool;
+    return widget->lazy.path;
+}
 
-const char *
-widget_prefix(pool_t pool, const struct widget *widget);
+static inline const char *
+widget_prefix(pool_t pool, const struct widget *widget)
+{
+    (void)pool;
+    return widget->lazy.prefix;
+}
 
 struct widget_session *
 widget_get_session(struct widget *widget, int create);
