@@ -189,8 +189,9 @@ istream_read(istream_t _istream)
     pool_t pool = istream->pool;
 
     assert(!istream->eof);
+    assert(!istream->reading);
+    assert(!istream->in_data);
 
-    assert(istream->reading == 0);
     pool_ref(pool);
     istream->reading = 1;
 #endif
