@@ -579,7 +579,7 @@ http_client_connection_new(pool_t pool, int fd,
 #ifdef NDEBUG
     pool_ref(pool);
 #else
-    pool = pool_new_linear(pool, "http_client_connection", 8192);
+    pool = pool_new_linear(pool, "http_client_connection", 16384);
 #endif
 
     connection = p_malloc(pool, sizeof(*connection));
@@ -742,7 +742,7 @@ http_client_request(http_client_connection_t connection,
     assert(handler != NULL);
     assert(handler->response != NULL);
 
-    connection->request.pool = pool_new_linear(connection->pool, "http_client_request", 8192);
+    connection->request.pool = pool_new_linear(connection->pool, "http_client_request", 16384);
     http_response_handler_set(&connection->request.handler, handler, ctx);
 
     /* request line */
