@@ -5,13 +5,13 @@
  */
 
 #include "istream.h"
+#include "strref.h"
 
 #include <assert.h>
 
 struct istream_memory {
     struct istream stream;
-    const char *data;
-    size_t length;
+    struct strref data;
 };
 
 
@@ -26,7 +26,7 @@ istream_memory_available(istream_t istream, int partial attr_unused)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 
-    return memory->length;
+    return memory->data.length;
 }
 
 static void
@@ -35,20 +35,16 @@ istream_memory_read(istream_t istream)
     struct istream_memory *memory = istream_to_memory(istream);
     size_t nbytes;
 
-    assert(memory->data != NULL);
-
-    if (memory->length > 0) {
-        nbytes = istream_invoke_data(&memory->stream, memory->data, memory->length);
-        assert(nbytes <= memory->length);
-
-        if (memory->data == NULL)
+    if (!strref_is_empty(&memory->data)) {
+        nbytes = istream_invoke_data(&memory->stream,
+                                     memory->data.data, memory->data.length);
+        if (nbytes == 0)
             return;
 
-        memory->data += nbytes;
-        memory->length -= nbytes;
+        strref_skip(&memory->data, nbytes);
     }
 
-    if (memory->length == 0)
+    if (strref_is_empty(&memory->data))
         istream_invoke_eof(&memory->stream);
 }
 
@@ -57,7 +53,6 @@ istream_memory_close(istream_t istream)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 
-    memory->data = NULL;
     istream_invoke_abort(&memory->stream);
 }
 
@@ -76,8 +71,7 @@ istream_memory_new(pool_t pool, const void *data, size_t length)
 
     memory->stream = istream_memory;
     memory->stream.pool = pool;
-    memory->data = data;
-    memory->length = length;
+    strref_set(&memory->data, data, length);
 
     return istream_struct_cast(&memory->stream);
 }
