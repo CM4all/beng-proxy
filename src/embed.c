@@ -138,8 +138,8 @@ embed_redirect(struct embed *embed,
                                   location, strlen(location));
     if (new_uri == NULL)
         new_uri = location;
-
-    location = new_uri;
+    else
+        location = new_uri;
 
     new_uri = widget_class_relative_uri(embed->widget->class, new_uri);
     if (new_uri == NULL)
