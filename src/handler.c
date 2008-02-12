@@ -238,6 +238,7 @@ my_http_server_connection_request(struct http_server_request *request,
     request2->args = NULL;
     request2->cookies = NULL;
     request2->session = NULL;
+    async_ref_clear(&request2->async);
     request2->body_consumed = 0;
     request2->response_sent = 0;
 

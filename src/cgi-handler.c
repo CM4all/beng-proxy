@@ -30,9 +30,9 @@ cgi_handler(struct request *request2)
     const struct translate_response *tr = request2->translate.response;
     const char *script_name, *path_info, *query_string, *document_root;
 
-    pool_ref(request->pool);
+    assert(!async_ref_defined(&request2->async));
 
-    async_ref_clear(&request2->url_stream);
+    pool_ref(request->pool);
 
     query_string = strchr(request->uri, '?');
     if (query_string == NULL) {
@@ -59,5 +59,5 @@ cgi_handler(struct request *request2)
             script_name, path_info, query_string, document_root,
             request->headers, request->body,
             &response_handler, request2,
-            &request2->url_stream);
+            &request2->async);
 }

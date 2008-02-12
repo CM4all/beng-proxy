@@ -44,8 +44,8 @@ response_close(struct request *request)
     assert(request->request != NULL);
     assert(request->request->pool != NULL);
 
-    if (async_ref_defined(&request->url_stream))
-        async_abort(&request->url_stream);
+    if (async_ref_defined(&request->async))
+        async_abort(&request->async);
 
     if (!request->response_sent)
         http_server_send_message(request->request,
@@ -85,14 +85,13 @@ response_invoke_processor(struct request *request2,
     unsigned processor_options = PROCESSOR_CONTAINER;
 
     assert(!request2->response_sent);
+    assert(!async_ref_defined(&request2->async));
     assert(body == NULL || !istream_has_handler(body));
 
     if (body == NULL) {
         response_dispatch(request2, status, response_headers, NULL);
         return;
     }
-
-    async_ref_clear(&request2->url_stream);
 
     if (http_server_request_has_body(request) && !request2->body_consumed) {
         request_body = request->body;
@@ -136,7 +135,7 @@ response_invoke_processor(struct request *request2,
         processor_new(request->pool, body, widget, &request2->env,
                       processor_options,
                       &widget_proxy_handler, request,
-                      &request2->url_stream);
+                      &request2->async);
 
         istream_read(body);
 
@@ -147,7 +146,7 @@ response_invoke_processor(struct request *request2,
         processor_new(request->pool, body, widget, &request2->env,
                       processor_options,
                       &response_handler, request2,
-                      &request2->url_stream);
+                      &request2->async);
     }
 
     /*
@@ -175,6 +174,7 @@ response_dispatch(struct request *request2,
         = request2->translate.transformation;
 
     assert(!request2->response_sent);
+    assert(!async_ref_defined(&request2->async));
     assert(body == NULL || !istream_has_handler(body));
 
     if (transformation)
@@ -194,7 +194,7 @@ response_dispatch(struct request *request2,
                    headers,
                    body,
                    &response_handler, request2,
-                   &request2->filter);
+                   &request2->async);
     } else if (transformation != NULL &&
                transformation->type == TRANSFORMATION_PROCESS) {
         response_invoke_processor(request2, status, headers, body);
@@ -235,12 +235,9 @@ response_response(http_status_t status, strmap_t headers,
     growing_buffer_t response_headers;
 
     assert(!request2->response_sent);
-    assert(async_ref_defined(&request2->url_stream) ||
-           async_ref_defined(&request2->filter));
     assert(body == NULL || !istream_has_handler(body));
 
-    async_ref_clear(&request2->url_stream);
-    async_ref_clear(&request2->filter);
+    async_ref_clear(&request2->async);
 
     if (headers == NULL) {
         response_headers = growing_buffer_new(request->pool, 1024);
@@ -266,8 +263,7 @@ response_abort(void *ctx)
     struct request *request = ctx;
     pool_t pool = request->request->pool;
 
-    assert(async_ref_defined(&request->url_stream) ||
-           async_ref_defined(&request->filter));
+    async_ref_clear(&request->async);
 
     response_close(request);
     pool_unref(pool);

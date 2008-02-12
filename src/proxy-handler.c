@@ -17,6 +17,8 @@ proxy_callback(struct request *request2)
     http_method_t method;
     istream_t body;
 
+    assert(!async_ref_defined(&request2->async));
+
     pool_ref(request->pool);
 
     if (http_server_request_has_body(request) &&
@@ -33,5 +35,5 @@ proxy_callback(struct request *request2)
                    request2->http_client_stock,
                    method, tr->proxy, NULL, body,
                    &response_handler, request2,
-                   &request2->url_stream);
+                   &request2->async);
 }
