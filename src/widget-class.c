@@ -5,8 +5,10 @@
  */
 
 /* XXX remove memrchr() usage */
+#ifndef
 #define _GNU_SOURCE
 #include <features.h>
+#endif
 
 #include "widget.h"
 
