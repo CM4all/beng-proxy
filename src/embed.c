@@ -137,7 +137,7 @@ embed_redirect(struct embed *embed,
     new_uri = widget_absolute_uri(embed->pool, embed->widget,
                                   location, strlen(location));
     if (new_uri == NULL)
-        new_uri = p_strdup(embed->pool, location);
+        new_uri = location;
 
     location = new_uri;
 

@@ -137,7 +137,7 @@ widget_copy_from_location(struct widget *widget, const char *location,
 
     qmark = strchr(location, '?');
     if (qmark == NULL) {
-        widget->from_request.path_info = location;
+        widget->from_request.path_info = p_strdup(pool, location);
         strref_clear(&widget->from_request.query_string);
     } else {
         widget->from_request.path_info
