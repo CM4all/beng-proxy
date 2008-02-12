@@ -441,7 +441,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         /* since we are not going to print anything, we don't need to
            parse the rest anyway */
 
-        if (processor->in_html)
+        if (processor->in_html || processor_option_quiet(processor))
             processor->tag = TAG_NONE;
         else {
             /* fall back to returning everything if there is no HTML
