@@ -14,6 +14,9 @@
 
 /** options for processor_new() */
 enum processor_options {
+    /** rewrite URLs */
+    PROCESSOR_REWRITE_URL = 0x1,
+
     /** only output the HTML body */
     PROCESSOR_BODY = 0x2,
 

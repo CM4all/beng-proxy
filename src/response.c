@@ -82,7 +82,7 @@ response_invoke_processor(struct request *request2,
     struct http_server_request *request = request2->request;
     istream_t request_body;
     struct widget *widget;
-    unsigned processor_options = PROCESSOR_CONTAINER;
+    unsigned processor_options = PROCESSOR_REWRITE_URL|PROCESSOR_CONTAINER;
 
     assert(!request2->response_sent);
     assert(!async_ref_defined(&request2->async));

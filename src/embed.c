@@ -272,7 +272,7 @@ embed_new(pool_t pool, struct widget *widget,
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-    assert((options & PROCESSOR_CONTAINER) == 0);
+    assert((options & (PROCESSOR_REWRITE_URL|PROCESSOR_CONTAINER)) == 0);
 
     if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET) {
         /* XXX put this check somewhere else */
@@ -283,6 +283,7 @@ embed_new(pool_t pool, struct widget *widget,
 
     assert(widget->display != WIDGET_DISPLAY_EXTERNAL);
 
+    options |= PROCESSOR_REWRITE_URL;
     if (widget->class->is_container)
         options |= PROCESSOR_CONTAINER;
 

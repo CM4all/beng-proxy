@@ -78,6 +78,12 @@ processor_option_quiet(const struct processor *processor)
 }
 
 static int
+processor_option_rewrite_url(const struct processor *processor)
+{
+    return (processor->options & PROCESSOR_REWRITE_URL) != 0;
+}
+
+static int
 processor_option_body(const struct processor *processor)
 {
     return (processor->options & PROCESSOR_BODY) != 0;
@@ -329,14 +335,18 @@ static void
 parser_element_start_in_body(processor_t processor,
                              const struct strref *name)
 {
-    if (strref_cmp_literal(name, "a") == 0) {
-        processor->tag = TAG_A;
-    } else if (strref_cmp_literal(name, "form") == 0) {
-        processor->tag = TAG_FORM;
-    } else if (strref_cmp_literal(name, "img") == 0) {
-        processor->tag = TAG_IMG;
-    } else if (strref_cmp_literal(name, "script") == 0) {
+    if (strref_cmp_literal(name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
+    } else if (processor_option_rewrite_url(processor)) {
+        if (strref_cmp_literal(name, "a") == 0) {
+            processor->tag = TAG_A;
+        } else if (strref_cmp_literal(name, "form") == 0) {
+            processor->tag = TAG_FORM;
+        } else if (strref_cmp_literal(name, "img") == 0) {
+            processor->tag = TAG_IMG;
+        } else {
+            processor->tag = TAG_NONE;
+        }
     } else {
         processor->tag = TAG_NONE;
     }
