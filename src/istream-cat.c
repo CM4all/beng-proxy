@@ -10,7 +10,6 @@
 #include <stdarg.h>
 
 struct input {
-    struct input *next;
     struct istream_cat *cat;
     istream_t istream;
 };
@@ -18,15 +17,21 @@ struct input {
 struct istream_cat {
     struct istream output;
     unsigned reading;
-    struct input *current;
+    unsigned current, num;
     struct input inputs[1];
 };
 
 
+static struct input *
+cat_current(struct istream_cat *cat)
+{
+    return &cat->inputs[cat->current];
+}
+
 static inline int
 cat_is_current(struct istream_cat *cat, struct input *input)
 {
-    return cat->current == input;
+    return cat_current(cat) == input;
 }
 
 static void
@@ -34,9 +39,8 @@ cat_close(struct istream_cat *cat)
 {
     struct input *input;
 
-    while (cat->current != NULL) {
-        input = cat->current;
-        cat->current = input->next;
+    while (cat->inputs[cat->current].cat != NULL) {
+        input = &cat->inputs[cat->current++];
         if (input->istream != NULL)
             istream_free_unref_handler(&input->istream);
     }
@@ -88,17 +92,17 @@ cat_input_eof(void *ctx)
 
     if (cat_is_current(cat, input)) {
         do {
-            cat->current = cat->current->next;
-        } while (cat->current != NULL && cat->current->istream == NULL);
+            ++cat->current;
+        } while (cat->current < cat->num && cat_current(cat)->istream == NULL);
 
-        if (cat->current == NULL) {
+        if (cat->current >= cat->num) {
             istream_invoke_eof(&cat->output);
         } else if (!cat->reading) {
             /* only call istream_read() if this function was not
                called from istream_cat_read() - in this case,
                istream_cat_read() would provide the loop.  This is
                advantageous because we avoid unnecessary recursing. */
-            istream_read(cat->current->istream);
+            istream_read(cat_current(cat)->istream);
         }
     }
 }
@@ -137,10 +141,11 @@ static off_t
 istream_cat_available(istream_t istream, int partial)
 {
     struct istream_cat *cat = istream_to_cat(istream);
-    struct input *input;
+    struct input *input, *end;
     off_t available = 0, a;
 
-    for (input = cat->current; input != NULL; input = input->next) {
+    for (input = cat_current(cat), end = &cat->inputs[cat->num];
+         input < end; ++input) {
         if (input->istream == NULL)
             continue;
 
@@ -161,26 +166,27 @@ static void
 istream_cat_read(istream_t istream)
 {
     struct istream_cat *cat = istream_to_cat(istream);
-    struct input *prev;
+    unsigned prev;
 
     pool_ref(cat->output.pool);
 
     cat->reading = 1;
 
     do {
-        while (cat->current != NULL && cat->current->istream == NULL)
-            cat->current = cat->current->next;
+        while (cat->current < cat->num && cat_current(cat)->istream == NULL)
+            ++cat->current;
 
-        if (cat->current == NULL) {
+        if (cat->current >= cat->num) {
             istream_invoke_eof(&cat->output);
             break;
         }
 
-        istream_handler_set_direct(cat->current->istream, cat->output.handler_direct);
+        istream_handler_set_direct(cat_current(cat)->istream,
+                                   cat->output.handler_direct);
 
         prev = cat->current;
-        istream_read(cat->current->istream);
-    } while (cat->current != NULL && cat->current != prev);
+        istream_read(cat_current(cat)->istream);
+    } while (cat->current < cat->num && cat->current != prev);
 
     cat->reading = 0;
 
@@ -214,7 +220,7 @@ istream_cat_new(pool_t pool, ...)
     va_list ap;
     unsigned num = 0;
     istream_t istream;
-    struct input **next_p, *input;
+    struct input *input;
 
     va_start(ap, pool);
     while (va_arg(ap, istream_t) != NULL)
@@ -227,23 +233,20 @@ istream_cat_new(pool_t pool, ...)
     cat->output = istream_cat;
     cat->output.pool = pool;
     cat->reading = 0;
+    cat->current = 0;
+    cat->num = num;
 
     va_start(ap, pool);
     num = 0;
-    next_p = &cat->current;
     while ((istream = va_arg(ap, istream_t)) != NULL) {
         assert(!istream_has_handler(istream));
 
         input = &cat->inputs[num++];
-        input->next = NULL;
         input->cat = cat;
 
         istream_assign_ref_handler(&input->istream, istream,
                                    &cat_input_handler, input,
                                    0);
-
-        *next_p = input;
-        next_p = &input->next;
     }
     va_end(ap);
 
