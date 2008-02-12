@@ -21,8 +21,10 @@ widget_ref_parse(pool_t pool, const char *_p)
     p = p_strdup(pool, _p);
 
     while ((slash = strchr(p, '/')) != NULL) {
-        if (slash == p)
+        if (slash == p) {
+            ++p;
             continue;
+        }
 
         *slash = 0;
         wr = p_malloc(pool, sizeof(*wr));
