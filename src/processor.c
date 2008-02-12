@@ -263,8 +263,7 @@ processor_new(pool_t pool, istream_t istream,
 
     if (widget->from_request.proxy_ref == NULL) {
         istream = istream_tee_new(pool, istream);
-        processor->replace = istream_replace_new(pool, istream_tee_second(istream),
-                                                 processor_option_quiet(processor));
+        processor->replace = istream_replace_new(pool, istream_tee_second(istream), 0);
     } else {
         processor->replace = NULL;
     }
