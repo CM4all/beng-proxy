@@ -68,7 +68,6 @@ struct pool {
     struct list_head siblings, children;
 #ifdef DEBUG_POOL_REF
     struct list_head refs, unrefs;
-    struct pool_ref main_ref;
 #endif
     pool_t parent;
     unsigned ref;
