@@ -149,12 +149,14 @@ processor_subst_beng_widget(pool_t pool, istream_t istream,
 {
     const char *path, *prefix;
 
-    path = widget_path(pool, widget);
+    (void)pool;
+
+    path = widget_path(widget);
     if (path == NULL)
         path = "";
     istream_subst_add(istream, "&c:path;", path);
 
-    prefix = widget_prefix(pool, widget);
+    prefix = widget_prefix(widget);
     if (prefix == NULL)
         prefix = "";
     istream_subst_add(istream, "&c:prefix;", prefix);
@@ -169,7 +171,7 @@ processor_subst_google_gadget(pool_t pool, istream_t istream,
 {
     const char *prefix;
 
-    prefix = widget_prefix(pool, widget);
+    prefix = widget_prefix(widget);
     if (prefix != NULL) {
         const char *module_id = p_strcat(pool, prefix, "widget", NULL);
         istream_subst_add(istream, "__MODULE_ID__", module_id);
@@ -666,7 +668,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
     growing_buffer_write_string(tag, tag_name);
     growing_buffer_write_string(tag, " class=\"embed\"");
 
-    prefix = widget_prefix(pool, widget);
+    prefix = widget_prefix(widget);
     if (prefix != NULL) {
         growing_buffer_write_string(tag, " id=\"beng_widget_");
         growing_buffer_write_string(tag, prefix);

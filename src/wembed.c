@@ -47,7 +47,7 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
     struct growing_buffer *gb;
 
     uri = widget_frame_uri(pool, env, widget);
-    prefix = widget_prefix(pool, widget);
+    prefix = widget_prefix(widget);
     /* XXX don't require prefix for WIDGET_DISPLAY_EXTERNAL */
     if (uri == NULL || prefix == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
@@ -79,7 +79,7 @@ embed_img_widget(pool_t pool, const struct processor_env *env,
     struct growing_buffer *gb;
 
     uri = widget_frame_uri(pool, env, widget);
-    prefix = widget_prefix(pool, widget);
+    prefix = widget_prefix(widget);
     if (uri == NULL || prefix == NULL)
         return istream_string_new(pool, "[framed widget without id]"); /* XXX */
 

@@ -30,7 +30,7 @@ js_generate_widget(struct growing_buffer *gb, const struct widget *widget,
     if (widget->parent != NULL)
         js_generate_widget(gb, widget->parent, pool);
 
-    prefix = widget_prefix(pool, widget);
+    prefix = widget_prefix(widget);
     if (prefix == NULL)
         return;
 
@@ -43,7 +43,7 @@ js_generate_widget(struct growing_buffer *gb, const struct widget *widget,
     } else {
         growing_buffer_write_string(gb, "new beng_widget(");
 
-        parent_prefix = widget_prefix(pool, widget->parent);
+        parent_prefix = widget_prefix(widget->parent);
         assert(parent_prefix != NULL);
 
         growing_buffer_write_string(gb, parent_prefix);
@@ -78,11 +78,13 @@ js_generate_preferences(struct growing_buffer *gb, const struct widget *widget,
 {
     const char *prefix, *query_string;
 
+    (void)pool;
+
     query_string = widget->from_request.session == NULL
         ? NULL
         : widget->from_request.session->query_string;
 
-    prefix = widget_prefix(pool, widget);
+    prefix = widget_prefix(widget);
     if (prefix == NULL)
         return;
 

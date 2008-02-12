@@ -188,16 +188,14 @@ widget_root(struct widget *widget)
 }
 
 static inline const char *
-widget_path(pool_t pool, const struct widget *widget)
+widget_path(const struct widget *widget)
 {
-    (void)pool;
     return widget->lazy.path;
 }
 
 static inline const char *
-widget_prefix(pool_t pool, const struct widget *widget)
+widget_prefix(const struct widget *widget)
 {
-    (void)pool;
     return widget->lazy.prefix;
 }
 

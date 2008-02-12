@@ -20,11 +20,11 @@ widget_set_id(struct widget *widget, pool_t pool, const struct strref *id)
 
     widget->id = strref_dup(pool, id);
 
-    p = widget_path(pool, widget->parent);
+    p = widget_path(widget->parent);
     if (p != NULL)
         widget->lazy.path = p_strcat(pool, p, "/", widget->id, NULL);
 
-    p = widget_prefix(pool, widget->parent);
+    p = widget_prefix(widget->parent);
     if (p != NULL)
         widget->lazy.prefix = p_strcat(pool, p, widget->id, "__", NULL);
 }

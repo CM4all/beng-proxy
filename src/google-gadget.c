@@ -528,7 +528,7 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     gw->parser = NULL;
     gw->has_locale = 0;
 
-    path = widget_path(pool, widget);
+    path = widget_path(widget);
     if (path != NULL)
         istream_subst_add(gw->subst,
                           "new _IG_Prefs()",
