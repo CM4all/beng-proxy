@@ -170,6 +170,9 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->lazy.real_uri = NULL;
 }
 
+void
+widget_set_id(struct widget *widget, pool_t pool, const struct strref *id);
+
 static inline struct widget *
 widget_root(struct widget *widget)
 {

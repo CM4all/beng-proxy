@@ -498,7 +498,7 @@ parser_widget_attr_finished(struct widget *widget,
         const char *class_name = strref_dup(pool, value);
         widget->class = get_widget_class(pool, class_name);
     } else if (strref_cmp_literal(name, "id") == 0)
-        widget->id = strref_dup(pool, value);
+        widget_set_id(widget, pool, value);
     else if (strref_cmp_literal(name, "display") == 0) {
         if (strref_cmp_literal(value, "inline") == 0)
             widget->display = WIDGET_DISPLAY_INLINE;

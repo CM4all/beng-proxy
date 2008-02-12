@@ -9,6 +9,15 @@
 #include <string.h>
 #include <assert.h>
 
+void
+widget_set_id(struct widget *widget, pool_t pool, const struct strref *id)
+{
+    assert(id != NULL);
+    assert(!strref_is_empty(id));
+
+    widget->id = strref_dup(pool, id);
+}
+
 const char *
 widget_path(pool_t pool, const struct widget *widget)
 {
