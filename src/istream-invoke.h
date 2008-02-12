@@ -34,7 +34,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
     istream->in_data = 0;
     istream->data_available = length - nbytes;
 
-    if (istream->available_check > 0) {
+    if (nbytes > 0 && istream->available_check > 0) {
         if ((ssize_t)nbytes < 0 || (ssize_t)nbytes > istream->available_check)
             istream->available_check = 0;
         else 
