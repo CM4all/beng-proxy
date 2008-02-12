@@ -672,24 +672,30 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
         growing_buffer_write_string(tag, "\"");
     }
 
-    growing_buffer_write_string(tag, " style='");
+    if (widget->decoration.width != NULL ||
+        widget->decoration.height != NULL ||
+        widget->decoration.style != NULL) {
+        growing_buffer_write_string(tag, " style='");
 
-    if (widget->decoration.width != NULL) {
-        growing_buffer_write_string(tag, "width:");
-        growing_buffer_write_string(tag, widget->decoration.width);
-        growing_buffer_write_string(tag, ";");
+        if (widget->decoration.width != NULL) {
+            growing_buffer_write_string(tag, "width:");
+            growing_buffer_write_string(tag, widget->decoration.width);
+            growing_buffer_write_string(tag, ";");
+        }
+
+        if (widget->decoration.height != NULL) {
+            growing_buffer_write_string(tag, "height:");
+            growing_buffer_write_string(tag, widget->decoration.height);
+            growing_buffer_write_string(tag, ";");
+        }
+
+        if (widget->decoration.style != NULL)
+            growing_buffer_write_string(tag, widget->decoration.style);
+
+        growing_buffer_write_string(tag, "'");
     }
 
-    if (widget->decoration.height != NULL) {
-        growing_buffer_write_string(tag, "height:");
-        growing_buffer_write_string(tag, widget->decoration.height);
-        growing_buffer_write_string(tag, ";");
-    }
-
-    if (widget->decoration.style != NULL)
-        growing_buffer_write_string(tag, widget->decoration.style);
-
-    growing_buffer_write_string(tag, "'>");
+    growing_buffer_write_string(tag, ">");
 
     return istream_cat_new(pool,
                            growing_buffer_istream(tag),
