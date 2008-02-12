@@ -123,7 +123,8 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
 }
 
 void
-widget_copy_from_location(struct widget *widget, const char *location,
+widget_copy_from_location(struct widget *widget,
+                          const char *location, size_t location_length,
                           pool_t pool)
 {
     struct widget_session *ws;
@@ -135,15 +136,16 @@ widget_copy_from_location(struct widget *widget, const char *location,
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
 
-    qmark = strchr(location, '?');
+    qmark = memchr(location, '?', location_length);
     if (qmark == NULL) {
-        widget->from_request.path_info = p_strdup(pool, location);
+        widget->from_request.path_info = p_strndup(pool, location,
+                                                   location_length);
         strref_clear(&widget->from_request.query_string);
     } else {
         widget->from_request.path_info
             = p_strndup(pool, location, qmark - location);
-        strref_set_c(&widget->from_request.query_string,
-                     qmark + 1);
+        strref_set(&widget->from_request.query_string,
+                   qmark + 1, location + location_length - (qmark + 1));
     }
 
     ws = widget_get_session(widget, 1);

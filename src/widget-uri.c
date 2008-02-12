@@ -111,6 +111,8 @@ widget_external_uri(pool_t pool,
 {
     const char *new_uri;
     const char *args2;
+    struct strref s;
+    const struct strref *p;
 
     if (relative_uri_length == 6 &&
         memcmp(relative_uri, ";proxy", 6) == 0)
@@ -132,19 +134,21 @@ widget_external_uri(pool_t pool,
         return new_uri;
 
     if (new_uri == NULL)
-        new_uri = p_strndup(pool, relative_uri, relative_uri_length);
+        strref_set(&s, relative_uri, relative_uri_length);
+    else
+        strref_set_c(&s, new_uri);
 
-    new_uri = widget_class_relative_uri(widget->class, new_uri);
-    if (new_uri == NULL)
+    p = widget_class_relative_uri(widget->class, &s);
+    if (p == NULL)
         return NULL;
 
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
-    args2 = args_format(pool, args,
-                        "focus", widget->id,
-                        "path", new_uri,
-                        NULL);
+    args2 = args_format_n(pool, args,
+                          "focus", widget->id,
+                          "path", p->data, p->length,
+                          NULL);
 
     return p_strncat(pool,
                      external_uri->base.data,

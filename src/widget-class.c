@@ -4,6 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+/* XXX remove memrchr() usage */
+#define _GNU_SOURCE
+#include <features.h>
+
 #include "widget.h"
 
 #include <string.h>
@@ -33,8 +37,9 @@ get_widget_class(pool_t pool, const char *uri)
     return wc;
 }
 
-const char *
-widget_class_relative_uri(const struct widget_class *class, const char *uri)
+const struct strref *
+widget_class_relative_uri(const struct widget_class *class,
+                          struct strref *uri)
 {
     size_t class_uri_length;
 
@@ -46,14 +51,19 @@ widget_class_relative_uri(const struct widget_class *class, const char *uri)
 
     class_uri_length = strlen(class->uri);
 
-    if (strncmp(uri, class->uri, class_uri_length) == 0)
-        return uri + class_uri_length;
+    if (uri->length >= class_uri_length &&
+        memcmp(uri->data, class->uri, class_uri_length) == 0) {
+        strref_skip(uri, class_uri_length);
+        return uri;
+    }
 
     /* special case: http://hostname without trailing slash */
-    if (strncmp(uri, class->uri, class_uri_length - 1) == 0 &&
-        uri[class_uri_length - 1] == 0 &&
-        strrchr(uri, '/') < uri + 7)
-        return "";
+    if (uri->length == class_uri_length - 1 &&
+        memcmp(uri->data, class->uri, uri->length) &&
+        (const char*)memrchr(uri->data, '/', uri->length) < uri->data + 7) {
+        strref_clear(uri);
+        return uri;
+    }
 
     return NULL;
 }

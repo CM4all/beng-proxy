@@ -122,6 +122,8 @@ embed_redirect(struct embed *embed,
 {
     const char *new_uri;
     growing_buffer_t headers;
+    struct strref s;
+    const struct strref *p;
 
     if (embed->num_redirects >= 8)
         return 0;
@@ -141,11 +143,13 @@ embed_redirect(struct embed *embed,
     else
         location = new_uri;
 
-    new_uri = widget_class_relative_uri(embed->widget->class, new_uri);
-    if (new_uri == NULL)
+    strref_set_c(&s, new_uri);
+
+    p = widget_class_relative_uri(embed->widget->class, &s);
+    if (p == NULL)
         return 0;
 
-    widget_copy_from_location(embed->widget, new_uri, embed->pool);
+    widget_copy_from_location(embed->widget, p->data, p->length, embed->pool);
     widget_determine_real_uri(embed->pool, embed->widget);
 
     ++embed->num_redirects;

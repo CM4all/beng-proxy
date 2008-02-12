@@ -139,8 +139,9 @@ extern const struct widget_class root_widget_class;
 const struct widget_class *
 get_widget_class(pool_t pool, const char *uri);
 
-const char *
-widget_class_relative_uri(const struct widget_class *class, const char *uri);
+const struct strref *
+widget_class_relative_uri(const struct widget_class *class,
+                          struct strref *uri);
 
 int
 widget_class_includes_uri(const struct widget_class *class, const char *uri);
@@ -218,7 +219,8 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env);
  * Overwrite request data, copy values from a HTTP redirect location.
  */
 void
-widget_copy_from_location(struct widget *widget, const char *location,
+widget_copy_from_location(struct widget *widget,
+                          const char *location, size_t location_length,
                           pool_t pool);
 
 void
