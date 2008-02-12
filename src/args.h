@@ -21,6 +21,13 @@ args_parse(pool_t pool, const char *p, size_t length);
  * @param replace_value the new value or NULL if the key should be removed
  */
 const char *
+args_format_n(pool_t pool, strmap_t args,
+              const char *replace_key, const char *replace_value,
+              const char *replace_key2, const char *replace_value2,
+              size_t replace_value2_length,
+              const char *remove_key);
+
+const char *
 args_format(pool_t pool, strmap_t args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2,
