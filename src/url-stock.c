@@ -164,7 +164,7 @@ url_stock_pool(void *ctx, pool_t parent, const char *uri)
     (void)ctx;
     (void)uri;
 
-    return pool_new_linear(parent, "url_stock", 8192);
+    return pool_new_linear(parent, "url_stock", 2048);
 }
 
 static void
