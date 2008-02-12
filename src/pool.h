@@ -8,6 +8,7 @@
 #define __BENG_POOL_H
 
 #include "compiler.h"
+#include "trace.h"
 
 #include <stddef.h>
 
@@ -33,27 +34,17 @@ pool_set_major(pool_t pool);
 
 #endif
 
-#ifdef DEBUG_POOL_REF
-
 void
-pool_ref_debug(pool_t pool, const char *file, unsigned line);
+pool_ref_impl(pool_t pool TRACE_ARGS_DECL);
+
+#define pool_ref(pool) pool_ref_impl(pool TRACE_ARGS)
+#define pool_ref_fwd(pool) pool_ref_impl(pool TRACE_ARGS_FWD)
 
 unsigned
-pool_unref_debug(pool_t pool, const char *file, unsigned line);
+pool_unref_impl(pool_t pool TRACE_ARGS_DECL);
 
-#define pool_ref(pool) pool_ref_debug(pool, __FILE__, __LINE__)
-
-#define pool_unref(pool) pool_unref_debug(pool, __FILE__, __LINE__)
-
-#else
-
-void
-pool_ref(pool_t pool);
-
-unsigned
-pool_unref(pool_t pool);
-
-#endif
+#define pool_unref(pool) pool_unref_impl(pool TRACE_ARGS)
+#define pool_unref_fwd(pool) pool_unref_impl(pool TRACE_ARGS_FWD)
 
 #ifdef NDEBUG
 static inline void

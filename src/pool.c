@@ -409,11 +409,7 @@ pool_dump_refs(pool_t pool)
 #endif
 
 void
-#ifdef DEBUG_POOL_REF
-pool_ref_debug(pool_t pool, const char *file, unsigned line)
-#else
-    pool_ref(pool_t pool)
-#endif
+pool_ref_impl(pool_t pool TRACE_ARGS_DECL)
 {
     assert(pool->ref > 0);
     ++pool->ref;
@@ -428,11 +424,7 @@ pool_ref_debug(pool_t pool, const char *file, unsigned line)
 }
 
 unsigned
-#ifdef DEBUG_POOL_REF
-pool_unref_debug(pool_t pool, const char *file, unsigned line)
-#else
-    pool_unref(pool_t pool)
-#endif
+pool_unref_impl(pool_t pool TRACE_ARGS_DECL)
 {
     assert(pool->ref > 0);
     --pool->ref;
