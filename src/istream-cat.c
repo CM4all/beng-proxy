@@ -39,7 +39,7 @@ cat_close(struct istream_cat *cat)
 {
     struct input *input;
 
-    while (cat->inputs[cat->current].cat != NULL) {
+    while (cat->current < cat->num) {
         input = &cat->inputs[cat->current++];
         if (input->istream != NULL)
             istream_free_unref_handler(&input->istream);
