@@ -46,6 +46,7 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
 
     assert(gg != NULL);
     assert(gg->delayed != NULL);
+    assert(gg->subst != NULL);
 
     if (gg->has_locale && gg->waiting_for_locale) {
             /* XXX abort locale */
@@ -466,10 +467,13 @@ gg_async_abort(struct async_operation *ao)
 {
     struct google_gadget *gw = async_to_gg(ao);
 
+    assert((gw->delayed == NULL) == (gw->subst == NULL));
+
     if (gw->delayed == NULL)
         return;
 
     gw->delayed = NULL;
+    istream_free(&gw->subst);
 
     if (gw->parser != NULL)
         parser_close(gw->parser);
