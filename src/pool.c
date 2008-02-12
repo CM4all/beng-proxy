@@ -95,6 +95,9 @@ struct pool {
 #ifdef DEBUG_POOL_GROW
     struct list_head allocations;
 #endif
+#ifdef DUMP_POOL_SIZE
+    size_t size;
+#endif
 };
 
 #ifndef NDEBUG
@@ -247,6 +250,9 @@ pool_new(pool_t parent, const char *name)
 #ifdef DEBUG_POOL_GROW
     list_init(&pool->allocations);
 #endif
+#ifdef DUMP_POOL_SIZE
+    pool->size = 0;
+#endif
 
     return pool;
 }
@@ -329,6 +335,10 @@ pool_destroy(pool_t pool, pool_t reparent_to)
     assert(pool->parent == NULL);
 
     (void)reparent_to;
+
+#ifdef DUMP_POOL_SIZE
+    daemon_log(4, "pool '%s' size=%zu\n", pool->name, pool->size);
+#endif
 
 #ifndef NDEBUG
     if (pool->trashed)
@@ -589,6 +599,10 @@ static void *
 internal_malloc(pool_t pool, size_t size TRACE_ARGS_DECL)
 {
     assert(pool != NULL);
+
+#ifdef DUMP_POOL_SIZE
+    pool->size += size;
+#endif
 
     if (likely(pool->type == POOL_LINEAR))
         return p_malloc_linear(pool, size TRACE_ARGS_FWD);
