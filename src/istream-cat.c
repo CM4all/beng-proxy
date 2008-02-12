@@ -9,8 +9,6 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#define MAX_INPUTS 16
-
 struct input {
     struct input *next;
     struct istream_cat *cat;
@@ -21,7 +19,7 @@ struct istream_cat {
     struct istream output;
     unsigned reading;
     struct input *current;
-    struct input inputs[MAX_INPUTS];
+    struct input inputs[1];
 };
 
 
@@ -206,20 +204,29 @@ static const struct istream istream_cat = {
 istream_t
 istream_cat_new(pool_t pool, ...)
 {
-    struct istream_cat *cat = p_malloc(pool, sizeof(*cat));
+    struct istream_cat *cat;
     va_list ap;
     unsigned num = 0;
     istream_t istream;
-    struct input **next_p = &cat->current, *input;
+    struct input **next_p, *input;
 
+    va_start(ap, pool);
+    while (va_arg(ap, istream_t) != NULL)
+        ++num;
+    va_end(ap);
+
+    assert(num > 0);
+
+    cat = p_malloc(pool, sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
     cat->output = istream_cat;
     cat->output.pool = pool;
     cat->reading = 0;
 
     va_start(ap, pool);
+    num = 0;
+    next_p = &cat->current;
     while ((istream = va_arg(ap, istream_t)) != NULL) {
         assert(!istream_has_handler(istream));
-        assert(num < MAX_INPUTS);
 
         input = &cat->inputs[num++];
         input->next = NULL;
