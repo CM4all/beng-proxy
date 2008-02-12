@@ -675,7 +675,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
     if (widget->decoration.width != NULL ||
         widget->decoration.height != NULL ||
         widget->decoration.style != NULL) {
-        growing_buffer_write_string(tag, " style='");
+        growing_buffer_write_string(tag, " style=\"");
 
         if (widget->decoration.width != NULL) {
             growing_buffer_write_string(tag, "width:");
@@ -692,7 +692,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
         if (widget->decoration.style != NULL)
             growing_buffer_write_string(tag, widget->decoration.style);
 
-        growing_buffer_write_string(tag, "'");
+        growing_buffer_write_string(tag, "\"");
     }
 
     growing_buffer_write_string(tag, ">");
