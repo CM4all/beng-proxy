@@ -497,9 +497,10 @@ parser_widget_attr_finished(struct widget *widget,
     if (strref_cmp_literal(name, "href") == 0) {
         const char *class_name = strref_dup(pool, value);
         widget->class = get_widget_class(pool, class_name);
-    } else if (strref_cmp_literal(name, "id") == 0)
-        widget_set_id(widget, pool, value);
-    else if (strref_cmp_literal(name, "display") == 0) {
+    } else if (strref_cmp_literal(name, "id") == 0) {
+        if (!strref_is_empty(value))
+            widget_set_id(widget, pool, value);
+    } else if (strref_cmp_literal(name, "display") == 0) {
         if (strref_cmp_literal(value, "inline") == 0)
             widget->display = WIDGET_DISPLAY_INLINE;
         else if (strref_cmp_literal(value, "iframe") == 0)
