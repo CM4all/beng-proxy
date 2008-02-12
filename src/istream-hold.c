@@ -18,7 +18,7 @@
 struct istream_hold {
     struct istream output;
     istream_t input;
-    int input_eof, input_aborted;
+    unsigned input_eof:1, input_aborted:1;
 };
 
 
