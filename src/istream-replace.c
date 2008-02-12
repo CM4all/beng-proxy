@@ -568,7 +568,7 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
         VALGRIND_MAKE_MEM_NOACCESS(&replace->position,
                                    sizeof(replace->position));
     } else {
-        replace->buffer = growing_buffer_new(pool, 8192);
+        replace->buffer = growing_buffer_new(pool, 4096);
         replace->source_length = 0;
         replace->position = 0;
     }
