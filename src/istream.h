@@ -80,7 +80,7 @@ struct istream {
     istream_direct_t handler_direct;
 
 #ifndef NDEBUG
-    int reading, eof, in_data;
+    unsigned reading:1, eof:1, in_data:1;
 
     /** how much data was available in the previous invocation? */
     size_t data_available;
