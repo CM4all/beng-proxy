@@ -73,6 +73,7 @@ struct pool {
     unsigned ref;
 
 #ifndef NDEBUG
+    struct list_head notify;
     int trashed;
 #endif
 
@@ -235,6 +236,7 @@ pool_new(pool_t parent, const char *name)
 #endif
     pool->ref = 1;
 #ifndef NDEBUG
+    list_init(&pool->notify);
     pool->trashed = 0;
 #endif
     pool->name = name;
@@ -340,6 +342,12 @@ pool_destroy(pool_t pool, pool_t reparent_to)
 #endif
 
 #ifndef NDEBUG
+    while (!list_empty(&pool->notify)) {
+        struct pool_notify *notify = (struct pool_notify *)pool->notify.next;
+        list_remove(&notify->siblings);
+        notify->destroyed = 1;
+    }
+
     if (pool->trashed)
         list_remove(&pool->siblings);
 
@@ -501,6 +509,13 @@ pool_unref_impl(pool_t pool TRACE_ARGS_DECL)
 }
 
 #ifndef NDEBUG
+
+void
+pool_notify(pool_t pool, struct pool_notify *notify)
+{
+    list_add(&notify->siblings, &pool->notify);
+    notify->destroyed = 0;
+}
 
 void
 pool_commit(void)

@@ -46,6 +46,27 @@ pool_unref_impl(pool_t pool TRACE_ARGS_DECL);
 #define pool_unref(pool) pool_unref_impl(pool TRACE_ARGS)
 #define pool_unref_fwd(pool) pool_unref_impl(pool TRACE_ARGS_FWD)
 
+#ifndef NDEBUG
+#include "list.h"
+
+struct pool_notify {
+    struct list_head siblings;
+    int destroyed;
+};
+
+void
+pool_notify(pool_t pool, struct pool_notify *notify);
+
+static inline int
+pool_denotify(struct pool_notify *notify)
+{
+    if (notify->destroyed)
+        return 1;
+    list_remove(&notify->siblings);
+    return 0;
+}
+#endif
+
 #ifdef NDEBUG
 static inline void
 pool_commit(void)

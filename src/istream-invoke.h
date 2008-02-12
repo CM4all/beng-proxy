@@ -11,6 +11,9 @@
 static inline size_t
 istream_invoke_data(struct istream *istream, const void *data, size_t length)
 {
+#ifndef NDEBUG
+    struct pool_notify notify;
+#endif
     size_t nbytes;
 
     assert(istream != NULL);
@@ -23,14 +26,20 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
     assert(length >= istream->data_available);
 
 #ifndef NDEBUG
+    pool_notify(istream->pool, &notify);
     istream->in_data = 1;
 #endif
 
     nbytes = istream->handler->data(data, length, istream->handler_ctx);
     assert(nbytes <= length);
-    assert(!istream->eof || nbytes == 0);
+    assert(nbytes == 0 || !istream->eof);
 
 #ifndef NDEBUG
+    if (pool_denotify(&notify)) {
+        assert(nbytes == 0);
+        return nbytes;
+    }
+
     istream->in_data = 0;
     istream->data_available = length - nbytes;
 
@@ -49,6 +58,9 @@ static inline ssize_t
 istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
                       size_t max_length)
 {
+#ifndef NDEBUG
+    struct pool_notify notify;
+#endif
     ssize_t nbytes;
 
     assert(istream != NULL);
@@ -61,14 +73,20 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
     assert(!istream->eof);
 
 #ifndef NDEBUG
+    pool_notify(istream->pool, &notify);
     istream->in_data = 1;
 #endif
 
     nbytes = istream->handler->direct(type, fd, max_length, istream->handler_ctx);
     assert(nbytes < 0 || (size_t)nbytes <= max_length);
-    assert(!istream->eof || nbytes == 0);
+    assert(nbytes == 0 || !istream->eof);
 
 #ifndef NDEBUG
+    if (pool_denotify(&notify)) {
+        assert(nbytes == 0);
+        return nbytes;
+    }
+
     istream->in_data = 0;
 
     if (nbytes > 0) {
