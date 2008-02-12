@@ -154,12 +154,12 @@ istream_available(istream_t _istream, int partial)
     struct istream *istream = _istream_opaque_cast(_istream);
     off_t available;
 #ifndef NDEBUG
-    pool_t pool = istream->pool;
+    struct pool_notify notify;
 
     assert(!istream->eof);
+    assert(!istream->reading);
 
-    assert(istream->reading == 0);
-    pool_ref(pool);
+    pool_notify(istream->pool, &notify);
     istream->reading = 1;
 #endif
 
@@ -169,8 +169,10 @@ istream_available(istream_t _istream, int partial)
         available = istream->available(_istream, partial);
 
 #ifndef NDEBUG
+    if (pool_denotify(&notify))
+        return available;
+
     istream->reading = 0;
-    pool_unref(pool);
 
     assert(partial || available == (off_t)-1 ||
            available >= istream->available_check);
@@ -186,21 +188,23 @@ istream_read(istream_t _istream)
 {
     struct istream *istream = _istream_opaque_cast(_istream);
 #ifndef NDEBUG
-    pool_t pool = istream->pool;
+    struct pool_notify notify;
 
     assert(!istream->eof);
     assert(!istream->reading);
     assert(!istream->in_data);
 
-    pool_ref(pool);
+    pool_notify(istream->pool, &notify);
     istream->reading = 1;
 #endif
 
     istream->read(_istream);
 
 #ifndef NDEBUG
+    if (pool_denotify(&notify))
+        return;
+
     istream->reading = 0;
-    pool_unref(pool);
 #endif
 }
 
