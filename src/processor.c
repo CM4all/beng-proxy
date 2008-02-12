@@ -672,7 +672,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
         growing_buffer_write_string(tag, "\"");
     }
 
-    growing_buffer_write_string(tag, " style='overflow:auto; margin:5pt; border:1px dotted red;");
+    growing_buffer_write_string(tag, " style='");
 
     if (widget->decoration.width != NULL) {
         growing_buffer_write_string(tag, "width:");
