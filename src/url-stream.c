@@ -162,11 +162,7 @@ url_stream_new(pool_t pool,
     assert(handler->response != NULL);
     assert(body == NULL || !istream_has_handler(body));
 
-#ifdef NDEBUG
     pool_ref(pool);
-#else
-    pool = pool_new_linear(pool, "url_stream", 4096);
-#endif
 
     us = p_malloc(pool, sizeof(*us));
     us->pool = pool;
