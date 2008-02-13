@@ -30,11 +30,11 @@
 #ifndef NDEBUG
 struct allocation_info {
     struct list_head siblings;
+    size_t size;
 #ifdef DEBUG_POOL_GROW
     const char *file;
     unsigned line;
 #endif
-    size_t size;
 };
 #define LINEAR_PREFIX sizeof(struct allocation_info)
 #else
