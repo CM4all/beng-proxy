@@ -27,11 +27,13 @@
 #define RECYCLER_MAX_LINEAR_AREAS 256
 #define RECYCLER_MAX_LINEAR_SIZE 65536
 
-#ifdef DEBUG_POOL_GROW
+#ifndef NDEBUG
 struct allocation_info {
     struct list_head siblings;
+#ifdef DEBUG_POOL_GROW
     const char *file;
     unsigned line;
+#endif
     size_t size;
 };
 #define LINEAR_PREFIX sizeof(struct allocation_info)
@@ -620,7 +622,7 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
 {
     struct linear_pool_area *area = pool->current_area.linear;
     void *p;
-#ifdef DEBUG_POOL_GROW
+#ifndef NDEBUG
     struct allocation_info *info;
 #endif
 
@@ -644,10 +646,12 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
 
     poison_undefined(p, size);
 
-#ifdef DEBUG_POOL_GROW
+#ifndef NDEBUG
     info = p;
+#ifdef DEBUG_POOL_GROW
     info->file = file;
     info->line = line;
+#endif
     info->size = size - LINEAR_PREFIX;
     list_add(&info->siblings, &pool->allocations);
 #endif
