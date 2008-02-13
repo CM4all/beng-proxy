@@ -10,7 +10,7 @@
 
 void
 processor_env_init(pool_t pool, struct processor_env *env,
-                   struct hstock *http_client_stock,
+                   struct http_cache *http_cache,
                    const char *remote_host,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,
@@ -24,7 +24,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
     assert(request_body == NULL || !istream_has_handler(request_body));
 
     env->pool = pool;
-    env->http_client_stock = http_client_stock;
+    env->http_cache = http_cache;
     env->remote_host = remote_host;
     env->absolute_uri = absolute_uri;
     env->external_uri = uri;

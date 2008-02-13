@@ -41,6 +41,9 @@ struct instance {
     /* stock */
     struct stock *translate_stock;
     struct hstock *http_client_stock;
+
+    /* cache */
+    struct http_cache *http_cache;
 };
 
 struct client_connection;

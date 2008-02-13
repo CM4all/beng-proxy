@@ -16,6 +16,7 @@
 
 struct request {
     struct hstock *http_client_stock;
+    struct http_cache *http_cache;
 
     struct http_server_request *request;
     struct parsed_uri uri;

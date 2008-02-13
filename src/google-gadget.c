@@ -7,7 +7,7 @@
 #include "google-gadget-internal.h"
 #include "widget.h"
 #include "istream.h"
-#include "url-stream.h"
+#include "http-cache.h"
 #include "http-response.h"
 #include "parser.h"
 #include "processor.h"
@@ -537,9 +537,9 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
 
     http_response_handler_set(&gw->response_handler, handler, handler_ctx);
 
-    url_stream_new(pool, env->http_client_stock,
-                   HTTP_METHOD_GET, widget->class->uri,
-                   NULL, NULL,
-                   &google_gadget_handler, gw,
-                   &gw->async);
+    http_cache_request(env->http_cache, pool,
+                       HTTP_METHOD_GET, widget->class->uri,
+                       NULL, NULL,
+                       &google_gadget_handler, gw,
+                       &gw->async);
 }

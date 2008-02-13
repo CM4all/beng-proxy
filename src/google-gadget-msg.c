@@ -8,7 +8,7 @@
 
 #include "google-gadget-internal.h"
 #include "parser.h"
-#include "url-stream.h"
+#include "http-cache.h"
 #include "http-response.h"
 #include "processor.h"
 #include "strutil.h"
@@ -204,11 +204,11 @@ google_gadget_msg_load(struct google_gadget *gg, const char *url)
 {
     gg->msg.parser = NULL;
 
-    url_stream_new(gg->pool, gg->env->http_client_stock,
-                   HTTP_METHOD_GET, url,
-                   NULL, NULL,
-                   &gg_msg_http_handler, gg,
-                   &gg->async);
+    http_cache_request(gg->env->http_cache, gg->pool,
+                       HTTP_METHOD_GET, url,
+                       NULL, NULL,
+                       &gg_msg_http_handler, gg,
+                       &gg->async);
 }
 
 void

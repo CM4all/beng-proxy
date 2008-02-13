@@ -36,7 +36,6 @@ enum processor_options {
     PROCESSOR_JSCRIPT_PREFS = 0x40,
 };
 
-struct hstock;
 struct parsed_uri;
 struct widget;
 struct processor_env;
@@ -52,7 +51,7 @@ typedef void (*processor_widget_callback_t)(pool_t pool,
 struct processor_env {
     pool_t pool;
 
-    struct hstock *http_client_stock;
+    struct http_cache *http_cache;
 
     const char *remote_host;
 
@@ -76,7 +75,7 @@ struct processor_env {
 void
 processor_env_init(pool_t pool,
                    struct processor_env *env,
-                   struct hstock *http_client_stock,
+                   struct http_cache *http_cache,
                    const char *remote_host,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,

@@ -133,6 +133,8 @@ SOURCES = src/main.c \
 	src/format.c \
 	src/hashmap.c \
 	src/strmap.c \
+	src/cache.c \
+	src/http-cache.c \
 	src/stock.c \
 	src/hstock.c \
 	src/tpool.c \

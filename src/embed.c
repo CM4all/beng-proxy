@@ -5,7 +5,7 @@
  */
 
 #include "embed.h"
-#include "url-stream.h"
+#include "http-cache.h"
 #include "processor.h"
 #include "widget.h"
 #include "header-writer.h"
@@ -161,11 +161,11 @@ embed_redirect(struct embed *embed,
 
     headers = embed_request_headers(embed, 0);
 
-    url_stream_new(embed->pool,
-                   embed->env->http_client_stock,
-                   HTTP_METHOD_GET, location, headers, NULL,
-                   &embed_response_handler, embed,
-                   embed->async_ref);
+    http_cache_request(embed->env->http_cache,
+                       embed->pool,
+                       HTTP_METHOD_GET, location, headers, NULL,
+                       &embed_response_handler, embed,
+                       embed->async_ref);
 
     return 1;
 }
@@ -307,9 +307,9 @@ embed_new(pool_t pool, struct widget *widget,
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
     embed->async_ref = async_ref;
 
-    url_stream_new(pool,
-                   env->http_client_stock,
-                   widget->from_request.method, widget_real_uri(widget), headers,
-                   widget->from_request.body,
-                   &embed_response_handler, embed, async_ref);
+    http_cache_request(env->http_cache,
+                       pool,
+                       widget->from_request.method, widget_real_uri(widget), headers,
+                       widget->from_request.body,
+                       &embed_response_handler, embed, async_ref);
 }
