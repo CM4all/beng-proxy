@@ -135,6 +135,7 @@ SOURCES = src/main.c \
 	src/strmap.c \
 	src/stock.c \
 	src/hstock.c \
+	src/tpool.c \
 	src/pstring.c \
 	src/pool.c
 

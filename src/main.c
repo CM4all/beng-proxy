@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "pool.h"
+#include "tpool.h"
 #include "instance.h"
 #include "connection.h"
 #include "session.h"
@@ -128,6 +128,7 @@ int main(int argc, char **argv)
     list_init(&instance.connections);
     list_init(&instance.children);
     instance.pool = pool_new_libc(NULL, "global");
+    tpool_init(instance.pool);
 
     init_signals(&instance);
 
@@ -182,6 +183,7 @@ int main(int argc, char **argv)
     event_base_free(instance.event_base);
 #endif
 
+    tpool_deinit();
     ref = pool_unref(instance.pool);
     assert(ref == 0);
     pool_commit();
