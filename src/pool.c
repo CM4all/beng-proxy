@@ -130,6 +130,14 @@ align_size(size_t size)
     return ((size - 1) | ALIGN_BITS) + 1;
 }
 
+#ifndef NDEBUG
+static struct allocation_info *
+get_linear_allocation_info(void *p)
+{
+    return (struct allocation_info *)((char*)p - sizeof(struct allocation_info));
+}
+#endif
+
 void
 pool_recycler_clear(void)
 {
@@ -702,6 +710,12 @@ p_free(pool_t pool, void *ptr)
 
     if (pool->type == POOL_LIBC)
         p_free_libc(pool, ptr);
+#ifndef NDEBUG
+    else if (pool->type == POOL_LINEAR) {
+        struct allocation_info *info = get_linear_allocation_info(ptr);
+        poison_noaccess(ptr, info->size);
+    }
+#endif
     else
         /* we don't know the exact size of this buffer, so we only
            mark the first ALIGN bytes */
