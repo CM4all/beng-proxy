@@ -9,6 +9,10 @@
 
 #include "valgrind.h"
 
+#ifdef POISON
+#include <string.h>
+#endif
+
 static inline void
 poison_noaccess(void *p, size_t length)
 {
