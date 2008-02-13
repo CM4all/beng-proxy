@@ -9,6 +9,6 @@
 
 #include "http-response.h"
 
-struct http_response_handler widget_proxy_handler;
+extern struct http_response_handler widget_proxy_handler;
 
 #endif
