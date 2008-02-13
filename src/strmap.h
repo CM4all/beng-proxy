@@ -18,6 +18,9 @@ struct strmap_pair {
 strmap_t attr_malloc
 strmap_new(pool_t pool, unsigned capacity);
 
+struct strmap *attr_malloc
+strmap_dup(pool_t pool, struct strmap *src);
+
 void
 strmap_addn(strmap_t map, const char *key, const char *value);
 

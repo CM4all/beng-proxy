@@ -45,6 +45,20 @@ strmap_new(pool_t pool, unsigned capacity)
     return map;
 }
 
+struct strmap *attr_malloc
+strmap_dup(pool_t pool, struct strmap *src)
+{
+    struct strmap *dest = strmap_new(pool, src->capacity);
+    const struct strmap_pair *pair;
+
+    strmap_rewind(src);
+    while ((pair = strmap_next(src)) != NULL)
+        strmap_addn(dest, p_strdup(pool, pair->key),
+                    p_strdup(pool, pair->value));
+
+    return dest;
+}
+
 void
 strmap_addn(strmap_t map, const char *key, const char *value)
 {
