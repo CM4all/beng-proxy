@@ -607,6 +607,23 @@ p_malloc_libc(pool_t pool, size_t size)
     return chunk->data;
 }
 
+#ifdef DEBUG_POOL_GROW
+static void
+pool_dump_allocations(pool_t pool)
+{
+    struct allocation_info *info;
+    size_t sum;
+
+    sum = 0;
+    for (info = (struct allocation_info *)pool->allocations.prev;
+         info != (struct allocation_info *)&pool->allocations;
+         info = (struct allocation_info *)info->siblings.prev) {
+        sum += info->size;
+        daemon_log(6, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
+    }
+}
+#endif
+
 static void *
 p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
 {
@@ -614,7 +631,6 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
     void *p;
 #ifdef DEBUG_POOL_GROW
     struct allocation_info *info;
-    size_t sum;
 #endif
 
     size += LINEAR_PREFIX;
@@ -623,14 +639,8 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
         size_t new_area_size = area->size;
         daemon_log(5, "growing linear pool '%s'\n", pool->name);
 #ifdef DEBUG_POOL_GROW
-        sum = 0;
-        for (info = (struct allocation_info *)pool->allocations.prev;
-             info != (struct allocation_info *)&pool->allocations;
-             info = (struct allocation_info *)info->siblings.prev) {
-            sum += info->size;
-            daemon_log(6, "- %s:%u %zu => %zu\n", info->file, info->line, info->size, sum);
-        }
-        daemon_log(6, "+ %s:%u %zu => %zu\n", file, line, size - LINEAR_PREFIX, sum + size - LINEAR_PREFIX);
+        pool_dump_allocations(pool);
+        daemon_log(6, "+ %s:%u %zu\n", file, line, size - LINEAR_PREFIX);
 #endif
         if (size > new_area_size)
             new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
