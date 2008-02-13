@@ -7,7 +7,7 @@
 #include "pool.h"
 #include "list.h"
 #include "compiler.h"
-#include "valgrind.h"
+#include "poison.h"
 
 #include <daemon/log.h>
 
@@ -157,20 +157,15 @@ pool_recycler_put_linear(struct linear_pool_area *area)
     assert(area != NULL);
     assert(area->size > 0);
 
-#ifdef POISON
-    memset(area->data, 0x01, area->used);
-#endif
-
     if (recycler.num_linear_areas < RECYCLER_MAX_LINEAR_AREAS &&
         area->size <= RECYCLER_MAX_LINEAR_SIZE) {
-        VALGRIND_MAKE_MEM_NOACCESS(area->data, area->size);
+        poison_noaccess(area->data, area->used);
 
         area->prev = recycler.linear_areas;
         recycler.linear_areas = area;
         ++recycler.num_linear_areas;
     } else {
-        VALGRIND_MAKE_MEM_UNDEFINED(area, sizeof(*area) - sizeof(area->data) + area->size);
-
+        poison_undefined(area->data, area->used);
         free(area);
     }
 }
@@ -277,11 +272,7 @@ pool_new_linear_area(struct linear_pool_area *prev, size_t size)
     area->size = size;
     area->used = 0;
 
-#ifdef POISON
-    memset(area->data, 0x01, area->size);
-#endif
-
-    VALGRIND_MAKE_MEM_NOACCESS(area->data, area->size);
+    poison_noaccess(area->data, area->size);
 
     return area;
 }
@@ -651,7 +642,7 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
     p = area->data + area->used;
     area->used += size;
 
-    VALGRIND_MAKE_MEM_UNDEFINED(p, size);
+    poison_undefined(p, size);
 
 #ifdef DEBUG_POOL_GROW
     info = p;
@@ -710,7 +701,7 @@ p_free(pool_t pool, void *ptr)
     else
         /* we don't know the exact size of this buffer, so we only
            mark the first ALIGN bytes */
-        VALGRIND_MAKE_MEM_NOACCESS(ptr, ALIGN);
+        poison_noaccess(ptr, ALIGN);
 }
 
 static inline void
