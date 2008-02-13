@@ -21,7 +21,7 @@ struct istream_byte {
  */
 
 static size_t
-byte_source_data(const void *data, size_t length, void *ctx)
+byte_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_byte *byte = ctx;
 
@@ -31,7 +31,7 @@ byte_source_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-byte_source_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+byte_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct istream_byte *byte = ctx;
 
@@ -41,32 +41,28 @@ byte_source_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 }
 
 static void
-byte_source_eof(void *ctx)
+byte_input_eof(void *ctx)
 {
     struct istream_byte *byte = ctx;
-
-    assert(byte->input != NULL);
 
     istream_clear_unref(&byte->input);
     istream_invoke_eof(&byte->output);
 }
 
 static void
-byte_source_abort(void *ctx)
+byte_input_abort(void *ctx)
 {
     struct istream_byte *byte = ctx;
-
-    assert(byte->input != NULL);
 
     istream_clear_unref(&byte->input);
     istream_invoke_abort(&byte->output);
 }
 
 static const struct istream_handler byte_input_handler = {
-    .data = byte_source_data,
-    .direct = byte_source_direct,
-    .eof = byte_source_eof,
-    .abort = byte_source_abort,
+    .data = byte_input_data,
+    .direct = byte_input_direct,
+    .eof = byte_input_eof,
+    .abort = byte_input_abort,
 };
 
 
