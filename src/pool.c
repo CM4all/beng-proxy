@@ -570,6 +570,35 @@ pool_contains(pool_t pool, const void *ptr, size_t size)
 
 #endif
 
+void
+pool_mark(pool_t pool, struct pool_mark *mark)
+{
+    assert(pool->type == POOL_LINEAR);
+
+    mark->area = pool->current_area.linear;
+    mark->position = mark->area->used;
+}
+
+void
+pool_rewind(pool_t pool, const struct pool_mark *mark)
+{
+    assert(pool->type == POOL_LINEAR);
+    assert(mark->area != NULL);
+    assert(mark->position <= mark->area->used);
+
+    while (pool->current_area.linear != mark->area) {
+        struct linear_pool_area *area = pool->current_area.linear;
+        assert(area != NULL);
+
+        pool->current_area.linear = area->prev;
+        pool_recycler_put_linear(area);
+    }
+
+    /* XXX poison, valgrind */
+
+    mark->area->used = mark->position;
+}
+
 static void *
 p_malloc_libc(pool_t pool, size_t size)
 {

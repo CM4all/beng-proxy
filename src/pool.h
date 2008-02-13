@@ -14,6 +14,11 @@
 
 typedef struct pool *pool_t;
 
+struct pool_mark {
+    struct linear_pool_area *area;
+    size_t position;
+};
+
 void
 pool_recycler_clear(void);
 
@@ -79,6 +84,12 @@ pool_commit(void);
 int
 pool_contains(pool_t pool, const void *ptr, size_t size);
 #endif
+
+void
+pool_mark(pool_t pool, struct pool_mark *mark);
+
+void
+pool_rewind(pool_t pool, const struct pool_mark *mark);
 
 void * attr_malloc
 p_malloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
