@@ -9,7 +9,7 @@
 
 #undef inline
 
-#if defined(__GNUC__) && __GNUC__ >= 4
+#if !defined(SPARSE) && defined(__GNUC__) && __GNUC__ >= 4
 
 /* GCC 4.x */
 

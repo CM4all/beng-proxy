@@ -45,7 +45,8 @@ LIBEVENT_LIBS = -levent
 LIBATTR_CFLAGS =
 LIBATTR_LIBS = -lattr
 
-SPARSE_FLAGS = $(MORE_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBEVENT_CFLAGS) \
+SPARSE_FLAGS = -DSPARSE \
+	$(MORE_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBEVENT_CFLAGS) \
 	-Wdecl -Wdefault-bitfield-sign -Wdo-while -Wenum-mismatch \
 	-Wnon-pointer-null -Wptr-subtraction-blows -Wreturn-void \
 	-Wshadow -Wtypesign 
