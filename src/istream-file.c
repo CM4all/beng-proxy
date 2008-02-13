@@ -95,7 +95,7 @@ istream_file_eof_detected(struct file *file)
 static inline size_t
 istream_file_max_read(const struct file *file)
 {
-    if (file->rest != (off_t)-1 && file->rest < INT_MAX)
+    if (file->rest != (off_t)-1 && file->rest < (off_t)INT_MAX)
         return (size_t)file->rest;
     else
         return INT_MAX;
