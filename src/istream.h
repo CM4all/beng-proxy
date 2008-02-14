@@ -85,7 +85,7 @@ struct istream {
     /** how much data was available in the previous invocation? */
     size_t data_available;
 
-    off_t available_check, available_full;
+    off_t available_partial, available_full;
 #endif
 
     /**
@@ -174,12 +174,12 @@ istream_available(istream_t _istream, int partial)
 
     istream->reading = 0;
 
-    assert(partial || available == (off_t)-1 ||
-           available >= istream->available_check);
-    if (available > istream->available_check)
-        istream->available_check = available;
-
-    if (!partial) {
+    if (partial) {
+        assert(istream->available_partial == 0 ||
+               available >= istream->available_partial);
+        if (available > istream->available_partial)
+            istream->available_partial = available;
+    } else {
         assert(!istream->available_full_set ||
                istream->available_full == available);
         if (!istream->available_full_set && available != (off_t)-1) {
