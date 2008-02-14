@@ -19,16 +19,23 @@ void
 remove_connection(struct client_connection *connection)
 {
     assert(connection != NULL);
-    assert(connection->http != NULL);
+    assert(connection->http == NULL);
     assert(connection->instance != NULL);
     assert(connection->instance->num_connections > 0);
 
     list_remove(&connection->siblings);
     --connection->instance->num_connections;
 
-    http_server_connection_free(&connection->http);
-
     pool_unref(connection->pool);
+}
+
+void
+close_connection(struct client_connection *connection)
+{
+    http_server_connection_t http = connection->http;
+
+    if (http != NULL)
+        http_server_connection_free(&http);
 }
 
 void

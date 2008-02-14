@@ -257,11 +257,10 @@ my_http_server_connection_free(void *ctx)
 {
     struct client_connection *connection = ctx;
 
-    /* since remove_connection() might recurse here, we check if
-       the connection has already been removed from the linked
-       list */
-    if (connection->http != NULL)
-        remove_connection(connection);
+    assert(connection->http != NULL);
+
+    connection->http = NULL;
+    remove_connection(connection);
 }
 
 const struct http_server_connection_handler my_http_server_connection_handler = {

@@ -145,7 +145,7 @@ create_child(struct instance *instance)
             listener_event_del(instance->listener);
 
         while (!list_empty(&instance->connections))
-            remove_connection((struct client_connection*)instance->connections.next);
+            close_connection((struct client_connection*)instance->connections.next);
 
         session_manager_deinit();
 

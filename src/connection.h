@@ -26,6 +26,9 @@ void
 remove_connection(struct client_connection *connection);
 
 void
+close_connection(struct client_connection *connection);
+
+void
 http_listener_callback(int fd,
                        const struct sockaddr *addr, socklen_t addrlen,
                        void *ctx);
