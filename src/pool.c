@@ -447,7 +447,8 @@ static void
 pool_dump_refs(pool_t pool)
 {
     const struct pool_ref *ref;
-    daemon_log(0, "pool '%s'(%u) REF:\n", pool->name, pool->ref);
+    daemon_log(0, "pool '%s'[%p](%u) REF:\n", pool->name,
+               (const void*)pool, pool->ref);
     for (ref = (const struct pool_ref *)pool->refs.next;
          &ref->list_head != &pool->refs;
          ref = (const struct pool_ref *)ref->list_head.next) {
