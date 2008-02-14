@@ -574,15 +574,21 @@ pool_contains(pool_t pool, const void *ptr, size_t size)
 void
 pool_mark(pool_t pool, struct pool_mark *mark)
 {
+#ifndef POOL_LIBC_ONLY
     assert(pool->type == POOL_LINEAR);
 
     mark->area = pool->current_area.linear;
     mark->position = mark->area->used;
+#else
+    (void)pool;
+    (void)mark;
+#endif
 }
 
 void
 pool_rewind(pool_t pool, const struct pool_mark *mark)
 {
+#ifndef POOL_LIBC_ONLY
     assert(pool->type == POOL_LINEAR);
     assert(mark->area != NULL);
     assert(mark->position <= mark->area->used);
@@ -598,6 +604,10 @@ pool_rewind(pool_t pool, const struct pool_mark *mark)
     /* XXX poison, valgrind */
 
     mark->area->used = mark->position;
+#else
+    (void)pool;
+    (void)mark;
+#endif
 }
 
 static void *
