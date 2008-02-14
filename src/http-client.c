@@ -493,7 +493,17 @@ http_client_try_read_buffered(http_client_connection_t connection)
     assert(nbytes != -2);
 
     if (nbytes == 0) {
-        /* XXX */
+        if (connection->response.read_state == READ_BODY) {
+            /* XXX what if there is still data in connection->input? */
+            http_body_socket_eof(&connection->response.body_reader,
+                                 connection->input);
+            if (!http_client_connection_valid(connection))
+                return;
+
+            http_body_deinit(&connection->response.body_reader);
+        }
+
+        connection->response.read_state = READ_NONE;
         http_client_connection_close(connection);
         return;
     }
@@ -627,7 +637,8 @@ http_client_connection_close(http_client_connection_t connection)
     if (connection->response.read_state == READ_BODY) {
         http_client_response_stream_close(http_body_istream(&connection->response.body_reader));
         assert(connection->response.read_state == READ_NONE);
-    } else if (connection->request.pool != NULL) {
+    } else if (connection->request.pool != NULL &&
+               http_response_handler_defined(&connection->request.handler) /* XXX eliminate this check */) {
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
            being freed */

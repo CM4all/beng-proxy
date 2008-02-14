@@ -82,6 +82,17 @@ http_body_try_direct(struct http_body_reader *body, int fd)
     return nbytes;
 }
 
+void
+http_body_socket_eof(struct http_body_reader *body, fifo_buffer_t buffer)
+{
+    (void)buffer; /* XXX there may still be data in here */
+
+    if (body->rest > 0)
+        istream_invoke_abort(&body->output);
+    else
+        istream_invoke_eof(&body->output);
+}
+
 istream_t
 http_body_init(struct http_body_reader *body,
                const struct istream *stream, pool_t stream_pool,

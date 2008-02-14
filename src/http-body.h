@@ -45,6 +45,9 @@ http_body_consume_body(struct http_body_reader *body,
 ssize_t
 http_body_try_direct(struct http_body_reader *body, int fd);
 
+void
+http_body_socket_eof(struct http_body_reader *body, fifo_buffer_t buffer);
+
 istream_t
 http_body_init(struct http_body_reader *body,
                const struct istream *stream, pool_t stream_pool,
