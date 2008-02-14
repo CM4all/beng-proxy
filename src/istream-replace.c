@@ -132,6 +132,9 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
     }
 }
 
+static void
+replace_destroy(struct istream_replace *replace);
+
 
 /*
  * istream handler
@@ -163,12 +166,26 @@ replace_substitution_eof(void *ctx)
         replace_to_next_substitution(replace, s);
 }
 
+static void
+replace_substitution_abort(void *ctx)
+{
+    struct substitution *s = ctx;
+    struct istream_replace *replace = s->replace;
+
+    istream_clear_unref(&s->istream);
+
+    replace_destroy(replace);
+
+    if (replace->input == NULL)
+        istream_invoke_abort(&replace->output);
+    else
+        istream_close(replace->input);
+}
+
 static const struct istream_handler replace_substitution_handler = {
     .data = replace_substitution_data,
     .eof = replace_substitution_eof,
-
-    /* XXX display error message on abort()? */
-    .abort = replace_substitution_eof,
+    .abort = replace_substitution_abort,
 };
 
 
