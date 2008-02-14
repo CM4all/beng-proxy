@@ -28,7 +28,7 @@ PORT=80
 WORKERS=1
 DOCUMENT_ROOT=/var/www
 TRANSLATION_SOCKET=/var/run/cm4all/beng-proxy-translation.sock
-OPTIONS=""
+OPTIONS="-vv"
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
 
