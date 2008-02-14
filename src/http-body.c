@@ -9,12 +9,6 @@
 #include <assert.h>
 #include <limits.h>
 
-static inline int
-http_body_valid(const struct http_body_reader *body)
-{
-    return body->output.pool != NULL;
-}
-
 /** determine how much can be read from the body */
 static inline size_t
 http_body_max_read(struct http_body_reader *body, size_t length)
@@ -54,7 +48,6 @@ void
 http_body_consume_body(struct http_body_reader *body,
                        fifo_buffer_t buffer)
 {
-    const int chunked = body->rest == (off_t)-1;
     const void *data;
     size_t length, consumed;
 
@@ -64,16 +57,11 @@ http_body_consume_body(struct http_body_reader *body,
 
     length = http_body_max_read(body, length);
     consumed = istream_invoke_data(&body->output, data, length);
-    assert(consumed <= length);
-
-    if (!http_body_valid(body))
+    if (consumed == 0)
         return;
 
-    if (consumed > 0) {
-        fifo_buffer_consume(buffer, consumed);
-        if (!chunked || body->rest != 0)
-            http_body_consumed(body, consumed);
-    }
+    fifo_buffer_consume(buffer, consumed);
+    http_body_consumed(body, consumed);
 }
 
 ssize_t
