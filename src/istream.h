@@ -80,12 +80,12 @@ struct istream {
     istream_direct_t handler_direct;
 
 #ifndef NDEBUG
-    unsigned reading:1, eof:1, in_data:1;
+    unsigned reading:1, eof:1, in_data:1, available_full_set:1;
 
     /** how much data was available in the previous invocation? */
     size_t data_available;
 
-    off_t available_check;
+    off_t available_check, available_full;
 #endif
 
     /**
@@ -178,6 +178,15 @@ istream_available(istream_t _istream, int partial)
            available >= istream->available_check);
     if (available > istream->available_check)
         istream->available_check = available;
+
+    if (!partial) {
+        assert(!istream->available_full_set ||
+               istream->available_full == available);
+        if (!istream->available_full_set && available != (off_t)-1) {
+            istream->available_full = available;
+            istream->available_full_set = 1;
+        }
+    }
 #endif
 
     return available;

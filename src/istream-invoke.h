@@ -24,6 +24,8 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
     assert(!istream->in_data);
     assert(!istream->eof);
     assert(length >= istream->data_available);
+    assert(!istream->available_full_set ||
+           (off_t)length <= istream->available_full);
 
 #ifndef NDEBUG
     pool_notify(istream->pool, &notify);
@@ -49,6 +51,9 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
         else 
             istream->available_check -= nbytes;
     }
+
+    if (nbytes > 0 && istream->available_full_set)
+        istream->available_full -= (off_t)nbytes;
 #endif
 
     return nbytes;
@@ -94,6 +99,11 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
             istream->available_check = 0;
         else 
             istream->available_check -= nbytes;
+
+        assert(!istream->available_full_set ||
+               (off_t)nbytes <= istream->available_full);
+        if (istream->available_full_set)
+            istream->available_full -= (off_t)nbytes;
     }
 #endif
 
@@ -106,6 +116,7 @@ istream_invoke_eof(struct istream *istream)
     assert(istream != NULL);
     assert(!istream->eof);
     assert(istream->available_check == 0);
+    assert(!istream->available_full_set || istream->available_full == 0);
 
 #ifndef NDEBUG
     istream->eof = 1;
