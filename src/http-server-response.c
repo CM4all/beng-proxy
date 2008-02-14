@@ -72,6 +72,7 @@ http_server_response_stream_eof(void *ctx)
     assert(connection->response.istream != NULL);
     assert(istream_pool(connection->response.istream) != NULL);
 
+    connection->response.istream = NULL;
     connection->response.writing = 0;
 
     if (connection->response.writing_100_continue) {
@@ -112,6 +113,9 @@ http_server_response_stream_abort(void *ctx)
     http_server_connection_t connection = ctx;
 
     assert(connection->response.writing);
+
+    connection->response.istream = NULL;
+    connection->response.writing = 0;
 
     http_server_connection_close(connection);
 }
