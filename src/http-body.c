@@ -31,7 +31,7 @@ http_body_consumed(struct http_body_reader *body, size_t nbytes)
     pool_t pool = body->output.pool;
 
     if (body->rest == (off_t)-1) {
-        if (istream_dechunk_eof(body->dechunk))
+        if (body->dechunk != NULL && istream_dechunk_eof(body->dechunk))
             body->rest = 0;
 
         return;
@@ -97,7 +97,7 @@ http_body_try_direct(struct http_body_reader *body, int fd)
 istream_t
 http_body_init(struct http_body_reader *body,
                const struct istream *stream, pool_t stream_pool,
-               pool_t pool, off_t content_length)
+               pool_t pool, off_t content_length, int keep_alive)
 {
     istream_t istream;
 
@@ -108,8 +108,10 @@ http_body_init(struct http_body_reader *body,
     body->rest = content_length;
 
     istream = http_body_istream(body);
-    if (content_length == (off_t)-1)
+    if (keep_alive && content_length == (off_t)-1)
         istream = body->dechunk = istream_dechunk_new(pool, istream);
+    else
+        body->dechunk = NULL;
 
     return istream;
 }

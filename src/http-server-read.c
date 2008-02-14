@@ -115,7 +115,7 @@ http_server_headers_finished(http_server_connection_t connection)
     request->body = http_body_init(&connection->request.body_reader,
                                    &http_server_request_stream,
                                    connection->pool, request->pool,
-                                   content_length);
+                                   content_length, 1);
 
     connection->request.read_state = READ_BODY;
 

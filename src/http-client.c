@@ -301,7 +301,8 @@ http_client_headers_finished(http_client_connection_t connection)
                          &http_client_response_stream,
                          connection->pool,
                          connection->request.pool,
-                         content_length);
+                         content_length,
+                         connection->keep_alive);
 
     connection->response.read_state = READ_BODY;
 }
