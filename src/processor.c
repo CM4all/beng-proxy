@@ -644,6 +644,7 @@ embed_widget(processor_t processor, struct processor_env *env,
                              processor->response_handler.handler,
                              processor->response_handler.ctx,
                              processor->async_ref);
+        parser_close(processor->parser);
         return NULL;
     } else {
         struct widget_stream *ws;
