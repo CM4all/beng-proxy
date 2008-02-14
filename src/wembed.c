@@ -55,7 +55,7 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
     gb = growing_buffer_new(pool, 512);
     growing_buffer_write_string(gb, "<iframe id=\"beng_iframe_");
     growing_buffer_write_string(gb, prefix);
-    growing_buffer_write_string(gb, "\""
+    growing_buffer_write_string(gb, "\" "
                                 "width='100%' height='100%' "
                                 "frameborder='0' marginheight='0' marginwidth='0' "
                                 "scrolling='no' "
