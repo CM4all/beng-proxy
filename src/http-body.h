@@ -57,8 +57,6 @@ static inline void
 http_body_deinit(struct http_body_reader *body)
 {
     VALGRIND_MAKE_MEM_UNDEFINED(body, sizeof(*body));
-
-    body->output.pool = NULL;
 }
 
 #endif

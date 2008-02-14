@@ -164,7 +164,6 @@ http_client_response_stream_close(istream_t istream)
     connection->request.pool = NULL;
     connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
-    connection->response.body_reader.output.pool = NULL;
 #endif
 
     if (!connection->keep_alive && http_client_connection_valid(connection)) {
@@ -411,7 +410,6 @@ http_client_response_stream_eof(http_client_connection_t connection)
     connection->request.pool = NULL;
     connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
-    connection->response.body_reader.output.pool = NULL;
 #endif
 
     if (!connection->keep_alive && http_client_connection_valid(connection)) {
