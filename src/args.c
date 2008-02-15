@@ -43,6 +43,7 @@ args_parse(pool_t pool, const char *p, size_t length)
 const char *
 args_format_n(pool_t pool, strmap_t args,
               const char *replace_key, const char *replace_value,
+              size_t replace_value_length,
               const char *replace_key2, const char *replace_value2,
               size_t replace_value2_length,
               const char *remove_key)
@@ -60,8 +61,8 @@ args_format_n(pool_t pool, strmap_t args,
             length += strlen(pair->key) + 1 + strlen(pair->value) * 3 + 1;
     }
 
-    if (replace_key != NULL && replace_value != NULL)
-        length += strlen(replace_key) + 1 + strlen(replace_value) * 3 + 1;
+    if (replace_key != NULL)
+        length += strlen(replace_key) + 1 + replace_value_length * 3 + 1;
 
     if (replace_key2 != NULL)
         length += strlen(replace_key2) + 1 + replace_value2_length * 3 + 1;
@@ -88,14 +89,14 @@ args_format_n(pool_t pool, strmap_t args,
         }
     }
 
-    if (replace_key != NULL && replace_value != NULL) {
+    if (replace_key != NULL) {
         if (p > ret)
             *p++ = '&';
         length = strlen(replace_key);
         memcpy(p, replace_key, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, replace_value, strlen(replace_value));
+        p += uri_escape(p, replace_value, replace_value_length);
     }
 
     if (replace_key2 != NULL) {
@@ -120,6 +121,7 @@ args_format(pool_t pool, strmap_t args,
 {
     return args_format_n(pool, args,
                          replace_key, replace_value,
+                         replace_value == NULL ? 0 : strlen(replace_value),
                          replace_key2, replace_value2,
                          replace_value2 == NULL ? 0 : strlen(replace_value2),
                          remove_key);

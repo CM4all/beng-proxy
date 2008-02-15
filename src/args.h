@@ -23,6 +23,7 @@ args_parse(pool_t pool, const char *p, size_t length);
 const char *
 args_format_n(pool_t pool, strmap_t args,
               const char *replace_key, const char *replace_value,
+              size_t replace_value_length,
               const char *replace_key2, const char *replace_value2,
               size_t replace_value2_length,
               const char *remove_key);

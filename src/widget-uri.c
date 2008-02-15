@@ -151,7 +151,7 @@ widget_external_uri(pool_t pool,
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format_n(tpool, args,
-                          "focus", widget->id,
+                          "focus", widget->id, strlen(widget->id),
                           "path", p->data, p->length,
                           NULL);
 
