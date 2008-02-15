@@ -31,7 +31,9 @@ ws_response(http_status_t status, struct strmap *headers,
         istream_delayed_set_eof(delayed);
     else {
         istream_delayed_set(delayed, body);
-        istream_read(delayed);
+
+        if (istream_has_handler(delayed))
+            istream_read(delayed);
     }
 }
 
