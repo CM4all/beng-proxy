@@ -143,6 +143,9 @@ test_normal(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, create_input(pool));
+    assert(istream != NULL);
+    assert(!istream_has_handler(istream));
+
     run_istream(istream);
 }
 
