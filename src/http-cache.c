@@ -76,6 +76,26 @@ http_cache_put(struct http_cache_request *request)
     cache_put(request->cache->cache, p_strdup(pool, request->url), &item->item);
 }
 
+/** check whether the HTTP response should be put into the cache */
+static int
+http_cache_evaluate(http_status_t status, strmap_t headers,
+                    istream_t body)
+{
+    off_t available;
+
+    (void)headers;
+
+    if (status != HTTP_STATUS_OK || body == NULL)
+        return 0;
+
+    available = istream_available(body, 1);
+    if (available != (off_t)-1 && available > 256 * 1024)
+        /* too large for the cache */
+        return 0;
+
+    return 1;
+}
+
 
 /*
  * istream handler
@@ -131,16 +151,8 @@ http_cache_response_response(http_status_t status, strmap_t headers,
     struct http_cache_request *request = ctx;
     off_t available;
 
-    if (status != HTTP_STATUS_OK || body == NULL) {
+    if (!http_cache_evaluate(status, headers, body)) {
         /* don't cache response */
-        http_response_handler_invoke_response(&request->handler, status,
-                                              headers, body);
-        return;
-    }
-
-    available = istream_available(body, 1);
-    if (available != (off_t)-1 && available > 256 * 1024) {
-        /* too large for the cache */
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
         return;
