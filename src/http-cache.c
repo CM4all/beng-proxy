@@ -88,10 +88,12 @@ http_cache_evaluate(http_status_t status, strmap_t headers,
     if (status != HTTP_STATUS_OK || body == NULL)
         return 0;
 
-    available = istream_available(body, 1);
-    if (available != (off_t)-1 && available > 256 * 1024)
-        /* too large for the cache */
-        return 0;
+    if (body != NULL) {
+        available = istream_available(body, 1);
+        if (available != (off_t)-1 && available > 256 * 1024)
+            /* too large for the cache */
+            return 0;
+    }
 
     return 1;
 }
