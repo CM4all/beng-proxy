@@ -13,6 +13,7 @@
 #include "js-filter.h"
 #include "js-generator.h"
 #include "widget-stream.h"
+#include "tpool.h"
 
 #include <daemon/log.h>
 
@@ -795,30 +796,38 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
             processor_replace_add(processor, processor->widget_start_offset,
                                   tag->end, istream);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
+        struct pool_mark mark;
+        const char *p;
+        size_t length;
+
         assert(processor->embedded_widget != NULL);
 
         /* XXX escape */
 
-        if (processor->widget_param.name_length == 0 ||
-            processor->widget_params_length + 1 +
-            processor->widget_param.name_length + 1 +
-            processor->widget_param.value_length >= sizeof(processor->widget_params))
+        if (processor->widget_param.name_length == 0)
             return;
+
+        pool_mark(tpool, &mark);
+
+        p = args_format_n(tpool, NULL,
+                          p_strndup(tpool, processor->widget_param.name,
+                                    processor->widget_param.name_length),
+                          processor->widget_param.value,
+                          processor->widget_param.value_length,
+                          NULL, NULL, 0, NULL);
+        length = strlen(p);
+
+        if (processor->widget_params_length + 1 + length >= sizeof(processor->widget_params)) {
+            pool_rewind(tpool, &mark);
+            return;
+        }
 
         if (processor->widget_params_length > 0)
             processor->widget_params[processor->widget_params_length++] = '&';
+        memcpy(processor->widget_params + processor->widget_params_length, p, length);
+        processor->widget_params_length += length;
 
-        memcpy(processor->widget_params + processor->widget_params_length,
-               processor->widget_param.name,
-               processor->widget_param.name_length);
-        processor->widget_params_length += processor->widget_param.name_length;
-
-        processor->widget_params[processor->widget_params_length++] = '=';
-
-        memcpy(processor->widget_params + processor->widget_params_length,
-               processor->widget_param.value,
-               processor->widget_param.value_length);
-        processor->widget_params_length += processor->widget_param.value_length;
+        pool_rewind(tpool, &mark);
     } else if (processor->tag == TAG_SCRIPT &&
                tag->type == TAG_OPEN) {
         processor->in_script = 1;
