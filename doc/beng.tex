@@ -326,7 +326,12 @@ browser does not support it - \emph{beng-proxy} will take care of it.
 The widget should not include some kind of session identification in
 the URI.
 
-Cookies are not available in JavaScript.
+These cookies are not available in JavaScript.  Besides that, it would
+be a bad practice to use cookies in JavaScript which are not actually
+evaluated by the server (and cannot be used by the widget server in
+this case, since \emph{beng-proxy} does not forward them).  These
+cookies would generate a lot of network load for no good, which would
+have to go through the visitor's narrow upstream with every request.
 
 \subsection{Authentification}
 
