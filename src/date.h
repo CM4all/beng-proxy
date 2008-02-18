@@ -15,4 +15,7 @@ http_date_format_r(char *buffer, time_t t);
 const char *
 http_date_format(time_t t);
 
+time_t
+http_date_parse(const char *p);
+
 #endif
