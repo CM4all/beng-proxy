@@ -163,6 +163,8 @@ http_cache_response_response(http_status_t status, strmap_t headers,
         request->output = NULL;
         http_cache_put(request);
     } else {
+        size_t buffer_size;
+
         /* tee the body: one goes to our client, and one goes into the
            cache */
         body = istream_tee_new(request->pool, body);
@@ -172,8 +174,14 @@ http_cache_response_response(http_status_t status, strmap_t headers,
         istream_assign_ref_handler(&request->input, istream_tee_second(body),
                                    &http_cache_response_body_handler, request,
                                    0);
-        request->output = growing_buffer_new(request->pool,
-                                             available == (off_t)-1 || available < 256 ? 1024 : available);
+
+        if (available == (off_t)-1 || available < 256)
+            buffer_size = 1024;
+        else if (available > 16384)
+            buffer_size = 16384;
+        else
+            buffer_size = (size_t)available;
+        request->output = growing_buffer_new(request->pool, buffer_size);
     }
 
     http_response_handler_invoke_response(&request->handler, status,
