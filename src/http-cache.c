@@ -9,6 +9,7 @@
 #include "url-stream.h"
 #include "strmap.h"
 #include "http-response.h"
+#include "date.h"
 
 #include <string.h>
 #include <time.h>
@@ -36,6 +37,8 @@ struct http_cache_request {
     const char *url;
     struct http_response_handler_ref handler;
 
+    off_t expires;
+
     http_status_t status;
     strmap_t headers;
     istream_t input;
@@ -52,7 +55,7 @@ http_cache_put(struct http_cache_request *request)
 
     pool = pool_new_linear(request->cache->pool, "http_cache_item", 1024);
     item = p_malloc(pool, sizeof(*item));
-    item->item.expires = time(NULL) + 60; /* XXX */
+    item->item.expires = request->expires;
     item->pool = pool;
     item->status = request->status;
     item->headers = strmap_dup(pool, request->headers);
@@ -79,8 +82,12 @@ http_cache_put(struct http_cache_request *request)
 /** check whether the HTTP response should be put into the cache */
 static int
 http_cache_evaluate(http_status_t status, strmap_t headers,
-                    off_t body_available)
+                    off_t body_available,
+                    time_t *expires_r)
 {
+    time_t date, expires;
+    const char *p;
+
     (void)headers;
 
     if (status != HTTP_STATUS_OK || body_available == 0)
@@ -88,6 +95,27 @@ http_cache_evaluate(http_status_t status, strmap_t headers,
 
     if (body_available != (off_t)-1 && body_available > 256 * 1024)
         /* too large for the cache */
+        return 0;
+
+    /* XXX cache-control */
+
+    p = strmap_get(headers, "date");
+    if (p == NULL)
+        /* we cannot determine wether to cache a resource if the
+           server does not provide its system time */
+        return 0;
+    date = http_date_parse(p);
+    if (date == (time_t)-1)
+        return 0;
+
+    p = strmap_get(headers, "expires");
+    if (p != NULL) {
+        expires = http_date_parse(p);
+        if (expires == (time_t)-1 || expires < date)
+            return 0;
+
+        *expires_r = time(NULL) + (expires - date);
+    } else
         return 0;
 
     return 1;
@@ -150,7 +178,7 @@ http_cache_response_response(http_status_t status, strmap_t headers,
 
     available = body == NULL ? 0 : istream_available(body, 1);
 
-    if (!http_cache_evaluate(status, headers, available)) {
+    if (!http_cache_evaluate(status, headers, available, &request->expires)) {
         /* don't cache response */
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
