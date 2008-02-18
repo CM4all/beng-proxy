@@ -24,7 +24,8 @@ istream_buffer_consume(struct istream *istream, fifo_buffer_t buffer)
         return 0;
 
     consumed = istream_invoke_data(istream, data, length);
-    fifo_buffer_consume(buffer, consumed);
+    if (consumed > 0)
+        fifo_buffer_consume(buffer, consumed);
     return length - consumed;
 }
 
@@ -42,7 +43,8 @@ istream_buffer_send(struct istream *istream, fifo_buffer_t buffer)
         return 0;
 
     consumed = istream_invoke_data(istream, data, length);
-    fifo_buffer_consume(buffer, consumed);
+    if (consumed > 0)
+        fifo_buffer_consume(buffer, consumed);
     return consumed;
 }
 
