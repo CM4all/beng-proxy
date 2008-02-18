@@ -37,7 +37,7 @@ struct http_cache_request {
     const char *url;
     struct http_response_handler_ref handler;
 
-    off_t expires;
+    time_t expires;
 
     http_status_t status;
     strmap_t headers;
