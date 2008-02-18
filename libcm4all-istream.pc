@@ -1,0 +1,9 @@
+version=0.0.0
+libdir=/usr/lib
+includedir=/usr/include/cm4all/libistream-0
+
+Name: libcm4all-istream
+Description: CM4all istream Library
+Version: ${version}
+Libs: -L${libdir} -lcm4all-istream
+Cflags: -I${includedir}

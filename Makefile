@@ -51,6 +51,32 @@ SPARSE_FLAGS = -DSPARSE \
 	-Wnon-pointer-null -Wptr-subtraction-blows -Wreturn-void \
 	-Wshadow -Wtypesign 
 
+POOL_SOURCES = src/pool.c src/pstring.c
+
+ISTREAM_SOURCES = \
+	src/istream-memory.c \
+	src/istream-null.c \
+	src/istream-string.c \
+	src/istream-file.c \
+	src/istream-chunked.c \
+	src/istream-dechunk.c \
+	src/istream-cat.c \
+	src/istream-pipe.c \
+	src/istream-delayed.c \
+	src/istream-hold.c \
+	src/istream-deflate.c \
+	src/istream-subst.c \
+	src/istream-byte.c \
+	src/istream-trace.c \
+	src/istream-fail.c \
+	src/istream-later.c \
+	src/istream-head.c \
+	src/istream-tee.c \
+	src/istream-replace.c \
+	src/format.c \
+	src/fifo-buffer.c \
+	$(POOL_SOURCES)
+
 SOURCES = src/main.c \
 	src/cmdline.c \
 	src/child.c \
@@ -64,7 +90,6 @@ SOURCES = src/main.c \
 	src/file-handler.c \
 	src/cgi-handler.c \
 	src/proxy-handler.c \
-	src/istream-replace.c \
 	src/widget.c \
 	src/widget-class.c \
 	src/widget-ref.c \
@@ -103,27 +128,9 @@ SOURCES = src/main.c \
 	src/url-stream.c \
 	src/cgi.c \
 	src/filter.c \
-	src/fifo-buffer.c \
 	src/growing-buffer.c \
 	src/duplex.c \
-	src/istream-memory.c \
-	src/istream-null.c \
-	src/istream-string.c \
-	src/istream-file.c \
-	src/istream-chunked.c \
-	src/istream-dechunk.c \
-	src/istream-cat.c \
-	src/istream-pipe.c \
-	src/istream-delayed.c \
-	src/istream-hold.c \
-	src/istream-deflate.c \
-	src/istream-subst.c \
-	src/istream-byte.c \
-	src/istream-trace.c \
-	src/istream-fail.c \
-	src/istream-later.c \
-	src/istream-head.c \
-	src/istream-tee.c \
+	$(ISTREAM_SOURCES) \
 	src/fork.c \
 	src/uri.c \
 	src/uri-escape.c \
@@ -131,19 +138,17 @@ SOURCES = src/main.c \
 	src/gmtime.c \
 	src/date.c \
 	src/strutil.c \
-	src/format.c \
 	src/hashmap.c \
 	src/strmap.c \
 	src/cache.c \
 	src/http-cache.c \
 	src/stock.c \
 	src/hstock.c \
-	src/tpool.c \
-	src/pstring.c \
-	src/pool.c
+	src/tpool.c
 
 HEADERS = $(wildcard src/*.h) $(wildcard include/beng-proxy/*.h)
 
+ISTREAM_OBJECTS = $(patsubst %.c,%.o,$(ISTREAM_SOURCES))
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
 DEBUG_ARGS = -vvvvvD
@@ -153,7 +158,10 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-processor test/run-google-gadget test/run-embed
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-processor test/run-google-gadget test/run-embed
+
+src/libcm4all-istream.a: $(ISTREAM_OBJECTS)
+	ar cr $@ $^
 
 src/cm4all-beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS) -lz
