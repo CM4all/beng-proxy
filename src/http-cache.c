@@ -7,6 +7,7 @@
 #include "http-cache.h"
 #include "cache.h"
 #include "url-stream.h"
+#include "header-writer.h"
 #include "strmap.h"
 #include "http-response.h"
 #include "date.h"
@@ -310,7 +311,7 @@ void
 http_cache_request(struct http_cache *cache,
                    pool_t pool,
                    http_method_t method, const char *url,
-                   struct growing_buffer *headers, istream_t body,
+                   struct strmap *headers, istream_t body,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
@@ -331,7 +332,7 @@ http_cache_request(struct http_cache *cache,
 
             url_stream_new(pool, cache->stock,
                            method, url,
-                           headers, body,
+                           headers_dup(pool, headers), body,
                            &http_cache_response_handler, request,
                            async_ref);
         } else {
@@ -353,7 +354,7 @@ http_cache_request(struct http_cache *cache,
 
         url_stream_new(pool, cache->stock,
                        method, url,
-                       headers, body,
+                       headers_dup(pool, headers), body,
                        handler, handler_ctx,
                        async_ref);
     }

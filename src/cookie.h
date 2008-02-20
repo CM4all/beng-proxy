@@ -9,7 +9,6 @@
 
 #include "pool.h"
 #include "list.h"
-#include "growing-buffer.h"
 #include "strref.h"
 
 #include <time.h>
@@ -28,7 +27,8 @@ void
 cookie_list_set_cookie2(pool_t pool, struct list_head *head, const char *value);
 
 void
-cookie_list_http_header(growing_buffer_t gb, struct list_head *head);
+cookie_list_http_header(struct strmap *headers, struct list_head *head,
+                        pool_t pool);
 
 void
 cookie_map_parse(struct strmap *cookies, const char *p, pool_t pool);

@@ -8,7 +8,6 @@
 #include "http-cache.h"
 #include "processor.h"
 #include "widget.h"
-#include "header-writer.h"
 #include "session.h"
 #include "cookie.h"
 #include "async.h"
@@ -62,16 +61,29 @@ get_env_request_header(const struct processor_env *env, const char *key)
     return strmap_get(env->request_headers, key);
 }
 
-static growing_buffer_t
+static void
+headers_copy(struct strmap *in, struct strmap *out,
+             const char *const* keys)
+{
+    const char *value;
+
+    for (; *keys != NULL; ++keys) {
+        value = strmap_get(in, *keys);
+        if (value != NULL)
+            strmap_put(out, *keys, value, 1);
+    }
+}
+
+static struct strmap *
 embed_request_headers(struct embed *embed, int with_body)
 {
-    growing_buffer_t headers;
+    struct strmap *headers;
     struct widget_session *ws;
     struct session *session;
     const char *p;
 
-    headers = growing_buffer_new(embed->pool, 1024);
-    header_write(headers, "accept-charset", "utf-8");
+    headers = strmap_new(embed->pool, 32);
+    strmap_addn(headers, "accept-charset", "utf-8");
 
     if (embed->env->request_headers != NULL) {
         headers_copy(embed->env->request_headers, headers, copy_headers);
@@ -81,33 +93,33 @@ embed_request_headers(struct embed *embed, int with_body)
 
     ws = widget_get_session(embed->widget, 0);
     if (ws != NULL)
-        cookie_list_http_header(headers, &ws->cookies);
+        cookie_list_http_header(headers, &ws->cookies, embed->pool);
 
     session = widget_get_session2(embed->widget);
     if (session != NULL && session->language != NULL)
-        header_write(headers, "accept-language", session->language);
+        strmap_addn(headers, "accept-language", session->language);
     else if (embed->env->request_headers != NULL)
         headers_copy(embed->env->request_headers, headers, language_headers);
 
     if (session != NULL && session->user != NULL)
-        header_write(headers, "x-cm4all-beng-user", session->user);
+        strmap_addn(headers, "x-cm4all-beng-user", session->user);
 
     p = get_env_request_header(embed->env, "user-agent");
     if (p == NULL)
         p = "beng-proxy v" VERSION;
-    header_write(headers, "user-agent", p);
+    strmap_addn(headers, "user-agent", p);
 
     p = get_env_request_header(embed->env, "x-forwarded-for");
     if (p == NULL) {
         if (embed->env->remote_host != NULL)
-            header_write(headers, "x-forwarded-for", embed->env->remote_host);
+            strmap_addn(headers, "x-forwarded-for", embed->env->remote_host);
     } else {
         if (embed->env->remote_host == NULL)
-            header_write(headers, "x-forwarded-for", p);
+            strmap_addn(headers, "x-forwarded-for", p);
         else
-            header_write(headers, "x-forwarded-for",
-                         p_strcat(embed->pool, p, ", ",
-                                  embed->env->remote_host, NULL));
+            strmap_addn(headers, "x-forwarded-for",
+                        p_strcat(embed->pool, p, ", ",
+                                 embed->env->remote_host, NULL));
     }
 
     return headers;
@@ -121,7 +133,7 @@ embed_redirect(struct embed *embed,
                istream_t body)
 {
     const char *new_uri;
-    growing_buffer_t headers;
+    struct strmap *headers;
     struct strref s;
     const struct strref *p;
 
@@ -274,7 +286,7 @@ embed_new(pool_t pool, struct widget *widget,
           struct async_operation_ref *async_ref)
 {
     struct embed *embed;
-    growing_buffer_t headers;
+    struct strmap *headers;
 
     assert(widget != NULL);
     assert(widget->class != NULL);

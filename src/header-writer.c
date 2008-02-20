@@ -51,3 +51,11 @@ headers_copy_all(strmap_t in, growing_buffer_t out)
     while ((pair = strmap_next(in)) != NULL)
         header_write(out, pair->key, pair->value);
 }
+
+growing_buffer_t
+headers_dup(pool_t pool, strmap_t in)
+{
+    growing_buffer_t out = growing_buffer_new(pool, 2048);
+    headers_copy_all(in, out);
+    return out;
+}

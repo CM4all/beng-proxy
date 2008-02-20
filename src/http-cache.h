@@ -12,7 +12,7 @@
 
 struct http_cache;
 struct hstock;
-struct growing_buffer;
+struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
@@ -27,7 +27,7 @@ void
 http_cache_request(struct http_cache *cache,
                    pool_t pool,
                    http_method_t method, const char *url,
-                   struct growing_buffer *headers, istream_t body,
+                   struct strmap *headers, istream_t body,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref);

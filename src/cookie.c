@@ -105,26 +105,35 @@ cookie_list_set_cookie2(pool_t pool, struct list_head *head, const char *value)
 }
 
 void
-cookie_list_http_header(growing_buffer_t gb, struct list_head *head)
+cookie_list_http_header(struct strmap *headers, struct list_head *head,
+                        pool_t pool)
 {
     struct cookie *cookie;
+    char buffer[2048];
+    size_t length;
 
     if (list_empty(head))
         return;
 
-    growing_buffer_write_string(gb, "Cookie2: $Version=\"1\"\r\nCookie: ");
+    length = 0;
 
     for (cookie = (struct cookie *)head->next;
          &cookie->siblings != head;
          cookie = (struct cookie *)cookie->siblings.next) {
-        growing_buffer_write_buffer(gb, cookie->name.data, cookie->name.length);
-        growing_buffer_write_string(gb, "=");
+        if (sizeof(buffer) - length < cookie->name.length + 1 + cookie->value.length + 2)
+            break;
+        memcpy(buffer + length, cookie->name.data, cookie->name.length);
+        length += cookie->name.length;
+        buffer[length++] = '=';
         /* XXX escape? */
-        growing_buffer_write_buffer(gb, cookie->value.data, cookie->value.length);
-        growing_buffer_write_string(gb, "; ");
+        memcpy(buffer + length, cookie->value.data, cookie->value.length);
+        length += cookie->value.length;
+        buffer[length++] = ';';
+        buffer[length++] = ' ';
     }
 
-    growing_buffer_write_string(gb, "\r\n");
+    strmap_addn(headers, "Cookie2", "$Version=\"1\"");
+    strmap_addn(headers, "Cookie", p_strndup(pool, buffer, length));
 }
 
 void
