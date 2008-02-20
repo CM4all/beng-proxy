@@ -30,6 +30,8 @@ struct http_cache {
 
 struct http_cache_info {
     time_t expires;
+    time_t last_modified;
+    const char *etag;
 };
 
 struct http_cache_item {
@@ -86,6 +88,8 @@ http_cache_request_evaluate(pool_t pool,
 
     info = p_malloc(pool, sizeof(*info));
     info->expires = (time_t)-1;
+    info->last_modified = (time_t)-1;
+    info->etag = NULL;
     return info;
 }
 
@@ -173,6 +177,9 @@ http_cache_response_evaluate(struct http_cache_info *info,
     info->expires = parse_translate_time(strmap_get(headers, "expires"), offset);
     if (info->expires == (time_t)-1 || info->expires < now)
         return 0;
+
+    info->last_modified = parse_translate_time(strmap_get(headers, "last-modified"), offset);
+    info->etag = strmap_get(headers, "etag");
 
     return 1;
 }
