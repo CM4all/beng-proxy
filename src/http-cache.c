@@ -28,6 +28,10 @@ struct http_cache {
     struct hstock *stock;
 };
 
+struct http_cache_info {
+    time_t expires;
+};
+
 struct http_cache_item {
     struct cache_item item;
 
@@ -45,7 +49,7 @@ struct http_cache_request {
     const char *url;
     struct http_response_handler_ref handler;
 
-    time_t expires;
+    struct http_cache_info *info;
 
     http_status_t status;
     strmap_t headers;
@@ -56,29 +60,33 @@ struct http_cache_request {
 
 
 /* check whether the request could produce a cacheable response */
-static int
-http_cache_request_evaluate(http_method_t method,
+static struct http_cache_info *
+http_cache_request_evaluate(pool_t pool,
+                            http_method_t method,
                             struct strmap *headers,
                             istream_t body)
 {
+    struct http_cache_info *info;
     const char *p;
 
     if (method != HTTP_METHOD_GET || body != NULL)
-        return 0;
+        return NULL;
 
     if (headers != NULL) {
         p = strmap_get(headers, "cache-control");
         if (p != NULL) {
             if (strcmp(p, "no-cache") == 0)
-                return 0;
+                return NULL;
         } else {
             p = strmap_get(headers, "pragme");
             if (p != NULL && strcmp(p, "no-cache") == 0)
-                return 0;
+                return NULL;
         }
     }
 
-    return 1;
+    info = p_malloc(pool, sizeof(*info));
+    info->expires = (time_t)-1;
+    return info;
 }
 
 static void
@@ -91,7 +99,7 @@ http_cache_put(struct http_cache_request *request)
 
     pool = pool_new_linear(request->cache->pool, "http_cache_item", 1024);
     item = p_malloc(pool, sizeof(*item));
-    item->item.expires = request->expires;
+    item->item.expires = request->info->expires;
     item->pool = pool;
     item->status = request->status;
     item->headers = strmap_dup(pool, request->headers);
@@ -117,9 +125,9 @@ http_cache_put(struct http_cache_request *request)
 
 /** check whether the HTTP response should be put into the cache */
 static int
-http_cache_evaluate(http_status_t status, strmap_t headers,
-                    off_t body_available,
-                    time_t *expires_r)
+http_cache_response_evaluate(struct http_cache_info *info,
+                             http_status_t status, strmap_t headers,
+                             off_t body_available)
 {
     time_t date, expires;
     const char *p;
@@ -150,7 +158,7 @@ http_cache_evaluate(http_status_t status, strmap_t headers,
         if (expires == (time_t)-1 || expires < date)
             return 0;
 
-        *expires_r = time(NULL) + (expires - date);
+        info->expires = time(NULL) + (expires - date);
     } else
         return 0;
 
@@ -216,7 +224,8 @@ http_cache_response_response(http_status_t status, strmap_t headers,
 
     available = body == NULL ? 0 : istream_available(body, 1);
 
-    if (!http_cache_evaluate(status, headers, available, &request->expires)) {
+    if (!http_cache_response_evaluate(request->info,
+                                      status, headers, available)) {
         /* don't cache response */
         cache_log(4, "http_cache: nocache %s\n", request->url);
 
@@ -331,7 +340,10 @@ http_cache_request(struct http_cache *cache,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    if (http_cache_request_evaluate(method, headers, body)) {
+    struct http_cache_info *info;
+
+    info = http_cache_request_evaluate(pool, method, headers, body);
+    if (info != NULL) {
         struct http_cache_item *item
             = (struct http_cache_item *)cache_get(cache->cache, url);
 
@@ -342,6 +354,8 @@ http_cache_request(struct http_cache *cache,
             request->cache = cache;
             request->url = url;
             http_response_handler_set(&request->handler, handler, handler_ctx);
+
+            request->info = info;
 
             cache_log(4, "http_cache: miss %s\n", url);
 
