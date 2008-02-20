@@ -14,6 +14,13 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef CACHE_LOG
+#include <daemon/log.h>
+#define cache_log(...) daemon_log(__VA_ARGS__)
+#else
+#define cache_log(...) do {} while (0)
+#endif
+
 struct http_cache {
     pool_t pool;
     struct cache *cache;
@@ -52,6 +59,8 @@ http_cache_put(struct http_cache_request *request)
 {
     pool_t pool;
     struct http_cache_item *item;
+
+    cache_log(4, "http_cache: put %s\n", request->url);
 
     pool = pool_new_linear(request->cache->pool, "http_cache_item", 1024);
     item = p_malloc(pool, sizeof(*item));
@@ -180,6 +189,8 @@ http_cache_response_response(http_status_t status, strmap_t headers,
 
     if (!http_cache_evaluate(status, headers, available, &request->expires)) {
         /* don't cache response */
+        cache_log(4, "http_cache: nocache %s\n", request->url);
+
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
         return;
@@ -301,6 +312,8 @@ http_cache_request(struct http_cache *cache,
             request->url = url;
             http_response_handler_set(&request->handler, handler, handler_ctx);
 
+            cache_log(4, "http_cache: miss %s\n", url);
+
             url_stream_new(pool, cache->stock,
                            method, url,
                            headers, body,
@@ -311,6 +324,8 @@ http_cache_request(struct http_cache *cache,
             struct http_response_handler_ref handler_ref;
             istream_t response_body;
 
+            cache_log(4, "http_cache: found %s\n", url);
+
             http_response_handler_set(&handler_ref, handler, handler_ctx);
 
             /* XXX hold reference on item */
@@ -318,10 +333,13 @@ http_cache_request(struct http_cache *cache,
             http_response_handler_invoke_response(&handler_ref, item->status,
                                                   item->headers, response_body);
         }
-    } else
+    } else {
+        cache_log(4, "http_cache: ignore %s\n", url);
+
         url_stream_new(pool, cache->stock,
                        method, url,
                        headers, body,
                        handler, handler_ctx,
                        async_ref);
+    }
 }
