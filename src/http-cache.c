@@ -170,12 +170,8 @@ http_cache_response_evaluate(struct http_cache_info *info,
     now = time(NULL);
     offset = now - date;
 
-    p = strmap_get(headers, "expires");
-    if (p != NULL) {
-        info->expires = parse_translate_time(p, offset);
-        if (info->expires == (time_t)-1 || info->expires < now)
-            return 0;
-    } else
+    info->expires = parse_translate_time(strmap_get(headers, "expires"), offset);
+    if (info->expires == (time_t)-1 || info->expires < now)
         return 0;
 
     return 1;
