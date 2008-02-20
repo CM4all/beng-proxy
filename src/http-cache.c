@@ -162,6 +162,8 @@ http_cache_response_body_abort(void *ctx)
 {
     struct http_cache_request *request = ctx;
 
+    cache_log(4, "http_cache: body_abort %s\n", request->url);
+
     istream_clear_unref(&request->input);
 }
 
@@ -231,6 +233,8 @@ static void
 http_cache_response_abort(void *ctx)
 {
     struct http_cache_request *request = ctx;
+
+    cache_log(4, "http_cache: response_abort %s\n", request->url);
 
     http_response_handler_invoke_abort(&request->handler);
 }
