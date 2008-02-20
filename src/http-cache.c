@@ -123,13 +123,28 @@ http_cache_put(struct http_cache_request *request)
     cache_put(request->cache->cache, p_strdup(pool, request->url), &item->item);
 }
 
+static time_t
+parse_translate_time(const char *p, time_t offset)
+{
+    time_t t;
+
+    if (p == NULL)
+        return (time_t)-1;
+
+    t = http_date_parse(p);
+    if (t != (time_t)-1)
+        t += offset;
+
+    return t;
+}
+
 /** check whether the HTTP response should be put into the cache */
 static int
 http_cache_response_evaluate(struct http_cache_info *info,
                              http_status_t status, strmap_t headers,
                              off_t body_available)
 {
-    time_t date, expires;
+    time_t date, now, offset;
     const char *p;
 
     (void)headers;
@@ -152,13 +167,14 @@ http_cache_response_evaluate(struct http_cache_info *info,
     if (date == (time_t)-1)
         return 0;
 
+    now = time(NULL);
+    offset = now - date;
+
     p = strmap_get(headers, "expires");
     if (p != NULL) {
-        expires = http_date_parse(p);
-        if (expires == (time_t)-1 || expires < date)
+        info->expires = parse_translate_time(p, offset);
+        if (info->expires == (time_t)-1 || info->expires < now)
             return 0;
-
-        info->expires = time(NULL) + (expires - date);
     } else
         return 0;
 
