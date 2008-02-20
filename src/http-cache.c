@@ -54,6 +54,17 @@ struct http_cache_request {
 };
 
 
+/* check whether the request could produce a cacheable response */
+static int
+http_cache_request_evaluate(http_method_t method,
+                            istream_t body)
+{
+    if (method != HTTP_METHOD_GET || body != NULL)
+        return 0;
+
+    return 1;
+}
+
 static void
 http_cache_put(struct http_cache_request *request)
 {
@@ -304,7 +315,7 @@ http_cache_request(struct http_cache *cache,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    if (method == HTTP_METHOD_GET && body == NULL) {
+    if (http_cache_request_evaluate(method, body)) {
         struct http_cache_item *item
             = (struct http_cache_item *)cache_get(cache->cache, url);
 
