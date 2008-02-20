@@ -58,10 +58,25 @@ struct http_cache_request {
 /* check whether the request could produce a cacheable response */
 static int
 http_cache_request_evaluate(http_method_t method,
+                            struct strmap *headers,
                             istream_t body)
 {
+    const char *p;
+
     if (method != HTTP_METHOD_GET || body != NULL)
         return 0;
+
+    if (headers != NULL) {
+        p = strmap_get(headers, "cache-control");
+        if (p != NULL) {
+            if (strcmp(p, "no-cache") == 0)
+                return 0;
+        } else {
+            p = strmap_get(headers, "pragme");
+            if (p != NULL && strcmp(p, "no-cache") == 0)
+                return 0;
+        }
+    }
 
     return 1;
 }
@@ -316,7 +331,7 @@ http_cache_request(struct http_cache *cache,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    if (http_cache_request_evaluate(method, body)) {
+    if (http_cache_request_evaluate(method, headers, body)) {
         struct http_cache_item *item
             = (struct http_cache_item *)cache_get(cache->cache, url);
 
