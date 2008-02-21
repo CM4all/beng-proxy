@@ -269,6 +269,12 @@ http_client_headers_finished(http_client_connection_t connection)
     connection->keep_alive = header_connection != NULL &&
         strcasecmp(header_connection, "keep-alive") == 0;
 
+    if (http_status_is_empty(connection->response.status)) {
+        connection->response.body = NULL;
+        connection->response.read_state = READ_BODY;
+        return;
+    }
+
     value = strmap_get(connection->response.headers, "transfer-encoding");
     if (value == NULL || strcasecmp(value, "chunked") != 0) {
         /* not chunked */
@@ -330,6 +336,9 @@ http_client_handle_line(http_client_connection_t connection,
     }
 }
 
+static void
+http_client_response_finished(http_client_connection_t connection);
+
 static int
 http_client_parse_headers(http_client_connection_t connection)
 {
@@ -371,12 +380,17 @@ http_client_parse_headers(http_client_connection_t connection)
 
     if (http_client_connection_valid(connection) &&
         connection->response.read_state != READ_HEADERS) {
+        int empty_response = connection->response.body == NULL;
+
         assert(connection->response.read_state == READ_BODY);
 
         http_response_handler_invoke_response(&connection->request.handler,
                                               connection->response.status,
                                               connection->response.headers,
                                               connection->response.body);
+
+        if (empty_response && http_client_connection_valid(connection))
+            http_client_response_finished(connection);
     }
 
     return 1;
