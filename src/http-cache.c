@@ -58,6 +58,7 @@ struct http_cache_request {
     const char *url;
     struct http_response_handler_ref handler;
 
+    struct http_cache_item *item;
     struct http_cache_info *info;
 
     http_status_t status;
@@ -211,6 +212,13 @@ http_cache_response_evaluate(struct http_cache_info *info,
     return info->expires != (time_t)-1 || info->last_modified != NULL;
 }
 
+static void
+http_cache_serve(struct http_cache_item *item,
+                 pool_t pool,
+                 const char *url, istream_t body,
+                 const struct http_response_handler *handler,
+                 void *handler_ctx);
+
 
 /*
  * istream handler
@@ -267,6 +275,16 @@ http_cache_response_response(http_status_t status, strmap_t headers,
 {
     struct http_cache_request *request = ctx;
     off_t available;
+
+    if (request->item != NULL && status == HTTP_STATUS_NOT_MODIFIED) {
+        assert(body == NULL);
+
+        cache_log(5, "http_cache: not_modified %s\n", request->url);
+        http_cache_serve(request->item, request->pool,
+                         request->url, NULL,
+                         request->handler.handler, request->handler.ctx);
+        return;
+    }
 
     available = body == NULL ? 0 : istream_available(body, 1);
 
@@ -393,6 +411,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
     request->url = url;
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
+    request->item = NULL;
     request->info = info;
 
     cache_log(4, "http_cache: miss %s\n", url);
@@ -407,7 +426,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
 static void
 http_cache_serve(struct http_cache_item *item,
                  pool_t pool,
-                 const char *url, istream_t body,
+                 const char *url attr_unused, istream_t body,
                  const struct http_response_handler *handler,
                  void *handler_ctx)
 {
@@ -428,6 +447,37 @@ http_cache_serve(struct http_cache_item *item,
 }
 
 static void
+http_cache_test(struct http_cache *cache, struct http_cache_item *item,
+                pool_t pool,
+                http_method_t method, const char *url,
+                struct strmap *headers, istream_t body,
+                const struct http_response_handler *handler,
+                void *handler_ctx,
+                struct async_operation_ref *async_ref)
+{
+    struct http_cache_request *request = p_malloc(pool,
+                                                  sizeof(*request));
+    request->pool = pool;
+    request->cache = cache;
+    request->url = url;
+    http_response_handler_set(&request->handler, handler, handler_ctx);
+
+    request->item = item;
+    request->info = &item->info;
+
+    cache_log(4, "http_cache: test %s\n", url);
+
+    if (item->info.last_modified != NULL)
+        strmap_put(headers, "if-modified-since", item->info.last_modified, 1);
+
+    url_stream_new(pool, cache->stock,
+                   method, url,
+                   headers_dup(pool, headers), body,
+                   &http_cache_response_handler, request,
+                   async_ref);
+}
+
+static void
 http_cache_found(struct http_cache *cache, struct http_cache_item *item,
                  pool_t pool,
                  http_method_t method, const char *url,
@@ -436,14 +486,12 @@ http_cache_found(struct http_cache *cache, struct http_cache_item *item,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    /* XXX request with If-Modified-Since */
-
-    (void)cache;
-    (void)method;
-    (void)headers;
-    (void)async_ref;
-
-    http_cache_serve(item, pool, url, body, handler, handler_ctx);
+    if (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL))
+        http_cache_serve(item, pool, url, body, handler, handler_ctx);
+    else
+        http_cache_test(cache, item, pool,
+                        method, url, headers, body,
+                        handler, handler_ctx, async_ref);
 }
 
 void
