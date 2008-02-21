@@ -308,10 +308,14 @@ http_server_response(struct http_server_request *request,
     content_length = body == NULL
         ? 0 : istream_available(body, 0);
     if (content_length == (off_t)-1) {
+        assert(!http_status_is_empty(status));
+
         if (body != NULL && connection->keep_alive) {
             header_write(headers, "transfer-encoding", "chunked");
             body = istream_chunked_new(request->pool, body);
         }
+    } else if (http_status_is_empty(status)) {
+        assert(content_length == 0);
     } else {
         format_uint64(connection->response.content_length_buffer, content_length);
         header_write(headers, "content-length",
