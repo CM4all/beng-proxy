@@ -399,10 +399,12 @@ http_cache_found(struct http_cache *cache, struct http_cache_item *item,
     istream_t response_body;
 
     (void)cache;
-    (void)body;
     (void)method;
     (void)headers;
     (void)async_ref;
+
+    if (body != NULL)
+        istream_close(body);
 
     cache_log(4, "http_cache: found %s\n", url);
 
