@@ -44,6 +44,8 @@ struct http_cache_item {
 
     pool_t pool;
 
+    struct http_cache_info info;
+
     http_status_t status;
     strmap_t headers;
     size_t length;
@@ -99,10 +101,23 @@ http_cache_request_evaluate(pool_t pool,
 }
 
 static void
+http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
+                     const struct http_cache_info *src)
+{
+    *dest = *src;
+
+    if (src->etag != NULL)
+        dest->etag = p_strdup(pool, src->etag);
+}
+
+static void
 http_cache_put(struct http_cache_request *request)
 {
     pool_t pool;
     struct http_cache_item *item;
+
+    assert(request != NULL);
+    assert(request->info != NULL);
 
     cache_log(4, "http_cache: put %s\n", request->url);
 
@@ -110,6 +125,7 @@ http_cache_put(struct http_cache_request *request)
     item = p_malloc(pool, sizeof(*item));
     item->item.expires = request->info->expires;
     item->pool = pool;
+    http_cache_copy_info(pool, &item->info, request->info);
     item->status = request->status;
     item->headers = strmap_dup(pool, request->headers);
     item->length = request->length;
