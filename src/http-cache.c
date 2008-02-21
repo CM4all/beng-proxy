@@ -358,6 +358,62 @@ http_cache_close(struct http_cache *cache)
     cache_close(cache->cache);
 }
 
+static void
+http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
+                pool_t pool,
+                http_method_t method, const char *url,
+                struct strmap *headers, istream_t body,
+                const struct http_response_handler *handler,
+                void *handler_ctx,
+                struct async_operation_ref *async_ref)
+{
+    struct http_cache_request *request = p_malloc(pool,
+                                                  sizeof(*request));
+    request->pool = pool;
+    request->cache = cache;
+    request->url = url;
+    http_response_handler_set(&request->handler, handler, handler_ctx);
+
+    request->info = info;
+
+    cache_log(4, "http_cache: miss %s\n", url);
+
+    url_stream_new(pool, cache->stock,
+                   method, url,
+                   headers_dup(pool, headers), body,
+                   &http_cache_response_handler, request,
+                   async_ref);
+}
+
+static void
+http_cache_found(struct http_cache *cache, struct http_cache_item *item,
+                 pool_t pool,
+                 http_method_t method, const char *url,
+                 struct strmap *headers, istream_t body,
+                 const struct http_response_handler *handler,
+                 void *handler_ctx,
+                 struct async_operation_ref *async_ref)
+{
+    /* XXX request with If-Modified-Since */
+    struct http_response_handler_ref handler_ref;
+    istream_t response_body;
+
+    (void)cache;
+    (void)body;
+    (void)method;
+    (void)headers;
+    (void)async_ref;
+
+    cache_log(4, "http_cache: found %s\n", url);
+
+    http_response_handler_set(&handler_ref, handler, handler_ctx);
+
+    /* XXX hold reference on item */
+    response_body = istream_memory_new(pool, item->data, item->length);
+    http_response_handler_invoke_response(&handler_ref, item->status,
+                                          item->headers, response_body);
+}
+
 void
 http_cache_request(struct http_cache *cache,
                    pool_t pool,
@@ -374,37 +430,14 @@ http_cache_request(struct http_cache *cache,
         struct http_cache_item *item
             = (struct http_cache_item *)cache_get(cache->cache, url);
 
-        if (item == NULL) {
-            struct http_cache_request *request = p_malloc(pool,
-                                                          sizeof(*request));
-            request->pool = pool;
-            request->cache = cache;
-            request->url = url;
-            http_response_handler_set(&request->handler, handler, handler_ctx);
-
-            request->info = info;
-
-            cache_log(4, "http_cache: miss %s\n", url);
-
-            url_stream_new(pool, cache->stock,
-                           method, url,
-                           headers_dup(pool, headers), body,
-                           &http_cache_response_handler, request,
-                           async_ref);
-        } else {
-            /* XXX request with If-Modified-Since */
-            struct http_response_handler_ref handler_ref;
-            istream_t response_body;
-
-            cache_log(4, "http_cache: found %s\n", url);
-
-            http_response_handler_set(&handler_ref, handler, handler_ctx);
-
-            /* XXX hold reference on item */
-            response_body = istream_memory_new(pool, item->data, item->length);
-            http_response_handler_invoke_response(&handler_ref, item->status,
-                                                  item->headers, response_body);
-        }
+        if (item == NULL)
+            http_cache_miss(cache, info, pool,
+                            method, url, headers, body,
+                            handler, handler_ctx, async_ref);
+        else
+            http_cache_found(cache, item, pool,
+                             method, url, headers, body,
+                             handler, handler_ctx, async_ref);
     } else {
         cache_log(4, "http_cache: ignore %s\n", url);
 
