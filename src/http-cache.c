@@ -29,8 +29,13 @@ struct http_cache {
 };
 
 struct http_cache_info {
+    /** when will the cached resource expire? (beng-proxy time) */
     time_t expires;
+
+    /** when was the cached resource last modified on the widget
+        server? (widget server time) */
     time_t last_modified;
+
     const char *etag;
 };
 
@@ -178,7 +183,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     if (info->expires < now)
         cache_log(2, "invalid 'expires' header\n");
 
-    info->last_modified = parse_translate_time(strmap_get(headers, "last-modified"), offset);
+    info->last_modified = parse_translate_time(strmap_get(headers, "last-modified"), 0);
     if (info->last_modified > now)
         cache_log(2, "invalid 'last-modified' header\n");
 
