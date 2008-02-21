@@ -16,7 +16,7 @@
 static inline void
 poison_noaccess(void *p, size_t length)
 {
-#ifndef POISON
+#ifdef POISON
     memset(p, 0x01, length);
 #endif
     VALGRIND_MAKE_MEM_NOACCESS(p, length);
@@ -25,7 +25,7 @@ poison_noaccess(void *p, size_t length)
 static inline void
 poison_undefined(void *p, size_t length)
 {
-#ifndef POISON
+#ifdef POISON
     memset(p, 0x02, length);
 #endif
     VALGRIND_MAKE_MEM_UNDEFINED(p, length);
