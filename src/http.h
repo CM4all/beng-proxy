@@ -71,4 +71,11 @@ http_status_is_success(http_status_t status)
     return status >= 200 && status < 300;
 }
 
+static inline int
+http_status_is_empty(http_status_t status)
+{
+    return status == HTTP_STATUS_NO_CONTENT ||
+        status == HTTP_STATUS_NOT_MODIFIED;
+}
+
 #endif
