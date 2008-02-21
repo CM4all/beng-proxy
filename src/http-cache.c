@@ -196,11 +196,11 @@ http_cache_response_evaluate(struct http_cache_info *info,
     offset = now - date;
 
     info->expires = parse_translate_time(strmap_get(headers, "expires"), offset);
-    if (info->expires < now)
+    if (info->expires != (time_t)-1 && info->expires < now)
         cache_log(2, "invalid 'expires' header\n");
 
     info->last_modified = parse_translate_time(strmap_get(headers, "last-modified"), 0);
-    if (info->last_modified > now)
+    if (info->last_modified != (time_t)-1 && info->last_modified > now)
         cache_log(2, "invalid 'last-modified' header\n");
 
     info->etag = strmap_get(headers, "etag");
