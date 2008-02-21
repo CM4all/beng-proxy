@@ -386,6 +386,29 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
 }
 
 static void
+http_cache_serve(struct http_cache_item *item,
+                 pool_t pool,
+                 const char *url, istream_t body,
+                 const struct http_response_handler *handler,
+                 void *handler_ctx)
+{
+    struct http_response_handler_ref handler_ref;
+    istream_t response_body;
+
+    if (body != NULL)
+        istream_close(body);
+
+    cache_log(4, "http_cache: serve %s\n", url);
+
+    http_response_handler_set(&handler_ref, handler, handler_ctx);
+
+    /* XXX hold reference on item */
+    response_body = istream_memory_new(pool, item->data, item->length);
+    http_response_handler_invoke_response(&handler_ref, item->status,
+                                          item->headers, response_body);
+}
+
+static void
 http_cache_found(struct http_cache *cache, struct http_cache_item *item,
                  pool_t pool,
                  http_method_t method, const char *url,
@@ -395,25 +418,13 @@ http_cache_found(struct http_cache *cache, struct http_cache_item *item,
                  struct async_operation_ref *async_ref)
 {
     /* XXX request with If-Modified-Since */
-    struct http_response_handler_ref handler_ref;
-    istream_t response_body;
 
     (void)cache;
     (void)method;
     (void)headers;
     (void)async_ref;
 
-    if (body != NULL)
-        istream_close(body);
-
-    cache_log(4, "http_cache: found %s\n", url);
-
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
-
-    /* XXX hold reference on item */
-    response_body = istream_memory_new(pool, item->data, item->length);
-    http_response_handler_invoke_response(&handler_ref, item->status,
-                                          item->headers, response_body);
+    http_cache_serve(item, pool, url, body, handler, handler_ctx);
 }
 
 void
