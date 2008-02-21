@@ -34,7 +34,7 @@ struct http_cache_info {
 
     /** when was the cached resource last modified on the widget
         server? (widget server time) */
-    time_t last_modified;
+    const char *last_modified;
 
     const char *etag;
 };
@@ -95,7 +95,7 @@ http_cache_request_evaluate(pool_t pool,
 
     info = p_malloc(pool, sizeof(*info));
     info->expires = (time_t)-1;
-    info->last_modified = (time_t)-1;
+    info->last_modified = NULL;
     info->etag = NULL;
     return info;
 }
@@ -104,7 +104,10 @@ static void
 http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
                      const struct http_cache_info *src)
 {
-    *dest = *src;
+    dest->expires = src->expires;
+
+    if (src->last_modified != NULL)
+        dest->last_modified = p_strdup(pool, src->last_modified);
 
     if (src->etag != NULL)
         dest->etag = p_strdup(pool, src->etag);
@@ -202,13 +205,10 @@ http_cache_response_evaluate(struct http_cache_info *info,
     if (info->expires != (time_t)-1 && info->expires < now)
         cache_log(2, "invalid 'expires' header\n");
 
-    info->last_modified = parse_translate_time(strmap_get(headers, "last-modified"), 0);
-    if (info->last_modified != (time_t)-1 && info->last_modified > now)
-        cache_log(2, "invalid 'last-modified' header\n");
-
+    info->last_modified = strmap_get(headers, "last-modified");
     info->etag = strmap_get(headers, "etag");
 
-    return info->expires != (time_t)-1 || info->last_modified != (time_t)-1;
+    return info->expires != (time_t)-1 || info->last_modified != NULL;
 }
 
 
