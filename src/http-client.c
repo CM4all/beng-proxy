@@ -383,21 +383,18 @@ http_client_parse_headers(http_client_connection_t connection)
 }
 
 static void
-http_client_response_stream_eof(http_client_connection_t connection)
+http_client_response_finished(http_client_connection_t connection)
 {
     assert(connection->response.read_state == READ_BODY);
     assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
     assert(!http_response_handler_defined(&connection->request.handler));
-    assert(http_body_eof(&connection->response.body_reader));
 
     event2_nand(&connection->event, EV_READ);
 
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
     connection->response.body = NULL;
-
-    http_body_deinit(&connection->response.body_reader);
 
     if (connection->request.pool != NULL) {
         pool_unref(connection->request.pool);
@@ -422,6 +419,20 @@ http_client_response_stream_eof(http_client_connection_t connection)
         connection->handler->idle != NULL) {
         connection->handler->idle(connection->handler_ctx);
     }
+}
+
+static void
+http_client_response_stream_eof(http_client_connection_t connection)
+{
+    assert(connection->response.read_state == READ_BODY);
+    assert(connection->request.pool != NULL);
+    assert(connection->request.istream == NULL);
+    assert(!http_response_handler_defined(&connection->request.handler));
+    assert(http_body_eof(&connection->response.body_reader));
+
+    http_body_deinit(&connection->response.body_reader);
+
+    http_client_response_finished(connection);
 }
 
 static void
