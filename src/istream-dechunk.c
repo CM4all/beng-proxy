@@ -188,7 +188,7 @@ dechunk_input_eof(void *ctx)
 
     assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
-    daemon_log(2, "premature EOF in dechunker");
+    daemon_log(2, "premature EOF in dechunker\n");
 
     dechunk->state = CLOSED;
 
