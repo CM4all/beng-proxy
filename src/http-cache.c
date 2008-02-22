@@ -470,6 +470,9 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
     if (item->info.last_modified != NULL)
         strmap_put(headers, "if-modified-since", item->info.last_modified, 1);
 
+    if (item->info.etag != NULL)
+        strmap_put(headers, "if-none-match", item->info.etag, 1);
+
     url_stream_new(pool, cache->stock,
                    method, url,
                    headers_dup(pool, headers), body,
