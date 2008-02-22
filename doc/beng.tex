@@ -382,8 +382,12 @@ with the same server URI \\
 \hline
 \texttt{name} & registered name of the widget server \\
 \hline
+
 \texttt{href} & use an unregistered widget (deprecated as soon as the
-widget registry is available) \\
+widget registry is available).  The prefix ``raw:'' means the HTTP
+response is inserted without further processing.  There is another
+prefix named ``google:'' for Google gadget emulation. \\
+
 \hline
 \texttt{query\_string} & optional query string to append to the widget
 URI (without the question mark) \\

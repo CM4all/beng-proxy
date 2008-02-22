@@ -233,6 +233,13 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
                 return;
             }
 
+            if (embed->widget->class->type == WIDGET_TYPE_RAW) {
+                http_response_handler_invoke_response(&embed->handler_ref,
+                                                      status, headers, body);
+                pool_unref(embed->pool);
+                return;
+            }
+                
             processor_new(embed->pool, body,
                           embed->widget, embed->env, embed->options,
                           embed->handler_ref.handler,

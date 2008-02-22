@@ -488,7 +488,10 @@ parser_widget_attr_finished(struct widget *widget,
         enum widget_type type = WIDGET_TYPE_BENG;
         const char *class_name = strref_dup(pool, value);
 
-        if (strncmp(class_name, "google:", 7) == 0) {
+        if (strncmp(class_name, "raw:", 4) == 0) {
+            type = WIDGET_TYPE_RAW;
+            class_name += 4;
+        } else if (strncmp(class_name, "google:", 7) == 0) {
             type = WIDGET_TYPE_GOOGLE_GADGET;
             class_name += 7;
         }
