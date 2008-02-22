@@ -55,9 +55,6 @@ struct widget {
             means unset, empty string means don't generate anything */
         const char *tag;
 
-        /** dimensions of the widget */
-        const char *width, *height;
-
         /** custom CSS */
         const char *style;
     } decoration;
@@ -156,8 +153,6 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->class = class;
     widget->id = NULL;
     widget->decoration.tag = NULL;
-    widget->decoration.width = NULL;
-    widget->decoration.height = NULL;
     widget->decoration.style = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->path_info = "";
