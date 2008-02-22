@@ -92,6 +92,7 @@ void *
 fifo_buffer_write(fifo_buffer_t buffer, size_t *max_length_r)
 {
     assert(buffer != NULL);
+    assert(buffer->size > 0);
     assert(buffer->end <= buffer->size);
     assert(max_length_r != NULL);
 
@@ -112,6 +113,7 @@ void
 fifo_buffer_append(fifo_buffer_t buffer, size_t length)
 {
     assert(buffer != NULL);
+    assert(buffer->size > 0);
     assert(buffer->end >= buffer->start);
     assert(buffer->end + length <= buffer->size);
 
@@ -121,11 +123,16 @@ fifo_buffer_append(fifo_buffer_t buffer, size_t length)
 int
 fifo_buffer_empty(fifo_buffer_t buffer)
 {
+    assert(buffer->size > 0);
+
     return buffer->start == buffer->end;
 }
 
 int
 fifo_buffer_full(fifo_buffer_t buffer)
 {
+    assert(buffer->size > 0);
+
     return buffer->start == 0 && buffer->end == buffer->size;
+
 }
