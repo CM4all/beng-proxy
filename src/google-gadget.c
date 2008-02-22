@@ -30,6 +30,17 @@ static void
 google_gadget_process(struct google_gadget *gg, istream_t istream,
                       unsigned options)
 {
+    const char *path;
+
+    path = widget_path(gg->widget);
+    if (path != NULL) {
+        istream = istream_subst_new(gg->pool, istream);
+        istream_subst_add(gg->subst,
+                          "new _IG_Prefs()",
+                          p_strcat(gg->pool, "new _IG_Prefs(\"", path, "\")",
+                                   NULL));
+    }
+
     processor_new(gg->pool, istream,
                   gg->widget, gg->env,
                   options,
@@ -499,7 +510,6 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
                     struct async_operation_ref *async_ref)
 {
     struct google_gadget *gw;
-    const char *path;
 
     assert(widget != NULL);
     assert(widget->class != NULL);
@@ -527,13 +537,6 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     gw->subst = istream_subst_new(pool, gw->delayed);
     gw->parser = NULL;
     gw->has_locale = 0;
-
-    path = widget_path(widget);
-    if (path != NULL)
-        istream_subst_add(gw->subst,
-                          "new _IG_Prefs()",
-                          p_strcat(pool, "new _IG_Prefs(\"", path, "\")",
-                                   NULL));
 
     http_response_handler_set(&gw->response_handler, handler, handler_ctx);
 
