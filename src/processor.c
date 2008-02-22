@@ -223,6 +223,7 @@ processor_new(pool_t pool, istream_t istream,
 
     if (widget->from_request.proxy_ref == NULL &&
         widget->class->type == WIDGET_TYPE_BENG) {
+        istream = istream_subst_new(pool, istream);
         processor_subst_beng_widget(istream, widget, env);
     }
 
