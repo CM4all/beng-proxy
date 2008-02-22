@@ -30,16 +30,25 @@ static void
 google_gadget_process(struct google_gadget *gg, istream_t istream,
                       unsigned options)
 {
-    const char *path;
+    const char *prefix, *path;
+
+    istream = istream_subst_new(gg->pool, istream);
+
+    prefix = widget_prefix(gg->widget);
+    if (prefix != NULL) {
+        const char *module_id = p_strcat(gg->pool, prefix, "widget", NULL);
+        istream_subst_add(istream, "__MODULE_ID__", module_id);
+    }
+
+    istream_subst_add(istream, "__BIDI_START_EDGE__", "left");
+    istream_subst_add(istream, "__BIDI_END_EDGE__", "right");
 
     path = widget_path(gg->widget);
-    if (path != NULL) {
-        istream = istream_subst_new(gg->pool, istream);
+    if (path != NULL)
         istream_subst_add(gg->subst,
                           "new _IG_Prefs()",
                           p_strcat(gg->pool, "new _IG_Prefs(\"", path, "\")",
                                    NULL));
-    }
 
     processor_new(gg->pool, istream,
                   gg->widget, gg->env,

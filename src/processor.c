@@ -170,22 +170,6 @@ processor_subst_beng_widget(istream_t istream,
         istream_subst_add(istream, "&c:uri;", env->absolute_uri);
 }
 
-static void
-processor_subst_google_gadget(pool_t pool, istream_t istream,
-                              struct widget *widget)
-{
-    const char *prefix;
-
-    prefix = widget_prefix(widget);
-    if (prefix != NULL) {
-        const char *module_id = p_strcat(pool, prefix, "widget", NULL);
-        istream_subst_add(istream, "__MODULE_ID__", module_id);
-    }
-
-    istream_subst_add(istream, "__BIDI_START_EDGE__", "left");
-    istream_subst_add(istream, "__BIDI_END_EDGE__", "right");
-}
-
 
 /*
  * async operation
@@ -237,18 +221,9 @@ processor_new(pool_t pool, istream_t istream,
 
     pool = pool_new_linear(pool, "processor", 32768);
 
-    if (widget->from_request.proxy_ref == NULL) {
-        istream = istream_subst_new(pool, istream);
-
-        switch (widget->class->type) {
-        case WIDGET_TYPE_BENG:
-            processor_subst_beng_widget(istream, widget, env);
-            break;
-
-        case WIDGET_TYPE_GOOGLE_GADGET:
-            processor_subst_google_gadget(pool, istream, widget);
-            break;
-        }
+    if (widget->from_request.proxy_ref == NULL &&
+        widget->class->type == WIDGET_TYPE_BENG) {
+        processor_subst_beng_widget(istream, widget, env);
     }
 
     processor = p_malloc(pool, sizeof(*processor));
