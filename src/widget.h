@@ -134,7 +134,7 @@ struct widget_ref {
 extern const struct widget_class root_widget_class;
 
 const struct widget_class *
-get_widget_class(pool_t pool, const char *uri);
+get_widget_class(pool_t pool, const char *uri, enum widget_type type);
 
 const struct strref *
 widget_class_relative_uri(const struct widget_class *class,

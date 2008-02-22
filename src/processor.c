@@ -485,8 +485,15 @@ parser_widget_attr_finished(struct widget *widget,
                             const struct strref *value)
 {
     if (strref_cmp_literal(name, "href") == 0) {
+        enum widget_type type = WIDGET_TYPE_BENG;
         const char *class_name = strref_dup(pool, value);
-        widget->class = get_widget_class(pool, class_name);
+
+        if (strncmp(class_name, "google:", 7) == 0) {
+            type = WIDGET_TYPE_GOOGLE_GADGET;
+            class_name += 7;
+        }
+
+        widget->class = get_widget_class(pool, class_name, type);
     } else if (strref_cmp_literal(name, "id") == 0) {
         if (!strref_is_empty(value))
             widget_set_id(widget, pool, value);
