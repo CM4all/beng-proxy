@@ -88,7 +88,7 @@ http_cache_request_evaluate(pool_t pool,
             if (strcmp(p, "no-cache") == 0)
                 return NULL;
         } else {
-            p = strmap_get(headers, "pragme");
+            p = strmap_get(headers, "pragma");
             if (p != NULL && strcmp(p, "no-cache") == 0)
                 return NULL;
         }
