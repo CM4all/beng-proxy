@@ -137,8 +137,6 @@ response_invoke_processor(struct request *request2,
                       &widget_proxy_handler, request,
                       &request2->async);
 
-        istream_read(body);
-
         pool_unref(request->pool);
     } else {
         processor_options |= PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT;
