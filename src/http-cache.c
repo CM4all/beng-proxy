@@ -418,7 +418,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
 
     url_stream_new(pool, cache->stock,
                    method, url,
-                   headers_dup(pool, headers), body,
+                   headers == NULL ? NULL : headers_dup(pool, headers), body,
                    &http_cache_response_handler, request,
                    async_ref);
 }
@@ -466,6 +466,9 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
     request->info = &item->info;
 
     cache_log(4, "http_cache: test %s\n", url);
+
+    if (headers == NULL)
+        headers = strmap_new(pool, 16);
 
     if (item->info.last_modified != NULL)
         strmap_put(headers, "if-modified-since", item->info.last_modified, 1);
