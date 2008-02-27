@@ -7,7 +7,8 @@
 #include "client-socket.h"
 #include "socket-util.h"
 #include "async.h"
-#include "valgrind.h"
+
+#include <inline/valgrind.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -60,7 +61,7 @@ static struct async_operation_class client_socket_operation = {
  */
 
 static void
-client_socket_event_callback(int fd, short event attr_unused, void *ctx)
+client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
 {
     struct client_socket *client_socket = ctx;
     int ret;

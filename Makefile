@@ -37,6 +37,7 @@ WARNING_CFLAGS = -std=gnu99 -x c -Wall -Werror -wd981
 endif
 
 MORE_CFLAGS = -DVERSION=\"$(VERSION)\" -Iinclude
+MORE_CFLAGS += -I/usr/include/cm4all/libinline-0
 
 ALL_CFLAGS = $(CFLAGS) $(ARCH_CFLAGS) $(MORE_CFLAGS) $(WARNING_CFLAGS) 
 

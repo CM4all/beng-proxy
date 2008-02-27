@@ -16,7 +16,7 @@ struct hashmap_pair {
     void *value;
 };
 
-hashmap_t attr_malloc
+hashmap_t __attr_malloc
 hashmap_new(pool_t pool, unsigned capacity);
 
 void

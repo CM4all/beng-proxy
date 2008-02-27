@@ -33,7 +33,8 @@ response_stream_to_connection(istream_t istream)
 }
 
 static off_t
-http_server_request_stream_available(istream_t istream, int partial attr_unused)
+http_server_request_stream_available(istream_t istream,
+                                     int partial __attr_unused)
 {
     http_server_connection_t connection = response_stream_to_connection(istream);
 

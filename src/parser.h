@@ -8,8 +8,9 @@
 #define __BENG_PARSER_H
 
 #include "strref.h"
-#include "compiler.h"
 #include "istream.h"
+
+#include <inline/compiler.h>
 
 #include <sys/types.h>
 
@@ -43,7 +44,7 @@ struct parser_handler {
 
 struct parser;
 
-struct parser * attr_malloc
+struct parser * __attr_malloc
 parser_new(pool_t pool, istream_t input,
            const struct parser_handler *handler, void *handler_ctx);
 

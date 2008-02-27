@@ -426,7 +426,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
 static void
 http_cache_serve(struct http_cache_item *item,
                  pool_t pool,
-                 const char *url attr_unused, istream_t body,
+                 const char *url __attr_unused, istream_t body,
                  const struct http_response_handler *handler,
                  void *handler_ctx)
 {

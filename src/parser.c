@@ -7,8 +7,8 @@
 #include "parser.h"
 #include "pool.h"
 #include "strutil.h"
-#include "compiler.h"
-#include "valgrind.h"
+
+#include <inline/valgrind.h>
 
 #include <assert.h>
 #include <string.h>
@@ -551,7 +551,7 @@ static const struct istream_handler parser_input_handler = {
  *
  */
 
-struct parser * attr_malloc
+struct parser * __attr_malloc
 parser_new(struct pool *pool, istream_t input,
            const struct parser_handler *handler, void *handler_ctx)
 {

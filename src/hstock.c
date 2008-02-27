@@ -82,7 +82,7 @@ hstock_get(struct hstock *hstock, const char *uri,
 }
 
 void
-hstock_put(struct hstock *hstock attr_unused, const char *uri attr_unused,
+hstock_put(struct hstock *hstock __attr_unused, const char *uri __attr_unused,
            struct stock_item *object, int destroy)
 {
 #ifndef NDEBUG

@@ -15,10 +15,10 @@ struct strmap_pair {
     const char *key, *value;
 };
 
-strmap_t attr_malloc
+strmap_t __attr_malloc
 strmap_new(pool_t pool, unsigned capacity);
 
-struct strmap *attr_malloc
+struct strmap *__attr_malloc
 strmap_dup(pool_t pool, struct strmap *src);
 
 void

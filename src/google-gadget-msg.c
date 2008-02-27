@@ -63,7 +63,7 @@ gg_msg_parser_tag_start(const struct parser_tag *tag, void *ctx)
 }
 
 static void
-gg_msg_parser_tag_finished(const struct parser_tag *tag attr_unused,
+gg_msg_parser_tag_finished(const struct parser_tag *tag __attr_unused,
                            void *ctx)
 {
     struct google_gadget *gg = ctx;
@@ -90,7 +90,8 @@ gg_msg_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 }
 
 static size_t
-gg_msg_parser_cdata(const char *p, size_t length, int escaped attr_unused, void *ctx)
+gg_msg_parser_cdata(const char *p, size_t length, int escaped __attr_unused,
+                    void *ctx)
 {
     struct google_gadget *gg = ctx;
 
@@ -108,7 +109,7 @@ gg_msg_parser_cdata(const char *p, size_t length, int escaped attr_unused, void 
 }
 
 static void
-gg_msg_parser_eof(void *ctx, off_t attr_unused length)
+gg_msg_parser_eof(void *ctx, off_t __attr_unused length)
 {
     struct google_gadget *gg = ctx;
 

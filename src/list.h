@@ -7,7 +7,7 @@
 #ifndef __BENG_LIST_H
 #define __BENG_LIST_H
 
-#include "compiler.h"
+#include <inline/compiler.h>
 
 #ifndef NDEBUG
 #define LIST_POISON1  ((void *) 0x00100100)

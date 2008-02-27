@@ -361,7 +361,7 @@ google_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 }
 
 static void
-google_parser_eof(void *ctx, off_t attr_unused length)
+google_parser_eof(void *ctx, off_t __attr_unused length)
 {
     struct google_gadget *gw = ctx;
 

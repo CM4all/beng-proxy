@@ -5,7 +5,6 @@
  */
 
 #include "strmap.h"
-#include "compiler.h"
 
 #include <assert.h>
 #include <string.h>
@@ -45,7 +44,7 @@ strmap_new(pool_t pool, unsigned capacity)
     return map;
 }
 
-struct strmap *attr_malloc
+struct strmap *__attr_malloc
 strmap_dup(pool_t pool, struct strmap *src)
 {
     struct strmap *dest = strmap_new(pool, src->capacity);

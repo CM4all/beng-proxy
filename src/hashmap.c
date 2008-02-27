@@ -5,7 +5,8 @@
  */
 
 #include "hashmap.h"
-#include "compiler.h"
+
+#include <inline/compiler.h>
 
 #include <assert.h>
 #include <string.h>

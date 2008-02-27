@@ -5,7 +5,6 @@
  */
 
 #include "http-server-internal.h"
-#include "compiler.h"
 #include "buffered-io.h"
 #include "header-writer.h"
 #include "date.h"
@@ -13,6 +12,7 @@
 #include "format.h"
 #include "socket-util.h"
 
+#include <inline/compiler.h>
 #include <daemon/log.h>
 
 #include <assert.h>

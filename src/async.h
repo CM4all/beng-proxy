@@ -31,7 +31,7 @@
 #ifndef __BENG_ABORT_H
 #define __BENG_ABORT_H
 
-#include "compiler.h"
+#include <inline/compiler.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -54,7 +54,7 @@ struct async_operation_ref {
 };
 
 static inline void
-async_poison(struct async_operation *ao attr_unused)
+async_poison(struct async_operation *ao __attr_unused)
 {
 #ifndef NDEBUG
     ao->aborted = -1;
@@ -88,7 +88,7 @@ async_ref_defined(const struct async_operation_ref *ref)
 }
 
 static inline void
-async_ref_poison(struct async_operation_ref *ref attr_unused)
+async_ref_poison(struct async_operation_ref *ref __attr_unused)
 {
     assert(ref != NULL);
 

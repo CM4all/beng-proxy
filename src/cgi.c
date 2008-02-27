@@ -305,7 +305,7 @@ static struct async_operation_class cgi_async_operation = {
  *
  */
 
-static void attr_noreturn
+static void __attr_noreturn
 cgi_run(const char *path,
         http_method_t method, const char *uri,
         const char *script_name, const char *path_info,

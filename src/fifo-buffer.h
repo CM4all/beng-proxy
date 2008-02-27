@@ -31,7 +31,7 @@ typedef struct fifo_buffer *fifo_buffer_t;
 extern "C" {
 #endif
 
-fifo_buffer_t attr_malloc
+fifo_buffer_t __attr_malloc
 fifo_buffer_new(pool_t pool, size_t size);
 
 void

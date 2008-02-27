@@ -8,7 +8,6 @@
 #include "stock.h"
 #include "socket-util.h"
 #include "growing-buffer.h"
-#include "compiler.h"
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
@@ -469,7 +468,7 @@ translate_try_write(struct translate_connection *connection)
 
 static void
 translate_stock_create(void *ctx, struct stock_item *item, const char *uri,
-                       struct async_operation_ref *async_ref attr_unused)
+                       struct async_operation_ref *async_ref __attr_unused)
 {
     struct translate_connection *connection = (struct translate_connection *)item;
     int ret;

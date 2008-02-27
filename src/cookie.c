@@ -25,7 +25,7 @@ cookie_list_find(struct list_head *head, const char *name, size_t name_length)
     return NULL;
 }
 
-static attr_always_inline void
+static __attr_always_inline void
 ltrim(struct strref *s)
 {
     while (s->length > 0 && char_is_whitespace(s->data[0])) {
@@ -34,14 +34,14 @@ ltrim(struct strref *s)
     }
 }
 
-static attr_always_inline void
+static __attr_always_inline void
 rtrim(struct strref *s)
 {
     while (s->length > 0 && char_is_whitespace(strref_last(s)))
         --s->length;
 }
 
-static attr_always_inline void
+static __attr_always_inline void
 trim(struct strref *s)
 {
     ltrim(s);

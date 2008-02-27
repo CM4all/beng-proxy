@@ -12,7 +12,6 @@
 #include "url-stock.h"
 #include "stock.h"
 #include "http-cache.h"
-#include "compiler.h"
 
 #include <daemon/daemonize.h>
 
@@ -66,7 +65,8 @@ exit_event_callback(int fd, short event, void *ctx)
 }
 
 static void
-reload_event_callback(int fd attr_unused, short event attr_unused, void *ctx attr_unused)
+reload_event_callback(int fd __attr_unused, short event __attr_unused,
+                      void *ctx __attr_unused)
 {
     daemonize_reopen_logfile();
 }
@@ -105,7 +105,7 @@ deinit_signals(struct instance *instance)
 int main(int argc, char **argv)
 {
     int ret;
-    int attr_unused ref;
+    int __attr_unused ref;
     static struct instance instance = {
         .config = {
             .max_connnections = 1024,

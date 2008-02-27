@@ -7,13 +7,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "compiler.h"
 #include "duplex.h"
 #include "socket-util.h"
 #include "fifo-buffer.h"
 #include "event2.h"
 #include "buffered-io.h"
 
+#include <inline/compiler.h>
 #include <daemon/log.h>
 
 #include <sys/socket.h>
@@ -76,7 +76,7 @@ duplex_check_close(struct duplex *duplex)
 }
 
 static void
-read_event_callback(int fd, short event attr_unused, void *ctx)
+read_event_callback(int fd, short event __attr_unused, void *ctx)
 {
     struct duplex *duplex = ctx;
     ssize_t nbytes;
@@ -108,7 +108,7 @@ read_event_callback(int fd, short event attr_unused, void *ctx)
 }
 
 static void
-write_event_callback(int fd, short event attr_unused, void *ctx)
+write_event_callback(int fd, short event __attr_unused, void *ctx)
 {
     struct duplex *duplex = ctx;
     ssize_t nbytes;

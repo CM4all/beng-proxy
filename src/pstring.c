@@ -37,12 +37,12 @@ p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL)
     return dest;
 }
 
-char * attr_malloc
+char * __attr_malloc
 p_sprintf(pool_t pool, const char *fmt, ...)
 {
 #if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__ICC)
     size_t length;
-    int attr_unused length2;
+    int __attr_unused length2;
     va_list ap;
     char *p;
 
@@ -64,7 +64,7 @@ p_sprintf(pool_t pool, const char *fmt, ...)
 #endif
 }
 
-char * attr_malloc
+char * __attr_malloc
 p_strcat(pool_t pool, const char *first, ...)
 {
     size_t length = 1;
@@ -92,7 +92,7 @@ p_strcat(pool_t pool, const char *first, ...)
     return ret;
 }
 
-char * attr_malloc
+char * __attr_malloc
 p_strncat(pool_t pool, const char *first, size_t first_length, ...)
 {
     size_t length = first_length + 1;

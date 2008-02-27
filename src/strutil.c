@@ -5,7 +5,8 @@
  */
 
 #include "strutil.h"
-#include "compiler.h"
+
+#include <inline/compiler.h>
 
 void
 str_to_lower(char *s)

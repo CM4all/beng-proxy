@@ -7,8 +7,9 @@
 #ifndef __BENG_POOL_H
 #define __BENG_POOL_H
 
-#include "compiler.h"
 #include "trace.h"
+
+#include <inline/compiler.h>
 
 #include <stddef.h>
 
@@ -91,7 +92,7 @@ pool_mark(pool_t pool, struct pool_mark *mark);
 void
 pool_rewind(pool_t pool, const struct pool_mark *mark);
 
-void * attr_malloc
+void * __attr_malloc
 p_malloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
 
 #define p_malloc(pool, size) p_malloc_impl(pool, size TRACE_ARGS)
@@ -100,29 +101,29 @@ p_malloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
 void
 p_free(pool_t pool, void *ptr);
 
-void * attr_malloc
+void * __attr_malloc
 p_calloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
 
 #define p_calloc(pool, size) p_calloc_impl(pool, size TRACE_ARGS)
 
-char * attr_malloc
+char * __attr_malloc
 p_memdup(pool_t pool, const void *src, size_t length);
 
-char * attr_malloc
+char * __attr_malloc
 p_strdup(pool_t pool, const char *src);
 
-char * attr_malloc
+char * __attr_malloc
 p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL);
 
 #define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
 
-char * attr_malloc attr_printf(2, 3)
+char * __attr_malloc __attr_printf(2, 3)
 p_sprintf(pool_t pool, const char *fmt, ...);
 
-char * attr_malloc
+char * __attr_malloc
 p_strcat(pool_t pool, const char *s, ...);
 
-char * attr_malloc
+char * __attr_malloc
 p_strncat(pool_t pool, const char *s, size_t length, ...);
 
 #endif

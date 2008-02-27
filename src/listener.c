@@ -66,7 +66,7 @@ listener_event_callback(int fd, short event, void *ctx)
     pool_commit();
 }
 
-static attr_always_inline uint16_t
+static __attr_always_inline uint16_t
 my_htons(uint16_t x)
 {
 #ifdef __ICC

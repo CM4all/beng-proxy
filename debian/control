@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 5), gcc (>= 4.1),
  libevent-dev (>= 1.3c), libattr1-dev,
- libcm4all-daemon-dev (>= 0.3),
+ libcm4all-inline-dev, libcm4all-daemon-dev (>= 0.3),
  tetex-extra (>= 3.0)
 Standards-Version: 3.7.3
 
@@ -54,7 +54,7 @@ Description: Development files for cm4all-beng-proxy
 Package: libcm4all-istream-dev
 Architecture: any
 Section: non-free/libdevel
-Depends: libc6-dev, pkg-config (>= 0.9.0)
+Depends: libc6-dev, libcm4all-inline-dev, pkg-config (>= 0.9.0)
 Description: Development files for libcm4all-istream
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.

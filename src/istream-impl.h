@@ -19,13 +19,13 @@ istream_fail_new(pool_t pool);
 istream_t
 istream_later_new(pool_t pool, istream_t input);
 
-istream_t attr_malloc
+istream_t __attr_malloc
 istream_memory_new(pool_t pool, const void *data, size_t length);
 
-istream_t attr_malloc
+istream_t __attr_malloc
 istream_string_new(pool_t pool, const char *s);
 
-istream_t attr_malloc
+istream_t __attr_malloc
 istream_file_new(pool_t pool, const char *path, off_t length);
 
 #ifdef __linux

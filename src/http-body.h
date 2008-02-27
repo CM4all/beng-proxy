@@ -9,7 +9,8 @@
 
 #include "istream.h"
 #include "fifo-buffer.h"
-#include "valgrind.h"
+
+#include <inline/valgrind.h>
 
 #include <assert.h>
 #include <stddef.h>

@@ -6,8 +6,8 @@
 
 #include "istream.h"
 #include "growing-buffer.h"
-#include "valgrind.h"
 
+#include <inline/valgrind.h>
 #include <daemon/log.h>
 
 #include <assert.h>

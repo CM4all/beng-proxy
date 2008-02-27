@@ -8,7 +8,7 @@
 #ifndef __BENG_EVENT2_H
 #define __BENG_EVENT2_H
 
-#include "compiler.h"
+#include <inline/compiler.h>
 
 #include <sys/types.h>
 #include <assert.h>

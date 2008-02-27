@@ -38,14 +38,14 @@ static const char months[13][4] = {
     "???,",
 };
 
-static attr_always_inline const char *
+static __attr_always_inline const char *
 wday_name(int wday)
 {
     return wdays[likely(wday >= 0 && wday < 7)
                  ? wday : 7];
 }
 
-static attr_always_inline const char *
+static __attr_always_inline const char *
 month_name(int month)
 {
     return months[likely(month >= 0 && month < 12)

@@ -5,7 +5,8 @@
  */
 
 #include "growing-buffer.h"
-#include "valgrind.h"
+
+#include <inline/valgrind.h>
 
 #include <assert.h>
 #include <string.h>
@@ -23,7 +24,7 @@ struct growing_buffer {
     struct buffer *current, *tail, first;
 };
 
-growing_buffer_t attr_malloc
+growing_buffer_t __attr_malloc
 growing_buffer_new(pool_t pool, size_t initial_size)
 {
     growing_buffer_t gb = p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);
@@ -138,7 +139,7 @@ istream_to_gb(istream_t istream)
 }
 
 static off_t
-istream_gb_available(istream_t istream, int partial attr_unused)
+istream_gb_available(istream_t istream, int partial __attr_unused)
 {
     growing_buffer_t gb = istream_to_gb(istream);
     struct buffer *buffer;

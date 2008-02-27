@@ -20,7 +20,7 @@ struct http_client_connection_handler {
     void (*free)(void *ctx);
 };
 
-http_client_connection_t attr_malloc
+http_client_connection_t __attr_malloc
 http_client_connection_new(pool_t pool, int fd,
                            const struct http_client_connection_handler *handler,
                            void *ctx);

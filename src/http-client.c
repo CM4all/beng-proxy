@@ -8,13 +8,13 @@
 #include "http-response.h"
 #include "fifo-buffer.h"
 #include "strutil.h"
-#include "compiler.h"
 #include "buffered-io.h"
 #include "header-parser.h"
 #include "header-writer.h"
 #include "event2.h"
 #include "http-body.h"
 
+#include <inline/compiler.h>
 #include <daemon/log.h>
 
 #include <assert.h>
@@ -92,7 +92,8 @@ response_stream_to_connection(istream_t istream)
 }
 
 static off_t
-http_client_response_stream_available(istream_t istream, int partial attr_unused)
+http_client_response_stream_available(istream_t istream,
+                                      int partial __attr_unused)
 {
     http_client_connection_t connection = response_stream_to_connection(istream);
 

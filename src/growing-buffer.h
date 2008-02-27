@@ -12,7 +12,7 @@
 
 typedef struct growing_buffer *growing_buffer_t;
 
-growing_buffer_t attr_malloc
+growing_buffer_t __attr_malloc
 growing_buffer_new(pool_t pool, size_t initial_size);
 
 void *
