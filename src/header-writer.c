@@ -14,6 +14,10 @@ header_write(growing_buffer_t gb, const char *key, const char *value)
     size_t key_length, value_length;
     char *dest;
 
+    assert(gb != NULL);
+    assert(key != NULL);
+    assert(value != NULL);
+
     key_length = strlen(key);
     value_length = strlen(value);
 
@@ -45,6 +49,9 @@ void
 headers_copy_all(strmap_t in, growing_buffer_t out)
 {
     const struct strmap_pair *pair;
+
+    assert(in != NULL);
+    assert(out != NULL);
 
     strmap_rewind(in);
 
