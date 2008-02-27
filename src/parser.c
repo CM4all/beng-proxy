@@ -8,7 +8,7 @@
 #include "pool.h"
 #include "strutil.h"
 
-#include <inline/valgrind.h>
+#include <inline/poison.h>
 
 #include <assert.h>
 #include <string.h>
@@ -94,7 +94,7 @@ parser_invoke_attr_finished(struct parser *parser)
     strref_set(&parser->attr.value, parser->attr_value, parser->attr_value_length);
 
     parser->handler->attr_finished(&parser->attr, parser->handler_ctx);
-    VALGRIND_MAKE_MEM_UNDEFINED(&parser->attr, sizeof(parser->attr));
+    poison_undefined(&parser->attr, sizeof(parser->attr));
 }
 
 static size_t
@@ -228,7 +228,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->tag.end = parser->position + (off_t)(buffer - start);
                     parser->handler->tag_finished(&parser->tag,
                                                   parser->handler_ctx);
-                    VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
+                    poison_undefined(&parser->tag, sizeof(parser->tag));
 
                     if (parser->input == NULL)
                         return 0;
@@ -360,7 +360,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->tag.end = parser->position + (off_t)(buffer - start);
                     parser->handler->tag_finished(&parser->tag,
                                                   parser->handler_ctx);
-                    VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
+                    poison_undefined(&parser->tag, sizeof(parser->tag));
 
                     if (parser->input == NULL)
                         return 0;
@@ -372,7 +372,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->tag.end = parser->position + (off_t)(buffer - start);
                     parser->handler->tag_finished(&parser->tag,
                                                   parser->handler_ctx);
-                    VALGRIND_MAKE_MEM_UNDEFINED(&parser->tag, sizeof(parser->tag));
+                    poison_undefined(&parser->tag, sizeof(parser->tag));
                     parser->state = PARSER_NONE;
 
                     if (parser->input == NULL)

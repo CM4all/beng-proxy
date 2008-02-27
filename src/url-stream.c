@@ -12,7 +12,7 @@
 #include "async.h"
 
 #include <inline/compiler.h>
-#include <inline/valgrind.h>
+#include <inline/poison.h>
 
 #include <string.h>
 
@@ -51,7 +51,7 @@ url_stream_response(http_status_t status, strmap_t headers,
     http_response_handler_invoke_response(&us->handler, status, headers, body);
 
     pool_unref(us->pool);
-    VALGRIND_MAKE_MEM_NOACCESS(us, sizeof(*us));
+    poison_noaccess(us, sizeof(*us));
 }
 
 static void 
@@ -63,7 +63,7 @@ url_stream_response_abort(void *ctx)
     http_response_handler_invoke_abort(&us->handler);
 
     pool_unref(us->pool);
-    VALGRIND_MAKE_MEM_NOACCESS(us, sizeof(*us));
+    poison_noaccess(us, sizeof(*us));
 }
 
 static const struct http_response_handler url_stream_response_handler = {

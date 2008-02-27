@@ -8,7 +8,7 @@
 #include "socket-util.h"
 #include "async.h"
 
-#include <inline/valgrind.h>
+#include <inline/poison.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -89,7 +89,7 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
         client_socket->callback(-1, s_err, client_socket->callback_ctx);
     }
 
-    VALGRIND_MAKE_MEM_NOACCESS(client_socket, sizeof(*client_socket));
+    poison_noaccess(client_socket, sizeof(*client_socket));
 
     pool_commit();
 }

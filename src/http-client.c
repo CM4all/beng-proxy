@@ -15,6 +15,7 @@
 #include "http-body.h"
 
 #include <inline/compiler.h>
+#include <inline/poison.h>
 #include <daemon/log.h>
 
 #include <assert.h>
@@ -159,9 +160,9 @@ http_client_response_stream_close(istream_t istream)
         connection->request.pool = NULL;
     }
 
-#ifdef VALGRIND
-    VALGRIND_MAKE_MEM_UNDEFINED(&connection->request, sizeof(connection->request));
-    VALGRIND_MAKE_MEM_UNDEFINED(&connection->response, sizeof(connection->response));
+#ifdef POISON
+    poison_undefined(&connection->request, sizeof(connection->request));
+    poison_undefined(&connection->response, sizeof(connection->response));
     connection->request.pool = NULL;
     connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
@@ -416,9 +417,9 @@ http_client_response_finished(http_client_connection_t connection)
         connection->request.pool = NULL;
     }
 
-#ifdef VALGRIND
-    VALGRIND_MAKE_MEM_UNDEFINED(&connection->request, sizeof(connection->request));
-    VALGRIND_MAKE_MEM_UNDEFINED(&connection->response, sizeof(connection->response));
+#ifdef POISON
+    poison_undefined(&connection->request, sizeof(connection->request));
+    poison_undefined(&connection->response, sizeof(connection->response));
     connection->request.pool = NULL;
     connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;

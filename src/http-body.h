@@ -10,7 +10,7 @@
 #include "istream.h"
 #include "fifo-buffer.h"
 
-#include <inline/valgrind.h>
+#include <inline/poison.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -57,7 +57,7 @@ http_body_init(struct http_body_reader *body,
 static inline void
 http_body_deinit(struct http_body_reader *body)
 {
-    VALGRIND_MAKE_MEM_UNDEFINED(body, sizeof(*body));
+    poison_undefined(body, sizeof(*body));
 }
 
 #endif

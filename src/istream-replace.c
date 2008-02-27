@@ -7,7 +7,7 @@
 #include "istream.h"
 #include "growing-buffer.h"
 
-#include <inline/valgrind.h>
+#include <inline/poison.h>
 #include <daemon/log.h>
 
 #include <assert.h>
@@ -580,10 +580,10 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
 
     if (quiet) {
         replace->buffer = NULL;
-        VALGRIND_MAKE_MEM_NOACCESS(&replace->source_length,
-                                   sizeof(replace->source_length));
-        VALGRIND_MAKE_MEM_NOACCESS(&replace->position,
-                                   sizeof(replace->position));
+        poison_noaccess(&replace->source_length,
+                        sizeof(replace->source_length));
+        poison_noaccess(&replace->position,
+                        sizeof(replace->position));
     } else {
         replace->buffer = growing_buffer_new(pool, 4096);
         replace->source_length = 0;
@@ -624,8 +624,8 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
         s->start = start;
         s->end = end;
     } else {
-        VALGRIND_MAKE_MEM_NOACCESS(&s->start, sizeof(s->start));
-        VALGRIND_MAKE_MEM_NOACCESS(&s->end, sizeof(s->end));
+        poison_noaccess(&s->start, sizeof(s->start));
+        poison_noaccess(&s->end, sizeof(s->end));
     }
 
 #ifndef NDEBUG
