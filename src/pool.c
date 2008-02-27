@@ -601,7 +601,8 @@ pool_rewind(pool_t pool, const struct pool_mark *mark)
         pool_recycler_put_linear(area);
     }
 
-    /* XXX poison, valgrind */
+    poison_noaccess(mark->area->data + mark->position,
+                    mark->area->used - mark->position);
 
     mark->area->used = mark->position;
 #else
