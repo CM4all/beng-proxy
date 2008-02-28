@@ -52,7 +52,7 @@ url_stream_response(http_status_t status, strmap_t headers,
     http_response_handler_invoke_response(&us->handler, status, headers, body);
 
     poison_noaccess(us, sizeof(*us));
-    pool_unref(us->pool);
+    pool_unref(pool);
 }
 
 static void 
