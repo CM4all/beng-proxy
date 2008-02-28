@@ -46,12 +46,13 @@ url_stream_response(http_status_t status, strmap_t headers,
                     void *ctx)
 {
     struct url_stream *us = ctx;
+    pool_t pool = us->pool;
 
     async_poison(&us->async);
     http_response_handler_invoke_response(&us->handler, status, headers, body);
 
-    pool_unref(us->pool);
     poison_noaccess(us, sizeof(*us));
+    pool_unref(us->pool);
 }
 
 static void 
