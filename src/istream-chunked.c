@@ -33,9 +33,7 @@ chunked_eof_detected(struct istream_chunked *chunked)
 
     chunked->buffer = NULL;
 
-    pool_ref(chunked->output.pool);
     istream_deinit_eof(&chunked->output);
-    pool_unref(chunked->output.pool);
 }
 
 static void
