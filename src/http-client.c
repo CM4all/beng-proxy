@@ -307,7 +307,8 @@ http_client_headers_finished(http_client_connection_t connection)
 
     /* istream_deinit() used poison_noaccess() - make it writable now
        for re-use */
-    poison_undefined(&connection->response.body, sizeof(connection->response.body));
+    poison_undefined(&connection->response.body_reader,
+                     sizeof(connection->response.body_reader));
 
     connection->response.body
         = http_body_init(&connection->response.body_reader,
