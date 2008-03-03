@@ -13,7 +13,7 @@ function _IG_Prefs(widget) {
 
     if (this.widget._query_string != null) {
         values = this.widget._query_string.split('&');
-        for (i in values) {
+        for (var i = 0; i < values.length; ++i) {
             var key = values[i], value;
             i = key.indexOf('=');
             if (i >= 0) {

@@ -174,7 +174,7 @@ var _beng_onload_list = Array();
 
 function _beng_onload() {
     var x;
-    for (x in _beng_onload_list) {
+    for (var x = 0; x < _beng_onload_list.length; ++x) {
         _beng_onload_list[x]();
     }
 }
