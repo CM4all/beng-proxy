@@ -169,7 +169,7 @@ cgi_input_eof(void *ctx)
 {
     struct cgi *cgi = ctx;
 
-    istream_clear_unref(&cgi->input);
+    cgi->input = NULL;
 
     if (cgi->headers != NULL) {
         daemon_log(1, "premature end of headers from CGI script\n");
@@ -185,7 +185,7 @@ cgi_input_abort(void *ctx)
 {
     struct cgi *cgi = ctx;
 
-    istream_clear_unref(&cgi->input);
+    cgi->input = NULL;
     istream_deinit_abort(&cgi->output);
 }
 
@@ -388,8 +388,8 @@ cgi_new(pool_t pool,
                 headers);
 
     cgi = (struct cgi *)istream_new(pool, &istream_cgi, sizeof(*cgi));
-    istream_assign_ref_handler(&cgi->input, input,
-                               &cgi_input_handler, cgi, 0);
+    istream_assign_handler(&cgi->input, input,
+                           &cgi_input_handler, cgi, 0);
 
     cgi->buffer = fifo_buffer_new(pool, 1024);
     cgi->headers = strmap_new(pool, 32);

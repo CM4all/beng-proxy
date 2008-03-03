@@ -524,7 +524,7 @@ parser_input_eof(void *ctx)
 
     assert(parser->input != NULL);
 
-    istream_clear_unref(&parser->input);
+    parser->input = NULL;
     parser->handler->eof(parser->handler_ctx, parser->position);
 }
 
@@ -535,7 +535,7 @@ parser_input_abort(void *ctx)
 
     assert(parser->input != NULL);
 
-    istream_clear_unref(&parser->input);
+    parser->input = NULL;
     parser->handler->abort(parser->handler_ctx);
 }
 
@@ -567,9 +567,9 @@ parser_new(struct pool *pool, istream_t input,
 
     parser->pool = pool;
 
-    istream_assign_ref_handler(&parser->input, input,
-                               &parser_input_handler, parser,
-                               0);
+    istream_assign_handler(&parser->input, input,
+                           &parser_input_handler, parser,
+                           0);
 
     parser->position = 0;
     parser->state = PARSER_NONE;

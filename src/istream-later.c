@@ -67,7 +67,7 @@ later_source_eof(void *ctx)
 {
     struct istream_later *later = ctx;
 
-    istream_clear_unref(&later->input);
+    later->input = NULL;
 
     later_schedule(later);
 }
@@ -79,7 +79,7 @@ later_source_abort(void *ctx)
 
     evtimer_del(&later->event);
 
-    istream_clear_unref(&later->input);
+    later->input = NULL;
     istream_deinit_abort(&later->output);
 }
 
@@ -143,9 +143,9 @@ istream_later_new(pool_t pool, istream_t input)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    istream_assign_ref_handler(&later->input, input,
-                               &later_input_handler, later,
-                               0);
+    istream_assign_handler(&later->input, input,
+                           &later_input_handler, later,
+                           0);
 
     evtimer_set(&later->event, later_event_callback, later);
 

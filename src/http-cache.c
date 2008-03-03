@@ -243,7 +243,7 @@ http_cache_response_body_eof(void *ctx)
     struct http_cache_request *request = ctx;
 
     http_cache_put(request);
-    istream_clear_unref(&request->input);
+    request->input = NULL;
 }
 
 static void
@@ -253,7 +253,7 @@ http_cache_response_body_abort(void *ctx)
 
     cache_log(4, "http_cache: body_abort %s\n", request->url);
 
-    istream_clear_unref(&request->input);
+    request->input = NULL;
 }
 
 static const struct istream_handler http_cache_response_body_handler = {
@@ -312,9 +312,9 @@ http_cache_response_response(http_status_t status, strmap_t headers,
 
         request->status = status;
         request->headers = headers;
-        istream_assign_ref_handler(&request->input, istream_tee_second(body),
-                                   &http_cache_response_body_handler, request,
-                                   0);
+        istream_assign_handler(&request->input, istream_tee_second(body),
+                               &http_cache_response_body_handler, request,
+                               0);
 
         if (available == (off_t)-1 || available < 256)
             buffer_size = 1024;

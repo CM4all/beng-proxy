@@ -48,7 +48,7 @@ tee_source_eof(void *ctx)
 
     pool_ref(tee->output1.pool);
 
-    istream_clear_unref(&tee->input);
+    tee->input = NULL;
     istream_invoke_eof(&tee->output1);
     istream_deinit_eof(&tee->output2);
 
@@ -64,7 +64,7 @@ tee_source_abort(void *ctx)
 
     pool_ref(tee->output1.pool);
 
-    istream_clear_unref(&tee->input);
+    tee->input = NULL;
     istream_invoke_abort(&tee->output1);
     istream_deinit_abort(&tee->output2);
 
@@ -105,7 +105,7 @@ istream_tee_close1(istream_t istream)
 
     assert(tee->input != NULL);
 
-    istream_free_unref_handler(&tee->input);
+    istream_free_handler(&tee->input);
     istream_invoke_abort(&tee->output2);
     istream_deinit_abort(&tee->output1);
 }
@@ -142,7 +142,7 @@ istream_tee_close2(istream_t istream)
 
     assert(tee->input != NULL);
 
-    istream_free_unref_handler(&tee->input);
+    istream_free_handler(&tee->input);
     istream_invoke_abort(&tee->output2);
     istream_deinit_abort(&tee->output1);
 }
@@ -170,9 +170,9 @@ istream_tee_new(pool_t pool, istream_t input)
     tee->output2 = istream_tee2;
     tee->output2.pool = pool;
 
-    istream_assign_ref_handler(&tee->input, input,
-                               &tee_input_handler, tee,
-                               0);
+    istream_assign_handler(&tee->input, input,
+                           &tee_input_handler, tee,
+                           0);
 
     return istream_struct_cast(&tee->output1);
 }

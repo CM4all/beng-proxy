@@ -160,7 +160,7 @@ replace_substitution_eof(void *ctx)
     struct substitution *s = ctx;
     struct istream_replace *replace = s->replace;
 
-    istream_clear_unref(&s->istream);
+    s->istream = NULL;
 
     if (substitution_is_active(s))
         replace_to_next_substitution(replace, s);
@@ -172,7 +172,7 @@ replace_substitution_abort(void *ctx)
     struct substitution *s = ctx;
     struct istream_replace *replace = s->replace;
 
-    istream_clear_unref(&s->istream);
+    s->istream = NULL;
 
     replace_destroy(replace);
 
@@ -207,7 +207,7 @@ replace_destroy(struct istream_replace *replace)
         replace->first_substitution = s->next;
 
         if (s->istream != NULL)
-            istream_free_unref_handler(&s->istream);
+            istream_free_handler(&s->istream);
     }
 }
 
@@ -420,7 +420,7 @@ replace_source_eof(void *ctx)
 {
     struct istream_replace *replace = ctx;
 
-    istream_clear_unref(&replace->input);
+    replace->input = NULL;
 
     if (replace->finished)
         replace_read_check_empty(replace);
@@ -432,7 +432,7 @@ replace_source_abort(void *ctx)
     struct istream_replace *replace = ctx;
 
     replace_destroy(replace);
-    istream_clear_unref(&replace->input);
+    replace->input = NULL;
     istream_deinit_abort(&replace->output);
 }
 
@@ -568,9 +568,9 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    istream_assign_ref_handler(&replace->input, input,
-                               &replace_input_handler, replace,
-                               0);
+    istream_assign_handler(&replace->input, input,
+                           &replace_input_handler, replace,
+                           0);
 
     replace->finished = 0;
     replace->read_locked = 0;
@@ -632,9 +632,9 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
     if (contents == NULL) {
         s->istream = NULL;
     } else {
-        istream_assign_ref_handler(&s->istream, contents,
-                                   &replace_substitution_handler, s,
-                                   0);
+        istream_assign_handler(&s->istream, contents,
+                               &replace_substitution_handler, s,
+                               0);
     }
 
     *replace->append_substitution_p = s;

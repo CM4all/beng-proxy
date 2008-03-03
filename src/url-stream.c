@@ -99,9 +99,6 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
     http_client_request(url_stock_item_get(item),
                         us->method, us->uri, us->headers, us->body,
                         &url_stream_response_handler, us);
-
-    if (us->body != NULL)
-        istream_clear_unref(&us->body);
 }
 
 
@@ -122,9 +119,6 @@ url_stream_abort(struct async_operation *ao)
     struct url_stream *us = async_to_url_stream(ao);
 
     assert(us != NULL);
-
-    if (us->body != NULL)
-        istream_clear_unref(&us->body);
 
     if (async_ref_defined(&us->stock_get_operation)) {
         async_abort(&us->stock_get_operation);
@@ -180,7 +174,7 @@ url_stream_new(pool_t pool,
         /* XXX remove istream_hold(), it is only here because
            http-client.c resets istream->pool after the response is
            ready */
-        istream_assign_ref(&us->body, istream_hold_new(pool, body));
+        us->body = istream_hold_new(pool, body);
     async_ref_clear(&us->stock_get_operation);
     us->stock_item = NULL;
     http_response_handler_set(&us->handler, handler, handler_ctx);

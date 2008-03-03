@@ -501,7 +501,7 @@ subst_source_eof(void *ctx)
 
     assert(subst->input != NULL);
 
-    istream_clear_unref(&subst->input);
+    subst->input = NULL;
 
     switch (subst->state) {
     case STATE_NONE:
@@ -542,7 +542,7 @@ subst_source_abort(void *ctx)
 
     subst->state = STATE_CLOSED;
 
-    istream_clear_unref(&subst->input);
+    subst->input = NULL;
     istream_deinit_abort(&subst->output);
 }
 
@@ -620,7 +620,7 @@ istream_subst_close(istream_t istream)
     subst->state = STATE_CLOSED;
 
     if (subst->input != NULL)
-        istream_free_unref_handler(&subst->input);
+        istream_free_handler(&subst->input);
 
     istream_deinit_abort(&subst->output);
 }
@@ -648,9 +648,9 @@ istream_subst_new(pool_t pool, istream_t input)
     subst->state = STATE_NONE;
     strref_clear(&subst->mismatch);
 
-    istream_assign_ref_handler(&subst->input, input,
-                               &subst_source_handler, subst,
-                               0);
+    istream_assign_handler(&subst->input, input,
+                           &subst_source_handler, subst,
+                           0);
 
     return istream_struct_cast(&subst->output);
 }

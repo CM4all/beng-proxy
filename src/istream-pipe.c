@@ -163,7 +163,7 @@ pipe_input_eof(void *ctx)
 {
     struct istream_pipe *p = ctx;
 
-    istream_clear_unref(&p->input);
+    p->input = NULL;
 
     if (p->fds[1] >= 0) {
         close(p->fds[1]);
@@ -185,7 +185,7 @@ pipe_input_abort(void *ctx)
 
     pipe_close(p);
 
-    istream_clear_unref(&p->input);
+    p->input = NULL;
     istream_deinit_abort(&p->output);
 }
 
@@ -257,9 +257,9 @@ istream_pipe_new(pool_t pool, istream_t input)
     p->fds[1] = -1;
     p->piped = 0;
 
-    istream_assign_ref_handler(&p->input, input,
-                               &pipe_input_handler, p,
-                               SPLICE_SOURCE_TYPES);
+    istream_assign_handler(&p->input, input,
+                           &pipe_input_handler, p,
+                           SPLICE_SOURCE_TYPES);
 
     return istream_struct_cast(&p->output);
 }

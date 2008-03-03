@@ -39,7 +39,7 @@ head_source_data(const void *data, size_t length, void *ctx)
     if (nbytes > 0) {
         head->rest -= nbytes;
         if (head->rest == 0) {
-            istream_free_unref_handler(&head->input);
+            istream_free_handler(&head->input);
             istream_deinit_eof(&head->output);
             return 0;
         }
@@ -66,7 +66,7 @@ head_source_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     if (nbytes > 0) {
         head->rest -= (size_t)nbytes;
         if (head->rest == 0) {
-            istream_free_unref_handler(&head->input);
+            istream_free_handler(&head->input);
             istream_deinit_eof(&head->output);
         }
     }
@@ -79,7 +79,7 @@ head_source_eof(void *ctx)
 {
     struct istream_head *head = ctx;
 
-    istream_clear_unref(&head->input);
+    head->input = NULL;
     istream_deinit_eof(&head->output);
 }
 
@@ -88,7 +88,7 @@ head_source_abort(void *ctx)
 {
     struct istream_head *head = ctx;
 
-    istream_clear_unref(&head->input);
+    head->input = NULL;
     istream_deinit_abort(&head->output);
 }
 
@@ -117,7 +117,7 @@ istream_head_read(istream_t istream)
     struct istream_head *head = istream_to_head(istream);
 
     if (head->rest == 0) {
-        istream_free_unref_handler(&head->input);
+        istream_free_handler(&head->input);
         istream_deinit_eof(&head->output);
     } else {
         istream_handler_set_direct(head->input, head->output.handler_direct);
@@ -131,7 +131,7 @@ istream_head_close(istream_t istream)
 {
     struct istream_head *head = istream_to_head(istream);
 
-    istream_free_unref(&head->input);
+    istream_free(&head->input);
 }
 
 static const struct istream istream_head = {
@@ -153,9 +153,9 @@ istream_head_new(pool_t pool, istream_t input, size_t size)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    istream_assign_ref_handler(&head->input, input,
-                               &head_input_handler, head,
-                               0);
+    istream_assign_handler(&head->input, input,
+                           &head_input_handler, head,
+                           0);
 
     head->rest = size;
 

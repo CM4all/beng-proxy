@@ -53,7 +53,7 @@ delayed_input_eof(void *ctx)
 {
     struct istream_delayed *delayed = ctx;
 
-    istream_clear_unref(&delayed->input);
+    delayed->input = NULL;
     istream_deinit_eof(&delayed->output);
 }
 
@@ -62,7 +62,7 @@ delayed_input_abort(void *ctx)
 {
     struct istream_delayed *delayed = ctx;
 
-    istream_clear_unref(&delayed->input);
+    delayed->input = NULL;
     istream_deinit_abort(&delayed->output);
 }
 
@@ -140,9 +140,9 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
 
     async_ref_clear(&delayed->async);
 
-    istream_assign_ref_handler(&delayed->input, input,
-                               &delayed_input_handler, delayed,
-                               delayed->output.handler_direct);
+    istream_assign_handler(&delayed->input, input,
+                           &delayed_input_handler, delayed,
+                           delayed->output.handler_direct);
 }
 
 void

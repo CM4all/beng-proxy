@@ -264,6 +264,16 @@ istream_handler_set(istream_t _istream,
 }
 
 static inline void
+istream_assign_handler(istream_t *istream_r, istream_t istream,
+                       const struct istream_handler *handler,
+                       void *handler_ctx,
+                       istream_direct_t handler_direct)
+{
+    *istream_r = istream;
+    istream_handler_set(istream, handler, handler_ctx, handler_direct);
+}
+
+static inline void
 istream_handler_set_direct(istream_t _istream,
                            istream_direct_t handler_direct)
 {
@@ -282,8 +292,14 @@ istream_handler_clear(istream_t _istream)
     istream->handler = NULL;
 }
 
+static inline void
+istream_free_handler(istream_t *istream_r)
+{
+    istream_handler_clear(*istream_r);
+    istream_free(istream_r);
+}
 
-#include "istream-ref.h"
+
 #include "istream-impl.h"
 
 #endif

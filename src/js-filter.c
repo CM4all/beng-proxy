@@ -42,7 +42,7 @@ js_source_eof(void *ctx)
 
     assert(js->input != NULL);
 
-    istream_clear_unref(&js->input);
+    js->input = NULL;
     istream_deinit_eof(&js->output);
 }
 
@@ -53,7 +53,7 @@ js_source_abort(void *ctx)
 
     assert(js->input != NULL);
 
-    istream_clear_unref(&js->input);
+    js->input = NULL;
     istream_deinit_abort(&js->output);
 }
 
@@ -100,7 +100,7 @@ js_filter_close(istream_t istream)
 
     assert(js->input != NULL);
 
-    istream_free_unref_handler(&js->input);
+    istream_free_handler(&js->input);
     istream_deinit_abort(&js->output);
 }
 
@@ -124,9 +124,9 @@ js_filter_new(pool_t pool, istream_t input)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    istream_assign_ref_handler(&js->input, input,
-                               &js_input_handler, js,
-                               0);
+    istream_assign_handler(&js->input, input,
+                           &js_input_handler, js,
+                           0);
 
     return istream_struct_cast(&js->output);
 }

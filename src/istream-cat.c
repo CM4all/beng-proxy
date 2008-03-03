@@ -42,7 +42,7 @@ cat_close(struct istream_cat *cat)
     while (cat->current < cat->num) {
         input = &cat->inputs[cat->current++];
         if (input->istream != NULL)
-            istream_free_unref_handler(&input->istream);
+            istream_free_handler(&input->istream);
     }
     
     istream_deinit_abort(&cat->output);
@@ -87,8 +87,7 @@ cat_input_eof(void *ctx)
     struct istream_cat *cat = input->cat;
 
     assert(input->istream != NULL);
-
-    istream_clear_unref(&input->istream);
+    input->istream = NULL;
 
     if (cat_is_current(cat, input)) {
         do {
@@ -113,7 +112,8 @@ cat_input_abort(void *ctx)
     struct input *input = ctx;
     struct istream_cat *cat = input->cat;
 
-    istream_clear_unref(&input->istream);
+    assert(input->istream != NULL);
+    input->istream = NULL;
 
     cat_close(cat);
 }
@@ -243,9 +243,9 @@ istream_cat_new(pool_t pool, ...)
         input = &cat->inputs[num++];
         input->cat = cat;
 
-        istream_assign_ref_handler(&input->istream, istream,
-                                   &cat_input_handler, input,
-                                   0);
+        istream_assign_handler(&input->istream, istream,
+                               &cat_input_handler, input,
+                               0);
     }
     va_end(ap);
 

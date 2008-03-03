@@ -45,7 +45,7 @@ byte_input_eof(void *ctx)
 {
     struct istream_byte *byte = ctx;
 
-    istream_clear_unref(&byte->input);
+    byte->input = NULL;
     istream_deinit_eof(&byte->output);
 }
 
@@ -54,7 +54,7 @@ byte_input_abort(void *ctx)
 {
     struct istream_byte *byte = ctx;
 
-    istream_clear_unref(&byte->input);
+    byte->input = NULL;
     istream_deinit_abort(&byte->output);
 }
 
@@ -94,7 +94,7 @@ istream_byte_close(istream_t istream)
 
     assert(byte->input != NULL);
 
-    istream_free_unref_handler(&byte->input);
+    istream_free_handler(&byte->input);
     istream_deinit_abort(&byte->output);
 }
 
@@ -117,9 +117,9 @@ istream_byte_new(pool_t pool, istream_t input)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    istream_assign_ref_handler(&byte->input, input,
-                               &byte_input_handler, byte,
-                               0);
+    istream_assign_handler(&byte->input, input,
+                           &byte_input_handler, byte,
+                           0);
 
     return istream_struct_cast(&byte->output);
 }

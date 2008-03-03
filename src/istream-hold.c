@@ -57,7 +57,7 @@ hold_input_eof(void *ctx)
     assert(!hold->input_eof);
     assert(!hold->input_aborted);
 
-    istream_clear_unref(&hold->input);
+    hold->input = NULL;
 
     if (hold->output.handler == NULL) {
         /* queue the eof() call */
@@ -76,7 +76,7 @@ hold_input_abort(void *ctx)
     assert(!hold->input_eof);
     assert(!hold->input_aborted);
 
-    istream_clear_unref(&hold->input);
+    hold->input = NULL;
 
     if (hold->output.handler == NULL) {
         /* queue the abort() call */
@@ -141,7 +141,7 @@ istream_hold_close(istream_t istream)
     } else if (hold->output.handler == NULL) {
         /* there is no handler yet - immediately deinitialize this
            istream */
-        istream_free_unref_handler(&hold->input);
+        istream_free_handler(&hold->input);
         istream_deinit(&hold->output);
     } else {
         /* the input object is still there; istream_close(hold->input)
@@ -172,9 +172,9 @@ istream_hold_new(pool_t pool, istream_t input)
     hold->input_eof = 0;
     hold->input_aborted = 0;
 
-    istream_assign_ref_handler(&hold->input, input,
-                               &hold_input_handler, hold,
-                               0);
+    istream_assign_handler(&hold->input, input,
+                           &hold_input_handler, hold,
+                           0);
 
     return istream_struct_cast(&hold->output);
 }

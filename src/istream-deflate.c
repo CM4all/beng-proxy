@@ -37,7 +37,7 @@ deflate_abort(struct istream_deflate *defl)
     deflate_close(defl);
 
     if (defl->input != NULL)
-        istream_free_unref_handler(&defl->input);
+        istream_free_handler(&defl->input);
 
     istream_deinit_abort(&defl->output);
 }
@@ -299,7 +299,7 @@ deflate_input_eof(void *ctx)
     int err;
 
     assert(defl->input != NULL);
-    istream_clear_unref(&defl->input);
+    defl->input = NULL;
 
     err = deflate_initialize_z(defl);
     if (err != Z_OK)
@@ -315,7 +315,7 @@ deflate_input_abort(void *ctx)
 {
     struct istream_deflate *defl = ctx;
 
-    istream_clear_unref(&defl->input);
+    defl->input = NULL;
 
     deflate_close(defl);
 
@@ -384,9 +384,9 @@ istream_deflate_new(pool_t pool, istream_t input)
     defl->z_initialized = 0;
     defl->z_stream_end = 0;
 
-    istream_assign_ref_handler(&defl->input, input,
-                               &deflate_input_handler, defl,
-                               0);
+    istream_assign_handler(&defl->input, input,
+                           &deflate_input_handler, defl,
+                           0);
 
     return istream_struct_cast(&defl->output);
 }

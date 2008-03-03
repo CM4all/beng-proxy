@@ -41,7 +41,7 @@ fork_close(struct fork *f)
         assert(f->input_fd >= 0);
 
         close(f->input_fd);
-        istream_free_unref_handler(&f->input);
+        istream_free_handler(&f->input);
     }
 
     event2_set(&f->event, 0);
@@ -79,7 +79,7 @@ fork_input_data(const void *data, size_t length, void *ctx)
                    strerror(errno));
         close(f->input_fd);
         f->input_fd = -1;
-        istream_free_unref_handler(&f->input);
+        istream_free_handler(&f->input);
         return 0;
     }
 
@@ -96,7 +96,7 @@ fork_input_eof(void *ctx)
     close(f->input_fd);
     f->input_fd = -1;
 
-    istream_clear_unref(&f->input);
+    f->input = NULL;
 }
 
 static void
@@ -106,7 +106,7 @@ fork_input_abort(void *ctx)
 
     assert(f->input_fd >= 0);
 
-    istream_clear_unref(&f->input);
+    f->input = NULL;
 
     fork_close(f);
     istream_deinit_abort(&f->output);
@@ -300,9 +300,9 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r)
             close(stdin_pipe[0]);
             f->input_fd = stdin_pipe[1];
 
-            istream_assign_ref_handler(&f->input, input,
-                                       &fork_input_handler, f,
-                                       ISTREAM_FILE|ISTREAM_PIPE);
+            istream_assign_handler(&f->input, input,
+                                   &fork_input_handler, f,
+                                   ISTREAM_FILE|ISTREAM_PIPE);
         } else
             f->input = NULL;
 
