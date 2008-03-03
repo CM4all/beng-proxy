@@ -123,13 +123,8 @@ istream_invoke_eof(struct istream *istream)
     istream->eof = 1;
 #endif
 
-    if (istream->handler != NULL) {
-        const struct istream_handler *handler = istream->handler;
-        void *handler_ctx = istream->handler_ctx;
-        istream->handler = NULL;
-        istream->handler_ctx = NULL;
-        handler->eof(handler_ctx);
-    }
+    if (istream->handler != NULL)
+        istream->handler->eof(istream->handler_ctx);
 }
 
 static inline void
@@ -142,13 +137,8 @@ istream_invoke_abort(struct istream *istream)
     istream->eof = 1;
 #endif
 
-    if (istream->handler != NULL) {
-        const struct istream_handler *handler = istream->handler;
-        void *handler_ctx = istream->handler_ctx;
-        istream->handler = NULL;
-        istream->handler_ctx = NULL;
-        handler->abort(handler_ctx);
-    }
+    if (istream->handler != NULL)
+        istream->handler->abort(istream->handler_ctx);
 }
 
 #endif
