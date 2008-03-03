@@ -22,21 +22,6 @@ struct istream_hold {
 };
 
 
-static void
-hold_close(struct istream_hold *hold)
-{
-    if (hold->input != NULL) {
-        /* the input object is still there; istream_close(hold->input)
-           will implicitly call istream_invoke_free(&hold->output)
-           through hold_input_free() */
-        istream_close(hold->input);
-        assert(hold->input == NULL);
-    } else {
-        istream_invoke_abort(&hold->output);
-    }
-}
-
-
 /*
  * istream handler
  *
@@ -151,7 +136,15 @@ istream_hold_close(istream_t istream)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 
-    hold_close(hold);
+    if (hold->input == NULL) {
+        istream_invoke_abort(&hold->output);
+    } else {
+        /* the input object is still there; istream_close(hold->input)
+           will implicitly call istream_invoke_free(&hold->output)
+           through hold_input_free() */
+        istream_close(hold->input);
+        assert(hold->input == NULL);
+    }
 }
 
 static const struct istream istream_hold = {
