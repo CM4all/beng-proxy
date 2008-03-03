@@ -247,6 +247,8 @@ istream_handler_set(istream_t _istream,
     assert(pool_contains(istream->pool, istream, sizeof(*istream)));
     assert(handler != NULL);
     assert(handler->data != NULL);
+    assert(handler->eof != NULL);
+    assert(handler->abort != NULL);
 
     istream->handler = handler;
     istream->handler_ctx = handler_ctx;
