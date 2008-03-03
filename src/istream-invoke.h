@@ -37,7 +37,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
     assert(nbytes == 0 || !istream->eof);
 
 #ifndef NDEBUG
-    if (pool_denotify(&notify)) {
+    if (pool_denotify(&notify) || istream->destroyed) {
         assert(nbytes == 0);
         return nbytes;
     }
@@ -88,7 +88,7 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
     assert(nbytes == 0 || !istream->eof);
 
 #ifndef NDEBUG
-    if (pool_denotify(&notify)) {
+    if (pool_denotify(&notify) || istream->destroyed) {
         assert(nbytes == 0);
         return nbytes;
     }
