@@ -140,16 +140,6 @@ istream_struct_cast(struct istream *istream)
     return (istream_t)istream;
 }
 
-static inline pool_t
-istream_pool(istream_t _istream)
-{
-    struct istream *istream = _istream_opaque_cast(_istream);
-
-    assert(istream->pool != NULL);
-
-    return istream->pool;
-}
-
 static inline off_t
 istream_available(istream_t _istream, int partial)
 {

@@ -70,7 +70,6 @@ http_server_response_stream_eof(void *ctx)
     assert(connection->request.request != NULL);
     assert(connection->response.writing);
     assert(connection->response.istream != NULL);
-    assert(istream_pool(connection->response.istream) != NULL);
 
     connection->response.istream = NULL;
     connection->response.writing = 0;

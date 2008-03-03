@@ -144,7 +144,6 @@ istream_gb_available(istream_t istream, int partial __attr_unused)
     struct buffer *buffer;
     off_t available = 0;
 
-    assert(gb->pool == istream_pool(istream));
     assert(gb->size == 0);
     assert(gb->tail == NULL);
     assert(gb->current != NULL);
@@ -163,7 +162,6 @@ istream_gb_read(istream_t istream)
     const void *data;
     size_t length, nbytes;
 
-    assert(gb->pool == istream_pool(istream));
     assert(gb->size == 0);
     assert(gb->tail == NULL);
     assert(gb->current != NULL);
