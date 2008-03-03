@@ -43,13 +43,13 @@ istream_deinit_impl(struct istream *istream TRACE_ARGS_DECL)
 {
     pool_t pool = istream->pool;
 
+#ifndef NDEBUG
     /* poison the istream struct (but not its implementation
        properties), so it cannot be used later */
     poison_noaccess(istream, sizeof(*istream));
     poison_undefined(&istream->pool, sizeof(istream->pool));
     istream->pool = pool;
 
-#ifndef NDEBUG
     poison_undefined(&istream->destroyed, sizeof(istream->destroyed));
     istream->destroyed = 1;
 #endif
