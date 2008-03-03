@@ -80,7 +80,7 @@ struct istream {
     istream_direct_t handler_direct;
 
 #ifndef NDEBUG
-    int reading;
+    int reading, destroyed;
 
     unsigned eof:1, in_data:1, available_full_set:1;
 
@@ -171,7 +171,7 @@ istream_available(istream_t _istream, int partial)
         available = istream->available(_istream, partial);
 
 #ifndef NDEBUG
-    if (pool_denotify(&notify))
+    if (pool_denotify(&notify) || istream->destroyed)
         return available;
 
     istream->reading = 0;
@@ -212,7 +212,7 @@ istream_read(istream_t _istream)
     istream->read(_istream);
 
 #ifndef NDEBUG
-    if (pool_denotify(&notify))
+    if (pool_denotify(&notify) || istream->destroyed)
         return;
 
     istream->reading = 0;

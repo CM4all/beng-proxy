@@ -21,7 +21,7 @@ istream_fail_read(istream_t istream)
 {
     struct istream_fail *fail = istream_to_fail(istream);
 
-    istream_invoke_abort(&fail->stream);
+    istream_deinit_abort(&fail->stream);
 }
 
 static void
@@ -29,7 +29,7 @@ istream_fail_close(istream_t istream)
 {
     struct istream_fail *fail = istream_to_fail(istream);
 
-    istream_invoke_abort(&fail->stream);
+    istream_deinit_abort(&fail->stream);
 }
 
 static const struct istream istream_fail = {
@@ -40,10 +40,6 @@ static const struct istream istream_fail = {
 istream_t
 istream_fail_new(pool_t pool)
 {
-    struct istream_fail *fail = p_malloc(pool, sizeof(*fail));
-
-    fail->stream = istream_fail;
-    fail->stream.pool = pool;
-
+    struct istream_fail *fail = istream_new_macro(pool, fail);
     return istream_struct_cast(&fail->stream);
 }

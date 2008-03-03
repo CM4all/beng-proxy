@@ -103,8 +103,7 @@ http_body_init(struct http_body_reader *body,
 
     assert(pool_contains(stream_pool, body, sizeof(*body)));
 
-    body->output = *stream;
-    body->output.pool = stream_pool;
+    istream_init(&body->output, stream, stream_pool);
     body->rest = content_length;
 
     istream = http_body_istream(body);
@@ -114,4 +113,10 @@ http_body_init(struct http_body_reader *body,
         body->dechunk = NULL;
 
     return istream;
+}
+
+void
+http_body_deinit(struct http_body_reader *body)
+{
+    istream_deinit(&body->output);
 }

@@ -109,7 +109,7 @@ fork_input_abort(void *ctx)
     istream_clear_unref(&f->input);
 
     fork_close(f);
-    istream_invoke_abort(&f->output);
+    istream_deinit_abort(&f->output);
 }
 
 static const struct istream_handler fork_input_handler = {
@@ -152,14 +152,14 @@ fork_read_from_output(struct fork *f)
                 event2_set(&f->event, EV_READ);
         } else if (nbytes == 0) {
             fork_close(f);
-            istream_invoke_eof(&f->output);
+            istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
             event2_set(&f->event, EV_READ);
         } else {
             daemon_log(1, "failed to read from sub process: %s\n",
                        strerror(errno));
             fork_close(f);
-            istream_invoke_abort(&f->output);
+            istream_deinit_abort(&f->output);
         }
     } else {
         nbytes = istream_invoke_direct(&f->output, ISTREAM_PIPE,
@@ -171,14 +171,14 @@ fork_read_from_output(struct fork *f)
             event2_set(&f->event, EV_READ);
         } else if (nbytes == 0) {
             fork_close(f);
-            istream_invoke_eof(&f->output);
+            istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
             event2_set(&f->event, EV_READ);
         } else {
             daemon_log(1, "failed to read from sub process: %s\n",
                        strerror(errno));
             fork_close(f);
-            istream_invoke_abort(&f->output);
+            istream_deinit_abort(&f->output);
         }
     }
 }
@@ -224,7 +224,7 @@ istream_fork_close(istream_t istream)
     struct fork *f = istream_to_fork(istream);
 
     fork_close(f);
-    istream_invoke_abort(&f->output);
+    istream_deinit_abort(&f->output);
 }
 
 static const struct istream istream_fork = {
@@ -293,7 +293,8 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r)
         dup2(stdout_pipe[1], STDOUT_FILENO);
         close(stdout_pipe[0]);
     } else {
-        struct fork *f = p_malloc(pool, sizeof(*f));
+        struct fork *f = (struct fork *)
+            istream_new(pool, &istream_fork, sizeof(*f));
 
         if (input != NULL) {
             close(stdin_pipe[0]);
@@ -312,9 +313,6 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r)
         f->buffer = NULL;
 
         f->pid = pid;
-
-        f->output = istream_fork;
-        f->output.pool = pool;
 
         /* XXX CLOEXEC */
 

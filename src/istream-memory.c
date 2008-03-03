@@ -45,7 +45,7 @@ istream_memory_read(istream_t istream)
     }
 
     if (strref_is_empty(&memory->data))
-        istream_invoke_eof(&memory->stream);
+        istream_deinit_eof(&memory->stream);
 }
 
 static void
@@ -53,7 +53,7 @@ istream_memory_close(istream_t istream)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 
-    istream_invoke_abort(&memory->stream);
+    istream_deinit_abort(&memory->stream);
 }
 
 static const struct istream istream_memory = {
@@ -65,12 +65,10 @@ static const struct istream istream_memory = {
 istream_t
 istream_memory_new(pool_t pool, const void *data, size_t length)
 {
-    struct istream_memory *memory = p_malloc(pool, sizeof(*memory));
+    struct istream_memory *memory = istream_new_macro(pool, memory);
 
     assert(data != NULL);
 
-    memory->stream = istream_memory;
-    memory->stream.pool = pool;
     strref_set(&memory->data, data, length);
 
     return istream_struct_cast(&memory->stream);

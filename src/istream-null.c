@@ -21,7 +21,7 @@ istream_null_read(istream_t istream)
 {
     struct istream_null *null = istream_to_null(istream);
 
-    istream_invoke_eof(&null->stream);
+    istream_deinit_eof(&null->stream);
 }
 
 static void
@@ -29,7 +29,7 @@ istream_null_close(istream_t istream)
 {
     struct istream_null *null = istream_to_null(istream);
 
-    istream_invoke_abort(&null->stream);
+    istream_deinit_abort(&null->stream);
 }
 
 static const struct istream istream_null = {
@@ -40,10 +40,6 @@ static const struct istream istream_null = {
 istream_t
 istream_null_new(pool_t pool)
 {
-    struct istream_null *null = p_malloc(pool, sizeof(*null));
-
-    null->stream = istream_null;
-    null->stream.pool = pool;
-
+    struct istream_null *null = istream_new_macro(pool, null);
     return istream_struct_cast(&null->stream);
 }

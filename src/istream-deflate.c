@@ -39,7 +39,7 @@ deflate_abort(struct istream_deflate *defl)
     if (defl->input != NULL)
         istream_free_unref_handler(&defl->input);
 
-    istream_invoke_abort(&defl->output);
+    istream_deinit_abort(&defl->output);
 }
 
 static voidpf z_alloc
@@ -103,7 +103,7 @@ deflate_try_write(struct istream_deflate *defl)
 
         if (nbytes == length && defl->input == NULL && defl->z_stream_end) {
             deflate_close(defl);
-            istream_invoke_eof(&defl->output);
+            istream_deinit_eof(&defl->output);
         }
     }
 
@@ -214,7 +214,7 @@ deflate_try_finish(struct istream_deflate *defl)
 
     if (defl->z_stream_end && fifo_buffer_empty(defl->buffer)) {
         deflate_close(defl);
-        istream_invoke_eof(&defl->output);
+        istream_deinit_eof(&defl->output);
     } else
         deflate_try_write(defl);
 }
@@ -319,7 +319,7 @@ deflate_input_abort(void *ctx)
 
     deflate_close(defl);
 
-    istream_invoke_abort(&defl->output);
+    istream_deinit_abort(&defl->output);
 }
 
 static const struct istream_handler deflate_input_handler = {
@@ -375,13 +375,11 @@ static const struct istream istream_deflate = {
 istream_t
 istream_deflate_new(pool_t pool, istream_t input)
 {
-    struct istream_deflate *defl = p_malloc(pool, sizeof(*defl));
+    struct istream_deflate *defl = istream_new_macro(pool, deflate);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    defl->output = istream_deflate;
-    defl->output.pool = pool;
     defl->buffer = fifo_buffer_new(pool, 4096);
     defl->z_initialized = 0;
     defl->z_stream_end = 0;

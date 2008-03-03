@@ -50,7 +50,7 @@ tee_source_eof(void *ctx)
 
     istream_clear_unref(&tee->input);
     istream_invoke_eof(&tee->output1);
-    istream_invoke_eof(&tee->output2);
+    istream_deinit_eof(&tee->output2);
 
     pool_unref(tee->output1.pool);
 }
@@ -66,7 +66,7 @@ tee_source_abort(void *ctx)
 
     istream_clear_unref(&tee->input);
     istream_invoke_abort(&tee->output1);
-    istream_invoke_abort(&tee->output2);
+    istream_deinit_abort(&tee->output2);
 
     pool_unref(tee->output1.pool);
 }
@@ -107,7 +107,7 @@ istream_tee_close1(istream_t istream)
 
     istream_free_unref_handler(&tee->input);
     istream_invoke_abort(&tee->output2);
-    istream_invoke_abort(&tee->output1);
+    istream_deinit_abort(&tee->output1);
 }
 
 static const struct istream istream_tee1 = {
@@ -144,7 +144,7 @@ istream_tee_close2(istream_t istream)
 
     istream_free_unref_handler(&tee->input);
     istream_invoke_abort(&tee->output2);
-    istream_invoke_abort(&tee->output1);
+    istream_deinit_abort(&tee->output1);
 }
 
 static const struct istream istream_tee2 = {
@@ -161,13 +161,11 @@ static const struct istream istream_tee2 = {
 istream_t
 istream_tee_new(pool_t pool, istream_t input)
 {
-    struct istream_tee *tee = p_malloc(pool, sizeof(*tee));
+    struct istream_tee *tee = (struct istream_tee *)
+        istream_new(pool, &istream_tee1, sizeof(*tee));
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
-
-    tee->output1 = istream_tee1;
-    tee->output1.pool = pool;
 
     tee->output2 = istream_tee2;
     tee->output2.pool = pool;

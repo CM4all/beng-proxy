@@ -45,7 +45,7 @@ cat_close(struct istream_cat *cat)
             istream_free_unref_handler(&input->istream);
     }
     
-    istream_invoke_abort(&cat->output);
+    istream_deinit_abort(&cat->output);
 }
 
 
@@ -96,7 +96,7 @@ cat_input_eof(void *ctx)
         } while (cat->current < cat->num && cat_current(cat)->istream == NULL);
 
         if (cat->current >= cat->num) {
-            istream_invoke_eof(&cat->output);
+            istream_deinit_eof(&cat->output);
         } else if (!cat->reading) {
             /* only call istream_read() if this function was not
                called from istream_cat_read() - in this case,
@@ -177,7 +177,7 @@ istream_cat_read(istream_t istream)
             ++cat->current;
 
         if (cat->current >= cat->num) {
-            istream_invoke_eof(&cat->output);
+            istream_deinit_eof(&cat->output);
             break;
         }
 
@@ -229,9 +229,8 @@ istream_cat_new(pool_t pool, ...)
 
     assert(num > 0);
 
-    cat = p_malloc(pool, sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
-    cat->output = istream_cat;
-    cat->output.pool = pool;
+    cat = (struct istream_cat*)istream_new(pool, &istream_cat,
+                                           sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
     cat->reading = 0;
     cat->current = 0;
     cat->num = num;

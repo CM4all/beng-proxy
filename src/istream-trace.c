@@ -56,7 +56,7 @@ trace_input_eof(void *ctx)
     fprintf(stderr, "eof()\n");
 
     istream_clear_unref(&trace->input);
-    istream_invoke_eof(&trace->output);
+    istream_deinit_eof(&trace->output);
 }
 
 static void
@@ -67,7 +67,7 @@ trace_input_abort(void *ctx)
     fprintf(stderr, "abort()\n");
 
     istream_clear_unref(&trace->input);
-    istream_invoke_abort(&trace->output);
+    istream_deinit_abort(&trace->output);
 }
 
 static const struct istream_handler trace_input_handler = {
@@ -121,7 +121,7 @@ istream_trace_close(istream_t istream)
     fprintf(stderr, "close()\n");
 
     istream_free_unref_handler(&trace->input);
-    istream_invoke_abort(&trace->output);
+    istream_deinit_abort(&trace->output);
 }
 
 static const struct istream istream_trace = {
@@ -139,15 +139,12 @@ static const struct istream istream_trace = {
 istream_t
 istream_trace_new(pool_t pool, istream_t input)
 {
-    struct istream_trace *trace = p_malloc(pool, sizeof(*trace));
+    struct istream_trace *trace = istream_new_macro(pool, trace);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
     fprintf(stderr, "new()\n");
-
-    trace->output = istream_trace;
-    trace->output.pool = pool;
 
     istream_assign_ref_handler(&trace->input, input,
                                &trace_input_handler, trace,

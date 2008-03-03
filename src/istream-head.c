@@ -40,7 +40,7 @@ head_source_data(const void *data, size_t length, void *ctx)
         head->rest -= nbytes;
         if (head->rest == 0) {
             istream_free_unref_handler(&head->input);
-            istream_invoke_eof(&head->output);
+            istream_deinit_eof(&head->output);
             return 0;
         }
     }
@@ -67,7 +67,7 @@ head_source_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         head->rest -= (size_t)nbytes;
         if (head->rest == 0) {
             istream_free_unref_handler(&head->input);
-            istream_invoke_eof(&head->output);
+            istream_deinit_eof(&head->output);
         }
     }
 
@@ -80,7 +80,7 @@ head_source_eof(void *ctx)
     struct istream_head *head = ctx;
 
     istream_clear_unref(&head->input);
-    istream_invoke_eof(&head->output);
+    istream_deinit_eof(&head->output);
 }
 
 static void
@@ -89,7 +89,7 @@ head_source_abort(void *ctx)
     struct istream_head *head = ctx;
 
     istream_clear_unref(&head->input);
-    istream_invoke_abort(&head->output);
+    istream_deinit_abort(&head->output);
 }
 
 static const struct istream_handler head_input_handler = {
@@ -118,7 +118,7 @@ istream_head_read(istream_t istream)
 
     if (head->rest == 0) {
         istream_free_unref_handler(&head->input);
-        istream_invoke_eof(&head->output);
+        istream_deinit_eof(&head->output);
     } else {
         istream_handler_set_direct(head->input, head->output.handler_direct);
 
@@ -148,13 +148,10 @@ static const struct istream istream_head = {
 istream_t
 istream_head_new(pool_t pool, istream_t input, size_t size)
 {
-    struct istream_head *head = p_malloc(pool, sizeof(*head));
+    struct istream_head *head = istream_new_macro(pool, head);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
-
-    head->output = istream_head;
-    head->output.pool = pool;
 
     istream_assign_ref_handler(&head->input, input,
                                &head_input_handler, head,

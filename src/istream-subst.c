@@ -268,7 +268,7 @@ subst_write_mismatch(struct istream_subst *subst)
         return 1;
 
     if (subst->input == NULL) {
-        istream_invoke_eof(&subst->output);
+        istream_deinit_eof(&subst->output);
         return 1;
     }
 
@@ -531,7 +531,7 @@ subst_source_eof(void *ctx)
 
     if (subst->state == STATE_NONE) {
         subst->state = STATE_CLOSED;
-        istream_invoke_eof(&subst->output);
+        istream_deinit_eof(&subst->output);
     }
 }
 
@@ -543,7 +543,7 @@ subst_source_abort(void *ctx)
     subst->state = STATE_CLOSED;
 
     istream_clear_unref(&subst->input);
-    istream_invoke_abort(&subst->output);
+    istream_deinit_abort(&subst->output);
 }
 
 static const struct istream_handler subst_source_handler = {
@@ -608,7 +608,7 @@ istream_subst_read(istream_t istream)
 
     if (subst->state == STATE_NONE && subst->input == NULL) {
         subst->state = STATE_CLOSED;
-        istream_invoke_eof(&subst->output);
+        istream_deinit_eof(&subst->output);
     }
 }
 
@@ -622,7 +622,7 @@ istream_subst_close(istream_t istream)
     if (subst->input != NULL)
         istream_free_unref_handler(&subst->input);
 
-    istream_invoke_abort(&subst->output);
+    istream_deinit_abort(&subst->output);
 }
 
 static const struct istream istream_subst = {
@@ -639,13 +639,11 @@ static const struct istream istream_subst = {
 istream_t
 istream_subst_new(pool_t pool, istream_t input)
 {
-    struct istream_subst *subst = p_malloc(pool, sizeof(*subst));
+    struct istream_subst *subst = istream_new_macro(pool, subst);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    subst->output = istream_subst;
-    subst->output.pool = pool;
     subst->root = NULL;
     subst->state = STATE_NONE;
     strref_clear(&subst->mismatch);

@@ -9,5 +9,6 @@
 
 #include "istream.h"
 #include "istream-invoke.h"
+#include "istream-new.h"
 
 #endif

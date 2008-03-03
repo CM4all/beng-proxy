@@ -27,7 +27,7 @@ delayed_close(struct istream_delayed *delayed)
         assert(delayed->input == NULL);
     } else if (async_ref_defined(&delayed->async)) {
         async_abort(&delayed->async);
-        istream_invoke_abort(&delayed->output);
+        istream_deinit_abort(&delayed->output);
     }
 }
 
@@ -54,7 +54,7 @@ delayed_input_eof(void *ctx)
     struct istream_delayed *delayed = ctx;
 
     istream_clear_unref(&delayed->input);
-    istream_invoke_eof(&delayed->output);
+    istream_deinit_eof(&delayed->output);
 }
 
 static void
@@ -63,7 +63,7 @@ delayed_input_abort(void *ctx)
     struct istream_delayed *delayed = ctx;
 
     istream_clear_unref(&delayed->input);
-    istream_invoke_abort(&delayed->output);
+    istream_deinit_abort(&delayed->output);
 }
 
 static const struct istream_handler delayed_input_handler = {
@@ -116,11 +116,8 @@ static const struct istream istream_delayed = {
 istream_t
 istream_delayed_new(pool_t pool, struct async_operation *async)
 {
-    struct istream_delayed *delayed;
+    struct istream_delayed *delayed = istream_new_macro(pool, delayed);
 
-    delayed = p_malloc(pool, sizeof(*delayed));
-    delayed->output = istream_delayed;
-    delayed->output.pool = pool;
     delayed->input = NULL;
 
     if (async == NULL)
@@ -158,5 +155,5 @@ istream_delayed_set_eof(istream_t i_delayed)
 
     async_ref_poison(&delayed->async);
 
-    istream_invoke_eof(&delayed->output);
+    istream_deinit_eof(&delayed->output);
 }

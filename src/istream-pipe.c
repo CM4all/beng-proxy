@@ -46,7 +46,7 @@ pipe_abort(struct istream_pipe *p)
     pipe_close(p);
 
     if (p->input == NULL)
-        istream_invoke_abort(&p->output);
+        istream_deinit_abort(&p->output);
     else
         istream_close(p->input);
 }
@@ -74,7 +74,7 @@ pipe_consume(struct istream_pipe *p)
         if (p->piped == 0 && p->input == NULL) {
             /* p->input has already reported EOF, and we have been
                waiting for the pipe buffer to become empty */
-            istream_invoke_eof(&p->output);
+            istream_deinit_eof(&p->output);
             pipe_close(p);
         }
     }
@@ -172,7 +172,7 @@ pipe_input_eof(void *ctx)
 
     if (p->piped == 0) {
         pool_ref(p->output.pool);
-        istream_invoke_eof(&p->output);
+        istream_deinit_eof(&p->output);
         pipe_close(p);
         pool_unref(p->output.pool);
     }
@@ -186,7 +186,7 @@ pipe_input_abort(void *ctx)
     pipe_close(p);
 
     istream_clear_unref(&p->input);
-    istream_invoke_abort(&p->output);
+    istream_deinit_abort(&p->output);
 }
 
 static const struct istream_handler pipe_input_handler = {
@@ -248,13 +248,11 @@ static const struct istream istream_pipe = {
 istream_t
 istream_pipe_new(pool_t pool, istream_t input)
 {
-    struct istream_pipe *p = p_malloc(pool, sizeof(*p));
+    struct istream_pipe *p = istream_new_macro(pool, pipe);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    p->output = istream_pipe;
-    p->output.pool = pool;
     p->fds[0] = -1;
     p->fds[1] = -1;
     p->piped = 0;

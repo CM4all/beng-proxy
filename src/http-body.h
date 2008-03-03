@@ -54,10 +54,7 @@ http_body_init(struct http_body_reader *body,
                const struct istream *stream, pool_t stream_pool,
                pool_t pool, off_t content_length, int keep_alive);
 
-static inline void
-http_body_deinit(struct http_body_reader *body)
-{
-    poison_undefined(body, sizeof(*body));
-}
+void
+http_body_deinit(struct http_body_reader *body);
 
 #endif

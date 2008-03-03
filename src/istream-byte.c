@@ -46,7 +46,7 @@ byte_input_eof(void *ctx)
     struct istream_byte *byte = ctx;
 
     istream_clear_unref(&byte->input);
-    istream_invoke_eof(&byte->output);
+    istream_deinit_eof(&byte->output);
 }
 
 static void
@@ -55,7 +55,7 @@ byte_input_abort(void *ctx)
     struct istream_byte *byte = ctx;
 
     istream_clear_unref(&byte->input);
-    istream_invoke_abort(&byte->output);
+    istream_deinit_abort(&byte->output);
 }
 
 static const struct istream_handler byte_input_handler = {
@@ -95,7 +95,7 @@ istream_byte_close(istream_t istream)
     assert(byte->input != NULL);
 
     istream_free_unref_handler(&byte->input);
-    istream_invoke_abort(&byte->output);
+    istream_deinit_abort(&byte->output);
 }
 
 static const struct istream istream_byte = {
@@ -112,13 +112,10 @@ static const struct istream istream_byte = {
 istream_t
 istream_byte_new(pool_t pool, istream_t input)
 {
-    struct istream_byte *byte = p_malloc(pool, sizeof(*byte));
+    struct istream_byte *byte = istream_new_macro(pool, byte);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
-
-    byte->output = istream_byte;
-    byte->output.pool = pool;
 
     istream_assign_ref_handler(&byte->input, input,
                                &byte_input_handler, byte,

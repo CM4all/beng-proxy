@@ -27,7 +27,7 @@ later_event_callback(int fd, short event, void *ctx)
     (void)event;
 
     if (later->input == NULL)
-        istream_invoke_eof(&later->output);
+        istream_deinit_eof(&later->output);
     else
         istream_read(later->input);
 }
@@ -80,7 +80,7 @@ later_source_abort(void *ctx)
     evtimer_del(&later->event);
 
     istream_clear_unref(&later->input);
-    istream_invoke_abort(&later->output);
+    istream_deinit_abort(&later->output);
 }
 
 static const struct istream_handler later_input_handler = {
@@ -119,7 +119,7 @@ istream_later_close(istream_t istream)
 
     if (later->input == NULL)
         /* this can only happen during the eof callback delay */
-        istream_invoke_abort(&later->output);
+        istream_deinit_abort(&later->output);
     else
         istream_close(later->input);
 }
@@ -138,13 +138,10 @@ static const struct istream istream_later = {
 istream_t
 istream_later_new(pool_t pool, istream_t input)
 {
-    struct istream_later *later = p_malloc(pool, sizeof(*later));
+    struct istream_later *later = istream_new_macro(pool, later);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
-
-    later->output = istream_later;
-    later->output.pool = pool;
 
     istream_assign_ref_handler(&later->input, input,
                                &later_input_handler, later,

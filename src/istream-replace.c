@@ -119,7 +119,7 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
            replace->first_substitution->start >= replace->position);
 
     if (replace_is_eof(replace)) {
-        istream_invoke_eof(&replace->output);
+        istream_deinit_eof(&replace->output);
         return;
     }
 
@@ -177,7 +177,7 @@ replace_substitution_abort(void *ctx)
     replace_destroy(replace);
 
     if (replace->input == NULL)
-        istream_invoke_abort(&replace->output);
+        istream_deinit_abort(&replace->output);
     else
         istream_close(replace->input);
 }
@@ -341,7 +341,7 @@ replace_try_read_from_buffer(struct istream_replace *replace)
     if (rest == 0 && replace->position == replace->source_length &&
         replace->first_substitution == NULL &&
         replace->input == NULL)
-        istream_invoke_eof(&replace->output);
+        istream_deinit_eof(&replace->output);
 
     return rest;
 }
@@ -374,7 +374,7 @@ replace_read_check_empty(struct istream_replace *replace)
     assert(replace->input == NULL);
 
     if (replace_is_eof(replace))
-        istream_invoke_eof(&replace->output);
+        istream_deinit_eof(&replace->output);
     else {
         pool_ref(replace->output.pool);
         replace_read(replace);
@@ -433,7 +433,7 @@ replace_source_abort(void *ctx)
 
     replace_destroy(replace);
     istream_clear_unref(&replace->input);
-    istream_invoke_abort(&replace->output);
+    istream_deinit_abort(&replace->output);
 }
 
 static const struct istream_handler replace_input_handler = {
@@ -543,7 +543,7 @@ istream_replace_close(istream_t istream)
     replace_destroy(replace);
 
     if (replace->input == NULL)
-        istream_invoke_abort(&replace->output);
+        istream_deinit_abort(&replace->output);
     else
         istream_close(replace->input);
 }
@@ -563,13 +563,10 @@ static const struct istream istream_replace = {
 istream_t
 istream_replace_new(pool_t pool, istream_t input, int quiet)
 {
-    struct istream_replace *replace = p_malloc(pool, sizeof(*replace));
+    struct istream_replace *replace = istream_new_macro(pool, replace);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
-
-    replace->output = istream_replace;
-    replace->output.pool = pool;
 
     istream_assign_ref_handler(&replace->input, input,
                                &replace_input_handler, replace,

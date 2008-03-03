@@ -39,7 +39,7 @@ file_abort(struct file *file)
 {
     file_close(file);
 
-    istream_invoke_abort(&file->stream);
+    istream_deinit_abort(&file->stream);
 }
 
 static inline struct file *
@@ -89,7 +89,7 @@ istream_file_eof_detected(struct file *file)
 
     file_close(file);
 
-    istream_invoke_eof(&file->stream);
+    istream_deinit_eof(&file->stream);
 }
 
 static inline size_t
@@ -223,7 +223,7 @@ static const struct istream istream_file = {
 istream_t
 istream_file_new(pool_t pool, const char *path, off_t length)
 {
-    struct file *file = p_malloc(pool, sizeof(*file));
+    struct file *file = (struct file*)istream_new(pool, &istream_file, sizeof(*file));
 
     assert(length >= -1);
 
@@ -237,8 +237,6 @@ istream_file_new(pool_t pool, const char *path, off_t length)
     file->rest = length;
     file->buffer = NULL;
     file->path = path;
-    file->stream = istream_file;
-    file->stream.pool = pool;
 
     return istream_struct_cast(&file->stream);
 }

@@ -65,7 +65,7 @@ hold_input_eof(void *ctx)
         return;
     }
 
-    istream_invoke_eof(&hold->output);
+    istream_deinit_eof(&hold->output);
 }
 
 static void
@@ -84,7 +84,7 @@ hold_input_abort(void *ctx)
         return;
     }
 
-    istream_invoke_abort(&hold->output);
+    istream_deinit_abort(&hold->output);
 }
 
 static const struct istream_handler hold_input_handler = {
@@ -122,9 +122,9 @@ istream_hold_read(istream_t istream)
     assert(hold->output.handler != NULL);
 
     if (unlikely(hold->input_eof))
-        istream_invoke_eof(&hold->output);
+        istream_deinit_eof(&hold->output);
     else if (unlikely(hold->input_aborted))
-        istream_invoke_abort(&hold->output);
+        istream_deinit_abort(&hold->output);
     else {
         istream_handler_set_direct(hold->input, hold->output.handler_direct);
         istream_read(hold->input);
@@ -137,7 +137,12 @@ istream_hold_close(istream_t istream)
     struct istream_hold *hold = istream_to_hold(istream);
 
     if (hold->input == NULL) {
-        istream_invoke_abort(&hold->output);
+        istream_deinit_abort(&hold->output);
+    } else if (hold->output.handler == NULL) {
+        /* there is no handler yet - immediately deinitialize this
+           istream */
+        istream_free_unref_handler(&hold->input);
+        istream_deinit(&hold->output);
     } else {
         /* the input object is still there; istream_close(hold->input)
            will implicitly call istream_invoke_free(&hold->output)
@@ -162,11 +167,8 @@ static const struct istream istream_hold = {
 istream_t
 istream_hold_new(pool_t pool, istream_t input)
 {
-    struct istream_hold *hold;
+    struct istream_hold *hold = istream_new_macro(pool, hold);
 
-    hold = p_malloc(pool, sizeof(*hold));
-    hold->output = istream_hold;
-    hold->output.pool = pool;
     hold->input_eof = 0;
     hold->input_aborted = 0;
 

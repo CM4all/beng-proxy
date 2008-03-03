@@ -163,7 +163,8 @@ http_client_response_stream_close(istream_t istream)
 
 #ifdef POISON
     poison_undefined(&connection->request, sizeof(connection->request));
-    poison_undefined(&connection->response, sizeof(connection->response));
+    poison_undefined(&connection->response,
+                     sizeof(connection->response) - sizeof(connection->response.body_reader));
     connection->request.pool = NULL;
     connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
@@ -420,7 +421,8 @@ http_client_response_finished(http_client_connection_t connection)
 
 #ifdef POISON
     poison_undefined(&connection->request, sizeof(connection->request));
-    poison_undefined(&connection->response, sizeof(connection->response));
+    poison_undefined(&connection->response,
+                     sizeof(connection->response) - sizeof(connection->response.body_reader));
     connection->request.pool = NULL;
     connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;

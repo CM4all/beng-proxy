@@ -174,9 +174,9 @@ cgi_input_eof(void *ctx)
     if (cgi->headers != NULL) {
         daemon_log(1, "premature end of headers from CGI script\n");
 
-        istream_invoke_abort(&cgi->output);
+        istream_deinit_abort(&cgi->output);
     } else if (fifo_buffer_empty(cgi->buffer)) {
-        istream_invoke_eof(&cgi->output);
+        istream_deinit_eof(&cgi->output);
     }
 }
 
@@ -186,7 +186,7 @@ cgi_input_abort(void *ctx)
     struct cgi *cgi = ctx;
 
     istream_clear_unref(&cgi->input);
-    istream_invoke_abort(&cgi->output);
+    istream_deinit_abort(&cgi->output);
 }
 
 static const struct istream_handler cgi_input_handler = {
@@ -252,7 +252,7 @@ istream_cgi_read(istream_t istream)
     } else {
         size_t rest = istream_buffer_consume(&cgi->output, cgi->buffer);
         if (rest == 0)
-            istream_invoke_eof(&cgi->output);
+            istream_deinit_eof(&cgi->output);
     }
 }
 
@@ -264,7 +264,7 @@ istream_cgi_close(istream_t istream)
     if (cgi->input != NULL)
         istream_close(cgi->input);
     else
-        istream_invoke_abort(&cgi->output);
+        istream_deinit_abort(&cgi->output);
 }
 
 static const struct istream istream_cgi = {
@@ -370,7 +370,7 @@ cgi_new(pool_t pool,
         void *handler_ctx,
         struct async_operation_ref *async_ref)
 {
-    struct cgi *cgi = p_malloc(pool, sizeof(*cgi));
+    struct cgi *cgi;
     pid_t pid;
     istream_t input;
 
@@ -387,9 +387,7 @@ cgi_new(pool_t pool,
                 script_name, path_info, query_string, document_root,
                 headers);
 
-    cgi->output = istream_cgi;
-    cgi->output.pool = pool;
-
+    cgi = (struct cgi *)istream_new(pool, &istream_cgi, sizeof(*cgi));
     istream_assign_ref_handler(&cgi->input, input,
                                &cgi_input_handler, cgi, 0);
 

@@ -38,7 +38,7 @@ dechunk_close(struct istream_dechunk *dechunk)
 
     if (dechunk->input == NULL) {
         dechunk->state = CLOSED;
-        istream_invoke_abort(&dechunk->output);
+        istream_deinit_abort(&dechunk->output);
     } else
         istream_close(dechunk->input);
 }
@@ -54,7 +54,7 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     dechunk->state = EOF_DETECTED;
 
     pool_ref(dechunk->output.pool);
-    istream_invoke_eof(&dechunk->output);
+    istream_deinit_eof(&dechunk->output);
 
     if (dechunk->state == CLOSED) {
         pool_unref(dechunk->output.pool);
@@ -193,7 +193,7 @@ dechunk_input_eof(void *ctx)
     dechunk->state = CLOSED;
 
     istream_clear_unref(&dechunk->input);
-    istream_invoke_abort(&dechunk->output);
+    istream_deinit_abort(&dechunk->output);
 }
 
 static void
@@ -206,7 +206,7 @@ dechunk_input_abort(void *ctx)
     istream_clear_unref(&dechunk->input);
 
     if (dechunk->state != EOF_DETECTED)
-        istream_invoke_abort(&dechunk->output);
+        istream_deinit_abort(&dechunk->output);
 
     dechunk->state = CLOSED;
 }
@@ -271,13 +271,11 @@ static const struct istream istream_dechunk = {
 istream_t
 istream_dechunk_new(pool_t pool, istream_t input)
 {
-    struct istream_dechunk *dechunk = p_malloc(pool, sizeof(*dechunk));
+    struct istream_dechunk *dechunk = istream_new_macro(pool, dechunk);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    dechunk->output = istream_dechunk;
-    dechunk->output.pool = pool;
     dechunk->state = NONE;
 
     istream_assign_ref_handler(&dechunk->input, input,

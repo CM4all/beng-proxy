@@ -34,7 +34,7 @@ chunked_eof_detected(struct istream_chunked *chunked)
     chunked->buffer = NULL;
 
     pool_ref(chunked->output.pool);
-    istream_invoke_eof(&chunked->output);
+    istream_deinit_eof(&chunked->output);
     pool_unref(chunked->output.pool);
 }
 
@@ -173,7 +173,7 @@ chunked_source_abort(void *ctx)
     chunked->buffer = NULL;
 
     istream_clear_unref(&chunked->input);
-    istream_invoke_abort(&chunked->output);
+    istream_deinit_abort(&chunked->output);
 }
 
 static const struct istream_handler chunked_source_handler = {
@@ -222,7 +222,7 @@ istream_chunked_close(istream_t istream)
     if (chunked->input != NULL)
         istream_free_unref_handler(&chunked->input);
 
-    istream_invoke_abort(&chunked->output);
+    istream_deinit_abort(&chunked->output);
 }
 
 static const struct istream istream_chunked = {
@@ -239,13 +239,11 @@ static const struct istream istream_chunked = {
 istream_t
 istream_chunked_new(pool_t pool, istream_t input)
 {
-    struct istream_chunked *chunked = p_malloc(pool, sizeof(*chunked));
+    struct istream_chunked *chunked = istream_new_macro(pool, chunked);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    chunked->output = istream_chunked;
-    chunked->output.pool = pool;
     chunked->buffer = fifo_buffer_new(pool, 4096);
     chunked->missing_from_current_chunk = 0;
 
