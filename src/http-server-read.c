@@ -112,6 +112,11 @@ http_server_headers_finished(http_server_connection_t connection)
         content_length = (off_t)-1;
     }
 
+    /* istream_deinit() used poison_noaccess() - make it writable now
+       for re-use */
+    poison_undefined(&connection->request.body_reader,
+                     sizeof(connection->request.body_reader));
+
     request->body = http_body_init(&connection->request.body_reader,
                                    &http_server_request_stream,
                                    connection->pool, request->pool,
