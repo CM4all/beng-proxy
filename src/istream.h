@@ -282,7 +282,6 @@ istream_handler_clear(istream_t _istream)
 
 
 #include "istream-ref.h"
-#include "istream-invoke.h"
 #include "istream-impl.h"
 
 #endif

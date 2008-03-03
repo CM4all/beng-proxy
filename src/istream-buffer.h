@@ -7,7 +7,7 @@
 #ifndef __ISTREAM_BUFFER_H
 #define __ISTREAM_BUFFER_H
 
-#include "istream.h"
+#include "istream-internal.h"
 #include "fifo-buffer.h"
 
 /**

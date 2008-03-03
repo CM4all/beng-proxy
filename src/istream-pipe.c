@@ -6,7 +6,7 @@
 
 #ifdef __linux
 
-#include "istream.h"
+#include "istream-internal.h"
 #include "splice.h"
 
 #include <daemon/log.h>

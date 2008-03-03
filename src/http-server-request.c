@@ -7,6 +7,7 @@
  */
 
 #include "http-server-internal.h"
+#include "istream-internal.h"
 
 void
 http_server_consume_body(http_server_connection_t connection)

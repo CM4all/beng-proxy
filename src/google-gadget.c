@@ -6,7 +6,7 @@
 
 #include "google-gadget-internal.h"
 #include "widget.h"
-#include "istream.h"
+#include "istream-internal.h"
 #include "http-cache.h"
 #include "http-response.h"
 #include "parser.h"

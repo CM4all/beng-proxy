@@ -6,6 +6,7 @@
  */
 
 #include "js-filter.h"
+#include "istream-internal.h"
 
 #include <assert.h>
 

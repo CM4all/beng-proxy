@@ -13,6 +13,7 @@
 #include "header-writer.h"
 #include "event2.h"
 #include "http-body.h"
+#include "istream-internal.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>

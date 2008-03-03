@@ -5,6 +5,7 @@
  */
 
 #include "http-body.h"
+#include "istream-internal.h"
 
 #include <assert.h>
 #include <limits.h>

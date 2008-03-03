@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream.h"
+#include "istream-internal.h"
 #include "strref.h"
 
 #include <assert.h>
