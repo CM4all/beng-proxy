@@ -82,6 +82,9 @@ my_response(http_status_t status, strmap_t headers __attr_unused,
     struct context *c = ctx;
 
     c->status = status;
+
+    if (body != NULL)
+        istream_close(body);
 }
 
 static void
@@ -108,6 +111,20 @@ test_empty(pool_t pool, struct context *c)
 
     assert(c->client == NULL);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
+}
+
+static void
+test_body(pool_t pool, struct context *c)
+{
+    c->client = connect_mirror(pool, &my_connection_handler, c);
+    http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
+                        istream_string_new(pool, "foobar"),
+                        &my_response_handler, c);
+
+    event_dispatch();
+
+    assert(c->client == NULL);
+    assert(c->status == HTTP_STATUS_OK);
 }
 
 static void
@@ -142,6 +159,7 @@ int main(int argc, char **argv) {
     pool = pool_new_libc(NULL, "root");
 
     run_test(pool, test_empty);
+    run_test(pool, test_body);
     run_test(pool, test_early_close);
 
     pool_unref(pool);
