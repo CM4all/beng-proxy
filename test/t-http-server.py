@@ -43,7 +43,7 @@ server = Server(*start_mirror())
 server.write("GET / HTTP/1.1\r\nconnection: keep-alive\r\n\r\n")
 data = server.read()
 assert data
-assert '200 OK' in data
+assert '204 No Content' in data
 assert 'keep-alive' in data
 assert data.endswith('\r\n\r\n')
 

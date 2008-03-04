@@ -10,7 +10,8 @@ my_request(struct http_server_request *request, void *ctx)
 {
     (void)ctx;
 
-    http_server_response(request, HTTP_STATUS_OK,
+    http_server_response(request,
+                         request->body == NULL ? HTTP_STATUS_NO_CONTENT : HTTP_STATUS_OK,
                          NULL,
                          request->body);
 }
