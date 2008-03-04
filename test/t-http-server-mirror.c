@@ -28,6 +28,7 @@ static struct http_server_connection_handler handler = {
 };
 
 int main(int argc, char **argv) {
+    struct event_base *event_base;
     pool_t pool;
     int sockfd;
     http_server_connection_t connection;
@@ -35,7 +36,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    event_init();
+    event_base = event_init();
 
     pool = pool_new_libc(NULL, "root");
 
@@ -54,4 +55,6 @@ int main(int argc, char **argv) {
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
+
+    event_base_free(event_base);
 }
