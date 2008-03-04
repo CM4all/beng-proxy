@@ -163,7 +163,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-processor test/run-google-gadget test/run-embed
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed
 
 src/libcm4all-istream.a: $(ISTREAM_OBJECTS)
 	ar cr $@ $^
@@ -208,6 +208,9 @@ test/t-html-escape: test/t-html-escape.o src/html-escape.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 test/t-http-server-mirror: test/t-http-server-mirror.o src/http-server.o src/http-server-request.o src/http-server-read.o src/http-server-response.o src/fifo-buffer.o src/duplex.o src/pool.o src/pstring.o src/buffered-io.o src/strmap.o src/header-writer.o src/istream-string.o src/istream-dechunk.o src/istream-chunked.o src/istream-pipe.o src/istream-memory.o src/istream-cat.o src/http-body.o src/date.o src/socket-util.o src/growing-buffer.o src/http.o src/header-parser.o src/format.o src/strutil.o src/gmtime.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
+
+test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstring.o src/strmap.o src/growing-buffer.o src/fifo-buffer.o src/header-writer.o src/istream-string.o src/istream-memory.o src/istream-cat.o src/http-body.o src/header-parser.o src/istream-chunked.o src/istream-dechunk.o src/format.o src/http.o src/strutil.o src/buffered-io.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
 test/t-processor: test/t-processor.o src/processor.o src/penv.o src/parser.o src/istream-replace.o src/widget.o src/widget-class.o src/widget-ref.o src/widget-uri.o src/widget-session.o src/embed.o src/wembed.o src/uri.o src/uri-escape.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/pool.o src/pstring.o src/istream-string.o src/istream-subst.o src/istream-file.o src/istream-cat.o src/istream-memory.o src/istream-delayed.o src/istream-hold.o src/istream-dechunk.o src/istream-chunked.o src/session.o src/cookie.o src/header-writer.o src/args.o src/buffered-io.o src/url-stream.o src/url-stock.o src/stock.o src/hstock.o src/js-filter.o src/client-socket.o src/http-client.o src/http-body.o src/socket-util.o src/format.o src/header-parser.o src/http.o src/strutil.o src/js-generator.o src/widget-request.o src/google-gadget.o src/google-gadget-msg.o src/istream-tee.o src/istream-null.o
