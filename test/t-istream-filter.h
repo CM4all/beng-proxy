@@ -101,10 +101,8 @@ istream_read_expect(struct ctx *ctx, istream_t istream)
 }
 
 static void
-run_istream_ctx(struct ctx *ctx, istream_t istream)
+run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 {
-    pool_t pool = istream_pool(istream);
-
     ctx->eof = 0;
 
     istream_handler_set(istream, &my_istream_handler, ctx, 0);
@@ -119,13 +117,13 @@ run_istream_ctx(struct ctx *ctx, istream_t istream)
 }
 
 static void
-run_istream(istream_t istream)
+run_istream(pool_t pool, istream_t istream)
 {
     struct ctx ctx = {
         .abort_istream = NULL,
     };
 
-    run_istream_ctx(&ctx, istream);
+    run_istream_ctx(&ctx, pool, istream);
 }
 
 
@@ -146,7 +144,7 @@ test_normal(pool_t pool)
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
 
-    run_istream(istream);
+    run_istream(pool, istream);
 }
 
 /** test with istream_byte */
@@ -158,7 +156,7 @@ test_byte(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_byte_new(pool, create_input(pool)));
-    run_istream(istream);
+    run_istream(pool, istream);
 }
 
 /** input fails */
@@ -170,7 +168,7 @@ test_fail(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_fail_new(pool));
-    run_istream(istream);
+    run_istream(pool, istream);
 }
 
 /** input fails after the first byte */
@@ -186,7 +184,7 @@ test_fail_1byte(pool_t pool)
                                           istream_head_new(pool, create_input(pool), 1),
                                           istream_fail_new(pool),
                                           NULL));
-    run_istream(istream);
+    run_istream(pool, istream);
 }
 
 /** abort without handler */
@@ -269,7 +267,7 @@ test_abort_1byte(pool_t pool)
                                create_test(pool,
                                            create_input(pool)),
                                1);
-    run_istream(istream);
+    run_istream(pool, istream);
 }
 
 /** test with istream_later filter */
@@ -281,7 +279,7 @@ test_later(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_later_new(pool, create_input(pool)));
-    run_istream(istream);
+    run_istream(pool, istream);
 }
 
 
