@@ -254,7 +254,7 @@ benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
 benchmark: src/cm4all-beng-proxy
 	./src/cm4all-beng-proxy -D -u max -p 8080
 
-valgrind: CFLAGS = -O0 -g -DPOISON -DVALGRIND -DPOOL_LIBC_ONLY
+valgrind: DEBUG_CFLAGS = -g -DPOISON -DVALGRIND -DPOOL_LIBC_ONLY
 valgrind: src/cm4all-beng-proxy
 	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy $(DEBUG_ARGS)
 
