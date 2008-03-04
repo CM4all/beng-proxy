@@ -47,7 +47,7 @@ connect_mirror(pool_t pool,
     return http_client_connection_new(pool, sv[0], handler, ctx);
 }
 
-struct my_connection {
+struct context {
     http_client_connection_t client;
     int idle, aborted;
     http_status_t status;
@@ -56,7 +56,7 @@ struct my_connection {
 static void
 my_connection_idle(void *ctx)
 {
-    struct my_connection *c = ctx;
+    struct context *c = ctx;
 
     c->idle = 1;
 }
@@ -64,7 +64,7 @@ my_connection_idle(void *ctx)
 static void
 my_connection_free(void *ctx __attr_unused)
 {
-    struct my_connection *c = ctx;
+    struct context *c = ctx;
 
     c->client = NULL;
 }
@@ -79,7 +79,7 @@ my_response(http_status_t status, strmap_t headers __attr_unused,
             istream_t body __attr_unused,
             void *ctx)
 {
-    struct my_connection *c = ctx;
+    struct context *c = ctx;
 
     c->status = status;
 }
@@ -87,7 +87,7 @@ my_response(http_status_t status, strmap_t headers __attr_unused,
 static void
 my_response_abort(void *ctx)
 {
-    struct my_connection *c = ctx;
+    struct context *c = ctx;
 
     c->aborted = 1;
 }
@@ -100,7 +100,7 @@ static const struct http_response_handler my_response_handler = {
 static void
 test_empty(pool_t pool)
 {
-    struct my_connection c;
+    struct context c;
 
     memset(&c, 0, sizeof(c));
     c.client = connect_mirror(pool, &my_connection_handler, &c);
@@ -116,7 +116,7 @@ test_empty(pool_t pool)
 static void
 test_early_close(pool_t pool)
 {
-    struct my_connection c;
+    struct context c;
 
     memset(&c, 0, sizeof(c));
     c.client = connect_mirror(pool, &my_connection_handler, &c);
