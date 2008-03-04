@@ -150,11 +150,9 @@ http_client_response_stream_close(istream_t istream)
     connection->response.headers = NULL;
     connection->response.body = NULL;
 
-    istream_invoke_abort(&connection->response.body_reader.output);
+    istream_deinit_abort(&connection->response.body_reader.output);
 
     connection->keep_alive = 0;
-
-    http_body_deinit(&connection->response.body_reader);
 
     if (connection->request.pool != NULL) {
         pool_unref(connection->request.pool);
