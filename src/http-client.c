@@ -146,13 +146,12 @@ http_client_response_stream_close(istream_t istream)
 
     event2_nand(&connection->event, EV_READ);
 
+    connection->keep_alive = 0;
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
     connection->response.body = NULL;
 
     istream_deinit_abort(&connection->response.body_reader.output);
-
-    connection->keep_alive = 0;
 
     if (connection->request.pool != NULL) {
         pool_unref(connection->request.pool);
@@ -168,16 +167,8 @@ http_client_response_stream_close(istream_t istream)
     connection->response.read_state = READ_NONE;
 #endif
 
-    if (!connection->keep_alive && http_client_connection_valid(connection)) {
+    if (http_client_connection_valid(connection))
         http_client_connection_close(connection);
-        return;
-    }
-
-    if (http_client_connection_valid(connection) &&
-        connection->handler != NULL &&
-        connection->handler->idle != NULL) {
-        connection->handler->idle(connection->handler_ctx);
-    }
 }
 
 static const struct istream http_client_response_stream = {
