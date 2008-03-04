@@ -98,37 +98,35 @@ static const struct http_response_handler my_response_handler = {
 };
 
 static void
-test_empty(pool_t pool)
+test_empty(pool_t pool, struct context *c)
 {
-    struct context c;
-
-    memset(&c, 0, sizeof(c));
-    c.client = connect_mirror(pool, &my_connection_handler, &c);
-    http_client_request(c.client, HTTP_METHOD_GET, "/foo", NULL, NULL,
-                        &my_response_handler, &c);
+    c->client = connect_mirror(pool, &my_connection_handler, c);
+    http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL, NULL,
+                        &my_response_handler, c);
 
     event_dispatch();
 
-    assert(c.client == NULL);
-    assert(c.status == HTTP_STATUS_NO_CONTENT);
+    assert(c->client == NULL);
+    assert(c->status == HTTP_STATUS_NO_CONTENT);
 }
 
 static void
-test_early_close(pool_t pool)
+test_early_close(pool_t pool, struct context *c)
 {
+    c->client = connect_mirror(pool, &my_connection_handler, c);
+    http_client_connection_close(c->client);
+
+    assert(c->client == NULL);
+}
+
+static void
+run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
     struct context c;
 
     memset(&c, 0, sizeof(c));
-    c.client = connect_mirror(pool, &my_connection_handler, &c);
-    http_client_connection_close(c.client);
 
-    assert(c.client == NULL);
-}
-
-static void
-run_test(pool_t pool, void (*test)(pool_t pool)) {
     pool = pool_new_linear(pool, "test", 16384);
-    test(pool);
+    test(pool, &c);
     pool_unref(pool);
     pool_commit();
 }
