@@ -1,6 +1,6 @@
 include version.mk
 
-DEBUG_CFLAGS = -g -DPOISON
+DEBUG_CFLAGS = -g -DPOISON -DVALGRIND
 CHECK_CFLAGS = -DTRACE -DDEBUG_POOL_REF
 LOG_CFLAGS = -DDEBUG_POOL_GROW -DDUMP_POOL_SIZE -DCACHE_LOG
 
@@ -254,7 +254,7 @@ benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
 benchmark: src/cm4all-beng-proxy
 	./src/cm4all-beng-proxy -D -u max -p 8080
 
-valgrind: DEBUG_CFLAGS = -g -DPOISON -DVALGRIND -DPOOL_LIBC_ONLY
+valgrind: DEBUG_CFLAGS += -DPOOL_LIBC_ONLY
 valgrind: src/cm4all-beng-proxy
 	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy $(DEBUG_ARGS)
 
