@@ -51,6 +51,10 @@ struct context {
     http_client_connection_t client;
     int idle, aborted;
     http_status_t status;
+
+    istream_t body;
+    off_t body_data;
+    int body_eof, body_abort;
 };
 
 
@@ -82,6 +86,45 @@ static const struct http_client_connection_handler my_connection_handler = {
 
 
 /*
+ * istream handler
+ *
+ */
+
+static size_t
+my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
+{
+    struct context *c = ctx;
+
+    c->body_data += length;
+    return length;
+}
+
+static void
+my_istream_eof(void *ctx)
+{
+    struct context *c = ctx;
+
+    c->body = NULL;
+    c->body_eof = 1;
+}
+
+static void
+my_istream_abort(void *ctx)
+{
+    struct context *c = ctx;
+
+    c->body = NULL;
+    c->body_abort = 1;
+}
+
+static const struct istream_handler my_istream_handler = {
+    .data = my_istream_data,
+    .eof = my_istream_eof,
+    .abort = my_istream_abort,
+};
+
+
+/*
  * http_response_handler
  *
  */
@@ -96,7 +139,7 @@ my_response(http_status_t status, strmap_t headers __attr_unused,
     c->status = status;
 
     if (body != NULL)
-        istream_close(body);
+        istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
 }
 
 static void
@@ -129,6 +172,9 @@ test_empty(pool_t pool, struct context *c)
 
     assert(c->client == NULL);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
 }
 
 static void
@@ -143,6 +189,8 @@ test_body(pool_t pool, struct context *c)
 
     assert(c->client == NULL);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->body_eof);
+    assert(c->body_data == 6);
 }
 
 static void
