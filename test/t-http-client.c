@@ -53,6 +53,12 @@ struct context {
     http_status_t status;
 };
 
+
+/*
+ * http_client_connection_handler
+ *
+ */
+
 static void
 my_connection_idle(void *ctx)
 {
@@ -73,6 +79,12 @@ static const struct http_client_connection_handler my_connection_handler = {
     .idle = my_connection_idle,
     .free = my_connection_free,
 };
+
+
+/*
+ * http_response_handler
+ *
+ */
 
 static void
 my_response(http_status_t status, strmap_t headers __attr_unused,
@@ -99,6 +111,12 @@ static const struct http_response_handler my_response_handler = {
     .response = my_response,
     .abort = my_response_abort,
 };
+
+
+/*
+ * tests
+ *
+ */
 
 static void
 test_empty(pool_t pool, struct context *c)
@@ -135,6 +153,12 @@ test_early_close(pool_t pool, struct context *c)
 
     assert(c->client == NULL);
 }
+
+
+/*
+ * main
+ *
+ */
 
 static void
 run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
