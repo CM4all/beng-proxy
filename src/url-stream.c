@@ -26,9 +26,8 @@ struct url_stream {
     growing_buffer_t headers;
     istream_t body;
 
-    struct async_operation_ref *async_ref;
-
     struct http_response_handler_ref handler;
+    struct async_operation_ref *async_ref;
 };
 
 
