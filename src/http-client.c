@@ -639,6 +639,9 @@ http_client_request_abort(http_client_connection_t connection)
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
 
+    if (connection->request.istream != NULL)
+        istream_free_handler(&connection->request.istream);
+
     if (connection->response.read_state == READ_BODY) {
         http_client_response_stream_close(http_body_istream(&connection->response.body_reader));
         assert(connection->response.read_state == READ_NONE);
@@ -672,9 +675,6 @@ http_client_connection_close(http_client_connection_t connection)
 #ifdef __linux
     connection->cork = 0;
 #endif
-
-    if (connection->request.istream != NULL)
-        istream_free_handler(&connection->request.istream);
 
     if (connection->request.pool != NULL)
         http_client_request_abort(connection);
