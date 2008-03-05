@@ -89,9 +89,9 @@ http_body_socket_eof(struct http_body_reader *body, fifo_buffer_t buffer)
     (void)buffer; /* XXX there may still be data in here */
 
     if (body->rest > 0)
-        istream_invoke_abort(&body->output);
+        istream_deinit_abort(&body->output);
     else
-        istream_invoke_eof(&body->output);
+        istream_deinit_eof(&body->output);
 }
 
 istream_t

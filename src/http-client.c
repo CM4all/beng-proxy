@@ -521,8 +521,6 @@ http_client_try_read_buffered(http_client_connection_t connection)
                                  connection->input);
             if (!http_client_connection_valid(connection))
                 return;
-
-            http_body_deinit(&connection->response.body_reader);
         }
 
         connection->response.read_state = READ_NONE;
