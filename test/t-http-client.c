@@ -48,6 +48,7 @@ connect_mirror(pool_t pool,
 }
 
 struct context {
+    int close_early, close_late, close_data;
     int close_response_body_early, close_response_body_late, close_response_body_data;
     http_client_connection_t client;
     int idle, aborted;
@@ -98,6 +99,11 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
 
     c->body_data += length;
 
+    if (c->close_data) {
+        http_client_connection_close(c->client);
+        return 0;
+    }
+
     if (c->close_response_body_data) {
         istream_close(c->body);
         return 0;
@@ -145,10 +151,15 @@ my_response(http_status_t status, strmap_t headers __attr_unused,
 
     c->status = status;
 
-    if (c->close_response_body_early)
+    if (c->close_early)
+        http_client_connection_close(c->client);
+    else if (c->close_response_body_early)
         istream_close(body);
     else if (body != NULL)
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
+
+    if (c->close_late)
+        http_client_connection_close(c->client);
 
     if (c->close_response_body_late)
         istream_close(c->body);
@@ -213,6 +224,63 @@ test_early_close(pool_t pool, struct context *c)
 
     assert(c->client == NULL);
     assert(c->status == 0);
+}
+
+static void
+test_close_early(pool_t pool, struct context *c)
+{
+    c->close_early = 1;
+    c->client = connect_mirror(pool, &my_connection_handler, c);
+    http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
+                        istream_string_new(pool, "foobar"),
+                        &my_response_handler, c);
+
+    event_dispatch();
+
+    assert(c->client == NULL);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(c->body_data == 0);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+}
+
+static void
+test_close_late(pool_t pool, struct context *c)
+{
+    c->close_late = 1;
+    c->client = connect_mirror(pool, &my_connection_handler, c);
+    http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
+                        istream_string_new(pool, "foobar"),
+                        &my_response_handler, c);
+
+    event_dispatch();
+
+    assert(c->client == NULL);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(c->body_data == 0);
+    assert(!c->body_eof);
+    assert(c->body_abort);
+}
+
+static void
+test_close_data(pool_t pool, struct context *c)
+{
+    c->close_data = 1;
+    c->client = connect_mirror(pool, &my_connection_handler, c);
+    http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
+                        istream_string_new(pool, "foobar"),
+                        &my_response_handler, c);
+
+    event_dispatch();
+
+    assert(c->client == NULL);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(c->body_data == 6);
+    assert(!c->body_eof);
+    assert(c->body_abort);
 }
 
 static void
@@ -304,6 +372,9 @@ int main(int argc, char **argv) {
     run_test(pool, test_empty);
     run_test(pool, test_body);
     run_test(pool, test_early_close);
+    run_test(pool, test_close_early);
+    run_test(pool, test_close_late);
+    run_test(pool, test_close_data);
     run_test(pool, test_close_response_body_early);
     run_test(pool, test_close_response_body_late);
     run_test(pool, test_close_response_body_data);
