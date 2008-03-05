@@ -109,10 +109,7 @@ url_http_connection_free(void *ctx)
 {
     struct url_connection *connection = ctx;
 
-    if (connection->http == NULL)
-        /* we are being called through url_stock_destroy() which means
-           that the stock item is already removed */
-        return;
+    assert(connection->http != NULL);
 
     if (stock_item_is_idle(&connection->stock_item))
         stock_del(&connection->stock_item);
@@ -253,7 +250,7 @@ url_stock_destroy(void *ctx, struct stock_item *item)
     if (async_ref_defined(&connection->client_socket))
         async_abort(&connection->client_socket);
     else if (connection->http != NULL)
-        http_client_connection_free(&connection->http);
+        http_client_connection_close(connection->http);
 }
 
 static struct stock_class url_stock_class = {
