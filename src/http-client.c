@@ -137,9 +137,6 @@ http_client_response_stream_close(istream_t istream)
 {
     http_client_connection_t connection = response_stream_to_connection(istream);
 
-    if (connection->response.read_state == READ_NONE)
-        return;
-
     assert(connection->response.read_state == READ_BODY);
     assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
