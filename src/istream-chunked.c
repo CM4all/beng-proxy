@@ -134,9 +134,13 @@ chunked_source_data(const void *data, size_t length, void *ctx)
 
     fifo_buffer_append(chunked->buffer, dest_length);
 
+    pool_ref(chunked->output.pool);
+
     chunked_try_write(chunked);
     if (chunked_is_closed(chunked))
-        return 0;
+        length = 0;
+
+    pool_unref(chunked->output.pool);
 
     return length;
 }
