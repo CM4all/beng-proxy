@@ -110,7 +110,6 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx,
     struct stock_item *item;
 
     assert(stock != NULL);
-    assert(async_ref == NULL || !async_ref_defined(async_ref));
 
     while (stock->num_idle > 0) {
         assert(!list_empty(&stock->idle));
