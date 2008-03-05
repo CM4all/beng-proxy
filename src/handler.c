@@ -94,7 +94,7 @@ translate_callback(const struct translate_response *response,
         else
             file_callback(request);
     } else if (response->proxy != NULL) {
-        proxy_callback(request);
+        proxy_handler(request);
     } else if (response->redirect != NULL) {
         http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
                                   response->redirect, NULL);

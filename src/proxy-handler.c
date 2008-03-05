@@ -10,7 +10,7 @@
 #include "http-cache.h"
 
 void
-proxy_callback(struct request *request2)
+proxy_handler(struct request *request2)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;

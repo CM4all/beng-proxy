@@ -18,6 +18,6 @@ void
 cgi_handler(struct request *request2);
 
 void
-proxy_callback(struct request *request);
+proxy_handler(struct request *request);
 
 #endif
