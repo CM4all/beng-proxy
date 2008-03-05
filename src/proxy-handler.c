@@ -7,7 +7,7 @@
 #include "handler.h"
 #include "request.h"
 #include "http-server.h"
-#include "url-stream.h"
+#include "http-cache.h"
 
 void
 proxy_callback(struct request *request2)
@@ -31,9 +31,8 @@ proxy_callback(struct request *request2)
         request2->body_consumed = 1;
     }
 
-    url_stream_new(request->pool,
-                   request2->http_client_stock,
-                   method, tr->proxy, NULL, body,
-                   &response_handler, request2,
-                   &request2->async);
+    http_cache_request(request2->http_cache, request->pool,
+                       method, tr->proxy, NULL, body,
+                       &response_handler, request2,
+                       &request2->async);
 }
