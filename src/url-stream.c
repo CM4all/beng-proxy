@@ -28,7 +28,6 @@ struct url_stream {
 
     struct async_operation_ref *async_ref;
 
-    struct async_operation_ref stock_get_operation;
     struct stock_item *stock_item;
 
     struct http_response_handler_ref handler;
@@ -46,8 +45,6 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
     url_stream_t us = ctx;
 
     assert(us->stock_item == NULL);
-
-    async_ref_clear(&us->stock_get_operation);
 
     if (item == NULL) {
         http_response_handler_invoke_abort(&us->handler);
@@ -105,7 +102,6 @@ url_stream_new(pool_t pool,
            http-client.c resets istream->pool after the response is
            ready */
         us->body = istream_hold_new(pool, body);
-    async_ref_clear(&us->stock_get_operation);
     us->stock_item = NULL;
     http_response_handler_set(&us->handler, handler, handler_ctx);
     us->async_ref = async_ref;
@@ -148,5 +144,5 @@ url_stream_new(pool_t pool,
 
     hstock_get(http_client_stock, host_and_port,
                url_stream_stock_callback, us,
-               &us->stock_get_operation);
+               async_ref);
 }
