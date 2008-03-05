@@ -648,6 +648,11 @@ http_client_request_abort(http_client_connection_t connection)
            being freed */
         http_response_handler_invoke_abort(&connection->request.handler);
     }
+
+    if (connection->request.pool != NULL) {
+        pool_unref(connection->request.pool);
+        connection->request.pool = NULL;
+    }
 }
 
 void
@@ -673,11 +678,6 @@ http_client_connection_close(http_client_connection_t connection)
 
     if (connection->request.pool != NULL)
         http_client_request_abort(connection);
-
-    if (connection->request.pool != NULL) {
-        pool_unref(connection->request.pool);
-        connection->request.pool = NULL;
-    }
 
     if (connection->handler != NULL &&
         connection->handler->free != NULL) {
