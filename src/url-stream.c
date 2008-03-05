@@ -26,7 +26,7 @@ struct url_stream {
     growing_buffer_t headers;
     istream_t body;
 
-    struct async_operation async;
+    struct async_operation_ref *async_ref;
 
     struct async_operation_ref stock_get_operation;
     struct stock_item *stock_item;
@@ -48,7 +48,6 @@ url_stream_response(http_status_t status, strmap_t headers,
     struct url_stream *us = ctx;
     pool_t pool = us->pool;
 
-    async_poison(&us->async);
     http_response_handler_invoke_response(&us->handler, status, headers, body);
 
     poison_noaccess(us, sizeof(*us));
@@ -60,7 +59,6 @@ url_stream_response_abort(void *ctx)
 {
     struct url_stream *us = ctx;
 
-    async_poison(&us->async);
     http_response_handler_invoke_abort(&us->handler);
 
     pool_unref(us->pool);
@@ -88,7 +86,6 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
     async_ref_clear(&us->stock_get_operation);
 
     if (item == NULL) {
-        async_poison(&us->async);
         http_response_handler_invoke_abort(&us->handler);
         pool_unref(us->pool);
         return;
@@ -98,41 +95,8 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
 
     http_client_request(url_stock_item_get(item),
                         us->method, us->uri, us->headers, us->body,
-                        &url_stream_response_handler, us);
+                        &url_stream_response_handler, us, us->async_ref);
 }
-
-
-/*
- * async operation
- *
- */
-
-static struct url_stream *
-async_to_url_stream(struct async_operation *ao)
-{
-    return (struct url_stream*)(((char*)ao) - offsetof(struct url_stream, async));
-}
-
-static void
-url_stream_abort(struct async_operation *ao)
-{
-    struct url_stream *us = async_to_url_stream(ao);
-
-    assert(us != NULL);
-
-    if (async_ref_defined(&us->stock_get_operation)) {
-        async_abort(&us->stock_get_operation);
-        return;
-    }
-
-    assert(us->stock_item != NULL);
-
-    http_client_connection_close(url_stock_item_get(us->stock_item));
-}
-
-static struct async_operation_class url_stream_async_operation = {
-    .abort = url_stream_abort,
-};
 
 
 /*
@@ -178,6 +142,7 @@ url_stream_new(pool_t pool,
     async_ref_clear(&us->stock_get_operation);
     us->stock_item = NULL;
     http_response_handler_set(&us->handler, handler, handler_ctx);
+    us->async_ref = async_ref;
 
     if (memcmp(url, "http://", 7) == 0) {
         /* HTTP over TCP */
@@ -186,7 +151,6 @@ url_stream_new(pool_t pool,
         p = url + 7;
         slash = strchr(p, '/');
         if (slash == NULL || slash == p) {
-            async_poison(&us->async);
             http_response_handler_invoke_abort(&us->handler);
             pool_unref(us->pool);
             return;
@@ -209,16 +173,12 @@ url_stream_new(pool_t pool,
         else
             host_and_port = p_strndup(us->pool, p, qmark - p);
     } else {
-        async_poison(&us->async);
         http_response_handler_invoke_abort(&us->handler);
         pool_unref(us->pool);
         return;
     }
 
     header_write(us->headers, "connection", "keep-alive");
-
-    async_init(&us->async, &url_stream_async_operation);
-    async_ref_set(async_ref, &us->async);
 
     hstock_get(http_client_stock, host_and_port,
                url_stream_stock_callback, us,

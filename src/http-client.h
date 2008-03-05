@@ -12,6 +12,7 @@
 #include "http.h"
 
 struct http_response_handler;
+struct async_operation_ref;
 
 typedef struct http_client_connection *http_client_connection_t;
 
@@ -37,6 +38,7 @@ http_client_request(http_client_connection_t connection,
                     growing_buffer_t headers,
                     istream_t body,
                     const struct http_response_handler *handler,
-                    void *ctx);
+                    void *ctx,
+                    struct async_operation_ref *async_ref);
 
 #endif

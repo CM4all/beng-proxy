@@ -14,6 +14,7 @@
 #include "event2.h"
 #include "http-body.h"
 #include "istream-internal.h"
+#include "async.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -46,6 +47,7 @@ struct http_client_connection {
         char content_length_buffer[32];
 
         struct http_response_handler_ref handler;
+        struct async_operation async;
     } request;
 
     /* response */
@@ -634,7 +636,7 @@ http_client_connection_new(pool_t pool, int fd,
 }
 
 static void
-http_client_request_abort(http_client_connection_t connection)
+http_client_request_close(http_client_connection_t connection)
 {
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
@@ -677,7 +679,7 @@ http_client_connection_close(http_client_connection_t connection)
 #endif
 
     if (connection->request.pool != NULL)
-        http_client_request_abort(connection);
+        http_client_request_close(connection);
 
     if (connection->handler != NULL &&
         connection->handler->free != NULL) {
@@ -766,13 +768,39 @@ static const struct istream_handler http_client_request_stream_handler = {
 };
 
 
+/*
+ * async operation
+ *
+ */
+
+static struct http_client_connection *
+async_to_http_client_connection(struct async_operation *ao)
+{
+    return (struct http_client_connection*)(((char*)ao) - offsetof(struct http_client_connection, request.async));
+}
+
+static void
+http_client_request_abort(struct async_operation *ao)
+{
+    struct http_client_connection *connection
+        = async_to_http_client_connection(ao);
+
+    http_client_connection_close(connection);
+}
+
+static struct async_operation_class http_client_request_async_operation = {
+    .abort = http_client_request_abort,
+};
+
+
 void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
                     growing_buffer_t headers,
                     istream_t body,
                     const struct http_response_handler *handler,
-                    void *ctx)
+                    void *ctx,
+                    struct async_operation_ref *async_ref)
 {
     istream_t request_line_stream, header_stream;
 
@@ -785,6 +813,9 @@ http_client_request(http_client_connection_t connection,
 
     connection->request.pool = pool_new_linear(connection->pool, "http_client_request", 8192);
     http_response_handler_set(&connection->request.handler, handler, ctx);
+
+    async_init(&connection->request.async, &http_client_request_async_operation);
+    async_ref_set(async_ref, &connection->request.async);
 
     /* request line */
 

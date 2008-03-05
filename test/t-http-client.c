@@ -1,6 +1,7 @@
 #include "http-client.h"
 #include "http-response.h"
 #include "duplex.h"
+#include "async.h"
 
 #include <inline/compiler.h>
 
@@ -50,6 +51,7 @@ connect_mirror(pool_t pool,
 struct context {
     int close_early, close_late, close_data;
     int close_response_body_early, close_response_body_late, close_response_body_data;
+    struct async_operation_ref async_ref;
     http_client_connection_t client;
     int idle, aborted;
     http_status_t status;
@@ -189,7 +191,7 @@ test_empty(pool_t pool, struct context *c)
 {
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL, NULL,
-                        &my_response_handler, c);
+                        &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
@@ -206,7 +208,7 @@ test_body(pool_t pool, struct context *c)
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
-                        &my_response_handler, c);
+                        &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
@@ -233,7 +235,7 @@ test_close_early(pool_t pool, struct context *c)
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
-                        &my_response_handler, c);
+                        &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
@@ -252,7 +254,7 @@ test_close_late(pool_t pool, struct context *c)
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
-                        &my_response_handler, c);
+                        &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
@@ -271,7 +273,7 @@ test_close_data(pool_t pool, struct context *c)
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
-                        &my_response_handler, c);
+                        &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
@@ -290,7 +292,7 @@ test_close_response_body_early(pool_t pool, struct context *c)
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
-                        &my_response_handler, c);
+                        &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
@@ -309,7 +311,7 @@ test_close_response_body_late(pool_t pool, struct context *c)
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
-                        &my_response_handler, c);
+                        &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
@@ -328,7 +330,7 @@ test_close_response_body_data(pool_t pool, struct context *c)
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
-                        &my_response_handler, c);
+                        &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
