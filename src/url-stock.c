@@ -25,6 +25,8 @@ struct url_connection {
 
     struct async_operation_ref client_socket;
     http_client_connection_t http;
+
+    int destroyed;
 };
 
 
@@ -111,6 +113,9 @@ url_http_connection_free(void *ctx)
 
     assert(connection->http != NULL);
 
+    if (connection->destroyed)
+        return;
+
     if (stock_item_is_idle(&connection->stock_item))
         stock_del(&connection->stock_item);
     else
@@ -177,6 +182,7 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri,
 
     async_ref_clear(&connection->client_socket);
     connection->http = NULL;
+    connection->destroyed = 0;
 
     async_init(&connection->create_operation,
                &url_create_operation);
@@ -246,6 +252,8 @@ url_stock_destroy(void *ctx, struct stock_item *item)
     struct url_connection *connection = (struct url_connection *)item;
 
     (void)ctx;
+
+    connection->destroyed = 1;
 
     if (async_ref_defined(&connection->client_socket))
         async_abort(&connection->client_socket);
