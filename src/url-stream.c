@@ -41,16 +41,14 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
 {
     url_stream_t us = ctx;
 
-    if (item == NULL) {
+    if (item == NULL)
         http_response_handler_invoke_abort(&us->handler);
-        pool_unref(us->pool);
-        return;
-    }
+    else
+        http_client_request(url_stock_item_get(item),
+                            us->method, us->uri, us->headers, us->body,
+                            us->handler.handler, us->handler.ctx,
+                            us->async_ref);
 
-    http_client_request(url_stock_item_get(item),
-                        us->method, us->uri, us->headers, us->body,
-                        us->handler.handler, us->handler.ctx,
-                        us->async_ref);
     pool_unref(us->pool);
 }
 
