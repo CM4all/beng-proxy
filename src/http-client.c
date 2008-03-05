@@ -652,7 +652,7 @@ http_client_connection_close(http_client_connection_t connection)
 #endif
 
     if (connection->request.istream != NULL)
-        istream_free(&connection->request.istream);
+        istream_free_handler(&connection->request.istream);
 
     if (connection->response.read_state == READ_BODY) {
         http_client_response_stream_close(http_body_istream(&connection->response.body_reader));
