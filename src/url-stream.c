@@ -36,42 +36,6 @@ struct url_stream {
 
 
 /*
- * http response handler
- *
- */
-
-static void 
-url_stream_response(http_status_t status, strmap_t headers,
-                    istream_t body,
-                    void *ctx)
-{
-    struct url_stream *us = ctx;
-    pool_t pool = us->pool;
-
-    http_response_handler_invoke_response(&us->handler, status, headers, body);
-
-    poison_noaccess(us, sizeof(*us));
-    pool_unref(pool);
-}
-
-static void 
-url_stream_response_abort(void *ctx)
-{
-    struct url_stream *us = ctx;
-
-    http_response_handler_invoke_abort(&us->handler);
-
-    pool_unref(us->pool);
-    poison_noaccess(us, sizeof(*us));
-}
-
-static const struct http_response_handler url_stream_response_handler = {
-    .response = url_stream_response,
-    .abort = url_stream_response_abort,
-};
-
-
-/*
  * stock callback
  *
  */
@@ -95,7 +59,9 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
 
     http_client_request(url_stock_item_get(item),
                         us->method, us->uri, us->headers, us->body,
-                        &url_stream_response_handler, us, us->async_ref);
+                        us->handler.handler, us->handler.ctx,
+                        us->async_ref);
+    pool_unref(us->pool);
 }
 
 
