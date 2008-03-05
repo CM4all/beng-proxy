@@ -46,6 +46,11 @@ http_body_consume_body(struct http_body_reader *body,
 ssize_t
 http_body_try_direct(struct http_body_reader *body, int fd);
 
+/**
+ * The underlying socket has been closed by the remote.  Handle the
+ * rest from the input buffer and forward eof/abort to the istream
+ * handler.
+ */
 void
 http_body_socket_eof(struct http_body_reader *body, fifo_buffer_t buffer);
 
