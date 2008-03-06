@@ -234,8 +234,10 @@ subst_feed_mismatch(struct istream_subst *subst)
         subst->send_first = 0;
     }
 
+    pool_ref(subst->output.pool);
     nbytes = subst_feed(subst, subst->mismatch.data,
                         subst->mismatch.length);
+    pool_unref(subst->output.pool);
     if (nbytes == 0)
         return 1;
 
