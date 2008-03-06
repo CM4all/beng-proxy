@@ -516,6 +516,7 @@ static void
 subst_source_eof(void *ctx)
 {
     struct istream_subst *subst = ctx;
+    size_t nbytes;
 
     assert(subst->input != NULL);
 
@@ -544,7 +545,9 @@ subst_source_eof(void *ctx)
         break;
 
     case STATE_INSERT:
-        subst_try_write_b(subst);
+        nbytes = subst_try_write_b(subst);
+        if (nbytes == 0)
+            return;
         break;
     }
 
@@ -587,6 +590,7 @@ static void
 istream_subst_read(istream_t istream)
 {
     struct istream_subst *subst = istream_to_subst(istream);
+    size_t nbytes;
 
     if (!strref_is_empty(&subst->mismatch)) {
         int ret;
@@ -621,7 +625,9 @@ istream_subst_read(istream_t istream)
         assert(0);
 
     case STATE_INSERT:
-        subst_try_write_b(subst);
+        nbytes = subst_try_write_b(subst);
+        if (nbytes == 0)
+            return;
         break;
     }
 
