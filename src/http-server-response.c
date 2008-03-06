@@ -20,7 +20,6 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
-    assert(connection->response.writing);
     assert(connection->response.istream != NULL);
 
     nbytes = write(connection->fd, data, length);
@@ -47,7 +46,7 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     http_server_connection_t connection = ctx;
     ssize_t nbytes;
 
-    assert(connection->response.writing);
+    assert(connection->response.istream != NULL);
 
     nbytes = istream_direct_to_socket(type, fd, connection->fd, max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN))
@@ -68,11 +67,9 @@ http_server_response_stream_eof(void *ctx)
     assert(connection->request.read_state != READ_START &&
            connection->request.read_state != READ_HEADERS);
     assert(connection->request.request != NULL);
-    assert(connection->response.writing);
     assert(connection->response.istream != NULL);
 
     connection->response.istream = NULL;
-    connection->response.writing = 0;
 
     if (connection->response.writing_100_continue) {
         /* connection->response.istream contained the string "100
@@ -111,11 +108,9 @@ http_server_response_stream_abort(void *ctx)
 {
     http_server_connection_t connection = ctx;
 
-    assert(connection->response.writing);
     assert(connection->response.istream != NULL);
 
     connection->response.istream = NULL;
-    connection->response.writing = 0;
 
     http_server_connection_close(connection);
 }

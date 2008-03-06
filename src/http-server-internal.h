@@ -47,7 +47,7 @@ struct http_server_connection {
 
     /* response */
     struct {
-        int writing, writing_100_continue;
+        int writing_100_continue;
         char status_buffer[64];
         char content_length_buffer[32];
         istream_t istream;

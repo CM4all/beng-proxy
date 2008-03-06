@@ -84,7 +84,7 @@ http_server_try_write(http_server_connection_t connection)
     assert(connection->request.read_state != READ_START &&
            connection->request.read_state != READ_HEADERS);
     assert(connection->request.request != NULL);
-    assert(connection->response.writing);
+    assert(connection->response.istream != NULL);
 
     http_server_cork(connection);
     event2_lock(&connection->event);
@@ -147,7 +147,7 @@ http_server_connection_new(pool_t pool, int fd,
     connection->remote_host = remote_host;
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
-    connection->response.writing = 0;
+    connection->response.istream = NULL;
 #ifdef __linux
     connection->cork = 0;
 #endif
@@ -199,12 +199,8 @@ http_server_connection_close(http_server_connection_t connection)
 
         connection->request.read_state = READ_START;
 
-        if (connection->response.writing) {
-            if (connection->response.istream != NULL)
-                istream_free_handler(&connection->response.istream);
-
-            connection->response.writing = 0;
-        }
+        if (connection->response.istream != NULL)
+            istream_free_handler(&connection->response.istream);
 
         pool_unref(pool);
     }
@@ -241,7 +237,7 @@ http_server_maybe_send_100_continue(http_server_connection_t connection)
     if (!connection->request.expect_100_continue)
         return;
 
-    assert(!connection->response.writing);
+    assert(connection->response.istream == NULL);
 
     connection->request.expect_100_continue = 0;
 
@@ -251,7 +247,6 @@ http_server_maybe_send_100_continue(http_server_connection_t connection)
                         &http_server_response_stream_handler, connection,
                         ISTREAM_DIRECT_SUPPORT);
 
-    connection->response.writing = 1;
     connection->response.writing_100_continue = 1;
 
     http_server_try_write(connection);
@@ -289,7 +284,7 @@ http_server_response(struct http_server_request *request,
     istream_t status_stream, header_stream;
 
     assert(connection->request.request == request);
-    assert(!connection->response.writing);
+    assert(connection->response.istream == NULL);
     /* XXX what if we weren't able to send "100 Continue" yet? */
 
     status_stream
@@ -345,7 +340,6 @@ http_server_response(struct http_server_request *request,
                         &http_server_response_stream_handler, connection,
                         ISTREAM_DIRECT_SUPPORT);
 
-    connection->response.writing = 1;
     connection->response.writing_100_continue = 0;
 
     pool_ref(connection->pool);
