@@ -105,9 +105,3 @@ http_body_init(struct http_body_reader *body,
 
     return istream;
 }
-
-void
-http_body_deinit(struct http_body_reader *body)
-{
-    istream_deinit(&body->output);
-}
