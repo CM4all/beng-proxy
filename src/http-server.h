@@ -8,7 +8,6 @@
 #define __BENG_HTTP_SERVER_H
 
 #include "pool.h"
-#include "strmap.h"
 #include "http.h"
 #include "istream.h"
 #include "growing-buffer.h"
@@ -25,7 +24,7 @@ struct http_server_request {
     /* request metadata */
     http_method_t method;
     char *uri;
-    strmap_t headers;
+    struct strmap *headers;
 
     istream_t body;
 };
