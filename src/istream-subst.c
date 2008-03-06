@@ -538,6 +538,7 @@ subst_source_eof(void *ctx)
 
             strref_set(&subst->mismatch, node->leaf.a, subst->a_match);
             subst_write_mismatch(subst);
+            return;
         }
         break;
 
