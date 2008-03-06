@@ -173,7 +173,11 @@ subst_find_any_leaf(const struct subst_node *node)
     } 
 }
 
-/** write data from subst->b */
+/**
+ * write data from subst->b
+ *
+ * @return the number of bytes remaining
+ */
 static size_t
 subst_try_write_b(struct istream_subst *subst)
 {
@@ -201,7 +205,7 @@ subst_try_write_b(struct istream_subst *subst)
             subst->state = STATE_NONE;
     }
 
-    return nbytes;
+    return length - nbytes;
 }
 
 static size_t
@@ -546,7 +550,7 @@ subst_source_eof(void *ctx)
 
     case STATE_INSERT:
         nbytes = subst_try_write_b(subst);
-        if (nbytes == 0)
+        if (nbytes > 0)
             return;
         break;
     }
@@ -626,7 +630,7 @@ istream_subst_read(istream_t istream)
 
     case STATE_INSERT:
         nbytes = subst_try_write_b(subst);
-        if (nbytes == 0)
+        if (nbytes > 0)
             return;
         break;
     }
