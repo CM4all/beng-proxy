@@ -6,6 +6,7 @@
 
 #include "http-body.h"
 #include "istream-internal.h"
+#include "fifo-buffer.h"
 
 #include <assert.h>
 #include <limits.h>

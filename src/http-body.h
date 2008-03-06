@@ -8,12 +8,10 @@
 #define __BENG_HTTP_BODY_H
 
 #include "istream.h"
-#include "fifo-buffer.h"
 
-#include <inline/poison.h>
-
-#include <assert.h>
 #include <stddef.h>
+
+struct fifo_buffer;
 
 struct http_body_reader {
     struct istream output;
@@ -41,7 +39,7 @@ http_body_available(const struct http_body_reader *body)
 
 size_t
 http_body_consume_body(struct http_body_reader *body,
-                       fifo_buffer_t buffer);
+                       struct fifo_buffer *buffer);
 
 ssize_t
 http_body_try_direct(struct http_body_reader *body, int fd);
@@ -52,7 +50,8 @@ http_body_try_direct(struct http_body_reader *body, int fd);
  * handler.
  */
 void
-http_body_socket_eof(struct http_body_reader *body, fifo_buffer_t buffer);
+http_body_socket_eof(struct http_body_reader *body,
+                     struct fifo_buffer *buffer);
 
 istream_t
 http_body_init(struct http_body_reader *body,
