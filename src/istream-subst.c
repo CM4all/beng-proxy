@@ -276,6 +276,21 @@ subst_write_mismatch(struct istream_subst *subst)
 }
 
 static size_t
+subst_invoke_data_final(struct istream_subst *subst, const char *start,
+                        const char *end, const char *p)
+{
+    size_t nbytes;
+
+    nbytes = istream_invoke_data(&subst->output, p, end - p);
+    if (nbytes == 0 && subst->state == STATE_CLOSED)
+        return 0;
+
+    subst->had_output = 1;
+
+    return (p - start) + nbytes;
+}
+
+static size_t
 subst_feed(struct istream_subst *subst, const void *_data, size_t length)
 {
     const char *data0 = _data, *data = data0, *p = data0, *end = p + length, *first = NULL;
@@ -300,15 +315,9 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
             assert(first == NULL);
 
             first = subst_find_first_char(subst, p, end - p);
-            if (first == NULL) {
+            if (first == NULL)
                 /* no match, try to write and return */
-                subst->had_output = 1;
-                nbytes = istream_invoke_data(&subst->output, data, end - data);
-                if (nbytes == 0 && subst->state == STATE_CLOSED)
-                    return 0;
-
-                return (data - data0) + nbytes;
-            }
+                return subst_invoke_data_final(subst, data0, end, data);
 
             subst->state = STATE_MATCH;
             subst->a_match = 1;
