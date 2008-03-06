@@ -169,6 +169,28 @@ http_server_connection_new(pool_t pool, int fd,
     pool_unref(connection->pool);
 }
 
+static void
+http_server_request_close(struct http_server_connection *connection)
+{
+    pool_t pool;
+
+    assert(connection->request.read_state != READ_START);
+    assert(connection->request.request != NULL);
+
+    pool = connection->request.request->pool;
+    assert(pool != NULL);
+    pool_ref(pool);
+
+    http_server_request_free(&connection->request.request);
+
+    connection->request.read_state = READ_START;
+
+    if (connection->response.istream != NULL)
+        istream_free_handler(&connection->response.istream);
+
+    pool_unref(pool);
+}
+
 void
 http_server_connection_close(http_server_connection_t connection)
 {
@@ -186,24 +208,8 @@ http_server_connection_close(http_server_connection_t connection)
 
     pool_ref(connection->pool);
 
-    if (connection->request.read_state != READ_START) {
-        pool_t pool;
-
-        assert(connection->request.request != NULL);
-
-        pool = connection->request.request->pool;
-        assert(pool != NULL);
-        pool_ref(pool);
-
-        http_server_request_free(&connection->request.request);
-
-        connection->request.read_state = READ_START;
-
-        if (connection->response.istream != NULL)
-            istream_free_handler(&connection->response.istream);
-
-        pool_unref(pool);
-    }
+    if (connection->request.read_state != READ_START)
+        http_server_request_close(connection);
 
     if (connection->handler != NULL && connection->handler->free != NULL) {
         const struct http_server_connection_handler *handler = connection->handler;
