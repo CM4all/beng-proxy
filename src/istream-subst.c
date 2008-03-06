@@ -509,6 +509,7 @@ static size_t
 subst_source_data(const void *data, size_t length, void *ctx)
 {
     struct istream_subst *subst = ctx;
+    size_t nbytes;
 
     if (!strref_is_empty(&subst->mismatch)) {
         int ret = subst_feed_mismatch(subst);
@@ -516,7 +517,11 @@ subst_source_data(const void *data, size_t length, void *ctx)
             return 0;
     }
 
-    return subst_feed(subst, data, length);
+    pool_ref(subst->output.pool);
+    nbytes = subst_feed(subst, data, length);
+    pool_unref(subst->output.pool);
+
+    return nbytes;
 }
 
 static void
