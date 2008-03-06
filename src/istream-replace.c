@@ -272,9 +272,9 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
     nbytes = istream_invoke_data(&replace->output, data, length);
     assert(nbytes <= length);
 
-    if (nbytes == 0 && replace->source_length == (off_t)-1)
+    if (nbytes == 0)
         /* istream_replace has been closed */
-        return 1;
+        return length;
 
     growing_buffer_consume(replace->buffer, nbytes);
     replace->position += nbytes;
