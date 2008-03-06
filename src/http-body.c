@@ -58,11 +58,10 @@ http_body_consume_body(struct http_body_reader *body,
 
     length = http_body_max_read(body, length);
     consumed = istream_invoke_data(&body->output, data, length);
-    if (consumed == 0)
-        return 0;
-
-    fifo_buffer_consume(buffer, consumed);
-    http_body_consumed(body, consumed);
+    if (consumed > 0) {
+        fifo_buffer_consume(buffer, consumed);
+        http_body_consumed(body, consumed);
+    }
 
     return consumed;
 }
