@@ -10,9 +10,8 @@
 #include "pool.h"
 #include "http.h"
 #include "istream.h"
-#include "growing-buffer.h"
 
-#include <stddef.h>
+struct growing_buffer;
 
 typedef struct http_server_connection *http_server_connection_t;
 
@@ -55,7 +54,7 @@ http_server_request_has_body(const struct http_server_request *request)
 void
 http_server_response(struct http_server_request *request,
                      http_status_t status,
-                     growing_buffer_t headers,
+                     struct growing_buffer *headers,
                      istream_t body);
 
 void
