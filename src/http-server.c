@@ -11,6 +11,7 @@
 #include "direct.h"
 #include "format.h"
 #include "socket-util.h"
+#include "istream-internal.h"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -177,7 +178,11 @@ http_server_request_close(struct http_server_connection *connection)
 
     http_server_request_free(&connection->request.request);
 
-    connection->request.read_state = READ_START;
+    if (connection->request.read_state == READ_BODY) {
+        connection->request.read_state = READ_START;
+        istream_deinit_abort(&connection->request.body_reader.output);
+    } else
+        connection->request.read_state = READ_START;
 
     if (connection->response.istream != NULL)
         istream_free_handler(&connection->response.istream);
