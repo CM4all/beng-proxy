@@ -24,6 +24,13 @@ http_server_consume_body(http_server_connection_t connection)
     if (!http_server_connection_valid(connection))
         return;
 
+    if (connection->request.read_state == READ_BODY &&
+        http_body_eof(&connection->request.body_reader)) {
+        http_body_deinit(&connection->request.body_reader);
+        if (!http_server_connection_valid(connection))
+            return;
+    }
+
     event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
 }
 
