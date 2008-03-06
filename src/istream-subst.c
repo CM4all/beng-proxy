@@ -275,6 +275,34 @@ subst_write_mismatch(struct istream_subst *subst)
     return 0;
 }
 
+/**
+ * Forwards source data to the istream handler.
+ *
+ * @return (size_t)-1 when everything has been consumed, or the
+ * correct return value for the data() callback.
+ */
+static size_t
+subst_invoke_data(struct istream_subst *subst, const char *start,
+                  const char *p, size_t length)
+{
+    size_t nbytes;
+
+    nbytes = istream_invoke_data(&subst->output, p, length);
+    if (nbytes == 0 && subst->state == STATE_CLOSED)
+        /* stream has been closed - we must return 0 */
+        return 0;
+
+    subst->had_output = 1;
+
+    if (nbytes < length) {
+        /* blocking */
+        subst->state = STATE_NONE;
+        return (p - start) + nbytes;
+    } else
+        /* everything has been consumed */
+        return (size_t)-1;
+}
+
 static size_t
 subst_invoke_data_final(struct istream_subst *subst, const char *start,
                         const char *end, const char *p)
@@ -354,15 +382,9 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                         subst->had_output = 1;
 
                         chunk_length = first - data;
-                        nbytes = istream_invoke_data(&subst->output, data, chunk_length);
-                        if (nbytes == 0 && subst->state == STATE_CLOSED)
-                            return 0;
-
-                        if (nbytes < chunk_length) {
-                            /* blocking */
-                            subst->state = STATE_NONE;
-                            return (data - data0) + nbytes;
-                        }
+                        nbytes = subst_invoke_data(subst, data0, data, chunk_length);
+                        if (nbytes != (size_t)-1)
+                            return nbytes;
                     }
 
                     /* move data pointer */
@@ -388,15 +410,9 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                     if (!strref_is_empty(&subst->mismatch))
                         ++chunk_length;
 
-                    nbytes = istream_invoke_data(&subst->output, data, chunk_length);
-                    if (nbytes == 0 && subst->state == STATE_CLOSED)
-                        return 0;
-
-                    if (nbytes < chunk_length) {
-                        /* blocking */
-                        subst->state = STATE_NONE;
-                        return (data - data0) + nbytes;
-                    }
+                    nbytes = subst_invoke_data(subst, data0, data, chunk_length);
+                    if (nbytes != (size_t)-1)
+                        return nbytes;
                 } else {
                     /* when re-parsing a mismatch, "first" must not be
                        NULL because we entered this function with
@@ -467,18 +483,9 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
 
         subst->had_output = 1;
 
-        nbytes = istream_invoke_data(&subst->output, data, chunk_length);
-        if (nbytes == 0 && subst->state == STATE_CLOSED)
-            return 0;
-
-        data += nbytes;
-
-        if (nbytes < chunk_length) {
-            /* discard match because our attempt to write the chunk
-               before it blocked */
-            subst->state = STATE_NONE;
-            return (data - data0) + nbytes;
-        }
+        nbytes = subst_invoke_data(subst, data0, data, chunk_length);
+        if (nbytes != (size_t)-1)
+            return nbytes;
     }
 
     return p - data0;
