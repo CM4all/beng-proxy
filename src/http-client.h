@@ -8,9 +8,10 @@
 #define __BENG_HTTP_CLIENT_H
 
 #include "pool.h"
-#include "growing-buffer.h"
 #include "http.h"
+#include "istream.h"
 
+struct growing_buffer;
 struct http_response_handler;
 struct async_operation_ref;
 
@@ -32,7 +33,7 @@ http_client_connection_close(http_client_connection_t connection);
 void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
-                    growing_buffer_t headers,
+                    struct growing_buffer *headers,
                     istream_t body,
                     const struct http_response_handler *handler,
                     void *ctx,
