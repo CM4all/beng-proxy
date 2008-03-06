@@ -147,8 +147,6 @@ http_client_response_stream_close(istream_t istream)
 
     connection->keep_alive = 0;
     connection->response.read_state = READ_NONE;
-    connection->response.headers = NULL;
-    connection->response.body = NULL;
 
     istream_deinit_abort(&connection->response.body_reader.output);
 
