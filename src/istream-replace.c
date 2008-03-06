@@ -288,6 +288,9 @@ static size_t
 replace_read_from_buffer_loop(struct istream_replace *replace, off_t end)
 {
     size_t max_length, rest;
+#ifndef NDEBUG
+    struct pool_notify notify;
+#endif
 
     assert(replace != NULL);
     assert(replace->buffer != NULL);
@@ -296,8 +299,19 @@ replace_read_from_buffer_loop(struct istream_replace *replace, off_t end)
 
     /* this loop is required to cross the growing_buffer borders */
     do {
+#ifndef NDEBUG
+        pool_notify(replace->output.pool, &notify);
+#endif
+
         max_length = (size_t)(end - replace->position);
         rest = replace_read_from_buffer(replace, max_length);
+
+#ifndef NDEBUG
+        if (pool_denotify(&notify)) {
+            assert(rest > 0);
+            break;
+        }
+#endif
 
         assert(replace->position <= end);
     } while (rest == 0 && replace->position < end);
