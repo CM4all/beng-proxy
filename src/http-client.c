@@ -450,12 +450,13 @@ http_client_response_stream_eof(http_client_connection_t connection)
 static void
 http_client_consume_body(http_client_connection_t connection)
 {
+    size_t nbytes;
+
     assert(connection != NULL);
     assert(connection->response.read_state == READ_BODY);
 
-    http_body_consume_body(&connection->response.body_reader, connection->input);
-
-    if (!http_client_connection_valid(connection))
+    nbytes = http_body_consume_body(&connection->response.body_reader, connection->input);
+    if (nbytes == 0 || !http_client_connection_valid(connection))
         return;
 
     if (http_body_eof(&connection->response.body_reader)) {

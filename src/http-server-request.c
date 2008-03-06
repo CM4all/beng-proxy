@@ -12,6 +12,8 @@
 void
 http_server_consume_body(http_server_connection_t connection)
 {
+    size_t nbytes;
+
     assert(connection != NULL);
     assert(connection->request.read_state == READ_BODY);
 
@@ -19,9 +21,8 @@ http_server_consume_body(http_server_connection_t connection)
         /* the handler is not yet connected */
         return;
 
-    http_body_consume_body(&connection->request.body_reader, connection->input);
-
-    if (!http_server_connection_valid(connection))
+    nbytes = http_body_consume_body(&connection->request.body_reader, connection->input);
+    if (nbytes == 0 || !http_server_connection_valid(connection))
         return;
 
     if (connection->request.read_state == READ_BODY &&
