@@ -186,10 +186,7 @@ subst_try_write_b(struct istream_subst *subst)
     assert(subst->a_match == strlen(subst->match->leaf.a));
 
     length = subst->match->leaf.b_length - subst->b_sent;
-    if (length == 0) {
-        subst->state = STATE_NONE;
-        return 0;
-    }
+    assert(length > 0);
 
     nbytes = istream_invoke_data(&subst->output,
                                  subst->match->leaf.b + subst->b_sent,
@@ -395,8 +392,12 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
 
                     /* switch state */
 
-                    subst->state = STATE_INSERT;
-                    subst->b_sent = 0;
+                    if (node->leaf.b_length > 0) {
+                        subst->state = STATE_INSERT;
+                        subst->b_sent = 0;
+                    } else {
+                        subst->state = STATE_NONE;
+                    }
                 }
             } else {
                 /* mismatch. reset match indicator and find new one */
