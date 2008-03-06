@@ -23,8 +23,6 @@ http_body_max_read(struct http_body_reader *body, size_t length)
 static void
 http_body_consumed(struct http_body_reader *body, size_t nbytes)
 {
-    pool_t pool = body->output.pool;
-
     if (body->rest == (off_t)-1) {
         if (body->dechunk != NULL && istream_dechunk_eof(body->dechunk))
             body->rest = 0;
@@ -35,14 +33,6 @@ http_body_consumed(struct http_body_reader *body, size_t nbytes)
     assert((off_t)nbytes <= body->rest);
 
     body->rest -= (off_t)nbytes;
-    if (body->rest > 0)
-        return;
-
-    pool_ref(pool);
-
-    istream_invoke_eof(&body->output);
-
-    pool_unref(pool);
 }
 
 size_t

@@ -10,6 +10,7 @@
 #include "strutil.h"
 #include "buffered-io.h"
 #include "header-parser.h"
+#include "istream-internal.h"
 
 #include <daemon/log.h>
 
@@ -268,6 +269,11 @@ http_server_try_request_direct(http_server_connection_t connection)
         daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
         http_server_connection_close(connection);
         return;
+    }
+
+    if (nbytes > 0 && http_body_eof(&connection->request.body_reader)) {
+        connection->request.read_state = READ_END;
+        istream_deinit_eof(&connection->request.body_reader.output);
     }
 }
 

@@ -440,7 +440,7 @@ http_client_response_stream_eof(http_client_connection_t connection)
     assert(!http_response_handler_defined(&connection->request.handler));
     assert(http_body_eof(&connection->response.body_reader));
 
-    http_body_deinit(&connection->response.body_reader);
+    istream_deinit_eof(&connection->response.body_reader.output);
 
     http_client_response_finished(connection);
 }
@@ -502,6 +502,9 @@ http_client_try_response_direct(http_client_connection_t connection)
         http_client_connection_close(connection);
         return;
     }
+
+    if (nbytes > 0 && http_body_eof(&connection->response.body_reader))
+        http_client_response_stream_eof(connection);
 }
 
 static void
