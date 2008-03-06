@@ -24,17 +24,29 @@ tee_source_data(const void *data, size_t length, void *ctx)
 {
     struct istream_tee *tee = ctx;
     size_t nbytes1, nbytes2;
+#ifndef NDEBUG
+    struct pool_notify notify;
+    int denotify;
+#endif
 
     nbytes1 = istream_invoke_data(&tee->output1, data, length);
     if (nbytes1 == 0)
         return 0;
 
+#ifndef NDEBUG
+    pool_notify(tee->output2.pool, &notify);
+#endif
+
     nbytes2 = istream_invoke_data(&tee->output2, data, nbytes1);
+
+#ifndef NDEBUG
+    denotify = pool_denotify(&notify);
+#endif
 
     /* XXX it is currently asserted that the second handler will
        always consume all data; later, buffering should probably be
        added */
-    assert(nbytes2 == nbytes1 || (nbytes2 == 0 && tee->input == NULL));
+    assert(nbytes2 == nbytes1 || (nbytes2 == 0 && (denotify || tee->input == NULL)));
 
     return nbytes2;
 }
