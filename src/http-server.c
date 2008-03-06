@@ -201,7 +201,7 @@ http_server_connection_close(http_server_connection_t connection)
 
         if (connection->response.writing) {
             if (connection->response.istream != NULL)
-                istream_free(&connection->response.istream);
+                istream_free_handler(&connection->response.istream);
 
             connection->response.writing = 0;
         }
