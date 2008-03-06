@@ -112,6 +112,7 @@ http_server_response_stream_abort(void *ctx)
     http_server_connection_t connection = ctx;
 
     assert(connection->response.writing);
+    assert(connection->response.istream != NULL);
 
     connection->response.istream = NULL;
     connection->response.writing = 0;
