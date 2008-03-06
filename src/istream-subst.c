@@ -195,13 +195,14 @@ subst_try_write_b(struct istream_subst *subst)
                                  subst->match->leaf.b + subst->b_sent,
                                  length);
     assert(nbytes <= length);
+    if (nbytes > 0) {
+        /* note progress */
+        subst->b_sent += nbytes;
 
-    /* note progress */
-    subst->b_sent += nbytes;
-
-    /* finished sending substitution? */
-    if (nbytes == length)
-        subst->state = STATE_NONE;
+        /* finished sending substitution? */
+        if (nbytes == length)
+            subst->state = STATE_NONE;
+    }
 
     return nbytes;
 }
