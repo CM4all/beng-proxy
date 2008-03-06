@@ -39,7 +39,7 @@ http_body_available(const struct http_body_reader *body)
     return body->rest;
 }
 
-void
+size_t
 http_body_consume_body(struct http_body_reader *body,
                        fifo_buffer_t buffer);
 
