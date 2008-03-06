@@ -86,9 +86,7 @@ http_server_request_stream_close(istream_t istream)
 
     connection->keep_alive = 0;
 
-    istream_invoke_abort(&connection->request.body_reader.output);
-
-    http_body_deinit(&connection->request.body_reader);
+    istream_deinit_abort(&connection->request.body_reader.output);
 }
 
 const struct istream http_server_request_stream = {
