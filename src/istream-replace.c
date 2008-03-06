@@ -419,11 +419,17 @@ replace_source_data(const void *data, size_t length, void *ctx)
         growing_buffer_write_buffer(replace->buffer, data, length);
         replace->source_length += (off_t)length;
 
+        pool_ref(replace->output.pool);
+
         replace_try_read_from_buffer(replace);
-        if (replace->input == NULL)
+        if (replace->input == NULL) {
             /* the istream API mandates that we must return 0 if the
                stream is finished */
+            pool_unref(replace->output.pool);
             return 0;
+        }
+
+        pool_unref(replace->output.pool);
     }
 
     return length;
