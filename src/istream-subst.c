@@ -460,14 +460,17 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
         case STATE_INSERT:
             /* there is a previous full match, copy data from subst->b */
 
-            subst_try_write_b(subst);
+            nbytes = subst_try_write_b(subst);
+            if (nbytes > 0) {
+                if (subst->state == STATE_CLOSED)
+                    return 0;
 
-            if (subst->state == STATE_CLOSED)
-                return 0;
-
-            if (subst->state == STATE_INSERT)
+                assert(subst->state == STATE_INSERT);
                 /* blocking */
                 return data - data0;
+            }
+
+            assert(subst->state == STATE_NONE);
 
             break;
         }
