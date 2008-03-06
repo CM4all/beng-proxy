@@ -172,14 +172,8 @@ http_server_connection_new(pool_t pool, int fd,
 static void
 http_server_request_close(struct http_server_connection *connection)
 {
-    pool_t pool;
-
     assert(connection->request.read_state != READ_START);
     assert(connection->request.request != NULL);
-
-    pool = connection->request.request->pool;
-    assert(pool != NULL);
-    pool_ref(pool);
 
     http_server_request_free(&connection->request.request);
 
@@ -187,8 +181,6 @@ http_server_request_close(struct http_server_connection *connection)
 
     if (connection->response.istream != NULL)
         istream_free_handler(&connection->response.istream);
-
-    pool_unref(pool);
 }
 
 void
