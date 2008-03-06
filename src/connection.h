@@ -7,8 +7,9 @@
 #ifndef __BENG_CONNECTION_H
 #define __BENG_CONNECTION_H
 
-#include "list.h"
 #include "http-server.h"
+
+#include <inline/list.h>
 
 #include <sys/socket.h>
 

@@ -5,9 +5,9 @@
  */
 
 #include "pool.h"
-#include "list.h"
 
 #include <inline/poison.h>
+#include <inline/list.h>
 #include <daemon/log.h>
 
 #include <assert.h>

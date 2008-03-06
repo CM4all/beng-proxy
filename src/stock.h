@@ -14,7 +14,8 @@
 #define __BENG_STOCK_H
 
 #include "pool.h"
-#include "list.h"
+
+#include <inline/list.h>
 
 struct async_operation_ref;
 struct stock_item;

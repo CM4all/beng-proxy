@@ -8,11 +8,12 @@
 #define __BENG_WIDGET_H
 
 #include "pool.h"
-#include "list.h"
 #include "strmap.h"
 #include "strref.h"
 #include "http.h"
 #include "istream.h"
+
+#include <inline/list.h>
 
 #include <assert.h>
 

@@ -8,8 +8,9 @@
 #define __BENG_COOKIE_H
 
 #include "pool.h"
-#include "list.h"
 #include "strref.h"
+
+#include <inline/list.h>
 
 #include <time.h>
 

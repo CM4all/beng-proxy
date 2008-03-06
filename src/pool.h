@@ -53,7 +53,7 @@ pool_unref_impl(pool_t pool TRACE_ARGS_DECL);
 #define pool_unref_fwd(pool) pool_unref_impl(pool TRACE_ARGS_FWD)
 
 #ifndef NDEBUG
-#include "list.h"
+#include <inline/list.h>
 
 struct pool_notify {
     struct list_head siblings;

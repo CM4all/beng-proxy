@@ -8,8 +8,9 @@
 #define __BENG_INSTANCE_H
 
 #include "listener.h"
-#include "list.h"
 #include "config.h"
+
+#include <inline/list.h>
 
 #include <event.h>
 
