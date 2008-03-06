@@ -282,12 +282,12 @@ subst_invoke_data_final(struct istream_subst *subst, const char *start,
     size_t nbytes;
 
     nbytes = istream_invoke_data(&subst->output, p, end - p);
-    if (nbytes == 0 && subst->state == STATE_CLOSED)
-        return 0;
+    if (nbytes > 0 || subst->state != STATE_CLOSED) {
+        subst->had_output = 1;
+        nbytes += (p - start);
+    }
 
-    subst->had_output = 1;
-
-    return (p - start) + nbytes;
+    return nbytes;
 }
 
 static size_t
