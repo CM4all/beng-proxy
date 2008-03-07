@@ -40,29 +40,11 @@ byte_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     return istream_invoke_direct(&byte->output, type, fd, 1);
 }
 
-static void
-byte_input_eof(void *ctx)
-{
-    struct istream_byte *byte = ctx;
-
-    byte->input = NULL;
-    istream_deinit_eof(&byte->output);
-}
-
-static void
-byte_input_abort(void *ctx)
-{
-    struct istream_byte *byte = ctx;
-
-    byte->input = NULL;
-    istream_deinit_abort(&byte->output);
-}
-
 static const struct istream_handler byte_input_handler = {
     .data = byte_input_data,
     .direct = byte_input_direct,
-    .eof = byte_input_eof,
-    .abort = byte_input_abort,
+    .eof = istream_forward_eof,
+    .abort = istream_forward_abort,
 };
 
 

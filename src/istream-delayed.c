@@ -38,29 +38,11 @@ delayed_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx
     return istream_invoke_direct(&delayed->output, type, fd, max_length);
 }
 
-static void
-delayed_input_eof(void *ctx)
-{
-    struct istream_delayed *delayed = ctx;
-
-    delayed->input = NULL;
-    istream_deinit_eof(&delayed->output);
-}
-
-static void
-delayed_input_abort(void *ctx)
-{
-    struct istream_delayed *delayed = ctx;
-
-    delayed->input = NULL;
-    istream_deinit_abort(&delayed->output);
-}
-
 static const struct istream_handler delayed_input_handler = {
     .data = delayed_input_data,
     .direct = delayed_input_direct,
-    .eof = delayed_input_eof,
-    .abort = delayed_input_abort,
+    .eof = istream_forward_eof,
+    .abort = istream_forward_abort,
 };
 
 

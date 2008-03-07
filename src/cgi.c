@@ -180,20 +180,11 @@ cgi_input_eof(void *ctx)
     }
 }
 
-static void
-cgi_input_abort(void *ctx)
-{
-    struct cgi *cgi = ctx;
-
-    cgi->input = NULL;
-    istream_deinit_abort(&cgi->output);
-}
-
 static const struct istream_handler cgi_input_handler = {
     .data = cgi_input_data,
     .direct = cgi_input_direct,
     .eof = cgi_input_eof,
-    .abort = cgi_input_abort,
+    .abort = istream_forward_abort,
 };
 
 

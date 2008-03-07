@@ -10,5 +10,6 @@
 #include "istream.h"
 #include "istream-invoke.h"
 #include "istream-new.h"
+#include "istream-forward.h"
 
 #endif

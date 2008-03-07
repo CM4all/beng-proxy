@@ -167,21 +167,10 @@ chunked_source_eof(void *ctx)
     chunked_try_write(chunked);
 }
 
-static void
-chunked_source_abort(void *ctx)
-{
-    struct istream_chunked *chunked = ctx;
-
-    chunked->buffer = NULL;
-
-    chunked->input = NULL;
-    istream_deinit_abort(&chunked->output);
-}
-
 static const struct istream_handler chunked_source_handler = {
     .data = chunked_source_data,
     .eof = chunked_source_eof,
-    .abort = chunked_source_abort,
+    .abort = istream_forward_abort,
 };
 
 

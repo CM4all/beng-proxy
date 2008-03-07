@@ -59,6 +59,7 @@ SPARSE_FLAGS = -DSPARSE \
 POOL_SOURCES = src/pool.c src/pstring.c
 
 ISTREAM_SOURCES = \
+	src/istream-forward.c \
 	src/istream-memory.c \
 	src/istream-null.c \
 	src/istream-string.c \
@@ -192,7 +193,7 @@ test/js: test/js.o src/js-filter.o src/pool.o src/istream-file.o src/fifo-buffer
 test/run-subst: test/run-subst.o src/istream-subst.o src/pool.o src/istream-file.o src/fifo-buffer.o src/buffered-io.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
-test/run-embed: test/run-embed.o src/istream-subst.o src/pool.o src/pstring.o src/istream-file.o src/uri.o src/session.o src/fifo-buffer.o src/hashmap.o src/widget-class.o src/wembed.o src/growing-buffer.o src/widget.o src/format.o src/js-generator.o src/widget-uri.o src/istream-string.o src/args.o src/strmap.o src/uri-escape.o src/url-stock.o src/stock.o src/hstock.o src/buffered-io.o src/client-socket.o src/http-client.o src/http-body.o src/header-writer.o src/http.o src/istream-chunked.o src/istream-cat.o src/socket-util.o src/parser.o src/istream-delayed.o src/header-parser.o src/istream-memory.o src/istream-null.o src/processor.o src/url-stream.o src/js-filter.o src/istream-tee.o src/istream-hold.o src/istream-replace.o src/widget-request.o src/widget-session.o src/embed.o src/strutil.o src/istream-dechunk.o src/cookie.o src/penv.o src/google-gadget.o src/google-gadget-msg.o
+test/run-embed: test/run-embed.o src/istream-subst.o src/pool.o src/pstring.o src/istream-file.o src/uri.o src/session.o src/fifo-buffer.o src/hashmap.o src/widget-class.o src/wembed.o src/growing-buffer.o src/widget.o src/format.o src/js-generator.o src/widget-uri.o src/istream-string.o src/args.o src/strmap.o src/uri-escape.o src/url-stock.o src/stock.o src/hstock.o src/buffered-io.o src/client-socket.o src/http-client.o src/http-body.o src/header-writer.o src/http.o src/istream-chunked.o src/istream-cat.o src/socket-util.o src/parser.o src/istream-delayed.o src/header-parser.o src/istream-memory.o src/istream-null.o src/processor.o src/url-stream.o src/js-filter.o src/istream-forward.o src/istream-tee.o src/istream-hold.o src/istream-replace.o src/widget-request.o src/widget-session.o src/embed.o src/strutil.o src/istream-dechunk.o src/cookie.o src/penv.o src/google-gadget.o src/google-gadget-msg.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test/run-google-gadget: test/run-google-gadget.o src/istream-subst.o src/pool.o src/pstring.o src/istream-file.o src/uri.o src/session.o src/fifo-buffer.o src/hashmap.o src/widget-class.o src/wembed.o src/growing-buffer.o src/widget.o src/format.o src/js-generator.o src/widget-uri.o src/istream-string.o src/args.o src/strmap.o src/uri-escape.o src/url-stock.o src/stock.o src/hstock.o src/buffered-io.o src/client-socket.o src/http-client.o src/http-body.o src/header-writer.o src/http.o src/istream-chunked.o src/istream-cat.o src/socket-util.o src/google-gadget.o src/parser.o src/istream-delayed.o src/header-parser.o src/istream-memory.o src/istream-null.o src/processor.o src/url-stream.o src/js-filter.o src/istream-tee.o src/istream-hold.o src/istream-replace.o src/widget-request.o src/widget-session.o src/embed.o src/strutil.o src/google-gadget-msg.o src/istream-dechunk.o src/cookie.o src/penv.o
@@ -219,13 +220,13 @@ test/t-processor: test/t-processor.o src/processor.o src/penv.o src/parser.o src
 FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate byte
 FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
 
-$(FILTER_TESTS): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o
+$(FILTER_TESTS): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS) -lz
 
-test/t-istream-processor: test/t-istream-processor.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/fifo-buffer.o src/format.o src/uri.o src/uri-escape.o src/session.o src/strmap.o src/hashmap.o src/pstring.o src/penv.o src/processor.o src/js-generator.o src/widget-request.o src/istream-subst.o src/widget.o src/growing-buffer.o src/js-filter.o src/istream-replace.o src/widget-ref.o src/widget-uri.o src/args.o src/widget-session.o src/parser.o src/widget-class.o src/istream-tee.o src/istream-later.o src/widget-stream.o src/tpool.o src/istream-hold.o src/istream-delayed.o
+test/t-istream-processor: test/t-istream-processor.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/fifo-buffer.o src/format.o src/uri.o src/uri-escape.o src/session.o src/strmap.o src/hashmap.o src/pstring.o src/penv.o src/processor.o src/js-generator.o src/widget-request.o src/istream-subst.o src/widget.o src/growing-buffer.o src/js-filter.o src/istream-replace.o src/widget-ref.o src/widget-uri.o src/args.o src/widget-session.o src/parser.o src/widget-class.o src/istream-tee.o src/istream-later.o src/widget-stream.o src/tpool.o src/istream-hold.o src/istream-delayed.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
-test/t-istream-js: test/t-istream-js.o src/pool.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/js-filter.o src/fifo-buffer.o src/format.o src/istream-later.o
+test/t-istream-js: test/t-istream-js.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/js-filter.o src/fifo-buffer.o src/format.o src/istream-later.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor): check-filter-%: test/t-istream-%
