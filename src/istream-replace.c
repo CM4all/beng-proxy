@@ -372,8 +372,7 @@ replace_read(struct istream_replace *replace)
     /* read until someone (input or output) blocks */
     do {
         blocking = replace_read_substitution(replace);
-        if (blocking || replace_buffer_eof(replace) ||
-            replace->source_length == (off_t)-1)
+        if (blocking || replace->source_length == (off_t)-1)
             break;
 
         rest = replace_try_read_from_buffer(replace);
