@@ -403,7 +403,7 @@ replace_read_check_empty(struct istream_replace *replace)
  */
 
 static size_t
-replace_source_data(const void *data, size_t length, void *ctx)
+replace_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_replace *replace = ctx;
 
@@ -434,7 +434,7 @@ replace_source_data(const void *data, size_t length, void *ctx)
 }
 
 static void
-replace_source_eof(void *ctx)
+replace_input_eof(void *ctx)
 {
     struct istream_replace *replace = ctx;
 
@@ -445,7 +445,7 @@ replace_source_eof(void *ctx)
 }
 
 static void
-replace_source_abort(void *ctx)
+replace_input_abort(void *ctx)
 {
     struct istream_replace *replace = ctx;
 
@@ -455,9 +455,9 @@ replace_source_abort(void *ctx)
 }
 
 static const struct istream_handler replace_input_handler = {
-    .data = replace_source_data,
-    .eof = replace_source_eof,
-    .abort = replace_source_abort,
+    .data = replace_input_data,
+    .eof = replace_input_eof,
+    .abort = replace_input_abort,
 };
 
 

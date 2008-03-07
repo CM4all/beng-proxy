@@ -20,7 +20,7 @@ struct istream_tee {
  */
 
 static size_t
-tee_source_data(const void *data, size_t length, void *ctx)
+tee_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_tee *tee = ctx;
     size_t nbytes1, nbytes2;
@@ -52,7 +52,7 @@ tee_source_data(const void *data, size_t length, void *ctx)
 }
 
 static void
-tee_source_eof(void *ctx)
+tee_input_eof(void *ctx)
 {
     struct istream_tee *tee = ctx;
 
@@ -68,7 +68,7 @@ tee_source_eof(void *ctx)
 }
 
 static void
-tee_source_abort(void *ctx)
+tee_input_abort(void *ctx)
 {
     struct istream_tee *tee = ctx;
 
@@ -84,10 +84,10 @@ tee_source_abort(void *ctx)
 }
 
 static const struct istream_handler tee_input_handler = {
-    .data = tee_source_data,
-    /* .direct = tee_source_direct, XXX implement that using sys_tee() */
-    .eof = tee_source_eof,
-    .abort = tee_source_abort,
+    .data = tee_input_data,
+    /* .direct = tee_input_direct, XXX implement that using sys_tee() */
+    .eof = tee_input_eof,
+    .abort = tee_input_abort,
 };
 
 

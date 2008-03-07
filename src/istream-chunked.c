@@ -89,7 +89,7 @@ chunked_start_chunk2(struct istream_chunked *chunked, size_t length)
  */
 
 static size_t
-chunked_source_data(const void *data, size_t length, void *ctx)
+chunked_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_chunked *chunked = ctx;
     char *dest;
@@ -146,7 +146,7 @@ chunked_source_data(const void *data, size_t length, void *ctx)
 }
 
 static void
-chunked_source_eof(void *ctx)
+chunked_input_eof(void *ctx)
 {
     struct istream_chunked *chunked = ctx;
     char *dest;
@@ -167,9 +167,9 @@ chunked_source_eof(void *ctx)
     chunked_try_write(chunked);
 }
 
-static const struct istream_handler chunked_source_handler = {
-    .data = chunked_source_data,
-    .eof = chunked_source_eof,
+static const struct istream_handler chunked_input_handler = {
+    .data = chunked_input_data,
+    .eof = chunked_input_eof,
     .abort = istream_forward_abort,
 };
 
@@ -239,7 +239,7 @@ istream_chunked_new(pool_t pool, istream_t input)
     chunked->missing_from_current_chunk = 0;
 
     istream_assign_handler(&chunked->input, input,
-                           &chunked_source_handler, chunked,
+                           &chunked_input_handler, chunked,
                            0);
 
     return istream_struct_cast(&chunked->output);

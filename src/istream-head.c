@@ -22,7 +22,7 @@ struct istream_head {
  */
 
 static size_t
-head_source_data(const void *data, size_t length, void *ctx)
+head_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_head *head = ctx;
     size_t nbytes;
@@ -49,7 +49,7 @@ head_source_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-head_source_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+head_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct istream_head *head = ctx;
     ssize_t nbytes;
@@ -75,7 +75,7 @@ head_source_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 }
 
 static void
-head_source_eof(void *ctx)
+head_input_eof(void *ctx)
 {
     struct istream_head *head = ctx;
 
@@ -84,7 +84,7 @@ head_source_eof(void *ctx)
 }
 
 static void
-head_source_abort(void *ctx)
+head_input_abort(void *ctx)
 {
     struct istream_head *head = ctx;
 
@@ -93,10 +93,10 @@ head_source_abort(void *ctx)
 }
 
 static const struct istream_handler head_input_handler = {
-    .data = head_source_data,
-    .direct = head_source_direct,
-    .eof = head_source_eof,
-    .abort = head_source_abort,
+    .data = head_input_data,
+    .direct = head_input_direct,
+    .eof = head_input_eof,
+    .abort = head_input_abort,
 };
 
 

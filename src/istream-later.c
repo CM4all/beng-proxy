@@ -47,7 +47,7 @@ static void later_schedule(struct istream_later *later)
  */
 
 static size_t
-later_source_data(const void *data, size_t length, void *ctx)
+later_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_later *later = ctx;
 
@@ -55,7 +55,7 @@ later_source_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-later_source_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+later_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct istream_later *later = ctx;
 
@@ -63,7 +63,7 @@ later_source_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 }
 
 static void
-later_source_eof(void *ctx)
+later_input_eof(void *ctx)
 {
     struct istream_later *later = ctx;
 
@@ -73,7 +73,7 @@ later_source_eof(void *ctx)
 }
 
 static void
-later_source_abort(void *ctx)
+later_input_abort(void *ctx)
 {
     struct istream_later *later = ctx;
 
@@ -84,10 +84,10 @@ later_source_abort(void *ctx)
 }
 
 static const struct istream_handler later_input_handler = {
-    .data = later_source_data,
-    .direct = later_source_direct,
-    .eof = later_source_eof,
-    .abort = later_source_abort,
+    .data = later_input_data,
+    .direct = later_input_direct,
+    .eof = later_input_eof,
+    .abort = later_input_abort,
 };
 
 

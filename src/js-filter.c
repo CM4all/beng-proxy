@@ -23,7 +23,7 @@ struct js_filter {
  */
 
 static size_t
-js_source_data(const void *data, size_t length, void *ctx)
+js_input_data(const void *data, size_t length, void *ctx)
 {
     struct js_filter *js = ctx;
 
@@ -36,7 +36,7 @@ js_source_data(const void *data, size_t length, void *ctx)
 }
 
 static void
-js_source_eof(void *ctx)
+js_input_eof(void *ctx)
 {
     struct js_filter *js = ctx;
 
@@ -47,7 +47,7 @@ js_source_eof(void *ctx)
 }
 
 static void
-js_source_abort(void *ctx)
+js_input_abort(void *ctx)
 {
     struct js_filter *js = ctx;
 
@@ -58,9 +58,9 @@ js_source_abort(void *ctx)
 }
 
 static const struct istream_handler js_input_handler = {
-    .data = js_source_data,
-    .eof = js_source_eof,
-    .abort = js_source_abort,
+    .data = js_input_data,
+    .eof = js_input_eof,
+    .abort = js_input_abort,
 };
 
 

@@ -508,7 +508,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
  */
 
 static size_t
-subst_source_data(const void *data, size_t length, void *ctx)
+subst_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_subst *subst = ctx;
     size_t nbytes;
@@ -527,7 +527,7 @@ subst_source_data(const void *data, size_t length, void *ctx)
 }
 
 static void
-subst_source_eof(void *ctx)
+subst_input_eof(void *ctx)
 {
     struct istream_subst *subst = ctx;
     size_t nbytes;
@@ -572,7 +572,7 @@ subst_source_eof(void *ctx)
 }
 
 static void
-subst_source_abort(void *ctx)
+subst_input_abort(void *ctx)
 {
     struct istream_subst *subst = ctx;
 
@@ -582,10 +582,10 @@ subst_source_abort(void *ctx)
     istream_deinit_abort(&subst->output);
 }
 
-static const struct istream_handler subst_source_handler = {
-    .data = subst_source_data,
-    .eof = subst_source_eof,
-    .abort = subst_source_abort,
+static const struct istream_handler subst_input_handler = {
+    .data = subst_input_data,
+    .eof = subst_input_eof,
+    .abort = subst_input_abort,
 };
 
 
@@ -688,7 +688,7 @@ istream_subst_new(pool_t pool, istream_t input)
     strref_clear(&subst->mismatch);
 
     istream_assign_handler(&subst->input, input,
-                           &subst_source_handler, subst,
+                           &subst_input_handler, subst,
                            0);
 
     return istream_struct_cast(&subst->output);
