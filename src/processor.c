@@ -315,27 +315,6 @@ processor_finish_script(processor_t processor, off_t end)
  */
 
 static void
-parser_element_start_in_body(processor_t processor,
-                             const struct strref *name)
-{
-    if (strref_cmp_literal(name, "script") == 0) {
-        processor->tag = TAG_SCRIPT;
-    } else if (processor_option_rewrite_url(processor)) {
-        if (strref_cmp_literal(name, "a") == 0) {
-            processor->tag = TAG_A;
-        } else if (strref_cmp_literal(name, "form") == 0) {
-            processor->tag = TAG_FORM;
-        } else if (strref_cmp_literal(name, "img") == 0) {
-            processor->tag = TAG_IMG;
-        } else {
-            processor->tag = TAG_NONE;
-        }
-    } else {
-        processor->tag = TAG_NONE;
-    }
-}
-
-static void
 parser_element_start_in_widget(processor_t processor,
                                enum parser_tag_type type,
                                const struct strref *name)
@@ -404,8 +383,20 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         list_add(&processor->embedded_widget->siblings,
                  &processor->widget->children);
         processor->embedded_widget->parent = processor->widget;
+    } else if (strref_cmp_literal(&tag->name, "script") == 0) {
+        processor->tag = TAG_SCRIPT;
+    } else if (processor_option_rewrite_url(processor)) {
+        if (strref_cmp_literal(&tag->name, "a") == 0) {
+            processor->tag = TAG_A;
+        } else if (strref_cmp_literal(&tag->name, "form") == 0) {
+            processor->tag = TAG_FORM;
+        } else if (strref_cmp_literal(&tag->name, "img") == 0) {
+            processor->tag = TAG_IMG;
+        } else {
+            processor->tag = TAG_NONE;
+        }
     } else {
-        parser_element_start_in_body(processor, &tag->name);
+        processor->tag = TAG_NONE;
     }
 }
 
