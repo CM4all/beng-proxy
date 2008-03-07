@@ -109,7 +109,6 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
 
     assert(pool != NULL);
     assert(env != NULL);
-    assert(env->widget_callback == embed_widget_callback);
     assert(widget != NULL);
 
     (void)async_ref;

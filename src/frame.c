@@ -20,22 +20,9 @@ frame_top_widget(pool_t pool, struct processor_env *env,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    struct processor_env *env2;
     unsigned options;
 
     assert(widget->from_request.proxy);
-
-    /* install normal embed callback on cloned env */
-
-    env2 = processor_env_dup(env->pool, env);
-    env2->widget_callback = embed_widget_callback;
-
-    /* clear the request body in the original env - the function
-       frame_widget_callback() has already discarded a request body
-       that is not being used within the frame, and if
-       env->request_body is still set, this means that the body is for
-       the frame */
-    env->request_body = NULL;
 
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
@@ -63,7 +50,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     }
 
     embed_new(pool, widget,
-              env2, options,
+              env, options,
               handler, handler_ctx, async_ref);
 }
 
@@ -117,6 +104,8 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
     assert(env->widget_callback == frame_widget_callback);
     assert(widget != NULL);
     assert(widget->class != NULL);
+    assert(widget->from_request.proxy || widget->from_request.proxy_ref != NULL ||
+           widget->parent != NULL);
 
     if (widget->from_request.proxy)
         /* this widget is being proxied */
@@ -127,7 +116,7 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
            widget */
         frame_parent_widget(pool, env, widget,
                             handler, handler_ctx, async_ref);
-    else {
+    else if (widget->parent->from_request.proxy_ref != NULL) {
         struct http_response_handler_ref handler_ref;
 
         /* this widget is none of our business */
@@ -136,5 +125,7 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
         http_response_handler_set(&handler_ref, handler, handler_ctx);
         http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
                                               NULL, NULL);
-    }
+    } else
+        /* child of a proxied widget */
+        embed_widget_callback(pool, env, widget, handler, handler_ctx, async_ref);
 }
