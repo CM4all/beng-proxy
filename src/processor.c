@@ -38,7 +38,7 @@ struct processor {
     istream_t replace;
 
     struct parser *parser;
-    int in_html, in_head, in_body;
+    int js_generated, in_body;
     enum {
         TAG_NONE,
         TAG_BODY,
@@ -228,8 +228,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->env = env;
     processor->options = options;
 
-    processor->in_html = 0;
-    processor->in_head = 0;
+    processor->js_generated = 0;
     processor->in_body = 0;
     processor->embedded_widget = NULL;
     processor->in_script = 0;
@@ -252,9 +251,11 @@ processor_new(pool_t pool, istream_t istream,
 
         if (processor_option_jscript(processor) &&
             (processor_option_fragment(processor) ||
-             widget->class->type == WIDGET_TYPE_GOOGLE_GADGET))
+             widget->class->type == WIDGET_TYPE_GOOGLE_GADGET)) {
             processor_replace_add(processor, 0, 0,
                                   processor_jscript(processor));
+            processor->js_generated = 1;
+        }
 
         headers = strmap_new(processor->pool, 4);
         strmap_addn(headers, "content-type", "text/html; charset=utf-8");
@@ -375,19 +376,14 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                                 js_generate_tail(processor->pool));
             processor->script_tail = 1;
         }
-    } else if (strref_cmp_literal(&tag->name, "html") == 0) {
-        processor->in_html = 1;
-        processor->tag = TAG_NONE;
-    } else if (processor->in_html && !processor->in_head &&
-               !processor->in_body &&
+    } else if (!processor->js_generated &&
                processor_option_jscript(processor) &&
-               !processor_option_fragment(processor) &&
                tag->type == TAG_CLOSE &&
                strref_cmp_literal(&tag->name, "head") == 0) {
         processor_replace_add(processor,
                               tag->start, tag->start,
                               processor_jscript(processor));
-        processor->in_head = 1;
+        processor->js_generated = 1;
     } else if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if (tag->type == TAG_CLOSE) {
             assert(processor->embedded_widget == NULL);
@@ -693,11 +689,12 @@ body_element_finished(processor_t processor, const struct parser_tag *tag)
         if (processor->in_body)
             return;
 
-        if (!processor_option_fragment(processor) &&
-            !processor->in_head && processor_option_jscript(processor))
+        if (!processor->js_generated && processor_option_jscript(processor)) {
             processor_replace_add(processor,
                                   tag->end, tag->end,
                                   processor_jscript(processor));
+            processor->js_generated = 1;
+        }
 
         processor->in_body = 1;
     }
