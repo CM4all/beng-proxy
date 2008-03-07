@@ -84,7 +84,7 @@ processor_option_rewrite_url(const struct processor *processor)
 }
 
 static int
-processor_option_body(const struct processor *processor)
+processor_option_fragment(const struct processor *processor)
 {
     return (processor->options & PROCESSOR_FRAGMENT) != 0;
 }
@@ -251,7 +251,7 @@ processor_new(pool_t pool, istream_t istream,
         processor->response_sent = 1;
 
         if (processor_option_jscript(processor) &&
-            (processor_option_body(processor) ||
+            (processor_option_fragment(processor) ||
              widget->class->type == WIDGET_TYPE_GOOGLE_GADGET))
             processor_replace_add(processor, 0, 0,
                                   processor_jscript(processor));
@@ -381,7 +381,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
     } else if (processor->in_html && !processor->in_head &&
                !processor->in_body &&
                processor_option_jscript(processor) &&
-               !processor_option_body(processor) &&
+               !processor_option_fragment(processor) &&
                tag->type == TAG_CLOSE &&
                strref_cmp_literal(&tag->name, "head") == 0) {
         processor_replace_add(processor,
@@ -693,7 +693,7 @@ body_element_finished(processor_t processor, const struct parser_tag *tag)
         if (processor->in_body)
             return;
 
-        if (!processor_option_body(processor) &&
+        if (!processor_option_fragment(processor) &&
             !processor->in_head && processor_option_jscript(processor))
             processor_replace_add(processor,
                                   tag->end, tag->end,
