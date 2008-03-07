@@ -261,8 +261,7 @@ processor_new(pool_t pool, istream_t istream,
 
         processor->response_sent = 1;
 
-        if (processor_option_fragment(processor) ||
-            widget->class->type == WIDGET_TYPE_GOOGLE_GADGET)
+        if (processor_option_fragment(processor))
             processor_insert_jscript(processor, 0);
 
         headers = strmap_new(processor->pool, 4);
@@ -385,6 +384,9 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->embedded_widget->parent = processor->widget;
     } else if (strref_cmp_literal(&tag->name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
+
+        if (tag->type != TAG_CLOSE)
+            processor_insert_jscript(processor, 0);
     } else if (processor_option_rewrite_url(processor)) {
         if (strref_cmp_literal(&tag->name, "a") == 0) {
             processor->tag = TAG_A;
