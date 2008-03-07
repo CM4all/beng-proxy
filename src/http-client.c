@@ -394,6 +394,7 @@ http_client_parse_headers(http_client_connection_t connection)
 static void
 http_client_response_finished(http_client_connection_t connection)
 {
+    assert(http_client_connection_valid(connection));
     assert(connection->response.read_state == READ_BODY);
     assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
@@ -419,14 +420,12 @@ http_client_response_finished(http_client_connection_t connection)
     connection->response.read_state = READ_NONE;
 #endif
 
-    if (!connection->keep_alive && http_client_connection_valid(connection)) {
+    if (!connection->keep_alive) {
         http_client_connection_close(connection);
         return;
     }
 
-    if (http_client_connection_valid(connection) &&
-        connection->handler != NULL &&
-        connection->handler->idle != NULL) {
+    if (connection->handler != NULL && connection->handler->idle != NULL) {
         connection->handler->idle(connection->handler_ctx);
     }
 }
@@ -442,7 +441,8 @@ http_client_response_stream_eof(http_client_connection_t connection)
 
     istream_deinit_eof(&connection->response.body_reader.output);
 
-    http_client_response_finished(connection);
+    if (http_client_connection_valid(connection))
+        http_client_response_finished(connection);
 }
 
 static void
