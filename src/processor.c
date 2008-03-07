@@ -41,6 +41,7 @@ struct processor {
     int js_generated, in_body;
     enum {
         TAG_NONE,
+        TAG_HEAD,
         TAG_BODY,
         TAG_WIDGET,
         TAG_WIDGET_PATH_INFO,
@@ -384,9 +385,8 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                                 js_generate_tail(processor->pool));
             processor->script_tail = 1;
         }
-    } else if (tag->type == TAG_CLOSE &&
-               strref_cmp_literal(&tag->name, "head") == 0) {
-        processor_insert_jscript(processor, tag->start);
+    } else if (strref_cmp_literal(&tag->name, "head") == 0) {
+        processor->tag = TAG_HEAD;
     } else if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if (tag->type == TAG_CLOSE) {
             assert(processor->embedded_widget == NULL);
@@ -514,6 +514,9 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
     switch (processor->tag) {
     case TAG_NONE:
+        break;
+
+    case TAG_HEAD:
         break;
 
     case TAG_BODY:
@@ -703,7 +706,10 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
     processor_t processor = ctx;
 
-    if (processor->tag == TAG_BODY) {
+    if (processor->tag == TAG_HEAD) {
+        if (tag->type == TAG_OPEN)
+            processor_insert_jscript(processor, tag->end);
+    } else if (processor->tag == TAG_BODY) {
         body_element_finished(processor, tag);
     } else if (processor->tag == TAG_WIDGET) {
         istream_t istream;
