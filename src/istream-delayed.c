@@ -17,21 +17,6 @@ struct istream_delayed {
 };
 
 
-static void
-delayed_close(struct istream_delayed *delayed)
-{
-    if (delayed->input != NULL) {
-        assert(!async_ref_defined(&delayed->async));
-
-        istream_close(delayed->input);
-        assert(delayed->input == NULL);
-    } else if (async_ref_defined(&delayed->async)) {
-        async_abort(&delayed->async);
-        istream_deinit_abort(&delayed->output);
-    }
-}
-
-
 static size_t
 delayed_input_data(const void *data, size_t length, void *ctx)
 {
@@ -104,7 +89,15 @@ istream_delayed_close(istream_t istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
-    delayed_close(delayed);
+    if (delayed->input != NULL) {
+        assert(!async_ref_defined(&delayed->async));
+
+        istream_close(delayed->input);
+        assert(delayed->input == NULL);
+    } else if (async_ref_defined(&delayed->async)) {
+        async_abort(&delayed->async);
+        istream_deinit_abort(&delayed->output);
+    }
 }
 
 static const struct istream istream_delayed = {
