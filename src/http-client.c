@@ -400,8 +400,6 @@ http_client_response_finished(http_client_connection_t connection)
     assert(connection->request.istream == NULL);
     assert(!http_response_handler_defined(&connection->request.handler));
 
-    event2_nand(&connection->event, EV_READ);
-
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
     connection->response.body = NULL;
@@ -429,6 +427,8 @@ http_client_response_finished(http_client_connection_t connection)
         http_client_connection_close(connection);
         return;
     }
+
+    event2_or(&connection->event, EV_READ);
 
     if (connection->handler != NULL && connection->handler->idle != NULL)
         connection->handler->idle(connection->handler_ctx);
@@ -544,6 +544,12 @@ http_client_try_read_buffered(http_client_connection_t connection)
         return;
     }
 
+    if (connection->request.pool == NULL) {
+        daemon_log(2, "excess data received on idle HTTP client socket\n");
+        http_client_connection_close(connection);
+        return;
+    }
+
     if (connection->response.read_state == READ_BODY)
         http_client_consume_body(connection);
     else
@@ -559,7 +565,8 @@ http_client_try_read_buffered(http_client_connection_t connection)
 static void
 http_client_try_read(http_client_connection_t connection)
 {
-    if (connection->response.read_state == READ_BODY &&
+    if (connection->request.pool != NULL &&
+        connection->response.read_state == READ_BODY &&
         (connection->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 &&
         fifo_buffer_empty(connection->input))
         /* XXX ensure connection->input is empty */
