@@ -420,6 +420,11 @@ http_client_response_finished(http_client_connection_t connection)
     connection->response.read_state = READ_NONE;
 #endif
 
+    if (!fifo_buffer_empty(connection->input)) {
+        daemon_log(2, "excess data after HTTP response\n");
+        connection->keep_alive = 0;
+    }
+
     if (!connection->keep_alive) {
         http_client_connection_close(connection);
         return;
