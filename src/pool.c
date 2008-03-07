@@ -47,6 +47,9 @@ enum pool_type {
 
 struct libc_pool_chunk {
     struct list_head siblings;
+#ifdef POISON
+    size_t size;
+#endif
     unsigned char data[sizeof(size_t)];
 };
 
@@ -394,6 +397,9 @@ pool_destroy(pool_t pool, pool_t reparent_to)
         while (!list_empty(&pool->current_area.libc)) {
             struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)pool->current_area.libc.next;
             list_remove(&chunk->siblings);
+#ifdef POISON
+            poison_undefined(chunk, sizeof(*chunk) - sizeof(chunk->data) + chunk->size);
+#endif
             free(chunk);
         }
         break;
@@ -616,6 +622,9 @@ p_malloc_libc(pool_t pool, size_t size)
 {
     struct libc_pool_chunk *chunk = xmalloc(sizeof(*chunk) - sizeof(chunk->data) + size);
     list_add(&chunk->siblings, &pool->current_area.libc);
+#ifdef POISON
+    chunk->size = size;
+#endif
     return chunk->data;
 }
 
