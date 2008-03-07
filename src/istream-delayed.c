@@ -90,8 +90,6 @@ istream_delayed_close(istream_t istream)
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
     if (delayed->input != NULL) {
-        assert(!async_ref_defined(&delayed->async));
-
         istream_close(delayed->input);
         assert(delayed->input == NULL);
     } else if (async_ref_defined(&delayed->async)) {
