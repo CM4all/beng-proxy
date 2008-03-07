@@ -39,7 +39,6 @@ struct processor {
 
     struct parser *parser;
     int in_html, in_head, in_body;
-    off_t end_of_body;
     enum {
         TAG_NONE,
         TAG_BODY,
@@ -103,13 +102,6 @@ processor_option_jscript_root(const struct processor *processor)
     return !processor_option_quiet(processor) &&
         (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_FRAGMENT))
         == PROCESSOR_JSCRIPT;
-}
-
-static inline int
-processor_is_quiet(processor_t processor)
-{
-    return processor_option_quiet(processor) ||
-        (processor_option_body(processor) && !processor->in_body);
 }
 
 static void
@@ -239,7 +231,6 @@ processor_new(pool_t pool, istream_t istream,
     processor->in_html = 0;
     processor->in_head = 0;
     processor->in_body = 0;
-    processor->end_of_body = (off_t)-1;
     processor->embedded_widget = NULL;
     processor->in_script = 0;
     processor->script_tail = 0;
@@ -397,11 +388,6 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                               tag->start, tag->start,
                               processor_jscript(processor));
         processor->in_head = 1;
-    } else if (processor->end_of_body != (off_t)-1) {
-        /* we have left the body, ignore the rest */
-        assert(processor_option_body(processor));
-
-        processor->tag = TAG_NONE;
     } else if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if (tag->type == TAG_CLOSE) {
             assert(processor->embedded_widget == NULL);
@@ -420,18 +406,6 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         list_add(&processor->embedded_widget->siblings,
                  &processor->widget->children);
         processor->embedded_widget->parent = processor->widget;
-    } else if (processor_is_quiet(processor)) {
-        /* since we are not going to print anything, we don't need to
-           parse the rest anyway */
-
-        if (processor->in_html || processor_option_quiet(processor))
-            processor->tag = TAG_NONE;
-        else {
-            /* fall back to returning everything if there is no HTML
-               tag */
-            processor->in_body = 1;
-            parser_element_start_in_body(processor, &tag->name);
-        }
     } else {
         parser_element_start_in_body(processor, &tag->name);
     }
@@ -525,7 +499,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
     processor_t processor = ctx;
 
-    if (!processor_is_quiet(processor) &&
+    if (!processor_option_quiet(processor) &&
         (processor->options & PROCESSOR_JS_FILTER) != 0 &&
         attr->name.length > 2 &&
         attr->name.data[0] == 'o' && attr->name.data[1] == 'n' &&
@@ -719,20 +693,13 @@ body_element_finished(processor_t processor, const struct parser_tag *tag)
         if (processor->in_body)
             return;
 
-        if (processor_option_body(processor))
-            processor_replace_add(processor, 0, tag->end, NULL);
-        else if (!processor->in_head && processor_option_jscript(processor))
+        if (!processor_option_body(processor) &&
+            !processor->in_head && processor_option_jscript(processor))
             processor_replace_add(processor,
                                   tag->end, tag->end,
                                   processor_jscript(processor));
 
         processor->in_body = 1;
-    } else {
-        if (!processor_option_body(processor) ||
-            processor->end_of_body != (off_t)-1)
-            return;
-
-        processor->end_of_body = tag->start;
     }
 }
 
@@ -831,22 +798,8 @@ processor_parser_eof(void *ctx, off_t length)
 
     processor->parser = NULL;
 
-    if (processor->end_of_body != (off_t)-1) {
-        /* remove everything between closing body tag and end of
-           file */
-        assert(processor_option_body(processor));
-
-        processor_replace_add(processor, processor->end_of_body,
-                              length, NULL);
-    } else if (processor_option_body(processor) &&
-               processor->in_html && !processor->in_body) {
-        /* no body */
-
-        processor_replace_add(processor, 0, length,
-                              istream_string_new(processor->pool,
-                                                 "<!-- the widget has no HTML body -->"));
-    } else if (!processor->script_tail &&
-               processor_option_jscript_root(processor)) {
+    if (!processor->script_tail &&
+        processor_option_jscript_root(processor)) {
         istream_replace_add(processor->replace, length, length,
                             js_generate_tail(processor->pool));
     }
