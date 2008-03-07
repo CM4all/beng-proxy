@@ -38,7 +38,7 @@ struct processor {
     istream_t replace;
 
     struct parser *parser;
-    int js_generated, in_body;
+    int js_generated;
     enum {
         TAG_NONE,
         TAG_HEAD,
@@ -242,7 +242,6 @@ processor_new(pool_t pool, istream_t istream,
     processor->options = options;
 
     processor->js_generated = 0;
-    processor->in_body = 0;
     processor->embedded_widget = NULL;
     processor->in_script = 0;
     processor->script_tail = 0;
@@ -691,14 +690,8 @@ static void
 body_element_finished(processor_t processor, const struct parser_tag *tag)
 {
 
-    if (tag->type != TAG_CLOSE) {
-        if (processor->in_body)
-            return;
-
+    if (tag->type != TAG_CLOSE)
         processor_insert_jscript(processor, tag->end);
-
-        processor->in_body = 1;
-    }
 }
 
 static void
