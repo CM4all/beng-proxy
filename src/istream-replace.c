@@ -534,14 +534,14 @@ istream_replace_read(istream_t istream)
 
     pool_ref(replace->output.pool);
 
-    replace->had_output = 0;
-
     replace_read(replace);
 
-    if (replace->had_output || replace->input == NULL) {
+    if (replace->input == NULL) {
         pool_unref(replace->output.pool);
         return;
     }
+
+    replace->had_output = 0;
 
     do {
         replace->had_input = 0;
