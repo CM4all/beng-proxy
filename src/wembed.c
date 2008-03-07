@@ -105,7 +105,7 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
                       struct async_operation_ref *async_ref)
 {
     struct http_response_handler_ref handler_ref;
-    istream_t istream;
+    istream_t istream = NULL;
 
     assert(pool != NULL);
     assert(env != NULL);
@@ -132,6 +132,8 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
         istream = embed_img_widget(pool, env, widget);
         break;
     }
+
+    assert(istream != NULL);
 
     http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_OK,
                                           NULL, istream);

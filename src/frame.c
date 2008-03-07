@@ -20,7 +20,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    unsigned options;
+    unsigned options = 0;
 
     assert(widget->from_request.proxy);
 
