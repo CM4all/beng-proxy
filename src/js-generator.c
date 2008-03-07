@@ -28,6 +28,7 @@ js_generate_widget(struct growing_buffer *gb, const struct widget *widget,
     const char *prefix, *parent_prefix;
 
     if (widget->parent != NULL &&
+        widget->display != WIDGET_DISPLAY_INLINE &&
         (widget->from_request.proxy || widget->from_request.proxy_ref != NULL))
         js_generate_widget(gb, widget->parent, pool);
 
