@@ -84,8 +84,8 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
             unsigned options = PROCESSOR_JSCRIPT|
                 PROCESSOR_JSCRIPT_PREFS;
 
-            if (gg->widget->from_request.proxy)
-                options |= PROCESSOR_JSCRIPT_ROOT;
+            if (!gg->widget->from_request.proxy)
+                options |= PROCESSOR_FRAGMENT;
 
             istream_delayed_set(gg->delayed, istream);
             gg->delayed = NULL;

@@ -21,7 +21,7 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
                     struct async_operation_ref *async_ref)
 {
     embed_new(pool, widget,
-              env, PROCESSOR_BODY | PROCESSOR_JSCRIPT,
+              env, PROCESSOR_FRAGMENT | PROCESSOR_JSCRIPT,
               handler, handler_ctx, async_ref);
 }
 

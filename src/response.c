@@ -139,7 +139,7 @@ response_invoke_processor(struct request *request2,
 
         pool_unref(request->pool);
     } else {
-        processor_options |= PROCESSOR_JSCRIPT | PROCESSOR_JSCRIPT_ROOT;
+        processor_options |= PROCESSOR_JSCRIPT;
 
         processor_new(request->pool, body, widget, &request2->env,
                       processor_options,

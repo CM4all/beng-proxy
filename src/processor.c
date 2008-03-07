@@ -87,7 +87,7 @@ processor_option_rewrite_url(const struct processor *processor)
 static int
 processor_option_body(const struct processor *processor)
 {
-    return (processor->options & PROCESSOR_BODY) != 0;
+    return (processor->options & PROCESSOR_FRAGMENT) != 0;
 }
 
 static int
@@ -101,8 +101,8 @@ static int
 processor_option_jscript_root(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
-        (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT))
-        == (PROCESSOR_JSCRIPT|PROCESSOR_JSCRIPT_ROOT);
+        (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_FRAGMENT))
+        == PROCESSOR_JSCRIPT;
 }
 
 static inline int
