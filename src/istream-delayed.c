@@ -17,6 +17,11 @@ struct istream_delayed {
 };
 
 
+/*
+ * istream handler
+ *
+ */
+
 static size_t
 delayed_input_data(const void *data, size_t length, void *ctx)
 {
@@ -57,6 +62,12 @@ static const struct istream_handler delayed_input_handler = {
     .eof = delayed_input_eof,
     .abort = delayed_input_abort,
 };
+
+
+/*
+ * istream implementation
+ *
+ */
 
 static inline struct istream_delayed *
 istream_to_delayed(istream_t istream)
@@ -103,6 +114,12 @@ static const struct istream istream_delayed = {
     .read = istream_delayed_read,
     .close = istream_delayed_close,
 };
+
+
+/*
+ * constructor
+ *
+ */
 
 istream_t
 istream_delayed_new(pool_t pool, struct async_operation *async)
