@@ -425,9 +425,8 @@ http_client_response_finished(http_client_connection_t connection)
         return;
     }
 
-    if (connection->handler != NULL && connection->handler->idle != NULL) {
+    if (connection->handler != NULL && connection->handler->idle != NULL)
         connection->handler->idle(connection->handler_ctx);
-    }
 }
 
 static void
