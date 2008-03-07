@@ -143,7 +143,8 @@ istream_google_html_read(istream_t istream)
     assert(gw->parser != NULL);
     assert(gw->from_parser.sending_content);
 
-    parser_read(gw->parser);
+    if (!gw->from_parser.in_parser)
+        parser_read(gw->parser);
 }
 
 static void
