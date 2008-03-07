@@ -131,7 +131,7 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    async_ref_clear(&delayed->async);
+    async_ref_poison(&delayed->async);
 
     istream_assign_handler(&delayed->input, input,
                            &delayed_input_handler, delayed,
