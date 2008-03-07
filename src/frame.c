@@ -27,7 +27,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     /* install normal embed callback on cloned env */
 
-    env2 = processor_env_dup(pool, env);
+    env2 = processor_env_dup(env->pool, env);
     env2->widget_callback = embed_widget_callback;
 
     /* clear the request body in the original env - the function
