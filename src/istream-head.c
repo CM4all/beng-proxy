@@ -83,20 +83,11 @@ head_input_eof(void *ctx)
     istream_deinit_eof(&head->output);
 }
 
-static void
-head_input_abort(void *ctx)
-{
-    struct istream_head *head = ctx;
-
-    head->input = NULL;
-    istream_deinit_abort(&head->output);
-}
-
 static const struct istream_handler head_input_handler = {
     .data = head_input_data,
     .direct = head_input_direct,
     .eof = head_input_eof,
-    .abort = head_input_abort,
+    .abort = istream_forward_abort,
 };
 
 
