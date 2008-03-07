@@ -374,11 +374,11 @@ cgi_new(pool_t pool,
     pid_t pid;
     istream_t input;
 
-    http_response_handler_set(&cgi->handler, handler, handler_ctx);
-
     pid = beng_fork(pool, body, &input);
     if (pid < 0) {
-        http_response_handler_invoke_abort(&cgi->handler);
+        struct http_response_handler_ref handler_ref;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_abort(&handler_ref);
         return;
     }
 
@@ -393,6 +393,8 @@ cgi_new(pool_t pool,
 
     cgi->buffer = fifo_buffer_new(pool, 1024);
     cgi->headers = strmap_new(pool, 32);
+
+    http_response_handler_set(&cgi->handler, handler, handler_ctx);
 
     async_init(&cgi->async, &cgi_async_operation);
     async_ref_set(async_ref, &cgi->async);
