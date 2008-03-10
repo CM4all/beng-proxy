@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream-buffer.h"
+#include "istream-internal.h"
 #include "format.h"
 
 #include <assert.h>
@@ -13,44 +13,18 @@
 struct istream_chunked {
     struct istream output;
     istream_t input;
-    fifo_buffer_t buffer;
+
+    char buffer[6];
+    size_t buffer_sent;
+
     size_t missing_from_current_chunk;
 };
 
 
-static int
-chunked_is_closed(const struct istream_chunked *chunked)
-{
-    return chunked->buffer == NULL;
-}
-
 static void
-chunked_eof_detected(struct istream_chunked *chunked)
+chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 {
-    assert(chunked->input == NULL);
-    assert(chunked->buffer != NULL);
-    assert(fifo_buffer_empty(chunked->buffer));
-
-    chunked->buffer = NULL;
-
-    istream_deinit_eof(&chunked->output);
-}
-
-static void
-chunked_try_write(struct istream_chunked *chunked)
-{
-    size_t rest;
-
-    assert(chunked->buffer != NULL);
-
-    rest = istream_buffer_consume(&chunked->output, chunked->buffer);
-    if (rest == 0 && chunked->input == NULL)
-        chunked_eof_detected(chunked);
-}
-
-static size_t
-chunked_start_chunk(struct istream_chunked *chunked, size_t length, char *dest)
-{
+    assert(chunked->buffer_sent == sizeof(chunked->buffer));
     assert(chunked->missing_from_current_chunk == 0);
 
     if (length > 0x8000)
@@ -59,78 +33,53 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length, char *dest)
 
     chunked->missing_from_current_chunk = length;
 
-    format_uint16_hex_fixed(dest, (uint16_t)length);
-    dest[4] = '\r';
-    dest[5] = '\n';
-
-    return 6;
+    format_uint16_hex_fixed(chunked->buffer, (uint16_t)length);
+    chunked->buffer[4] = '\r';
+    chunked->buffer[5] = '\n';
+    chunked->buffer_sent = 0;
 }
 
-static void
-chunked_start_chunk2(struct istream_chunked *chunked, size_t length)
+static size_t
+chunked_write_buffer(struct istream_chunked *chunked)
 {
-    char *dest;
-    size_t max_length, header_length;
+    size_t rest, nbytes;
 
-    dest = fifo_buffer_write(chunked->buffer, &max_length);
-    if (dest == NULL || max_length < 6)
-        return;
+    rest = sizeof(chunked->buffer) - chunked->buffer_sent;
+    if (rest == 0)
+        return 0;
 
-    header_length = chunked_start_chunk(chunked, length, dest);
-    assert(header_length <= max_length);
+    nbytes = istream_invoke_data(&chunked->output,
+                                 chunked->buffer + chunked->buffer_sent,
+                                 rest);
+    if (nbytes == 0)
+        return rest;
 
-    fifo_buffer_append(chunked->buffer, header_length);
+    chunked->buffer_sent += nbytes;
+    return rest - nbytes;
 }
 
 static size_t
 chunked_feed(struct istream_chunked *chunked, const void *data, size_t length)
 {
-    char *dest;
-    size_t max_length, dest_length;
+    size_t rest, nbytes;
 
     assert(chunked->input != NULL);
 
-    dest = fifo_buffer_write(chunked->buffer, &max_length);
-    if (dest == NULL || max_length < 4 + 2 + 1 + 2 + 5) {
-        /* the buffer is full - try to flush it */
-        chunked_try_write(chunked);
-        if (chunked_is_closed(chunked))
-            return 0;
-
-        dest = fifo_buffer_write(chunked->buffer, &max_length);
-        if (dest == NULL || max_length < 4 + 2 + 1 + 2 + 5)
-            return 0;
-    }
-
-
     if (chunked->missing_from_current_chunk == 0)
-        dest_length = chunked_start_chunk(chunked, length, dest);
-    else
-        dest_length = 0;
+        chunked_start_chunk(chunked, length);
+
+    rest = chunked_write_buffer(chunked);
+    if (rest > 0)
+        return 0;
 
     if (length > chunked->missing_from_current_chunk)
         length = chunked->missing_from_current_chunk;
 
-    if (length > max_length - 4 - 2 - 2 - 5)
-        length = max_length - 4 - 2 - 2 - 5;
+    nbytes = istream_invoke_data(&chunked->output, data, length);
+    if (nbytes > 0)
+        chunked->missing_from_current_chunk -= nbytes;
 
-    memcpy(dest + dest_length, data, length);
-    dest_length += length;
-
-    chunked->missing_from_current_chunk -= length;
-    if (chunked->missing_from_current_chunk == 0) {
-        dest[dest_length] = '\r';
-        dest[dest_length + 1] = '\n';
-        dest_length += 2;
-    }
-
-    fifo_buffer_append(chunked->buffer, dest_length);
-
-    chunked_try_write(chunked);
-    if (chunked_is_closed(chunked))
-        length = 0;
-
-    return length;
+    return nbytes;
 }
 
 
@@ -156,29 +105,20 @@ static void
 chunked_input_eof(void *ctx)
 {
     struct istream_chunked *chunked = ctx;
-    char *dest;
-    size_t max_length;
 
     assert(chunked->input != NULL);
-    assert(chunked->buffer != NULL);
     assert(chunked->missing_from_current_chunk == 0);
 
     chunked->input = NULL;
 
     /* write EOF chunk (length 0) */
 
-    dest = fifo_buffer_write(chunked->buffer, &max_length);
-    if (dest == NULL || max_length < 5) {
-        istream_deinit_abort(&chunked->output);
-        return;
-    }
-
-    memcpy(dest, "0\r\n\r\n", 5);
-    fifo_buffer_append(chunked->buffer, 5);
+    memcpy(chunked->buffer + sizeof(chunked->buffer) - 5, "0\r\n\r\n", 5);
+    chunked->buffer_sent = sizeof(chunked->buffer) - 5;
 
     /* flush the buffer */
 
-    chunked_try_write(chunked);
+    chunked_write_buffer(chunked);
 }
 
 static const struct istream_handler chunked_input_handler = {
@@ -203,26 +143,32 @@ static void
 istream_chunked_read(istream_t istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
+    size_t rest;
 
-    if (chunked->input == NULL)
-        chunked_try_write(chunked);
-    else {
-        if (chunked->missing_from_current_chunk == 0) {
-            off_t available = istream_available(chunked->input, 1);
-            if (available != (off_t)-1 && available > 0)
-                chunked_start_chunk2(chunked, available);
-        }
+    rest = chunked_write_buffer(chunked);
+    if (rest > 0)
+        return;
 
-        istream_read(chunked->input);
+    if (chunked->input == NULL) {
+        istream_deinit_eof(&chunked->output);
+        return;
     }
+
+    assert(chunked->input != NULL);
+
+    if (chunked->missing_from_current_chunk == 0) {
+        off_t available = istream_available(chunked->input, 1);
+        if (available != (off_t)-1 && available > 0)
+            chunked_start_chunk(chunked, available);
+    }
+
+    istream_read(chunked->input);
 }
 
 static void
 istream_chunked_close(istream_t istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
-
-    chunked->buffer = NULL;
 
     if (chunked->input != NULL)
         istream_free_handler(&chunked->input);
@@ -249,7 +195,7 @@ istream_chunked_new(pool_t pool, istream_t input)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    chunked->buffer = fifo_buffer_new(pool, 4096);
+    chunked->buffer_sent = sizeof(chunked->buffer);
     chunked->missing_from_current_chunk = 0;
 
     istream_assign_handler(&chunked->input, input,
