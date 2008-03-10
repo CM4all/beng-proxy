@@ -53,9 +53,9 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length, char *dest)
 {
     assert(chunked->missing_from_current_chunk == 0);
 
-    if (length > 0x1000)
-        /* maximum chunk size is 4kB for now */
-        length = 0x1000;
+    if (length > 0x8000)
+        /* maximum chunk size is 32kB for now */
+        length = 0x8000;
 
     chunked->missing_from_current_chunk = length;
 
