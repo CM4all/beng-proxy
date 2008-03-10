@@ -73,8 +73,8 @@ chunked_start_chunk2(struct istream_chunked *chunked, size_t length)
     size_t max_length, header_length;
 
     dest = fifo_buffer_write(chunked->buffer, &max_length);
-    assert(dest != NULL);
-    assert(max_length > 6);
+    if (dest == NULL || max_length < 6)
+        return;
 
     header_length = chunked_start_chunk(chunked, length, dest);
     assert(header_length <= max_length);
