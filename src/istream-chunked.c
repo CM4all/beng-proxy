@@ -44,7 +44,7 @@ chunked_try_write(struct istream_chunked *chunked)
     assert(chunked->buffer != NULL);
 
     rest = istream_buffer_consume(&chunked->output, chunked->buffer);
-    if (rest == 0 && chunked->input == NULL)
+    if (rest == 0 && chunked->buffer != NULL && chunked->input == NULL)
         chunked_eof_detected(chunked);
 }
 
