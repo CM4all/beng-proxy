@@ -182,7 +182,7 @@ dechunk_feed(struct istream_dechunk *dechunk, const void *data0, size_t length)
  */
 
 static size_t
-dechunk_input_data(const void *data0, size_t length, void *ctx)
+dechunk_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_dechunk *dechunk = ctx;
     size_t nbytes;
