@@ -94,8 +94,7 @@ chunked_feed(struct istream_chunked *chunked, const void *data, size_t length)
     if (dest == NULL || max_length < 4 + 2 + 1 + 2 + 5) {
         /* the buffer is full - try to flush it */
         chunked_try_write(chunked);
-
-        if (chunked->input == NULL)
+        if (chunked_is_closed(chunked))
             return 0;
 
         dest = fifo_buffer_write(chunked->buffer, &max_length);
