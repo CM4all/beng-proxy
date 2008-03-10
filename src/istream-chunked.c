@@ -24,6 +24,7 @@ struct istream_chunked {
 static void
 chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 {
+    assert(length > 0);
     assert(chunked->buffer_sent == sizeof(chunked->buffer));
     assert(chunked->missing_from_current_chunk == 0);
 
@@ -59,25 +60,31 @@ chunked_write_buffer(struct istream_chunked *chunked)
 }
 
 static size_t
-chunked_feed(struct istream_chunked *chunked, const void *data, size_t length)
+chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
 {
-    size_t rest, nbytes;
+    size_t total = 0, rest, nbytes;
 
     assert(chunked->input != NULL);
 
-    if (chunked->missing_from_current_chunk == 0)
-        chunked_start_chunk(chunked, length);
+    do {
+        if (chunked->missing_from_current_chunk == 0)
+            chunked_start_chunk(chunked, length);
 
-    rest = chunked_write_buffer(chunked);
-    if (rest > 0)
-        return 0;
+        rest = chunked_write_buffer(chunked);
+        if (rest > 0)
+            return chunked->input == NULL ? 0 : total;
 
-    if (length > chunked->missing_from_current_chunk)
-        length = chunked->missing_from_current_chunk;
+        rest = length - total;
+        if (rest > chunked->missing_from_current_chunk)
+            rest = chunked->missing_from_current_chunk;
 
-    nbytes = istream_invoke_data(&chunked->output, data, length);
-    if (nbytes > 0)
+        nbytes = istream_invoke_data(&chunked->output, data + total, rest);
+        if (nbytes == 0)
+            return chunked->input == NULL ? 0 : total;
+
         chunked->missing_from_current_chunk -= nbytes;
+        total += nbytes;
+    } while (total < length && nbytes == rest);
 
     return nbytes;
 }
@@ -95,7 +102,7 @@ chunked_input_data(const void *data, size_t length, void *ctx)
     size_t nbytes;
 
     pool_ref(chunked->output.pool);
-    nbytes = chunked_feed(chunked, data, length);
+    nbytes = chunked_feed(chunked, (const char*)data, length);
     pool_unref(chunked->output.pool);
 
     return nbytes;
