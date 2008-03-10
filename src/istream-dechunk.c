@@ -265,8 +265,6 @@ istream_dechunk_close(istream_t istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 
-    assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
-
     dechunk_close(dechunk);
 }
 
