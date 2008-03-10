@@ -158,6 +158,8 @@ chunked_input_eof(void *ctx)
 
     chunked->input = NULL;
 
+    /* write EOF chunk (length 0) */
+
     dest = fifo_buffer_write(chunked->buffer, &max_length);
     if (dest == NULL || max_length < 5) {
         istream_deinit_abort(&chunked->output);
@@ -166,6 +168,8 @@ chunked_input_eof(void *ctx)
 
     memcpy(dest, "0\r\n\r\n", 5);
     fifo_buffer_append(chunked->buffer, 5);
+
+    /* flush the buffer */
 
     chunked_try_write(chunked);
 }
