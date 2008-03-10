@@ -82,16 +82,9 @@ chunked_start_chunk2(struct istream_chunked *chunked, size_t length)
     fifo_buffer_append(chunked->buffer, header_length);
 }
 
-
-/*
- * istream handler
- *
- */
-
 static size_t
-chunked_input_data(const void *data, size_t length, void *ctx)
+chunked_feed(struct istream_chunked *chunked, const void *data, size_t length)
 {
-    struct istream_chunked *chunked = ctx;
     char *dest;
     size_t max_length, dest_length;
 
@@ -134,15 +127,30 @@ chunked_input_data(const void *data, size_t length, void *ctx)
 
     fifo_buffer_append(chunked->buffer, dest_length);
 
-    pool_ref(chunked->output.pool);
-
     chunked_try_write(chunked);
     if (chunked_is_closed(chunked))
         length = 0;
 
+    return length;
+}
+
+
+/*
+ * istream handler
+ *
+ */
+
+static size_t
+chunked_input_data(const void *data, size_t length, void *ctx)
+{
+    struct istream_chunked *chunked = ctx;
+    size_t nbytes;
+
+    pool_ref(chunked->output.pool);
+    nbytes = chunked_feed(chunked, data, length);
     pool_unref(chunked->output.pool);
 
-    return length;
+    return nbytes;
 }
 
 static void
