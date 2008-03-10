@@ -67,16 +67,9 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     }
 }
 
-
-/*
- * istream handler
- *
- */
-
 static size_t
-dechunk_input_data(const void *data0, size_t length, void *ctx)
+dechunk_feed(struct istream_dechunk *dechunk, const void *data0, size_t length)
 {
-    struct istream_dechunk *dechunk = ctx;
     const char *data = data0;
     size_t position = 0, digit, size, nbytes;
 
@@ -180,6 +173,25 @@ dechunk_input_data(const void *data0, size_t length, void *ctx)
     }
 
     return position;
+}
+
+
+/*
+ * istream handler
+ *
+ */
+
+static size_t
+dechunk_input_data(const void *data0, size_t length, void *ctx)
+{
+    struct istream_dechunk *dechunk = ctx;
+    size_t nbytes;
+
+    pool_ref(dechunk->output.pool);
+    nbytes = dechunk_feed(dechunk, data, length);
+    pool_unref(dechunk->output.pool);
+
+    return nbytes;
 }
 
 static void
