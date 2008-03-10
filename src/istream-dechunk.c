@@ -36,11 +36,11 @@ dechunk_close(struct istream_dechunk *dechunk)
 {
     assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
-    if (dechunk->input == NULL) {
-        dechunk->state = CLOSED;
-        istream_deinit_abort(&dechunk->output);
-    } else
-        istream_close(dechunk->input);
+    if (dechunk->input != NULL)
+        istream_free_handler(&dechunk->input);
+
+    dechunk->state = CLOSED;
+    istream_deinit_abort(&dechunk->output);
 }
 
 
