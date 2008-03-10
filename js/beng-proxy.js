@@ -112,17 +112,8 @@ function beng_widget_reload_inline(widget, uri) {
                 return;
             if (req.readyState == 4 && req.status >= 200 && req.status < 300) {
                 var element = widget.getElement();
-                if (element != null) {
+                if (element != null)
                     element.innerHTML = req.responseText;
-                    var scriptElements =  element.getElementsByTagName( "script" );
-                    for ( var i = 0; i < scriptElements.length; i++ ) {
-                        try {
-                            eval( scriptElements[i].innerHTML );
-                        } catch ( e ) {
-                            alert ( e ) ;
-                        }
-                    }
-                }
             }
         });
     return req;
