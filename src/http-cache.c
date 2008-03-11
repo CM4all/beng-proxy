@@ -109,9 +109,13 @@ http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
 
     if (src->last_modified != NULL)
         dest->last_modified = p_strdup(pool, src->last_modified);
+    else
+        dest->last_modified = NULL;
 
     if (src->etag != NULL)
         dest->etag = p_strdup(pool, src->etag);
+    else
+        dest->etag = NULL;
 }
 
 static void
