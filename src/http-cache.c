@@ -22,6 +22,8 @@
 #define cache_log(...) do {} while (0)
 #endif
 
+static const off_t cacheable_size_limit = 256 * 1024;
+
 struct http_cache {
     pool_t pool;
     struct cache *cache;
@@ -210,7 +212,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     if (status != HTTP_STATUS_OK || body_available == 0)
         return 0;
 
-    if (body_available != (off_t)-1 && body_available > 256 * 1024)
+    if (body_available != (off_t)-1 && body_available > cacheable_size_limit)
         /* too large for the cache */
         return 0;
 
