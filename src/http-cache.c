@@ -118,6 +118,29 @@ http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
         dest->etag = NULL;
 }
 
+static struct http_cache_info *
+http_cache_info_dup(pool_t pool, const struct http_cache_info *src)
+{
+    struct http_cache_info *dest = p_malloc(pool, sizeof(*dest));
+
+    http_cache_copy_info(pool, dest, src);
+    return dest;
+}
+
+static struct http_cache_request *
+http_cache_request_dup(pool_t pool, const struct http_cache_request *src)
+{
+    struct http_cache_request *dest = p_malloc(pool, sizeof(*dest));
+
+    dest->pool = pool;
+    dest->cache = src->cache;
+    dest->url = p_strdup(pool, src->url);
+    dest->handler = src->handler;
+    dest->info = http_cache_info_dup(pool, src->info);
+    dest->length = src->length;
+    return dest;
+}
+
 static void
 http_cache_put(struct http_cache_request *request)
 {
@@ -248,6 +271,7 @@ http_cache_response_body_eof(void *ctx)
 
     http_cache_put(request);
     request->input = NULL;
+    pool_unref(request->pool);
 }
 
 static void
@@ -258,6 +282,7 @@ http_cache_response_body_abort(void *ctx)
     cache_log(4, "http_cache: body_abort %s\n", request->url);
 
     request->input = NULL;
+    pool_unref(request->pool);
 }
 
 static const struct istream_handler http_cache_response_body_handler = {
@@ -308,14 +333,21 @@ http_cache_response_response(http_status_t status, strmap_t headers,
         request->output = NULL;
         http_cache_put(request);
     } else {
+        pool_t pool;
         size_t buffer_size;
+
+        /* move all this stuff to a new pool, so istream_tee's second
+           head can continue to fill the cache even if our caller gave
+           up on it */
+        pool = pool_new_linear(request->cache->pool, "http_cache_tee", 1024);
+        request = http_cache_request_dup(pool, request);
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
         body = istream_tee_new(request->pool, body);
 
         request->status = status;
-        request->headers = headers;
+        request->headers = strmap_dup(request->pool, headers);
         istream_assign_handler(&request->input, istream_tee_second(body),
                                &http_cache_response_body_handler, request,
                                0);
