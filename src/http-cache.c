@@ -137,7 +137,6 @@ http_cache_request_dup(pool_t pool, const struct http_cache_request *src)
     dest->url = p_strdup(pool, src->url);
     dest->handler = src->handler;
     dest->info = http_cache_info_dup(pool, src->info);
-    dest->length = src->length;
     return dest;
 }
 
@@ -327,8 +326,6 @@ http_cache_response_response(http_status_t status, strmap_t headers,
         return;
     }
 
-    request->length = 0;
-
     if (body == NULL) {
         request->output = NULL;
         http_cache_put(request);
@@ -348,6 +345,8 @@ http_cache_response_response(http_status_t status, strmap_t headers,
 
         request->status = status;
         request->headers = strmap_dup(request->pool, headers);
+        request->length = 0;
+
         istream_assign_handler(&request->input, istream_tee_second(body),
                                &http_cache_response_body_handler, request,
                                0);
