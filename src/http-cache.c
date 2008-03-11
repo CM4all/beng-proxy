@@ -259,9 +259,9 @@ http_cache_response_body_data(const void *data, size_t length, void *ctx)
     struct http_cache_request *request = ctx;
 
     request->length += length;
-    if (request->length > cacheable_size_limit) {
+    if (request->length > (size_t)cacheable_size_limit) {
         istream_close(request->input);
-        return;
+        return 0;
     }
 
     growing_buffer_write_buffer(request->output, data, length);
