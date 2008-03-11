@@ -14,8 +14,14 @@ istream_init_impl(struct istream *istream, const struct istream *class,
                   pool_t pool TRACE_ARGS_DECL)
 {
     *istream = *class;
+
+#ifdef ISTREAM_POOL
+    istream->pool = pool_new_libc(pool, "istream");
+    TRACE_ARGS_IGNORE;
+#else
     istream->pool = pool;
     pool_ref_fwd(pool);
+#endif
 }
 
 #define istream_init(istream, class, pool) istream_init_impl(istream, class, pool TRACE_ARGS)
