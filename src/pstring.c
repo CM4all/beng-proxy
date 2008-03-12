@@ -61,6 +61,7 @@ p_sprintf(pool_t pool, const char *fmt, ...)
     return p;
 #else
 #error C99 required for snprintf(NULL, 0, ...)
+    return NULL
 #endif
 }
 
