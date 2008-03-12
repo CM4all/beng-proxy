@@ -21,13 +21,19 @@ typedef struct session *session_t;
 
 typedef unsigned session_id_t;
 
+struct widget_server_session {
+    session_t session;
+
+    struct list_head cookies;
+};
+
 /**
  * Session data associated with a widget instance (struct widget).
  */
 struct widget_session {
     struct widget_session *parent;
 
-    session_t session;
+    struct widget_server_session *server;
 
     pool_t pool;
 
@@ -41,9 +47,6 @@ struct widget_session {
 
     /** last query string */
     char *query_string;
-
-    /* XXX move cookies to struct widget_server_session */
-    struct list_head cookies;
 };
 
 /**
