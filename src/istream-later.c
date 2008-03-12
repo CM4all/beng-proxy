@@ -8,8 +8,6 @@
 #include "istream-internal.h"
 
 #include <event.h>
-#include <string.h>
-#include <string.h>
 
 struct istream_later {
     struct istream output;

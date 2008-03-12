@@ -11,8 +11,6 @@
 #include "processor.h"
 #include "date.h"
 #include "format.h"
-#include "embed.h"
-#include "session.h"
 
 #include <assert.h>
 #include <sys/stat.h>

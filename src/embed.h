@@ -8,7 +8,6 @@
 #define __BENG_EMBED_H
 
 #include "istream.h"
-#include "http.h"
 
 struct widget;
 struct processor_env;

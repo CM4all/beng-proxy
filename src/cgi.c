@@ -6,11 +6,7 @@
 
 #include "cgi.h"
 #include "istream-buffer.h"
-#include "header-writer.h"
 #include "processor.h"
-#include "date.h"
-#include "format.h"
-#include "embed.h"
 #include "session.h"
 #include "fork.h"
 #include "async.h"

@@ -12,7 +12,6 @@
 #include "cookie.h"
 #include "async.h"
 #include "google-gadget.h"
-#include "widget-stream.h"
 
 #include <assert.h>
 #include <string.h>

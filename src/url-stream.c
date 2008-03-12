@@ -12,7 +12,6 @@
 #include "async.h"
 
 #include <inline/compiler.h>
-#include <inline/poison.h>
 
 #include <string.h>
 

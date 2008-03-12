@@ -8,7 +8,6 @@
 #define __BENG_SESSION_H
 
 #include "pool.h"
-#include "strmap.h"
 #include "hashmap.h"
 
 #include <inline/list.h>

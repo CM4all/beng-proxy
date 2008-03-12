@@ -9,8 +9,6 @@
 #include "header-writer.h"
 #include "http-server.h"
 
-#include <assert.h>
-
 struct widget_proxy {
     struct http_server_request *request;
     istream_t body;

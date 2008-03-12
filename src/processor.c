@@ -6,7 +6,6 @@
 
 #include "processor.h"
 #include "parser.h"
-#include "strutil.h"
 #include "args.h"
 #include "widget.h"
 #include "growing-buffer.h"
@@ -14,8 +13,6 @@
 #include "js-generator.h"
 #include "widget-stream.h"
 #include "tpool.h"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <string.h>
