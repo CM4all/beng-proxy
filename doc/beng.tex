@@ -470,6 +470,8 @@ class Widget {
   Widget getWidget(string path);
   string translateURI(string uri, bool proxy);
   XMLHTTPRequest get(string uri, function onreadystatechange);
+  XMLHTTPRequest post(string uri, string content_type, request_body,
+                      function onreadystatechange);
   XMLHTTPRequest reload(string uri);
   Element getElement();
 }

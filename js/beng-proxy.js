@@ -106,6 +106,23 @@ function beng_widget_get(uri, onreadystatechange, save) {
     return req;
 }
 
+function _beng_widget_post(uri, content_type, request_body,
+                           onreadystatechange) {
+    if (content_type == null || request_body == null)
+        return null;
+    var url = this.translateURI(uri, true, false);
+    if (url == null)
+        return null;
+    var req = beng_proxy_request();
+    if (req == null)
+        return null;
+    req.setRequestHeader("Content-Type", content_type);
+    req.onreadystatechange = onreadystatechange;
+    req.open("POST", url, onreadystatechange != null);
+    req.send(request_body);
+    return req;
+}
+
 function beng_widget_reload_inline(widget, uri) {
     var req = widget.get(uri, function() {
             if (req == null)
@@ -159,6 +176,7 @@ function beng_widget(parent, id) {
     this.createWidget = beng_widget_create_widget;
     this.translateURI = beng_widget_translate_uri;
     this.get = beng_widget_get;
+    this.post = _beng_widget_post;
     this.reload = beng_widget_reload;
     this.getElement = function() {
         if (this.path == null)
