@@ -329,7 +329,7 @@ cgi_run(const char *path,
 
     strmap_rewind(headers);
     while ((pair = strmap_next(headers)) != NULL) {
-        for (i = 0; i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
+        for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
             if (char_is_minuscule_letter(pair->key[i]))
                 buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
             else if (char_is_capital_letter(pair->key[i]) ||
