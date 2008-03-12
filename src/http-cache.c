@@ -565,11 +565,16 @@ http_cache_request(struct http_cache *cache,
                              method, url, headers, body,
                              handler, handler_ctx, async_ref);
     } else {
+        struct growing_buffer *headers2;
+
         cache_log(4, "http_cache: ignore %s\n", url);
+
+        headers2 = headers == NULL
+            ? NULL : headers_dup(pool, headers);
 
         url_stream_new(pool, cache->stock,
                        method, url,
-                       headers_dup(pool, headers), body,
+                       headers2, body,
                        handler, handler_ctx,
                        async_ref);
     }
