@@ -54,5 +54,5 @@ struct session *
 widget_get_session2(struct widget *widget)
 {
     struct widget_session *ws = widget_get_session(widget_root(widget), 0);
-    return ws == NULL ? NULL : ws->server->session;
+    return ws == NULL ? NULL : ws->session;
 }
