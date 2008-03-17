@@ -53,7 +53,7 @@ tee_input_data(const void *data, size_t length, void *ctx)
         /* XXX it is currently asserted that the second handler will
            always consume all data; later, buffering should probably be
            added */
-        assert(nbytes2 == nbytes1 || (nbytes2 == 0 && (denotify || tee->input == NULL)));
+        assert(nbytes2 == nbytes1 || (nbytes2 == 0 && (denotify || !tee->outputs[1].enabled)));
     } else
         nbytes2 = nbytes1;
 
