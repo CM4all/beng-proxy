@@ -247,11 +247,10 @@ widget_session_get_child(struct widget_session *parent, const char *id,
                          int create)
 {
     assert(parent != NULL);
-    assert(parent->server != NULL);
-    assert(parent->server->session != NULL);
+    assert(parent->session != NULL);
     assert(id != NULL);
 
-    return hashmap_r_get_widget_session(parent->server->session,
+    return hashmap_r_get_widget_session(parent->session,
                                         &parent->children,
                                         id, create);
 }

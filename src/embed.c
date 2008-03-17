@@ -91,7 +91,7 @@ embed_request_headers(struct embed *embed, int with_body)
     }
 
     ws = widget_get_session(embed->widget, 0);
-    if (ws != NULL)
+    if (ws != NULL && ws->server != NULL)
         cookie_list_http_header(headers, &ws->server->cookies, embed->pool);
 
     session = widget_get_session2(embed->widget);
@@ -205,7 +205,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
         cookies = strmap_get(headers, "set-cookie");
     if (cookies != NULL) {
         struct widget_session *ws = widget_get_session(embed->widget, 1);
-        if (ws != NULL)
+        if (ws != NULL && ws->server != NULL)
             cookie_list_set_cookie2(ws->pool, &ws->server->cookies,
                                     cookies);
     }

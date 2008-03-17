@@ -32,6 +32,8 @@ struct widget_server_session {
 struct widget_session {
     struct widget_session *parent;
 
+    session_t session;
+
     struct widget_server_session *server;
 
     pool_t pool;
