@@ -221,6 +221,7 @@ hashmap_r_get_widget_session(session_t session, hashmap_t *map_r,
 
     ws = p_malloc(session->pool, sizeof(*ws));
     ws->parent = NULL;
+    ws->session = session;
     ws->server = wss;
     ws->pool = session->pool;
     ws->id = p_strdup(session->pool, id);
