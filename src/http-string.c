@@ -67,3 +67,25 @@ http_next_value(pool_t pool, struct strref *input, struct strref *value)
     else
         http_next_token(input, value);
 }
+
+size_t
+http_quote_string(char *dest, struct strref *src)
+{
+    size_t dest_pos = 0, src_pos = 0;
+
+    dest[dest_pos++] = '"';
+
+    while (src_pos < src->length) {
+        if (src->data[src_pos] == '"' || src->data[src_pos] == '\\') {
+            dest[dest_pos++] = '\\';
+            dest[dest_pos++] = src->data[src_pos++];
+        } else if (char_is_http_text(src->data[src_pos]))
+            dest[dest_pos++] = src->data[src_pos++];
+        else
+            /* XXX how to handle invalid characters? */
+            break;
+    }
+
+    dest[dest_pos++] = '"';
+    return dest_pos;
+}

@@ -1,5 +1,6 @@
 #include "cookie.h"
 #include "header-writer.h"
+#include "tpool.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -17,6 +18,7 @@ int main(int argc, char **argv) {
     ssize_t nbytes;
 
     pool = pool_new_libc(NULL, "root");
+    tpool_init(pool);
 
     for (i = 1; i < argc; ++i)
         cookie_list_set_cookie2(pool, &cookies, argv[i]);
@@ -38,6 +40,7 @@ int main(int argc, char **argv) {
         growing_buffer_consume(gb, (size_t)nbytes);
     }
 
+    tpool_deinit();
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();

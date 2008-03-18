@@ -9,6 +9,7 @@
 #include "strref.h"
 #include "strmap.h"
 #include "http-string.h"
+#include "tpool.h"
 
 #include <string.h>
 
@@ -129,25 +130,29 @@ void
 cookie_list_http_header(struct strmap *headers, struct list_head *head,
                         pool_t pool)
 {
+    static const size_t buffer_size = 4096;
+    char *buffer;
     struct cookie *cookie;
-    char buffer[2048];
     size_t length;
+    struct pool_mark mark;
 
     if (list_empty(head))
         return;
+
+    pool_mark(tpool, &mark);
+    buffer = p_malloc(tpool, buffer_size);
 
     length = 0;
 
     for (cookie = (struct cookie *)head->next;
          &cookie->siblings != head;
          cookie = (struct cookie *)cookie->siblings.next) {
-        if (sizeof(buffer) - length < cookie->name.length + 1 + cookie->value.length + 2)
+        if (buffer_size - length < cookie->name.length + 1 + 1 + cookie->value.length * 2 + 1 + 2)
             break;
         memcpy(buffer + length, cookie->name.data, cookie->name.length);
         length += cookie->name.length;
         buffer[length++] = '=';
-        /* XXX escape? */
-        memcpy(buffer + length, cookie->value.data, cookie->value.length);
+        length += http_quote_string(buffer + length, &cookie->value);
         length += cookie->value.length;
         buffer[length++] = ';';
         buffer[length++] = ' ';
@@ -155,6 +160,8 @@ cookie_list_http_header(struct strmap *headers, struct list_head *head,
 
     strmap_addn(headers, "Cookie2", "$Version=\"1\"");
     strmap_addn(headers, "Cookie", p_strndup(pool, buffer, length));
+
+    pool_rewind(tpool, &mark);
 }
 
 void

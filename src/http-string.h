@@ -68,4 +68,7 @@ http_next_quoted_string(pool_t pool, struct strref *input, struct strref *value)
 void
 http_next_value(pool_t pool, struct strref *input, struct strref *value);
 
+size_t
+http_quote_string(char *dest, struct strref *src);
+
 #endif
