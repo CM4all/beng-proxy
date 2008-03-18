@@ -47,7 +47,7 @@ http_next_quoted_string(pool_t pool, struct strref *input, struct strref *value)
         } else if (input->data[pos] == '"') {
             ++pos;
             break;
-        } else if (char_is_http_text(input->data[pos++])) {
+        } else if (char_is_http_text(input->data[pos])) {
             dest[value->length++] = input->data[pos++];
         } else {
             ++pos;
