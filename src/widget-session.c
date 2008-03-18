@@ -6,14 +6,35 @@
 
 #include "widget.h"
 #include "session.h"
+#include "tpool.h"
 
 #include <assert.h>
+
+static const char *
+widget_get_server_name(pool_t pool, const struct widget *widget)
+{
+    const char *uri = widget->class->uri, *p;
+    if (uri == NULL)
+        return NULL;
+
+    p = strchr(uri, ':');
+    if (p == NULL || p[1] != '/' || p[2] != '/' || p[3] == '/')
+        return NULL;
+
+    uri = p + 3;
+    p = strchr(uri, '/');
+    if (p == NULL)
+        return uri;
+
+    return p_strndup(pool, uri, p - uri);
+}
 
 struct widget_session *
 widget_get_session(struct widget *widget, int create)
 {
     struct widget_session *parent;
     struct session *session;
+    struct pool_mark mark;
 
     assert(widget != NULL);
 
@@ -30,8 +51,13 @@ widget_get_session(struct widget *widget, int create)
         if (parent == NULL)
             return NULL;
 
-        return widget->from_request.session
-            = widget_session_get_child(parent, widget->id, create);
+        pool_mark(tpool, &mark);
+        widget->from_request.session
+            = widget_session_get_child(parent,
+                                       widget_get_server_name(tpool, widget),
+                                       widget->id, create);
+        pool_rewind(tpool, &mark);
+        return widget->from_request.session;
 
     case WIDGET_SESSION_SITE:
         /* this is a site-global widget: get the widget_session
@@ -42,8 +68,13 @@ widget_get_session(struct widget *widget, int create)
         if (session == NULL)
             return NULL;
 
-        return widget->from_request.session
-            = session_get_widget(session, widget->id, create);
+        pool_mark(tpool, &mark);
+        widget->from_request.session
+            = session_get_widget(session,
+                                 widget_get_server_name(tpool, widget),
+                                 widget->id, create);
+        pool_rewind(tpool, &mark);
+        return widget->from_request.session;
     }
 
     assert(0);

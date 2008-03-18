@@ -82,6 +82,9 @@ struct session {
 
     /** a map of widget path to struct widget_session */
     hashmap_t widgets;
+
+    /** a map of server name to struct widget_server_session */
+    hashmap_t widget_servers;
 };
 
 void
@@ -106,10 +109,13 @@ void
 session_remove(session_t session);
 
 struct widget_session *
-session_get_widget(session_t session, const char *id, int create);
+session_get_widget(session_t session,
+                   const char *server_name, const char *id,
+                   int create);
 
 struct widget_session *
-widget_session_get_child(struct widget_session *parent, const char *id,
+widget_session_get_child(struct widget_session *parent,
+                         const char *server_name, const char *id,
                          int create);
 
 #endif

@@ -119,6 +119,7 @@ response_invoke_processor(struct request *request2,
     widget->lazy.path = "";
     widget->lazy.prefix = "__";
     widget->from_request.session = session_get_widget(request2->env.session,
+                                                      NULL,
                                                       strref_dup(request->pool,
                                                                  &request2->uri.base),
                                                       1);
