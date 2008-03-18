@@ -69,7 +69,7 @@ http_next_value(pool_t pool, struct strref *input, struct strref *value)
 }
 
 size_t
-http_quote_string(char *dest, struct strref *src)
+http_quote_string(char *dest, const struct strref *src)
 {
     size_t dest_pos = 0, src_pos = 0;
 
