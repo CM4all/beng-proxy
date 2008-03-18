@@ -8,6 +8,7 @@
 #include "strutil.h"
 #include "strref.h"
 #include "strmap.h"
+#include "http-string.h"
 
 #include <string.h>
 
@@ -49,35 +50,34 @@ trim(struct strref *s)
 }
 
 static void
-parse_cookie2(pool_t pool, struct list_head *head,
-              const char *input, size_t input_length)
+parse_key_value(pool_t pool, struct strref *input,
+                struct strref *name, struct strref *value)
 {
-    const char *equals;
+    http_next_token(input, name);
+    if (strref_is_empty(name))
+        return;
+
+    ltrim(input);
+    if (!strref_is_empty(input) && input->data[0] == '=') {
+        strref_skip(input, 1);
+        http_next_value(pool, input, value);
+    } else
+        strref_clear(value);
+}
+
+static int
+parse_next_cookie(pool_t pool, struct list_head *head,
+                  struct strref *input)
+{
     struct strref name, value;
     struct cookie *cookie;
 
-    equals = memchr(input, '=', input_length);
-    if (equals == NULL)
-        return;
-
-    strref_set(&name, input, equals - input);
-    trim(&name);
+    parse_key_value(pool, input, &name, &value);
     if (strref_is_empty(&name))
-        return;
-
-    if (strref_cmp_literal(&name, "expires") == 0 ||
-        strref_cmp_literal(&name, "domain") == 0 ||
-        strref_cmp_literal(&name, "path") == 0)
-        return; /* XXX */
-
-    strref_set(&value, equals + 1, input + input_length - equals - 1);
-    trim(&value);
+        return 0;
 
     cookie = cookie_list_find(head, name.data, name.length);
     if (cookie == NULL) {
-        if (strref_is_empty(&value))
-            return;
-
         cookie = p_malloc(pool, sizeof(*cookie));
         strref_set_dup(pool, &cookie->name, &name);
         cookie->valid_until = (time_t)-1; /* XXX */
@@ -86,22 +86,43 @@ parse_cookie2(pool_t pool, struct list_head *head,
     }
 
     strref_set_dup(pool, &cookie->value, &value);
+
+    ltrim(input);
+    while (!strref_is_empty(input) && input->data[0] == ';') {
+        strref_skip(input, 1);
+
+        parse_key_value(pool, input, &name, &value);
+        if (!strref_is_empty(&name)) {
+            /* XXX */
+        }
+    }
+
+    /* XXX: use "expires" and "path" arguments */
+
+    return 1;
 }
 
 void
 cookie_list_set_cookie2(pool_t pool, struct list_head *head, const char *value)
 {
-    const char *semicolon;
+    struct strref input;
 
-    while ((semicolon = strchr(value, ';')) != NULL) {
-        parse_cookie2(pool, head, value, semicolon - value);
-        value = semicolon + 1;
+    strref_set_c(&input, value);
+
+    while (1) {
+        if (!parse_next_cookie(pool, head, &input))
+            break;
+
+        if (strref_is_empty(&input))
+            return;
+
+        if (input.data[0] != ',')
+            break;
+
+        strref_skip(&input, 1);
     }
 
-    if (*value != 0)
-        parse_cookie2(pool, head, value, strlen(value));
-
-    /* XXX: use "expires" and "path" arguments */
+    /* XXX log error */
 }
 
 void
