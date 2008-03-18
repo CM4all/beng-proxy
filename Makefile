@@ -123,6 +123,7 @@ SOURCES = src/main.c \
 	src/header-parser.c \
 	src/header-writer.c \
 	src/http.c \
+	src/http-string.c \
 	src/http-body.c \
 	src/http-server.c \
 	src/http-server-request.c \
