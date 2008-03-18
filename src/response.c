@@ -210,6 +210,8 @@ response_dispatch(struct request *request2,
             request2->session->cookie_sent = 1;
         }
 
+        header_write(headers, "server", "beng-proxy v" VERSION);
+
         request2->response_sent = 1;
         http_server_response(request2->request,
                              status, headers, body);
