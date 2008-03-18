@@ -68,6 +68,17 @@ http_next_quoted_string(pool_t pool, struct strref *input, struct strref *value)
 void
 http_next_value(pool_t pool, struct strref *input, struct strref *value);
 
+static inline int
+http_should_quote_token(const struct strref *src)
+{
+    size_t i;
+
+    for (i = 0; i < src->length; ++i)
+        if (!char_is_http_token(src->data[i]))
+            return 1;
+    return 0;
+}
+
 size_t
 http_quote_string(char *dest, const struct strref *src);
 

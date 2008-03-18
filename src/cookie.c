@@ -152,8 +152,12 @@ cookie_list_http_header(struct strmap *headers, struct list_head *head,
         memcpy(buffer + length, cookie->name.data, cookie->name.length);
         length += cookie->name.length;
         buffer[length++] = '=';
-        length += http_quote_string(buffer + length, &cookie->value);
-        length += cookie->value.length;
+        if (http_should_quote_token(&cookie->value))
+            length += http_quote_string(buffer + length, &cookie->value);
+        else {
+            memcpy(buffer + length, cookie->value.data, cookie->value.length);
+            length += cookie->value.length;
+        }
         buffer[length++] = ';';
         buffer[length++] = ' ';
     }
