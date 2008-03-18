@@ -69,7 +69,7 @@ void
 http_next_value(pool_t pool, struct strref *input, struct strref *value);
 
 static inline int
-http_should_quote_token(const struct strref *src)
+http_must_quote_token(const struct strref *src)
 {
     size_t i;
 

@@ -152,7 +152,7 @@ cookie_list_http_header(struct strmap *headers, struct list_head *head,
         memcpy(buffer + length, cookie->name.data, cookie->name.length);
         length += cookie->name.length;
         buffer[length++] = '=';
-        if (http_should_quote_token(&cookie->value))
+        if (http_must_quote_token(&cookie->value))
             length += http_quote_string(buffer + length, &cookie->value);
         else {
             memcpy(buffer + length, cookie->value.data, cookie->value.length);
