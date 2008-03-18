@@ -4,6 +4,8 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+DEB_VERSION := $(shell dpkg-parsechangelog | egrep '^Version:' | cut -d' ' -f2)
+
 CFLAGS = -Wall -g
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -17,7 +19,7 @@ debian/stamp-build:
 	dh_testdir
 
 	#$(MAKE) CFLAGS="$(CFLAGS)" all doc/beng.pdf
-	$(MAKE) src/cm4all-beng-proxy src/libcm4all-istream.a doc/beng.pdf
+	$(MAKE) src/cm4all-beng-proxy src/libcm4all-istream.a doc/beng.pdf VERSION=$(DEB_VERSION)
 
 	touch $@
 
