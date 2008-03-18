@@ -19,15 +19,15 @@ ltrim(struct strref *s)
 void
 http_next_token(struct strref *input, struct strref *value)
 {
-    size_t pos = 0;
-
     value->length = 0;
     value->data = input->data;
 
-    while (pos < input->length && char_is_http_token(input->data[pos]))
+    while (value->length < input->length &&
+           char_is_http_token(input->data[value->length]))
         ++value->length;
 
-    strref_skip(input, pos);
+    if (value->length > 0)
+        strref_skip(input, value->length);
 }
 
 void
