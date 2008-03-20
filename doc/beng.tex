@@ -277,6 +277,34 @@ request, \emph{beng-proxy} sends its contents unless it is empty (in
 which case it omits this parameter).  With every response, the
 translation server may provide a new value (which may be empty).
 
+\subsubsection{Widget registry}
+
+The translation server provides access to the widget database, where
+all widget servers are registered.  A widget request can use the
+following packets:
+
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\texttt{WIDGET\_TYPE} & the name of the widget type \\
+\hline
+\end{tabular}
+
+The translation server's response consists of these packets:
+
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\texttt{STATUS} & in case of a lookup error, this packet provides the
+HTTP status code \\
+\hline
+\texttt{PROXY} & the base HTTP URL of the widget server; may be local
+path of a Unix socket \\
+\hline
+\texttt{PROCESS} & enable the BENG processor \\
+\hline
+\texttt{CONTAINER} & this widget can contain other widgets \\
+\hline
+\end{tabular}
+
 
 \section{Widget protocol}
 
