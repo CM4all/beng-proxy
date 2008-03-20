@@ -14,6 +14,7 @@ struct istream_tee {
         unsigned enabled;
     } outputs[2];
     istream_t input;
+    int fragile;
 };
 
 
@@ -148,8 +149,12 @@ istream_tee_close1(istream_t istream)
 
     tee->outputs[0].enabled = 0;
 
-    if (tee->input != NULL && !tee->outputs[1].enabled)
-        istream_free_handler(&tee->input);
+    if (tee->input != NULL) {
+        if (!tee->outputs[1].enabled)
+            istream_free_handler(&tee->input);
+        else if (tee->fragile)
+            istream_close(tee->input);
+    }
 
     istream_deinit_abort(&tee->outputs[0].istream);
 }
@@ -199,8 +204,12 @@ istream_tee_close2(istream_t istream)
 
     tee->outputs[1].enabled = 0;
 
-    if (tee->input != NULL && !tee->outputs[0].enabled)
-        istream_free_handler(&tee->input);
+    if (tee->input != NULL) {
+        if (!tee->outputs[0].enabled)
+            istream_free_handler(&tee->input);
+        else if (tee->fragile)
+            istream_close(tee->input);
+    }
 
     istream_deinit_abort(&tee->outputs[1].istream);
 }
@@ -218,7 +227,7 @@ static const struct istream istream_tee2 = {
  */
 
 istream_t
-istream_tee_new(pool_t pool, istream_t input)
+istream_tee_new(pool_t pool, istream_t input, int fragile)
 {
     struct istream_tee *tee = (struct istream_tee *)
         istream_new(pool, &istream_tee1, sizeof(*tee));
@@ -234,6 +243,8 @@ istream_tee_new(pool_t pool, istream_t input)
     istream_assign_handler(&tee->input, input,
                            &tee_input_handler, tee,
                            0);
+
+    tee->fragile = fragile;
 
     return istream_struct_cast(&tee->outputs[0].istream);
 }

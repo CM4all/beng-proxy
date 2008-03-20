@@ -244,7 +244,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->script_tail = 0;
 
     if (widget->from_request.proxy_ref == NULL) {
-        istream = istream_tee_new(pool, istream);
+        istream = istream_tee_new(pool, istream, 1);
         processor->replace = istream_replace_new(pool, istream_tee_second(istream), 0);
     } else {
         processor->replace = NULL;
