@@ -82,7 +82,7 @@ struct istream {
 #ifndef NDEBUG
     int reading, destroyed;
 
-    unsigned eof:1, in_data:1, available_full_set:1;
+    unsigned closing:1, eof:1, in_data:1, available_full_set:1;
 
     /** how much data was available in the previous invocation? */
     size_t data_available;
@@ -148,6 +148,7 @@ istream_available(istream_t _istream, int partial)
 #ifndef NDEBUG
     struct pool_notify notify;
 
+    assert(!istream->closing);
     assert(!istream->eof);
     assert(!istream->reading);
 
@@ -191,6 +192,7 @@ istream_read(istream_t _istream)
 #ifndef NDEBUG
     struct pool_notify notify;
 
+    assert(!istream->closing);
     assert(!istream->eof);
     assert(!istream->reading);
     assert(!istream->in_data);
@@ -214,7 +216,12 @@ istream_close(istream_t _istream)
 {
     struct istream *istream = _istream_opaque_cast(_istream);
 
+    assert(!istream->closing);
     assert(!istream->eof);
+
+#ifndef NDEBUG
+    istream->closing = 1;
+#endif
 
     istream->close(_istream);
 }
