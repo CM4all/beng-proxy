@@ -168,7 +168,7 @@ ask_translation_server(struct request *request2,
                                                  &request2->uri.base);
 
     translate(request->pool, stock, &request2->translate.request,
-              translate_callback, request2);
+              translate_callback, request2, NULL);
 }
 
 static void

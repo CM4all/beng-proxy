@@ -11,6 +11,7 @@
 #include "http.h"
 
 struct stock;
+struct async_operation_ref;
 
 struct translate_request {
     const char *remote_host;
@@ -59,6 +60,7 @@ translate(pool_t pool,
           struct stock *stock,
           const struct translate_request *request,
           translate_callback_t callback,
-          void *ctx);
+          void *ctx,
+          struct async_operation_ref *async_ref);
 
 #endif

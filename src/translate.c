@@ -570,7 +570,8 @@ translate(pool_t pool,
           struct stock *stock,
           const struct translate_request *request,
           translate_callback_t callback,
-          void *ctx)
+          void *ctx,
+          struct async_operation_ref *async_ref)
 {
     struct translate_request_and_callback *request2;
 
@@ -590,5 +591,5 @@ translate(pool_t pool,
     request2->callback = callback;
     request2->callback_ctx = ctx;
 
-    stock_get(stock, translate_stock_callback, request2, NULL);
+    stock_get(stock, translate_stock_callback, request2, async_ref);
 }
