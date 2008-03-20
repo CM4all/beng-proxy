@@ -204,7 +204,8 @@ http_server_consume_input(http_server_connection_t connection)
             (connection->request.read_state == READ_BODY ||
              connection->request.read_state == READ_END))
             connection->handler->request(connection->request.request,
-                                         connection->handler_ctx);
+                                         connection->handler_ctx,
+                                         &connection->request.async_ref);
     } else if (connection->request.read_state == READ_BODY) {
         http_server_consume_body(connection);
     }

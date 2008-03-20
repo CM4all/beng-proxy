@@ -11,6 +11,7 @@
 #include "fifo-buffer.h"
 #include "event2.h"
 #include "http-body.h"
+#include "async.h"
 
 struct http_server_connection {
     pool_t pool;
@@ -43,6 +44,8 @@ struct http_server_connection {
         struct http_server_request *request;
 
         struct http_body_reader body_reader;
+
+        struct async_operation_ref async_ref;
     } request;
 
     /* response */

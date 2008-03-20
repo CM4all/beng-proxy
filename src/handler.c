@@ -168,7 +168,8 @@ ask_translation_server(struct request *request2,
                                                  &request2->uri.base);
 
     translate(request->pool, stock, &request2->translate.request,
-              translate_callback, request2, NULL);
+              translate_callback, request2,
+              request2->async_ref);
 }
 
 static void
@@ -216,7 +217,8 @@ serve_document_root_file(struct request *request2,
 
 static void
 my_http_server_connection_request(struct http_server_request *request,
-                                  void *ctx)
+                                  void *ctx,
+                                  struct async_operation_ref *async_ref)
 {
     struct client_connection *connection = ctx;
     struct request *request2;
@@ -242,6 +244,7 @@ my_http_server_connection_request(struct http_server_request *request,
     async_ref_clear(&request2->async);
     request2->body_consumed = 0;
     request2->response_sent = 0;
+    request2->async_ref = async_ref;
 
     request_get_cookie_session(request2);
     request_args_parse(request2);

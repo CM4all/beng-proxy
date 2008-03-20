@@ -178,6 +178,12 @@ http_server_request_close(struct http_server_connection *connection)
 
     http_server_request_free(&connection->request.request);
 
+    if ((connection->request.read_state == READ_BODY ||
+         connection->request.read_state == READ_END) &&
+        (connection->response.writing_100_continue ||
+         connection->response.istream == NULL))
+        async_abort(&connection->request.async_ref);
+
     if (connection->request.read_state == READ_BODY) {
         connection->request.read_state = READ_START;
         istream_deinit_abort(&connection->request.body_reader.output);
@@ -289,6 +295,8 @@ http_server_response(struct http_server_request *request,
     assert(connection->request.request == request);
     assert(connection->response.istream == NULL);
     /* XXX what if we weren't able to send "100 Continue" yet? */
+
+    async_ref_poison(&connection->request.async_ref);
 
     status_stream
         = istream_memory_new(request->pool,

@@ -12,6 +12,7 @@
 #include "istream.h"
 
 struct growing_buffer;
+struct async_operation_ref;
 
 typedef struct http_server_connection *http_server_connection_t;
 
@@ -30,7 +31,8 @@ struct http_server_request {
 
 struct http_server_connection_handler {
     void (*request)(struct http_server_request *request,
-                    void *ctx);
+                    void *ctx,
+                    struct async_operation_ref *async_ref);
     void (*free)(void *ctx);
 };
 
