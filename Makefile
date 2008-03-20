@@ -242,7 +242,10 @@ check-http-server: test/t-http-server-mirror
 check-http-client: test/t-http-client test/t-http-server-mirror
 	./test/t-http-client
 
-check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client
+check-cookie-client: test/run-cookie-client
+	python ./test/t-cookie-client.py
+
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client check-cookie-client
 
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb
