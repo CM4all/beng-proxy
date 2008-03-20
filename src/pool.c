@@ -525,6 +525,21 @@ pool_notify(pool_t pool, struct pool_notify *notify)
 }
 
 void
+pool_trash(pool_t pool)
+{
+    assert(!pool->major);
+
+    if (pool->trashed)
+        return;
+
+    assert(pool->parent != NULL);
+
+    pool_remove_child(pool->parent, pool);
+    list_add(&pool->siblings, &trash);
+    pool->trashed = 1;
+}
+
+void
 pool_commit(void)
 {
     pool_t pool;

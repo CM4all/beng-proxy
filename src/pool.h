@@ -74,16 +74,32 @@ pool_denotify(struct pool_notify *notify)
 #endif
 
 #ifdef NDEBUG
+#else
+#endif
+
+#ifdef NDEBUG
+
+static inline void
+pool_trash(pool_t pool __attr_unused)
+{
+}
+
 static inline void
 pool_commit(void)
 {
 }
+
 #else
+
+void
+pool_trash(pool_t pool __attr_unused);
+
 void
 pool_commit(void);
 
 int
 pool_contains(pool_t pool, const void *ptr, size_t size);
+
 #endif
 
 void
