@@ -110,10 +110,10 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
     while (!ctx->eof)
         istream_read_expect(ctx, istream);
 
+    pool_trash(pool);
     pool_unref(pool);
-    pool_commit();
-
     cleanup();
+    pool_commit();
 }
 
 static void
@@ -198,10 +198,10 @@ test_abort_without_handler(pool_t pool)
     istream = create_test(pool, create_input(pool));
     istream_close(istream);
 
+    pool_trash(pool);
     pool_unref(pool);
-    pool_commit();
-
     cleanup();
+    pool_commit();
 }
 
 /** abort with handler */
@@ -221,12 +221,12 @@ test_abort_with_handler(pool_t pool)
 
     istream_close(istream);
 
+    pool_trash(pool);
     pool_unref(pool);
+    cleanup();
     pool_commit();
 
     assert(ctx.eof);
-
-    cleanup();
 }
 
 /** abort in handler */
@@ -249,10 +249,10 @@ test_abort_in_handler(pool_t pool)
 
     assert(ctx.abort_istream == NULL);
 
+    pool_trash(pool);
     pool_unref(pool);
-    pool_commit();
-
     cleanup();
+    pool_commit();
 }
 
 /** abort after 1 byte of output */
