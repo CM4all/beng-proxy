@@ -68,7 +68,6 @@ response_invoke_processor(struct request *request2,
     unsigned processor_options = PROCESSOR_REWRITE_URL|PROCESSOR_CONTAINER;
 
     assert(!request2->response_sent);
-    assert(!async_ref_defined(&request2->async));
     assert(body == NULL || !istream_has_handler(body));
 
     if (body == NULL) {
@@ -119,7 +118,7 @@ response_invoke_processor(struct request *request2,
         processor_new(request->pool, body, widget, &request2->env,
                       processor_options,
                       &widget_proxy_handler, request,
-                      &request2->async);
+                      request2->async_ref);
 
         pool_unref(request->pool);
     } else {
@@ -128,7 +127,7 @@ response_invoke_processor(struct request *request2,
         processor_new(request->pool, body, widget, &request2->env,
                       processor_options,
                       &response_handler, request2,
-                      &request2->async);
+                      request2->async_ref);
     }
 
     /*
@@ -156,7 +155,6 @@ response_dispatch(struct request *request2,
         = request2->translate.transformation;
 
     assert(!request2->response_sent);
-    assert(!async_ref_defined(&request2->async));
     assert(body == NULL || !istream_has_handler(body));
 
     if (transformation)
@@ -176,7 +174,7 @@ response_dispatch(struct request *request2,
                    headers,
                    body,
                    &response_handler, request2,
-                   &request2->async);
+                   request2->async_ref);
     } else if (transformation != NULL &&
                transformation->type == TRANSFORMATION_PROCESS) {
         response_invoke_processor(request2, status, headers, body);
@@ -221,8 +219,6 @@ response_response(http_status_t status, strmap_t headers,
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
 
-    async_ref_clear(&request2->async);
-
     if (headers == NULL) {
         response_headers = growing_buffer_new(request->pool, 1024);
     } else {
@@ -246,8 +242,6 @@ response_abort(void *ctx)
 {
     struct request *request = ctx;
     pool_t pool = request->request->pool;
-
-    async_ref_clear(&request->async);
 
     if (!request->response_sent)
         http_server_send_message(request->request,

@@ -35,8 +35,6 @@ struct request {
 
     struct processor_env env;
 
-    struct async_operation_ref async;
-
     unsigned body_consumed, response_sent;
     struct async_operation_ref *async_ref;
 };
