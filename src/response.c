@@ -36,22 +36,6 @@ static const char *const copy_headers_processed[] = {
 };
 
 
-static void
-response_close(struct request *request)
-{
-    assert(request != NULL);
-    assert(request->request != NULL);
-    assert(request->request->pool != NULL);
-
-    if (async_ref_defined(&request->async))
-        async_abort(&request->async);
-
-    if (!request->response_sent)
-        http_server_send_message(request->request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Internal server error");
-}
-
 static const char *
 request_absolute_uri(struct http_server_request *request)
 {
@@ -265,7 +249,11 @@ response_abort(void *ctx)
 
     async_ref_clear(&request->async);
 
-    response_close(request);
+    if (!request->response_sent)
+        http_server_send_message(request->request,
+                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "Internal server error");
+
     pool_unref(pool);
 }
 
