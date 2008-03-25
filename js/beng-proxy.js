@@ -27,13 +27,13 @@ function beng_proxy_request() {
     }
 }
 
-function beng_proxy_make_uri(focus, path, proxy, save) {
+function beng_proxy_make_uri(focus, path, mode) {
     var uri = this.uri + ";session=" + escape(this.session);
     if (focus != null) {
         uri += "&focus=" + escape(focus);
-        if (proxy)
+        if (mode == "frame" || mode == "proxy" || mode == "save")
             uri += "&frame=" + escape(focus);
-        if (save)
+        if (mode == "save")
             uri += "&save=1";
         if (path != null) {
             var query_string = null;
@@ -86,15 +86,17 @@ function beng_root_widget(proxy) {
     return this;
 }
 
-function beng_widget_translate_uri(uri, proxy, save) {
+function beng_widget_translate_uri(uri, mode) {
     if (this.path == null)
         return null;
 
-    return this.proxy.make_uri(this.path, uri, proxy, save);
+    return this.proxy.make_uri(this.path, uri, mode);
 }
 
-function beng_widget_get(uri, onreadystatechange, save) {
-    var url = this.translateURI(uri, true, save);
+function beng_widget_get(uri, onreadystatechange, mode) {
+    if (mode == null)
+        mode = "proxy";
+    var url = this.translateURI(uri, mode);
     if (url == null)
         return null;
     var req = beng_proxy_request();
@@ -110,7 +112,7 @@ function _beng_widget_post(uri, content_type, request_body,
                            onreadystatechange) {
     if (content_type == null || request_body == null)
         return null;
-    var url = this.translateURI(uri, true, false);
+    var url = this.translateURI(uri, "proxy");
     if (url == null)
         return null;
     var req = beng_proxy_request();
@@ -132,7 +134,7 @@ function beng_widget_reload_inline(widget, uri) {
                 if (element != null)
                     element.innerHTML = req.responseText;
             }
-        });
+        }, "frame");
     return req;
 }
 

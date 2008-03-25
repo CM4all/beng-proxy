@@ -46,7 +46,7 @@ function _IG_Prefs(widget) {
 
     this.set = function(name, value) {
         this.values[name] = value;
-        this.widget.get("?" + escape(name) + "=" + escape(value), null, true);
+        this.widget.get("?" + escape(name) + "=" + escape(value), null, "save");
     }
 
     return this;

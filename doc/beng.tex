@@ -496,7 +496,7 @@ The JavaScript widget class provides the following API (pseudo code):
 class Widget {
   Widget parent;
   Widget getWidget(string path);
-  string translateURI(string uri, bool proxy);
+  string translateURI(string uri, string mode);
   XMLHTTPRequest get(string uri, function onreadystatechange);
   XMLHTTPRequest post(string uri, string content_type, request_body,
                       function onreadystatechange);
@@ -524,7 +524,23 @@ idempotent widget server).
 If you want more control over this operation, you may use
 \texttt{get()} to send a \texttt{GET} request with a custom callback
 function, or \texttt{translateURI} to translate a relative widget
-server URI to an absolute URL to \emph{beng-proxy}.
+server URI to an absolute URL to \emph{beng-proxy}.  The following
+modes are available:
+
+\begin{tabular}{|l|p{12cm}|}
+\hline
+[null] & the full page \\
+\hline
+\texttt{frame} & just this one widget, processor enabled (must be
+\texttt{text/html}) \\
+\hline
+\texttt{proxy} & this widget, but processor enabled, any content type
+allowed \\
+\hline
+\end{tabular}
+
+The methods \texttt{get} and \texttt{post} use the \texttt{proxy}
+mode; \texttt{reload} sets the \texttt{frame} mode.
 
 The ``uri'' argument is an URI relative to the widget.  It may include
 a query string.
