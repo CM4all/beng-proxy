@@ -33,6 +33,8 @@ function beng_proxy_make_uri(focus, path, mode) {
         uri += "&focus=" + escape(focus);
         if (mode == "frame" || mode == "proxy" || mode == "save")
             uri += "&frame=" + escape(focus);
+        if (mode == "proxy")
+            uri += "&raw=1";
         if (mode == "save")
             uri += "&save=1";
         if (path != null) {
