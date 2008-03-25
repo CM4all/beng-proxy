@@ -242,6 +242,17 @@ istream_to_dechunk(istream_t istream)
     return (struct istream_dechunk *)(((char*)istream) - offsetof(struct istream_dechunk, output));
 }
 
+static off_t 
+istream_dechunk_available(istream_t istream, int partial)
+{
+    struct istream_dechunk *dechunk = istream_to_dechunk(istream);
+
+    if (partial && dechunk->state == DATA)
+        return (off_t)dechunk->size;
+
+    return (off_t)-1;
+}
+
 static void
 istream_dechunk_read(istream_t istream)
 {
@@ -269,6 +280,7 @@ istream_dechunk_close(istream_t istream)
 }
 
 static const struct istream istream_dechunk = {
+    .available = istream_dechunk_available,
     .read = istream_dechunk_read,
     .close = istream_dechunk_close,
 };
