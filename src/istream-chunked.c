@@ -86,7 +86,7 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
         total += nbytes;
     } while (total < length && nbytes == rest);
 
-    return nbytes;
+    return total;
 }
 
 
