@@ -68,7 +68,7 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
 
     do {
         if (chunked->missing_from_current_chunk == 0)
-            chunked_start_chunk(chunked, length);
+            chunked_start_chunk(chunked, length - total);
 
         rest = chunked_write_buffer(chunked);
         if (rest > 0)
