@@ -15,6 +15,28 @@ struct istream_trace {
 };
 
 
+static void
+trace_data(const void *data0, size_t length)
+{
+    const char *data = data0;
+    size_t i;
+
+    fputc('"', stderr);
+    for (i = 0; i < length; ++i) {
+        if (data[i] == '\n')
+            fputs("\\n", stderr);
+        else if (data[i] == '\r')
+            fputs("\\r", stderr);
+        else if (data[i] == 0)
+            fputs("\\0", stderr);
+        else if (data[i] == '"')
+            fputs("\\\"", stderr);
+        else
+            fputc(data[i], stderr);
+    }
+    fputs("\"\n", stderr);
+}
+
 /*
  * istream handler
  *
@@ -27,6 +49,7 @@ trace_input_data(const void *data, size_t length, void *ctx)
     size_t nbytes;
 
     fprintf(stderr, "data(%zu)\n", length);
+    trace_data(data, length);
     nbytes = istream_invoke_data(&trace->output, data, length);
     fprintf(stderr, "data(%zu)=%zu\n", length, nbytes);
 
