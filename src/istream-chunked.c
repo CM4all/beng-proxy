@@ -24,6 +24,8 @@ struct istream_chunked {
 static void
 chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 {
+    char *buffer;
+
     assert(length > 0);
     assert(chunked->buffer_sent == sizeof(chunked->buffer));
     assert(chunked->missing_from_current_chunk == 0);
@@ -34,11 +36,12 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 
     chunked->missing_from_current_chunk = length;
 
-    format_uint16_hex_fixed(chunked->buffer, (uint16_t)length);
-    chunked->buffer[4] = '\r';
-    chunked->buffer[5] = '\n';
+    buffer = chunked->buffer + sizeof(chunked->buffer) - 6;
+    format_uint16_hex_fixed(buffer, (uint16_t)length);
+    buffer[4] = '\r';
+    buffer[5] = '\n';
 
-    chunked->buffer_sent = 0;
+    chunked->buffer_sent = sizeof(chunked->buffer) - 6;
 }
 
 static size_t
