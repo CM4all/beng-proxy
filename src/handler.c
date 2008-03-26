@@ -166,6 +166,7 @@ ask_translation_server(struct request *request2,
     request2->translate.request.host = strmap_get(request->headers, "host");
     request2->translate.request.uri = strref_dup(request->pool,
                                                  &request2->uri.base);
+    request2->translate.request.widget_type = NULL;
 
     translate(request->pool, stock, &request2->translate.request,
               translate_callback, request2,

@@ -8,6 +8,7 @@
 #include "stock.h"
 #include "socket-util.h"
 #include "growing-buffer.h"
+#include "processor.h"
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
@@ -328,6 +329,17 @@ translate_handle_packet(struct translate_connection *connection,
         /* XXX wrong pool */
         transformation = translate_add_transformation(connection);
         transformation->type = TRANSFORMATION_PROCESS;
+        transformation->u.processor_options = 0;
+        break;
+
+    case TRANSLATE_CONTAINER:
+        if (connection->response.transformation == NULL ||
+            connection->response.transformation->type != TRANSFORMATION_PROCESS) {
+            daemon_log(2, "misplaced TRANSLATE_CONTAINER packet\n");
+            break;
+        }
+
+        connection->response.transformation->u.processor_options |= PROCESSOR_CONTAINER;
         break;
 
     case TRANSLATE_SESSION:

@@ -29,6 +29,8 @@ TRANSLATE_PATH_INFO = 17
 TRANSLATE_SITE = 18
 TRANSLATE_CGI = 19
 TRANSLATE_DOCUMENT_ROOT = 20
+TRANSLATE_WIDGET_TYPE = 21
+TRANSLATE_CONTAINER = 22
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
 
@@ -150,6 +152,7 @@ class Translation(Protocol):
         if not cgi and path[-5:] == '.html':
             self._write_packet(TRANSLATE_CONTENT_TYPE, 'text/html; charset=utf-8')
             self._write_packet(TRANSLATE_PROCESS)
+            self._write_packet(TRANSLATE_CONTAINER)
         self._write_packet(TRANSLATE_END)
 
     def _handle_packet(self, packet):

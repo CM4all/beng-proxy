@@ -60,12 +60,13 @@ request_absolute_uri(struct http_server_request *request)
 static void
 response_invoke_processor(struct request *request2,
                           http_status_t status, growing_buffer_t response_headers,
-                          istream_t body)
+                          istream_t body,
+                          const struct translate_transformation *transformation)
 {
     struct http_server_request *request = request2->request;
     istream_t request_body;
     struct widget *widget;
-    unsigned processor_options = PROCESSOR_REWRITE_URL|PROCESSOR_CONTAINER;
+    unsigned processor_options = PROCESSOR_REWRITE_URL|transformation->u.processor_options;
 
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
@@ -177,7 +178,8 @@ response_dispatch(struct request *request2,
                    request2->async_ref);
     } else if (transformation != NULL &&
                transformation->type == TRANSFORMATION_PROCESS) {
-        response_invoke_processor(request2, status, headers, body);
+        response_invoke_processor(request2, status, headers, body,
+                                  transformation);
     } else {
         if (request2->session != NULL &&
             !request2->session->cookie_sent) {
