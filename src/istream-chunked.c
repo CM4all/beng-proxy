@@ -172,6 +172,7 @@ static void
 chunked_input_eof(void *ctx)
 {
     struct istream_chunked *chunked = ctx;
+    size_t rest;
 
     assert(chunked->input != NULL);
     assert(chunked->missing_from_current_chunk == 0);
@@ -184,7 +185,9 @@ chunked_input_eof(void *ctx)
 
     /* flush the buffer */
 
-    chunked_write_buffer(chunked);
+    rest = chunked_write_buffer(chunked);
+    if (rest == 0)
+        istream_deinit_eof(&chunked->output);
 }
 
 static const struct istream_handler chunked_input_handler = {
