@@ -320,7 +320,7 @@ translate_handle_packet(struct translate_connection *connection,
             /* XXX wrong pool */
             transformation = translate_add_transformation(connection);
             transformation->type = TRANSFORMATION_FILTER;
-            transformation->filter = payload;
+            transformation->u.filter = payload;
         }
         break;
 

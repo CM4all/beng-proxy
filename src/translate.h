@@ -30,7 +30,9 @@ struct translate_transformation {
         TRANSFORMATION_FILTER,
     } type;
 
-    const char *filter;
+    union {
+        const char *filter;
+    } u;
 };
 
 struct translate_response {

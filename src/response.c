@@ -164,13 +164,13 @@ response_dispatch(struct request *request2,
         transformation->type == TRANSFORMATION_FILTER) {
         struct http_server_request *request = request2->request;
 
-        assert(transformation->filter != NULL);
+        assert(transformation->u.filter != NULL);
 
         pool_ref(request->pool);
 
         filter_new(request->pool,
                    request2->http_client_stock,
-                   transformation->filter,
+                   transformation->u.filter,
                    headers,
                    body,
                    &response_handler, request2,
