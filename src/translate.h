@@ -17,6 +17,7 @@ struct translate_request {
     const char *remote_host;
     const char *host;
     const char *uri;
+    const char *widget_type;
     const char *session;
     const char *param;
 };

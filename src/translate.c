@@ -94,6 +94,8 @@ marshal_request(pool_t pool, const struct translate_request *request)
         write_packet(gb, TRANSLATE_HOST, request->host);
     if (request->uri != NULL)
         write_packet(gb, TRANSLATE_URI, request->uri);
+    if (request->widget_type != NULL)
+        write_packet(gb, TRANSLATE_WIDGET_TYPE, request->widget_type);
     if (request->session != NULL && *request->session != 0)
         write_packet(gb, TRANSLATE_SESSION, request->session);
     if (request->param != NULL)
