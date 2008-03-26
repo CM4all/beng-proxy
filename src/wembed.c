@@ -113,8 +113,6 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
 
     (void)async_ref;
 
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
-
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
         embed_inline_widget(pool, env, widget,
@@ -135,6 +133,7 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
 
     assert(istream != NULL);
 
+    http_response_handler_set(&handler_ref, handler, handler_ctx);
     http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_OK,
                                           NULL, istream);
 }
