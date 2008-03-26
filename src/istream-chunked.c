@@ -20,6 +20,11 @@ struct istream_chunked {
     size_t missing_from_current_chunk;
 };
 
+static inline int
+chunked_buffer_empty(const struct istream_chunked *chunked)
+{
+    return chunked->buffer_sent == sizeof(chunked->buffer);
+}
 
 static void
 chunked_start_chunk(struct istream_chunked *chunked, size_t length)
@@ -27,7 +32,7 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length)
     char *buffer;
 
     assert(length > 0);
-    assert(chunked->buffer_sent == sizeof(chunked->buffer));
+    assert(chunked_buffer_empty(chunked));
     assert(chunked->missing_from_current_chunk == 0);
 
     if (length > 0x8000)
@@ -71,7 +76,7 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
     assert(chunked->input != NULL);
 
     do {
-        if (chunked->buffer_sent == sizeof(chunked->buffer) &&
+        if (chunked_buffer_empty(chunked) &&
             chunked->missing_from_current_chunk == 0)
             chunked_start_chunk(chunked, length - total);
 
@@ -182,7 +187,7 @@ istream_chunked_read(istream_t istream)
 
     assert(chunked->input != NULL);
 
-    if (chunked->buffer_sent == sizeof(chunked->buffer) &&
+    if (chunked_buffer_empty(chunked) &&
         chunked->missing_from_current_chunk == 0) {
         off_t available = istream_available(chunked->input, 1);
         if (available != (off_t)-1 && available > 0)
