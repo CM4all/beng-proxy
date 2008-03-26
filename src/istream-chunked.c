@@ -39,11 +39,6 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length)
     chunked->buffer[5] = '\n';
 
     chunked->buffer_sent = 0;
-    /* a certain web browser from Redmond immediately closes the
-       connection when it sees leading zeroes in the chunk length,
-       which are legal according to RFC 2616 3.6.1 */
-    while (chunked->buffer[chunked->buffer_sent] == '0')
-        ++chunked->buffer_sent;
 }
 
 static size_t
@@ -73,12 +68,18 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
     assert(chunked->input != NULL);
 
     do {
-        if (chunked->missing_from_current_chunk == 0)
+        if (chunked->buffer_sent == sizeof(chunked->buffer) &&
+            chunked->missing_from_current_chunk == 0)
             chunked_start_chunk(chunked, length - total);
 
         rest = chunked_write_buffer(chunked);
         if (rest > 0)
             return chunked->input == NULL ? 0 : total;
+
+        if (chunked->missing_from_current_chunk == 0)
+            /* we have just written the previous chunk trailer;
+               re-start this loop to start a new chunk */
+            continue;
 
         rest = length - total;
         if (rest > chunked->missing_from_current_chunk)
@@ -88,9 +89,18 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
         if (nbytes == 0)
             return chunked->input == NULL ? 0 : total;
 
-        chunked->missing_from_current_chunk -= nbytes;
         total += nbytes;
-    } while (total < length && nbytes == rest);
+
+        chunked->missing_from_current_chunk -= nbytes;
+        if (chunked->missing_from_current_chunk == 0) {
+            /* a chunk ends with "\r\n" */
+            chunked->buffer[4] = '\r';
+            chunked->buffer[5] = '\n';
+            chunked->buffer_sent = sizeof(chunked->buffer) - 2;
+        }
+    } while ((chunked->buffer_sent < sizeof(chunked->buffer) ||
+              total < length) &&
+             nbytes == rest);
 
     return total;
 }
@@ -169,7 +179,8 @@ istream_chunked_read(istream_t istream)
 
     assert(chunked->input != NULL);
 
-    if (chunked->missing_from_current_chunk == 0) {
+    if (chunked->buffer_sent == sizeof(chunked->buffer) &&
+        chunked->missing_from_current_chunk == 0) {
         off_t available = istream_available(chunked->input, 1);
         if (available != (off_t)-1 && available > 0)
             chunked_start_chunk(chunked, available);
