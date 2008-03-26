@@ -26,6 +26,16 @@ chunked_buffer_empty(const struct istream_chunked *chunked)
     return chunked->buffer_sent == sizeof(chunked->buffer);
 }
 
+/** set the buffer length and return a pointer to the first byte */
+static inline char *
+chunked_buffer_set(struct istream_chunked *chunked, size_t length)
+{
+    assert(length <= sizeof(chunked->buffer));
+
+    chunked->buffer_sent = sizeof(chunked->buffer) - length;
+    return chunked->buffer + chunked->buffer_sent;
+}
+
 static void
 chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 {
@@ -41,12 +51,10 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 
     chunked->missing_from_current_chunk = length;
 
-    buffer = chunked->buffer + sizeof(chunked->buffer) - 6;
+    buffer = chunked_buffer_set(chunked, 6);
     format_uint16_hex_fixed(buffer, (uint16_t)length);
     buffer[4] = '\r';
     buffer[5] = '\n';
-
-    chunked->buffer_sent = sizeof(chunked->buffer) - 6;
 }
 
 static size_t
@@ -102,9 +110,9 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
         chunked->missing_from_current_chunk -= nbytes;
         if (chunked->missing_from_current_chunk == 0) {
             /* a chunk ends with "\r\n" */
-            chunked->buffer[4] = '\r';
-            chunked->buffer[5] = '\n';
-            chunked->buffer_sent = sizeof(chunked->buffer) - 2;
+            char *buffer = chunked_buffer_set(chunked, 2);
+            buffer[0] = '\r';
+            buffer[1] = '\n';
         }
     } while ((chunked->buffer_sent < sizeof(chunked->buffer) ||
               total < length) &&
@@ -144,8 +152,7 @@ chunked_input_eof(void *ctx)
 
     /* write EOF chunk (length 0) */
 
-    memcpy(chunked->buffer + sizeof(chunked->buffer) - 5, "0\r\n\r\n", 5);
-    chunked->buffer_sent = sizeof(chunked->buffer) - 5;
+    memcpy(chunked_buffer_set(chunked, 5), "0\r\n\r\n", 5);
 
     /* flush the buffer */
 
