@@ -37,7 +37,13 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length)
     format_uint16_hex_fixed(chunked->buffer, (uint16_t)length);
     chunked->buffer[4] = '\r';
     chunked->buffer[5] = '\n';
+
     chunked->buffer_sent = 0;
+    /* a certain web browser from Redmond immediately closes the
+       connection when it sees leading zeroes in the chunk length,
+       which are legal according to RFC 2616 3.6.1 */
+    while (chunked->buffer[chunked->buffer_sent] == '0')
+        ++chunked->buffer_sent;
 }
 
 static size_t
