@@ -14,7 +14,7 @@ struct istream_chunked {
     struct istream output;
     istream_t input;
 
-    char buffer[6];
+    char buffer[7];
     size_t buffer_sent;
 
     size_t missing_from_current_chunk;
@@ -37,6 +37,31 @@ chunked_buffer_set(struct istream_chunked *chunked, size_t length)
 
     chunked->buffer_sent = sizeof(chunked->buffer) - length;
     return chunked->buffer + chunked->buffer_sent;
+}
+
+/** append data to the buffer */
+static void
+chunked_buffer_append(struct istream_chunked *chunked,
+                      const void *data, size_t length)
+{
+    char *dest;
+
+    assert(data != NULL);
+    assert(length > 0);
+    assert(length <= chunked->buffer_sent);
+
+    if (chunked_buffer_empty(chunked)) {
+        dest = chunked_buffer_set(chunked, length);
+    } else {
+        const void *old = chunked->buffer + chunked->buffer_sent;
+        size_t old_length = sizeof(chunked->buffer) - chunked->buffer_sent;
+
+        dest = chunked_buffer_set(chunked, old_length + length);
+        memmove(dest, old, old_length);
+        dest += old_length;
+    }
+
+    memcpy(dest, data, length);
 }
 
 static void
@@ -155,7 +180,7 @@ chunked_input_eof(void *ctx)
 
     /* write EOF chunk (length 0) */
 
-    memcpy(chunked_buffer_set(chunked, 5), "0\r\n\r\n", 5);
+    chunked_buffer_append(chunked, "0\r\n\r\n", 5);
 
     /* flush the buffer */
 
