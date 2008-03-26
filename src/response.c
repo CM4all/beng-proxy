@@ -88,6 +88,7 @@ response_invoke_processor(struct request *request2,
     request_make_session(request2);
 
     processor_env_init(request->pool, &request2->env,
+                       request2->translate_stock,
                        request2->http_cache,
                        request->remote_host,
                        request_absolute_uri(request),

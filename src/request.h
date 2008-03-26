@@ -15,6 +15,8 @@
 #include "async.h"
 
 struct request {
+    struct stock *translate_stock;
+
     struct hstock *http_client_stock;
     struct http_cache *http_cache;
 
