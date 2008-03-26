@@ -23,6 +23,8 @@ struct istream_chunked {
 static inline int
 chunked_buffer_empty(const struct istream_chunked *chunked)
 {
+    assert(chunked->buffer_sent <= sizeof(chunked->buffer));
+
     return chunked->buffer_sent == sizeof(chunked->buffer);
 }
 
@@ -30,6 +32,7 @@ chunked_buffer_empty(const struct istream_chunked *chunked)
 static inline char *
 chunked_buffer_set(struct istream_chunked *chunked, size_t length)
 {
+    assert(chunked_buffer_empty(chunked));
     assert(length <= sizeof(chunked->buffer));
 
     chunked->buffer_sent = sizeof(chunked->buffer) - length;
