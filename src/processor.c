@@ -384,7 +384,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
         if (tag->type != TAG_CLOSE)
             processor_insert_jscript(processor, 0);
-    } else if (!processor_option_quiet &&
+    } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
         if (strref_cmp_literal(&tag->name, "a") == 0) {
             processor->tag = TAG_A;
