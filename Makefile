@@ -62,6 +62,7 @@ ISTREAM_SOURCES = \
 	src/istream-forward.c \
 	src/istream-memory.c \
 	src/istream-null.c \
+	src/istream-block.c \
 	src/istream-string.c \
 	src/istream-file.c \
 	src/istream-chunked.c \
