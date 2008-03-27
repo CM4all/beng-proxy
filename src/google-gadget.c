@@ -237,7 +237,7 @@ google_content_tag_finished(struct google_gadget *gw,
 
         gw->widget->display = WIDGET_DISPLAY_EXTERNAL;
         gw->widget->class = gg_class(gw->pool, gw->from_parser.url);
-        widget_determine_real_uri(gw->pool, gw->widget);
+        gw->widget->lazy.real_uri = NULL;
 
         istream = embed_iframe_widget(gw->pool, gw->env, gw->widget);
         gg_set_content(gw, istream, 0);

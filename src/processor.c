@@ -586,8 +586,6 @@ embed_widget(processor_t processor, struct processor_env *env,
         processor->replace == NULL)
         return NULL;
 
-    widget_determine_real_uri(pool, widget);
-
     if (widget->from_request.proxy || widget->from_request.proxy_ref != NULL) {
         processor->response_sent = 1;
         env->widget_callback(pool, env, widget,

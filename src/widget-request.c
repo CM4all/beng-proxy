@@ -39,6 +39,8 @@ session_to_widget(struct widget *widget, const struct widget_session *ws)
 
     if (ws->query_string != NULL)
         strref_set_c(&widget->from_request.query_string, ws->query_string);
+
+    widget->lazy.real_uri = NULL;
 }
 
 void
@@ -147,6 +149,8 @@ widget_copy_from_location(struct widget *widget,
         strref_set(&widget->from_request.query_string,
                    qmark + 1, location + location_length - (qmark + 1));
     }
+
+    widget->lazy.real_uri = NULL;
 
     ws = widget_get_session(widget, 1);
     if (ws != NULL)

@@ -163,7 +163,6 @@ embed_redirect(struct embed *embed,
         return 0;
 
     widget_copy_from_location(embed->widget, p->data, p->length, embed->pool);
-    widget_determine_real_uri(embed->pool, embed->widget);
 
     ++embed->num_redirects;
 
@@ -327,7 +326,9 @@ embed_new(pool_t pool, struct widget *widget,
 
     http_cache_request(env->http_cache,
                        pool,
-                       widget->from_request.method, widget_real_uri(widget), headers,
+                       widget->from_request.method,
+                       widget_real_uri(pool, widget),
+                       headers,
                        widget->from_request.body,
                        &embed_response_handler, embed, async_ref);
 }

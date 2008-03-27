@@ -224,15 +224,16 @@ void
 widget_determine_real_uri(pool_t pool, struct widget *widget);
 
 static inline const char *
-widget_real_uri(const struct widget *widget)
+widget_real_uri(pool_t pool, struct widget *widget)
 {
-    assert(widget->lazy.real_uri != NULL);
+    if (widget->lazy.real_uri == NULL)
+        widget_determine_real_uri(pool, widget);
 
     return widget->lazy.real_uri;
 }
 
 const char *
-widget_absolute_uri(pool_t pool, const struct widget *widget,
+widget_absolute_uri(pool_t pool, struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length);
 
 const char *
@@ -251,7 +252,7 @@ const char *
 widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     strmap_t args,
-                    const struct widget *widget,
+                    struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length);
 
 /**
