@@ -112,6 +112,10 @@ http_server_response_stream_abort(void *ctx)
 
     connection->response.istream = NULL;
 
+    /* we clear this async_ref here so http_server_request_close()
+       won't think we havn't sent a response yet */
+    async_ref_clear(&connection->request.async_ref);
+
     http_server_connection_close(connection);
 }
 
