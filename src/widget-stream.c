@@ -98,8 +98,10 @@ widget_stream_new(pool_t pool)
 {
     struct widget_stream *ws = p_malloc(pool, sizeof(*ws));
 
+    ws->delayed = istream_delayed_new(pool);
+
     async_init(&ws->async, &ws_delayed_operation);
-    ws->delayed = istream_delayed_new(pool, &ws->async);
+    async_ref_set(istream_delayed_async(ws->delayed), &ws->async);
 
     return ws;
 }

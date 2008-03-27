@@ -542,7 +542,8 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     async_init(&gw->async_operation, &gg_async_operation);
     async_ref_set(async_ref, &gw->async_operation);
 
-    gw->delayed = istream_delayed_new(pool, NULL);
+    gw->delayed = istream_delayed_new(pool);
+    async_ref_clear(istream_delayed_async(gw->delayed));
 
     gw->subst = istream_subst_new(pool, gw->delayed);
     gw->parser = NULL;

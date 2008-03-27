@@ -104,17 +104,11 @@ static const struct istream istream_delayed = {
  */
 
 istream_t
-istream_delayed_new(pool_t pool, struct async_operation *async)
+istream_delayed_new(pool_t pool)
 {
     struct istream_delayed *delayed = istream_new_macro(pool, delayed);
 
     delayed->input = NULL;
-
-    if (async == NULL)
-        async_ref_clear(&delayed->async);
-    else
-        async_ref_set(&delayed->async, async);
-
     return istream_struct_cast(&delayed->output);
 }
 

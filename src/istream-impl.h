@@ -49,7 +49,7 @@ istream_t
 istream_cat_new(pool_t pool, ...);
 
 istream_t
-istream_delayed_new(pool_t pool, struct async_operation *async);
+istream_delayed_new(pool_t pool);
 
 struct async_operation_ref *
 istream_delayed_async(istream_t i_delayed);
