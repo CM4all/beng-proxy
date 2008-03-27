@@ -103,6 +103,7 @@ SOURCES = src/main.c \
 	src/widget-uri.c \
 	src/widget-request.c \
 	src/widget-stream.c \
+	src/widget-registry.c \
 	src/proxy-widget.c \
 	src/html-escape.c \
 	src/js-filter.c \

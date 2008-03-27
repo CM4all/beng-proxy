@@ -448,7 +448,9 @@ parser_widget_attr_finished(struct widget *widget,
                             const struct strref *name,
                             const struct strref *value)
 {
-    if (strref_cmp_literal(name, "href") == 0) {
+    if (strref_cmp_literal(name, "type") == 0) {
+        widget->class_name = strref_dup(pool, value);
+    } else if (strref_cmp_literal(name, "href") == 0) {
         enum widget_type type = WIDGET_TYPE_BENG;
         const char *class_name = strref_dup(pool, value);
 
@@ -577,7 +579,8 @@ embed_widget(processor_t processor, struct processor_env *env,
 {
     pool_t pool = processor->pool;
 
-    if (widget->class == NULL || widget->class->uri == NULL)
+    if (widget->class_name == NULL &&
+        (widget->class == NULL || widget->class->uri == NULL))
         return NULL;
 
     widget_copy_from_request(widget, env);

@@ -77,6 +77,7 @@ class Request:
     def __init__(self):
         self.host = None
         self.uri = None
+        self.widget_type = None
         self.session = None
         self.param = None
         self.remote_host = None
@@ -88,6 +89,8 @@ class Request:
             self.host = packet.payload
         elif packet.command == TRANSLATE_URI:
             self.uri = packet.payload
+        elif packet.command == TRANSLATE_WIDGET_TYPE:
+            self.widget_type = packet.payload
         elif packet.command == TRANSLATE_SESSION:
             self.session = packet.payload
         elif packet.command == TRANSLATE_PARAM:
@@ -109,6 +112,35 @@ class Translation(Protocol):
         self.transport.write(struct.pack('HH', len(payload), command))
         self.transport.write(payload)
 
+    def _handle_widget_lookup(self, request):
+        # checks on the name should be here.
+        path = "/etc/cm4all/beng/widgets/%s" % request.widget_type
+        try:
+            f = open(path)
+        except IOError:
+            self._write_packet(TRANSLATE_BEGIN)
+            self._write_packet(TRANSLATE_STATUS, struct.pack('H', 404))
+            self._write_packet(TRANSLATE_END)
+            return
+        self._write_packet(TRANSLATE_BEGIN)
+        for line in f.readlines():
+            line = line.strip()
+            if line == '' or line[0] == '#':
+                continue
+            m = re.match(r'^server\s+"(\S+)"$', line)
+            if m:
+                self._write_packet(TRANSLATE_PROXY, m.group(1))
+                continue
+            if line == 'process':
+                self._write_packet(TRANSLATE_PROCESS)
+            elif line == 'container':
+                self._write_packet(TRANSLATE_CONTAINER)
+            else:
+                print "Syntax error in %s: %s" % (path, line)
+                self._write_packet(TRANSLATE_STATUS, struct.pack('H', 500))
+                break
+        self._write_packet(TRANSLATE_END)
+
     def _handle_request(self, request):
         if request.session is not None: print "- session =", request.session
         if request.param is not None: print "- param =", request.param
@@ -125,6 +157,9 @@ class Translation(Protocol):
         else:
             # 
             user = session = None
+
+        if request.widget_type is not None:
+            return self._handle_widget_lookup(request)
 
         if request.uri[:19] == '/cm4all-beng-proxy/':
             from sys import argv

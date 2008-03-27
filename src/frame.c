@@ -8,6 +8,7 @@
 #include "embed.h"
 #include "processor.h"
 #include "widget.h"
+#include "widget-registry.h"
 
 #include <daemon/log.h>
 
@@ -61,6 +62,12 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
+    if (widget->class == NULL) {
+        widget_class_lookup(pool, env, widget,
+                            handler, handler_ctx, async_ref);
+        return;
+    }
+
     if (!widget->class->is_container) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
@@ -103,7 +110,6 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
     assert(env != NULL);
     assert(env->widget_callback == frame_widget_callback);
     assert(widget != NULL);
-    assert(widget->class != NULL);
     assert(widget->from_request.proxy || widget->from_request.proxy_ref != NULL ||
            widget->parent != NULL);
 

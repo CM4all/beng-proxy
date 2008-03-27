@@ -7,6 +7,7 @@
 #include "embed.h"
 #include "processor.h"
 #include "widget.h"
+#include "widget-registry.h"
 #include "growing-buffer.h"
 #include "js-generator.h"
 
@@ -110,6 +111,12 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
     assert(pool != NULL);
     assert(env != NULL);
     assert(widget != NULL);
+
+    if (widget->class == NULL) {
+        widget_class_lookup(pool, env, widget,
+                            handler, handler_ctx, async_ref);
+        return;
+    }
 
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:

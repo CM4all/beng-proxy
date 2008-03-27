@@ -591,7 +591,7 @@ translate(pool_t pool,
 
     assert(pool != NULL);
     assert(request != NULL);
-    assert(request->uri != NULL);
+    assert(request->uri != NULL || request->widget_type != NULL);
     assert(callback != NULL);
 
     if (stock == NULL) {

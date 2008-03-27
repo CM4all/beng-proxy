@@ -47,6 +47,8 @@ struct widget {
     struct list_head siblings, children;
     struct widget *parent;
 
+    const char *class_name;
+
     const struct widget_class *class;
 
     /** the widget's instance id, as specified in the template */
