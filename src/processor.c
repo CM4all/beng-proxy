@@ -671,7 +671,7 @@ embed_element_finished(processor_t processor)
                                          processor->widget_params_length);
 
     istream = embed_widget(processor, processor->env, widget);
-    if (istream != NULL && !processor_option_quiet(processor))
+    if (istream != NULL)
         istream = embed_decorate(processor->pool, istream, widget);
 
     return istream;
