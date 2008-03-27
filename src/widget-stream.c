@@ -46,6 +46,12 @@ ws_abort(void *ctx)
     if (ws->delayed == NULL)
         return;
 
+    /* clear the delayed async_ref object: we didn't provide an
+       istream to the delayed object, and if we close it right now, it
+       will trigger the async_abort(), unless we clear its
+       async_ref */
+    async_ref_clear(istream_delayed_async(ws->delayed));
+
     istream_free(&ws->delayed);
 }
 
