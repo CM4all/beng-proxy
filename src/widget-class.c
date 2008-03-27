@@ -29,6 +29,7 @@ get_widget_class(pool_t pool, const char *uri, enum widget_type type)
     wc->uri = uri;
     wc->type = type;
     wc->is_container = type == WIDGET_TYPE_BENG;
+    wc->old_style =  1;
 
     return wc;
 }

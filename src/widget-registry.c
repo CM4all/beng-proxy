@@ -58,6 +58,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
 
     class = p_malloc(lookup->pool, sizeof(*class));
     class->uri = response->proxy;
+    class->old_style = 0;
 
     if (response->transformation != NULL &&
         response->transformation->type == TRANSFORMATION_PROCESS) {

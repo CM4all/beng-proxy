@@ -38,6 +38,10 @@ struct widget_class {
 
     /** can this widget contain other widgets? */
     unsigned is_container:1;
+
+    /** is this an old-style widget class, i.e. not coming from the
+        widget registry? */
+    unsigned old_style:1;
 };
 
 /**
