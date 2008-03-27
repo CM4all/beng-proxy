@@ -118,6 +118,14 @@ istream_delayed_new(pool_t pool, struct async_operation *async)
     return istream_struct_cast(&delayed->output);
 }
 
+struct async_operation_ref *
+istream_delayed_async(istream_t i_delayed)
+{
+    struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
+
+    return &delayed->async;
+}
+
 void
 istream_delayed_set(istream_t i_delayed, istream_t input)
 {

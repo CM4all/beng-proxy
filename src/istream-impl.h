@@ -51,6 +51,9 @@ istream_cat_new(pool_t pool, ...);
 istream_t
 istream_delayed_new(pool_t pool, struct async_operation *async);
 
+struct async_operation_ref *
+istream_delayed_async(istream_t i_delayed);
+
 void
 istream_delayed_set(istream_t istream_delayed, istream_t input);
 
