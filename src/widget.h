@@ -219,6 +219,12 @@ void
 widget_copy_from_request(struct widget *widget, struct processor_env *env);
 
 /**
+ * Synchronize the widget with its session.
+ */
+void
+widget_sync_session(struct widget *widget);
+
+/**
  * Overwrite request data, copy values from a HTTP redirect location.
  */
 void

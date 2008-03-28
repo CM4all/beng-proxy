@@ -46,8 +46,6 @@ session_to_widget(struct widget *widget, const struct widget_session *ws)
 void
 widget_copy_from_request(struct widget *widget, struct processor_env *env)
 {
-    struct widget_session *ws;
-
     assert(widget != NULL);
     assert(widget->lazy.real_uri == NULL);
     assert(widget->from_request.path_info == NULL);
@@ -89,12 +87,6 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
             widget->from_request.body = env->request_body;
             env->request_body = NULL;
         }
-
-        /* store query string in session */
-
-        ws = widget_get_session(widget, 1);
-        if (ws != NULL)
-            widget_to_session(ws, widget);
     } else if (widget->id != NULL && widget->parent != NULL &&
                widget->parent->from_request.focus_ref != NULL &&
                strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
@@ -104,12 +96,26 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
 
         widget->from_request.focus_ref = widget->parent->from_request.focus_ref->next;
         widget->parent->from_request.focus_ref = NULL;
-        
-        /* get query string from session */
+    }
+}
 
-        ws = widget_get_session(widget, 0);
+void
+widget_sync_session(struct widget *widget)
+{
+    struct widget_session *ws;
+
+    assert(widget != NULL);
+    assert(widget->lazy.real_uri == NULL);
+
+    /* are we focused? */
+
+    if (widget->id != NULL && widget->parent != NULL &&
+        widget->parent->from_request.focus_ref != NULL &&
+        strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
+        widget->parent->from_request.focus_ref->next == NULL) {
+        ws = widget_get_session(widget, 1);
         if (ws != NULL)
-            session_to_widget(widget, ws);
+            widget_to_session(ws, widget);
     } else {
         /* get query string from session */
 
