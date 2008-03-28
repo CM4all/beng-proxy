@@ -68,6 +68,8 @@ lookup_callback(const struct translate_response *response, void *ctx)
         class->type = WIDGET_TYPE_RAW;
     }
 
+    lookup->widget->class = class;
+
     lookup->env->widget_callback(lookup->pool, lookup->env, lookup->widget,
                                  lookup->handler.handler, lookup->handler.ctx, 
                                  lookup->async_ref);
