@@ -102,8 +102,6 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
 void
 widget_sync_session(struct widget *widget)
 {
-    struct widget_session *ws;
-
     assert(widget != NULL);
     assert(widget->lazy.real_uri == NULL);
 
@@ -116,14 +114,14 @@ widget_sync_session(struct widget *widget)
 
         /* do not save to session when this is a raw request */
         if (!widget->from_request.raw) {
-            ws = widget_get_session(widget, 1);
+            struct widget_session *ws = widget_get_session(widget, 1);
             if (ws != NULL)
                 widget_to_session(ws, widget);
         }
     } else {
         /* get query string from session */
 
-        ws = widget_get_session(widget, 0);
+        struct widget_session *ws = widget_get_session(widget, 0);
         if (ws != NULL)
             session_to_widget(widget, ws);
     }
