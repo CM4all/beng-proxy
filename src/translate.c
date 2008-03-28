@@ -224,9 +224,9 @@ translate_read_event_callback(int fd, short event, void *ctx)
         return;
     }
 
-    pool_ref(connection->pool);
+    pool_ref(connection->stock_item.pool);
     translate_try_read(connection);
-    pool_unref(connection->pool);
+    pool_unref(connection->stock_item.pool);
 }
 
 static struct translate_transformation *
