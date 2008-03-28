@@ -25,6 +25,14 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     assert(widget->from_request.proxy);
 
+    if (widget->class == NULL) {
+        widget_class_lookup(pool, env, widget,
+                            handler, handler_ctx, async_ref);
+        return;
+    }
+
+    widget_sync_session(widget);
+
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
         /* an inline widget is used in a "frame" request - this is
