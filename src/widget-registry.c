@@ -66,6 +66,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
         class->is_container = (response->transformation->u.processor_options & PROCESSOR_CONTAINER) != 0;
     } else {
         class->type = WIDGET_TYPE_RAW;
+        class->is_container = 0;
     }
 
     lookup->widget->class = class;
