@@ -118,6 +118,8 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
         return;
     }
 
+    widget_sync_session(widget);
+
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
         embed_inline_widget(pool, env, widget,

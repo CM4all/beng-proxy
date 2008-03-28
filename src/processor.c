@@ -580,7 +580,6 @@ embed_widget(processor_t processor, struct processor_env *env,
         return NULL;
 
     widget_copy_from_request(widget, env);
-    widget_sync_session(widget);
     if (!widget->from_request.proxy &&
         widget->from_request.proxy_ref == NULL &&
         processor->replace == NULL)

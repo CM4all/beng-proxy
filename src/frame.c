@@ -68,6 +68,8 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         return;
     }
 
+    widget_sync_session(widget);
+
     if (!widget->class->is_container) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
