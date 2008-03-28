@@ -4,6 +4,31 @@
 // Author: Max Kellermann <mk@cm4all.com>
 //
 
+function beng_widget_uri(base_uri, session_id, focus, mode, path) {
+    var uri = base_uri + ";session=" + escape(session_id);
+    if (focus != null) {
+        uri += "&focus=" + escape(focus);
+        if (mode == "frame" || mode == "proxy" || mode == "save")
+            uri += "&frame=" + escape(focus);
+        if (mode == "proxy")
+            uri += "&raw=1";
+        if (mode == "save")
+            uri += "&save=1";
+        if (path != null) {
+            var query_string = null;
+            var qmark = path.indexOf("?");
+            if (qmark >= 0) {
+                query_string = path.substring(qmark);
+                path = path.substring(0, qmark);
+            }
+            uri += "&path=" + escape(path);
+            if (query_string != null)
+                uri += query_string;
+        }
+    }
+    return uri;
+}
+
 function beng_proxy_request() {
     var req = null;
     if (window.XMLHttpRequest) {
@@ -28,28 +53,7 @@ function beng_proxy_request() {
 }
 
 function beng_proxy_make_uri(focus, path, mode) {
-    var uri = this.uri + ";session=" + escape(this.session);
-    if (focus != null) {
-        uri += "&focus=" + escape(focus);
-        if (mode == "frame" || mode == "proxy" || mode == "save")
-            uri += "&frame=" + escape(focus);
-        if (mode == "proxy")
-            uri += "&raw=1";
-        if (mode == "save")
-            uri += "&save=1";
-        if (path != null) {
-            var query_string = null;
-            var qmark = path.indexOf("?");
-            if (qmark >= 0) {
-                query_string = path.substring(qmark);
-                path = path.substring(0, qmark);
-            }
-            uri += "&path=" + escape(path);
-            if (query_string != null)
-                uri += query_string;
-        }
-    }
-    return uri;
+    return beng_widget_uri(this.uri, this.session, focus, mode, path);
 }
 
 function beng_proxy(session) {
