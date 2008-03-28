@@ -170,6 +170,11 @@ processor_subst_beng_widget(istream_t istream,
 
     if (env->absolute_uri != NULL)
         istream_subst_add(istream, "&c:uri;", env->absolute_uri);
+
+    istream_subst_add(istream, "&c:frame;",
+                      strmap_get(env->args, "frame"));
+    istream_subst_add(istream, "&c:session;",
+                      strmap_get(env->args, "session"));
 }
 
 
