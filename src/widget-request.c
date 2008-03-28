@@ -113,9 +113,13 @@ widget_sync_session(struct widget *widget)
         widget->parent->from_request.focus_ref != NULL &&
         strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
         widget->parent->from_request.focus_ref->next == NULL) {
-        ws = widget_get_session(widget, 1);
-        if (ws != NULL)
-            widget_to_session(ws, widget);
+
+        /* do not save to session when this is a raw request */
+        if (!widget->from_request.raw) {
+            ws = widget_get_session(widget, 1);
+            if (ws != NULL)
+                widget_to_session(ws, widget);
+        }
     } else {
         /* get query string from session */
 
