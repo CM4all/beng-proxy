@@ -158,6 +158,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     list_init(&widget->children);
     widget->parent = NULL;
 
+    widget->class_name = NULL;
     widget->class = class;
     widget->id = NULL;
     widget->decoration.tag = NULL;
