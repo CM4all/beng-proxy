@@ -19,6 +19,7 @@ const struct widget_class root_widget_class = {
     .uri = NULL,
     .type = WIDGET_TYPE_BENG,
     .is_container = 1,
+    .old_style = 1,
 };
 
 const struct widget_class *

@@ -91,6 +91,7 @@ static int
 processor_option_jscript(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
+        processor->widget->class->old_style &&
         (processor->options & PROCESSOR_JSCRIPT) != 0;
 }
 
@@ -98,6 +99,7 @@ static int
 processor_option_jscript_root(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
+        processor->widget->class->old_style &&
         (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_FRAGMENT))
         == PROCESSOR_JSCRIPT;
 }
