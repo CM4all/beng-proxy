@@ -4,12 +4,14 @@
 // Author: Max Kellermann <mk@cm4all.com>
 //
 
-function beng_widget_uri(base_uri, session_id, focus, mode, path) {
+function beng_widget_uri(base_uri, session_id, frame, focus, mode, path) {
     var uri = base_uri + ";session=" + escape(session_id);
     if (focus != null) {
         uri += "&focus=" + escape(focus);
         if (mode == "frame" || mode == "proxy" || mode == "save")
-            uri += "&frame=" + escape(focus);
+            frame = focus;
+        if (frame != null)
+            uri += "&frame=" + escape(frame);
         if (mode == "proxy")
             uri += "&raw=1";
         if (mode == "save")
@@ -53,7 +55,7 @@ function beng_proxy_request() {
 }
 
 function beng_proxy_make_uri(focus, path, mode) {
-    return beng_widget_uri(this.uri, this.session, focus, mode, path);
+    return beng_widget_uri(this.uri, this.session, null, focus, mode, path);
 }
 
 function beng_proxy(session) {
