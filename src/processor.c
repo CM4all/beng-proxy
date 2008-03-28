@@ -156,21 +156,9 @@ processor_subst_beng_widget(istream_t istream,
                             struct widget *widget,
                             const struct processor_env *env)
 {
-    const char *path, *prefix;
-
-    path = widget_path(widget);
-    if (path == NULL)
-        path = "";
-    istream_subst_add(istream, "&c:path;", path);
-
-    prefix = widget_prefix(widget);
-    if (prefix == NULL)
-        prefix = "";
-    istream_subst_add(istream, "&c:prefix;", prefix);
-
-    if (env->absolute_uri != NULL)
-        istream_subst_add(istream, "&c:uri;", env->absolute_uri);
-
+    istream_subst_add(istream, "&c:path;", widget_path(widget));
+    istream_subst_add(istream, "&c:prefix;", widget_prefix(widget));
+    istream_subst_add(istream, "&c:uri;", env->absolute_uri);
     istream_subst_add(istream, "&c:frame;",
                       strmap_get(env->args, "frame"));
     istream_subst_add(istream, "&c:session;",
