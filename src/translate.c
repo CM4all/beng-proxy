@@ -9,6 +9,7 @@
 #include "socket-util.h"
 #include "growing-buffer.h"
 #include "processor.h"
+#include "async.h"
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
@@ -32,10 +33,13 @@ struct translate_request_and_callback {
 
     translate_callback_t callback;
     void *callback_ctx;
+
+    struct async_operation_ref *async_ref;
 };
 
 struct translate_connection {
     struct stock_item stock_item;
+    struct async_operation async;
 
     pool_t pool;
     int fd;
@@ -546,6 +550,32 @@ static struct stock_class translate_stock_class = {
 
 
 /*
+ * async operation
+ *
+ */
+
+static struct translate_connection *
+async_to_translate_connection(struct async_operation *ao)
+{
+    return (struct translate_connection*)(((char*)ao) - offsetof(struct translate_connection, async));
+}
+
+static void
+translate_connection_abort(struct async_operation *ao)
+{
+    struct translate_connection *connection = async_to_translate_connection(ao);
+
+    assert(connection->fd >= 0);
+
+    stock_put(&connection->stock_item, 1);
+}
+
+static struct async_operation_class translate_operation = {
+    .abort = translate_connection_abort,
+};
+
+
+/*
  * constructor
  *
  */
@@ -576,6 +606,9 @@ translate_stock_callback(void *ctx, struct stock_item *item)
     connection->ctx = request2->callback_ctx;
     connection->response.status = (http_status_t)-1;
 
+    async_init(&connection->async, &translate_operation);
+    async_ref_set(request2->async_ref, &connection->async);
+
     translate_try_write(connection);
 }
 
@@ -604,6 +637,7 @@ translate(pool_t pool,
     request2->request = request;
     request2->callback = callback;
     request2->callback_ctx = ctx;
+    request2->async_ref = async_ref;
 
     stock_get(stock, translate_stock_callback, request2, async_ref);
 }
