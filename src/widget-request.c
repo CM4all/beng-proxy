@@ -35,12 +35,12 @@ widget_to_session(struct widget_session *ws, const struct widget *widget)
 static void
 session_to_widget(struct widget *widget, const struct widget_session *ws)
 {
+    assert(widget->lazy.real_uri == NULL);
+
     widget->from_request.path_info = ws->path_info;
 
     if (ws->query_string != NULL)
         strref_set_c(&widget->from_request.query_string, ws->query_string);
-
-    widget->lazy.real_uri = NULL;
 }
 
 void
