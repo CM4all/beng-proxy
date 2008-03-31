@@ -598,7 +598,7 @@ embed_widget(processor_t processor, struct processor_env *env,
         istream_t hold;
 
         ws = widget_stream_new(pool);
-        hold = istream_hold_new(pool, ws->delayed);
+        hold = istream_hold_new(pool, istream_catch_new(pool, ws->delayed));
 
         env->widget_callback(pool, env, widget,
                              &widget_stream_response_handler, ws,
