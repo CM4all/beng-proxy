@@ -96,7 +96,7 @@ struct pool {
         struct pool *recycler;
     } current_area;
 
-#ifndef NDEBUG
+#ifdef DEBUG_POOL_GROW
     struct list_head allocations;
 #endif
 #ifdef DUMP_POOL_SIZE
