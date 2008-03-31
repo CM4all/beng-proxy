@@ -548,4 +548,18 @@ widget should only manipulate its own widget objects.  This limitation
 will be loosened in a later stage of development.
 
 
+\section{The prototype translation server}
+
+Until the \texttt{jetserv} daemon is finished, the prototype
+translation server should be used.  It is not configrable; this
+section describes its hard-coded behaviour.
+
+\subsection{Request translation}
+
+The document root is \texttt{/var/www}.  File names ending with
+\texttt{.html} are mapped to the content type ``text/html;
+charset=utf-8'' and are marked with the flags \texttt{PROCESS},
+\texttt{CONTAINER}.
+
+
 \end{document}
