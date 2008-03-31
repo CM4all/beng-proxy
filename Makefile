@@ -76,6 +76,7 @@ ISTREAM_SOURCES = \
 	src/istream-byte.c \
 	src/istream-trace.c \
 	src/istream-fail.c \
+	src/istream-catch.c \
 	src/istream-later.c \
 	src/istream-head.c \
 	src/istream-tee.c \

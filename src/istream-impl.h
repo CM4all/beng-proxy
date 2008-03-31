@@ -20,6 +20,9 @@ istream_t
 istream_fail_new(pool_t pool);
 
 istream_t
+istream_catch_new(pool_t pool, istream_t input);
+
+istream_t
 istream_later_new(pool_t pool, istream_t input);
 
 istream_t __attr_malloc
