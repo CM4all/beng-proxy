@@ -255,7 +255,7 @@ pool_new(pool_t parent, const char *name)
     if (parent != NULL)
         pool_add_child(parent, pool);
 
-#ifdef DEBUG_POOL_GROW
+#ifndef NDEBUG
     list_init(&pool->allocations);
 #endif
 #ifdef DUMP_POOL_SIZE
