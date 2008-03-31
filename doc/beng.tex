@@ -397,7 +397,7 @@ inserted in the form of XML processing instructions.
 To add a widget, insert the following command:
 
 \begin{verbatim*}
-<c:widget id="foo" href="http://cfatest01.intern.cm-ag/date.py" />
+<c:widget id="foo" type="date" />
 \end{verbatim*}
 
 The following attributes may be specified:
@@ -408,14 +408,7 @@ The following attributes may be specified:
 for proper session and form management if there are several widgets
 with the same server URI \\
 \hline
-\texttt{name} & registered name of the widget server \\
-\hline
-
-\texttt{href} & use an unregistered widget (deprecated as soon as the
-widget registry is available).  The prefix ``raw:'' means the HTTP
-response is inserted without further processing.  There is another
-prefix named ``google:'' for Google gadget emulation. \\
-
+\texttt{type} & registered name of the widget server \\
 \hline
 \texttt{query\_string} & optional query string to append to the widget
 URI (without the question mark) \\
@@ -446,7 +439,7 @@ Registered widgets are not yet implemented.
 \subsection{Passing arguments to widgets}
 
 \begin{verbatim*}
-<c:widget id="foo" href="http://cfatest01.intern.cm-ag/date.py">
+<c:widget id="foo" type="date">
   <param name="timezone" value="PST" />
   <path-info value="/bla" />
 </c:widget>
