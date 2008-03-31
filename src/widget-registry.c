@@ -51,7 +51,6 @@ lookup_callback(const struct translate_response *response, void *ctx)
         /* XXX */
         http_response_handler_invoke_response(&lookup->handler, response->status,
                                               NULL, NULL);
-        pool_unref(lookup->pool);
         return;
     }
 
@@ -75,7 +74,6 @@ lookup_callback(const struct translate_response *response, void *ctx)
     lookup->env->widget_callback(lookup->pool, lookup->env, lookup->widget,
                                  lookup->handler.handler, lookup->handler.ctx, 
                                  lookup->async_ref);
-    pool_unref(lookup->pool);
 }
 
 void
@@ -90,7 +88,6 @@ widget_class_lookup(pool_t pool, struct processor_env *env,
     assert(widget->class == NULL);
     assert(widget->class_name != NULL);
 
-    pool_ref(pool);
     lookup->pool = pool;
     lookup->env = env;
     lookup->widget = widget;
