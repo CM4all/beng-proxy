@@ -51,6 +51,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
         /* XXX */
         http_response_handler_invoke_response(&lookup->handler, response->status,
                                               NULL, NULL);
+        pool_unref(lookup->pool);
         return;
     }
 
