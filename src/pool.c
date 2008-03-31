@@ -166,6 +166,7 @@ pool_recycler_clear(void)
 static void
 pool_recycler_put(struct pool *pool)
 {
+    poison_undefined(pool, sizeof(*pool));
     pool->current_area.recycler = recycler.pools;
     recycler.pools = pool;
     ++recycler.num_pools;
