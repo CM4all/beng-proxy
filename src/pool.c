@@ -606,6 +606,30 @@ pool_mark(pool_t pool, struct pool_mark *mark)
 #endif
 }
 
+#ifndef POOL_LIBC_ONLY
+static void
+pool_remove_allocations(pool_t pool, const unsigned char *p, size_t length)
+{
+#ifndef NDEBUG
+    struct allocation_info *info =
+        (struct allocation_info *)pool->allocations.next;
+
+    while (info != (struct allocation_info *)&pool->allocations) {
+        struct allocation_info *next
+            = (struct allocation_info *)info->siblings.next;
+        if ((const unsigned char*)info >= p &&
+            (const unsigned char*)(info + 1) + info->size <= p + length)
+            list_remove(&info->siblings);
+        info = next;
+    }
+#else
+    (void)pool;
+    (void)p;
+    (void)length;
+#endif
+}
+#endif
+
 void
 pool_rewind(pool_t pool, const struct pool_mark *mark)
 {
@@ -618,9 +642,14 @@ pool_rewind(pool_t pool, const struct pool_mark *mark)
         struct linear_pool_area *area = pool->current_area.linear;
         assert(area != NULL);
 
+        pool_remove_allocations(pool, area->data, area->used);
+
         pool->current_area.linear = area->prev;
         pool_recycler_put_linear(area);
     }
+
+    pool_remove_allocations(pool, mark->area->data + mark->position,
+                            mark->area->used - mark->position);
 
     poison_noaccess(mark->area->data + mark->position,
                     mark->area->used - mark->position);
