@@ -409,14 +409,16 @@ static void
 make_url_attribute_absolute(processor_t processor,
                             const struct parser_attr *attr)
 {
-    const char *new_uri = widget_absolute_uri(processor->pool,
-                                              processor->widget,
-                                              attr->value.data,
-                                              attr->value.length);
-    if (new_uri != NULL)
-        replace_attribute_value(processor, attr,
-                                istream_string_new(processor->pool,
-                                                   new_uri));
+    const char *new_uri
+        = widget_absolute_uri(processor->pool,
+                              processor->widget,
+                              attr->value.data, attr->value.length);
+    if (new_uri == NULL)
+        return;
+
+    replace_attribute_value(processor, attr,
+                            istream_string_new(processor->pool,
+                                               new_uri));
 }
 
 static void
@@ -428,8 +430,7 @@ transform_url_attribute(processor_t processor,
                               processor->env->external_uri,
                               processor->env->args,
                               processor->widget,
-                              attr->value.data,
-                              attr->value.length);
+                              attr->value.data, attr->value.length);
     if (new_uri == NULL)
         return;
 
