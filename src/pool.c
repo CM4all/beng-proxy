@@ -748,6 +748,7 @@ p_free(pool_t pool, void *ptr)
 #ifndef NDEBUG
     else if (pool->type == POOL_LINEAR) {
         struct allocation_info *info = get_linear_allocation_info(ptr);
+        list_remove(&info->siblings);
         poison_noaccess(ptr, info->size);
     }
 #endif
