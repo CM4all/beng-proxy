@@ -164,6 +164,14 @@ pool_recycler_clear(void)
 }
 
 static void
+pool_recycler_put(struct pool *pool)
+{
+    pool->current_area.recycler = recycler.pools;
+    recycler.pools = pool;
+    ++recycler.num_pools;
+}
+
+static void
 pool_recycler_put_linear(struct linear_pool_area *area)
 {
     assert(area != NULL);
@@ -413,11 +421,9 @@ pool_destroy(pool_t pool, pool_t reparent_to)
         break;
     }
 
-    if (recycler.num_pools < RECYCLER_MAX_POOLS) {
-        pool->current_area.recycler = recycler.pools;
-        recycler.pools = pool;
-        ++recycler.num_pools;
-    } else
+    if (recycler.num_pools < RECYCLER_MAX_POOLS)
+        pool_recycler_put(pool);
+    else
         free(pool);
 }
 
