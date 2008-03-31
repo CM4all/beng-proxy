@@ -365,6 +365,10 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_DOCUMENT_ROOT:
         connection->response.document_root = payload;
         break;
+
+    case TRANSLATE_ADDRESS:
+        /* XXX ignore this packet for now */
+        break;
     }
 }
 

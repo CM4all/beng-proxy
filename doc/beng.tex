@@ -232,6 +232,13 @@ header for this session \\
 \hline
 \texttt{CGI} & execute the resource as CGI script \\
 \hline
+
+\texttt{ADDRESS} & after each packet which provides a host name
+(\texttt{PROXY}, \texttt{FILTER}), there must be one or more
+\texttt{ADDRESS} packets which specify the resolved addresses.  The
+payload of each is a \texttt{struct sockaddr}. \\
+
+\hline
 \end{tabular}
 
 If the translation server does not provide the \texttt{CONTENT\_TYPE}
