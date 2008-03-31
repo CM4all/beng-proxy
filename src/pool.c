@@ -698,6 +698,8 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
     struct allocation_info *info;
 #endif
 
+    assert(area != NULL);
+
     size += LINEAR_PREFIX;
 
     if (unlikely(area->used + size > area->size)) {
