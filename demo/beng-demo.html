@@ -13,20 +13,16 @@
     <h2>Ein paar Mini-Widgets (CGI)</h2>
 
     <p>Datum:</p>
-    <c:widget id="date" href="http://cfatest01.intern.cm-ag/date.py"/>
-
-    <p>Datum als Raw-Widget (ressourcenschonend):</p>
-    <c:widget id="date" tag="" href="raw:http://cfatest01.intern.cm-ag/date.py"/>
+    <c:widget id="date" type="demo_date"/>
 
     <p>Suche in den Heise News:</p>
-    <c:widget id="search" href="http://cfatest01.intern.cm-ag/search.rb"
-        width="200"/>
+    <c:widget id="search" type="demo_search"/>
 
     <p>Demo mit POST-Formular:</p>
-    <c:widget id="post" href="http://cfatest01.intern.cm-ag/post.py"/>
+    <c:widget id="post" type="demo_post"/>
 
     <p>Nochmal POST, aber im IFRAME:</p>
-    <c:widget id="post2" href="http://cfatest01.intern.cm-ag/post.py"
+    <c:widget id="post2" type="demo_post"
       display="iframe" width="300" height="100"/>
 
     <h2>Google-Gadgets</h2>
