@@ -178,6 +178,24 @@ static struct async_operation_class processor_async_operation = {
  *
  */
 
+static const char *
+base_uri(pool_t pool, const char *absolute_uri)
+{
+    const char *p;
+
+    if (absolute_uri == NULL)
+        return NULL;
+
+    p = strchr(absolute_uri, ';');
+    if (p == NULL) {
+        p = strchr(absolute_uri, '?');
+        if (p == NULL)
+            return absolute_uri;
+    }
+
+    return p_strndup(pool, absolute_uri, p - absolute_uri);
+}
+
 static void
 processor_subst_beng_widget(istream_t istream,
                             struct widget *widget,
@@ -186,6 +204,8 @@ processor_subst_beng_widget(istream_t istream,
     istream_subst_add(istream, "&c:path;", widget_path(widget));
     istream_subst_add(istream, "&c:prefix;", widget_prefix(widget));
     istream_subst_add(istream, "&c:uri;", env->absolute_uri);
+    istream_subst_add(istream, "&c:base;",
+                      base_uri(env->pool, env->absolute_uri));
     istream_subst_add(istream, "&c:frame;",
                       strmap_get(env->args, "frame"));
     istream_subst_add(istream, "&c:session;",
