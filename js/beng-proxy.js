@@ -77,10 +77,6 @@ function beng_widget_get_widget(id) {
     return widget.getWidget(id.substring(slash + 1));
 }
 
-function beng_widget_create_widget(id) {
-    return new beng_widget(this, id);
-}
-
 function beng_root_widget(proxy) {
     this.parent = null;
     this.proxy = proxy;
@@ -89,7 +85,6 @@ function beng_root_widget(proxy) {
     this.widgets = Array();
 
     this.getWidget = beng_widget_get_widget;
-    this.createWidget = beng_widget_create_widget;
 
     return this;
 }
@@ -183,7 +178,6 @@ function beng_widget(parent, id) {
     this.widgets = Array();
 
     this.getWidget = beng_widget_get_widget;
-    this.createWidget = beng_widget_create_widget;
     this.translateURI = beng_widget_translate_uri;
     this.get = beng_widget_get;
     this.post = _beng_widget_post;
