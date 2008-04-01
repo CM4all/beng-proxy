@@ -34,8 +34,9 @@ widget_frame_uri(pool_t pool, const struct processor_env *env,
         /* XXX append google gadget preferences to query_string? */
         return widget->class->uri;
 
-    return widget_proxy_uri(pool, env->external_uri,
-                            env->args, widget);
+    return widget_external_uri(pool, env->external_uri, env->args,
+                               widget, 0, NULL, 0,
+                               1, 0);
 }
 
 /** generate IFRAME element; the client will perform a second request

@@ -74,31 +74,6 @@ widget_relative_uri(pool_t pool, struct widget *widget,
 }
 
 const char *
-widget_proxy_uri(pool_t pool,
-                 const struct parsed_uri *external_uri,
-                 strmap_t args,
-                 const struct widget *widget)
-{
-    const char *path, *args2;
-
-    path = widget_path(widget);
-    if (path == NULL)
-        return NULL;
-
-    args2 = args_format(pool, args,
-                        "frame", path,
-                        NULL, NULL,
-                        NULL);
-
-    return p_strncat(pool,
-                     external_uri->base.data,
-                     external_uri->base.length,
-                     ";", (size_t)1,
-                     args2, strlen(args2),
-                     NULL);
-}
-
-const char *
 widget_translation_uri(pool_t pool,
                        const struct parsed_uri *external_uri,
                        strmap_t args,
