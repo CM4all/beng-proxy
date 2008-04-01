@@ -462,7 +462,8 @@ transform_url_attribute(struct processor *processor,
                               processor->env->external_uri,
                               processor->env->args,
                               processor->widget,
-                              attr->value.data, attr->value.length);
+                              attr->value.data, attr->value.length,
+                              0, 0);
     if (new_uri == NULL)
         return;
 

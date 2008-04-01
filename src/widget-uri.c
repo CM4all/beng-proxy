@@ -108,7 +108,8 @@ widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     strmap_t args,
                     struct widget *widget,
-                    const char *relative_uri, size_t relative_uri_length)
+                    const char *relative_uri, size_t relative_uri_length,
+                    int frame, int raw)
 {
     const char *path;
     const char *new_uri;
@@ -155,7 +156,7 @@ widget_external_uri(pool_t pool,
     args2 = args_format_n(tpool, args,
                           "focus", path, strlen(path),
                           "path", p->data, p->length,
-                          NULL, NULL, 0,
+                          frame ? "frame" : NULL, path, strlen(path),
                           NULL);
 
     new_uri = p_strncat(pool,
@@ -163,6 +164,7 @@ widget_external_uri(pool_t pool,
                         external_uri->base.length,
                         ";", (size_t)1,
                         args2, strlen(args2),
+                        "raw=1", raw ? 5 : 0,
                         NULL);
     pool_rewind(tpool, &mark);
 

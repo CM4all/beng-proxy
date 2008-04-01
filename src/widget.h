@@ -266,7 +266,8 @@ widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     strmap_t args,
                     struct widget *widget,
-                    const char *relative_uri, size_t relative_uri_length);
+                    const char *relative_uri, size_t relative_uri_length,
+                    int frame, int raw);
 
 /**
  * Free important resources associated with the widget.  A widget
