@@ -59,7 +59,7 @@ function beng_proxy_make_uri(focus, path, mode) {
 }
 
 function beng_proxy(session) {
-    this.uri = String(window.location).replace(/[;?#].*/, "");
+    this.uri = window.location.href.replace(/[;?#].*/, "");
     this.session = session;
 
     this.make_uri = beng_proxy_make_uri;
