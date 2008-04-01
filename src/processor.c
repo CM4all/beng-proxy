@@ -17,6 +17,13 @@
 #include <assert.h>
 #include <string.h>
 
+enum uri_base {
+    URI_BASE_TEMPLATE,
+    URI_BASE_WIDGET,
+    URI_BASE_FOCUS,
+    URI_BASE_PROXY,
+};
+
 struct processor {
     pool_t pool;
 
@@ -452,6 +459,30 @@ transform_url_attribute(struct processor *processor,
 }
 
 static void
+transform_uri_attribute(struct processor *processor,
+                        const struct parser_attr *attr,
+                        enum uri_base base)
+{
+    switch (base) {
+    case URI_BASE_TEMPLATE:
+        /* no need to rewrite the attribute */
+        break;
+
+    case URI_BASE_WIDGET:
+        make_url_attribute_absolute(processor, attr);
+        break;
+
+    case URI_BASE_FOCUS:
+        transform_url_attribute(processor, attr);
+        break;
+
+    case URI_BASE_PROXY:
+        /* XXX */
+        break;
+    }
+}
+
+static void
 parser_widget_attr_finished(struct widget *widget,
                             pool_t pool,
                             const struct strref *name,
@@ -561,23 +592,23 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
     case TAG_IMG:
         if (strref_cmp_literal(&attr->name, "src") == 0)
-            make_url_attribute_absolute(processor, attr);
+            transform_uri_attribute(processor, attr, URI_BASE_WIDGET);
         break;
 
     case TAG_A:
         if (strref_cmp_literal(&attr->name, "href") == 0 &&
             !strref_starts_with_n(&attr->value, "javascript:", 11))
-            transform_url_attribute(processor, attr);
+            transform_uri_attribute(processor, attr, URI_BASE_FOCUS);
         break;
 
     case TAG_FORM:
         if (strref_cmp_literal(&attr->name, "action") == 0)
-            transform_url_attribute(processor, attr);
+            transform_uri_attribute(processor, attr, URI_BASE_FOCUS);
         break;
 
     case TAG_SCRIPT:
         if (strref_cmp_literal(&attr->name, "src") == 0)
-            make_url_attribute_absolute(processor, attr);
+            transform_uri_attribute(processor, attr, URI_BASE_WIDGET);
         break;
     }
 }
