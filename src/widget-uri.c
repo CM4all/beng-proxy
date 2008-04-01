@@ -124,6 +124,7 @@ widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     strmap_t args,
                     struct widget *widget,
+                    int focus,
                     const char *relative_uri, size_t relative_uri_length,
                     int frame, int raw)
 {
@@ -133,26 +134,32 @@ widget_external_uri(pool_t pool,
     const struct strref *p;
     struct pool_mark mark;
 
+    assert(focus || frame);
+    assert(focus || (relative_uri == NULL && relative_uri_length == 0));
+    assert(frame || !raw);
+
     path = widget_path(widget);
     if (path == NULL ||
         external_uri == NULL ||
         widget->class == &root_widget_class)
         return NULL;
 
-    pool_mark(tpool, &mark);
+    if (focus) {
+        pool_mark(tpool, &mark);
 
-    p = widget_relative_uri(tpool, widget, relative_uri, relative_uri_length);
-    if (p == NULL) {
-        pool_rewind(tpool, &mark);
-        return NULL;
+        p = widget_relative_uri(tpool, widget, relative_uri, relative_uri_length);
+        if (p == NULL) {
+            pool_rewind(tpool, &mark);
+            return NULL;
+        }
     }
 
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format_n(tpool, args,
-                          "focus", path, strlen(path),
-                          "path", p->data, p->length,
+                          focus ? "focus" : NULL, path, strlen(path),
+                          focus ? "path" : NULL, p->data, p->length,
                           frame ? "frame" : NULL, path, strlen(path),
                           NULL);
 
@@ -163,7 +170,9 @@ widget_external_uri(pool_t pool,
                         args2, strlen(args2),
                         "&raw=1", (size_t)(raw ? 6 : 0),
                         NULL);
-    pool_rewind(tpool, &mark);
+
+    if (focus)
+        pool_rewind(tpool, &mark);
 
     return new_uri;
 }

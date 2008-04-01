@@ -461,6 +461,7 @@ transform_uri_attribute(struct processor *processor,
                                   processor->env->external_uri,
                                   processor->env->args,
                                   processor->widget,
+                                  1,
                                   attr->value.data, attr->value.length,
                                   0, 0);
         break;
@@ -470,6 +471,7 @@ transform_uri_attribute(struct processor *processor,
                                   processor->env->external_uri,
                                   processor->env->args,
                                   processor->widget,
+                                  1,
                                   attr->value.data, attr->value.length,
                                   1, 1);
         break;
