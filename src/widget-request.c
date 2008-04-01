@@ -112,8 +112,8 @@ widget_sync_session(struct widget *widget)
         strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
         widget->parent->from_request.focus_ref->next == NULL) {
 
-        /* do not save to session when this is a raw request */
-        if (!widget->from_request.raw) {
+        /* do not save to session when this is a raw or POST request */
+        if (!widget->from_request.raw && widget->from_request.body == NULL) {
             struct widget_session *ws = widget_get_session(widget, 1);
             if (ws != NULL)
                 widget_to_session(ws, widget);
