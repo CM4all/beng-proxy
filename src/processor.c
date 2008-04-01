@@ -466,8 +466,12 @@ transform_uri_attribute(struct processor *processor,
         break;
 
     case URI_BASE_PROXY:
-        /* XXX */
-        uri = NULL;
+        uri = widget_external_uri(processor->pool,
+                                  processor->env->external_uri,
+                                  processor->env->args,
+                                  processor->widget,
+                                  attr->value.data, attr->value.length,
+                                  1, 1);
         break;
     }
 
