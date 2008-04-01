@@ -438,62 +438,43 @@ replace_attribute_value(struct processor *processor,
 }
 
 static void
-make_url_attribute_absolute(struct processor *processor,
-                            const struct parser_attr *attr)
-{
-    const char *new_uri
-        = widget_absolute_uri(processor->pool,
-                              processor->widget,
-                              attr->value.data, attr->value.length);
-    if (new_uri == NULL)
-        return;
-
-    replace_attribute_value(processor, attr,
-                            istream_string_new(processor->pool,
-                                               new_uri));
-}
-
-static void
-transform_url_attribute(struct processor *processor,
-                        const struct parser_attr *attr)
-{
-    const char *new_uri
-        = widget_external_uri(processor->pool,
-                              processor->env->external_uri,
-                              processor->env->args,
-                              processor->widget,
-                              attr->value.data, attr->value.length,
-                              0, 0);
-    if (new_uri == NULL)
-        return;
-
-    replace_attribute_value(processor, attr,
-                            istream_string_new(processor->pool,
-                                               new_uri));
-}
-
-static void
 transform_uri_attribute(struct processor *processor,
                         const struct parser_attr *attr,
                         enum uri_base base)
 {
+    const char *uri;
+
     switch (base) {
     case URI_BASE_TEMPLATE:
         /* no need to rewrite the attribute */
+        uri = NULL;
         break;
 
     case URI_BASE_WIDGET:
-        make_url_attribute_absolute(processor, attr);
+        uri = widget_absolute_uri(processor->pool,
+                                  processor->widget,
+                                  attr->value.data, attr->value.length);
         break;
 
     case URI_BASE_FOCUS:
-        transform_url_attribute(processor, attr);
+        uri = widget_external_uri(processor->pool,
+                                  processor->env->external_uri,
+                                  processor->env->args,
+                                  processor->widget,
+                                  attr->value.data, attr->value.length,
+                                  0, 0);
         break;
 
     case URI_BASE_PROXY:
         /* XXX */
+        uri = NULL;
         break;
     }
+
+    if (uri != NULL)
+        replace_attribute_value(processor, attr,
+                                istream_string_new(processor->pool,
+                                                   uri));
 }
 
 static void
