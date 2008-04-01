@@ -118,18 +118,6 @@ widget_external_uri(pool_t pool,
     const struct strref *p;
     struct pool_mark mark;
 
-    if (relative_uri_length == 6 &&
-        memcmp(relative_uri, ";proxy", 6) == 0)
-        /* XXX this special URL syntax should be redesigned */
-        return widget_proxy_uri(pool, external_uri, args, widget);
-
-    if (relative_uri_length >= 11 &&
-        memcmp(relative_uri, ";translate=", 11) == 0)
-        /* XXX this special URL syntax should be redesigned */
-        return widget_translation_uri(pool, external_uri, args,
-                                      p_strndup(pool, relative_uri + 11,
-                                                relative_uri_length - 11));
-
     path = widget_path(widget);
     if (path == NULL ||
         external_uri == NULL ||
