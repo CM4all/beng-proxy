@@ -802,7 +802,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
                                     processor->widget_param.name_length),
                           processor->widget_param.value,
                           processor->widget_param.value_length,
-                          NULL, NULL, 0, NULL);
+                          NULL, NULL, 0, NULL, NULL, 0, NULL);
         length = strlen(p);
 
         if (processor->widget_params_length + 1 + length >= sizeof(processor->widget_params)) {

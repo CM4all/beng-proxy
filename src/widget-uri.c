@@ -153,6 +153,7 @@ widget_external_uri(pool_t pool,
     args2 = args_format_n(tpool, args,
                           "focus", widget->id, strlen(widget->id),
                           "path", p->data, p->length,
+                          NULL, NULL, 0,
                           NULL);
 
     new_uri = p_strncat(pool,

@@ -26,6 +26,8 @@ args_format_n(pool_t pool, strmap_t args,
               size_t replace_value_length,
               const char *replace_key2, const char *replace_value2,
               size_t replace_value2_length,
+              const char *replace_key3, const char *replace_value3,
+              size_t replace_value3_length,
               const char *remove_key);
 
 const char *
