@@ -110,6 +110,7 @@ widget_external_uri(pool_t pool,
                     struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length)
 {
+    const char *path;
     const char *new_uri;
     const char *args2;
     struct strref s;
@@ -128,7 +129,8 @@ widget_external_uri(pool_t pool,
                                       p_strndup(pool, relative_uri + 11,
                                                 relative_uri_length - 11));
 
-    if (widget->id == NULL ||
+    path = widget_path(widget);
+    if (path == NULL ||
         external_uri == NULL ||
         widget->class == &root_widget_class)
         return widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
@@ -151,7 +153,7 @@ widget_external_uri(pool_t pool,
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format_n(tpool, args,
-                          "focus", widget->id, strlen(widget->id),
+                          "focus", path, strlen(path),
                           "path", p->data, p->length,
                           NULL, NULL, 0,
                           NULL);
