@@ -27,7 +27,8 @@ create_test(pool_t pool, istream_t input)
     static struct async_operation async;
 
     async_init(&async, &my_delayed_operation);
-    istream = istream_delayed_new(pool, &async);
+    istream = istream_delayed_new(pool);
+    async_ref_set(istream_delayed_async(istream), &async);
 
     istream_delayed_set(istream, input);
     return istream;
