@@ -134,7 +134,7 @@ widget_external_uri(pool_t pool,
     if (path == NULL ||
         external_uri == NULL ||
         widget->class == &root_widget_class)
-        return widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
+        return NULL;
 
     pool_mark(tpool, &mark);
 
