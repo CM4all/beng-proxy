@@ -149,26 +149,6 @@ processor_insert_jscript(processor_t processor, off_t offset)
 
 
 /*
- * constructor
- *
- */
-
-static void
-processor_subst_beng_widget(istream_t istream,
-                            struct widget *widget,
-                            const struct processor_env *env)
-{
-    istream_subst_add(istream, "&c:path;", widget_path(widget));
-    istream_subst_add(istream, "&c:prefix;", widget_prefix(widget));
-    istream_subst_add(istream, "&c:uri;", env->absolute_uri);
-    istream_subst_add(istream, "&c:frame;",
-                      strmap_get(env->args, "frame"));
-    istream_subst_add(istream, "&c:session;",
-                      strmap_get(env->args, "session"));
-}
-
-
-/*
  * async operation
  *
  */
@@ -197,6 +177,20 @@ static struct async_operation_class processor_async_operation = {
  * constructor
  *
  */
+
+static void
+processor_subst_beng_widget(istream_t istream,
+                            struct widget *widget,
+                            const struct processor_env *env)
+{
+    istream_subst_add(istream, "&c:path;", widget_path(widget));
+    istream_subst_add(istream, "&c:prefix;", widget_prefix(widget));
+    istream_subst_add(istream, "&c:uri;", env->absolute_uri);
+    istream_subst_add(istream, "&c:frame;",
+                      strmap_get(env->args, "frame"));
+    istream_subst_add(istream, "&c:session;",
+                      strmap_get(env->args, "session"));
+}
 
 static void
 processor_parser_init(processor_t processor, istream_t input);
