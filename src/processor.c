@@ -17,8 +17,6 @@
 #include <assert.h>
 #include <string.h>
 
-typedef struct processor *processor_t;
-
 struct processor {
     pool_t pool;
 
@@ -105,14 +103,14 @@ processor_option_jscript_root(const struct processor *processor)
 }
 
 static void
-processor_replace_add(processor_t processor, off_t start, off_t end,
+processor_replace_add(struct processor *processor, off_t start, off_t end,
                       istream_t istream)
 {
     istream_replace_add(processor->replace, start, end, istream);
 }
 
 static istream_t
-processor_jscript(processor_t processor)
+processor_jscript(struct processor *processor)
 {
     growing_buffer_t gb = growing_buffer_new(processor->pool, 512);
 
@@ -137,7 +135,7 @@ processor_jscript(processor_t processor)
 }
 
 static void
-processor_insert_jscript(processor_t processor, off_t offset)
+processor_insert_jscript(struct processor *processor, off_t offset)
 {
     if (processor->js_generated || !processor_option_jscript(processor))
         return;
@@ -213,7 +211,7 @@ processor_subst_beng_widget(istream_t istream,
 }
 
 static void
-processor_parser_init(processor_t processor, istream_t input);
+processor_parser_init(struct processor *processor, istream_t input);
 
 void
 processor_new(pool_t pool, istream_t istream,
@@ -224,7 +222,7 @@ processor_new(pool_t pool, istream_t istream,
               void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
-    processor_t processor;
+    struct processor *processor;
 
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
@@ -294,7 +292,7 @@ processor_new(pool_t pool, istream_t istream,
 
 
 static void
-processor_finish_script(processor_t processor, off_t end)
+processor_finish_script(struct processor *processor, off_t end)
 {
     assert(processor->in_script);
 
@@ -320,7 +318,7 @@ processor_finish_script(processor_t processor, off_t end)
  */
 
 static void
-parser_element_start_in_widget(processor_t processor,
+parser_element_start_in_widget(struct processor *processor,
                                enum parser_tag_type type,
                                const struct strref *name)
 {
@@ -341,7 +339,7 @@ parser_element_start_in_widget(processor_t processor,
 static void
 processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 {
-    processor_t processor = ctx;
+    struct processor *processor = ctx;
 
     processor->tag = TAG_NONE;
 
@@ -410,7 +408,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 }
 
 static void
-replace_attribute_value(processor_t processor,
+replace_attribute_value(struct processor *processor,
                         const struct parser_attr *attr,
                         istream_t value)
 {
@@ -420,7 +418,7 @@ replace_attribute_value(processor_t processor,
 }
 
 static void
-make_url_attribute_absolute(processor_t processor,
+make_url_attribute_absolute(struct processor *processor,
                             const struct parser_attr *attr)
 {
     const char *new_uri
@@ -436,7 +434,7 @@ make_url_attribute_absolute(processor_t processor,
 }
 
 static void
-transform_url_attribute(processor_t processor,
+transform_url_attribute(struct processor *processor,
                         const struct parser_attr *attr)
 {
     const char *new_uri
@@ -498,7 +496,7 @@ parser_widget_attr_finished(struct widget *widget,
 static void
 processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
-    processor_t processor = ctx;
+    struct processor *processor = ctx;
 
     if (!processor_option_quiet(processor) &&
         (processor->options & PROCESSOR_JS_FILTER) != 0 &&
@@ -585,7 +583,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 }
 
 static istream_t
-embed_widget(processor_t processor, struct processor_env *env,
+embed_widget(struct processor *processor, struct processor_env *env,
              struct widget *widget)
 {
     pool_t pool = processor->pool;
@@ -668,7 +666,7 @@ embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
 }
 
 static istream_t
-embed_element_finished(processor_t processor)
+embed_element_finished(struct processor *processor)
 {
     struct widget *widget;
     istream_t istream;
@@ -690,7 +688,7 @@ embed_element_finished(processor_t processor)
 }
 
 static void
-body_element_finished(processor_t processor, const struct parser_tag *tag)
+body_element_finished(struct processor *processor, const struct parser_tag *tag)
 {
 
     if (tag->type != TAG_CLOSE)
@@ -700,7 +698,7 @@ body_element_finished(processor_t processor, const struct parser_tag *tag)
 static void
 processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
-    processor_t processor = ctx;
+    struct processor *processor = ctx;
 
     if (processor->tag == TAG_HEAD) {
         if (tag->type == TAG_OPEN)
@@ -776,7 +774,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 static size_t
 processor_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 {
-    processor_t processor = ctx;
+    struct processor *processor = ctx;
 
     (void)escaped;
 
@@ -789,7 +787,7 @@ processor_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 static void
 processor_parser_eof(void *ctx, off_t length)
 {
-    processor_t processor = ctx;
+    struct processor *processor = ctx;
 
     assert(processor->parser != NULL);
 
@@ -817,7 +815,7 @@ processor_parser_eof(void *ctx, off_t length)
 static void
 processor_parser_abort(void *ctx)
 {
-    processor_t processor = ctx;
+    struct processor *processor = ctx;
 
     processor->parser = NULL;
 
@@ -839,7 +837,7 @@ static const struct parser_handler processor_parser_handler = {
 };
 
 static void
-processor_parser_init(processor_t processor, istream_t input)
+processor_parser_init(struct processor *processor, istream_t input)
 {
     processor->parser = parser_new(processor->pool, input,
                                    &processor_parser_handler, processor);
