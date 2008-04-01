@@ -487,6 +487,46 @@ this variable for redirecting \\
 \hline
 \end{tabular}
 
+\subsection{Relative URIs}
+
+Relative links are difficult with \emph{beng-proxy}, because the
+browser interprets links as relative to the document by default.  A
+widget author cannot specify a link relative to the widget itself.  To
+allow this, \emph{beng-proxy} can rewrite relative links in the
+following modes:
+
+\begin{tabular}{|l|p{10cm}|}
+\hline
+
+\texttt{template} & links are relative to the main template \\
+
+\hline
+
+\texttt{widget} & links are relative to the widget; the browser will
+leave \emph{beng-proxy} if the user clicks on such a link, because it
+points to the widget server \\
+
+\hline
+
+\texttt{focus} & links are also relative to the widget, but the
+widget stays embedded in the template \\
+
+\hline
+
+\texttt{proxy} & links are also relative to the widget, and the target
+is proxied by \emph{beng-proxy} (useful for images or other non-HTML
+resources) \\
+
+\hline
+\end{tabular}
+
+The mode name must be specified in the element attribute
+\texttt{c:base} before the attribute containing the URI.  Example:
+
+\begin{verbatim*}
+<img c:base="proxy" href="foo.jpg"/>
+\end{verbatim*}
+
 
 \section{The Beng JavaScript API}
 

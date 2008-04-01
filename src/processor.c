@@ -53,6 +53,7 @@ struct processor {
         TAG_IMG,
         TAG_SCRIPT,
     } tag;
+    enum uri_base uri_base;
     off_t widget_start_offset;
     struct widget *embedded_widget;
     struct {
@@ -395,6 +396,9 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->embedded_widget->parent = processor->widget;
     } else if (strref_cmp_literal(&tag->name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
+        processor->uri_base = processor->widget->class->old_style
+            ? URI_BASE_WIDGET
+            : URI_BASE_TEMPLATE;
 
         if (tag->type != TAG_CLOSE)
             processor_insert_jscript(processor, 0);
@@ -402,10 +406,19 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                processor_option_rewrite_url(processor)) {
         if (strref_cmp_literal(&tag->name, "a") == 0) {
             processor->tag = TAG_A;
+            processor->uri_base = processor->widget->class->old_style
+                ? URI_BASE_FOCUS
+                : URI_BASE_TEMPLATE;
         } else if (strref_cmp_literal(&tag->name, "form") == 0) {
             processor->tag = TAG_FORM;
+            processor->uri_base = processor->widget->class->old_style
+                ? URI_BASE_FOCUS
+                : URI_BASE_TEMPLATE;
         } else if (strref_cmp_literal(&tag->name, "img") == 0) {
             processor->tag = TAG_IMG;
+            processor->uri_base = processor->widget->class->old_style
+                ? URI_BASE_WIDGET
+                : URI_BASE_TEMPLATE;
         } else {
             processor->tag = TAG_NONE;
         }
@@ -543,6 +556,21 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         return;
     }
 
+    if (!processor_option_quiet(processor) &&
+        processor->tag != TAG_NONE &&
+        strref_cmp_literal(&attr->name, "c:base") == 0) {
+        if (strref_cmp_literal(&attr->value, "widget") == 0)
+            processor->uri_base = URI_BASE_WIDGET;
+        else if (strref_cmp_literal(&attr->value, "focus") == 0)
+            processor->uri_base = URI_BASE_FOCUS;
+        else if (strref_cmp_literal(&attr->value, "proxy") == 0)
+            processor->uri_base = URI_BASE_PROXY;
+        else
+            processor->uri_base = URI_BASE_TEMPLATE;
+        /* XXX remove the whole attribute */
+        return;
+    }
+
     switch (processor->tag) {
     case TAG_NONE:
         break;
@@ -592,23 +620,23 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
     case TAG_IMG:
         if (strref_cmp_literal(&attr->name, "src") == 0)
-            transform_uri_attribute(processor, attr, URI_BASE_WIDGET);
+            transform_uri_attribute(processor, attr, processor->uri_base);
         break;
 
     case TAG_A:
         if (strref_cmp_literal(&attr->name, "href") == 0 &&
             !strref_starts_with_n(&attr->value, "javascript:", 11))
-            transform_uri_attribute(processor, attr, URI_BASE_FOCUS);
+            transform_uri_attribute(processor, attr, processor->uri_base);
         break;
 
     case TAG_FORM:
         if (strref_cmp_literal(&attr->name, "action") == 0)
-            transform_uri_attribute(processor, attr, URI_BASE_FOCUS);
+            transform_uri_attribute(processor, attr, processor->uri_base);
         break;
 
     case TAG_SCRIPT:
         if (strref_cmp_literal(&attr->name, "src") == 0)
-            transform_uri_attribute(processor, attr, URI_BASE_WIDGET);
+            transform_uri_attribute(processor, attr, processor->uri_base);
         break;
     }
 }
