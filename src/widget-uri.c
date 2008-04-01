@@ -164,7 +164,7 @@ widget_external_uri(pool_t pool,
                         external_uri->base.length,
                         ";", (size_t)1,
                         args2, strlen(args2),
-                        "raw=1", raw ? 5 : 0,
+                        "&raw=1", raw ? 6 : 0,
                         NULL);
     pool_rewind(tpool, &mark);
 
