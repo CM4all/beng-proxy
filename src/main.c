@@ -152,7 +152,7 @@ int main(int argc, char **argv)
     instance.translate_stock = translate_stock_new(instance.pool,
                                                    instance.config.translation_socket);
     instance.http_client_stock = url_hstock_new(instance.pool);
-    instance.http_cache = http_cache_new(instance.pool, 1024 * 1024,
+    instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.http_client_stock);
 
     /* daemonize */
