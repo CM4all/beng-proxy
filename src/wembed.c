@@ -79,33 +79,6 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
     return growing_buffer_istream(gb);
 }
 
-/** generate IMG element */
-static istream_t
-embed_img_widget(pool_t pool, const struct processor_env *env,
-                    struct widget *widget)
-{
-    const char *uri, *prefix;
-    struct growing_buffer *gb;
-
-    uri = widget_frame_uri(pool, env, widget);
-    prefix = widget_prefix(widget);
-    if (uri == NULL || prefix == NULL)
-        return istream_string_new(pool, "[framed widget without id]"); /* XXX */
-
-    gb = growing_buffer_new(pool, 512);
-    growing_buffer_write_string(gb, "<img id=\"beng_img_");
-    growing_buffer_write_string(gb, prefix);
-    growing_buffer_write_string(gb, "\" src=\"");
-    growing_buffer_write_string(gb, uri);
-    growing_buffer_write_string(gb, "\"></img>");
-
-    growing_buffer_write_string(gb, "<script type=\"text/javascript\">\n");
-    js_generate_widget(gb, widget, pool);
-    growing_buffer_write_string(gb, "</script>\n");
-
-    return growing_buffer_istream(gb);
-}
-
 void
 embed_widget_callback(pool_t pool, struct processor_env *env,
                       struct widget *widget,
@@ -145,11 +118,6 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
     case WIDGET_DISPLAY_EXTERNAL:
         widget_cancel(widget);
         istream = embed_iframe_widget(pool, env, widget);
-        break;
-
-    case WIDGET_DISPLAY_IMG:
-        widget_cancel(widget);
-        istream = embed_img_widget(pool, env, widget);
         break;
     }
 

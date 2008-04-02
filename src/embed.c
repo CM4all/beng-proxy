@@ -243,9 +243,6 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
 
         break;
 
-    case WIDGET_DISPLAY_IMG:
-        break;
-
     case WIDGET_DISPLAY_EXTERNAL:
         assert(0);
         break;

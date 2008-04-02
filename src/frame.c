@@ -51,7 +51,6 @@ frame_top_widget(pool_t pool, struct processor_env *env,
         break;
 
     case WIDGET_DISPLAY_NONE:
-    case WIDGET_DISPLAY_IMG:
         options = 0;
         break;
 

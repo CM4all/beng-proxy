@@ -72,7 +72,6 @@ struct widget {
         WIDGET_DISPLAY_INLINE,
         WIDGET_DISPLAY_NONE,
         WIDGET_DISPLAY_IFRAME,
-        WIDGET_DISPLAY_IMG,
 
         /** external URL in IFRAME */
         WIDGET_DISPLAY_EXTERNAL,
