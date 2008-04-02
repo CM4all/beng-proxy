@@ -32,6 +32,7 @@ struct embed {
 static const char *const copy_headers[] = {
     "accept",
     "from",
+    "cache-control",
     NULL,
 };
 

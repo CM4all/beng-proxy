@@ -17,6 +17,7 @@
 static const char *const copy_headers[] = {
     "age",
     "etag",
+    "cache-control",
     "content-encoding",
     "content-language",
     "content-md5",
@@ -29,6 +30,7 @@ static const char *const copy_headers[] = {
 };
 
 static const char *const copy_headers_processed[] = {
+    "cache-control",
     "content-language",
     "content-type",
     "vary",
