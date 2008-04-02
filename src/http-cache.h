@@ -17,7 +17,7 @@ struct http_response_handler;
 struct async_operation_ref;
 
 struct http_cache *
-http_cache_new(pool_t pool,
+http_cache_new(pool_t pool, size_t max_size,
                struct hstock *http_client_stock);
 
 void

@@ -418,13 +418,12 @@ static const struct cache_class http_cache_class = {
  */
 
 struct http_cache *
-http_cache_new(pool_t pool,
+http_cache_new(pool_t pool, size_t max_size,
                struct hstock *http_client_stock)
 {
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
-    cache->cache = cache_new(pool, &http_cache_class,
-                             1024 * 1024);
+    cache->cache = cache_new(pool, &http_cache_class, max_size);
     cache->stock = http_client_stock;
     return cache;
 }
