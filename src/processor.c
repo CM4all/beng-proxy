@@ -516,6 +516,8 @@ parser_widget_attr_finished(struct widget *widget,
             widget->display = WIDGET_DISPLAY_IFRAME;
         else if (strref_cmp_literal(value, "img") == 0)
             widget->display = WIDGET_DISPLAY_IMG;
+        else
+            widget->display = WIDGET_DISPLAY_NONE;
     } else if (strref_cmp_literal(name, "session") == 0) {
         if (strref_cmp_literal(value, "resource") == 0)
             widget->session = WIDGET_SESSION_RESOURCE;
