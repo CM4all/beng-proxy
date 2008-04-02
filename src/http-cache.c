@@ -102,6 +102,15 @@ http_cache_request_evaluate(pool_t pool,
     return info;
 }
 
+/* check whether the request should invalidate the existing cache */
+static int
+http_cache_request_invalidate(http_method_t method)
+{
+    /* RFC 2616 13.10 "Invalidation After Updates or Deletions" */
+    return method == HTTP_METHOD_PUT || method == HTTP_METHOD_DELETE ||
+        method == HTTP_METHOD_POST;
+}
+
 static void
 http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
                      const struct http_cache_info *src)
@@ -567,6 +576,9 @@ http_cache_request(struct http_cache *cache,
                              handler, handler_ctx, async_ref);
     } else {
         struct growing_buffer *headers2;
+
+        if (http_cache_request_invalidate(method))
+            cache_remove(cache->cache, url);
 
         cache_log(4, "http_cache: ignore %s\n", url);
 
