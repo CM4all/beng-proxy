@@ -70,8 +70,10 @@ cache_get(struct cache *cache, const char *key)
         return NULL;
 
     if (time(NULL) < item->expires &&
-        (cache->class->validate == NULL || cache->class->validate(item)))
+        (cache->class->validate == NULL || cache->class->validate(item))) {
+        item->last_accessed = time(NULL);
         return item;
+    }
 
     hashmap_remove(cache->items, key);
     cache_destroy_item(cache, item);
@@ -89,4 +91,5 @@ cache_put(struct cache *cache, const char *key,
         cache_destroy_item(cache, old);
 
     cache->size += item->size;
+    item->last_accessed = time(NULL);
 }
