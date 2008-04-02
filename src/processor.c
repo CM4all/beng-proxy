@@ -14,6 +14,7 @@
 #include "widget-stream.h"
 #include "tpool.h"
 #include "frame.h"
+#include "embed.h"
 
 #include <assert.h>
 #include <string.h>
@@ -751,7 +752,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
         ws = widget_stream_new(pool);
         hold = istream_hold_new(pool, istream_catch_new(pool, ws->delayed));
 
-        frame_widget_callback(pool, env, widget,
+        embed_widget_callback(pool, env, widget,
                               &widget_stream_response_handler, ws,
                               &ws->async_ref);
 
