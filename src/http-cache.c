@@ -423,7 +423,8 @@ http_cache_new(pool_t pool,
 {
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
-    cache->cache = cache_new(pool, &http_cache_class);
+    cache->cache = cache_new(pool, &http_cache_class,
+                             1024 * 1024);
     cache->stock = http_client_stock;
     return cache;
 }

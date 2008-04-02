@@ -12,18 +12,20 @@
 
 struct cache {
     const struct cache_class *class;
-    size_t size;
+    size_t max_size, size;
     struct hashmap *items;
 };
 
 struct cache *
-cache_new(pool_t pool, const struct cache_class *class)
+cache_new(pool_t pool, const struct cache_class *class,
+          size_t max_size)
 {
     struct cache *cache = p_malloc(pool, sizeof(*cache));
 
     assert(class != NULL);
 
     cache->class = class;
+    cache->max_size = max_size;
     cache->size = 0;
     cache->items = hashmap_new(pool, 1024);
 
@@ -110,11 +112,11 @@ cache_destroy_oldest_item(struct cache *cache)
 static int
 cache_need_room(struct cache *cache, size_t size)
 {
-    if (size > 1024 * 1024)
+    if (size > cache->max_size)
         return 0;
 
     while (1) {
-        if (cache->size + size <= 1024 * 1024)
+        if (cache->size + size <= cache->max_size)
             return 1;
 
         cache_destroy_oldest_item(cache);
