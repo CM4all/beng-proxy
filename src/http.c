@@ -10,6 +10,8 @@ const char *http_method_to_string_data[HTTP_METHOD_INVALID] = {
     [HTTP_METHOD_HEAD] = "HEAD",
     [HTTP_METHOD_GET] = "GET",
     [HTTP_METHOD_POST] = "POST",
+    [HTTP_METHOD_PUT] = "PUT",
+    [HTTP_METHOD_DELETE] = "DELETE",
 };
 
 const char *http_status_to_string_data[6][20] = {

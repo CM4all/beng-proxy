@@ -51,6 +51,11 @@ http_server_parse_request_line(http_server_connection_t connection,
             method = HTTP_METHOD_POST;
             line += 5;
         }
+
+        if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ')) {
+            method = HTTP_METHOD_PUT;
+            line += 4;
+        }
         break;
 
     case 'H':
