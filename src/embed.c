@@ -212,6 +212,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
 
     switch (embed->widget->display) {
     case WIDGET_DISPLAY_INLINE:
+    case WIDGET_DISPLAY_NONE:
     case WIDGET_DISPLAY_IFRAME:
         if (!embed->widget->from_request.raw && body != NULL) {
             if (content_type == NULL ||

@@ -134,6 +134,13 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
                             handler, handler_ctx, async_ref);
         return;
 
+    case WIDGET_DISPLAY_NONE:
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_response(&handler_ref,
+                                              HTTP_STATUS_NO_CONTENT,
+                                              NULL, NULL);
+        return;
+
     case WIDGET_DISPLAY_IFRAME:
     case WIDGET_DISPLAY_EXTERNAL:
         widget_cancel(widget);

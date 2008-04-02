@@ -70,6 +70,7 @@ struct widget {
     /** in which form should this widget be displayed? */
     enum {
         WIDGET_DISPLAY_INLINE,
+        WIDGET_DISPLAY_NONE,
         WIDGET_DISPLAY_IFRAME,
         WIDGET_DISPLAY_IMG,
 
