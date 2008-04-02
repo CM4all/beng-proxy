@@ -143,3 +143,18 @@ cache_put(struct cache *cache, const char *key,
     cache->size += item->size;
     item->last_accessed = time(NULL);
 }
+
+void
+cache_remove(struct cache *cache, const char *key, struct cache_item *item)
+{
+    struct cache_item *old = hashmap_remove(cache->items, key);
+
+    if (old != item) {
+        /* the specified item has been removed before */
+        if (old != NULL)
+            hashmap_put(cache->items, key, old, 1);
+        return;
+    }
+
+    cache_destroy_item(cache, item);
+}

@@ -38,4 +38,7 @@ void
 cache_put(struct cache *cache, const char *key,
           struct cache_item *item);
 
+void
+cache_remove(struct cache *cache, const char *key, struct cache_item *item);
+
 #endif
