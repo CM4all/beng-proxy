@@ -80,13 +80,61 @@ cache_get(struct cache *cache, const char *key)
     return NULL;
 }
 
+static void
+cache_destroy_oldest_item(struct cache *cache)
+{
+    const struct hashmap_pair *pair;
+    const char *oldest_key;
+    struct cache_item *oldest_item = NULL;
+
+    /* XXX this function is O(n^2) */
+
+    hashmap_rewind(cache->items);
+    while ((pair = hashmap_next(cache->items)) != NULL) {
+        struct cache_item *item = pair->value;
+
+        if (oldest_item == NULL ||
+            item->last_accessed < oldest_item->last_accessed) {
+            oldest_key = pair->key;
+            oldest_item = item;
+        }
+    }
+
+    if (oldest_item == NULL)
+        return;
+
+    hashmap_remove(cache->items, oldest_key);
+    cache_destroy_item(cache, oldest_item);
+}
+
+static int
+cache_need_room(struct cache *cache, size_t size)
+{
+    if (size > 1024 * 1024)
+        return 0;
+
+    while (1) {
+        if (cache->size + size <= 1024 * 1024)
+            return 1;
+
+        cache_destroy_oldest_item(cache);
+    }
+}
+
 void
 cache_put(struct cache *cache, const char *key,
           struct cache_item *item)
 {
     /* XXX size constraints */
-    struct cache_item *old = hashmap_put(cache->items, key, item, 1);
+    struct cache_item *old;
 
+    if (!cache_need_room(cache, item->size)) {
+        if (cache->class->destroy != NULL)
+            cache->class->destroy(item);
+        return;
+    }
+
+    old = hashmap_put(cache->items, key, item, 1);
     if (old != NULL)
         cache_destroy_item(cache, old);
 
