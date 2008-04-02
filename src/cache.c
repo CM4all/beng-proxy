@@ -149,7 +149,7 @@ cache_remove(struct cache *cache, const char *key)
 {
     struct cache_item *old = hashmap_remove(cache->items, key);
     if (old != NULL)
-        cache_destroy_item(cache, item);
+        cache_destroy_item(cache, old);
 }
 
 void
