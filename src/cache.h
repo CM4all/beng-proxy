@@ -15,6 +15,7 @@ struct cache;
 
 struct cache_item {
     time_t expires;
+    size_t size;
 };
 
 struct cache_class {

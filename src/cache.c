@@ -12,6 +12,7 @@
 
 struct cache {
     const struct cache_class *class;
+    size_t size;
     struct hashmap *items;
 };
 
@@ -23,6 +24,7 @@ cache_new(pool_t pool, const struct cache_class *class)
     assert(class != NULL);
 
     cache->class = class;
+    cache->size = 0;
     cache->items = hashmap_new(pool, 1024);
 
     /* event, auto-expire */
@@ -39,9 +41,15 @@ cache_close(struct cache *cache)
         hashmap_rewind(cache->items);
         while ((pair = hashmap_next(cache->items)) != NULL) {
             struct cache_item *item = pair->value;
+
+            assert(cache->size >= item->size);
+            cache->size -= item->size;
+
             cache->class->destroy(item);
         }
     }
+
+    assert(cache->size == 0);
 }
 
 struct cache_item *
@@ -55,6 +63,8 @@ cache_get(struct cache *cache, const char *key)
         (cache->class->validate == NULL || cache->class->validate(item)))
         return item;
 
+    assert(cache->size >= item->size);
+    cache->size -= item->size;
     hashmap_remove(cache->items, key);
     if (cache->class->destroy != NULL)
         cache->class->destroy(item);
@@ -67,6 +77,14 @@ cache_put(struct cache *cache, const char *key,
 {
     /* XXX size constraints */
     struct cache_item *old = hashmap_put(cache->items, key, item, 1);
-    if (old != NULL && cache->class->destroy != NULL)
-        cache->class->destroy(old);
+
+    if (old != NULL) {
+        assert(cache->size >= old->size);
+        cache->size -= old->size;
+
+        if (cache->class->destroy != NULL)
+            cache->class->destroy(old);
+    }
+
+    cache->size += item->size;
 }

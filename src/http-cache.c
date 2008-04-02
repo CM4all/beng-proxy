@@ -50,7 +50,6 @@ struct http_cache_item {
 
     http_status_t status;
     strmap_t headers;
-    size_t length;
     unsigned char *data;
 };
 
@@ -159,20 +158,20 @@ http_cache_put(struct http_cache_request *request)
         item->item.expires = time(NULL) + 300; /* XXX 5 minutes */
     else
         item->item.expires = request->info->expires;
+    item->item.size = request->length;
     item->pool = pool;
     http_cache_copy_info(pool, &item->info, request->info);
     item->status = request->status;
     item->headers = strmap_dup(pool, request->headers);
-    item->length = request->length;
 
-    if (item->length == 0) {
+    if (item->item.size == 0) {
         item->data = NULL;
     } else {
         unsigned char *dest;
         const void *src;
         size_t length;
 
-        item->data = dest = p_malloc(pool, item->length);
+        item->data = dest = p_malloc(pool, item->item.size);
         while ((src = growing_buffer_read(request->output, &length)) != NULL) {
             memcpy(dest, src, length);
             dest += length;
@@ -481,7 +480,7 @@ http_cache_serve(struct http_cache_item *item,
     http_response_handler_set(&handler_ref, handler, handler_ctx);
 
     /* XXX hold reference on item */
-    response_body = istream_memory_new(pool, item->data, item->length);
+    response_body = istream_memory_new(pool, item->data, item->item.size);
     http_response_handler_invoke_response(&handler_ref, item->status,
                                           item->headers, response_body);
 }
