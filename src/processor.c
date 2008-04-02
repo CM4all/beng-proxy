@@ -409,6 +409,11 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->uri_base = processor->widget->class->old_style
                 ? URI_BASE_FOCUS
                 : URI_BASE_TEMPLATE;
+        } else if (strref_cmp_literal(&tag->name, "link") == 0) {
+            /* this isn't actually an anchor, but we are only interested in
+               the HREF attribute */
+            processor->tag = TAG_A;
+            processor->uri_base = URI_BASE_TEMPLATE;
         } else if (strref_cmp_literal(&tag->name, "form") == 0) {
             processor->tag = TAG_FORM;
             processor->uri_base = processor->widget->class->old_style
