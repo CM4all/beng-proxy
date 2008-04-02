@@ -493,8 +493,8 @@ this variable for redirecting \\
 Relative links are difficult with \emph{beng-proxy}, because the
 browser interprets links as relative to the document by default.  A
 widget author cannot specify a link relative to the widget itself.  To
-allow this, \emph{beng-proxy} can rewrite relative links in the
-following modes:
+allow this, \emph{beng-proxy} can rewrite relative links to the
+following bases:
 
 \begin{tabular}{|l|p{10cm}|}
 \hline
@@ -527,11 +527,38 @@ child widget \\
 \hline
 \end{tabular}
 
-The mode name must be specified in the element attribute
-\texttt{c:base} before the attribute containing the URI.  Example:
+The base name must be specified in the element attribute
+\texttt{c:base} before the attribute containing the URI.  To specify
+the mode of the rewritten URI, you may use the attribute
+\texttt{c:mode}:
+
+\begin{tabular}{|l|p{10cm}|}
+\hline
+
+\texttt{direct} & direct link to the resource \\
+
+\hline
+
+\texttt{full} & link to \emph{beng-proxy} serving the full page,
+focusing the selected widget \\
+
+\hline
+
+\texttt{partial} & link to \emph{beng-proxy} serving only the selected
+widget; useful for frame contents \\
+
+\hline
+
+\texttt{proxy} & link to \emph{beng-proxy} proxying the selected
+resource without further processing
+
+\hline
+\end{tabular}
+
+Example:
 
 \begin{verbatim*}
-<img c:base="proxy" href="foo.jpg"/>
+<img c:base="widget" c:mode="proxy" href="foo.jpg"/>
 \end{verbatim*}
 
 

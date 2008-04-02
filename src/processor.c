@@ -20,9 +20,14 @@
 enum uri_base {
     URI_BASE_TEMPLATE,
     URI_BASE_WIDGET,
-    URI_BASE_FOCUS,
-    URI_BASE_PROXY,
     URI_BASE_CHILD,
+};
+
+enum uri_mode {
+    URI_MODE_DIRECT,
+    URI_MODE_FULL,
+    URI_MODE_PARTIAL,
+    URI_MODE_PROXY,
 };
 
 struct processor {
@@ -55,6 +60,7 @@ struct processor {
         TAG_SCRIPT,
     } tag;
     enum uri_base uri_base;
+    enum uri_mode uri_mode;
     off_t widget_start_offset;
     struct widget *embedded_widget;
     struct {
@@ -400,6 +406,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->uri_base = processor->widget->class->old_style
             ? URI_BASE_WIDGET
             : URI_BASE_TEMPLATE;
+        processor->uri_mode = URI_MODE_DIRECT;
 
         if (tag->type != TAG_CLOSE)
             processor_insert_jscript(processor, 0);
@@ -407,29 +414,40 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                processor_option_rewrite_url(processor)) {
         if (strref_cmp_literal(&tag->name, "a") == 0) {
             processor->tag = TAG_A;
-            processor->uri_base = processor->widget->class->old_style
-                ? URI_BASE_FOCUS
-                : URI_BASE_TEMPLATE;
+            if (processor->widget->class->old_style) {
+                processor->uri_base = URI_BASE_WIDGET;
+                processor->uri_mode = URI_MODE_FULL;
+            } else {
+                processor->uri_base = URI_BASE_TEMPLATE;
+                processor->uri_mode = URI_MODE_DIRECT;
+            }
         } else if (strref_cmp_literal(&tag->name, "link") == 0) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
             processor->tag = TAG_A;
             processor->uri_base = URI_BASE_TEMPLATE;
+            processor->uri_mode = URI_MODE_DIRECT;
         } else if (strref_cmp_literal(&tag->name, "form") == 0) {
             processor->tag = TAG_FORM;
-            processor->uri_base = processor->widget->class->old_style
-                ? URI_BASE_FOCUS
-                : URI_BASE_TEMPLATE;
+            if (processor->widget->class->old_style) {
+                processor->uri_base = URI_BASE_WIDGET;
+                processor->uri_mode = URI_MODE_FULL;
+            } else {
+                processor->uri_base = URI_BASE_TEMPLATE;
+                processor->uri_mode = URI_MODE_DIRECT;
+            }
         } else if (strref_cmp_literal(&tag->name, "img") == 0) {
             processor->tag = TAG_IMG;
             processor->uri_base = processor->widget->class->old_style
                 ? URI_BASE_WIDGET
                 : URI_BASE_TEMPLATE;
+            processor->uri_mode = URI_MODE_DIRECT;
         } else if (strref_cmp_literal(&tag->name, "iframe") == 0) {
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
             processor->tag = TAG_IMG;
             processor->uri_base = URI_BASE_TEMPLATE;
+            processor->uri_mode = URI_MODE_DIRECT;
         } else {
             processor->tag = TAG_NONE;
         }
@@ -448,10 +466,54 @@ replace_attribute_value(struct processor *processor,
                           value);
 }
 
+static const char *
+transform_widget_uri_attribute(struct processor *processor,
+                               struct widget *widget,
+                               const struct strref *value,
+                               enum uri_mode mode)
+{
+    switch (mode) {
+    case URI_MODE_DIRECT:
+        return widget_absolute_uri(processor->pool, widget,
+                                   value->data, value->length);
+
+    case URI_MODE_FULL:
+        return widget_external_uri(processor->pool,
+                                   processor->env->external_uri,
+                                   processor->env->args,
+                                   widget,
+                                   1,
+                                   value->data, value->length,
+                                   0, 0);
+
+    case URI_MODE_PARTIAL:
+        return widget_external_uri(processor->pool,
+                                   processor->env->external_uri,
+                                   processor->env->args,
+                                   widget,
+                                   1,
+                                   value->data, value->length,
+                                   1, 0);
+
+    case URI_MODE_PROXY:
+        return widget_external_uri(processor->pool,
+                                   processor->env->external_uri,
+                                   processor->env->args,
+                                   widget,
+                                   1,
+                                   value->data, value->length,
+                                   1, 1);
+    }
+
+    assert(0);
+    return NULL;
+}
+
 static void
 transform_uri_attribute(struct processor *processor,
                         const struct parser_attr *attr,
-                        enum uri_base base)
+                        enum uri_base base,
+                        enum uri_mode mode)
 {
     const char *uri;
     struct widget *child;
@@ -463,41 +525,19 @@ transform_uri_attribute(struct processor *processor,
         break;
 
     case URI_BASE_WIDGET:
-        uri = widget_absolute_uri(processor->pool,
-                                  processor->widget,
-                                  attr->value.data, attr->value.length);
-        break;
-
-    case URI_BASE_FOCUS:
-        uri = widget_external_uri(processor->pool,
-                                  processor->env->external_uri,
-                                  processor->env->args,
-                                  processor->widget,
-                                  1,
-                                  attr->value.data, attr->value.length,
-                                  0, 0);
-        break;
-
-    case URI_BASE_PROXY:
-        uri = widget_external_uri(processor->pool,
-                                  processor->env->external_uri,
-                                  processor->env->args,
-                                  processor->widget,
-                                  1,
-                                  attr->value.data, attr->value.length,
-                                  1, 1);
+        uri = transform_widget_uri_attribute(processor,
+                                             processor->widget,
+                                             &attr->value,
+                                             mode);
         break;
 
     case URI_BASE_CHILD:
         child = widget_get_child(processor->widget, strref_dup(processor->pool,
                                                                &attr->value));
         if (child != NULL)
-            uri = widget_external_uri(processor->pool,
-                                      processor->env->external_uri,
-                                      processor->env->args,
-                                      child,
-                                      0, NULL, 0,
-                                      1, 0);
+            uri = transform_widget_uri_attribute(processor, child,
+                                                 &attr->value, /* XXX NULL */
+                                                 mode);
         else
             uri = NULL;
         break;
@@ -579,14 +619,27 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         strref_cmp_literal(&attr->name, "c:base") == 0) {
         if (strref_cmp_literal(&attr->value, "widget") == 0)
             processor->uri_base = URI_BASE_WIDGET;
-        else if (strref_cmp_literal(&attr->value, "focus") == 0)
-            processor->uri_base = URI_BASE_FOCUS;
-        else if (strref_cmp_literal(&attr->value, "proxy") == 0)
-            processor->uri_base = URI_BASE_PROXY;
         else if (strref_cmp_literal(&attr->value, "child") == 0)
             processor->uri_base = URI_BASE_CHILD;
         else
             processor->uri_base = URI_BASE_TEMPLATE;
+        /* XXX remove the whole attribute */
+        return;
+    }
+
+    if (!processor_option_quiet(processor) &&
+        processor->tag != TAG_NONE &&
+        strref_cmp_literal(&attr->name, "c:mode") == 0) {
+        if (strref_cmp_literal(&attr->value, "direct") == 0)
+            processor->uri_mode = URI_MODE_DIRECT;
+        else if (strref_cmp_literal(&attr->value, "full") == 0)
+            processor->uri_mode = URI_MODE_FULL;
+        else if (strref_cmp_literal(&attr->value, "partial") == 0)
+            processor->uri_mode = URI_MODE_PARTIAL;
+        else if (strref_cmp_literal(&attr->value, "proxy") == 0)
+            processor->uri_mode = URI_MODE_PROXY;
+        else
+            processor->uri_mode = URI_MODE_DIRECT;
         /* XXX remove the whole attribute */
         return;
     }
@@ -640,24 +693,28 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
     case TAG_IMG:
         if (strref_cmp_literal(&attr->name, "src") == 0)
-            transform_uri_attribute(processor, attr, processor->uri_base);
+            transform_uri_attribute(processor, attr, processor->uri_base,
+                                    processor->uri_mode);
         break;
 
     case TAG_A:
         if (strref_cmp_literal(&attr->name, "href") == 0 &&
             !strref_starts_with_n(&attr->value, "#", 1) &&
             !strref_starts_with_n(&attr->value, "javascript:", 11))
-            transform_uri_attribute(processor, attr, processor->uri_base);
+            transform_uri_attribute(processor, attr, processor->uri_base,
+                                    processor->uri_mode);
         break;
 
     case TAG_FORM:
         if (strref_cmp_literal(&attr->name, "action") == 0)
-            transform_uri_attribute(processor, attr, processor->uri_base);
+            transform_uri_attribute(processor, attr, processor->uri_base,
+                                    processor->uri_mode);
         break;
 
     case TAG_SCRIPT:
         if (strref_cmp_literal(&attr->name, "src") == 0)
-            transform_uri_attribute(processor, attr, processor->uri_base);
+            transform_uri_attribute(processor, attr, processor->uri_base,
+                                    processor->uri_mode);
         break;
     }
 }
