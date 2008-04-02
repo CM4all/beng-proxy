@@ -125,7 +125,7 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
         ctx->widget = widget;
         http_response_handler_set(&ctx->handler, handler, handler_ctx);
         ctx->async_ref = async_ref;
-        widget_class_lookup(pool, env->translate_stock, widget->class_name,
+        widget_class_lookup(env->pool, env->translate_stock, widget->class_name,
                             class_lookup_callback, ctx, async_ref);
         return;
     }
