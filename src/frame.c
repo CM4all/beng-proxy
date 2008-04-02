@@ -125,7 +125,6 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
 {
     assert(pool != NULL);
     assert(env != NULL);
-    assert(env->widget_callback == frame_widget_callback);
     assert(widget != NULL);
     assert(widget->from_request.proxy || widget->from_request.proxy_ref != NULL ||
            widget->parent != NULL);

@@ -13,6 +13,7 @@
 #include "js-generator.h"
 #include "widget-stream.h"
 #include "tpool.h"
+#include "frame.h"
 
 #include <assert.h>
 #include <string.h>
@@ -737,10 +738,10 @@ embed_widget(struct processor *processor, struct processor_env *env,
 
     if (widget->from_request.proxy || widget->from_request.proxy_ref != NULL) {
         processor->response_sent = 1;
-        env->widget_callback(pool, env, widget,
-                             processor->response_handler.handler,
-                             processor->response_handler.ctx,
-                             processor->async_ref);
+        frame_widget_callback(pool, env, widget,
+                              processor->response_handler.handler,
+                              processor->response_handler.ctx,
+                              processor->async_ref);
         parser_close(processor->parser);
         return NULL;
     } else {
@@ -750,9 +751,9 @@ embed_widget(struct processor *processor, struct processor_env *env,
         ws = widget_stream_new(pool);
         hold = istream_hold_new(pool, istream_catch_new(pool, ws->delayed));
 
-        env->widget_callback(pool, env, widget,
-                             &widget_stream_response_handler, ws,
-                             &ws->async_ref);
+        frame_widget_callback(pool, env, widget,
+                              &widget_stream_response_handler, ws,
+                              &ws->async_ref);
 
         return hold;
     }

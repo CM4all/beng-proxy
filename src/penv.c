@@ -18,8 +18,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    strmap_t args,
                    struct session *session,
                    strmap_t request_headers,
-                   istream_t request_body,
-                   processor_widget_callback_t widget_callback)
+                   istream_t request_body)
 {
     assert(session != NULL);
     assert(request_body == NULL || !istream_has_handler(request_body));
@@ -40,6 +39,4 @@ processor_env_init(pool_t pool, struct processor_env *env,
     env->request_body = request_body;
 
     env->session = session;
-
-    env->widget_callback = widget_callback;
 }

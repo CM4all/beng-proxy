@@ -8,6 +8,7 @@
 #include "widget-registry.h"
 #include "processor.h"
 #include "widget.h"
+#include "frame.h"
 
 void
 widget_registry_lookup(pool_t pool,
@@ -72,9 +73,9 @@ lookup_callback(const struct translate_response *response, void *ctx)
 
     lookup->widget->class = class;
 
-    lookup->env->widget_callback(lookup->pool, lookup->env, lookup->widget,
-                                 lookup->handler.handler, lookup->handler.ctx, 
-                                 lookup->async_ref);
+    frame_widget_callback(lookup->pool, lookup->env, lookup->widget,
+                          lookup->handler.handler, lookup->handler.ctx, 
+                          lookup->async_ref);
     pool_unref(lookup->pool);
 }
 

@@ -98,8 +98,7 @@ response_invoke_processor(struct request *request2,
                        request2->args,
                        request2->session,
                        request->headers,
-                       request_body,
-                       embed_widget_callback);
+                       request_body);
 
     widget = p_malloc(request->pool, sizeof(*widget));
     widget_init(widget, &root_widget_class);
@@ -117,8 +116,6 @@ response_invoke_processor(struct request *request2,
     widget->from_request.proxy_ref = widget_ref_parse(request->pool,
                                                       strmap_get(request2->env.args, "frame"));
     if (widget->from_request.proxy_ref != NULL) {
-        request2->env.widget_callback = frame_widget_callback;
-
         processor_new(request->pool, body, widget, &request2->env,
                       processor_options,
                       &widget_proxy_handler, request,

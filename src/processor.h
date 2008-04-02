@@ -38,13 +38,6 @@ struct widget;
 struct processor_env;
 struct async_operation_ref;
 
-typedef void (*processor_widget_callback_t)(pool_t pool,
-                                            struct processor_env *env,
-                                            struct widget *widget,
-                                            const struct http_response_handler *handler,
-                                            void *handler_ctx,
-                                            struct async_operation_ref *async_ref);
-
 struct processor_env {
     pool_t pool;
 
@@ -67,8 +60,6 @@ struct processor_env {
     istream_t request_body;
 
     struct session *session;
-
-    processor_widget_callback_t widget_callback;
 };
 
 void
@@ -82,8 +73,7 @@ processor_env_init(pool_t pool,
                    strmap_t args,
                    struct session *session,
                    strmap_t request_headers,
-                   istream_t request_body,
-                   processor_widget_callback_t widget_callback);
+                   istream_t request_body);
 
 void
 processor_new(pool_t pool, istream_t istream,
