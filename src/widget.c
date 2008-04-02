@@ -31,6 +31,24 @@ widget_set_id(struct widget *widget, pool_t pool, const struct strref *id)
         widget->lazy.prefix = p_strcat(pool, p, widget->id, "__", NULL);
 }
 
+struct widget *
+widget_get_child(struct widget *widget, const char *id)
+{
+    struct widget *child;
+
+    assert(widget != NULL);
+    assert(id != NULL);
+
+    for (child = (struct widget *)widget->children.next;
+         child != (struct widget *)&widget->children;
+         child = (struct widget *)child->siblings.next) {
+        if (child->id != NULL && strcmp(child->id, id) == 0)
+            return child;
+    }
+
+    return NULL;
+}
+
 void
 widget_cancel(struct widget *widget)
 {

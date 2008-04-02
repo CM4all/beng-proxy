@@ -193,6 +193,9 @@ widget_root(struct widget *widget)
     return widget;
 }
 
+struct widget *
+widget_get_child(struct widget *widget, const char *id);
+
 static inline const char *
 widget_path(const struct widget *widget)
 {
