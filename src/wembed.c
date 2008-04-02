@@ -21,8 +21,15 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
+    unsigned options;
+
+    if (widget->class->old_style)
+        options = PROCESSOR_FRAGMENT | PROCESSOR_JSCRIPT;
+    else
+        options = 0;
+
     embed_new(pool, widget,
-              env, PROCESSOR_FRAGMENT | PROCESSOR_JSCRIPT,
+              env, options,
               handler, handler_ctx, async_ref);
 }
 
