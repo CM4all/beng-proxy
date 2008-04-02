@@ -13,6 +13,8 @@
 #include "async.h"
 #include "google-gadget.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 #include <string.h>
 
@@ -181,18 +183,6 @@ embed_redirect(struct embed *embed,
     return 1;
 }
 
-static void
-embed_send_error(struct embed *embed, const char *msg)
-{
-    struct strmap *headers = strmap_new(embed->pool, 4);
-    istream_t body = istream_string_new(embed->pool, msg);
-
-    strmap_addn(headers, "content-type", "text/plain");
-    http_response_handler_invoke_response(&embed->handler_ref,
-                                          HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                          headers, body);
-}
-
 static void 
 embed_response_response(http_status_t status, strmap_t headers, istream_t body,
                         void *ctx)
@@ -226,8 +216,9 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
         if (!embed->widget->from_request.raw && body != NULL) {
             if (content_type == NULL ||
                 strncmp(content_type, "text/html", 9) != 0) {
+                daemon_log(2, "widget sent non-HTML response\n");
                 istream_close(body);
-                embed_send_error(embed, "text/html expected");
+                http_response_handler_invoke_abort(&embed->handler_ref);
                 pool_unref(embed->pool);
                 return;
             }
