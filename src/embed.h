@@ -26,11 +26,8 @@ istream_t
 embed_iframe_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget);
 
-void
+istream_t
 embed_widget_callback(pool_t pool, struct processor_env *env,
-                      struct widget *widget,
-                      const struct http_response_handler *handler,
-                      void *handler_ctx,
-                      struct async_operation_ref *async_ref);
+                      struct widget *widget);
 
 #endif

@@ -11,10 +11,10 @@
 #include "growing-buffer.h"
 #include "js-filter.h"
 #include "js-generator.h"
-#include "widget-stream.h"
 #include "tpool.h"
 #include "frame.h"
 #include "embed.h"
+#include "async.h"
 
 #include <assert.h>
 #include <string.h>
@@ -744,17 +744,13 @@ embed_widget(struct processor *processor, struct processor_env *env,
         parser_close(processor->parser);
         return NULL;
     } else {
-        struct widget_stream *ws;
-        istream_t hold;
+        istream_t istream;
 
-        ws = widget_stream_new(pool);
-        hold = istream_hold_new(pool, istream_catch_new(pool, ws->delayed));
+        istream = embed_widget_callback(pool, env, widget);
+        if (istream != NULL)
+            istream = istream_catch_new(pool, istream);
 
-        embed_widget_callback(pool, env, widget,
-                              &widget_stream_response_handler, ws,
-                              &ws->async_ref);
-
-        return hold;
+        return istream;
     }
 }
 

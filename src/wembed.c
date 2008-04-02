@@ -10,52 +10,50 @@
 #include "widget-registry.h"
 #include "growing-buffer.h"
 #include "js-generator.h"
+#include "widget-stream.h"
 
 #include <assert.h>
 #include <string.h>
 
-struct widget_callback_ctx {
+struct inline_widget {
     pool_t pool;
     struct processor_env *env;
     struct widget *widget;
 
-    struct http_response_handler_ref handler;
-    struct async_operation_ref *async_ref;
+    struct widget_stream *stream;
 };
+
+static void
+inline_widget_set(struct inline_widget *iw);
 
 static void
 class_lookup_callback(const struct widget_class *class, void *_ctx)
 {
-    struct widget_callback_ctx *ctx = _ctx;
+    struct inline_widget *iw = _ctx;
 
-    if (class == NULL) {
-        http_response_handler_invoke_abort(&ctx->handler);
-        return;
+    if (class != NULL) {
+        iw->widget->class = class;
+        inline_widget_set(iw);
+    } else {
+        async_ref_clear(istream_delayed_async(iw->stream->delayed));
+        istream_free(&iw->stream->delayed);
     }
-
-    ctx->widget->class = class;
-    embed_widget_callback(ctx->pool, ctx->env, ctx->widget,
-                          ctx->handler.handler, ctx->handler.ctx,
-                          ctx->async_ref);
 }
 
 static void
-embed_inline_widget(pool_t pool, struct processor_env *env,
-                    struct widget *widget,
-                    const struct http_response_handler *handler,
-                    void *handler_ctx,
-                    struct async_operation_ref *async_ref)
+embed_inline_widget(struct inline_widget *iw)
 {
     unsigned options;
 
-    if (widget->class->old_style)
+    if (iw->widget->class->old_style)
         options = PROCESSOR_FRAGMENT | PROCESSOR_JSCRIPT;
     else
         options = 0;
 
-    widget_http_request(pool, widget,
-                        env, options,
-                        handler, handler_ctx, async_ref);
+    widget_http_request(iw->pool, iw->widget,
+                        iw->env, options,
+                        &widget_stream_response_handler, iw->stream,
+                        &iw->stream->async_ref);
 }
 
 static const char *
@@ -104,57 +102,54 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
     return growing_buffer_istream(gb);
 }
 
-void
-embed_widget_callback(pool_t pool, struct processor_env *env,
-                      struct widget *widget,
-                      const struct http_response_handler *handler,
-                      void *handler_ctx,
-                      struct async_operation_ref *async_ref)
+static void
+inline_widget_set(struct inline_widget *iw)
 {
-    struct http_response_handler_ref handler_ref;
-    istream_t istream = NULL;
-
-    assert(pool != NULL);
-    assert(env != NULL);
-    assert(widget != NULL);
-
-    if (widget->class == NULL) {
-        struct widget_callback_ctx *ctx = p_malloc(pool, sizeof(*ctx));
-        ctx->pool = pool;
-        ctx->env = env;
-        ctx->widget = widget;
-        http_response_handler_set(&ctx->handler, handler, handler_ctx);
-        ctx->async_ref = async_ref;
-        widget_class_lookup(env->pool, env->translate_stock, widget->class_name,
-                            class_lookup_callback, ctx, async_ref);
-        return;
-    }
+    struct widget *widget = iw->widget;
 
     widget_sync_session(widget);
 
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
-        embed_inline_widget(pool, env, widget,
-                            handler, handler_ctx, async_ref);
+        embed_inline_widget(iw);
         return;
 
     case WIDGET_DISPLAY_NONE:
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_response(&handler_ref,
-                                              HTTP_STATUS_NO_CONTENT,
-                                              NULL, NULL);
+        istream_delayed_set_eof(iw->stream->delayed);
         return;
 
     case WIDGET_DISPLAY_IFRAME:
     case WIDGET_DISPLAY_EXTERNAL:
         widget_cancel(widget);
-        istream = embed_iframe_widget(pool, env, widget);
-        break;
+        istream_delayed_set(iw->stream->delayed,
+                            embed_iframe_widget(iw->pool, iw->env, iw->widget));
+        return;
     }
 
-    assert(istream != NULL);
+    assert(0);
+    istream_close(iw->stream->delayed);
+}
 
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
-    http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_OK,
-                                          NULL, istream);
+istream_t
+embed_widget_callback(pool_t pool, struct processor_env *env,
+                      struct widget *widget)
+{
+    struct inline_widget *iw = p_malloc(pool, sizeof(*iw));
+
+    assert(pool != NULL);
+    assert(env != NULL);
+    assert(widget != NULL);
+
+    iw->pool = pool;
+    iw->env = env;
+    iw->widget = widget;
+    iw->stream = widget_stream_new(pool);
+
+    if (widget->class == NULL)
+        widget_class_lookup(env->pool, env->translate_stock, widget->class_name,
+                            class_lookup_callback, iw, &iw->stream->async_ref);
+    else
+        inline_widget_set(iw);
+
+    return iw->stream->delayed;
 }
