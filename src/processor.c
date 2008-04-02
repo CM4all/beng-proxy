@@ -22,6 +22,7 @@ enum uri_base {
     URI_BASE_WIDGET,
     URI_BASE_FOCUS,
     URI_BASE_PROXY,
+    URI_BASE_CHILD,
 };
 
 struct processor {
@@ -453,6 +454,7 @@ transform_uri_attribute(struct processor *processor,
                         enum uri_base base)
 {
     const char *uri;
+    struct widget *child;
 
     switch (base) {
     case URI_BASE_TEMPLATE:
@@ -484,6 +486,20 @@ transform_uri_attribute(struct processor *processor,
                                   1,
                                   attr->value.data, attr->value.length,
                                   1, 1);
+        break;
+
+    case URI_BASE_CHILD:
+        child = widget_get_child(processor->widget, strref_dup(processor->pool,
+                                                               &attr->value));
+        if (child != NULL)
+            uri = widget_external_uri(processor->pool,
+                                      processor->env->external_uri,
+                                      processor->env->args,
+                                      child,
+                                      0, NULL, 0,
+                                      1, 0);
+        else
+            uri = NULL;
         break;
     }
 
@@ -567,6 +583,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             processor->uri_base = URI_BASE_FOCUS;
         else if (strref_cmp_literal(&attr->value, "proxy") == 0)
             processor->uri_base = URI_BASE_PROXY;
+        else if (strref_cmp_literal(&attr->value, "child") == 0)
+            processor->uri_base = URI_BASE_CHILD;
         else
             processor->uri_base = URI_BASE_TEMPLATE;
         /* XXX remove the whole attribute */
