@@ -18,15 +18,17 @@ widget_registry_lookup(pool_t pool,
                        void *ctx,
                        struct async_operation_ref *async_ref);
 
-struct processor_env;
-struct widget;
-struct http_response_handler;
+struct widget_class;
+
+typedef void (*widget_class_callback_t)(const struct widget_class *class,
+                                        void *ctx);
 
 void
-widget_class_lookup(pool_t pool, struct processor_env *env,
-                    struct widget *widget,
-                    const struct http_response_handler *handler,
-                    void *handler_ctx,
+widget_class_lookup(pool_t pool,
+                    struct stock *translate_stock,
+                    const char *widget_type,
+                    widget_class_callback_t callback,
+                    void *ctx,
                     struct async_operation_ref *async_ref);
 
 #endif

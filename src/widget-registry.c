@@ -34,12 +34,10 @@ widget_registry_lookup(pool_t pool,
 struct widget_class_lookup {
     pool_t pool;
 
-    struct processor_env *env;
-    struct widget *widget;
+    struct widget_class class;
 
-    struct http_response_handler_ref handler;
-
-    struct async_operation_ref *async_ref;
+    widget_class_callback_t callback;
+    void *callback_ctx;
 };
 
 static void 
@@ -49,17 +47,15 @@ lookup_callback(const struct translate_response *response, void *ctx)
     struct widget_class *class;
 
     if (response->status != 0) {
-        /* XXX */
-        http_response_handler_invoke_response(&lookup->handler, response->status,
-                                              NULL, NULL);
+        lookup->callback(NULL, lookup->callback_ctx);
         pool_unref(lookup->pool);
         return;
     }
 
     assert(response->proxy != NULL); /* XXX */
 
-    class = p_malloc(lookup->env->pool, sizeof(*class));
-    class->uri = p_strdup(lookup->env->pool, response->proxy);
+    class = &lookup->class;
+    class->uri = p_strdup(lookup->pool, response->proxy);
     class->old_style = 0;
 
     if (response->transformation != NULL &&
@@ -71,35 +67,30 @@ lookup_callback(const struct translate_response *response, void *ctx)
         class->is_container = 0;
     }
 
-    lookup->widget->class = class;
-
-    frame_widget_callback(lookup->pool, lookup->env, lookup->widget,
-                          lookup->handler.handler, lookup->handler.ctx, 
-                          lookup->async_ref);
+    lookup->callback(class, lookup->callback_ctx);
     pool_unref(lookup->pool);
 }
 
+
 void
-widget_class_lookup(pool_t pool, struct processor_env *env,
-                    struct widget *widget,
-                    const struct http_response_handler *handler,
-                    void *handler_ctx,
+widget_class_lookup(pool_t pool,
+                    struct stock *translate_stock,
+                    const char *widget_type,
+                    widget_class_callback_t callback,
+                    void *ctx,
                     struct async_operation_ref *async_ref)
 {
     struct widget_class_lookup *lookup = p_malloc(pool, sizeof(*lookup));
 
-    assert(widget->class == NULL);
-    assert(widget->class_name != NULL);
+    assert(widget_type != NULL);
 
     pool_ref(pool);
 
     lookup->pool = pool;
-    lookup->env = env;
-    lookup->widget = widget;
-    http_response_handler_set(&lookup->handler, handler, handler_ctx);
-    lookup->async_ref = async_ref;
+    lookup->callback = callback;
+    lookup->callback_ctx = ctx;
 
-    widget_registry_lookup(pool, env->translate_stock, widget->class_name,
+    widget_registry_lookup(pool, translate_stock, widget_type,
                            lookup_callback, lookup,
                            async_ref);
 }

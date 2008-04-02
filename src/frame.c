@@ -14,6 +14,31 @@
 
 #include <assert.h>
 
+struct widget_callback_ctx {
+    pool_t pool;
+    struct processor_env *env;
+    struct widget *widget;
+
+    struct http_response_handler_ref handler;
+    struct async_operation_ref *async_ref;
+};
+
+static void
+class_lookup_callback(const struct widget_class *class, void *_ctx)
+{
+    struct widget_callback_ctx *ctx = _ctx;
+
+    if (class == NULL) {
+        http_response_handler_invoke_abort(&ctx->handler);
+        return;
+    }
+
+    ctx->widget->class = class;
+    frame_widget_callback(ctx->pool, ctx->env, ctx->widget,
+                          ctx->handler.handler, ctx->handler.ctx,
+                          ctx->async_ref);
+}
+
 static void
 frame_top_widget(pool_t pool, struct processor_env *env,
                  struct widget *widget,
@@ -26,8 +51,14 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     assert(widget->from_request.proxy);
 
     if (widget->class == NULL) {
-        widget_class_lookup(pool, env, widget,
-                            handler, handler_ctx, async_ref);
+        struct widget_callback_ctx *ctx = p_malloc(pool, sizeof(*ctx));
+        ctx->pool = pool;
+        ctx->env = env;
+        ctx->widget = widget;
+        http_response_handler_set(&ctx->handler, handler, handler_ctx);
+        ctx->async_ref = async_ref;
+        widget_class_lookup(pool, env->translate_stock, widget->class_name,
+                            class_lookup_callback, ctx, async_ref);
         return;
     }
 
@@ -77,8 +108,14 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
                     struct async_operation_ref *async_ref)
 {
     if (widget->class == NULL) {
-        widget_class_lookup(pool, env, widget,
-                            handler, handler_ctx, async_ref);
+        struct widget_callback_ctx *ctx = p_malloc(pool, sizeof(*ctx));
+        ctx->pool = pool;
+        ctx->env = env;
+        ctx->widget = widget;
+        http_response_handler_set(&ctx->handler, handler, handler_ctx);
+        ctx->async_ref = async_ref;
+        widget_class_lookup(pool, env->translate_stock, widget->class_name,
+                            class_lookup_callback, ctx, async_ref);
         return;
     }
 
