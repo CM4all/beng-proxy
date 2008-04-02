@@ -52,6 +52,16 @@ cache_close(struct cache *cache)
     }
 }
 
+static void
+cache_destroy_item(struct cache *cache, struct cache_item *item)
+{
+    assert(cache->size >= item->size);
+    cache->size -= item->size;
+
+    if (cache->class->destroy != NULL)
+        cache->class->destroy(item);
+}
+
 struct cache_item *
 cache_get(struct cache *cache, const char *key)
 {
@@ -63,11 +73,8 @@ cache_get(struct cache *cache, const char *key)
         (cache->class->validate == NULL || cache->class->validate(item)))
         return item;
 
-    assert(cache->size >= item->size);
-    cache->size -= item->size;
     hashmap_remove(cache->items, key);
-    if (cache->class->destroy != NULL)
-        cache->class->destroy(item);
+    cache_destroy_item(cache, item);
     return NULL;
 }
 
@@ -78,13 +85,8 @@ cache_put(struct cache *cache, const char *key,
     /* XXX size constraints */
     struct cache_item *old = hashmap_put(cache->items, key, item, 1);
 
-    if (old != NULL) {
-        assert(cache->size >= old->size);
-        cache->size -= old->size;
-
-        if (cache->class->destroy != NULL)
-            cache->class->destroy(old);
-    }
+    if (old != NULL)
+        cache_destroy_item(cache, old);
 
     cache->size += item->size;
 }
