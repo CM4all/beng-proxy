@@ -419,6 +419,11 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->uri_base = processor->widget->class->old_style
                 ? URI_BASE_WIDGET
                 : URI_BASE_TEMPLATE;
+        } else if (strref_cmp_literal(&tag->name, "iframe") == 0) {
+            /* this isn't actually an IMG, but we are only interested
+               in the SRC attribute */
+            processor->tag = TAG_IMG;
+            processor->uri_base = URI_BASE_TEMPLATE;
         } else {
             processor->tag = TAG_NONE;
         }
