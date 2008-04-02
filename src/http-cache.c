@@ -206,8 +206,6 @@ http_cache_response_evaluate(struct http_cache_info *info,
     time_t date, now, offset;
     const char *p;
 
-    (void)headers;
-
     if (status != HTTP_STATUS_OK || body_available == 0)
         return 0;
 
