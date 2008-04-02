@@ -47,9 +47,9 @@ cache_close(struct cache *cache)
 
             cache->class->destroy(item);
         }
-    }
 
-    assert(cache->size == 0);
+        assert(cache->size == 0);
+    }
 }
 
 struct cache_item *
