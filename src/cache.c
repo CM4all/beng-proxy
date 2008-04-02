@@ -88,12 +88,22 @@ cache_destroy_oldest_item(struct cache *cache)
     const struct hashmap_pair *pair;
     const char *oldest_key;
     struct cache_item *oldest_item = NULL;
+    const time_t now = time(NULL);
 
     /* XXX this function is O(n^2) */
 
     hashmap_rewind(cache->items);
     while ((pair = hashmap_next(cache->items)) != NULL) {
         struct cache_item *item = pair->value;
+
+        if (now >= item->expires) {
+            /* this item is expired; although this method should
+               delete the oldest item, we are satisfied for now with
+               deleting any expired item */
+            oldest_key = pair->key;
+            oldest_item = item;
+            break;
+        }
 
         if (oldest_item == NULL ||
             item->last_accessed < oldest_item->last_accessed) {
