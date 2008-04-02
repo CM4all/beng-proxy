@@ -127,14 +127,17 @@ widget_external_uri(pool_t pool,
             pool_rewind(tpool, &mark);
             return NULL;
         }
-    }
+    } else
+        p = NULL;
 
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format_n(tpool, args,
                           focus ? "focus" : NULL, path, strlen(path),
-                          focus ? "path" : NULL, p->data, p->length,
+                          focus ? "path" : NULL,
+                          p == NULL ? NULL : p->data,
+                          p == NULL ? 0 : p->length,
                           frame ? "frame" : NULL, path, strlen(path),
                           NULL);
 
