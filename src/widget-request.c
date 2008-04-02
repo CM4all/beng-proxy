@@ -56,10 +56,12 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
     assert(widget->from_request.body == NULL);
     assert(!widget->from_request.proxy);
 
+    if (widget->id == NULL || widget->parent == NULL)
+        return;
+
     /* is this widget being proxied? */
 
-    if (widget->id != NULL && widget->parent != NULL &&
-        widget->parent->from_request.proxy_ref != NULL &&
+    if (widget->parent->from_request.proxy_ref != NULL &&
         strcmp(widget->id, widget->parent->from_request.proxy_ref->id) == 0) {
         widget->from_request.proxy_ref = widget->parent->from_request.proxy_ref->next;
 
@@ -73,8 +75,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
 
     /* are we focused? */
 
-    if (widget->id != NULL && widget->parent != NULL &&
-        widget->parent->from_request.focus_ref != NULL &&
+    if (widget->parent->from_request.focus_ref != NULL &&
         strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
         widget->parent->from_request.focus_ref->next == NULL) {
         /* we're in focus.  forward query string and request body. */
@@ -87,8 +88,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
             widget->from_request.body = env->request_body;
             env->request_body = NULL;
         }
-    } else if (widget->id != NULL && widget->parent != NULL &&
-               widget->parent->from_request.focus_ref != NULL &&
+    } else if (widget->parent->from_request.focus_ref != NULL &&
                strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
                widget->parent->from_request.focus_ref->next != NULL) {
         /* we are the parent (or grant-parent) of the focused widget.
