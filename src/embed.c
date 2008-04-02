@@ -77,7 +77,7 @@ headers_copy(struct strmap *in, struct strmap *out,
 }
 
 static struct strmap *
-embed_request_headers(struct embed *embed, int with_body)
+widget_request_headers(struct embed *embed, int with_body)
 {
     struct strmap *headers;
     struct widget_session *ws;
@@ -127,12 +127,12 @@ embed_request_headers(struct embed *embed, int with_body)
     return headers;
 }
 
-static const struct http_response_handler embed_response_handler;
+static const struct http_response_handler widget_response_handler;
 
 static int
-embed_redirect(struct embed *embed,
-               strmap_t request_headers, const char *location,
-               istream_t body)
+widget_response_redirect(struct embed *embed,
+                         strmap_t request_headers, const char *location,
+                         istream_t body)
 {
     const char *new_uri;
     struct strmap *headers;
@@ -172,19 +172,19 @@ embed_redirect(struct embed *embed,
     istream_close(body);
     pool_ref(embed->pool);
 
-    headers = embed_request_headers(embed, 0);
+    headers = widget_request_headers(embed, 0);
 
     http_cache_request(embed->env->http_cache,
                        embed->pool,
                        HTTP_METHOD_GET, location, headers, NULL,
-                       &embed_response_handler, embed,
+                       &widget_response_handler, embed,
                        embed->async_ref);
 
     return 1;
 }
 
 static void 
-embed_response_response(http_status_t status, strmap_t headers, istream_t body,
+widget_response_response(http_status_t status, strmap_t headers, istream_t body,
                         void *ctx)
 {
     struct embed *embed = ctx;
@@ -202,7 +202,8 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
 
     if (status >= 300 && status < 400) {
         location = strmap_get(headers, "location");
-        if (location != NULL && embed_redirect(embed, headers, location, body)) {
+        if (location != NULL &&
+            widget_response_redirect(embed, headers, location, body)) {
             pool_unref(embed->pool);
             return;
         }
@@ -256,7 +257,7 @@ embed_response_response(http_status_t status, strmap_t headers, istream_t body,
 }
 
 static void
-embed_response_abort(void *ctx)
+widget_response_abort(void *ctx)
 {
     struct embed *embed = ctx;
 
@@ -264,9 +265,9 @@ embed_response_abort(void *ctx)
     pool_unref(embed->pool);
 }
 
-static const struct http_response_handler embed_response_handler = {
-    .response = embed_response_response,
-    .abort = embed_response_abort,
+static const struct http_response_handler widget_response_handler = {
+    .response = widget_response_response,
+    .abort = widget_response_abort,
 };
 
 
@@ -276,12 +277,12 @@ static const struct http_response_handler embed_response_handler = {
  */
 
 void
-embed_new(pool_t pool, struct widget *widget,
-          struct processor_env *env,
-          unsigned options,
-          const struct http_response_handler *handler,
-          void *handler_ctx,
-          struct async_operation_ref *async_ref)
+widget_http_request(pool_t pool, struct widget *widget,
+                    struct processor_env *env,
+                    unsigned options,
+                    const struct http_response_handler *handler,
+                    void *handler_ctx,
+                    struct async_operation_ref *async_ref)
 {
     struct embed *embed;
     struct strmap *headers;
@@ -310,7 +311,7 @@ embed_new(pool_t pool, struct widget *widget,
     embed->env = env;
     embed->options = options;
 
-    headers = embed_request_headers(embed, widget->from_request.body != NULL);
+    headers = widget_request_headers(embed, widget->from_request.body != NULL);
 
     pool_ref(embed->pool);
 
@@ -323,5 +324,5 @@ embed_new(pool_t pool, struct widget *widget,
                        widget_real_uri(pool, widget),
                        headers,
                        widget->from_request.body,
-                       &embed_response_handler, embed, async_ref);
+                       &widget_response_handler, embed, async_ref);
 }

@@ -28,9 +28,9 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
     else
         options = 0;
 
-    embed_new(pool, widget,
-              env, options,
-              handler, handler_ctx, async_ref);
+    widget_http_request(pool, widget,
+                        env, options,
+                        handler, handler_ctx, async_ref);
 }
 
 static const char *

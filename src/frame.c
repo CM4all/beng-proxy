@@ -65,9 +65,9 @@ frame_top_widget(pool_t pool, struct processor_env *env,
         return;
     }
 
-    embed_new(pool, widget,
-              env, options,
-              handler, handler_ctx, async_ref);
+    widget_http_request(pool, widget,
+                        env, options,
+                        handler, handler_ctx, async_ref);
 }
 
 static void
@@ -111,9 +111,9 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         istream_free(&env->request_body);
     }
 
-    embed_new(pool, widget,
-              env, 0,
-              handler, handler_ctx, async_ref);
+    widget_http_request(pool, widget,
+                        env, 0,
+                        handler, handler_ctx, async_ref);
 }
 
 void
