@@ -184,6 +184,5 @@ frame_widget_callback(pool_t pool, struct processor_env *env,
         http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
                                               NULL, NULL);
     } else
-        /* child of a proxied widget */
-        embed_widget_callback(pool, env, widget, handler, handler_ctx, async_ref);
+        assert(0);
 }
