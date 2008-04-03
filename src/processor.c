@@ -93,7 +93,8 @@ processor_option_rewrite_url(const struct processor *processor)
 static int
 processor_option_fragment(const struct processor *processor)
 {
-    return (processor->options & PROCESSOR_FRAGMENT) != 0;
+    return processor->widget->class->old_style &&
+        processor->widget->parent != NULL;
 }
 
 static int
@@ -108,9 +109,9 @@ static int
 processor_option_jscript_root(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
+        !processor_option_fragment(processor) &&
         processor->widget->class->old_style &&
-        (processor->options & (PROCESSOR_JSCRIPT|PROCESSOR_FRAGMENT))
-        == PROCESSOR_JSCRIPT;
+        (processor->options & PROCESSOR_JSCRIPT) != 0;
 }
 
 static void

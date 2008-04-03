@@ -47,7 +47,7 @@ embed_inline_widget(struct inline_widget *iw)
     unsigned options;
 
     if (iw->widget->class->old_style)
-        options = PROCESSOR_FRAGMENT | PROCESSOR_JSCRIPT;
+        options = PROCESSOR_JSCRIPT;
     else
         options = 0;
 

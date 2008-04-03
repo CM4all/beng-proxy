@@ -69,7 +69,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
         /* an inline widget is used in a "frame" request - this is
            probably JS requesting new contents for a widget */
         if (widget->class->old_style)
-            options = PROCESSOR_FRAGMENT | PROCESSOR_JSCRIPT;
+            options = PROCESSOR_JSCRIPT;
         else
             options = 0;
         break;
