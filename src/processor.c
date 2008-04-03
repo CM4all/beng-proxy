@@ -412,7 +412,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->tag = TAG_A;
             if (processor->widget->class->old_style) {
                 processor->uri_base = URI_BASE_WIDGET;
-                processor->uri_mode = URI_MODE_FULL;
+                processor->uri_mode = URI_MODE_FOCUS;
             } else {
                 processor->uri_base = URI_BASE_TEMPLATE;
                 processor->uri_mode = URI_MODE_DIRECT;
@@ -427,7 +427,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->tag = TAG_FORM;
             if (processor->widget->class->old_style) {
                 processor->uri_base = URI_BASE_WIDGET;
-                processor->uri_mode = URI_MODE_FULL;
+                processor->uri_mode = URI_MODE_FOCUS;
             } else {
                 processor->uri_base = URI_BASE_TEMPLATE;
                 processor->uri_mode = URI_MODE_DIRECT;
@@ -582,8 +582,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         strref_cmp_literal(&attr->name, "c:mode") == 0) {
         if (strref_cmp_literal(&attr->value, "direct") == 0)
             processor->uri_mode = URI_MODE_DIRECT;
-        else if (strref_cmp_literal(&attr->value, "full") == 0)
-            processor->uri_mode = URI_MODE_FULL;
+        else if (strref_cmp_literal(&attr->value, "focus") == 0)
+            processor->uri_mode = URI_MODE_FOCUS;
         else if (strref_cmp_literal(&attr->value, "partial") == 0)
             processor->uri_mode = URI_MODE_PARTIAL;
         else if (strref_cmp_literal(&attr->value, "proxy") == 0)

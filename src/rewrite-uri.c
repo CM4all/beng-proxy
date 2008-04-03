@@ -10,6 +10,19 @@
 #include "widget-registry.h"
 
 static const char *
+current_frame(const struct widget *widget)
+{
+    do {
+        if (widget->from_request.proxy)
+            return widget_path(widget);
+
+        widget = widget->parent;
+    } while (widget != NULL);
+
+    return NULL;
+}
+
+static const char *
 do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
                       struct strmap *args, struct widget *widget,
                       const struct strref *value,
@@ -23,8 +36,8 @@ do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
         return widget_absolute_uri(pool, widget,
                                    value->data, value->length);
 
-    case URI_MODE_FULL:
-        frame = NULL;
+    case URI_MODE_FOCUS:
+        frame = current_frame(widget);
         raw = 0;
         break;
 

@@ -17,7 +17,7 @@ struct strref;
 
 enum uri_mode {
     URI_MODE_DIRECT,
-    URI_MODE_FULL,
+    URI_MODE_FOCUS,
     URI_MODE_PARTIAL,
     URI_MODE_PROXY,
 };
