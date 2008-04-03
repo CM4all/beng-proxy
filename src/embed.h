@@ -17,7 +17,6 @@ struct async_operation_ref;
 void
 widget_http_request(pool_t pool, struct widget *widget,
                     struct processor_env *env,
-                    unsigned options,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref);

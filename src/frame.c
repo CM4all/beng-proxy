@@ -46,8 +46,6 @@ frame_top_widget(pool_t pool, struct processor_env *env,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    unsigned options = 0;
-
     assert(widget->from_request.proxy);
 
     if (widget->class == NULL) {
@@ -68,21 +66,12 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     case WIDGET_DISPLAY_INLINE:
         /* an inline widget is used in a "frame" request - this is
            probably JS requesting new contents for a widget */
-        if (widget->class->old_style)
-            options = PROCESSOR_JSCRIPT;
-        else
-            options = 0;
         break;
 
     case WIDGET_DISPLAY_IFRAME:
-        if (widget->class->old_style)
-            options = PROCESSOR_JSCRIPT;
-        else
-            options = 0;
         break;
 
     case WIDGET_DISPLAY_NONE:
-        options = 0;
         break;
 
     case WIDGET_DISPLAY_EXTERNAL:
@@ -95,8 +84,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
         return;
     }
 
-    widget_http_request(pool, widget,
-                        env, options,
+    widget_http_request(pool, widget, env,
                         handler, handler_ctx, async_ref);
 }
 
@@ -147,8 +135,7 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         istream_free(&env->request_body);
     }
 
-    widget_http_request(pool, widget,
-                        env, 0,
+    widget_http_request(pool, widget, env,
                         handler, handler_ctx, async_ref);
 }
 

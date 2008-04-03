@@ -44,15 +44,7 @@ class_lookup_callback(const struct widget_class *class, void *_ctx)
 static void
 embed_inline_widget(struct inline_widget *iw)
 {
-    unsigned options;
-
-    if (iw->widget->class->old_style)
-        options = PROCESSOR_JSCRIPT;
-    else
-        options = 0;
-
-    widget_http_request(iw->pool, iw->widget,
-                        iw->env, options,
+    widget_http_request(iw->pool, iw->widget, iw->env,
                         &widget_stream_response_handler, iw->stream,
                         &iw->stream->async_ref);
 }

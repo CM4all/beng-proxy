@@ -276,17 +276,16 @@ static const struct http_response_handler widget_response_handler = {
 void
 widget_http_request(pool_t pool, struct widget *widget,
                     struct processor_env *env,
-                    unsigned options,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
+    unsigned options = PROCESSOR_REWRITE_URL;
     struct embed *embed;
     struct strmap *headers;
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-    assert((options & (PROCESSOR_REWRITE_URL|PROCESSOR_CONTAINER)) == 0);
 
     if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET) {
         /* XXX put this check somewhere else */
@@ -297,9 +296,11 @@ widget_http_request(pool_t pool, struct widget *widget,
 
     assert(widget->display != WIDGET_DISPLAY_EXTERNAL);
 
-    options |= PROCESSOR_REWRITE_URL;
     if (widget->class->is_container)
         options |= PROCESSOR_CONTAINER;
+
+    if (widget->class->old_style)
+        options |= PROCESSOR_JSCRIPT;
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
