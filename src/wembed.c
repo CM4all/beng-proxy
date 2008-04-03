@@ -154,7 +154,7 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
     hold = istream_hold_new(pool, iw->stream->delayed);
 
     if (widget->class == NULL)
-        widget_class_lookup(env->pool, env->translate_stock, widget->class_name,
+        widget_class_lookup(pool, env->translate_stock, widget->class_name,
                             class_lookup_callback, iw, &iw->stream->async_ref);
     else
         inline_widget_set(iw);
