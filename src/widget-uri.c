@@ -57,22 +57,6 @@ widget_absolute_uri(pool_t pool, struct widget *widget,
                         relative_uri, relative_uri_length);
 }
 
-static const struct strref *
-widget_relative_uri(pool_t pool, struct widget *widget,
-                    const char *relative_uri, size_t relative_uri_length)
-{
-    const char *absolute_uri;
-    struct strref s;
-
-    absolute_uri = widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
-    if (absolute_uri == NULL)
-        strref_set(&s, relative_uri, relative_uri_length);
-    else
-        strref_set_c(&s, absolute_uri);
-
-    return widget_class_relative_uri(widget->class, &s);
-}
-
 const char *
 widget_translation_uri(pool_t pool,
                        const struct parsed_uri *external_uri,
@@ -92,6 +76,22 @@ widget_translation_uri(pool_t pool,
                      ";", (size_t)1,
                      args2, strlen(args2),
                      NULL);
+}
+
+static const struct strref *
+widget_relative_uri(pool_t pool, struct widget *widget,
+                    const char *relative_uri, size_t relative_uri_length)
+{
+    const char *absolute_uri;
+    struct strref s;
+
+    absolute_uri = widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
+    if (absolute_uri == NULL)
+        strref_set(&s, relative_uri, relative_uri_length);
+    else
+        strref_set_c(&s, absolute_uri);
+
+    return widget_class_relative_uri(widget->class, &s);
 }
 
 const char *
