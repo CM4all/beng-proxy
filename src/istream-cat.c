@@ -22,7 +22,7 @@ struct istream_cat {
 };
 
 
-static struct input *
+static inline struct input *
 cat_current(struct istream_cat *cat)
 {
     return &cat->inputs[cat->current];
