@@ -474,41 +474,34 @@ transform_widget_uri_attribute(struct processor *processor,
                                const struct strref *value,
                                enum uri_mode mode)
 {
+    int frame, raw;
+
     switch (mode) {
     case URI_MODE_DIRECT:
         return widget_absolute_uri(processor->pool, widget,
                                    value->data, value->length);
 
     case URI_MODE_FULL:
-        return widget_external_uri(processor->pool,
-                                   processor->env->external_uri,
-                                   processor->env->args,
-                                   widget,
-                                   1,
-                                   value->data, value->length,
-                                   0, 0);
+        frame = raw = 0;
+        break;
 
     case URI_MODE_PARTIAL:
-        return widget_external_uri(processor->pool,
-                                   processor->env->external_uri,
-                                   processor->env->args,
-                                   widget,
-                                   1,
-                                   value->data, value->length,
-                                   1, 0);
+        frame = 1;
+        raw = 0;
+        break;
 
     case URI_MODE_PROXY:
-        return widget_external_uri(processor->pool,
-                                   processor->env->external_uri,
-                                   processor->env->args,
-                                   widget,
-                                   1,
-                                   value->data, value->length,
-                                   1, 1);
+        frame = raw = 1;
+        break;
     }
 
-    assert(0);
-    return NULL;
+    return widget_external_uri(processor->pool,
+                               processor->env->external_uri,
+                               processor->env->args,
+                               widget,
+                               1,
+                               value->data, value->length,
+                               frame, raw);
 }
 
 static void
