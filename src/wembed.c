@@ -37,6 +37,7 @@ class_lookup_callback(const struct widget_class *class, void *_ctx)
     } else {
         async_ref_clear(istream_delayed_async(iw->stream->delayed));
         istream_free(&iw->stream->delayed);
+        pool_unref(iw->pool);
     }
 }
 
@@ -112,10 +113,12 @@ inline_widget_set(struct inline_widget *iw)
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
         embed_inline_widget(iw);
+        pool_unref(iw->pool);
         return;
 
     case WIDGET_DISPLAY_NONE:
         istream_delayed_set_eof(iw->stream->delayed);
+        pool_unref(iw->pool);
         return;
 
     case WIDGET_DISPLAY_IFRAME:
@@ -123,6 +126,7 @@ inline_widget_set(struct inline_widget *iw)
         widget_cancel(widget);
         istream_delayed_set(iw->stream->delayed,
                             embed_iframe_widget(iw->pool, iw->env, iw->widget));
+        pool_unref(iw->pool);
         return;
     }
 
@@ -139,6 +143,8 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
     assert(pool != NULL);
     assert(env != NULL);
     assert(widget != NULL);
+
+    pool_ref(pool);
 
     iw->pool = pool;
     iw->env = env;
