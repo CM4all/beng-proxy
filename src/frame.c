@@ -64,14 +64,10 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
-        /* an inline widget is used in a "frame" request - this is
-           probably JS requesting new contents for a widget */
-        break;
-
     case WIDGET_DISPLAY_IFRAME:
-        break;
-
     case WIDGET_DISPLAY_NONE:
+        widget_http_request(pool, widget, env,
+                            handler, handler_ctx, async_ref);
         break;
 
     case WIDGET_DISPLAY_EXTERNAL:
@@ -81,11 +77,8 @@ frame_top_widget(pool_t pool, struct processor_env *env,
             http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
                                                   NULL, NULL);
         }
-        return;
+        break;
     }
-
-    widget_http_request(pool, widget, env,
-                        handler, handler_ctx, async_ref);
 }
 
 static void
