@@ -12,7 +12,6 @@
 #include "js-filter.h"
 #include "js-generator.h"
 #include "tpool.h"
-#include "frame.h"
 #include "embed.h"
 #include "async.h"
 #include "rewrite-uri.h"

@@ -9,7 +9,6 @@
 #include "header-writer.h"
 #include "widget.h"
 #include "embed.h"
-#include "frame.h"
 #include "proxy-widget.h"
 #include "session.h"
 #include "filter.h"

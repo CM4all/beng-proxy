@@ -8,7 +8,6 @@
 #include "widget-registry.h"
 #include "processor.h"
 #include "widget.h"
-#include "frame.h"
 
 void
 widget_registry_lookup(pool_t pool,
