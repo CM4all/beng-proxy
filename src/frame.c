@@ -14,7 +14,7 @@
 
 #include <assert.h>
 
-struct widget_callback_ctx {
+struct frame_class_looup {
     pool_t pool;
     struct processor_env *env;
     struct widget *widget;
@@ -24,19 +24,19 @@ struct widget_callback_ctx {
 };
 
 static void
-class_lookup_callback(const struct widget_class *class, void *_ctx)
+frame_class_lookup_callback(const struct widget_class *class, void *ctx)
 {
-    struct widget_callback_ctx *ctx = _ctx;
+    struct frame_class_looup *fcl = ctx;
 
     if (class == NULL) {
-        http_response_handler_invoke_abort(&ctx->handler);
+        http_response_handler_invoke_abort(&fcl->handler);
         return;
     }
 
-    ctx->widget->class = class;
-    frame_widget_callback(ctx->pool, ctx->env, ctx->widget,
-                          ctx->handler.handler, ctx->handler.ctx,
-                          ctx->async_ref);
+    fcl->widget->class = class;
+    frame_widget_callback(fcl->pool, fcl->env, fcl->widget,
+                          fcl->handler.handler, fcl->handler.ctx,
+                          fcl->async_ref);
 }
 
 static void
@@ -49,14 +49,14 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     assert(widget->from_request.proxy);
 
     if (widget->class == NULL) {
-        struct widget_callback_ctx *ctx = p_malloc(pool, sizeof(*ctx));
-        ctx->pool = pool;
-        ctx->env = env;
-        ctx->widget = widget;
-        http_response_handler_set(&ctx->handler, handler, handler_ctx);
-        ctx->async_ref = async_ref;
+        struct frame_class_looup *fcl = p_malloc(pool, sizeof(*fcl));
+        fcl->pool = pool;
+        fcl->env = env;
+        fcl->widget = widget;
+        http_response_handler_set(&fcl->handler, handler, handler_ctx);
+        fcl->async_ref = async_ref;
         widget_class_lookup(pool, env->translate_stock, widget->class_name,
-                            class_lookup_callback, ctx, async_ref);
+                            frame_class_lookup_callback, fcl, async_ref);
         return;
     }
 
@@ -89,14 +89,14 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
                     struct async_operation_ref *async_ref)
 {
     if (widget->class == NULL) {
-        struct widget_callback_ctx *ctx = p_malloc(pool, sizeof(*ctx));
-        ctx->pool = pool;
-        ctx->env = env;
-        ctx->widget = widget;
-        http_response_handler_set(&ctx->handler, handler, handler_ctx);
-        ctx->async_ref = async_ref;
+        struct frame_class_looup *fcl = p_malloc(pool, sizeof(*fcl));
+        fcl->pool = pool;
+        fcl->env = env;
+        fcl->widget = widget;
+        http_response_handler_set(&fcl->handler, handler, handler_ctx);
+        fcl->async_ref = async_ref;
         widget_class_lookup(pool, env->translate_stock, widget->class_name,
-                            class_lookup_callback, ctx, async_ref);
+                            frame_class_lookup_callback, fcl, async_ref);
         return;
     }
 
