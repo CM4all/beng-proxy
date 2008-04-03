@@ -121,8 +121,8 @@ inline_widget_set(struct inline_widget *iw)
 }
 
 istream_t
-embed_widget_callback(pool_t pool, struct processor_env *env,
-                      struct widget *widget)
+embed_inline_widget(pool_t pool, struct processor_env *env,
+                    struct widget *widget)
 {
     struct inline_widget *iw = p_malloc(pool, sizeof(*iw));
     istream_t hold;

@@ -34,9 +34,9 @@ frame_class_lookup_callback(const struct widget_class *class, void *ctx)
     }
 
     fcl->widget->class = class;
-    frame_widget_callback(fcl->pool, fcl->env, fcl->widget,
-                          fcl->handler.handler, fcl->handler.ctx,
-                          fcl->async_ref);
+    embed_frame_widget(fcl->pool, fcl->env, fcl->widget,
+                       fcl->handler.handler, fcl->handler.ctx,
+                       fcl->async_ref);
 }
 
 static void
@@ -133,11 +133,11 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
 }
 
 void
-frame_widget_callback(pool_t pool, struct processor_env *env,
-                      struct widget *widget,
-                      const struct http_response_handler *handler,
-                      void *handler_ctx,
-                      struct async_operation_ref *async_ref)
+embed_frame_widget(pool_t pool, struct processor_env *env,
+                   struct widget *widget,
+                   const struct http_response_handler *handler,
+                   void *handler_ctx,
+                   struct async_operation_ref *async_ref)
 {
     assert(pool != NULL);
     assert(env != NULL);

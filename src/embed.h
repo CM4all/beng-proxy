@@ -26,7 +26,7 @@ embed_iframe_widget(pool_t pool, const struct processor_env *env,
                     struct widget *widget);
 
 istream_t
-embed_widget_callback(pool_t pool, struct processor_env *env,
-                      struct widget *widget);
+embed_inline_widget(pool_t pool, struct processor_env *env,
+                    struct widget *widget);
 
 #endif

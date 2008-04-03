@@ -688,16 +688,16 @@ embed_widget(struct processor *processor, struct processor_env *env,
 
     if (widget->from_request.proxy || widget->from_request.proxy_ref != NULL) {
         processor->response_sent = 1;
-        frame_widget_callback(pool, env, widget,
-                              processor->response_handler.handler,
-                              processor->response_handler.ctx,
-                              processor->async_ref);
+        embed_frame_widget(pool, env, widget,
+                           processor->response_handler.handler,
+                           processor->response_handler.ctx,
+                           processor->async_ref);
         parser_close(processor->parser);
         return NULL;
     } else {
         istream_t istream;
 
-        istream = embed_widget_callback(pool, env, widget);
+        istream = embed_inline_widget(pool, env, widget);
         if (istream != NULL)
             istream = istream_catch_new(pool, istream);
 
