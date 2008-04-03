@@ -40,12 +40,18 @@ cat_shift(struct istream_cat *cat)
     return &cat->inputs[cat->current++];
 }
 
+static inline int
+cat_is_eof(const struct istream_cat *cat)
+{
+    return cat->current == cat->num;
+}
+
 static void
 cat_close(struct istream_cat *cat)
 {
     struct input *input;
 
-    while (cat->current < cat->num) {
+    while (!cat_is_eof(cat)) {
         input = cat_shift(cat);
         if (input->istream != NULL)
             istream_free_handler(&input->istream);
@@ -98,9 +104,9 @@ cat_input_eof(void *ctx)
     if (cat_is_current(cat, input)) {
         do {
             cat_shift(cat);
-        } while (cat->current < cat->num && cat_current(cat)->istream == NULL);
+        } while (!cat_is_eof(cat) && cat_current(cat)->istream == NULL);
 
-        if (cat->current >= cat->num) {
+        if (cat_is_eof(cat)) {
             istream_deinit_eof(&cat->output);
         } else if (!cat->reading) {
             /* only call istream_read() if this function was not
@@ -179,10 +185,10 @@ istream_cat_read(istream_t istream)
     cat->reading = 1;
 
     do {
-        while (cat->current < cat->num && cat_current(cat)->istream == NULL)
+        while (!cat_is_eof(cat) && cat_current(cat)->istream == NULL)
             ++cat->current;
 
-        if (cat->current >= cat->num) {
+        if (cat_is_eof(cat)) {
             istream_deinit_eof(&cat->output);
             break;
         }
@@ -192,7 +198,7 @@ istream_cat_read(istream_t istream)
 
         prev = cat->current;
         istream_read(cat_current(cat)->istream);
-    } while (cat->current < cat->num && cat->current != prev);
+    } while (cat_is_eof(cat) && cat->current != prev);
 
     cat->reading = 0;
 
