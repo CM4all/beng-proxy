@@ -51,7 +51,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
     assert(widget->from_request.proxy);
 
     if (widget->class == NULL) {
-        struct widget_callback_ctx *ctx = p_malloc(pool, sizeof(*ctx));
+        struct widget_callback_ctx *ctx = p_malloc(env->pool, sizeof(*ctx));
         ctx->pool = pool;
         ctx->env = env;
         ctx->widget = widget;
@@ -108,7 +108,7 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
                     struct async_operation_ref *async_ref)
 {
     if (widget->class == NULL) {
-        struct widget_callback_ctx *ctx = p_malloc(pool, sizeof(*ctx));
+        struct widget_callback_ctx *ctx = p_malloc(env->pool, sizeof(*ctx));
         ctx->pool = pool;
         ctx->env = env;
         ctx->widget = widget;
