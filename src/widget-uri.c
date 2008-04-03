@@ -137,7 +137,7 @@ widget_external_uri(pool_t pool,
                           focus ? "focus" : NULL, path, strlen(path),
                           focus ? "path" : NULL,
                           p == NULL ? NULL : p->data,
-                          p == NULL ? 0 : p->length,
+                          p == NULL ? (size_t)0 : p->length,
                           frame ? "frame" : NULL, path, strlen(path),
                           NULL);
 
