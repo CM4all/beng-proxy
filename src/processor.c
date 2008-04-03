@@ -511,7 +511,7 @@ transform_uri_attribute(struct processor *processor,
                         enum uri_mode mode)
 {
     const char *uri;
-    struct widget *child;
+    struct widget *widget;
 
     switch (base) {
     case URI_BASE_TEMPLATE:
@@ -519,24 +519,19 @@ transform_uri_attribute(struct processor *processor,
         return;
 
     case URI_BASE_WIDGET:
-        uri = transform_widget_uri_attribute(processor,
-                                             processor->widget,
-                                             &attr->value,
-                                             mode);
+        widget = processor->widget;
         break;
 
     case URI_BASE_CHILD:
-        child = widget_get_child(processor->widget, strref_dup(processor->pool,
-                                                               &attr->value));
-        if (child == NULL)
+        widget = widget_get_child(processor->widget,
+                                  strref_dup(processor->pool, &attr->value));
+        if (widget == NULL)
             return;
-
-        uri = transform_widget_uri_attribute(processor, child,
-                                             &attr->value, /* XXX NULL */
-                                             mode);
         break;
     }
 
+    uri = transform_widget_uri_attribute(processor, widget,
+                                         &attr->value, mode);
     if (uri != NULL)
         replace_attribute_value(processor, attr,
                                 istream_string_new(processor->pool,
