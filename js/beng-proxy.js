@@ -7,13 +7,16 @@
 function beng_widget_uri(base_uri, session_id, frame, focus, mode, path) {
     if (base_uri == null ||
         (mode != null && mode != "focus" && mode != "frame" &&
-         mode != "proxy" && mode != "save"))
+         mode != "partial" && mode != "proxy" && mode != "save"))
         return null;
 
     var uri = base_uri + ";session=" + escape(session_id);
     if (focus != null) {
+        if (mode == "frame")
+            mode = "partial";
+
         uri += "&focus=" + escape(focus);
-        if (mode == "frame" || mode == "proxy" || mode == "save")
+        if (mode == "partial" || mode == "proxy" || mode == "save")
             frame = focus;
         if (frame != null)
             uri += "&frame=" + escape(frame);
