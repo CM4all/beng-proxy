@@ -80,18 +80,18 @@ widget_translation_uri(pool_t pool,
 
 static const struct strref *
 widget_relative_uri(pool_t pool, struct widget *widget,
-                    const char *relative_uri, size_t relative_uri_length)
+                    const char *relative_uri, size_t relative_uri_length,
+                    struct strref *buffer)
 {
     const char *absolute_uri;
-    struct strref s;
 
     absolute_uri = widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
     if (absolute_uri == NULL)
-        strref_set(&s, relative_uri, relative_uri_length);
+        strref_set(buffer, relative_uri, relative_uri_length);
     else
-        strref_set_c(&s, absolute_uri);
+        strref_set_c(buffer, absolute_uri);
 
-    return widget_class_relative_uri(widget->class, &s);
+    return widget_class_relative_uri(widget->class, buffer);
 }
 
 const char *
@@ -106,6 +106,7 @@ widget_external_uri(pool_t pool,
     const char *path;
     const char *new_uri;
     const char *args2;
+    struct strref buffer;
     const struct strref *p;
     struct pool_mark mark;
 
@@ -122,7 +123,9 @@ widget_external_uri(pool_t pool,
     if (focus) {
         pool_mark(tpool, &mark);
 
-        p = widget_relative_uri(tpool, widget, relative_uri, relative_uri_length);
+        p = widget_relative_uri(tpool, widget,
+                                relative_uri, relative_uri_length,
+                                &buffer);
         if (p == NULL) {
             pool_rewind(tpool, &mark);
             return NULL;
