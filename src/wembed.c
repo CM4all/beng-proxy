@@ -145,6 +145,9 @@ embed_widget_callback(pool_t pool, struct processor_env *env,
     assert(env != NULL);
     assert(widget != NULL);
 
+    if (widget->display == WIDGET_DISPLAY_NONE)
+        return NULL;
+
     pool_ref(pool);
 
     iw->pool = pool;
