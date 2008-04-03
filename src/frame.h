@@ -7,7 +7,7 @@
 #ifndef __BENG_FRAME_H
 #define __BENG_FRAME_H
 
-#include "istream.h"
+#include "pool.h"
 
 struct widget;
 struct processor_env;
