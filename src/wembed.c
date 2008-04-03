@@ -41,14 +41,6 @@ class_lookup_callback(const struct widget_class *class, void *_ctx)
     }
 }
 
-static void
-embed_inline_widget(struct inline_widget *iw)
-{
-    widget_http_request(iw->pool, iw->widget, iw->env,
-                        &widget_stream_response_handler, iw->stream,
-                        &iw->stream->async_ref);
-}
-
 static const char *
 widget_frame_uri(pool_t pool, const struct processor_env *env,
                  struct widget *widget)
@@ -104,7 +96,9 @@ inline_widget_set(struct inline_widget *iw)
 
     switch (widget->display) {
     case WIDGET_DISPLAY_INLINE:
-        embed_inline_widget(iw);
+        widget_http_request(iw->pool, iw->widget, iw->env,
+                            &widget_stream_response_handler, iw->stream,
+                            &iw->stream->async_ref);
         pool_unref(iw->pool);
         return;
 
