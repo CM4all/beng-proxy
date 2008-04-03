@@ -34,13 +34,19 @@ cat_is_current(struct istream_cat *cat, struct input *input)
     return cat_current(cat) == input;
 }
 
+static inline struct input *
+cat_shift(struct istream_cat *cat)
+{
+    return &cat->inputs[cat->current++];
+}
+
 static void
 cat_close(struct istream_cat *cat)
 {
     struct input *input;
 
     while (cat->current < cat->num) {
-        input = &cat->inputs[cat->current++];
+        input = cat_shift(cat);
         if (input->istream != NULL)
             istream_free_handler(&input->istream);
     }
@@ -91,7 +97,7 @@ cat_input_eof(void *ctx)
 
     if (cat_is_current(cat, input)) {
         do {
-            ++cat->current;
+            cat_shift(cat);
         } while (cat->current < cat->num && cat_current(cat)->istream == NULL);
 
         if (cat->current >= cat->num) {
