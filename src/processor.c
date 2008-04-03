@@ -492,7 +492,9 @@ transform_uri_attribute(struct processor *processor,
         break;
     }
 
-    istream = rewrite_widget_uri(processor->pool, processor->env->external_uri,
+    istream = rewrite_widget_uri(processor->pool,
+                                 processor->env->translate_stock,
+                                 processor->env->external_uri,
                                  processor->env->args, widget,
                                  &value, mode);
     if (istream != NULL)

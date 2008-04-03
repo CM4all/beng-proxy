@@ -9,6 +9,7 @@
 
 #include "istream.h"
 
+struct stock;
 struct parsed_uri;
 struct strmap;
 struct widget;
@@ -22,7 +23,8 @@ enum uri_mode {
 };
 
 istream_t
-rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
+rewrite_widget_uri(pool_t pool, struct stock *translate_stock,
+                   const struct parsed_uri *external_uri,
                    struct strmap *args, struct widget *widget,
                    const struct strref *value,
                    enum uri_mode mode);
