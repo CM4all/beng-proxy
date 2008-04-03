@@ -101,7 +101,7 @@ widget_external_uri(pool_t pool,
                     struct widget *widget,
                     int focus,
                     const char *relative_uri, size_t relative_uri_length,
-                    int frame, int raw)
+                    const char *frame, int raw)
 {
     const char *path;
     const char *new_uri;
@@ -110,9 +110,9 @@ widget_external_uri(pool_t pool,
     const struct strref *p;
     struct pool_mark mark;
 
-    assert(focus || frame);
+    assert(focus || frame != NULL);
     assert(focus || (relative_uri == NULL && relative_uri_length == 0));
-    assert(frame || !raw);
+    assert(frame != NULL || !raw);
 
     path = widget_path(widget);
     if (path == NULL ||
@@ -141,7 +141,8 @@ widget_external_uri(pool_t pool,
                           focus ? "path" : NULL,
                           p == NULL ? NULL : p->data,
                           p == NULL ? (size_t)0 : p->length,
-                          frame ? "frame" : NULL, path, strlen(path),
+                          frame == NULL ? NULL : "frame", frame,
+                          frame == NULL ? 0 : strlen(frame),
                           NULL);
 
     new_uri = p_strncat(pool,

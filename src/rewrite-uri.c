@@ -15,7 +15,8 @@ do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
                       const struct strref *value,
                       enum uri_mode mode)
 {
-    int frame, raw;
+    const char *frame;
+    int raw;
 
     switch (mode) {
     case URI_MODE_DIRECT:
@@ -23,16 +24,18 @@ do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
                                    value->data, value->length);
 
     case URI_MODE_FULL:
-        frame = raw = 0;
+        frame = NULL;
+        raw = 0;
         break;
 
     case URI_MODE_PARTIAL:
-        frame = 1;
+        frame = widget_path(widget);
         raw = 0;
         break;
 
     case URI_MODE_PROXY:
-        frame = raw = 1;
+        frame = widget_path(widget);
+        raw = 1;
         break;
     }
 
