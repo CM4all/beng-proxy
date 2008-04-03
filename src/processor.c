@@ -516,8 +516,7 @@ transform_uri_attribute(struct processor *processor,
     switch (base) {
     case URI_BASE_TEMPLATE:
         /* no need to rewrite the attribute */
-        uri = NULL;
-        break;
+        return;
 
     case URI_BASE_WIDGET:
         uri = transform_widget_uri_attribute(processor,
@@ -529,12 +528,12 @@ transform_uri_attribute(struct processor *processor,
     case URI_BASE_CHILD:
         child = widget_get_child(processor->widget, strref_dup(processor->pool,
                                                                &attr->value));
-        if (child != NULL)
-            uri = transform_widget_uri_attribute(processor, child,
-                                                 &attr->value, /* XXX NULL */
-                                                 mode);
-        else
-            uri = NULL;
+        if (child == NULL)
+            return;
+
+        uri = transform_widget_uri_attribute(processor, child,
+                                             &attr->value, /* XXX NULL */
+                                             mode);
         break;
     }
 
