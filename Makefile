@@ -39,6 +39,8 @@ endif
 MORE_CFLAGS = -DVERSION=\"$(VERSION)\" -Iinclude
 MORE_CFLAGS += -I/usr/include/cm4all/libinline-0
 
+CFLAGS += -DNO_DEFLATE
+
 ALL_CFLAGS = $(CFLAGS) $(ARCH_CFLAGS) $(MORE_CFLAGS) $(WARNING_CFLAGS) 
 
 LIBDAEMON_CFLAGS := $(shell pkg-config --cflags libcm4all-daemon)
