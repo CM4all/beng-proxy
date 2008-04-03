@@ -198,7 +198,7 @@ istream_cat_read(istream_t istream)
 
         prev = cat->current;
         istream_read(cat_current(cat)->istream);
-    } while (cat_is_eof(cat) && cat->current != prev);
+    } while (!cat_is_eof(cat) && cat->current != prev);
 
     cat->reading = 0;
 
