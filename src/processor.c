@@ -15,6 +15,7 @@
 #include "frame.h"
 #include "embed.h"
 #include "async.h"
+#include "rewrite-uri.h"
 
 #include <assert.h>
 #include <string.h>
@@ -23,13 +24,6 @@ enum uri_base {
     URI_BASE_TEMPLATE,
     URI_BASE_WIDGET,
     URI_BASE_CHILD,
-};
-
-enum uri_mode {
-    URI_MODE_DIRECT,
-    URI_MODE_FULL,
-    URI_MODE_PARTIAL,
-    URI_MODE_PROXY,
 };
 
 struct processor {
@@ -468,51 +462,15 @@ replace_attribute_value(struct processor *processor,
                           value);
 }
 
-static const char *
-transform_widget_uri_attribute(struct processor *processor,
-                               struct widget *widget,
-                               const struct strref *value,
-                               enum uri_mode mode)
-{
-    int frame, raw;
-
-    switch (mode) {
-    case URI_MODE_DIRECT:
-        return widget_absolute_uri(processor->pool, widget,
-                                   value->data, value->length);
-
-    case URI_MODE_FULL:
-        frame = raw = 0;
-        break;
-
-    case URI_MODE_PARTIAL:
-        frame = 1;
-        raw = 0;
-        break;
-
-    case URI_MODE_PROXY:
-        frame = raw = 1;
-        break;
-    }
-
-    return widget_external_uri(processor->pool,
-                               processor->env->external_uri,
-                               processor->env->args,
-                               widget,
-                               1,
-                               value->data, value->length,
-                               frame, raw);
-}
-
 static void
 transform_uri_attribute(struct processor *processor,
                         const struct parser_attr *attr,
                         enum uri_base base,
                         enum uri_mode mode)
 {
-    const char *uri;
     struct widget *widget;
     struct strref value;
+    istream_t istream;
 
     switch (base) {
     case URI_BASE_TEMPLATE:
@@ -534,12 +492,11 @@ transform_uri_attribute(struct processor *processor,
         break;
     }
 
-    uri = transform_widget_uri_attribute(processor, widget,
-                                         &value, mode);
-    if (uri != NULL)
-        replace_attribute_value(processor, attr,
-                                istream_string_new(processor->pool,
-                                                   uri));
+    istream = rewrite_widget_uri(processor->pool, processor->env->external_uri,
+                                 processor->env->args, widget,
+                                 &value, mode);
+    if (istream != NULL)
+        replace_attribute_value(processor, attr, istream);
 }
 
 static void

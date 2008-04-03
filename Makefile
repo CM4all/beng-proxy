@@ -115,6 +115,7 @@ SOURCES = src/main.c \
 	src/processor.c \
 	src/penv.c \
 	src/parser.c \
+	src/rewrite-uri.c \
 	src/embed.c \
 	src/wembed.c \
 	src/frame.c \
