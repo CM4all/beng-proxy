@@ -4,37 +4,49 @@
 #include "uri.h"
 #include "session.h"
 #include "widget-stream.h"
+#include "embed.h"
+#include "widget-registry.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+
+void
+widget_class_lookup(pool_t pool __attr_unused,
+                    struct stock *translate_stock __attr_unused,
+                    const char *widget_type __attr_unused,
+                    widget_class_callback_t callback,
+                    void *ctx,
+                    struct async_operation_ref *async_ref __attr_unused)
+{
+    callback(NULL, ctx);
+}
+
+istream_t
+embed_inline_widget(pool_t pool, struct processor_env *env __attr_unused,
+                    struct widget *widget)
+{
+    return istream_string_new(pool,
+                              widget->class->uri != NULL
+                              ? widget->class->uri : "bar");
+}
+
+void
+embed_frame_widget(pool_t pool __attr_unused,
+                   struct processor_env *env __attr_unused,
+                   struct widget *widget __attr_unused,
+                   const struct http_response_handler *handler,
+                   void *handler_ctx,
+                   struct async_operation_ref *async_ref __attr_unused)
+{
+    struct http_response_handler_ref handler_ref;
+    http_response_handler_set(&handler_ref, handler, handler_ctx);
+    http_response_handler_invoke_abort(&handler_ref);
+}
 
 static istream_t
 create_input(pool_t pool)
 {
     return istream_string_new(pool, "foo &c:url; <c:widget id=\"foo\" href=\"http://localhost:8080/foo\"/>");
-}
-
-static void
-my_embed_widget_callback(pool_t pool, struct processor_env *env,
-                         struct widget *widget,
-                         const struct http_response_handler *handler,
-                         void *handler_ctx,
-                         struct async_operation_ref *async_ref)
-{
-    struct http_response_handler_ref handler_ref;
-    istream_t body;
-
-    (void)env;
-    (void)async_ref;
-
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
-
-    body = istream_string_new(pool,
-                              widget->class->uri != NULL
-                              ? widget->class->uri : "bar");
-
-    http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_OK, NULL,
-                                          body);
 }
 
 static istream_t
@@ -66,8 +78,7 @@ create_test(pool_t pool, istream_t input)
                        NULL,
                        session_new(),
                        NULL,
-                       NULL,
-                       my_embed_widget_callback);
+                       NULL);
 
     ws = widget_stream_new(pool);
     delayed = ws->delayed;
