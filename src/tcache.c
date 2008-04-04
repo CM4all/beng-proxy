@@ -106,6 +106,7 @@ tcache_callback(const struct translate_response *response, void *ctx)
         item->pool = pool;
 
         tcache_dup_response(tcr->pool, &item->response, response);
+        cache_put(tcr->tcache->cache, tcr->key, &item->item);
     } else {
         cache_log(4, "translate_cache: nocache %s\n", tcr->key);
     }
