@@ -85,10 +85,15 @@ cgi_parse_headers(struct cgi *cgi)
     fifo_buffer_consume(cgi->buffer, next - buffer);
 
     if (ret) {
+        struct strmap *headers;
+
         async_poison(&cgi->async);
 
+        headers = cgi->headers;
+        cgi->headers = NULL;
+
         http_response_handler_invoke_response(&cgi->handler,
-                                              HTTP_STATUS_OK, cgi->headers,
+                                              HTTP_STATUS_OK, headers,
                                               istream_struct_cast(&cgi->output));
         cgi->headers = NULL;
     }
