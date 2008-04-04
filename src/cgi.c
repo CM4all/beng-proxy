@@ -170,7 +170,10 @@ cgi_input_eof(void *ctx)
     if (cgi->headers != NULL) {
         daemon_log(1, "premature end of headers from CGI script\n");
 
-        istream_deinit_abort(&cgi->output);
+        assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
+
+        http_response_handler_invoke_abort(&cgi->handler);
+        pool_unref(cgi->output.pool);
     } else if (fifo_buffer_empty(cgi->buffer)) {
         istream_deinit_eof(&cgi->output);
     }
