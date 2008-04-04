@@ -94,6 +94,7 @@ SOURCES = src/main.c \
 	src/cookie.c \
 	src/connection.c \
 	src/translate.c \
+	src/tcache.c \
 	src/request.c \
 	src/response.c \
 	src/handler.c \
