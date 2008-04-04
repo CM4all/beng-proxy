@@ -37,6 +37,13 @@ struct tcache_request {
     void *ctx;
 };
 
+#ifdef CACHE_LOG
+#include <daemon/log.h>
+#define cache_log(...) daemon_log(__VA_ARGS__)
+#else
+#define cache_log(...) do {} while (0)
+#endif
+
 
 /* check whether the request could produce a cacheable response */
 static int
@@ -92,11 +99,15 @@ tcache_callback(const struct translate_response *response, void *ctx)
         pool_t pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 256);
         struct tcache_item *item = p_malloc(pool, sizeof(*item));
 
+        cache_log(4, "translate_cache: store %s\n", tcr->key);
+
         item->item.expires = time(NULL) + 300;
         item->item.size = 1;
         item->pool = pool;
 
         tcache_dup_response(tcr->pool, &item->response, response);
+    } else {
+        cache_log(4, "translate_cache: nocache %s\n", tcr->key);
     }
 
     tcr->callback(response, tcr->ctx);
@@ -177,6 +188,9 @@ translate_cache(pool_t pool, struct tcache *tcache,
 
         if (item == NULL) {
             struct tcache_request *tcr = p_malloc(pool, sizeof(*tcr));
+
+            cache_log(4, "translate_cache: miss %s\n", key);
+
             tcr->pool = pool;
             tcr->tcache = tcache;
             tcr->key = key;
@@ -189,10 +203,15 @@ translate_cache(pool_t pool, struct tcache *tcache,
             struct translate_response *response =
                 p_malloc(pool, sizeof(*response));
 
+            cache_log(4, "translate_cache: hit %s\n", key);
+
             tcache_dup_response(pool, response, &item->response);
             callback(response, ctx);
         }
     } else {
+        cache_log(4, "translate_cache: ignore %s\n",
+                  request->uri == NULL ? request->widget_type : request->uri);
+
         translate(pool, tcache->stock, request, callback, ctx, async_ref);
     }
 }
