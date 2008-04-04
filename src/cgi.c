@@ -26,8 +26,8 @@ struct cgi {
     struct istream output;
 
     istream_t input;
-    fifo_buffer_t buffer;
-    strmap_t headers;
+    struct fifo_buffer *buffer;
+    struct strmap *headers;
 
     struct async_operation async;
     struct http_response_handler_ref handler;
