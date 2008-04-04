@@ -70,6 +70,9 @@ static void
 tcache_dup_response(pool_t pool, struct translate_response *dest,
                     const struct translate_response *src)
 {
+    const struct translate_transformation *transformation;
+    struct translate_transformation **tail_p;
+
     dest->status = src->status;
     dest->path = p_strdup_checked(pool, src->path);
     dest->path_info = p_strdup_checked(pool, src->path_info);
@@ -82,6 +85,28 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->session = NULL;
     dest->user = NULL;
     dest->language = NULL;
+
+    dest->transformation = NULL;
+    tail_p = &dest->transformation;
+    for (transformation = src->transformation;
+         transformation != NULL; transformation = transformation->next) {
+        struct translate_transformation *p = p_malloc(pool, sizeof(*p));
+
+        p->type = transformation->type;
+        switch (p->type) {
+        case TRANSFORMATION_PROCESS:
+            p->u.processor_options = transformation->u.processor_options;
+            break;
+
+        case TRANSFORMATION_FILTER:
+            p->u.filter = p_strdup(pool, transformation->u.filter);
+            break;
+        }
+
+        p->next = NULL;
+        *tail_p = p;
+        tail_p = &p->next;
+    }
 }
 
 
@@ -105,8 +130,8 @@ tcache_callback(const struct translate_response *response, void *ctx)
         item->item.size = 1;
         item->pool = pool;
 
-        tcache_dup_response(tcr->pool, &item->response, response);
-        cache_put(tcr->tcache->cache, tcr->key, &item->item);
+        tcache_dup_response(pool, &item->response, response);
+        cache_put(tcr->tcache->cache, p_strdup(pool, tcr->key), &item->item);
     } else {
         cache_log(4, "translate_cache: nocache %s\n", tcr->key);
     }
