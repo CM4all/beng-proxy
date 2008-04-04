@@ -15,6 +15,9 @@ struct tcache *
 translate_cache_new(pool_t pool, struct stock *translate_stock);
 
 void
+translate_cache_close(struct tcache *tcache);
+
+void
 translate_cache(pool_t pool, struct tcache *tcache,
                 const struct translate_request *request,
                 translate_callback_t callback,
