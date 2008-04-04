@@ -11,6 +11,7 @@
 #include "translate.h"
 #include "url-stock.h"
 #include "stock.h"
+#include "tcache.h"
 #include "http-cache.h"
 
 #include <daemon/daemonize.h>
@@ -52,8 +53,8 @@ exit_event_callback(int fd, short event, void *ctx)
 
     session_manager_deinit();
 
-    if (instance->translate_stock != NULL)
-        stock_free(&instance->translate_stock);
+    if (instance->translate_cache != NULL)
+        translate_cache_close(instance->translate_cache);
 
     if (instance->http_cache != NULL) {
         http_cache_close(instance->http_cache);
@@ -111,6 +112,7 @@ int main(int argc, char **argv)
             .max_connnections = 1024,
         },
     };
+    struct stock *translate_stock;
 
 #ifndef NDEBUG
     if (geteuid() != 0)
@@ -149,8 +151,11 @@ int main(int argc, char **argv)
         exit(2);
     }
 
-    instance.translate_stock = translate_stock_new(instance.pool,
-                                                   instance.config.translation_socket);
+    translate_stock = translate_stock_new(instance.pool,
+                                          instance.config.translation_socket);
+    instance.translate_cache = translate_cache_new(instance.pool,
+                                                   translate_stock);
+                                                   
     instance.http_client_stock = url_hstock_new(instance.pool);
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.http_client_stock);

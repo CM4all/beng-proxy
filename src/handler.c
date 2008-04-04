@@ -11,6 +11,7 @@
 #include "args.h"
 #include "session.h"
 #include "instance.h"
+#include "tcache.h"
 
 #include <daemon/log.h>
 
@@ -157,8 +158,7 @@ request_args_parse(struct request *request)
 }
 
 static void
-ask_translation_server(struct request *request2,
-                       struct stock *stock)
+ask_translation_server(struct request *request2, struct tcache *tcache)
 {
     struct http_server_request *request = request2->request;
 
@@ -168,9 +168,9 @@ ask_translation_server(struct request *request2,
                                                  &request2->uri.base);
     request2->translate.request.widget_type = NULL;
 
-    translate(request->pool, stock, &request2->translate.request,
-              translate_callback, request2,
-              request2->async_ref);
+    translate_cache(request->pool, tcache, &request2->translate.request,
+                    translate_callback, request2,
+                    request2->async_ref);
 }
 
 static void
@@ -228,7 +228,7 @@ my_http_server_connection_request(struct http_server_request *request,
     assert(request != NULL);
 
     request2 = p_malloc(request->pool, sizeof(*request2));
-    request2->translate_stock = connection->instance->translate_stock;
+    request2->translate_cache = connection->instance->translate_cache;
     request2->http_client_stock = connection->instance->http_client_stock;
     request2->http_cache = connection->instance->http_cache;
     request2->request = request;
@@ -253,7 +253,7 @@ my_http_server_connection_request(struct http_server_request *request,
     if (connection->config->translation_socket == NULL)
         serve_document_root_file(request2, connection->config);
     else
-        ask_translation_server(request2, connection->instance->translate_stock);
+        ask_translation_server(request2, connection->instance->translate_cache);
 }
 
 static void

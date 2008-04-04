@@ -54,7 +54,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
         fcl->widget = widget;
         http_response_handler_set(&fcl->handler, handler, handler_ctx);
         fcl->async_ref = async_ref;
-        widget_class_lookup(pool, env->translate_stock, widget->class_name,
+        widget_class_lookup(pool, env->translate_cache, widget->class_name,
                             frame_class_lookup_callback, fcl, async_ref);
         return;
     }
@@ -94,7 +94,7 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         fcl->widget = widget;
         http_response_handler_set(&fcl->handler, handler, handler_ctx);
         fcl->async_ref = async_ref;
-        widget_class_lookup(pool, env->translate_stock, widget->class_name,
+        widget_class_lookup(pool, env->translate_cache, widget->class_name,
                             frame_class_lookup_callback, fcl, async_ref);
         return;
     }

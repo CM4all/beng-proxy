@@ -93,7 +93,7 @@ class_lookup_callback(const struct widget_class *class, void *ctx)
 }
 
 istream_t
-rewrite_widget_uri(pool_t pool, struct stock *translate_stock,
+rewrite_widget_uri(pool_t pool, struct tcache *translate_cache,
                    const struct parsed_uri *external_uri,
                    struct strmap *args, struct widget *widget,
                    const struct strref *value,
@@ -122,7 +122,7 @@ rewrite_widget_uri(pool_t pool, struct stock *translate_stock,
         rwu->stream = widget_stream_new(pool);
         hold = istream_hold_new(pool, rwu->stream->delayed);
 
-        widget_class_lookup(pool, translate_stock,
+        widget_class_lookup(pool, translate_cache,
                             widget->class_name,
                             class_lookup_callback, rwu,
                             &rwu->stream->async_ref);

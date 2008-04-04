@@ -8,10 +8,11 @@
 #include "widget-registry.h"
 #include "processor.h"
 #include "widget.h"
+#include "tcache.h"
 
 void
 widget_registry_lookup(pool_t pool,
-                       struct stock *translate_stock,
+                       struct tcache *tcache,
                        const char *widget_type,
                        translate_callback_t callback,
                        void *ctx,
@@ -26,8 +27,8 @@ widget_registry_lookup(pool_t pool,
     request->session = NULL;
     request->param = NULL;
 
-    translate(pool, translate_stock, request,
-              callback, ctx, async_ref);
+    translate_cache(pool, tcache, request,
+                    callback, ctx, async_ref);
 }
 
 struct widget_class_lookup {
@@ -73,7 +74,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
 
 void
 widget_class_lookup(pool_t pool,
-                    struct stock *translate_stock,
+                    struct tcache *tcache,
                     const char *widget_type,
                     widget_class_callback_t callback,
                     void *ctx,
@@ -89,7 +90,7 @@ widget_class_lookup(pool_t pool,
     lookup->callback = callback;
     lookup->callback_ctx = ctx;
 
-    widget_registry_lookup(pool, translate_stock, widget_type,
+    widget_registry_lookup(pool, tcache, widget_type,
                            lookup_callback, lookup,
                            async_ref);
 }

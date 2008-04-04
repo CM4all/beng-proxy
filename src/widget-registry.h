@@ -10,9 +10,11 @@
 
 #include "translate.h"
 
+struct tcache;
+
 void
 widget_registry_lookup(pool_t pool,
-                       struct stock *translate_stock,
+                       struct tcache *translate_cache,
                        const char *widget_type,
                        translate_callback_t callback,
                        void *ctx,
@@ -25,7 +27,7 @@ typedef void (*widget_class_callback_t)(const struct widget_class *class,
 
 void
 widget_class_lookup(pool_t pool,
-                    struct stock *translate_stock,
+                    struct tcache *translate_cache,
                     const char *widget_type,
                     widget_class_callback_t callback,
                     void *ctx,

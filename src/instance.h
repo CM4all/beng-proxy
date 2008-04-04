@@ -40,7 +40,7 @@ struct instance {
     unsigned num_children;
 
     /* stock */
-    struct stock *translate_stock;
+    struct tcache *translate_cache;
     struct hstock *http_client_stock;
 
     /* cache */
