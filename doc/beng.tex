@@ -397,7 +397,12 @@ The \texttt{Referer} request header is not supported.
 \label{processor}
 
 The \emph{Beng} template language defines commands which may be
-inserted in the form of XML processing instructions.
+inserted into XHTML stream.  They are implemented as XML elements and
+attributes with the prefix \texttt{c:}.  If you care about validating
+the processor input, you must declare the XML namespace \texttt{c:}.
+There is currently no suggested namespace URI, and \emph{beng-proxy}
+does not actually care, because it does not implement a full-featured
+XML parser.
 
 \subsection{Adding a widget}
 
