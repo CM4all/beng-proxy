@@ -564,7 +564,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     }
 
     if (!processor_option_quiet(processor) &&
-        processor->tag != TAG_NONE &&
+        (processor->tag == TAG_A || processor->tag == TAG_FORM ||
+         processor->tag == TAG_IMG || processor->tag == TAG_SCRIPT) &&
         strref_cmp_literal(&attr->name, "c:base") == 0) {
         if (strref_cmp_literal(&attr->value, "widget") == 0)
             processor->uri_base = URI_BASE_WIDGET;
