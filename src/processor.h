@@ -29,7 +29,6 @@ enum processor_options {
 
 struct parsed_uri;
 struct widget;
-struct processor_env;
 struct async_operation_ref;
 
 struct processor_env {
