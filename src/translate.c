@@ -333,7 +333,7 @@ translate_handle_packet(struct translate_connection *connection,
         /* XXX wrong pool */
         transformation = translate_add_transformation(connection);
         transformation->type = TRANSFORMATION_PROCESS;
-        transformation->u.processor_options = 0;
+        transformation->u.processor_options = PROCESSOR_REWRITE_URL;
         break;
 
     case TRANSLATE_CONTAINER:

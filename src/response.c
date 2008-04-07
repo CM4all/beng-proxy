@@ -68,7 +68,6 @@ response_invoke_processor(struct request *request2,
     struct http_server_request *request = request2->request;
     istream_t request_body;
     struct widget *widget;
-    unsigned processor_options = PROCESSOR_REWRITE_URL|transformation->u.processor_options;
 
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
@@ -117,16 +116,14 @@ response_invoke_processor(struct request *request2,
                                                       strmap_get(request2->env.args, "frame"));
     if (widget->from_request.proxy_ref != NULL) {
         processor_new(request->pool, body, widget, &request2->env,
-                      processor_options,
+                      transformation->u.processor_options,
                       &widget_proxy_handler, request,
                       request2->async_ref);
 
         pool_unref(request->pool);
     } else {
-        processor_options |= PROCESSOR_JSCRIPT;
-
         processor_new(request->pool, body, widget, &request2->env,
-                      processor_options,
+                      transformation->u.processor_options | PROCESSOR_JSCRIPT,
                       &response_handler, request2,
                       request2->async_ref);
     }
