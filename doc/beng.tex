@@ -464,7 +464,10 @@ input came from the template or from the user's browser.
 \subsection{Variable substitutions}
 
 \emph{beng-proxy} defines special entities beginning with \texttt{c:}
-for its purposes.
+for its purposes.  Namespaced entities are not actually allowed in XML
+or HTML, and this is only an interim solution until the javascript
+filter is finished.  These entities are (unlike normal HTML entities)
+also expanded in \texttt{SCRIPT} elements.
 
 \begin{tabular}{|l|p{8cm}|}
 \hline
