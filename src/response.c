@@ -12,6 +12,7 @@
 #include "proxy-widget.h"
 #include "session.h"
 #include "filter.h"
+#include "access-log.h"
 
 static const char *const copy_headers[] = {
     "age",
@@ -180,6 +181,8 @@ response_dispatch(struct request *request2,
         response_invoke_processor(request2, status, headers, body,
                                   transformation);
     } else {
+        access_log(request2->request, status, body);
+
         if (request2->session != NULL &&
             !request2->session->cookie_sent) {
             char session_id[9];

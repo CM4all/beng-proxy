@@ -138,6 +138,7 @@ SOURCES = src/main.c \
 	src/http-server-response.c \
 	src/http-client.c \
 	src/http-util.c \
+	src/access-log.c \
 	src/url-stock.c \
 	src/url-stream.c \
 	src/cgi.c \
@@ -265,7 +266,7 @@ profile: src/cm4all-beng-proxy
 	./src/cm4all-beng-proxy -D -u max -p 8080
 
 # -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
-benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE
+benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE -DNO_ACCESS_LOG
 benchmark: src/cm4all-beng-proxy
 	./src/cm4all-beng-proxy -D -u max -p 8080
 
