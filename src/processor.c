@@ -573,7 +573,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             processor->uri_base = URI_BASE_CHILD;
         else
             processor->uri_base = URI_BASE_TEMPLATE;
-        /* XXX remove the whole attribute */
+        istream_replace_add(processor->replace, attr->name_start,
+                            attr->end, NULL);
         return;
     }
 
@@ -590,7 +591,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             processor->uri_mode = URI_MODE_PROXY;
         else
             processor->uri_mode = URI_MODE_DIRECT;
-        /* XXX remove the whole attribute */
+        istream_replace_add(processor->replace, attr->name_start,
+                            attr->end, NULL);
         return;
     }
 
