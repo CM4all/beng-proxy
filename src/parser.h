@@ -29,7 +29,7 @@ struct parser_tag {
 };
 
 struct parser_attr {
-    off_t value_start, value_end;
+    off_t name_start, value_start, value_end, end;
     struct strref name, value;
 };
 

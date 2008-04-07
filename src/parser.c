@@ -236,6 +236,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     break;
                 } else if (char_is_letter(*buffer)) {
                     parser->state = PARSER_ATTR_NAME;
+                    parser->attr.name_start = parser->position + (off_t)(buffer - start);
                     parser->attr_name_length = 0;
                     parser->attr_value_length = 0;
                     break;
@@ -313,6 +314,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 if (*buffer == parser->attr_value_delimiter) {
                     parser->attr.value_end = parser->position + (off_t)(buffer - start);
                     ++buffer;
+                    parser->attr.end = parser->position + (off_t)(buffer - start);
                     parser_invoke_attr_finished(parser);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
@@ -341,7 +343,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
                     parser->attr_value[parser->attr_value_length++] = *buffer++;
                 } else {
-                    parser->attr.value_end = parser->position + (off_t)(buffer - start);
+                    parser->attr.value_end = parser->attr.end =
+                        parser->position + (off_t)(buffer - start);
                     parser_invoke_attr_finished(parser);
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
