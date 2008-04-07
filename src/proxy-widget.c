@@ -5,16 +5,9 @@
  */
 
 #include "proxy-widget.h"
-#include "http-util.h"
 #include "header-writer.h"
 #include "http-server.h"
 #include "access-log.h"
-
-struct widget_proxy {
-    struct http_server_request *request;
-    istream_t body;
-};
-
 
 /*
  * processor_env.response_handler
