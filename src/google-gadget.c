@@ -27,8 +27,7 @@ gg_class(pool_t pool, const char *uri)
 }
 
 static void
-google_gadget_process(struct google_gadget *gg, istream_t istream,
-                      unsigned options)
+google_gadget_process(struct google_gadget *gg, istream_t istream)
 {
     const char *prefix, *path;
 
@@ -52,7 +51,7 @@ google_gadget_process(struct google_gadget *gg, istream_t istream,
 
     processor_new(gg->pool, istream,
                   gg->widget, gg->env,
-                  options,
+                  PROCESSOR_JSCRIPT_PREFS,
                   gg->response_handler.handler,
                   gg->response_handler.ctx,
                   &gg->async);
@@ -81,11 +80,9 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
         strmap_addn(headers, "content-type", "text/html; charset=utf-8");
 
         if (process) {
-            unsigned options = PROCESSOR_JSCRIPT_PREFS;
-
             istream_delayed_set(gg->delayed, istream);
             gg->delayed = NULL;
-            google_gadget_process(gg, gg->subst, options);
+            google_gadget_process(gg, gg->subst);
             return;
         }
     }
