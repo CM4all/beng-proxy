@@ -123,7 +123,7 @@ response_invoke_processor(struct request *request2,
         pool_unref(request->pool);
     } else {
         processor_new(request->pool, body, widget, &request2->env,
-                      transformation->u.processor_options | PROCESSOR_JSCRIPT,
+                      transformation->u.processor_options,
                       &response_handler, request2,
                       request2->async_ref);
     }

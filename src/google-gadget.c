@@ -81,8 +81,7 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
         strmap_addn(headers, "content-type", "text/html; charset=utf-8");
 
         if (process) {
-            unsigned options = PROCESSOR_JSCRIPT|
-                PROCESSOR_JSCRIPT_PREFS;
+            unsigned options = PROCESSOR_JSCRIPT_PREFS;
 
             istream_delayed_set(gg->delayed, istream);
             gg->delayed = NULL;

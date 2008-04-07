@@ -100,8 +100,7 @@ static int
 processor_option_jscript(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
-        processor->widget->class->old_style &&
-        (processor->options & PROCESSOR_JSCRIPT) != 0;
+        processor->widget->class->old_style;
 }
 
 static int
@@ -109,8 +108,7 @@ processor_option_jscript_root(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
         !processor_option_fragment(processor) &&
-        processor->widget->class->old_style &&
-        (processor->options & PROCESSOR_JSCRIPT) != 0;
+        processor->widget->class->old_style;
 }
 
 static void

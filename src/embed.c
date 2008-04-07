@@ -299,9 +299,6 @@ widget_http_request(pool_t pool, struct widget *widget,
     if (widget->class->is_container)
         options |= PROCESSOR_CONTAINER;
 
-    if (widget->class->old_style)
-        options |= PROCESSOR_JSCRIPT;
-
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
     embed->num_redirects = 0;

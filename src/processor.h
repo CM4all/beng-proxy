@@ -17,9 +17,6 @@ enum processor_options {
     /** rewrite URLs */
     PROCESSOR_REWRITE_URL = 0x1,
 
-    /** generate JavaScript code */
-    PROCESSOR_JSCRIPT = 0x4,
-
     /** enable the c:embed element */
     PROCESSOR_CONTAINER = 0x10,
 
