@@ -424,8 +424,7 @@ URI (without the question mark) \\
 \texttt{display} & specifies how the widget is to be displayed:
 \texttt{inline} is the default, and inserts the widget's HTML code
 into the current page; \texttt{none} does not display the widget, but
-it may be referenced later; \texttt{iframe} puts the widget into an
-\texttt{IFRAME} \\
+it may be referenced later \\
 
 \hline
 \texttt{session} & the scope of the widget session (which widgets with
@@ -552,6 +551,33 @@ Example:
 \begin{verbatim*}
 <img c:base="widget" c:mode="proxy" href="foo.jpg"/>
 \end{verbatim*}
+
+\subsection{Frames}
+
+\emph{beng-proxy} supports displaying widgets in an \texttt{IFRAME} or
+\texttt{IMG} element.  To do this, declare your widget with
+\texttt{display=none}.  After that, insert an \texttt{IFRAME} element
+(or any other element which references its content with an URI), and
+let \emph{beng-proxy} rewrite the URI:
+
+\begin{verbatim}
+<c:widget id="post" type="demo_post" display="none"/>
+<iframe width="200" height="200" c:base="child" c:mode="partial"
+  src="post"/>
+\end{verbatim}
+
+This may be used for any HTML tag which is supported by the
+\emph{beng-proxy} URI rewriting code, here an example for a widget
+rendering an image:
+
+\begin{verbatim}
+<c:widget id="logo" type="logorenderer" display="none"/>
+<img c:base="child" c:mode="proxy" src="logo"
+  alt="Our website logo"/>
+\end{verbatim}
+
+Note that we use \texttt{c:mode=proxy} here, because an image should
+not (and can not) be processed by \emph{beng-proxy}.
 
 
 \section{The Beng JavaScript API}
