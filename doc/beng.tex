@@ -396,7 +396,7 @@ The \texttt{Referer} request header is not supported.
 \section{The Beng Template Language}
 \label{processor}
 
-The \emph{Beng} template language defines commands which may be
+The \emph{beng-proxy} template language defines commands which may be
 inserted into XHTML stream.  They are implemented as XML elements and
 attributes with the prefix \texttt{c:}.  If you care about validating
 the processor input, you must declare the XML namespace \texttt{c:}.
@@ -406,7 +406,7 @@ XML parser.
 
 \subsection{Adding a widget}
 
-To add a widget, insert the following command:
+To add a widget, use the following command:
 
 \begin{verbatim*}
 <c:widget id="foo" type="date" />
