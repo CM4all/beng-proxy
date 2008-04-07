@@ -629,32 +629,6 @@ The \texttt{path} argument is an URI relative to the widget.  It may
 include a query string.
 
 
-\subsection{Contacting the widget server}
-
-Most browsers allow network connections only to the originating web
-server, i.e. direct connection to the widget server is not possible.
-Plus, it would not preserve session information.
-
-If a widget wants to send an HTTP request to a widget server, it can
-use \emph{beng-proxy} as proxy server.  To do that, it passes the
-absolute URI to \texttt{Widget.translateURI()} with
-\texttt{proxy=true}.  The translated URI should now be used instead of
-the original one to perform the HTTP request.
-
-A secure connection (HTTPS) between the browser and the widget server
-is not possible.
-
-For proxied request, \emph{beng-proxy} only supports \texttt{GET}
-requests without a body and \texttt{POST} requests with a body.
-
-
-\subsection{Referencing other widgets}
-
-The JavaScript API is currently limited: the JavaScript code of a
-widget should only manipulate its own widget objects.  This limitation
-will be loosened in a later stage of development.
-
-
 \section{The prototype translation server}
 
 Until the \texttt{jetserv} daemon is finished, the prototype
