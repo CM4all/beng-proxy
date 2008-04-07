@@ -93,7 +93,8 @@ static int
 processor_option_fragment(const struct processor *processor)
 {
     return processor->widget->class->old_style &&
-        processor->widget->parent != NULL;
+        processor->widget->parent != NULL &&
+        !processor->widget->from_request.proxy;
 }
 
 static int
