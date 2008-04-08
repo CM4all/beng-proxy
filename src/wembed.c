@@ -31,22 +31,10 @@ inline_widget_set(struct inline_widget *iw)
 
     widget_sync_session(widget);
 
-    switch (widget->display) {
-    case WIDGET_DISPLAY_INLINE:
-        widget_http_request(iw->pool, iw->widget, iw->env,
-                            &widget_stream_response_handler, iw->stream,
-                            &iw->stream->async_ref);
-        pool_unref(iw->pool);
-        return;
-
-    case WIDGET_DISPLAY_NONE:
-        istream_delayed_set_eof(iw->stream->delayed);
-        pool_unref(iw->pool);
-        return;
-    }
-
-    assert(0);
-    istream_close(iw->stream->delayed);
+    widget_http_request(iw->pool, iw->widget, iw->env,
+                        &widget_stream_response_handler, iw->stream,
+                        &iw->stream->async_ref);
+    pool_unref(iw->pool);
 }
 
 static void
