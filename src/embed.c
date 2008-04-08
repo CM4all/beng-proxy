@@ -211,34 +211,34 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
 
     content_type = strmap_get(headers, "content-type");
 
-    if (!embed->widget->from_request.raw && body != NULL) {
-        if (content_type == NULL ||
-            strncmp(content_type, "text/html", 9) != 0) {
-            daemon_log(2, "widget sent non-HTML response\n");
-            istream_close(body);
-            http_response_handler_invoke_abort(&embed->handler_ref);
-            pool_unref(embed->pool);
-            return;
-        }
-
-        if (embed->widget->class->type == WIDGET_TYPE_RAW) {
-            http_response_handler_invoke_response(&embed->handler_ref,
-                                                  status, headers, body);
-            pool_unref(embed->pool);
-            return;
-        }
-                
-        processor_new(embed->pool, body,
-                      embed->widget, embed->env, embed->options,
-                      embed->handler_ref.handler,
-                      embed->handler_ref.ctx,
-                      embed->async_ref);
+    if (embed->widget->from_request.raw || body == NULL) {
+        http_response_handler_invoke_response(&embed->handler_ref,
+                                              status, headers, body);
         pool_unref(embed->pool);
         return;
     }
 
-    http_response_handler_invoke_response(&embed->handler_ref,
-                                          status, headers, body);
+    if (content_type == NULL ||
+        strncmp(content_type, "text/html", 9) != 0) {
+        daemon_log(2, "widget sent non-HTML response\n");
+        istream_close(body);
+        http_response_handler_invoke_abort(&embed->handler_ref);
+        pool_unref(embed->pool);
+        return;
+    }
+
+    if (embed->widget->class->type == WIDGET_TYPE_RAW) {
+        http_response_handler_invoke_response(&embed->handler_ref,
+                                              status, headers, body);
+        pool_unref(embed->pool);
+        return;
+    }
+                
+    processor_new(embed->pool, body,
+                  embed->widget, embed->env, embed->options,
+                  embed->handler_ref.handler,
+                  embed->handler_ref.ctx,
+                  embed->async_ref);
     pool_unref(embed->pool);
 }
 
