@@ -47,6 +47,14 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 {
     assert(widget->from_request.proxy);
 
+    if (widget->display == WIDGET_DISPLAY_EXTERNAL) {
+        struct http_response_handler_ref handler_ref;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
+                                              NULL, NULL);
+        return;
+    }
+
     if (widget->class == NULL) {
         struct frame_class_looup *fcl = p_malloc(pool, sizeof(*fcl));
         fcl->pool = pool;
@@ -61,23 +69,8 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     widget_sync_session(widget);
 
-    switch (widget->display) {
-    case WIDGET_DISPLAY_INLINE:
-    case WIDGET_DISPLAY_IFRAME:
-    case WIDGET_DISPLAY_NONE:
-        widget_http_request(pool, widget, env,
-                            handler, handler_ctx, async_ref);
-        break;
-
-    case WIDGET_DISPLAY_EXTERNAL:
-        {
-            struct http_response_handler_ref handler_ref;
-            http_response_handler_set(&handler_ref, handler, handler_ctx);
-            http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
-                                                  NULL, NULL);
-        }
-        break;
-    }
+    widget_http_request(pool, widget, env,
+                        handler, handler_ctx, async_ref);
 }
 
 static void
