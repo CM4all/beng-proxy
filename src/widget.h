@@ -8,7 +8,6 @@
 #define __BENG_WIDGET_H
 
 #include "pool.h"
-#include "strmap.h"
 #include "strref.h"
 #include "http.h"
 #include "istream.h"
@@ -17,6 +16,7 @@
 
 #include <assert.h>
 
+struct strmap;
 struct processor_env;
 struct parsed_uri;
 
@@ -255,13 +255,13 @@ widget_absolute_uri(pool_t pool, struct widget *widget,
 const char *
 widget_translation_uri(pool_t pool,
                        const struct parsed_uri *external_uri,
-                       strmap_t args,
+                       struct strmap *args,
                        const char *translation);
 
 const char *
 widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
-                    strmap_t args,
+                    struct strmap *args,
                     struct widget *widget,
                     int focus,
                     const char *relative_uri, size_t relative_uri_length,
