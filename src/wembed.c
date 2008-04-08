@@ -5,6 +5,7 @@
  */
 
 #include "embed.h"
+#include "widget-http.h"
 #include "processor.h"
 #include "widget.h"
 #include "widget-registry.h"

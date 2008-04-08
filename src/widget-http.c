@@ -1,10 +1,10 @@
 /*
- * Query a widget and embed its HTML text after processing.
+ * Send HTTP requests to a widget server.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "embed.h"
+#include "widget-http.h"
 #include "http-cache.h"
 #include "processor.h"
 #include "widget.h"

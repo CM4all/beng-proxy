@@ -678,14 +678,18 @@ embed_widget(struct processor *processor, struct processor_env *env,
     pool_t pool = processor->pool;
 
     if (widget->class_name == NULL &&
-        (widget->class == NULL || widget->class->uri == NULL))
+        (widget->class == NULL || widget->class->uri == NULL)) {
+        widget_cancel(widget);
         return NULL;
+    }
 
     widget_copy_from_request(widget, env);
     if (!widget->from_request.proxy &&
         widget->from_request.proxy_ref == NULL &&
-        processor->replace == NULL)
+        processor->replace == NULL) {
+        widget_cancel(widget);
         return NULL;
+    }
 
     if (widget->from_request.proxy || widget->from_request.proxy_ref != NULL) {
         processor->response_sent = 1;

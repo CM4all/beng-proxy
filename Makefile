@@ -118,7 +118,7 @@ SOURCES = src/main.c \
 	src/penv.c \
 	src/parser.c \
 	src/rewrite-uri.c \
-	src/embed.c \
+	src/widget-http.c \
 	src/wembed.c \
 	src/frame.c \
 	src/google-gadget.c \

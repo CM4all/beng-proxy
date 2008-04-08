@@ -5,6 +5,7 @@
  */
 
 #include "embed.h"
+#include "widget-http.h"
 #include "processor.h"
 #include "widget.h"
 #include "widget-registry.h"
@@ -136,8 +137,7 @@ embed_frame_widget(pool_t pool, struct processor_env *env,
     assert(pool != NULL);
     assert(env != NULL);
     assert(widget != NULL);
-    assert(widget->from_request.proxy || widget->from_request.proxy_ref != NULL ||
-           widget->parent != NULL);
+    assert(widget->from_request.proxy || widget->from_request.proxy_ref != NULL);
 
     if (widget->from_request.proxy)
         /* this widget is being proxied */
