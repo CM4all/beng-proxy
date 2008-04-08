@@ -6,14 +6,15 @@
 
 #include "args.h"
 #include "uri.h"
+#include "strmap.h"
 
 #include <string.h>
 
-strmap_t
+struct strmap *
 args_parse(pool_t pool, const char *p, size_t length)
 {
     const char *end = p + length;
-    strmap_t args = strmap_new(pool, 16);
+    struct strmap *args = strmap_new(pool, 16);
     const char *and, *equals, *next;
 
     do {
@@ -41,7 +42,7 @@ args_parse(pool_t pool, const char *p, size_t length)
 }
 
 const char *
-args_format_n(pool_t pool, strmap_t args,
+args_format_n(pool_t pool, struct strmap *args,
               const char *replace_key, const char *replace_value,
               size_t replace_value_length,
               const char *replace_key2, const char *replace_value2,
@@ -130,7 +131,7 @@ args_format_n(pool_t pool, strmap_t args,
 }
 
 const char *
-args_format(pool_t pool, strmap_t args,
+args_format(pool_t pool, struct strmap *args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2,
             const char *remove_key)
