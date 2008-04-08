@@ -12,7 +12,6 @@
 #include "widget-stream.h"
 
 #include <assert.h>
-#include <string.h>
 
 struct inline_widget {
     pool_t pool;
