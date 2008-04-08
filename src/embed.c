@@ -12,6 +12,7 @@
 #include "cookie.h"
 #include "async.h"
 #include "google-gadget.h"
+#include "http-util.h"
 
 #include <daemon/log.h>
 
@@ -192,6 +193,7 @@ widget_response_process(struct embed *embed, http_status_t status,
                         strmap_t headers, istream_t body)
 {
     const char *content_type;
+    struct strref *charset, charset_buffer;
 
     content_type = strmap_get(headers, "content-type");
 
@@ -201,6 +203,28 @@ widget_response_process(struct embed *embed, http_status_t status,
         istream_close(body);
         http_response_handler_invoke_abort(&embed->handler_ref);
         return;
+    }
+
+    charset = http_header_param(&charset_buffer, content_type, "charset");
+    if (charset != NULL && strref_cmp_literal(charset, "utf-8") != 0 &&
+        strref_cmp_literal(charset, "utf8") != 0) {
+        /* beng-proxy expects all widgets to send their HTML code in
+           utf-8; this widget however used a different charset.
+           Automatically convert it with istream_iconv */
+        const char *charset2 = strref_dup(embed->pool, charset);
+        istream_t ic = istream_iconv_new(embed->pool, body, "utf-8", charset2);
+        if (ic == NULL) {
+            daemon_log(2, "widget sent unknown charset '%s'\n", charset2);
+            istream_close(body);
+            http_response_handler_invoke_abort(&embed->handler_ref);
+            return;
+        }
+
+        daemon_log(6, "charset conversion '%s' -> utf-8\n", charset2);
+        body = ic;
+
+        headers = strmap_dup(embed->pool, headers);
+        strmap_put(headers, "content-type", "text/html; charset=utf-8", 1);
     }
 
     if (embed->widget->class->type == WIDGET_TYPE_RAW) {
