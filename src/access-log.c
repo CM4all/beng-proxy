@@ -34,7 +34,7 @@ access_log(struct http_server_request *request,
                    request->remote_host, stamp,
                    http_method_to_string(request->method),
                    request->uri,
-                   status, content_length);
+                   status, (unsigned long)content_length);
 }
 
 #endif
