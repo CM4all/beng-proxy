@@ -49,6 +49,8 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     if (widget->display == WIDGET_DISPLAY_EXTERNAL) {
         struct http_response_handler_ref handler_ref;
+
+        widget_cancel(widget);
         http_response_handler_set(&handler_ref, handler, handler_ctx);
         http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
                                               NULL, NULL);
