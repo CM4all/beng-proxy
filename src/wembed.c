@@ -9,8 +9,6 @@
 #include "processor.h"
 #include "widget.h"
 #include "widget-registry.h"
-#include "growing-buffer.h"
-#include "js-generator.h"
 #include "widget-stream.h"
 
 #include <assert.h>
