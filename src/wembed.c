@@ -25,24 +25,6 @@ struct inline_widget {
 };
 
 static void
-inline_widget_set(struct inline_widget *iw);
-
-static void
-class_lookup_callback(const struct widget_class *class, void *_ctx)
-{
-    struct inline_widget *iw = _ctx;
-
-    if (class != NULL) {
-        iw->widget->class = class;
-        inline_widget_set(iw);
-    } else {
-        async_ref_clear(istream_delayed_async(iw->stream->delayed));
-        istream_free(&iw->stream->delayed);
-        pool_unref(iw->pool);
-    }
-}
-
-static void
 inline_widget_set(struct inline_widget *iw)
 {
     struct widget *widget = iw->widget;
@@ -65,6 +47,21 @@ inline_widget_set(struct inline_widget *iw)
 
     assert(0);
     istream_close(iw->stream->delayed);
+}
+
+static void
+class_lookup_callback(const struct widget_class *class, void *_ctx)
+{
+    struct inline_widget *iw = _ctx;
+
+    if (class != NULL) {
+        iw->widget->class = class;
+        inline_widget_set(iw);
+    } else {
+        async_ref_clear(istream_delayed_async(iw->stream->delayed));
+        istream_free(&iw->stream->delayed);
+        pool_unref(iw->pool);
+    }
 }
 
 istream_t
