@@ -9,6 +9,8 @@
 
 #include "strmap.h"
 
+struct strref;
+
 int
 http_list_contains(const char *list, const char *item);
 
@@ -20,5 +22,8 @@ http_client_accepts_encoding(strmap_t request_headers,
     return accept_encoding != NULL &&
         http_list_contains(accept_encoding, coding);
 }
+
+struct strref *
+http_header_param(struct strref *dest, const char *value, const char *name);
 
 #endif
