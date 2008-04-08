@@ -133,20 +133,9 @@ embed_frame_widget(pool_t pool, struct processor_env *env,
         /* this widget is being proxied */
         frame_top_widget(pool, env, widget,
                          handler, handler_ctx, async_ref);
-    else if (widget->from_request.proxy_ref != NULL)
+    else
         /* only partial match: this is the parent of the frame
            widget */
         frame_parent_widget(pool, env, widget,
                             handler, handler_ctx, async_ref);
-    else if (widget->parent->from_request.proxy_ref != NULL) {
-        struct http_response_handler_ref handler_ref;
-
-        /* this widget is none of our business */
-        widget_cancel(widget);
-
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
-                                              NULL, NULL);
-    } else
-        assert(0);
 }
