@@ -85,8 +85,6 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         return;
     }
 
-    widget_sync_session(widget);
-
     if (!widget->class->is_container) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
@@ -101,6 +99,8 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         http_response_handler_invoke_abort(&handler_ref);
         return;
     }
+
+    widget_sync_session(widget);
 
     if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
         /* the request body is not consumed yet, but the focus is not
