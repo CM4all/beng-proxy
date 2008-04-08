@@ -118,24 +118,24 @@ istream_to_google_gadget(istream_t istream)
 static void
 istream_google_html_read(istream_t istream)
 {
-    struct google_gadget *gw = istream_to_google_gadget(istream);
+    struct google_gadget *gg = istream_to_google_gadget(istream);
 
-    assert(gw->parser != NULL);
-    assert(gw->from_parser.sending_content);
+    assert(gg->parser != NULL);
+    assert(gg->from_parser.sending_content);
 
-    if (!gw->from_parser.in_parser)
-        parser_read(gw->parser);
+    if (!gg->from_parser.in_parser)
+        parser_read(gg->parser);
 }
 
 static void
 istream_google_html_close(istream_t istream)
 {
-    struct google_gadget *gw = istream_to_google_gadget(istream);
+    struct google_gadget *gg = istream_to_google_gadget(istream);
 
-    assert(gw->parser != NULL);
-    assert(gw->from_parser.sending_content);
+    assert(gg->parser != NULL);
+    assert(gg->from_parser.sending_content);
 
-    parser_close(gw->parser);
+    parser_close(gg->parser);
 }
 
 static const struct istream istream_google_html = {
@@ -196,60 +196,60 @@ generate_iframe(pool_t pool, const char *uri)
 }
 
 static void
-google_content_tag_finished(struct google_gadget *gw,
+google_content_tag_finished(struct google_gadget *gg,
                             const struct parser_tag *tag)
 {
     istream_t istream;
 
-    switch (gw->from_parser.type) {
+    switch (gg->from_parser.type) {
     case TYPE_NONE:
         break;
 
     case TYPE_HTML:
     case TYPE_HTML_INLINE:
         if (tag->type == TAG_OPEN) {
-            if (gw->widget->from_request.proxy ||
-                gw->from_parser.type == TYPE_HTML_INLINE) {
-                gw->from_parser.sending_content = 1;
-                gw->output = istream_google_html;
-                gw->output.pool = gw->pool;
+            if (gg->widget->from_request.proxy ||
+                gg->from_parser.type == TYPE_HTML_INLINE) {
+                gg->from_parser.sending_content = 1;
+                gg->output = istream_google_html;
+                gg->output.pool = gg->pool;
 
-                gg_set_content(gw, istream_struct_cast(&gw->output), 1);
+                gg_set_content(gg, istream_struct_cast(&gg->output), 1);
             } else {
                 const char *uri =
-                    widget_external_uri(gw->pool, gw->env->external_uri,
-                                        gw->env->args,
-                                        gw->widget, 0, NULL, 0,
-                                        widget_path(gw->widget), 0);
+                    widget_external_uri(gg->pool, gg->env->external_uri,
+                                        gg->env->args,
+                                        gg->widget, 0, NULL, 0,
+                                        widget_path(gg->widget), 0);
 
                 if (uri != NULL)
-                    istream = generate_iframe(gw->pool, uri);
+                    istream = generate_iframe(gg->pool, uri);
                 else
                     istream = NULL;
-                gg_set_content(gw, istream, 0);
+                gg_set_content(gg, istream, 0);
 
-                parser_close(gw->parser);
+                parser_close(gg->parser);
             }
         } else {
             /* it's TAG_SHORT, handle that gracefully */
 
-            gg_set_content(gw, NULL, 0);
+            gg_set_content(gg, NULL, 0);
         }
 
         return;
 
     case TYPE_URL:
-        if (gw->from_parser.url == NULL)
+        if (gg->from_parser.url == NULL)
             break;
 
-        istream = generate_iframe(gw->pool, gw->from_parser.url);
-        gg_set_content(gw, istream, 0);
+        istream = generate_iframe(gg->pool, gg->from_parser.url);
+        gg_set_content(gg, istream, 0);
 
-        parser_close(gw->parser);
+        parser_close(gg->parser);
         return;
     }
 
-    google_send_error(gw, "malformed google gadget");
+    google_send_error(gg, "malformed google gadget");
 }
 
 
@@ -261,105 +261,105 @@ google_content_tag_finished(struct google_gadget *gw,
 static void
 google_parser_tag_start(const struct parser_tag *tag, void *ctx)
 {
-    struct google_gadget *gw = ctx;
+    struct google_gadget *gg = ctx;
 
-    if (gw->from_parser.sending_content) {
-        gw->from_parser.sending_content = 0;
-        istream_invoke_eof(&gw->output);
+    if (gg->from_parser.sending_content) {
+        gg->from_parser.sending_content = 0;
+        istream_invoke_eof(&gg->output);
     }
 
-    if (!gw->has_locale && tag->type != TAG_CLOSE &&
+    if (!gg->has_locale && tag->type != TAG_CLOSE &&
         strref_cmp_literal(&tag->name, "locale") == 0) {
-        gw->from_parser.tag = TAG_LOCALE;
-        gw->has_locale = 1;
-        gw->waiting_for_locale = 0;
+        gg->from_parser.tag = TAG_LOCALE;
+        gg->has_locale = 1;
+        gg->waiting_for_locale = 0;
     } else if (strref_cmp_literal(&tag->name, "content") == 0) {
-        gw->from_parser.tag = TAG_CONTENT;
+        gg->from_parser.tag = TAG_CONTENT;
     } else {
-        gw->from_parser.tag = TAG_NONE;
+        gg->from_parser.tag = TAG_NONE;
     }
 }
 
 static void
 google_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
-    struct google_gadget *gw = ctx;
+    struct google_gadget *gg = ctx;
 
-    gw->from_parser.in_parser = 1;
+    gg->from_parser.in_parser = 1;
 
     if (tag->type != TAG_CLOSE &&
-        gw->from_parser.tag == TAG_CONTENT &&
-        gw->delayed != NULL) {
-        gw->from_parser.tag = TAG_NONE;
-        google_content_tag_finished(gw, tag);
+        gg->from_parser.tag == TAG_CONTENT &&
+        gg->delayed != NULL) {
+        gg->from_parser.tag = TAG_NONE;
+        google_content_tag_finished(gg, tag);
     } else {
-        gw->from_parser.tag = TAG_NONE;
+        gg->from_parser.tag = TAG_NONE;
     }
 
-    gw->from_parser.in_parser = 0;
+    gg->from_parser.in_parser = 0;
 }
 
 static void
 google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
-    struct google_gadget *gw = ctx;
+    struct google_gadget *gg = ctx;
 
-    gw->from_parser.in_parser = 1;
+    gg->from_parser.in_parser = 1;
 
-    switch (gw->from_parser.tag) {
+    switch (gg->from_parser.tag) {
     case TAG_NONE:
         break;
 
     case TAG_LOCALE:
         if (strref_cmp_literal(&attr->name, "messages") == 0 &&
             !strref_is_empty(&attr->value) &&
-            gw->delayed != NULL) {
+            gg->delayed != NULL) {
             const char *url;
 
-            gw->waiting_for_locale = 1;
+            gg->waiting_for_locale = 1;
 
-            url = widget_absolute_uri(gw->pool, gw->widget,
+            url = widget_absolute_uri(gg->pool, gg->widget,
                                       attr->value.data, attr->value.length);
             if (url == NULL)
-                url = strref_dup(gw->pool, &attr->value);
-            google_gadget_msg_load(gw, url);
+                url = strref_dup(gg->pool, &attr->value);
+            google_gadget_msg_load(gg, url);
         }
         break;
 
     case TAG_CONTENT:
         if (strref_cmp_literal(&attr->name, "type") == 0) {
             if (strref_cmp_literal(&attr->value, "url") == 0) {
-                gw->from_parser.type = TYPE_URL;
-                gw->from_parser.url = NULL;
+                gg->from_parser.type = TYPE_URL;
+                gg->from_parser.url = NULL;
             } else if (strref_cmp_literal(&attr->value, "html") == 0)
-                gw->from_parser.type = TYPE_HTML;
+                gg->from_parser.type = TYPE_HTML;
             else if (strref_cmp_literal(&attr->value, "html-inline") == 0)
-                gw->from_parser.type = TYPE_HTML_INLINE;
+                gg->from_parser.type = TYPE_HTML_INLINE;
             else {
-                google_send_error(gw, "unknown type attribute");
-                gw->from_parser.in_parser = 0;
+                google_send_error(gg, "unknown type attribute");
+                gg->from_parser.in_parser = 0;
                 return;
             }
-        } else if (gw->from_parser.type == TYPE_URL &&
+        } else if (gg->from_parser.type == TYPE_URL &&
                    strref_cmp_literal(&attr->name, "href") == 0) {
-            gw->from_parser.url = strref_dup(gw->pool, &attr->value);
+            gg->from_parser.url = strref_dup(gg->pool, &attr->value);
         }
 
         break;
     }
 
-    gw->from_parser.in_parser = 0;
+    gg->from_parser.in_parser = 0;
 }
 
 static size_t
 google_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 {
-    struct google_gadget *gw = ctx;
+    struct google_gadget *gg = ctx;
 
-    if (!escaped && gw->from_parser.sending_content) {
-        if (gw->has_locale && gw->waiting_for_locale)
+    if (!escaped && gg->from_parser.sending_content) {
+        if (gg->has_locale && gg->waiting_for_locale)
             return 0;
-        return istream_invoke_data(&gw->output, p, length);
+        return istream_invoke_data(&gg->output, p, length);
     } else
         return length;
 }
@@ -367,39 +367,39 @@ google_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 static void
 google_parser_eof(void *ctx, off_t __attr_unused length)
 {
-    struct google_gadget *gw = ctx;
+    struct google_gadget *gg = ctx;
 
-    gw->parser = NULL;
+    gg->parser = NULL;
 
-    if (gw->has_locale && gw->waiting_for_locale)
-        google_gadget_msg_close(gw);
+    if (gg->has_locale && gg->waiting_for_locale)
+        google_gadget_msg_close(gg);
 
-    if (gw->from_parser.sending_content) {
-        gw->from_parser.sending_content = 0;
-        istream_invoke_eof(&gw->output);
-    } else if (gw->delayed != NULL && !async_ref_defined(&gw->async))
-        google_send_error(gw, "google gadget did not contain a valid Content element");
+    if (gg->from_parser.sending_content) {
+        gg->from_parser.sending_content = 0;
+        istream_invoke_eof(&gg->output);
+    } else if (gg->delayed != NULL && !async_ref_defined(&gg->async))
+        google_send_error(gg, "google gadget did not contain a valid Content element");
 
-    pool_unref(gw->pool);
+    pool_unref(gg->pool);
 }
 
 static void
 google_parser_abort(void *ctx)
 {
-    struct google_gadget *gw = ctx;
+    struct google_gadget *gg = ctx;
 
-    gw->parser = NULL;
+    gg->parser = NULL;
 
-    if (gw->has_locale && gw->waiting_for_locale)
-        google_gadget_msg_close(gw);
+    if (gg->has_locale && gg->waiting_for_locale)
+        google_gadget_msg_close(gg);
 
-    if (gw->from_parser.sending_content) {
-        gw->from_parser.sending_content = 0;
-        istream_invoke_abort(&gw->output);
-    } else if (gw->delayed != NULL)
-        google_send_error(gw, "google gadget retrieval aborted");
+    if (gg->from_parser.sending_content) {
+        gg->from_parser.sending_content = 0;
+        istream_invoke_abort(&gg->output);
+    } else if (gg->delayed != NULL)
+        google_send_error(gg, "google gadget retrieval aborted");
 
-    pool_unref(gw->pool);
+    pool_unref(gg->pool);
 }
 
 static const struct parser_handler google_parser_handler = {
@@ -421,18 +421,18 @@ static void
 google_gadget_http_response(http_status_t status, strmap_t headers,
                             istream_t body, void *ctx)
 {
-    struct google_gadget *gw = ctx;
+    struct google_gadget *gg = ctx;
     const char *p;
 
-    assert(gw->delayed != NULL);
+    assert(gg->delayed != NULL);
 
-    async_ref_clear(&gw->async);
+    async_ref_clear(&gg->async);
 
     if (!http_status_is_success(status)) {
         if (body != NULL)
             istream_close(body);
 
-        google_send_error(gw, "widget server reported error");
+        google_send_error(gg, "widget server reported error");
         return;
     }
 
@@ -443,30 +443,30 @@ google_gadget_http_response(http_status_t status, strmap_t headers,
         if (body != NULL)
             istream_close(body);
 
-        google_send_error(gw, "text/xml expected");
+        google_send_error(gg, "text/xml expected");
         return;
     }
 
-    gw->from_parser.tag = TAG_NONE;
-    gw->from_parser.type = TYPE_NONE;
-    gw->from_parser.sending_content = 0;
-    gw->from_parser.in_parser = 0;
-    gw->parser = parser_new(gw->pool, body,
-                            &google_parser_handler, gw);
+    gg->from_parser.tag = TAG_NONE;
+    gg->from_parser.type = TYPE_NONE;
+    gg->from_parser.sending_content = 0;
+    gg->from_parser.in_parser = 0;
+    gg->parser = parser_new(gg->pool, body,
+                            &google_parser_handler, gg);
     istream_read(body);
 }
 
 static void
 google_gadget_http_abort(void *ctx)
 {
-    struct google_gadget *gw = ctx;
+    struct google_gadget *gg = ctx;
 
-    async_ref_clear(&gw->async);
+    async_ref_clear(&gg->async);
 
-    if (gw->delayed != NULL)
-        istream_free(&gw->delayed);
+    if (gg->delayed != NULL)
+        istream_free(&gg->delayed);
 
-    pool_unref(gw->pool);
+    pool_unref(gg->pool);
 }
 
 static const struct http_response_handler google_gadget_handler = {
@@ -489,20 +489,20 @@ async_to_gg(struct async_operation *ao)
 static void
 gg_async_abort(struct async_operation *ao)
 {
-    struct google_gadget *gw = async_to_gg(ao);
+    struct google_gadget *gg = async_to_gg(ao);
 
-    assert((gw->delayed == NULL) == (gw->subst == NULL));
+    assert((gg->delayed == NULL) == (gg->subst == NULL));
 
-    if (gw->delayed == NULL)
+    if (gg->delayed == NULL)
         return;
 
-    gw->delayed = NULL;
-    istream_free(&gw->subst);
+    gg->delayed = NULL;
+    istream_free(&gg->subst);
 
-    if (gw->parser != NULL)
-        parser_close(gw->parser);
-    else if (async_ref_defined(&gw->async))
-        async_abort(&gw->async);
+    if (gg->parser != NULL)
+        parser_close(gg->parser);
+    else if (async_ref_defined(&gg->async))
+        async_abort(&gg->async);
 }
 
 static struct async_operation_class gg_async_operation = {
@@ -522,7 +522,7 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    struct google_gadget *gw;
+    struct google_gadget *gg;
 
     assert(widget != NULL);
     assert(widget->class != NULL);
@@ -537,26 +537,26 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
 
     pool_ref(pool);
 
-    gw = p_malloc(pool, sizeof(*gw));
-    gw->pool = pool;
-    gw->env = env;
-    gw->widget = widget;
+    gg = p_malloc(pool, sizeof(*gg));
+    gg->pool = pool;
+    gg->env = env;
+    gg->widget = widget;
 
-    async_init(&gw->async_operation, &gg_async_operation);
-    async_ref_set(async_ref, &gw->async_operation);
+    async_init(&gg->async_operation, &gg_async_operation);
+    async_ref_set(async_ref, &gg->async_operation);
 
-    gw->delayed = istream_delayed_new(pool);
-    async_ref_clear(istream_delayed_async(gw->delayed));
+    gg->delayed = istream_delayed_new(pool);
+    async_ref_clear(istream_delayed_async(gg->delayed));
 
-    gw->subst = istream_subst_new(pool, gw->delayed);
-    gw->parser = NULL;
-    gw->has_locale = 0;
+    gg->subst = istream_subst_new(pool, gg->delayed);
+    gg->parser = NULL;
+    gg->has_locale = 0;
 
-    http_response_handler_set(&gw->response_handler, handler, handler_ctx);
+    http_response_handler_set(&gg->response_handler, handler, handler_ctx);
 
     http_cache_request(env->http_cache, pool,
                        HTTP_METHOD_GET, widget->class->uri,
                        NULL, NULL,
-                       &google_gadget_handler, gw,
-                       &gw->async);
+                       &google_gadget_handler, gg,
+                       &gg->async);
 }
