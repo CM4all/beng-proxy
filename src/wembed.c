@@ -108,7 +108,6 @@ inline_widget_set(struct inline_widget *iw)
         pool_unref(iw->pool);
         return;
 
-    case WIDGET_DISPLAY_IFRAME:
     case WIDGET_DISPLAY_EXTERNAL:
         widget_cancel(widget);
         istream_delayed_set(iw->stream->delayed,

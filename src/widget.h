@@ -71,7 +71,6 @@ struct widget {
     enum {
         WIDGET_DISPLAY_INLINE,
         WIDGET_DISPLAY_NONE,
-        WIDGET_DISPLAY_IFRAME,
 
         /** external URL in IFRAME */
         WIDGET_DISPLAY_EXTERNAL,

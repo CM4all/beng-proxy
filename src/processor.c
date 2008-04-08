@@ -529,8 +529,6 @@ parser_widget_attr_finished(struct widget *widget,
             widget->display = WIDGET_DISPLAY_INLINE;
         if (strref_cmp_literal(value, "none") == 0)
             widget->display = WIDGET_DISPLAY_NONE;
-        else if (strref_cmp_literal(value, "iframe") == 0)
-            widget->display = WIDGET_DISPLAY_IFRAME;
         else
             widget->display = WIDGET_DISPLAY_NONE;
     } else if (strref_cmp_literal(name, "session") == 0) {

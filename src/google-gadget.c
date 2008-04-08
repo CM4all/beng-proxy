@@ -209,8 +209,6 @@ google_content_tag_finished(struct google_gadget *gw,
 
                 gg_set_content(gw, istream_struct_cast(&gw->output), 1);
             } else {
-                gw->widget->display = WIDGET_DISPLAY_IFRAME;
-
                 istream = embed_iframe_widget(gw->pool, gw->env, gw->widget);
                 gg_set_content(gw, istream, 0);
 
