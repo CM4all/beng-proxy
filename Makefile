@@ -76,6 +76,7 @@ ISTREAM_SOURCES = \
 	src/istream-deflate.c \
 	src/istream-subst.c \
 	src/istream-byte.c \
+	src/istream-iconv.c \
 	src/istream-trace.c \
 	src/istream-fail.c \
 	src/istream-catch.c \
@@ -229,7 +230,7 @@ test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstrin
 test/t-processor: test/t-processor.o src/processor.o src/penv.o src/parser.o src/istream-replace.o src/widget.o src/widget-class.o src/widget-ref.o src/widget-uri.o src/widget-session.o src/embed.o src/wembed.o src/uri.o src/uri-escape.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/pool.o src/pstring.o src/istream-string.o src/istream-subst.o src/istream-file.o src/istream-cat.o src/istream-memory.o src/istream-delayed.o src/istream-hold.o src/istream-dechunk.o src/istream-chunked.o src/session.o src/cookie.o src/header-writer.o src/args.o src/buffered-io.o src/url-stream.o src/url-stock.o src/stock.o src/hstock.o src/js-filter.o src/client-socket.o src/http-client.o src/http-body.o src/socket-util.o src/format.o src/header-parser.o src/http.o src/strutil.o src/js-generator.o src/widget-request.o src/google-gadget.o src/google-gadget-msg.o src/istream-tee.o src/istream-null.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
-FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate byte
+FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate byte iconv
 FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
 
 $(FILTER_TESTS): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o

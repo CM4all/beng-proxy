@@ -91,6 +91,10 @@ istream_t
 istream_tee_second(istream_t istream);
 
 istream_t
+istream_iconv_new(pool_t pool, istream_t input,
+                  const char *tocode, const char *fromcode);
+
+istream_t
 istream_replace_new(pool_t pool, istream_t input, int quiet);
 
 void
