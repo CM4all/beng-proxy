@@ -183,12 +183,45 @@ widget_response_redirect(struct embed *embed,
     return 1;
 }
 
+/**
+ * The widget response is going to be embedded into a template; check
+ * its content type and run the processor (if applicable).
+ */
+static void
+widget_response_process(struct embed *embed, http_status_t status,
+                        strmap_t headers, istream_t body)
+{
+    const char *content_type;
+
+    content_type = strmap_get(headers, "content-type");
+
+    if (content_type == NULL ||
+        strncmp(content_type, "text/html", 9) != 0) {
+        daemon_log(2, "widget sent non-HTML response\n");
+        istream_close(body);
+        http_response_handler_invoke_abort(&embed->handler_ref);
+        return;
+    }
+
+    if (embed->widget->class->type == WIDGET_TYPE_RAW) {
+        http_response_handler_invoke_response(&embed->handler_ref,
+                                              status, headers, body);
+        return;
+    }
+                
+    processor_new(embed->pool, body,
+                  embed->widget, embed->env, embed->options,
+                  embed->handler_ref.handler,
+                  embed->handler_ref.ctx,
+                  embed->async_ref);
+}
+
 static void 
 widget_response_response(http_status_t status, strmap_t headers, istream_t body,
-                        void *ctx)
+                         void *ctx)
 {
     struct embed *embed = ctx;
-    const char *location, *cookies, *content_type;
+    const char *location, *cookies;
 
     cookies = strmap_get(headers, "set-cookie2");
     if (cookies == NULL)
@@ -209,36 +242,12 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
         }
     }
 
-    content_type = strmap_get(headers, "content-type");
-
-    if (embed->widget->from_request.raw || body == NULL) {
+    if (embed->widget->from_request.raw || body == NULL)
         http_response_handler_invoke_response(&embed->handler_ref,
                                               status, headers, body);
-        pool_unref(embed->pool);
-        return;
-    }
+    else
+        widget_response_process(embed, status, headers, body);
 
-    if (content_type == NULL ||
-        strncmp(content_type, "text/html", 9) != 0) {
-        daemon_log(2, "widget sent non-HTML response\n");
-        istream_close(body);
-        http_response_handler_invoke_abort(&embed->handler_ref);
-        pool_unref(embed->pool);
-        return;
-    }
-
-    if (embed->widget->class->type == WIDGET_TYPE_RAW) {
-        http_response_handler_invoke_response(&embed->handler_ref,
-                                              status, headers, body);
-        pool_unref(embed->pool);
-        return;
-    }
-                
-    processor_new(embed->pool, body,
-                  embed->widget, embed->env, embed->options,
-                  embed->handler_ref.handler,
-                  embed->handler_ref.ctx,
-                  embed->async_ref);
     pool_unref(embed->pool);
 }
 
