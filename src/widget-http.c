@@ -308,7 +308,6 @@ widget_http_request(pool_t pool, struct widget *widget,
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-    assert(widget->class->type != WIDGET_DISPLAY_EXTERNAL);
 
     if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET) {
         /* XXX put this check somewhere else */
@@ -316,8 +315,6 @@ widget_http_request(pool_t pool, struct widget *widget,
                             handler, handler_ctx, async_ref);
         return;
     }
-
-    assert(widget->display != WIDGET_DISPLAY_EXTERNAL);
 
     if (widget->class->is_container)
         options |= PROCESSOR_CONTAINER;

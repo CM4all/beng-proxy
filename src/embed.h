@@ -15,10 +15,6 @@ struct http_response_handler;
 struct async_operation_ref;
 
 istream_t
-embed_iframe_widget(pool_t pool, const struct processor_env *env,
-                    struct widget *widget);
-
-istream_t
 embed_inline_widget(pool_t pool, struct processor_env *env,
                     struct widget *widget);
 

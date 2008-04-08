@@ -71,9 +71,6 @@ struct widget {
     enum {
         WIDGET_DISPLAY_INLINE,
         WIDGET_DISPLAY_NONE,
-
-        /** external URL in IFRAME */
-        WIDGET_DISPLAY_EXTERNAL,
     } display;
 
     /** the path info as specified in the template */

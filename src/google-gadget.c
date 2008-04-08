@@ -11,20 +11,7 @@
 #include "http-response.h"
 #include "parser.h"
 #include "processor.h"
-#include "embed.h"
-
-static const struct widget_class *
-gg_class(pool_t pool, const char *uri)
-{
-    /* XXX merge this method with get_widget_class() */
-    struct widget_class *wc = p_malloc(pool, sizeof(*wc));
-
-    wc->uri = uri;
-    wc->type = WIDGET_TYPE_GOOGLE_GADGET;
-    wc->is_container = 0;
-
-    return wc;
-}
+#include "growing-buffer.h"
 
 static void
 google_gadget_process(struct google_gadget *gg, istream_t istream)
@@ -188,6 +175,26 @@ google_gadget_msg_abort(struct google_gadget *gg)
  *
  */
 
+static istream_t
+generate_iframe(pool_t pool, const char *uri)
+{
+    struct growing_buffer *gb;
+
+    if (uri == NULL)
+        return istream_string_new(pool, "[framed widget without id]"); /* XXX */
+
+    gb = growing_buffer_new(pool, 512);
+    growing_buffer_write_string(gb, "<iframe "
+                                "width='100%' height='100%' "
+                                "frameborder='0' marginheight='0' marginwidth='0' "
+                                "scrolling='no' "
+                                "src='");
+    growing_buffer_write_string(gb, uri);
+    growing_buffer_write_string(gb, "'></iframe>");
+
+    return growing_buffer_istream(gb);
+}
+
 static void
 google_content_tag_finished(struct google_gadget *gw,
                             const struct parser_tag *tag)
@@ -209,7 +216,16 @@ google_content_tag_finished(struct google_gadget *gw,
 
                 gg_set_content(gw, istream_struct_cast(&gw->output), 1);
             } else {
-                istream = embed_iframe_widget(gw->pool, gw->env, gw->widget);
+                const char *uri =
+                    widget_external_uri(gw->pool, gw->env->external_uri,
+                                        gw->env->args,
+                                        gw->widget, 0, NULL, 0,
+                                        widget_path(gw->widget), 0);
+
+                if (uri != NULL)
+                    istream = generate_iframe(gw->pool, uri);
+                else
+                    istream = NULL;
                 gg_set_content(gw, istream, 0);
 
                 parser_close(gw->parser);
@@ -226,11 +242,7 @@ google_content_tag_finished(struct google_gadget *gw,
         if (gw->from_parser.url == NULL)
             break;
 
-        gw->widget->display = WIDGET_DISPLAY_EXTERNAL;
-        gw->widget->class = gg_class(gw->pool, gw->from_parser.url);
-        gw->widget->lazy.real_uri = NULL;
-
-        istream = embed_iframe_widget(gw->pool, gw->env, gw->widget);
+        istream = generate_iframe(gw->pool, gw->from_parser.url);
         gg_set_content(gw, istream, 0);
 
         parser_close(gw->parser);
