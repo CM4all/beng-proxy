@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef __BENG_ABORT_H
-#define __BENG_ABORT_H
+#ifndef __BENG_ASYNC_H
+#define __BENG_ASYNC_H
 
 #include <inline/compiler.h>
 
