@@ -8,6 +8,7 @@
 #define __BENG_HTTP_H
 
 #include <assert.h>
+#include <stdbool.h>
 
 typedef enum {
     HTTP_METHOD_NULL = 0,
@@ -67,13 +68,13 @@ http_status_to_string(http_status_t status)
     return http_status_to_string_data[status / 100][status % 100];
 }
 
-static inline int
+static inline bool
 http_status_is_success(http_status_t status)
 {
     return status >= 200 && status < 300;
 }
 
-static inline int
+static inline bool
 http_status_is_empty(http_status_t status)
 {
     return status == HTTP_STATUS_NO_CONTENT ||

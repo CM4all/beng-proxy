@@ -41,7 +41,7 @@ struct istream_replace {
  * This is ignored (returns true) if this replace object is in "quiet"
  * mode (buffer==NULL).
  */
-static inline int
+static inline bool
 replace_is_at_position(const struct istream_replace *replace, off_t at)
 {
     return replace->buffer == NULL || replace->position == at;
@@ -50,7 +50,7 @@ replace_is_at_position(const struct istream_replace *replace, off_t at)
 /**
  * Is the buffer at the end-of-file position?
  */
-static inline int
+static inline bool
 replace_buffer_eof(const struct istream_replace *replace)
 {
     return replace->buffer == NULL ||
@@ -60,7 +60,7 @@ replace_buffer_eof(const struct istream_replace *replace)
 /**
  * Is the object at end-of-file?
  */
-static inline int
+static inline bool
 replace_is_eof(const struct istream_replace *replace)
 {
     return replace->input == NULL && replace->finished &&
@@ -72,7 +72,7 @@ replace_is_eof(const struct istream_replace *replace)
  * Is this substitution object is active, i.e. its data is the next
  * being written?
  */
-static inline int
+static inline bool
 substitution_is_active(const struct substitution *s)
 {
     const struct istream_replace *replace = s->replace;

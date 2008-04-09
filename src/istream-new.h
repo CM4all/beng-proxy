@@ -57,7 +57,7 @@ istream_deinit_impl(struct istream *istream TRACE_ARGS_DECL)
     istream->pool = pool;
 
     poison_undefined(&istream->destroyed, sizeof(istream->destroyed));
-    istream->destroyed = 1;
+    istream->destroyed = true;
 #endif
 
     pool_unref_fwd(pool);

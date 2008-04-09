@@ -121,7 +121,7 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx,
         assert(item->is_idle);
 
         if (stock->class->validate(stock->class_ctx, item)) {
-            item->is_idle = 0;
+            item->is_idle = false;
 
             list_add(&item->list_head, &stock->busy);
             ++stock->num_busy;
@@ -141,7 +141,7 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx,
     item = p_malloc(pool, stock->class->item_size);
     item->stock = stock;
     item->pool = pool;
-    item->is_idle = 0;
+    item->is_idle = false;
     item->callback = callback;
     item->callback_ctx = callback_ctx;
 
@@ -184,7 +184,7 @@ stock_put(struct stock_item *item, int destroy)
         !stock->class->validate(stock->class_ctx, item)) {
         destroy_item(stock, item);
     } else {
-        item->is_idle = 1;
+        item->is_idle = true;
         list_add(&item->list_head, &stock->idle);
         ++stock->num_idle;
     }

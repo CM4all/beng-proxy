@@ -29,7 +29,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
 
 #ifndef NDEBUG
     pool_notify(istream->pool, &notify);
-    istream->in_data = 1;
+    istream->in_data = true;
 #endif
 
     nbytes = istream->handler->data(data, length, istream->handler_ctx);
@@ -42,7 +42,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
         return nbytes;
     }
 
-    istream->in_data = 0;
+    istream->in_data = false;
     istream->data_available = length - nbytes;
 
     if (nbytes > 0) {
@@ -80,7 +80,7 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
 
 #ifndef NDEBUG
     pool_notify(istream->pool, &notify);
-    istream->in_data = 1;
+    istream->in_data = true;
 #endif
 
     nbytes = istream->handler->direct(type, fd, max_length, istream->handler_ctx);
@@ -93,7 +93,7 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
         return nbytes;
     }
 
-    istream->in_data = 0;
+    istream->in_data = false;
 
     if (nbytes > 0) {
         if ((off_t)nbytes >= istream->available_partial)
@@ -120,7 +120,7 @@ istream_invoke_eof(struct istream *istream)
     assert(!istream->available_full_set || istream->available_full == 0);
 
 #ifndef NDEBUG
-    istream->eof = 1;
+    istream->eof = true;
 #endif
 
     if (istream->handler != NULL)
@@ -134,7 +134,7 @@ istream_invoke_abort(struct istream *istream)
     assert(!istream->eof);
 
 #ifndef NDEBUG
-    istream->eof = 1;
+    istream->eof = false;
 #endif
 
     if (istream->handler != NULL)

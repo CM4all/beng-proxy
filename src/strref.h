@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdbool.h>
 
 struct strref {
     size_t length;
@@ -130,7 +131,7 @@ strref_skip(struct strref *s, size_t nbytes)
     s->data += nbytes;
 }
 
-static inline int
+static inline bool
 strref_is_null(const struct strref *s)
 {
     assert(s != NULL);
@@ -139,7 +140,7 @@ strref_is_null(const struct strref *s)
     return s->data == NULL;
 }
 
-static __attr_always_inline int
+static __attr_always_inline bool
 strref_is_empty(const struct strref *s)
 {
     assert(s != NULL);
@@ -200,7 +201,7 @@ strref_cmp2(const struct strref *a, const struct strref *b)
     return strref_cmp(a, b->data, b->length);
 }
 
-static __attr_always_inline int
+static __attr_always_inline bool
 strref_starts_with_n(const struct strref *s,
                      const char *p, size_t length)
 {
@@ -211,7 +212,7 @@ strref_starts_with_n(const struct strref *s,
         memcmp(s->data, p, length) == 0;
 }
 
-static __attr_always_inline int
+static __attr_always_inline bool
 strref_ends_with_n(const struct strref *s,
                    const char *p, size_t length)
 {

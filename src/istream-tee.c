@@ -14,7 +14,7 @@ struct istream_tee {
         unsigned enabled;
     } outputs[2];
     istream_t input;
-    int fragile;
+    bool fragile;
 };
 
 
@@ -227,7 +227,7 @@ static const struct istream istream_tee2 = {
  */
 
 istream_t
-istream_tee_new(pool_t pool, istream_t input, int fragile)
+istream_tee_new(pool_t pool, istream_t input, bool fragile)
 {
     struct istream_tee *tee = (struct istream_tee *)
         istream_new(pool, &istream_tee1, sizeof(*tee));

@@ -26,7 +26,7 @@ struct url_connection {
     struct async_operation_ref client_socket;
     http_client_connection_t http;
 
-    int destroyed;
+    bool destroyed;
 };
 
 
@@ -182,7 +182,7 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri,
 
     async_ref_clear(&connection->client_socket);
     connection->http = NULL;
-    connection->destroyed = 0;
+    connection->destroyed = false;
 
     async_init(&connection->create_operation,
                &url_create_operation);
@@ -253,7 +253,7 @@ url_stock_destroy(void *ctx, struct stock_item *item)
 
     (void)ctx;
 
-    connection->destroyed = 1;
+    connection->destroyed = true;
 
     if (async_ref_defined(&connection->client_socket))
         async_abort(&connection->client_socket);

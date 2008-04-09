@@ -77,19 +77,19 @@ struct processor {
 };
 
 
-static int
+static inline bool
 processor_option_quiet(const struct processor *processor)
 {
     return processor->replace == NULL;
 }
 
-static int
+static inline bool
 processor_option_rewrite_url(const struct processor *processor)
 {
     return (processor->options & PROCESSOR_REWRITE_URL) != 0;
 }
 
-static int
+static inline bool
 processor_option_fragment(const struct processor *processor)
 {
     return processor->widget->class->old_style &&
@@ -97,14 +97,14 @@ processor_option_fragment(const struct processor *processor)
         !processor->widget->from_request.proxy;
 }
 
-static int
+static inline bool
 processor_option_jscript(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
         processor->widget->class->old_style;
 }
 
-static int
+static inline bool
 processor_option_jscript_root(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
@@ -261,7 +261,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->script_tail = 0;
 
     if (widget->from_request.proxy_ref == NULL) {
-        istream = istream_tee_new(pool, istream, 1);
+        istream = istream_tee_new(pool, istream, true);
         processor->replace = istream_replace_new(pool, istream_tee_second(istream), 0);
     } else {
         processor->replace = NULL;

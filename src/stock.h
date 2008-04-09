@@ -17,6 +17,8 @@
 
 #include <inline/list.h>
 
+#include <stdbool.h>
+
 struct async_operation_ref;
 struct stock_item;
 
@@ -26,7 +28,7 @@ struct stock_item {
     struct list_head list_head;
     struct stock *stock;
     pool_t pool;
-    int is_idle;
+    bool is_idle;
 
     stock_callback_t callback;
     void *callback_ctx;
@@ -67,7 +69,7 @@ stock_put(struct stock_item *item, int destroy);
 void
 stock_del(struct stock_item *item);
 
-static inline int
+static inline bool
 stock_item_is_idle(const struct stock_item *item)
 {
     return item->is_idle;

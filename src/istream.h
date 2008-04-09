@@ -10,6 +10,7 @@
 #include "pool.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <sys/types.h>
 
 enum istream_direct {
@@ -80,9 +81,9 @@ struct istream {
     istream_direct_t handler_direct;
 
 #ifndef NDEBUG
-    int reading, destroyed;
+    bool reading, destroyed;
 
-    unsigned closing:1, eof:1, in_data:1, available_full_set:1;
+    bool closing:1, eof:1, in_data:1, available_full_set:1;
 
     /** how much data was available in the previous invocation? */
     size_t data_available;
@@ -153,7 +154,7 @@ istream_available(istream_t _istream, int partial)
     assert(!istream->reading);
 
     pool_notify(istream->pool, &notify);
-    istream->reading = 1;
+    istream->reading = true;
 #endif
 
     if (istream->available == NULL)
@@ -165,7 +166,7 @@ istream_available(istream_t _istream, int partial)
     if (pool_denotify(&notify) || istream->destroyed)
         return available;
 
-    istream->reading = 0;
+    istream->reading = false;
 
     if (partial) {
         assert(istream->available_partial == 0 ||
@@ -177,7 +178,7 @@ istream_available(istream_t _istream, int partial)
                istream->available_full == available);
         if (!istream->available_full_set && available != (off_t)-1) {
             istream->available_full = available;
-            istream->available_full_set = 1;
+            istream->available_full_set = true;
         }
     }
 #endif
@@ -198,7 +199,7 @@ istream_read(istream_t _istream)
     assert(!istream->in_data);
 
     pool_notify(istream->pool, &notify);
-    istream->reading = 1;
+    istream->reading = true;
 #endif
 
     istream->read(_istream);
@@ -207,7 +208,7 @@ istream_read(istream_t _istream)
     if (pool_denotify(&notify) || istream->destroyed)
         return;
 
-    istream->reading = 0;
+    istream->reading = false;
 #endif
 }
 
@@ -234,7 +235,7 @@ istream_free(istream_t *istream_r)
     istream_close(istream);
 }
 
-static inline int
+static inline bool
 istream_has_handler(istream_t _istream)
 {
     struct istream *istream = _istream_opaque_cast(_istream);

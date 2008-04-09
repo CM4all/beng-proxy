@@ -8,6 +8,8 @@
 #ifndef __BENG_ISTREAM_IMPL_H
 #define __BENG_ISTREAM_IMPL_H
 
+#include <stdbool.h>
+
 struct async_operation;
 
 istream_t
@@ -85,7 +87,7 @@ istream_t
 istream_head_new(pool_t pool, istream_t input, size_t size);
 
 istream_t
-istream_tee_new(pool_t pool, istream_t input, int fragile);
+istream_tee_new(pool_t pool, istream_t input, bool fragile);
 
 istream_t
 istream_tee_second(istream_t istream);

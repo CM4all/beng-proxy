@@ -16,7 +16,7 @@ struct input {
 
 struct istream_cat {
     struct istream output;
-    unsigned reading;
+    bool reading;
     unsigned current, num;
     struct input inputs[1];
 };
@@ -28,7 +28,7 @@ cat_current(struct istream_cat *cat)
     return &cat->inputs[cat->current];
 }
 
-static inline int
+static inline bool
 cat_is_current(struct istream_cat *cat, struct input *input)
 {
     return cat_current(cat) == input;
@@ -40,7 +40,7 @@ cat_shift(struct istream_cat *cat)
     return &cat->inputs[cat->current++];
 }
 
-static inline int
+static inline bool
 cat_is_eof(const struct istream_cat *cat)
 {
     return cat->current == cat->num;
@@ -182,7 +182,7 @@ istream_cat_read(istream_t istream)
 
     pool_ref(cat->output.pool);
 
-    cat->reading = 1;
+    cat->reading = true;
 
     do {
         while (!cat_is_eof(cat) && cat_current(cat)->istream == NULL)
@@ -200,7 +200,7 @@ istream_cat_read(istream_t istream)
         istream_read(cat_current(cat)->istream);
     } while (!cat_is_eof(cat) && cat->current != prev);
 
-    cat->reading = 0;
+    cat->reading = false;
 
     pool_unref(cat->output.pool);
 }
@@ -243,7 +243,7 @@ istream_cat_new(pool_t pool, ...)
 
     cat = (struct istream_cat*)istream_new(pool, &istream_cat,
                                            sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
-    cat->reading = 0;
+    cat->reading = false;
     cat->current = 0;
     cat->num = num;
 
