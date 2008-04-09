@@ -100,6 +100,20 @@ shm_close(struct shm *shm)
         daemon_log(1, "munmap() failed: %s\n", strerror(errno));
 }
 
+static struct page *
+shm_split_page(const struct shm *shm, struct page *page)
+{
+    assert(page->num_pages >= 2);
+
+    --page->num_pages;
+
+    page[page->num_pages].data = page->data + shm->page_size * page->num_pages;
+    page += page->num_pages;
+    page->num_pages = 1;
+
+    return page;
+}
+
 void *
 shm_alloc(struct shm *shm)
 {
@@ -119,12 +133,10 @@ shm_alloc(struct shm *shm)
 
         return page->data;
     } else {
-        --page->num_pages;
+        page = shm_split_page(shm, page);
+
         lock_unlock(&shm->lock);
 
-        page[page->num_pages].data = page->data + shm->page_size * page->num_pages;
-        page += page->num_pages;
-        page->num_pages = 1;
         return page->data;
     }
 }
