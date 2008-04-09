@@ -5,6 +5,7 @@
  */
 
 #include "shm.h"
+#include "lock.h"
 
 #include <inline/poison.h>
 #include <inline/list.h>
@@ -24,6 +25,9 @@ struct page {
 struct shm {
     size_t page_size;
     unsigned num_pages;
+
+    /** this lock protects the linked list */
+    struct lock lock;
 
     struct list_head available;
     struct page pages[1];
@@ -68,6 +72,8 @@ shm_new(size_t page_size, unsigned num_pages)
     shm->page_size = page_size;
     shm->num_pages = num_pages;
 
+    lock_init(&shm->lock);
+
     list_init(&shm->available);
     list_add(&shm->pages[0].siblings, &shm->available);
     shm->pages[0].num_pages = num_pages;
@@ -86,6 +92,8 @@ shm_close(struct shm *shm)
 
     assert(shm != NULL);
 
+    lock_destroy(&shm->lock);
+
     header_pages = calc_header_pages(shm->page_size, shm->num_pages);
     ret = munmap(shm, shm->page_size * (header_pages + shm->num_pages));
     if (ret < 0)
@@ -97,17 +105,23 @@ shm_alloc(struct shm *shm)
 {
     struct page *page;
 
-    /* XXX synchronize */
+    lock_lock(&shm->lock);
 
-    if (list_empty(&shm->available))
+    if (list_empty(&shm->available)) {
+        lock_unlock(&shm->lock);
         return NULL;
+    }
 
     page = (struct page *)shm->available.next;
     if (page->num_pages == 1) {
         list_remove(&page->siblings);
+        lock_unlock(&shm->lock);
+
         return page->data;
     } else {
         --page->num_pages;
+        lock_unlock(&shm->lock);
+
         page[page->num_pages].data = page->data + shm->page_size * page->num_pages;
         page += page->num_pages;
         page->num_pages = 1;
@@ -135,8 +149,10 @@ shm_free(struct shm *shm, const void *p)
 
     poison_noaccess(page->data, shm->page_size * page->num_pages);
 
-    /* XXX synchronize */
+    lock_lock(&shm->lock);
 
     list_add(&page->siblings, &shm->available);
     /* XXX sort; merge adjacent pages */
+
+    lock_unlock(&shm->lock);
 }
