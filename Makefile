@@ -150,6 +150,7 @@ SOURCES = src/main.c \
 	$(ISTREAM_SOURCES) \
 	src/fork.c \
 	src/uri.c \
+	src/uri-address.c \
 	src/uri-escape.c \
 	src/args.c \
 	src/gmtime.c \

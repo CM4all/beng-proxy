@@ -7,6 +7,7 @@
 #include "tcache.h"
 #include "cache.h"
 #include "stock.h"
+#include "uri-address.h"
 
 #include <time.h>
 
@@ -79,7 +80,8 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->site = p_strdup_checked(pool, src->site);
     dest->document_root = p_strdup_checked(pool, src->document_root);
     dest->content_type = p_strdup_checked(pool, src->content_type);
-    dest->proxy = p_strdup_checked(pool, src->proxy);
+    dest->proxy = src->proxy == NULL ? NULL
+        : uri_address_dup(pool, src->proxy);
     dest->redirect = p_strdup_checked(pool, src->redirect);
     dest->cgi = src->cgi;
     dest->session = NULL;

@@ -10,6 +10,7 @@
 #include "growing-buffer.h"
 #include "processor.h"
 #include "async.h"
+#include "uri-address.h"
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
@@ -51,6 +52,7 @@ struct translate_connection {
 
     struct packet_reader reader;
     struct translate_response response;
+    struct uri_with_address *uri_with_address;
     struct translate_transformation **transformation_tail;
 };
 
@@ -282,6 +284,7 @@ translate_handle_packet(struct translate_connection *connection,
 
     case TRANSLATE_BEGIN:
         memset(&connection->response, 0, sizeof(connection->response));
+        connection->uri_with_address = NULL;
         connection->transformation_tail= &connection->response.transformation;
         break;
 
@@ -313,7 +316,9 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_PROXY:
-        connection->response.proxy = payload;
+        if (payload != NULL)
+            connection->response.proxy =
+                uri_address_new(connection->pool, payload);
         break;
 
     case TRANSLATE_REDIRECT:
@@ -367,7 +372,18 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_ADDRESS:
-        /* XXX ignore this packet for now */
+        if (connection->uri_with_address == NULL) {
+            daemon_log(2, "misplaced TRANSLATE_ADDRESS packet\n");
+            break;
+        }
+
+        if (payload_length < 2) {
+            daemon_log(2, "malformed TRANSLATE_ADDRESS packet\n");
+            break;
+        }
+
+        uri_address_add(connection->uri_with_address,
+                        (const struct sockaddr *)payload, payload_length);
         break;
     }
 }
@@ -644,4 +660,5 @@ translate(pool_t pool,
     request2->async_ref = async_ref;
 
     stock_get(stock, translate_stock_callback, request2, async_ref);
+
 }

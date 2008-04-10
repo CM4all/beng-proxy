@@ -9,6 +9,7 @@
 #include "processor.h"
 #include "widget.h"
 #include "tcache.h"
+#include "uri-address.h"
 
 void
 widget_registry_lookup(pool_t pool,
@@ -55,7 +56,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
     assert(response->proxy != NULL); /* XXX */
 
     class = &lookup->class;
-    class->uri = p_strdup(lookup->pool, response->proxy);
+    class->uri = p_strdup(lookup->pool, response->proxy->uri);
     class->old_style = 0;
 
     if (response->transformation != NULL &&

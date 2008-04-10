@@ -10,6 +10,7 @@
 #include "pool.h"
 #include "http.h"
 
+struct uri_with_address;
 struct stock;
 struct async_operation_ref;
 
@@ -44,7 +45,7 @@ struct translate_response {
     const char *site;
     const char *document_root;
     const char *content_type;
-    const char *proxy;
+    struct uri_with_address *proxy;
     const char *redirect;
     int cgi;
     const char *session;
