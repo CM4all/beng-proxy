@@ -34,9 +34,48 @@ close_connection(struct client_connection *connection)
 {
     http_server_connection_t http = connection->http;
 
+    assert(http != NULL);
     if (http != NULL)
         http_server_connection_free(&http);
 }
+
+
+/*
+ * http connection handler
+ *
+ */
+
+static void
+my_http_server_connection_request(struct http_server_request *request,
+                                  void *ctx,
+                                  struct async_operation_ref *async_ref)
+{
+    struct client_connection *connection = ctx;
+
+    handle_http_request(connection, request, async_ref);
+}
+
+static void
+my_http_server_connection_free(void *ctx)
+{
+    struct client_connection *connection = ctx;
+
+    assert(connection->http != NULL);
+
+    connection->http = NULL;
+    remove_connection(connection);
+}
+
+static const struct http_server_connection_handler my_http_server_connection_handler = {
+    .request = my_http_server_connection_request,
+    .free = my_http_server_connection_free,
+};
+
+
+/*
+ * listener callback
+ *
+ */
 
 void
 http_listener_callback(int fd,

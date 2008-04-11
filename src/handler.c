@@ -216,12 +216,11 @@ serve_document_root_file(struct request *request2,
     file_callback(request2);
 }
 
-static void
-my_http_server_connection_request(struct http_server_request *request,
-                                  void *ctx,
-                                  struct async_operation_ref *async_ref)
+void
+handle_http_request(struct client_connection *connection,
+                    struct http_server_request *request,
+                    struct async_operation_ref *async_ref)
 {
-    struct client_connection *connection = ctx;
     struct request *request2;
     int ret;
 
@@ -255,19 +254,3 @@ my_http_server_connection_request(struct http_server_request *request,
     else
         ask_translation_server(request2, connection->instance->translate_cache);
 }
-
-static void
-my_http_server_connection_free(void *ctx)
-{
-    struct client_connection *connection = ctx;
-
-    assert(connection->http != NULL);
-
-    connection->http = NULL;
-    remove_connection(connection);
-}
-
-const struct http_server_connection_handler my_http_server_connection_handler = {
-    .request = my_http_server_connection_request,
-    .free = my_http_server_connection_free,
-};

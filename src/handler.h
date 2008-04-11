@@ -8,8 +8,9 @@
 #define __BENG_HANDLER_H
 
 struct request;
-
-extern const struct http_server_connection_handler my_http_server_connection_handler;
+struct client_connection;
+struct http_server_request;
+struct async_operation_ref;
 
 void
 file_callback(struct request *request);
@@ -19,5 +20,10 @@ cgi_handler(struct request *request2);
 
 void
 proxy_handler(struct request *request);
+
+void
+handle_http_request(struct client_connection *connection,
+                    struct http_server_request *request,
+                    struct async_operation_ref *async_ref);
 
 #endif
