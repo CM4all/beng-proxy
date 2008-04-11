@@ -45,7 +45,7 @@ http_server_connection_new(pool_t pool, int fd,
                            http_server_connection_t *connection_r);
 
 void
-http_server_connection_free(http_server_connection_t *connection_r);
+http_server_connection_close(http_server_connection_t connection);
 
 static inline int
 http_server_request_has_body(const struct http_server_request *request)

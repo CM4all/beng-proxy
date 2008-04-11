@@ -18,11 +18,9 @@
 void
 close_connection(struct client_connection *connection)
 {
-    http_server_connection_t http = connection->http;
-
-    assert(http != NULL);
-    if (http != NULL)
-        http_server_connection_free(&http);
+    assert(connection->http != NULL);
+    http_server_connection_close(connection->http);
+    assert(connection->http == NULL);
 }
 
 

@@ -82,9 +82,6 @@ void
 http_server_request_free(struct http_server_request **request_r);
 
 void
-http_server_connection_close(http_server_connection_t connection);
-
-void
 http_server_consume_body(http_server_connection_t connection);
 
 extern const struct istream http_server_request_stream;

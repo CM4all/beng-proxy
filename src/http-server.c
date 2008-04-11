@@ -226,17 +226,6 @@ http_server_connection_close(http_server_connection_t connection)
     pool_unref(connection->pool);
 }
 
-void
-http_server_connection_free(http_server_connection_t *connection_r)
-{
-    http_server_connection_t connection = *connection_r;
-    *connection_r = NULL;
-
-    assert(connection != NULL);
-
-    http_server_connection_close(connection);
-}
-
 
 void
 http_server_maybe_send_100_continue(http_server_connection_t connection)
