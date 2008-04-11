@@ -92,7 +92,7 @@ pool_commit(void)
 #else
 
 void
-pool_trash(pool_t pool __attr_unused);
+pool_trash(pool_t pool);
 
 void
 pool_commit(void);
