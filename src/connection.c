@@ -26,6 +26,7 @@ remove_connection(struct client_connection *connection)
     list_remove(&connection->siblings);
     --connection->instance->num_connections;
 
+    pool_trash(connection->pool);
     pool_unref(connection->pool);
 }
 
