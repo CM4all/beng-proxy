@@ -16,20 +16,6 @@
 #include <unistd.h>
 
 void
-remove_connection(struct client_connection *connection)
-{
-    assert(connection != NULL);
-    assert(connection->http == NULL);
-    assert(connection->instance != NULL);
-    assert(connection->instance->num_connections > 0);
-
-    list_remove(&connection->siblings);
-    --connection->instance->num_connections;
-
-    pool_unref(connection->pool);
-}
-
-void
 close_connection(struct client_connection *connection)
 {
     http_server_connection_t http = connection->http;
@@ -61,9 +47,15 @@ my_http_server_connection_free(void *ctx)
     struct client_connection *connection = ctx;
 
     assert(connection->http != NULL);
+    assert(connection->instance != NULL);
+    assert(connection->instance->num_connections > 0);
 
     connection->http = NULL;
-    remove_connection(connection);
+
+    list_remove(&connection->siblings);
+    --connection->instance->num_connections;
+
+    pool_unref(connection->pool);
 }
 
 static const struct http_server_connection_handler my_http_server_connection_handler = {

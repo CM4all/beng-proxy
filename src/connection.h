@@ -24,9 +24,6 @@ struct client_connection {
 };
 
 void
-remove_connection(struct client_connection *connection);
-
-void
 close_connection(struct client_connection *connection);
 
 void
