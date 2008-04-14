@@ -289,7 +289,7 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_BEGIN:
         memset(&connection->response, 0, sizeof(connection->response));
         connection->uri_with_address = NULL;
-        connection->transformation_tail= &connection->response.transformation;
+        connection->transformation_tail = &connection->response.transformation;
         break;
 
     case TRANSLATE_STATUS:
