@@ -549,7 +549,7 @@ translate_stock_pool(void *ctx __attr_unused, pool_t parent,
 
 static void
 translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
-                       const char *uri, const void *info __attr_unused,
+                       const char *uri, void *info __attr_unused,
                        struct async_operation_ref *async_ref __attr_unused)
 {
     struct translate_connection *connection = (struct translate_connection *)item;

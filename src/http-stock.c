@@ -170,7 +170,7 @@ http_stock_pool(void *ctx __attr_unused, pool_t parent,
 
 static void
 http_stock_create(void *ctx __attr_unused, struct stock_item *item,
-                 const char *uri, const void *info __attr_unused,
+                 const char *uri, void *info __attr_unused,
                  struct async_operation_ref *async_ref)
 {
     struct http_stock_connection *connection =

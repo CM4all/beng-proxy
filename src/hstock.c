@@ -64,7 +64,7 @@ hstock_free(struct hstock **hstock_r)
 
 void
 hstock_get(struct hstock *hstock,
-           const char *uri, const void *info,
+           const char *uri, void *info,
            stock_callback_t callback, void *callback_ctx,
            struct async_operation_ref *async_ref)
 {

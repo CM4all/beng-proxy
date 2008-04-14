@@ -103,7 +103,7 @@ stock_free(struct stock **stock_r)
 }
 
 void
-stock_get(struct stock *stock, const void *info,
+stock_get(struct stock *stock, void *info,
           stock_callback_t callback, void *callback_ctx,
           struct async_operation_ref *async_ref)
 {
