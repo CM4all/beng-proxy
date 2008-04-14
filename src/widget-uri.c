@@ -120,9 +120,9 @@ widget_external_uri(pool_t pool,
         widget->class == &root_widget_class)
         return NULL;
 
-    if (focus) {
-        pool_mark(tpool, &mark);
+    pool_mark(tpool, &mark);
 
+    if (focus) {
         p = widget_relative_uri(tpool, widget,
                                 relative_uri, relative_uri_length,
                                 &buffer);
@@ -153,8 +153,6 @@ widget_external_uri(pool_t pool,
                         "&raw=1", (size_t)(raw ? 6 : 0),
                         NULL);
 
-    if (focus)
-        pool_rewind(tpool, &mark);
-
+    pool_rewind(tpool, &mark);
     return new_uri;
 }
