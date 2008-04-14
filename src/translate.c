@@ -504,6 +504,15 @@ translate_try_write(struct translate_connection *connection)
  *
  */
 
+static pool_t
+translate_stock_pool(void *ctx, pool_t parent, const char *uri)
+{
+    (void)ctx;
+    (void)uri;
+
+    return pool_new_linear(parent, "translate", 1024);
+}
+
 static void
 translate_stock_create(void *ctx, struct stock_item *item, const char *uri,
                        struct async_operation_ref *async_ref __attr_unused)
@@ -563,6 +572,7 @@ translate_stock_destroy(void *ctx, struct stock_item *item)
 
 static struct stock_class translate_stock_class = {
     .item_size = sizeof(struct translate_connection),
+    .pool = translate_stock_pool,
     .create = translate_stock_create,
     .validate = translate_stock_validate,
     .destroy = translate_stock_destroy,
