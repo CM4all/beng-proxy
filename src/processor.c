@@ -467,7 +467,7 @@ transform_uri_attribute(struct processor *processor,
                         enum uri_base base,
                         enum uri_mode mode)
 {
-    struct widget *widget;
+    struct widget *widget = NULL;
     struct strref value;
     istream_t istream;
 
@@ -490,6 +490,8 @@ transform_uri_attribute(struct processor *processor,
         strref_clear(&value);
         break;
     }
+
+    assert(widget != NULL);
 
     istream = rewrite_widget_uri(processor->pool,
                                  processor->env->translate_cache,

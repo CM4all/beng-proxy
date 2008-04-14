@@ -86,7 +86,7 @@ static void
 cache_destroy_oldest_item(struct cache *cache)
 {
     const struct hashmap_pair *pair;
-    const char *oldest_key;
+    const char *oldest_key = NULL;
     struct cache_item *oldest_item = NULL;
     const time_t now = time(NULL);
 
