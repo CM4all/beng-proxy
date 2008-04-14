@@ -8,14 +8,14 @@
 #define __BENG_URL_STOCK_H
 
 #include "pool.h"
-#include "http-client.h"
 
 struct stock_item;
+struct http_client_connection;
 
 struct hstock *
 url_hstock_new(pool_t pool);
 
-http_client_connection_t
+struct http_client_connection *
 url_stock_item_get(struct stock_item *item);
 
 #endif

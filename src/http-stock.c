@@ -8,6 +8,7 @@
 #include "stock.h"
 #include "async.h"
 #include "client-socket.h"
+#include "http-client.h"
 
 #include <daemon/log.h>
 
@@ -24,7 +25,7 @@ struct url_connection {
     struct async_operation create_operation;
 
     struct async_operation_ref client_socket;
-    http_client_connection_t http;
+    struct http_client_connection *http;
 
     bool destroyed;
 };
@@ -274,7 +275,7 @@ url_hstock_new(pool_t pool)
     return hstock_new(pool, &url_stock_class, NULL);
 }
 
-http_client_connection_t
+struct http_client_connection *
 url_stock_item_get(struct stock_item *item)
 {
     struct url_connection *connection = (struct url_connection *)item;

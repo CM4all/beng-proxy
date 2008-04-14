@@ -10,6 +10,7 @@
 #include "http-stock.h"
 #include "stock.h"
 #include "async.h"
+#include "http-client.h"
 
 #include <inline/compiler.h>
 
