@@ -72,7 +72,7 @@ getaddrinfo_helper(const char *host_and_port, int default_port,
  */
 
 static struct http_stock_connection *
-async_to_url_connection(struct async_operation *ao)
+async_to_http_stock_connection(struct async_operation *ao)
 {
     return (struct http_stock_connection*)(((char*)ao) - offsetof(struct http_stock_connection, create_operation));
 }
@@ -80,7 +80,7 @@ async_to_url_connection(struct async_operation *ao)
 static void
 url_create_abort(struct async_operation *ao)
 {
-    struct http_stock_connection *connection = async_to_url_connection(ao);
+    struct http_stock_connection *connection = async_to_http_stock_connection(ao);
 
     assert(connection != NULL);
     assert(async_ref_defined(&connection->client_socket));
