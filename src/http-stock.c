@@ -100,7 +100,7 @@ static struct async_operation_class url_create_operation = {
  */
 
 static void
-url_http_connection_idle(void *ctx)
+http_stock_connection_idle(void *ctx)
 {
     struct http_stock_connection *connection = ctx;
 
@@ -108,7 +108,7 @@ url_http_connection_idle(void *ctx)
 }
 
 static void
-url_http_connection_free(void *ctx)
+http_stock_connection_free(void *ctx)
 {
     struct http_stock_connection *connection = ctx;
 
@@ -123,9 +123,9 @@ url_http_connection_free(void *ctx)
         stock_put(&connection->stock_item, 1);
 }
 
-static const struct http_client_connection_handler url_http_connection_handler = {
-    .idle = url_http_connection_idle,
-    .free = url_http_connection_free,
+static const struct http_client_connection_handler http_stock_connection_handler = {
+    .idle = http_stock_connection_idle,
+    .free = http_stock_connection_free,
 };
 
 
@@ -135,7 +135,7 @@ static const struct http_client_connection_handler url_http_connection_handler =
  */
 
 static void
-url_client_socket_callback(int fd, int err, void *ctx)
+http_stock_socket_callback(int fd, int err, void *ctx)
 {
     struct http_stock_connection *connection = ctx;
 
@@ -145,7 +145,7 @@ url_client_socket_callback(int fd, int err, void *ctx)
         assert(fd >= 0);
 
         connection->http = http_client_connection_new(connection->stock_item.pool, fd,
-                                                      &url_http_connection_handler, connection);
+                                                      &http_stock_connection_handler, connection);
         stock_available(&connection->stock_item, 1);
     } else {
         daemon_log(1, "failed to connect to '%s': %s\n",
@@ -208,7 +208,7 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
         client_socket_new(connection->stock_item.pool,
                           PF_INET, SOCK_STREAM, 0,
                           ai->ai_addr, ai->ai_addrlen,
-                          url_client_socket_callback, connection,
+                          http_stock_socket_callback, connection,
                           &connection->client_socket);
         freeaddrinfo(ai);
     } else {
@@ -230,7 +230,7 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
         client_socket_new(connection->stock_item.pool,
                           PF_UNIX, SOCK_STREAM, 0,
                           (const struct sockaddr*)&sun, sizeof(sun),
-                          url_client_socket_callback, connection,
+                          http_stock_socket_callback, connection,
                           &connection->client_socket);
     }
 }
