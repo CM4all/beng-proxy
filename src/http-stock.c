@@ -162,14 +162,14 @@ url_client_socket_callback(int fd, int err, void *ctx)
  */
 
 static pool_t
-url_stock_pool(void *ctx __attr_unused, pool_t parent,
+http_stock_pool(void *ctx __attr_unused, pool_t parent,
                const char *uri __attr_unused)
 {
-    return pool_new_linear(parent, "url_stock", 2048);
+    return pool_new_linear(parent, "http_stock", 2048);
 }
 
 static void
-url_stock_create(void *ctx __attr_unused, struct stock_item *item,
+http_stock_create(void *ctx __attr_unused, struct stock_item *item,
                  const char *uri, const void *info __attr_unused,
                  struct async_operation_ref *async_ref)
 {
@@ -235,7 +235,7 @@ url_stock_create(void *ctx __attr_unused, struct stock_item *item,
 }
 
 static int
-url_stock_validate(void *ctx __attr_unused, struct stock_item *item)
+http_stock_validate(void *ctx __attr_unused, struct stock_item *item)
 {
     struct url_connection *connection = (struct url_connection *)item;
 
@@ -243,7 +243,7 @@ url_stock_validate(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static void
-url_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
+http_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
 {
     struct url_connection *connection = (struct url_connection *)item;
 
@@ -255,12 +255,12 @@ url_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
         http_client_connection_close(connection->http);
 }
 
-static struct stock_class url_stock_class = {
+static struct stock_class http_stock_class = {
     .item_size = sizeof(struct url_connection),
-    .pool = url_stock_pool,
-    .create = url_stock_create,
-    .validate = url_stock_validate,
-    .destroy = url_stock_destroy,
+    .pool = http_stock_pool,
+    .create = http_stock_create,
+    .validate = http_stock_validate,
+    .destroy = http_stock_destroy,
 };
 
 
@@ -272,7 +272,7 @@ static struct stock_class url_stock_class = {
 struct hstock *
 http_stock_new(pool_t pool)
 {
-    return hstock_new(pool, &url_stock_class, NULL);
+    return hstock_new(pool, &http_stock_class, NULL);
 }
 
 struct http_client_connection *
