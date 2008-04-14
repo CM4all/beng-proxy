@@ -9,7 +9,7 @@
 #include "connection.h"
 #include "session.h"
 #include "translate.h"
-#include "url-stock.h"
+#include "http-stock.h"
 #include "stock.h"
 #include "tcache.h"
 #include "http-cache.h"

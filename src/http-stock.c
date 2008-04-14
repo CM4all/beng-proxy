@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "url-stock.h"
+#include "http-stock.h"
 #include "stock.h"
 #include "async.h"
 #include "client-socket.h"

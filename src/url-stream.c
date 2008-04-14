@@ -7,7 +7,7 @@
 #include "url-stream.h"
 #include "http-response.h"
 #include "header-writer.h"
-#include "url-stock.h"
+#include "http-stock.h"
 #include "stock.h"
 #include "async.h"
 
