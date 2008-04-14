@@ -161,24 +161,21 @@ url_client_socket_callback(int fd, int err, void *ctx)
  */
 
 static pool_t
-url_stock_pool(void *ctx, pool_t parent, const char *uri)
+url_stock_pool(void *ctx __attr_unused, pool_t parent,
+               const char *uri __attr_unused)
 {
-    (void)ctx;
-    (void)uri;
-
     return pool_new_linear(parent, "url_stock", 2048);
 }
 
 static void
-url_stock_create(void *ctx, struct stock_item *item, const char *uri,
+url_stock_create(void *ctx __attr_unused, struct stock_item *item,
+                 const char *uri,
                  struct async_operation_ref *async_ref)
 {
     struct url_connection *connection = (struct url_connection *)item;
     int ret;
 
     assert(uri != NULL);
-
-    (void)ctx;
 
     async_ref_clear(&connection->client_socket);
     connection->http = NULL;
@@ -237,21 +234,17 @@ url_stock_create(void *ctx, struct stock_item *item, const char *uri,
 }
 
 static int
-url_stock_validate(void *ctx, struct stock_item *item)
+url_stock_validate(void *ctx __attr_unused, struct stock_item *item)
 {
     struct url_connection *connection = (struct url_connection *)item;
-
-    (void)ctx;
 
     return connection->http != NULL;
 }
 
 static void
-url_stock_destroy(void *ctx, struct stock_item *item)
+url_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
 {
     struct url_connection *connection = (struct url_connection *)item;
-
-    (void)ctx;
 
     connection->destroyed = true;
 
