@@ -7,6 +7,7 @@
 #include "proxy-widget.h"
 #include "header-writer.h"
 #include "http-server.h"
+#include "http-util.h"
 #include "access-log.h"
 
 /*

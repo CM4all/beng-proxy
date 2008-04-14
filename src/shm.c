@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <sys/mman.h>
 #include <errno.h>
+#include <string.h>
 
 struct page {
     struct list_head siblings;
