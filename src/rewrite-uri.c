@@ -29,7 +29,7 @@ do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
                       enum uri_mode mode)
 {
     const char *frame = NULL;
-    int raw = 0;
+    bool raw = false;
 
     switch (mode) {
     case URI_MODE_DIRECT:
@@ -46,7 +46,7 @@ do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
 
     case URI_MODE_PROXY:
         frame = widget_path(widget);
-        raw = 1;
+        raw = true;
         break;
     }
 

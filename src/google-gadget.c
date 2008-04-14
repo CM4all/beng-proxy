@@ -220,7 +220,7 @@ google_content_tag_finished(struct google_gadget *gg,
                     widget_external_uri(gg->pool, gg->env->external_uri,
                                         gg->env->args,
                                         gg->widget, 0, NULL, 0,
-                                        widget_path(gg->widget), 0);
+                                        widget_path(gg->widget), false);
 
                 if (uri != NULL)
                     istream = generate_iframe(gg->pool, uri);

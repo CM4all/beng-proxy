@@ -101,7 +101,7 @@ widget_external_uri(pool_t pool,
                     struct widget *widget,
                     int focus,
                     const char *relative_uri, size_t relative_uri_length,
-                    const char *frame, int raw)
+                    const char *frame, bool raw)
 {
     const char *path;
     const char *new_uri;
