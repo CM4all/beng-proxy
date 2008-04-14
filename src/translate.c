@@ -321,7 +321,7 @@ translate_handle_packet(struct translate_connection *connection,
 
     case TRANSLATE_PROXY:
         if (payload != NULL)
-            connection->response.proxy =
+            connection->uri_with_address = connection->response.proxy =
                 uri_address_new(connection->pool, payload);
         break;
 
