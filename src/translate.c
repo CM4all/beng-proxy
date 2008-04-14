@@ -549,7 +549,7 @@ translate_stock_pool(void *ctx __attr_unused, pool_t parent,
 
 static void
 translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
-                       const char *uri,
+                       const char *uri, const void *info __attr_unused,
                        struct async_operation_ref *async_ref __attr_unused)
 {
     struct translate_connection *connection = (struct translate_connection *)item;
@@ -698,6 +698,6 @@ translate(pool_t pool,
     request2->callback_ctx = ctx;
     request2->async_ref = async_ref;
 
-    stock_get(stock, translate_stock_callback, request2, async_ref);
+    stock_get(stock, NULL, translate_stock_callback, request2, async_ref);
 
 }

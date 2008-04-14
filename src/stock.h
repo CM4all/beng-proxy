@@ -38,7 +38,8 @@ struct stock_class {
     size_t item_size;
 
     pool_t (*pool)(void *ctx, pool_t parent, const char *uri);
-    void (*create)(void *ctx, struct stock_item *item, const char *uri,
+    void (*create)(void *ctx, struct stock_item *item,
+                   const char *uri, const void *info,
                    struct async_operation_ref *async_ref);
     int (*validate)(void *ctx, struct stock_item *item);
     void (*destroy)(void *ctx, struct stock_item *item);
@@ -57,7 +58,8 @@ void
 stock_free(struct stock **stock_r);
 
 void
-stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx,
+stock_get(struct stock *stock, const void *info,
+          stock_callback_t callback, void *callback_ctx,
           struct async_operation_ref *async_ref);
 
 void
@@ -87,7 +89,8 @@ void
 hstock_free(struct hstock **hstock_r);
 
 void
-hstock_get(struct hstock *hstock, const char *uri,
+hstock_get(struct hstock *hstock,
+           const char *uri, const void *info,
            stock_callback_t callback, void *callback_ctx,
            struct async_operation_ref *async_ref);
 

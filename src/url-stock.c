@@ -169,7 +169,7 @@ url_stock_pool(void *ctx __attr_unused, pool_t parent,
 
 static void
 url_stock_create(void *ctx __attr_unused, struct stock_item *item,
-                 const char *uri,
+                 const char *uri, const void *info __attr_unused,
                  struct async_operation_ref *async_ref)
 {
     struct url_connection *connection = (struct url_connection *)item;

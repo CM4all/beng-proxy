@@ -134,7 +134,8 @@ url_stream_new(pool_t pool,
 
     header_write(us->headers, "connection", "keep-alive");
 
-    hstock_get(http_client_stock, host_and_port,
+    hstock_get(http_client_stock,
+               host_and_port, NULL,
                url_stream_stock_callback, us,
                async_ref);
 }

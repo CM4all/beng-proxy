@@ -103,7 +103,8 @@ stock_free(struct stock **stock_r)
 }
 
 void
-stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx,
+stock_get(struct stock *stock, const void *info,
+          stock_callback_t callback, void *callback_ctx,
           struct async_operation_ref *async_ref)
 {
     pool_t pool;
@@ -145,7 +146,7 @@ stock_get(struct stock *stock, stock_callback_t callback, void *callback_ctx,
     item->callback = callback;
     item->callback_ctx = callback_ctx;
 
-    stock->class->create(stock->class_ctx, item, stock->uri, async_ref);
+    stock->class->create(stock->class_ctx, item, stock->uri, info, async_ref);
 }
 
 void
