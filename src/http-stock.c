@@ -9,6 +9,7 @@
 #include "async.h"
 #include "client-socket.h"
 #include "http-client.h"
+#include "uri-address.h"
 
 #include <daemon/log.h>
 
@@ -170,12 +171,15 @@ http_stock_pool(void *ctx __attr_unused, pool_t parent,
 
 static void
 http_stock_create(void *ctx __attr_unused, struct stock_item *item,
-                 const char *uri, void *info __attr_unused,
-                 struct async_operation_ref *async_ref)
+                  const char *uri, void *info,
+                  struct async_operation_ref *async_ref)
 {
     struct http_stock_connection *connection =
         (struct http_stock_connection *)item;
+    struct uri_with_address *uwa = info;
     int ret;
+    const struct sockaddr *addr;
+    socklen_t addrlen;
 
     assert(uri != NULL);
 
@@ -189,7 +193,18 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
 
     connection->uri = uri;
 
-    if (uri[0] != '/') {
+    if (uwa != NULL)
+        addr = uri_address_next(uwa, &addrlen);
+    else
+        addr = NULL;
+
+    if (addr != NULL) {
+        client_socket_new(connection->stock_item.pool,
+                          addr->sa_family, SOCK_STREAM, 0,
+                          addr, addrlen,
+                          http_stock_socket_callback, connection,
+                          &connection->client_socket);
+    } else if (uri[0] != '/') {
         /* HTTP over TCP */
         struct addrinfo hints, *ai;
 

@@ -12,13 +12,14 @@
 #include "istream.h"
 
 struct hstock;
+struct uri_with_address;
 struct http_response_handler;
 struct async_operation_ref;
 
 void
 filter_new(pool_t pool,
            struct hstock *http_client_stock,
-           const char *url,
+           struct uri_with_address *uwa,
            growing_buffer_t headers,
            istream_t body,
            const struct http_response_handler *handler,

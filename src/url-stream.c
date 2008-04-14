@@ -11,6 +11,7 @@
 #include "stock.h"
 #include "async.h"
 #include "http-client.h"
+#include "uri-address.h"
 
 #include <inline/compiler.h>
 
@@ -64,7 +65,8 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
 void
 url_stream_new(pool_t pool,
                struct hstock *http_client_stock,
-               http_method_t method, const char *url,
+               http_method_t method,
+               struct uri_with_address *uwa,
                growing_buffer_t headers,
                istream_t body,
                const struct http_response_handler *handler,
@@ -74,7 +76,8 @@ url_stream_new(pool_t pool,
     url_stream_t us;
     const char *host_and_port;
 
-    assert(url != NULL);
+    assert(uwa != NULL);
+    assert(uwa->uri != NULL);
     assert(handler != NULL);
     assert(handler->response != NULL);
     assert(body == NULL || !istream_has_handler(body));
@@ -99,11 +102,11 @@ url_stream_new(pool_t pool,
     http_response_handler_set(&us->handler, handler, handler_ctx);
     us->async_ref = async_ref;
 
-    if (memcmp(url, "http://", 7) == 0) {
+    if (memcmp(uwa->uri, "http://", 7) == 0) {
         /* HTTP over TCP */
         const char *p, *slash;
 
-        p = url + 7;
+        p = uwa->uri + 7;
         slash = strchr(p, '/');
         if (slash == NULL || slash == p) {
             http_response_handler_invoke_abort(&us->handler);
@@ -115,11 +118,11 @@ url_stream_new(pool_t pool,
         header_write(us->headers, "host", host_and_port);
 
         us->uri = slash;
-    } else if (memcmp(url, "unix:/", 6) == 0) {
+    } else if (memcmp(uwa->uri, "unix:/", 6) == 0) {
         /* HTTP over Unix socket */
         const char *p, *qmark;
 
-        p = url + 5;
+        p = uwa->uri + 5;
         us->uri = p;
 
         qmark = strchr(p, '?');
@@ -136,7 +139,7 @@ url_stream_new(pool_t pool,
     header_write(us->headers, "connection", "keep-alive");
 
     hstock_get(http_client_stock,
-               host_and_port, NULL,
+               host_and_port, uwa,
                url_stream_stock_callback, us,
                async_ref);
 }

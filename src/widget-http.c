@@ -13,6 +13,7 @@
 #include "async.h"
 #include "google-gadget.h"
 #include "http-util.h"
+#include "uri-address.h"
 
 #include <daemon/log.h>
 
@@ -136,6 +137,7 @@ widget_response_redirect(struct embed *embed,
                          istream_t body)
 {
     const char *new_uri;
+    struct uri_with_address *uwa;
     struct strmap *headers;
     struct strref s;
     const struct strref *p;
@@ -173,11 +175,14 @@ widget_response_redirect(struct embed *embed,
     istream_close(body);
     pool_ref(embed->pool);
 
+    uwa = uri_address_dup(embed->pool, embed->widget->class->address);
+    uwa->uri = location;
+
     headers = widget_request_headers(embed, 0);
 
     http_cache_request(embed->env->http_cache,
                        embed->pool,
-                       HTTP_METHOD_GET, location, headers, NULL,
+                       HTTP_METHOD_GET, uwa, headers, NULL,
                        &widget_response_handler, embed,
                        embed->async_ref);
 
@@ -304,6 +309,7 @@ widget_http_request(pool_t pool, struct widget *widget,
 {
     unsigned options = PROCESSOR_REWRITE_URL;
     struct embed *embed;
+    struct uri_with_address *uwa;
     struct strmap *headers;
 
     assert(widget != NULL);
@@ -327,6 +333,9 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->env = env;
     embed->options = options;
 
+    uwa = uri_address_dup(pool, widget->class->address);
+    uwa->uri = widget_real_uri(pool, widget);
+
     headers = widget_request_headers(embed, widget->from_request.body != NULL);
 
     pool_ref(embed->pool);
@@ -337,7 +346,7 @@ widget_http_request(pool_t pool, struct widget *widget,
     http_cache_request(env->http_cache,
                        pool,
                        widget->from_request.method,
-                       widget_real_uri(pool, widget),
+                       uwa,
                        headers,
                        widget->from_request.body,
                        &widget_response_handler, embed, async_ref);

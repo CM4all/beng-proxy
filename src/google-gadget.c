@@ -558,7 +558,7 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     http_response_handler_set(&gg->response_handler, handler, handler_ctx);
 
     http_cache_request(env->http_cache, pool,
-                       HTTP_METHOD_GET, widget->class->address->uri,
+                       HTTP_METHOD_GET, widget->class->address,
                        NULL, NULL,
                        &google_gadget_handler, gg,
                        &gg->async);

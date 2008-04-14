@@ -13,6 +13,7 @@
 #include "session.h"
 #include "filter.h"
 #include "access-log.h"
+#include "uri-address.h"
 
 static const char *const copy_headers[] = {
     "age",
@@ -168,7 +169,7 @@ response_dispatch(struct request *request2,
 
         filter_new(request->pool,
                    request2->http_client_stock,
-                   transformation->u.filter,
+                   uri_address_new(request->pool, transformation->u.filter),
                    headers,
                    body,
                    &response_handler, request2,

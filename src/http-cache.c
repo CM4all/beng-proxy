@@ -11,6 +11,7 @@
 #include "strmap.h"
 #include "http-response.h"
 #include "date.h"
+#include "uri-address.h"
 
 #include <string.h>
 #include <time.h>
@@ -448,7 +449,8 @@ http_cache_close(struct http_cache *cache)
 static void
 http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
                 pool_t pool,
-                http_method_t method, const char *url,
+                http_method_t method,
+                struct uri_with_address *uwa,
                 struct strmap *headers, istream_t body,
                 const struct http_response_handler *handler,
                 void *handler_ctx,
@@ -458,16 +460,16 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
                                                   sizeof(*request));
     request->pool = pool;
     request->cache = cache;
-    request->url = url;
+    request->url = uwa->uri;
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     request->item = NULL;
     request->info = info;
 
-    cache_log(4, "http_cache: miss %s\n", url);
+    cache_log(4, "http_cache: miss %s\n", uwa->uri);
 
     url_stream_new(pool, cache->stock,
-                   method, url,
+                   method, uwa,
                    headers == NULL ? NULL : headers_dup(pool, headers), body,
                    &http_cache_response_handler, request,
                    async_ref);
@@ -499,7 +501,8 @@ http_cache_serve(struct http_cache_item *item,
 static void
 http_cache_test(struct http_cache *cache, struct http_cache_item *item,
                 pool_t pool,
-                http_method_t method, const char *url,
+                http_method_t method,
+                struct uri_with_address *uwa,
                 struct strmap *headers, istream_t body,
                 const struct http_response_handler *handler,
                 void *handler_ctx,
@@ -509,13 +512,13 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
                                                   sizeof(*request));
     request->pool = pool;
     request->cache = cache;
-    request->url = url;
+    request->url = uwa->uri;
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     request->item = item;
     request->info = &item->info;
 
-    cache_log(4, "http_cache: test %s\n", url);
+    cache_log(4, "http_cache: test %s\n", uwa->uri);
 
     if (headers == NULL)
         headers = strmap_new(pool, 16);
@@ -527,7 +530,7 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
         strmap_put(headers, "if-none-match", item->info.etag, 1);
 
     url_stream_new(pool, cache->stock,
-                   method, url,
+                   method, uwa,
                    headers_dup(pool, headers), body,
                    &http_cache_response_handler, request,
                    async_ref);
@@ -536,24 +539,26 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
 static void
 http_cache_found(struct http_cache *cache, struct http_cache_item *item,
                  pool_t pool,
-                 http_method_t method, const char *url,
+                 http_method_t method,
+                 struct uri_with_address *uwa,
                  struct strmap *headers, istream_t body,
                  const struct http_response_handler *handler,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
     if (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL))
-        http_cache_serve(item, pool, url, body, handler, handler_ctx);
+        http_cache_serve(item, pool, uwa->uri, body, handler, handler_ctx);
     else
         http_cache_test(cache, item, pool,
-                        method, url, headers, body,
+                        method, uwa, headers, body,
                         handler, handler_ctx, async_ref);
 }
 
 void
 http_cache_request(struct http_cache *cache,
                    pool_t pool,
-                   http_method_t method, const char *url,
+                   http_method_t method,
+                   struct uri_with_address *uwa,
                    struct strmap *headers, istream_t body,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
@@ -564,29 +569,29 @@ http_cache_request(struct http_cache *cache,
     info = http_cache_request_evaluate(pool, method, headers, body);
     if (info != NULL) {
         struct http_cache_item *item
-            = (struct http_cache_item *)cache_get(cache->cache, url);
+            = (struct http_cache_item *)cache_get(cache->cache, uwa->uri);
 
         if (item == NULL)
             http_cache_miss(cache, info, pool,
-                            method, url, headers, body,
+                            method, uwa, headers, body,
                             handler, handler_ctx, async_ref);
         else
             http_cache_found(cache, item, pool,
-                             method, url, headers, body,
+                             method, uwa, headers, body,
                              handler, handler_ctx, async_ref);
     } else {
         struct growing_buffer *headers2;
 
         if (http_cache_request_invalidate(method))
-            cache_remove(cache->cache, url);
+            cache_remove(cache->cache, uwa->uri);
 
-        cache_log(4, "http_cache: ignore %s\n", url);
+        cache_log(4, "http_cache: ignore %s\n", uwa->uri);
 
         headers2 = headers == NULL
             ? NULL : headers_dup(pool, headers);
 
         url_stream_new(pool, cache->stock,
-                       method, url,
+                       method, uwa,
                        headers2, body,
                        handler, handler_ctx,
                        async_ref);

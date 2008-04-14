@@ -12,6 +12,8 @@
 #include "http-response.h"
 #include "processor.h"
 #include "strutil.h"
+#include "uri-address.h"
+#include "widget.h"
 
 static const char *
 gg_msg_strip(pool_t pool, const char *value)
@@ -203,10 +205,16 @@ static const struct http_response_handler gg_msg_http_handler = {
 void
 google_gadget_msg_load(struct google_gadget *gg, const char *url)
 {
+    struct uri_with_address *uwa;
+
+    /* XXX check host name? */
+    uwa = uri_address_dup(gg->pool, gg->widget->class->address);
+    uwa->uri = url;
+
     gg->msg.parser = NULL;
 
     http_cache_request(gg->env->http_cache, gg->pool,
-                       HTTP_METHOD_GET, url,
+                       HTTP_METHOD_GET, uwa,
                        NULL, NULL,
                        &gg_msg_http_handler, gg,
                        &gg->async);
