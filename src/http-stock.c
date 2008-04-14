@@ -270,13 +270,13 @@ static struct stock_class url_stock_class = {
  */
 
 struct hstock *
-url_hstock_new(pool_t pool)
+http_stock_new(pool_t pool)
 {
     return hstock_new(pool, &url_stock_class, NULL);
 }
 
 struct http_client_connection *
-url_stock_item_get(struct stock_item *item)
+http_stock_item_get(struct stock_item *item)
 {
     struct url_connection *connection = (struct url_connection *)item;
 

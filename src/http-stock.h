@@ -13,9 +13,9 @@ struct stock_item;
 struct http_client_connection;
 
 struct hstock *
-url_hstock_new(pool_t pool);
+http_stock_new(pool_t pool);
 
 struct http_client_connection *
-url_stock_item_get(struct stock_item *item);
+http_stock_item_get(struct stock_item *item);
 
 #endif

@@ -47,7 +47,7 @@ url_stream_stock_callback(void *ctx, struct stock_item *item)
         if (us->body != NULL)
             istream_close(us->body);
     } else
-        http_client_request(url_stock_item_get(item),
+        http_client_request(http_stock_item_get(item),
                             us->method, us->uri, us->headers, us->body,
                             us->handler.handler, us->handler.ctx,
                             us->async_ref);
