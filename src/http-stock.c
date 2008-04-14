@@ -18,7 +18,7 @@
 #include <netdb.h>
 #include <sys/un.h>
 
-struct url_connection {
+struct http_stock_connection {
     struct stock_item stock_item;
     const char *uri;
 
@@ -71,16 +71,16 @@ getaddrinfo_helper(const char *host_and_port, int default_port,
  *
  */
 
-static struct url_connection *
+static struct http_stock_connection *
 async_to_url_connection(struct async_operation *ao)
 {
-    return (struct url_connection*)(((char*)ao) - offsetof(struct url_connection, create_operation));
+    return (struct http_stock_connection*)(((char*)ao) - offsetof(struct http_stock_connection, create_operation));
 }
 
 static void
 url_create_abort(struct async_operation *ao)
 {
-    struct url_connection *connection = async_to_url_connection(ao);
+    struct http_stock_connection *connection = async_to_url_connection(ao);
 
     assert(connection != NULL);
     assert(async_ref_defined(&connection->client_socket));
@@ -102,7 +102,7 @@ static struct async_operation_class url_create_operation = {
 static void
 url_http_connection_idle(void *ctx)
 {
-    struct url_connection *connection = ctx;
+    struct http_stock_connection *connection = ctx;
 
     stock_put(&connection->stock_item, 0);
 }
@@ -110,7 +110,7 @@ url_http_connection_idle(void *ctx)
 static void
 url_http_connection_free(void *ctx)
 {
-    struct url_connection *connection = ctx;
+    struct http_stock_connection *connection = ctx;
 
     assert(connection->http != NULL);
 
@@ -137,7 +137,7 @@ static const struct http_client_connection_handler url_http_connection_handler =
 static void
 url_client_socket_callback(int fd, int err, void *ctx)
 {
-    struct url_connection *connection = ctx;
+    struct http_stock_connection *connection = ctx;
 
     async_ref_clear(&connection->client_socket);
 
@@ -173,7 +173,8 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
                  const char *uri, const void *info __attr_unused,
                  struct async_operation_ref *async_ref)
 {
-    struct url_connection *connection = (struct url_connection *)item;
+    struct http_stock_connection *connection =
+        (struct http_stock_connection *)item;
     int ret;
 
     assert(uri != NULL);
@@ -237,7 +238,8 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
 static int
 http_stock_validate(void *ctx __attr_unused, struct stock_item *item)
 {
-    struct url_connection *connection = (struct url_connection *)item;
+    struct http_stock_connection *connection =
+        (struct http_stock_connection *)item;
 
     return connection->http != NULL;
 }
@@ -245,7 +247,8 @@ http_stock_validate(void *ctx __attr_unused, struct stock_item *item)
 static void
 http_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
 {
-    struct url_connection *connection = (struct url_connection *)item;
+    struct http_stock_connection *connection =
+        (struct http_stock_connection *)item;
 
     connection->destroyed = true;
 
@@ -256,7 +259,7 @@ http_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static struct stock_class http_stock_class = {
-    .item_size = sizeof(struct url_connection),
+    .item_size = sizeof(struct http_stock_connection),
     .pool = http_stock_pool,
     .create = http_stock_create,
     .validate = http_stock_validate,
@@ -278,7 +281,8 @@ http_stock_new(pool_t pool)
 struct http_client_connection *
 http_stock_item_get(struct stock_item *item)
 {
-    struct url_connection *connection = (struct url_connection *)item;
+    struct http_stock_connection *connection =
+        (struct http_stock_connection *)item;
 
     assert(item != NULL);
 
