@@ -505,22 +505,19 @@ translate_try_write(struct translate_connection *connection)
  */
 
 static pool_t
-translate_stock_pool(void *ctx, pool_t parent, const char *uri)
+translate_stock_pool(void *ctx __attr_unused, pool_t parent,
+                     const char *uri __attr_unused)
 {
-    (void)ctx;
-    (void)uri;
-
     return pool_new_linear(parent, "translate", 1024);
 }
 
 static void
-translate_stock_create(void *ctx, struct stock_item *item, const char *uri,
+translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
+                       const char *uri,
                        struct async_operation_ref *async_ref __attr_unused)
 {
     struct translate_connection *connection = (struct translate_connection *)item;
     int ret;
-
-    (void)ctx;
 
     connection->event.ev_events = 0;
 
@@ -545,21 +542,17 @@ translate_stock_create(void *ctx, struct stock_item *item, const char *uri,
 }
 
 static int
-translate_stock_validate(void *ctx, struct stock_item *item)
+translate_stock_validate(void *ctx __attr_unused, struct stock_item *item)
 {
     struct translate_connection *connection = (struct translate_connection *)item;
-
-    (void)ctx;
 
     return connection->fd >= 0;
 }
 
 static void
-translate_stock_destroy(void *ctx, struct stock_item *item)
+translate_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
 {
     struct translate_connection *connection = (struct translate_connection *)item;
-
-    (void)ctx;
 
     if (stock_item_is_idle(item) && connection->event.ev_events != 0)
         event_del(&connection->event);
