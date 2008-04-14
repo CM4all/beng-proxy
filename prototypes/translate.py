@@ -8,6 +8,8 @@ import re
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, Factory
 import struct
+from urlparse import urlparse
+from socket import gethostbyname
 
 TRANSLATE_BEGIN = 1
 TRANSLATE_END = 2
@@ -31,6 +33,8 @@ TRANSLATE_CGI = 19
 TRANSLATE_DOCUMENT_ROOT = 20
 TRANSLATE_WIDGET_TYPE = 21
 TRANSLATE_CONTAINER = 22
+TRANSLATE_ADDRESS = 23
+TRANSLATE_ADDRESS_STRING = 24
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
 
@@ -129,7 +133,12 @@ class Translation(Protocol):
                 continue
             m = re.match(r'^server\s+"(\S+)"$', line)
             if m:
-                self._write_packet(TRANSLATE_PROXY, m.group(1))
+                uri = m.group(1)
+                self._write_packet(TRANSLATE_PROXY, uri)
+                host, port = urlparse(uri)[1].split(':', 1) + [None]
+                address = gethostbyname(host)
+                if port: address += ':' + port
+                self._write_packet(TRANSLATE_ADDRESS_STRING, address)
                 continue
             if line == 'process':
                 self._write_packet(TRANSLATE_PROCESS)

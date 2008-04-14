@@ -33,6 +33,7 @@ enum beng_translation_command {
     TRANSLATE_WIDGET_TYPE = 21,
     TRANSLATE_CONTAINER = 22,
     TRANSLATE_ADDRESS = 23,
+    TRANSLATE_ADDRESS_STRING = 24,
 };
 
 struct beng_translation_header {

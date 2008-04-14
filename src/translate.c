@@ -20,6 +20,10 @@
 #include <string.h>
 #include <errno.h>
 #include <event.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 struct packet_reader {
     struct beng_translation_header header;
@@ -384,6 +388,38 @@ translate_handle_packet(struct translate_connection *connection,
 
         uri_address_add(connection->uri_with_address,
                         (const struct sockaddr *)payload, payload_length);
+        break;
+
+
+    case TRANSLATE_ADDRESS_STRING:
+        if (connection->uri_with_address == NULL) {
+            daemon_log(2, "misplaced TRANSLATE_ADDRESS_STRING packet\n");
+            break;
+        }
+
+        if (payload_length < 7) {
+            daemon_log(2, "malformed TRANSLATE_ADDRESS_STRING packet\n");
+            break;
+        }
+
+        {
+            struct sockaddr_in sin;
+            int ret;
+
+            ret = inet_aton(payload, &sin.sin_addr);
+            if (!ret) {
+                daemon_log(2, "malformed TRANSLATE_ADDRESS_STRING packet\n");
+                break;
+            }
+
+            sin.sin_family = AF_INET;
+            sin.sin_port = htons(80);
+            memset(&sin.sin_zero, 0, sizeof(sin.sin_zero));
+
+            uri_address_add(connection->uri_with_address,
+                            (const struct sockaddr *)&sin, sizeof(sin));
+        }
+
         break;
     }
 }
