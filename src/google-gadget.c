@@ -12,6 +12,7 @@
 #include "parser.h"
 #include "processor.h"
 #include "growing-buffer.h"
+#include "uri-address.h"
 
 static void
 google_gadget_process(struct google_gadget *gg, istream_t istream)
@@ -526,6 +527,8 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
 
     assert(widget != NULL);
     assert(widget->class != NULL);
+    assert(widget->class->address != NULL);
+    assert(widget->class->address->uri != NULL);
 
     if (widget->from_request.proxy && strmap_get(env->args, "save") != NULL) {
         struct http_response_handler_ref handler_ref;
@@ -555,7 +558,7 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     http_response_handler_set(&gg->response_handler, handler, handler_ctx);
 
     http_cache_request(env->http_cache, pool,
-                       HTTP_METHOD_GET, widget->class->uri,
+                       HTTP_METHOD_GET, widget->class->address->uri,
                        NULL, NULL,
                        &google_gadget_handler, gg,
                        &gg->async);

@@ -32,7 +32,7 @@ enum widget_type {
  */
 struct widget_class {
     /** the base URI of this widget, as specified in the template */
-    const char *uri;
+    struct uri_with_address *address;
 
     /** which API is used by the widget */
     enum widget_type type;

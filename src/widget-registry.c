@@ -56,7 +56,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
     assert(response->proxy != NULL); /* XXX */
 
     class = &lookup->class;
-    class->uri = p_strdup(lookup->pool, response->proxy->uri);
+    class->address = uri_address_dup(lookup->pool, response->proxy);
     class->old_style = 0;
 
     if (response->transformation != NULL &&

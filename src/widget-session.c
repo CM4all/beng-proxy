@@ -7,15 +7,19 @@
 #include "widget.h"
 #include "session.h"
 #include "tpool.h"
+#include "uri-address.h"
 
 #include <assert.h>
 
 static const char *
 widget_get_server_name(pool_t pool, const struct widget *widget)
 {
-    const char *uri = widget->class->uri, *p;
-    if (uri == NULL)
+    const char *uri, *p;
+
+    if (widget->class->address == NULL)
         return NULL;
+
+    uri = widget->class->address->uri;
 
     p = strchr(uri, ':');
     if (p == NULL || p[1] != '/' || p[2] != '/' || p[3] == '/')
