@@ -4,9 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "access-log.h"
+
 #ifndef NO_ACCESS_LOG
 
-#include "access-log.h"
 #include "http-server.h"
 
 #include <time.h>
