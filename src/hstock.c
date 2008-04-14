@@ -84,7 +84,7 @@ hstock_get(struct hstock *hstock,
 
 void
 hstock_put(struct hstock *hstock __attr_unused, const char *uri __attr_unused,
-           struct stock_item *object, int destroy)
+           struct stock_item *object, bool destroy)
 {
 #ifndef NDEBUG
     struct stock *stock = (struct stock *)hashmap_get(hstock->stocks, uri);

@@ -230,7 +230,7 @@ translate_read_event_callback(int fd, short event, void *ctx)
     if (event == EV_TIMEOUT) {
         daemon_log(1, "read timeout on translation server\n");
         connection->callback(&error, connection->ctx);
-        stock_put(&connection->stock_item, 1);
+        stock_put(&connection->stock_item, true);
         return;
     }
 
@@ -264,14 +264,14 @@ translate_handle_packet(struct translate_connection *connection,
         if (connection->response.status != (http_status_t)-1) {
             daemon_log(1, "double BEGIN from translation server\n");
             connection->callback(&error, connection->ctx);
-            stock_put(&connection->stock_item, 1);
+            stock_put(&connection->stock_item, true);
             return;
         }
     } else {
         if (connection->response.status == (http_status_t)-1) {
             daemon_log(1, "no BEGIN from translation server\n");
             connection->callback(&error, connection->ctx);
-            stock_put(&connection->stock_item, 1);
+            stock_put(&connection->stock_item, true);
             return;
         }
     }
@@ -279,7 +279,7 @@ translate_handle_packet(struct translate_connection *connection,
     switch (command) {
     case TRANSLATE_END:
         connection->callback(&connection->response, connection->ctx);
-        stock_put(&connection->stock_item, 0);
+        stock_put(&connection->stock_item, false);
 
         event_set(&connection->event, connection->fd, EV_READ,
                   translate_idle_event_callback, connection);
@@ -296,7 +296,7 @@ translate_handle_packet(struct translate_connection *connection,
         if (payload_length != 2) {
             daemon_log(1, "size mismatch in STATUS packet from translation server\n");
             connection->callback(&error, connection->ctx);
-            stock_put(&connection->stock_item, 1);
+            stock_put(&connection->stock_item, true);
             return;
         }
 
@@ -446,12 +446,12 @@ translate_try_read(struct translate_connection *connection)
             daemon_log(1, "read error from translation server: %s\n",
                        strerror(errno));
             connection->callback(&error, connection->ctx);
-            stock_put(&connection->stock_item, 1);
+            stock_put(&connection->stock_item, true);
             return;
         } else if (ret == 0) {
             daemon_log(1, "translation server aborted the connection\n");
             connection->callback(&error, connection->ctx);
-            stock_put(&connection->stock_item, 1);
+            stock_put(&connection->stock_item, true);
             return;
         }
 
@@ -482,7 +482,7 @@ translate_write_event_callback(int fd, short event, void *ctx)
     if (event == EV_TIMEOUT) {
         daemon_log(1, "write timeout on translation server\n");
         connection->callback(&error, connection->ctx);
-        stock_put(&connection->stock_item, 1);
+        stock_put(&connection->stock_item, true);
         return;
     }
 
@@ -508,7 +508,7 @@ translate_try_write(struct translate_connection *connection)
         daemon_log(1, "write error on translation server: %s\n",
                    strerror(errno));
         connection->callback(&error, connection->ctx);
-        stock_put(&connection->stock_item, 1);
+        stock_put(&connection->stock_item, true);
         return;
     }
 
@@ -561,7 +561,7 @@ translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     if (connection->fd < 0) {
         daemon_log(1, "failed to connect to %s: %s\n",
                    uri, strerror(errno));
-        stock_available(item, 0);
+        stock_available(item, false);
         return;
     }
 
@@ -569,11 +569,11 @@ translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     if (ret < 0) {
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));
-        stock_available(item, 0);
+        stock_available(item, false);
         return;
     }
 
-    stock_available(item, 1);
+    stock_available(item, true);
     return;
 }
 
@@ -626,7 +626,7 @@ translate_connection_abort(struct async_operation *ao)
 
     assert(connection->fd >= 0);
 
-    stock_put(&connection->stock_item, 1);
+    stock_put(&connection->stock_item, true);
 }
 
 static struct async_operation_class translate_operation = {

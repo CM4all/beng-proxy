@@ -86,7 +86,7 @@ url_create_abort(struct async_operation *ao)
     assert(async_ref_defined(&connection->client_socket));
 
     async_abort(&connection->client_socket);
-    stock_available(&connection->stock_item, 0);
+    stock_available(&connection->stock_item, false);
 }
 
 static struct async_operation_class url_create_operation = {
@@ -104,7 +104,7 @@ http_stock_connection_idle(void *ctx)
 {
     struct http_stock_connection *connection = ctx;
 
-    stock_put(&connection->stock_item, 0);
+    stock_put(&connection->stock_item, false);
 }
 
 static void
@@ -120,7 +120,7 @@ http_stock_connection_free(void *ctx)
     if (stock_item_is_idle(&connection->stock_item))
         stock_del(&connection->stock_item);
     else
-        stock_put(&connection->stock_item, 1);
+        stock_put(&connection->stock_item, true);
 }
 
 static const struct http_client_connection_handler http_stock_connection_handler = {
@@ -146,12 +146,12 @@ http_stock_socket_callback(int fd, int err, void *ctx)
 
         connection->http = http_client_connection_new(connection->stock_item.pool, fd,
                                                       &http_stock_connection_handler, connection);
-        stock_available(&connection->stock_item, 1);
+        stock_available(&connection->stock_item, true);
     } else {
         daemon_log(1, "failed to connect to '%s': %s\n",
                    connection->uri, strerror(err));
 
-        stock_available(&connection->stock_item, 0);
+        stock_available(&connection->stock_item, false);
     }
 }
 
@@ -201,7 +201,7 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
         ret = getaddrinfo_helper(uri, 80, &hints, &ai);
         if (ret != 0) {
             daemon_log(1, "failed to resolve host name '%s'\n", uri);
-            stock_available(item, 0);
+            stock_available(item, false);
             return;
         }
 
@@ -220,7 +220,7 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
 
         if (path_length >= sizeof(sun.sun_path)) {
             daemon_log(1, "client_socket_new() failed: unix socket path is too long\n");
-            stock_available(item, 0);
+            stock_available(item, false);
             return;
         }
 

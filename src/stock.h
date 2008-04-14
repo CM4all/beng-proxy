@@ -63,10 +63,10 @@ stock_get(struct stock *stock, void *info,
           struct async_operation_ref *async_ref);
 
 void
-stock_available(struct stock_item *item, int success);
+stock_available(struct stock_item *item, bool success);
 
 void
-stock_put(struct stock_item *item, int destroy);
+stock_put(struct stock_item *item, bool destroy);
 
 void
 stock_del(struct stock_item *item);
@@ -96,7 +96,7 @@ hstock_get(struct hstock *hstock,
 
 void
 hstock_put(struct hstock *hstock, const char *uri, struct stock_item *item,
-           int destroy);
+           bool destroy);
 
 
 #endif

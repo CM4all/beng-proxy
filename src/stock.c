@@ -150,7 +150,7 @@ stock_get(struct stock *stock, void *info,
 }
 
 void
-stock_available(struct stock_item *item, int success)
+stock_available(struct stock_item *item, bool success)
 {
     struct stock *stock = item->stock;
 
@@ -166,7 +166,7 @@ stock_available(struct stock_item *item, int success)
 }
 
 void
-stock_put(struct stock_item *item, int destroy)
+stock_put(struct stock_item *item, bool destroy)
 {
     struct stock *stock;
 
