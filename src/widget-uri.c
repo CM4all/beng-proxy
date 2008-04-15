@@ -6,6 +6,7 @@
 
 #include "widget.h"
 #include "uri.h"
+#include "uri-parser.h"
 #include "args.h"
 #include "tpool.h"
 #include "uri-address.h"

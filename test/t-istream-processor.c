@@ -1,7 +1,7 @@
 #include "istream.h"
 #include "widget.h"
 #include "processor.h"
-#include "uri.h"
+#include "uri-parser.h"
 #include "session.h"
 #include "widget-stream.h"
 #include "embed.h"

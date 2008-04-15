@@ -8,7 +8,7 @@
 #ifndef __BENG_REQUEST_H
 #define __BENG_REQUEST_H
 
-#include "uri.h"
+#include "uri-parser.h"
 #include "translate.h"
 #include "strmap.h"
 #include "processor.h"

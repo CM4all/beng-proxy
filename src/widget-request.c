@@ -7,7 +7,7 @@
 #include "widget.h"
 #include "session.h"
 #include "processor.h"
-#include "uri.h"
+#include "uri-parser.h"
 
 #include <string.h>
 #include <assert.h>
