@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri.h"
+#include "uri-escape.h"
 #include "strutil.h"
 #include "format.h"
 

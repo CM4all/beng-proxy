@@ -5,7 +5,7 @@
  */
 
 #include "args.h"
-#include "uri.h"
+#include "uri-escape.h"
 #include "strmap.h"
 
 #include <string.h>

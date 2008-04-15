@@ -5,7 +5,7 @@
  */
 
 #include "uri-parser.h"
-#include "uri.h"
+#include "uri-escape.h"
 
 #include <string.h>
 
