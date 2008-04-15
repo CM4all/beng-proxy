@@ -6,6 +6,7 @@
 #include "widget-stream.h"
 #include "embed.h"
 #include "widget-registry.h"
+#include "uri-address.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,8 +27,8 @@ embed_inline_widget(pool_t pool, struct processor_env *env __attr_unused,
                     struct widget *widget)
 {
     return istream_string_new(pool,
-                              widget->class->uri != NULL
-                              ? widget->class->uri : "bar");
+                              widget->class->address != NULL
+                              ? widget->class->address->uri : "bar");
 }
 
 void
