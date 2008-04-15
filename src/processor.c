@@ -28,8 +28,6 @@ enum uri_base {
 struct processor {
     pool_t pool;
 
-    int had_input;
-
     pool_t widget_pool;
 
     struct widget *widget;
