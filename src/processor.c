@@ -296,7 +296,7 @@ processor_new(pool_t pool, istream_t istream,
         async_ref_set(async_ref, &processor->async);
         processor->async_ref = async_ref;
 
-        istream_read(istream);
+        parser_read(processor->parser);
     }
 }
 
