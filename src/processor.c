@@ -41,7 +41,9 @@ struct processor {
     istream_t replace;
 
     struct parser *parser;
-    int js_generated;
+
+    bool js_generated:1;
+
     enum {
         TAG_NONE,
         TAG_HEAD,
@@ -152,7 +154,7 @@ processor_insert_jscript(struct processor *processor, off_t offset)
 
     processor_replace_add(processor, offset, offset,
                           processor_jscript(processor));
-    processor->js_generated = 1;
+    processor->js_generated = true;
 }
 
 
@@ -255,7 +257,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->env = env;
     processor->options = options;
 
-    processor->js_generated = 0;
+    processor->js_generated = false;
     processor->embedded_widget = NULL;
     processor->in_script = false;
     processor->script_tail = false;
