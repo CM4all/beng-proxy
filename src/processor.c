@@ -39,6 +39,7 @@ struct processor {
     istream_t replace;
 
     struct parser *parser;
+    bool had_input:1;
 
     bool js_generated:1;
 
@@ -296,7 +297,12 @@ processor_new(pool_t pool, istream_t istream,
         async_ref_set(async_ref, &processor->async);
         processor->async_ref = async_ref;
 
-        parser_read(processor->parser);
+        pool_ref(pool);
+        do {
+            processor->had_input = false;
+            parser_read(processor->parser);
+        } while (processor->had_input && !processor->response_sent);
+        pool_unref(pool);
     }
 }
 
@@ -351,6 +357,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 {
     struct processor *processor = ctx;
 
+    processor->had_input = true;
     processor->tag = TAG_NONE;
 
     if (processor->in_script) {
@@ -548,6 +555,8 @@ static void
 processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
     struct processor *processor = ctx;
+
+    processor->had_input = true;
 
     if (!processor_option_quiet(processor) &&
         (processor->options & PROCESSOR_JS_FILTER) != 0 &&
@@ -789,6 +798,8 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
     struct processor *processor = ctx;
 
+    processor->had_input = true;
+
     if (processor->tag == TAG_HEAD) {
         if (tag->type == TAG_OPEN)
             processor_insert_jscript(processor, tag->end);
@@ -864,6 +875,8 @@ static size_t
 processor_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
 {
     struct processor *processor = ctx;
+
+    processor->had_input = true;
 
     (void)escaped;
 
