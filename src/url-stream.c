@@ -17,8 +17,6 @@
 
 #include <string.h>
 
-typedef struct url_stream *url_stream_t;
-
 struct url_stream {
     pool_t pool;
 
@@ -40,7 +38,7 @@ struct url_stream {
 static void
 url_stream_stock_callback(void *ctx, struct stock_item *item)
 {
-    url_stream_t us = ctx;
+    struct url_stream *us = ctx;
 
     if (item == NULL) {
         http_response_handler_invoke_abort(&us->handler);
@@ -73,7 +71,7 @@ url_stream_new(pool_t pool,
                void *handler_ctx,
                struct async_operation_ref *async_ref)
 {
-    url_stream_t us;
+    struct url_stream *us;
     const char *host_and_port;
 
     assert(uwa != NULL);
