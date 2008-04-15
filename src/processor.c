@@ -34,7 +34,7 @@ struct processor {
     struct processor_env *env;
     unsigned options;
 
-    unsigned response_sent:1;
+    bool response_sent:1;
 
     istream_t replace;
 
@@ -273,7 +273,7 @@ processor_new(pool_t pool, istream_t istream,
         struct http_response_handler_ref response_handler;
         strmap_t headers;
 
-        processor->response_sent = 1;
+        processor->response_sent = true;
 
         if (processor_option_fragment(processor))
             processor_insert_jscript(processor, 0);
@@ -287,7 +287,7 @@ processor_new(pool_t pool, istream_t istream,
                                               HTTP_STATUS_OK, headers,
                                               processor->replace);
     } else {
-        processor->response_sent = 0;
+        processor->response_sent = false;
 
         http_response_handler_set(&processor->response_handler,
                                   handler, handler_ctx);
@@ -692,7 +692,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
     }
 
     if (widget->from_request.proxy || widget->from_request.proxy_ref != NULL) {
-        processor->response_sent = 1;
+        processor->response_sent = true;
         embed_frame_widget(pool, env, widget,
                            processor->response_handler.handler,
                            processor->response_handler.ctx,
@@ -892,7 +892,7 @@ processor_parser_eof(void *ctx, off_t length)
         istream_replace_finish(processor->replace);
 
     if (!processor->response_sent) {
-        processor->response_sent = 1;
+        processor->response_sent = true;
         http_response_handler_invoke_message(&processor->response_handler, processor->pool,
                                              HTTP_STATUS_NOT_FOUND,
                                              "Widget not found");
@@ -909,7 +909,7 @@ processor_parser_abort(void *ctx)
     processor->parser = NULL;
 
     if (!processor->response_sent) {
-        processor->response_sent = 1;
+        processor->response_sent = true;
         http_response_handler_invoke_abort(&processor->response_handler);
     }
 
