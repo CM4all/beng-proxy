@@ -16,6 +16,9 @@ istream_t
 istream_null_new(pool_t pool);
 
 istream_t
+istream_zero_new(pool_t pool);
+
+istream_t
 istream_block_new(pool_t pool);
 
 istream_t
