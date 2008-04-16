@@ -124,9 +124,8 @@ http_client_response_stream_read(istream_t istream)
 
     http_client_consume_body(connection);
 
-    assert(!fifo_buffer_full(connection->input));
-
-    if (connection->response.read_state == READ_BODY)
+    if (!fifo_buffer_full(connection->input) &&
+        connection->response.read_state == READ_BODY)
         http_client_try_read(connection);
 
     pool_unref(connection->pool);
