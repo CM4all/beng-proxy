@@ -2,6 +2,7 @@
 #include "http-response.h"
 #include "duplex.h"
 #include "async.h"
+#include "socket-util.h"
 
 #include <inline/compiler.h>
 
@@ -44,6 +45,8 @@ connect_mirror(pool_t pool,
     }
 
     close(sv[1]);
+
+    socket_set_nonblock(sv[0], 1);
 
     return http_client_connection_new(pool, sv[0], handler, ctx);
 }
