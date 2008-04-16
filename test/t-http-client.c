@@ -357,7 +357,7 @@ test_data_blocking(pool_t pool, struct context *c)
     c->data_blocking = 5;
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
-                        istream_head_new(pool, istream_zero_new(pool), 8192),
+                        istream_head_new(pool, istream_zero_new(pool), 65536),
                         &my_response_handler, c, &c->async_ref);
 
     while (c->data_blocking > 0) {
