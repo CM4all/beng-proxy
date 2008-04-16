@@ -93,6 +93,7 @@ SOURCES = src/main.c \
 	src/cmdline.c \
 	src/child.c \
 	src/shm.c \
+	src/dpool.c \
 	src/session.c \
 	src/cookie.c \
 	src/connection.c \
@@ -178,7 +179,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-cookie-client test/t-html-escape test/t-istream-replace test/t-parser-cdata test/t-shm
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-cookie-client test/t-html-escape test/t-istream-replace test/t-parser-cdata test/t-shm test/t-dpool
 
 src/libcm4all-istream.a: $(ISTREAM_OBJECTS)
 	ar cr $@ $^
@@ -264,7 +265,13 @@ test/t-shm: test/t-shm.o src/shm.o
 check-shm: test/t-shm
 	./test/t-shm
 
-check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client check-cookie-client check-shm
+test/t-dpool: test/t-dpool.o src/shm.o src/dpool.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
+check-dpool: test/t-dpool
+	./test/t-dpool
+
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client check-cookie-client check-shm check-dpool
 
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb
