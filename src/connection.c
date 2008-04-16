@@ -19,8 +19,8 @@ void
 close_connection(struct client_connection *connection)
 {
     assert(connection->http != NULL);
+
     http_server_connection_close(connection->http);
-    assert(connection->http == NULL);
 }
 
 
