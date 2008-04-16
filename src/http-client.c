@@ -556,10 +556,11 @@ http_client_try_read_buffered(http_client_connection_t connection)
         http_client_consume_headers(connection);
 
     if (http_client_connection_valid(connection) &&
-        connection->response.read_state != READ_NONE &&
-        ((connection->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 ||
-         !fifo_buffer_full(connection->input)))
-        event2_or(&connection->event, EV_READ);
+        connection->response.read_state != READ_NONE) {
+        event2_setbit(&connection->event, EV_READ,
+                      (connection->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 ||
+                      !fifo_buffer_full(connection->input));
+    }
 }
 
 static void
