@@ -85,12 +85,16 @@ strmap_addn(strmap_t map, const char *key, const char *value)
 }
 
 static inline const char *
-strmap_maybe_overwrite(struct slot *slot, const char *value, int overwrite)
+strmap_maybe_overwrite(struct slot *slot, const char *key, const char *value,
+                       int overwrite)
 {
     const char *old = slot->pair.value;
     assert(old != NULL);
-    if (overwrite)
+    if (overwrite) {
+        slot->pair.key = key;
         slot->pair.value = value;
+    }
+
     return old;
 }
 
@@ -109,14 +113,14 @@ strmap_put(strmap_t map, const char *key, const char *value, int overwrite)
         prev->pair.value = value;
         return NULL;
     } else if (strcmp(prev->pair.key, key) == 0)
-        return strmap_maybe_overwrite(prev, value, overwrite);
+        return strmap_maybe_overwrite(prev, key, value, overwrite);
 
     for (slot = prev->next; slot != NULL; slot = slot->next) {
         assert(slot->pair.key != NULL);
         assert(slot->pair.value != NULL);
 
         if (strcmp(slot->pair.key, key) == 0)
-            return strmap_maybe_overwrite(slot, value, overwrite);
+            return strmap_maybe_overwrite(slot, key, value, overwrite);
     }
 
     slot = p_malloc(map->pool, sizeof(*slot));

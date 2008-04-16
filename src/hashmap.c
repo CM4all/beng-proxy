@@ -73,12 +73,16 @@ hashmap_addn(hashmap_t map, const char *key, void *value)
 }
 
 static inline void *
-hashmap_maybe_overwrite(struct slot *slot, void *value, int overwrite)
+hashmap_maybe_overwrite(struct slot *slot, const char *key, void *value,
+                        int overwrite)
 {
     void *old = slot->pair.value;
     assert(old != NULL);
-    if (overwrite)
+    if (overwrite) {
+        slot->pair.key = key;
         slot->pair.value = value;
+    }
+
     return old;
 }
 
@@ -97,14 +101,14 @@ hashmap_put(hashmap_t map, const char *key, void *value, int overwrite)
         prev->pair.value = value;
         return NULL;
     } else if (strcmp(prev->pair.key, key) == 0)
-        return hashmap_maybe_overwrite(prev, value, overwrite);
+        return hashmap_maybe_overwrite(prev, key, value, overwrite);
 
     for (slot = prev->next; slot != NULL; slot = slot->next) {
         assert(slot->pair.key != NULL);
         assert(slot->pair.value != NULL);
 
         if (strcmp(slot->pair.key, key) == 0)
-            return hashmap_maybe_overwrite(slot, value, overwrite);
+            return hashmap_maybe_overwrite(slot, key, value, overwrite);
     }
 
     slot = p_malloc(map->pool, sizeof(*slot));
