@@ -28,8 +28,6 @@ enum uri_base {
 struct processor {
     pool_t pool;
 
-    pool_t widget_pool;
-
     struct widget *container;
     struct processor_env *env;
     unsigned options;
@@ -57,15 +55,22 @@ struct processor {
     } tag;
     enum uri_base uri_base;
     enum uri_mode uri_mode;
-    off_t widget_start_offset;
-    struct widget *embedded_widget;
+
     struct {
-        size_t name_length, value_length;
-        char name[64];
-        char value[64];
-    } widget_param;
-    char widget_params[512];
-    size_t widget_params_length;
+        off_t start_offset;
+
+        pool_t pool;
+        struct widget *widget;
+
+        struct {
+            size_t name_length, value_length;
+            char name[64];
+            char value[64];
+        } param;
+
+        char params[512];
+        size_t params_length;
+    } widget;
 
     bool in_script:1, script_tail:1;
     growing_buffer_t script;
@@ -250,14 +255,14 @@ processor_new(pool_t pool, istream_t istream,
     processor = p_malloc(pool, sizeof(*processor));
     processor->pool = pool;
 
-    processor->widget_pool = env->pool;
+    processor->widget.pool = env->pool;
 
     processor->container = widget;
     processor->env = env;
     processor->options = options;
 
     processor->js_generated = false;
-    processor->embedded_widget = NULL;
+    processor->widget.widget = NULL;
     processor->in_script = false;
     processor->script_tail = false;
 
@@ -345,8 +350,8 @@ parser_element_start_in_widget(struct processor *processor,
         processor->tag = TAG_WIDGET_PATH_INFO;
     } else if (strref_cmp_literal(name, "param") == 0) {
         processor->tag = TAG_WIDGET_PARAM;
-        processor->widget_param.name_length = 0;
-        processor->widget_param.value_length = 0;
+        processor->widget.param.name_length = 0;
+        processor->widget.param.value_length = 0;
     } else {
         processor->tag = TAG_NONE;
     }
@@ -369,7 +374,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor_finish_script(processor, tag->start);
     }
 
-    if (processor->embedded_widget != NULL) {
+    if (processor->widget.widget != NULL) {
         parser_element_start_in_widget(processor, tag->type, &tag->name);
         return;
     }
@@ -387,7 +392,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->tag = TAG_HEAD;
     } else if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if (tag->type == TAG_CLOSE) {
-            assert(processor->embedded_widget == NULL);
+            assert(processor->widget.widget == NULL);
             return;
         }
 
@@ -395,14 +400,14 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             return;
 
         processor->tag = TAG_WIDGET;
-        processor->embedded_widget = p_malloc(processor->widget_pool,
-                                              sizeof(*processor->embedded_widget));
-        widget_init(processor->embedded_widget, NULL);
-        processor->widget_params_length = 0;
+        processor->widget.widget = p_malloc(processor->widget.pool,
+                                              sizeof(*processor->widget.widget));
+        widget_init(processor->widget.widget, NULL);
+        processor->widget.params_length = 0;
 
-        list_add(&processor->embedded_widget->siblings,
+        list_add(&processor->widget.widget->siblings,
                  &processor->container->children);
-        processor->embedded_widget->parent = processor->container;
+        processor->widget.widget->parent = processor->container;
     } else if (strref_cmp_literal(&tag->name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
         processor->uri_base = processor->container->class->old_style
@@ -616,38 +621,38 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_WIDGET:
-        assert(processor->embedded_widget != NULL);
+        assert(processor->widget.widget != NULL);
 
-        parser_widget_attr_finished(processor->embedded_widget,
-                                    processor->widget_pool,
+        parser_widget_attr_finished(processor->widget.widget,
+                                    processor->widget.pool,
                                     &attr->name, &attr->value);
         break;
 
     case TAG_WIDGET_PARAM:
-        assert(processor->embedded_widget != NULL);
+        assert(processor->widget.widget != NULL);
 
         if (strref_cmp_literal(&attr->name, "name") == 0) {
             size_t length = attr->value.length;
-            if (length > sizeof(processor->widget_param.name))
-                length = sizeof(processor->widget_param.name);
-            processor->widget_param.name_length = length;
-            memcpy(processor->widget_param.name, attr->value.data, length);
+            if (length > sizeof(processor->widget.param.name))
+                length = sizeof(processor->widget.param.name);
+            processor->widget.param.name_length = length;
+            memcpy(processor->widget.param.name, attr->value.data, length);
         } else if (strref_cmp_literal(&attr->name, "value") == 0) {
             size_t length = attr->value.length;
-            if (length > sizeof(processor->widget_param.value))
-                length = sizeof(processor->widget_param.value);
-            processor->widget_param.value_length = length;
-            memcpy(processor->widget_param.value, attr->value.data, length);
+            if (length > sizeof(processor->widget.param.value))
+                length = sizeof(processor->widget.param.value);
+            processor->widget.param.value_length = length;
+            memcpy(processor->widget.param.value, attr->value.data, length);
         }
 
         break;
 
     case TAG_WIDGET_PATH_INFO:
-        assert(processor->embedded_widget != NULL);
+        assert(processor->widget.widget != NULL);
 
         if (strref_cmp_literal(&attr->name, "value") == 0) {
-            processor->embedded_widget->path_info
-                = strref_dup(processor->widget_pool, &attr->value);
+            processor->widget.widget->path_info
+                = strref_dup(processor->widget.pool, &attr->value);
         }
 
         break;
@@ -769,13 +774,13 @@ embed_element_finished(struct processor *processor)
     struct widget *widget;
     istream_t istream;
 
-    widget = processor->embedded_widget;
-    processor->embedded_widget = NULL;
+    widget = processor->widget.widget;
+    processor->widget.widget = NULL;
 
-    if (processor->widget_params_length > 0)
+    if (processor->widget.params_length > 0)
         widget->query_string = p_strndup(processor->pool,
-                                         processor->widget_params,
-                                         processor->widget_params_length);
+                                         processor->widget.params,
+                                         processor->widget.params_length);
 
     istream = embed_widget(processor, processor->env, widget);
     if (istream != NULL && widget->class != NULL &&
@@ -809,11 +814,11 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         istream_t istream;
 
         if (tag->type == TAG_OPEN || tag->type == TAG_SHORT)
-            processor->widget_start_offset = tag->start;
-        else if (processor->embedded_widget == NULL)
+            processor->widget.start_offset = tag->start;
+        else if (processor->widget.widget == NULL)
             return;
 
-        assert(processor->embedded_widget != NULL);
+        assert(processor->widget.widget != NULL);
 
         if (tag->type == TAG_OPEN)
             return;
@@ -822,39 +827,39 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         assert(istream == NULL || processor->replace != NULL);
 
         if (processor->replace != NULL)
-            processor_replace_add(processor, processor->widget_start_offset,
+            processor_replace_add(processor, processor->widget.start_offset,
                                   tag->end, istream);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
         struct pool_mark mark;
         const char *p;
         size_t length;
 
-        assert(processor->embedded_widget != NULL);
+        assert(processor->widget.widget != NULL);
 
         /* XXX escape */
 
-        if (processor->widget_param.name_length == 0)
+        if (processor->widget.param.name_length == 0)
             return;
 
         pool_mark(tpool, &mark);
 
         p = args_format_n(tpool, NULL,
-                          p_strndup(tpool, processor->widget_param.name,
-                                    processor->widget_param.name_length),
-                          processor->widget_param.value,
-                          processor->widget_param.value_length,
+                          p_strndup(tpool, processor->widget.param.name,
+                                    processor->widget.param.name_length),
+                          processor->widget.param.value,
+                          processor->widget.param.value_length,
                           NULL, NULL, 0, NULL, NULL, 0, NULL);
         length = strlen(p);
 
-        if (processor->widget_params_length + 1 + length >= sizeof(processor->widget_params)) {
+        if (processor->widget.params_length + 1 + length >= sizeof(processor->widget.params)) {
             pool_rewind(tpool, &mark);
             return;
         }
 
-        if (processor->widget_params_length > 0)
-            processor->widget_params[processor->widget_params_length++] = '&';
-        memcpy(processor->widget_params + processor->widget_params_length, p, length);
-        processor->widget_params_length += length;
+        if (processor->widget.params_length > 0)
+            processor->widget.params[processor->widget.params_length++] = '&';
+        memcpy(processor->widget.params + processor->widget.params_length, p, length);
+        processor->widget.params_length += length;
 
         pool_rewind(tpool, &mark);
     } else if (processor->tag == TAG_SCRIPT &&
