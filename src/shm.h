@@ -17,6 +17,9 @@ shm_new(size_t page_size, unsigned num_pages);
 void
 shm_close(struct shm *shm);
 
+size_t
+shm_page_size(const struct shm *shm);
+
 void *
 shm_alloc(struct shm *shm);
 

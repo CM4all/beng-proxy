@@ -101,6 +101,12 @@ shm_close(struct shm *shm)
         daemon_log(1, "munmap() failed: %s\n", strerror(errno));
 }
 
+size_t
+shm_page_size(const struct shm *shm)
+{
+    return shm->page_size;
+}
+
 static struct page *
 shm_split_page(const struct shm *shm, struct page *page)
 {
