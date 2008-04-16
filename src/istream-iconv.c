@@ -72,6 +72,7 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
                        caller that we consumed it */
                     istream_handler_clear(ic->input);
                     istream_close(ic->input);
+                    iconv_close(ic->iconv);
                     istream_deinit_abort(&ic->output);
                     return 0;
                 }
@@ -124,6 +125,7 @@ iconv_input_eof(void *ctx)
 
     if (fifo_buffer_empty(ic->buffer)) {
         ic->buffer = NULL;
+        iconv_close(ic->iconv);
         istream_deinit_eof(&ic->output);
     }
 }
@@ -137,6 +139,7 @@ iconv_input_abort(void *ctx)
 
     ic->buffer = NULL;
 
+    iconv_close(ic->iconv);
     istream_deinit_abort(&ic->output);
 }
 
@@ -167,8 +170,10 @@ istream_iconv_read(istream_t istream)
         istream_read(ic->input);
     else {
         size_t nbytes = istream_buffer_send(&ic->output, ic->buffer);
-        if (nbytes > 0 && fifo_buffer_empty(ic->buffer))
+        if (nbytes > 0 && fifo_buffer_empty(ic->buffer)) {
+            iconv_close(ic->iconv);
             istream_deinit_eof(&ic->output);
+        }
     }
 }
 
@@ -180,6 +185,7 @@ istream_iconv_close(istream_t istream)
     ic->buffer = NULL;
 
     istream_free_handler(&ic->input);
+    iconv_close(ic->iconv);
     istream_deinit_abort(&ic->output);
 }
 
