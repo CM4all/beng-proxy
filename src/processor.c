@@ -30,7 +30,7 @@ struct processor {
 
     pool_t widget_pool;
 
-    struct widget *widget;
+    struct widget *container;
     struct processor_env *env;
     unsigned options;
 
@@ -93,16 +93,16 @@ processor_option_rewrite_url(const struct processor *processor)
 static inline bool
 processor_option_fragment(const struct processor *processor)
 {
-    return processor->widget->class->old_style &&
-        processor->widget->parent != NULL &&
-        !processor->widget->from_request.proxy;
+    return processor->container->class->old_style &&
+        processor->container->parent != NULL &&
+        !processor->container->from_request.proxy;
 }
 
 static inline bool
 processor_option_jscript(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
-        processor->widget->class->old_style;
+        processor->container->class->old_style;
 }
 
 static inline bool
@@ -110,7 +110,7 @@ processor_option_jscript_root(const struct processor *processor)
 {
     return !processor_option_quiet(processor) &&
         !processor_option_fragment(processor) &&
-        processor->widget->class->old_style;
+        processor->container->class->old_style;
 }
 
 static void
@@ -135,10 +135,10 @@ processor_jscript(struct processor *processor)
     if (processor_option_jscript_root(processor))
         js_generate_root_widget(gb, strmap_get(processor->env->args, "session"));
 
-    js_generate_widget(gb, processor->widget, processor->pool);
+    js_generate_widget(gb, processor->container, processor->pool);
 
     if ((processor->options & PROCESSOR_JSCRIPT_PREFS) != 0)
-        js_generate_preferences(gb, processor->widget);
+        js_generate_preferences(gb, processor->container);
 
     growing_buffer_write_string(gb, "</script>\n");
 
@@ -252,7 +252,7 @@ processor_new(pool_t pool, istream_t istream,
 
     processor->widget_pool = env->pool;
 
-    processor->widget = widget;
+    processor->container = widget;
     processor->env = env;
     processor->options = options;
 
@@ -401,11 +401,11 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->widget_params_length = 0;
 
         list_add(&processor->embedded_widget->siblings,
-                 &processor->widget->children);
-        processor->embedded_widget->parent = processor->widget;
+                 &processor->container->children);
+        processor->embedded_widget->parent = processor->container;
     } else if (strref_cmp_literal(&tag->name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
-        processor->uri_base = processor->widget->class->old_style
+        processor->uri_base = processor->container->class->old_style
             ? URI_BASE_WIDGET
             : URI_BASE_TEMPLATE;
         processor->uri_mode = URI_MODE_DIRECT;
@@ -416,7 +416,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                processor_option_rewrite_url(processor)) {
         if (strref_cmp_literal(&tag->name, "a") == 0) {
             processor->tag = TAG_A;
-            if (processor->widget->class->old_style) {
+            if (processor->container->class->old_style) {
                 processor->uri_base = URI_BASE_WIDGET;
                 processor->uri_mode = URI_MODE_FOCUS;
             } else {
@@ -431,7 +431,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->uri_mode = URI_MODE_DIRECT;
         } else if (strref_cmp_literal(&tag->name, "form") == 0) {
             processor->tag = TAG_FORM;
-            if (processor->widget->class->old_style) {
+            if (processor->container->class->old_style) {
                 processor->uri_base = URI_BASE_WIDGET;
                 processor->uri_mode = URI_MODE_FOCUS;
             } else {
@@ -440,7 +440,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             }
         } else if (strref_cmp_literal(&tag->name, "img") == 0) {
             processor->tag = TAG_IMG;
-            processor->uri_base = processor->widget->class->old_style
+            processor->uri_base = processor->container->class->old_style
                 ? URI_BASE_WIDGET
                 : URI_BASE_TEMPLATE;
             processor->uri_mode = URI_MODE_DIRECT;
@@ -484,12 +484,12 @@ transform_uri_attribute(struct processor *processor,
         return;
 
     case URI_BASE_WIDGET:
-        widget = processor->widget;
+        widget = processor->container;
         value = attr->value;
         break;
 
     case URI_BASE_CHILD:
-        widget = widget_get_child(processor->widget,
+        widget = widget_get_child(processor->container,
                                   strref_dup(processor->pool, &attr->value));
         if (widget == NULL)
             return;
