@@ -17,9 +17,9 @@ filter_new(pool_t pool,
            void *handler_ctx,
            struct async_operation_ref *async_ref)
 {
-    url_stream_new(pool, http_client_stock,
-                   HTTP_METHOD_POST, uwa,
-                   headers, body,
-                   handler, handler_ctx,
-                   async_ref);
+    http_request(pool, http_client_stock,
+                 HTTP_METHOD_POST, uwa,
+                 headers, body,
+                 handler, handler_ctx,
+                 async_ref);
 }

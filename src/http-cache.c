@@ -468,11 +468,11 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
 
     cache_log(4, "http_cache: miss %s\n", uwa->uri);
 
-    url_stream_new(pool, cache->stock,
-                   method, uwa,
-                   headers == NULL ? NULL : headers_dup(pool, headers), body,
-                   &http_cache_response_handler, request,
-                   async_ref);
+    http_request(pool, cache->stock,
+                 method, uwa,
+                 headers == NULL ? NULL : headers_dup(pool, headers), body,
+                 &http_cache_response_handler, request,
+                 async_ref);
 }
 
 static void
@@ -529,11 +529,11 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
     if (item->info.etag != NULL)
         strmap_put(headers, "if-none-match", item->info.etag, 1);
 
-    url_stream_new(pool, cache->stock,
-                   method, uwa,
-                   headers_dup(pool, headers), body,
-                   &http_cache_response_handler, request,
-                   async_ref);
+    http_request(pool, cache->stock,
+                 method, uwa,
+                 headers_dup(pool, headers), body,
+                 &http_cache_response_handler, request,
+                 async_ref);
 }
 
 static void
@@ -590,10 +590,10 @@ http_cache_request(struct http_cache *cache,
         headers2 = headers == NULL
             ? NULL : headers_dup(pool, headers);
 
-        url_stream_new(pool, cache->stock,
-                       method, uwa,
-                       headers2, body,
-                       handler, handler_ctx,
-                       async_ref);
+        http_request(pool, cache->stock,
+                     method, uwa,
+                     headers2, body,
+                     handler, handler_ctx,
+                     async_ref);
     }
 }
