@@ -53,6 +53,7 @@ connect_mirror(pool_t pool,
 
 struct context {
     int close_early, close_late, close_data;
+    unsigned data_blocking;
     int close_response_body_early, close_response_body_late, close_response_body_data;
     struct async_operation_ref async_ref;
     http_client_connection_t client;
@@ -111,6 +112,11 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
 
     if (c->close_response_body_data) {
         istream_close(c->body);
+        return 0;
+    }
+
+    if (c->data_blocking) {
+        --c->data_blocking;
         return 0;
     }
 
@@ -345,6 +351,36 @@ test_close_response_body_data(pool_t pool, struct context *c)
     assert(c->body_abort);
 }
 
+static void
+test_data_blocking(pool_t pool, struct context *c)
+{
+    c->data_blocking = 5;
+    c->client = connect_mirror(pool, &my_connection_handler, c);
+    http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
+                        istream_head_new(pool, istream_zero_new(pool), 8192),
+                        &my_response_handler, c, &c->async_ref);
+
+    while (c->data_blocking > 0) {
+        if (c->body != NULL)
+            istream_read(c->body);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
+
+    assert(c->client != NULL);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body != NULL);
+    assert(c->body_data > 0);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+
+    http_client_connection_close(c->client);
+
+    assert(c->client == NULL);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(c->body_abort);
+}
+
 
 /*
  * main
@@ -383,6 +419,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_response_body_early);
     run_test(pool, test_close_response_body_late);
     run_test(pool, test_close_response_body_data);
+    run_test(pool, test_data_blocking);
 
     pool_unref(pool);
     pool_commit();
