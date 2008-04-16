@@ -7,7 +7,7 @@
 #ifndef __BENG_SHM_H
 #define __BENG_SHM_H
 
-#include "pool.h"
+#include <stddef.h>
 
 struct shm;
 
