@@ -138,12 +138,14 @@ shm_alloc(struct shm *shm)
         list_remove(&page->siblings);
         lock_unlock(&shm->lock);
 
+        poison_undefined(page->data, shm->page_size);
         return page->data;
     } else {
         page = shm_split_page(shm, page);
 
         lock_unlock(&shm->lock);
 
+        poison_undefined(page->data, shm->page_size);
         return page->data;
     }
 }
