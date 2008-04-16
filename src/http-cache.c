@@ -6,7 +6,7 @@
 
 #include "http-cache.h"
 #include "cache.h"
-#include "url-stream.h"
+#include "http-request.h"
 #include "header-writer.h"
 #include "strmap.h"
 #include "http-response.h"

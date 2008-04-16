@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "url-stream.h"
+#include "http-request.h"
 #include "http-response.h"
 #include "header-writer.h"
 #include "http-stock.h"

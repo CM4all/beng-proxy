@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_URL_STREAM_H
-#define __BENG_URL_STREAM_H
+#ifndef __BENG_HTTP_REQUEST_H
+#define __BENG_HTTP_REQUEST_H
 
 #include "growing-buffer.h"
 #include "istream.h"

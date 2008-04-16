@@ -5,7 +5,7 @@
  */
 
 #include "filter.h"
-#include "url-stream.h"
+#include "http-request.h"
 
 void
 filter_new(pool_t pool,
