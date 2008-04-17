@@ -310,6 +310,11 @@ path of a Unix socket \\
 \hline
 \texttt{CONTAINER} & this widget can contain other widgets \\
 \hline
+
+\texttt{GOOGLE\_GADGET} & this is a Google gadget, enable API
+emulation \\
+
+\hline
 \end{tabular}
 
 
@@ -662,6 +667,9 @@ Disabling features may increase the performance dramatically, because
 it allows \emph{beng-proxy} to make better assumptions on data it does
 not know yet.  So if you know the widget is a leaf widget, do not
 specify \texttt{container}.
+
+As an alternative to \texttt{process}, you can specify
+\texttt{google\_gadget}.  This enables Google gadget emulation.
 
 
 \end{document}

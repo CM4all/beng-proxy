@@ -35,6 +35,7 @@ TRANSLATE_WIDGET_TYPE = 21
 TRANSLATE_CONTAINER = 22
 TRANSLATE_ADDRESS = 23
 TRANSLATE_ADDRESS_STRING = 24
+TRANSLATE_GOOGLE_GADGET = 25
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
 
@@ -144,6 +145,8 @@ class Translation(Protocol):
                 self._write_packet(TRANSLATE_PROCESS)
             elif line == 'container':
                 self._write_packet(TRANSLATE_CONTAINER)
+            elif line == 'google_gadget':
+                self._write_packet(TRANSLATE_GOOGLE_GADGET)
             else:
                 print "Syntax error in %s: %s" % (path, line)
                 self._write_packet(TRANSLATE_STATUS, struct.pack('H', 500))

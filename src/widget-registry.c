@@ -63,6 +63,9 @@ lookup_callback(const struct translate_response *response, void *ctx)
         response->transformation->type == TRANSFORMATION_PROCESS) {
         class->type = WIDGET_TYPE_BENG;
         class->is_container = (response->transformation->u.processor_options & PROCESSOR_CONTAINER) != 0;
+    } else if (response->google_gadget) {
+        class->type = WIDGET_TYPE_GOOGLE_GADGET;
+        class->is_container = 0;
     } else {
         class->type = WIDGET_TYPE_RAW;
         class->is_container = 0;

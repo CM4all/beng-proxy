@@ -34,6 +34,7 @@ enum beng_translation_command {
     TRANSLATE_CONTAINER = 22,
     TRANSLATE_ADDRESS = 23,
     TRANSLATE_ADDRESS_STRING = 24,
+    TRANSLATE_GOOGLE_GADGET = 25,
 };
 
 struct beng_translation_header {

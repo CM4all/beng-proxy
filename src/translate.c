@@ -371,6 +371,10 @@ translate_handle_packet(struct translate_connection *connection,
         connection->response.cgi = true;
         break;
 
+    case TRANSLATE_GOOGLE_GADGET:
+        connection->response.google_gadget = true;
+        break;
+
     case TRANSLATE_DOCUMENT_ROOT:
         connection->response.document_root = payload;
         break;

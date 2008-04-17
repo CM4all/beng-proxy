@@ -48,6 +48,7 @@ struct translate_response {
     struct uri_with_address *proxy;
     const char *redirect;
     bool cgi;
+    bool google_gadget;
     const char *session;
     const char *user;
     const char *language;
