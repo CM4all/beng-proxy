@@ -12,6 +12,7 @@
 #include <inline/compiler.h>
 
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef struct pool *pool_t;
 
@@ -57,19 +58,19 @@ pool_unref_impl(pool_t pool TRACE_ARGS_DECL);
 
 struct pool_notify {
     struct list_head siblings;
-    int destroyed;
+    bool destroyed;
 };
 
 void
 pool_notify(pool_t pool, struct pool_notify *notify);
 
-static inline int
+static inline bool
 pool_denotify(struct pool_notify *notify)
 {
     if (notify->destroyed)
-        return 1;
+        return true;
     list_remove(&notify->siblings);
-    return 0;
+    return false;
 }
 #endif
 
@@ -97,7 +98,7 @@ pool_trash(pool_t pool);
 void
 pool_commit(void);
 
-int
+bool
 pool_contains(pool_t pool, const void *ptr, size_t size);
 
 #endif

@@ -578,7 +578,7 @@ linear_pool_area_contains(const struct linear_pool_area *area,
         ptr <= (const void*)(area->data + area->used - size);
 }
 
-int
+bool
 pool_contains(pool_t pool, const void *ptr, size_t size)
 {
     const struct linear_pool_area *area;
@@ -588,13 +588,13 @@ pool_contains(pool_t pool, const void *ptr, size_t size)
     assert(size > 0);
 
     if (pool->type != POOL_LINEAR)
-        return 1;
+        return true;
 
     for (area = pool->current_area.linear; area != NULL; area = area->prev)
         if (linear_pool_area_contains(area, ptr, size))
-            return 1;
+            return true;
 
-    return 0;
+    return false;
 }
 
 #endif
