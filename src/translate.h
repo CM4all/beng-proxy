@@ -47,7 +47,7 @@ struct translate_response {
     const char *content_type;
     struct uri_with_address *proxy;
     const char *redirect;
-    int cgi;
+    bool cgi;
     const char *session;
     const char *user;
     const char *language;

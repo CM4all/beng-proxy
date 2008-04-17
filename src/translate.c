@@ -368,7 +368,7 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_CGI:
-        connection->response.cgi = 1;
+        connection->response.cgi = true;
         break;
 
     case TRANSLATE_DOCUMENT_ROOT:
