@@ -23,7 +23,14 @@ google_gadget_process(struct google_gadget *gg, istream_t istream)
 {
     const char *prefix;
 
-    istream = istream_subst_new(gg->pool, istream);
+    assert(gg != NULL);
+    assert(gg->delayed != NULL);
+    assert(gg->subst != NULL);
+
+    istream_delayed_set(gg->delayed, istream);
+    gg->delayed = NULL;
+
+    istream = gg->subst;
 
     prefix = widget_prefix(gg->widget);
     if (prefix != NULL) {
@@ -59,11 +66,8 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
         headers = strmap_new(gg->pool, 4);
         strmap_addn(headers, "content-type", "text/html; charset=utf-8");
 
-        if (process) {
-            istream_delayed_set(gg->delayed, istream);
-            gg->delayed = NULL;
-            istream = google_gadget_process(gg, gg->subst);
-        }
+        if (process)
+            istream = google_gadget_process(gg, istream);
     }
 
     if (gg->delayed != NULL) {
