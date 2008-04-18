@@ -244,8 +244,7 @@ google_content_tag_finished(struct google_gadget *gg,
             if (gg->widget->from_request.proxy ||
                 gg->from_parser.type == TYPE_HTML_INLINE) {
                 gg->from_parser.sending_content = 1;
-                gg->output = istream_google_html;
-                gg->output.pool = gg->pool;
+                istream_init(&gg->output, &istream_google_html, gg->pool);
 
                 istream = istream_struct_cast(&gg->output);
                 istream = istream_cat_new(gg->pool,
@@ -304,7 +303,7 @@ google_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     if (gg->from_parser.sending_content) {
         gg->from_parser.sending_content = 0;
-        istream_invoke_eof(&gg->output);
+        istream_deinit_eof(&gg->output);
     }
 
     if (!gg->has_locale && tag->type != TAG_CLOSE &&
@@ -415,7 +414,7 @@ google_parser_eof(void *ctx, off_t __attr_unused length)
 
     if (gg->from_parser.sending_content) {
         gg->from_parser.sending_content = 0;
-        istream_invoke_eof(&gg->output);
+        istream_deinit_eof(&gg->output);
     } else if (gg->delayed != NULL && !async_ref_defined(&gg->async))
         google_send_error(gg, "google gadget did not contain a valid Content element");
 
@@ -434,7 +433,7 @@ google_parser_abort(void *ctx)
 
     if (gg->from_parser.sending_content) {
         gg->from_parser.sending_content = 0;
-        istream_invoke_abort(&gg->output);
+        istream_deinit_abort(&gg->output);
     } else if (gg->delayed != NULL)
         google_send_error(gg, "google gadget retrieval aborted");
 
