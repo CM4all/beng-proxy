@@ -15,6 +15,7 @@
 #include "uri-address.h"
 #include "session.h"
 
+/* XXX make the URL configurable */
 static const char jscript[] =
     "<script type=\"text/javascript\" src=\"/cm4all-beng-proxy/google-gadget.js\"></script>\n";
 

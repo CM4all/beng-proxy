@@ -60,8 +60,7 @@ void
 js_generate_includes(struct growing_buffer *gb)
 {
     /* XXX make the URL configurable */
-    growing_buffer_write_string(gb, "<script type=\"text/javascript\" src=\"/cm4all-beng-proxy/beng-proxy.js\"></script>\n"
-                                "<script type=\"text/javascript\" src=\"/cm4all-beng-proxy/google-gadget.js\"></script>\n");
+    growing_buffer_write_string(gb, "<script type=\"text/javascript\" src=\"/cm4all-beng-proxy/beng-proxy.js\"></script>\n");
 }
 
 void
