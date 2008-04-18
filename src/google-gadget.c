@@ -18,7 +18,7 @@
 static const char jscript[] =
     "<script type=\"text/javascript\" src=\"/cm4all-beng-proxy/google-gadget.js\"></script>\n";
 
-static void
+static istream_t
 google_gadget_process(struct google_gadget *gg, istream_t istream)
 {
     const char *prefix;
@@ -34,12 +34,7 @@ google_gadget_process(struct google_gadget *gg, istream_t istream)
     istream_subst_add(istream, "__BIDI_START_EDGE__", "left");
     istream_subst_add(istream, "__BIDI_END_EDGE__", "right");
 
-    processor_new(gg->pool, istream,
-                  gg->widget, gg->env,
-                  PROCESSOR_JSCRIPT_PREFS,
-                  gg->response_handler.handler,
-                  gg->response_handler.ctx,
-                  &gg->async);
+    return istream;
 }
 
 static void
@@ -67,13 +62,14 @@ gg_set_content(struct google_gadget *gg, istream_t istream, int process)
         if (process) {
             istream_delayed_set(gg->delayed, istream);
             gg->delayed = NULL;
-            google_gadget_process(gg, gg->subst);
-            return;
+            istream = google_gadget_process(gg, gg->subst);
         }
     }
 
-    gg->delayed = NULL;
-    istream_free(&gg->subst);
+    if (gg->delayed != NULL) {
+        gg->delayed = NULL;
+        istream_free(&gg->subst);
+    }
 
     http_response_handler_invoke_response(&gg->response_handler,
                                           status, headers, istream);
