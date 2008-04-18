@@ -4,15 +4,34 @@
 // Author: Max Kellermann <mk@cm4all.com>
 //
 
-function _IG_Prefs(widget) {
-    if (typeof(widget) == "object")
-        this.widget = widget;
-    else
-        this.widget = rootWidget.getWidget(widget);
+function beng_proxy_request() {
+    var req = null;
+    if (window.XMLHttpRequest) {
+    	try {
+            return new XMLHttpRequest();
+        } catch(e) {
+            return null;
+        }
+    } else if(window.ActiveXObject) {
+       	try {
+            return new ActiveXObject("Msxml2.XMLHTTP");
+      	} catch(e) {
+            try {
+                return new ActiveXObject("Microsoft.XMLHTTP");
+            } catch(e) {
+                return null;
+            }
+        }
+    } else {
+        return null;
+    }
+}
+
+function _IG_Prefs(dummy) {
     this.values = new Array();
 
-    if (this.widget._query_string != null) {
-        values = this.widget._query_string.split('&');
+    if (window._beng_proxy_widget_prefs != null) {
+        values = window._beng_proxy_widget_prefs.split('&');
         for (var i = 0; i < values.length; ++i) {
             var key = values[i], value;
             i = key.indexOf('=');
@@ -46,7 +65,14 @@ function _IG_Prefs(widget) {
 
     this.set = function(name, value) {
         this.values[name] = value;
-        this.widget.get("?" + escape(name) + "=" + escape(value), null, "save");
+        var url = window.location.href +
+            "&focus=" + escape(_beng_proxy_widget_path) + "&save=1?" +
+            escape(name) + "=" + escape(value);
+        var req = beng_proxy_request();
+        if (req == null)
+            return null;
+        req.open("GET", url, true);
+        req.send(null);
     }
 
     return this;
@@ -105,7 +131,7 @@ function _IG_AdjustIFrameHeight() {
 }
 
 function _IG_RegisterOnloadHandler(load) {
-    beng_register_onload(load);
+    load();
 }
 
 function _IG_AddDOMEventHandler(window, event, handler) {

@@ -13,11 +13,15 @@
 #include "processor.h"
 #include "growing-buffer.h"
 #include "uri-address.h"
+#include "session.h"
+
+static const char jscript[] =
+    "<script type=\"text/javascript\" src=\"/cm4all-beng-proxy/google-gadget.js\"></script>\n";
 
 static void
 google_gadget_process(struct google_gadget *gg, istream_t istream)
 {
-    const char *prefix, *path;
+    const char *prefix;
 
     istream = istream_subst_new(gg->pool, istream);
 
@@ -29,13 +33,6 @@ google_gadget_process(struct google_gadget *gg, istream_t istream)
 
     istream_subst_add(istream, "__BIDI_START_EDGE__", "left");
     istream_subst_add(istream, "__BIDI_END_EDGE__", "right");
-
-    path = widget_path(gg->widget);
-    if (path != NULL)
-        istream_subst_add(gg->subst,
-                          "new _IG_Prefs()",
-                          p_strcat(gg->pool, "new _IG_Prefs(\"", path, "\")",
-                                   NULL));
 
     processor_new(gg->pool, istream,
                   gg->widget, gg->env,
@@ -176,6 +173,41 @@ google_gadget_msg_abort(struct google_gadget *gg)
  *
  */
 
+static void
+growing_buffer_write_jscript_string(growing_buffer_t gb, const char *s)
+{
+    if (s == NULL)
+        growing_buffer_write_string(gb, "null");
+    else {
+        growing_buffer_write_string(gb, "\"");
+        growing_buffer_write_string(gb, s); /* XXX escape */
+        growing_buffer_write_string(gb, "\"");
+    }
+}
+
+static istream_t
+generate_jscript(pool_t pool, struct widget *widget)
+{
+    struct growing_buffer *gb = growing_buffer_new(pool, 256);
+    struct widget_session *session;
+
+    growing_buffer_write_string(gb, "<script type=\"text/javascript\">\n"
+                                "var _beng_proxy_widget_path = ");
+    growing_buffer_write_jscript_string(gb, widget_path(widget));
+    growing_buffer_write_string(gb, ";\n"
+                                "var _beng_proxy_widget_prefs = ");
+
+    session = widget_get_session(widget, 0);
+    growing_buffer_write_jscript_string(gb, session == NULL ? NULL : session->query_string);
+    growing_buffer_write_string(gb, ";\n");
+
+    growing_buffer_write_string(gb, "</script>\n");
+
+    growing_buffer_write_string(gb, jscript);
+
+    return growing_buffer_istream(gb);
+}
+
 static istream_t
 generate_iframe(pool_t pool, const char *uri)
 {
@@ -215,7 +247,13 @@ google_content_tag_finished(struct google_gadget *gg,
                 gg->output = istream_google_html;
                 gg->output.pool = gg->pool;
 
-                gg_set_content(gg, istream_struct_cast(&gg->output), 1);
+                istream = istream_struct_cast(&gg->output);
+                istream = istream_cat_new(gg->pool,
+                                          generate_jscript(gg->pool, gg->widget),
+                                          istream,
+                                          NULL);
+
+                gg_set_content(gg, istream, 1);
             } else {
                 const char *uri =
                     widget_external_uri(gg->pool, gg->env->external_uri,
