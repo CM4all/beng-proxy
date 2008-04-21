@@ -33,6 +33,23 @@ widget_get_server_name(pool_t pool, const struct widget *widget)
     return p_strndup(pool, uri, p - uri);
 }
 
+struct widget_server_session *
+widget_get_server_session(struct widget *widget, int create)
+{
+    struct session *session;
+
+    if (widget->from_request.session != NULL)
+        return widget->from_request.session->server;
+
+    session = widget_get_session2(widget);
+    if (session == NULL)
+        return NULL;
+
+    return session_get_widget_server(session,
+                                     widget_get_server_name(tpool, widget),
+                                     create);
+}
+
 struct widget_session *
 widget_get_session(struct widget *widget, int create)
 {
