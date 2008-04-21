@@ -84,6 +84,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
         : uri_address_dup(pool, src->proxy);
     dest->redirect = p_strdup_checked(pool, src->redirect);
     dest->cgi = src->cgi;
+    dest->google_gadget = src->google_gadget;
     dest->session = NULL;
     dest->user = NULL;
     dest->language = NULL;
