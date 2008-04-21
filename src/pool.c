@@ -781,6 +781,8 @@ p_free(pool_t pool, void *ptr)
     assert(ptr != NULL);
     assert(pool_contains(pool, ptr, 1));
 
+    assert((((unsigned long)ptr) & ALIGN_BITS) == 0);
+
     if (pool->type == POOL_LIBC)
         p_free_libc(pool, ptr);
 #ifndef NDEBUG
