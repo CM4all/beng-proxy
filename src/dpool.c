@@ -14,6 +14,14 @@
 
 #include <assert.h>
 
+#if defined(__x86_64__) || defined(__PPC64__)
+#define ALIGN 8
+#define ALIGN_BITS 0x7
+#else
+#define ALIGN 4
+#define ALIGN_BITS 0x3
+#endif
+
 struct dpool_chunk {
     struct list_head siblings;
     size_t size, used;
@@ -25,6 +33,12 @@ struct dpool {
     struct lock lock;
     struct dpool_chunk first_chunk;
 };
+
+static inline size_t __attr_const
+align_size(size_t size)
+{
+    return ((size - 1) | ALIGN_BITS) + 1;
+}
 
 struct dpool *
 dpool_new(struct shm *shm)
@@ -106,6 +120,8 @@ d_malloc(struct dpool *pool, size_t size)
     assert(pool->shm != NULL);
     assert(pool->first_chunk.size == shm_page_size(pool->shm) - sizeof(*pool) +
            sizeof(pool->first_chunk.data));
+
+    size = align_size(size);
 
     /* XXX allow multi-page chunks */
     if (size > pool->first_chunk.size)
