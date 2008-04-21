@@ -188,8 +188,8 @@ response_dispatch(struct request *request2,
 
             header_write(headers, "set-cookie",
                          p_strcat(request2->request->pool,
-                                  "beng_proxy_session=\"", session_id,
-                                  "\"; Version=\"1\"; Path=\"/\"", NULL));
+                                  "beng_proxy_session=", session_id,
+                                  "; Path=/", NULL));
 
             request2->session->cookie_sent = 1;
         }
