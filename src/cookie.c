@@ -121,6 +121,7 @@ cookie_list_set_cookie2(pool_t pool, struct list_head *head, const char *value)
             break;
 
         strref_skip(&input, 1);
+        ltrim(&input);
     }
 
     /* XXX log error */
