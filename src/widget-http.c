@@ -82,7 +82,7 @@ static struct strmap *
 widget_request_headers(struct embed *embed, int with_body)
 {
     struct strmap *headers;
-    struct widget_session *ws;
+    struct widget_server_session *wss;
     struct session *session;
     const char *p;
 
@@ -95,9 +95,9 @@ widget_request_headers(struct embed *embed, int with_body)
             headers_copy(embed->env->request_headers, headers, copy_headers_with_body);
     }
 
-    ws = widget_get_session(embed->widget, 0);
-    if (ws != NULL && ws->server != NULL)
-        cookie_list_http_header(headers, &ws->server->cookies, embed->pool);
+    wss = widget_get_server_session(embed->widget, 0);
+    if (wss != NULL)
+        cookie_list_http_header(headers, &wss->cookies, embed->pool);
 
     session = widget_get_session2(embed->widget);
     if (session != NULL && session->language != NULL)
@@ -256,9 +256,9 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
     if (cookies == NULL)
         cookies = strmap_get(headers, "set-cookie");
     if (cookies != NULL) {
-        struct widget_session *ws = widget_get_session(embed->widget, 1);
-        if (ws != NULL && ws->server != NULL)
-            cookie_list_set_cookie2(ws->pool, &ws->server->cookies,
+        struct widget_server_session *wss = widget_get_server_session(embed->widget, 1);
+        if (wss != NULL)
+            cookie_list_set_cookie2(wss->session->pool, &wss->cookies,
                                     cookies);
     }
 
