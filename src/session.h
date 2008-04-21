@@ -108,6 +108,9 @@ session_get(session_id_t id);
 void
 session_remove(session_t session);
 
+struct widget_server_session *
+session_get_widget_server(session_t session, const char *name, int create);
+
 struct widget_session *
 session_get_widget(session_t session,
                    const char *server_name, const char *id,

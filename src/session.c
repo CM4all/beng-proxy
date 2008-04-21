@@ -188,7 +188,7 @@ session_remove(session_t session)
     pool_unref(pool);
 }
 
-static struct widget_server_session *
+struct widget_server_session *
 session_get_widget_server(session_t session, const char *name, int create)
 {
     struct widget_server_session *server;
