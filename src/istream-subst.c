@@ -627,11 +627,15 @@ istream_subst_read(istream_t istream)
 
         subst->had_output = 0;
 
+        pool_ref(subst->output.pool);
+
         do {
             subst->had_input = 0;
             istream_read(subst->input);
         } while (subst->input != NULL && subst->had_input &&
                  !subst->had_output);
+
+        pool_unref(subst->output.pool);
 
         return;
 
