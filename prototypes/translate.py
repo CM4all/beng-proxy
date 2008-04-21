@@ -136,7 +136,7 @@ class Translation(Protocol):
             if m:
                 uri = m.group(1)
                 self._write_packet(TRANSLATE_PROXY, uri)
-                host, port = urlparse(uri)[1].split(':', 1) + [None]
+                host, port = (urlparse(uri)[1].split(':', 1) + [None])[0:2]
                 address = gethostbyname(host)
                 if port: address += ':' + port
                 self._write_packet(TRANSLATE_ADDRESS_STRING, address)
