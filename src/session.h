@@ -8,13 +8,12 @@
 #define __BENG_SESSION_H
 
 #include "pool.h"
-#include "hashmap.h"
 
 #include <inline/list.h>
 
 #include <time.h>
 
-struct widget;
+struct hashmap;
 
 typedef struct session *session_t;
 
@@ -33,7 +32,7 @@ struct widget_session {
     /** local id of this widget; must not be NULL since widgets
         without an id cannot have a session */
     const char *id;
-    hashmap_t children;
+    struct hashmap *children;
 
     /** last relative URI */
     char *path_info;
@@ -73,7 +72,7 @@ struct session {
     const char *language;
 
     /** a map of widget path to struct widget_session */
-    hashmap_t widgets;
+    struct hashmap *widgets;
 
     /** all cookies received by widget servers */
     struct cookie_jar *cookies;

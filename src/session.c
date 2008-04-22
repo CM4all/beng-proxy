@@ -7,6 +7,7 @@
 #include "session.h"
 #include "format.h"
 #include "cookie.h"
+#include "hashmap.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -190,10 +191,10 @@ session_remove(session_t session)
 }
 
 static struct widget_session *
-hashmap_r_get_widget_session(session_t session, hashmap_t *map_r,
+hashmap_r_get_widget_session(session_t session, struct hashmap **map_r,
                              const char *id, int create)
 {
-    hashmap_t map;
+    struct hashmap *map;
     struct widget_session *ws;
 
     assert(session != NULL);
