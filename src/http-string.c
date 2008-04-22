@@ -5,7 +5,6 @@
  */
 
 #include "http-string.h"
-#include "strutil.h"
 
 void
 http_next_token(struct strref *input, struct strref *value)
