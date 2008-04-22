@@ -61,6 +61,7 @@ parse_key_value(pool_t pool, struct strref *input,
     ltrim(input);
     if (!strref_is_empty(input) && input->data[0] == '=') {
         strref_skip(input, 1);
+        ltrim(input);
         http_next_value(pool, input, value);
     } else
         strref_clear(value);
