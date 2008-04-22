@@ -86,15 +86,14 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
     if (cookie == NULL) {
         cookie = p_malloc(jar->pool, sizeof(*cookie));
 
-        /* XXX domain from cookie attribute */
-        cookie->domain = p_strdup(jar->pool, domain);
-        cookie->path = NULL;
-
         strref_set_dup(jar->pool, &cookie->name, &name);
-        cookie->valid_until = (time_t)-1; /* XXX */
 
         list_add(&cookie->siblings, &jar->cookies);
     }
+
+    cookie->domain = NULL;
+    cookie->path = NULL;
+    cookie->valid_until = (time_t)-1; /* XXX */
 
     strref_set_dup(jar->pool, &cookie->value, &value);
 
@@ -120,6 +119,9 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
         strref_ltrim(input);
     }
+
+    if (cookie->domain == NULL)
+        cookie->domain = p_strdup(jar->pool, domain);
 
     return true;
 }
