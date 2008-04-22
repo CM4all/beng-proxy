@@ -14,6 +14,7 @@
 #include "google-gadget.h"
 #include "http-util.h"
 #include "uri-address.h"
+#include "strref2.h"
 
 #include <daemon/log.h>
 
@@ -245,8 +246,8 @@ widget_response_process(struct embed *embed, http_status_t status,
     }
 
     charset = http_header_param(&charset_buffer, content_type, "charset");
-    if (charset != NULL && strref_cmp_literal(charset, "utf-8") != 0 &&
-        strref_cmp_literal(charset, "utf8") != 0) {
+    if (charset != NULL && strref_lower_cmp_literal(charset, "utf-8") != 0 &&
+        strref_lower_cmp_literal(charset, "utf8") != 0) {
         /* beng-proxy expects all widgets to send their HTML code in
            utf-8; this widget however used a different charset.
            Automatically convert it with istream_iconv */

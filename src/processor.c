@@ -15,6 +15,7 @@
 #include "embed.h"
 #include "async.h"
 #include "rewrite-uri.h"
+#include "strref2.h"
 
 #include <assert.h>
 #include <string.h>
@@ -368,7 +369,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
     if (processor->in_script) {
         /* workaround for bugged scripts: ignore all closing tags
            except </SCRIPT> */
-        if (strref_cmp_literal(&tag->name, "script") != 0)
+        if (strref_lower_cmp_literal(&tag->name, "script") != 0)
             return;
 
         processor_finish_script(processor, tag->start);
@@ -379,7 +380,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         return;
     }
 
-    if (strref_cmp_literal(&tag->name, "body") == 0) {
+    if (strref_lower_cmp_literal(&tag->name, "body") == 0) {
         processor->tag = TAG_BODY;
 
         if (tag->type == TAG_CLOSE && !processor->script_tail &&
@@ -388,7 +389,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                                 js_generate_tail(processor->pool));
             processor->script_tail = true;
         }
-    } else if (strref_cmp_literal(&tag->name, "head") == 0) {
+    } else if (strref_lower_cmp_literal(&tag->name, "head") == 0) {
         processor->tag = TAG_HEAD;
     } else if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if (tag->type == TAG_CLOSE) {
@@ -408,7 +409,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         list_add(&processor->widget.widget->siblings,
                  &processor->container->children);
         processor->widget.widget->parent = processor->container;
-    } else if (strref_cmp_literal(&tag->name, "script") == 0) {
+    } else if (strref_lower_cmp_literal(&tag->name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
         processor->uri_base = processor->container->class->old_style
             ? URI_BASE_WIDGET
@@ -419,7 +420,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor_insert_jscript(processor, 0);
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
-        if (strref_cmp_literal(&tag->name, "a") == 0) {
+        if (strref_lower_cmp_literal(&tag->name, "a") == 0) {
             processor->tag = TAG_A;
             if (processor->container->class->old_style) {
                 processor->uri_base = URI_BASE_WIDGET;
@@ -428,13 +429,13 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                 processor->uri_base = URI_BASE_TEMPLATE;
                 processor->uri_mode = URI_MODE_DIRECT;
             }
-        } else if (strref_cmp_literal(&tag->name, "link") == 0) {
+        } else if (strref_lower_cmp_literal(&tag->name, "link") == 0) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
             processor->tag = TAG_A;
             processor->uri_base = URI_BASE_TEMPLATE;
             processor->uri_mode = URI_MODE_DIRECT;
-        } else if (strref_cmp_literal(&tag->name, "form") == 0) {
+        } else if (strref_lower_cmp_literal(&tag->name, "form") == 0) {
             processor->tag = TAG_FORM;
             if (processor->container->class->old_style) {
                 processor->uri_base = URI_BASE_WIDGET;
@@ -443,13 +444,13 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                 processor->uri_base = URI_BASE_TEMPLATE;
                 processor->uri_mode = URI_MODE_DIRECT;
             }
-        } else if (strref_cmp_literal(&tag->name, "img") == 0) {
+        } else if (strref_lower_cmp_literal(&tag->name, "img") == 0) {
             processor->tag = TAG_IMG;
             processor->uri_base = processor->container->class->old_style
                 ? URI_BASE_WIDGET
                 : URI_BASE_TEMPLATE;
             processor->uri_mode = URI_MODE_DIRECT;
-        } else if (strref_cmp_literal(&tag->name, "iframe") == 0) {
+        } else if (strref_lower_cmp_literal(&tag->name, "iframe") == 0) {
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
             processor->tag = TAG_IMG;
@@ -648,13 +649,13 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_IMG:
-        if (strref_cmp_literal(&attr->name, "src") == 0)
+        if (strref_lower_cmp_literal(&attr->name, "src") == 0)
             transform_uri_attribute(processor, attr, processor->uri_base,
                                     processor->uri_mode);
         break;
 
     case TAG_A:
-        if (strref_cmp_literal(&attr->name, "href") == 0 &&
+        if (strref_lower_cmp_literal(&attr->name, "href") == 0 &&
             !strref_starts_with_n(&attr->value, "#", 1) &&
             !strref_starts_with_n(&attr->value, "javascript:", 11))
             transform_uri_attribute(processor, attr, processor->uri_base,
@@ -662,13 +663,13 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_FORM:
-        if (strref_cmp_literal(&attr->name, "action") == 0)
+        if (strref_lower_cmp_literal(&attr->name, "action") == 0)
             transform_uri_attribute(processor, attr, processor->uri_base,
                                     processor->uri_mode);
         break;
 
     case TAG_SCRIPT:
-        if (strref_cmp_literal(&attr->name, "src") == 0)
+        if (strref_lower_cmp_literal(&attr->name, "src") == 0)
             transform_uri_attribute(processor, attr, processor->uri_base,
                                     processor->uri_mode);
         break;
