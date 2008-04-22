@@ -21,12 +21,6 @@ typedef struct session *session_t;
 
 typedef unsigned session_id_t;
 
-struct widget_server_session {
-    session_t session;
-
-    struct cookie_jar cookies;
-};
-
 /**
  * Session data associated with a widget instance (struct widget).
  */
@@ -34,8 +28,6 @@ struct widget_session {
     struct widget_session *parent;
 
     session_t session;
-
-    struct widget_server_session *server;
 
     pool_t pool;
 
@@ -84,8 +76,8 @@ struct session {
     /** a map of widget path to struct widget_session */
     hashmap_t widgets;
 
-    /** a map of server name to struct widget_server_session */
-    hashmap_t widget_servers;
+    /** all cookies received by widget servers */
+    struct cookie_jar cookies;
 };
 
 void
@@ -109,17 +101,11 @@ session_get(session_id_t id);
 void
 session_remove(session_t session);
 
-struct widget_server_session *
-session_get_widget_server(session_t session, const char *name, int create);
+struct widget_session *
+session_get_widget(session_t session, const char *id, int create);
 
 struct widget_session *
-session_get_widget(session_t session,
-                   const char *server_name, const char *id,
-                   int create);
-
-struct widget_session *
-widget_session_get_child(struct widget_session *parent,
-                         const char *server_name, const char *id,
+widget_session_get_child(struct widget_session *parent, const char *id,
                          int create);
 
 #endif
