@@ -161,6 +161,7 @@ cookie_jar_http_header(struct cookie_jar *jar,
     struct cookie *cookie;
     size_t length;
     struct pool_mark mark;
+    time_t now;
 
     assert(domain != NULL);
     assert(path != NULL);
@@ -172,11 +173,14 @@ cookie_jar_http_header(struct cookie_jar *jar,
     buffer = p_malloc(tpool, buffer_size);
 
     length = 0;
+    now = time(NULL);
 
     for (cookie = (struct cookie *)jar->cookies.next;
          &cookie->siblings != &jar->cookies;
          cookie = (struct cookie *)cookie->siblings.next) {
-        if (!domain_matches(domain, cookie->domain) || !path_matches(path, cookie->path))
+        if (!domain_matches(domain, cookie->domain) ||
+            !path_matches(path, cookie->path) ||
+            (cookie->valid_until != 0 && cookie->valid_until < now))
             continue;
 
         if (buffer_size - length < cookie->name.length + 1 + 1 + cookie->value.length * 2 + 1 + 2)
