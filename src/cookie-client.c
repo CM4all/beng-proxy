@@ -185,6 +185,12 @@ cookie_jar_http_header(struct cookie_jar *jar,
 
         if (buffer_size - length < cookie->name.length + 1 + 1 + cookie->value.length * 2 + 1 + 2)
             break;
+
+        if (length > 0) {
+            buffer[length++] = ';';
+            buffer[length++] = ' ';
+        }
+
         memcpy(buffer + length, cookie->name.data, cookie->name.length);
         length += cookie->name.length;
         buffer[length++] = '=';
@@ -194,8 +200,6 @@ cookie_jar_http_header(struct cookie_jar *jar,
             memcpy(buffer + length, cookie->value.data, cookie->value.length);
             length += cookie->value.length;
         }
-        buffer[length++] = ';';
-        buffer[length++] = ' ';
     }
 
     if (length > 0) {
