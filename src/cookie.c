@@ -138,8 +138,6 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
         strref_ltrim(&input);
     }
 
-    /* XXX: use "expires" and "path" arguments */
-
     return true;
 }
 
