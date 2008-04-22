@@ -113,7 +113,7 @@ widget_request_headers(struct embed *embed, int with_body)
     session = widget_get_session2(embed->widget);
 
     if (embed->host_and_port != NULL && session != NULL)
-        cookie_jar_http_header(&session->cookies, headers,
+        cookie_jar_http_header(session->cookies, headers,
                                embed->host_and_port, embed->pool);
 
     if (session != NULL && session->language != NULL)
@@ -280,7 +280,7 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
         if (cookies != NULL) {
             struct session *session = widget_get_session2(embed->widget);
             if (session != NULL)
-                cookie_jar_set_cookie2(&session->cookies, cookies,
+                cookie_jar_set_cookie2(session->cookies, cookies,
                                        embed->host_and_port);
         }
     }

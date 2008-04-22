@@ -11,7 +11,10 @@
 #include "http-string.h"
 #include "tpool.h"
 
+#include <inline/list.h>
+
 #include <string.h>
+#include <time.h>
 
 struct cookie {
     struct list_head siblings;
@@ -21,6 +24,21 @@ struct cookie {
     const char *domain;
     time_t valid_until;
 };
+
+struct cookie_jar {
+    pool_t pool;
+
+    struct list_head cookies;
+};
+
+struct cookie_jar *
+cookie_jar_new(pool_t pool)
+{
+    struct cookie_jar *jar = p_malloc(pool, sizeof(*jar));
+    jar->pool = pool;
+    list_init(&jar->cookies);
+    return jar;
+}
 
 static bool
 domain_matches(const char *domain, const char *match)

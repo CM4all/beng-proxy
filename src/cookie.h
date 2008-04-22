@@ -8,28 +8,14 @@
 #define __BENG_COOKIE_H
 
 #include "pool.h"
-#include "strref.h"
-
-#include <inline/list.h>
-
-#include <time.h>
 
 struct strmap;
 
 struct cookie;
+struct cookie_jar;
 
-struct cookie_jar {
-    pool_t pool;
-
-    struct list_head cookies;
-};
-
-static inline void
-cookie_jar_init(struct cookie_jar *jar, pool_t pool)
-{
-    jar->pool = pool;
-    list_init(&jar->cookies);
-}
+struct cookie_jar *
+cookie_jar_new(pool_t pool);
 
 /**
  * Parse a Set-Cookie2 response header and insert new cookies into the

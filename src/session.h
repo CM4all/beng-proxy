@@ -9,7 +9,6 @@
 
 #include "pool.h"
 #include "hashmap.h"
-#include "cookie.h"
 
 #include <inline/list.h>
 
@@ -77,7 +76,7 @@ struct session {
     hashmap_t widgets;
 
     /** all cookies received by widget servers */
-    struct cookie_jar cookies;
+    struct cookie_jar *cookies;
 };
 
 void

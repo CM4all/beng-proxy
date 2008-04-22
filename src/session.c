@@ -6,6 +6,7 @@
 
 #include "session.h"
 #include "format.h"
+#include "cookie.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -136,7 +137,7 @@ session_new(void)
     session->expires = time(NULL) + SESSION_TTL_NEW;
     session->translate = NULL;
     session->widgets = NULL;
-    cookie_jar_init(&session->cookies, pool);
+    session->cookies = cookie_jar_new(pool);
 
     list_add(&session->hash_siblings, session_slot(session->id));
     ++session_manager.num_sessions;
