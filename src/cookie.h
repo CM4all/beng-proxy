@@ -10,8 +10,6 @@
 #include "pool.h"
 
 struct strmap;
-
-struct cookie;
 struct cookie_jar;
 
 struct cookie_jar *
