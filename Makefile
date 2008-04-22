@@ -96,6 +96,7 @@ SOURCES = src/main.c \
 	src/dpool.c \
 	src/session.c \
 	src/cookie.c \
+	src/cookie-server.c \
 	src/connection.c \
 	src/translate.c \
 	src/tcache.c \

@@ -32,11 +32,4 @@ cookie_jar_http_header(struct cookie_jar *jar,
                        const char *domain, const char *path,
                        struct strmap *headers, pool_t pool);
 
-/**
- * Parse a Cookie request header and store all cookies in the
- * specified strmap.
- */
-void
-cookie_map_parse(struct strmap *cookies, const char *p, pool_t pool);
-
 #endif

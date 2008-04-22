@@ -8,7 +8,7 @@
 #include "request.h"
 #include "session.h"
 #include "http-server.h"
-#include "cookie.h"
+#include "cookie-server.h"
 
 int
 request_processor_enabled(struct request *request)
