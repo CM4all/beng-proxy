@@ -88,7 +88,7 @@ parse_key_value(pool_t pool, struct strref *input,
         strref_clear(value);
 }
 
-static int
+static bool
 parse_next_cookie(struct cookie_jar *jar, struct strref *input,
                   const char *domain)
 {
@@ -97,7 +97,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
     parse_key_value(jar->pool, input, &name, &value);
     if (strref_is_empty(&name))
-        return 0;
+        return false;
 
     cookie = cookie_list_find(&jar->cookies, domain, name.data, name.length);
     if (cookie == NULL) {
@@ -138,7 +138,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
     /* XXX: use "expires" and "path" arguments */
 
-    return 1;
+    return true;
 }
 
 void
