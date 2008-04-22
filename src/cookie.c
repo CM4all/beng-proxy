@@ -6,7 +6,7 @@
 
 #include "cookie.h"
 #include "strutil.h"
-#include "strref.h"
+#include "strref2.h"
 #include "strmap.h"
 #include "http-string.h"
 #include "tpool.h"
@@ -71,29 +71,6 @@ cookie_list_find(struct list_head *head, const char *domain,
     return NULL;
 }
 
-static __attr_always_inline void
-ltrim(struct strref *s)
-{
-    while (s->length > 0 && char_is_whitespace(s->data[0])) {
-        ++s->data;
-        --s->length;
-    }
-}
-
-static __attr_always_inline void
-rtrim(struct strref *s)
-{
-    while (s->length > 0 && char_is_whitespace(strref_last(s)))
-        --s->length;
-}
-
-static __attr_always_inline void
-trim(struct strref *s)
-{
-    ltrim(s);
-    rtrim(s);
-}
-
 static void
 parse_key_value(pool_t pool, struct strref *input,
                 struct strref *name, struct strref *value)
@@ -102,10 +79,10 @@ parse_key_value(pool_t pool, struct strref *input,
     if (strref_is_empty(name))
         return;
 
-    ltrim(input);
+    strref_ltrim(input);
     if (!strref_is_empty(input) && input->data[0] == '=') {
         strref_skip(input, 1);
-        ltrim(input);
+        strref_ltrim(input);
         http_next_value(pool, input, value);
     } else
         strref_clear(value);
@@ -138,7 +115,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
     strref_set_dup(jar->pool, &cookie->value, &value);
 
-    ltrim(input);
+    strref_ltrim(input);
     while (!strref_is_empty(input) && input->data[0] == ';') {
         strref_skip(input, 1);
 
@@ -183,7 +160,7 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
             break;
 
         strref_skip(&input, 1);
-        ltrim(&input);
+        strref_ltrim(&input);
     }
 
     /* XXX log error */
