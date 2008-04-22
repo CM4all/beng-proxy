@@ -5,55 +5,48 @@
  */
 
 #include "cookie-server.h"
-#include "strutil.h"
+#include "strref2.h"
 #include "strmap.h"
 #include "http-string.h"
 
 #include <inline/list.h>
 
+static void
+parse_key_value(pool_t pool, struct strref *input,
+                struct strref *name, struct strref *value)
+{
+    http_next_token(input, name);
+    if (strref_is_empty(name))
+        return;
+
+    strref_ltrim(input);
+    if (!strref_is_empty(input) && input->data[0] == '=') {
+        strref_skip(input, 1);
+        strref_ltrim(input);
+        http_next_value(pool, input, value);
+    } else
+        strref_clear(value);
+}
+
 void
 cookie_map_parse(struct strmap *cookies, const char *p, pool_t pool)
 {
-    const char *name, *value, *end;
+    struct strref input, name, value;
 
     assert(cookies != NULL);
     assert(p != NULL);
 
+    strref_set_c(&input, p);
+
     while (1) {
-        value = strchr(p, '=');
-        if (value == NULL)
+        parse_key_value(pool, &input, &name, &value);
+        if (strref_is_empty(&name))
             break;
 
-        name = p_strndup(pool, p, value - p);
+        strmap_addn(cookies, strref_dup(pool, &name), strref_dup(pool, &value));
 
-        ++value;
-
-        if (*value == '"') {
-            ++value;
-
-            end = strchr(value, '"');
-            if (end == NULL)
-                break;
-
-            value = p_strndup(pool, value, end - value);
-
-            end = strchr(value, ';');
-        } else {
-            end = strchr(value, ';');
-
-            if (end == NULL)
-                value = p_strdup(pool, value);
-            else
-                value = p_strndup(pool, value, end - value);
-        }
-
-        strmap_addn(cookies, name, value);
-
-        if (end == NULL)
+        strref_ltrim(&input);
+        if (strref_is_empty(&input) || input.data[0] != ';')
             break;
-
-        p = end + 1;
-        while (*p != 0 && char_is_whitespace(*p))
-            ++p;
     }
 }
