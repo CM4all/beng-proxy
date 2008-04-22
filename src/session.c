@@ -209,7 +209,7 @@ session_get_widget_server(session_t session, const char *name, int create)
 
     server = p_malloc(session->pool, sizeof(*server));
     server->session = session;
-    list_init(&server->cookies);
+    cookie_jar_init(&server->cookies, session->pool);
 
     hashmap_addn(session->widget_servers,
                  p_strdup(session->pool, name), server);

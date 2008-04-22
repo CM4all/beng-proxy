@@ -76,32 +76,31 @@ parse_key_value(pool_t pool, struct strref *input,
 }
 
 static int
-parse_next_cookie(pool_t pool, struct list_head *head,
-                  struct strref *input)
+parse_next_cookie(struct cookie_jar *jar, struct strref *input)
 {
     struct strref name, value;
     struct cookie *cookie;
 
-    parse_key_value(pool, input, &name, &value);
+    parse_key_value(jar->pool, input, &name, &value);
     if (strref_is_empty(&name))
         return 0;
 
-    cookie = cookie_list_find(head, name.data, name.length);
+    cookie = cookie_list_find(&jar->cookies, name.data, name.length);
     if (cookie == NULL) {
-        cookie = p_malloc(pool, sizeof(*cookie));
-        strref_set_dup(pool, &cookie->name, &name);
+        cookie = p_malloc(jar->pool, sizeof(*cookie));
+        strref_set_dup(jar->pool, &cookie->name, &name);
         cookie->valid_until = (time_t)-1; /* XXX */
 
-        list_add(&cookie->siblings, head);
+        list_add(&cookie->siblings, &jar->cookies);
     }
 
-    strref_set_dup(pool, &cookie->value, &value);
+    strref_set_dup(jar->pool, &cookie->value, &value);
 
     ltrim(input);
     while (!strref_is_empty(input) && input->data[0] == ';') {
         strref_skip(input, 1);
 
-        parse_key_value(pool, input, &name, &value);
+        parse_key_value(jar->pool, input, &name, &value);
         if (!strref_is_empty(&name)) {
             /* XXX */
         }
@@ -113,14 +112,14 @@ parse_next_cookie(pool_t pool, struct list_head *head,
 }
 
 void
-cookie_list_set_cookie2(pool_t pool, struct list_head *head, const char *value)
+cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value)
 {
     struct strref input;
 
     strref_set_c(&input, value);
 
     while (1) {
-        if (!parse_next_cookie(pool, head, &input))
+        if (!parse_next_cookie(jar, &input))
             break;
 
         if (strref_is_empty(&input))
@@ -137,8 +136,8 @@ cookie_list_set_cookie2(pool_t pool, struct list_head *head, const char *value)
 }
 
 void
-cookie_list_http_header(struct strmap *headers, struct list_head *head,
-                        pool_t pool)
+cookie_jar_http_header(struct cookie_jar *jar, struct strmap *headers,
+                       pool_t pool)
 {
     static const size_t buffer_size = 4096;
     char *buffer;
@@ -146,7 +145,7 @@ cookie_list_http_header(struct strmap *headers, struct list_head *head,
     size_t length;
     struct pool_mark mark;
 
-    if (list_empty(head))
+    if (list_empty(&jar->cookies))
         return;
 
     pool_mark(tpool, &mark);
@@ -154,8 +153,8 @@ cookie_list_http_header(struct strmap *headers, struct list_head *head,
 
     length = 0;
 
-    for (cookie = (struct cookie *)head->next;
-         &cookie->siblings != head;
+    for (cookie = (struct cookie *)jar->cookies.next;
+         &cookie->siblings != &jar->cookies;
          cookie = (struct cookie *)cookie->siblings.next) {
         if (buffer_size - length < cookie->name.length + 1 + 1 + cookie->value.length * 2 + 1 + 2)
             break;

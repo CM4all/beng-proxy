@@ -97,7 +97,7 @@ widget_request_headers(struct embed *embed, int with_body)
 
     wss = widget_get_server_session(embed->widget, 0);
     if (wss != NULL)
-        cookie_list_http_header(headers, &wss->cookies, embed->pool);
+        cookie_jar_http_header(&wss->cookies, headers, embed->pool);
 
     session = widget_get_session2(embed->widget);
     if (session != NULL && session->language != NULL)
@@ -258,8 +258,7 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
     if (cookies != NULL) {
         struct widget_server_session *wss = widget_get_server_session(embed->widget, 1);
         if (wss != NULL)
-            cookie_list_set_cookie2(wss->session->pool, &wss->cookies,
-                                    cookies);
+            cookie_jar_set_cookie2(&wss->cookies, cookies);
     }
 
     if (status >= 300 && status < 400) {

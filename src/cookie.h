@@ -18,20 +18,33 @@ struct strmap;
 
 struct cookie;
 
+struct cookie_jar {
+    pool_t pool;
+
+    struct list_head cookies;
+};
+
+static inline void
+cookie_jar_init(struct cookie_jar *jar, pool_t pool)
+{
+    jar->pool = pool;
+    list_init(&jar->cookies);
+}
+
 /**
  * Parse a Set-Cookie2 response header and insert new cookies into the
  * linked list.
  */
 void
-cookie_list_set_cookie2(pool_t pool, struct list_head *head, const char *value);
+cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value);
 
 /**
  * Generate HTTP request headers passing for all cookies in the linked
  * list.
  */
 void
-cookie_list_http_header(struct strmap *headers, struct list_head *head,
-                        pool_t pool);
+cookie_jar_http_header(struct cookie_jar *jar, struct strmap *headers,
+                       pool_t pool);
 
 /**
  * Parse a Cookie request header and store all cookies in the

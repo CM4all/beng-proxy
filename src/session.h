@@ -9,6 +9,7 @@
 
 #include "pool.h"
 #include "hashmap.h"
+#include "cookie.h"
 
 #include <inline/list.h>
 
@@ -23,7 +24,7 @@ typedef unsigned session_id_t;
 struct widget_server_session {
     session_t session;
 
-    struct list_head cookies;
+    struct cookie_jar cookies;
 };
 
 /**
