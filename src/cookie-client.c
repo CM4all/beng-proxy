@@ -23,7 +23,7 @@ struct cookie {
     struct strref name;
     struct strref value;
     const char *domain, *path;
-    time_t valid_until;
+    time_t expires;
 };
 
 struct cookie_jar {
@@ -93,7 +93,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
     cookie->domain = NULL;
     cookie->path = NULL;
-    cookie->valid_until = 0;
+    cookie->expires = 0;
 
     strref_set_dup(jar->pool, &cookie->value, &value);
 
@@ -114,7 +114,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
             seconds = strtoul(strref_dup(jar->pool, &value), &endptr, 10);
             if (seconds > 0 && *endptr == 0)
-                cookie->valid_until = time(NULL) + seconds;
+                cookie->expires = time(NULL) + seconds;
         }
 
         strref_ltrim(input);
@@ -180,7 +180,7 @@ cookie_jar_http_header(struct cookie_jar *jar,
          cookie = (struct cookie *)cookie->siblings.next) {
         if (!domain_matches(domain, cookie->domain) ||
             !path_matches(path, cookie->path) ||
-            (cookie->valid_until != 0 && cookie->valid_until < now))
+            (cookie->expires != 0 && cookie->expires < now))
             continue;
 
         if (buffer_size - length < cookie->name.length + 1 + 1 + cookie->value.length * 2 + 1 + 2)
