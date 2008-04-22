@@ -93,7 +93,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
     cookie->domain = NULL;
     cookie->path = NULL;
-    cookie->valid_until = (time_t)-1; /* XXX */
+    cookie->valid_until = 0;
 
     strref_set_dup(jar->pool, &cookie->value, &value);
 
