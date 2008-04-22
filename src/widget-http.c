@@ -99,7 +99,6 @@ static struct strmap *
 widget_request_headers(struct embed *embed, int with_body)
 {
     struct strmap *headers;
-    struct widget_server_session *wss;
     struct session *session;
     const char *p;
 
@@ -112,14 +111,12 @@ widget_request_headers(struct embed *embed, int with_body)
             headers_copy(embed->env->request_headers, headers, copy_headers_with_body);
     }
 
-    if (embed->host_and_port != NULL) {
-        wss = widget_get_server_session(embed->widget, 0);
-        if (wss != NULL)
-            cookie_jar_http_header(&wss->cookies, headers,
-                                   embed->host_and_port, embed->pool);
-    }
-
     session = widget_get_session2(embed->widget);
+
+    if (embed->host_and_port != NULL && session != NULL)
+        cookie_jar_http_header(&session->cookies, headers,
+                               embed->host_and_port, embed->pool);
+
     if (session != NULL && session->language != NULL)
         strmap_addn(headers, "accept-language", session->language);
     else if (embed->env->request_headers != NULL)
@@ -277,9 +274,9 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
         if (cookies == NULL)
             cookies = strmap_get(headers, "set-cookie");
         if (cookies != NULL) {
-            struct widget_server_session *wss = widget_get_server_session(embed->widget, 1);
-            if (wss != NULL)
-                cookie_jar_set_cookie2(&wss->cookies, cookies,
+            struct session *session = widget_get_session2(embed->widget);
+            if (session != NULL)
+                cookie_jar_set_cookie2(&session->cookies, cookies,
                                        embed->host_and_port);
         }
     }

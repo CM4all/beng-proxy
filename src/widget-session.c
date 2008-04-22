@@ -11,45 +11,6 @@
 
 #include <assert.h>
 
-static const char *
-widget_get_server_name(pool_t pool, const struct widget *widget)
-{
-    const char *uri, *p;
-
-    if (widget->class->address == NULL)
-        return NULL;
-
-    uri = widget->class->address->uri;
-
-    p = strchr(uri, ':');
-    if (p == NULL || p[1] != '/' || p[2] != '/' || p[3] == '/')
-        return NULL;
-
-    uri = p + 3;
-    p = strchr(uri, '/');
-    if (p == NULL)
-        return uri;
-
-    return p_strndup(pool, uri, p - uri);
-}
-
-struct widget_server_session *
-widget_get_server_session(struct widget *widget, int create)
-{
-    struct session *session;
-
-    if (widget->from_request.session != NULL)
-        return widget->from_request.session->server;
-
-    session = widget_get_session2(widget);
-    if (session == NULL)
-        return NULL;
-
-    return session_get_widget_server(session,
-                                     widget_get_server_name(tpool, widget),
-                                     create);
-}
-
 struct widget_session *
 widget_get_session(struct widget *widget, int create)
 {
@@ -74,9 +35,7 @@ widget_get_session(struct widget *widget, int create)
 
         pool_mark(tpool, &mark);
         widget->from_request.session
-            = widget_session_get_child(parent,
-                                       widget_get_server_name(tpool, widget),
-                                       widget->id, create);
+            = widget_session_get_child(parent, widget->id, create);
         pool_rewind(tpool, &mark);
         return widget->from_request.session;
 
@@ -91,9 +50,7 @@ widget_get_session(struct widget *widget, int create)
 
         pool_mark(tpool, &mark);
         widget->from_request.session
-            = session_get_widget(session,
-                                 widget_get_server_name(tpool, widget),
-                                 widget->id, create);
+            = session_get_widget(session, widget->id, create);
         pool_rewind(tpool, &mark);
         return widget->from_request.session;
     }
