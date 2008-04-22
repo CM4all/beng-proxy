@@ -10,12 +10,12 @@ def command_expect(command, expected):
         print "expected", repr(expected)
         assert False
 
-prefix = 'Cookie2: $Version="1"\r\n'
-suffix = ' \r\n'
+prefix = 'cookie2: $Version="1"\r\n'
+suffix = '\r\n'
 
 command_expect('./test/run-cookie-client foo=bar',
-               prefix + 'Cookie: foo=bar;' + suffix)
+               prefix + 'cookie: foo=bar' + suffix)
 command_expect('./test/run-cookie-client foo=bar;a=b',
-               prefix + 'Cookie: foo=bar;' + suffix)
+               prefix + 'cookie: foo=bar' + suffix)
 command_expect('./test/run-cookie-client foo=bar,a=b',
-               prefix + 'Cookie: a=b; foo=bar;' + suffix)
+               prefix + 'cookie: a=b; foo=bar' + suffix)
