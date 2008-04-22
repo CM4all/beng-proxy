@@ -48,18 +48,6 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 {
     assert(widget->from_request.proxy);
 
-    if (widget->class == NULL) {
-        struct frame_class_looup *fcl = p_malloc(pool, sizeof(*fcl));
-        fcl->pool = pool;
-        fcl->env = env;
-        fcl->widget = widget;
-        http_response_handler_set(&fcl->handler, handler, handler_ctx);
-        fcl->async_ref = async_ref;
-        widget_class_lookup(pool, env->translate_cache, widget->class_name,
-                            frame_class_lookup_callback, fcl, async_ref);
-        return;
-    }
-
     widget_sync_session(widget);
 
     widget_http_request(pool, widget, env,
@@ -73,18 +61,6 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    if (widget->class == NULL) {
-        struct frame_class_looup *fcl = p_malloc(pool, sizeof(*fcl));
-        fcl->pool = pool;
-        fcl->env = env;
-        fcl->widget = widget;
-        http_response_handler_set(&fcl->handler, handler, handler_ctx);
-        fcl->async_ref = async_ref;
-        widget_class_lookup(pool, env->translate_cache, widget->class_name,
-                            frame_class_lookup_callback, fcl, async_ref);
-        return;
-    }
-
     if (!widget->class->is_container) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
@@ -128,6 +104,18 @@ embed_frame_widget(pool_t pool, struct processor_env *env,
     assert(env != NULL);
     assert(widget != NULL);
     assert(widget->from_request.proxy || widget->from_request.proxy_ref != NULL);
+
+    if (widget->class == NULL) {
+        struct frame_class_looup *fcl = p_malloc(pool, sizeof(*fcl));
+        fcl->pool = pool;
+        fcl->env = env;
+        fcl->widget = widget;
+        http_response_handler_set(&fcl->handler, handler, handler_ctx);
+        fcl->async_ref = async_ref;
+        widget_class_lookup(pool, env->translate_cache, widget->class_name,
+                            frame_class_lookup_callback, fcl, async_ref);
+        return;
+    }
 
     if (widget->from_request.proxy)
         /* this widget is being proxied */
