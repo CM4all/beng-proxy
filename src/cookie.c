@@ -134,6 +134,8 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
             if (seconds > 0 && *endptr == 0)
                 cookie->valid_until = time(NULL) + seconds;
         }
+
+        strref_ltrim(&input);
     }
 
     /* XXX: use "expires" and "path" arguments */
