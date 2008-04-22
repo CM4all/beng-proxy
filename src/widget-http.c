@@ -27,7 +27,6 @@ struct embed {
 
     struct widget *widget;
     struct processor_env *env;
-    unsigned options;
     const char *host_and_port;
 
     struct http_response_handler_ref handler_ref;
@@ -216,6 +215,7 @@ widget_response_process(struct embed *embed, http_status_t status,
 {
     const char *content_type;
     struct strref *charset, charset_buffer;
+    unsigned options;
 
     content_type = strmap_get(headers, "content-type");
 
@@ -254,9 +254,13 @@ widget_response_process(struct embed *embed, http_status_t status,
                                               status, headers, body);
         return;
     }
-                
+
+    options = PROCESSOR_REWRITE_URL;
+    if (embed->widget->class->is_container)
+        options |= PROCESSOR_CONTAINER;
+
     processor_new(embed->pool, body,
-                  embed->widget, embed->env, embed->options,
+                  embed->widget, embed->env, options,
                   embed->handler_ref.handler,
                   embed->handler_ref.ctx,
                   embed->async_ref);
@@ -326,7 +330,6 @@ widget_http_request(pool_t pool, struct widget *widget,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    unsigned options = PROCESSOR_REWRITE_URL;
     struct embed *embed;
     struct uri_with_address *uwa;
     struct strmap *headers;
@@ -341,16 +344,12 @@ widget_http_request(pool_t pool, struct widget *widget,
         return;
     }
 
-    if (widget->class->is_container)
-        options |= PROCESSOR_CONTAINER;
-
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
 
     embed->num_redirects = 0;
     embed->widget = widget;
     embed->env = env;
-    embed->options = options;
     embed->host_and_port =
         uri_host_and_port(pool, embed->widget->class->address->uri);
 
