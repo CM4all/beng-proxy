@@ -1,10 +1,10 @@
 /*
- * Cookie management.
+ * Manage cookies sent by the widget server.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cookie.h"
+#include "cookie-client.h"
 #include "strutil.h"
 #include "strref2.h"
 #include "strmap.h"
@@ -135,7 +135,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
                 cookie->valid_until = time(NULL) + seconds;
         }
 
-        strref_ltrim(&input);
+        strref_ltrim(input);
     }
 
     return true;

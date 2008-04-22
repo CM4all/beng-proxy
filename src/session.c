@@ -6,7 +6,7 @@
 
 #include "session.h"
 #include "format.h"
-#include "cookie.h"
+#include "cookie-client.h"
 #include "hashmap.h"
 
 #include <assert.h>

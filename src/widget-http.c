@@ -9,7 +9,7 @@
 #include "processor.h"
 #include "widget.h"
 #include "session.h"
-#include "cookie.h"
+#include "cookie-client.h"
 #include "async.h"
 #include "google-gadget.h"
 #include "http-util.h"

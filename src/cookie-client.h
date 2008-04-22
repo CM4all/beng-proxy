@@ -1,11 +1,11 @@
 /*
- * Cookie management.
+ * Manage cookies sent by the widget server.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_COOKIE_H
-#define __BENG_COOKIE_H
+#ifndef __BENG_COOKIE_CLIENT_H
+#define __BENG_COOKIE_CLIENT_H
 
 #include "pool.h"
 

@@ -1,5 +1,5 @@
 /*
- * Cookie management.
+ * Handle cookies sent by the HTTP client.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
