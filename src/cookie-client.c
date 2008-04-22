@@ -71,23 +71,6 @@ cookie_list_find(struct list_head *head, const char *domain,
     return NULL;
 }
 
-static void
-parse_key_value(pool_t pool, struct strref *input,
-                struct strref *name, struct strref *value)
-{
-    http_next_token(input, name);
-    if (strref_is_empty(name))
-        return;
-
-    strref_ltrim(input);
-    if (!strref_is_empty(input) && input->data[0] == '=') {
-        strref_skip(input, 1);
-        strref_ltrim(input);
-        http_next_value(pool, input, value);
-    } else
-        strref_clear(value);
-}
-
 static bool
 parse_next_cookie(struct cookie_jar *jar, struct strref *input,
                   const char *domain)
@@ -95,7 +78,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
     struct strref name, value;
     struct cookie *cookie;
 
-    parse_key_value(jar->pool, input, &name, &value);
+    http_next_name_value(jar->pool, input, &name, &value);
     if (strref_is_empty(&name))
         return false;
 
@@ -119,7 +102,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
     while (!strref_is_empty(input) && input->data[0] == ';') {
         strref_skip(input, 1);
 
-        parse_key_value(jar->pool, input, &name, &value);
+        http_next_name_value(jar->pool, input, &name, &value);
         if (strref_lower_cmp_literal(&name, "domain") == 0) {
             const char *new_domain = strref_dup(jar->pool, &value);
             if (domain_matches(domain, new_domain))

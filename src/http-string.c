@@ -5,6 +5,7 @@
  */
 
 #include "http-string.h"
+#include "strref2.h"
 
 void
 http_next_token(struct strref *input, struct strref *value)
@@ -54,6 +55,23 @@ http_next_value(pool_t pool, struct strref *input, struct strref *value)
         http_next_quoted_string(pool, input, value);
     else
         http_next_token(input, value);
+}
+
+void
+http_next_name_value(pool_t pool, struct strref *input,
+                     struct strref *name, struct strref *value)
+{
+    http_next_token(input, name);
+    if (strref_is_empty(name))
+        return;
+
+    strref_ltrim(input);
+    if (!strref_is_empty(input) && input->data[0] == '=') {
+        strref_skip(input, 1);
+        strref_ltrim(input);
+        http_next_value(pool, input, value);
+    } else
+        strref_clear(value);
 }
 
 size_t

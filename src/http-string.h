@@ -70,6 +70,10 @@ http_next_quoted_string(pool_t pool, struct strref *input, struct strref *value)
 void
 http_next_value(pool_t pool, struct strref *input, struct strref *value);
 
+void
+http_next_name_value(pool_t pool, struct strref *input,
+                     struct strref *name, struct strref *value);
+
 static inline bool
 http_must_quote_token(const struct strref *src)
 {
