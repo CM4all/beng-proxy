@@ -28,7 +28,8 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
  * list.
  */
 void
-cookie_jar_http_header(struct cookie_jar *jar, const char *domain,
+cookie_jar_http_header(struct cookie_jar *jar,
+                       const char *domain, const char *path,
                        struct strmap *headers, pool_t pool);
 
 /**

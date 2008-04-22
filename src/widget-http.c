@@ -94,6 +94,20 @@ headers_copy(struct strmap *in, struct strmap *out,
     }
 }
 
+static const char *
+uri_path(const char *uri)
+{
+    const char *p = strchr(uri, ':');
+    if (p == NULL || p[1] != '/')
+        return uri;
+    if (p[2] != '/')
+        return p + 1;
+    p = strchr(p + 3, '/');
+    if (p == NULL)
+        return "";
+    return p;
+}
+
 static struct strmap *
 widget_request_headers(struct embed *embed, int with_body)
 {
@@ -112,9 +126,12 @@ widget_request_headers(struct embed *embed, int with_body)
 
     session = widget_get_session2(embed->widget);
 
-    if (embed->host_and_port != NULL && session != NULL)
-        cookie_jar_http_header(session->cookies, embed->host_and_port,
+    if (embed->host_and_port != NULL && session != NULL) {
+        const char *path = uri_path(widget_real_uri(embed->pool,
+                                                    embed->widget));
+        cookie_jar_http_header(session->cookies, embed->host_and_port, path,
                                headers, embed->pool);
+    }
 
     if (session != NULL && session->language != NULL)
         strmap_addn(headers, "accept-language", session->language);
