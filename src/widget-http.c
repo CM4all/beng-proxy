@@ -113,8 +113,8 @@ widget_request_headers(struct embed *embed, int with_body)
     session = widget_get_session2(embed->widget);
 
     if (embed->host_and_port != NULL && session != NULL)
-        cookie_jar_http_header(session->cookies, headers,
-                               embed->host_and_port, embed->pool);
+        cookie_jar_http_header(session->cookies, embed->host_and_port,
+                               headers, embed->pool);
 
     if (session != NULL && session->language != NULL)
         strmap_addn(headers, "accept-language", session->language);

@@ -171,8 +171,8 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
 }
 
 void
-cookie_jar_http_header(struct cookie_jar *jar, struct strmap *headers,
-                       const char *domain, pool_t pool)
+cookie_jar_http_header(struct cookie_jar *jar, const char *domain,
+                       struct strmap *headers, pool_t pool)
 {
     static const size_t buffer_size = 4096;
     char *buffer;
