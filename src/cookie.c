@@ -13,6 +13,7 @@
 
 #include <inline/list.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -148,6 +149,14 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
                 cookie->domain = new_domain;
         } else if (strref_cmp_literal(&name, "path") == 0)
             cookie->path = strref_dup(jar->pool, &value);
+        else if (strref_cmp_literal(&name, "max-age") == 0) {
+            unsigned long seconds;
+            char *endptr;
+
+            seconds = strtoul(strref_dup(jar->pool, &value), &endptr, 10);
+            if (seconds > 0 && *endptr == 0)
+                cookie->valid_until = time(NULL) + seconds;
+        }
     }
 
     /* XXX: use "expires" and "path" arguments */
