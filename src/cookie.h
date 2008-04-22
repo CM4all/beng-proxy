@@ -36,7 +36,8 @@ cookie_jar_init(struct cookie_jar *jar, pool_t pool)
  * linked list.
  */
 void
-cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value);
+cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
+                       const char *domain);
 
 /**
  * Generate HTTP request headers passing for all cookies in the linked
@@ -44,7 +45,7 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value);
  */
 void
 cookie_jar_http_header(struct cookie_jar *jar, struct strmap *headers,
-                       pool_t pool);
+                       const char *domain, pool_t pool);
 
 /**
  * Parse a Cookie request header and store all cookies in the

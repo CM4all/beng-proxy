@@ -18,18 +18,29 @@ struct cookie {
 
     struct strref name;
     struct strref value;
+    const char *domain;
     time_t valid_until;
 };
 
+static bool
+domain_matches(const char *domain, const char *match)
+{
+    /* XXX */
+
+    return strcmp(domain, match) == 0;
+}
+
 static struct cookie *
-cookie_list_find(struct list_head *head, const char *name, size_t name_length)
+cookie_list_find(struct list_head *head, const char *domain,
+                 const char *name, size_t name_length)
 {
     struct cookie *cookie;
 
     for (cookie = (struct cookie *)head->next;
          &cookie->siblings != head;
          cookie = (struct cookie *)cookie->siblings.next)
-        if (strref_cmp(&cookie->name, name, name_length) == 0)
+        if (domain_matches(domain, cookie->domain) &&
+            strref_cmp(&cookie->name, name, name_length) == 0)
             return cookie;
 
     return NULL;
@@ -76,7 +87,8 @@ parse_key_value(pool_t pool, struct strref *input,
 }
 
 static int
-parse_next_cookie(struct cookie_jar *jar, struct strref *input)
+parse_next_cookie(struct cookie_jar *jar, struct strref *input,
+                  const char *domain)
 {
     struct strref name, value;
     struct cookie *cookie;
@@ -85,9 +97,13 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input)
     if (strref_is_empty(&name))
         return 0;
 
-    cookie = cookie_list_find(&jar->cookies, name.data, name.length);
+    cookie = cookie_list_find(&jar->cookies, domain, name.data, name.length);
     if (cookie == NULL) {
         cookie = p_malloc(jar->pool, sizeof(*cookie));
+
+        /* XXX domain from cookie attribute */
+        cookie->domain = p_strdup(jar->pool, domain);
+
         strref_set_dup(jar->pool, &cookie->name, &name);
         cookie->valid_until = (time_t)-1; /* XXX */
 
@@ -112,14 +128,15 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input)
 }
 
 void
-cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value)
+cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
+                       const char *domain)
 {
     struct strref input;
 
     strref_set_c(&input, value);
 
     while (1) {
-        if (!parse_next_cookie(jar, &input))
+        if (!parse_next_cookie(jar, &input, domain))
             break;
 
         if (strref_is_empty(&input))
@@ -137,7 +154,7 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value)
 
 void
 cookie_jar_http_header(struct cookie_jar *jar, struct strmap *headers,
-                       pool_t pool)
+                       const char *domain, pool_t pool)
 {
     static const size_t buffer_size = 4096;
     char *buffer;
@@ -156,6 +173,9 @@ cookie_jar_http_header(struct cookie_jar *jar, struct strmap *headers,
     for (cookie = (struct cookie *)jar->cookies.next;
          &cookie->siblings != &jar->cookies;
          cookie = (struct cookie *)cookie->siblings.next) {
+        if (!domain_matches(domain, cookie->domain))
+            continue;
+
         if (buffer_size - length < cookie->name.length + 1 + 1 + cookie->value.length * 2 + 1 + 2)
             break;
         memcpy(buffer + length, cookie->name.data, cookie->name.length);

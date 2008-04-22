@@ -28,6 +28,7 @@ struct embed {
     struct widget *widget;
     struct processor_env *env;
     unsigned options;
+    const char *host_and_port;
 
     struct http_response_handler_ref handler_ref;
     struct async_operation_ref *async_ref;
@@ -53,6 +54,22 @@ static const char *const copy_headers_with_body[] = {
     "content-type",
     NULL,
 };
+
+static const char *
+uri_host_and_port(pool_t pool, const char *uri)
+{
+    const char *slash;
+
+    if (memcmp(uri, "http://", 7) != 0)
+        return NULL;
+
+    uri += 7;
+    slash = strchr(uri, '/');
+    if (slash == NULL)
+        return uri;
+
+    return p_strndup(pool, uri, slash - uri);
+}
 
 static const char *
 get_env_request_header(const struct processor_env *env, const char *key)
@@ -95,9 +112,12 @@ widget_request_headers(struct embed *embed, int with_body)
             headers_copy(embed->env->request_headers, headers, copy_headers_with_body);
     }
 
-    wss = widget_get_server_session(embed->widget, 0);
-    if (wss != NULL)
-        cookie_jar_http_header(&wss->cookies, headers, embed->pool);
+    if (embed->host_and_port != NULL) {
+        wss = widget_get_server_session(embed->widget, 0);
+        if (wss != NULL)
+            cookie_jar_http_header(&wss->cookies, headers,
+                                   embed->host_and_port, embed->pool);
+    }
 
     session = widget_get_session2(embed->widget);
     if (session != NULL && session->language != NULL)
@@ -252,13 +272,16 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
     struct embed *embed = ctx;
     const char *location, *cookies;
 
-    cookies = strmap_get(headers, "set-cookie2");
-    if (cookies == NULL)
-        cookies = strmap_get(headers, "set-cookie");
-    if (cookies != NULL) {
-        struct widget_server_session *wss = widget_get_server_session(embed->widget, 1);
-        if (wss != NULL)
-            cookie_jar_set_cookie2(&wss->cookies, cookies);
+    if (embed->host_and_port != NULL) {
+        cookies = strmap_get(headers, "set-cookie2");
+        if (cookies == NULL)
+            cookies = strmap_get(headers, "set-cookie");
+        if (cookies != NULL) {
+            struct widget_server_session *wss = widget_get_server_session(embed->widget, 1);
+            if (wss != NULL)
+                cookie_jar_set_cookie2(&wss->cookies, cookies,
+                                       embed->host_and_port);
+        }
     }
 
     if (status >= 300 && status < 400) {
@@ -331,6 +354,8 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->widget = widget;
     embed->env = env;
     embed->options = options;
+    embed->host_and_port =
+        uri_host_and_port(pool, embed->widget->class->address->uri);
 
     uwa = uri_address_dup(pool, widget->class->address);
     uwa->uri = widget_real_uri(pool, widget);
