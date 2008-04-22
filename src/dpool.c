@@ -22,9 +22,18 @@
 #define ALIGN_BITS 0x3
 #endif
 
+struct dpool_allocation {
+    struct list_head all_siblings, free_siblings;
+
+    unsigned char data[sizeof(size_t)];
+};
+
 struct dpool_chunk {
     struct list_head siblings;
     size_t size, used;
+
+    struct list_head all_allocations, free_allocations;
+
     unsigned char data[sizeof(size_t)];
 };
 
@@ -57,6 +66,9 @@ dpool_new(struct shm *shm)
         sizeof(pool->first_chunk.data);
     pool->first_chunk.used = 0;
 
+    list_init(&pool->first_chunk.all_allocations);
+    list_init(&pool->first_chunk.free_allocations);
+
     return pool;
 }
 
@@ -82,18 +94,46 @@ dpool_destroy(struct dpool *pool)
     shm_free(pool->shm, pool);
 }
 
+static size_t
+allocation_size(const struct dpool_chunk *chunk,
+                const struct dpool_allocation *alloc)
+{
+    if (alloc->all_siblings.next == &chunk->all_allocations)
+        return chunk->data + chunk->used - alloc->data;
+    else
+        return (const unsigned char *)alloc->all_siblings.next - alloc->data;
+}
+
+static void *
+allocation_alloc(struct dpool_allocation *alloc, size_t size __attr_unused)
+{
+    /* XXX split allocation */
+
+    list_remove(&alloc->free_siblings);
+    return alloc->data;
+}
+
 static void *
 dchunk_malloc(struct dpool_chunk *chunk, size_t size)
 {
-    void *p;
+    struct dpool_allocation *alloc;
 
-    if (size > chunk->size - chunk->used)
+    for (alloc = (struct dpool_allocation *)chunk->free_allocations.next;
+         alloc != (struct dpool_allocation *)&chunk->free_allocations;
+         alloc = (struct dpool_allocation *)alloc->free_siblings.next) {
+        if (allocation_size(chunk, alloc) >= size)
+            return allocation_alloc(alloc, size);
+    }
+
+    if (sizeof(*alloc) - sizeof(alloc->data) + size > chunk->size - chunk->used)
         return NULL;
 
-    p = chunk->data + chunk->used;
-    chunk->used += size;
+    alloc = (struct dpool_allocation *)(chunk->data + chunk->used);
+    chunk->used += sizeof(*alloc) - sizeof(alloc->data) + size;
 
-    return p;
+    list_add(&alloc->all_siblings, chunk->all_allocations.prev);
+
+    return alloc->data;
 }
 
 static struct dpool_chunk *
@@ -105,6 +145,9 @@ dchunk_new(struct dpool *pool)
 
     chunk->size = shm_page_size(pool->shm) - sizeof(*chunk) + sizeof(chunk->data);
     chunk->used = 0;
+
+    list_init(&chunk->all_allocations);
+    list_init(&chunk->free_allocations);
 
     list_add(&chunk->siblings, &pool->first_chunk.siblings);
     return chunk;
