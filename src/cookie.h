@@ -16,13 +16,7 @@
 
 struct strmap;
 
-struct cookie {
-    struct list_head siblings;
-
-    struct strref name;
-    struct strref value;
-    time_t valid_until;
-};
+struct cookie;
 
 /**
  * Parse a Set-Cookie2 response header and insert new cookies into the

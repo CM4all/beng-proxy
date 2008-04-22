@@ -13,6 +13,14 @@
 
 #include <string.h>
 
+struct cookie {
+    struct list_head siblings;
+
+    struct strref name;
+    struct strref value;
+    time_t valid_until;
+};
+
 static struct cookie *
 cookie_list_find(struct list_head *head, const char *name, size_t name_length)
 {
