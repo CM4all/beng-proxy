@@ -10,7 +10,7 @@
 int main(int argc, char **argv) {
     pool_t pool;
     int i;
-    LIST_HEAD(cookies);
+    struct cookie_jar *jar;
     struct strmap *headers;
     struct growing_buffer *gb;
     const void *data;
@@ -20,11 +20,13 @@ int main(int argc, char **argv) {
     pool = pool_new_libc(NULL, "root");
     tpool_init(pool);
 
+    jar = cookie_jar_new(pool);
+
     for (i = 1; i < argc; ++i)
-        cookie_list_set_cookie2(pool, &cookies, argv[i]);
+        cookie_jar_set_cookie2(jar, argv[i], "foo.bar");
 
     headers = strmap_new(pool, 4);
-    cookie_list_http_header(headers, &cookies, pool);
+    cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
 
     gb = headers_dup(pool, headers);
     while ((data = growing_buffer_read(gb, &length)) != NULL) {
