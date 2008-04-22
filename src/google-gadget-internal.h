@@ -40,12 +40,12 @@ struct google_gadget {
             TYPE_HTML_INLINE,
         } type;
 
-        unsigned sending_content:1, in_parser:1;
+        bool sending_content:1, in_parser:1;
 
         const char *url;
     } from_parser;
 
-    unsigned has_locale:1, waiting_for_locale:1;
+    bool has_locale:1, waiting_for_locale:1;
 
     struct {
         struct parser *parser;

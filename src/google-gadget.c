@@ -155,7 +155,7 @@ google_gadget_msg_eof(struct google_gadget *gg)
 
     assert(gg->has_locale && gg->waiting_for_locale);
 
-    gg->waiting_for_locale = 0;
+    gg->waiting_for_locale = false;
 
     if (gg->parser != NULL && !gg->from_parser.in_parser)
         parser_read(gg->parser);
@@ -244,7 +244,7 @@ google_content_tag_finished(struct google_gadget *gg,
         if (tag->type == TAG_OPEN) {
             if (gg->widget->from_request.proxy ||
                 gg->from_parser.type == TYPE_HTML_INLINE) {
-                gg->from_parser.sending_content = 1;
+                gg->from_parser.sending_content = true;
                 istream_init(&gg->output, &istream_google_html, gg->pool);
 
                 istream = istream_struct_cast(&gg->output);
@@ -303,15 +303,15 @@ google_parser_tag_start(const struct parser_tag *tag, void *ctx)
     struct google_gadget *gg = ctx;
 
     if (gg->from_parser.sending_content) {
-        gg->from_parser.sending_content = 0;
+        gg->from_parser.sending_content = false;
         istream_deinit_eof(&gg->output);
     }
 
     if (!gg->has_locale && tag->type != TAG_CLOSE &&
         strref_cmp_literal(&tag->name, "locale") == 0) {
         gg->from_parser.tag = TAG_LOCALE;
-        gg->has_locale = 1;
-        gg->waiting_for_locale = 0;
+        gg->has_locale = true;
+        gg->waiting_for_locale = false;
     } else if (strref_cmp_literal(&tag->name, "content") == 0) {
         gg->from_parser.tag = TAG_CONTENT;
     } else {
@@ -324,7 +324,7 @@ google_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
     struct google_gadget *gg = ctx;
 
-    gg->from_parser.in_parser = 1;
+    gg->from_parser.in_parser = true;
 
     if (tag->type != TAG_CLOSE &&
         gg->from_parser.tag == TAG_CONTENT &&
@@ -335,7 +335,7 @@ google_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         gg->from_parser.tag = TAG_NONE;
     }
 
-    gg->from_parser.in_parser = 0;
+    gg->from_parser.in_parser = false;
 }
 
 static void
@@ -343,7 +343,7 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
     struct google_gadget *gg = ctx;
 
-    gg->from_parser.in_parser = 1;
+    gg->from_parser.in_parser = true;
 
     switch (gg->from_parser.tag) {
     case TAG_NONE:
@@ -355,7 +355,7 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             gg->delayed != NULL) {
             const char *url;
 
-            gg->waiting_for_locale = 1;
+            gg->waiting_for_locale = true;
 
             url = widget_absolute_uri(gg->pool, gg->widget,
                                       attr->value.data, attr->value.length);
@@ -376,7 +376,7 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
                 gg->from_parser.type = TYPE_HTML_INLINE;
             else {
                 google_send_error(gg, "unknown type attribute");
-                gg->from_parser.in_parser = 0;
+                gg->from_parser.in_parser = false;
                 return;
             }
         } else if (gg->from_parser.type == TYPE_URL &&
@@ -387,7 +387,7 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
     }
 
-    gg->from_parser.in_parser = 0;
+    gg->from_parser.in_parser = false;
 }
 
 static size_t
@@ -414,7 +414,7 @@ google_parser_eof(void *ctx, off_t __attr_unused length)
         google_gadget_msg_close(gg);
 
     if (gg->from_parser.sending_content) {
-        gg->from_parser.sending_content = 0;
+        gg->from_parser.sending_content = false;
         istream_deinit_eof(&gg->output);
     } else if (gg->delayed != NULL && !async_ref_defined(&gg->async))
         google_send_error(gg, "google gadget did not contain a valid Content element");
@@ -433,7 +433,7 @@ google_parser_abort(void *ctx)
         google_gadget_msg_close(gg);
 
     if (gg->from_parser.sending_content) {
-        gg->from_parser.sending_content = 0;
+        gg->from_parser.sending_content = false;
         istream_deinit_abort(&gg->output);
     } else if (gg->delayed != NULL)
         google_send_error(gg, "google gadget retrieval aborted");
@@ -488,8 +488,8 @@ google_gadget_http_response(http_status_t status, strmap_t headers,
 
     gg->from_parser.tag = TAG_NONE;
     gg->from_parser.type = TYPE_NONE;
-    gg->from_parser.sending_content = 0;
-    gg->from_parser.in_parser = 0;
+    gg->from_parser.sending_content = false;
+    gg->from_parser.in_parser = false;
     gg->parser = parser_new(gg->pool, body,
                             &google_parser_handler, gg);
     istream_read(body);
@@ -591,7 +591,7 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
 
     gg->subst = istream_subst_new(pool, gg->delayed);
     gg->parser = NULL;
-    gg->has_locale = 0;
+    gg->has_locale = false;
 
     http_response_handler_set(&gg->response_handler, handler, handler_ctx);
 
