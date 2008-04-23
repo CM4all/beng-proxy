@@ -189,7 +189,7 @@ response_dispatch(struct request *request2,
                                   "beng_proxy_session=", session_id,
                                   "; Path=/", NULL));
 
-            request2->session->cookie_sent = 1;
+            request2->session->cookie_sent = true;
         }
 
         header_write(headers, "server", "beng-proxy v" VERSION);

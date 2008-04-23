@@ -186,7 +186,7 @@ session_remove(session_t session)
     if (session_manager.num_sessions == 0)
         evtimer_del(&session_manager.cleanup_event);
 
-    session->removed = 1;
+    session->removed = true;
     pool_unref(pool);
 }
 
