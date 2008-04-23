@@ -49,7 +49,6 @@ lookup_callback(const struct translate_response *response, void *ctx)
 
     if (response->status != 0) {
         lookup->callback(NULL, lookup->callback_ctx);
-        pool_unref(lookup->pool);
         return;
     }
 
@@ -72,7 +71,6 @@ lookup_callback(const struct translate_response *response, void *ctx)
     }
 
     lookup->callback(class, lookup->callback_ctx);
-    pool_unref(lookup->pool);
 }
 
 
@@ -87,8 +85,6 @@ widget_class_lookup(pool_t pool,
     struct widget_class_lookup *lookup = p_malloc(pool, sizeof(*lookup));
 
     assert(widget_type != NULL);
-
-    pool_ref(pool);
 
     lookup->pool = pool;
     lookup->callback = callback;
