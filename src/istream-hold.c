@@ -111,6 +111,11 @@ istream_hold_available(istream_t istream, int partial)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 
+    if (unlikely(hold->input_eof))
+        return 0;
+    else if (unlikely(hold->input_aborted))
+        return (off_t)-1;
+
     return istream_available(hold->input, partial);
 }
 
