@@ -18,7 +18,7 @@
 struct istream_hold {
     struct istream output;
     istream_t input;
-    unsigned input_eof:1, input_aborted:1;
+    bool input_eof:1, input_aborted:1;
 };
 
 
@@ -61,7 +61,7 @@ hold_input_eof(void *ctx)
 
     if (hold->output.handler == NULL) {
         /* queue the eof() call */
-        hold->input_eof = 1;
+        hold->input_eof = true;
         return;
     }
 
@@ -80,7 +80,7 @@ hold_input_abort(void *ctx)
 
     if (hold->output.handler == NULL) {
         /* queue the abort() call */
-        hold->input_aborted = 1;
+        hold->input_aborted = true;
         return;
     }
 
@@ -174,8 +174,8 @@ istream_hold_new(pool_t pool, istream_t input)
 {
     struct istream_hold *hold = istream_new_macro(pool, hold);
 
-    hold->input_eof = 0;
-    hold->input_aborted = 0;
+    hold->input_eof = false;
+    hold->input_aborted = false;
 
     istream_assign_handler(&hold->input, input,
                            &hold_input_handler, hold,
