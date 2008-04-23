@@ -5,6 +5,7 @@
  */
 
 #include "socket-util.h"
+#include "fd-util.h"
 
 #include <assert.h>
 #include <sys/socket.h>
@@ -21,20 +22,7 @@
 int
 socket_set_nonblock(int fd, int value)
 {
-    int ret;
-
-    assert(fd >= 0);
-
-    ret = fcntl(fd, F_GETFL, 0);
-    if (ret < 0)
-        return ret;
-
-    if (value)
-        ret |= O_NONBLOCK;
-    else
-        ret &= ~O_NONBLOCK;
-
-    return fcntl(fd, F_SETFL, ret);
+    return fd_mask_flags(fd, ~O_NONBLOCK, value ? O_NONBLOCK : 0);
 }
 
 #ifdef __linux
