@@ -6,6 +6,7 @@
 
 #include "listener.h"
 #include "socket-util.h"
+#include "fd-util.h"
 
 #include <daemon/log.h>
 
@@ -17,6 +18,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include <event.h>
 
@@ -152,6 +154,14 @@ listener_tcp_port_new(pool_t pool, int port,
         return -1;
     }
 
+    ret = fd_mask_descriptor_flags(listener->fd, ~FD_CLOEXEC, FD_CLOEXEC);
+    if (ret < 0) {
+        int save_errno = errno;
+        close(listener->fd);
+        errno = save_errno;
+        return -1;
+    }
+
     listener->callback = callback;
     listener->callback_ctx = ctx;
 
@@ -187,4 +197,11 @@ void
 listener_event_del(listener_t listener)
 {
     event_del(&listener->event);
+}
+
+void
+listener_set_cloexec(listener_t listener, bool enable)
+{
+    fd_mask_descriptor_flags(listener->fd, ~FD_CLOEXEC,
+                             enable ? FD_CLOEXEC : 0);
 }
