@@ -12,6 +12,8 @@ struct data {
     const struct widget_class *class;
 };
 
+static bool aborted;
+
 static void
 widget_class_callback(const struct widget_class *class, void *ctx)
 {
@@ -20,6 +22,22 @@ widget_class_callback(const struct widget_class *class, void *ctx)
     data->got_class = true;
     data->class = class;
 }
+
+
+/*
+ * async operation
+ *
+ */
+
+static void
+my_abort(struct async_operation *ao __attr_unused)
+{
+    aborted = true;
+}
+
+static struct async_operation_class my_operation = {
+    .abort = my_abort,
+};
 
 
 /*
@@ -67,8 +85,6 @@ translate(pool_t pool,
           void *ctx,
           struct async_operation_ref *async_ref __attr_unused)
 {
-    struct translate_response *response;
-
     assert(request->remote_host == NULL);
     assert(request->host == NULL);
     assert(request->uri == NULL);
@@ -76,10 +92,18 @@ translate(pool_t pool,
     assert(request->session == NULL);
     assert(request->param == NULL);
 
-    response = p_calloc(pool, sizeof(*response));
-    response->proxy = uri_address_new(pool, "http://foo/");
+    if (strcmp(request->widget_type, "sync") == 0) {
+        struct translate_response *response =
+            p_calloc(pool, sizeof(*response));
+        response->proxy = uri_address_new(pool, "http://foo/");
+        callback(response, ctx);
+    } else if (strcmp(request->widget_type, "block") == 0) {
+        struct async_operation *ao = p_malloc(pool, sizeof(*ao));
 
-    callback(response, ctx);
+        async_init(ao, &my_operation);
+        async_ref_set(async_ref, ao);
+    } else
+        assert(0);
 }
 
 
@@ -102,8 +126,10 @@ test_normal(pool_t pool)
 
     tcache = translate_cache_new(pool, translate_stock_new(pool, "/dev/null"));
 
-    widget_class_lookup(pool, tcache,  "foo",
+    aborted = false;
+    widget_class_lookup(pool, tcache, "sync",
                         widget_class_callback, &data, &async_ref);
+    assert(!aborted);
     assert(data.got_class);
     assert(data.class != NULL);
     assert(strcmp(data.class->address->uri, "http://foo/") == 0);
@@ -112,6 +138,37 @@ test_normal(pool_t pool)
     assert(!data.class->old_style);
 
     pool_unref(pool);
+
+    translate_cache_close(tcache);
+
+    pool_commit();
+}
+
+/** caller aborts */
+static void
+test_abort(pool_t pool)
+{
+    struct data data = {
+        .got_class = false,
+    };
+    struct tcache *tcache;
+    struct async_operation_ref async_ref;
+
+    pool = pool_new_linear(pool, "test", 8192);
+
+    tcache = translate_cache_new(pool, translate_stock_new(pool, "/dev/null"));
+
+    aborted = false;
+    widget_class_lookup(pool, tcache,  "block",
+                        widget_class_callback, &data, &async_ref);
+    assert(!data.got_class);
+    assert(!aborted);
+
+    pool_unref(pool);
+
+    async_abort(&async_ref);
+    assert(aborted);
+    assert(!data.got_class);
 
     translate_cache_close(tcache);
 
@@ -132,6 +189,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     /* run test suite */
 
     test_normal(root_pool);
+    test_abort(root_pool);
 
     /* cleanup */
 
