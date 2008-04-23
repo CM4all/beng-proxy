@@ -180,7 +180,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-istream-replace test/t-parser-cdata test/t-shm test/t-dpool
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-istream-replace test/t-parser-cdata test/t-shm test/t-dpool test/t-widget-registry
 
 src/libcm4all-istream.a: $(ISTREAM_OBJECTS)
 	ar cr $@ $^
@@ -276,7 +276,13 @@ test/t-dpool: test/t-dpool.o src/shm.o src/dpool.o
 check-dpool: test/t-dpool
 	./test/t-dpool
 
-check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client check-cookie-client check-shm check-dpool
+test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock.o src/pool.o src/pstring.o src/uri-address.o src/tcache.o src/cache.o src/hashmap.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
+check-widget-registry: test/t-widget-registry
+	./test/t-widget-registry
+
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client check-cookie-client check-shm check-dpool check-widget-registry
 
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb
