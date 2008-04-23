@@ -10,7 +10,7 @@ cleanup(void)
 #endif
 
 struct ctx {
-    int got_data, eof;
+    bool got_data, eof;
     istream_t abort_istream;
 };
 
@@ -27,7 +27,7 @@ my_istream_data(const void *data, size_t length, void *_ctx)
     (void)data;
 
     printf("data(%zu)\n", length);
-    ctx->got_data = 1;
+    ctx->got_data = true;
 
     if (ctx->abort_istream != NULL) {
         istream_free(&ctx->abort_istream);
@@ -45,7 +45,7 @@ my_istream_direct(istream_direct_t type, int fd, size_t max_length, void *_ctx)
     (void)fd;
 
     printf("direct(%u, %zu)\n", type, max_length);
-    ctx->got_data = 1;
+    ctx->got_data = true;
 
     if (ctx->abort_istream != NULL) {
         istream_free(&ctx->abort_istream);
@@ -61,7 +61,7 @@ my_istream_eof(void *_ctx)
     struct ctx *ctx = _ctx;
 
     printf("eof\n");
-    ctx->eof = 1;
+    ctx->eof = true;
 }
 
 static void
@@ -70,7 +70,7 @@ my_istream_abort(void *_ctx)
     struct ctx *ctx = _ctx;
 
     printf("abort\n");
-    ctx->eof = 1;
+    ctx->eof = true;
 }
 
 static const struct istream_handler my_istream_handler = {
@@ -93,7 +93,7 @@ istream_read_expect(struct ctx *ctx, istream_t istream)
 
     assert(!ctx->eof);
 
-    ctx->got_data = 0;
+    ctx->got_data = false;
     istream_read(istream);
 
     ret = event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
@@ -103,7 +103,7 @@ istream_read_expect(struct ctx *ctx, istream_t istream)
 static void
 run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 {
-    ctx->eof = 0;
+    ctx->eof = false;
 
     istream_handler_set(istream, &my_istream_handler, ctx, 0);
 
@@ -210,7 +210,7 @@ test_abort_with_handler(pool_t pool)
 {
     struct ctx ctx = {
         .abort_istream = NULL,
-        .eof = 0,
+        .eof = false,
     };
     istream_t istream;
 
@@ -234,7 +234,7 @@ static void
 test_abort_in_handler(pool_t pool)
 {
     struct ctx ctx = {
-        .eof = 0,
+        .eof = false,
     };
 
     pool = pool_new_linear(pool, "test", 8192);
