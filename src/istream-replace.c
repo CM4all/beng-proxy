@@ -202,6 +202,8 @@ replace_destroy(struct istream_replace *replace)
     /* source_length -1 is the "destroyed" marker */
     replace->source_length = (off_t)-1;
 
+    pool_ref(replace->output.pool);
+
     while (replace->first_substitution != NULL) {
         struct substitution *s = replace->first_substitution;
         replace->first_substitution = s->next;
@@ -209,6 +211,8 @@ replace_destroy(struct istream_replace *replace)
         if (s->istream != NULL)
             istream_free_handler(&s->istream);
     }
+
+    pool_unref(replace->output.pool);
 }
 
 
