@@ -57,8 +57,6 @@ hold_input_eof(void *ctx)
     assert(!hold->input_eof);
     assert(!hold->input_aborted);
 
-    hold->input = NULL;
-
     if (hold->output.handler == NULL) {
         /* queue the eof() call */
         hold->input_eof = true;
@@ -75,8 +73,6 @@ hold_input_abort(void *ctx)
 
     assert(!hold->input_eof);
     assert(!hold->input_aborted);
-
-    hold->input = NULL;
 
     if (hold->output.handler == NULL) {
         /* queue the abort() call */
@@ -141,20 +137,19 @@ istream_hold_close(istream_t istream)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 
-    if (hold->input == NULL) {
+    if (hold->input_eof || hold->input_aborted)
         istream_deinit_abort(&hold->output);
-    } else if (hold->output.handler == NULL) {
+    else if (hold->output.handler == NULL) {
         /* there is no handler yet - immediately deinitialize this
            istream */
-        istream_free_handler(&hold->input);
+        istream_handler_clear(hold->input);
+        istream_close(hold->input);
         istream_deinit(&hold->output);
-    } else {
+    } else
         /* the input object is still there; istream_close(hold->input)
            will implicitly call istream_invoke_free(&hold->output)
            through hold_input_free() */
         istream_close(hold->input);
-        assert(hold->input == NULL);
-    }
 }
 
 static const struct istream istream_hold = {
