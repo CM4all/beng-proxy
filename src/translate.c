@@ -645,6 +645,8 @@ translate_connection_abort(struct async_operation *ao)
 
     assert(connection->fd >= 0);
 
+    pool_unref(connection->pool);
+
     stock_put(&connection->stock_item, true);
 }
 
@@ -712,7 +714,6 @@ translate(pool_t pool,
     }
 
     pool_ref(pool);
-    async_ref = async_unref_on_abort(pool, async_ref);
 
     request2 = p_malloc(pool, sizeof(*request2));
     request2->pool = pool;
@@ -721,6 +722,6 @@ translate(pool_t pool,
     request2->callback_ctx = ctx;
     request2->async_ref = async_ref;
 
-    stock_get(stock, NULL, translate_stock_callback, request2, async_ref);
-
+    stock_get(stock, NULL, translate_stock_callback, request2,
+              async_unref_on_abort(pool, async_ref));
 }
