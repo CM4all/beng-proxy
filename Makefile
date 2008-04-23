@@ -166,6 +166,7 @@ SOURCES = src/main.c \
 	src/http-cache.c \
 	src/stock.c \
 	src/hstock.c \
+	src/abort-unref.o \
 	src/tpool.c
 
 HEADERS = $(wildcard src/*.h) $(wildcard include/beng-proxy/*.h)
@@ -276,7 +277,7 @@ test/t-dpool: test/t-dpool.o src/shm.o src/dpool.o
 check-dpool: test/t-dpool
 	./test/t-dpool
 
-test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock.o src/pool.o src/pstring.o src/uri-address.o src/tcache.o src/cache.o src/hashmap.o
+test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock.o src/pool.o src/pstring.o src/uri-address.o src/tcache.o src/cache.o src/hashmap.o src/abort-unref.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
 check-widget-registry: test/t-widget-registry
