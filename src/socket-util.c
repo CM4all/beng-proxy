@@ -22,7 +22,7 @@
 int
 socket_set_nonblock(int fd, int value)
 {
-    return fd_mask_flags(fd, ~O_NONBLOCK, value ? O_NONBLOCK : 0);
+    return fd_mask_status_flags(fd, ~O_NONBLOCK, value ? O_NONBLOCK : 0);
 }
 
 #ifdef __linux

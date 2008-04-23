@@ -10,7 +10,7 @@
 #include <fcntl.h>
 
 int
-fd_mask_flags(int fd, int and_mask, int xor_mask)
+fd_mask_status_flags(int fd, int and_mask, int xor_mask)
 {
     int ret;
 
