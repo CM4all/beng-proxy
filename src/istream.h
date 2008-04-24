@@ -100,7 +100,7 @@ struct istream {
      * @return the number of bytes available or -1 if the object does
      * not know
      */
-    off_t (*available)(istream_t istream, int partial);
+    off_t (*available)(istream_t istream, bool partial);
 
     /**
      * Try to read from the stream.  If the stream can read data
@@ -142,7 +142,7 @@ istream_struct_cast(struct istream *istream)
 }
 
 static inline off_t
-istream_available(istream_t _istream, int partial)
+istream_available(istream_t _istream, bool partial)
 {
     struct istream *istream = _istream_opaque_cast(_istream);
     off_t available;

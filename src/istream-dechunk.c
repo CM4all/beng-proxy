@@ -243,7 +243,7 @@ istream_to_dechunk(istream_t istream)
 }
 
 static off_t 
-istream_dechunk_available(istream_t istream, int partial)
+istream_dechunk_available(istream_t istream, bool partial)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 

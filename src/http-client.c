@@ -97,7 +97,7 @@ response_stream_to_connection(istream_t istream)
 
 static off_t
 http_client_response_stream_available(istream_t istream,
-                                      int partial __attr_unused)
+                                      bool partial __attr_unused)
 {
     http_client_connection_t connection = response_stream_to_connection(istream);
 
@@ -833,7 +833,7 @@ http_client_request(http_client_connection_t connection,
         headers = growing_buffer_new(connection->request.pool, 256);
 
     if (body != NULL) {
-        off_t content_length = istream_available(body, 0);
+        off_t content_length = istream_available(body, false);
         if (content_length == (off_t)-1) {
             header_write(headers, "transfer-encoding", "chunked");
             body = istream_chunked_new(connection->request.pool, body);

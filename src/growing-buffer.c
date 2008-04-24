@@ -138,7 +138,7 @@ istream_to_gb(istream_t istream)
 }
 
 static off_t
-istream_gb_available(istream_t istream, int partial __attr_unused)
+istream_gb_available(istream_t istream, bool partial __attr_unused)
 {
     growing_buffer_t gb = istream_to_gb(istream);
     struct buffer *buffer;

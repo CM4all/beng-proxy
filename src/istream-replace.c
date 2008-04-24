@@ -477,7 +477,7 @@ istream_to_replace(istream_t istream)
 }
 
 static off_t
-istream_replace_available(istream_t istream, int partial)
+istream_replace_available(istream_t istream, bool partial)
 {
     struct istream_replace *replace = istream_to_replace(istream);
     const struct substitution *subst;

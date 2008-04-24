@@ -44,7 +44,7 @@ widget_proxy_response(http_status_t status, strmap_t headers, istream_t body,
         headers_copy(headers, headers2, copy_headers);
 
 #ifndef NO_DEFLATE
-    if (body != NULL && istream_available(body, 0) == (off_t)-1 &&
+    if (body != NULL && istream_available(body, false) == (off_t)-1 &&
         (headers == NULL || strmap_get(headers, "content-encoding") == NULL) &&
         http_client_accepts_encoding(request->headers, "deflate")) {
         header_write(headers2, "content-encoding", "deflate");

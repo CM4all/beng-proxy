@@ -330,7 +330,7 @@ http_cache_response_response(http_status_t status, strmap_t headers,
         cache_remove_item(request->cache->cache, request->url,
                           &request->item->item);
 
-    available = body == NULL ? 0 : istream_available(body, 1);
+    available = body == NULL ? 0 : istream_available(body, true);
 
     if (!http_cache_response_evaluate(request->info,
                                       status, headers, available)) {

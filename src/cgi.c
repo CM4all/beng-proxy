@@ -204,7 +204,7 @@ istream_to_cgi(istream_t istream)
 }
 
 static off_t
-istream_cgi_available(istream_t istream, int partial)
+istream_cgi_available(istream_t istream, bool partial)
 {
     struct cgi *cgi = istream_to_cgi(istream);
     const void *data;

@@ -121,7 +121,7 @@ istream_to_tee1(istream_t istream)
 }
 
 static off_t
-istream_tee_available1(istream_t istream, int partial)
+istream_tee_available1(istream_t istream, bool partial)
 {
     struct istream_tee *tee = istream_to_tee1(istream);
 
@@ -178,7 +178,7 @@ istream_to_tee2(istream_t istream)
 }
 
 static off_t
-istream_tee_available2(istream_t istream, int partial)
+istream_tee_available2(istream_t istream, bool partial)
 {
     struct istream_tee *tee = istream_to_tee2(istream);
 

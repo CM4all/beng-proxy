@@ -103,7 +103,7 @@ istream_to_hold(istream_t istream)
 }
 
 static off_t
-istream_hold_available(istream_t istream, int partial)
+istream_hold_available(istream_t istream, bool partial)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 

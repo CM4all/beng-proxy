@@ -302,7 +302,7 @@ http_server_response(struct http_server_request *request,
 #endif
 
     content_length = body == NULL
-        ? 0 : istream_available(body, 0);
+        ? 0 : istream_available(body, false);
     if (content_length == (off_t)-1) {
         assert(!http_status_is_empty(status));
 

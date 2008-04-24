@@ -25,7 +25,7 @@
 #include <event.h>
 
 #ifndef NDEBUG
-int debug_mode = 0;
+bool debug_mode = false;
 #endif
 
 static void
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 
 #ifndef NDEBUG
     if (geteuid() != 0)
-        debug_mode = 1;
+        debug_mode = true;
 #endif
 
     /* configuration */

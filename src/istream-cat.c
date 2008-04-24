@@ -150,7 +150,7 @@ istream_to_cat(istream_t istream)
 }
 
 static off_t
-istream_cat_available(istream_t istream, int partial)
+istream_cat_available(istream_t istream, bool partial)
 {
     struct istream_cat *cat = istream_to_cat(istream);
     struct input *input, *end;

@@ -58,7 +58,7 @@ istream_to_delayed(istream_t istream)
 }
 
 static off_t
-istream_delayed_available(istream_t istream, int partial)
+istream_delayed_available(istream_t istream, bool partial)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 

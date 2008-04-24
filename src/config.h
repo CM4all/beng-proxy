@@ -8,11 +8,12 @@
 #define __BENG_CONFIG_H
 
 #include <sys/types.h>
+#include <stdbool.h>
 
 #ifdef NDEBUG
-static const int debug_mode = 0;
+static const bool debug_mode = false;
 #else
-extern int debug_mode;
+extern bool debug_mode;
 #endif
 
 struct config {

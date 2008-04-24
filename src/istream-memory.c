@@ -22,7 +22,7 @@ istream_to_memory(istream_t istream)
 }
 
 static off_t
-istream_memory_available(istream_t istream, int partial __attr_unused)
+istream_memory_available(istream_t istream, bool partial __attr_unused)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 

@@ -113,7 +113,7 @@ istream_to_trace(istream_t istream)
 }
 
 static off_t 
-istream_trace_available(istream_t istream, int partial)
+istream_trace_available(istream_t istream, bool partial)
 {
     struct istream_trace *trace = istream_to_trace(istream);
     off_t available;

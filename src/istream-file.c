@@ -49,7 +49,7 @@ istream_to_file(istream_t istream)
 }
 
 static off_t
-istream_file_available(istream_t istream, int partial)
+istream_file_available(istream_t istream, bool partial)
 {
     struct file *file = istream_to_file(istream);
     off_t available = 0;

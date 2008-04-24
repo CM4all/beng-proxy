@@ -124,7 +124,7 @@ istream_to_catch(istream_t istream)
 }
 
 static off_t 
-istream_catch_available(istream_t istream, int partial)
+istream_catch_available(istream_t istream, bool partial)
 {
     struct istream_catch *catch = istream_to_catch(istream);
 
