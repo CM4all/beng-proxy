@@ -56,7 +56,7 @@ session_redirect(struct request *request)
 
     http_server_response(request->request,
                          request->request->method == HTTP_METHOD_GET
-                         ? HTTP_STATUS_TEMPORARY_FOUND
+                         ? HTTP_STATUS_FOUND
                          : HTTP_STATUS_TEMPORARY_REDIRECT,
                          headers, NULL);
 }
