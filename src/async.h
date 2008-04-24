@@ -3,9 +3,7 @@
  *
  * The idea behind it is that functions starting an asynchronous
  * operation return a pointer to a struct async_operation, which can
- * be used to call async_abort().  If the operation happened to be
- * completed before the asynchronous function returns, it will return
- * NULL.
+ * be used to call async_abort().
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
