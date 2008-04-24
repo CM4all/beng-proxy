@@ -297,7 +297,7 @@ handle_http_request(struct client_connection *connection,
         if (id == request2->session->cookie_id)
             request2->session->cookie_received = true;
         else if (request2->session->cookie_received)
-            /* someone has stole our URI including the session id;
+            /* someone has stolen our URI including the session id;
                refuse to continue with this session */
             request2->session = NULL;
     }
