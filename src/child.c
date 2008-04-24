@@ -123,9 +123,6 @@ create_child(struct instance *instance)
 
     assert(instance->respawn_event.ev_events == 0);
 
-    if (instance->listener != NULL)
-        listener_set_cloexec(instance->listener, false);
-
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
@@ -144,10 +141,8 @@ create_child(struct instance *instance)
             instance->num_children = 0;
         }
 
-        if (instance->listener != NULL) {
-            listener_set_cloexec(instance->listener, true);
+        if (instance->listener != NULL)
             listener_event_del(instance->listener);
-        }
 
         while (!list_empty(&instance->connections))
             close_connection((struct client_connection*)instance->connections.next);
@@ -165,9 +160,6 @@ create_child(struct instance *instance)
             listener_event_add(instance->listener);
     } else {
         struct child *child;
-
-        if (instance->listener != NULL)
-            listener_set_cloexec(instance->listener, true);
 
         if (list_empty(&instance->children)) {
             event_set(&instance->child_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,

@@ -31,7 +31,4 @@ listener_event_add(listener_t listener);
 void
 listener_event_del(listener_t listener);
 
-void
-listener_set_cloexec(listener_t listener, bool enable);
-
 #endif

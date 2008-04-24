@@ -198,10 +198,3 @@ listener_event_del(listener_t listener)
 {
     event_del(&listener->event);
 }
-
-void
-listener_set_cloexec(listener_t listener, bool enable)
-{
-    fd_mask_descriptor_flags(listener->fd, ~FD_CLOEXEC,
-                             enable ? FD_CLOEXEC : 0);
-}
