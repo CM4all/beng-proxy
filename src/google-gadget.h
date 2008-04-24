@@ -7,7 +7,7 @@
 #ifndef __BENG_GOOGLE_GADGET_H
 #define __BENG_GOOGLE_GADGET_H
 
-#include "istream.h"
+#include "pool.h"
 
 struct processor_env;
 struct widget;
