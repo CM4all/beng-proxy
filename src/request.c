@@ -87,6 +87,8 @@ request_get_cookie_session(struct request *request)
         return;
 
     request_get_session(request, session_id);
+    if (request->session != NULL)
+        request->session->cookie_received = true;
 }
 
 struct session *
