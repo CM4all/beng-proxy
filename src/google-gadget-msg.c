@@ -227,6 +227,4 @@ google_gadget_msg_close(struct google_gadget *gg)
         parser_close(gg->msg.parser);
     else if (async_ref_defined(&gg->async))
         async_abort(&gg->async);
-
-    assert(gg->msg.parser == NULL);
 }
