@@ -12,7 +12,7 @@
 #include <assert.h>
 
 struct widget_session *
-widget_get_session(struct widget *widget, int create)
+widget_get_session(struct widget *widget, bool create)
 {
     struct widget_session *parent;
     struct session *session;
@@ -62,6 +62,6 @@ widget_get_session(struct widget *widget, int create)
 struct session *
 widget_get_session2(struct widget *widget)
 {
-    struct widget_session *ws = widget_get_session(widget_root(widget), 0);
+    struct widget_session *ws = widget_get_session(widget_root(widget), false);
     return ws == NULL ? NULL : ws->session;
 }

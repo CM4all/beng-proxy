@@ -106,10 +106,10 @@ void
 session_remove(session_t session);
 
 struct widget_session *
-session_get_widget(session_t session, const char *id, int create);
+session_get_widget(session_t session, const char *id, bool create);
 
 struct widget_session *
 widget_session_get_child(struct widget_session *parent, const char *id,
-                         int create);
+                         bool create);
 
 #endif

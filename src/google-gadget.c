@@ -198,7 +198,7 @@ generate_jscript(pool_t pool, struct widget *widget)
     growing_buffer_write_string(gb, ";\n"
                                 "var _beng_proxy_widget_prefs = ");
 
-    session = widget_get_session(widget, 0);
+    session = widget_get_session(widget, false);
     growing_buffer_write_jscript_string(gb, session == NULL ? NULL : session->query_string);
     growing_buffer_write_string(gb, ";\n");
 

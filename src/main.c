@@ -39,7 +39,7 @@ exit_event_callback(int fd, short event, void *ctx)
     if (instance->should_exit)
         return;
 
-    instance->should_exit = 1;
+    instance->should_exit = true;
     deinit_signals(instance);
 
     if (instance->listener != NULL)

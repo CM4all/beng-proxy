@@ -208,7 +208,7 @@ struct widget_server_session *
 widget_get_server_session(struct widget *widget, int create);
 
 struct widget_session *
-widget_get_session(struct widget *widget, int create);
+widget_get_session(struct widget *widget, bool create);
 
 struct session *
 widget_get_session2(struct widget *widget);

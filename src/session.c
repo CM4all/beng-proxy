@@ -195,7 +195,7 @@ session_remove(session_t session)
 
 static struct widget_session *
 hashmap_r_get_widget_session(session_t session, struct hashmap **map_r,
-                             const char *id, int create)
+                             const char *id, bool create)
 {
     struct hashmap *map;
     struct widget_session *ws;
@@ -236,7 +236,7 @@ hashmap_r_get_widget_session(session_t session, struct hashmap **map_r,
 }
 
 struct widget_session *
-session_get_widget(session_t session, const char *id, int create)
+session_get_widget(session_t session, const char *id, bool create)
 {
     assert(session != NULL);
     assert(id != NULL);
@@ -248,7 +248,7 @@ session_get_widget(session_t session, const char *id, int create)
 struct widget_session *
 widget_session_get_child(struct widget_session *parent,
                          const char *id,
-                         int create)
+                         bool create)
 {
     assert(parent != NULL);
     assert(parent->session != NULL);
