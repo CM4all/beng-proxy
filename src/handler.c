@@ -42,7 +42,8 @@ session_redirect(struct request *request)
                            request->uri.base.data, request->uri.base.length,
                            ";", (size_t)1,
                            args, strlen(args),
-                           "?", (size_t)1,
+                           request->uri.query.length == 0 ? NULL : "?",
+                           (size_t)1,
                            request->uri.query.data, request->uri.query.length,
                            NULL));
 
