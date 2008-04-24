@@ -58,12 +58,6 @@ translate_callback(const struct translate_response *response,
 {
     struct request *request = ctx;
 
-    if (response->transformation != NULL &&
-        (request->session == NULL || !request->session->cookie_sent)) {
-        session_redirect(request);
-        return;
-    }
-
     request->translate.response = response;
     request->translate.transformation = response->transformation;
 
@@ -128,6 +122,12 @@ translate_callback(const struct translate_response *response,
                 request->session->language = p_strdup(request->session->pool,
                                                       response->language);
         }
+    }
+
+    if ((response->transformation != NULL && request->session == NULL) ||
+        (request->session != NULL && !request->session->cookie_sent)) {
+        session_redirect(request);
+        return;
     }
 
     if (response->path != NULL) {
