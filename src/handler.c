@@ -49,7 +49,11 @@ session_redirect(struct request *request)
 
     request->session->cookie_sent = true;
 
-    http_server_response(request->request, HTTP_STATUS_FOUND, headers, NULL);
+    http_server_response(request->request,
+                         request->request->method == HTTP_METHOD_GET
+                         ? HTTP_STATUS_TEMPORARY_FOUND
+                         : HTTP_STATUS_TEMPORARY_REDIRECT,
+                         headers, NULL);
 }
 
 static void
