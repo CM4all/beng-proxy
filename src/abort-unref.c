@@ -30,7 +30,7 @@ async_to_uoa(struct async_operation *ao)
 }
 
 static void
-uoa_delayed_abort(struct async_operation *ao)
+uoa_abort(struct async_operation *ao)
 {
     struct unref_on_abort *uoa = async_to_uoa(ao);
 
@@ -38,8 +38,8 @@ uoa_delayed_abort(struct async_operation *ao)
     pool_unref(uoa->pool);
 }
 
-static struct async_operation_class uoa_delayed_operation = {
-    .abort = uoa_delayed_abort,
+static struct async_operation_class uoa_operation = {
+    .abort = uoa_abort,
 };
 
 
@@ -54,7 +54,7 @@ async_unref_on_abort(pool_t pool, struct async_operation_ref *async_ref)
     struct unref_on_abort *uoa = p_malloc(pool, sizeof(*uoa));
 
     uoa->pool = pool;
-    async_init(&uoa->operation, &uoa_delayed_operation);
+    async_init(&uoa->operation, &uoa_operation);
     async_ref_set(async_ref, &uoa->operation);
 
     return &uoa->ref;
