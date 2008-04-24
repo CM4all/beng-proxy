@@ -93,7 +93,7 @@ http_server_request_stream_close(istream_t istream)
     if (connection->request.request != NULL)
         connection->request.request->body = NULL;
 
-    connection->keep_alive = 0;
+    connection->keep_alive = false;
 
     istream_deinit_abort(&connection->request.body_reader.output);
 }

@@ -260,7 +260,7 @@ widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
                     struct widget *widget,
-                    int focus,
+                    bool focus,
                     const char *relative_uri, size_t relative_uri_length,
                     const char *frame, bool raw);
 

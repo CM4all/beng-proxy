@@ -23,8 +23,8 @@ struct istream_replace {
     struct istream output;
     istream_t input;
 
-    unsigned finished:1, read_locked:1;
-    unsigned had_input:1, had_output:1;
+    bool finished:1, read_locked:1;
+    bool had_input:1, had_output:1;
 
     struct growing_buffer *buffer;
     off_t source_length, position;
@@ -148,7 +148,7 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
     struct istream_replace *replace = s->replace;
 
     if (substitution_is_active(s)) {
-        replace->had_output = 1;
+        replace->had_output = true;
         return istream_invoke_data(&replace->output, data, length);
     } else
         return 0;
@@ -224,29 +224,29 @@ replace_destroy(struct istream_replace *replace)
 /**
  * Read data from substitution objects.
  */
-static int
+static bool
 replace_read_substitution(struct istream_replace *replace)
 {
     while (replace->first_substitution != NULL &&
            substitution_is_active(replace->first_substitution)) {
         struct substitution *s = replace->first_substitution;
 
-        replace->read_locked = 1;
+        replace->read_locked = true;
 
         if (s->istream == NULL)
             replace_to_next_substitution(replace, s);
         else
             istream_read(s->istream);
 
-        replace->read_locked = 0;
+        replace->read_locked = false;
 
         /* we assume the substitution object is blocking if it hasn't
            reached EOF with this one call */
         if (s == replace->first_substitution)
-            return 1;
+            return true;
     }
 
-    return 0;
+    return false;
 }
 
 /**
@@ -272,7 +272,7 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
     if (length > max_length)
         length = max_length;
 
-    replace->had_output = 1;
+    replace->had_output = true;
     nbytes = istream_invoke_data(&replace->output, data, length);
     assert(nbytes <= length);
 
@@ -367,7 +367,7 @@ replace_try_read_from_buffer(struct istream_replace *replace)
 static void
 replace_read(struct istream_replace *replace)
 {
-    int blocking;
+    bool blocking;
     size_t rest;
 
     assert(replace != NULL);
@@ -411,7 +411,7 @@ replace_input_data(const void *data, size_t length, void *ctx)
 {
     struct istream_replace *replace = ctx;
 
-    replace->had_input = 1;
+    replace->had_input = true;
 
     if (replace->buffer != NULL) {
         if (replace->source_length >= 8 * 1024 * 1024) {
@@ -546,10 +546,10 @@ istream_replace_read(istream_t istream)
         return;
     }
 
-    replace->had_output = 0;
+    replace->had_output = false;
 
     do {
-        replace->had_input = 0;
+        replace->had_input = false;
         istream_read(replace->input);
     } while (replace->had_input && !replace->had_output &&
              replace->input != NULL);
@@ -583,7 +583,7 @@ static const struct istream istream_replace = {
  */
 
 istream_t
-istream_replace_new(pool_t pool, istream_t input, int quiet)
+istream_replace_new(pool_t pool, istream_t input, bool quiet)
 {
     struct istream_replace *replace = istream_new_macro(pool, replace);
 
@@ -594,8 +594,8 @@ istream_replace_new(pool_t pool, istream_t input, int quiet)
                            &replace_input_handler, replace,
                            0);
 
-    replace->finished = 0;
-    replace->read_locked = 0;
+    replace->finished = false;
+    replace->read_locked = false;
 
     if (quiet) {
         replace->buffer = NULL;
@@ -670,7 +670,7 @@ istream_replace_finish(istream_t istream)
 
     assert(!replace->finished);
 
-    replace->finished = 1;
+    replace->finished = true;
 
     if (replace->input == NULL)
         replace_read_check_empty(replace);

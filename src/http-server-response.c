@@ -86,7 +86,7 @@ http_server_response_stream_eof(void *ctx)
            anymore.  To discard it, we simply close the connection by
            disabling keepalive; this seems cheaper than redirecting
            the rest of the body to /dev/null */
-        connection->keep_alive = 0;
+        connection->keep_alive = false;
     }
 
     http_server_request_free(&connection->request.request);

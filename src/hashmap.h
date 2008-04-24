@@ -23,7 +23,7 @@ void
 hashmap_addn(hashmap_t map, const char *key, void *value);
 
 void *
-hashmap_put(hashmap_t map, const char *key, void *value, int overwrite);
+hashmap_put(hashmap_t map, const char *key, void *value, bool overwrite);
 
 void *
 hashmap_remove(hashmap_t map, const char *key);

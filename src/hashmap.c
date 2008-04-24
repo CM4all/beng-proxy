@@ -74,7 +74,7 @@ hashmap_addn(hashmap_t map, const char *key, void *value)
 
 static inline void *
 hashmap_maybe_overwrite(struct slot *slot, const char *key, void *value,
-                        int overwrite)
+                        bool overwrite)
 {
     void *old = slot->pair.value;
     assert(old != NULL);
@@ -87,7 +87,7 @@ hashmap_maybe_overwrite(struct slot *slot, const char *key, void *value,
 }
 
 void *
-hashmap_put(hashmap_t map, const char *key, void *value, int overwrite)
+hashmap_put(hashmap_t map, const char *key, void *value, bool overwrite)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;

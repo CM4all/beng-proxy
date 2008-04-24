@@ -7,8 +7,10 @@
 #ifndef __BENG_SOCKET_UTIL_H
 #define __BENG_SOCKET_UTIL_H
 
+#include <stdbool.h>
+
 int
-socket_set_nonblock(int fd, int value);
+socket_set_nonblock(int fd, bool value);
 
 #ifdef __linux
 

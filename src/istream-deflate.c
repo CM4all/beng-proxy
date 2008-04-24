@@ -16,9 +16,9 @@ struct istream_deflate {
     struct istream output;
     istream_t input;
     fifo_buffer_t buffer;
-    int z_initialized, z_stream_end;
+    bool z_initialized, z_stream_end;
     z_stream z;
-    unsigned had_input:1, had_output:1;
+    bool had_input:1, had_output:1;
 };
 
 
@@ -26,7 +26,7 @@ static void
 deflate_close(struct istream_deflate *defl)
 {
     if (defl->z_initialized) {
-        defl->z_initialized = 0;
+        defl->z_initialized = false;
         deflateEnd(&defl->z);
     }
 }
@@ -76,7 +76,7 @@ deflate_initialize_z(struct istream_deflate *defl)
         return err;
     }
 
-    defl->z_initialized = 1;
+    defl->z_initialized = true;
     return Z_OK;
 }
 
@@ -162,12 +162,12 @@ deflate_try_flush(struct istream_deflate *defl)
 static void
 istream_deflate_force_read(struct istream_deflate *defl)
 {
-    int had_input = 0;
+    bool had_input = false;
 
-    defl->had_output = 0;
+    defl->had_output = false;
 
     while (1) {
-        defl->had_input = 0;
+        defl->had_input = false;
         istream_read(defl->input);
         if (defl->input == NULL || defl->had_output)
             return;
@@ -175,7 +175,7 @@ istream_deflate_force_read(struct istream_deflate *defl)
         if (!defl->had_input)
             break;
 
-        had_input = 1;
+        had_input = true;
     }
 
     if (had_input)
@@ -203,7 +203,7 @@ deflate_try_finish(struct istream_deflate *defl)
 
     err = deflate(&defl->z, Z_FINISH);
     if (err == Z_STREAM_END)
-        defl->z_stream_end = 1;
+        defl->z_stream_end = true;
     else if (err != Z_OK) {
         daemon_log(2, "deflate(Z_FINISH) failed: %d\n", err);
         deflate_close(defl);
@@ -247,7 +247,7 @@ deflate_input_data(const void *data, size_t length, void *ctx)
     if (err != Z_OK)
         return 0;
 
-    defl->had_input = 1;
+    defl->had_input = true;
 
     defl->z.next_out = dest_buffer;
     defl->z.avail_out = (uInt)max_length;
@@ -266,7 +266,7 @@ deflate_input_data(const void *data, size_t length, void *ctx)
 
         nbytes = max_length - (size_t)defl->z.avail_out;
         if (nbytes > 0) {
-            defl->had_output = 1;
+            defl->had_output = true;
             fifo_buffer_append(defl->buffer, nbytes);
 
             pool_ref(defl->output.pool);
@@ -381,8 +381,8 @@ istream_deflate_new(pool_t pool, istream_t input)
     assert(!istream_has_handler(input));
 
     defl->buffer = fifo_buffer_new(pool, 4096);
-    defl->z_initialized = 0;
-    defl->z_stream_end = 0;
+    defl->z_initialized = false;
+    defl->z_stream_end = false;
 
     istream_assign_handler(&defl->input, input,
                            &deflate_input_handler, defl,

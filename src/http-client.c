@@ -65,9 +65,9 @@ struct http_client_connection {
     } response;
 
     /* connection settings */
-    int keep_alive;
+    bool keep_alive;
 #ifdef __linux
-    int cork;
+    bool cork;
 #endif
 };
 
@@ -144,7 +144,7 @@ http_client_response_stream_close(istream_t istream)
 
     event2_nand(&connection->event, EV_READ);
 
-    connection->keep_alive = 0;
+    connection->keep_alive = false;
     connection->response.read_state = READ_NONE;
 
     istream_deinit_abort(&connection->response.body_reader.output);
@@ -183,7 +183,7 @@ http_client_cork(http_client_connection_t connection)
 
 #ifdef __linux
     if (!connection->cork) {
-        connection->cork = 1;
+        connection->cork = true;
         socket_set_cork(connection->fd, connection->cork);
     }
 #else
@@ -199,7 +199,7 @@ http_client_uncork(http_client_connection_t connection)
 #ifdef __linux
     if (connection->cork) {
         assert(connection->fd >= 0);
-        connection->cork = 0;
+        connection->cork = false;
         socket_set_cork(connection->fd, connection->cork);
     }
 #else
@@ -374,7 +374,7 @@ http_client_parse_headers(http_client_connection_t connection)
 
     if (http_client_connection_valid(connection) &&
         connection->response.read_state != READ_HEADERS) {
-        int empty_response = connection->response.body == NULL;
+        bool empty_response = connection->response.body == NULL;
 
         assert(connection->response.read_state == READ_BODY);
 
@@ -419,7 +419,7 @@ http_client_response_finished(http_client_connection_t connection)
 
     if (!fifo_buffer_empty(connection->input)) {
         daemon_log(2, "excess data after HTTP response\n");
-        connection->keep_alive = 0;
+        connection->keep_alive = false;
     }
 
     if (!connection->keep_alive) {
@@ -685,7 +685,7 @@ http_client_connection_close(http_client_connection_t connection)
     }
 
 #ifdef __linux
-    connection->cork = 0;
+    connection->cork = false;
 #endif
 
     if (connection->request.pool != NULL)

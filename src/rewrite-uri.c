@@ -52,7 +52,7 @@ do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
 
     return widget_external_uri(pool, external_uri, args,
                                widget,
-                               1,
+                               true,
                                value->data, value->length,
                                frame, raw);
 }

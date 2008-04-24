@@ -92,7 +92,7 @@ gg_msg_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 }
 
 static size_t
-gg_msg_parser_cdata(const char *p, size_t length, int escaped __attr_unused,
+gg_msg_parser_cdata(const char *p, size_t length, bool escaped __attr_unused,
                     void *ctx)
 {
     struct google_gadget *gg = ctx;

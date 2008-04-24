@@ -86,7 +86,7 @@ strmap_addn(strmap_t map, const char *key, const char *value)
 
 static inline const char *
 strmap_maybe_overwrite(struct slot *slot, const char *key, const char *value,
-                       int overwrite)
+                       bool overwrite)
 {
     const char *old = slot->pair.value;
     assert(old != NULL);
@@ -99,7 +99,7 @@ strmap_maybe_overwrite(struct slot *slot, const char *key, const char *value,
 }
 
 const char *
-strmap_put(strmap_t map, const char *key, const char *value, int overwrite)
+strmap_put(strmap_t map, const char *key, const char *value, bool overwrite)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;

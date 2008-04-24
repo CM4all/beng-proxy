@@ -46,7 +46,7 @@ google_gadget_process(struct google_gadget *gg, istream_t istream)
 }
 
 static void
-gg_set_content(struct google_gadget *gg, istream_t istream, int process)
+gg_set_content(struct google_gadget *gg, istream_t istream, bool process)
 {
     http_status_t status;
     strmap_t headers;
@@ -253,26 +253,26 @@ google_content_tag_finished(struct google_gadget *gg,
                                           istream,
                                           NULL);
 
-                gg_set_content(gg, istream, 1);
+                gg_set_content(gg, istream, true);
             } else {
                 const char *uri =
                     widget_external_uri(gg->pool, gg->env->external_uri,
                                         gg->env->args,
-                                        gg->widget, 0, NULL, 0,
+                                        gg->widget, false, NULL, 0,
                                         widget_path(gg->widget), false);
 
                 if (uri != NULL)
                     istream = generate_iframe(gg->pool, uri);
                 else
                     istream = NULL;
-                gg_set_content(gg, istream, 0);
+                gg_set_content(gg, istream, false);
 
                 parser_close(gg->parser);
             }
         } else {
             /* it's TAG_SHORT, handle that gracefully */
 
-            gg_set_content(gg, NULL, 0);
+            gg_set_content(gg, NULL, false);
         }
 
         return;
@@ -282,7 +282,7 @@ google_content_tag_finished(struct google_gadget *gg,
             break;
 
         istream = generate_iframe(gg->pool, gg->from_parser.url);
-        gg_set_content(gg, istream, 0);
+        gg_set_content(gg, istream, false);
 
         parser_close(gg->parser);
         return;
@@ -391,7 +391,7 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 }
 
 static size_t
-google_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
+google_parser_cdata(const char *p, size_t length, bool escaped, void *ctx)
 {
     struct google_gadget *gg = ctx;
 

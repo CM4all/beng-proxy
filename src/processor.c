@@ -269,7 +269,7 @@ processor_new(pool_t pool, istream_t istream,
 
     if (widget->from_request.proxy_ref == NULL) {
         istream = istream_tee_new(pool, istream, true);
-        processor->replace = istream_replace_new(pool, istream_tee_second(istream), 0);
+        processor->replace = istream_replace_new(pool, istream_tee_second(istream), false);
     } else {
         processor->replace = NULL;
     }
@@ -868,13 +868,12 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 }
 
 static size_t
-processor_parser_cdata(const char *p, size_t length, int escaped, void *ctx)
+processor_parser_cdata(const char *p, size_t length,
+                       bool escaped __attr_unused, void *ctx)
 {
     struct processor *processor = ctx;
 
     processor->had_input = true;
-
-    (void)escaped;
 
     if (processor->in_script && processor->script != NULL)
         growing_buffer_write_buffer(processor->script, p, length);

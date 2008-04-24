@@ -56,7 +56,7 @@ http_server_cork(http_server_connection_t connection)
 
 #ifdef __linux
     if (!connection->cork) {
-        connection->cork = 1;
+        connection->cork = true;
         socket_set_cork(connection->fd, connection->cork);
     }
 #endif
@@ -70,7 +70,7 @@ http_server_uncork(http_server_connection_t connection)
 #ifdef __linux
     if (connection->cork) {
         assert(connection->fd >= 0);
-        connection->cork = 0;
+        connection->cork = false;
         socket_set_cork(connection->fd, connection->cork);
     }
 #endif
@@ -150,7 +150,7 @@ http_server_connection_new(pool_t pool, int fd,
     connection->request.request = NULL;
     connection->response.istream = NULL;
 #ifdef __linux
-    connection->cork = 0;
+    connection->cork = false;
 #endif
 
     connection->input = fifo_buffer_new(pool, 4096);
@@ -207,7 +207,7 @@ http_server_connection_close(http_server_connection_t connection)
     }
 
 #ifdef __linux
-    connection->cork = 0;
+    connection->cork = false;
 #endif
 
     pool_ref(connection->pool);
@@ -246,7 +246,7 @@ http_server_maybe_send_100_continue(http_server_connection_t connection)
                         &http_server_response_stream_handler, connection,
                         ISTREAM_DIRECT_SUPPORT);
 
-    connection->response.writing_100_continue = 1;
+    connection->response.writing_100_continue = true;
 
     http_server_try_write(connection);
 }
@@ -341,7 +341,7 @@ http_server_response(struct http_server_request *request,
                         &http_server_response_stream_handler, connection,
                         ISTREAM_DIRECT_SUPPORT);
 
-    connection->response.writing_100_continue = 0;
+    connection->response.writing_100_continue = false;
 
     pool_ref(connection->pool);
 

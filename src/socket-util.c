@@ -20,7 +20,7 @@
 #endif
 
 int
-socket_set_nonblock(int fd, int value)
+socket_set_nonblock(int fd, bool value)
 {
     return fd_mask_status_flags(fd, ~O_NONBLOCK, value ? O_NONBLOCK : 0);
 }
