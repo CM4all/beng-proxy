@@ -87,7 +87,7 @@ url_create_abort(struct async_operation *ao)
     assert(async_ref_defined(&connection->client_socket));
 
     async_abort(&connection->client_socket);
-    stock_available(&connection->stock_item, false);
+    stock_item_aborted(&connection->stock_item);
 }
 
 static struct async_operation_class url_create_operation = {

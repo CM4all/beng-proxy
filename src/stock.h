@@ -66,6 +66,9 @@ void
 stock_available(struct stock_item *item, bool success);
 
 void
+stock_item_aborted(struct stock_item *item);
+
+void
 stock_put(struct stock_item *item, bool destroy);
 
 void
