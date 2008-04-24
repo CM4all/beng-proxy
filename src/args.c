@@ -81,7 +81,7 @@ args_format_n(pool_t pool, struct strmap *args,
         strmap_rewind(args);
 
         while ((pair = strmap_next(args)) != NULL) {
-            if ((replace_key != NULL && strcmp(pair->key, replace_key)) == 0 ||
+            if ((replace_key != NULL && strcmp(pair->key, replace_key) == 0) ||
                 (replace_key2 != NULL && strcmp(pair->key, replace_key2) == 0) ||
                 (replace_key3 != NULL && strcmp(pair->key, replace_key3) == 0) ||
                 (remove_key != NULL && strcmp(pair->key, remove_key) == 0))
