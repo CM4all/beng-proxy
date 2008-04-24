@@ -150,19 +150,23 @@ stock_get(struct stock *stock, void *info,
 }
 
 void
-stock_available(struct stock_item *item, bool success)
+stock_item_available(struct stock_item *item)
 {
     struct stock *stock = item->stock;
 
-    if (success) {
-        list_add(&item->list_head, &stock->busy);
-        ++stock->num_busy;
+    list_add(&item->list_head, &stock->busy);
+    ++stock->num_busy;
 
-        item->callback(item->callback_ctx, item);
-    } else {
-        item->callback(item->callback_ctx, NULL);
-        destroy_item(stock, item);
-    }
+    item->callback(item->callback_ctx, item);
+}
+
+void
+stock_item_failed(struct stock_item *item)
+{
+    struct stock *stock = item->stock;
+
+    item->callback(item->callback_ctx, NULL);
+    destroy_item(stock, item);
 }
 
 void

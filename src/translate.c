@@ -580,7 +580,7 @@ translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     if (connection->fd < 0) {
         daemon_log(1, "failed to connect to %s: %s\n",
                    uri, strerror(errno));
-        stock_available(item, false);
+        stock_item_failed(item);
         return;
     }
 
@@ -588,11 +588,11 @@ translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     if (ret < 0) {
         daemon_log(1, "failed to set non-blocking mode: %s\n",
                    strerror(errno));
-        stock_available(item, false);
+        stock_item_failed(item);
         return;
     }
 
-    stock_available(item, true);
+    stock_item_available(item);
     return;
 }
 

@@ -63,7 +63,10 @@ stock_get(struct stock *stock, void *info,
           struct async_operation_ref *async_ref);
 
 void
-stock_available(struct stock_item *item, bool success);
+stock_item_available(struct stock_item *item);
+
+void
+stock_item_failed(struct stock_item *item);
 
 void
 stock_item_aborted(struct stock_item *item);
