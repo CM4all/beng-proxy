@@ -100,7 +100,7 @@ istream_iconv_new(pool_t pool, istream_t input,
                   const char *tocode, const char *fromcode);
 
 istream_t
-istream_replace_new(pool_t pool, istream_t input, bool quiet);
+istream_replace_new(pool_t pool, istream_t input);
 
 void
 istream_replace_add(istream_t istream, off_t start, off_t end,

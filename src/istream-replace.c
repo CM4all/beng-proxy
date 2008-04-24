@@ -44,7 +44,7 @@ struct istream_replace {
 static inline bool
 replace_is_at_position(const struct istream_replace *replace, off_t at)
 {
-    return replace->buffer == NULL || replace->position == at;
+    return replace->position == at;
 }
 
 /**
@@ -53,8 +53,7 @@ replace_is_at_position(const struct istream_replace *replace, off_t at)
 static inline bool
 replace_buffer_eof(const struct istream_replace *replace)
 {
-    return replace->buffer == NULL ||
-        replace->position == replace->source_length;
+    return replace->position == replace->source_length;
 }
 
 /**
@@ -79,12 +78,11 @@ substitution_is_active(const struct substitution *s)
 
     assert(replace != NULL);
     assert(replace->first_substitution != NULL);
-    assert(replace->buffer == NULL ||
-           replace->first_substitution->start <= s->start);
-    assert(replace->buffer == NULL || s->start >= replace->position);
+    assert(replace->first_substitution->start <= s->start);
+    assert(s->start >= replace->position);
 
     return s == replace->first_substitution &&
-        (replace->buffer == NULL || replace->position == s->start);
+        replace->position == s->start;
 }
 
 static void
@@ -99,12 +97,10 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
     assert(replace->first_substitution == s);
     assert(substitution_is_active(s));
     assert(s->istream == NULL);
-    assert(replace->buffer == NULL || s->start <= s->end);
+    assert(s->start <= s->end);
 
-    if (replace->buffer != NULL) {
-        growing_buffer_consume(replace->buffer, s->end - s->start);
-        replace->position = s->end;
-    }
+    growing_buffer_consume(replace->buffer, s->end - s->start);
+    replace->position = s->end;
 
     replace->first_substitution = s->next;
     if (replace->first_substitution == NULL) {
@@ -114,8 +110,7 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
 
     p_free(replace->output.pool, s);
 
-    assert(replace->buffer == NULL ||
-           replace->first_substitution == NULL ||
+    assert(replace->first_substitution == NULL ||
            replace->first_substitution->start >= replace->position);
 
     if (replace_is_eof(replace)) {
@@ -262,7 +257,6 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
     size_t length, nbytes;
 
     assert(replace != NULL);
-    assert(replace->buffer != NULL);
     assert(max_length > 0);
 
     data = growing_buffer_read(replace->buffer, &length);
@@ -297,7 +291,6 @@ replace_read_from_buffer_loop(struct istream_replace *replace, off_t end)
 #endif
 
     assert(replace != NULL);
-    assert(replace->buffer != NULL);
     assert(end > replace->position);
     assert(end <= replace->source_length);
 
@@ -336,7 +329,6 @@ replace_try_read_from_buffer(struct istream_replace *replace)
     size_t rest;
 
     assert(replace != NULL);
-    assert(replace->buffer != NULL);
 
     if (replace->first_substitution == NULL) {
         if (!replace->finished)
@@ -371,7 +363,7 @@ replace_read(struct istream_replace *replace)
     size_t rest;
 
     assert(replace != NULL);
-    assert(replace->buffer == NULL || replace->position <= replace->source_length);
+    assert(replace->position <= replace->source_length);
 
     /* read until someone (input or output) blocks */
     do {
@@ -413,26 +405,24 @@ replace_input_data(const void *data, size_t length, void *ctx)
 
     replace->had_input = true;
 
-    if (replace->buffer != NULL) {
-        if (replace->source_length >= 8 * 1024 * 1024) {
-            daemon_log(2, "file too large for processor\n");
-            istream_close(replace->input);
-            return 0;
-        }
-
-        growing_buffer_write_buffer(replace->buffer, data, length);
-        replace->source_length += (off_t)length;
-
-        pool_ref(replace->output.pool);
-
-        replace_try_read_from_buffer(replace);
-        if (replace->input == NULL)
-            /* the istream API mandates that we must return 0 if the
-               stream is finished */
-            length = 0;
-
-        pool_unref(replace->output.pool);
+    if (replace->source_length >= 8 * 1024 * 1024) {
+        daemon_log(2, "file too large for processor\n");
+        istream_close(replace->input);
+        return 0;
     }
+
+    growing_buffer_write_buffer(replace->buffer, data, length);
+    replace->source_length += (off_t)length;
+
+    pool_ref(replace->output.pool);
+
+    replace_try_read_from_buffer(replace);
+    if (replace->input == NULL)
+        /* the istream API mandates that we must return 0 if the
+           stream is finished */
+        length = 0;
+
+    pool_unref(replace->output.pool);
 
     return length;
 }
@@ -503,14 +493,12 @@ istream_replace_available(istream_t istream, bool partial)
     /* add available bytes from substitutions (and the source buffers
        before the substitutions) */
 
-    if (replace->buffer != NULL)
-        position = replace->position;
+    position = replace->position;
 
     for (subst = replace->first_substitution; subst != NULL; subst = subst->next) {
-        assert(replace->buffer == NULL || position <= subst->start);
+        assert(position <= subst->start);
 
-        if (replace->buffer != NULL)
-            length += subst->start - position;
+        length += subst->start - position;
 
         if (subst->istream != NULL) {
             l = istream_available(subst->istream, partial);
@@ -520,13 +508,12 @@ istream_replace_available(istream_t istream, bool partial)
                 return (off_t)-1;
         }
 
-        if (replace->buffer != NULL)
-            position = subst->end;
+        position = subst->end;
     }
 
     /* add available bytes from tail (if known yet) */
 
-    if (replace->buffer != NULL && replace->finished)
+    if (replace->finished)
         length += replace->source_length - position;
 
     return length;
@@ -583,7 +570,7 @@ static const struct istream istream_replace = {
  */
 
 istream_t
-istream_replace_new(pool_t pool, istream_t input, bool quiet)
+istream_replace_new(pool_t pool, istream_t input)
 {
     struct istream_replace *replace = istream_new_macro(pool, replace);
 
@@ -597,17 +584,9 @@ istream_replace_new(pool_t pool, istream_t input, bool quiet)
     replace->finished = false;
     replace->read_locked = false;
 
-    if (quiet) {
-        replace->buffer = NULL;
-        poison_noaccess(&replace->source_length,
-                        sizeof(replace->source_length));
-        poison_noaccess(&replace->position,
-                        sizeof(replace->position));
-    } else {
-        replace->buffer = growing_buffer_new(pool, 4096);
-        replace->source_length = 0;
-        replace->position = 0;
-    }
+    replace->buffer = growing_buffer_new(pool, 4096);
+    replace->source_length = 0;
+    replace->position = 0;
 
     replace->first_substitution = NULL;
     replace->append_substitution_p = &replace->first_substitution;
@@ -631,21 +610,15 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
     assert(start <= end);
     assert(start >= replace->last_substitution_end);
 
-    if (contents == NULL &&
-        (replace->buffer == NULL || start == end))
+    if (contents == NULL && start == end)
         return;
 
     s = p_malloc(replace->output.pool, sizeof(*s));
     s->next = NULL;
     s->replace = replace;
 
-    if (replace->buffer != NULL) {
-        s->start = start;
-        s->end = end;
-    } else {
-        poison_noaccess(&s->start, sizeof(s->start));
-        poison_noaccess(&s->end, sizeof(s->end));
-    }
+    s->start = start;
+    s->end = end;
 
 #ifndef NDEBUG
     replace->last_substitution_end = end;
