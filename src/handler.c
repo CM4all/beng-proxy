@@ -19,6 +19,11 @@
 
 #include <assert.h>
 
+/**
+ * The request had no valid session, but it requires one; redirect the
+ * client to a new URI which includes the session id, and send a
+ * session cookie.
+ */
 static void
 session_redirect(struct request *request)
 {
@@ -128,6 +133,9 @@ translate_callback(const struct translate_response *response,
         }
     }
 
+    /* always enforce sessions when there is a transformation
+       (e.g. the beng template processor); also redirect the client
+       when a session has just been created */
     if ((response->transformation != NULL && request->session == NULL) ||
         (request->session != NULL && !request->session->cookie_sent)) {
         session_redirect(request);
