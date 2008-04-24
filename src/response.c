@@ -182,7 +182,7 @@ response_dispatch(struct request *request2,
         if (request2->session != NULL &&
             !request2->session->cookie_sent) {
             char session_id[9];
-            session_id_format(session_id, request2->session->id);
+            session_id_format(session_id, request2->session->cookie_id);
 
             header_write(headers, "set-cookie",
                          p_strcat(request2->request->pool,

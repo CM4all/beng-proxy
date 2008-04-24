@@ -71,24 +71,20 @@ request_get_session(struct request *request, const char *session_id)
         request->translate.request.session = request->session->translate;
 }
 
-void
-request_get_cookie_session(struct request *request)
+session_id_t
+request_get_cookie_session_id(struct request *request)
 {
     struct strmap *cookies = request_get_cookies(request);
     const char *session_id;
 
-    assert(request->session == NULL);
-
     if (cookies == NULL)
-        return;
+        return 0;
 
     session_id = strmap_get(cookies, "beng_proxy_session");
     if (session_id == NULL)
-        return;
+        return 0;
 
-    request_get_session(request, session_id);
-    if (request->session != NULL)
-        request->session->cookie_received = true;
+    return session_id_parse(session_id);
 }
 
 struct session *
@@ -100,7 +96,7 @@ request_make_session(struct request *request)
         return request->session;
 
     request->session = session_new();
-    session_id_format(request->session_id_buffer, request->session->id);
+    session_id_format(request->session_id_buffer, request->session->uri_id);
 
     if (request->args == NULL)
         request->args = strmap_new(request->request->pool, 4);

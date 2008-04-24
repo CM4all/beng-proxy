@@ -147,14 +147,8 @@ request_args_parse(struct request *request)
     request->translate.request.session = NULL;
 
     session_id = strmap_get(request->args, "session");
-    if (session_id != NULL) {
-        if (request->session == NULL)
-            request_get_session(request, session_id);
-        else
-            /* the session has already been set up with cookies - we
-               don't need the session id in request->args anymore */
-            strmap_remove(request->args, "session");
-    }
+    if (session_id != NULL)
+        request_get_session(request, session_id);
 }
 
 static void
@@ -246,8 +240,16 @@ handle_http_request(struct client_connection *connection,
     request2->response_sent = 0;
     request2->async_ref = async_ref;
 
-    request_get_cookie_session(request2);
     request_args_parse(request2);
+    if (request2->session != NULL) {
+        session_id_t id = request_get_cookie_session_id(request2);
+        if (id == request2->session->cookie_id)
+            request2->session->cookie_received = true;
+        else if (request2->session->cookie_received)
+            /* someone has stole our URI including the session id;
+               refuse to continue with this session */
+            request2->session = NULL;
+    }
 
     if (connection->config->translation_socket == NULL)
         serve_document_root_file(request2, connection->config);

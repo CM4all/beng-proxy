@@ -134,13 +134,14 @@ session_new(void)
     session_t session = p_calloc(pool, sizeof(*session));
 
     session->pool = pool;
-    session->id = session_generate_id();
+    session->uri_id = session_generate_id();
+    session->cookie_id = session_generate_id();
     session->expires = time(NULL) + SESSION_TTL_NEW;
     session->translate = NULL;
     session->widgets = NULL;
     session->cookies = cookie_jar_new(pool);
 
-    list_add(&session->hash_siblings, session_slot(session->id));
+    list_add(&session->hash_siblings, session_slot(session->uri_id));
     ++session_manager.num_sessions;
 
     if (session_manager.num_sessions == 1) {
@@ -159,9 +160,9 @@ session_get(session_id_t id)
 
     for (session = (session_t)head->next; session != (session_t)head;
          session = (session_t)session->hash_siblings.next) {
-        assert(session_slot(session->id) == head);
+        assert(session_slot(session->uri_id) == head);
 
-        if (session->id == id) {
+        if (session->uri_id == id) {
             session->expires = time(NULL) + SESSION_TTL;
             return session;
         }

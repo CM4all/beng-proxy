@@ -13,6 +13,7 @@
 #include "strmap.h"
 #include "processor.h"
 #include "async.h"
+#include "session.h"
 
 struct request {
     struct tcache *translate_cache;
@@ -50,8 +51,8 @@ response_dispatcher_wants_body(struct request *request);
 void
 request_get_session(struct request *request, const char *session_id);
 
-void
-request_get_cookie_session(struct request *request);
+session_id_t
+request_get_cookie_session_id(struct request *request);
 
 struct session *
 request_make_session(struct request *request);

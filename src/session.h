@@ -48,8 +48,11 @@ struct session {
     struct list_head hash_siblings;
     pool_t pool;
 
-    /** identification number of this session */
-    session_id_t id;
+    /** identification number of this session in the URI */
+    session_id_t uri_id;
+
+    /** identification number of this session in the cookie */
+    session_id_t cookie_id;
 
     /** when will this session expire? */
     time_t expires;
