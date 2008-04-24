@@ -46,7 +46,7 @@ google_gadget_process(struct google_gadget *gg, istream_t istream)
 }
 
 static void
-gg_set_content(struct google_gadget *gg, istream_t istream, bool process)
+gg_set_content(struct google_gadget *gg, istream_t istream)
 {
     http_status_t status;
     strmap_t headers;
@@ -66,9 +66,6 @@ gg_set_content(struct google_gadget *gg, istream_t istream, bool process)
         status = HTTP_STATUS_OK;
         headers = strmap_new(gg->pool, 4);
         strmap_addn(headers, "content-type", "text/html; charset=utf-8");
-
-        if (process)
-            istream = google_gadget_process(gg, istream);
     }
 
     if (gg->delayed != NULL) {
@@ -248,12 +245,13 @@ google_content_tag_finished(struct google_gadget *gg,
                 istream_init(&gg->output, &istream_google_html, gg->pool);
 
                 istream = istream_struct_cast(&gg->output);
+                google_gadget_process(gg, istream);
                 istream = istream_cat_new(gg->pool,
                                           generate_jscript(gg->pool, gg->widget),
                                           istream,
                                           NULL);
 
-                gg_set_content(gg, istream, true);
+                gg_set_content(gg, istream);
             } else {
                 const char *uri =
                     widget_external_uri(gg->pool, gg->env->external_uri,
@@ -265,14 +263,14 @@ google_content_tag_finished(struct google_gadget *gg,
                     istream = generate_iframe(gg->pool, uri);
                 else
                     istream = NULL;
-                gg_set_content(gg, istream, false);
+                gg_set_content(gg, istream);
 
                 parser_close(gg->parser);
             }
         } else {
             /* it's TAG_SHORT, handle that gracefully */
 
-            gg_set_content(gg, NULL, false);
+            gg_set_content(gg, NULL);
         }
 
         return;
@@ -282,7 +280,7 @@ google_content_tag_finished(struct google_gadget *gg,
             break;
 
         istream = generate_iframe(gg->pool, gg->from_parser.url);
-        gg_set_content(gg, istream, false);
+        gg_set_content(gg, istream);
 
         parser_close(gg->parser);
         return;
