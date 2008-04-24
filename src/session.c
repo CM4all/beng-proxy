@@ -66,6 +66,8 @@ session_manager_init(pool_t pool)
 
     assert(session_manager.pool == NULL);
 
+    srandom((unsigned)time(NULL));
+
     session_manager.pool = pool_new_libc(pool, "session_manager");
 
     for (i = 0; i < SESSION_SLOTS; ++i)
