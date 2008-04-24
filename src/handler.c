@@ -45,7 +45,7 @@ session_redirect(struct request *request)
     header_write(headers, "set-cookie",
                  p_strcat(request->request->pool,
                           "beng_proxy_session=", session_id,
-                          "; Path=/", NULL));
+                          "; Discard; Path=/; Version=1", NULL));
 
     request->session->cookie_sent = true;
 
