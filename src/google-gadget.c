@@ -52,8 +52,6 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
     strmap_t headers;
 
     assert(gg != NULL);
-    assert(gg->delayed != NULL);
-    assert(gg->subst != NULL);
 
     if (gg->has_locale && gg->waiting_for_locale) {
             /* XXX abort locale */
@@ -245,7 +243,7 @@ google_content_tag_finished(struct google_gadget *gg,
                 istream_init(&gg->output, &istream_google_html, gg->pool);
 
                 istream = istream_struct_cast(&gg->output);
-                google_gadget_process(gg, istream);
+                istream = google_gadget_process(gg, istream);
                 istream = istream_cat_new(gg->pool,
                                           generate_jscript(gg->pool, gg->widget),
                                           istream,
