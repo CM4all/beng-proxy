@@ -12,16 +12,57 @@
 #include "session.h"
 #include "instance.h"
 #include "tcache.h"
+#include "growing-buffer.h"
+#include "header-writer.h"
 
 #include <daemon/log.h>
 
 #include <assert.h>
 
 static void
+session_redirect(struct request *request)
+{
+    struct growing_buffer *headers =
+        growing_buffer_new(request->request->pool, 512);
+    char session_id[9];
+    const char *args;
+
+    request_make_session(request);
+
+    session_id_format(session_id, request->session->uri_id);
+    args = args_format(request->request->pool, request->args,
+                       "session", session_id, NULL, NULL, NULL);
+    header_write(headers, "location",
+                 p_strncat(request->request->pool,
+                           request->uri.base.data, request->uri.base.length,
+                           ";", (size_t)1,
+                           args, strlen(args),
+                           "?", (size_t)1,
+                           request->uri.query.data, request->uri.query.length,
+                           NULL));
+
+    session_id_format(session_id, request->session->cookie_id);
+    header_write(headers, "set-cookie",
+                 p_strcat(request->request->pool,
+                          "beng_proxy_session=", session_id,
+                          "; Path=/", NULL));
+
+    request->session->cookie_sent = true;
+
+    http_server_response(request->request, HTTP_STATUS_FOUND, headers, NULL);
+}
+
+static void
 translate_callback(const struct translate_response *response,
                    void *ctx)
 {
     struct request *request = ctx;
+
+    if (response->transformation != NULL &&
+        (request->session == NULL || !request->session->cookie_sent)) {
+        session_redirect(request);
+        return;
+    }
 
     request->translate.response = response;
     request->translate.transformation = response->transformation;
@@ -187,6 +228,12 @@ serve_document_root_file(struct request *request2,
         process = 1;
     } else {
         process = strref_ends_with_n(&uri->base, ".html", 5);
+    }
+
+    if (process &&
+        (request2->session == NULL || !request2->session->cookie_sent)) {
+        session_redirect(request2);
+        return;
     }
 
     if (process) {

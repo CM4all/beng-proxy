@@ -179,19 +179,6 @@ response_dispatch(struct request *request2,
     } else {
         access_log(request2->request, status, body);
 
-        if (request2->session != NULL &&
-            !request2->session->cookie_sent) {
-            char session_id[9];
-            session_id_format(session_id, request2->session->cookie_id);
-
-            header_write(headers, "set-cookie",
-                         p_strcat(request2->request->pool,
-                                  "beng_proxy_session=", session_id,
-                                  "; Path=/", NULL));
-
-            request2->session->cookie_sent = true;
-        }
-
         header_write(headers, "server", "beng-proxy v" VERSION);
 
         request2->response_sent = 1;
