@@ -4,12 +4,6 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-/* XXX remove memrchr() usage */
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#include <features.h>
-#endif
-
 #include "widget.h"
 #include "uri-address.h"
 
@@ -63,7 +57,7 @@ widget_class_relative_uri(const struct widget_class *class,
     /* special case: http://hostname without trailing slash */
     if (uri->length == class_uri_length - 1 &&
         memcmp(uri->data, class_uri, uri->length) &&
-        (const char*)memrchr(uri->data, '/', uri->length) < uri->data + 7) {
+        memchr(uri->data + 7, '/', uri->length - 7) == NULL) {
         strref_clear(uri);
         return uri;
     }
