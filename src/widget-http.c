@@ -11,7 +11,6 @@
 #include "session.h"
 #include "cookie-client.h"
 #include "async.h"
-#include "google-gadget.h"
 #include "http-util.h"
 #include "uri-address.h"
 #include "strref2.h"
@@ -352,13 +351,6 @@ widget_http_request(pool_t pool, struct widget *widget,
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-
-    if (widget->class->type == WIDGET_TYPE_GOOGLE_GADGET) {
-        /* XXX put this check somewhere else */
-        embed_google_gadget(pool, env, widget,
-                            handler, handler_ctx, async_ref);
-        return;
-    }
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;

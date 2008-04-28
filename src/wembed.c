@@ -10,6 +10,7 @@
 #include "widget.h"
 #include "widget-registry.h"
 #include "widget-stream.h"
+#include "google-gadget.h"
 
 #include <assert.h>
 
@@ -28,9 +29,21 @@ inline_widget_set(struct inline_widget *iw)
 
     widget_sync_session(widget);
 
-    widget_http_request(iw->pool, iw->widget, iw->env,
-                        &widget_stream_response_handler, iw->stream,
-                        &iw->stream->async_ref);
+    switch (widget->class->type) {
+    case WIDGET_TYPE_RAW:
+    case WIDGET_TYPE_BENG:
+        widget_http_request(iw->pool, iw->widget, iw->env,
+                            &widget_stream_response_handler, iw->stream,
+                            &iw->stream->async_ref);
+        break;
+
+    case WIDGET_TYPE_GOOGLE_GADGET:
+        embed_google_gadget(iw->pool, iw->env, iw->widget,
+                            &widget_stream_response_handler, iw->stream,
+                            &iw->stream->async_ref);
+        break;
+    }
+
     pool_unref(iw->pool);
 }
 

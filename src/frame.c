@@ -9,6 +9,7 @@
 #include "processor.h"
 #include "widget.h"
 #include "widget-registry.h"
+#include "google-gadget.h"
 
 #include <daemon/log.h>
 
@@ -50,8 +51,18 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     widget_sync_session(widget);
 
-    widget_http_request(pool, widget, env,
-                        handler, handler_ctx, async_ref);
+    switch (widget->class->type) {
+    case WIDGET_TYPE_RAW:
+    case WIDGET_TYPE_BENG:
+        widget_http_request(pool, widget, env,
+                            handler, handler_ctx, async_ref);
+        break;
+
+    case WIDGET_TYPE_GOOGLE_GADGET:
+        embed_google_gadget(pool, env, widget,
+                            handler, handler_ctx, async_ref);
+        break;
+    }
 }
 
 static void
