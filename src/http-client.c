@@ -703,6 +703,21 @@ http_client_connection_close(http_client_connection_t connection)
     pool_unref(connection->pool);
 }
 
+void
+http_client_connection_graceful(http_client_connection_t connection)
+{
+    assert(connection != NULL);
+
+    if (connection->request.pool != NULL)
+        /* a request is currently being handled by the server; disable
+           keep_alive so the connection will be closed after this last
+           request */
+        connection->keep_alive = false;
+    else
+        /* the connection is idle; close it immediately */
+        http_client_connection_close(connection);
+}
+
 
 /*
  * istream handler for the request
