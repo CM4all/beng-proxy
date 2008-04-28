@@ -226,6 +226,21 @@ http_server_connection_close(http_server_connection_t connection)
     pool_unref(connection->pool);
 }
 
+void
+http_server_connection_graceful(http_server_connection_t connection)
+{
+    assert(connection != NULL);
+
+    if (connection->request.read_state == READ_START)
+        /* there is no request currently; close the connection
+           immediately */
+        http_server_connection_close(connection);
+    else
+        /* a request is currently being handled; disable keep_alive so
+           the connection will be closed after this last request */
+        connection->keep_alive = false;
+}
+
 
 void
 http_server_maybe_send_100_continue(http_server_connection_t connection)
