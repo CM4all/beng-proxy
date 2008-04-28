@@ -165,7 +165,7 @@ widget_request_headers(struct embed *embed, int with_body)
 
 static const struct http_response_handler widget_response_handler;
 
-static int
+static bool
 widget_response_redirect(struct embed *embed, const char *location,
                          istream_t body)
 {
@@ -176,7 +176,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     const struct strref *p;
 
     if (embed->num_redirects >= 8)
-        return 0;
+        return false;
 
     new_uri = widget_absolute_uri(embed->pool, embed->widget,
                                   location, strlen(location));
@@ -191,7 +191,7 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     p = widget_class_relative_uri(embed->widget->class, &s);
     if (p == NULL)
-        return 0;
+        return false;
 
     widget_copy_from_location(embed->widget, p->data, p->length, embed->pool);
 
@@ -211,7 +211,7 @@ widget_response_redirect(struct embed *embed, const char *location,
                        &widget_response_handler, embed,
                        embed->async_ref);
 
-    return 1;
+    return true;
 }
 
 /**
