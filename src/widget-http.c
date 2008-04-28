@@ -289,10 +289,9 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
                          void *ctx)
 {
     struct embed *embed = ctx;
-    const char *location, *cookies;
 
     if (embed->host_and_port != NULL) {
-        cookies = strmap_get(headers, "set-cookie2");
+        const char *cookies = strmap_get(headers, "set-cookie2");
         if (cookies == NULL)
             cookies = strmap_get(headers, "set-cookie");
         if (cookies != NULL) {
@@ -304,7 +303,7 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
     }
 
     if (status >= 300 && status < 400) {
-        location = strmap_get(headers, "location");
+        const char *location = strmap_get(headers, "location");
         if (location != NULL &&
             widget_response_redirect(embed, headers, location, body)) {
             pool_unref(embed->pool);
