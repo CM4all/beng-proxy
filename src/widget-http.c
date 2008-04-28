@@ -166,8 +166,7 @@ widget_request_headers(struct embed *embed, int with_body)
 static const struct http_response_handler widget_response_handler;
 
 static int
-widget_response_redirect(struct embed *embed,
-                         strmap_t request_headers, const char *location,
+widget_response_redirect(struct embed *embed, const char *location,
                          istream_t body)
 {
     const char *new_uri;
@@ -178,14 +177,6 @@ widget_response_redirect(struct embed *embed,
 
     if (embed->num_redirects >= 8)
         return 0;
-
-    if (strncmp(location, ";translate=", 11) == 0) {
-        /* XXX this special URL syntax should be redesigned */
-        location = widget_translation_uri(embed->pool, embed->env->external_uri,
-                                          embed->env->args, location + 11);
-        strmap_put(request_headers, "location", location, 1);
-        return 0;
-    }
 
     new_uri = widget_absolute_uri(embed->pool, embed->widget,
                                   location, strlen(location));
@@ -289,6 +280,7 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
                          void *ctx)
 {
     struct embed *embed = ctx;
+    const char *translate;
 
     if (embed->host_and_port != NULL) {
         const char *cookies = strmap_get(headers, "set-cookie2");
@@ -302,10 +294,17 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
         }
     }
 
+    translate = strmap_get(headers, "x-cm4all-beng-translate");
+    if (translate != NULL) {
+        struct session *session = widget_get_session2(embed->widget);
+        if (session != NULL)
+            session->translate = p_strdup(session->pool, translate);
+    }
+
     if (status >= 300 && status < 400) {
         const char *location = strmap_get(headers, "location");
         if (location != NULL &&
-            widget_response_redirect(embed, headers, location, body)) {
+            widget_response_redirect(embed, location, body)) {
             pool_unref(embed->pool);
             return;
         }
