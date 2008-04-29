@@ -33,6 +33,8 @@ struct http_cache {
 };
 
 struct http_cache_info {
+    bool only_if_cached:1;
+
     /** when will the cached resource expire? (beng-proxy time) */
     time_t expires;
 
@@ -99,6 +101,7 @@ http_cache_info_new(pool_t pool)
 {
     struct http_cache_info *info = p_malloc(pool, sizeof(*info));
 
+    info->only_if_cached = false;
     info->expires = (time_t)-1;
     info->last_modified = NULL;
     info->etag = NULL;
@@ -129,6 +132,12 @@ http_cache_request_evaluate(pool_t pool,
                 if (strref_cmp_literal(s, "no-cache") == 0 ||
                     strref_cmp_literal(s, "no-store") == 0)
                     return NULL;
+
+                if (strref_cmp_literal(s, "only-if-cached") == 0) {
+                    if (info == NULL)
+                        info = http_cache_info_new(pool);
+                    info->only_if_cached = true;
+                }
             }
         } else {
             p = strmap_get(headers, "pragma");
@@ -137,7 +146,8 @@ http_cache_request_evaluate(pool_t pool,
         }
     }
 
-    info = http_cache_info_new(pool);
+    if (info == NULL)
+        info = http_cache_info_new(pool);
     return info;
 }
 
@@ -506,8 +516,19 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
                 void *handler_ctx,
                 struct async_operation_ref *async_ref)
 {
-    struct http_cache_request *request = p_malloc(pool,
-                                                  sizeof(*request));
+    struct http_cache_request *request;
+
+    if (info->only_if_cached) {
+        struct http_response_handler_ref handler_ref;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+
+        http_response_handler_invoke_response(&handler_ref,
+                                              HTTP_STATUS_GATEWAY_TIMEOUT,
+                                              NULL, NULL);
+        return;
+    }
+
+    request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->cache = cache;
     request->url = uwa->uri;
@@ -587,7 +608,9 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
 }
 
 static void
-http_cache_found(struct http_cache *cache, struct http_cache_item *item,
+http_cache_found(struct http_cache *cache,
+                 struct http_cache_info *info,
+                 struct http_cache_item *item,
                  pool_t pool,
                  http_method_t method,
                  struct uri_with_address *uwa,
@@ -596,7 +619,8 @@ http_cache_found(struct http_cache *cache, struct http_cache_item *item,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    if (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL))
+    if (info->only_if_cached ||
+        (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL)))
         http_cache_serve(item, pool, uwa->uri, body, handler, handler_ctx);
     else
         http_cache_test(cache, item, pool,
@@ -626,7 +650,7 @@ http_cache_request(struct http_cache *cache,
                             method, uwa, headers, body,
                             handler, handler_ctx, async_ref);
         else
-            http_cache_found(cache, item, pool,
+            http_cache_found(cache, info, item, pool,
                              method, uwa, headers, body,
                              handler, handler_ctx, async_ref);
     } else {
