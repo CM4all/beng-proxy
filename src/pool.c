@@ -504,7 +504,7 @@ pool_unref_impl(pool_t pool TRACE_ARGS_DECL)
     pool_increment_ref(pool, &pool->unrefs, file, line);
 #endif
 
-    if (pool->ref == 0) {
+    if (unlikely(pool->ref == 0)) {
 #ifdef NDEBUG
         pool_t reparent_to = NULL;
 #else
