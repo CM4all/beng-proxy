@@ -54,6 +54,9 @@ struct libc_pool_chunk {
 #ifdef POISON
     size_t size;
 #endif
+#ifdef DUMP_POOL_ALLOC
+    struct allocation_info info;
+#endif
     unsigned char data[sizeof(size_t)];
 };
 
@@ -682,9 +685,17 @@ pool_rewind(pool_t pool, const struct pool_mark *mark)
 }
 
 static void *
-p_malloc_libc(pool_t pool, size_t size)
+p_malloc_libc(pool_t pool, size_t size TRACE_ARGS_DECL)
 {
     struct libc_pool_chunk *chunk = xmalloc(sizeof(*chunk) - sizeof(chunk->data) + size);
+
+#ifdef DUMP_POOL_ALLOC
+    list_add(&chunk->info.siblings, &pool->allocations);
+    chunk->info.file = file;
+    chunk->info.line = line;
+    chunk->info.size = size;
+#endif
+
     list_add(&chunk->siblings, &pool->current_area.libc);
 #ifdef POISON
     chunk->size = size;
@@ -766,7 +777,7 @@ internal_malloc(pool_t pool, size_t size TRACE_ARGS_DECL)
         return p_malloc_linear(pool, size TRACE_ARGS_FWD);
 
     assert(pool->type == POOL_LIBC);
-    return p_malloc_libc(pool, size);
+    return p_malloc_libc(pool, size TRACE_ARGS_FWD);
 }
 
 void *
@@ -782,6 +793,10 @@ p_free_libc(pool_t pool, void *ptr)
                                                                offsetof(struct libc_pool_chunk, data));
 
     (void)pool;
+
+#ifdef DUMP_POOL_ALLOC
+    list_remove(&chunk->info.siblings);
+#endif
 
     list_remove(&chunk->siblings);
     free(chunk);
