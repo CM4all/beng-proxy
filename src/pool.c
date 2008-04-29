@@ -14,6 +14,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef DEBUG_POOL_GROW
+#define DUMP_POOL_ALLOC
+#endif
+
 #if defined(__x86_64__) || defined(__PPC64__)
 #define ALIGN 8
 #define ALIGN_BITS 0x7
@@ -30,7 +34,7 @@
 struct allocation_info {
     struct list_head siblings;
     size_t size;
-#ifdef DEBUG_POOL_GROW
+#ifdef DUMP_POOL_ALLOC
     const char *file;
     unsigned line;
 #endif
@@ -679,7 +683,7 @@ p_malloc_libc(pool_t pool, size_t size)
     return chunk->data;
 }
 
-#ifdef DEBUG_POOL_GROW
+#ifdef DUMP_POOL_ALLOC
 static void
 pool_dump_allocations(pool_t pool)
 {
@@ -729,7 +733,7 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
 
 #ifndef NDEBUG
     info = p;
-#ifdef DEBUG_POOL_GROW
+#ifdef DUMP_POOL_ALLOC
     info->file = file;
     info->line = line;
 #endif
