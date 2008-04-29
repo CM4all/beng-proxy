@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef DEBUG_POOL_GROW
+#if defined(DEBUG_POOL_GROW) || defined(DUMP_POOL_ALLOC_ALL)
 #define DUMP_POOL_ALLOC
 #endif
 
@@ -345,6 +345,11 @@ pool_set_major(pool_t pool)
 }
 #endif
 
+#ifdef DUMP_POOL_ALLOC_ALL
+static void
+pool_dump_allocations(pool_t pool);
+#endif
+
 static void
 pool_destroy(pool_t pool, pool_t reparent_to)
 {
@@ -355,6 +360,10 @@ pool_destroy(pool_t pool, pool_t reparent_to)
 
 #ifdef DUMP_POOL_SIZE
     daemon_log(4, "pool '%s' size=%zu\n", pool->name, pool->size);
+#endif
+
+#ifdef DUMP_POOL_ALLOC_ALL
+    pool_dump_allocations(pool);
 #endif
 
 #ifndef NDEBUG
