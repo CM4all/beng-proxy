@@ -94,6 +94,17 @@ next_item(struct strref *s, struct strref *p)
     return p;
 }
 
+static struct http_cache_info *
+http_cache_info_new(pool_t pool)
+{
+    struct http_cache_info *info = p_malloc(pool, sizeof(*info));
+
+    info->expires = (time_t)-1;
+    info->last_modified = NULL;
+    info->etag = NULL;
+    return info;
+}
+
 /* check whether the request could produce a cacheable response */
 static struct http_cache_info *
 http_cache_request_evaluate(pool_t pool,
@@ -126,10 +137,7 @@ http_cache_request_evaluate(pool_t pool,
         }
     }
 
-    info = p_malloc(pool, sizeof(*info));
-    info->expires = (time_t)-1;
-    info->last_modified = NULL;
-    info->etag = NULL;
+    info = http_cache_info_new(pool);
     return info;
 }
 
