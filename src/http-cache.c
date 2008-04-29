@@ -110,8 +110,15 @@ http_cache_request_evaluate(pool_t pool,
     if (headers != NULL) {
         p = strmap_get(headers, "cache-control");
         if (p != NULL) {
-            if (strcmp(p, "no-cache") == 0)
-                return NULL;
+            struct strref cc, tmp, *s;
+
+            strref_set_c(&cc, p);
+
+            while ((s = next_item(&cc, &tmp)) != NULL) {
+                if (strref_cmp_literal(s, "no-cache") == 0 ||
+                    strref_cmp_literal(s, "no-store") == 0)
+                    return NULL;
+            }
         } else {
             p = strmap_get(headers, "pragma");
             if (p != NULL && strcmp(p, "no-cache") == 0)
