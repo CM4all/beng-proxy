@@ -12,6 +12,7 @@
 #include "http-response.h"
 #include "date.h"
 #include "uri-address.h"
+#include "strref2.h"
 
 #include <string.h>
 #include <time.h>
@@ -70,6 +71,28 @@ struct http_cache_request {
     struct growing_buffer *output;
 };
 
+
+static struct strref *
+next_item(struct strref *s, struct strref *p)
+{
+    const char *comma;
+
+    strref_ltrim(s);
+    if (strref_is_empty(s))
+        return NULL;
+
+    comma = strref_chr(s, ',');
+    if (comma == NULL) {
+        *p = *s;
+        strref_clear(s);
+    } else {
+        strref_set2(p, s->data, comma);
+        strref_set2(s, comma + 1, strref_end(s));
+    }
+
+    strref_rtrim(p);
+    return p;
+}
 
 /* check whether the request could produce a cacheable response */
 static struct http_cache_info *
@@ -223,7 +246,19 @@ http_cache_response_evaluate(struct http_cache_info *info,
         /* too large for the cache */
         return 0;
 
-    /* XXX cache-control */
+    p = strmap_get(headers, "cache-control");
+    if (p != NULL) {
+        struct strref cc, tmp, *s;
+
+        strref_set_c(&cc, p);
+
+        while ((s = next_item(&cc, &tmp)) != NULL) {
+            if (strref_starts_with_n(s, "private", 7) ||
+                strref_cmp_literal(s, "no-cache") == 0 ||
+                strref_cmp_literal(s, "no-store") == 0)
+                return 0;
+        }
+    }
 
     p = strmap_get(headers, "date");
     if (p == NULL)
