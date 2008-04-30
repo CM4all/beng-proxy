@@ -56,7 +56,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
 
     class = &lookup->class;
     class->address = uri_address_dup(lookup->pool, response->proxy);
-    class->old_style = 0;
+    class->old_style = false;
 
     if (response->transformation != NULL &&
         response->transformation->type == TRANSFORMATION_PROCESS) {
@@ -64,10 +64,10 @@ lookup_callback(const struct translate_response *response, void *ctx)
         class->is_container = (response->transformation->u.processor_options & PROCESSOR_CONTAINER) != 0;
     } else if (response->google_gadget) {
         class->type = WIDGET_TYPE_GOOGLE_GADGET;
-        class->is_container = 0;
+        class->is_container = false;
     } else {
         class->type = WIDGET_TYPE_RAW;
-        class->is_container = 0;
+        class->is_container = false;
     }
 
     lookup->callback(class, lookup->callback_ctx);

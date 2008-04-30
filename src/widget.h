@@ -38,11 +38,11 @@ struct widget_class {
     enum widget_type type;
 
     /** can this widget contain other widgets? */
-    unsigned is_container:1;
+    bool is_container:1;
 
     /** is this an old-style widget class, i.e. not coming from the
         widget registry? */
-    unsigned old_style:1;
+    bool old_style:1;
 };
 
 /**

@@ -13,8 +13,8 @@
 const struct widget_class root_widget_class = {
     .address = NULL,
     .type = WIDGET_TYPE_BENG,
-    .is_container = 1,
-    .old_style = 1,
+    .is_container = true,
+    .old_style = true,
 };
 
 const struct widget_class *
@@ -25,7 +25,7 @@ get_widget_class(pool_t pool, const char *uri, enum widget_type type)
     wc->address = uri_address_new(pool, uri);
     wc->type = type;
     wc->is_container = type == WIDGET_TYPE_BENG;
-    wc->old_style =  1;
+    wc->old_style = true;
 
     return wc;
 }
