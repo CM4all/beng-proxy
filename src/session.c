@@ -37,17 +37,17 @@ cleanup_event_callback(int fd, short event, void *ctx)
 {
     time_t now = time(NULL);
     unsigned i;
-    session_t session, next;
+    struct session *session, *next;
 
     (void)fd;
     (void)event;
     (void)ctx;
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
-        for (session = (session_t)session_manager.sessions[i].next;
-             session != (session_t)&session_manager.sessions[i];
+        for (session = (struct session *)session_manager.sessions[i].next;
+             &session->hash_siblings != &session_manager.sessions[i];
              session = next) {
-            next = (session_t)session->hash_siblings.next;
+            next = (struct session *)session->hash_siblings.next;
             if (now >= session->expires)
                 session_remove(session);
         }
@@ -87,7 +87,7 @@ session_manager_deinit(void)
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
         while (!list_empty(&session_manager.sessions[i])) {
-            session_t session = (session_t)session_manager.sessions[i].next;
+            struct session *session = (struct session *)session_manager.sessions[i].next;
             session_remove(session);
         }
     }
@@ -129,11 +129,11 @@ session_generate_id(void)
     return (session_id_t)random(); /* XXX this is insecure! */
 }
 
-session_t
+struct session *
 session_new(void)
 {
     pool_t pool = pool_new_libc(session_manager.pool, "session");
-    session_t session = p_calloc(pool, sizeof(*session));
+    struct session *session = p_calloc(pool, sizeof(*session));
 
     session->pool = pool;
     session->uri_id = session_generate_id();
@@ -154,14 +154,15 @@ session_new(void)
     return session;
 }
 
-session_t
+struct session *
 session_get(session_id_t id)
 {
     struct list_head *head = session_slot(id);
-    session_t session;
+    struct session *session;
 
-    for (session = (session_t)head->next; session != (session_t)head;
-         session = (session_t)session->hash_siblings.next) {
+    for (session = (struct session *)head->next;
+         &session->hash_siblings != head;
+         session = (struct session *)session->hash_siblings.next) {
         assert(session_slot(session->uri_id) == head);
 
         if (session->uri_id == id) {
@@ -174,7 +175,7 @@ session_get(session_id_t id)
 }
 
 void
-session_remove(session_t session)
+session_remove(struct session *session)
 {
     pool_t pool = session->pool;
 
@@ -194,7 +195,7 @@ session_remove(session_t session)
 }
 
 static struct widget_session *
-hashmap_r_get_widget_session(session_t session, struct hashmap **map_r,
+hashmap_r_get_widget_session(struct session *session, struct hashmap **map_r,
                              const char *id, bool create)
 {
     struct hashmap *map;
@@ -236,7 +237,7 @@ hashmap_r_get_widget_session(session_t session, struct hashmap **map_r,
 }
 
 struct widget_session *
-session_get_widget(session_t session, const char *id, bool create)
+session_get_widget(struct session *session, const char *id, bool create)
 {
     assert(session != NULL);
     assert(id != NULL);

@@ -15,8 +15,6 @@
 
 struct hashmap;
 
-typedef struct session *session_t;
-
 typedef unsigned session_id_t;
 
 /**
@@ -25,7 +23,7 @@ typedef unsigned session_id_t;
 struct widget_session {
     struct widget_session *parent;
 
-    session_t session;
+    struct session *session;
 
     pool_t pool;
 
@@ -96,17 +94,17 @@ session_id_parse(const char *p);
 void
 session_id_format(char dest[9], session_id_t id);
 
-session_t
+struct session *
 session_new(void);
 
-session_t
+struct session *
 session_get(session_id_t id);
 
 void
-session_remove(session_t session);
+session_remove(struct session *session);
 
 struct widget_session *
-session_get_widget(session_t session, const char *id, bool create);
+session_get_widget(struct session *session, const char *id, bool create);
 
 struct widget_session *
 widget_session_get_child(struct widget_session *parent, const char *id,
