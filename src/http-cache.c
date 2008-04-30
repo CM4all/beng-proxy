@@ -115,7 +115,7 @@ http_cache_request_evaluate(pool_t pool,
                             struct strmap *headers,
                             istream_t body)
 {
-    struct http_cache_info *info;
+    struct http_cache_info *info = NULL;
     const char *p;
 
     if (method != HTTP_METHOD_GET || body != NULL)
