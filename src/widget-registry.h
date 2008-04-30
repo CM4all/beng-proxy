@@ -9,10 +9,10 @@
 #define __BENG_WIDGET_REGISTRY_H
 
 #include "pool.h"
-#include "async.h"
 
 struct tcache;
 struct widget_class;
+struct async_operation_ref;
 
 typedef void (*widget_class_callback_t)(const struct widget_class *class,
                                         void *ctx);
