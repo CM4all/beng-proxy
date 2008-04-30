@@ -7,7 +7,7 @@
 #include "rewrite-uri.h"
 #include "widget.h"
 #include "widget-stream.h"
-#include "widget-registry.h"
+#include "widget-resolver.h"
 
 static const char *
 current_frame(const struct widget *widget)
@@ -68,14 +68,13 @@ struct rewrite_widget_uri {
 };
 
 static void
-class_lookup_callback(const struct widget_class *class, void *ctx)
+class_lookup_callback(void *ctx)
 {
     struct rewrite_widget_uri *rwu = ctx;
 
-    if (class != NULL) {
+    if (rwu->widget->class != NULL) {
         const char *uri;
 
-        rwu->widget->class = class;
         widget_sync_session(rwu->widget);
 
         uri = do_rewrite_widget_uri(rwu->pool, rwu->external_uri, rwu->args,
@@ -120,8 +119,9 @@ rewrite_widget_uri(pool_t pool, struct tcache *translate_cache,
         rwu->stream = widget_stream_new(pool);
         hold = istream_hold_new(pool, rwu->stream->delayed);
 
-        widget_class_lookup(pool, translate_cache,
-                            widget->class_name,
+        widget_resolver_new(pool, pool, /* XXX which pool? */
+                            widget,
+                            translate_cache,
                             class_lookup_callback, rwu,
                             &rwu->stream->async_ref);
         return hold;

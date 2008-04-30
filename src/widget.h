@@ -56,6 +56,8 @@ struct widget {
 
     const struct widget_class *class;
 
+    struct widget_resolver *resolver;
+
     /** the widget's instance id, as specified in the template */
     const char *id;
 
@@ -154,6 +156,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
 
     widget->class_name = NULL;
     widget->class = class;
+    widget->resolver = NULL;
     widget->id = NULL;
     widget->decoration.tag = NULL;
     widget->decoration.style = NULL;

@@ -8,7 +8,7 @@
 #include "widget-http.h"
 #include "processor.h"
 #include "widget.h"
-#include "widget-registry.h"
+#include "widget-resolver.h"
 #include "widget-stream.h"
 #include "google-gadget.h"
 
@@ -48,12 +48,11 @@ inline_widget_set(struct inline_widget *iw)
 }
 
 static void
-class_lookup_callback(const struct widget_class *class, void *_ctx)
+class_lookup_callback(void *_ctx)
 {
     struct inline_widget *iw = _ctx;
 
-    if (class != NULL) {
-        iw->widget->class = class;
+    if (iw->widget->class != NULL) {
         inline_widget_set(iw);
     } else {
         async_ref_clear(istream_delayed_async(iw->stream->delayed));
@@ -85,7 +84,9 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
     hold = istream_hold_new(pool, iw->stream->delayed);
 
     if (widget->class == NULL)
-        widget_class_lookup(pool, env->translate_cache, widget->class_name,
+        widget_resolver_new(pool, pool, /* XXX which pool? */
+                            widget,
+                            env->translate_cache,
                             class_lookup_callback, iw, &iw->stream->async_ref);
     else
         inline_widget_set(iw);
