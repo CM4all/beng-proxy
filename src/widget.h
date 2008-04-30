@@ -145,9 +145,6 @@ const struct strref *
 widget_class_relative_uri(const struct widget_class *class,
                           struct strref *uri);
 
-int
-widget_class_includes_uri(const struct widget_class *class, const char *uri);
-
 
 static inline void
 widget_init(struct widget *widget, const struct widget_class *class)

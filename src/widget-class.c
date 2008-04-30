@@ -64,14 +64,3 @@ widget_class_relative_uri(const struct widget_class *class,
 
     return NULL;
 }
-
-int
-widget_class_includes_uri(const struct widget_class *class, const char *uri)
-{
-    assert(class != NULL);
-    assert(class->address == NULL || class->address->uri != NULL);
-    assert(uri != NULL);
-
-    return class->address != NULL &&
-        strncmp(uri, class->address->uri, strlen(class->address->uri)) == 0;
-}
