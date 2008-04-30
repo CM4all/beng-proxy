@@ -8,18 +8,10 @@
 #ifndef __BENG_WIDGET_REGISTRY_H
 #define __BENG_WIDGET_REGISTRY_H
 
-#include "translate.h"
+#include "pool.h"
+#include "async.h"
 
 struct tcache;
-
-void
-widget_registry_lookup(pool_t pool,
-                       struct tcache *translate_cache,
-                       const char *widget_type,
-                       translate_callback_t callback,
-                       void *ctx,
-                       struct async_operation_ref *async_ref);
-
 struct widget_class;
 
 typedef void (*widget_class_callback_t)(const struct widget_class *class,

@@ -11,7 +11,7 @@
 #include "tcache.h"
 #include "uri-address.h"
 
-void
+static void
 widget_registry_lookup(pool_t pool,
                        struct tcache *tcache,
                        const char *widget_type,
