@@ -169,6 +169,8 @@ file_callback(struct request *request2)
                                (unsigned long)skip,
                                (unsigned long)(size - 1),
                                (unsigned long)st.st_size));
+    } else if (tr->status == 0 && !request_transformation_enabled(request2)) {
+        header_write(headers, "accept-ranges", "bytes");
     }
 
     make_etag(buffer, &st);
