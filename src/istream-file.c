@@ -73,6 +73,36 @@ istream_file_available(istream_t istream, bool partial)
     return available;
 }
 
+static off_t
+istream_file_skip(istream_t istream, off_t length)
+{
+    struct file *file = istream_to_file(istream);
+
+    if (file->rest == (off_t)-1)
+        return (off_t)-1;
+
+    if (file->buffer != NULL)
+        /* clear the buffer; later we could optimize this function by
+           flushing only the skipped number of bytes */
+        fifo_buffer_clear(file->buffer);
+
+    if (length >= file->rest) {
+        /* skip beyond EOF */
+
+        length = file->rest;
+        file->rest = 0;
+    } else {
+        /* seek the file descriptor */
+
+        off_t ret = lseek(file->fd, length, SEEK_CUR);
+        if (ret < 0)
+            return -1;
+        file->rest -= length;
+    }
+
+    return length;
+}
+
 /**
  * @return the number of bytes still in the buffer
  */
@@ -216,6 +246,7 @@ istream_file_close(istream_t istream)
 
 static const struct istream istream_file = {
     .available = istream_file_available,
+    .skip = istream_file_skip,
     .read = istream_file_read,
     .close = istream_file_close,
 };
