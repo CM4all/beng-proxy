@@ -122,6 +122,10 @@ http_cache_request_evaluate(pool_t pool,
         return NULL;
 
     if (headers != NULL) {
+        p = strmap_get(headers, "range");
+        if (p != NULL)
+            return NULL;
+
         p = strmap_get(headers, "cache-control");
         if (p != NULL) {
             struct strref cc, tmp, *s;
