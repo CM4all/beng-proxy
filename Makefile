@@ -169,7 +169,7 @@ SOURCES = src/main.c \
 	src/http-cache.c \
 	src/stock.c \
 	src/hstock.c \
-	src/abort-unref.o \
+	src/abort-unref.c \
 	src/tpool.c
 
 HEADERS = $(wildcard src/*.h) $(wildcard include/beng-proxy/*.h)
