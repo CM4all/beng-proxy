@@ -16,6 +16,12 @@ istream_to_zero(istream_t istream)
     return (struct istream_zero *)(((char*)istream) - offsetof(struct istream_zero, stream));
 }
 
+static off_t
+istream_zero_skip(istream_t istream __attr_unused, off_t length)
+{
+    return length;
+}
+
 static void
 istream_zero_read(istream_t istream)
 {
@@ -34,6 +40,7 @@ istream_zero_close(istream_t istream)
 }
 
 static const struct istream istream_zero = {
+    .skip = istream_zero_skip,
     .read = istream_zero_read,
     .close = istream_zero_close,
 };
