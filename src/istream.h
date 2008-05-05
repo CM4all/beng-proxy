@@ -103,6 +103,13 @@ struct istream {
     off_t (*available)(istream_t istream, bool partial);
 
     /**
+     * Skip data without processing it.
+     *
+     * @return the number of bytes skipped or -1 if skipping is not supported
+     */
+    off_t (*skip)(istream_t istream, off_t length);
+
+    /**
      * Try to read from the stream.  If the stream can read data
      * without blocking, it must provide data.  It may invoke the
      * callbacks any number of times, supposed that the handler itself
@@ -184,6 +191,51 @@ istream_available(istream_t _istream, bool partial)
 #endif
 
     return available;
+}
+
+static inline off_t
+istream_skip(istream_t _istream, off_t length)
+{
+    struct istream *istream = _istream_opaque_cast(_istream);
+    off_t nbytes;
+#ifndef NDEBUG
+    struct pool_notify notify;
+
+    assert(!istream->closing);
+    assert(!istream->eof);
+    assert(!istream->reading);
+
+    pool_notify(istream->pool, &notify);
+    istream->reading = true;
+#endif
+
+    if (istream->skip == NULL)
+        nbytes = (off_t)-1;
+    else
+        nbytes = istream->skip(_istream, length);
+
+    assert(nbytes <= length);
+
+#ifndef NDEBUG
+    if (pool_denotify(&notify) || istream->destroyed)
+        return nbytes;
+
+    istream->reading = false;
+
+    if (nbytes > 0) {
+        if (nbytes > istream->available_partial)
+            istream->available_partial = 0;
+        else
+            istream->available_partial -= nbytes;
+
+        assert(!istream->available_full_set ||
+               nbytes < istream->available_full);
+        if (istream->available_full_set)
+            istream->available_full -= nbytes;
+    }
+#endif
+
+    return nbytes;
 }
 
 static inline void
