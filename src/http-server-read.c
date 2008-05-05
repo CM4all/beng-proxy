@@ -161,7 +161,7 @@ http_server_handle_line(http_server_connection_t connection,
     }
 }
 
-static int
+static bool
 http_server_parse_headers(http_server_connection_t connection)
 {
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
@@ -172,7 +172,7 @@ http_server_parse_headers(http_server_connection_t connection)
 
     buffer = fifo_buffer_read(connection->input, &length);
     if (buffer == NULL)
-        return 0;
+        return false;
 
     assert(length > 0);
     buffer_end = buffer + length;
@@ -194,10 +194,10 @@ http_server_parse_headers(http_server_connection_t connection)
     }
 
     if (next == NULL)
-        return 0;
+        return false;
 
     fifo_buffer_consume(connection->input, next - buffer);
-    return 1;
+    return true;
 }
 
 static void

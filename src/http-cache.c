@@ -156,7 +156,7 @@ http_cache_request_evaluate(pool_t pool,
 }
 
 /* check whether the request should invalidate the existing cache */
-static int
+static bool
 http_cache_request_invalidate(http_method_t method)
 {
     /* RFC 2616 13.10 "Invalidation After Updates or Deletions" */
@@ -260,7 +260,7 @@ parse_translate_time(const char *p, time_t offset)
 }
 
 /** check whether the HTTP response should be put into the cache */
-static int
+static bool
 http_cache_response_evaluate(struct http_cache_info *info,
                              http_status_t status, strmap_t headers,
                              off_t body_available)
@@ -269,11 +269,11 @@ http_cache_response_evaluate(struct http_cache_info *info,
     const char *p;
 
     if (status != HTTP_STATUS_OK || body_available == 0)
-        return 0;
+        return false;
 
     if (body_available != (off_t)-1 && body_available > cacheable_size_limit)
         /* too large for the cache */
-        return 0;
+        return false;
 
     p = strmap_get(headers, "cache-control");
     if (p != NULL) {
@@ -285,7 +285,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
             if (strref_starts_with_n(s, "private", 7) ||
                 strref_cmp_literal(s, "no-cache") == 0 ||
                 strref_cmp_literal(s, "no-store") == 0)
-                return 0;
+                return false;
         }
     }
 
@@ -293,10 +293,10 @@ http_cache_response_evaluate(struct http_cache_info *info,
     if (p == NULL)
         /* we cannot determine wether to cache a resource if the
            server does not provide its system time */
-        return 0;
+        return false;
     date = http_date_parse(p);
     if (date == (time_t)-1)
-        return 0;
+        return false;
 
     now = time(NULL);
     offset = now - date;

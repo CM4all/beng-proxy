@@ -211,7 +211,7 @@ subst_try_write_b(struct istream_subst *subst)
 static size_t
 subst_feed(struct istream_subst *subst, const void *_data, size_t length);
 
-static int
+static bool
 subst_feed_mismatch(struct istream_subst *subst)
 {
     size_t nbytes;
@@ -223,13 +223,13 @@ subst_feed_mismatch(struct istream_subst *subst)
     if (subst->send_first) {
         nbytes = istream_invoke_data(&subst->output, subst->mismatch.data, 1);
         if (nbytes == 0)
-            return 1;
+            return true;
 
         ++subst->mismatch.data;
         --subst->mismatch.length;
 
         if (strref_is_empty(&subst->mismatch))
-            return 0;
+            return false;
 
         subst->send_first = 0;
     }
@@ -239,7 +239,7 @@ subst_feed_mismatch(struct istream_subst *subst)
                         subst->mismatch.length);
     pool_unref(subst->output.pool);
     if (nbytes == 0)
-        return 1;
+        return true;
 
     assert(nbytes <= subst->mismatch.length);
 
@@ -249,7 +249,7 @@ subst_feed_mismatch(struct istream_subst *subst)
     return !strref_is_empty(&subst->mismatch);
 }
 
-static int
+static bool
 subst_write_mismatch(struct istream_subst *subst)
 {
     size_t nbytes;
@@ -261,7 +261,7 @@ subst_write_mismatch(struct istream_subst *subst)
                                  subst->mismatch.data,
                                  subst->mismatch.length);
     if (nbytes == 0)
-        return 1;
+        return true;
 
     assert(nbytes <= subst->mismatch.length);
 
@@ -269,14 +269,14 @@ subst_write_mismatch(struct istream_subst *subst)
     subst->mismatch.length -= nbytes;
 
     if (!strref_is_empty(&subst->mismatch))
-        return 1;
+        return true;
 
     if (subst->input == NULL) {
         istream_deinit_eof(&subst->output);
-        return 1;
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
 /**
@@ -442,7 +442,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                 subst->state = STATE_NONE;
 
                 if (strref_is_empty(&subst->mismatch)) {
-                    int ret;
+                    bool ret;
 
                     subst->send_first = 1;
 
@@ -514,7 +514,7 @@ subst_input_data(const void *data, size_t length, void *ctx)
     size_t nbytes;
 
     if (!strref_is_empty(&subst->mismatch)) {
-        int ret = subst_feed_mismatch(subst);
+        bool ret = subst_feed_mismatch(subst);
         if (ret)
             return 0;
     }
@@ -607,7 +607,7 @@ istream_subst_read(istream_t istream)
     size_t nbytes;
 
     if (!strref_is_empty(&subst->mismatch)) {
-        int ret;
+        bool ret;
 
         if (subst->input == NULL)
             ret = subst_write_mismatch(subst);

@@ -10,7 +10,7 @@
 #include "http-server.h"
 #include "cookie-server.h"
 
-int
+bool
 request_processor_enabled(struct request *request)
 {
     const struct translate_transformation *transformation;
@@ -19,12 +19,12 @@ request_processor_enabled(struct request *request)
          transformation != NULL;
          transformation = transformation->next)
         if (transformation->type == TRANSFORMATION_PROCESS)
-            return 1;
+            return true;
 
-    return 0;
+    return false;
 }
 
-int
+bool
 response_dispatcher_wants_body(struct request *request)
 {
     assert(http_server_request_has_body(request->request));

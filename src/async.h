@@ -77,7 +77,7 @@ async_ref_clear(struct async_operation_ref *ref)
     ref->operation = NULL;
 }
 
-static inline int
+static inline bool
 async_ref_defined(const struct async_operation_ref *ref)
 {
     assert(ref != NULL);

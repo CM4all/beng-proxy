@@ -44,7 +44,7 @@ dechunk_close(struct istream_dechunk *dechunk)
 }
 
 
-static int
+static bool
 dechunk_eof_detected(struct istream_dechunk *dechunk)
 {
     assert(dechunk->input != NULL);
@@ -58,12 +58,12 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
 
     if (dechunk->state == CLOSED) {
         pool_unref(dechunk->output.pool);
-        return 1;
+        return true;
     } else {
         istream_handler_clear(dechunk->input);
         dechunk->input = NULL;
         pool_unref(dechunk->output.pool);
-        return 0;
+        return false;
     }
 }
 

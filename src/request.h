@@ -42,10 +42,10 @@ struct request {
     struct async_operation_ref *async_ref;
 };
 
-int
+bool
 request_processor_enabled(struct request *request);
 
-int
+bool
 response_dispatcher_wants_body(struct request *request);
 
 void

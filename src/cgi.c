@@ -34,7 +34,7 @@ struct cgi {
 };
 
 
-static int
+static bool
 cgi_handle_line(struct cgi *cgi, const char *line, size_t length)
 {
     assert(cgi != NULL);
@@ -44,9 +44,9 @@ cgi_handle_line(struct cgi *cgi, const char *line, size_t length)
     if (length > 0) {
         header_parse_line(cgi->output.pool, cgi->headers,
                           line, length);
-        return 0;
+        return false;
     } else
-        return 1;
+        return true;
 }
 
 static void

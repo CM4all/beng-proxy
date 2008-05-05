@@ -10,7 +10,7 @@
 
 #include <string.h>
 
-static inline int
+static inline bool
 uri_harmless_char(char ch)
 {
     return char_is_alphanumeric(ch) ||

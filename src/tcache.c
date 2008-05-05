@@ -47,7 +47,7 @@ struct tcache_request {
 
 
 /* check whether the request could produce a cacheable response */
-static int
+static bool
 tcache_request_evaluate(const struct translate_request *request)
 {
     return (request->uri != NULL || request->widget_type != NULL) &&
@@ -55,7 +55,7 @@ tcache_request_evaluate(const struct translate_request *request)
 }
 
 /* check whether the response is cacheable */
-static int
+static bool
 tcache_response_evaluate(const struct translate_response *response)
 {
     return response != NULL && response->status == 0;

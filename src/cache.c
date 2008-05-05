@@ -119,15 +119,15 @@ cache_destroy_oldest_item(struct cache *cache)
     cache_destroy_item(cache, oldest_item);
 }
 
-static int
+static bool
 cache_need_room(struct cache *cache, size_t size)
 {
     if (size > cache->max_size)
-        return 0;
+        return false;
 
     while (1) {
         if (cache->size + size <= cache->max_size)
-            return 1;
+            return true;
 
         cache_destroy_oldest_item(cache);
     }

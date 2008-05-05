@@ -25,7 +25,7 @@ http_body_istream(struct http_body_reader *body)
     return istream_struct_cast(&body->output);
 }
 
-static inline int
+static inline bool
 http_body_eof(const struct http_body_reader *body)
 {
     return body->rest == 0;

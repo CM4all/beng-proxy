@@ -8,7 +8,7 @@
 
 #include <string.h>
 
-static int
+static bool
 uri_has_protocol(const char *uri, size_t length)
 {
     const char *colon = memchr(uri, ':', length);

@@ -71,7 +71,7 @@ struct http_client_connection {
 #endif
 };
 
-static inline int
+static inline bool
 http_client_connection_valid(http_client_connection_t connection)
 {
     return connection->fd >= 0;
@@ -333,7 +333,7 @@ http_client_handle_line(http_client_connection_t connection,
 static void
 http_client_response_finished(http_client_connection_t connection);
 
-static int
+static bool
 http_client_parse_headers(http_client_connection_t connection)
 {
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
@@ -346,7 +346,7 @@ http_client_parse_headers(http_client_connection_t connection)
 
     buffer = fifo_buffer_read(connection->input, &length);
     if (buffer == NULL)
-        return 0;
+        return false;
 
     assert(length > 0);
     buffer_end = buffer + length;
@@ -368,7 +368,7 @@ http_client_parse_headers(http_client_connection_t connection)
     }
 
     if (next == NULL)
-        return 0;
+        return false;
 
     fifo_buffer_consume(connection->input, next - buffer);
 
@@ -387,7 +387,7 @@ http_client_parse_headers(http_client_connection_t connection)
             http_client_response_finished(connection);
     }
 
-    return 1;
+    return true;
 }
 
 static void

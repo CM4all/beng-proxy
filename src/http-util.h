@@ -11,7 +11,7 @@
 
 struct strref;
 
-int
+bool
 http_list_contains(const char *list, const char *item);
 
 static inline int

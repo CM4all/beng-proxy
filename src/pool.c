@@ -585,7 +585,7 @@ pool_commit(void)
     abort();
 }
 
-static int
+static bool
 linear_pool_area_contains(const struct linear_pool_area *area,
                           const void *ptr, size_t size)
 {

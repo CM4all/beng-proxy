@@ -50,7 +50,7 @@ http_server_connection_close(http_server_connection_t connection);
 void
 http_server_connection_graceful(http_server_connection_t connection);
 
-static inline int
+static inline bool
 http_server_request_has_body(const struct http_server_request *request)
 {
     return request->body != NULL;
