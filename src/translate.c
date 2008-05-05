@@ -596,7 +596,7 @@ translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     return;
 }
 
-static int
+static bool
 translate_stock_validate(void *ctx __attr_unused, struct stock_item *item)
 {
     struct translate_connection *connection = (struct translate_connection *)item;

@@ -52,7 +52,7 @@ my_stock_create(void *ctx __attr_unused, struct stock_item *item __attr_unused,
 {
 }
 
-static int
+static bool
 my_stock_validate(void *ctx __attr_unused, struct stock_item *item __attr_unused)
 {
     return true;

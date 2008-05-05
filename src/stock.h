@@ -41,7 +41,7 @@ struct stock_class {
     void (*create)(void *ctx, struct stock_item *item,
                    const char *uri, void *info,
                    struct async_operation_ref *async_ref);
-    int (*validate)(void *ctx, struct stock_item *item);
+    bool (*validate)(void *ctx, struct stock_item *item);
     void (*destroy)(void *ctx, struct stock_item *item);
 };
 

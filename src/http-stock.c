@@ -250,7 +250,7 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
     }
 }
 
-static int
+static bool
 http_stock_validate(void *ctx __attr_unused, struct stock_item *item)
 {
     struct http_stock_connection *connection =
