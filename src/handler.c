@@ -296,8 +296,8 @@ handle_http_request(struct client_connection *connection,
     request2->args = NULL;
     request2->cookies = NULL;
     request2->session = NULL;
-    request2->body_consumed = 0;
-    request2->response_sent = 0;
+    request2->body_consumed = false;
+    request2->response_sent = false;
     request2->async_ref = async_ref;
 
     request_args_parse(request2);

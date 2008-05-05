@@ -80,7 +80,7 @@ response_invoke_processor(struct request *request2,
 
     if (http_server_request_has_body(request) && !request2->body_consumed) {
         request_body = request->body;
-        request2->body_consumed = 1;
+        request2->body_consumed = true;
     } else {
         request_body = NULL;
     }
@@ -182,7 +182,7 @@ response_dispatch(struct request *request2,
 
         header_write(headers, "server", "beng-proxy v" VERSION);
 
-        request2->response_sent = 1;
+        request2->response_sent = true;
         http_server_response(request2->request,
                              status, headers, body);
     }

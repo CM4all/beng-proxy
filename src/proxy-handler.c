@@ -27,7 +27,7 @@ proxy_handler(struct request *request2)
     } else {
         method = request->method;
         body = request->body;
-        request2->body_consumed = 1;
+        request2->body_consumed = true;
     }
 
     http_cache_request(request2->http_cache, request->pool,
