@@ -16,6 +16,19 @@ istream_to_null(istream_t istream)
     return (struct istream_null *)(((char*)istream) - offsetof(struct istream_null, stream));
 }
 
+static off_t
+istream_null_available(istream_t istream __attr_unused,
+                       bool partial __attr_unused)
+{
+    return 0;
+}
+
+static off_t
+istream_null_skip(istream_t istream __attr_unused, off_t length __attr_unused)
+{
+    return 0;
+}
+
 static void
 istream_null_read(istream_t istream)
 {
@@ -33,6 +46,8 @@ istream_null_close(istream_t istream)
 }
 
 static const struct istream istream_null = {
+    .available = istream_null_available,
+    .skip = istream_null_skip,
     .read = istream_null_read,
     .close = istream_null_close,
 };
