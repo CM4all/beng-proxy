@@ -103,7 +103,8 @@ struct istream {
     off_t (*available)(istream_t istream, bool partial);
 
     /**
-     * Skip data without processing it.
+     * Skip data without processing it.  By skipping 0 bytes, you can
+     * test whether the stream is able to skip at all.
      *
      * @return the number of bytes skipped or -1 if skipping is not supported
      */

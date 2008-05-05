@@ -81,6 +81,9 @@ istream_file_skip(istream_t istream, off_t length)
     if (file->rest == (off_t)-1)
         return (off_t)-1;
 
+    if (length == 0)
+        return 0;
+
     if (file->buffer != NULL)
         /* clear the buffer; later we could optimize this function by
            flushing only the skipped number of bytes */
