@@ -16,10 +16,52 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifndef NO_XATTR
 #include <attr/xattr.h>
 #endif
+
+static bool
+parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
+{
+    unsigned long v;
+    char *endptr;
+
+    assert(p != NULL);
+    assert(skip_r != NULL);
+    assert(size_r != NULL);
+
+    if (memcmp(p, "bytes=", 6) != 0)
+        return false;
+
+    p += 6;
+
+    if (*p == '-') {
+        ++p;
+
+        v = strtoul(p, &endptr, 10);
+        if (v > (unsigned long)*size_r)
+            return false;
+
+        *skip_r = *size_r - v;
+    } else {
+        *skip_r = strtoul(p, &endptr, 10);
+        if (*skip_r > *size_r)
+            return false;
+
+        if (*endptr == '-') {
+            v = strtoul(endptr + 1, NULL, 10);
+            if (v < (unsigned long)*skip_r)
+                return false;
+
+            if (v < (unsigned long)*size_r)
+                *size_r = v + 1;
+        }
+    }
+
+    return true;
+}
 
 static void
 make_etag(char *p, const struct stat *st)
@@ -50,6 +92,8 @@ file_callback(struct request *request2)
     growing_buffer_t headers;
     istream_t body;
     struct stat st;
+    bool range = false;
+    off_t skip, size;
     char buffer[64];
     http_status_t status;
 
@@ -88,7 +132,16 @@ file_callback(struct request *request2)
         return;
     }
 
-    body = istream_file_new(request->pool, path, st.st_size);
+    size = st.st_size;
+
+    if (tr->status == 0 && !request_transformation_enabled(request2)) {
+        const char *p = strmap_get(request->headers, "range");
+
+        if (p != NULL)
+            range = parse_range_header(p, &skip, &size);
+    }
+
+    body = istream_file_new(request->pool, path, size);
     if (body == NULL) {
         if (errno == ENOENT) {
             http_server_send_message(request,
@@ -103,6 +156,20 @@ file_callback(struct request *request2)
     }
 
     headers = growing_buffer_new(request->pool, 2048);
+
+    status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
+
+    if (range) {
+        istream_skip(body, skip);
+
+        status = HTTP_STATUS_PARTIAL_CONTENT;
+
+        header_write(headers, "content-range",
+                     p_sprintf(request->pool, "bytes %lu-%lu/%lu",
+                               (unsigned long)skip,
+                               (unsigned long)(size - 1),
+                               (unsigned long)st.st_size));
+    }
 
     make_etag(buffer, &st);
     header_write(headers, "etag", buffer);
@@ -127,8 +194,6 @@ file_callback(struct request *request2)
         }
 #endif /* #ifndef NO_XATTR */
     }
-
-    status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
     if (!request_processor_enabled(request2)) {
         if (request->method == HTTP_METHOD_POST) {

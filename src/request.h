@@ -42,6 +42,12 @@ struct request {
     struct async_operation_ref *async_ref;
 };
 
+static inline bool
+request_transformation_enabled(struct request *request)
+{
+    return request->translate.response->transformation != NULL;
+}
+
 bool
 request_processor_enabled(struct request *request);
 
