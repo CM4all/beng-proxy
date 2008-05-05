@@ -104,7 +104,8 @@ file_callback(struct request *request2)
 
     if (request->method != HTTP_METHOD_HEAD &&
         request->method != HTTP_METHOD_GET &&
-        request->method != HTTP_METHOD_POST) {
+        (!request_processor_enabled(request2) ||
+         request->method != HTTP_METHOD_POST)) {
         http_server_send_message(request,
                                  HTTP_STATUS_METHOD_NOT_ALLOWED,
                                  "This method is not allowed.");
@@ -198,14 +199,6 @@ file_callback(struct request *request2)
     }
 
     if (!request_processor_enabled(request2)) {
-        if (request->method == HTTP_METHOD_POST) {
-            istream_close(body);
-            http_server_send_message(request,
-                                     HTTP_STATUS_METHOD_NOT_ALLOWED,
-                                     "This method is not allowed.");
-            return;
-        }
-
 #ifndef NO_LAST_MODIFIED_HEADER
         header_write(headers, "last-modified", http_date_format(st.st_mtime));
 #endif
