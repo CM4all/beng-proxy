@@ -9,32 +9,30 @@
 
 #include "pool.h"
 
-typedef struct hashmap *hashmap_t;
-
 struct hashmap_pair {
     const char *key;
     void *value;
 };
 
-hashmap_t __attr_malloc
+struct hashmap *__attr_malloc
 hashmap_new(pool_t pool, unsigned capacity);
 
 void
-hashmap_addn(hashmap_t map, const char *key, void *value);
+hashmap_addn(struct hashmap *map, const char *key, void *value);
 
 void *
-hashmap_put(hashmap_t map, const char *key, void *value, bool overwrite);
+hashmap_put(struct hashmap *map, const char *key, void *value, bool overwrite);
 
 void *
-hashmap_remove(hashmap_t map, const char *key);
+hashmap_remove(struct hashmap *map, const char *key);
 
 void *
-hashmap_get(hashmap_t map, const char *key);
+hashmap_get(struct hashmap *map, const char *key);
 
 void
-hashmap_rewind(hashmap_t map);
+hashmap_rewind(struct hashmap *map);
 
 const struct hashmap_pair *
-hashmap_next(hashmap_t map);
+hashmap_next(struct hashmap *map);
 
 #endif

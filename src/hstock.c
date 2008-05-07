@@ -14,7 +14,7 @@ struct hstock {
     const struct stock_class *class;
     void *class_ctx;
 
-    hashmap_t stocks;
+    struct hashmap *stocks;
 };
 
 struct hstock *

@@ -36,10 +36,10 @@ calc_hash(const char *p) {
     return hash;
 }
 
-hashmap_t
+struct hashmap *
 hashmap_new(pool_t pool, unsigned capacity)
 {
-    hashmap_t map = p_calloc(pool, sizeof(*map) + sizeof(map->slots) * (capacity - 1));
+    struct hashmap *map = p_calloc(pool, sizeof(*map) + sizeof(map->slots) * (capacity - 1));
     assert(capacity > 1);
     map->pool = pool;
     map->capacity = capacity;
@@ -47,7 +47,7 @@ hashmap_new(pool_t pool, unsigned capacity)
 }
 
 void
-hashmap_addn(hashmap_t map, const char *key, void *value)
+hashmap_addn(struct hashmap *map, const char *key, void *value)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;
@@ -87,7 +87,7 @@ hashmap_maybe_overwrite(struct slot *slot, const char *key, void *value,
 }
 
 void *
-hashmap_put(hashmap_t map, const char *key, void *value, bool overwrite)
+hashmap_put(struct hashmap *map, const char *key, void *value, bool overwrite)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;
@@ -120,7 +120,7 @@ hashmap_put(hashmap_t map, const char *key, void *value, bool overwrite)
 }
 
 void *
-hashmap_remove(hashmap_t map, const char *key)
+hashmap_remove(struct hashmap *map, const char *key)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;
@@ -160,7 +160,7 @@ hashmap_remove(hashmap_t map, const char *key)
 }
 
 void *
-hashmap_get(hashmap_t map, const char *key)
+hashmap_get(struct hashmap *map, const char *key)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot;
@@ -184,14 +184,14 @@ hashmap_get(hashmap_t map, const char *key)
 }
 
 void
-hashmap_rewind(hashmap_t map)
+hashmap_rewind(struct hashmap *map)
 {
     map->current_slot = NULL;
     map->next_slot = 0;
 }
 
 const struct hashmap_pair *
-hashmap_next(hashmap_t map)
+hashmap_next(struct hashmap *map)
 {
     if (map->current_slot != NULL && map->current_slot->next != NULL) {
         map->current_slot = map->current_slot->next;
