@@ -78,7 +78,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
     struct strref name, value;
     struct cookie *cookie;
 
-    http_next_name_value(jar->pool, input, &name, &value);
+    http_next_name_value(tpool, input, &name, &value);
     if (strref_is_empty(&name))
         return false;
 
@@ -101,7 +101,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
     while (!strref_is_empty(input) && input->data[0] == ';') {
         strref_skip(input, 1);
 
-        http_next_name_value(jar->pool, input, &name, &value);
+        http_next_name_value(tpool, input, &name, &value);
         if (strref_lower_cmp_literal(&name, "domain") == 0) {
             const char *new_domain = strref_dup(jar->pool, &value);
             if (domain_matches(domain, new_domain))
@@ -112,7 +112,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
             unsigned long seconds;
             char *endptr;
 
-            seconds = strtoul(strref_dup(jar->pool, &value), &endptr, 10);
+            seconds = strtoul(strref_dup(tpool, &value), &endptr, 10);
             if (seconds > 0 && *endptr == 0)
                 cookie->expires = time(NULL) + seconds;
         }
@@ -131,15 +131,20 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
                        const char *domain)
 {
     struct strref input;
+    struct pool_mark mark;
 
     strref_set_c(&input, value);
+
+    pool_mark(tpool, &mark);
 
     while (1) {
         if (!parse_next_cookie(jar, &input, domain))
             break;
 
-        if (strref_is_empty(&input))
+        if (strref_is_empty(&input)) {
+            pool_rewind(tpool, &mark);
             return;
+        }
 
         if (input.data[0] != ',')
             break;
@@ -147,6 +152,8 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
         strref_skip(&input, 1);
         strref_ltrim(&input);
     }
+
+    pool_rewind(tpool, &mark);
 
     /* XXX log error */
 }
