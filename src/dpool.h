@@ -24,4 +24,13 @@ d_malloc(struct dpool *pool, size_t size);
 void
 d_free(struct dpool *pool, const void *p);
 
+char *
+d_memdup(struct dpool *pool, const void *src, size_t length);
+
+char *
+d_strdup(struct dpool *pool, const char *src);
+
+char *
+d_strndup(struct dpool *pool, const char *src, size_t length);
+
 #endif
