@@ -224,7 +224,7 @@ hashmap_r_get_widget_session(struct session *session, struct hashmap **map_r,
     ws->session = session;
     ws->pool = session->pool;
     ws->id = p_strdup(session->pool, id);
-    ws->children = NULL; 
+    ws->children = NULL;
     ws->path_info = NULL;
     ws->query_string = NULL;
 
