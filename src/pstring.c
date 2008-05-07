@@ -22,10 +22,7 @@ p_memdup(pool_t pool, const void *src, size_t length)
 char *
 p_strdup(pool_t pool, const char *src)
 {
-    size_t length = strlen(src) + 1;
-    char *dest = p_malloc(pool, length);
-    memcpy(dest, src, length);
-    return dest;
+    return p_memdup(pool, src, strlen(src) + 1);
 }
 
 char *
