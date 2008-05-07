@@ -56,21 +56,19 @@ dhashmap_new(struct dpool *pool, unsigned capacity)
 }
 
 static inline void *
-dhashmap_maybe_overwrite(struct slot *slot, const char *key, void *value,
-                        bool overwrite)
+dhashmap_overwrite(struct slot *slot, const char *key, void *value)
 {
     void *old = slot->pair.value;
     assert(old != NULL);
-    if (overwrite) {
-        slot->pair.key = key;
-        slot->pair.value = value;
-    }
+
+    slot->pair.key = key;
+    slot->pair.value = value;
 
     return old;
 }
 
 void *
-dhashmap_put(struct dhashmap *map, const char *key, void *value, bool overwrite)
+dhashmap_put(struct dhashmap *map, const char *key, void *value)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;
@@ -84,14 +82,14 @@ dhashmap_put(struct dhashmap *map, const char *key, void *value, bool overwrite)
         prev->pair.value = value;
         return NULL;
     } else if (strcmp(prev->pair.key, key) == 0)
-        return dhashmap_maybe_overwrite(prev, key, value, overwrite);
+        return dhashmap_overwrite(prev, key, value);
 
     for (slot = prev->next; slot != NULL; slot = slot->next) {
         assert(slot->pair.key != NULL);
         assert(slot->pair.value != NULL);
 
         if (strcmp(slot->pair.key, key) == 0)
-            return dhashmap_maybe_overwrite(slot, key, value, overwrite);
+            return dhashmap_overwrite(slot, key, value);
     }
 
     slot = d_malloc(map->pool, sizeof(*slot));

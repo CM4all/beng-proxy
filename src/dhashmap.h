@@ -10,8 +10,6 @@
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
-
 struct dpool;
 
 struct dhashmap_pair {
@@ -23,7 +21,7 @@ struct dhashmap *__attr_malloc
 dhashmap_new(struct dpool *pool, unsigned capacity);
 
 void *
-dhashmap_put(struct dhashmap *map, const char *key, void *value, bool overwrite);
+dhashmap_put(struct dhashmap *map, const char *key, void *value);
 
 void *
 dhashmap_remove(struct dhashmap *map, const char *key);
