@@ -30,6 +30,9 @@ char *
 d_strndup(struct dpool *pool, const char *src, size_t length)
 {
     char *dest = d_malloc(pool, length + 1);
+    if (dest == NULL)
+        return NULL;
+
     memcpy(dest, src, length);
     dest[length] = 0;
     return dest;
