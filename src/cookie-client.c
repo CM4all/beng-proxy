@@ -7,6 +7,7 @@
 #include "cookie-client.h"
 #include "strutil.h"
 #include "strref2.h"
+#include "strref-pool.h"
 #include "strmap.h"
 #include "http-string.h"
 #include "tpool.h"

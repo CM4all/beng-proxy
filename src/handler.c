@@ -14,6 +14,7 @@
 #include "tcache.h"
 #include "growing-buffer.h"
 #include "header-writer.h"
+#include "strref-pool.h"
 
 #include <daemon/log.h>
 

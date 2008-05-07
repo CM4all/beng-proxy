@@ -6,6 +6,7 @@
 
 #include "uri-parser.h"
 #include "uri-escape.h"
+#include "strref-pool.h"
 
 #include <string.h>
 

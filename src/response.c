@@ -14,6 +14,7 @@
 #include "filter.h"
 #include "access-log.h"
 #include "uri-address.h"
+#include "strref-pool.h"
 
 static const char *const copy_headers[] = {
     "age",

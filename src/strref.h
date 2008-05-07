@@ -8,8 +8,6 @@
 #ifndef __BENG_STRREF_H
 #define __BENG_STRREF_H
 
-#include "pool.h"
-
 #include <inline/compiler.h>
 
 #include <assert.h>
@@ -59,21 +57,6 @@ strref_set(struct strref *s, const char *p, size_t length)
 
     s->length = length;
     s->data = p;
-}
-
-static __attr_always_inline void
-strref_set_dup(pool_t pool, struct strref *dest, const struct strref *src)
-{
-    assert(dest != NULL);
-    assert(src != NULL);
-    assert(src->length == 0 || src->data != NULL);
-
-    if (src->length == 0) {
-        dest->length = 0;
-    } else {
-        dest->length = src->length;
-        dest->data = p_memdup(pool, src->data, src->length);
-    }
 }
 
 static __attr_always_inline void
@@ -157,15 +140,6 @@ strref_last(const struct strref *s)
     assert(s->data != NULL);
 
     return s->data[s->length - 1];
-}
-
-static __attr_always_inline char *
-strref_dup(pool_t pool, const struct strref *s)
-{
-    assert(pool != NULL);
-    assert(s != NULL);
-
-    return p_strndup(pool, s->data, s->length);
 }
 
 static __attr_always_inline int

@@ -5,6 +5,7 @@
  */
 
 #include "widget.h"
+#include "strref-pool.h"
 
 #include <string.h>
 #include <assert.h>

@@ -16,6 +16,7 @@
 #include "async.h"
 #include "rewrite-uri.h"
 #include "strref2.h"
+#include "strref-pool.h"
 
 #include <assert.h>
 #include <string.h>

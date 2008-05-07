@@ -8,6 +8,7 @@
 #include "session.h"
 #include "processor.h"
 #include "uri-parser.h"
+#include "strref-pool.h"
 
 #include <string.h>
 #include <assert.h>

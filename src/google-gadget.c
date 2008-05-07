@@ -14,6 +14,7 @@
 #include "growing-buffer.h"
 #include "uri-address.h"
 #include "session.h"
+#include "strref-pool.h"
 
 /* XXX make the URL configurable */
 static const char jscript[] =

@@ -8,6 +8,7 @@
 #include "widget.h"
 #include "widget-stream.h"
 #include "widget-resolver.h"
+#include "strref-pool.h"
 
 static const char *
 current_frame(const struct widget *widget)

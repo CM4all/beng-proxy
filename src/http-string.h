@@ -7,6 +7,7 @@
 #ifndef __BENG_HTTP_STRING_H
 #define __BENG_HTTP_STRING_H
 
+#include "pool.h"
 #include "strref.h"
 
 #include <inline/compiler.h>
