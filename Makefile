@@ -166,6 +166,7 @@ SOURCES = src/main.c \
 	src/strutil.c \
 	src/hashmap.c \
 	src/strmap.c \
+	src/dhashmap.c \
 	src/cache.c \
 	src/http-cache.c \
 	src/stock.c \
