@@ -100,9 +100,6 @@ session_new(void);
 struct session *
 session_get(session_id_t id);
 
-void
-session_remove(struct session *session);
-
 struct widget_session *
 session_get_widget(struct session *session, const char *id, bool create);
 

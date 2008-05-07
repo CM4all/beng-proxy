@@ -33,6 +33,9 @@ static struct {
 } session_manager;
 
 static void
+session_remove(struct session *session);
+
+static void
 cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
                        void *ctx __attr_unused)
 {
@@ -171,7 +174,7 @@ session_get(session_id_t id)
     return NULL;
 }
 
-void
+static void
 session_remove(struct session *session)
 {
     pool_t pool = session->pool;
