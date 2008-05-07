@@ -30,14 +30,12 @@ struct listener {
 };
 
 static void
-listener_event_callback(int fd, short event, void *ctx)
+listener_event_callback(int fd, short event __attr_unused, void *ctx)
 {
     listener_t listener = ctx;
     struct sockaddr_storage sa;
     socklen_t sa_len;
     int remote_fd, ret;
-
-    (void)event;
 
     sa_len = sizeof(sa);
     remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);

@@ -188,7 +188,7 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
  */
 
 static void
-translate_idle_event_callback(int fd, short event, void *ctx)
+translate_idle_event_callback(int fd, short event __attr_unused, void *ctx)
 {
     struct translate_connection *connection = ctx;
     unsigned char buffer;
@@ -197,8 +197,6 @@ translate_idle_event_callback(int fd, short event, void *ctx)
     /* whatever happens here, we must close the translation server
        connection: this connection is idle, there is no request, but
        there is something on the socket */
-
-    (void)event;
 
     nbytes = read(fd, &buffer, sizeof(buffer));
     if (nbytes < 0)
@@ -222,11 +220,9 @@ static void
 translate_try_read(struct translate_connection *connection);
 
 static void
-translate_read_event_callback(int fd, short event, void *ctx)
+translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct translate_connection *connection = ctx;
-
-    (void)fd;
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "read timeout on translation server\n");
@@ -490,11 +486,9 @@ static void
 translate_try_write(struct translate_connection *connection);
 
 static void
-translate_write_event_callback(int fd, short event, void *ctx)
+translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct translate_connection *connection = ctx;
-
-    (void)fd;
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "write timeout on translation server\n");

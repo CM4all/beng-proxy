@@ -33,15 +33,12 @@ static struct {
 } session_manager;
 
 static void
-cleanup_event_callback(int fd, short event, void *ctx)
+cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
+                       void *ctx __attr_unused)
 {
     time_t now = time(NULL);
     unsigned i;
     struct session *session, *next;
-
-    (void)fd;
-    (void)event;
-    (void)ctx;
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
         for (session = (struct session *)session_manager.sessions[i].next;

@@ -576,11 +576,9 @@ http_client_try_read(http_client_connection_t connection)
 }
 
 static void
-http_client_event_callback(int fd, short event, void *ctx)
+http_client_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     http_client_connection_t connection = ctx;
-
-    (void)fd;
 
     pool_ref(connection->pool);
 

@@ -17,12 +17,10 @@ struct istream_later {
 
 
 static void
-later_event_callback(int fd, short event, void *ctx)
+later_event_callback(int fd __attr_unused, short event __attr_unused,
+                     void *ctx)
 {
     struct istream_later *later = ctx;
-
-    (void)fd;
-    (void)event;
 
     if (later->input == NULL)
         istream_deinit_eof(&later->output);

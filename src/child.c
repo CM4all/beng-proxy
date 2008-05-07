@@ -37,13 +37,11 @@ static void
 schedule_respawn(struct instance *instance);
 
 static void
-respawn_event_callback(int fd, short event, void *ctx)
+respawn_event_callback(int fd __attr_unused, short event __attr_unused,
+                       void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
     pid_t pid;
-
-    (void)fd;
-    (void)event;
 
     instance->respawn_event.ev_events = 0;
 
@@ -75,15 +73,13 @@ schedule_respawn(struct instance *instance)
 }
 
 static void
-child_event_callback(int fd, short event, void *ctx)
+child_event_callback(int fd __attr_unused, short event __attr_unused,
+                     void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
     pid_t pid;
     int status, exit_status;
     struct child *child;
-
-    (void)fd;
-    (void)event;
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         child = find_child_by_pid(instance, pid);
