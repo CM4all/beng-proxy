@@ -55,9 +55,6 @@ struct session {
     /** when will this session expire? */
     time_t expires;
 
-    /** is this session removed from session_manager? */
-    bool removed:1;
-
     /** has a HTTP cookie with this session id already been sent? */
     bool cookie_sent:1;
 

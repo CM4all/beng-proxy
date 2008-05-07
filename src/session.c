@@ -179,9 +179,6 @@ session_remove(struct session *session)
 {
     pool_t pool = session->pool;
 
-    if (session->removed)
-        return;
-
     assert(session_manager.num_sessions > 0);
 
     list_remove(&session->hash_siblings);
@@ -190,7 +187,6 @@ session_remove(struct session *session)
     if (session_manager.num_sessions == 0)
         evtimer_del(&session_manager.cleanup_event);
 
-    session->removed = true;
     pool_unref(pool);
 }
 
