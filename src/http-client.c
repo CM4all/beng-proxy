@@ -157,7 +157,6 @@ http_client_response_stream_close(istream_t istream)
     poison_undefined(&connection->response,
                      sizeof(connection->response) - sizeof(connection->response.body_reader));
     connection->request.pool = NULL;
-    connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
 #endif
 
@@ -411,7 +410,6 @@ http_client_response_finished(http_client_connection_t connection)
     poison_undefined(&connection->response,
                      sizeof(connection->response) - sizeof(connection->response.body_reader));
     connection->request.pool = NULL;
-    connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
 #endif
 
@@ -631,7 +629,6 @@ http_client_connection_new(pool_t pool, int fd,
     connection->handler_ctx = ctx;
 
     connection->request.pool = NULL;
-    connection->request.istream = NULL;
     connection->response.read_state = READ_NONE;
 
     event2_init(&connection->event, connection->fd,
@@ -731,6 +728,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
+    assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
 
     nbytes = write(connection->fd, data, length);
@@ -755,6 +753,7 @@ http_client_request_stream_eof(void *ctx)
 {
     http_client_connection_t connection = ctx;
 
+    assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
 
     connection->request.istream = NULL;
@@ -770,6 +769,7 @@ http_client_request_stream_abort(void *ctx)
 {
     http_client_connection_t connection = ctx;
 
+    assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
 
     http_client_connection_close(connection);
@@ -820,7 +820,6 @@ http_client_request(http_client_connection_t connection,
 
     assert(connection != NULL);
     assert(connection->request.pool == NULL);
-    assert(connection->request.istream == NULL);
     assert(connection->response.read_state == READ_NONE);
     assert(handler != NULL);
     assert(handler->response != NULL);
