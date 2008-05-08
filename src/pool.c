@@ -550,8 +550,6 @@ pool_notify(pool_t pool, struct pool_notify *notify)
 void
 pool_trash(pool_t pool)
 {
-    assert(!pool->major);
-
     if (pool->trashed)
         return;
 
