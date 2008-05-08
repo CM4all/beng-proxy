@@ -803,8 +803,15 @@ p_free_libc(pool_t pool, void *ptr)
 }
 
 void
-p_free(pool_t pool, void *ptr)
+p_free(pool_t pool, const void *cptr)
 {
+    /* deconst hack - we know what we're doing![tm] */
+    union {
+        const void *in;
+        void *out;
+    } u = { .in = cptr };
+    void *ptr = u.out;
+
     assert(pool != NULL);
     assert(ptr != NULL);
     assert((((unsigned long)ptr) & ALIGN_BITS) == 0);

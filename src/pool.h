@@ -116,7 +116,7 @@ p_malloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
 #define p_malloc_fwd(pool, size) p_malloc_impl(pool, size TRACE_ARGS_FWD)
 
 void
-p_free(pool_t pool, void *ptr);
+p_free(pool_t pool, const void *ptr);
 
 void * __attr_malloc
 p_calloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
