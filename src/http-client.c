@@ -646,15 +646,8 @@ http_client_connection_new(pool_t pool, int fd,
 static void
 http_client_request_close(http_client_connection_t connection)
 {
-    pool_t pool;
-
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
-
-    /* remember and clear the pool now, to avoid recursive calls of
-       this function */
-    pool = connection->request.pool;
-    connection->request.pool = NULL;
 
     if (connection->request.istream != NULL)
         istream_free_handler(&connection->request.istream);
@@ -669,7 +662,10 @@ http_client_request_close(http_client_connection_t connection)
         http_response_handler_invoke_abort(&connection->request.handler);
     }
 
-    pool_unref(pool);
+    if (connection->request.pool != NULL) {
+        pool_unref(connection->request.pool);
+        connection->request.pool = NULL;
+    }
 }
 
 void
