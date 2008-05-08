@@ -43,6 +43,7 @@ static void
 my_http_server_connection_free(void *ctx)
 {
     struct client_connection *connection = ctx;
+    pool_t pool;
 
     assert(connection->http != NULL);
     assert(connection->instance != NULL);
@@ -53,7 +54,9 @@ my_http_server_connection_free(void *ctx)
     list_remove(&connection->siblings);
     --connection->instance->num_connections;
 
-    pool_unref(connection->pool);
+    pool = connection->pool;
+    pool_unref(pool);
+    pool_trash(pool);
 }
 
 static const struct http_server_connection_handler my_http_server_connection_handler = {
