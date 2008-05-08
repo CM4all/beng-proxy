@@ -48,6 +48,8 @@ exit_event_callback(int fd, short event, void *ctx)
     while (!list_empty(&instance->connections))
         close_connection((struct client_connection*)instance->connections.next);
 
+    pool_commit();
+
     event_del(&instance->child_event);
     kill_children(instance);
 
@@ -63,6 +65,8 @@ exit_event_callback(int fd, short event, void *ctx)
 
     if (instance->http_client_stock != NULL)
         hstock_free(&instance->http_client_stock);
+
+    pool_commit();
 }
 
 static void
