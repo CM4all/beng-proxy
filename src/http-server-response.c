@@ -6,6 +6,7 @@
 
 #include "http-server-internal.h"
 #include "direct.h"
+#include "istream-internal.h"
 
 #include <daemon/log.h>
 
@@ -87,6 +88,11 @@ http_server_response_stream_eof(void *ctx)
            disabling keepalive; this seems cheaper than redirecting
            the rest of the body to /dev/null */
         connection->keep_alive = false;
+        connection->request.read_state = READ_END;
+
+        istream_deinit_abort(&connection->request.body_reader.output);
+        if (!http_server_connection_valid(connection))
+            return;
     }
 
     pool_unref(connection->request.request->pool);
