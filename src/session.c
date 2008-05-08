@@ -132,6 +132,21 @@ session_manager_deinit(void)
     session_manager = NULL;
 }
 
+void
+session_manager_event_add(void)
+{
+    if (session_manager->num_sessions == 0) {
+        struct timeval tv = cleanup_interval;
+        evtimer_add(&session_cleanup_event, &tv);
+    }
+}
+
+void
+session_manager_event_del(void)
+{
+    event_del(&session_cleanup_event);
+}
+
 static struct list_head *
 session_slot(session_id_t id)
 {
@@ -205,12 +220,14 @@ session_new(void)
 
     return session;
 }
-
+#include <unistd.h>
 struct session *
 session_get(session_id_t id)
 {
     struct list_head *head = session_slot(id);
     struct session *session;
+
+    daemon_log(1, "PID=%d session_get(0x%x)\n", getpid(), id);
 
     lock_lock(&session_manager->lock);
 

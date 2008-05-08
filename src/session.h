@@ -86,6 +86,12 @@ session_manager_init(void);
 void
 session_manager_deinit(void);
 
+void
+session_manager_event_add(void);
+
+void
+session_manager_event_del(void);
+
 session_id_t
 session_id_parse(const char *p);
 
