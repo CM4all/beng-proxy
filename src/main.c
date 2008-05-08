@@ -29,12 +29,9 @@ bool debug_mode = false;
 #endif
 
 static void
-exit_event_callback(int fd, short event, void *ctx)
+exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
-
-    (void)fd;
-    (void)event;
 
     if (instance->should_exit)
         return;
