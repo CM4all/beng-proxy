@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 
     init_signals(&instance);
 
-    session_manager_init(instance.pool);
+    session_manager_init();
 
     ret = listener_tcp_port_new(instance.pool,
                                 instance.config.port,

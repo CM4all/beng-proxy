@@ -150,7 +150,7 @@ create_child(struct instance *instance)
 
         init_signals(instance);
 
-        session_manager_init(instance->pool);
+        session_manager_init();
 
         if (instance->listener != NULL)
             listener_event_add(instance->listener);

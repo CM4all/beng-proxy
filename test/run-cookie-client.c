@@ -1,6 +1,8 @@
 #include "cookie-client.h"
 #include "header-writer.h"
 #include "tpool.h"
+#include "shm.h"
+#include "dpool.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -9,6 +11,8 @@
 
 int main(int argc, char **argv) {
     pool_t pool;
+    struct shm *shm;
+    struct dpool *dpool;
     int i;
     struct cookie_jar *jar;
     struct strmap *headers;
@@ -20,7 +24,10 @@ int main(int argc, char **argv) {
     pool = pool_new_libc(NULL, "root");
     tpool_init(pool);
 
-    jar = cookie_jar_new(pool);
+    shm = shm_new(1024, 512);
+    dpool = dpool_new(shm);
+
+    jar = cookie_jar_new(dpool);
 
     for (i = 1; i < argc; ++i)
         cookie_jar_set_cookie2(jar, argv[i], "foo.bar");
@@ -41,6 +48,9 @@ int main(int argc, char **argv) {
 
         growing_buffer_consume(gb, (size_t)nbytes);
     }
+
+    dpool_destroy(dpool);
+    shm_close(shm);
 
     tpool_deinit();
     pool_unref(pool);

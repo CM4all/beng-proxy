@@ -7,7 +7,11 @@
 #include "session.h"
 #include "format.h"
 #include "cookie-client.h"
-#include "hashmap.h"
+#include "shm.h"
+#include "dpool.h"
+#include "dhashmap.h"
+
+#include <daemon/log.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -24,7 +28,7 @@ static struct timeval cleanup_interval = {
 };
 
 static struct {
-    pool_t pool;
+    struct shm *shm;
 
     struct list_head sessions[SESSION_SLOTS];
     unsigned num_sessions;
@@ -60,15 +64,19 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 void
-session_manager_init(pool_t pool)
+session_manager_init(void)
 {
     unsigned i;
 
-    assert(session_manager.pool == NULL);
+    assert(session_manager.shm == NULL);
 
     srandom((unsigned)time(NULL));
 
-    session_manager.pool = pool_new_libc(pool, "session_manager");
+    session_manager.shm = shm_new(4096, 8192);
+    if (session_manager.shm == NULL) {
+        daemon_log(1, "shm_new() failed\n");
+        abort();
+    }
 
     for (i = 0; i < SESSION_SLOTS; ++i)
         list_init(&session_manager.sessions[i]);
@@ -81,7 +89,7 @@ session_manager_deinit(void)
 {
     unsigned i;
 
-    assert(session_manager.pool != NULL);
+    assert(session_manager.shm != NULL);
 
     event_del(&session_manager.cleanup_event);
 
@@ -92,8 +100,8 @@ session_manager_deinit(void)
         }
     }
 
-    pool_unref(session_manager.pool);
-    session_manager.pool = NULL;
+    shm_close(session_manager.shm);
+    session_manager.shm = NULL;
 }
 
 static struct list_head *
@@ -132,8 +140,20 @@ session_generate_id(void)
 struct session *
 session_new(void)
 {
-    pool_t pool = pool_new_libc(session_manager.pool, "session");
-    struct session *session = p_calloc(pool, sizeof(*session));
+    struct dpool *pool;
+    struct session *session;
+
+    pool = dpool_new(session_manager.shm);
+    if (pool == NULL)
+        return NULL;
+
+    session = d_malloc(pool, sizeof(*session));
+    if (session == NULL) {
+        dpool_destroy(pool);
+        return NULL;
+    }
+
+    memset(session, 0, sizeof(*session));
 
     session->pool = pool;
     session->uri_id = session_generate_id();
@@ -177,8 +197,6 @@ session_get(session_id_t id)
 static void
 session_remove(struct session *session)
 {
-    pool_t pool = session->pool;
-
     assert(session_manager.num_sessions > 0);
 
     list_remove(&session->hash_siblings);
@@ -187,14 +205,14 @@ session_remove(struct session *session)
     if (session_manager.num_sessions == 0)
         evtimer_del(&session_manager.cleanup_event);
 
-    pool_unref(pool);
+    dpool_destroy(session->pool);
 }
 
 static struct widget_session *
-hashmap_r_get_widget_session(struct session *session, struct hashmap **map_r,
+hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
                              const char *id, bool create)
 {
-    struct hashmap *map;
+    struct dhashmap *map;
     struct widget_session *ws;
 
     assert(session != NULL);
@@ -207,9 +225,9 @@ hashmap_r_get_widget_session(struct session *session, struct hashmap **map_r,
             return NULL;
 
         /* lazy initialisation */
-        *map_r = map = hashmap_new(session->pool, 16);
+        *map_r = map = dhashmap_new(session->pool, 16);
     } else {
-        ws = (struct widget_session *)hashmap_get(map, id);
+        ws = (struct widget_session *)dhashmap_get(map, id);
         if (ws != NULL)
             return ws;
 
@@ -219,16 +237,19 @@ hashmap_r_get_widget_session(struct session *session, struct hashmap **map_r,
 
     assert(create);
 
-    ws = p_malloc(session->pool, sizeof(*ws));
+    ws = d_malloc(session->pool, sizeof(*ws));
+    if (ws == NULL)
+        return NULL;
+
     ws->parent = NULL;
     ws->session = session;
     ws->pool = session->pool;
-    ws->id = p_strdup(session->pool, id);
+    ws->id = d_strdup(session->pool, id);
     ws->children = NULL;
     ws->path_info = NULL;
     ws->query_string = NULL;
 
-    hashmap_addn(map, ws->id, ws);
+    dhashmap_put(map, ws->id, ws);
     return ws;
 }
 

@@ -15,6 +15,7 @@
 #include "growing-buffer.h"
 #include "header-writer.h"
 #include "strref-pool.h"
+#include "dpool.h"
 
 #include <daemon/log.h>
 
@@ -94,7 +95,7 @@ translate_callback(const struct translate_response *response,
 
             if (request->session->translate == NULL ||
                 strcmp(response->session, request->session->translate) != 0)
-                request->session->translate = p_strdup(request->session->pool,
+                request->session->translate = d_strdup(request->session->pool,
                                                        response->session);
         }
     }
@@ -112,7 +113,7 @@ translate_callback(const struct translate_response *response,
 
             if (request->session->user == NULL ||
                 strcmp(response->user, request->session->user) != 0)
-                request->session->user = p_strdup(request->session->pool,
+                request->session->user = d_strdup(request->session->pool,
                                                   response->user);
         }
     }
@@ -130,7 +131,7 @@ translate_callback(const struct translate_response *response,
 
             if (request->session->language == NULL ||
                 strcmp(response->language, request->session->language) != 0)
-                request->session->language = p_strdup(request->session->pool,
+                request->session->language = d_strdup(request->session->pool,
                                                       response->language);
         }
     }

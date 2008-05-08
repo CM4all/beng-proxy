@@ -7,13 +7,13 @@
 #ifndef __BENG_SESSION_H
 #define __BENG_SESSION_H
 
-#include "pool.h"
-
 #include <inline/list.h>
 
 #include <time.h>
+#include <stdbool.h>
 
-struct hashmap;
+struct dpool;
+struct dhashmap;
 
 typedef unsigned session_id_t;
 
@@ -25,12 +25,12 @@ struct widget_session {
 
     struct session *session;
 
-    pool_t pool;
+    struct dpool *pool;
 
     /** local id of this widget; must not be NULL since widgets
         without an id cannot have a session */
     const char *id;
-    struct hashmap *children;
+    struct dhashmap *children;
 
     /** last relative URI */
     char *path_info;
@@ -44,7 +44,8 @@ struct widget_session {
  */
 struct session {
     struct list_head hash_siblings;
-    pool_t pool;
+
+    struct dpool *pool;
 
     /** identification number of this session in the URI */
     session_id_t uri_id;
@@ -73,14 +74,14 @@ struct session {
     const char *language;
 
     /** a map of widget path to struct widget_session */
-    struct hashmap *widgets;
+    struct dhashmap *widgets;
 
     /** all cookies received by widget servers */
     struct cookie_jar *cookies;
 };
 
 void
-session_manager_init(pool_t pool);
+session_manager_init(void);
 
 void
 session_manager_deinit(void);

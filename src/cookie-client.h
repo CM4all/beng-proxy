@@ -9,11 +9,12 @@
 
 #include "pool.h"
 
+struct dpool;
 struct strmap;
 struct cookie_jar;
 
 struct cookie_jar *
-cookie_jar_new(pool_t pool);
+cookie_jar_new(struct dpool *pool);
 
 /**
  * Parse a Set-Cookie2 response header and insert new cookies into the

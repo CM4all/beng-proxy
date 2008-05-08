@@ -8,9 +8,11 @@
 #include "strutil.h"
 #include "strref2.h"
 #include "strref-pool.h"
+#include "strref-dpool.h"
 #include "strmap.h"
 #include "http-string.h"
 #include "tpool.h"
+#include "dpool.h"
 
 #include <inline/list.h>
 
@@ -28,7 +30,7 @@ struct cookie {
 };
 
 struct cookie_jar {
-    pool_t pool;
+    struct dpool *pool;
 
     struct list_head cookies;
 };
@@ -43,21 +45,24 @@ cookie_delete(struct cookie_jar *jar, struct cookie *cookie)
     list_remove(&cookie->siblings);
 
     if (!strref_is_empty(&cookie->name))
-        strref_free(jar->pool, &cookie->name);
+        strref_free_d(jar->pool, &cookie->name);
     if (!strref_is_empty(&cookie->value))
-        strref_free(jar->pool, &cookie->value);
+        strref_free_d(jar->pool, &cookie->value);
     if (cookie->domain != NULL)
-        p_free(jar->pool, cookie->domain);
+        d_free(jar->pool, cookie->domain);
     if (cookie->path != NULL)
-        p_free(jar->pool, cookie->path);
+        d_free(jar->pool, cookie->path);
 
-    p_free(jar->pool, cookie);
+    d_free(jar->pool, cookie);
 }
 
 struct cookie_jar *
-cookie_jar_new(pool_t pool)
+cookie_jar_new(struct dpool *pool)
 {
-    struct cookie_jar *jar = p_malloc(pool, sizeof(*jar));
+    struct cookie_jar *jar = d_malloc(pool, sizeof(*jar));
+    if (jar == NULL)
+        return NULL;
+
     jar->pool = pool;
     list_init(&jar->cookies);
     return jar;
@@ -106,9 +111,17 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
     cookie = cookie_list_find(&jar->cookies, domain, name.data, name.length);
     if (cookie == NULL) {
-        cookie = p_malloc(jar->pool, sizeof(*cookie));
+        cookie = d_malloc(jar->pool, sizeof(*cookie));
+        if (cookie == NULL)
+            /* out of memory */
+            return false;
 
-        strref_set_dup(jar->pool, &cookie->name, &name);
+        strref_set_dup_d(jar->pool, &cookie->name, &name);
+        if (strref_is_empty(&cookie->name)) {
+            /* out of memory */
+            d_free(jar->pool, cookie);
+            return false;
+        }
 
         list_add(&cookie->siblings, &jar->cookies);
     }
@@ -117,7 +130,8 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
     cookie->path = NULL;
     cookie->expires = 0;
 
-    strref_set_dup(jar->pool, &cookie->value, &value);
+    strref_set_dup_d(jar->pool, &cookie->value, &value);
+    /* XXX check out of memory */
 
     strref_ltrim(input);
     while (!strref_is_empty(input) && input->data[0] == ';') {
@@ -127,9 +141,9 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
         if (strref_lower_cmp_literal(&name, "domain") == 0) {
             const char *new_domain = strref_dup(tpool, &value);
             if (domain_matches(domain, new_domain))
-                cookie->domain = p_strdup(jar->pool, new_domain);
+                cookie->domain = d_strdup(jar->pool, new_domain);
         } else if (strref_lower_cmp_literal(&name, "path") == 0)
-            cookie->path = strref_dup(jar->pool, &value);
+            cookie->path = strref_dup_d(jar->pool, &value);
         else if (strref_lower_cmp_literal(&name, "max-age") == 0) {
             unsigned long seconds;
             char *endptr;
@@ -143,7 +157,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
     }
 
     if (cookie->domain == NULL)
-        cookie->domain = p_strdup(jar->pool, domain);
+        cookie->domain = d_strdup(jar->pool, domain);
 
     return true;
 }

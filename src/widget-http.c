@@ -15,6 +15,7 @@
 #include "uri-address.h"
 #include "strref2.h"
 #include "strref-pool.h"
+#include "dpool.h"
 
 #include <daemon/log.h>
 
@@ -298,7 +299,7 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
     if (translate != NULL) {
         struct session *session = widget_get_session2(embed->widget);
         if (session != NULL)
-            session->translate = p_strdup(session->pool, translate);
+            session->translate = d_strdup(session->pool, translate);
     }
 
     if (status >= 300 && status < 400) {
