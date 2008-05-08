@@ -166,7 +166,7 @@ cookie_jar_http_header(struct cookie_jar *jar,
 {
     static const size_t buffer_size = 4096;
     char *buffer;
-    struct cookie *cookie;
+    struct cookie *cookie, *next;
     size_t length;
     struct pool_mark mark;
     time_t now;
@@ -185,7 +185,9 @@ cookie_jar_http_header(struct cookie_jar *jar,
 
     for (cookie = (struct cookie *)jar->cookies.next;
          &cookie->siblings != &jar->cookies;
-         cookie = (struct cookie *)cookie->siblings.next) {
+         cookie = next) {
+        next = (struct cookie *)cookie->siblings.next;
+
         if (!domain_matches(domain, cookie->domain) ||
             !path_matches(path, cookie->path) ||
             (cookie->expires != 0 && cookie->expires < now))
