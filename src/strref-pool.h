@@ -10,6 +10,8 @@
 #include "strref.h"
 #include "pool.h"
 
+#include <inline/poison.h>
+
 static __attr_always_inline void
 strref_set_dup(pool_t pool, struct strref *dest, const struct strref *src)
 {
@@ -32,6 +34,18 @@ strref_dup(pool_t pool, const struct strref *s)
     assert(s != NULL);
 
     return p_strndup(pool, s->data, s->length);
+}
+
+static __attr_always_inline void
+strref_free(pool_t pool, struct strref *s)
+{
+    assert(pool != NULL);
+    assert(s != NULL);
+    assert(s->length > 0);
+    assert(s->data != NULL);
+
+    p_free(pool, s->data);
+    poison_undefined(s, sizeof(*s));
 }
 
 #endif
