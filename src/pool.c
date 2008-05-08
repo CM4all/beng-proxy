@@ -85,7 +85,7 @@ struct pool {
 
 #ifndef NDEBUG
     struct list_head notify;
-    int trashed;
+    bool trashed;
 #endif
 
     enum pool_type type;
@@ -260,7 +260,7 @@ pool_new(pool_t parent, const char *name)
     pool->ref = 1;
 #ifndef NDEBUG
     list_init(&pool->notify);
-    pool->trashed = 0;
+    pool->trashed = false;
 #endif
     pool->name = name;
 #ifndef NDEBUG
@@ -390,7 +390,7 @@ pool_destroy(pool_t pool, pool_t reparent_to)
             assert(pool->major || pool->trashed);
 
             list_add(&child->siblings, &trash);
-            child->trashed = 1;
+            child->trashed = true;
         } else {
             /* reparent all children of the destroyed pool to its
                parent, so they can live on - this reparenting never
@@ -559,7 +559,7 @@ pool_trash(pool_t pool)
 
     pool_remove_child(pool->parent, pool);
     list_add(&pool->siblings, &trash);
-    pool->trashed = 1;
+    pool->trashed = true;
 }
 
 void
