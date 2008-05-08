@@ -21,34 +21,35 @@
 #define SESSION_TTL_NEW 120
 #define SESSION_TTL 600
 
-#define SESSION_SLOTS 1024
+#define SESSION_SLOTS 64
 
-static const struct timeval cleanup_interval = {
-    .tv_sec = 60,
-    .tv_usec = 0,
-};
-
-static struct {
+struct session_manager {
     struct shm *shm;
 
     struct lock lock;
 
     struct list_head sessions[SESSION_SLOTS];
     unsigned num_sessions;
+};
 
-    struct event cleanup_event;
-} session_manager;
+static const struct timeval cleanup_interval = {
+    .tv_sec = 60,
+    .tv_usec = 0,
+};
+
+static struct session_manager *session_manager;
+static struct event session_cleanup_event;
 
 static void
 session_remove(struct session *session)
 {
-    assert(session_manager.num_sessions > 0);
+    assert(session_manager->num_sessions > 0);
 
     list_remove(&session->hash_siblings);
-    --session_manager.num_sessions;
+    --session_manager->num_sessions;
 
-    if (session_manager.num_sessions == 0)
-        evtimer_del(&session_manager.cleanup_event);
+    if (session_manager->num_sessions == 0)
+        evtimer_del(&session_cleanup_event);
 
     dpool_destroy(session->pool);
 }
@@ -61,11 +62,11 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
     unsigned i;
     struct session *session, *next;
 
-    lock_lock(&session_manager.lock);
+    lock_lock(&session_manager->lock);
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
-        for (session = (struct session *)session_manager.sessions[i].next;
-             &session->hash_siblings != &session_manager.sessions[i];
+        for (session = (struct session *)session_manager->sessions[i].next;
+             &session->hash_siblings != &session_manager->sessions[i];
              session = next) {
             next = (struct session *)session->hash_siblings.next;
             if (now >= session->expires)
@@ -73,35 +74,39 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
         }
     }
 
-    lock_unlock(&session_manager.lock);
+    lock_unlock(&session_manager->lock);
 
-    if (session_manager.num_sessions > 0) {
+    if (session_manager->num_sessions > 0) {
         struct timeval tv = cleanup_interval;
-        evtimer_add(&session_manager.cleanup_event, &tv);
+        evtimer_add(&session_cleanup_event, &tv);
     }
 }
 
 void
 session_manager_init(void)
 {
+    struct shm *shm;
     unsigned i;
 
-    assert(session_manager.shm == NULL);
+    assert(session_manager == NULL);
 
     srandom((unsigned)time(NULL));
 
-    session_manager.shm = shm_new(4096, 8192);
-    if (session_manager.shm == NULL) {
+    shm = shm_new(4096, 8192);
+    if (shm == NULL) {
         daemon_log(1, "shm_new() failed\n");
         abort();
     }
 
-    lock_init(&session_manager.lock);
+    session_manager = shm_alloc(shm);
+    session_manager->shm = shm;
+
+    lock_init(&session_manager->lock);
 
     for (i = 0; i < SESSION_SLOTS; ++i)
-        list_init(&session_manager.sessions[i]);
+        list_init(&session_manager->sessions[i]);
 
-    evtimer_set(&session_manager.cleanup_event, cleanup_event_callback, NULL);
+    evtimer_set(&session_cleanup_event, cleanup_event_callback, NULL);
 }
 
 void
@@ -109,27 +114,28 @@ session_manager_deinit(void)
 {
     unsigned i;
 
-    assert(session_manager.shm != NULL);
+    assert(session_manager->shm != NULL);
 
-    event_del(&session_manager.cleanup_event);
+    event_del(&session_cleanup_event);
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
-        while (!list_empty(&session_manager.sessions[i])) {
-            struct session *session = (struct session *)session_manager.sessions[i].next;
+        while (!list_empty(&session_manager->sessions[i])) {
+            struct session *session = (struct session *)session_manager->sessions[i].next;
             session_remove(session);
         }
     }
 
-    lock_destroy(&session_manager.lock);
+    lock_destroy(&session_manager->lock);
 
-    shm_close(session_manager.shm);
-    session_manager.shm = NULL;
+    shm_close(session_manager->shm);
+
+    session_manager = NULL;
 }
 
 static struct list_head *
 session_slot(session_id_t id)
 {
-    return &session_manager.sessions[id % SESSION_SLOTS];
+    return &session_manager->sessions[id % SESSION_SLOTS];
 }
 
 session_id_t
@@ -165,7 +171,7 @@ session_new(void)
     struct dpool *pool;
     struct session *session;
 
-    pool = dpool_new(session_manager.shm);
+    pool = dpool_new(session_manager->shm);
     if (pool == NULL)
         return NULL;
 
@@ -185,16 +191,16 @@ session_new(void)
     session->widgets = NULL;
     session->cookies = cookie_jar_new(pool);
 
-    lock_lock(&session_manager.lock);
+    lock_lock(&session_manager->lock);
 
     list_add(&session->hash_siblings, session_slot(session->uri_id));
-    ++session_manager.num_sessions;
+    ++session_manager->num_sessions;
 
-    lock_unlock(&session_manager.lock);
+    lock_unlock(&session_manager->lock);
 
-    if (session_manager.num_sessions == 1) {
+    if (session_manager->num_sessions == 1) {
         struct timeval tv = cleanup_interval;
-        evtimer_add(&session_manager.cleanup_event, &tv);
+        evtimer_add(&session_cleanup_event, &tv);
     }
 
     return session;
@@ -206,7 +212,7 @@ session_get(session_id_t id)
     struct list_head *head = session_slot(id);
     struct session *session;
 
-    lock_lock(&session_manager.lock);
+    lock_lock(&session_manager->lock);
 
     for (session = (struct session *)head->next;
          &session->hash_siblings != head;
@@ -214,14 +220,14 @@ session_get(session_id_t id)
         assert(session_slot(session->uri_id) == head);
 
         if (session->uri_id == id) {
-            lock_unlock(&session_manager.lock);
+            lock_unlock(&session_manager->lock);
 
             session->expires = time(NULL) + SESSION_TTL;
             return session;
         }
     }
 
-    lock_unlock(&session_manager.lock);
+    lock_unlock(&session_manager->lock);
 
     return NULL;
 }
