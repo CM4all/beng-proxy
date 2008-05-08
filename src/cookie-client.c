@@ -33,6 +33,27 @@ struct cookie_jar {
     struct list_head cookies;
 };
 
+static void
+cookie_delete(struct cookie_jar *jar, struct cookie *cookie)
+{
+    assert(jar != NULL);
+    assert(cookie != NULL);
+    assert(&cookie->siblings != &jar->cookies);
+
+    list_remove(&cookie->siblings);
+
+    if (!strref_is_empty(&cookie->name))
+        strref_free(jar->pool, &cookie->name);
+    if (!strref_is_empty(&cookie->value))
+        strref_free(jar->pool, &cookie->value);
+    if (cookie->domain != NULL)
+        p_free(jar->pool, cookie->domain);
+    if (cookie->path != NULL)
+        p_free(jar->pool, cookie->path);
+
+    p_free(jar->pool, cookie);
+}
+
 struct cookie_jar *
 cookie_jar_new(pool_t pool)
 {
@@ -187,10 +208,13 @@ cookie_jar_http_header(struct cookie_jar *jar,
          &cookie->siblings != &jar->cookies;
          cookie = next) {
         next = (struct cookie *)cookie->siblings.next;
+        if (cookie->expires != 0 && cookie->expires < now) {
+            cookie_delete(jar, cookie);
+            continue;
+        }
 
         if (!domain_matches(domain, cookie->domain) ||
-            !path_matches(path, cookie->path) ||
-            (cookie->expires != 0 && cookie->expires < now))
+            !path_matches(path, cookie->path))
             continue;
 
         if (buffer_size - length < cookie->name.length + 1 + 1 + cookie->value.length * 2 + 1 + 2)
