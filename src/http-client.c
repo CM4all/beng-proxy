@@ -147,12 +147,10 @@ http_client_response_stream_close(istream_t istream)
     connection->keep_alive = false;
     connection->response.read_state = READ_NONE;
 
-    istream_deinit_abort(&connection->response.body_reader.output);
+    pool_unref(connection->request.pool);
+    connection->request.pool = NULL;
 
-    if (connection->request.pool != NULL) {
-        pool_unref(connection->request.pool);
-        connection->request.pool = NULL;
-    }
+    istream_deinit_abort(&connection->response.body_reader.output);
 
 #ifdef POISON
     poison_undefined(&connection->request, sizeof(connection->request));
