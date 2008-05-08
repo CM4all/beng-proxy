@@ -32,9 +32,17 @@ struct http_server_connection {
     /* request */
     struct {
         enum {
+            /** there is no request (yet); waiting for the request
+                line */
             READ_START,
+
+            /** parsing request headers; waiting for empty line */
             READ_HEADERS,
+
+            /** reading the request body */
             READ_BODY,
+
+            /** the request has been consumed, and we are going to send the response */
             READ_END
         } read_state;
 
