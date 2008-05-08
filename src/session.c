@@ -10,6 +10,7 @@
 #include "shm.h"
 #include "dpool.h"
 #include "dhashmap.h"
+#include "lock.h"
 
 #include <daemon/log.h>
 
@@ -29,6 +30,8 @@ static const struct timeval cleanup_interval = {
 
 static struct {
     struct shm *shm;
+
+    struct lock lock;
 
     struct list_head sessions[SESSION_SLOTS];
     unsigned num_sessions;
@@ -58,6 +61,8 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
     unsigned i;
     struct session *session, *next;
 
+    lock_lock(&session_manager.lock);
+
     for (i = 0; i < SESSION_SLOTS; ++i) {
         for (session = (struct session *)session_manager.sessions[i].next;
              &session->hash_siblings != &session_manager.sessions[i];
@@ -67,6 +72,8 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
                 session_remove(session);
         }
     }
+
+    lock_unlock(&session_manager.lock);
 
     if (session_manager.num_sessions > 0) {
         struct timeval tv = cleanup_interval;
@@ -89,6 +96,8 @@ session_manager_init(void)
         abort();
     }
 
+    lock_init(&session_manager.lock);
+
     for (i = 0; i < SESSION_SLOTS; ++i)
         list_init(&session_manager.sessions[i]);
 
@@ -110,6 +119,8 @@ session_manager_deinit(void)
             session_remove(session);
         }
     }
+
+    lock_destroy(&session_manager.lock);
 
     shm_close(session_manager.shm);
     session_manager.shm = NULL;
@@ -174,8 +185,12 @@ session_new(void)
     session->widgets = NULL;
     session->cookies = cookie_jar_new(pool);
 
+    lock_lock(&session_manager.lock);
+
     list_add(&session->hash_siblings, session_slot(session->uri_id));
     ++session_manager.num_sessions;
+
+    lock_unlock(&session_manager.lock);
 
     if (session_manager.num_sessions == 1) {
         struct timeval tv = cleanup_interval;
@@ -191,16 +206,22 @@ session_get(session_id_t id)
     struct list_head *head = session_slot(id);
     struct session *session;
 
+    lock_lock(&session_manager.lock);
+
     for (session = (struct session *)head->next;
          &session->hash_siblings != head;
          session = (struct session *)session->hash_siblings.next) {
         assert(session_slot(session->uri_id) == head);
 
         if (session->uri_id == id) {
+            lock_unlock(&session_manager.lock);
+
             session->expires = time(NULL) + SESSION_TTL;
             return session;
         }
     }
+
+    lock_unlock(&session_manager.lock);
 
     return NULL;
 }
