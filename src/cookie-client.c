@@ -104,9 +104,9 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
         http_next_name_value(tpool, input, &name, &value);
         if (strref_lower_cmp_literal(&name, "domain") == 0) {
-            const char *new_domain = strref_dup(jar->pool, &value);
+            const char *new_domain = strref_dup(tpool, &value);
             if (domain_matches(domain, new_domain))
-                cookie->domain = new_domain;
+                cookie->domain = p_strdup(jar->pool, new_domain);
         } else if (strref_lower_cmp_literal(&name, "path") == 0)
             cookie->path = strref_dup(jar->pool, &value);
         else if (strref_lower_cmp_literal(&name, "max-age") == 0) {
