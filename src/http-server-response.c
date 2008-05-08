@@ -89,7 +89,8 @@ http_server_response_stream_eof(void *ctx)
         connection->keep_alive = false;
     }
 
-    http_server_request_free(&connection->request.request);
+    pool_unref(connection->request.request->pool);
+    connection->request.request = NULL;
 
     connection->request.read_state = READ_START;
 

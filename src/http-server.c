@@ -39,15 +39,6 @@ http_server_request_new(http_server_connection_t connection)
     return request;
 }
 
-void
-http_server_request_free(struct http_server_request **request_r)
-{
-    struct http_server_request *request = *request_r;
-    *request_r = NULL;
-
-    pool_unref(request->pool);
-}
-
 static inline void
 http_server_cork(http_server_connection_t connection)
 {
@@ -176,7 +167,8 @@ http_server_request_close(struct http_server_connection *connection)
     assert(connection->request.read_state != READ_START);
     assert(connection->request.request != NULL);
 
-    http_server_request_free(&connection->request.request);
+    pool_unref(connection->request.request->pool);
+    connection->request.request = NULL;
 
     if ((connection->request.read_state == READ_BODY ||
          connection->request.read_state == READ_END) &&
