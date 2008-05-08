@@ -47,7 +47,7 @@ struct http_server_connection {
         } read_state;
 
         /** did the client send an "Expect: 100-continue" header? */
-        int expect_100_continue;
+        bool expect_100_continue;
 
         struct http_server_request *request;
 

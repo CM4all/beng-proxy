@@ -253,7 +253,7 @@ http_server_maybe_send_100_continue(http_server_connection_t connection)
 
     assert(connection->response.istream == NULL);
 
-    connection->request.expect_100_continue = 0;
+    connection->request.expect_100_continue = false;
 
     connection->response.istream = istream_string_new(connection->request.request->pool,
                                                       "100 Continue\r\n\r\n");
