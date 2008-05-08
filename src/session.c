@@ -37,7 +37,18 @@ static struct {
 } session_manager;
 
 static void
-session_remove(struct session *session);
+session_remove(struct session *session)
+{
+    assert(session_manager.num_sessions > 0);
+
+    list_remove(&session->hash_siblings);
+    --session_manager.num_sessions;
+
+    if (session_manager.num_sessions == 0)
+        evtimer_del(&session_manager.cleanup_event);
+
+    dpool_destroy(session->pool);
+}
 
 static void
 cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
@@ -192,20 +203,6 @@ session_get(session_id_t id)
     }
 
     return NULL;
-}
-
-static void
-session_remove(struct session *session)
-{
-    assert(session_manager.num_sessions > 0);
-
-    list_remove(&session->hash_siblings);
-    --session_manager.num_sessions;
-
-    if (session_manager.num_sessions == 0)
-        evtimer_del(&session_manager.cleanup_event);
-
-    dpool_destroy(session->pool);
 }
 
 static struct widget_session *
