@@ -22,7 +22,7 @@
 
 #define SESSION_SLOTS 1024
 
-static struct timeval cleanup_interval = {
+static const struct timeval cleanup_interval = {
     .tv_sec = 60,
     .tv_usec = 0,
 };
