@@ -51,12 +51,15 @@ struct http_server_connection {
 
         struct http_server_request *request;
 
+        /** the request body reader; this variable is only valid if
+            read_state==READ_BODY */
         struct http_body_reader body_reader;
 
         struct async_operation_ref async_ref;
     } request;
 
-    /* response */
+    /** the response; this struct is only valid if
+        read_state==READ_BODY||read_state==READ_END */
     struct {
         bool writing_100_continue;
         char status_buffer[64];
