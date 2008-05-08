@@ -106,6 +106,8 @@ session_manager_init(void)
     for (i = 0; i < SESSION_SLOTS; ++i)
         list_init(&session_manager->sessions[i]);
 
+    session_manager->num_sessions = 0;
+
     evtimer_set(&session_cleanup_event, cleanup_event_callback, NULL);
 }
 
