@@ -649,8 +649,11 @@ http_client_request_close(http_client_connection_t connection)
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
 
-    if (connection->request.istream != NULL)
+    if (connection->request.istream != NULL) {
         istream_free_handler(&connection->request.istream);
+        if (connection->request.pool == NULL)
+            return;
+    }
 
     if (connection->response.read_state == READ_BODY) {
         http_client_response_stream_close(http_body_istream(&connection->response.body_reader));
