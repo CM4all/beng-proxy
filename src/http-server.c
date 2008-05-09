@@ -86,11 +86,9 @@ http_server_try_write(http_server_connection_t connection)
 }
 
 static void
-http_server_event_callback(int fd, short event, void *ctx)
+http_server_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     http_server_connection_t connection = ctx;
-
-    (void)fd;
 
     pool_ref(connection->pool);
 
@@ -351,9 +349,7 @@ http_server_response(struct http_server_request *request,
     connection->response.writing_100_continue = false;
 
     pool_ref(connection->pool);
-
     http_server_try_write(connection);
-
     pool_unref(connection->pool);
 }
 
