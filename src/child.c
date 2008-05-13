@@ -133,9 +133,7 @@ create_child(struct instance *instance)
 
         if (!list_empty(&instance->children)) {
             event_del(&instance->child_event);
-            do
-                list_remove(instance->children.next);
-            while (!list_empty(&instance->children));
+            list_init(&instance->children);
             instance->num_children = 0;
         }
 
