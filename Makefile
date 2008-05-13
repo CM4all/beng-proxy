@@ -143,6 +143,7 @@ SOURCES = src/main.c \
 	src/http-string.c \
 	src/http-body.c \
 	src/http-server.c \
+	src/http-server-send.c \
 	src/http-server-request.c \
 	src/http-server-read.c \
 	src/http-server-response.c \
