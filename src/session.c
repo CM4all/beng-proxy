@@ -120,8 +120,10 @@ session_manager_init(void)
 
     if (session_manager == NULL)
         session_manager = session_manager_new();
-    else
+    else {
         ++session_manager->ref;
+        shm_ref(session_manager->shm);
+    }
 
     evtimer_set(&session_cleanup_event, cleanup_event_callback, NULL);
 }

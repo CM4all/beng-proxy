@@ -24,6 +24,8 @@ struct page {
 };
 
 struct shm {
+    unsigned ref;
+
     size_t page_size;
     unsigned num_pages;
 
@@ -70,6 +72,7 @@ shm_new(size_t page_size, unsigned num_pages)
         return NULL;
 
     shm = (struct shm *)p;
+    shm->ref = 1;
     shm->page_size = page_size;
     shm->num_pages = num_pages;
 
@@ -86,14 +89,26 @@ shm_new(size_t page_size, unsigned num_pages)
 }
 
 void
+shm_ref(struct shm *shm)
+{
+    assert(shm != NULL);
+    assert(shm->ref > 0);
+
+    ++shm->ref;
+}
+
+void
 shm_close(struct shm *shm)
 {
     unsigned header_pages;
     int ret;
 
     assert(shm != NULL);
+    assert(shm->ref > 0);
 
-    lock_destroy(&shm->lock);
+    --shm->ref;
+    if (shm->ref == 0)
+        lock_destroy(&shm->lock);
 
     header_pages = calc_header_pages(shm->page_size, shm->num_pages);
     ret = munmap(shm, shm->page_size * (header_pages + shm->num_pages));
