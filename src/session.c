@@ -82,15 +82,12 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
     }
 }
 
-void
-session_manager_init(void)
+static struct session_manager *
+session_manager_new(void)
 {
     struct shm *shm;
+    struct session_manager *sm;
     unsigned i;
-
-    assert(session_manager == NULL);
-
-    srandom((unsigned)time(NULL));
 
     shm = shm_new(4096, 8192);
     if (shm == NULL) {
@@ -98,39 +95,56 @@ session_manager_init(void)
         abort();
     }
 
-    session_manager = shm_alloc(shm);
-    session_manager->shm = shm;
+    sm = shm_alloc(shm);
+    sm->shm = shm;
 
-    lock_init(&session_manager->lock);
+    lock_init(&sm->lock);
 
     for (i = 0; i < SESSION_SLOTS; ++i)
-        list_init(&session_manager->sessions[i]);
+        list_init(&sm->sessions[i]);
 
-    session_manager->num_sessions = 0;
+    sm->num_sessions = 0;
+
+    return sm;
+}
+
+void
+session_manager_init(void)
+{
+    srandom((unsigned)time(NULL));
+
+    assert(session_manager == NULL);
+
+    session_manager = session_manager_new();
 
     evtimer_set(&session_cleanup_event, cleanup_event_callback, NULL);
+}
+
+static void
+session_manager_destroy(struct session_manager *sm)
+{
+    unsigned i;
+
+    for (i = 0; i < SESSION_SLOTS; ++i) {
+        while (!list_empty(&sm->sessions[i])) {
+            struct session *session = (struct session *)sm->sessions[i].next;
+            session_remove(session);
+        }
+    }
+
+    lock_destroy(&sm->lock);
+
+    shm_close(sm->shm);
 }
 
 void
 session_manager_deinit(void)
 {
-    unsigned i;
-
     assert(session_manager->shm != NULL);
 
     event_del(&session_cleanup_event);
 
-    for (i = 0; i < SESSION_SLOTS; ++i) {
-        while (!list_empty(&session_manager->sessions[i])) {
-            struct session *session = (struct session *)session_manager->sessions[i].next;
-            session_remove(session);
-        }
-    }
-
-    lock_destroy(&session_manager->lock);
-
-    shm_close(session_manager->shm);
-
+    session_manager_destroy(session_manager);
     session_manager = NULL;
 }
 
