@@ -24,7 +24,7 @@
 #define SESSION_SLOTS 64
 
 struct session_manager {
-    unsigned in_use;
+    unsigned ref;
 
     struct shm *shm;
 
@@ -98,7 +98,7 @@ session_manager_new(void)
     }
 
     sm = shm_alloc(shm);
-    sm->in_use = 1;
+    sm->ref = 1;
     sm->shm = shm;
 
     lock_init(&sm->lock);
@@ -116,12 +116,12 @@ session_manager_init(void)
 {
     srandom((unsigned)time(NULL));
 
-    assert(session_manager == NULL || session_manager->in_use > 0);
+    assert(session_manager == NULL || session_manager->ref > 0);
 
     if (session_manager == NULL)
         session_manager = session_manager_new();
     else
-        ++session_manager->in_use;
+        ++session_manager->ref;
 
     evtimer_set(&session_cleanup_event, cleanup_event_callback, NULL);
 }
@@ -145,16 +145,18 @@ void
 session_manager_deinit(void)
 {
     assert(session_manager != NULL);
-    assert(session_manager->in_use > 0);
+    assert(session_manager->ref > 0);
     assert(session_manager->shm != NULL);
 
     event_del(&session_cleanup_event);
 
-    --session_manager->in_use;
+    --session_manager->ref;
 
-    if (session_manager->in_use == 0)
+    if (session_manager->ref == 0)
         session_manager_destroy(session_manager);
 
+    /* we always destroy the SHM section, because it is not used
+       anymore by this process; other processes may still use it */
     shm_close(session_manager->shm);
 
     session_manager = NULL;
