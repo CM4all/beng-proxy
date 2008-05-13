@@ -139,8 +139,6 @@ session_manager_destroy(struct session_manager *sm)
     }
 
     lock_destroy(&sm->lock);
-
-    shm_close(sm->shm);
 }
 
 void
@@ -156,6 +154,9 @@ session_manager_deinit(void)
 
     if (session_manager->in_use == 0)
         session_manager_destroy(session_manager);
+
+    shm_close(session_manager->shm);
+
     session_manager = NULL;
 }
 
