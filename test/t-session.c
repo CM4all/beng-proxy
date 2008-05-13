@@ -31,16 +31,22 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     pid = fork();
     assert(pid >= 0);
 
-    session_manager_event_add();
-
     if (pid == 0) {
-        struct session *session = session_new();
+        struct session *session;
+
+        event_base_free(event_base);
+        event_base = event_init();
+        session_manager_init();
+
+        session = session_new();
         write(fds[1], &session->uri_id, sizeof(session->uri_id));
     } else {
         pid_t pid2;
         int status;
         session_id_t session_id;
         struct session *session;
+
+        session_manager_event_add();
 
         close(fds[1]);
 
