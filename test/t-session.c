@@ -26,12 +26,12 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     session_manager_init();
     session_manager_event_del();
 
+    pipe(fds);
+
     pid = fork();
     assert(pid >= 0);
 
     session_manager_event_add();
-
-    pipe(fds);
 
     if (pid == 0) {
         struct session *session = session_new();
