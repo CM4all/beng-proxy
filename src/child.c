@@ -119,6 +119,8 @@ create_child(struct instance *instance)
 
     assert(instance->respawn_event.ev_events == 0);
 
+    session_manager_event_del();
+
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
@@ -143,19 +145,19 @@ create_child(struct instance *instance)
         while (!list_empty(&instance->connections))
             close_connection((struct client_connection*)instance->connections.next);
 
-        session_manager_event_del();
-
         event_base_free(instance->event_base);
         instance->event_base = event_init();
 
         init_signals(instance);
 
-        session_manager_event_add();
+        session_manager_init();
 
         if (instance->listener != NULL)
             listener_event_add(instance->listener);
     } else {
         struct child *child;
+
+        session_manager_event_add();
 
         if (list_empty(&instance->children)) {
             event_set(&instance->child_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
