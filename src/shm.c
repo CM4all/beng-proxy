@@ -6,6 +6,7 @@
 
 #include "shm.h"
 #include "lock.h"
+#include "refcount.h"
 
 #include <inline/poison.h>
 #include <inline/list.h>
@@ -24,7 +25,7 @@ struct page {
 };
 
 struct shm {
-    unsigned ref;
+    struct refcount ref;
 
     size_t page_size;
     unsigned num_pages;
@@ -72,7 +73,7 @@ shm_new(size_t page_size, unsigned num_pages)
         return NULL;
 
     shm = (struct shm *)p;
-    shm->ref = 1;
+    refcount_init(&shm->ref);
     shm->page_size = page_size;
     shm->num_pages = num_pages;
 
@@ -92,9 +93,8 @@ void
 shm_ref(struct shm *shm)
 {
     assert(shm != NULL);
-    assert(shm->ref > 0);
 
-    ++shm->ref;
+    refcount_get(&shm->ref);
 }
 
 void
@@ -104,10 +104,8 @@ shm_close(struct shm *shm)
     int ret;
 
     assert(shm != NULL);
-    assert(shm->ref > 0);
 
-    --shm->ref;
-    if (shm->ref == 0)
+    if (refcount_put(&shm->ref) == 0)
         lock_destroy(&shm->lock);
 
     header_pages = calc_header_pages(shm->page_size, shm->num_pages);

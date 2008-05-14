@@ -11,6 +11,7 @@
 #include "dpool.h"
 #include "dhashmap.h"
 #include "lock.h"
+#include "refcount.h"
 
 #include <daemon/log.h>
 
@@ -24,7 +25,7 @@
 #define SESSION_SLOTS 64
 
 struct session_manager {
-    unsigned ref;
+    struct refcount ref;
 
     struct shm *shm;
 
@@ -98,7 +99,7 @@ session_manager_new(void)
     }
 
     sm = shm_alloc(shm);
-    sm->ref = 1;
+    refcount_init(&sm->ref);
     sm->shm = shm;
 
     lock_init(&sm->lock);
@@ -116,12 +117,12 @@ session_manager_init(void)
 {
     srandom((unsigned)time(NULL));
 
-    assert(session_manager == NULL || session_manager->ref > 0);
+    assert(session_manager == NULL);
 
     if (session_manager == NULL)
         session_manager = session_manager_new();
     else {
-        ++session_manager->ref;
+        refcount_get(&session_manager->ref);
         shm_ref(session_manager->shm);
     }
 
@@ -147,14 +148,11 @@ void
 session_manager_deinit(void)
 {
     assert(session_manager != NULL);
-    assert(session_manager->ref > 0);
     assert(session_manager->shm != NULL);
 
     event_del(&session_cleanup_event);
 
-    --session_manager->ref;
-
-    if (session_manager->ref == 0)
+    if (refcount_put(&session_manager->ref) == 0)
         session_manager_destroy(session_manager);
 
     /* we always destroy the SHM section, because it is not used
