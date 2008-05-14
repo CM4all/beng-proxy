@@ -42,8 +42,6 @@ struct processor {
 
     enum {
         TAG_NONE,
-        TAG_HEAD,
-        TAG_BODY,
         TAG_WIDGET,
         TAG_WIDGET_PATH_INFO,
         TAG_WIDGET_PARAM,
@@ -337,11 +335,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         return;
     }
 
-    if (strref_lower_cmp_literal(&tag->name, "body") == 0) {
-        processor->tag = TAG_BODY;
-    } else if (strref_lower_cmp_literal(&tag->name, "head") == 0) {
-        processor->tag = TAG_HEAD;
-    } else if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
+    if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if (tag->type == TAG_CLOSE) {
             assert(processor->widget.widget == NULL);
             return;
@@ -552,12 +546,6 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     case TAG_NONE:
         break;
 
-    case TAG_HEAD:
-        break;
-
-    case TAG_BODY:
-        break;
-
     case TAG_WIDGET:
         assert(processor->widget.widget != NULL);
 
@@ -735,9 +723,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
     processor->had_input = true;
 
-    if (processor->tag == TAG_HEAD) {
-    } else if (processor->tag == TAG_BODY) {
-    } else if (processor->tag == TAG_WIDGET) {
+    if (processor->tag == TAG_WIDGET) {
         istream_t istream;
 
         if (tag->type == TAG_OPEN || tag->type == TAG_SHORT)
