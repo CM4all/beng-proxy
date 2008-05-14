@@ -92,14 +92,6 @@ processor_option_rewrite_url(const struct processor *processor)
     return (processor->options & PROCESSOR_REWRITE_URL) != 0;
 }
 
-static inline bool
-processor_option_fragment(const struct processor *processor)
-{
-    return processor->container->class->old_style &&
-        processor->container->parent != NULL &&
-        !processor->container->from_request.proxy;
-}
-
 static void
 processor_replace_add(struct processor *processor, off_t start, off_t end,
                       istream_t istream)
