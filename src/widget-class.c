@@ -17,19 +17,6 @@ const struct widget_class root_widget_class = {
     .old_style = true,
 };
 
-const struct widget_class *
-get_widget_class(pool_t pool, const char *uri, enum widget_type type)
-{
-    struct widget_class *wc = p_malloc(pool, sizeof(*wc));
-
-    wc->address = uri_address_new(pool, uri);
-    wc->type = type;
-    wc->is_container = type == WIDGET_TYPE_BENG;
-    wc->old_style = true;
-
-    return wc;
-}
-
 const struct strref *
 widget_class_relative_uri(const struct widget_class *class,
                           struct strref *uri)

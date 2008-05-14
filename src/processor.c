@@ -427,9 +427,6 @@ parser_widget_attr_finished(struct widget *widget,
 {
     if (strref_cmp_literal(name, "type") == 0) {
         widget->class_name = strref_dup(pool, value);
-    } else if (strref_cmp_literal(name, "href") == 0) {
-        widget->class = get_widget_class(pool, strref_dup(pool, value),
-                                         WIDGET_TYPE_BENG);
     } else if (strref_cmp_literal(name, "id") == 0) {
         if (!strref_is_empty(value))
             widget_set_id(widget, pool, value);
