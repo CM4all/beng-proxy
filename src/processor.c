@@ -100,21 +100,6 @@ processor_option_fragment(const struct processor *processor)
         !processor->container->from_request.proxy;
 }
 
-static inline bool
-processor_option_jscript(const struct processor *processor)
-{
-    return !processor_option_quiet(processor) &&
-        processor->container->class->old_style;
-}
-
-static inline bool
-processor_option_jscript_root(const struct processor *processor)
-{
-    return !processor_option_quiet(processor) &&
-        !processor_option_fragment(processor) &&
-        processor->container->class->old_style;
-}
-
 static void
 processor_replace_add(struct processor *processor, off_t start, off_t end,
                       istream_t istream)
