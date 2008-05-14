@@ -14,7 +14,6 @@ const struct widget_class root_widget_class = {
     .address = NULL,
     .type = WIDGET_TYPE_BENG,
     .is_container = true,
-    .old_style = true,
 };
 
 const struct strref *

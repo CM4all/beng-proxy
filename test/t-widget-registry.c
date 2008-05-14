@@ -135,7 +135,6 @@ test_normal(pool_t pool)
     assert(strcmp(data.class->address->uri, "http://foo/") == 0);
     assert(data.class->type == WIDGET_TYPE_RAW);
     assert(!data.class->is_container);
-    assert(!data.class->old_style);
 
     pool_unref(pool);
 

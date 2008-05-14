@@ -39,10 +39,6 @@ struct widget_class {
 
     /** can this widget contain other widgets? */
     bool is_container:1;
-
-    /** is this an old-style widget class, i.e. not coming from the
-        widget registry? */
-    bool old_style:1;
 };
 
 /**
