@@ -74,25 +74,6 @@ js_generate_root_widget(struct growing_buffer *gb, const char *session_id)
     growing_buffer_write_string(gb, "\"));\n");
 }
 
-void
-js_generate_preferences(struct growing_buffer *gb, const struct widget *widget)
-{
-    const char *prefix, *query_string;
-
-    query_string = widget->from_request.session == NULL
-        ? NULL
-        : widget->from_request.session->query_string;
-
-    prefix = widget_prefix(widget);
-    if (prefix == NULL)
-        return;
-
-    growing_buffer_write_string(gb, prefix);
-    growing_buffer_write_string(gb, "widget._query_string = ");
-    growing_buffer_write_jscript_string(gb, query_string);
-    growing_buffer_write_string(gb, ";\n");
-}
-
 istream_t
 js_generate_tail(pool_t pool)
 {

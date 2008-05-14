@@ -23,9 +23,6 @@ js_generate_includes(struct growing_buffer *gb);
 void
 js_generate_root_widget(struct growing_buffer *gb, const char *session_id);
 
-void
-js_generate_preferences(struct growing_buffer *gb, const struct widget *widget);
-
 istream_t
 js_generate_tail(pool_t pool);
 
