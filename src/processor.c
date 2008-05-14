@@ -332,21 +332,14 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->widget.widget->parent = processor->container;
     } else if (strref_lower_cmp_literal(&tag->name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
-        processor->uri_base = processor->container->class->old_style
-            ? URI_BASE_WIDGET
-            : URI_BASE_TEMPLATE;
+        processor->uri_base = URI_BASE_TEMPLATE;
         processor->uri_mode = URI_MODE_DIRECT;
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
         if (strref_lower_cmp_literal(&tag->name, "a") == 0) {
             processor->tag = TAG_A;
-            if (processor->container->class->old_style) {
-                processor->uri_base = URI_BASE_WIDGET;
-                processor->uri_mode = URI_MODE_FOCUS;
-            } else {
-                processor->uri_base = URI_BASE_TEMPLATE;
-                processor->uri_mode = URI_MODE_DIRECT;
-            }
+            processor->uri_base = URI_BASE_TEMPLATE;
+            processor->uri_mode = URI_MODE_DIRECT;
         } else if (strref_lower_cmp_literal(&tag->name, "link") == 0) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
@@ -355,18 +348,11 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->uri_mode = URI_MODE_DIRECT;
         } else if (strref_lower_cmp_literal(&tag->name, "form") == 0) {
             processor->tag = TAG_FORM;
-            if (processor->container->class->old_style) {
-                processor->uri_base = URI_BASE_WIDGET;
-                processor->uri_mode = URI_MODE_FOCUS;
-            } else {
-                processor->uri_base = URI_BASE_TEMPLATE;
-                processor->uri_mode = URI_MODE_DIRECT;
-            }
+            processor->uri_base = URI_BASE_TEMPLATE;
+            processor->uri_mode = URI_MODE_DIRECT;
         } else if (strref_lower_cmp_literal(&tag->name, "img") == 0) {
             processor->tag = TAG_IMG;
-            processor->uri_base = processor->container->class->old_style
-                ? URI_BASE_WIDGET
-                : URI_BASE_TEMPLATE;
+            processor->uri_base = URI_BASE_TEMPLATE;
             processor->uri_mode = URI_MODE_DIRECT;
         } else if (strref_lower_cmp_literal(&tag->name, "iframe") == 0) {
             /* this isn't actually an IMG, but we are only interested
