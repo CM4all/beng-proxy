@@ -11,6 +11,13 @@
 
 #include <assert.h>
 
+static struct session *
+widget_get_session2(struct widget *widget)
+{
+    struct widget_session *ws = widget_get_session(widget_root(widget), false);
+    return ws == NULL ? NULL : ws->session;
+}
+
 struct widget_session *
 widget_get_session(struct widget *widget, bool create)
 {
@@ -57,11 +64,4 @@ widget_get_session(struct widget *widget, bool create)
 
     assert(0);
     return NULL;
-}
-
-struct session *
-widget_get_session2(struct widget *widget)
-{
-    struct widget_session *ws = widget_get_session(widget_root(widget), false);
-    return ws == NULL ? NULL : ws->session;
 }

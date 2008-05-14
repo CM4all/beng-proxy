@@ -200,9 +200,6 @@ widget_prefix(const struct widget *widget)
 struct widget_session *
 widget_get_session(struct widget *widget, bool create);
 
-struct session *
-widget_get_session2(struct widget *widget);
-
 const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *p);
 
