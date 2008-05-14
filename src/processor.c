@@ -10,7 +10,6 @@
 #include "widget.h"
 #include "growing-buffer.h"
 #include "js-filter.h"
-#include "js-generator.h"
 #include "tpool.h"
 #include "embed.h"
 #include "async.h"
@@ -40,8 +39,6 @@ struct processor {
 
     struct parser *parser;
     bool had_input:1;
-
-    bool js_generated:1;
 
     enum {
         TAG_NONE,
@@ -74,7 +71,7 @@ struct processor {
         size_t params_length;
     } widget;
 
-    bool in_script:1, script_tail:1;
+    bool in_script:1;
     growing_buffer_t script;
     off_t script_start_offset;
 
@@ -125,39 +122,6 @@ processor_replace_add(struct processor *processor, off_t start, off_t end,
                       istream_t istream)
 {
     istream_replace_add(processor->replace, start, end, istream);
-}
-
-static istream_t
-processor_jscript(struct processor *processor)
-{
-    growing_buffer_t gb = growing_buffer_new(processor->pool, 512);
-
-    assert(processor_option_jscript(processor));
-
-    if (processor_option_jscript_root(processor))
-        js_generate_includes(gb);
-
-    growing_buffer_write_string(gb, "<script type=\"text/javascript\">\n");
-
-    if (processor_option_jscript_root(processor))
-        js_generate_root_widget(gb, strmap_get(processor->env->args, "session"));
-
-    js_generate_widget(gb, processor->container, processor->pool);
-
-    growing_buffer_write_string(gb, "</script>\n");
-
-    return growing_buffer_istream(gb);
-}
-
-static void
-processor_insert_jscript(struct processor *processor, off_t offset)
-{
-    if (processor->js_generated || !processor_option_jscript(processor))
-        return;
-
-    processor_replace_add(processor, offset, offset,
-                          processor_jscript(processor));
-    processor->js_generated = true;
 }
 
 
@@ -260,10 +224,8 @@ processor_new(pool_t pool, istream_t istream,
     processor->env = env;
     processor->options = options;
 
-    processor->js_generated = false;
     processor->widget.widget = NULL;
     processor->in_script = false;
-    processor->script_tail = false;
 
     if (widget->from_request.proxy_ref == NULL) {
         istream = istream_tee_new(pool, istream, true);
@@ -279,9 +241,6 @@ processor_new(pool_t pool, istream_t istream,
         strmap_t headers;
 
         processor->response_sent = true;
-
-        if (processor_option_fragment(processor))
-            processor_insert_jscript(processor, 0);
 
         headers = strmap_new(processor->pool, 4);
         strmap_addn(headers, "content-type", "text/html; charset=utf-8");
@@ -380,13 +339,6 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     if (strref_lower_cmp_literal(&tag->name, "body") == 0) {
         processor->tag = TAG_BODY;
-
-        if (tag->type == TAG_CLOSE && !processor->script_tail &&
-            processor_option_jscript_root(processor)) {
-            istream_replace_add(processor->replace, tag->start, tag->start,
-                                js_generate_tail(processor->pool));
-            processor->script_tail = true;
-        }
     } else if (strref_lower_cmp_literal(&tag->name, "head") == 0) {
         processor->tag = TAG_HEAD;
     } else if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
@@ -413,9 +365,6 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             ? URI_BASE_WIDGET
             : URI_BASE_TEMPLATE;
         processor->uri_mode = URI_MODE_DIRECT;
-
-        if (tag->type != TAG_CLOSE)
-            processor_insert_jscript(processor, 0);
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
         if (strref_lower_cmp_literal(&tag->name, "a") == 0) {
@@ -780,14 +729,6 @@ embed_element_finished(struct processor *processor)
 }
 
 static void
-body_element_finished(struct processor *processor, const struct parser_tag *tag)
-{
-
-    if (tag->type != TAG_CLOSE)
-        processor_insert_jscript(processor, tag->end);
-}
-
-static void
 processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
     struct processor *processor = ctx;
@@ -795,10 +736,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     processor->had_input = true;
 
     if (processor->tag == TAG_HEAD) {
-        if (tag->type == TAG_OPEN)
-            processor_insert_jscript(processor, tag->end);
     } else if (processor->tag == TAG_BODY) {
-        body_element_finished(processor, tag);
     } else if (processor->tag == TAG_WIDGET) {
         istream_t istream;
 
@@ -880,19 +818,13 @@ processor_parser_cdata(const char *p, size_t length,
 }
 
 static void
-processor_parser_eof(void *ctx, off_t length)
+processor_parser_eof(void *ctx, off_t length __attr_unused)
 {
     struct processor *processor = ctx;
 
     assert(processor->parser != NULL);
 
     processor->parser = NULL;
-
-    if (!processor->script_tail &&
-        processor_option_jscript_root(processor)) {
-        istream_replace_add(processor->replace, length, length,
-                            js_generate_tail(processor->pool));
-    }
 
     if (processor->replace != NULL)
         istream_replace_finish(processor->replace);
