@@ -126,7 +126,7 @@ widget_request_headers(struct embed *embed, int with_body)
             headers_copy(embed->env->request_headers, headers, copy_headers_with_body);
     }
 
-    session = widget_get_session2(embed->widget);
+    session = embed->env->session;
 
     if (embed->host_and_port != NULL && session != NULL) {
         const char *path = uri_path(widget_real_uri(embed->pool,
@@ -288,7 +288,7 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
         if (cookies == NULL)
             cookies = strmap_get(headers, "set-cookie");
         if (cookies != NULL) {
-            struct session *session = widget_get_session2(embed->widget);
+            struct session *session = embed->env->session;
             if (session != NULL)
                 cookie_jar_set_cookie2(session->cookies, cookies,
                                        embed->host_and_port);
@@ -297,7 +297,7 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
 
     translate = strmap_get(headers, "x-cm4all-beng-translate");
     if (translate != NULL) {
-        struct session *session = widget_get_session2(embed->widget);
+        struct session *session = embed->env->session;
         if (session != NULL)
             session->translate = d_strdup(session->pool, translate);
     }
