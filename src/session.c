@@ -250,14 +250,12 @@ session_new(void)
 
     return session;
 }
-#include <unistd.h>
+
 struct session *
 session_get(session_id_t id)
 {
     struct list_head *head = session_slot(id);
     struct session *session;
-
-    daemon_log(1, "PID=%d session_get(0x%x)\n", getpid(), id);
 
     lock_lock(&session_manager->lock);
 
