@@ -614,54 +614,9 @@ embed_widget(struct processor *processor, struct processor_env *env,
 }
 
 static istream_t
-embed_decorate(pool_t pool, istream_t istream, const struct widget *widget)
-{
-    growing_buffer_t tag;
-    const char *tag_name, *prefix;
-
-    assert(istream != NULL);
-    assert(!istream_has_handler(istream));
-
-    tag_name = widget->decoration.tag;
-    if (tag_name == NULL)
-        tag_name = "div";
-    else if (tag_name[0] == 0)
-        return istream;
-
-    tag = growing_buffer_new(pool, 256);
-    growing_buffer_write_string(tag, "<");
-    growing_buffer_write_string(tag, tag_name);
-    growing_buffer_write_string(tag, " class=\"widget\"");
-
-    prefix = widget_prefix(widget);
-    if (prefix != NULL) {
-        growing_buffer_write_string(tag, " id=\"beng_widget_");
-        growing_buffer_write_string(tag, prefix);
-        growing_buffer_write_string(tag, "\"");
-    }
-
-    if (widget->decoration.style != NULL) {
-        growing_buffer_write_string(tag, " style=\"");
-        growing_buffer_write_string(tag, widget->decoration.style);
-        growing_buffer_write_string(tag, "\"");
-    }
-
-    growing_buffer_write_string(tag, ">");
-
-    return istream_cat_new(pool,
-                           growing_buffer_istream(tag),
-                           istream,
-                           istream_string_new(pool, p_strcat(pool, "</",
-                                                             tag_name,
-                                                             ">", NULL)),
-                           NULL);
-}
-
-static istream_t
 embed_element_finished(struct processor *processor)
 {
     struct widget *widget;
-    istream_t istream;
 
     widget = processor->widget.widget;
     processor->widget.widget = NULL;
@@ -671,12 +626,7 @@ embed_element_finished(struct processor *processor)
                                          processor->widget.params,
                                          processor->widget.params_length);
 
-    istream = embed_widget(processor, processor->env, widget);
-    if (istream != NULL && widget->class != NULL &&
-        widget->class->old_style)
-        istream = embed_decorate(processor->pool, istream, widget);
-
-    return istream;
+    return embed_widget(processor, processor->env, widget);
 }
 
 static void
