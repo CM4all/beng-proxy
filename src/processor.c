@@ -414,6 +414,7 @@ transform_uri_attribute(struct processor *processor,
                                  processor->env->translate_cache,
                                  processor->env->external_uri,
                                  processor->env->args, widget,
+                                 processor->env->session,
                                  &value, mode);
     if (istream != NULL)
         replace_attribute_value(processor, attr, istream);

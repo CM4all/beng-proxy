@@ -194,7 +194,8 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (p == NULL)
         return false;
 
-    widget_copy_from_location(embed->widget, p->data, p->length, embed->pool);
+    widget_copy_from_location(embed->widget, embed->env->session,
+                              p->data, p->length, embed->pool);
 
     ++embed->num_redirects;
 

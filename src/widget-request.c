@@ -101,7 +101,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
 }
 
 void
-widget_sync_session(struct widget *widget)
+widget_sync_session(struct widget *widget, struct session *session)
 {
     assert(widget != NULL);
     assert(widget->lazy.real_uri == NULL);
@@ -115,14 +115,14 @@ widget_sync_session(struct widget *widget)
 
         /* do not save to session when this is a raw or POST request */
         if (!widget->from_request.raw && widget->from_request.body == NULL) {
-            struct widget_session *ws = widget_get_session(widget, 1);
+            struct widget_session *ws = widget_get_session(widget, session, 1);
             if (ws != NULL)
                 widget_to_session(ws, widget);
         }
     } else {
         /* get query string from session */
 
-        struct widget_session *ws = widget_get_session(widget, 0);
+        struct widget_session *ws = widget_get_session(widget, session, 0);
         if (ws != NULL)
             session_to_widget(widget, ws);
     }
@@ -134,7 +134,7 @@ widget_sync_session(struct widget *widget)
 }
 
 void
-widget_copy_from_location(struct widget *widget,
+widget_copy_from_location(struct widget *widget, struct session *session,
                           const char *location, size_t location_length,
                           pool_t pool)
 {
@@ -161,7 +161,7 @@ widget_copy_from_location(struct widget *widget,
 
     widget->lazy.real_uri = NULL;
 
-    ws = widget_get_session(widget, 1);
+    ws = widget_get_session(widget, session, 1);
     if (ws != NULL)
         widget_to_session(ws, widget);
 }

@@ -13,6 +13,7 @@ struct tcache;
 struct parsed_uri;
 struct strmap;
 struct widget;
+struct session;
 struct strref;
 
 enum uri_mode {
@@ -26,6 +27,7 @@ istream_t
 rewrite_widget_uri(pool_t pool, struct tcache *translate_cache,
                    const struct parsed_uri *external_uri,
                    struct strmap *args, struct widget *widget,
+                   struct session *session,
                    const struct strref *value,
                    enum uri_mode mode);
 

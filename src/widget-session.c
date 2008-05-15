@@ -11,55 +11,45 @@
 
 #include <assert.h>
 
-static struct session *
-widget_get_session2(struct widget *widget)
-{
-    struct widget_session *ws = widget_get_session(widget_root(widget), false);
-    return ws == NULL ? NULL : ws->session;
-}
-
 struct widget_session *
-widget_get_session(struct widget *widget, bool create)
+widget_get_session(struct widget *widget, struct session *session,
+                   bool create)
 {
-    struct widget_session *parent;
-    struct session *session;
+    struct widget_session *parent, *ws;
     struct pool_mark mark;
 
     assert(widget != NULL);
+    assert(session != NULL);
 
-    if (widget->from_request.session != NULL ||
-        widget->parent == NULL || widget->id == NULL)
-        return widget->from_request.session;
+    if (widget->id == NULL)
+        return NULL;
+
+    if (widget->parent == NULL)
+        return session_get_widget(session, widget->id, create);
 
     switch (widget->session) {
     case WIDGET_SESSION_RESOURCE:
         /* the session is bound to the resource: determine
            widget_session from the parent's session */
 
-        parent = widget_get_session(widget->parent, create);
+        parent = widget_get_session(widget->parent, session, create);
         if (parent == NULL)
             return NULL;
 
         pool_mark(tpool, &mark);
-        widget->from_request.session
-            = widget_session_get_child(parent, widget->id, create);
+        ws = widget_session_get_child(parent, widget->id, create);
         pool_rewind(tpool, &mark);
-        return widget->from_request.session;
+        return ws;
 
     case WIDGET_SESSION_SITE:
         /* this is a site-global widget: get the widget_session
            directly from the session struct (which is site
            specific) */
 
-        session = widget_get_session2(widget);
-        if (session == NULL)
-            return NULL;
-
         pool_mark(tpool, &mark);
-        widget->from_request.session
-            = session_get_widget(session, widget->id, create);
+        ws = session_get_widget(session, widget->id, create);
         pool_rewind(tpool, &mark);
-        return widget->from_request.session;
+        return ws;
     }
 
     assert(0);

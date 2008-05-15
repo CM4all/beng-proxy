@@ -49,7 +49,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 {
     assert(widget->from_request.proxy);
 
-    widget_sync_session(widget);
+    widget_sync_session(widget, env->session);
 
     switch (widget->class->type) {
     case WIDGET_TYPE_RAW:
@@ -87,7 +87,7 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         return;
     }
 
-    widget_sync_session(widget);
+    widget_sync_session(widget, env->session);
 
     if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
         /* the request body is not consumed yet, but the focus is not

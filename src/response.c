@@ -106,8 +106,6 @@ response_invoke_processor(struct request *request2,
     widget->id = strref_dup(request->pool, &request2->uri.base);
     widget->lazy.path = "";
     widget->lazy.prefix = "__";
-    widget->from_request.session = session_get_widget(request2->env.session,
-                                                      widget->id, true);
 
     widget->from_request.focus_ref = widget_ref_parse(request->pool,
                                                       strmap_remove(request2->env.args, "focus"));

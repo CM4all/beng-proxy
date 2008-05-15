@@ -27,7 +27,7 @@ inline_widget_set(struct inline_widget *iw)
 {
     struct widget *widget = iw->widget;
 
-    widget_sync_session(widget);
+    widget_sync_session(widget, iw->env->session);
 
     switch (widget->class->type) {
     case WIDGET_TYPE_RAW:

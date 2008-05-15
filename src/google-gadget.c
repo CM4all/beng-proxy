@@ -183,7 +183,7 @@ growing_buffer_write_jscript_string(growing_buffer_t gb, const char *s)
 }
 
 static istream_t
-generate_jscript(pool_t pool, struct widget *widget)
+generate_jscript(pool_t pool, struct widget *widget, struct session *session2)
 {
     struct growing_buffer *gb = growing_buffer_new(pool, 256);
     struct widget_session *session;
@@ -194,7 +194,7 @@ generate_jscript(pool_t pool, struct widget *widget)
     growing_buffer_write_string(gb, ";\n"
                                 "var _beng_proxy_widget_prefs = ");
 
-    session = widget_get_session(widget, false);
+    session = widget_get_session(widget, session2, false);
     growing_buffer_write_jscript_string(gb, session == NULL ? NULL : session->query_string);
     growing_buffer_write_string(gb, ";\n");
 
@@ -246,7 +246,8 @@ google_content_tag_finished(struct google_gadget *gg,
                 istream = istream_struct_cast(&gg->output);
                 istream = google_gadget_process(gg, istream);
                 istream = istream_cat_new(gg->pool,
-                                          generate_jscript(gg->pool, gg->widget),
+                                          generate_jscript(gg->pool, gg->widget,
+                                                           gg->env->session),
                                           istream,
                                           NULL);
 

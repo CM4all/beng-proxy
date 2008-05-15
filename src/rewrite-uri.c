@@ -63,6 +63,7 @@ struct rewrite_widget_uri {
     const struct parsed_uri *external_uri;
     struct strmap *args;
     struct widget *widget;
+    struct session *session;
     struct strref value;
     enum uri_mode mode;
     struct widget_stream *stream;
@@ -76,7 +77,7 @@ class_lookup_callback(void *ctx)
     if (rwu->widget->class != NULL) {
         const char *uri;
 
-        widget_sync_session(rwu->widget);
+        widget_sync_session(rwu->widget, rwu->session);
 
         uri = do_rewrite_widget_uri(rwu->pool, rwu->external_uri, rwu->args,
                                     rwu->widget, &rwu->value, rwu->mode);
@@ -94,6 +95,7 @@ istream_t
 rewrite_widget_uri(pool_t pool, struct tcache *translate_cache,
                    const struct parsed_uri *external_uri,
                    struct strmap *args, struct widget *widget,
+                   struct session *session,
                    const struct strref *value,
                    enum uri_mode mode)
 {
@@ -115,6 +117,7 @@ rewrite_widget_uri(pool_t pool, struct tcache *translate_cache,
         rwu->external_uri = external_uri;
         rwu->args = args;
         rwu->widget = widget;
+        rwu->session = session;
         strref_set_dup(pool, &rwu->value, value);
         rwu->mode = mode;
         rwu->stream = widget_stream_new(pool);

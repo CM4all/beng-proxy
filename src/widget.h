@@ -20,6 +20,7 @@
 struct strmap;
 struct processor_env;
 struct parsed_uri;
+struct session;
 
 enum widget_type {
     WIDGET_TYPE_RAW,
@@ -99,8 +100,6 @@ struct widget {
             processor_env.external_uri.query_string) */
         struct strref query_string;
 
-        struct widget_session *session;
-
         http_method_t method;
 
         /** the request body (from processor_env.body) */
@@ -161,7 +160,6 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->from_request.focus_ref = NULL;
     widget->from_request.path_info = NULL;
     strref_clear(&widget->from_request.query_string);
-    widget->from_request.session = NULL;
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
     widget->from_request.proxy = 0;
@@ -198,7 +196,8 @@ widget_prefix(const struct widget *widget)
 }
 
 struct widget_session *
-widget_get_session(struct widget *widget, bool create);
+widget_get_session(struct widget *widget, struct session *session,
+                   bool create);
 
 const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *p);
@@ -213,13 +212,13 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env);
  * Synchronize the widget with its session.
  */
 void
-widget_sync_session(struct widget *widget);
+widget_sync_session(struct widget *widget, struct session *session);
 
 /**
  * Overwrite request data, copy values from a HTTP redirect location.
  */
 void
-widget_copy_from_location(struct widget *widget,
+widget_copy_from_location(struct widget *widget, struct session *session,
                           const char *location, size_t location_length,
                           pool_t pool);
 
