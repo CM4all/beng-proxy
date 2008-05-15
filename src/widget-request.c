@@ -142,7 +142,7 @@ widget_copy_from_location(struct widget *widget, struct session *session,
     const char *qmark;
 
     assert(widget != NULL);
-    assert(widget != NULL);
+    assert(session != NULL);
 
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
