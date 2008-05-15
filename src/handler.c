@@ -255,9 +255,11 @@ serve_document_root_file(struct request *request2,
         struct translate_transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
         transformation->next = NULL;
         transformation->type = TRANSFORMATION_PROCESS;
-        request2->translate.transformation = transformation;
+        tr->transformation = transformation;
     } else
-        request2->translate.transformation = NULL;
+        tr->transformation = NULL;
+
+    request2->translate.transformation = tr->transformation;
 
     tr->status = 0;
     tr->path = p_strncat(request->pool,
