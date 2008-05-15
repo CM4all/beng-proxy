@@ -46,6 +46,7 @@ static struct event session_cleanup_event;
 static void
 session_destroy(struct session *session)
 {
+    lock_destroy(&session->lock);
     dpool_destroy(session->pool);
 }
 
@@ -235,6 +236,7 @@ session_new(void)
     memset(session, 0, sizeof(*session));
 
     session->pool = pool;
+    lock_init(&session->lock);
     session->uri_id = session_generate_id();
     session->cookie_id = session_generate_id();
     session->expires = time(NULL) + SESSION_TTL_NEW;

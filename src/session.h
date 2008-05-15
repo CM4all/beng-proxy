@@ -7,6 +7,8 @@
 #ifndef __BENG_SESSION_H
 #define __BENG_SESSION_H
 
+#include "lock.h"
+
 #include <inline/list.h>
 
 #include <time.h>
@@ -46,6 +48,8 @@ struct session {
     struct list_head hash_siblings;
 
     struct dpool *pool;
+
+    struct lock lock;
 
     /** identification number of this session in the URI */
     session_id_t uri_id;
