@@ -49,6 +49,8 @@ struct session {
 
     struct dpool *pool;
 
+    /** this lock protects the bit fields, all widget session hash
+        maps and the cookie jar */
     struct lock lock;
 
     /** identification number of this session in the URI */

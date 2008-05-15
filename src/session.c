@@ -29,6 +29,7 @@ struct session_manager {
 
     struct shm *shm;
 
+    /** this lock protects the following hash table */
     struct lock lock;
 
     struct list_head sessions[SESSION_SLOTS];
