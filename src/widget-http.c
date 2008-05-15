@@ -131,8 +131,11 @@ widget_request_headers(struct embed *embed, int with_body)
     if (embed->host_and_port != NULL && session != NULL) {
         const char *path = uri_path(widget_real_uri(embed->pool,
                                                     embed->widget));
+
+        lock_lock(&session->lock);
         cookie_jar_http_header(session->cookies, embed->host_and_port, path,
                                headers, embed->pool);
+        lock_unlock(&session->lock);
     }
 
     if (session != NULL && session->language != NULL)
@@ -290,9 +293,12 @@ widget_response_response(http_status_t status, strmap_t headers, istream_t body,
             cookies = strmap_get(headers, "set-cookie");
         if (cookies != NULL) {
             struct session *session = embed->env->session;
-            if (session != NULL)
+            if (session != NULL) {
+                lock_lock(&session->lock);
                 cookie_jar_set_cookie2(session->cookies, cookies,
                                        embed->host_and_port);
+                lock_unlock(&session->lock);
+            }
         }
     }
 
