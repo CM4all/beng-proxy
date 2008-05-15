@@ -44,6 +44,12 @@ static struct session_manager *session_manager;
 static struct event session_cleanup_event;
 
 static void
+session_destroy(struct session *session)
+{
+    dpool_destroy(session->pool);
+}
+
+static void
 session_remove(struct session *session)
 {
     assert(session_manager->num_sessions > 0);
@@ -54,7 +60,7 @@ session_remove(struct session *session)
     if (session_manager->num_sessions == 0)
         evtimer_del(&session_cleanup_event);
 
-    dpool_destroy(session->pool);
+    session_destroy(session);
 }
 
 static void
