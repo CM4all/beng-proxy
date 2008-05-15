@@ -32,41 +32,6 @@ struct http_stock_connection {
 };
 
 
-static int
-getaddrinfo_helper(const char *host_and_port, int default_port,
-                   const struct addrinfo *hints,
-                   struct addrinfo **aip) {
-    const char *colon, *host, *port;
-    char buffer[256];
-
-    colon = strchr(host_and_port, ':');
-    if (colon == NULL) {
-        snprintf(buffer, sizeof(buffer), "%d", default_port);
-
-        host = host_and_port;
-        port = buffer;
-    } else {
-        size_t len = colon - host_and_port;
-
-        if (len >= sizeof(buffer)) {
-            errno = ENAMETOOLONG;
-            return EAI_SYSTEM;
-        }
-
-        memcpy(buffer, host_and_port, len);
-        buffer[len] = 0;
-
-        host = buffer;
-        port = colon + 1;
-    }
-
-    if (strcmp(host, "*") == 0)
-        host = "0.0.0.0";
-
-    return getaddrinfo(host, port, hints, aip);
-}
-
-
 /*
  * async operation
  *
@@ -177,7 +142,6 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
     struct http_stock_connection *connection =
         (struct http_stock_connection *)item;
     struct uri_with_address *uwa = info;
-    int ret;
     const struct sockaddr *addr;
     socklen_t addrlen;
 
@@ -205,27 +169,8 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
                           http_stock_socket_callback, connection,
                           &connection->client_socket);
     } else if (uri[0] != '/') {
-        /* HTTP over TCP */
-        struct addrinfo hints, *ai;
-
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = PF_INET;
-        hints.ai_socktype = SOCK_STREAM;
-
-        /* XXX make this asynchronous */
-        ret = getaddrinfo_helper(uri, 80, &hints, &ai);
-        if (ret != 0) {
-            daemon_log(1, "failed to resolve host name '%s'\n", uri);
-            stock_item_failed(item);
-            return;
-        }
-
-        client_socket_new(connection->stock_item.pool,
-                          PF_INET, SOCK_STREAM, 0,
-                          ai->ai_addr, ai->ai_addrlen,
-                          http_stock_socket_callback, connection,
-                          &connection->client_socket);
-        freeaddrinfo(ai);
+        daemon_log(1, "address missing for '%s'\n", uri);
+        stock_item_failed(item);
     } else {
         /* HTTP over Unix socket */
         size_t path_length;
