@@ -298,6 +298,7 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
     struct widget_session *ws;
 
     assert(session != NULL);
+    assert(lock_is_locked(&session->lock));
     assert(map_r != NULL);
     assert(id != NULL);
 

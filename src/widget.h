@@ -195,6 +195,10 @@ widget_prefix(const struct widget *widget)
     return widget->lazy.prefix;
 }
 
+/**
+ * Returns the widget's session object.  The passed session object
+ * must be locked.
+ */
 struct widget_session *
 widget_get_session(struct widget *widget, struct session *session,
                    bool create);

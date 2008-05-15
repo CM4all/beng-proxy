@@ -106,6 +106,8 @@ widget_sync_session(struct widget *widget, struct session *session)
     assert(widget != NULL);
     assert(widget->lazy.real_uri == NULL);
 
+    lock_lock(&session->lock);
+
     /* are we focused? */
 
     if (widget->id != NULL && widget->parent != NULL &&
@@ -126,6 +128,8 @@ widget_sync_session(struct widget *widget, struct session *session)
         if (ws != NULL)
             session_to_widget(widget, ws);
     }
+
+    lock_unlock(&session->lock);
 
     if (widget->from_request.path_info == NULL)
         widget->from_request.path_info = widget->path_info;
@@ -161,7 +165,11 @@ widget_copy_from_location(struct widget *widget, struct session *session,
 
     widget->lazy.real_uri = NULL;
 
+    lock_lock(&session->lock);
+
     ws = widget_get_session(widget, session, 1);
     if (ws != NULL)
         widget_to_session(ws, widget);
+
+    lock_unlock(&session->lock);
 }
