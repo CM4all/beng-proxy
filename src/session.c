@@ -55,8 +55,12 @@ session_remove(struct session *session)
 {
     assert(session_manager->num_sessions > 0);
 
+    lock_lock(&session_manager->lock);
+
     list_remove(&session->hash_siblings);
     --session_manager->num_sessions;
+
+    lock_unlock(&session_manager->lock);
 
     if (session_manager->num_sessions == 0)
         evtimer_del(&session_cleanup_event);
