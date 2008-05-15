@@ -231,7 +231,7 @@ serve_document_root_file(struct request *request2,
     struct parsed_uri *uri;
     struct translate_response *tr;
     const char *index_file = NULL;
-    int process;
+    bool process;
 
     uri = &request2->uri;
 
@@ -240,7 +240,7 @@ serve_document_root_file(struct request *request2,
 
     if (uri->base.data[uri->base.length - 1] == '/') {
         index_file = "index.html";
-        process = 1;
+        process = true;
     } else {
         process = strref_ends_with_n(&uri->base, ".html", 5);
     }

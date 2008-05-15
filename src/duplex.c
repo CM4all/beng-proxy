@@ -27,7 +27,7 @@ struct duplex {
     int read_fd;
     int write_fd;
     int sock_fd;
-    unsigned sock_eof;
+    bool sock_eof;
     fifo_buffer_t from_read;
     fifo_buffer_t to_write;
 
@@ -147,7 +147,7 @@ sock_event_callback(int fd, short event, void *ctx)
         }
 
         if (nbytes == 0) {
-            duplex->sock_eof = 1;
+            duplex->sock_eof = true;
             if (duplex_check_close(duplex))
                 return;
         }
@@ -206,7 +206,7 @@ duplex_new(pool_t pool, int read_fd, int write_fd)
     duplex->sock_fd = fds[0];
     duplex->from_read = fifo_buffer_new(pool, 4096);
     duplex->to_write = fifo_buffer_new(pool, 4096);
-    duplex->sock_eof = 0;
+    duplex->sock_eof = false;
 
     event2_init(&duplex->read_event, read_fd,
                 read_event_callback, duplex, NULL);

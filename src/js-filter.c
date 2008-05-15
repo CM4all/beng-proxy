@@ -13,7 +13,7 @@
 struct js_filter {
     struct istream output;
     istream_t input;
-    unsigned had_input:1, had_output:1;
+    bool had_input:1, had_output:1;
 };
 
 
@@ -27,11 +27,11 @@ js_input_data(const void *data, size_t length, void *ctx)
 {
     struct js_filter *js = ctx;
 
-    js->had_input = 1;
+    js->had_input = true;
 
     /* XXX insert filtering code here */
 
-    js->had_output = 1;
+    js->had_output = true;
     return istream_invoke_data(&js->output, data, length);
 }
 
@@ -84,10 +84,10 @@ js_filter_read(istream_t istream)
        provides data unless its input is blocking or finished, as
        demanded by the istream API specification */
 
-    js->had_output = 0;
+    js->had_output = false;
 
     do {
-        js->had_input = 0;
+        js->had_input = false;
         istream_read(js->input);
     } while (js->input != NULL && js->had_input &&
              !js->had_output);

@@ -52,17 +52,17 @@ connect_mirror(pool_t pool,
 }
 
 struct context {
-    int close_early, close_late, close_data;
+    bool close_early, close_late, close_data;
     unsigned data_blocking;
-    int close_response_body_early, close_response_body_late, close_response_body_data;
+    bool close_response_body_early, close_response_body_late, close_response_body_data;
     struct async_operation_ref async_ref;
     http_client_connection_t client;
-    int idle, aborted;
+    bool idle, aborted;
     http_status_t status;
 
     istream_t body;
     off_t body_data;
-    int body_eof, body_abort;
+    bool body_eof, body_abort;
 };
 
 
@@ -76,7 +76,7 @@ my_connection_idle(void *ctx)
 {
     struct context *c = ctx;
 
-    c->idle = 1;
+    c->idle = true;
 }
 
 static void
@@ -129,7 +129,7 @@ my_istream_eof(void *ctx)
     struct context *c = ctx;
 
     c->body = NULL;
-    c->body_eof = 1;
+    c->body_eof = true;
 }
 
 static void
@@ -138,7 +138,7 @@ my_istream_abort(void *ctx)
     struct context *c = ctx;
 
     c->body = NULL;
-    c->body_abort = 1;
+    c->body_abort = true;
 }
 
 static const struct istream_handler my_istream_handler = {
@@ -181,7 +181,7 @@ my_response_abort(void *ctx)
 {
     struct context *c = ctx;
 
-    c->aborted = 1;
+    c->aborted = true;
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -240,7 +240,7 @@ test_early_close(pool_t pool, struct context *c)
 static void
 test_close_early(pool_t pool, struct context *c)
 {
-    c->close_early = 1;
+    c->close_early = true;
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
@@ -259,7 +259,7 @@ test_close_early(pool_t pool, struct context *c)
 static void
 test_close_late(pool_t pool, struct context *c)
 {
-    c->close_late = 1;
+    c->close_late = true;
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
@@ -278,7 +278,7 @@ test_close_late(pool_t pool, struct context *c)
 static void
 test_close_data(pool_t pool, struct context *c)
 {
-    c->close_data = 1;
+    c->close_data = true;
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
@@ -297,7 +297,7 @@ test_close_data(pool_t pool, struct context *c)
 static void
 test_close_response_body_early(pool_t pool, struct context *c)
 {
-    c->close_response_body_early = 1;
+    c->close_response_body_early = true;
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
@@ -316,7 +316,7 @@ test_close_response_body_early(pool_t pool, struct context *c)
 static void
 test_close_response_body_late(pool_t pool, struct context *c)
 {
-    c->close_response_body_late = 1;
+    c->close_response_body_late = true;
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
@@ -335,7 +335,7 @@ test_close_response_body_late(pool_t pool, struct context *c)
 static void
 test_close_response_body_data(pool_t pool, struct context *c)
 {
-    c->close_response_body_data = 1;
+    c->close_response_body_data = true;
     c->client = connect_mirror(pool, &my_connection_handler, c);
     http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),

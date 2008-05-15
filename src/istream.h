@@ -274,7 +274,7 @@ istream_close(istream_t _istream)
     assert(!istream->eof);
 
 #ifndef NDEBUG
-    istream->closing = 1;
+    istream->closing = true;
 #endif
 
     istream->close(_istream);

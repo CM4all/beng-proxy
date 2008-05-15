@@ -40,7 +40,7 @@ gg_msg_finish(struct google_gadget *gg)
         istream_subst_add(gg->subst, gg->msg.key,
                           gg_msg_strip(gg->pool, gg->msg.value));
 
-    gg->msg.in_msg_tag = 0;
+    gg->msg.in_msg_tag = false;
 }
 
 /*
@@ -57,7 +57,7 @@ gg_msg_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     if (strref_cmp_literal(&tag->name, "msg") == 0 &&
         tag->type != TAG_CLOSE) {
-        gg->msg.in_msg_tag = 1;
+        gg->msg.in_msg_tag = true;
         gg->msg.key = NULL;
         gg->msg.value = NULL;
         /* XXX */
@@ -175,7 +175,7 @@ gg_msg_http_response(http_status_t status, strmap_t headers,
         return;
     }
 
-    gg->msg.in_msg_tag = 0;
+    gg->msg.in_msg_tag = false;
     gg->msg.parser = parser_new(gg->pool, body,
                                 &gg_msg_parser_handler, gg);
     istream_read(body);

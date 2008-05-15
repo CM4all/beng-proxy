@@ -107,10 +107,10 @@ struct widget {
 
         /** is this the single widget in this whole request which should
             be proxied? */
-        unsigned proxy:1;
+        bool proxy:1;
 
         /** should the resource be passed raw, i.e. not processed? */
-        unsigned raw:1;
+        bool raw:1;
     } from_request;
 
     struct {
@@ -162,8 +162,8 @@ widget_init(struct widget *widget, const struct widget_class *class)
     strref_clear(&widget->from_request.query_string);
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
-    widget->from_request.proxy = 0;
-    widget->from_request.raw = 0;
+    widget->from_request.proxy = false;
+    widget->from_request.raw = false;
     widget->lazy.path = NULL;
     widget->lazy.prefix = NULL;
     widget->lazy.real_uri = NULL;

@@ -49,7 +49,7 @@ struct google_gadget {
 
     struct {
         struct parser *parser;
-        unsigned in_msg_tag;
+        bool in_msg_tag;
         const char *key, *value;
     } msg;
 

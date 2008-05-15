@@ -67,9 +67,9 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
         widget->from_request.proxy_ref = widget->parent->from_request.proxy_ref->next;
 
         if (widget->from_request.proxy_ref == NULL) {
-            widget->from_request.proxy = 1;
+            widget->from_request.proxy = true;
             if (strmap_get(env->args, "raw") != NULL)
-                widget->from_request.raw = 1;
+                widget->from_request.raw = true;
         } else
             widget->parent->from_request.proxy_ref = NULL;
     }

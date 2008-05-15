@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <string.h>
 
-static int should_exit;
+static bool should_exit;
 
 /*
  * istream handler
@@ -40,7 +40,7 @@ static void
 my_istream_eof(void *ctx)
 {
     (void)ctx;
-    should_exit = 1;
+    should_exit = true;
 }
 
 static void attr_noreturn

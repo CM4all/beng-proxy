@@ -28,9 +28,9 @@ struct subst_node {
 struct istream_subst {
     struct istream output;
     istream_t input;
-    unsigned had_input:1, had_output:1;
+    bool had_input:1, had_output:1;
 
-    unsigned send_first:1;
+    bool send_first:1;
 
     struct subst_node *root;
     const struct subst_node *match;
@@ -231,7 +231,7 @@ subst_feed_mismatch(struct istream_subst *subst)
         if (strref_is_empty(&subst->mismatch))
             return false;
 
-        subst->send_first = 0;
+        subst->send_first = false;
     }
 
     pool_ref(subst->output.pool);
@@ -296,7 +296,7 @@ subst_invoke_data(struct istream_subst *subst, const char *start,
         /* stream has been closed - we must return 0 */
         return 0;
 
-    subst->had_output = 1;
+    subst->had_output = true;
 
     if (nbytes < length) {
         /* blocking */
@@ -315,7 +315,7 @@ subst_invoke_data_final(struct istream_subst *subst, const char *start,
 
     nbytes = istream_invoke_data(&subst->output, p, end - p);
     if (nbytes > 0 || subst->state != STATE_CLOSED) {
-        subst->had_output = 1;
+        subst->had_output = true;
         nbytes += (p - start);
     }
 
@@ -331,7 +331,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
 
     assert(subst->input != NULL);
 
-    subst->had_input = 1;
+    subst->had_input = true;
 
     /* find new match */
 
@@ -383,7 +383,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                     if (first != NULL && first > data) {
                         /* write the data chunk before the match */
 
-                        subst->had_output = 1;
+                        subst->had_output = true;
 
                         chunk_length = first - data;
                         nbytes = subst_invoke_data(subst, data0, data, chunk_length);
@@ -412,7 +412,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                                       !strref_is_empty(&subst->mismatch))) {
                     /* write the data chunk before the (mis-)match */
 
-                    subst->had_output = 1;
+                    subst->had_output = true;
 
                     chunk_length = first - data;
                     if (!strref_is_empty(&subst->mismatch))
@@ -444,7 +444,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                 if (strref_is_empty(&subst->mismatch)) {
                     bool ret;
 
-                    subst->send_first = 1;
+                    subst->send_first = true;
 
                     node = subst_find_any_leaf(subst->match);
                     assert(node != NULL);
@@ -492,7 +492,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
     if (chunk_length > 0) {
         /* write chunk */
 
-        subst->had_output = 1;
+        subst->had_output = true;
 
         nbytes = subst_invoke_data(subst, data0, data, chunk_length);
         if (nbytes != (size_t)-1)
@@ -625,12 +625,12 @@ istream_subst_read(istream_t istream)
     case STATE_MATCH:
         assert(subst->input != NULL);
 
-        subst->had_output = 0;
+        subst->had_output = false;
 
         pool_ref(subst->output.pool);
 
         do {
-            subst->had_input = 0;
+            subst->had_input = false;
             istream_read(subst->input);
         } while (subst->input != NULL && subst->had_input &&
                  !subst->had_output);
