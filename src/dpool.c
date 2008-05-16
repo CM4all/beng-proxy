@@ -105,7 +105,7 @@ allocation_size(const struct dpool_chunk *chunk,
 }
 
 static void
-allocation_split(const struct dpool_chunk *chunk,
+allocation_split(const struct dpool_chunk *chunk __attr_unused,
                  struct dpool_allocation *alloc, size_t size)
 {
     struct dpool_allocation *other;
