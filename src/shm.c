@@ -175,18 +175,53 @@ shm_page_number(struct shm *shm, const void *p)
     return page_number;
 }
 
+/** merge this page with its adjacent pages if possible, to create
+    bigger "available" areas */
+static void
+shm_merge(struct shm *shm, struct page *page)
+{
+    unsigned page_number = shm_page_number(shm, page->data);
+    struct page *other;
+
+    /* merge with previous page? */
+
+    other = (struct page *)page->siblings.prev;
+    if (&other->siblings != &shm->available &&
+        shm_page_number(shm, other->data) + other->num_pages == page_number) {
+        other->num_pages += page->num_pages;
+        list_remove(&page->siblings);
+        page = other;
+    }
+
+    /* merge with next page? */
+
+    other = (struct page *)page->siblings.next;
+    if (&other->siblings != &shm->available &&
+        page_number + page->num_pages == shm_page_number(shm, other->data)) {
+        page->num_pages += other->num_pages;
+        list_remove(&other->siblings);
+    }
+}
+
 void
 shm_free(struct shm *shm, const void *p)
 {
     unsigned page_number = shm_page_number(shm, p);
     struct page *page = &shm->pages[page_number];
+    struct page *prev;
 
     poison_noaccess(page->data, shm->page_size * page->num_pages);
 
     lock_lock(&shm->lock);
 
-    list_add(&page->siblings, &shm->available);
-    /* XXX sort; merge adjacent pages */
+    for (prev = (struct page *)&shm->available;
+         prev->siblings.next != &shm->available;
+         prev = (struct page *)prev->siblings.next) {
+    }
+
+    list_add(&page->siblings, &prev->siblings);
+
+    shm_merge(shm, page);
 
     lock_unlock(&shm->lock);
 }
