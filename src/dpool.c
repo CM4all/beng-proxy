@@ -128,6 +128,7 @@ allocation_alloc(const struct dpool_chunk *chunk,
     assert(allocation_size(chunk, alloc) >= size);
 
     list_remove(&alloc->free_siblings);
+    list_init(&alloc->free_siblings);
     return alloc->data;
 }
 
@@ -150,6 +151,7 @@ dchunk_malloc(struct dpool_chunk *chunk, size_t size)
     chunk->used += sizeof(*alloc) - sizeof(alloc->data) + size;
 
     list_add(&alloc->all_siblings, chunk->all_allocations.prev);
+    list_init(&alloc->free_siblings);
 
     return alloc->data;
 }
