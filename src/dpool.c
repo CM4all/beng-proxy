@@ -132,6 +132,12 @@ allocation_alloc(const struct dpool_chunk *chunk,
     return alloc->data;
 }
 
+static struct dpool_allocation *
+dpool_free_to_alloc(struct list_head *list)
+{
+    return (struct dpool_allocation *)(((char*)list) - offsetof(struct dpool_allocation, free_siblings));
+}
+
 static void *
 dchunk_malloc(struct dpool_chunk *chunk, size_t size)
 {
@@ -139,7 +145,7 @@ dchunk_malloc(struct dpool_chunk *chunk, size_t size)
 
     for (alloc = (struct dpool_allocation *)chunk->free_allocations.next;
          alloc != (struct dpool_allocation *)&chunk->free_allocations;
-         alloc = (struct dpool_allocation *)alloc->free_siblings.next) {
+         alloc = dpool_free_to_alloc(alloc->free_siblings.next)) {
         if (allocation_size(chunk, alloc) >= size)
             return allocation_alloc(chunk, alloc, size);
     }
