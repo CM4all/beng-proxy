@@ -129,8 +129,6 @@ session_manager_init(void)
 {
     srandom((unsigned)time(NULL));
 
-    assert(session_manager == NULL);
-
     if (session_manager == NULL)
         session_manager = session_manager_new();
     else {
