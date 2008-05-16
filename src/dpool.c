@@ -52,7 +52,7 @@ align_size(size_t size)
 struct dpool *
 dpool_new(struct shm *shm)
 {
-    struct dpool *pool = shm_alloc(shm);
+    struct dpool *pool = shm_alloc(shm, 1);
     if (pool == NULL)
         return NULL;
 
@@ -139,7 +139,7 @@ dchunk_malloc(struct dpool_chunk *chunk, size_t size)
 static struct dpool_chunk *
 dchunk_new(struct dpool *pool)
 {
-    struct dpool_chunk *chunk = shm_alloc(pool->shm);
+    struct dpool_chunk *chunk = shm_alloc(pool->shm, 1);
     if (chunk == NULL)
         return NULL;
 

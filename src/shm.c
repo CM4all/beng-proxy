@@ -121,44 +121,63 @@ shm_page_size(const struct shm *shm)
 }
 
 static struct page *
-shm_split_page(const struct shm *shm, struct page *page)
+shm_find_available(struct shm *shm, unsigned num_pages)
 {
-    assert(page->num_pages >= 2);
+    struct page *page;
 
-    --page->num_pages;
+    for (page = (struct page *)shm->available.next;
+         &page->siblings != &shm->available;
+         page = (struct page *)page->siblings.next)
+        if (page->num_pages >= num_pages)
+            return page;
+
+    return NULL;
+}
+
+static struct page *
+shm_split_page(const struct shm *shm, struct page *page, unsigned num_pages)
+{
+    assert(page->num_pages > num_pages);
+
+    page->num_pages -= num_pages;
 
     page[page->num_pages].data = page->data + shm->page_size * page->num_pages;
     page += page->num_pages;
-    page->num_pages = 1;
+    page->num_pages = num_pages;
 
     return page;
 }
 
 void *
-shm_alloc(struct shm *shm)
+shm_alloc(struct shm *shm, unsigned num_pages)
 {
     struct page *page;
 
+    assert(num_pages > 0);
+
     lock_lock(&shm->lock);
 
-    if (list_empty(&shm->available)) {
+    page = shm_find_available(shm, num_pages);
+    if (page == NULL) {
         lock_unlock(&shm->lock);
         return NULL;
     }
 
+    assert(page->num_pages >= num_pages);
+
     page = (struct page *)shm->available.next;
-    if (page->num_pages == 1) {
+    if (page->num_pages == num_pages) {
         list_remove(&page->siblings);
         lock_unlock(&shm->lock);
 
-        poison_undefined(page->data, shm->page_size);
+        poison_undefined(page->data, shm->page_size * num_pages);
         return page->data;
     } else {
-        page = shm_split_page(shm, page);
+        page = shm_split_page(shm, page, num_pages);
 
         lock_unlock(&shm->lock);
 
-        poison_undefined(page->data, shm->page_size);
+        poison_undefined(page->data, shm->page_size * num_pages);
         return page->data;
     }
 }

@@ -17,11 +17,11 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     pool = dpool_new(shm);
     assert(pool != NULL);
 
-    a = shm_alloc(shm);
+    a = shm_alloc(shm, 1);
     assert(a != NULL);
     assert(a != pool);
 
-    b = shm_alloc(shm);
+    b = shm_alloc(shm, 1);
     assert(b == NULL);
 
     shm_free(shm, a);

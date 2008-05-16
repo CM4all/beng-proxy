@@ -110,7 +110,7 @@ session_manager_new(void)
         abort();
     }
 
-    sm = shm_alloc(shm);
+    sm = shm_alloc(shm, 1);
     refcount_init(&sm->ref);
     sm->shm = shm;
 
