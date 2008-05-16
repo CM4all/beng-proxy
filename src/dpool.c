@@ -104,10 +104,28 @@ allocation_size(const struct dpool_chunk *chunk,
         return (const unsigned char *)alloc->all_siblings.next - alloc->data;
 }
 
-static void *
-allocation_alloc(struct dpool_allocation *alloc, size_t size __attr_unused)
+static void
+allocation_split(const struct dpool_chunk *chunk,
+                 struct dpool_allocation *alloc, size_t size)
 {
-    /* XXX split allocation */
+    struct dpool_allocation *other;
+
+    assert(allocation_size(chunk, alloc) > size + sizeof(*alloc) * 2);
+
+    other = (struct dpool_allocation *)(alloc->data + size);
+    list_add(&other->all_siblings, &alloc->all_siblings);
+    list_add(&other->free_siblings, &alloc->free_siblings);
+}
+
+static void *
+allocation_alloc(const struct dpool_chunk *chunk,
+                 struct dpool_allocation *alloc,
+                 size_t size)
+{
+    if (allocation_size(chunk, alloc) > size + sizeof(*alloc) * 2)
+        allocation_split(chunk, alloc, size);
+
+    assert(allocation_size(chunk, alloc) >= size);
 
     list_remove(&alloc->free_siblings);
     return alloc->data;
@@ -122,7 +140,7 @@ dchunk_malloc(struct dpool_chunk *chunk, size_t size)
          alloc != (struct dpool_allocation *)&chunk->free_allocations;
          alloc = (struct dpool_allocation *)alloc->free_siblings.next) {
         if (allocation_size(chunk, alloc) >= size)
-            return allocation_alloc(alloc, size);
+            return allocation_alloc(chunk, alloc, size);
     }
 
     if (sizeof(*alloc) - sizeof(alloc->data) + size > chunk->size - chunk->used)
