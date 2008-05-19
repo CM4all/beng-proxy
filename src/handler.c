@@ -146,8 +146,8 @@ translate_callback(const struct translate_response *response,
     }
 
     if (response->path != NULL) {
-        if (response->cgi)
-            cgi_handler(request);
+        if (response->cgi || response->jailcgi)
+            cgi_handler(request, response->jailcgi);
         else
             file_callback(request);
     } else if (response->proxy != NULL) {

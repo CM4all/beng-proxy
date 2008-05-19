@@ -378,6 +378,10 @@ translate_handle_packet(struct translate_connection *connection,
         connection->response.cgi = true;
         break;
 
+    case TRANSLATE_JAILCGI:
+        connection->response.jailcgi = true;
+        break;
+
     case TRANSLATE_GOOGLE_GADGET:
         connection->response.google_gadget = true;
         break;

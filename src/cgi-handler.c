@@ -24,7 +24,7 @@ remove_tail(pool_t pool, const char *p, const char *tail)
 }
 
 void
-cgi_handler(struct request *request2)
+cgi_handler(struct request *request2, bool jail __attr_unused)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
