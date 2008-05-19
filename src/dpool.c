@@ -312,6 +312,14 @@ d_free(struct dpool *pool, const void *p)
         list_remove(&next->free_siblings);
     }
 
+    if (alloc->all_siblings.next == &chunk->all_allocations) {
+        /* remove free tail allocation */
+        assert(alloc->free_siblings.next == &chunk->free_allocations);
+        list_remove(&alloc->all_siblings);
+        list_remove(&alloc->free_siblings);
+        chunk->used = (unsigned char*)alloc - chunk->data;
+    }
+
     /* XXX merge */
 
     lock_unlock(&pool->lock);
