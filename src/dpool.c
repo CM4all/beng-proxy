@@ -200,7 +200,7 @@ d_malloc(struct dpool *pool, size_t size)
 
     /* find a chunk with enough room */
 
-    chunk = (struct dpool_chunk *)pool->first_chunk.siblings.next;
+    chunk = &pool->first_chunk;
     do {
         p = dchunk_malloc(chunk, size);
         if (p != NULL) {
