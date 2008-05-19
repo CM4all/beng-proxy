@@ -124,7 +124,7 @@ dchunk_malloc(struct dpool_chunk *chunk, size_t size)
 
     for (alloc = dpool_free_to_alloc(chunk->free_allocations.next);
          &alloc->free_siblings != &chunk->free_allocations;
-         alloc = dpool_free_to_alloc(alloc->free_siblings.next)) {
+         alloc = dalloc_next_free(alloc)) {
         if (allocation_size(chunk, alloc) >= size)
             return allocation_alloc(chunk, alloc, size);
     }
@@ -267,7 +267,7 @@ d_free(struct dpool *pool, const void *p)
     else
         list_add(&alloc->free_siblings, &prev->free_siblings);
 
-    prev = dpool_free_to_alloc(alloc->free_siblings.prev);
+    prev = dalloc_prev_free(alloc);
     if (&prev->free_siblings != &chunk->free_allocations &&
         prev == (struct dpool_allocation *)alloc->all_siblings.prev) {
         /* merge with previous */
@@ -276,7 +276,7 @@ d_free(struct dpool *pool, const void *p)
         alloc = prev;
     }
 
-    next = dpool_free_to_alloc(alloc->free_siblings.next);
+    next = dalloc_next_free(alloc);
     if (&next->free_siblings != &chunk->free_allocations &&
         next == (struct dpool_allocation *)alloc->all_siblings.next) {
         /* merge with next */

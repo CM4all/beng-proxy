@@ -40,4 +40,16 @@ dpool_free_to_alloc(struct list_head *list)
     return (struct dpool_allocation *)(((char*)list) - offsetof(struct dpool_allocation, free_siblings));
 }
 
+static inline struct dpool_allocation *
+dalloc_prev_free(struct dpool_allocation *alloc)
+{
+    return dpool_free_to_alloc(alloc->free_siblings.prev);
+}
+
+static inline struct dpool_allocation *
+dalloc_next_free(struct dpool_allocation *alloc)
+{
+    return dpool_free_to_alloc(alloc->free_siblings.next);
+}
+
 #endif
