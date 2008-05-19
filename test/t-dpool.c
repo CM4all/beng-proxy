@@ -9,7 +9,7 @@
 int main(int argc __attr_unused, char **argv __attr_unused) {
     struct shm *shm;
     struct dpool *pool;
-    void *a, *b, *c;
+    void *a, *b, *c, *d;
 
     shm = shm_new(1024, 2);
     assert(shm != NULL);
@@ -30,21 +30,19 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     assert(a != NULL);
     memset(a, 0, 512);
 
-    b = d_malloc(pool, 512);
+    b = d_malloc(pool, 800);
     assert(b != NULL);
-    memset(b, 0, 512);
+    memset(b, 0, 800);
 
     c = d_malloc(pool, 512);
     assert(c == NULL);
 
-    d_free(pool, b);
-
-    b = d_malloc(pool, 256);
-    assert(b != NULL);
+    d = d_malloc(pool, 220);
+    assert(d != NULL);
 
     d_free(pool, a);
 
-    a = d_malloc(pool, 256);
+    a = d_malloc(pool, 220);
     assert(a != NULL);
 
     c = d_malloc(pool, 257);
