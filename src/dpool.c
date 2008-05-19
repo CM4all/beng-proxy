@@ -226,8 +226,88 @@ d_malloc(struct dpool *pool, size_t size)
     return p;
 }
 
-void
-d_free(struct dpool *pool __attr_unused, const void *p __attr_unused)
+static struct dpool_allocation *
+dpool_pointer_to_allocation(const void *p)
 {
-    /* XXX implement this */
+    union {
+        const void *in;
+        char *out;
+    } u = { .in = p };
+
+    return (struct dpool_allocation *)(u.out - offsetof(struct dpool_allocation, data));
+}
+
+static bool
+dpool_chunk_contains(const struct dpool_chunk *chunk, const void *p)
+{
+    return (const unsigned char*)p >= chunk->data &&
+        (const unsigned char*)p < chunk->data + chunk->used;
+}
+
+static struct dpool_chunk *
+dpool_find_chunk(struct dpool *pool, const void *p)
+{
+    struct dpool_chunk *chunk;
+
+    if (dpool_chunk_contains(&pool->first_chunk, p))
+        return &pool->first_chunk;
+
+    for (chunk = (struct dpool_chunk *)pool->first_chunk.siblings.next;
+         chunk != &pool->first_chunk;
+         chunk = (struct dpool_chunk *)chunk->siblings.next) {
+        if (dpool_chunk_contains(chunk, p))
+            return chunk;
+    }
+
+    return NULL;
+}
+
+static struct dpool_allocation *
+dpool_find_free(const struct dpool_chunk *chunk,
+                struct dpool_allocation *alloc)
+{
+    struct dpool_allocation *p;
+
+    for (p = (struct dpool_allocation *)alloc->all_siblings.prev;
+         p != (const struct dpool_allocation *)&chunk->all_allocations;
+         p = (struct dpool_allocation *)p->all_siblings.prev)
+        if (!list_empty(&p->free_siblings))
+            return p;
+
+    return NULL;
+}
+
+void
+d_free(struct dpool *pool, const void *p)
+{
+    struct dpool_chunk *chunk = dpool_find_chunk(pool, p);
+    struct dpool_allocation *alloc = dpool_pointer_to_allocation(p);
+    struct dpool_allocation *prev, *next;
+
+    assert(chunk != NULL);
+    assert(list_empty(&alloc->free_siblings));    
+
+    prev = dpool_find_free(chunk, alloc);
+    if (prev == NULL)
+        list_add(&alloc->free_siblings, &chunk->free_allocations);
+    else
+        list_add(&alloc->free_siblings, &prev->free_siblings);
+
+    prev = dpool_free_to_alloc(alloc->free_siblings.prev);
+    if (&prev->free_siblings != &chunk->free_allocations &&
+        prev == (struct dpool_allocation *)alloc->all_siblings.prev) {
+        /* merge with previous */
+        list_remove(&alloc->all_siblings);
+        list_remove(&alloc->free_siblings);
+    }
+
+    next = dpool_free_to_alloc(alloc->free_siblings.next);
+    if (&next->free_siblings != &chunk->free_allocations &&
+        next == (struct dpool_allocation *)alloc->all_siblings.next) {
+        /* merge with next */
+        list_remove(&next->all_siblings);
+        list_remove(&next->free_siblings);
+    }
+
+    /* XXX merge */
 }

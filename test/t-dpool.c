@@ -37,6 +37,19 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     c = d_malloc(pool, 512);
     assert(c == NULL);
 
+    d_free(pool, b);
+
+    b = d_malloc(pool, 256);
+    assert(b != NULL);
+
+    d_free(pool, a);
+
+    a = d_malloc(pool, 256);
+    assert(a != NULL);
+
+    c = d_malloc(pool, 257);
+    assert(c == NULL);
+
     dpool_destroy(pool);
     shm_close(shm);
 }
