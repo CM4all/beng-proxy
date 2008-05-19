@@ -299,6 +299,7 @@ d_free(struct dpool *pool, const void *p)
         /* merge with previous */
         list_remove(&alloc->all_siblings);
         list_remove(&alloc->free_siblings);
+        alloc = prev;
     }
 
     next = dpool_free_to_alloc(alloc->free_siblings.next);
