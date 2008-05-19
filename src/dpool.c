@@ -117,12 +117,6 @@ allocation_alloc(const struct dpool_chunk *chunk,
     return alloc->data;
 }
 
-static struct dpool_allocation *
-dpool_free_to_alloc(struct list_head *list)
-{
-    return (struct dpool_allocation *)(((char*)list) - offsetof(struct dpool_allocation, free_siblings));
-}
-
 static void *
 dchunk_malloc(struct dpool_chunk *chunk, size_t size)
 {
@@ -220,13 +214,6 @@ dpool_pointer_to_allocation(const void *p)
     } u = { .in = p };
 
     return (struct dpool_allocation *)(u.out - offsetof(struct dpool_allocation, data));
-}
-
-static bool
-dpool_chunk_contains(const struct dpool_chunk *chunk, const void *p)
-{
-    return (const unsigned char*)p >= chunk->data &&
-        (const unsigned char*)p < chunk->data + chunk->used;
 }
 
 static struct dpool_chunk *

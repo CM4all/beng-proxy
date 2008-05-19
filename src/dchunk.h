@@ -10,6 +10,7 @@
 #include <inline/list.h>
 
 #include <stddef.h>
+#include <stdbool.h>
 
 struct dpool_allocation {
     struct list_head all_siblings, free_siblings;
@@ -25,5 +26,18 @@ struct dpool_chunk {
 
     unsigned char data[sizeof(size_t)];
 };
+
+static inline bool
+dpool_chunk_contains(const struct dpool_chunk *chunk, const void *p)
+{
+    return (const unsigned char*)p >= chunk->data &&
+        (const unsigned char*)p < chunk->data + chunk->used;
+}
+
+static inline struct dpool_allocation *
+dpool_free_to_alloc(struct list_head *list)
+{
+    return (struct dpool_allocation *)(((char*)list) - offsetof(struct dpool_allocation, free_siblings));
+}
 
 #endif
