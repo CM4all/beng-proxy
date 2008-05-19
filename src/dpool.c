@@ -287,6 +287,8 @@ d_free(struct dpool *pool, const void *p)
     assert(chunk != NULL);
     assert(list_empty(&alloc->free_siblings));    
 
+    lock_lock(&pool->lock);
+
     prev = dpool_find_free(chunk, alloc);
     if (prev == NULL)
         list_add(&alloc->free_siblings, &chunk->free_allocations);
@@ -311,4 +313,6 @@ d_free(struct dpool *pool, const void *p)
     }
 
     /* XXX merge */
+
+    lock_unlock(&pool->lock);
 }
