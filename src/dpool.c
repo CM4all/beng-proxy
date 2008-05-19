@@ -143,8 +143,8 @@ dchunk_malloc(struct dpool_chunk *chunk, size_t size)
 {
     struct dpool_allocation *alloc;
 
-    for (alloc = (struct dpool_allocation *)chunk->free_allocations.next;
-         alloc != (struct dpool_allocation *)&chunk->free_allocations;
+    for (alloc = dpool_free_to_alloc(chunk->free_allocations.next);
+         &alloc->free_siblings != &chunk->free_allocations;
          alloc = dpool_free_to_alloc(alloc->free_siblings.next)) {
         if (allocation_size(chunk, alloc) >= size)
             return allocation_alloc(chunk, alloc, size);
