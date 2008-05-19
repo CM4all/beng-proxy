@@ -318,6 +318,16 @@ d_free(struct dpool *pool, const void *p)
         list_remove(&alloc->all_siblings);
         list_remove(&alloc->free_siblings);
         chunk->used = (unsigned char*)alloc - chunk->data;
+
+        if (chunk->used == 0 && chunk != &pool->first_chunk) {
+            /* the chunk is completely empty; release it to the SHM
+               object */
+            assert(list_empty(&chunk->all_allocations));
+            assert(list_empty(&chunk->free_allocations));
+
+            list_remove(&chunk->siblings);
+            shm_free(pool->shm, chunk);
+        }
     }
 
     /* XXX merge */

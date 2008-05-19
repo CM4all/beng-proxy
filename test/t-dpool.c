@@ -48,6 +48,17 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     c = d_malloc(pool, 257);
     assert(c == NULL);
 
+    /* no free SHM page */
+    c = shm_alloc(shm, 1);
+    assert(c == NULL);
+
+    /* free "b" which should release one SHM page */
+    d_free(pool, b);
+
+    c = shm_alloc(shm, 1);
+    assert(c != NULL);
+
+
     dpool_destroy(pool);
     shm_close(shm);
 }
