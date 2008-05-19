@@ -5,10 +5,10 @@
  */
 
 #include "dpool.h"
+#include "dchunk.h"
 #include "shm.h"
 #include "lock.h"
 
-#include <inline/list.h>
 #include <inline/compiler.h>
 #include <inline/poison.h>
 
@@ -21,21 +21,6 @@
 #define ALIGN 4
 #define ALIGN_BITS 0x3
 #endif
-
-struct dpool_allocation {
-    struct list_head all_siblings, free_siblings;
-
-    unsigned char data[sizeof(size_t)];
-};
-
-struct dpool_chunk {
-    struct list_head siblings;
-    size_t size, used;
-
-    struct list_head all_allocations, free_allocations;
-
-    unsigned char data[sizeof(size_t)];
-};
 
 struct dpool {
     struct shm *shm;
