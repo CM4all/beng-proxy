@@ -7,8 +7,11 @@
 #ifndef __BENG_DCHUNK_H
 #define __BENG_DCHUNK_H
 
+#include "shm.h"
+
 #include <inline/list.h>
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -50,6 +53,28 @@ static inline struct dpool_allocation *
 dalloc_next_free(struct dpool_allocation *alloc)
 {
     return dpool_free_to_alloc(alloc->free_siblings.next);
+}
+
+static inline struct dpool_chunk *
+dchunk_new(struct shm *shm, struct list_head *chunks_head)
+{
+    struct dpool_chunk *chunk;
+
+    assert(shm != NULL);
+    assert(shm_page_size(shm) >= sizeof(*chunk));
+
+    chunk = shm_alloc(shm, 1);
+    if (chunk == NULL)
+        return NULL;
+
+    chunk->size = shm_page_size(shm) - sizeof(*chunk) + sizeof(chunk->data);
+    chunk->used = 0;
+
+    list_init(&chunk->all_allocations);
+    list_init(&chunk->free_allocations);
+
+    list_add(&chunk->siblings, chunks_head);
+    return chunk;
 }
 
 #endif

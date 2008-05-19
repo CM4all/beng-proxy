@@ -141,23 +141,6 @@ dchunk_malloc(struct dpool_chunk *chunk, size_t size)
     return alloc->data;
 }
 
-static struct dpool_chunk *
-dchunk_new(struct dpool *pool)
-{
-    struct dpool_chunk *chunk = shm_alloc(pool->shm, 1);
-    if (chunk == NULL)
-        return NULL;
-
-    chunk->size = shm_page_size(pool->shm) - sizeof(*chunk) + sizeof(chunk->data);
-    chunk->used = 0;
-
-    list_init(&chunk->all_allocations);
-    list_init(&chunk->free_allocations);
-
-    list_add(&chunk->siblings, &pool->first_chunk.siblings);
-    return chunk;
-}
-
 void *
 d_malloc(struct dpool *pool, size_t size)
 {
@@ -194,7 +177,7 @@ d_malloc(struct dpool *pool, size_t size)
 
     assert(p == NULL);
 
-    chunk = dchunk_new(pool);
+    chunk = dchunk_new(pool->shm, &pool->first_chunk.siblings);
     if (chunk != NULL) {
         p = dchunk_malloc(chunk, size);
         assert(p != NULL);
