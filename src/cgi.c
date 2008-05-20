@@ -135,8 +135,11 @@ cgi_input_data(const void *data, size_t length, void *ctx)
             return 0;
         }
 
-        if (cgi->headers == NULL)
-            length += istream_buffer_send(&cgi->output, cgi->buffer);
+        if (cgi->headers == NULL) {
+            size_t consumed = istream_buffer_send(&cgi->output, cgi->buffer);
+            if (consumed == 0 && cgi->input == NULL)
+                length = 0;
+        }
 
         pool_unref(cgi->output.pool);
 
