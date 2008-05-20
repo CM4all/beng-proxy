@@ -311,7 +311,18 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_PATH:
-        connection->response.path = payload;
+        if (connection->response.address.type != RESOURCE_ADDRESS_NONE) {
+            daemon_log(2, "misplaced TRANSLATE_PATH packet\n");
+            break;
+        }
+
+        if (payload == NULL) {
+            daemon_log(2, "malformed TRANSLATE_PATH packet\n");
+            break;
+        }
+
+        connection->response.address.type = RESOURCE_ADDRESS_LOCAL;
+        connection->response.address.u.path = payload;
         break;
 
     case TRANSLATE_PATH_INFO:
@@ -327,8 +338,18 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_PROXY:
-        if (payload != NULL)
-            connection->uri_with_address = connection->response.proxy =
+        if (connection->response.address.type != RESOURCE_ADDRESS_NONE) {
+            daemon_log(2, "misplaced TRANSLATE_PROXY packet\n");
+            break;
+        }
+
+        if (payload == NULL) {
+            daemon_log(2, "malformed TRANSLATE_PROXY packet\n");
+            break;
+        }
+
+        connection->response.address.type = RESOURCE_ADDRESS_HTTP;
+        connection->uri_with_address = connection->response.address.u.http =
                 uri_address_new(connection->pool, payload);
         break;
 
@@ -375,10 +396,21 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_CGI:
-        connection->response.cgi = true;
+        if (connection->response.address.type != RESOURCE_ADDRESS_LOCAL) {
+            daemon_log(2, "misplaced TRANSLATE_CGI packet\n");
+            break;
+        }
+
+        connection->response.address.type = RESOURCE_ADDRESS_CGI;
         break;
 
     case TRANSLATE_JAILCGI:
+        if (connection->response.address.type != RESOURCE_ADDRESS_LOCAL) {
+            daemon_log(2, "misplaced TRANSLATE_CGI packet\n");
+            break;
+        }
+
+        connection->response.address.type = RESOURCE_ADDRESS_CGI;
         connection->response.jailcgi = true;
         break;
 

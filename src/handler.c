@@ -74,7 +74,7 @@ translate_callback(const struct translate_response *response,
     request->translate.transformation = response->transformation;
 
     if (response->status == (http_status_t)-1 ||
-        (response->path == NULL && response->proxy == NULL &&
+        (response->address.type == RESOURCE_ADDRESS_NONE &&
          response->redirect == NULL)) {
         http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -145,12 +145,11 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
-    if (response->path != NULL) {
-        if (response->cgi || response->jailcgi)
-            cgi_handler(request, response->jailcgi);
-        else
-            file_callback(request);
-    } else if (response->proxy != NULL) {
+    if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
+        file_callback(request);
+    } else if (response->address.type == RESOURCE_ADDRESS_CGI) {
+        cgi_handler(request, response->jailcgi);
+    } else if (response->address.type == RESOURCE_ADDRESS_HTTP) {
         proxy_handler(request);
     } else if (response->redirect != NULL) {
         http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
@@ -262,13 +261,14 @@ serve_document_root_file(struct request *request2,
     request2->translate.transformation = tr->transformation;
 
     tr->status = 0;
-    tr->path = p_strncat(request->pool,
-                         config->document_root,
-                         strlen(config->document_root),
-                         uri->base.data,
-                         uri->base.length,
-                         index_file, (size_t)10,
-                         NULL);
+    tr->address.type = RESOURCE_ADDRESS_LOCAL;
+    tr->address.u.path = p_strncat(request->pool,
+                                   config->document_root,
+                                   strlen(config->document_root),
+                                   uri->base.data,
+                                   uri->base.length,
+                                   index_file, (size_t)10,
+                                   NULL);
     tr->content_type = NULL;
 
     file_callback(request2);

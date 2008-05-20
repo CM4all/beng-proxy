@@ -31,7 +31,7 @@ proxy_handler(struct request *request2)
     }
 
     http_cache_request(request2->http_cache, request->pool,
-                       method, tr->proxy, NULL, body,
+                       method, tr->address.u.http, NULL, body,
                        &response_handler, request2,
                        request2->async_ref);
 }

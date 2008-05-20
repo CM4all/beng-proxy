@@ -9,6 +9,7 @@
 
 #include "pool.h"
 #include "http.h"
+#include "resource-address.h"
 
 struct uri_with_address;
 struct stock;
@@ -40,14 +41,14 @@ struct translate_transformation {
 
 struct translate_response {
     http_status_t status;
-    const char *path;
+
+    struct resource_address address;
+
     const char *path_info;
     const char *site;
     const char *document_root;
     const char *content_type;
-    struct uri_with_address *proxy;
     const char *redirect;
-    bool cgi;
     bool jailcgi;
     bool google_gadget;
     const char *session;

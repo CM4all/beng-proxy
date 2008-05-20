@@ -98,9 +98,9 @@ file_callback(struct request *request2)
     http_status_t status;
 
     assert(tr != NULL);
-    assert(tr->path != NULL);
+    assert(tr->address.u.path != NULL);
 
-    path = tr->path;
+    path = tr->address.u.path;
 
     if (request->method != HTTP_METHOD_HEAD &&
         request->method != HTTP_METHOD_GET &&

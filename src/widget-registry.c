@@ -52,10 +52,11 @@ lookup_callback(const struct translate_response *response, void *ctx)
         return;
     }
 
-    assert(response->proxy != NULL); /* XXX */
+    assert(response->address.type == RESOURCE_ADDRESS_HTTP); /* XXX */
+    assert(response->address.u.http != NULL); /* XXX */
 
     class = &lookup->class;
-    class->address = uri_address_dup(lookup->pool, response->proxy);
+    class->address = uri_address_dup(lookup->pool, response->address.u.http);
 
     if (response->transformation != NULL &&
         response->transformation->type == TRANSFORMATION_PROCESS) {

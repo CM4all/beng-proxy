@@ -75,15 +75,12 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     struct translate_transformation **tail_p;
 
     dest->status = src->status;
-    dest->path = p_strdup_checked(pool, src->path);
+    resource_address_copy(pool, &dest->address, &src->address);
     dest->path_info = p_strdup_checked(pool, src->path_info);
     dest->site = p_strdup_checked(pool, src->site);
     dest->document_root = p_strdup_checked(pool, src->document_root);
     dest->content_type = p_strdup_checked(pool, src->content_type);
-    dest->proxy = src->proxy == NULL ? NULL
-        : uri_address_dup(pool, src->proxy);
     dest->redirect = p_strdup_checked(pool, src->redirect);
-    dest->cgi = src->cgi;
     dest->google_gadget = src->google_gadget;
     dest->session = NULL;
     dest->user = NULL;
