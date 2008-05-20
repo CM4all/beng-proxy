@@ -178,7 +178,7 @@ cgi_input_eof(void *ctx)
 
         http_response_handler_invoke_abort(&cgi->handler);
         pool_unref(cgi->output.pool);
-    } else if (fifo_buffer_empty(cgi->buffer)) {
+    } else if (cgi->buffer == NULL || fifo_buffer_empty(cgi->buffer)) {
         istream_deinit_eof(&cgi->output);
     }
 }
