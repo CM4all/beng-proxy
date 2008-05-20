@@ -15,7 +15,7 @@ struct http_response_handler;
 struct async_operation_ref;
 
 void
-cgi_new(pool_t pool,
+cgi_new(pool_t pool, bool jail,
         const char *path,
         http_method_t method, const char *uri,
         const char *script_name, const char *path_info,
