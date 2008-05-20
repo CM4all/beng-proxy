@@ -11,7 +11,9 @@
 #include <assert.h>
 
 const struct widget_class root_widget_class = {
-    .address = NULL,
+    .address = {
+        .type = RESOURCE_ADDRESS_NONE,
+    },
     .type = WIDGET_TYPE_BENG,
     .is_container = true,
 };
@@ -26,12 +28,12 @@ widget_class_relative_uri(const struct widget_class *class,
     assert(class != NULL);
     assert(uri != NULL);
 
-    if (class->address == NULL)
+    if (class->address.type != RESOURCE_ADDRESS_HTTP)
         return NULL;
 
-    assert(class->address->uri != NULL);
+    assert(class->address.u.http != NULL);
 
-    class_uri = class->address->uri;
+    class_uri = class->address.u.http->uri;
     class_uri_length = strlen(class_uri);
 
     if (uri->length >= class_uri_length &&

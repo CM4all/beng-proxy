@@ -182,6 +182,10 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (embed->num_redirects >= 8)
         return false;
 
+    if (embed->widget->class->address.type != RESOURCE_ADDRESS_HTTP)
+        /* a static or CGI widget cannot send redirects */
+        return false;
+
     new_uri = widget_absolute_uri(embed->pool, embed->widget,
                                   location, strlen(location));
     if (new_uri == NULL)
@@ -205,7 +209,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     istream_close(body);
     pool_ref(embed->pool);
 
-    uwa = uri_address_dup(embed->pool, embed->widget->class->address);
+    uwa = uri_address_dup(embed->pool, embed->widget->class->address.u.http);
     uwa->uri = location;
 
     headers = widget_request_headers(embed, 0);
@@ -361,6 +365,14 @@ widget_http_request(pool_t pool, struct widget *widget,
     assert(widget != NULL);
     assert(widget->class != NULL);
 
+    if (widget->class->address.type != RESOURCE_ADDRESS_HTTP) {
+        /* XXX support static/CGI widgets */
+        struct http_response_handler_ref handler_ref;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_abort(&handler_ref);
+        return;
+    }
+
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
 
@@ -368,9 +380,9 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->widget = widget;
     embed->env = env;
     embed->host_and_port =
-        uri_host_and_port(pool, embed->widget->class->address->uri);
+        uri_host_and_port(pool, embed->widget->class->address.u.http->uri);
 
-    uwa = uri_address_dup(pool, widget->class->address);
+    uwa = uri_address_dup(pool, widget->class->address.u.http);
     uwa->uri = widget_real_uri(pool, widget);
 
     headers = widget_request_headers(embed, widget->from_request.body != NULL);

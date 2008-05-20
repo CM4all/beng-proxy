@@ -11,6 +11,7 @@
 #include "strref.h"
 #include "http.h"
 #include "istream.h"
+#include "resource-address.h"
 
 #include <inline/list.h>
 
@@ -33,7 +34,7 @@ enum widget_type {
  */
 struct widget_class {
     /** the base URI of this widget, as specified in the template */
-    struct uri_with_address *address;
+    struct resource_address address;
 
     /** which API is used by the widget */
     enum widget_type type;

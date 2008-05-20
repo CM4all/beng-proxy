@@ -579,7 +579,8 @@ embed_widget(struct processor *processor, struct processor_env *env,
     pool_t pool = processor->pool;
 
     if (widget->class_name == NULL &&
-        (widget->class == NULL || widget->class->address == NULL)) {
+        (widget->class == NULL ||
+         widget->class->address.type == RESOURCE_ADDRESS_NONE)) {
         widget_cancel(widget);
         return NULL;
     }

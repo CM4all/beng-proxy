@@ -20,11 +20,11 @@ widget_determine_real_uri(pool_t pool, struct widget *widget)
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-    assert(widget->class->address != NULL);
-    assert(widget->class->address->uri != NULL);
+    assert(widget->class->address.type == RESOURCE_ADDRESS_HTTP);
+    assert(widget->class->address.u.http->uri != NULL);
     assert(widget->from_request.path_info != NULL);
 
-    uri = widget->class->address->uri;
+    uri = widget->class->address.u.http->uri;
 
     if (!strref_is_empty(&widget->from_request.query_string))
         uri = p_strncat(pool,

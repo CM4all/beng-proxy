@@ -566,8 +566,8 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-    assert(widget->class->address != NULL);
-    assert(widget->class->address->uri != NULL);
+    assert(widget->class->address.type == RESOURCE_ADDRESS_HTTP);
+    assert(widget->class->address.u.http != NULL);
 
     if (widget->from_request.proxy && strmap_get(env->args, "save") != NULL) {
         struct http_response_handler_ref handler_ref;
@@ -597,7 +597,7 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     http_response_handler_set(&gg->response_handler, handler, handler_ctx);
 
     http_cache_request(env->http_cache, pool,
-                       HTTP_METHOD_GET, widget->class->address,
+                       HTTP_METHOD_GET, widget->class->address.u.http,
                        NULL, NULL,
                        &google_gadget_handler, gg,
                        &gg->async);

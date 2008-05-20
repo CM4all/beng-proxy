@@ -56,7 +56,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
     assert(response->address.u.http != NULL); /* XXX */
 
     class = &lookup->class;
-    class->address = uri_address_dup(lookup->pool, response->address.u.http);
+    resource_address_copy(lookup->pool, &class->address, &response->address);
 
     if (response->transformation != NULL &&
         response->transformation->type == TRANSFORMATION_PROCESS) {
