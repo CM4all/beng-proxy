@@ -212,8 +212,11 @@ istream_cgi_available(istream_t istream, bool partial)
     const void *data;
     size_t available;
 
-    data = fifo_buffer_read(cgi->buffer, &available);
-    if (data == NULL)
+    if (cgi->buffer != NULL) {
+        data = fifo_buffer_read(cgi->buffer, &available);
+        if (data == NULL)
+            available = 0;
+    } else
         available = 0;
 
     if (cgi->input != NULL) {
