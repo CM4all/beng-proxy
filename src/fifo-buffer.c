@@ -123,6 +123,7 @@ fifo_buffer_append(fifo_buffer_t buffer, size_t length)
 int
 fifo_buffer_empty(fifo_buffer_t buffer)
 {
+    assert(buffer != NULL);
     assert(buffer->size > 0);
 
     return buffer->start == buffer->end;
@@ -131,6 +132,7 @@ fifo_buffer_empty(fifo_buffer_t buffer)
 int
 fifo_buffer_full(fifo_buffer_t buffer)
 {
+    assert(buffer != NULL);
     assert(buffer->size > 0);
 
     return buffer->start == 0 && buffer->end == buffer->size;
