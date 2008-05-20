@@ -566,8 +566,14 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-    assert(widget->class->address.type == RESOURCE_ADDRESS_HTTP);
-    assert(widget->class->address.u.http != NULL);
+
+    if (widget->class->address.type != RESOURCE_ADDRESS_HTTP) {
+        /* google gadgets must be served from a HTTP server */
+        struct http_response_handler_ref handler_ref;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_abort(&handler_ref);
+        return;
+    }
 
     if (widget->from_request.proxy && strmap_get(env->args, "save") != NULL) {
         struct http_response_handler_ref handler_ref;

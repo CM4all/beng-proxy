@@ -1,1 +1,1 @@
-server "http://cfatest01.intern.cm-ag/date.py"
+cgi "/home/max/svn/beng/proxy/demo/cgi-bin/date.py"
