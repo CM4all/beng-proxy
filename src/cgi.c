@@ -90,7 +90,6 @@ cgi_parse_headers(struct cgi *cgi)
         async_poison(&cgi->async);
 
         headers = cgi->headers;
-        cgi->headers = NULL;
 
         http_response_handler_invoke_response(&cgi->handler,
                                               HTTP_STATUS_OK, headers,
