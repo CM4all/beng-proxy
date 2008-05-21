@@ -396,12 +396,18 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_CGI:
-        if (connection->response.address.type != RESOURCE_ADDRESS_LOCAL) {
+        if (connection->response.address.type != RESOURCE_ADDRESS_NONE) {
             daemon_log(2, "misplaced TRANSLATE_CGI packet\n");
             break;
         }
 
+        if (payload == NULL) {
+            daemon_log(2, "malformed TRANSLATE_CGI packet\n");
+            break;
+        }
+
         connection->response.address.type = RESOURCE_ADDRESS_CGI;
+        connection->response.address.u.path = payload;
         break;
 
     case TRANSLATE_JAILCGI:

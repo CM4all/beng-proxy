@@ -189,9 +189,10 @@ class Translation(Protocol):
 
         self._write_packet(TRANSLATE_BEGIN)
         self._write_packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
-        self._write_packet(TRANSLATE_PATH, path)
         if cgi:
-            self._write_packet(TRANSLATE_CGI)
+            self._write_packet(TRANSLATE_CGI, path)
+        else:
+            self._write_packet(TRANSLATE_PATH, path)
         if user is not None:
             self._write_packet(TRANSLATE_USER, user)
         if session is not None:
