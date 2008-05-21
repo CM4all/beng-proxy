@@ -12,10 +12,10 @@
 #include "cookie-client.h"
 #include "async.h"
 #include "http-util.h"
-#include "uri-address.h"
 #include "strref2.h"
 #include "strref-pool.h"
 #include "dpool.h"
+#include "get.h"
 
 #include <daemon/log.h>
 
@@ -359,19 +359,11 @@ widget_http_request(pool_t pool, struct widget *widget,
                     struct async_operation_ref *async_ref)
 {
     struct embed *embed;
-    struct uri_with_address *uwa;
+    struct resource_address *address;
     struct strmap *headers;
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-
-    if (widget->class->address.type != RESOURCE_ADDRESS_HTTP) {
-        /* XXX support static/CGI widgets */
-        struct http_response_handler_ref handler_ref;
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_abort(&handler_ref);
-        return;
-    }
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
@@ -382,8 +374,9 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->host_and_port =
         uri_host_and_port(pool, embed->widget->class->address.u.http->uri);
 
-    uwa = uri_address_dup(pool, widget->class->address.u.http);
-    uwa->uri = widget_real_uri(pool, widget);
+    address = resource_address_dup(pool, &widget->class->address);
+    if (address->type == RESOURCE_ADDRESS_HTTP)
+        address->u.http->uri = widget_real_uri(pool, widget);
 
     headers = widget_request_headers(embed, widget->from_request.body != NULL);
 
@@ -392,11 +385,10 @@ widget_http_request(pool_t pool, struct widget *widget,
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
     embed->async_ref = async_ref;
 
-    http_cache_request(env->http_cache,
-                       pool,
-                       widget->from_request.method,
-                       uwa,
-                       headers,
-                       widget->from_request.body,
-                       &widget_response_handler, embed, async_ref);
+    resource_get(env->http_cache, pool,
+                 widget->from_request.method,
+                 address,
+                 headers,
+                 widget->from_request.body,
+                 &widget_response_handler, embed, async_ref);
 }
