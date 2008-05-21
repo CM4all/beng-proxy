@@ -34,7 +34,7 @@ resource_get(struct http_cache *cache, pool_t pool,
         cgi_new(pool, false /* XXX */, address->u.path,
                 method, "/" /* XXX */,
                 "/" /* XXX */, "" /* XXX */,
-                NULL /* XXX */, "/var/www" /* XXX */,
+                "" /* XXX */, "/var/www" /* XXX */,
                 headers, body,
                 handler, handler_ctx, async_ref);
         return;
