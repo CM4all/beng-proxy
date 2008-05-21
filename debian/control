@@ -68,7 +68,7 @@ Description: Development files for libcm4all-istream
 Package: cm4all-beng-proxy-translation-prototype
 Architecture: all
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, cm4all-utils,
- libcm4all-beng-proxy-js (= ${source:Version}), python-twisted-core
+ python-twisted-core
 Provides: cm4all-beng-proxy-translation
 Enhances: cm4all-beng-proxy
 Description: Translation server prototype
@@ -80,7 +80,8 @@ Description: Translation server prototype
 
 Package: cm4all-beng-proxy-demo
 Architecture: all
-Depends: cm4all-beng-proxy, cm4all-beng-proxy-translation-prototype
+Depends: cm4all-beng-proxy, cm4all-beng-proxy-translation-prototype,
+ libcm4all-beng-proxy-js
 Recommends: cm4all-beng-proxy-dbg, cm4all-beng-proxy-doc
 Description: Demo package for cm4all-beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
