@@ -126,6 +126,7 @@ SOURCES = src/main.c \
 	src/parser.c \
 	src/rewrite-uri.c \
 	src/get.c \
+	src/static-file.c \
 	src/widget-http.c \
 	src/wembed.c \
 	src/frame.c \

@@ -9,6 +9,7 @@
 #include "resource-address.h"
 #include "http-cache.h"
 #include "http-response.h"
+#include "static-file.h"
 #include "cgi.h"
 
 void
@@ -27,8 +28,12 @@ resource_get(struct http_cache *cache, pool_t pool,
         break;
 
     case RESOURCE_ADDRESS_LOCAL:
-        /* XXX */
-        break;
+        if (body != NULL)
+            istream_close(body);
+
+        static_file_get(pool, address->u.path,
+                        handler, handler_ctx);
+        return;
 
     case RESOURCE_ADDRESS_CGI:
         cgi_new(pool, false /* XXX */, address->u.path,

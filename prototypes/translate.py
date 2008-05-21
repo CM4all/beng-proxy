@@ -146,6 +146,10 @@ class Translation(Protocol):
             if m:
                 self._write_packet(TRANSLATE_CGI, m.group(1))
                 continue
+            m = re.match(r'^path\s+"(\S+)"$', line)
+            if m:
+                self._write_packet(TRANSLATE_PATH, m.group(1))
+                continue
             if line == 'process':
                 self._write_packet(TRANSLATE_PROCESS)
             elif line == 'container':
