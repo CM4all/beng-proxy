@@ -362,7 +362,9 @@ translate_handle_packet(struct translate_connection *connection,
             /* XXX wrong pool */
             transformation = translate_add_transformation(connection);
             transformation->type = TRANSFORMATION_FILTER;
-            transformation->u.filter = payload;
+            transformation->u.filter.type = RESOURCE_ADDRESS_HTTP;
+            transformation->u.filter.u.http =
+                uri_address_new(connection->pool, payload);
         }
         break;
 

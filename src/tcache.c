@@ -99,7 +99,8 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
             break;
 
         case TRANSFORMATION_FILTER:
-            p->u.filter = p_strdup(pool, transformation->u.filter);
+            resource_address_copy(pool, &p->u.filter,
+                                  &transformation->u.filter);
             break;
         }
 

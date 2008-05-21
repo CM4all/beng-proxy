@@ -35,7 +35,7 @@ struct translate_transformation {
     union {
         unsigned processor_options;
 
-        const char *filter;
+        struct resource_address filter;
     } u;
 };
 
