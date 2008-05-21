@@ -372,7 +372,9 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->widget = widget;
     embed->env = env;
     embed->host_and_port =
-        uri_host_and_port(pool, embed->widget->class->address.u.http->uri);
+        embed->widget->class->address.type == RESOURCE_ADDRESS_HTTP
+        ? uri_host_and_port(pool, embed->widget->class->address.u.http->uri)
+        : NULL;
 
     address = resource_address_dup(pool, &widget->class->address);
     if (address->type == RESOURCE_ADDRESS_HTTP)

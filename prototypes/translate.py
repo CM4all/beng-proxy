@@ -142,6 +142,10 @@ class Translation(Protocol):
                 if port: address += ':' + port
                 self._write_packet(TRANSLATE_ADDRESS_STRING, address)
                 continue
+            m = re.match(r'^cgi\s+"(\S+)"$', line)
+            if m:
+                self._write_packet(TRANSLATE_CGI, m.group(1))
+                continue
             if line == 'process':
                 self._write_packet(TRANSLATE_PROCESS)
             elif line == 'container':

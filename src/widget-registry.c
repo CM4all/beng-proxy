@@ -52,9 +52,6 @@ lookup_callback(const struct translate_response *response, void *ctx)
         return;
     }
 
-    assert(response->address.type == RESOURCE_ADDRESS_HTTP); /* XXX */
-    assert(response->address.u.http != NULL); /* XXX */
-
     class = &lookup->class;
     resource_address_copy(lookup->pool, &class->address, &response->address);
 
