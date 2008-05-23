@@ -183,8 +183,10 @@ file_callback(struct request *request2)
         header_write(headers, "accept-ranges", "bytes");
     }
 
-    make_etag(buffer, &st);
-    header_write(headers, "etag", buffer);
+    if (!request_transformation_enabled(request2)) {
+        make_etag(buffer, &st);
+        header_write(headers, "etag", buffer);
+    }
 
     if (tr->content_type != NULL) {
         /* content type override from the translation server */
