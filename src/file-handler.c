@@ -141,6 +141,30 @@ file_callback(struct request *request2)
 
     /* request options */
 
+    if (!request_transformation_enabled(request2)) {
+        const char *p = strmap_get(request->headers, "if-modified-since");
+        if (p != NULL) {
+            time_t t = http_date_parse(p);
+            if (t != (time_t)-1 && st.st_mtime > t) {
+                http_server_response(request,
+                                     HTTP_STATUS_NOT_MODIFIED,
+                                     NULL, NULL);
+                return;
+            }
+        }
+
+        p = strmap_get(request->headers, "if-unmodified-since");
+        if (p != NULL) {
+            time_t t = http_date_parse(p);
+            if (t != (time_t)-1 && st.st_mtime < t) {
+                http_server_response(request,
+                                     HTTP_STATUS_PRECONDITION_FAILED,
+                                     NULL, NULL);
+                return;
+            }
+        }
+    }
+
     if (tr->status == 0 && request->method == HTTP_METHOD_GET &&
         !request_transformation_enabled(request2)) {
         const char *p = strmap_get(request->headers, "range");
