@@ -23,6 +23,9 @@ resource_get(struct http_cache *cache, pool_t pool,
 {
     struct http_response_handler_ref handler_ref;
 
+    assert(cache != NULL);
+    assert(address != NULL);
+
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:
         break;
