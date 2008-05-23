@@ -712,7 +712,7 @@ translate_stock_callback(void *ctx, struct stock_item *item)
 
     if (item == NULL) {
         request2->callback(&error, request2->callback_ctx);
-        pool_unref(connection->pool);
+        pool_unref(request2->pool);
         return;
     }
 
