@@ -141,7 +141,8 @@ file_callback(struct request *request2)
 
     /* request options */
 
-    if (tr->status == 0 && !request_transformation_enabled(request2)) {
+    if (tr->status == 0 && request->method == HTTP_METHOD_GET &&
+        !request_transformation_enabled(request2)) {
         const char *p = strmap_get(request->headers, "range");
 
         if (p != NULL)
