@@ -20,7 +20,7 @@ struct async_operation_ref;
 void
 resource_get(struct http_cache *cache, pool_t pool,
              http_method_t method,
-             struct resource_address *address,
+             const struct resource_address *address,
              struct strmap *headers, istream_t body,
              const struct http_response_handler *handler,
              void *handler_ctx,
