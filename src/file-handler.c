@@ -11,6 +11,7 @@
 #include "processor.h"
 #include "date.h"
 #include "format.h"
+#include "http-util.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -157,6 +158,37 @@ file_callback(struct request *request2)
         if (p != NULL) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st.st_mtime < t) {
+                http_server_response(request,
+                                     HTTP_STATUS_PRECONDITION_FAILED,
+                                     NULL, NULL);
+                return;
+            }
+        }
+
+        p = strmap_get(request->headers, "if-match");
+        if (p != NULL && strcmp(p, "*") != 0) {
+            make_etag(buffer, &st);
+
+            if (!http_list_contains(p, buffer)) {
+                http_server_response(request,
+                                     HTTP_STATUS_PRECONDITION_FAILED,
+                                     NULL, NULL);
+                return;
+            }
+        }
+
+        p = strmap_get(request->headers, "if-none-match");
+        if (p != NULL && strcmp(p, "*") == 0) {
+            http_server_response(request,
+                                 HTTP_STATUS_PRECONDITION_FAILED,
+                                 NULL, NULL);
+            return;
+        }
+
+        if (p != NULL) {
+            make_etag(buffer, &st);
+
+            if (http_list_contains(p, buffer)) {
                 http_server_response(request,
                                      HTTP_STATUS_PRECONDITION_FAILED,
                                      NULL, NULL);
