@@ -102,6 +102,8 @@ file_callback(struct request *request2)
 
     path = tr->address.u.path;
 
+    /* check request */
+
     if (request->method != HTTP_METHOD_HEAD &&
         request->method != HTTP_METHOD_GET &&
         (!request_processor_enabled(request2) ||
@@ -111,6 +113,8 @@ file_callback(struct request *request2)
                                  "This method is not allowed.");
         return;
     }
+
+    /* get file information */
 
     ret = lstat(path, &st);
     if (ret != 0) {
@@ -135,12 +139,16 @@ file_callback(struct request *request2)
 
     size = st.st_size;
 
+    /* request options */
+
     if (tr->status == 0 && !request_transformation_enabled(request2)) {
         const char *p = strmap_get(request->headers, "range");
 
         if (p != NULL)
             range = parse_range_header(p, &skip, &size);
     }
+
+    /* build the response */
 
     body = istream_file_new(request->pool, path, size);
     if (body == NULL) {
@@ -176,8 +184,9 @@ file_callback(struct request *request2)
 
     make_etag(buffer, &st);
     header_write(headers, "etag", buffer);
- 
+
     if (tr->content_type != NULL) {
+        /* content type override from the translation server */
         header_write(headers, "content-type", tr->content_type);
     } else {
 #ifndef NO_XATTR
@@ -206,6 +215,8 @@ file_callback(struct request *request2)
         if (request->body != NULL)
             istream_close(request->body);
     }
+
+    /* finished, dispatch this response */
 
     response_dispatch(request2, status, headers, body);
 }
