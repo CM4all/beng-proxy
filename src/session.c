@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <event.h>
 
+#define SHM_PAGE_SIZE 4096
+#define SHM_NUM_PAGES 8192
+
 #define SESSION_TTL_NEW 120
 #define SESSION_TTL 600
 
@@ -104,7 +107,7 @@ session_manager_new(void)
     struct session_manager *sm;
     unsigned i;
 
-    shm = shm_new(4096, 8192);
+    shm = shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES);
     if (shm == NULL) {
         daemon_log(1, "shm_new() failed\n");
         abort();
