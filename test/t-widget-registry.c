@@ -95,7 +95,8 @@ translate(pool_t pool,
     if (strcmp(request->widget_type, "sync") == 0) {
         struct translate_response *response =
             p_calloc(pool, sizeof(*response));
-        response->proxy = uri_address_new(pool, "http://foo/");
+        response->address.type = RESOURCE_ADDRESS_HTTP;
+        response->address.u.http = uri_address_new(pool, "http://foo/");
         callback(response, ctx);
     } else if (strcmp(request->widget_type, "block") == 0) {
         struct async_operation *ao = p_malloc(pool, sizeof(*ao));
@@ -132,7 +133,8 @@ test_normal(pool_t pool)
     assert(!aborted);
     assert(data.got_class);
     assert(data.class != NULL);
-    assert(strcmp(data.class->address->uri, "http://foo/") == 0);
+    assert(data.class->address.type == RESOURCE_ADDRESS_HTTP);
+    assert(strcmp(data.class->address.u.http->uri, "http://foo/") == 0);
     assert(data.class->type == WIDGET_TYPE_RAW);
     assert(!data.class->is_container);
 

@@ -27,8 +27,8 @@ embed_inline_widget(pool_t pool, struct processor_env *env __attr_unused,
                     struct widget *widget)
 {
     return istream_string_new(pool,
-                              widget->class->address != NULL
-                              ? widget->class->address->uri : "bar");
+                              widget->class->address.type == RESOURCE_ADDRESS_HTTP
+                              ? widget->class->address.u.http->uri : "bar");
 }
 
 void
