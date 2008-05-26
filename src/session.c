@@ -26,7 +26,7 @@
 #define SESSION_TTL_NEW 120
 #define SESSION_TTL 600
 
-#define SESSION_SLOTS 64
+#define SESSION_SLOTS 1024
 
 struct session_manager {
     struct refcount ref;
