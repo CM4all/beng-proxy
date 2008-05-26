@@ -10,7 +10,6 @@
 
 #include "uri-parser.h"
 #include "translate.h"
-#include "strmap.h"
 #include "processor.h"
 #include "async.h"
 #include "session.h"
@@ -24,7 +23,7 @@ struct request {
     struct http_server_request *request;
     struct parsed_uri uri;
 
-    strmap_t args;
+    struct strmap *args;
 
     struct strmap *cookies;
     char session_id_buffer[9];

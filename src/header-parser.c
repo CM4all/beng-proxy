@@ -6,11 +6,12 @@
 
 #include "header-parser.h"
 #include "strutil.h"
+#include "strmap.h"
 
 #include <string.h>
 
 void
-header_parse_line(pool_t pool, strmap_t headers,
+header_parse_line(pool_t pool, struct strmap *headers,
                   const char *line, size_t length)
 {
     const char *colon, *key_end;

@@ -53,7 +53,7 @@ struct http_cache_item {
     struct http_cache_info info;
 
     http_status_t status;
-    strmap_t headers;
+    struct strmap *headers;
     unsigned char *data;
 };
 
@@ -67,7 +67,7 @@ struct http_cache_request {
     struct http_cache_info *info;
 
     http_status_t status;
-    strmap_t headers;
+    struct strmap *headers;
     istream_t input;
     size_t length;
     struct growing_buffer *output;
@@ -262,7 +262,7 @@ parse_translate_time(const char *p, time_t offset)
 /** check whether the HTTP response should be put into the cache */
 static bool
 http_cache_response_evaluate(struct http_cache_info *info,
-                             http_status_t status, strmap_t headers,
+                             http_status_t status, struct strmap *headers,
                              off_t body_available)
 {
     time_t date, now, offset;
@@ -372,8 +372,8 @@ static const struct istream_handler http_cache_response_body_handler = {
  *
  */
 
-static void 
-http_cache_response_response(http_status_t status, strmap_t headers,
+static void
+http_cache_response_response(http_status_t status, struct strmap *headers,
                              istream_t body,
                              void *ctx)
 {

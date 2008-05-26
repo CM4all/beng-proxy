@@ -15,9 +15,9 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    const char *remote_host,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,
-                   strmap_t args,
+                   struct strmap *args,
                    struct session *session,
-                   strmap_t request_headers,
+                   struct strmap *request_headers,
                    istream_t request_body)
 {
     assert(session != NULL);

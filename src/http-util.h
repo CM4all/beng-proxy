@@ -15,7 +15,7 @@ bool
 http_list_contains(const char *list, const char *item);
 
 static inline int
-http_client_accepts_encoding(strmap_t request_headers,
+http_client_accepts_encoding(struct strmap *request_headers,
                              const char *coding)
 {
     const char *accept_encoding = strmap_get(request_headers, "accept-encoding");

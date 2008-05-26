@@ -5,6 +5,7 @@
  */
 
 #include "header-writer.h"
+#include "strmap.h"
 
 #include <string.h>
 
@@ -34,7 +35,7 @@ header_write(growing_buffer_t gb, const char *key, const char *value)
 }
 
 void
-headers_copy(strmap_t in, growing_buffer_t out, const char *const* keys)
+headers_copy(struct strmap *in, growing_buffer_t out, const char *const* keys)
 {
     const char *value;
 
@@ -46,7 +47,7 @@ headers_copy(strmap_t in, growing_buffer_t out, const char *const* keys)
 }
 
 void
-headers_copy_all(strmap_t in, growing_buffer_t out)
+headers_copy_all(struct strmap *in, growing_buffer_t out)
 {
     const struct strmap_pair *pair;
 
@@ -60,7 +61,7 @@ headers_copy_all(strmap_t in, growing_buffer_t out)
 }
 
 growing_buffer_t
-headers_dup(pool_t pool, strmap_t in)
+headers_dup(pool_t pool, struct strmap *in)
 {
     growing_buffer_t out = growing_buffer_new(pool, 2048);
     headers_copy_all(in, out);

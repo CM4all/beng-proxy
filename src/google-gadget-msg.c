@@ -148,7 +148,7 @@ static const struct parser_handler gg_msg_parser_handler = {
  */
 
 static void
-gg_msg_http_response(http_status_t status, strmap_t headers,
+gg_msg_http_response(http_status_t status, struct strmap *headers,
                      istream_t body, void *ctx)
 {
     struct google_gadget *gg = ctx;

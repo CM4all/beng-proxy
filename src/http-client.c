@@ -59,7 +59,7 @@ struct http_client_connection {
             READ_BODY
         } read_state;
         http_status_t status;
-        strmap_t headers;
+        struct strmap *headers;
         istream_t body;
         struct http_body_reader body_reader;
     } response;

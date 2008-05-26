@@ -34,10 +34,10 @@ calc_hash(const char *p) {
     return hash;
 }
 
-strmap_t
+struct strmap *
 strmap_new(pool_t pool, unsigned capacity)
 {
-    strmap_t map = p_calloc(pool, sizeof(*map) + sizeof(map->slots) * (capacity - 1));
+    struct strmap *map = p_calloc(pool, sizeof(*map) + sizeof(map->slots) * (capacity - 1));
     assert(capacity > 1);
     map->pool = pool;
     map->capacity = capacity;
@@ -59,7 +59,7 @@ strmap_dup(pool_t pool, struct strmap *src)
 }
 
 void
-strmap_addn(strmap_t map, const char *key, const char *value)
+strmap_addn(struct strmap *map, const char *key, const char *value)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;
@@ -99,7 +99,8 @@ strmap_maybe_overwrite(struct slot *slot, const char *key, const char *value,
 }
 
 const char *
-strmap_put(strmap_t map, const char *key, const char *value, bool overwrite)
+strmap_put(struct strmap *map, const char *key, const char *value,
+           bool overwrite)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;
@@ -132,7 +133,7 @@ strmap_put(strmap_t map, const char *key, const char *value, bool overwrite)
 }
 
 const char *
-strmap_remove(strmap_t map, const char *key)
+strmap_remove(struct strmap *map, const char *key)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;
@@ -173,7 +174,7 @@ strmap_remove(strmap_t map, const char *key)
 }
 
 const char *
-strmap_get(strmap_t map, const char *key)
+strmap_get(struct strmap *map, const char *key)
 {
     unsigned hash;
     struct slot *slot;
@@ -201,7 +202,7 @@ strmap_get(strmap_t map, const char *key)
 }
 
 void
-strmap_rewind(strmap_t map)
+strmap_rewind(struct strmap *map)
 {
     assert(map != NULL);
 
@@ -210,7 +211,7 @@ strmap_rewind(strmap_t map)
 }
 
 const struct strmap_pair *
-strmap_next(strmap_t map)
+strmap_next(struct strmap *map)
 {
     assert(map != NULL);
 

@@ -50,7 +50,7 @@ static void
 gg_set_content(struct google_gadget *gg, istream_t istream)
 {
     http_status_t status;
-    strmap_t headers;
+    struct strmap *headers;
 
     assert(gg != NULL);
 
@@ -458,7 +458,7 @@ static const struct parser_handler google_parser_handler = {
  */
 
 static void
-google_gadget_http_response(http_status_t status, strmap_t headers,
+google_gadget_http_response(http_status_t status, struct strmap *headers,
                             istream_t body, void *ctx)
 {
     struct google_gadget *gg = ctx;

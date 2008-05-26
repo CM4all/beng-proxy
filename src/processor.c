@@ -213,7 +213,7 @@ processor_new(pool_t pool, istream_t istream,
 
     if (widget->from_request.proxy_ref == NULL) {
         struct http_response_handler_ref response_handler;
-        strmap_t headers;
+        struct strmap *headers;
 
         processor->response_sent = true;
 

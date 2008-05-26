@@ -16,8 +16,8 @@
  */
 
 static void
-widget_proxy_response(http_status_t status, strmap_t headers, istream_t body,
-                      void *ctx)
+widget_proxy_response(http_status_t status, struct strmap *headers,
+                      istream_t body, void *ctx)
 {
     struct http_server_request *request = ctx;
     growing_buffer_t headers2;

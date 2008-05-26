@@ -229,7 +229,7 @@ widget_response_redirect(struct embed *embed, const char *location,
  */
 static void
 widget_response_process(struct embed *embed, http_status_t status,
-                        strmap_t headers, istream_t body)
+                        struct strmap *headers, istream_t body)
 {
     const char *content_type;
     struct strref *charset, charset_buffer;
@@ -284,9 +284,9 @@ widget_response_process(struct embed *embed, http_status_t status,
                   embed->async_ref);
 }
 
-static void 
-widget_response_response(http_status_t status, strmap_t headers, istream_t body,
-                         void *ctx)
+static void
+widget_response_response(http_status_t status, struct strmap *headers,
+                         istream_t body, void *ctx)
 {
     struct embed *embed = ctx;
     const char *translate;

@@ -15,8 +15,8 @@
 #include <stddef.h>
 
 struct http_response_handler {
-    void (*response)(http_status_t status, strmap_t headers, istream_t body,
-                     void *ctx);
+    void (*response)(http_status_t status, struct strmap *headers,
+                     istream_t body, void *ctx);
     void (*abort)(void *ctx);
 };
 
@@ -56,8 +56,8 @@ http_response_handler_set(struct http_response_handler_ref *ref,
 
 static inline void
 http_response_handler_invoke_response(struct http_response_handler_ref *ref,
-                                      http_status_t status, strmap_t headers,
-                                      istream_t body)
+                                      http_status_t status,
+                                      struct strmap *headers, istream_t body)
 {
     const struct http_response_handler *handler;
 
@@ -95,7 +95,7 @@ http_response_handler_invoke_message(struct http_response_handler_ref *ref,
                                      pool_t pool,
                                      http_status_t status, const char *msg)
 {
-    strmap_t headers = strmap_new(pool, 2);
+    struct strmap *headers = strmap_new(pool, 2);
     strmap_addn(headers, "content-type", "text/plain; charset=utf-8");
     http_response_handler_invoke_response(ref, status, headers,
                                           istream_string_new(pool, msg));

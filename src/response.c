@@ -193,7 +193,7 @@ response_dispatch(struct request *request2,
  */
 
 static void
-response_response(http_status_t status, strmap_t headers,
+response_response(http_status_t status, struct strmap *headers,
                   istream_t body,
                   void *ctx)
 {

@@ -8,7 +8,6 @@
 #define __BENG_PROCESSOR_H
 
 #include "istream.h"
-#include "strmap.h"
 #include "http.h"
 #include "http-response.h"
 
@@ -43,9 +42,9 @@ struct processor_env {
     const struct parsed_uri *external_uri;
 
     /** semicolon-arguments in the external URI */
-    strmap_t args;
+    struct strmap *args;
 
-    strmap_t request_headers;
+    struct strmap *request_headers;
 
     istream_t request_body;
 
@@ -60,9 +59,9 @@ processor_env_init(pool_t pool,
                    const char *remote_host,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,
-                   strmap_t args,
+                   struct strmap *args,
                    struct session *session,
-                   strmap_t request_headers,
+                   struct strmap *request_headers,
                    istream_t request_body);
 
 void

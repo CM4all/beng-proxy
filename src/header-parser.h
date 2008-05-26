@@ -7,12 +7,14 @@
 #ifndef __BENG_HEADER_PARSER_H
 #define __BENG_HEADER_PARSER_H
 
-#include "strmap.h"
+#include "pool.h"
 
 #include <stddef.h>
 
+struct strmap;
+
 void
-header_parse_line(pool_t pool, strmap_t headers,
+header_parse_line(pool_t pool, struct strmap *headers,
                   const char *line, size_t length);
 
 #endif
