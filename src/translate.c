@@ -57,6 +57,7 @@ struct translate_connection {
 
     struct packet_reader reader;
     struct translate_response response;
+    struct resource_address *resource_address;
     struct uri_with_address *uri_with_address;
     struct translate_transformation **transformation_tail;
 };
@@ -293,6 +294,7 @@ translate_handle_packet(struct translate_connection *connection,
 
     case TRANSLATE_BEGIN:
         memset(&connection->response, 0, sizeof(connection->response));
+        connection->resource_address = &connection->response.address;
         connection->uri_with_address = NULL;
         connection->transformation_tail = &connection->response.transformation;
         break;
@@ -311,7 +313,8 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_PATH:
-        if (connection->response.address.type != RESOURCE_ADDRESS_NONE) {
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
             daemon_log(2, "misplaced TRANSLATE_PATH packet\n");
             break;
         }
@@ -321,8 +324,8 @@ translate_handle_packet(struct translate_connection *connection,
             break;
         }
 
-        connection->response.address.type = RESOURCE_ADDRESS_LOCAL;
-        connection->response.address.u.path = payload;
+        connection->resource_address->type = RESOURCE_ADDRESS_LOCAL;
+        connection->resource_address->u.path = payload;
         break;
 
     case TRANSLATE_PATH_INFO:
@@ -338,7 +341,8 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_PROXY:
-        if (connection->response.address.type != RESOURCE_ADDRESS_NONE) {
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
             daemon_log(2, "misplaced TRANSLATE_PROXY packet\n");
             break;
         }
@@ -348,8 +352,8 @@ translate_handle_packet(struct translate_connection *connection,
             break;
         }
 
-        connection->response.address.type = RESOURCE_ADDRESS_HTTP;
-        connection->uri_with_address = connection->response.address.u.http =
+        connection->resource_address->type = RESOURCE_ADDRESS_HTTP;
+        connection->uri_with_address = connection->resource_address->u.http =
                 uri_address_new(connection->pool, payload);
         break;
 
@@ -398,7 +402,8 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_CGI:
-        if (connection->response.address.type != RESOURCE_ADDRESS_NONE) {
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
             daemon_log(2, "misplaced TRANSLATE_CGI packet\n");
             break;
         }
@@ -408,17 +413,21 @@ translate_handle_packet(struct translate_connection *connection,
             break;
         }
 
-        connection->response.address.type = RESOURCE_ADDRESS_CGI;
-        connection->response.address.u.path = payload;
+        connection->resource_address->type = RESOURCE_ADDRESS_CGI;
+        connection->resource_address->u.path = payload;
         break;
 
     case TRANSLATE_JAILCGI:
-        if (connection->response.address.type != RESOURCE_ADDRESS_LOCAL) {
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
             daemon_log(2, "misplaced TRANSLATE_CGI packet\n");
             break;
         }
 
-        connection->response.address.type = RESOURCE_ADDRESS_CGI;
+        connection->resource_address->type = RESOURCE_ADDRESS_CGI;
+
+        /* XXX what if connection->resource_address !=
+           &connection->response.address ? */
         connection->response.jailcgi = true;
         break;
 
