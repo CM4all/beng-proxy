@@ -3,6 +3,7 @@
 #include "tpool.h"
 #include "shm.h"
 #include "dpool.h"
+#include "strmap.h"
 
 #include <stdio.h>
 #include <unistd.h>
