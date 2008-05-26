@@ -21,6 +21,7 @@
 
 #define SHM_PAGE_SIZE 4096
 #define SHM_NUM_PAGES 8192
+#define SM_PAGES ((sizeof(struct session_manager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE)
 
 #define SESSION_TTL_NEW 120
 #define SESSION_TTL 600
@@ -113,7 +114,7 @@ session_manager_new(void)
         abort();
     }
 
-    sm = shm_alloc(shm, 1);
+    sm = shm_alloc(shm, SM_PAGES);
     refcount_init(&sm->ref);
     sm->shm = shm;
 
