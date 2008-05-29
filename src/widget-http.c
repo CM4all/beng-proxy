@@ -118,7 +118,7 @@ widget_request_headers(struct embed *embed, int with_body)
     const char *p;
 
     headers = strmap_new(embed->pool, 32);
-    strmap_addn(headers, "accept-charset", "utf-8");
+    strmap_add(headers, "accept-charset", "utf-8");
 
     if (embed->env->request_headers != NULL) {
         headers_copy(embed->env->request_headers, headers, copy_headers);
@@ -139,29 +139,29 @@ widget_request_headers(struct embed *embed, int with_body)
     }
 
     if (session != NULL && session->language != NULL)
-        strmap_addn(headers, "accept-language", session->language);
+        strmap_add(headers, "accept-language", session->language);
     else if (embed->env->request_headers != NULL)
         headers_copy(embed->env->request_headers, headers, language_headers);
 
     if (session != NULL && session->user != NULL)
-        strmap_addn(headers, "x-cm4all-beng-user", session->user);
+        strmap_add(headers, "x-cm4all-beng-user", session->user);
 
     p = get_env_request_header(embed->env, "user-agent");
     if (p == NULL)
         p = "beng-proxy v" VERSION;
-    strmap_addn(headers, "user-agent", p);
+    strmap_add(headers, "user-agent", p);
 
     p = get_env_request_header(embed->env, "x-forwarded-for");
     if (p == NULL) {
         if (embed->env->remote_host != NULL)
-            strmap_addn(headers, "x-forwarded-for", embed->env->remote_host);
+            strmap_add(headers, "x-forwarded-for", embed->env->remote_host);
     } else {
         if (embed->env->remote_host == NULL)
-            strmap_addn(headers, "x-forwarded-for", p);
+            strmap_add(headers, "x-forwarded-for", p);
         else
-            strmap_addn(headers, "x-forwarded-for",
-                        p_strcat(embed->pool, p, ", ",
-                                 embed->env->remote_host, NULL));
+            strmap_add(headers, "x-forwarded-for",
+                       p_strcat(embed->pool, p, ", ",
+                                embed->env->remote_host, NULL));
     }
 
     return headers;

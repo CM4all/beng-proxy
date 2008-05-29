@@ -37,7 +37,7 @@ header_parse_line(pool_t pool, struct strmap *headers,
 
     str_to_lower(key);
 
-    strmap_addn(headers, key, value);
+    strmap_add(headers, key, value);
 }
 
 void

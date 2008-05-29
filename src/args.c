@@ -30,9 +30,7 @@ args_parse(pool_t pool, const char *p, size_t length)
             value_length = uri_unescape_inplace(value, value_length);
             value[value_length] = 0;
 
-            strmap_addn(args,
-                        p_strndup(pool, p, equals - p),
-                        value);
+            strmap_add(args, p_strndup(pool, p, equals - p), value);
         }
 
         p = next;

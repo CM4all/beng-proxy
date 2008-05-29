@@ -40,21 +40,21 @@ strmap_dup(pool_t pool, struct strmap *src)
 
     strmap_rewind(src);
     while ((pair = strmap_next(src)) != NULL)
-        strmap_addn(dest, p_strdup(pool, pair->key),
-                    p_strdup(pool, pair->value));
+        strmap_add(dest, p_strdup(pool, pair->key),
+                   p_strdup(pool, pair->value));
 
     return dest;
 }
 
 void
-strmap_addn(struct strmap *map, const char *key, const char *value)
+strmap_add(struct strmap *map, const char *key, const char *value)
 {
     union {
         const char *in;
         void *out;
     } u = { .in = value };
 
-    hashmap_addn(map->hashmap, key, u.out);
+    hashmap_add(map->hashmap, key, u.out);
 }
 
 const char *

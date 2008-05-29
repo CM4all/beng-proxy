@@ -64,7 +64,7 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
     } else {
         status = HTTP_STATUS_OK;
         headers = strmap_new(gg->pool, 4);
-        strmap_addn(headers, "content-type", "text/html; charset=utf-8");
+        strmap_add(headers, "content-type", "text/html; charset=utf-8");
     }
 
     if (gg->delayed != NULL) {
@@ -85,7 +85,7 @@ google_send_error(struct google_gadget *gg, const char *msg)
     gg->delayed = NULL;
     istream_free(&gg->subst);
 
-    strmap_addn(headers, "content-type", "text/plain");
+    strmap_add(headers, "content-type", "text/plain");
     http_response_handler_invoke_response(&gg->response_handler,
                                           HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                           headers, response);

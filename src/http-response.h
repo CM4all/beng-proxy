@@ -96,7 +96,7 @@ http_response_handler_invoke_message(struct http_response_handler_ref *ref,
                                      http_status_t status, const char *msg)
 {
     struct strmap *headers = strmap_new(pool, 2);
-    strmap_addn(headers, "content-type", "text/plain; charset=utf-8");
+    strmap_add(headers, "content-type", "text/plain; charset=utf-8");
     http_response_handler_invoke_response(ref, status, headers,
                                           istream_string_new(pool, msg));
 }

@@ -20,7 +20,7 @@ struct strmap *__attr_malloc
 strmap_dup(pool_t pool, struct strmap *src);
 
 void
-strmap_addn(struct strmap *map, const char *key, const char *value);
+strmap_add(struct strmap *map, const char *key, const char *value);
 
 const char *
 strmap_put(struct strmap *map, const char *key, const char *value,

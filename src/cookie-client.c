@@ -251,8 +251,8 @@ cookie_jar_http_header(struct cookie_jar *jar,
     }
 
     if (length > 0) {
-        strmap_addn(headers, "cookie2", "$Version=\"1\"");
-        strmap_addn(headers, "cookie", p_strndup(pool, buffer, length));
+        strmap_add(headers, "cookie2", "$Version=\"1\"");
+        strmap_add(headers, "cookie", p_strndup(pool, buffer, length));
     }
    
     pool_rewind(tpool, &mark);

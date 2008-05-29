@@ -47,7 +47,7 @@ hashmap_new(pool_t pool, unsigned capacity)
 }
 
 void
-hashmap_addn(struct hashmap *map, const char *key, void *value)
+hashmap_add(struct hashmap *map, const char *key, void *value)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot, *prev;

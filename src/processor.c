@@ -218,7 +218,7 @@ processor_new(pool_t pool, istream_t istream,
         processor->response_sent = true;
 
         headers = strmap_new(processor->pool, 4);
-        strmap_addn(headers, "content-type", "text/html; charset=utf-8");
+        strmap_add(headers, "content-type", "text/html; charset=utf-8");
 
         http_response_handler_set(&response_handler,
                                   handler, handler_ctx);
