@@ -235,7 +235,8 @@ widget_response_process(struct embed *embed, http_status_t status,
     struct strref *charset, charset_buffer;
     unsigned options;
 
-    content_type = strmap_get(headers, "content-type");
+    content_type = headers == NULL
+        ? NULL : strmap_get(headers, "content-type");
 
     if (content_type == NULL ||
         strncmp(content_type, "text/html", 9) != 0) {
@@ -291,34 +292,36 @@ widget_response_response(http_status_t status, struct strmap *headers,
     struct embed *embed = ctx;
     const char *translate;
 
-    if (embed->host_and_port != NULL) {
-        const char *cookies = strmap_get(headers, "set-cookie2");
-        if (cookies == NULL)
-            cookies = strmap_get(headers, "set-cookie");
-        if (cookies != NULL) {
-            struct session *session = embed->env->session;
-            if (session != NULL) {
-                lock_lock(&session->lock);
-                cookie_jar_set_cookie2(session->cookies, cookies,
-                                       embed->host_and_port);
-                lock_unlock(&session->lock);
+    if (headers != NULL) {
+        if (embed->host_and_port != NULL) {
+            const char *cookies = strmap_get(headers, "set-cookie2");
+            if (cookies == NULL)
+                cookies = strmap_get(headers, "set-cookie");
+            if (cookies != NULL) {
+                struct session *session = embed->env->session;
+                if (session != NULL) {
+                    lock_lock(&session->lock);
+                    cookie_jar_set_cookie2(session->cookies, cookies,
+                                           embed->host_and_port);
+                    lock_unlock(&session->lock);
+                }
             }
         }
-    }
 
-    translate = strmap_get(headers, "x-cm4all-beng-translate");
-    if (translate != NULL) {
-        struct session *session = embed->env->session;
-        if (session != NULL)
-            session->translate = d_strdup(session->pool, translate);
-    }
+        translate = strmap_get(headers, "x-cm4all-beng-translate");
+        if (translate != NULL) {
+            struct session *session = embed->env->session;
+            if (session != NULL)
+                session->translate = d_strdup(session->pool, translate);
+        }
 
-    if (status >= 300 && status < 400) {
-        const char *location = strmap_get(headers, "location");
-        if (location != NULL &&
-            widget_response_redirect(embed, location, body)) {
-            pool_unref(embed->pool);
-            return;
+        if (status >= 300 && status < 400) {
+            const char *location = strmap_get(headers, "location");
+            if (location != NULL &&
+                widget_response_redirect(embed, location, body)) {
+                pool_unref(embed->pool);
+                return;
+            }
         }
     }
 
