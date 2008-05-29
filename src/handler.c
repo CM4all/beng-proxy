@@ -286,7 +286,6 @@ handle_http_request(struct client_connection *connection,
 
     request2 = p_malloc(request->pool, sizeof(*request2));
     request2->translate_cache = connection->instance->translate_cache;
-    request2->http_client_stock = connection->instance->http_client_stock;
     request2->http_cache = connection->instance->http_cache;
     request2->request = request;
 

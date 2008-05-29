@@ -17,7 +17,6 @@
 struct request {
     struct tcache *translate_cache;
 
-    struct hstock *http_client_stock;
     struct http_cache *http_cache;
 
     struct http_server_request *request;
