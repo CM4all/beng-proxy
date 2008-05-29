@@ -160,13 +160,11 @@ response_dispatch(struct request *request2,
         transformation->type == TRANSFORMATION_FILTER) {
         struct http_server_request *request = request2->request;
 
-        assert(transformation->u.filter.type == RESOURCE_ADDRESS_HTTP);
-
         pool_ref(request->pool);
 
-        filter_new(request->pool,
-                   request2->http_client_stock,
-                   transformation->u.filter.u.http,
+        filter_new(request2->http_cache,
+                   request->pool,
+                   &transformation->u.filter,
                    headers,
                    body,
                    &response_handler, request2,

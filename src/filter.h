@@ -11,15 +11,15 @@
 #include "growing-buffer.h"
 #include "istream.h"
 
-struct hstock;
-struct uri_with_address;
+struct http_cache;
+struct resource_address;
 struct http_response_handler;
 struct async_operation_ref;
 
 void
-filter_new(pool_t pool,
-           struct hstock *http_client_stock,
-           struct uri_with_address *uwa,
+filter_new(struct http_cache *cache,
+           pool_t pool,
+           const struct resource_address *address,
            growing_buffer_t headers,
            istream_t body,
            const struct http_response_handler *handler,
