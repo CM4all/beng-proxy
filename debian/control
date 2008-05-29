@@ -81,7 +81,7 @@ Description: Translation server prototype
 Package: cm4all-beng-proxy-demo
 Architecture: all
 Depends: cm4all-beng-proxy, cm4all-beng-proxy-translation-prototype,
- libcm4all-beng-proxy-js
+ libcm4all-beng-proxy-js, python
 Recommends: cm4all-beng-proxy-dbg, cm4all-beng-proxy-doc
 Description: Demo package for cm4all-beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
