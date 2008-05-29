@@ -23,8 +23,7 @@ void
 strmap_add(struct strmap *map, const char *key, const char *value);
 
 const char *
-strmap_put(struct strmap *map, const char *key, const char *value,
-           bool overwrite);
+strmap_set(struct strmap *map, const char *key, const char *value);
 
 const char *
 strmap_remove(struct strmap *map, const char *key);

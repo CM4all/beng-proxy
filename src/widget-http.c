@@ -92,7 +92,7 @@ headers_copy(struct strmap *in, struct strmap *out,
     for (; *keys != NULL; ++keys) {
         value = strmap_get(in, *keys);
         if (value != NULL)
-            strmap_put(out, *keys, value, 1);
+            strmap_set(out, *keys, value);
     }
 }
 
@@ -264,7 +264,7 @@ widget_response_process(struct embed *embed, http_status_t status,
         body = ic;
 
         headers = strmap_dup(embed->pool, headers);
-        strmap_put(headers, "content-type", "text/html; charset=utf-8", 1);
+        strmap_set(headers, "content-type", "text/html; charset=utf-8");
     }
 
     if (embed->widget->class->type == WIDGET_TYPE_RAW) {

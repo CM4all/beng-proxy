@@ -58,15 +58,14 @@ strmap_add(struct strmap *map, const char *key, const char *value)
 }
 
 const char *
-strmap_put(struct strmap *map, const char *key, const char *value,
-           bool overwrite)
+strmap_set(struct strmap *map, const char *key, const char *value)
 {
     union {
         const char *in;
         void *out;
     } u = { .in = value };
 
-    return (const char*)hashmap_put(map->hashmap, key, u.out, overwrite);
+    return (const char*)hashmap_put(map->hashmap, key, u.out, true);
 }
 
 const char *

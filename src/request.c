@@ -100,7 +100,7 @@ request_make_session(struct request *request)
 
     if (request->args == NULL)
         request->args = strmap_new(request->request->pool, 4);
-    strmap_put(request->args, "session", request->session_id_buffer, 1);
+    strmap_set(request->args, "session", request->session_id_buffer);
 
     return request->session;
 }

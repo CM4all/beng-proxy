@@ -65,7 +65,7 @@ static_file_get(pool_t pool, const char *path,
 
     /* XXX response headers */
     headers = strmap_new(pool, 4);
-    strmap_put(headers, "content-type", "text/html; charset=utf-8", 1);
+    strmap_add(headers, "content-type", "text/html; charset=utf-8");
 
     http_response_handler_invoke_response(&handler_ref,
                                           HTTP_STATUS_OK,
