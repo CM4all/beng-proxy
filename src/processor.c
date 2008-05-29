@@ -617,8 +617,15 @@ embed_element_finished(struct processor *processor)
 {
     struct widget *widget;
 
+    assert(processor->widget.widget != NULL);
+    assert(processor->widget.widget->parent == processor->container);
+
     widget = processor->widget.widget;
     processor->widget.widget = NULL;
+
+    if (widget->class_name != NULL &&
+        widget_check_recursion(widget->parent, widget->class_name))
+        return NULL;
 
     if (processor->widget.params_length > 0)
         widget->query_string = p_strndup(processor->pool,

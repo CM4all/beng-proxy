@@ -258,6 +258,9 @@ widget_external_uri(pool_t pool,
                     const char *relative_uri, size_t relative_uri_length,
                     const char *frame, bool raw);
 
+bool
+widget_check_recursion(struct widget *widget, const char *class_name);
+
 /**
  * Free important resources associated with the widget.  A widget
  * callback must call this function on a widget which it will not

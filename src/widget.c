@@ -50,6 +50,23 @@ widget_get_child(struct widget *widget, const char *id)
     return NULL;
 }
 
+bool
+widget_check_recursion(struct widget *widget, const char *class_name)
+{
+    assert(widget != NULL);
+    assert(class_name != NULL);
+
+    do {
+        if (widget->class_name != NULL &&
+            strcmp(widget->class_name, class_name) == 0)
+            return true;
+
+        widget = widget->parent;
+    } while (widget != NULL);
+
+    return false;
+}
+
 void
 widget_cancel(struct widget *widget)
 {
