@@ -146,7 +146,7 @@ cache_put(struct cache *cache, const char *key,
         return;
     }
 
-    old = hashmap_put(cache->items, key, item, 1);
+    old = hashmap_set(cache->items, key, item);
     if (old != NULL)
         cache_destroy_item(cache, old);
 
@@ -171,7 +171,7 @@ cache_remove_item(struct cache *cache, const char *key,
     if (old != item) {
         /* the specified item has been removed before */
         if (old != NULL)
-            hashmap_put(cache->items, key, old, 1);
+            hashmap_set(cache->items, key, old);
         return;
     }
 

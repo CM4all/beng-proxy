@@ -65,7 +65,7 @@ strmap_set(struct strmap *map, const char *key, const char *value)
         void *out;
     } u = { .in = value };
 
-    return (const char*)hashmap_put(map->hashmap, key, u.out, true);
+    return (const char*)hashmap_set(map->hashmap, key, u.out);
 }
 
 const char *

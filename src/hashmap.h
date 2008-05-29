@@ -21,7 +21,7 @@ void
 hashmap_add(struct hashmap *map, const char *key, void *value);
 
 void *
-hashmap_put(struct hashmap *map, const char *key, void *value, bool overwrite);
+hashmap_set(struct hashmap *map, const char *key, void *value);
 
 void *
 hashmap_remove(struct hashmap *map, const char *key);
