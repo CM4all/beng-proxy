@@ -258,6 +258,10 @@ widget_external_uri(pool_t pool,
                     const char *relative_uri, size_t relative_uri_length,
                     const char *frame, bool raw);
 
+/**
+ * Recursion detection: check if the widget or its parent chain
+ * contains the specified class name.
+ */
 bool
 widget_check_recursion(struct widget *widget, const char *class_name);
 
