@@ -1,4 +1,4 @@
 demo/beng-demo.html var/www
-demo/widgets/demo_{date,post,search,hello} etc/cm4all/beng/widgets
+demo/widgets/demo_{date,post,search,hello,todo,ip} etc/cm4all/beng/widgets
 demo/hello.html usr/share/cm4all/beng-proxy/demo
 demo/cgi-bin/date.py usr/share/cm4all/beng-proxy/demo
