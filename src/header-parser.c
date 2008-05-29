@@ -7,6 +7,9 @@
 #include "header-parser.h"
 #include "strutil.h"
 #include "strmap.h"
+#include "growing-buffer.h"
+#include "fifo-buffer.h"
+#include "tpool.h"
 
 #include <string.h>
 
@@ -35,4 +38,72 @@ header_parse_line(pool_t pool, struct strmap *headers,
     str_to_lower(key);
 
     strmap_addn(headers, key, value);
+}
+
+void
+header_parse_buffer(pool_t pool, struct strmap *headers,
+                    struct growing_buffer *gb)
+{
+    struct pool_mark mark;
+    struct fifo_buffer *buffer;
+    void *dest;
+    const char *src, *p, *eol;
+    size_t max_length, length;
+
+    assert(pool != NULL);
+    assert(headers != NULL);
+    assert(gb != NULL);
+
+    pool_mark(tpool, &mark);
+
+    buffer = fifo_buffer_new(tpool, 4096);
+
+    while (true) {
+        /* copy gb to buffer */
+
+        if (gb != NULL) {
+            dest = fifo_buffer_write(buffer, &max_length);
+            if (dest != NULL) {
+                src = growing_buffer_read(gb, &length);
+                if (src != NULL) {
+                    if (length > max_length)
+                        length = max_length;
+
+                    memcpy(dest, src, length);
+                    fifo_buffer_append(buffer, length);
+                    growing_buffer_consume(gb, length);
+                } else
+                    gb = NULL;
+            }
+        }
+
+        /* parse lines from the buffer */
+
+        p = src = fifo_buffer_read(buffer, &length);
+        if (src == NULL && gb == NULL)
+            break;
+
+        while (true) {
+            while (p < src + length && char_is_whitespace(*p))
+                ++p;
+
+            eol = memchr(p, '\n', src + length - p);
+            if (eol == NULL) {
+                if (gb == NULL)
+                    eol = src + length;
+                else
+                    break;
+            }
+
+            while (eol > p && eol[-1] == '\r')
+                --eol;
+
+            header_parse_line(pool, headers, p, eol - p);
+            p = eol + 1;
+        }
+
+        fifo_buffer_consume(buffer, p - src);
+    }
+
+    pool_rewind(tpool, &mark);
 }
