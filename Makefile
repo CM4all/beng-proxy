@@ -218,13 +218,13 @@ test/js: test/js.o src/js-filter.o src/pool.o src/istream-file.o src/fifo-buffer
 test/run-subst: test/run-subst.o src/istream-subst.o src/pool.o src/istream-file.o src/fifo-buffer.o src/buffered-io.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
-test/run-cookie-client: test/run-cookie-client.o src/cookie-client.o src/http-string.o src/header-writer.o src/growing-buffer.o src/pool.o src/pstring.o src/tpool.o src/strmap.o src/shm.o src/dpool.o src/dstring.o
+test/run-cookie-client: test/run-cookie-client.o src/cookie-client.o src/http-string.o src/header-writer.o src/growing-buffer.o src/pool.o src/pstring.o src/tpool.o src/strmap.o src/hashmap.o src/shm.o src/dpool.o src/dstring.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
 test/run-header-parser: test/run-header-parser.o src/header-parser.o src/growing-buffer.o src/fifo-buffer.o src/pool.o src/pstring.o src/tpool.o src/strmap.o src/strutil.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
-test/t-cookie-client: test/t-cookie-client.o src/cookie-client.o src/http-string.o src/header-writer.o src/growing-buffer.o src/pool.o src/pstring.o src/tpool.o src/strmap.o src/shm.o src/dpool.o src/dstring.o
+test/t-cookie-client: test/t-cookie-client.o src/cookie-client.o src/http-string.o src/header-writer.o src/growing-buffer.o src/pool.o src/pstring.o src/tpool.o src/strmap.o src/hashmap.o src/shm.o src/dpool.o src/dstring.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
 test/run-embed: test/run-embed.o src/istream-subst.o src/pool.o src/pstring.o src/istream-file.o src/uri.o src/uri-parser.o src/session.o src/fifo-buffer.o src/hashmap.o src/widget-class.o src/wembed.o src/growing-buffer.o src/widget.o src/format.o src/widget-uri.o src/istream-string.o src/args.o src/strmap.o src/uri-escape.o src/http-stock.o src/stock.o src/hstock.o src/buffered-io.o src/client-socket.o src/http-client.o src/http-body.o src/header-writer.o src/http.o src/istream-chunked.o src/istream-cat.o src/socket-util.o src/parser.o src/istream-delayed.o src/header-parser.o src/istream-memory.o src/istream-null.o src/processor.o src/js-filter.o src/istream-forward.o src/istream-tee.o src/istream-hold.o src/istream-replace.o src/widget-request.o src/widget-session.o src/embed.o src/strutil.o src/istream-dechunk.o src/cookie-client.o src/penv.o src/google-gadget.o src/google-gadget-msg.o
@@ -242,10 +242,10 @@ test/t-html-unescape: test/t-html-unescape.o src/html-escape.o
 test/t-html-escape: test/t-html-escape.o src/html-escape.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-test/t-http-server-mirror: test/t-http-server-mirror.o src/http-server.o src/http-server-send.o src/http-server-request.o src/http-server-read.o src/http-server-response.o src/fifo-buffer.o src/duplex.o src/pool.o src/pstring.o src/buffered-io.o src/strmap.o src/header-writer.o src/istream-forward.o src/istream-string.o src/istream-dechunk.o src/istream-chunked.o src/istream-pipe.o src/istream-memory.o src/istream-cat.o src/http-body.o src/date.o src/fd-util.o src/socket-util.o src/growing-buffer.o src/http.o src/header-parser.o src/format.o src/strutil.o src/gmtime.o src/tpool.o
+test/t-http-server-mirror: test/t-http-server-mirror.o src/http-server.o src/http-server-send.o src/http-server-request.o src/http-server-read.o src/http-server-response.o src/fifo-buffer.o src/duplex.o src/pool.o src/pstring.o src/buffered-io.o src/strmap.o src/hashmap.o src/header-writer.o src/istream-forward.o src/istream-string.o src/istream-dechunk.o src/istream-chunked.o src/istream-pipe.o src/istream-memory.o src/istream-cat.o src/http-body.o src/date.o src/fd-util.o src/socket-util.o src/growing-buffer.o src/http.o src/header-parser.o src/format.o src/strutil.o src/gmtime.o src/tpool.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
-test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstring.o src/strmap.o src/growing-buffer.o src/fifo-buffer.o src/header-writer.o src/istream-forward.o src/istream-string.o src/istream-memory.o src/istream-cat.o src/http-body.o src/header-parser.o src/istream-chunked.o src/istream-dechunk.o src/format.o src/http.o src/strutil.o src/buffered-io.o src/fd-util.o src/socket-util.o src/istream-head.o src/istream-zero.o src/tpool.o
+test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstring.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/header-writer.o src/istream-forward.o src/istream-string.o src/istream-memory.o src/istream-cat.o src/http-body.o src/header-parser.o src/istream-chunked.o src/istream-dechunk.o src/format.o src/http.o src/strutil.o src/buffered-io.o src/fd-util.o src/socket-util.o src/istream-head.o src/istream-zero.o src/tpool.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
 test/t-processor: test/t-processor.o src/processor.o src/penv.o src/parser.o src/istream-replace.o src/widget.o src/widget-class.o src/widget-ref.o src/widget-uri.o src/widget-session.o src/embed.o src/wembed.o src/uri.o src/uri-parser.o src/uri-escape.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/pool.o src/pstring.o src/istream-string.o src/istream-subst.o src/istream-file.o src/istream-cat.o src/istream-memory.o src/istream-delayed.o src/istream-hold.o src/istream-dechunk.o src/istream-chunked.o src/session.o src/cookie-client.o src/header-writer.o src/args.o src/buffered-io.o src/http-stock.o src/stock.o src/hstock.o src/js-filter.o src/client-socket.o src/http-client.o src/http-body.o src/socket-util.o src/format.o src/header-parser.o src/http.o src/strutil.o src/widget-request.o src/google-gadget.o src/google-gadget-msg.o src/istream-tee.o src/istream-null.o
