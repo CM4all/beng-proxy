@@ -277,6 +277,21 @@ translate_add_transformation(struct translate_connection *connection)
     return transformation;
 }
 
+static bool
+parse_address_string(struct sockaddr_in *sin, const char *p)
+{
+    int ret;
+
+    ret = inet_aton(p, &sin->sin_addr);
+    if (!ret)
+        return false;
+
+    sin->sin_family = AF_INET;
+    sin->sin_port = htons(80);
+    memset(&sin->sin_zero, 0, sizeof(sin->sin_zero));
+    return true;
+}
+
 static void
 translate_handle_packet(struct translate_connection *connection,
                         unsigned command, const char *payload,
@@ -489,17 +504,13 @@ translate_handle_packet(struct translate_connection *connection,
 
         {
             struct sockaddr_in sin;
-            int ret;
+            bool ret;
 
-            ret = inet_aton(payload, &sin.sin_addr);
+            ret = parse_address_string(&sin, payload);
             if (!ret) {
                 daemon_log(2, "malformed TRANSLATE_ADDRESS_STRING packet\n");
                 break;
             }
-
-            sin.sin_family = AF_INET;
-            sin.sin_port = htons(80);
-            memset(&sin.sin_zero, 0, sizeof(sin.sin_zero));
 
             uri_address_add(connection->resource_address->u.http,
                             (const struct sockaddr *)&sin, sizeof(sin));
