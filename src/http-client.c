@@ -517,7 +517,6 @@ http_client_try_read_buffered(http_client_connection_t connection)
 
     if (nbytes == 0) {
         if (connection->response.read_state == READ_BODY) {
-            /* XXX what if there is still data in connection->input? */
             http_body_socket_eof(&connection->response.body_reader,
                                  connection->input);
             if (!http_client_connection_valid(connection))
