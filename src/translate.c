@@ -26,6 +26,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+enum packet_reader_result {
+    PACKET_READER_EOF,
+    PACKET_READER_ERROR,
+    PACKET_READER_INCOMPLETE,
+    PACKET_READER_SUCCESS
+};
+
 struct packet_reader {
     struct beng_translation_header header;
     size_t header_position;
@@ -148,7 +155,7 @@ packet_reader_init(struct packet_reader *reader)
  *
  * @return 0 on EOF, -1 on error, -2 when the packet is incomplete, 1 if the packet is complete
  */
-static int
+static enum packet_reader_result
 packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
 {
     ssize_t nbytes;
@@ -159,20 +166,20 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
         nbytes = read(fd, p + reader->header_position,
                       sizeof(reader->header) - reader->header_position);
         if (nbytes < 0 && errno == EAGAIN)
-            return -2;
+            return PACKET_READER_INCOMPLETE;
 
         if (nbytes <= 0)
             return (int)nbytes;
 
         reader->header_position += (size_t)nbytes;
         if (reader->header_position < sizeof(reader->header))
-            return -2;
+            return PACKET_READER_INCOMPLETE;
 
         reader->payload_position = 0;
 
         if (reader->header.length == 0) {
             reader->payload = NULL;
-            return 1;
+            return PACKET_READER_SUCCESS;
         }
 
         reader->payload = p_malloc(pool, reader->header.length + 1);
@@ -182,18 +189,22 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
 
     nbytes = read(fd, reader->payload + reader->payload_position,
                   reader->header.length - reader->payload_position);
-    if (nbytes < 0 && errno == EAGAIN)
-        return -2;
+    if (nbytes == 0)
+        return PACKET_READER_EOF;
 
-    if (nbytes <= 0)
-        return (int)nbytes;
+    if (nbytes < 0) {
+        if (errno == EAGAIN)
+            return PACKET_READER_INCOMPLETE;
+        else
+            return PACKET_READER_ERROR;
+    }
 
     reader->payload_position += (size_t)nbytes;
     if (reader->payload_position < reader->header.length)
-        return -2;
+        return PACKET_READER_INCOMPLETE;
 
     reader->payload[reader->header.length] = 0;
-    return 1;
+    return PACKET_READER_SUCCESS;
 }
 
 
@@ -501,12 +512,10 @@ translate_handle_packet(struct translate_connection *connection,
 static void
 translate_try_read(struct translate_connection *connection)
 {
-    int ret;
-
     do {
-        ret = packet_reader_read(connection->pool, &connection->reader,
-                                 connection->fd);
-        if (ret == -2) {
+        switch (packet_reader_read(connection->pool, &connection->reader,
+                                   connection->fd)) {
+        case PACKET_READER_INCOMPLETE: {
             struct timeval tv = {
                 .tv_sec = 60,
                 .tv_usec = 0,
@@ -516,7 +525,9 @@ translate_try_read(struct translate_connection *connection)
                       translate_read_event_callback, connection);
             event_add(&connection->event, &tv);
             return;
-        } else if (ret == -1) {
+        }
+
+        case PACKET_READER_ERROR:
             daemon_log(1, "read error from translation server: %s\n",
                        strerror(errno));
             connection->callback(&error, connection->ctx);
@@ -524,11 +535,15 @@ translate_try_read(struct translate_connection *connection)
 
             stock_put(&connection->stock_item, true);
             return;
-        } else if (ret == 0) {
+
+        case PACKET_READER_EOF:
             daemon_log(1, "translation server aborted the connection\n");
             connection->callback(&error, connection->ctx);
             stock_put(&connection->stock_item, true);
             return;
+
+        case PACKET_READER_SUCCESS:
+            break;
         }
 
         translate_handle_packet(connection,
