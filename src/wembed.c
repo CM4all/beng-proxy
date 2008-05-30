@@ -84,7 +84,7 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
     hold = istream_hold_new(pool, iw->stream->delayed);
 
     if (widget->class == NULL)
-        widget_resolver_new(pool, pool, /* XXX which pool? */
+        widget_resolver_new(pool, env->pool,
                             widget,
                             env->translate_cache,
                             class_lookup_callback, iw, &iw->stream->async_ref);

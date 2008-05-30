@@ -112,6 +112,7 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
     assert(widget != NULL);
     assert(widget->class_name != NULL);
     assert(widget->class == NULL);
+    assert(pool_contains(widget_pool, widget, sizeof(*widget)));
 
     /* create new resolver object if it does not already exist */
 
@@ -122,6 +123,9 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
         widget->resolver = resolver;
         new = true;
     }
+
+    assert(pool_contains(widget_pool, widget->resolver,
+                         sizeof(*widget->resolver)));
 
     /* add a new listener to the resolver */
 

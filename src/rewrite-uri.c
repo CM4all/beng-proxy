@@ -92,7 +92,8 @@ class_lookup_callback(void *ctx)
 }
 
 istream_t
-rewrite_widget_uri(pool_t pool, struct tcache *translate_cache,
+rewrite_widget_uri(pool_t pool, pool_t widget_pool,
+                   struct tcache *translate_cache,
                    const struct parsed_uri *external_uri,
                    struct strmap *args, struct widget *widget,
                    struct session *session,
@@ -123,7 +124,7 @@ rewrite_widget_uri(pool_t pool, struct tcache *translate_cache,
         rwu->stream = widget_stream_new(pool);
         hold = istream_hold_new(pool, rwu->stream->delayed);
 
-        widget_resolver_new(pool, pool, /* XXX which pool? */
+        widget_resolver_new(pool, widget_pool,
                             widget,
                             translate_cache,
                             class_lookup_callback, rwu,

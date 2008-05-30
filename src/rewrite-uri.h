@@ -24,7 +24,8 @@ enum uri_mode {
 };
 
 istream_t
-rewrite_widget_uri(pool_t pool, struct tcache *translate_cache,
+rewrite_widget_uri(pool_t pool, pool_t widget_pool,
+                   struct tcache *translate_cache,
                    const struct parsed_uri *external_uri,
                    struct strmap *args, struct widget *widget,
                    struct session *session,
