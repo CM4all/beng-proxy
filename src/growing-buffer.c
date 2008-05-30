@@ -78,6 +78,22 @@ growing_buffer_write_string(struct growing_buffer *gb, const char *p)
     growing_buffer_write_buffer(gb, p, strlen(p));
 }
 
+bool
+growing_buffer_empty(struct growing_buffer *gb)
+{
+    assert(gb->current != NULL);
+
+    while (gb->current->position == gb->current->length) {
+        assert(gb->current->position <= gb->current->length);
+        if (gb->current->next == NULL)
+            return true;
+        gb->current = gb->current->next;
+        assert(gb->current->position == 0);
+    }
+
+    return false;
+}
+
 const void *
 growing_buffer_read(struct growing_buffer *gb, size_t *length_r)
 {
