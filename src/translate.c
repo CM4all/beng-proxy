@@ -12,6 +12,7 @@
 #include "async.h"
 #include "uri-address.h"
 #include "abort-unref.h"
+#include "gb-io.h"
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
@@ -584,19 +585,16 @@ translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
 static void
 translate_try_write(struct translate_connection *connection)
 {
-    const void *data;
-    size_t length;
     ssize_t nbytes;
     struct timeval tv = {
         .tv_sec = 10,
         .tv_usec = 0,
     };
 
-    data = growing_buffer_read(connection->request, &length);
-    assert(data != NULL && length > 0);
+    nbytes = write_from_gb(connection->fd, connection->request);
+    assert(nbytes != -2);
 
-    nbytes = write(connection->fd, data, length);
-    if (nbytes < 0 && errno != EAGAIN) {
+    if (nbytes < 0) {
         daemon_log(1, "write error on translation server: %s\n",
                    strerror(errno));
         connection->callback(&error, connection->ctx);
@@ -605,11 +603,7 @@ translate_try_write(struct translate_connection *connection)
         return;
     }
 
-    if (nbytes > 0)
-        growing_buffer_consume(connection->request, (size_t)nbytes);
-
-    if ((size_t)nbytes == length &&
-        growing_buffer_empty(connection->request)) {
+    if (nbytes == 0 && growing_buffer_empty(connection->request)) {
         /* the buffer is empty, i.e. the request has been sent -
            start reading the response */
         packet_reader_init(&connection->reader);

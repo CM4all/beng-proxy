@@ -156,6 +156,7 @@ SOURCES = src/main.c \
 	src/cgi.c \
 	src/filter.c \
 	src/growing-buffer.c \
+	src/gb-io.c \
 	src/duplex.c \
 	$(ISTREAM_SOURCES) \
 	src/fork.c \
