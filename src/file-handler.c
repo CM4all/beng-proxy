@@ -253,8 +253,8 @@ file_callback(struct request *request2)
         ssize_t nbytes;
         char content_type[256];
 
-        nbytes = getxattr(path, "user.Content-Type", /* XXX use fgetxattr() */
-                          content_type, sizeof(content_type) - 1);
+        nbytes = fgetxattr(istream_file_fd(body), "user.Content-Type",
+                           content_type, sizeof(content_type) - 1);
         if (nbytes > 0) {
             assert((size_t)nbytes < sizeof(content_type));
             content_type[nbytes] = 0;
