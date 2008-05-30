@@ -45,12 +45,17 @@ struct translate_request_and_callback {
 
 struct translate_connection {
     struct stock_item stock_item;
-    struct async_operation async;
 
+    /** the socket connection to the translation server */
     int fd;
+
+    /** events for the socket */
     struct event event;
 
+    /** the request pool */
     pool_t pool;
+
+    /** the marshalled translate request */
     growing_buffer_t request;
 
     translate_callback_t callback;
@@ -58,9 +63,20 @@ struct translate_connection {
 
     struct packet_reader reader;
     struct translate_response response;
+
+    /** the current resource address being edited */
     struct resource_address *resource_address;
+
+    /** the uri_with_address object being edited or NULL if there is
+        none */
     struct uri_with_address *uri_with_address;
+
+    /** pointer to the tail of the transformation linked list */
     struct translate_transformation **transformation_tail;
+
+    /** this asynchronous operation is the translate request; aborting
+        it causes the request to be cancelled */
+    struct async_operation async;
 };
 
 static struct translate_response error = {
