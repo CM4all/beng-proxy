@@ -376,6 +376,8 @@ translate_handle_packet(struct translate_connection *connection,
         }
 
         connection->resource_address->type = RESOURCE_ADDRESS_HTTP;
+        connection->resource_address->u.http =
+            uri_address_new(connection->pool, payload);
         break;
 
     case TRANSLATE_REDIRECT:
