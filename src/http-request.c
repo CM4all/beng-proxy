@@ -92,13 +92,8 @@ http_request(pool_t pool,
     if (hr->headers == NULL)
         hr->headers = growing_buffer_new(pool, 512);
 
-    if (body == NULL)
-        hr->body = NULL;
-    else
-        /* XXX remove istream_hold(), it is only here because
-           http-client.c resets istream->pool after the response is
-           ready */
-        hr->body = istream_hold_new(pool, body);
+    hr->body = body;
+
     http_response_handler_set(&hr->handler, handler, handler_ctx);
     hr->async_ref = async_ref;
 
