@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 
 enum packet_reader_result {
     PACKET_READER_EOF,
@@ -281,13 +282,29 @@ static bool
 parse_address_string(struct sockaddr_in *sin, const char *p)
 {
     int ret;
+    const char *colon;
+    char ip[32];
+    int port = 80;
+
+    colon = strchr(p, ':');
+    if (colon != NULL) {
+        if (colon >= p + sizeof(ip))
+            /* too long */
+            return false;
+
+        memcpy(ip, p, colon - p);
+        ip[colon - p] = 0;
+        p = ip;
+
+        port = atoi(colon + 1);
+    }
 
     ret = inet_aton(p, &sin->sin_addr);
     if (!ret)
         return false;
 
     sin->sin_family = AF_INET;
-    sin->sin_port = htons(80);
+    sin->sin_port = htons(port);
     memset(&sin->sin_zero, 0, sizeof(sin->sin_zero));
     return true;
 }
