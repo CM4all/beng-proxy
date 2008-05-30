@@ -67,10 +67,6 @@ struct translate_connection {
     /** the current resource address being edited */
     struct resource_address *resource_address;
 
-    /** the uri_with_address object being edited or NULL if there is
-        none */
-    struct uri_with_address *uri_with_address;
-
     /** pointer to the tail of the transformation linked list */
     struct translate_transformation **transformation_tail;
 
@@ -312,7 +308,6 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_BEGIN:
         memset(&connection->response, 0, sizeof(connection->response));
         connection->resource_address = &connection->response.address;
-        connection->uri_with_address = NULL;
         connection->transformation_tail = &connection->response.transformation;
         break;
 
@@ -370,8 +365,6 @@ translate_handle_packet(struct translate_connection *connection,
         }
 
         connection->resource_address->type = RESOURCE_ADDRESS_HTTP;
-        connection->uri_with_address = connection->resource_address->u.http =
-                uri_address_new(connection->pool, payload);
         break;
 
     case TRANSLATE_REDIRECT:
@@ -457,7 +450,7 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_ADDRESS:
-        if (connection->uri_with_address == NULL) {
+        if (connection->resource_address->type != RESOURCE_ADDRESS_HTTP) {
             daemon_log(2, "misplaced TRANSLATE_ADDRESS packet\n");
             break;
         }
@@ -467,13 +460,13 @@ translate_handle_packet(struct translate_connection *connection,
             break;
         }
 
-        uri_address_add(connection->uri_with_address,
+        uri_address_add(connection->resource_address->u.http,
                         (const struct sockaddr *)payload, payload_length);
         break;
 
 
     case TRANSLATE_ADDRESS_STRING:
-        if (connection->uri_with_address == NULL) {
+        if (connection->resource_address->type != RESOURCE_ADDRESS_HTTP) {
             daemon_log(2, "misplaced TRANSLATE_ADDRESS_STRING packet\n");
             break;
         }
@@ -497,7 +490,7 @@ translate_handle_packet(struct translate_connection *connection,
             sin.sin_port = htons(80);
             memset(&sin.sin_zero, 0, sizeof(sin.sin_zero));
 
-            uri_address_add(connection->uri_with_address,
+            uri_address_add(connection->resource_address->u.http,
                             (const struct sockaddr *)&sin, sizeof(sin));
         }
 
