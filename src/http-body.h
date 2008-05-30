@@ -16,7 +16,6 @@ struct fifo_buffer;
 struct http_body_reader {
     struct istream output;
     off_t rest;
-    istream_t dechunk;
 };
 
 static inline istream_t

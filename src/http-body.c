@@ -26,12 +26,8 @@ http_body_max_read(struct http_body_reader *body, size_t length)
 static void
 http_body_consumed(struct http_body_reader *body, size_t nbytes)
 {
-    if (body->rest == (off_t)-1) {
-        if (body->dechunk != NULL && istream_dechunk_eof(body->dechunk))
-            body->rest = 0;
-
+    if (body->rest == (off_t)-1)
         return;
-    }
 
     assert((off_t)nbytes <= body->rest);
 
@@ -82,7 +78,7 @@ http_body_socket_eof(struct http_body_reader *body, fifo_buffer_t buffer)
 {
     (void)buffer; /* XXX there may still be data in here */
 
-    if (body->rest != 0)
+    if (body->rest != 0 && body->rest != (off_t)-1)
         istream_deinit_abort(&body->output);
     else
         istream_deinit_eof(&body->output);
@@ -102,9 +98,7 @@ http_body_init(struct http_body_reader *body,
 
     istream = http_body_istream(body);
     if (keep_alive && content_length == (off_t)-1)
-        istream = body->dechunk = istream_dechunk_new(pool, istream);
-    else
-        body->dechunk = NULL;
+        istream = istream_dechunk_new(pool, istream);
 
     return istream;
 }
