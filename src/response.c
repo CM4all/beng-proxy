@@ -15,6 +15,7 @@
 #include "access-log.h"
 #include "uri-address.h"
 #include "strref-pool.h"
+#include "growing-buffer.h"
 
 static const char *const copy_headers[] = {
     "age",
@@ -63,7 +64,7 @@ request_absolute_uri(struct http_server_request *request)
 
 static void
 response_invoke_processor(struct request *request2,
-                          http_status_t status, growing_buffer_t response_headers,
+                          http_status_t status, struct growing_buffer *response_headers,
                           istream_t body,
                           const struct translate_transformation *transformation)
 {
@@ -198,7 +199,7 @@ response_response(http_status_t status, struct strmap *headers,
     struct request *request2 = ctx;
     struct http_server_request *request = request2->request;
     pool_t pool = request->pool;
-    growing_buffer_t response_headers;
+    struct growing_buffer *response_headers;
 
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));

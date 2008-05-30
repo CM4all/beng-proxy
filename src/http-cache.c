@@ -13,6 +13,7 @@
 #include "date.h"
 #include "uri-address.h"
 #include "strref2.h"
+#include "growing-buffer.h"
 
 #include <string.h>
 #include <time.h>

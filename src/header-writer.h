@@ -7,20 +7,22 @@
 #ifndef __BENG_HEADER_WRITER_H
 #define __BENG_HEADER_WRITER_H
 
-#include "growing-buffer.h"
+#include "pool.h"
 
 struct strmap;
+struct growing_buffer;
 
 void
-header_write(growing_buffer_t gb, const char *key, const char *value);
+header_write(struct growing_buffer *gb, const char *key, const char *value);
 
 void
-headers_copy(struct strmap *in, growing_buffer_t out, const char *const* keys);
+headers_copy(struct strmap *in, struct growing_buffer *out,
+             const char *const* keys);
 
 void
-headers_copy_all(struct strmap *in, growing_buffer_t out);
+headers_copy_all(struct strmap *in, struct growing_buffer *out);
 
-growing_buffer_t
+struct growing_buffer *
 headers_dup(pool_t pool, struct strmap *in);
 
 #endif

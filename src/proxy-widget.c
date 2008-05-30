@@ -9,6 +9,7 @@
 #include "http-server.h"
 #include "http-util.h"
 #include "access-log.h"
+#include "growing-buffer.h"
 
 /*
  * processor_env.response_handler
@@ -20,7 +21,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
                       istream_t body, void *ctx)
 {
     struct http_server_request *request = ctx;
-    growing_buffer_t headers2;
+    struct growing_buffer *headers2;
     static const char *const copy_headers[] = {
         "age",
         "etag",

@@ -12,6 +12,7 @@
 #include "date.h"
 #include "format.h"
 #include "http-util.h"
+#include "growing-buffer.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -90,7 +91,7 @@ file_callback(struct request *request2)
     const struct translate_response *tr = request2->translate.response;
     const char *path;
     int ret;
-    growing_buffer_t headers;
+    struct growing_buffer *headers;
     istream_t body;
     struct stat st;
     bool range = false;

@@ -23,10 +23,10 @@ struct growing_buffer {
     struct buffer *current, *tail, first;
 };
 
-growing_buffer_t __attr_malloc
+struct growing_buffer *__attr_malloc
 growing_buffer_new(pool_t pool, size_t initial_size)
 {
-    growing_buffer_t gb = p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);
+    struct growing_buffer *gb = p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);
 
     gb->pool = pool;
     gb->size = initial_size;
@@ -40,7 +40,7 @@ growing_buffer_new(pool_t pool, size_t initial_size)
 }
 
 void *
-growing_buffer_write(growing_buffer_t gb, size_t length)
+growing_buffer_write(struct growing_buffer *gb, size_t length)
 {
     struct buffer *buffer = gb->tail;
     void *ret;
@@ -67,19 +67,19 @@ growing_buffer_write(growing_buffer_t gb, size_t length)
 }
 
 void
-growing_buffer_write_buffer(growing_buffer_t gb, const void *p, size_t length)
+growing_buffer_write_buffer(struct growing_buffer *gb, const void *p, size_t length)
 {
     memcpy(growing_buffer_write(gb, length), p, length);
 }
 
 void
-growing_buffer_write_string(growing_buffer_t gb, const char *p)
+growing_buffer_write_string(struct growing_buffer *gb, const char *p)
 {
     growing_buffer_write_buffer(gb, p, strlen(p));
 }
 
 const void *
-growing_buffer_read(growing_buffer_t gb, size_t *length_r)
+growing_buffer_read(struct growing_buffer *gb, size_t *length_r)
 {
     assert(gb->current != NULL);
 
@@ -98,7 +98,7 @@ growing_buffer_read(growing_buffer_t gb, size_t *length_r)
 }
 
 void
-growing_buffer_consume(growing_buffer_t gb, size_t length)
+growing_buffer_consume(struct growing_buffer *gb, size_t length)
 {
     assert(gb->current != NULL);
     assert(gb->current->position <= gb->current->length);
@@ -131,16 +131,16 @@ growing_buffer_consume(growing_buffer_t gb, size_t length)
 }
 
 
-static inline growing_buffer_t
+static inline struct growing_buffer *
 istream_to_gb(istream_t istream)
 {
-    return (growing_buffer_t)(((char*)istream) - offsetof(struct growing_buffer, stream));
+    return (struct growing_buffer *)(((char*)istream) - offsetof(struct growing_buffer, stream));
 }
 
 static off_t
 istream_gb_available(istream_t istream, bool partial __attr_unused)
 {
-    growing_buffer_t gb = istream_to_gb(istream);
+    struct growing_buffer *gb = istream_to_gb(istream);
     struct buffer *buffer;
     off_t available = 0;
 
@@ -158,7 +158,7 @@ istream_gb_available(istream_t istream, bool partial __attr_unused)
 static void
 istream_gb_read(istream_t istream)
 {
-    growing_buffer_t gb = istream_to_gb(istream);
+    struct growing_buffer *gb = istream_to_gb(istream);
     const void *data;
     size_t length, nbytes;
 
@@ -190,7 +190,7 @@ istream_gb_read(istream_t istream)
 static void
 istream_gb_close(istream_t istream)
 {
-    growing_buffer_t gb = istream_to_gb(istream);
+    struct growing_buffer *gb = istream_to_gb(istream);
 
     assert(gb->size == 0);
     assert(gb->tail == NULL);
@@ -207,7 +207,7 @@ static const struct istream istream_gb = {
 };
 
 istream_t
-growing_buffer_istream(growing_buffer_t gb)
+growing_buffer_istream(struct growing_buffer *gb)
 {
     assert(gb->size > 0);
 

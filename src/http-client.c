@@ -15,6 +15,7 @@
 #include "http-body.h"
 #include "istream-internal.h"
 #include "async.h"
+#include "growing-buffer.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -810,7 +811,7 @@ static struct async_operation_class http_client_request_async_operation = {
 void
 http_client_request(http_client_connection_t connection,
                     http_method_t method, const char *uri,
-                    growing_buffer_t headers,
+                    struct growing_buffer *headers,
                     istream_t body,
                     const struct http_response_handler *handler,
                     void *ctx,

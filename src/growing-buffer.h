@@ -10,27 +10,25 @@
 #include "pool.h"
 #include "istream.h"
 
-typedef struct growing_buffer *growing_buffer_t;
-
-growing_buffer_t __attr_malloc
+struct growing_buffer *__attr_malloc
 growing_buffer_new(pool_t pool, size_t initial_size);
 
 void *
-growing_buffer_write(growing_buffer_t gb, size_t length);
+growing_buffer_write(struct growing_buffer *gb, size_t length);
 
 void
-growing_buffer_write_buffer(growing_buffer_t gb, const void *p, size_t length);
+growing_buffer_write_buffer(struct growing_buffer *gb, const void *p, size_t length);
 
 void
-growing_buffer_write_string(growing_buffer_t gb, const char *p);
+growing_buffer_write_string(struct growing_buffer *gb, const char *p);
 
 const void *
-growing_buffer_read(growing_buffer_t gb, size_t *length_r);
+growing_buffer_read(struct growing_buffer *gb, size_t *length_r);
 
 void
-growing_buffer_consume(growing_buffer_t gb, size_t length);
+growing_buffer_consume(struct growing_buffer *gb, size_t length);
 
 istream_t
-growing_buffer_istream(growing_buffer_t gb);
+growing_buffer_istream(struct growing_buffer *gb);
 
 #endif

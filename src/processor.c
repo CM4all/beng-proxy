@@ -70,7 +70,7 @@ struct processor {
     } widget;
 
     bool in_script:1;
-    growing_buffer_t script;
+    struct growing_buffer *script;
     off_t script_start_offset;
 
     struct async_operation async;

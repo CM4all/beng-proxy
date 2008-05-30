@@ -13,6 +13,7 @@
 #include "http-client.h"
 #include "uri-address.h"
 #include "abort-unref.h"
+#include "growing-buffer.h"
 
 #include <inline/compiler.h>
 
@@ -23,7 +24,7 @@ struct http_request {
 
     http_method_t method;
     const char *uri;
-    growing_buffer_t headers;
+    struct growing_buffer *headers;
     istream_t body;
 
     struct http_response_handler_ref handler;
@@ -66,7 +67,7 @@ http_request(pool_t pool,
              struct hstock *http_client_stock,
              http_method_t method,
              struct uri_with_address *uwa,
-             growing_buffer_t headers,
+             struct growing_buffer *headers,
              istream_t body,
              const struct http_response_handler *handler,
              void *handler_ctx,

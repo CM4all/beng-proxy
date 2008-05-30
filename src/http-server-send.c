@@ -9,6 +9,7 @@
 #include "header-writer.h"
 #include "format.h"
 #include "date.h"
+#include "growing-buffer.h"
 
 #include <string.h>
 
@@ -137,7 +138,7 @@ void
 http_server_send_message(struct http_server_request *request,
                          http_status_t status, const char *msg)
 {
-    growing_buffer_t headers = growing_buffer_new(request->pool, 40);
+    struct growing_buffer *headers = growing_buffer_new(request->pool, 40);
     header_write(headers, "content-type", "text/plain");
 
     http_server_response(request, status, headers,
@@ -149,7 +150,7 @@ http_server_send_redirect(struct http_server_request *request,
                           http_status_t status, const char *location,
                           const char *msg)
 {
-    growing_buffer_t headers;
+    struct growing_buffer *headers;
 
     assert(request != NULL);
     assert(status >= 300 && status < 400);

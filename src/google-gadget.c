@@ -171,7 +171,7 @@ google_gadget_msg_abort(struct google_gadget *gg)
  */
 
 static void
-growing_buffer_write_jscript_string(growing_buffer_t gb, const char *s)
+growing_buffer_write_jscript_string(struct growing_buffer *gb, const char *s)
 {
     if (s == NULL)
         growing_buffer_write_string(gb, "null");

@@ -56,7 +56,7 @@ struct translate_connection {
     pool_t pool;
 
     /** the marshalled translate request */
-    growing_buffer_t request;
+    struct growing_buffer *request;
 
     translate_callback_t callback;
     void *ctx;
@@ -86,7 +86,7 @@ static struct translate_response error = {
  */
 
 static void
-write_packet(growing_buffer_t gb, uint16_t command,
+write_packet(struct growing_buffer *gb, uint16_t command,
              const char *payload)
 {
     static struct beng_translation_header header;
@@ -107,10 +107,10 @@ write_packet(growing_buffer_t gb, uint16_t command,
         growing_buffer_write_buffer(gb, payload, header.length);
 }
 
-static growing_buffer_t
+static struct growing_buffer *
 marshal_request(pool_t pool, const struct translate_request *request)
 {
-    growing_buffer_t gb;
+    struct growing_buffer *gb;
 
     gb = growing_buffer_new(pool, 512);
     write_packet(gb, TRANSLATE_BEGIN, NULL);

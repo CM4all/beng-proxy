@@ -13,7 +13,7 @@ void
 filter_new(struct http_cache *cache,
            pool_t pool,
            const struct resource_address *address,
-           growing_buffer_t headers,
+           struct growing_buffer *headers,
            istream_t body,
            const struct http_response_handler *handler,
            void *handler_ctx,
