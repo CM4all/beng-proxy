@@ -606,18 +606,16 @@ translate_try_write(struct translate_connection *connection)
     if (nbytes > 0)
         growing_buffer_consume(connection->request, (size_t)nbytes);
 
-    if ((size_t)nbytes == length) {
-        data = growing_buffer_read(connection->request, &length);
-        if (data == NULL) {
-            /* the buffer is empty, i.e. the request has been sent -
-               start reading the response */
-            packet_reader_init(&connection->reader);
+    if ((size_t)nbytes == length &&
+        growing_buffer_empty(connection->request)) {
+        /* the buffer is empty, i.e. the request has been sent -
+           start reading the response */
+        packet_reader_init(&connection->reader);
 
-            pool_ref(connection->pool);
-            translate_try_read(connection);
-            pool_unref(connection->pool);
-            return;
-        }
+        pool_ref(connection->pool);
+        translate_try_read(connection);
+        pool_unref(connection->pool);
+        return;
     }
 
     event_set(&connection->event, connection->fd, EV_WRITE|EV_TIMEOUT,
