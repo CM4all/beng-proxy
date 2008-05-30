@@ -39,6 +39,9 @@ istream_string_new(pool_t pool, const char *s);
 istream_t __attr_malloc
 istream_file_new(pool_t pool, const char *path, off_t length);
 
+int
+istream_file_fd(istream_t istream);
+
 #ifdef __linux
 istream_t
 istream_pipe_new(pool_t pool, istream_t input);

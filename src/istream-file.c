@@ -274,3 +274,14 @@ istream_file_new(pool_t pool, const char *path, off_t length)
 
     return istream_struct_cast(&file->stream);
 }
+
+int
+istream_file_fd(istream_t istream)
+{
+    struct file *file = istream_to_file(istream);
+
+    assert(file->fd >= 0);
+
+    return file->fd;
+}
+
