@@ -47,9 +47,10 @@ struct translate_connection {
     struct stock_item stock_item;
     struct async_operation async;
 
-    pool_t pool;
     int fd;
     struct event event;
+
+    pool_t pool;
     growing_buffer_t request;
 
     translate_callback_t callback;
@@ -621,8 +622,6 @@ translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     struct translate_connection *connection = (struct translate_connection *)item;
     int ret;
 
-    connection->event.ev_events = 0;
-
     connection->fd = socket_unix_connect(uri);
     if (connection->fd < 0) {
         daemon_log(1, "failed to connect to %s: %s\n",
@@ -639,8 +638,9 @@ translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
         return;
     }
 
+    connection->event.ev_events = 0;
+
     stock_item_available(item);
-    return;
 }
 
 static bool
