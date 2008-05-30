@@ -285,7 +285,5 @@ d_free(struct dpool *pool, const void *p)
         }
     }
 
-    /* XXX merge */
-
     lock_unlock(&pool->lock);
 }
