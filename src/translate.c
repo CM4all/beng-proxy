@@ -267,7 +267,6 @@ translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
 static struct translate_transformation *
 translate_add_transformation(struct translate_connection *connection)
 {
-    /* XXX wrong pool */
     struct translate_transformation *transformation
         = p_malloc(connection->pool, sizeof(*transformation));
 
@@ -387,7 +386,6 @@ translate_handle_packet(struct translate_connection *connection,
 
     case TRANSLATE_FILTER:
         if (payload != NULL) {
-            /* XXX wrong pool */
             transformation = translate_add_transformation(connection);
             transformation->type = TRANSFORMATION_FILTER;
             transformation->u.filter.type = RESOURCE_ADDRESS_HTTP;
@@ -397,7 +395,6 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_PROCESS:
-        /* XXX wrong pool */
         transformation = translate_add_transformation(connection);
         transformation->type = TRANSFORMATION_PROCESS;
         transformation->u.processor_options = PROCESSOR_REWRITE_URL;
