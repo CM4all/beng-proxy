@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include <event.h>
 
 static http_client_connection_t
@@ -51,8 +52,50 @@ connect_mirror(pool_t pool,
     return http_client_connection_new(pool, sv[0], handler, ctx);
 }
 
+static http_client_connection_t
+connect_abort(pool_t pool,
+              const struct http_client_connection_handler *handler,
+              void *ctx)
+{
+    int ret, sv[2];
+    pid_t pid;
+
+    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
+    if (ret < 0) {
+        perror("socketpair() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    pid = fork();
+    if (pid < 0) {
+        perror("fork() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid == 0) {
+        char buffer[256];
+        ssize_t nbytes;
+
+        close(sv[0]);
+        nbytes = read(sv[1], buffer, sizeof(buffer));
+        assert(nbytes > 0);
+
+        write(sv[1], "200 OK\r\n", 8);
+
+        shutdown(sv[1], SHUT_WR);
+        sleep(1);
+        exit(EXIT_FAILURE);
+    }
+
+    close(sv[1]);
+
+    socket_set_nonblock(sv[0], 1);
+
+    return http_client_connection_new(pool, sv[0], handler, ctx);
+}
+
 struct context {
-    bool close_early, close_late, close_data;
+    bool close_early, close_late, close_data, close_abort;
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
     struct async_operation_ref async_ref;
@@ -182,6 +225,9 @@ my_response_abort(void *ctx)
     struct context *c = ctx;
 
     c->aborted = true;
+
+    if (c->close_abort)
+        http_client_connection_close(c->client);
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -381,6 +427,20 @@ test_data_blocking(pool_t pool, struct context *c)
     assert(c->body_abort);
 }
 
+static void
+test_socket_close(pool_t pool, struct context *c)
+{
+    c->close_abort = true;
+    c->client = connect_abort(pool, &my_connection_handler, c);
+    http_client_request(c->client, HTTP_METHOD_GET, "/foo", NULL, NULL,
+                        &my_response_handler, c, &c->async_ref);
+
+    event_dispatch();
+
+    assert(c->client == NULL);
+    assert(c->body == NULL);
+}
+
 
 /*
  * main
@@ -406,6 +466,8 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    signal(SIGPIPE, SIG_IGN);
+
     event_base = event_init();
 
     pool = pool_new_libc(NULL, "root");
@@ -420,6 +482,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_response_body_late);
     run_test(pool, test_close_response_body_data);
     run_test(pool, test_data_blocking);
+    run_test(pool, test_socket_close);
 
     pool_unref(pool);
     pool_commit();
