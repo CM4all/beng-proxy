@@ -653,9 +653,12 @@ http_client_request_close(http_client_connection_t connection)
     }
 
     if (connection->response.read_state == READ_BODY) {
-        http_client_response_stream_close(http_body_istream(&connection->response.body_reader));
+        pool_t pool = connection->request.pool;
+        connection->request.pool = NULL;
 
-        assert(connection->request.pool == NULL);
+        istream_deinit_abort(&connection->response.body_reader.output);
+
+        pool_unref(pool);
     } else {
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
