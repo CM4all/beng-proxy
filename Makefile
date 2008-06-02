@@ -93,7 +93,7 @@ ISTREAM_SOURCES = \
 
 SOURCES = src/main.c \
 	src/cmdline.c \
-	src/child.c \
+	src/worker.c \
 	src/shm.c \
 	src/dpool.c \
 	src/dstring.c \
