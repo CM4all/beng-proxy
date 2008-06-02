@@ -5,6 +5,7 @@
 #include "dpool.h"
 #include "strmap.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
