@@ -124,6 +124,8 @@ create_child(struct instance *instance)
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
+
+        session_manager_event_add();
     } else if (pid == 0) {
         deinit_signals(instance);
 
