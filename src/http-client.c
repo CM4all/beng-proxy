@@ -643,6 +643,8 @@ http_client_request_close(http_client_connection_t connection)
 {
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
+    assert(connection->response.read_state == READ_BODY ||
+           http_response_handler_defined(&connection->request.handler));
 
     if (connection->request.istream != NULL) {
         istream_free_handler(&connection->request.istream);
