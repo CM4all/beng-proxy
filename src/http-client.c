@@ -641,35 +641,28 @@ http_client_connection_new(pool_t pool, int fd,
 static void
 http_client_request_close(http_client_connection_t connection)
 {
+    pool_t pool = connection->request.pool;
+
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_BODY ||
            http_response_handler_defined(&connection->request.handler));
 
-    if (connection->request.istream != NULL) {
+    connection->request.pool = NULL;
+
+    if (connection->request.istream != NULL)
         istream_free_handler(&connection->request.istream);
-        if (connection->request.pool == NULL)
-            return;
-    }
 
     if (connection->response.read_state == READ_BODY) {
-        pool_t pool = connection->request.pool;
-        connection->request.pool = NULL;
-
         istream_deinit_abort(&connection->response.body_reader.output);
-
-        pool_unref(pool);
     } else {
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
            being freed */
-        pool_t pool = connection->request.pool;
-        connection->request.pool = NULL;
-
         http_response_handler_invoke_abort(&connection->request.handler);
-
-        pool_unref(pool);
     }
+
+    pool_unref(pool);
 }
 
 void
