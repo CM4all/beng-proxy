@@ -122,22 +122,26 @@ create_child(struct instance *instance)
     deinit_signals(instance);
     session_manager_event_del();
 
+    if (!list_empty(&instance->children))
+        event_del(&instance->child_event);
+
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
 
         init_signals(instance);
         session_manager_event_add();
+
+        if (!list_empty(&instance->children)) {
+            event_set(&instance->child_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
+                      child_event_callback, instance);
+            event_add(&instance->child_event, NULL);
+        }
     } else if (pid == 0) {
         instance->config.num_workers = 0;
 
-        event_del(&instance->child_event);
-
-        if (!list_empty(&instance->children)) {
-            event_del(&instance->child_event);
-            list_init(&instance->children);
-            instance->num_children = 0;
-        }
+        list_init(&instance->children);
+        instance->num_children = 0;
 
         if (instance->listener != NULL)
             listener_event_del(instance->listener);
@@ -160,11 +164,9 @@ create_child(struct instance *instance)
         init_signals(instance);
         session_manager_event_add();
 
-        if (list_empty(&instance->children)) {
-            event_set(&instance->child_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
-                      child_event_callback, instance);
-            event_add(&instance->child_event, NULL);
-        }
+        event_set(&instance->child_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
+                  child_event_callback, instance);
+        event_add(&instance->child_event, NULL);
 
         /* XXX leak */
         child = p_calloc(instance->pool, sizeof(*child));
