@@ -641,13 +641,14 @@ http_client_connection_new(pool_t pool, int fd,
 static void
 http_client_request_close(http_client_connection_t connection)
 {
-    pool_t pool = connection->request.pool;
+    pool_t pool;
 
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_BODY ||
            http_response_handler_defined(&connection->request.handler));
 
+    pool = connection->request.pool;
     connection->request.pool = NULL;
 
     if (connection->request.istream != NULL)
