@@ -12,9 +12,11 @@
 #include "async.h"
 #include "header-parser.h"
 #include "strutil.h"
+#include "child.h"
 
 #include <daemon/log.h>
 
+#include <sys/wait.h>
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
@@ -363,6 +365,20 @@ cgi_run(bool jail, const char *path,
     _exit(2);
 }
 
+static void
+cgi_child_callback(int status, void *ctx __attr_unused)
+{
+    int exit_status = WEXITSTATUS(status);
+
+    if (WIFSIGNALED(status)) {
+        daemon_log(1, "CGI died from signal %d%s\n",
+                   WTERMSIG(status),
+                   WCOREDUMP(status) ? " (core dumped)" : "");
+    } else if (exit_status != 0)
+        daemon_log(1, "CGI exited with status %d\n",
+                   exit_status);
+}
+
 void
 cgi_new(pool_t pool, bool jail,
         const char *path,
@@ -391,6 +407,8 @@ cgi_new(pool_t pool, bool jail,
         cgi_run(jail, path, method, uri,
                 script_name, path_info, query_string, document_root,
                 headers);
+
+    child_register(pid, cgi_child_callback, NULL);
 
     cgi = (struct cgi *)istream_new(pool, &istream_cgi, sizeof(*cgi));
     istream_assign_handler(&cgi->input, input,
