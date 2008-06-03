@@ -50,9 +50,9 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
         if (child == NULL)
             continue;
 
-        child->callback(status, child->callback_ctx);
-
         list_remove(&child->siblings);
+
+        child->callback(status, child->callback_ctx);
         p_free(pool, child);
     }
 
