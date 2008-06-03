@@ -145,7 +145,7 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
     /* finally send request to the widget registry */
 
     if (new)
-        widget_class_lookup(widget_pool, translate_cache,
+        widget_class_lookup(pool, widget_pool, translate_cache,
                             widget->class_name,
                             widget_resolver_callback, widget,
                             &resolver->async_ref);

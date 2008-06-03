@@ -18,7 +18,7 @@ typedef void (*widget_class_callback_t)(const struct widget_class *class,
                                         void *ctx);
 
 void
-widget_class_lookup(pool_t pool,
+widget_class_lookup(pool_t pool, pool_t widget_pool,
                     struct tcache *translate_cache,
                     const char *widget_type,
                     widget_class_callback_t callback,

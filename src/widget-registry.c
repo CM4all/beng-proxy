@@ -72,7 +72,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
 
 
 void
-widget_class_lookup(pool_t pool,
+widget_class_lookup(pool_t pool, pool_t widget_pool,
                     struct tcache *tcache,
                     const char *widget_type,
                     widget_class_callback_t callback,
@@ -83,7 +83,7 @@ widget_class_lookup(pool_t pool,
 
     assert(widget_type != NULL);
 
-    lookup->pool = pool;
+    lookup->pool = widget_pool;
     lookup->callback = callback;
     lookup->callback_ctx = ctx;
 
