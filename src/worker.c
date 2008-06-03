@@ -19,20 +19,6 @@
 #include <string.h>
 #include <errno.h>
 
-static struct child *
-find_child_by_pid(struct instance *instance, pid_t pid)
-{
-    struct child *child;
-
-    for (child = (struct child*)instance->children.next;
-         child != (struct child*)&instance->children;
-         child = (struct child*)child->siblings.next)
-        if (child->pid == pid)
-            return child;
-
-    return NULL;
-}
-
 static void
 schedule_respawn(struct instance *instance);
 
@@ -72,40 +58,36 @@ schedule_respawn(struct instance *instance)
     }
 }
 
-static void
-child_event_callback(int fd __attr_unused, short event __attr_unused,
-                     void *ctx)
+static inline struct child *
+watcher_to_child(struct ev_child *watcher)
 {
-    struct instance *instance = (struct instance*)ctx;
-    pid_t pid;
-    int status, exit_status;
-    struct child *child;
+    return (struct child *)(((char*)watcher) - offsetof(struct child, watcher));
+}
 
-    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-        child = find_child_by_pid(instance, pid);
-        if (child == NULL)
-            continue;
+static void
+child_watcher_callback(EV_P_ struct ev_child *watcher,
+                       int revents __attr_unused)
+{
+    struct child *child = watcher_to_child(watcher);
+    struct instance *instance = child->instance;
+    int status = watcher->rstatus, exit_status = WEXITSTATUS(status);
 
-        exit_status = WEXITSTATUS(status);
+    ev_child_stop(EV_A_ watcher);
 
-        if (WIFSIGNALED(status)) {
-            daemon_log(1, "child %d died from signal %d%s\n",
-                       pid, WTERMSIG(status),
-                       WCOREDUMP(status) ? " (core dumped)" : "");
-        } else if (exit_status == 0)
-            daemon_log(1, "child %d exited with success\n",
-                       pid);
-        else
-            daemon_log(1, "child %d exited with status %d\n",
-                       pid, exit_status);
+    if (WIFSIGNALED(status)) {
+        daemon_log(1, "child %d died from signal %d%s\n",
+                   child->pid, WTERMSIG(status),
+                   WCOREDUMP(status) ? " (core dumped)" : "");
+    } else if (exit_status == 0)
+        daemon_log(1, "child %d exited with success\n",
+                   child->pid);
+    else
+        daemon_log(1, "child %d exited with status %d\n",
+                   child->pid, exit_status);
 
-        list_remove(&child->siblings);
-        assert(instance->num_children > 0);
-        --instance->num_children;
-    }
-
-    if (list_empty(&instance->children))
-        event_del(&instance->child_event);
+    list_remove(&child->siblings);
+    assert(instance->num_children > 0);
+    --instance->num_children;
 
     schedule_respawn(instance);
 
@@ -119,18 +101,9 @@ create_child(struct instance *instance)
 
     assert(instance->respawn_event.ev_events == 0);
 
-    if (!list_empty(&instance->children))
-        event_del(&instance->child_event);
-
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
-
-        if (!list_empty(&instance->children)) {
-            event_set(&instance->child_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
-                      child_event_callback, instance);
-            event_add(&instance->child_event, NULL);
-        }
     } else if (pid == 0) {
         ev_default_fork();
 
@@ -153,13 +126,13 @@ create_child(struct instance *instance)
     } else {
         struct child *child;
 
-        event_set(&instance->child_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
-                  child_event_callback, instance);
-        event_add(&instance->child_event, NULL);
-
         /* XXX leak */
         child = p_calloc(instance->pool, sizeof(*child));
+        child->instance = instance;
         child->pid = pid;
+
+        ev_child_init(&child->watcher, child_watcher_callback, pid, 0);
+        ev_child_start(EV_DEFAULT_ &child->watcher);
 
         list_add(&child->siblings, &instance->children);
         ++instance->num_children;

@@ -16,7 +16,12 @@
 
 struct child {
     struct list_head siblings;
+
+    struct instance *instance;
+
     pid_t pid;
+
+    struct ev_child watcher;
 };
 
 struct instance {
@@ -37,7 +42,7 @@ struct instance {
     struct shm *shm;
 
     /* child management */
-    struct event child_event, respawn_event;
+    struct event respawn_event;
     struct list_head children;
     unsigned num_children;
 
