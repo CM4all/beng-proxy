@@ -69,8 +69,6 @@ http_server_response(struct http_server_request *request,
     istream_t status_stream, header_stream;
 
     assert(connection->request.request == request);
-    assert(connection->response.istream == NULL);
-    /* XXX what if we weren't able to send "100 Continue" yet? */
 
     async_ref_poison(&connection->request.async_ref);
 
@@ -121,8 +119,21 @@ http_server_response(struct http_server_request *request,
 
     header_stream = growing_buffer_istream(headers);
 
-    connection->response.istream = istream_cat_new(request->pool, status_stream,
-                                                   header_stream, body, NULL);
+    istream_cat_new(request->pool, status_stream,
+                    header_stream, body, NULL);
+
+    if (connection->response.istream != NULL) {
+        /* we havn't yet finished writing "100 Continue" yet;
+           concatenate this stream and the response stream now  */
+        assert(connection->response.writing_100_continue);
+
+        connection->response.writing_100_continue = false;
+
+        istream_handler_clear(connection->response.istream);
+        body = istream_cat_new(request->pool, connection->response.istream, body);
+    }
+
+    connection->response.istream = body;
     istream_handler_set(connection->response.istream,
                         &http_server_response_stream_handler, connection,
                         ISTREAM_DIRECT_SUPPORT);
