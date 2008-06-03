@@ -33,6 +33,9 @@ struct http_server_connection_handler {
     void (*request)(struct http_server_request *request,
                     void *ctx,
                     struct async_operation_ref *async_ref);
+    void (*log)(struct http_server_request *request,
+                http_status_t status, off_t length,
+                void *ctx);
     void (*free)(void *ctx);
 };
 

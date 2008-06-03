@@ -62,9 +62,11 @@ struct http_server_connection {
         read_state==READ_BODY||read_state==READ_END */
     struct {
         bool writing_100_continue;
+        http_status_t status;
         char status_buffer[64];
         char content_length_buffer[32];
         istream_t istream;
+        off_t length;
     } response;
 
     /* connection settings */

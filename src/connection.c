@@ -9,6 +9,7 @@
 #include "http-server.h"
 #include "handler.h"
 #include "address.h"
+#include "access-log.h"
 
 #include <daemon/log.h>
 
@@ -40,6 +41,14 @@ my_http_server_connection_request(struct http_server_request *request,
 }
 
 static void
+my_http_server_connection_log(struct http_server_request *request,
+                              http_status_t status, off_t length,
+                              void *ctx __attr_unused)
+{
+    access_log(request, status, length);
+}
+
+static void
 my_http_server_connection_free(void *ctx)
 {
     struct client_connection *connection = ctx;
@@ -61,6 +70,7 @@ my_http_server_connection_free(void *ctx)
 
 static const struct http_server_connection_handler my_http_server_connection_handler = {
     .request = my_http_server_connection_request,
+    .log = my_http_server_connection_log,
     .free = my_http_server_connection_free,
 };
 

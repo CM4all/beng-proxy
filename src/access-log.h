@@ -20,7 +20,7 @@ struct http_server_request;
 
 static inline void
 access_log(struct http_server_request *request __attr_unused,
-           http_status_t status __attr_unused, istream_t body __attr_unused)
+           http_status_t status __attr_unused, off_t length __attr_unused)
 {
 }
 
@@ -28,7 +28,7 @@ access_log(struct http_server_request *request __attr_unused,
 
 void
 access_log(struct http_server_request *request,
-           http_status_t status, istream_t body);
+           http_status_t status, off_t length);
 
 #endif
 

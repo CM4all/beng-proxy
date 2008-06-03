@@ -26,6 +26,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     nbytes = write(connection->fd, data, length);
 
     if (likely(nbytes >= 0)) {
+        connection->response.length += (off_t)nbytes;
         event2_or(&connection->event, EV_WRITE);
         return (size_t)nbytes;
     }
@@ -53,8 +54,10 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     if (unlikely(nbytes < 0 && errno == EAGAIN))
         return -2;
 
-    if (likely(nbytes > 0))
+    if (likely(nbytes > 0)) {
+        connection->response.length += (off_t)nbytes;
         event2_or(&connection->event, EV_WRITE);
+    }
 
     return nbytes;
 }
@@ -94,6 +97,12 @@ http_server_response_stream_eof(void *ctx)
         if (!http_server_connection_valid(connection))
             return;
     }
+
+    if (connection->handler->log != NULL)
+        connection->handler->log(connection->request.request,
+                                 connection->response.status,
+                                 connection->response.length,
+                                 connection->handler_ctx);
 
     pool_unref(connection->request.request->pool);
     connection->request.request = NULL;

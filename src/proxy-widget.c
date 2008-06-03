@@ -8,7 +8,6 @@
 #include "header-writer.h"
 #include "http-server.h"
 #include "http-util.h"
-#include "access-log.h"
 #include "growing-buffer.h"
 
 /*
@@ -36,8 +35,6 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
         "vary",
         NULL,
     };
-
-    access_log(request, status, body);
 
     headers2 = growing_buffer_new(request->pool, 2048);
 

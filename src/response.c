@@ -12,7 +12,6 @@
 #include "proxy-widget.h"
 #include "session.h"
 #include "filter.h"
-#include "access-log.h"
 #include "uri-address.h"
 #include "strref-pool.h"
 #include "growing-buffer.h"
@@ -175,8 +174,6 @@ response_dispatch(struct request *request2,
         response_invoke_processor(request2, status, headers, body,
                                   transformation);
     } else {
-        access_log(request2->request, status, body);
-
         header_write(headers, "server", "beng-proxy v" VERSION);
 
         request2->response_sent = true;

@@ -72,6 +72,7 @@ http_server_response(struct http_server_request *request,
 
     async_ref_poison(&connection->request.async_ref);
 
+    connection->response.status = status;
     status_stream
         = istream_memory_new(request->pool,
                              connection->response.status_buffer,
@@ -119,8 +120,11 @@ http_server_response(struct http_server_request *request,
 
     header_stream = growing_buffer_istream(headers);
 
-    istream_cat_new(request->pool, status_stream,
-                    header_stream, body, NULL);
+    connection->response.length = - istream_available(status_stream, false)
+        - istream_available(header_stream, false);
+
+    body = istream_cat_new(request->pool, status_stream,
+                           header_stream, body, NULL);
 
     if (connection->response.istream != NULL) {
         /* we havn't yet finished writing "100 Continue" yet;
@@ -130,6 +134,9 @@ http_server_response(struct http_server_request *request,
         connection->response.writing_100_continue = false;
 
         istream_handler_clear(connection->response.istream);
+        connection->response.length -=
+            istream_available(connection->response.istream, false);
+
         body = istream_cat_new(request->pool, connection->response.istream, body);
     }
 

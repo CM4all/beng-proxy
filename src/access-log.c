@@ -14,9 +14,8 @@
 
 void
 access_log(struct http_server_request *request,
-           http_status_t status, istream_t body)
+           http_status_t status, off_t content_length)
 {
-    off_t content_length = body == NULL ? -2 : istream_available(body, false);
     time_t now = time(NULL);
     char stamp[32];
 
