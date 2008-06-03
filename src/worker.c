@@ -82,8 +82,6 @@ worker_child_callback(int status, void *ctx)
     --instance->num_children;
 
     schedule_respawn(instance);
-
-    pool_commit();
 }
 
 pid_t
