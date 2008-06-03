@@ -9,6 +9,7 @@
 #include "instance.h"
 #include "connection.h"
 #include "session.h"
+#include "child.h"
 
 #include <daemon/log.h>
 
@@ -58,21 +59,12 @@ schedule_respawn(struct instance *instance)
     }
 }
 
-static inline struct child *
-watcher_to_child(struct ev_child *watcher)
-{
-    return (struct child *)(((char*)watcher) - offsetof(struct child, watcher));
-}
-
 static void
-child_watcher_callback(EV_P_ struct ev_child *watcher,
-                       int revents __attr_unused)
+worker_child_callback(int status, void *ctx)
 {
-    struct child *child = watcher_to_child(watcher);
+    struct child *child = ctx;
     struct instance *instance = child->instance;
-    int status = watcher->rstatus, exit_status = WEXITSTATUS(status);
-
-    ev_child_stop(EV_A_ watcher);
+    int exit_status = WEXITSTATUS(status);
 
     if (WIFSIGNALED(status)) {
         daemon_log(1, "child %d died from signal %d%s\n",
@@ -101,11 +93,14 @@ create_child(struct instance *instance)
 
     assert(instance->respawn_event.ev_events == 0);
 
+    deinit_signals(instance);
+    children_event_del();
+
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
     } else if (pid == 0) {
-        ev_default_fork();
+        event_reinit(instance->event_base);
 
         instance->config.num_workers = 0;
 
@@ -117,6 +112,9 @@ create_child(struct instance *instance)
 
         while (!list_empty(&instance->connections))
             close_connection((struct client_connection*)instance->connections.next);
+
+        init_signals(instance);
+        children_event_add();
 
         session_manager_event_del();
         session_manager_init();
@@ -131,11 +129,13 @@ create_child(struct instance *instance)
         child->instance = instance;
         child->pid = pid;
 
-        ev_child_init(&child->watcher, child_watcher_callback, pid, 0);
-        ev_child_start(EV_DEFAULT_ &child->watcher);
-
         list_add(&child->siblings, &instance->children);
         ++instance->num_children;
+
+        init_signals(instance);
+        children_event_add();
+
+        child_register(pid, worker_child_callback, child);
     }
 
     return pid;

@@ -49,7 +49,7 @@ LIBDAEMON_CFLAGS := $(shell pkg-config --cflags libcm4all-daemon)
 LIBDAEMON_LIBS := $(shell pkg-config --libs libcm4all-daemon)
 
 LIBEVENT_CFLAGS =
-LIBEVENT_LIBS = -lev
+LIBEVENT_LIBS = -levent
 
 LIBATTR_CFLAGS =
 LIBATTR_LIBS = -lattr
@@ -93,6 +93,7 @@ ISTREAM_SOURCES = \
 
 SOURCES = src/main.c \
 	src/cmdline.c \
+	src/child.c \
 	src/worker.c \
 	src/shm.c \
 	src/dpool.c \

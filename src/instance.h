@@ -20,8 +20,6 @@ struct child {
     struct instance *instance;
 
     pid_t pid;
-
-    struct ev_child watcher;
 };
 
 struct instance {
