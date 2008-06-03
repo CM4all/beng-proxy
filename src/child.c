@@ -56,6 +56,9 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
         p_free(pool, child);
     }
 
+    if (list_empty(&children))
+        children_event_del();
+
     pool_commit();
 }
 
