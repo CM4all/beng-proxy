@@ -13,9 +13,7 @@
 
 #include <daemon/log.h>
 
-#include <sys/signal.h>
 #include <sys/wait.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
