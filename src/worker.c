@@ -119,16 +119,16 @@ create_child(struct instance *instance)
 
     assert(instance->respawn_event.ev_events == 0);
 
+    deinit_signals(instance);
     session_manager_event_del();
 
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
 
+        init_signals(instance);
         session_manager_event_add();
     } else if (pid == 0) {
-        deinit_signals(instance);
-
         instance->config.num_workers = 0;
 
         event_del(&instance->child_event);
@@ -157,6 +157,7 @@ create_child(struct instance *instance)
     } else {
         struct child *child;
 
+        init_signals(instance);
         session_manager_event_add();
 
         if (list_empty(&instance->children)) {
