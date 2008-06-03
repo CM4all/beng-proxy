@@ -8,7 +8,7 @@
 #include "widget-http.h"
 #include "processor.h"
 #include "widget.h"
-#include "widget-registry.h"
+#include "widget-resolver.h"
 #include "google-gadget.h"
 
 #include <daemon/log.h>
@@ -25,16 +25,15 @@ struct frame_class_looup {
 };
 
 static void
-frame_class_lookup_callback(const struct widget_class *class, void *ctx)
+frame_class_lookup_callback(void *ctx)
 {
     struct frame_class_looup *fcl = ctx;
 
-    if (class == NULL) {
+    if (fcl->widget->class == NULL) {
         http_response_handler_invoke_abort(&fcl->handler);
         return;
     }
 
-    fcl->widget->class = class;
     embed_frame_widget(fcl->pool, fcl->env, fcl->widget,
                        fcl->handler.handler, fcl->handler.ctx,
                        fcl->async_ref);
@@ -123,7 +122,8 @@ embed_frame_widget(pool_t pool, struct processor_env *env,
         fcl->widget = widget;
         http_response_handler_set(&fcl->handler, handler, handler_ctx);
         fcl->async_ref = async_ref;
-        widget_class_lookup(pool, env->translate_cache, widget->class_name,
+        widget_resolver_new(pool, env->pool, widget,
+                            env->translate_cache,
                             frame_class_lookup_callback, fcl, async_ref);
         return;
     }
