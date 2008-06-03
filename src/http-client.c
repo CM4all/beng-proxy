@@ -57,7 +57,8 @@ struct http_client_connection {
             READ_NONE,
             READ_STATUS,
             READ_HEADERS,
-            READ_BODY
+            READ_BODY,
+            READ_ABORTED
         } read_state;
         http_status_t status;
         struct strmap *headers;
@@ -517,13 +518,14 @@ http_client_try_read_buffered(http_client_connection_t connection)
 
     if (nbytes == 0) {
         if (connection->response.read_state == READ_BODY) {
+            connection->response.read_state = READ_ABORTED;
+
             http_body_socket_eof(&connection->response.body_reader,
                                  connection->input);
             if (!http_client_connection_valid(connection))
                 return;
         }
 
-        connection->response.read_state = READ_NONE;
         http_client_connection_close(connection);
         return;
     }
@@ -646,6 +648,7 @@ http_client_request_close(http_client_connection_t connection)
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_BODY ||
+           connection->response.read_state == READ_ABORTED ||
            http_response_handler_defined(&connection->request.handler));
 
     pool = connection->request.pool;
@@ -656,7 +659,7 @@ http_client_request_close(http_client_connection_t connection)
 
     if (connection->response.read_state == READ_BODY) {
         istream_deinit_abort(&connection->response.body_reader.output);
-    } else {
+    } else if (connection->response.read_state != READ_ABORTED) {
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
            being freed */
