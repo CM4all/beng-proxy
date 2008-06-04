@@ -28,8 +28,6 @@ respawn_event_callback(int fd __attr_unused, short event __attr_unused,
     struct instance *instance = (struct instance*)ctx;
     pid_t pid;
 
-    instance->respawn_event.ev_events = 0;
-
     if (instance->should_exit ||
         instance->num_children >= instance->config.num_workers)
         return;
@@ -46,7 +44,7 @@ schedule_respawn(struct instance *instance)
 {
     if (!instance->should_exit &&
         instance->num_children < instance->config.num_workers &&
-        instance->respawn_event.ev_events == 0) {
+        evtimer_pending(&instance->respawn_event, NULL) == 0) {
         static struct timeval tv = {
             .tv_sec = 1,
             .tv_usec = 0,
@@ -86,8 +84,6 @@ pid_t
 create_child(struct instance *instance)
 {
     pid_t pid;
-
-    assert(instance->respawn_event.ev_events == 0);
 
     deinit_signals(instance);
     children_event_del();
