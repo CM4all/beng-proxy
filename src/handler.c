@@ -155,9 +155,9 @@ translate_callback(const struct translate_response *response,
         http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
                                   response->redirect, NULL);
     } else if (response->status != (http_status_t)0) {
-        http_server_send_message(request->request,
-                                 response->status,
-                                 ""); /* XXX which message? */
+        http_server_response(request->request,
+                             response->status,
+                             NULL, NULL);
     } else {
         daemon_log(2, "empty response from translation server\n");
         http_server_send_message(request->request,
