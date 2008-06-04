@@ -24,9 +24,6 @@ void
 children_shutdown(void);
 
 void
-children_deinit(void);
-
-void
 children_event_add(void);
 
 void

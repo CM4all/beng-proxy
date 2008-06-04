@@ -84,19 +84,6 @@ children_shutdown(void)
 }
 
 void
-children_deinit(void)
-{
-    children_event_del();
-
-    while (!list_empty(&children)) {
-        struct child *child = (struct child *)children.next;
-
-        list_remove(&child->siblings);
-        p_free(pool, child);
-    }
-}
-
-void
 children_event_add(void)
 {
     assert(!shutdown);
