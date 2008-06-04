@@ -71,9 +71,17 @@ cookie_jar_new(struct dpool *pool)
 static bool
 domain_matches(const char *domain, const char *match)
 {
-    /* XXX */
+    size_t domain_length = strlen(domain);
+    size_t match_length = strlen(match);
 
-    return strcmp(domain, match) == 0;
+    return domain_length >= match_length &&
+        strcasecmp(domain + domain_length - match_length, match) == 0 &&
+        (domain_length == match_length || /* "a.b" matches "a.b" */
+         match[0] == '.' || /* "a.b" matches ".b" */
+         /* "a.b" matches "b" (implicit dot according to RFC 2965
+            3.2.2): */
+         (domain_length > match_length &&
+          domain[domain_length - match_length - 1] == '.'));
 }
 
 static bool
