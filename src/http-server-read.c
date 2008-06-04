@@ -68,7 +68,12 @@ http_server_parse_request_line(http_server_connection_t connection,
         break;
     }
 
-    /* XXX: unknown method? */
+    if (method == HTTP_METHOD_NULL) {
+        /* invalid request method */
+
+        http_server_connection_close(connection);
+        return;
+    }
 
     space = memchr(line, ' ', eol - line);
     if (unlikely(space == NULL))
