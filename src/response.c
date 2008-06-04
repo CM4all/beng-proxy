@@ -41,7 +41,7 @@ static const char *const copy_headers_processed[] = {
 
 
 static const char *
-request_absolute_uri(struct http_server_request *request)
+request_absolute_uri(const struct http_server_request *request)
 {
     const char *host = strmap_get(request->headers, "host");
 

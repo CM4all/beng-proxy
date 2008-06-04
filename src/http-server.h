@@ -60,17 +60,17 @@ http_server_request_has_body(const struct http_server_request *request)
 }
 
 void
-http_server_response(struct http_server_request *request,
+http_server_response(const struct http_server_request *request,
                      http_status_t status,
                      struct growing_buffer *headers,
                      istream_t body);
 
 void
-http_server_send_message(struct http_server_request *request,
+http_server_send_message(const struct http_server_request *request,
                          http_status_t status, const char *msg);
 
 void
-http_server_send_redirect(struct http_server_request *request,
+http_server_send_redirect(const struct http_server_request *request,
                           http_status_t status, const char *location,
                           const char *msg);
 

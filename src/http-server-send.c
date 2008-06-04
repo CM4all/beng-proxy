@@ -59,7 +59,7 @@ format_status_line(char *p, http_status_t status)
 }
 
 void
-http_server_response(struct http_server_request *request,
+http_server_response(const struct http_server_request *request,
                      http_status_t status,
                      struct growing_buffer *headers,
                      istream_t body)
@@ -153,7 +153,7 @@ http_server_response(struct http_server_request *request,
 }
 
 void
-http_server_send_message(struct http_server_request *request,
+http_server_send_message(const struct http_server_request *request,
                          http_status_t status, const char *msg)
 {
     struct growing_buffer *headers = growing_buffer_new(request->pool, 40);
@@ -164,7 +164,7 @@ http_server_send_message(struct http_server_request *request,
 }
 
 void
-http_server_send_redirect(struct http_server_request *request,
+http_server_send_redirect(const struct http_server_request *request,
                           http_status_t status, const char *location,
                           const char *msg)
 {
