@@ -128,7 +128,7 @@ test_normal(pool_t pool)
     tcache = translate_cache_new(pool, translate_stock_new(pool, "/dev/null"));
 
     aborted = false;
-    widget_class_lookup(pool, tcache, "sync",
+    widget_class_lookup(pool, pool, tcache, "sync",
                         widget_class_callback, &data, &async_ref);
     assert(!aborted);
     assert(data.got_class);
@@ -160,7 +160,7 @@ test_abort(pool_t pool)
     tcache = translate_cache_new(pool, translate_stock_new(pool, "/dev/null"));
 
     aborted = false;
-    widget_class_lookup(pool, tcache,  "block",
+    widget_class_lookup(pool, pool, tcache,  "block",
                         widget_class_callback, &data, &async_ref);
     assert(!data.got_class);
     assert(!aborted);

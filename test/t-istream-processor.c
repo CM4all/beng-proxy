@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 void
-widget_class_lookup(pool_t pool __attr_unused,
+widget_class_lookup(pool_t pool __attr_unused, pool_t widget_pool __attr_unused,
                     struct tcache *translate_cache __attr_unused,
                     const char *widget_type __attr_unused,
                     widget_class_callback_t callback,
