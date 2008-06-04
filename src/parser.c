@@ -320,9 +320,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     break;
                 } else {
                     if (parser->attr_value_length == sizeof(parser->attr_value)) {
-                        /* XXX value buffer overflowing */
-                        parser->state = PARSER_ELEMENT_TAG;
-                        break;
+                        /* value buffer overflowing, cut off */
+                        ++buffer;
+                        continue;
                     }
 
                     parser->attr_value[parser->attr_value_length++] = *buffer++;
@@ -336,9 +336,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             do {
                 if (!char_is_whitespace(*buffer) && *buffer != '>') {
                     if (parser->attr_value_length == sizeof(parser->attr_value)) {
-                        /* XXX value buffer overflowing */
-                        parser->state = PARSER_ELEMENT_TAG;
-                        break;
+                        /* value buffer overflowing, cut off */
+                        ++buffer;
+                        continue;
                     }
 
                     parser->attr_value[parser->attr_value_length++] = *buffer++;
