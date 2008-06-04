@@ -77,6 +77,8 @@ worker_child_callback(int status, void *ctx)
     assert(instance->num_children > 0);
     --instance->num_children;
 
+    p_free(instance->pool, child);
+
     schedule_respawn(instance);
 }
 
@@ -116,7 +118,6 @@ create_child(struct instance *instance)
     } else {
         struct child *child;
 
-        /* XXX leak */
         child = p_calloc(instance->pool, sizeof(*child));
         child->instance = instance;
         child->pid = pid;
