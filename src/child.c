@@ -67,6 +67,8 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
 void
 children_init(pool_t _pool)
 {
+    assert(!shutdown);
+
     pool = _pool;
 
     list_init(&children);
@@ -106,6 +108,8 @@ void
 child_register(pid_t pid, child_callback_t callback, void *ctx)
 {
     struct child *child = p_malloc(pool, sizeof(*child));
+
+    assert(!shutdown);
 
     child->pid = pid;
     child->callback = callback;
