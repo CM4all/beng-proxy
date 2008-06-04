@@ -88,8 +88,8 @@ http_quote_string(char *dest, const struct strref *src)
         } else if (char_is_http_text(src->data[src_pos]))
             dest[dest_pos++] = src->data[src_pos++];
         else
-            /* XXX how to handle invalid characters? */
-            break;
+            /* ignore invalid characters */
+            ++src_pos;
     }
 
     dest[dest_pos++] = '"';
