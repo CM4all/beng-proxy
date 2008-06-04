@@ -154,7 +154,10 @@ d_malloc(struct dpool *pool, size_t size)
 
     size = align_size(size);
 
-    /* XXX allow multi-page chunks */
+    /* we could theoretically allow larger allocations by using
+       multiple consecutive chunks, but we don't implement that
+       because our current use cases should not need to allocate such
+       large structures */
     if (size > pool->first_chunk.size)
         return NULL;
 
