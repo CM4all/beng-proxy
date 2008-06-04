@@ -48,6 +48,7 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 
     pool_commit();
 
+    children_shutdown();
     kill_children(instance);
 
     session_manager_deinit();

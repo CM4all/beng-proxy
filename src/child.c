@@ -8,6 +8,7 @@
 
 #include <inline/list.h>
 
+#include <assert.h>
 #include <sys/wait.h>
 #include <event.h>
 
@@ -20,6 +21,7 @@ struct child {
     void *callback_ctx;
 };
 
+static bool shutdown = false;
 static pool_t pool;
 static struct list_head children;
 static struct event sigchld_event;
@@ -56,7 +58,7 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
         p_free(pool, child);
     }
 
-    if (list_empty(&children))
+    if (shutdown && list_empty(&children))
         children_event_del();
 
     pool_commit();
@@ -70,6 +72,15 @@ children_init(pool_t _pool)
     list_init(&children);
 
     children_event_add();
+}
+
+void
+children_shutdown(void)
+{
+    shutdown = true;
+
+    if (list_empty(&children))
+        children_event_del();
 }
 
 void
@@ -88,8 +99,7 @@ children_deinit(void)
 void
 children_event_add(void)
 {
-    if (list_empty(&children))
-        return;
+    assert(!shutdown);
 
     event_set(&sigchld_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
               child_event_callback, NULL);

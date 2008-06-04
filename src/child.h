@@ -16,6 +16,13 @@ typedef void (*child_callback_t)(int status, void *ctx);
 void
 children_init(pool_t pool);
 
+/**
+ * Begin shutdown of this subsystem: wait for all children to exit,
+ * and then remove the event.
+ */
+void
+children_shutdown(void);
+
 void
 children_deinit(void);
 
