@@ -53,13 +53,12 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
             continue;
 
         list_remove(&child->siblings);
+        if (shutdown && list_empty(&children))
+            children_event_del();
 
         child->callback(status, child->callback_ctx);
         p_free(pool, child);
     }
-
-    if (shutdown && list_empty(&children))
-        children_event_del();
 
     pool_commit();
 }
@@ -98,10 +97,7 @@ children_event_add(void)
 void
 children_event_del(void)
 {
-    if (sigchld_event.ev_events != 0) {
-        event_del(&sigchld_event);
-        sigchld_event.ev_events = 0;
-    }
+    event_del(&sigchld_event);
 }
 
 void
