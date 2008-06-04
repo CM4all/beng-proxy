@@ -58,9 +58,8 @@ widget_proxy_abort(void *ctx)
 {
     struct http_server_request *request = ctx;
 
-    /* XXX better message */
-    http_server_send_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                             "Internal server error");
+    http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
+                             "Upstream server failed");
 }
 
 struct http_response_handler widget_proxy_handler = {
