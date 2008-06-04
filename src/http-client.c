@@ -242,8 +242,6 @@ http_client_parse_status_line(http_client_connection_t connection,
 
     connection->response.read_state = READ_HEADERS;
     connection->response.headers = strmap_new(connection->request.pool, 64);
-
-    /* XXX */
 }
 
 static void
@@ -567,7 +565,6 @@ http_client_try_read(http_client_connection_t connection)
         connection->response.read_state == READ_BODY &&
         (connection->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 &&
         fifo_buffer_empty(connection->input))
-        /* XXX ensure connection->input is empty */
         http_client_try_response_direct(connection);
     else
         http_client_try_read_buffered(connection);
