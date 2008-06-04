@@ -26,7 +26,7 @@ struct config {
     unsigned num_workers;
 
     /** maximum number of simultaneous connections */
-    unsigned max_connnections;
+    unsigned max_connections;
 };
 
 void

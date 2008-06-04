@@ -89,7 +89,7 @@ http_listener_callback(int fd,
     pool_t pool;
     struct client_connection *connection;
 
-    if (instance->num_connections >= instance->config.max_connnections) {
+    if (instance->num_connections >= instance->config.max_connections) {
         /* XXX rather drop an existing connection? */
         daemon_log(1, "too many connections (%u), dropping\n",
                    instance->num_connections);

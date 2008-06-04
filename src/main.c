@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     int __attr_unused ref;
     static struct instance instance = {
         .config = {
-            .max_connnections = 1024,
+            .max_connections = 1024,
         },
     };
     struct stock *translate_stock;
