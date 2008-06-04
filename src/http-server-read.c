@@ -248,7 +248,7 @@ http_server_try_read_buffered(http_server_connection_t connection)
     }
 
     if (unlikely(nbytes == 0)) {
-        /* XXX */
+        /* the client closed the connection; do the same on our side */
         http_server_connection_close(connection);
         return;
     }
