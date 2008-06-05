@@ -131,7 +131,10 @@ session_manager_new(void)
 void
 session_manager_init(void)
 {
-    srandom((unsigned)time(NULL));
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+    srandom(tv.tv_sec ^ tv.tv_usec);
 
     if (session_manager == NULL)
         session_manager = session_manager_new();
@@ -221,7 +224,7 @@ static session_id_t
 session_generate_id(void)
 {
 
-    return (session_id_t)random(); /* XXX this is insecure! */
+    return (session_id_t)random();
 }
 
 struct session *
