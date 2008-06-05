@@ -14,26 +14,8 @@
 #include "strutil.h"
 #include "uri-address.h"
 #include "widget.h"
-
-static const char *
-gg_msg_strip(char *value)
-{
-    size_t length;
-
-    if (value == NULL)
-        return NULL;
-
-    while (*value != 0 && char_is_whitespace(*value))
-        ++value;
-
-    length = strlen(value);
-    while (length > 0 && char_is_whitespace(value[length - 1]))
-        --length;
-
-    value[length] = 0;
-
-    return value;
-}
+#include "strref2.h"
+#include "strref-pool.h"
 
 static void
 gg_msg_finish(struct google_gadget *gg)
@@ -41,8 +23,11 @@ gg_msg_finish(struct google_gadget *gg)
     if (!gg->msg.in_msg_tag)
         return;
 
-    if (gg->msg.key != NULL)
-        istream_subst_add(gg->subst, gg->msg.key, gg_msg_strip(gg->msg.value));
+    if (gg->msg.key != NULL) {
+        strref_trim(&gg->msg.value);
+        istream_subst_add_n(gg->subst, gg->msg.key,
+                            gg->msg.value.data, gg->msg.value.length);
+    }
 
     gg->msg.in_msg_tag = false;
 }
@@ -63,7 +48,7 @@ gg_msg_parser_tag_start(const struct parser_tag *tag, void *ctx)
         tag->type != TAG_CLOSE) {
         gg->msg.in_msg_tag = true;
         gg->msg.key = NULL;
-        gg->msg.value = NULL;
+        strref_clear(&gg->msg.value);
     }
 }
 
@@ -101,13 +86,9 @@ gg_msg_parser_cdata(const char *p, size_t length, bool escaped __attr_unused,
     struct google_gadget *gg = ctx;
 
     if (gg->msg.in_msg_tag && gg->msg.key != NULL) {
-        if (gg->msg.value == NULL)
-            gg->msg.value = p_strndup(gg->pool, p, length);
-        else
-            gg->msg.value = p_strncat(gg->pool,
-                                      gg->msg.value, strlen(gg->msg.value),
-                                      p, length,
-                                      NULL);
+        struct strref s;
+        strref_set(&s, p, length);
+        strref_append(gg->pool, &gg->msg.value, &s);
     }
 
     return length;

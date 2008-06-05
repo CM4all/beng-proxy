@@ -10,6 +10,7 @@
 #include "google-gadget.h"
 #include "async.h"
 #include "http-response.h"
+#include "strref.h"
 
 struct google_gadget {
     pool_t pool;
@@ -51,7 +52,7 @@ struct google_gadget {
         struct parser *parser;
         bool in_msg_tag;
         const char *key;
-        char *value;
+        struct strref value;
     } msg;
 
     struct istream output;
