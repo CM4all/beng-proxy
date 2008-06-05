@@ -27,8 +27,6 @@ struct widget_session {
 
     struct session *session;
 
-    struct dpool *pool;
-
     /** local id of this widget; must not be NULL since widgets
         without an id cannot have a session */
     const char *id;

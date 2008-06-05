@@ -331,7 +331,6 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
 
     ws->parent = NULL;
     ws->session = session;
-    ws->pool = session->pool;
     ws->id = d_strdup(session->pool, id);
     ws->children = NULL;
     ws->path_info = NULL;

@@ -18,18 +18,18 @@ static void
 widget_to_session(struct widget_session *ws, const struct widget *widget)
 {
     if (ws->path_info != NULL)
-        d_free(ws->pool, ws->path_info);
+        d_free(ws->session->pool, ws->path_info);
 
     ws->path_info = widget->from_request.path_info == NULL
         ? NULL
-        : d_strdup(ws->pool, widget->from_request.path_info);
+        : d_strdup(ws->session->pool, widget->from_request.path_info);
 
     if (ws->query_string != NULL)
-        d_free(ws->pool, ws->query_string);
+        d_free(ws->session->pool, ws->query_string);
 
     ws->query_string = strref_is_empty(&widget->from_request.query_string)
         ? NULL
-        : strref_dup_d(ws->pool, &widget->from_request.query_string);
+        : strref_dup_d(ws->session->pool, &widget->from_request.query_string);
 }
 
 /** restore data from the session */
