@@ -20,6 +20,9 @@ gg_msg_strip(pool_t pool, const char *value)
 {
     size_t length;
 
+    if (value == NULL)
+        return NULL;
+
     while (*value != 0 && char_is_whitespace(*value))
         ++value;
 
