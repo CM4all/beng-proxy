@@ -160,7 +160,7 @@ gg_msg_http_response(http_status_t status, struct strmap *headers,
         if (body != NULL)
             istream_close(body);
 
-        /* XXX google_send_error(gg, "widget server reported error"); */
+        google_gadget_msg_abort(gg);
         return;
     }
 
@@ -171,7 +171,7 @@ gg_msg_http_response(http_status_t status, struct strmap *headers,
         if (body != NULL)
             istream_close(body);
 
-        /* XXX google_send_error(gg, "text/xml expected"); */
+        google_gadget_msg_abort(gg);
         return;
     }
 
