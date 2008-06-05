@@ -698,7 +698,7 @@ istream_subst_new(pool_t pool, istream_t input)
     return istream_struct_cast(&subst->output);
 }
 
-int
+bool
 istream_subst_add_n(istream_t istream, const char *a0,
                     const char *b, size_t b_length)
 {
@@ -743,7 +743,7 @@ istream_subst_add_n(istream_t istream, const char *a0,
 
     /* this keyword already exists */
     if (*pp != NULL)
-        return 0;
+        return false;
 
     /* create new leaf node */
 
@@ -759,10 +759,10 @@ istream_subst_add_n(istream_t istream, const char *a0,
 
     *pp = p;
 
-    return 1;
+    return true;
 }
 
-int
+bool
 istream_subst_add(istream_t istream, const char *a, const char *b)
 {
     return istream_subst_add_n(istream, a, b, b == NULL ? 0 : strlen(b));

@@ -80,11 +80,11 @@ istream_deflate_new(pool_t pool, istream_t input);
 istream_t
 istream_subst_new(pool_t pool, istream_t input);
 
-int
+bool
 istream_subst_add_n(istream_t istream, const char *a,
                     const char *b, size_t b_length);
 
-int
+bool
 istream_subst_add(istream_t istream, const char *a, const char *b);
 
 istream_t
