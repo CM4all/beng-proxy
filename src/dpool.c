@@ -89,6 +89,27 @@ allocation_size(const struct dpool_chunk *chunk,
         return (const unsigned char *)alloc->all_siblings.next - alloc->data;
 }
 
+bool
+dpool_is_fragmented(const struct dpool *pool)
+{
+    size_t reserved = 0, freed = 0;
+    struct dpool_allocation *alloc;
+    const struct dpool_chunk *chunk = &pool->first_chunk;
+
+    do {
+        reserved += chunk->used;
+
+        for (alloc = dpool_free_to_alloc(chunk->free_allocations.next);
+             &alloc->free_siblings != &chunk->free_allocations;
+             alloc = dpool_free_to_alloc(alloc->free_siblings.next))
+            freed += allocation_size(chunk, alloc);
+
+        chunk = (struct dpool_chunk *)chunk->siblings.next;
+    } while (chunk != &pool->first_chunk);
+
+    return reserved > 0 && freed * 4 > reserved;
+}
+
 static void
 allocation_split(const struct dpool_chunk *chunk __attr_unused,
                  struct dpool_allocation *alloc, size_t size)

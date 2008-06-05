@@ -8,6 +8,7 @@
 #define __BENG_DPOOL_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 struct dpool;
 struct shm;
@@ -26,6 +27,9 @@ dpool_new(struct shm *shm);
  */
 void
 dpool_destroy(struct dpool *pool);
+
+bool
+dpool_is_fragmented(const struct dpool *pool);
 
 /**
  * Allocate memory from the pool.
