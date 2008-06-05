@@ -90,6 +90,64 @@ cookie_jar_free(struct cookie_jar *jar)
     d_free(jar->pool, jar);
 }
 
+static struct cookie * __attr_malloc
+cookie_dup(struct dpool *pool, const struct cookie *src)
+{
+    struct cookie *dest;
+
+    assert(src != NULL);
+    assert(src->domain != NULL);
+
+    dest = d_malloc(pool, sizeof(*dest));
+    if (dest == NULL)
+        return NULL;
+
+    strref_set_dup_d(pool, &dest->name, &src->name);
+    strref_set_dup_d(pool, &dest->value, &src->value);
+
+    dest->domain = d_strdup(pool, src->domain);
+    if (dest->domain == NULL)
+        return NULL;
+
+    if (src->path != NULL) {
+        dest->path = d_strdup(pool, src->path);
+        if (dest->path == NULL)
+            return NULL;
+    } else
+        dest->path = NULL;
+
+    dest->expires = src->expires;
+
+    return dest;
+}
+
+struct cookie_jar * __attr_malloc
+cookie_jar_dup(struct dpool *pool, const struct cookie_jar *src)
+{
+    struct cookie_jar *dest;
+    struct cookie *src_cookie, *dest_cookie;
+
+    dest = d_malloc(pool, sizeof(*dest));
+    if (dest == NULL)
+        return NULL;
+
+    dest->pool = pool;
+
+    for (src_cookie = (struct cookie *)src->cookies.next;
+         &src_cookie->siblings != &src->cookies;
+         src_cookie = (struct cookie *)src_cookie->siblings.next) {
+        dest_cookie = cookie_dup(pool, src_cookie);
+        if (dest_cookie == NULL) {
+            cookie_jar_free(dest);
+            return NULL;
+        }
+
+        list_add(&dest_cookie->siblings, &dest->cookies);
+    }
+
+    return dest;
+}
+
 static bool
 domain_matches(const char *domain, const char *match)
 {
