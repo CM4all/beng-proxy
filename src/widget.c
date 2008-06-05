@@ -51,14 +51,14 @@ widget_get_child(struct widget *widget, const char *id)
 }
 
 bool
-widget_check_recursion(struct widget *widget, const char *class_name)
+widget_check_recursion(struct widget *widget)
 {
+    unsigned depth = 0;
+
     assert(widget != NULL);
-    assert(class_name != NULL);
 
     do {
-        if (widget->class_name != NULL &&
-            strcmp(widget->class_name, class_name) == 0)
+        if (++depth >= 8)
             return true;
 
         widget = widget->parent;

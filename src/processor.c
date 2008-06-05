@@ -17,6 +17,8 @@
 #include "strref2.h"
 #include "strref-pool.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 #include <string.h>
 
@@ -623,9 +625,10 @@ embed_element_finished(struct processor *processor)
     widget = processor->widget.widget;
     processor->widget.widget = NULL;
 
-    if (widget->class_name != NULL &&
-        widget_check_recursion(widget->parent, widget->class_name))
+    if (widget->class_name != NULL && widget_check_recursion(widget->parent)) {
+        daemon_log(5, "maximum widget depth exceeded\n");
         return NULL;
+    }
 
     if (processor->widget.params_length > 0)
         widget->query_string = p_strndup(processor->pool,

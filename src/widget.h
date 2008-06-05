@@ -263,7 +263,7 @@ widget_external_uri(pool_t pool,
  * contains the specified class name.
  */
 bool
-widget_check_recursion(struct widget *widget, const char *class_name);
+widget_check_recursion(struct widget *widget);
 
 /**
  * Free important resources associated with the widget.  A widget
