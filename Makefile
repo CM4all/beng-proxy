@@ -290,7 +290,7 @@ test/t-dpool: test/t-dpool.o src/shm.o src/dpool.o
 check-dpool: test/t-dpool
 	./test/t-dpool
 
-test/t-session: test/t-session.o src/shm.o src/session.o src/dpool.o src/dstring.o src/format.o src/dhashmap.o
+test/t-session: test/t-session.o src/shm.o src/session.o src/dpool.o src/dstring.o src/format.o src/dhashmap.o src/cookie-client.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 check-session: test/t-session
