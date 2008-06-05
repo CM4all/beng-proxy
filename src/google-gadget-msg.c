@@ -207,6 +207,8 @@ google_gadget_msg_load(struct google_gadget *gg, const char *url)
 {
     struct uri_with_address *uwa;
 
+    assert(gg->widget->class->address.type == RESOURCE_ADDRESS_HTTP);
+
     /* XXX check host name? */
     uwa = uri_address_dup(gg->pool, gg->widget->class->address.u.http);
     uwa->uri = url;
