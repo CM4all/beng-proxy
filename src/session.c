@@ -269,6 +269,137 @@ session_new(void)
     return session;
 }
 
+static struct dhashmap * __attr_malloc
+widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
+                       struct session *session, struct widget_session *parent);
+
+static struct widget_session * __attr_malloc
+widget_session_dup(struct dpool *pool, const struct widget_session *src,
+                   struct session *session)
+{
+    struct widget_session *dest;
+
+    assert(src != NULL);
+    assert(src->id != NULL);
+
+    dest = d_malloc(pool, sizeof(*dest));
+    if (dest == NULL)
+        return NULL;
+
+    dest->id = d_strdup(pool, src->id);
+    if (dest->id == NULL)
+        return NULL;
+
+    if (src->children != NULL) {
+        dest->children = widget_session_map_dup(pool, src->children,
+                                                session, dest);
+        if (dest->children == NULL)
+            return NULL;
+    } else
+        dest->children = NULL;
+
+    if (src->path_info != NULL) {
+        dest->path_info = d_strdup(pool, src->path_info);
+        if (dest->path_info == NULL)
+            return NULL;
+    } else
+        dest->path_info = NULL;
+
+    if (src->query_string != NULL) {
+        dest->query_string = d_strdup(pool, src->query_string);
+        if (dest->query_string == NULL)
+            return NULL;
+    } else
+        dest->query_string = NULL;
+
+    return dest;
+}
+
+static struct dhashmap * __attr_malloc
+widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
+                       struct session *session, struct widget_session *parent)
+{
+    struct dhashmap *dest;
+    const struct dhashmap_pair *pair;
+
+    dest = dhashmap_new(pool, 16);
+    if (dest == NULL)
+        return NULL;
+
+    dhashmap_rewind(src);
+    while ((pair = dhashmap_next(src)) != NULL) {
+        const struct widget_session *src_ws = pair->value;
+        struct widget_session *dest_ws;
+        const char *key = d_strdup(pool, pair->key);
+
+        if (key == NULL)
+            return NULL;
+
+        dest_ws = widget_session_dup(pool, src_ws, session);
+        if (dest_ws == NULL)
+            return NULL;
+
+        dhashmap_put(dest, key, dest_ws);
+        dest_ws->parent = parent;
+        dest_ws->session = session;
+    }
+
+    return dest;
+}
+
+struct session * __attr_malloc
+session_dup(const struct session *src)
+{
+    struct dpool *pool;
+    struct session *dest;
+
+    pool = dpool_new(session_manager->shm);
+    if (pool == NULL)
+        return NULL;
+
+    dest = d_malloc(pool, sizeof(*dest));
+    if (dest == NULL) {
+        dpool_destroy(pool);
+        return NULL;
+    }
+
+    dest->pool = pool;
+    lock_init(&dest->lock);
+    dest->uri_id = src->uri_id;
+    dest->cookie_id = src->cookie_id;
+    dest->expires = src->expires;
+    dest->cookie_sent = src->cookie_sent;
+    dest->cookie_received = src->cookie_received;
+
+    if (src->translate != NULL)
+        dest->translate = d_strdup(pool, src->translate);
+    else
+        dest->translate = NULL;
+
+    if (src->user != NULL)
+        dest->user = d_strdup(pool, src->user);
+    else
+        dest->user = NULL;
+
+    if (src->language != NULL)
+        dest->language = d_strdup(pool, src->language);
+    else
+        dest->language = NULL;
+
+    if (src->widgets != NULL) {
+        dest->widgets = widget_session_map_dup(pool, src->widgets, dest, NULL);
+        if (dest->widgets == NULL) {
+            dpool_destroy(pool);
+            return NULL;
+        }
+    } else
+        dest->widgets = NULL;
+
+    dest->cookies = cookie_jar_dup(pool, src->cookies);
+
+    return dest;
+}
+
 struct session *
 session_get(session_id_t id)
 {

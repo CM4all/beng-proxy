@@ -10,6 +10,7 @@
 #include "lock.h"
 
 #include <inline/list.h>
+#include <inline/compiler.h>
 
 #include <time.h>
 #include <stdbool.h>
@@ -102,8 +103,11 @@ session_id_parse(const char *p);
 void
 session_id_format(char dest[9], session_id_t id);
 
-struct session *
+struct session * __attr_malloc
 session_new(void);
+
+struct session * __attr_malloc
+session_dup(const struct session *src);
 
 struct session *
 session_get(session_id_t id);
