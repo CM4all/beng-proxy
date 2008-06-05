@@ -36,6 +36,24 @@ struct cookie_jar {
 };
 
 static void
+cookie_free(struct dpool *pool, struct cookie *cookie)
+{
+    if (!strref_is_empty(&cookie->name))
+        strref_free_d(pool, &cookie->name);
+
+    if (!strref_is_empty(&cookie->value))
+        strref_free_d(pool, &cookie->value);
+
+    if (cookie->domain != NULL)
+        d_free(pool, cookie->domain);
+
+    if (cookie->path != NULL)
+        d_free(pool, cookie->path);
+
+    d_free(pool, cookie);
+}
+
+static void
 cookie_delete(struct cookie_jar *jar, struct cookie *cookie)
 {
     assert(jar != NULL);
@@ -44,16 +62,7 @@ cookie_delete(struct cookie_jar *jar, struct cookie *cookie)
 
     list_remove(&cookie->siblings);
 
-    if (!strref_is_empty(&cookie->name))
-        strref_free_d(jar->pool, &cookie->name);
-    if (!strref_is_empty(&cookie->value))
-        strref_free_d(jar->pool, &cookie->value);
-    if (cookie->domain != NULL)
-        d_free(jar->pool, cookie->domain);
-    if (cookie->path != NULL)
-        d_free(jar->pool, cookie->path);
-
-    d_free(jar->pool, cookie);
+    cookie_free(jar->pool, cookie);
 }
 
 struct cookie_jar *
@@ -66,24 +75,6 @@ cookie_jar_new(struct dpool *pool)
     jar->pool = pool;
     list_init(&jar->cookies);
     return jar;
-}
-
-static void
-cookie_free(struct dpool *pool, struct cookie *cookie)
-{
-    if (!strref_is_empty(&cookie->name))
-        d_free(pool, cookie->name.data);
-
-    if (!strref_is_empty(&cookie->value))
-        d_free(pool, cookie->value.data);
-
-    if (cookie->domain != NULL)
-        d_free(pool, cookie->domain);
-
-    if (cookie->path != NULL)
-        d_free(pool, cookie->path);
-
-    d_free(pool, cookie);
 }
 
 void
