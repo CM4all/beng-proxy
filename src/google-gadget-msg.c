@@ -16,7 +16,7 @@
 #include "widget.h"
 
 static const char *
-gg_msg_strip(pool_t pool, const char *value)
+gg_msg_strip(char *value)
 {
     size_t length;
 
@@ -30,7 +30,9 @@ gg_msg_strip(pool_t pool, const char *value)
     while (length > 0 && char_is_whitespace(value[length - 1]))
         --length;
 
-    return p_strndup(pool, value, length);
+    value[length] = 0;
+
+    return value;
 }
 
 static void
@@ -40,8 +42,7 @@ gg_msg_finish(struct google_gadget *gg)
         return;
 
     if (gg->msg.key != NULL)
-        istream_subst_add(gg->subst, gg->msg.key,
-                          gg_msg_strip(gg->pool, gg->msg.value));
+        istream_subst_add(gg->subst, gg->msg.key, gg_msg_strip(gg->msg.value));
 
     gg->msg.in_msg_tag = false;
 }

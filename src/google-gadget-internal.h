@@ -50,7 +50,8 @@ struct google_gadget {
     struct {
         struct parser *parser;
         bool in_msg_tag;
-        const char *key, *value;
+        const char *key;
+        char *value;
     } msg;
 
     struct istream output;
