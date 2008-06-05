@@ -23,7 +23,7 @@ char_is_http_char(char ch)
 static __attr_always_inline bool
 char_is_http_ctl(char ch)
 {
-    return (ch >= 0 && ch <= 0x1f) || ch == 0x7f;
+    return (((unsigned char)ch) <= 0x1f) || ch == 0x7f;
 }
 
 static __attr_always_inline bool
