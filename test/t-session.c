@@ -16,6 +16,13 @@ cookie_jar_new(struct dpool *pool __attr_unused)
     return NULL;
 }
 
+struct cookie_jar *
+cookie_jar_dup(struct dpool *pool __attr_unused,
+               const struct cookie_jar *src __attr_unused)
+{
+    return NULL;
+}
+
 int main(int argc __attr_unused, char **argv __attr_unused) {
     struct event_base *event_base;
     pid_t pid;
