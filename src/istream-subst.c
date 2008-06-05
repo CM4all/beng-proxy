@@ -699,16 +699,17 @@ istream_subst_new(pool_t pool, istream_t input)
 }
 
 int
-istream_subst_add(istream_t istream, const char *a0, const char *b)
+istream_subst_add_n(istream_t istream, const char *a0,
+                    const char *b, size_t b_length)
 {
     struct istream_subst *subst = istream_to_subst(istream);
     struct subst_node **pp, *p, *parent = NULL;
     const char *a = a0;
-    size_t b_length;
 
     assert(subst != NULL);
     assert(a0 != NULL);
     assert(*a0 != 0);
+    assert(b_length == 0 || b != NULL);
 
     pp = &subst->root;
     do {
@@ -744,8 +745,6 @@ istream_subst_add(istream_t istream, const char *a0, const char *b)
     if (*pp != NULL)
         return 0;
 
-    b_length = b == NULL ? 0 : strlen(b);
-
     /* create new leaf node */
 
     p = p_malloc(subst->output.pool, sizeof(*p) + b_length - sizeof(p->leaf.b));
@@ -761,4 +760,10 @@ istream_subst_add(istream_t istream, const char *a0, const char *b)
     *pp = p;
 
     return 1;
+}
+
+int
+istream_subst_add(istream_t istream, const char *a, const char *b)
+{
+    return istream_subst_add_n(istream, a, b, b == NULL ? 0 : strlen(b));
 }
