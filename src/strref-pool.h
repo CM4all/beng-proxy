@@ -27,6 +27,26 @@ strref_set_dup(pool_t pool, struct strref *dest, const struct strref *src)
     }
 }
 
+static __attr_always_inline void
+strref_append(pool_t pool, struct strref *dest, const struct strref *src)
+{
+    char *p;
+
+    assert(dest != NULL);
+    assert(src != NULL);
+    assert(src->length == 0 || src->data != NULL);
+
+    if (src->length == 0)
+        return;
+
+    p = p_malloc(pool, dest->length + src->length);
+    memcpy(p, dest->data, dest->length);
+    memcpy(p + dest->length, src->data, src->length);
+
+    dest->data = p;
+    dest->length += src->length;
+}
+
 static __attr_always_inline char *
 strref_dup(pool_t pool, const struct strref *s)
 {
