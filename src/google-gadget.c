@@ -213,8 +213,7 @@ generate_iframe(pool_t pool, const char *uri)
 {
     struct growing_buffer *gb;
 
-    if (uri == NULL)
-        return istream_string_new(pool, "[framed widget without id]"); /* XXX */
+    assert(uri != NULL);
 
     gb = growing_buffer_new(pool, 512);
     growing_buffer_write_string(gb, "<iframe "
