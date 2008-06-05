@@ -16,6 +16,9 @@ struct cookie_jar;
 struct cookie_jar *
 cookie_jar_new(struct dpool *pool);
 
+void
+cookie_jar_free(struct cookie_jar *jar);
+
 /**
  * Parse a Set-Cookie2 response header and insert new cookies into the
  * linked list.

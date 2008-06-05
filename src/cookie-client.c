@@ -68,6 +68,37 @@ cookie_jar_new(struct dpool *pool)
     return jar;
 }
 
+static void
+cookie_free(struct dpool *pool, struct cookie *cookie)
+{
+    if (!strref_is_empty(&cookie->name))
+        d_free(pool, cookie->name.data);
+
+    if (!strref_is_empty(&cookie->value))
+        d_free(pool, cookie->value.data);
+
+    if (cookie->domain != NULL)
+        d_free(pool, cookie->domain);
+
+    if (cookie->path != NULL)
+        d_free(pool, cookie->path);
+
+    d_free(pool, cookie);
+}
+
+void
+cookie_jar_free(struct cookie_jar *jar)
+{
+    while (!list_empty(&jar->cookies)) {
+        struct cookie *cookie = (struct cookie *)jar->cookies.next;
+
+        list_remove(&cookie->siblings);
+        cookie_free(jar->pool, cookie);
+    }
+
+    d_free(jar->pool, jar);
+}
+
 static bool
 domain_matches(const char *domain, const char *match)
 {
