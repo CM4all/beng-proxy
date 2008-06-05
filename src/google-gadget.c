@@ -171,13 +171,40 @@ google_gadget_msg_abort(struct google_gadget *gg)
  */
 
 static void
+growing_buffer_escape_string(struct growing_buffer *gb, const char *src0)
+{
+    size_t length = 0;
+    const char *src;
+    char *dest;
+
+    for (src = src0; *src != 0; ++src) {
+        if (*src == '"')
+            length += 2;
+        else if ((signed char)*src >= 0x20)
+            ++length;
+    }
+
+    if (length == 0)
+        return;
+
+    dest = growing_buffer_write(gb, length);
+    for (src = src0; *src != 0; ++src) {
+        if (*src == '"') {
+            *dest++ = '\\';
+            *dest++ = *src;
+        } else if ((signed char)*src >= 0x20)
+            *dest++ = *src;
+    }
+}
+
+static void
 growing_buffer_write_jscript_string(struct growing_buffer *gb, const char *s)
 {
     if (s == NULL)
         growing_buffer_write_string(gb, "null");
     else {
         growing_buffer_write_string(gb, "\"");
-        growing_buffer_write_string(gb, s); /* XXX escape */
+        growing_buffer_escape_string(gb, s);
         growing_buffer_write_string(gb, "\"");
     }
 }
