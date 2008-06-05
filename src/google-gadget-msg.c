@@ -64,7 +64,6 @@ gg_msg_parser_tag_start(const struct parser_tag *tag, void *ctx)
         gg->msg.in_msg_tag = true;
         gg->msg.key = NULL;
         gg->msg.value = NULL;
-        /* XXX */
     }
 }
 
