@@ -40,12 +40,19 @@ struct session_manager {
     unsigned num_sessions;
 };
 
+/** clean up expired sessions every 60 seconds */
 static const struct timeval cleanup_interval = {
     .tv_sec = 60,
     .tv_usec = 0,
 };
 
+/** the one and only session manager instance, allocated from shared
+    memory */
 static struct session_manager *session_manager;
+
+/* this must be a separate variable, because session_manager is
+   allocated from shared memory, and each process must manage its own
+   event struct */
 static struct event session_cleanup_event;
 
 static void

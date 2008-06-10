@@ -85,15 +85,31 @@ struct session {
     struct cookie_jar *cookies;
 };
 
+/**
+ * Initialize the global session manager or increase the reference
+ * counter.
+ */
 void
 session_manager_init(void);
 
+/**
+ * Decrease the reference counter and destroy the global session
+ * manager if it has become zero.
+ */
 void
 session_manager_deinit(void);
 
+/**
+ * Re-add all libevent events after session_manager_event_del().
+ */
 void
 session_manager_event_add(void);
 
+/**
+ * Removes all libevent events.  Call this before fork(), or before
+ * creating a new event base.  Don't forget to call
+ * session_manager_event_add() afterwards.
+ */
 void
 session_manager_event_del(void);
 
