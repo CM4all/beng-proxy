@@ -7,6 +7,8 @@
 #ifndef __BENG_LOCK_H
 #define __BENG_LOCK_H
 
+#include <inline/poison.h>
+
 #include <assert.h>
 #include <stdbool.h>
 #include <semaphore.h>
@@ -43,12 +45,9 @@ lock_destroy(struct lock *lock)
     assert(lock->magic1 == LOCK_MAGIC1);
     assert(lock->magic2 == LOCK_MAGIC2);
 
-#ifndef NDEBUG
-    lock->magic1 = 0;
-    lock->magic2 = 0;
-#endif
-
     sem_destroy(&lock->semaphore);
+
+    poison_undefined(lock, sizeof(*lock));
 }
 
 static inline void
