@@ -16,7 +16,7 @@ Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
  libcm4all-beng-proxy-js (= ${source:Version})
 Suggests: attr, cm4all-jailcgi-wrapper (> 1.2)
 Provides: httpd, httpd-cgi
-Conflicts: libevent1 (>> 1.4~)
+Conflicts: libevent1 (>= 1.4~)
 Description: HTTP proxy server
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
