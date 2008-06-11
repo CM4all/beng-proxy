@@ -13,12 +13,18 @@
 #include <stdbool.h>
 #include <semaphore.h>
 
+#ifndef NDEBUG
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 #define LOCK_MAGIC1 (*(const unsigned*)"lck1")
 #define LOCK_MAGIC2 (*(const unsigned*)"lck2")
 
 struct lock {
 #ifndef NDEBUG
     unsigned magic1;
+    pid_t pid;
 #endif
 
     sem_t semaphore;
@@ -36,6 +42,7 @@ lock_init(struct lock *lock)
 #ifndef NDEBUG
     lock->magic1 = LOCK_MAGIC1;
     lock->magic2 = LOCK_MAGIC2;
+    lock->pid = 0;
 #endif
 }
 
@@ -55,8 +62,13 @@ lock_lock(struct lock *lock)
 {
     assert(lock->magic1 == LOCK_MAGIC1);
     assert(lock->magic2 == LOCK_MAGIC2);
+    assert(lock->pid != getpid());
 
     sem_wait(&lock->semaphore);
+
+#ifndef NDEBUG
+    lock->pid = getpid();
+#endif
 }
 
 static inline void
@@ -64,8 +76,13 @@ lock_unlock(struct lock *lock)
 {
     assert(lock->magic1 == LOCK_MAGIC1);
     assert(lock->magic2 == LOCK_MAGIC2);
+    assert(lock->pid == getpid());
 
     sem_post(&lock->semaphore);
+
+#ifndef NDEBUG
+    lock->pid = 0;
+#endif
 }
 
 static inline bool
