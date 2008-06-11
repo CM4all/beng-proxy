@@ -4,8 +4,8 @@
 #DAEMON_USER=cm4all-beng-proxy
 
 # Process which receives the daemon's log messages 
-#LOGGER="/usr/bin/multilog t s1048576 /var/log/cm4all/beng-proxy"
-#LOGGER="logger -p daemon.info -t cm4all-beng-proxy"
+#LOGGER="exec /usr/bin/multilog t s1048576 /var/log/cm4all/beng-proxy"
+#LOGGER="exec logger -p daemon.info -t cm4all-beng-proxy"
 
 # Which user should workshop run as?
 #LOGGER_USER=cm4all-logger
