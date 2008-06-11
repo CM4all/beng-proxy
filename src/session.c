@@ -65,14 +65,11 @@ session_destroy(struct session *session)
 static void
 session_remove(struct session *session)
 {
+    assert(lock_is_locked(&session_manager->lock));
     assert(session_manager->num_sessions > 0);
-
-    lock_lock(&session_manager->lock);
 
     list_remove(&session->hash_siblings);
     --session_manager->num_sessions;
-
-    lock_unlock(&session_manager->lock);
 
     if (session_manager->num_sessions == 0)
         evtimer_del(&session_cleanup_event);
@@ -158,6 +155,8 @@ session_manager_destroy(struct session_manager *sm)
 {
     unsigned i;
 
+    lock_lock(&sm->lock);
+
     for (i = 0; i < SESSION_SLOTS; ++i) {
         while (!list_empty(&sm->sessions[i])) {
             struct session *session = (struct session *)sm->sessions[i].next;
@@ -165,6 +164,7 @@ session_manager_destroy(struct session_manager *sm)
         }
     }
 
+    lock_unlock(&sm->lock);
     lock_destroy(&sm->lock);
 }
 
