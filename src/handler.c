@@ -29,14 +29,16 @@
 static void
 session_redirect(struct request *request)
 {
+    struct session *session;
     struct growing_buffer *headers =
         growing_buffer_new(request->request->pool, 512);
     char session_id[9];
     const char *args;
 
-    request_make_session(request);
+    session = request_make_session(request);
+    assert(session != NULL);
 
-    session_id_format(session_id, request->session->uri_id);
+    session_id_format(session_id, session->uri_id);
     args = args_format(request->request->pool, request->args,
                        "session", session_id, NULL, NULL, NULL);
     header_write(headers, "location",
@@ -49,13 +51,13 @@ session_redirect(struct request *request)
                            request->uri.query.data, request->uri.query.length,
                            NULL));
 
-    session_id_format(session_id, request->session->cookie_id);
+    session_id_format(session_id, session->cookie_id);
     header_write(headers, "set-cookie",
                  p_strcat(request->request->pool,
                           "beng_proxy_session=", session_id,
                           "; Discard; HttpOnly; Path=/; Version=1", NULL));
 
-    request->session->cookie_sent = true;
+    session->cookie_sent = true;
 
     http_server_response(request->request,
                          request->request->method == HTTP_METHOD_GET
