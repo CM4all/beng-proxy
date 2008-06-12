@@ -130,7 +130,7 @@ struct session * __attr_malloc
 session_new(void);
 
 struct session * __attr_malloc
-session_dup(const struct session *src);
+session_defragment(struct session *src);
 
 struct session *
 session_get(session_id_t id);

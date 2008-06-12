@@ -371,7 +371,7 @@ widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
     return dest;
 }
 
-struct session * __attr_malloc
+static struct session * __attr_malloc
 session_dup(const struct session *src)
 {
     struct dpool *pool;
@@ -422,6 +422,17 @@ session_dup(const struct session *src)
     dest->cookies = cookie_jar_dup(pool, src->cookies);
 
     list_add(&dest->hash_siblings, session_slot(dest->uri_id));
+    return dest;
+}
+
+struct session * __attr_malloc
+session_defragment(struct session *src)
+{
+    struct session *dest = session_dup(src);
+    if (dest == NULL)
+        return src;
+
+    session_remove(src);
     return dest;
 }
 
