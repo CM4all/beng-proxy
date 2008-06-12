@@ -49,7 +49,7 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     pool_commit();
 
     children_shutdown();
-    kill_children(instance);
+    worker_killall(instance);
 
     session_manager_deinit();
 
@@ -180,7 +180,7 @@ int main(int argc, char **argv)
         listener_event_del(instance.listener);
 
         while (instance.num_children < instance.config.num_workers) {
-            pid = create_child(&instance);
+            pid = worker_new(&instance);
             if (pid <= 0)
                 break;
         }

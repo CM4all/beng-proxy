@@ -61,9 +61,9 @@ void
 deinit_signals(struct instance *instance);
 
 pid_t
-create_child(struct instance *instance);
+worker_new(struct instance *instance);
 
 void
-kill_children(struct instance *instance);
+worker_killall(struct instance *instance);
 
 #endif

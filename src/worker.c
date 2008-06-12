@@ -34,7 +34,7 @@ respawn_event_callback(int fd __attr_unused, short event __attr_unused,
 
     daemon_log(2, "respawning child\n");
 
-    pid = create_child(instance);
+    pid = worker_new(instance);
     if (pid != 0)
         schedule_respawn(instance);
 }
@@ -83,7 +83,7 @@ worker_child_callback(int status, void *ctx)
 }
 
 pid_t
-create_child(struct instance *instance)
+worker_new(struct instance *instance)
 {
     pid_t pid;
 
@@ -135,7 +135,7 @@ create_child(struct instance *instance)
 }
 
 void
-kill_children(struct instance *instance)
+worker_killall(struct instance *instance)
 {
     struct child *child;
     int ret;
