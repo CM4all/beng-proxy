@@ -14,7 +14,7 @@
 
 #include <event.h>
 
-struct child {
+struct worker {
     struct list_head siblings;
 
     struct instance *instance;

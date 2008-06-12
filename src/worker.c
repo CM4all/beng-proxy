@@ -58,26 +58,26 @@ schedule_respawn(struct instance *instance)
 static void
 worker_child_callback(int status, void *ctx)
 {
-    struct child *child = ctx;
-    struct instance *instance = child->instance;
+    struct worker *worker = ctx;
+    struct instance *instance = worker->instance;
     int exit_status = WEXITSTATUS(status);
 
     if (WIFSIGNALED(status)) {
-        daemon_log(1, "child %d died from signal %d%s\n",
-                   child->pid, WTERMSIG(status),
+        daemon_log(1, "worker %d died from signal %d%s\n",
+                   worker->pid, WTERMSIG(status),
                    WCOREDUMP(status) ? " (core dumped)" : "");
     } else if (exit_status == 0)
-        daemon_log(1, "child %d exited with success\n",
-                   child->pid);
+        daemon_log(1, "worker %d exited with success\n",
+                   worker->pid);
     else
-        daemon_log(1, "child %d exited with status %d\n",
-                   child->pid, exit_status);
+        daemon_log(1, "worker %d exited with status %d\n",
+                   worker->pid, exit_status);
 
-    list_remove(&child->siblings);
+    list_remove(&worker->siblings);
     assert(instance->num_children > 0);
     --instance->num_children;
 
-    p_free(instance->pool, child);
+    p_free(instance->pool, worker);
 
     schedule_respawn(instance);
 }
@@ -116,19 +116,19 @@ worker_new(struct instance *instance)
         if (instance->listener != NULL)
             listener_event_add(instance->listener);
     } else {
-        struct child *child;
+        struct worker *worker;
 
-        child = p_calloc(instance->pool, sizeof(*child));
-        child->instance = instance;
-        child->pid = pid;
+        worker = p_calloc(instance->pool, sizeof(*worker));
+        worker->instance = instance;
+        worker->pid = pid;
 
-        list_add(&child->siblings, &instance->children);
+        list_add(&worker->siblings, &instance->children);
         ++instance->num_children;
 
         init_signals(instance);
         children_event_add();
 
-        child_register(pid, worker_child_callback, child);
+        child_register(pid, worker_child_callback, worker);
     }
 
     return pid;
@@ -137,14 +137,14 @@ worker_new(struct instance *instance)
 void
 worker_killall(struct instance *instance)
 {
-    struct child *child;
+    struct worker *worker;
     int ret;
 
-    for (child = (struct child*)instance->children.next;
-         child != (struct child*)&instance->children;
-         child = (struct child*)child->siblings.next) {
-        ret = kill(child->pid, SIGTERM);
+    for (worker = (struct worker*)instance->children.next;
+         worker != (struct worker*)&instance->children;
+         worker = (struct worker*)worker->siblings.next) {
+        ret = kill(worker->pid, SIGTERM);
         if (ret < 0)
-            daemon_log(1, "failed to kill child: %s\n", strerror(errno));
+            daemon_log(1, "failed to kill worker: %s\n", strerror(errno));
     }
 }
