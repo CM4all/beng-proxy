@@ -80,14 +80,14 @@ worker_child_callback(int status, void *ctx)
     p_free(instance->pool, worker);
 
     if (WIFSIGNALED(status)) {
-        bool ret;
-
         /* a worker has died due to a signal - this is dangerous for
            all other processes (including us), because the worker may
            have corrupted shared memory.  Our only hope to recover is
            to immediately free all shared memory, kill all workers
            still using it, and spawn new workers with fresh shared
            memory. */
+        bool ret;
+
         daemon_log(1, "abandoning shared memory, preparing to kill and respawn all workers\n");
 
         session_manager_abandon();
