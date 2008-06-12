@@ -37,8 +37,6 @@ struct instance {
     struct event sigterm_event, sigint_event, sigquit_event;
     struct event sighup_event;
 
-    struct shm *shm;
-
     /* child management */
     struct event respawn_event;
     struct list_head workers;
