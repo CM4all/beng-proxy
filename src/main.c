@@ -136,7 +136,7 @@ int main(int argc, char **argv)
     instance.event_base = event_init();
 
     list_init(&instance.connections);
-    list_init(&instance.children);
+    list_init(&instance.workers);
     instance.pool = pool_new_libc(NULL, "global");
     tpool_init(instance.pool);
 
@@ -179,7 +179,7 @@ int main(int argc, char **argv)
         /* the master process shouldn't work */
         listener_event_del(instance.listener);
 
-        while (instance.num_children < instance.config.num_workers) {
+        while (instance.num_workers < instance.config.num_workers) {
             pid = worker_new(&instance);
             if (pid <= 0)
                 break;

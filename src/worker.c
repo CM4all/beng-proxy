@@ -29,7 +29,7 @@ respawn_event_callback(int fd __attr_unused, short event __attr_unused,
     pid_t pid;
 
     if (instance->should_exit ||
-        instance->num_children >= instance->config.num_workers)
+        instance->num_workers >= instance->config.num_workers)
         return;
 
     daemon_log(2, "respawning child\n");
@@ -43,7 +43,7 @@ static void
 schedule_respawn(struct instance *instance)
 {
     if (!instance->should_exit &&
-        instance->num_children < instance->config.num_workers &&
+        instance->num_workers < instance->config.num_workers &&
         evtimer_pending(&instance->respawn_event, NULL) == 0) {
         static struct timeval tv = {
             .tv_sec = 1,
@@ -74,8 +74,8 @@ worker_child_callback(int status, void *ctx)
                    worker->pid, exit_status);
 
     list_remove(&worker->siblings);
-    assert(instance->num_children > 0);
-    --instance->num_children;
+    assert(instance->num_workers > 0);
+    --instance->num_workers;
 
     p_free(instance->pool, worker);
 
@@ -98,8 +98,8 @@ worker_new(struct instance *instance)
 
         instance->config.num_workers = 0;
 
-        list_init(&instance->children);
-        instance->num_children = 0;
+        list_init(&instance->workers);
+        instance->num_workers = 0;
 
         if (instance->listener != NULL)
             listener_event_del(instance->listener);
@@ -122,8 +122,8 @@ worker_new(struct instance *instance)
         worker->instance = instance;
         worker->pid = pid;
 
-        list_add(&worker->siblings, &instance->children);
-        ++instance->num_children;
+        list_add(&worker->siblings, &instance->workers);
+        ++instance->num_workers;
 
         init_signals(instance);
         children_event_add();
@@ -140,8 +140,8 @@ worker_killall(struct instance *instance)
     struct worker *worker;
     int ret;
 
-    for (worker = (struct worker*)instance->children.next;
-         worker != (struct worker*)&instance->children;
+    for (worker = (struct worker*)instance->workers.next;
+         worker != (struct worker*)&instance->workers;
          worker = (struct worker*)worker->siblings.next) {
         ret = kill(worker->pid, SIGTERM);
         if (ret < 0)

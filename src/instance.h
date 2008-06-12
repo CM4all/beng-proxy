@@ -41,8 +41,8 @@ struct instance {
 
     /* child management */
     struct event respawn_event;
-    struct list_head children;
-    unsigned num_children;
+    struct list_head workers;
+    unsigned num_workers;
 
     /* stock */
     struct tcache *translate_cache;
