@@ -66,7 +66,7 @@ request_get_session(struct request *request, const char *session_id)
         return;
 
     session = session_get(request->session_id);
-    if (session != NULL)
+    if (session != NULL && session->translate != NULL)
         request->translate.request.session =
             p_strdup(request->request->pool, session->translate);
 }
