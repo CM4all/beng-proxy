@@ -187,6 +187,19 @@ session_manager_deinit(void)
 }
 
 void
+session_manager_abandon(void)
+{
+    assert(session_manager != NULL);
+    assert(session_manager->shm != NULL);
+
+    event_del(&session_cleanup_event);
+
+    /* XXX move the "shm" pointer out of the shared memory */
+    shm_close(session_manager->shm);
+    session_manager = NULL;
+}
+
+void
 session_manager_event_add(void)
 {
     if (session_manager->num_sessions == 0) {

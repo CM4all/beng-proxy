@@ -100,6 +100,13 @@ void
 session_manager_deinit(void);
 
 /**
+ * Release the session manager and try not to access the shared
+ * memory, because we assume it may be corrupted.
+ */
+void
+session_manager_abandon(void);
+
+/**
  * Re-add all libevent events after session_manager_event_del().
  */
 void
