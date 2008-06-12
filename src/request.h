@@ -26,7 +26,7 @@ struct request {
 
     struct strmap *cookies;
     char session_id_buffer[9];
-    struct session *session;
+    session_id_t session_id;
 
     struct {
         struct translate_request request;

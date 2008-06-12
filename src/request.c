@@ -55,20 +55,19 @@ request_get_cookies(struct request *request)
 void
 request_get_session(struct request *request, const char *session_id)
 {
-    session_id_t session_id2;
+    struct session *session;
 
     assert(request != NULL);
-    assert(request->session == NULL);
+    assert(request->session_id == 0);
     assert(session_id != NULL);
 
-    session_id2 = session_id_parse(session_id);
-    if (session_id2 == 0)
+    request->session_id = session_id_parse(session_id);
+    if (request->session_id == 0)
         return;
 
-    request->session = session_get(session_id2);
-
-    if (request->session != NULL)
-        request->translate.request.session = request->session->translate;
+    session = session_get(request->session_id);
+    if (session != NULL)
+        request->translate.request.session = session->translate;
 }
 
 session_id_t
@@ -90,17 +89,23 @@ request_get_cookie_session_id(struct request *request)
 struct session *
 request_make_session(struct request *request)
 {
+    struct session *session;
+
     assert(request != NULL);
 
-    if (request->session != NULL)
-        return request->session;
+    if (request->session_id != 0) {
+        session = session_get(request->session_id);
+        if (session != NULL)
+            return session;
+    }
 
-    request->session = session_new();
-    session_id_format(request->session_id_buffer, request->session->uri_id);
+    session = session_new();
+    request->session_id = session->uri_id;
+    session_id_format(request->session_id_buffer, request->session_id);
 
     if (request->args == NULL)
         request->args = strmap_new(request->request->pool, 4);
     strmap_set(request->args, "session", request->session_id_buffer);
 
-    return request->session;
+    return session;
 }

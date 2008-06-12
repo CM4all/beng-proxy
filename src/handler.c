@@ -71,6 +71,7 @@ translate_callback(const struct translate_response *response,
                    void *ctx)
 {
     struct request *request = ctx;
+    struct session *session;
 
     request->translate.response = response;
     request->translate.transformation = response->transformation;
@@ -84,21 +85,27 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
+    if (request->session_id != 0 &&
+        (response->session != NULL || response->user != NULL ||
+         response->language != NULL || response->transformation != NULL))
+        session = session_get(request->session_id);
+    else
+        session = NULL;
+
     if (response->session != NULL) {
         if (*response->session == 0) {
             /* clear translate session */
 
-            if (request->session != NULL)
-                request->session->translate = NULL;
+            if (session != NULL)
+                session->translate = NULL;
         } else {
             /* set new translate session */
 
             request_make_session(request);
 
-            if (request->session->translate == NULL ||
-                strcmp(response->session, request->session->translate) != 0)
-                request->session->translate = d_strdup(request->session->pool,
-                                                       response->session);
+            if (session->translate == NULL ||
+                strcmp(response->session, session->translate) != 0)
+                session->translate = d_strdup(session->pool, response->session);
         }
     }
 
@@ -106,17 +113,16 @@ translate_callback(const struct translate_response *response,
         if (*response->user == 0) {
             /* log out */
 
-            if (request->session != NULL)
-                request->session->user = NULL;
+            if (session != NULL)
+                session->user = NULL;
         } else {
             /* log in */
 
             request_make_session(request);
 
-            if (request->session->user == NULL ||
-                strcmp(response->user, request->session->user) != 0)
-                request->session->user = d_strdup(request->session->pool,
-                                                  response->user);
+            if (session->user == NULL ||
+                strcmp(response->user, session->user) != 0)
+                session->user = d_strdup(session->pool, response->user);
         }
     }
 
@@ -124,25 +130,24 @@ translate_callback(const struct translate_response *response,
         if (*response->language == 0) {
             /* reset language setting */
 
-            if (request->session != NULL)
-                request->session->language = NULL;
+            if (session != NULL)
+                session->language = NULL;
         } else {
             /* override language */
 
             request_make_session(request);
 
-            if (request->session->language == NULL ||
-                strcmp(response->language, request->session->language) != 0)
-                request->session->language = d_strdup(request->session->pool,
-                                                      response->language);
+            if (session->language == NULL ||
+                strcmp(response->language, session->language) != 0)
+                session->language = d_strdup(session->pool, response->language);
         }
     }
 
     /* always enforce sessions when there is a transformation
        (e.g. the beng template processor); also redirect the client
        when a session has just been created */
-    if ((response->transformation != NULL && request->session == NULL) ||
-        (request->session != NULL && !request->session->cookie_sent)) {
+    if ((response->transformation != NULL && session == NULL) ||
+        (session != NULL && !session->cookie_sent)) {
         session_redirect(request);
         return;
     }
@@ -224,6 +229,18 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
                     request2->async_ref);
 }
 
+static bool
+request_session_cookie_sent(struct request *request)
+{
+    struct session *session;
+
+    if (request->session_id == 0)
+        return false;
+
+    session = session_get(request->session_id);
+    return session != NULL && session->cookie_sent;
+}
+
 static void
 serve_document_root_file(struct request *request2,
                          const struct config *config)
@@ -246,8 +263,7 @@ serve_document_root_file(struct request *request2,
         process = strref_ends_with_n(&uri->base, ".html", 5);
     }
 
-    if (process &&
-        (request2->session == NULL || !request2->session->cookie_sent)) {
+    if (process && !request_session_cookie_sent(request2)) {
         session_redirect(request2);
         return;
     }
@@ -300,20 +316,24 @@ handle_http_request(struct client_connection *connection,
 
     request2->args = NULL;
     request2->cookies = NULL;
-    request2->session = NULL;
+    request2->session_id = 0;
     request2->body_consumed = false;
     request2->response_sent = false;
     request2->async_ref = async_ref;
 
     request_args_parse(request2);
-    if (request2->session != NULL) {
-        session_id_t id = request_get_cookie_session_id(request2);
-        if (id == request2->session->cookie_id)
-            request2->session->cookie_received = true;
-        else if (request2->session->cookie_received)
-            /* someone has stolen our URI including the session id;
-               refuse to continue with this session */
-            request2->session = NULL;
+    if (request2->session_id != 0) {
+        struct session *session = session_get(request2->session_id);
+
+        if (session != NULL) {
+            session_id_t id = request_get_cookie_session_id(request2);
+            if (id == session->cookie_id)
+                session->cookie_received = true;
+            else if (session->cookie_received)
+                /* someone has stolen our URI including the session
+                   id; refuse to continue with this session */
+                request2->session_id = 0;
+        }
     }
 
     if (connection->config->translation_socket == NULL)
