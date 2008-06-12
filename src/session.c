@@ -132,7 +132,7 @@ session_manager_new(void)
     return sm;
 }
 
-void
+bool
 session_manager_init(void)
 {
     struct timeval tv;
@@ -140,14 +140,18 @@ session_manager_init(void)
     gettimeofday(&tv, NULL);
     srandom(tv.tv_sec ^ tv.tv_usec);
 
-    if (session_manager == NULL)
+    if (session_manager == NULL) {
         session_manager = session_manager_new();
-    else {
+        if (session_manager == NULL)
+                return false;
+    } else {
         refcount_get(&session_manager->ref);
         shm_ref(session_manager->shm);
     }
 
     evtimer_set(&session_cleanup_event, cleanup_event_callback, NULL);
+
+    return true;
 }
 
 static void

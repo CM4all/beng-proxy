@@ -108,6 +108,7 @@ deinit_signals(struct instance *instance)
 int main(int argc, char **argv)
 {
     int ret;
+    bool bret;
     int __attr_unused ref;
     static struct instance instance = {
         .config = {
@@ -143,7 +144,12 @@ int main(int argc, char **argv)
     init_signals(&instance);
 
     children_init(instance.pool);
-    session_manager_init();
+
+    bret = session_manager_init();
+    if (!bret) {
+        fprintf(stderr, "session_manager_init() failed\n");
+        exit(2);
+    }
 
     ret = listener_tcp_port_new(instance.pool,
                                 instance.config.port,

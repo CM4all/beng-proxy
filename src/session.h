@@ -89,7 +89,7 @@ struct session {
  * Initialize the global session manager or increase the reference
  * counter.
  */
-void
+bool
 session_manager_init(void);
 
 /**

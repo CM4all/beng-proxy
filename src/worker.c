@@ -86,6 +86,7 @@ pid_t
 worker_new(struct instance *instance)
 {
     pid_t pid;
+    bool ret __attr_unused;
 
     deinit_signals(instance);
     children_event_del();
@@ -111,7 +112,9 @@ worker_new(struct instance *instance)
         children_init(instance->pool);
 
         session_manager_event_del();
-        session_manager_init();
+
+        ret = session_manager_init();
+        assert(ret);
 
         if (instance->listener != NULL)
             listener_event_add(instance->listener);
