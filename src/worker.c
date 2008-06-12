@@ -118,7 +118,7 @@ worker_new(struct instance *instance)
     } else {
         struct worker *worker;
 
-        worker = p_calloc(instance->pool, sizeof(*worker));
+        worker = p_malloc(instance->pool, sizeof(*worker));
         worker->instance = instance;
         worker->pid = pid;
 
