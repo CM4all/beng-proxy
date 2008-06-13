@@ -276,7 +276,7 @@ google_content_tag_finished(struct google_gadget *gg,
                 istream = google_gadget_process(gg, istream);
                 istream = istream_cat_new(gg->pool,
                                           generate_jscript(gg->pool, gg->widget,
-                                                           gg->env->session),
+                                                           session_get(gg->env->session_id)),
                                           istream,
                                           NULL);
 

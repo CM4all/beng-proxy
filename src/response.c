@@ -97,7 +97,7 @@ response_invoke_processor(struct request *request2,
                        request_absolute_uri(request),
                        &request2->uri,
                        request2->args,
-                       session_get(request2->session_id),
+                       request2->session_id,
                        request->headers,
                        request_body);
 

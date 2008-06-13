@@ -16,11 +16,11 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,
                    struct strmap *args,
-                   struct session *session,
+                   session_id_t session_id,
                    struct strmap *request_headers,
                    istream_t request_body)
 {
-    assert(session != NULL);
+    assert(session_id != 0);
     assert(request_body == NULL || !istream_has_handler(request_body));
 
     env->pool = pool;
@@ -38,5 +38,5 @@ processor_env_init(pool_t pool, struct processor_env *env,
     env->request_headers = request_headers;
     env->request_body = request_body;
 
-    env->session = session;
+    env->session_id = session_id;
 }

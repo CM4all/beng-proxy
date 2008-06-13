@@ -8,6 +8,7 @@
 #define __BENG_REWRITE_URI_H
 
 #include "istream.h"
+#include "session.h"
 
 struct tcache;
 struct parsed_uri;
@@ -28,7 +29,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct tcache *translate_cache,
                    const struct parsed_uri *external_uri,
                    struct strmap *args, struct widget *widget,
-                   struct session *session,
+                   session_id_t session_id,
                    const struct strref *value,
                    enum uri_mode mode);
 

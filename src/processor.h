@@ -10,6 +10,7 @@
 #include "istream.h"
 #include "http.h"
 #include "http-response.h"
+#include "session.h"
 
 /** options for processor_new() */
 enum processor_options {
@@ -48,7 +49,7 @@ struct processor_env {
 
     istream_t request_body;
 
-    struct session *session;
+    session_id_t session_id;
 };
 
 void
@@ -60,7 +61,7 @@ processor_env_init(pool_t pool,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,
                    struct strmap *args,
-                   struct session *session,
+                   session_id_t session_id,
                    struct strmap *request_headers,
                    istream_t request_body);
 
