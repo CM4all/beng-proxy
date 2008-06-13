@@ -132,6 +132,7 @@ cookie_jar_dup(struct dpool *pool, const struct cookie_jar *src)
         return NULL;
 
     dest->pool = pool;
+    list_init(&dest->cookies);
 
     for (src_cookie = (struct cookie *)src->cookies.next;
          &src_cookie->siblings != &src->cookies;
