@@ -422,6 +422,7 @@ session_dup(const struct session *src)
     dest->cookies = cookie_jar_dup(pool, src->cookies);
 
     list_add(&dest->hash_siblings, session_slot(dest->uri_id));
+    ++session_manager->num_sessions;
     return dest;
 }
 
