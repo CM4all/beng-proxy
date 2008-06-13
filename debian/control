@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 5), gcc (>= 4.1),
  libevent-dev (>= 1.4~), libattr1-dev,
  libcm4all-inline-dev (>= 0.1.1), libcm4all-daemon-dev (>= 0.3),
  tetex-extra (>= 3.0)
-Standards-Version: 3.7.3
+Standards-Version: 3.8.0
 
 Package: cm4all-beng-proxy
 Architecture: any
