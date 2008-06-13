@@ -126,9 +126,18 @@ session_id_parse(const char *p);
 void
 session_id_format(char dest[9], session_id_t id);
 
+/**
+ * Create a new session with a random session id.
+ */
 struct session * __attr_malloc
 session_new(void);
 
+/**
+ * After a while the dpool may have fragmentations, and memory is
+ * wasted.  This function duplicates the session into a fresh dpool,
+ * and frees the old session instance.  Of course, this requires that
+ * there is enough free shared memory.
+ */
 struct session * __attr_malloc
 session_defragment(struct session *src);
 
