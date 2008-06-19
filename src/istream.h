@@ -171,6 +171,8 @@ istream_available(istream_t _istream, bool partial)
         available = istream->available(_istream, partial);
 
 #ifndef NDEBUG
+    assert(available >= -1);
+
     if (pool_denotify(&notify) || istream->destroyed)
         return available;
 
