@@ -8,6 +8,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <poll.h>
 
 int
 fd_mask_descriptor_flags(int fd, int and_mask, int xor_mask)
@@ -35,4 +36,15 @@ fd_mask_status_flags(int fd, int and_mask, int xor_mask)
         return ret;
 
     return fcntl(fd, F_SETFL, (ret & and_mask) ^ xor_mask);
+}
+
+bool
+fd_ready_for_writing(int fd)
+{
+    struct pollfd pollfd = {
+        .fd = fd,
+        .events = POLLOUT,
+    };
+
+    return poll(&pollfd, 1, 0) > 0;
 }
