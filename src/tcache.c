@@ -82,6 +82,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->content_type = p_strdup_checked(pool, src->content_type);
     dest->redirect = p_strdup_checked(pool, src->redirect);
     dest->jailcgi = src->jailcgi;
+    dest->interpreter = p_strdup_checked(pool, src->interpreter);
     dest->google_gadget = src->google_gadget;
     dest->session = NULL;
     dest->user = NULL;

@@ -484,6 +484,10 @@ translate_handle_packet(struct translate_connection *connection,
         connection->response.jailcgi = true;
         break;
 
+    case TRANSLATE_INTERPRETER:
+        connection->response.interpreter = payload;
+        break;
+
     case TRANSLATE_GOOGLE_GADGET:
         connection->response.google_gadget = true;
         break;
