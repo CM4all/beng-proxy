@@ -145,6 +145,7 @@ class Translation(Protocol):
                         (account_id[0:6], account_id[6:8],
                          account_id[8:10], account_id[10:12])
         path = document_root + request.uri
+        if path[-1:] == '/': path += 'index.html'
 
         cgi = cgi_re.search(path, 1)
 
