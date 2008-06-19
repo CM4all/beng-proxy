@@ -39,7 +39,7 @@ resource_get(struct http_cache *cache, pool_t pool,
         return;
 
     case RESOURCE_ADDRESS_CGI:
-        cgi_new(pool, false /* XXX */, address->u.path,
+        cgi_new(pool, false /* XXX */, NULL, address->u.path,
                 method, "/" /* XXX */,
                 "/" /* XXX */, "" /* XXX */,
                 "" /* XXX */, "/var/www" /* XXX */,
