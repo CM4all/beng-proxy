@@ -52,7 +52,8 @@ cgi_handler(struct request *request2, bool jail __attr_unused)
     if (document_root == NULL)
         document_root = "/var/www";
 
-    cgi_new(request->pool, jail, tr->interpreter, tr->address.u.path,
+    cgi_new(request->pool, jail, tr->address.u.cgi.interpreter,
+            tr->address.u.cgi.path,
             request->method, request->uri,
             script_name, path_info, query_string, document_root,
             request->headers, request->body,

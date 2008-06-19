@@ -467,23 +467,28 @@ translate_handle_packet(struct translate_connection *connection,
         }
 
         connection->resource_address->type = RESOURCE_ADDRESS_CGI;
-        connection->resource_address->u.path = payload;
+        connection->resource_address->u.cgi.path = payload;
         break;
 
     case TRANSLATE_JAILCGI:
         if (connection->resource_address == NULL ||
             connection->resource_address->type != RESOURCE_ADDRESS_CGI) {
-            daemon_log(2, "misplaced TRANSLATE_CGI packet\n");
+            daemon_log(2, "misplaced TRANSLATE_JAILCGI packet\n");
             break;
         }
 
-        /* XXX what if connection->resource_address !=
-           &connection->response.address ? */
-        connection->response.jailcgi = true;
+        connection->resource_address->u.cgi.jail = true;
         break;
 
     case TRANSLATE_INTERPRETER:
-        connection->response.interpreter = payload;
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_CGI ||
+            connection->resource_address->u.cgi.interpreter != NULL) {
+            daemon_log(2, "misplaced TRANSLATE_INTERPRETER packet\n");
+            break;
+        }
+
+        connection->resource_address->u.cgi.interpreter = payload;
         break;
 
     case TRANSLATE_GOOGLE_GADGET:

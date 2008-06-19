@@ -49,8 +49,6 @@ struct translate_response {
     const char *document_root;
     const char *content_type;
     const char *redirect;
-    bool jailcgi;
-    const char *interpreter;
     bool google_gadget;
     const char *session;
     const char *user;

@@ -25,6 +25,12 @@ struct resource_address {
         const char *path;
 
         struct uri_with_address *http;
+
+        struct {
+            const char *path;
+            bool jail;
+            const char *interpreter;
+        } cgi;
     } u;
 };
 
@@ -39,7 +45,6 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         break;
 
     case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_CGI:
         assert(src->u.path != NULL);
         dest->u.path = p_strdup(pool, src->u.path);
         break;
@@ -47,6 +52,15 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_HTTP:
         assert(src->u.http != NULL);
         dest->u.http = uri_address_dup(pool, src->u.http);
+        break;
+
+    case RESOURCE_ADDRESS_CGI:
+        assert(src->u.cgi.path != NULL);
+
+        dest->u.cgi.path = p_strdup(pool, src->u.cgi.path);
+        dest->u.cgi.jail = src->u.cgi.jail;
+        dest->u.cgi.interpreter = src->u.cgi.interpreter == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.interpreter);
         break;
     }
 }
