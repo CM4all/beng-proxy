@@ -213,6 +213,7 @@ istream_cgi_available(istream_t istream, bool partial)
     struct cgi *cgi = istream_to_cgi(istream);
     const void *data;
     size_t length;
+    off_t available;
 
     if (cgi->buffer != NULL) {
         data = fifo_buffer_read(cgi->buffer, &length);
@@ -221,30 +222,28 @@ istream_cgi_available(istream_t istream, bool partial)
     } else
         length = 0;
 
-    if (cgi->input != NULL) {
-        off_t available;
-
-        if (cgi->headers != NULL) {
-            /* this condition catches the case in cgi_parse_headers():
-               http_response_handler_invoke_response() might recursively call
-               istream_read(cgi->input) */
-            if (partial)
-                return length;
-            else
-                return (off_t)-1;
-        }
-
-        available = istream_available(cgi->input, partial);
-        if (available == (off_t)-1) {
-            if (partial)
-                return length;
-            else
-                return (off_t)-1;
-        }
-
-        return (off_t)length + available;
-    } else
+    if (cgi->input == NULL)
         return length;
+
+    if (cgi->headers != NULL) {
+        /* this condition catches the case in cgi_parse_headers():
+           http_response_handler_invoke_response() might recursively call
+           istream_read(cgi->input) */
+        if (partial)
+            return length;
+        else
+            return (off_t)-1;
+    }
+
+    available = istream_available(cgi->input, partial);
+    if (available == (off_t)-1) {
+        if (partial)
+            return length;
+        else
+            return (off_t)-1;
+    }
+
+    return (off_t)length + available;
 }
 
 static void
