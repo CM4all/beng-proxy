@@ -77,7 +77,8 @@ translate_callback(const struct translate_response *response,
     request->translate.transformation = response->transformation;
 
     if (response->status == (http_status_t)-1 ||
-        (response->address.type == RESOURCE_ADDRESS_NONE &&
+        (response->status == (http_status_t)0 &&
+         response->address.type == RESOURCE_ADDRESS_NONE &&
          response->redirect == NULL)) {
         http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
