@@ -156,7 +156,7 @@ translate_callback(const struct translate_response *response,
     if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
         file_callback(request);
     } else if (response->address.type == RESOURCE_ADDRESS_CGI) {
-        cgi_handler(request, response->address.u.cgi.jail);
+        cgi_handler(request);
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP) {
         proxy_handler(request);
     } else if (response->redirect != NULL) {

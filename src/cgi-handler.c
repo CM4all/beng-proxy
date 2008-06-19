@@ -24,7 +24,7 @@ remove_tail(pool_t pool, const char *p, const char *tail)
 }
 
 void
-cgi_handler(struct request *request2, bool jail __attr_unused)
+cgi_handler(struct request *request2)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
@@ -52,8 +52,8 @@ cgi_handler(struct request *request2, bool jail __attr_unused)
     if (document_root == NULL)
         document_root = "/var/www";
 
-    cgi_new(request->pool, jail, tr->address.u.cgi.interpreter,
-            tr->address.u.cgi.path,
+    cgi_new(request->pool, tr->address.u.cgi.jail,
+            tr->address.u.cgi.interpreter, tr->address.u.cgi.path,
             request->method, request->uri,
             script_name, path_info, query_string, document_root,
             request->headers, request->body,
