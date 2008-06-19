@@ -53,7 +53,8 @@ cgi_handler(struct request *request2)
         document_root = "/var/www";
 
     cgi_new(request->pool, tr->address.u.cgi.jail,
-            tr->address.u.cgi.interpreter, tr->address.u.cgi.path,
+            tr->address.u.cgi.interpreter, tr->address.u.cgi.action,
+            tr->address.u.cgi.path,
             request->method, request->uri,
             script_name, path_info, query_string, document_root,
             request->headers, request->body,

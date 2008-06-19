@@ -30,6 +30,7 @@ struct resource_address {
             const char *path;
             bool jail;
             const char *interpreter;
+            const char *action;
         } cgi;
     } u;
 };
@@ -61,6 +62,8 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         dest->u.cgi.jail = src->u.cgi.jail;
         dest->u.cgi.interpreter = src->u.cgi.interpreter == NULL
             ? NULL : p_strdup(pool, src->u.cgi.interpreter);
+        dest->u.cgi.action = src->u.cgi.action == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.action);
         break;
     }
 }

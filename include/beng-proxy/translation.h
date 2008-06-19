@@ -37,6 +37,7 @@ enum beng_translation_command {
     TRANSLATE_GOOGLE_GADGET = 25,
     TRANSLATE_JAILCGI = 26,
     TRANSLATE_INTERPRETER = 27,
+    TRANSLATE_ACTION = 28,
 };
 
 struct beng_translation_header {

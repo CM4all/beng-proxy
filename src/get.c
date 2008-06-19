@@ -40,7 +40,8 @@ resource_get(struct http_cache *cache, pool_t pool,
 
     case RESOURCE_ADDRESS_CGI:
         cgi_new(pool, address->u.cgi.jail,
-                address->u.cgi.interpreter, address->u.cgi.path,
+                address->u.cgi.interpreter, address->u.cgi.action,
+                address->u.cgi.path,
                 method, "/" /* XXX */,
                 "/" /* XXX */, "" /* XXX */,
                 "" /* XXX */, "/var/www" /* XXX */,

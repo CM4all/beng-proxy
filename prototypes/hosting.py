@@ -39,8 +39,9 @@ TRANSLATE_ADDRESS_STRING = 24
 TRANSLATE_GOOGLE_GADGET = 25
 TRANSLATE_JAILCGI = 26
 TRANSLATE_INTERPRETER = 27
+TRANSLATE_ACTION = 28
 
-cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
+cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
 
 class PacketReader:
     def __init__(self):
@@ -162,6 +163,12 @@ class Translation(Protocol):
                 self._write_packet(TRANSLATE_INTERPRETER, '/usr/bin/python')
             elif path[-3:] == '.rb':
                 self._write_packet(TRANSLATE_INTERPRETER, '/usr/bin/ruby')
+            elif path[-4:] == '.php':
+                self._write_packet(TRANSLATE_ACTION, '/usr/bin/cm4all-jailcgi-phpchooser')
+            elif path[-5:] == '.php4':
+                self._write_packet(TRANSLATE_ACTION, '/usr/bin/cm4all-jailcgi-php4wrapper/')
+            elif path[-5:] == '.php5':
+                self._write_packet(TRANSLATE_ACTION, '/usr/bin/cm4all-jailcgi-php4wrapper/')
         else:
             self._write_packet(TRANSLATE_PATH, path)
         if not cgi and path[-5:] == '.html':

@@ -316,7 +316,8 @@ static struct async_operation_class cgi_async_operation = {
  */
 
 static void __attr_noreturn
-cgi_run(bool jail, const char *interpreter, const char *path,
+cgi_run(bool jail, const char *interpreter, const char *action,
+        const char *path,
         http_method_t method, const char *uri,
         const char *script_name, const char *path_info,
         const char *query_string,
@@ -352,8 +353,11 @@ cgi_run(bool jail, const char *interpreter, const char *path,
 
         if (interpreter != NULL)
             setenv("JAILCGI_INTERPRETER", interpreter, 1);
+
+        if (action != NULL)
+            setenv("JAILCGI_ACTION", action, 1);
     } else {
-        /* XXX interpreter */
+        /* XXX interpreter, action */
     }
 
     strmap_rewind(headers);
@@ -394,7 +398,7 @@ cgi_child_callback(int status, void *ctx __attr_unused)
 
 void
 cgi_new(pool_t pool, bool jail,
-        const char *interpreter,
+        const char *interpreter, const char *action,
         const char *path,
         http_method_t method, const char *uri,
         const char *script_name, const char *path_info,
@@ -418,7 +422,7 @@ cgi_new(pool_t pool, bool jail,
     }
 
     if (pid == 0)
-        cgi_run(jail, interpreter, path, method, uri,
+        cgi_run(jail, interpreter, action, path, method, uri,
                 script_name, path_info, query_string, document_root,
                 headers);
 
