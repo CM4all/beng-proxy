@@ -7,6 +7,7 @@
 #include "http-server-internal.h"
 #include "direct.h"
 #include "istream-internal.h"
+#include "fd-util.h"
 
 #include <daemon/log.h>
 
@@ -51,8 +52,19 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     assert(connection->response.istream != NULL);
 
     nbytes = istream_direct_to_socket(type, fd, connection->fd, max_length);
-    if (unlikely(nbytes < 0 && errno == EAGAIN))
-        return -2;
+    if (unlikely(nbytes < 0 && errno == EAGAIN)) {
+        if (!fd_ready_for_writing(connection->fd)) {
+            event2_or(&connection->event, EV_WRITE);
+            return -2;
+        }
+
+        /* try again, just in case connection->fd has become ready
+           between the first istream_direct_to_socket() call and
+           fd_ready_for_writing() */
+        nbytes = istream_direct_to_socket(type, fd, connection->fd, max_length);
+        if (nbytes < 0 && errno == EAGAIN)
+            return -1;
+    }
 
     if (likely(nbytes > 0)) {
         connection->response.length += (off_t)nbytes;
