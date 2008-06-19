@@ -1,0 +1,61 @@
+#!/bin/bash
+#
+# cm4all-beng-proxy-translation-hosting: start the BENG proxy
+# translation server
+#
+# Author: Max Kellermann <mk@cm4all.com>
+#
+
+### BEGIN INIT INFO
+# Provides:          cm4all-beng-proxy-translation-hosting
+# Required-Start:    $network
+# Required-Stop:     $network
+# Should-Start:      
+# Should-Stop:       
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start or stop the CM4all BENG proxy translation server
+### END INIT INFO
+
+test -f /usr/share/cm4all/beng-proxy/bin/hosting.py || exit 0
+
+source /lib/lsb/init-functions
+
+PIDFILE=/var/run/cm4all/beng-proxy-translation-hosting.pid
+DAEMON_USER=root
+LOGFILE=/var/log/cm4all/beng-proxy-translation-hosting.log
+TRANSLATION_SOCKET=/var/run/cm4all/beng-proxy-translation.sock
+
+case "$1" in
+    start)
+	log_begin_msg "Starting CM4all BENG proxy translation server"
+        start-stop-daemon --start --quiet \
+            --exec /usr/bin/daemon \
+            --pidfile "$PIDFILE" \
+            -- \
+            --pidfile "$PIDFILE" \
+            --logfile "$LOGFILE" \
+            /usr/share/cm4all/beng-proxy/bin/hosting.py \
+            $TRANSLATION_SOCKET
+	log_end_msg $?
+	;;
+    stop)
+	log_begin_msg "Stopping CM4all BENG proxy translation server"
+	start-stop-daemon --stop --quiet \
+            --retry 60 \
+            --oknodo \
+            --pidfile "$PIDFILE" \
+            --user "$DAEMON_USER"
+	log_end_msg $?
+	;;
+    restart|force-reload)
+	$0 stop
+	$0 start
+	;;
+    *)
+	log_success_msg "Usage: /etc/init.d/cm4all-beng-proxy-translation-hosting {start|stop|force-reload|restart}"
+	exit 1
+	;;
+esac
+
+exit 0

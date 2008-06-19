@@ -70,6 +70,7 @@ Package: cm4all-beng-proxy-translation-prototype
 Architecture: all
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, cm4all-utils,
  python-twisted-core
+Conflicts: cm4all-beng-proxy-translation-hosting
 Provides: cm4all-beng-proxy-translation
 Enhances: cm4all-beng-proxy
 Description: Translation server prototype
@@ -78,6 +79,20 @@ Description: Translation server prototype
  .
  This package contains a prototype for the beng-proxy translation
  server.
+
+Package: cm4all-beng-proxy-translation-hosting
+Architecture: all
+Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, cm4all-utils,
+ python-twisted-core
+Conflicts: cm4all-beng-proxy-translation-prototype
+Provides: cm4all-beng-proxy-translation
+Enhances: cm4all-beng-proxy
+Description: Translation server prototype for web hosting
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This package contains a prototype for the beng-proxy translation
+ server, for web hosting.
 
 Package: cm4all-beng-proxy-demo
 Architecture: all
