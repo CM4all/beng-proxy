@@ -567,6 +567,8 @@ translate_try_read(struct translate_connection *connection)
         case PACKET_READER_EOF:
             daemon_log(1, "translation server aborted the connection\n");
             connection->callback(&error, connection->ctx);
+            pool_unref(connection->pool);
+
             stock_put(&connection->stock_item, true);
             return;
 
