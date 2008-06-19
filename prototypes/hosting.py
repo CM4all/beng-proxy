@@ -151,7 +151,7 @@ class Translation(Protocol):
         self._write_packet(TRANSLATE_BEGIN)
         self._write_packet(TRANSLATE_DOCUMENT_ROOT, document_root)
         if cgi:
-            self._write_packet(TRANSLATE_PATH, path)
+            self._write_packet(TRANSLATE_CGI, path)
             self._write_packet(TRANSLATE_JAILCGI)
             if path[-3:] == '.sh':
                 self._write_packet(TRANSLATE_INTERPRETER, '/bin/bash')

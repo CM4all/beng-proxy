@@ -472,12 +472,10 @@ translate_handle_packet(struct translate_connection *connection,
 
     case TRANSLATE_JAILCGI:
         if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
+            connection->resource_address->type != RESOURCE_ADDRESS_CGI) {
             daemon_log(2, "misplaced TRANSLATE_CGI packet\n");
             break;
         }
-
-        connection->resource_address->type = RESOURCE_ADDRESS_CGI;
 
         /* XXX what if connection->resource_address !=
            &connection->response.address ? */
