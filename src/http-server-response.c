@@ -96,6 +96,12 @@ http_server_response_stream_eof(void *ctx)
         return;
     }
 
+    if (connection->handler->log != NULL)
+        connection->handler->log(connection->request.request,
+                                 connection->response.status,
+                                 connection->response.length,
+                                 connection->handler_ctx);
+
     if (connection->request.read_state == READ_BODY &&
         !connection->request.expect_100_continue) {
         /* We are still reading the request body, which we don't need
@@ -109,12 +115,6 @@ http_server_response_stream_eof(void *ctx)
         if (!http_server_connection_valid(connection))
             return;
     }
-
-    if (connection->handler->log != NULL)
-        connection->handler->log(connection->request.request,
-                                 connection->response.status,
-                                 connection->response.length,
-                                 connection->handler_ctx);
 
     pool_unref(connection->request.request->pool);
     connection->request.request = NULL;
