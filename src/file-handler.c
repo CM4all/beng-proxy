@@ -56,7 +56,7 @@ parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
         *size_r = v;
     } else {
         *skip_r = strtoul(p, &endptr, 10);
-        if (*skip_r > *size_r)
+        if (*skip_r >= *size_r)
             return RANGE_INVALID;
 
         if (*endptr == '-') {
@@ -66,11 +66,11 @@ parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
                 return RANGE_VALID;
 
             v = strtoul(p, &endptr, 10);
-            if (*endptr != 0 || v < (unsigned long)*skip_r)
+            if (*endptr != 0 || v < (unsigned long)*skip_r ||
+                v >= (unsigned long)*size_r)
                 return RANGE_INVALID;
 
-            if (v < (unsigned long)*size_r)
-                *size_r = v + 1;
+            *size_r = v + 1;
         }
     }
 
