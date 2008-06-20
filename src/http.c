@@ -35,6 +35,7 @@ const char *http_status_to_string_data[6][20] = {
         [HTTP_STATUS_NOT_FOUND - 400] = "404 Not Found",
         [HTTP_STATUS_METHOD_NOT_ALLOWED - 400] = "405 Method Not Allowed",
         [HTTP_STATUS_PRECONDITION_FAILED - 400] = "412 Precondition Failed",
+        [HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE - 400] = "416 Requested Range Not Satisfiable",
     },
     [5] = {
         [HTTP_STATUS_INTERNAL_SERVER_ERROR - 500] = "500 Internal Server Error",
