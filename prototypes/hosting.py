@@ -168,7 +168,7 @@ class Translation(Protocol):
             elif path[-5:] == '.php4':
                 self._write_packet(TRANSLATE_ACTION, '/usr/bin/cm4all-jailcgi-php4wrapper/')
             elif path[-5:] == '.php5':
-                self._write_packet(TRANSLATE_ACTION, '/usr/bin/cm4all-jailcgi-php4wrapper/')
+                self._write_packet(TRANSLATE_ACTION, '/usr/bin/cm4all-jailcgi-php5wrapper/')
         else:
             self._write_packet(TRANSLATE_PATH, path)
         if not cgi and path[-5:] == '.html':
