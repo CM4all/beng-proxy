@@ -220,6 +220,13 @@ http_server_consume_input(http_server_connection_t connection)
     } else if (connection->request.read_state == READ_BODY) {
         http_server_consume_body(connection);
     }
+
+    if (http_server_connection_valid(connection) &&
+        (connection->request.read_state == READ_START ||
+         connection->request.read_state == READ_HEADERS ||
+         connection->request.read_state == READ_BODY) &&
+        !fifo_buffer_full(connection->input))
+        event2_or(&connection->event, EV_READ);
 }
 
 static void
@@ -253,13 +260,6 @@ http_server_try_read_buffered(http_server_connection_t connection)
     }
 
     http_server_consume_input(connection);
-
-    if (http_server_connection_valid(connection) &&
-        (connection->request.read_state == READ_START ||
-         connection->request.read_state == READ_HEADERS ||
-         connection->request.read_state == READ_BODY) &&
-        !fifo_buffer_full(connection->input))
-        event2_or(&connection->event, EV_READ);
 }
 
 static void
