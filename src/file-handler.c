@@ -59,8 +59,8 @@ parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
                 /* "wget -c" */
                 return true;
 
-            v = strtoul(p, NULL, 10);
-            if (v < (unsigned long)*skip_r)
+            v = strtoul(p, &endptr, 10);
+            if (*endptr != 0 || v < (unsigned long)*skip_r)
                 return false;
 
             if (v < (unsigned long)*size_r)
