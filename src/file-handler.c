@@ -24,7 +24,13 @@
 #include <attr/xattr.h>
 #endif
 
-static bool
+enum range_type {
+    RANGE_NONE,
+    RANGE_VALID,
+    RANGE_INVALID
+};
+
+static enum range_type
 parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
 {
     unsigned long v;
@@ -35,7 +41,7 @@ parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
     assert(size_r != NULL);
 
     if (memcmp(p, "bytes=", 6) != 0)
-        return false;
+        return RANGE_INVALID;
 
     p += 6;
 
@@ -45,30 +51,30 @@ parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
 
         v = strtoul(p, &endptr, 10);
         if (v >= (unsigned long)*size_r)
-            return false;
+            return RANGE_NONE;
 
         *size_r = v;
     } else {
         *skip_r = strtoul(p, &endptr, 10);
         if (*skip_r > *size_r)
-            return false;
+            return RANGE_INVALID;
 
         if (*endptr == '-') {
             p = endptr + 1;
             if (*p == 0)
                 /* "wget -c" */
-                return true;
+                return RANGE_VALID;
 
             v = strtoul(p, &endptr, 10);
             if (*endptr != 0 || v < (unsigned long)*skip_r)
-                return false;
+                return RANGE_INVALID;
 
             if (v < (unsigned long)*size_r)
                 *size_r = v + 1;
         }
     }
 
-    return true;
+    return RANGE_VALID;
 }
 
 static void
@@ -100,7 +106,7 @@ file_callback(struct request *request2)
     struct growing_buffer *headers;
     istream_t body;
     struct stat st;
-    bool range = false;
+    enum range_type range = RANGE_NONE;
     off_t skip, size;
     char buffer[64];
     http_status_t status;
@@ -232,7 +238,8 @@ file_callback(struct request *request2)
 
     status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
-    if (range) {
+    switch (range) {
+    case RANGE_VALID:
         istream_skip(body, skip);
 
         status = HTTP_STATUS_PARTIAL_CONTENT;
@@ -242,7 +249,10 @@ file_callback(struct request *request2)
                                (unsigned long)skip,
                                (unsigned long)(size - 1),
                                (unsigned long)st.st_size));
-    } else if (tr->status == 0 && !request_transformation_enabled(request2)) {
+        break;
+
+    case RANGE_NONE:
+    case RANGE_INVALID:
         header_write(headers, "accept-ranges", "bytes");
     }
 
