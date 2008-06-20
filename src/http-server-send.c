@@ -86,18 +86,25 @@ http_server_response(const struct http_server_request *request,
     header_write(headers, "date", http_date_format(time(NULL)));
 #endif
 
+    /* how will we transfer the body?  determine length and
+       transfer-encoding */
+
     content_length = body == NULL
         ? 0 : istream_available(body, false);
     if (content_length == (off_t)-1) {
+        /* the response length is unknown yet */
         assert(!http_status_is_empty(status));
 
         if (body != NULL && connection->keep_alive) {
+            /* keep-alive is enabled, which means that we have to
+               enable chunking */
             header_write(headers, "transfer-encoding", "chunked");
             body = istream_chunked_new(request->pool, body);
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);
     } else {
+        /* fixed body size */
         format_uint64(connection->response.content_length_buffer, content_length);
         header_write(headers, "content-length",
                      connection->response.content_length_buffer);
