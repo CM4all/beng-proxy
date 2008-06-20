@@ -262,8 +262,6 @@ file_callback(struct request *request2)
         header_write(headers, "content-range",
                      p_sprintf(request->pool, "bytes */%lu",
                                (unsigned long)st.st_size));
-
-        istream_free(&body);
         break;
     }
 
@@ -293,6 +291,9 @@ file_callback(struct request *request2)
         }
 #endif /* #ifndef NO_XATTR */
     }
+
+    if (range == RANGE_INVALID)
+        istream_free(&body);
 
     if (!request_processor_enabled(request2)) {
 #ifndef NO_LAST_MODIFIED_HEADER
