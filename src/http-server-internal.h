@@ -92,6 +92,9 @@ void
 http_server_maybe_send_100_continue(http_server_connection_t connection);
 
 void
+http_server_consume_input(http_server_connection_t connection);
+
+void
 http_server_try_read(http_server_connection_t connection);
 
 void

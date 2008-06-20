@@ -122,9 +122,10 @@ http_server_response_stream_eof(void *ctx)
     connection->request.read_state = READ_START;
 
     if (connection->keep_alive) {
-        /* set up events for next request */
-        if (!fifo_buffer_full(connection->input))
-            event2_set(&connection->event, EV_READ);
+        /* handle pipelined request (if any), or set up events for
+           next request */
+
+        http_server_consume_input(connection);
     } else {
         /* keepalive disabled and response is finished: we must close
            the connection */

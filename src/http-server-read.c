@@ -206,7 +206,7 @@ http_server_parse_headers(http_server_connection_t connection)
     return true;
 }
 
-static void
+void
 http_server_consume_input(http_server_connection_t connection)
 {
     if (connection->request.read_state == READ_START ||
