@@ -285,6 +285,8 @@ file_callback(struct request *request2)
     case RANGE_VALID:
         istream_skip(body, skip);
 
+        assert(istream_available(body, false) == size - skip);
+
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
         header_write(headers, "content-range",
