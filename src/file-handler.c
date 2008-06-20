@@ -238,33 +238,6 @@ file_callback(struct request *request2)
 
     status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
-    header_write(headers, "accept-ranges", "bytes");
-
-    switch (range) {
-    case RANGE_NONE:
-        break;
-
-    case RANGE_VALID:
-        istream_skip(body, skip);
-
-        status = HTTP_STATUS_PARTIAL_CONTENT;
-
-        header_write(headers, "content-range",
-                     p_sprintf(request->pool, "bytes %lu-%lu/%lu",
-                               (unsigned long)skip,
-                               (unsigned long)(size - 1),
-                               (unsigned long)st.st_size));
-        break;
-
-    case RANGE_INVALID:
-        status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
-
-        header_write(headers, "content-range",
-                     p_sprintf(request->pool, "bytes */%lu",
-                               (unsigned long)st.st_size));
-        break;
-    }
-
     if (!request_transformation_enabled(request2)) {
         make_etag(buffer, &st);
         header_write(headers, "etag", buffer);
@@ -292,9 +265,6 @@ file_callback(struct request *request2)
 #endif /* #ifndef NO_XATTR */
     }
 
-    if (range == RANGE_INVALID)
-        istream_free(&body);
-
     if (!request_processor_enabled(request2)) {
 #ifndef NO_LAST_MODIFIED_HEADER
         header_write(headers, "last-modified", http_date_format(st.st_mtime));
@@ -302,6 +272,37 @@ file_callback(struct request *request2)
 
         if (request->body != NULL)
             istream_close(request->body);
+    }
+
+    /* generate the Content-Range header */
+
+    header_write(headers, "accept-ranges", "bytes");
+
+    switch (range) {
+    case RANGE_NONE:
+        break;
+
+    case RANGE_VALID:
+        istream_skip(body, skip);
+
+        status = HTTP_STATUS_PARTIAL_CONTENT;
+
+        header_write(headers, "content-range",
+                     p_sprintf(request->pool, "bytes %lu-%lu/%lu",
+                               (unsigned long)skip,
+                               (unsigned long)(size - 1),
+                               (unsigned long)st.st_size));
+        break;
+
+    case RANGE_INVALID:
+        status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
+
+        header_write(headers, "content-range",
+                     p_sprintf(request->pool, "bytes */%lu",
+                               (unsigned long)st.st_size));
+
+        istream_free(&body);
+        break;
     }
 
     /* finished, dispatch this response */
