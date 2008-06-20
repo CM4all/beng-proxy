@@ -239,6 +239,10 @@ file_callback(struct request *request2)
     status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
     switch (range) {
+    case RANGE_NONE:
+        header_write(headers, "accept-ranges", "bytes");
+        break;
+
     case RANGE_VALID:
         istream_skip(body, skip);
 
@@ -251,9 +255,16 @@ file_callback(struct request *request2)
                                (unsigned long)st.st_size));
         break;
 
-    case RANGE_NONE:
     case RANGE_INVALID:
+        status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
+
         header_write(headers, "accept-ranges", "bytes");
+        header_write(headers, "content-range",
+                     p_sprintf(request->pool, "bytes */%lu",
+                               (unsigned long)st.st_size));
+
+        istream_free(&body);
+        break;
     }
 
     if (!request_transformation_enabled(request2)) {
