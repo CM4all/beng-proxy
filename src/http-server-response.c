@@ -123,7 +123,8 @@ http_server_response_stream_eof(void *ctx)
 
     if (connection->keep_alive) {
         /* set up events for next request */
-        event2_set(&connection->event, EV_READ);
+        if (!fifo_buffer_full(connection->input))
+            event2_set(&connection->event, EV_READ);
     } else {
         /* keepalive disabled and response is finished: we must close
            the connection */
