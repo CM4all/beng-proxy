@@ -234,9 +234,8 @@ http_server_try_read_buffered(http_server_connection_t connection)
     }
 
     nbytes = read_to_buffer(connection->fd, connection->input, INT_MAX);
-    assert(nbytes != -2);
 
-    if (unlikely(nbytes < 0)) {
+    if (unlikely(nbytes < 0 && nbytes != -2)) {
         if (errno == EAGAIN) {
             event2_or(&connection->event, EV_READ);
             return;
