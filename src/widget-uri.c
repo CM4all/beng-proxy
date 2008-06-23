@@ -104,21 +104,7 @@ widget_relative_uri(pool_t pool, struct widget *widget,
     if (address == NULL)
         return NULL;
 
-    switch (address->type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-        return NULL;
-
-    case RESOURCE_ADDRESS_HTTP:
-        strref_set_c(buffer, address->u.http->uri);
-        return widget_class_relative_uri(widget->class, buffer);
-
-    case RESOURCE_ADDRESS_CGI:
-        strref_set_c(buffer, address->u.cgi.path_info);
-        return buffer;
-    }
-
-    assert(false);
+    return resource_address_relative(&widget->class->address, address, buffer);
 }
 
 const char *

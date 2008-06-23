@@ -7,6 +7,7 @@
 
 #include "resource-address.h"
 #include "uri-relative.h"
+#include "strref.h"
 
 const struct resource_address *
 resource_address_apply(pool_t pool, const struct resource_address *src,
@@ -51,6 +52,37 @@ resource_address_apply(pool_t pool, const struct resource_address *src,
 
         resource_address_copy(pool, buffer, src);
         buffer->u.cgi.path_info = p;
+        return buffer;
+    }
+
+    assert(false);
+}
+
+const struct strref *
+resource_address_relative(const struct resource_address *base,
+                          const struct resource_address *address,
+                          struct strref *buffer)
+{
+    struct strref base_uri;
+
+    assert(base != NULL);
+    assert(address != NULL);
+    assert(base->type == address->type);
+    assert(buffer != NULL);
+
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+        return NULL;
+
+    case RESOURCE_ADDRESS_HTTP:
+        strref_set_c(&base_uri, base->u.http->uri);
+        strref_set_c(buffer, address->u.http->uri);
+        return uri_relative(&base_uri, buffer);
+
+    case RESOURCE_ADDRESS_CGI:
+        /* XXX */
+        strref_set_c(buffer, address->u.cgi.path_info);
         return buffer;
     }
 

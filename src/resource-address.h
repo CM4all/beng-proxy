@@ -13,6 +13,8 @@
 
 #include <assert.h>
 
+struct strref;
+
 enum resource_address_type {
     RESOURCE_ADDRESS_NONE = 0,
     RESOURCE_ADDRESS_LOCAL,
@@ -114,5 +116,10 @@ const struct resource_address *
 resource_address_apply(pool_t pool, const struct resource_address *src,
                        const char *relative, size_t relative_length,
                        struct resource_address *buffer);
+
+const struct strref *
+resource_address_relative(const struct resource_address *base,
+                          const struct resource_address *address,
+                          struct strref *buffer);
 
 #endif
