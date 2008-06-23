@@ -62,8 +62,6 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
         nbytes = istream_direct_to_socket(type, fd, connection->fd, max_length);
-        if (nbytes < 0 && errno == EAGAIN)
-            return -1;
     }
 
     if (likely(nbytes > 0)) {
