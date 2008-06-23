@@ -5,7 +5,7 @@
  */
 
 #include "widget.h"
-#include "uri.h"
+#include "uri-relative.h"
 #include "uri-parser.h"
 #include "args.h"
 #include "tpool.h"

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri.h"
+#include "uri-relative.h"
 
 #include <string.h>
 
