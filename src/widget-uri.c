@@ -55,9 +55,6 @@ const char *
 widget_absolute_uri(pool_t pool, struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length)
 {
-    if (widget->class == &root_widget_class)
-        return NULL;
-
     return uri_absolute(pool, widget_real_uri(pool, widget),
                         relative_uri, relative_uri_length);
 }
