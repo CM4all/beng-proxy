@@ -110,4 +110,9 @@ resource_address_dup(pool_t pool, const struct resource_address *src)
     return dest;
 }
 
+const struct resource_address *
+resource_address_apply(pool_t pool, const struct resource_address *src,
+                       const char *relative, size_t relative_length,
+                       struct resource_address *buffer);
+
 #endif

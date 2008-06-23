@@ -95,15 +95,30 @@ widget_relative_uri(pool_t pool, struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length,
                     struct strref *buffer)
 {
-    const char *absolute_uri;
+    struct resource_address address_buffer;
+    const struct resource_address *address;
 
-    absolute_uri = widget_absolute_uri(pool, widget, relative_uri, relative_uri_length);
-    if (absolute_uri == NULL)
-        strref_set(buffer, relative_uri, relative_uri_length);
-    else
-        strref_set_c(buffer, absolute_uri);
+    address = resource_address_apply(pool, widget_address(pool, widget),
+                                     relative_uri, relative_uri_length,
+                                     &address_buffer);
+    if (address == NULL)
+        return NULL;
 
-    return widget_class_relative_uri(widget->class, buffer);
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+        return NULL;
+
+    case RESOURCE_ADDRESS_HTTP:
+        strref_set_c(buffer, address->u.http->uri);
+        return widget_class_relative_uri(widget->class, buffer);
+
+    case RESOURCE_ADDRESS_CGI:
+        strref_set_c(buffer, address->u.cgi.path_info);
+        return buffer;
+    }
+
+    assert(false);
 }
 
 const char *
