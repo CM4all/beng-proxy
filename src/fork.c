@@ -29,6 +29,9 @@ struct fork {
     int input_fd;
 
     pid_t pid;
+
+    child_callback_t callback;
+    void *callback_ctx;
 };
 
 
@@ -234,12 +237,32 @@ static const struct istream istream_fork = {
 
 
 /*
+ * child callback
+ *
+ */
+
+static void
+fork_child_callback(int status, void *ctx)
+{
+    struct fork *f = ctx;
+
+    assert(f->pid >= 0);
+
+    f->pid = -1;
+
+    if (f->callback)
+        f->callback(status, f->callback_ctx);
+}
+
+
+/*
  * constructor
  *
  */
 
 pid_t
-beng_fork(pool_t pool, istream_t input, istream_t *output_r)
+beng_fork(pool_t pool, istream_t input, istream_t *output_r,
+          child_callback_t callback, void *ctx)
 {
     int ret, stdin_pipe[2], stdout_pipe[2];
     pid_t pid;
@@ -313,6 +336,10 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r)
         f->buffer = NULL;
 
         f->pid = pid;
+        f->callback = callback;
+        f->callback_ctx = ctx;
+
+        child_register(f->pid, fork_child_callback, f);
 
         /* XXX CLOEXEC */
 

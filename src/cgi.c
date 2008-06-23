@@ -12,7 +12,6 @@
 #include "async.h"
 #include "header-parser.h"
 #include "strutil.h"
-#include "child.h"
 
 #include <daemon/log.h>
 
@@ -413,7 +412,8 @@ cgi_new(pool_t pool, bool jail,
     pid_t pid;
     istream_t input;
 
-    pid = beng_fork(pool, body, &input);
+    pid = beng_fork(pool, body, &input,
+                    cgi_child_callback, NULL);
     if (pid < 0) {
         struct http_response_handler_ref handler_ref;
         http_response_handler_set(&handler_ref, handler, handler_ctx);
@@ -425,8 +425,6 @@ cgi_new(pool_t pool, bool jail,
         cgi_run(jail, interpreter, action, path, method, uri,
                 script_name, path_info, query_string, document_root,
                 headers);
-
-    child_register(pid, cgi_child_callback, NULL);
 
     cgi = (struct cgi *)istream_new(pool, &istream_cgi, sizeof(*cgi));
     istream_assign_handler(&cgi->input, input,
