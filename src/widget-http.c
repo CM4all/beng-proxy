@@ -5,7 +5,6 @@
  */
 
 #include "widget-http.h"
-#include "http-cache.h"
 #include "processor.h"
 #include "widget.h"
 #include "session.h"
@@ -173,11 +172,12 @@ static bool
 widget_response_redirect(struct embed *embed, const char *location,
                          istream_t body)
 {
-    const char *new_uri;
+    struct resource_address address_buffer;
+    const struct resource_address *address;
     struct session *session;
     struct uri_with_address *uwa;
     struct strmap *headers;
-    struct strref s;
+    struct strref strref_buffer;
     const struct strref *p;
 
     if (embed->num_redirects >= 8)
@@ -187,18 +187,15 @@ widget_response_redirect(struct embed *embed, const char *location,
         /* a static or CGI widget cannot send redirects */
         return false;
 
-    new_uri = widget_absolute_uri(embed->pool, embed->widget,
-                                  location, strlen(location));
-    if (new_uri == NULL)
-        /* we have to strdup() the location pointer here because
-           istream_close() will invalidate its pool */
-        new_uri = location = p_strdup(embed->pool, location);
-    else
-        location = new_uri;
+    address = resource_address_apply(embed->pool,
+                                     widget_address(embed->pool, embed->widget),
+                                     location, strlen(location),
+                                     &address_buffer);
+    if (address == NULL)
+        return false;
 
-    strref_set_c(&s, new_uri);
-
-    p = widget_class_relative_uri(embed->widget->class, &s);
+    p = resource_address_relative(&embed->widget->class->address, address,
+                                  &strref_buffer);
     if (p == NULL)
         return false;
 
@@ -217,11 +214,11 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     headers = widget_request_headers(embed, 0);
 
-    http_cache_request(embed->env->http_cache,
-                       embed->pool,
-                       HTTP_METHOD_GET, uwa, headers, NULL,
-                       &widget_response_handler, embed,
-                       embed->async_ref);
+    resource_get(embed->env->http_cache,
+                 embed->pool,
+                 HTTP_METHOD_GET, address, headers, NULL,
+                 &widget_response_handler, embed,
+                 embed->async_ref);
 
     return true;
 }
