@@ -11,6 +11,8 @@
 #include "pool.h"
 #include "uri-address.h"
 
+#include <assert.h>
+
 enum resource_address_type {
     RESOURCE_ADDRESS_NONE = 0,
     RESOURCE_ADDRESS_LOCAL,
@@ -31,9 +33,32 @@ struct resource_address {
             bool jail;
             const char *interpreter;
             const char *action;
+
+            const char *script_name, *path_info, *query_string;
+            const char *document_root;
         } cgi;
     } u;
 };
+
+static inline const char *
+resource_address_cgi_uri(pool_t pool, const struct resource_address *address)
+{
+    const char *p;
+
+    assert(address->type == RESOURCE_ADDRESS_CGI);
+
+    p = address->u.cgi.script_name;
+    if (p == NULL)
+        p = "";
+
+    if (address->u.cgi.path_info != NULL)
+        p = p_strcat(pool, p, address->u.cgi.path_info, NULL);
+
+    if (address->u.cgi.query_string != NULL)
+        p = p_strcat(pool, p, "?", address->u.cgi.query_string, NULL);
+
+    return p;
+}
 
 static inline void
 resource_address_copy(pool_t pool, struct resource_address *dest,
