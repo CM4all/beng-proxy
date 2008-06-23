@@ -89,6 +89,14 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
             ? NULL : p_strdup(pool, src->u.cgi.interpreter);
         dest->u.cgi.action = src->u.cgi.action == NULL
             ? NULL : p_strdup(pool, src->u.cgi.action);
+        dest->u.cgi.script_name = src->u.cgi.script_name == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.script_name);
+        dest->u.cgi.path_info = src->u.cgi.path_info == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.path_info);
+        dest->u.cgi.query_string = src->u.cgi.query_string == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.query_string);
+        dest->u.cgi.document_root = src->u.cgi.document_root == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.document_root);
         break;
     }
 }
