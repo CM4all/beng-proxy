@@ -55,7 +55,6 @@ fork_close(struct fork *f)
 
     if (f->pid >= 0) {
         kill(f->pid, SIGTERM);
-        f->pid = -1;
         /* XXX SIGKILL? */
     }
 }
