@@ -1,5 +1,5 @@
 /*
- * Functions for working with URIs.
+ * Functions for working with relative URIs.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
