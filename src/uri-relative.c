@@ -46,6 +46,8 @@ uri_absolute(pool_t pool, const char *base, const char *uri, size_t length)
     size_t base_length;
     char *dest;
 
+    assert(uri != NULL || length == 0);
+
     if (base == NULL || length == 0)
         return base;
 
