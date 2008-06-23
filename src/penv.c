@@ -5,7 +5,6 @@
  */
 
 #include "processor.h"
-#include "uri.h"
 #include "session.h"
 
 void
