@@ -46,9 +46,10 @@ uri_absolute(pool_t pool, const char *base, const char *uri, size_t length)
     size_t base_length;
     char *dest;
 
+    assert(base != NULL);
     assert(uri != NULL || length == 0);
 
-    if (base == NULL || length == 0)
+    if (length == 0)
         return base;
 
     if (uri_has_protocol(uri, length))
