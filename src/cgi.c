@@ -329,9 +329,15 @@ cgi_run(bool jail, const char *interpreter, const char *action,
 
     assert(path != NULL);
     assert(uri != NULL);
-    assert(script_name != NULL);
-    assert(path_info != NULL);
-    assert(query_string != NULL);
+
+    if (script_name == NULL)
+        script_name = "";
+
+    if (path_info == NULL)
+        path_info = "";
+
+    if (query_string == NULL)
+        query_string = "";
 
     clearenv();
 
