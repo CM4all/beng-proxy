@@ -5,6 +5,7 @@
  */
 
 #include "uri-relative.h"
+#include "strref.h"
 
 #include <string.h>
 
@@ -75,4 +76,28 @@ uri_absolute(pool_t pool, const char *base, const char *uri, size_t length)
     memcpy(dest + base_length, uri, length);
     dest[base_length + length] = 0;
     return dest;
+}
+
+const struct strref *
+uri_relative(const struct strref *base, struct strref *uri)
+{
+    if (base == NULL || strref_is_empty(base) ||
+        uri == NULL || strref_is_empty(uri))
+        return NULL;
+
+    if (uri->length >= base->length &&
+        memcmp(uri->data, base->data, base->length) == 0) {
+        strref_skip(uri, base->length);
+        return uri;
+    }
+
+    /* special case: http://hostname without trailing slash */
+    if (uri->length == base->length - 1 &&
+        memcmp(uri->data, base->data, base->length) &&
+        memchr(uri->data + 7, '/', uri->length - 7) == NULL) {
+        strref_clear(uri);
+        return uri;
+    }
+
+    return NULL;
 }
