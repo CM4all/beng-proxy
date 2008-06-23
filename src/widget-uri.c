@@ -124,7 +124,9 @@ widget_external_uri(pool_t pool,
 
     pool_mark(tpool, &mark);
 
-    if (focus) {
+    if (focus && relative_uri_length > 0) {
+        assert(relative_uri != NULL);
+
         p = widget_relative_uri(tpool, widget,
                                 relative_uri, relative_uri_length,
                                 &buffer);
