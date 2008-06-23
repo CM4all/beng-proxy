@@ -137,10 +137,6 @@ struct widget_ref {
 
 extern const struct widget_class root_widget_class;
 
-const struct strref *
-widget_class_relative_uri(const struct widget_class *class,
-                          struct strref *uri);
-
 
 static inline void
 widget_init(struct widget *widget, const struct widget_class *class)
