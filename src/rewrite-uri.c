@@ -34,6 +34,9 @@ do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
 
     switch (mode) {
     case URI_MODE_DIRECT:
+        if (widget->class->address.type != RESOURCE_ADDRESS_HTTP)
+            return NULL;
+
         return widget_absolute_uri(pool, widget,
                                    value->data, value->length);
 
