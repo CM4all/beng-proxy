@@ -36,7 +36,7 @@ widget_to_session(struct widget_session *ws, const struct widget *widget)
 static void
 session_to_widget(struct widget *widget, const struct widget_session *ws)
 {
-    assert(widget->lazy.real_uri == NULL);
+    assert(widget->lazy.address == NULL);
 
     widget->from_request.path_info = ws->path_info;
 
@@ -48,7 +48,7 @@ void
 widget_copy_from_request(struct widget *widget, struct processor_env *env)
 {
     assert(widget != NULL);
-    assert(widget->lazy.real_uri == NULL);
+    assert(widget->lazy.address == NULL);
     assert(widget->from_request.path_info == NULL);
     assert(strref_is_empty(&widget->from_request.query_string));
     assert(widget->from_request.proxy_ref == NULL);
@@ -104,7 +104,7 @@ void
 widget_sync_session(struct widget *widget, struct session *session)
 {
     assert(widget != NULL);
-    assert(widget->lazy.real_uri == NULL);
+    assert(widget->lazy.address == NULL);
 
     lock_lock(&session->lock);
 
@@ -163,7 +163,7 @@ widget_copy_from_location(struct widget *widget, struct session *session,
                    qmark + 1, location + location_length - (qmark + 1));
     }
 
-    widget->lazy.real_uri = NULL;
+    widget->lazy.address = NULL;
 
     lock_lock(&session->lock);
 

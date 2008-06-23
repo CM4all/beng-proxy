@@ -129,8 +129,8 @@ widget_request_headers(struct embed *embed, int with_body)
     session = session_get(embed->env->session_id);
 
     if (embed->host_and_port != NULL && session != NULL) {
-        const char *path = uri_path(widget_real_uri(embed->pool,
-                                                    embed->widget));
+        const char *path = uri_path(widget_address(embed->pool,
+                                                   embed->widget)->u.http->uri);
 
         lock_lock(&session->lock);
         cookie_jar_http_header(session->cookies, embed->host_and_port, path,
@@ -365,7 +365,6 @@ widget_http_request(pool_t pool, struct widget *widget,
                     struct async_operation_ref *async_ref)
 {
     struct embed *embed;
-    struct resource_address *address;
     struct strmap *headers;
 
     assert(widget != NULL);
@@ -382,10 +381,6 @@ widget_http_request(pool_t pool, struct widget *widget,
         ? uri_host_and_port(pool, embed->widget->class->address.u.http->uri)
         : NULL;
 
-    address = resource_address_dup(pool, &widget->class->address);
-    if (address->type == RESOURCE_ADDRESS_HTTP)
-        address->u.http->uri = widget_real_uri(pool, widget);
-
     headers = widget_request_headers(embed, widget->from_request.body != NULL);
 
     pool_ref(embed->pool);
@@ -395,7 +390,7 @@ widget_http_request(pool_t pool, struct widget *widget,
 
     resource_get(env->http_cache, pool,
                  widget->from_request.method,
-                 address,
+                 widget_address(pool, widget),
                  headers,
                  widget->from_request.body,
                  &widget_response_handler, embed, async_ref);

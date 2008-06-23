@@ -14,15 +14,23 @@
 #include <assert.h>
 
 void
-widget_determine_real_uri(pool_t pool, struct widget *widget)
+widget_determine_address(pool_t pool, struct widget *widget)
 {
     const char *uri;
+    struct resource_address *address;
 
     assert(widget != NULL);
     assert(widget->class != NULL);
+    assert(widget->from_request.path_info != NULL);
+
+    if (widget->class->address.type != RESOURCE_ADDRESS_HTTP) {
+        /* XXX */
+        widget->lazy.address = &widget->class->address;
+        return;
+    }
+
     assert(widget->class->address.type == RESOURCE_ADDRESS_HTTP);
     assert(widget->class->address.u.http->uri != NULL);
-    assert(widget->from_request.path_info != NULL);
 
     uri = widget->class->address.u.http->uri;
 
@@ -48,14 +56,16 @@ widget_determine_real_uri(pool_t pool, struct widget *widget)
                        widget->query_string,
                        NULL);
 
-    widget->lazy.real_uri = uri;
+    address = resource_address_dup(pool, &widget->class->address);
+    address->u.http->uri = uri;
+    widget->lazy.address = address;
 }
 
 const char *
 widget_absolute_uri(pool_t pool, struct widget *widget,
                     const char *relative_uri, size_t relative_uri_length)
 {
-    return uri_absolute(pool, widget_real_uri(pool, widget),
+    return uri_absolute(pool, widget_address(pool, widget)->u.http->uri,
                         relative_uri, relative_uri_length);
 }
 

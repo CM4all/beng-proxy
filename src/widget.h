@@ -119,9 +119,10 @@ struct widget {
 
         const char *prefix;
 
-        /** the URI which is actually retrieved - this is the same as
-            base_uri, except when the user clicked on a relative link */
-        const char *real_uri;
+        /** the address which is actually retrieved - this is the same
+            as class->address, except when the user clicked on a
+            relative link */
+        const struct resource_address *address;
     } lazy;
 };
 
@@ -167,7 +168,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->from_request.raw = false;
     widget->lazy.path = NULL;
     widget->lazy.prefix = NULL;
-    widget->lazy.real_uri = NULL;
+    widget->lazy.address = NULL;
 }
 
 void
@@ -228,15 +229,15 @@ widget_copy_from_location(struct widget *widget, struct session *session,
                           pool_t pool);
 
 void
-widget_determine_real_uri(pool_t pool, struct widget *widget);
+widget_determine_address(pool_t pool, struct widget *widget);
 
-static inline const char *
-widget_real_uri(pool_t pool, struct widget *widget)
+static inline const struct resource_address *
+widget_address(pool_t pool, struct widget *widget)
 {
-    if (widget->lazy.real_uri == NULL)
-        widget_determine_real_uri(pool, widget);
+    if (widget->lazy.address == NULL)
+        widget_determine_address(pool, widget);
 
-    return widget->lazy.real_uri;
+    return widget->lazy.address;
 }
 
 const char *
