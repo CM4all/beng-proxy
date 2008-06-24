@@ -22,6 +22,7 @@ widget_determine_address(pool_t pool, struct widget *widget)
     assert(widget != NULL);
     assert(widget->class != NULL);
     assert(widget->from_request.path_info != NULL);
+    assert(widget->lazy.address == NULL);
 
     switch (widget->class->address.type) {
     case RESOURCE_ADDRESS_NONE:
@@ -47,7 +48,7 @@ widget_determine_address(pool_t pool, struct widget *widget)
                             widget->from_request.query_string.data,
                             widget->from_request.query_string.length,
                             NULL);
-        else if (widget->from_request.path_info != NULL)
+        else if (*widget->from_request.path_info != 0)
             uri = p_strcat(pool,
                            uri,
                            widget->from_request.path_info,
