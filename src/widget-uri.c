@@ -9,6 +9,7 @@
 #include "uri-parser.h"
 #include "args.h"
 #include "tpool.h"
+#include "strref-pool.h"
 #include "uri-address.h"
 
 #include <assert.h>
@@ -67,7 +68,32 @@ widget_determine_address(pool_t pool, struct widget *widget)
         return;
 
     case RESOURCE_ADDRESS_CGI:
-        break;
+        if (strref_is_empty(&widget->from_request.query_string) &&
+            *widget->from_request.path_info == 0 &&
+            widget->query_string == NULL)
+            break;
+
+        address = resource_address_dup(pool, &widget->class->address);
+
+        if (*widget->from_request.path_info != 0)
+            address->u.cgi.path_info = widget->from_request.path_info;
+
+        if (strref_is_empty(&widget->from_request.query_string))
+            address->u.cgi.query_string = widget->query_string;
+        else if (widget->query_string == NULL)
+            address->u.cgi.query_string =
+                strref_dup(pool, &widget->from_request.query_string);
+        else
+            address->u.cgi.query_string =
+                p_strncat(pool,
+                          widget->from_request.query_string.data,
+                          widget->from_request.query_string.length,
+                          "&", (size_t)1,
+                          widget->query_string, strlen(widget->query_string),
+                          NULL);
+
+        widget->lazy.address = address;
+        return;
     }
 
     widget->lazy.address = &widget->class->address;
