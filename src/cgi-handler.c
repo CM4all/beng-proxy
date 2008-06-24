@@ -14,19 +14,15 @@ cgi_handler(struct request *request2)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
-    const char *script_name, *query_string, *document_root;
+    const char *query_string, *document_root;
 
     pool_ref(request->pool);
 
     query_string = strchr(request->uri, '?');
-    if (query_string == NULL) {
-        script_name = request->uri;
+    if (query_string == NULL)
         query_string = "";
-    } else {
-        script_name = p_strndup(request->pool, request->uri,
-                                query_string - request->uri);
+    else
         ++query_string;
-    }
 
     document_root = tr->document_root;
     if (document_root == NULL)
@@ -36,7 +32,7 @@ cgi_handler(struct request *request2)
             tr->address.u.cgi.interpreter, tr->address.u.cgi.action,
             tr->address.u.cgi.path,
             request->method, request->uri,
-            script_name, tr->address.u.cgi.path_info,
+            tr->address.u.cgi.script_name, tr->address.u.cgi.path_info,
             query_string, document_root,
             request->headers, request->body,
             &response_handler, request2,
