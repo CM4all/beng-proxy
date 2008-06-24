@@ -240,7 +240,8 @@ widget_response_process(struct embed *embed, http_status_t status,
 
     if (content_type == NULL ||
         strncmp(content_type, "text/html", 9) != 0) {
-        daemon_log(2, "widget sent non-HTML response\n");
+        daemon_log(2, "widget '%s' sent non-HTML response\n",
+                   widget_path(embed->widget));
         istream_close(body);
         http_response_handler_invoke_abort(&embed->handler_ref);
         return;
@@ -255,13 +256,15 @@ widget_response_process(struct embed *embed, http_status_t status,
         const char *charset2 = strref_dup(embed->pool, charset);
         istream_t ic = istream_iconv_new(embed->pool, body, "utf-8", charset2);
         if (ic == NULL) {
-            daemon_log(2, "widget sent unknown charset '%s'\n", charset2);
+            daemon_log(2, "widget '%s' sent unknown charset '%s'\n",
+                       widget_path(embed->widget), charset2);
             istream_close(body);
             http_response_handler_invoke_abort(&embed->handler_ref);
             return;
         }
 
-        daemon_log(6, "charset conversion '%s' -> utf-8\n", charset2);
+        daemon_log(6, "widget '%s': charset conversion '%s' -> utf-8\n",
+                   widget_path(embed->widget), charset2);
         body = ic;
 
         headers = strmap_dup(embed->pool, headers);
