@@ -257,17 +257,20 @@ static const struct istream istream_file = {
 istream_t
 istream_file_new(pool_t pool, const char *path, off_t length)
 {
-    struct file *file = (struct file*)istream_new(pool, &istream_file, sizeof(*file));
+    int fd;
+    struct file *file;
 
     assert(length >= -1);
 
-    file->fd = open(path, O_RDONLY);
-    if (file->fd < 0) {
+    fd = open(path, O_RDONLY);
+    if (fd < 0) {
         daemon_log(1, "failed to open '%s': %s\n",
                    path, strerror(errno));
         return NULL;
     }
 
+    file = (struct file*)istream_new(pool, &istream_file, sizeof(*file));
+    file->fd = fd;
     file->rest = length;
     file->buffer = NULL;
     file->path = path;
