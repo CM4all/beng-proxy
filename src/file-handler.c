@@ -243,9 +243,9 @@ file_callback(struct request *request2)
         header_write(headers, "etag", buffer);
     }
 
-    if (tr->content_type != NULL) {
+    if (tr->address.u.local.content_type != NULL) {
         /* content type override from the translation server */
-        header_write(headers, "content-type", tr->content_type);
+        header_write(headers, "content-type", tr->address.u.local.content_type);
     } else {
 #ifndef NO_XATTR
         ssize_t nbytes;

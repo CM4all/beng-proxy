@@ -288,7 +288,7 @@ serve_document_root_file(struct request *request2,
                                          uri->base.length,
                                          index_file, (size_t)10,
                                          NULL);
-    tr->content_type = NULL;
+    tr->address.u.local.content_type = NULL;
 
     file_callback(request2);
 }

@@ -28,6 +28,7 @@ struct resource_address {
     union {
         struct {
             const char *path;
+            const char *content_type;
         } local;
 
         struct uri_with_address *http;
@@ -77,6 +78,8 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_LOCAL:
         assert(src->u.local.path != NULL);
         dest->u.local.path = p_strdup(pool, src->u.local.path);
+        dest->u.local.content_type = src->u.local.content_type == NULL
+            ? NULL : p_strdup(pool, src->u.local.content_type);
         break;
 
     case RESOURCE_ADDRESS_HTTP:

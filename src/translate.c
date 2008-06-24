@@ -392,7 +392,13 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_CONTENT_TYPE:
-        connection->response.content_type = payload;
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
+            daemon_log(2, "misplaced TRANSLATE_CONTENT_TYPE packet\n");
+            break;
+        }
+
+        connection->resource_address->u.local.content_type = payload;
         break;
 
     case TRANSLATE_PROXY:

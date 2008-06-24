@@ -47,7 +47,6 @@ struct translate_response {
     const char *path_info;
     const char *site;
     const char *document_root;
-    const char *content_type;
     const char *redirect;
     bool google_gadget;
     const char *session;
