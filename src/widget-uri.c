@@ -31,6 +31,11 @@ widget_determine_address(pool_t pool, struct widget *widget)
     case RESOURCE_ADDRESS_HTTP:
         assert(widget->class->address.u.http->uri != NULL);
 
+        if (strref_is_empty(&widget->from_request.query_string) &&
+            *widget->from_request.path_info == 0 &&
+            widget->query_string == NULL)
+            break;
+
         uri = widget->class->address.u.http->uri;
 
         if (!strref_is_empty(&widget->from_request.query_string))
