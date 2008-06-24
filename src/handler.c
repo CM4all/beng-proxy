@@ -281,13 +281,13 @@ serve_document_root_file(struct request *request2,
 
     tr->status = 0;
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
-    tr->address.u.path = p_strncat(request->pool,
-                                   config->document_root,
-                                   strlen(config->document_root),
-                                   uri->base.data,
-                                   uri->base.length,
-                                   index_file, (size_t)10,
-                                   NULL);
+    tr->address.u.local.path = p_strncat(request->pool,
+                                         config->document_root,
+                                         strlen(config->document_root),
+                                         uri->base.data,
+                                         uri->base.length,
+                                         index_file, (size_t)10,
+                                         NULL);
     tr->content_type = NULL;
 
     file_callback(request2);

@@ -112,9 +112,9 @@ file_callback(struct request *request2)
     http_status_t status;
 
     assert(tr != NULL);
-    assert(tr->address.u.path != NULL);
+    assert(tr->address.u.local.path != NULL);
 
-    path = tr->address.u.path;
+    path = tr->address.u.local.path;
 
     /* check request */
 

@@ -380,7 +380,7 @@ translate_handle_packet(struct translate_connection *connection,
         }
 
         connection->resource_address->type = RESOURCE_ADDRESS_LOCAL;
-        connection->resource_address->u.path = payload;
+        connection->resource_address->u.local.path = payload;
         break;
 
     case TRANSLATE_PATH_INFO:

@@ -26,7 +26,9 @@ struct resource_address {
     enum resource_address_type type;
 
     union {
-        const char *path;
+        struct {
+            const char *path;
+        } local;
 
         struct uri_with_address *http;
 
@@ -73,8 +75,8 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         break;
 
     case RESOURCE_ADDRESS_LOCAL:
-        assert(src->u.path != NULL);
-        dest->u.path = p_strdup(pool, src->u.path);
+        assert(src->u.local.path != NULL);
+        dest->u.local.path = p_strdup(pool, src->u.local.path);
         break;
 
     case RESOURCE_ADDRESS_HTTP:

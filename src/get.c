@@ -34,7 +34,7 @@ resource_get(struct http_cache *cache, pool_t pool,
         if (body != NULL)
             istream_close(body);
 
-        static_file_get(pool, address->u.path,
+        static_file_get(pool, address->u.local.path,
                         handler, handler_ctx);
         return;
 
