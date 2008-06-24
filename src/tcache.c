@@ -76,7 +76,6 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
 
     dest->status = src->status;
     resource_address_copy(pool, &dest->address, &src->address);
-    dest->path_info = p_strdup_checked(pool, src->path_info);
     dest->site = p_strdup_checked(pool, src->site);
     dest->document_root = p_strdup_checked(pool, src->document_root);
     dest->redirect = p_strdup_checked(pool, src->redirect);

@@ -384,7 +384,15 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_PATH_INFO:
-        connection->response.path_info = payload;
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_CGI) {
+            if (connection->resource_address == NULL ||
+                connection->resource_address->type != RESOURCE_ADDRESS_LOCAL)
+                daemon_log(2, "misplaced TRANSLATE_PATH_INFO packet\n");
+            break;
+        }
+
+        connection->resource_address->u.cgi.path_info = payload;
         break;
 
     case TRANSLATE_SITE:

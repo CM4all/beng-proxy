@@ -44,7 +44,6 @@ struct translate_response {
 
     struct resource_address address;
 
-    const char *path_info;
     const char *site;
     const char *document_root;
     const char *redirect;
