@@ -23,42 +23,49 @@ widget_determine_address(pool_t pool, struct widget *widget)
     assert(widget->class != NULL);
     assert(widget->from_request.path_info != NULL);
 
-    if (widget->class->address.type != RESOURCE_ADDRESS_HTTP) {
-        /* XXX */
-        widget->lazy.address = &widget->class->address;
+    switch (widget->class->address.type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+        break;
+
+    case RESOURCE_ADDRESS_HTTP:
+        assert(widget->class->address.u.http->uri != NULL);
+
+        uri = widget->class->address.u.http->uri;
+
+        if (!strref_is_empty(&widget->from_request.query_string))
+            uri = p_strncat(pool,
+                            uri, strlen(uri),
+                            widget->from_request.path_info,
+                            strlen(widget->from_request.path_info),
+                            "?", (size_t)1,
+                            widget->from_request.query_string.data,
+                            widget->from_request.query_string.length,
+                            NULL);
+        else if (widget->from_request.path_info != NULL)
+            uri = p_strcat(pool,
+                           uri,
+                           widget->from_request.path_info,
+                           NULL);
+
+        if (widget->query_string != NULL)
+            uri = p_strcat(pool,
+                           uri,
+                           strchr(uri, '?') == NULL ? "?" : "&",
+                           widget->query_string,
+                           NULL);
+
+        address = resource_address_dup(pool, &widget->class->address);
+        address->u.http->uri = uri;
+        widget->lazy.address = address;
         return;
+
+    case RESOURCE_ADDRESS_CGI:
+        break;
     }
 
-    assert(widget->class->address.type == RESOURCE_ADDRESS_HTTP);
-    assert(widget->class->address.u.http->uri != NULL);
-
-    uri = widget->class->address.u.http->uri;
-
-    if (!strref_is_empty(&widget->from_request.query_string))
-        uri = p_strncat(pool,
-                        uri, strlen(uri),
-                        widget->from_request.path_info,
-                        strlen(widget->from_request.path_info),
-                        "?", (size_t)1,
-                        widget->from_request.query_string.data,
-                        widget->from_request.query_string.length,
-                        NULL);
-    else if (widget->from_request.path_info != NULL)
-        uri = p_strcat(pool,
-                       uri,
-                       widget->from_request.path_info,
-                       NULL);
-
-    if (widget->query_string != NULL)
-        uri = p_strcat(pool,
-                       uri,
-                       strchr(uri, '?') == NULL ? "?" : "&",
-                       widget->query_string,
-                       NULL);
-
-    address = resource_address_dup(pool, &widget->class->address);
-    address->u.http->uri = uri;
-    widget->lazy.address = address;
+    widget->lazy.address = &widget->class->address;
+    return;
 }
 
 const char *
