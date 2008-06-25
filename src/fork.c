@@ -338,7 +338,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         f->callback = callback;
         f->callback_ctx = ctx;
 
-        child_register(f->pid, fork_child_callback, f);
+        child_register(pool, f->pid, fork_child_callback, f);
 
         /* XXX CLOEXEC */
 

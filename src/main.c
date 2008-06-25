@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 
     init_signals(&instance);
 
-    children_init(instance.pool);
+    children_init();
 
     bret = session_manager_init();
     if (!bret) {

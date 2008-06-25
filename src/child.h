@@ -14,7 +14,7 @@
 typedef void (*child_callback_t)(int status, void *ctx);
 
 void
-children_init(pool_t pool);
+children_init(void);
 
 /**
  * Begin shutdown of this subsystem: wait for all children to exit,
@@ -30,6 +30,6 @@ void
 children_event_del(void);
 
 void
-child_register(pid_t pid, child_callback_t callback, void *ctx);
+child_register(pool_t pool, pid_t pid, child_callback_t callback, void *ctx);
 
 #endif
