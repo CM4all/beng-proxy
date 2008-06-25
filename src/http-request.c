@@ -82,8 +82,6 @@ http_request(pool_t pool,
     assert(handler->response != NULL);
     assert(body == NULL || !istream_has_handler(body));
 
-    pool_ref(pool);
-
     hr = p_malloc(pool, sizeof(*hr));
     hr->pool = pool;
     hr->method = method;
@@ -105,7 +103,6 @@ http_request(pool_t pool,
         slash = strchr(p, '/');
         if (slash == NULL || slash == p) {
             http_response_handler_invoke_abort(&hr->handler);
-            pool_unref(hr->pool);
             return;
         }
 
@@ -127,11 +124,12 @@ http_request(pool_t pool,
             host_and_port = p_strndup(hr->pool, p, qmark - p);
     } else {
         http_response_handler_invoke_abort(&hr->handler);
-        pool_unref(hr->pool);
         return;
     }
 
     header_write(hr->headers, "connection", "keep-alive");
+
+    pool_ref(pool);
 
     hstock_get(http_client_stock,
                host_and_port, uwa,
