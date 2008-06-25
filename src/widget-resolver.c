@@ -30,6 +30,8 @@ struct widget_resolver_listener {
 struct widget_resolver {
     struct list_head listeners;
 
+    pool_t pool;
+
     struct async_operation_ref async_ref;
 };
 
@@ -52,10 +54,12 @@ wrl_abort(struct async_operation *ao)
     struct widget_resolver *resolver = listener->resolver;
 
     list_remove(&listener->siblings);
-    if (list_empty(&resolver->listeners))
+    if (list_empty(&resolver->listeners)) {
         /* the last listener has been aborted: abort the widget
            registry */
         async_abort(&resolver->async_ref);
+        pool_unref(resolver->pool);
+    }
 
     pool_unref(listener->pool);
 }
@@ -91,6 +95,8 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
         listener->callback(listener->callback_ctx);
         pool_unref(listener->pool);
     }
+
+    pool_unref(resolver->pool);
 }
 
 
@@ -118,8 +124,10 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
 
     resolver = widget->resolver;
     if (resolver == NULL) {
+        pool_ref(widget_pool);
         resolver = p_malloc(widget_pool, sizeof(*widget->resolver));
         list_init(&resolver->listeners);
+        resolver->pool = widget_pool;
         widget->resolver = resolver;
         new = true;
     }
