@@ -108,6 +108,8 @@ iconv_input_data(const void *data, size_t length, void *ctx)
     struct istream_iconv *ic = ctx;
     size_t nbytes;
 
+    assert(ic->input != NULL);
+
     pool_ref(ic->output.pool);
     nbytes = iconv_feed(ic, data, length);
     pool_unref(ic->output.pool);
@@ -184,7 +186,8 @@ istream_iconv_close(istream_t istream)
 
     ic->buffer = NULL;
 
-    istream_free_handler(&ic->input);
+    if (ic->input != NULL)
+        istream_free_handler(&ic->input);
     iconv_close(ic->iconv);
     istream_deinit_abort(&ic->output);
 }
