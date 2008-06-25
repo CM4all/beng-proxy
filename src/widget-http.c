@@ -207,7 +207,6 @@ widget_response_redirect(struct embed *embed, const char *location,
     ++embed->num_redirects;
 
     istream_close(body);
-    pool_ref(embed->pool);
 
     uwa = uri_address_dup(embed->pool, embed->widget->class->address.u.http);
     uwa->uri = location;
@@ -322,7 +321,6 @@ widget_response_response(http_status_t status, struct strmap *headers,
             const char *location = strmap_get(headers, "location");
             if (location != NULL &&
                 widget_response_redirect(embed, location, body)) {
-                pool_unref(embed->pool);
                 return;
             }
         }
@@ -333,8 +331,6 @@ widget_response_response(http_status_t status, struct strmap *headers,
                                               status, headers, body);
     else
         widget_response_process(embed, status, headers, body);
-
-    pool_unref(embed->pool);
 }
 
 static void
@@ -343,7 +339,6 @@ widget_response_abort(void *ctx)
     struct embed *embed = ctx;
 
     http_response_handler_invoke_abort(&embed->handler_ref);
-    pool_unref(embed->pool);
 }
 
 static const struct http_response_handler widget_response_handler = {
@@ -382,8 +377,6 @@ widget_http_request(pool_t pool, struct widget *widget,
         : NULL;
 
     headers = widget_request_headers(embed, widget->from_request.body != NULL);
-
-    pool_ref(embed->pool);
 
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
     embed->async_ref = async_ref;
