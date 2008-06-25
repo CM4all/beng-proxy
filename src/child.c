@@ -49,6 +49,8 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         struct child *child = find_child_by_pid(pid);
+        pool_t pool;
+
         if (child == NULL)
             continue;
 
@@ -57,8 +59,10 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
             children_event_del();
 
         child->callback(status, child->callback_ctx);
-        p_free(child->pool, child);
-        pool_unref(child->pool);
+
+        pool = child->pool;
+        p_free(pool, child);
+        pool_unref(pool);
     }
 
     pool_commit();
