@@ -120,7 +120,7 @@ tcache_callback(const struct translate_response *response, void *ctx)
     struct tcache_request *tcr = ctx;
 
     if (tcache_response_evaluate(response)) {
-        pool_t pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 256);
+        pool_t pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 512);
         struct tcache_item *item = p_malloc(pool, sizeof(*item));
 
         cache_log(4, "translate_cache: store %s\n", tcr->key);
