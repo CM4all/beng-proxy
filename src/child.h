@@ -32,4 +32,7 @@ children_event_del(void);
 void
 child_register(pid_t pid, child_callback_t callback, void *ctx);
 
+void
+child_clear(pid_t pid);
+
 #endif

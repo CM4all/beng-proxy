@@ -56,7 +56,8 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
         if (shutdown && list_empty(&children))
             children_event_del();
 
-        child->callback(status, child->callback_ctx);
+        if (child->callback != NULL)
+            child->callback(status, child->callback_ctx);
         p_free(pool, child);
     }
 
@@ -112,3 +113,15 @@ child_register(pid_t pid, child_callback_t callback, void *ctx)
     child->callback_ctx = ctx;
     list_add(&child->siblings, &children);
 }
+
+void
+child_clear(pid_t pid)
+{
+    struct child *child = find_child_by_pid(pid);
+
+    assert(child != NULL);
+    assert(child->callback != NULL);
+
+    child->callback = NULL;
+}
+
