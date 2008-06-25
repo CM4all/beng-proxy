@@ -15,7 +15,6 @@
 struct child {
     struct list_head siblings;
 
-    pool_t pool;
     pid_t pid;
 
     child_callback_t callback;
@@ -23,6 +22,7 @@ struct child {
 };
 
 static bool shutdown = false;
+static pool_t pool;
 static struct list_head children;
 static struct event sigchld_event;
 
@@ -49,8 +49,6 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         struct child *child = find_child_by_pid(pid);
-        pool_t pool;
-
         if (child == NULL)
             continue;
 
@@ -59,19 +57,18 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
             children_event_del();
 
         child->callback(status, child->callback_ctx);
-
-        pool = child->pool;
         p_free(pool, child);
-        pool_unref(pool);
     }
 
     pool_commit();
 }
 
 void
-children_init(void)
+children_init(pool_t _pool)
 {
     assert(!shutdown);
+
+    pool = _pool;
 
     list_init(&children);
 
@@ -104,15 +101,12 @@ children_event_del(void)
 }
 
 void
-child_register(pool_t pool, pid_t pid, child_callback_t callback, void *ctx)
+child_register(pid_t pid, child_callback_t callback, void *ctx)
 {
     struct child *child = p_malloc(pool, sizeof(*child));
 
     assert(!shutdown);
 
-    pool_ref(pool);
-
-    child->pool = pool;
     child->pid = pid;
     child->callback = callback;
     child->callback_ctx = ctx;
