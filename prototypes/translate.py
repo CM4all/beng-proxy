@@ -156,6 +156,14 @@ class Translation(Protocol):
             if m:
                 self._write_packet(TRANSLATE_DOCUMENT_ROOT, m.group(1))
                 continue
+            m = re.match(r'^daction\s+"(\S+)"$', line)
+            if m:
+                self._write_packet(TRANSLATE_ACTION, m.group(1))
+                continue
+            m = re.match(r'^dinterpreter\s+"(\S+)"$', line)
+            if m:
+                self._write_packet(TRANSLATE_INTERPRETER, m.group(1))
+                continue
             if line == 'process':
                 self._write_packet(TRANSLATE_PROCESS)
             elif line == 'container':
