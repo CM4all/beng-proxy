@@ -152,6 +152,10 @@ class Translation(Protocol):
             if m:
                 self._write_packet(TRANSLATE_PATH, m.group(1))
                 continue
+            m = re.match(r'^document_root\s+"(\S+)"$', line)
+            if m:
+                self._write_packet(TRANSLATE_DOCUMENT_ROOT, m.group(1))
+                continue
             if line == 'process':
                 self._write_packet(TRANSLATE_PROCESS)
             elif line == 'container':

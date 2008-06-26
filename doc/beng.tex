@@ -309,8 +309,16 @@ The translation server's response consists of these packets:
 \texttt{STATUS} & in case of a lookup error, this packet provides the
 HTTP status code \\
 \hline
-\texttt{PROXY} & the base HTTP URL of the widget server; may be local
-path of a Unix socket \\
+
+\texttt{PATH}, \texttt{CGI}, \texttt{PROXY} & choose one of these
+packets: a static widget (local file path), a local CGI script, or a
+HTTP server \\
+
+\hline
+
+\texttt{DOCUMENT\_ROOT}, \texttt{JAILCGI} & optional flags for CGI
+widgets \\
+
 \hline
 \texttt{PROCESS} & enable the BENG processor \\
 \hline
@@ -681,5 +689,7 @@ Instead of \texttt{server}, you can use \texttt{cgi} to specify the
 absolute path of a CGI script which will serve the widget, or
 \texttt{path} for a static widget.
 
+For CGI widgets, you can also specify a \texttt{document\_root} and
+the \texttt{jailcgi} flag.
 
 \end{document}
