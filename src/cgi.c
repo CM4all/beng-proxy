@@ -371,7 +371,10 @@ cgi_run(bool jail, const char *interpreter, const char *action,
         if (action != NULL)
             setenv("JAILCGI_ACTION", action, 1);
     } else {
-        /* XXX interpreter, action */
+        if (action != NULL)
+            path = action;
+
+        /* XXX interpreter */
     }
 
     strmap_rewind(headers);
