@@ -211,6 +211,12 @@ remote HTTP server (proxy mode) \\
 \texttt{CGI} & a local path which is executed as CGI script \\
 
 \hline
+
+\texttt{REDIRECT} & another alternative to \texttt{PATH}: redirect the
+HTTP client to this URL; \texttt{STATUS} must be set to one of the
+HTTP 3xx codes \\
+
+\hline
 \texttt{PATH\_INFO} & optional URI substring which was left after
 finding the file \\
 \hline
@@ -220,10 +226,6 @@ resource belongs to \\
 \texttt{DOCUMENT\_ROOT} & base directory of the site \\
 \hline
 \texttt{CONTENT\_TYPE} & MIME type of the file (optional) \\
-\hline
-\texttt{REDIRECT} & another alternative to \texttt{PATH}: redirect the
-HTTP client to this URL; \texttt{STATUS} must be set to one of the
-HTTP 3xx codes \\
 \hline
 \texttt{FILTER} & absolute URL of the filter, see section \ref{filter} \\
 \hline
