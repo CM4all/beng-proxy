@@ -335,6 +335,7 @@ cgi_run(bool jail, const char *interpreter, const char *action,
     const struct strmap_pair *pair;
     char buffer[512] = "HTTP_";
     size_t i;
+    const char *arg = NULL;
 
     assert(path != NULL);
     assert(uri != NULL);
@@ -374,7 +375,10 @@ cgi_run(bool jail, const char *interpreter, const char *action,
         if (action != NULL)
             path = action;
 
-        /* XXX interpreter */
+        if (interpreter != NULL) {
+            arg = path;
+            path = interpreter;
+        }
     }
 
     strmap_rewind(headers);
@@ -393,7 +397,7 @@ cgi_run(bool jail, const char *interpreter, const char *action,
         setenv(buffer, pair->value, 1);
     }
 
-    execl(path, path, NULL);
+    execl(path, path, arg, NULL);
     fprintf(stderr, "exec('%s') failed: %s\n",
             path, strerror(errno));
     _exit(2);
