@@ -1,0 +1,5 @@
+public void main(Request requ, Response resp) {
+    resp.setContentType("text/html");
+    Writer out = resp.getWriter();
+    out.write("Hello, COMA!");
+}
