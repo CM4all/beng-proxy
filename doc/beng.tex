@@ -197,7 +197,19 @@ server, see section \ref{sessions} \\
 \texttt{STATUS} & HTTP status code, encoded as \texttt{uint16\_t};
 this parameter is usually not used \\
 \hline
+
 \texttt{PATH} & absolute path of the local file to be served \\
+
+\hline
+
+\texttt{PROXY} & this URL parameter may be specified instead of
+\texttt{PATH} to tell \emph{beng-proxy} to obtain the resource from a
+remote HTTP server (proxy mode) \\
+
+\hline
+
+\texttt{CGI} & a local path which is executed as CGI script \\
+
 \hline
 \texttt{PATH\_INFO} & optional URI substring which was left after
 finding the file \\
@@ -208,10 +220,6 @@ resource belongs to \\
 \texttt{DOCUMENT\_ROOT} & base directory of the site \\
 \hline
 \texttt{CONTENT\_TYPE} & MIME type of the file (optional) \\
-\hline
-\texttt{PROXY} & this URL parameter may be specified instead of
-\texttt{PATH} to tell \emph{beng-proxy} to obtain the resource from a
-remote HTTP server (proxy mode) \\
 \hline
 \texttt{REDIRECT} & another alternative to \texttt{PATH}: redirect the
 HTTP client to this URL; \texttt{STATUS} must be set to one of the
@@ -229,10 +237,6 @@ server, see section \ref{sessions} \\
 \hline
 \texttt{LANGUAGE} & overrides the \texttt{Accept-Language} request
 header for this session \\
-\hline
-
-\texttt{CGI} & a local path which is executed as CGI script \\
-
 \hline
 
 \texttt{JAILCGI} & enable JailCGI \\
