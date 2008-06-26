@@ -227,7 +227,11 @@ resource belongs to \\
 \hline
 \texttt{CONTENT\_TYPE} & MIME type of the file (optional) \\
 \hline
-\texttt{FILTER} & absolute URL of the filter, see section \ref{filter} \\
+
+\texttt{FILTER} & the next resource address (\texttt{PROXY},
+\texttt{CGI}) will denote an output filter, see section \ref{filter}
+\\
+
 \hline
 \texttt{PROCESS} & enables the \emph{beng-proxy} processor, see
 section \ref{processor} \\
@@ -245,10 +249,9 @@ header for this session \\
 
 \hline
 
-\texttt{ADDRESS} & after each packet which provides a host name
-(\texttt{PROXY}, \texttt{FILTER}), there must be one or more
-\texttt{ADDRESS} packets which specify the resolved addresses.  The
-payload of each is a \texttt{struct sockaddr}. \\
+\texttt{ADDRESS} & after each \texttt{PROXY} packet, there must be one
+or more \texttt{ADDRESS} packets which specify the resolved addresses.
+The payload of each is a \texttt{struct sockaddr}. \\
 
 \hline
 \end{tabular}
@@ -275,8 +278,8 @@ the request body.
 \label{filter}
 
 The translation server can tell \emph{beng-proxy} to apply a filter to
-the resource by sending the \texttt{FILTER} command.  This is an
-absolute URL which points to a HTTP server.  \emph{beng-proxy} sends
+the resource by sending the \texttt{FILTER} command.  This is a
+pointer to a HTTP server (or a CGI script).  \emph{beng-proxy} sends
 the original resource with a POST request and expects the filtered
 resource as response.
 

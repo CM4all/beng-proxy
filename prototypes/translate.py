@@ -211,7 +211,8 @@ class Translation(Protocol):
             self._write_packet(TRANSLATE_USER, user)
         if session is not None:
             self._write_packet(TRANSLATE_SESSION, session)
-        #self._write_packet(TRANSLATE_FILTER, 'http://cfatest01.intern.cm-ag/filter.py')
+        #self._write_packet(TRANSLATE_FILTER)
+        # .... PROXY 'http://cfatest01.intern.cm-ag/filter.py'
         if not cgi and path[-5:] == '.html':
             self._write_packet(TRANSLATE_CONTENT_TYPE, 'text/html; charset=utf-8')
             self._write_packet(TRANSLATE_PROCESS)

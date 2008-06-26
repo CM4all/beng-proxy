@@ -431,13 +431,10 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_FILTER:
-        if (payload != NULL) {
-            transformation = translate_add_transformation(connection);
-            transformation->type = TRANSFORMATION_FILTER;
-            transformation->u.filter.type = RESOURCE_ADDRESS_HTTP;
-            transformation->u.filter.u.http =
-                uri_address_new(connection->pool, payload);
-        }
+        transformation = translate_add_transformation(connection);
+        transformation->type = TRANSFORMATION_FILTER;
+        transformation->u.filter.type = RESOURCE_ADDRESS_NONE;
+        connection->resource_address = &transformation->u.filter;
         break;
 
     case TRANSLATE_PROCESS:
