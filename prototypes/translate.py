@@ -156,11 +156,11 @@ class Translation(Protocol):
             if m:
                 self._write_packet(TRANSLATE_DOCUMENT_ROOT, m.group(1))
                 continue
-            m = re.match(r'^daction\s+"(\S+)"$', line)
+            m = re.match(r'^action\s+"(\S+)"$', line)
             if m:
                 self._write_packet(TRANSLATE_ACTION, m.group(1))
                 continue
-            m = re.match(r'^dinterpreter\s+"(\S+)"$', line)
+            m = re.match(r'^interpreter\s+"(\S+)"$', line)
             if m:
                 self._write_packet(TRANSLATE_INTERPRETER, m.group(1))
                 continue
