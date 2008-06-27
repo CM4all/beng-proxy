@@ -361,6 +361,7 @@ cgi_run(bool jail, const char *interpreter, const char *action,
     setenv("PATH_INFO", path_info, 1);
     setenv("QUERY_STRING", query_string, 1);
     setenv("DOCUMENT_ROOT", document_root, 1);
+    setenv("SERVER_SOFTWARE", "beng-proxy v" VERSION, 1);
 
     if (jail) {
         setenv("JAILCGI_FILENAME", path, 1);
