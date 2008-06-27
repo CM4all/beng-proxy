@@ -39,6 +39,7 @@ TRANSLATE_GOOGLE_GADGET = 25
 TRANSLATE_JAILCGI = 26
 TRANSLATE_INTERPRETER = 27
 TRANSLATE_ACTION = 28
+TRANSLATE_SCRIPT_NAME = 29
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
 
@@ -151,6 +152,10 @@ class Translation(Protocol):
             m = re.match(r'^path\s+"(\S+)"$', line)
             if m:
                 self._write_packet(TRANSLATE_PATH, m.group(1))
+                continue
+            m = re.match(r'^script_name\s+"(\S+)"$', line)
+            if m:
+                self._write_packet(TRANSLATE_SCRIPT_NAME, m.group(1))
                 continue
             m = re.match(r'^document_root\s+"(\S+)"$', line)
             if m:

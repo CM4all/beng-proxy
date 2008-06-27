@@ -38,6 +38,7 @@ enum beng_translation_command {
     TRANSLATE_JAILCGI = 26,
     TRANSLATE_INTERPRETER = 27,
     TRANSLATE_ACTION = 28,
+    TRANSLATE_SCRIPT_NAME = 29,
 };
 
 struct beng_translation_header {

@@ -513,6 +513,17 @@ translate_handle_packet(struct translate_connection *connection,
         connection->resource_address->u.cgi.action = payload;
         break;
 
+    case TRANSLATE_SCRIPT_NAME:
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_CGI ||
+            connection->resource_address->u.cgi.script_name != NULL) {
+            daemon_log(2, "misplaced TRANSLATE_SCRIPT_NAME packet\n");
+            break;
+        }
+
+        connection->resource_address->u.cgi.script_name = payload;
+        break;
+
     case TRANSLATE_GOOGLE_GADGET:
         connection->response.google_gadget = true;
         break;
