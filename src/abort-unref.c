@@ -16,6 +16,11 @@ struct unref_on_abort {
     pool_t pool;
     struct async_operation operation;
     struct async_operation_ref ref;
+
+#ifdef TRACE
+    const char *file;
+    unsigned line;
+#endif
 };
 
 /*
@@ -33,9 +38,13 @@ static void
 uoa_abort(struct async_operation *ao)
 {
     struct unref_on_abort *uoa = async_to_uoa(ao);
+#ifdef TRACE
+    const char *file = uoa->file;
+    unsigned line = uoa->line;
+#endif
 
     async_abort(&uoa->ref);
-    pool_unref(uoa->pool);
+    pool_unref_fwd(uoa->pool);
 }
 
 static struct async_operation_class uoa_operation = {
@@ -49,13 +58,19 @@ static struct async_operation_class uoa_operation = {
  */
 
 struct async_operation_ref *
-async_unref_on_abort(pool_t pool, struct async_operation_ref *async_ref)
+async_unref_on_abort_impl(pool_t pool, struct async_operation_ref *async_ref
+                          TRACE_ARGS_DECL)
 {
     struct unref_on_abort *uoa = p_malloc(pool, sizeof(*uoa));
 
     uoa->pool = pool;
     async_init(&uoa->operation, &uoa_operation);
     async_ref_set(async_ref, &uoa->operation);
+
+#ifdef TRACE
+    uoa->file = file;
+    uoa->line = line;
+#endif
 
     return &uoa->ref;
 }

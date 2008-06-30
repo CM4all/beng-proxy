@@ -13,10 +13,14 @@
 #define __BENG_ABORT_UNREF_H
 
 #include "pool.h"
+#include "trace.h"
 
 struct async_operation_ref;
 
 struct async_operation_ref *
-async_unref_on_abort(pool_t pool, struct async_operation_ref *async_ref);
+async_unref_on_abort_impl(pool_t pool, struct async_operation_ref *async_ref
+                          TRACE_ARGS_DECL);
+
+#define async_unref_on_abort(pool, async_ref) async_unref_on_abort_impl(pool, async_ref TRACE_ARGS)
 
 #endif
