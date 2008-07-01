@@ -584,7 +584,7 @@ istream_replace_new(pool_t pool, istream_t input)
     replace->finished = false;
     replace->read_locked = false;
 
-    replace->buffer = growing_buffer_new(pool, 4096);
+    replace->buffer = growing_buffer_new(replace->output.pool, 4096);
     replace->source_length = 0;
     replace->position = 0;
 
