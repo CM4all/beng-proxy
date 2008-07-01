@@ -235,7 +235,7 @@ istream_tee_new(pool_t pool, istream_t input, bool fragile)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    istream_init(&tee->outputs[1].istream, &istream_tee2, pool);
+    istream_init(&tee->outputs[1].istream, &istream_tee2, tee->outputs[0].istream.pool);
 
     tee->outputs[0].enabled = 1;
     tee->outputs[1].enabled = 1;
