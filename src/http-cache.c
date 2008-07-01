@@ -549,7 +549,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
                  method, uwa,
                  headers == NULL ? NULL : headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
-                 async_unref_on_abort(pool, async_ref));
+                 async_ref);
 }
 
 static void
@@ -610,7 +610,7 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
                  method, uwa,
                  headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
-                 async_unref_on_abort(pool, async_ref));
+                 async_ref);
 }
 
 static void
