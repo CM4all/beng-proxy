@@ -350,7 +350,6 @@ http_cache_response_body_eof(void *ctx)
 
     http_cache_put(request);
     request->input = NULL;
-    pool_unref(request->pool);
 }
 
 static void
@@ -361,7 +360,6 @@ http_cache_response_body_abort(void *ctx)
     cache_log(4, "http_cache: body_abort %s\n", request->url);
 
     request->input = NULL;
-    pool_unref(request->pool);
 }
 
 static const struct istream_handler http_cache_response_body_handler = {
@@ -382,7 +380,6 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
                              void *ctx)
 {
     struct http_cache_request *request = ctx;
-    pool_t request_pool = request->pool;
     off_t available;
 
     if (request->item != NULL && status == HTTP_STATUS_NOT_MODIFIED) {
@@ -392,7 +389,6 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         http_cache_serve(request->item, request->pool,
                          request->url, NULL,
                          request->handler.handler, request->handler.ctx);
-        pool_unref(request->pool);
         return;
     }
 
@@ -409,7 +405,6 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
-        pool_unref(request->pool);
         return;
     }
 
@@ -449,7 +444,6 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
-    pool_unref(request_pool);
 }
 
 static void 
@@ -460,7 +454,6 @@ http_cache_response_abort(void *ctx)
     cache_log(4, "http_cache: response_abort %s\n", request->url);
 
     http_response_handler_invoke_abort(&request->handler);
-    pool_unref(request->pool);
 }
 
 static const struct http_response_handler http_cache_response_handler = {
@@ -552,7 +545,6 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
 
     cache_log(4, "http_cache: miss %s\n", uwa->uri);
 
-    pool_ref(pool);
     http_request(pool, cache->stock,
                  method, uwa,
                  headers == NULL ? NULL : headers_dup(pool, headers), body,
@@ -614,7 +606,6 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
     if (item->info.etag != NULL)
         strmap_set(headers, "if-none-match", item->info.etag);
 
-    pool_ref(pool);
     http_request(pool, cache->stock,
                  method, uwa,
                  headers_dup(pool, headers), body,
