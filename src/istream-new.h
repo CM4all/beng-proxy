@@ -15,13 +15,8 @@ istream_init_impl(struct istream *istream, const struct istream *class,
 {
     *istream = *class;
 
-#ifdef ISTREAM_POOL
-    istream->pool = pool_new_libc(pool, "istream");
-    TRACE_ARGS_IGNORE;
-#else
     istream->pool = pool;
     pool_ref_fwd(pool);
-#endif
 }
 
 #define istream_init(istream, class, pool) istream_init_impl(istream, class, pool TRACE_ARGS)
@@ -31,11 +26,21 @@ istream_new_impl(pool_t pool,
                  const struct istream *class, size_t size
                  TRACE_ARGS_DECL)
 {
-    struct istream *istream = p_malloc(pool, size);
+    struct istream *istream;
 
     assert(size >= sizeof(*istream));
 
+#ifdef ISTREAM_POOL
+    pool = pool_new_libc(pool, "istream");
+#endif
+
+    istream = p_malloc(pool, size);
     istream_init_impl(istream, class, pool TRACE_ARGS_FWD);
+
+#ifdef ISTREAM_POOL
+    pool_unref(pool);
+#endif
+
     return istream;
 }
 
