@@ -35,6 +35,7 @@ http_client_connection_graceful(http_client_connection_t connection);
 
 void
 http_client_request(http_client_connection_t connection,
+                    pool_t pool,
                     http_method_t method, const char *uri,
                     struct growing_buffer *headers,
                     istream_t body,

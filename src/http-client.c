@@ -42,7 +42,7 @@ struct http_client_connection {
 
     /* request */
     struct {
-        pool_t pool;
+        pool_t caller_pool, pool;
         istream_t istream;
         char request_line_buffer[1024];
         char content_length_buffer[32];
@@ -372,6 +372,7 @@ http_client_parse_headers(http_client_connection_t connection)
     if (http_client_connection_valid(connection) &&
         connection->response.read_state != READ_HEADERS) {
         bool empty_response = connection->response.body == NULL;
+        pool_t caller_pool = connection->request.caller_pool;
 
         assert(connection->response.read_state == READ_BODY);
 
@@ -379,6 +380,7 @@ http_client_parse_headers(http_client_connection_t connection)
                                               connection->response.status,
                                               connection->response.headers,
                                               connection->response.body);
+        pool_unref(caller_pool);
 
         if (empty_response && http_client_connection_valid(connection))
             http_client_response_finished(connection);
@@ -660,7 +662,10 @@ http_client_request_close(http_client_connection_t connection)
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
            being freed */
+        pool_t caller_pool = connection->request.caller_pool;
+
         http_response_handler_invoke_abort(&connection->request.handler);
+        pool_unref(caller_pool);
     }
 
     pool_unref(pool);
@@ -808,6 +813,7 @@ static struct async_operation_class http_client_request_async_operation = {
 
 void
 http_client_request(http_client_connection_t connection,
+                    pool_t pool,
                     http_method_t method, const char *uri,
                     struct growing_buffer *headers,
                     istream_t body,
@@ -823,6 +829,8 @@ http_client_request(http_client_connection_t connection,
     assert(handler != NULL);
     assert(handler->response != NULL);
 
+    pool_ref(pool);
+    connection->request.caller_pool = pool;
     connection->request.pool = pool_new_linear(connection->pool, "http_client_request", 8192);
     http_response_handler_set(&connection->request.handler, handler, ctx);
 
