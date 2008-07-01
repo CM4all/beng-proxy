@@ -349,6 +349,9 @@ cgi_run(bool jail, const char *interpreter, const char *action,
     if (query_string == NULL)
         query_string = "";
 
+    if (document_root == NULL)
+        document_root = "/var/www";
+
     clearenv();
 
     setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
