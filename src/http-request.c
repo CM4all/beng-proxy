@@ -49,7 +49,7 @@ http_request_stock_callback(void *ctx, struct stock_item *item)
             istream_close(hr->body);
     } else
         http_client_request(http_stock_item_get(item),
-                            item->pool,
+                            hr->pool,
                             hr->method, hr->uri, hr->headers, hr->body,
                             hr->handler.handler, hr->handler.ctx,
                             hr->async_ref);
