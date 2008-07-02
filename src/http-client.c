@@ -207,7 +207,10 @@ http_client_uncork(http_client_connection_t connection)
 }
 */
 
-static void
+/**
+ * @return false if the connection is closed
+ */
+static bool
 http_client_parse_status_line(http_client_connection_t connection,
                               const char *line, size_t length)
 {
@@ -231,20 +234,24 @@ http_client_parse_status_line(http_client_connection_t connection,
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
         daemon_log(2, "no HTTP status found\n");
         http_client_connection_close(connection);
-        return;
+        return false;
     }
 
     connection->response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
     if (unlikely(connection->response.status < 100 || connection->response.status > 599)) {
         http_client_connection_close(connection);
-        return;
+        return false;
     }
 
     connection->response.read_state = READ_HEADERS;
     connection->response.headers = strmap_new(connection->request.pool, 64);
+    return true;
 }
 
-static void
+/**
+ * @return false if the connection is closed
+ */
+static bool
 http_client_headers_finished(http_client_connection_t connection)
 {
     const char *header_connection, *value;
@@ -258,7 +265,7 @@ http_client_headers_finished(http_client_connection_t connection)
     if (http_status_is_empty(connection->response.status)) {
         connection->response.body = NULL;
         connection->response.read_state = READ_BODY;
-        return;
+        return true;
     }
 
     value = strmap_get(connection->response.headers, "transfer-encoding");
@@ -270,7 +277,7 @@ http_client_headers_finished(http_client_connection_t connection)
             if (connection->keep_alive) {
                 daemon_log(2, "no Content-Length header in HTTP response\n");
                 http_client_connection_close(connection);
-                return;
+                return false;
             }
             content_length = (off_t)-1;
         } else {
@@ -278,7 +285,7 @@ http_client_headers_finished(http_client_connection_t connection)
             if (unlikely(*endptr != 0 || content_length < 0)) {
                 daemon_log(2, "invalid Content-Length header in HTTP response\n");
                 http_client_connection_close(connection);
-                return;
+                return false;
             }
         }
     } else {
@@ -301,9 +308,13 @@ http_client_headers_finished(http_client_connection_t connection)
                          connection->keep_alive);
 
     connection->response.read_state = READ_BODY;
+    return true;
 }
 
-static void
+/**
+ * @return false if the connection is closed
+ */
+static bool
 http_client_handle_line(http_client_connection_t connection,
                         const char *line, size_t length)
 {
@@ -313,13 +324,14 @@ http_client_handle_line(http_client_connection_t connection,
            connection->response.read_state == READ_HEADERS);
 
     if (connection->response.read_state == READ_STATUS)
-        http_client_parse_status_line(connection, line, length);
+        return http_client_parse_status_line(connection, line, length);
     else if (length > 0) {
         header_parse_line(connection->request.pool,
                           connection->response.headers,
                           line, length);
+        return true;
     } else
-        http_client_headers_finished(connection);
+        return http_client_headers_finished(connection);
 }
 
 static void
@@ -330,6 +342,7 @@ http_client_parse_headers(http_client_connection_t connection)
 {
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
     size_t length;
+    bool bret;
 
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
@@ -356,7 +369,10 @@ http_client_parse_headers(http_client_connection_t connection)
             --end;
 
         /* handle this line */
-        http_client_handle_line(connection, start, end - start + 1);
+        bret = http_client_handle_line(connection, start, end - start + 1);
+        if (!bret)
+            return false;
+
         if (connection->response.read_state != READ_HEADERS)
             /* header parsing is finished */
             break;
@@ -372,8 +388,7 @@ http_client_parse_headers(http_client_connection_t connection)
     /* remove the parsed part of the buffer */
     fifo_buffer_consume(connection->input, next - buffer);
 
-    if (http_client_connection_valid(connection) &&
-        connection->response.read_state != READ_HEADERS) {
+    if (connection->response.read_state != READ_HEADERS) {
         bool empty_response = connection->response.body == NULL;
         pool_t caller_pool = connection->request.caller_pool;
 
