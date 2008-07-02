@@ -348,25 +348,33 @@ http_client_parse_headers(http_client_connection_t connection)
     assert(length > 0);
     buffer_end = buffer + length;
 
+    /* parse line by line */
     start = buffer;
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
+
+        /* strip the line */
         --end;
         if (likely(*end == '\r'))
             --end;
         while (unlikely(end >= start && char_is_whitespace(*end)))
             --end;
 
+        /* handle this line */
         http_client_handle_line(connection, start, end - start + 1);
         if (connection->response.read_state != READ_HEADERS)
+            /* header parsing is finished */
             break;
 
         start = next;
     }
 
     if (next == NULL)
+        /* not a single line was processed - skip the following
+           checks */
         return false;
 
+    /* remove the parsed part of the buffer */
     fifo_buffer_consume(connection->input, next - buffer);
 
     if (http_client_connection_valid(connection) &&
