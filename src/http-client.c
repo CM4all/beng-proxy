@@ -312,19 +312,14 @@ http_client_handle_line(http_client_connection_t connection,
     assert(connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
-    if (connection->response.read_state == READ_STATUS) {
+    if (connection->response.read_state == READ_STATUS)
         http_client_parse_status_line(connection, line, length);
-    } else if (length > 0) {
-        assert(connection->response.read_state == READ_HEADERS);
-
+    else if (length > 0) {
         header_parse_line(connection->request.pool,
                           connection->response.headers,
                           line, length);
-    } else {
-        assert(connection->response.read_state == READ_HEADERS);
-
+    } else
         http_client_headers_finished(connection);
-    }
 }
 
 static void
