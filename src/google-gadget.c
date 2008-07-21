@@ -539,8 +539,9 @@ google_gadget_http_abort(void *ctx)
     struct google_gadget *gg = ctx;
 
     assert(gg->delayed != NULL);
+    assert(istream_has_handler(gg->subst));
 
-    istream_free(&gg->subst);
+    istream_close(gg->subst);
 
     http_response_handler_invoke_abort(&gg->response_handler);
     pool_unref(gg->pool);
@@ -569,10 +570,10 @@ gg_async_abort(struct async_operation *ao)
     struct google_gadget *gg = async_to_gg(ao);
 
     assert(gg->delayed != NULL);
+    assert(istream_has_handler(gg->subst));
     assert(!gg->from_parser.sending_content);
 
-    gg->delayed = NULL;
-    istream_free(&gg->subst);
+    istream_close(gg->subst);
 
     if (gg->parser != NULL) {
         if (gg->has_locale && gg->waiting_for_locale)
