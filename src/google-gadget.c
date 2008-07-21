@@ -503,8 +503,6 @@ google_gadget_http_response(http_status_t status, struct strmap *headers,
 
     assert(gg->delayed != NULL);
 
-    async_ref_clear(&gg->async);
-
     if (!http_status_is_success(status)) {
         if (body != NULL)
             istream_close(body);
@@ -570,17 +568,14 @@ gg_async_abort(struct async_operation *ao)
 {
     struct google_gadget *gg = async_to_gg(ao);
 
-    assert((gg->delayed == NULL) == (gg->subst == NULL));
-
-    if (gg->delayed == NULL)
-        return;
+    assert(gg->delayed != NULL);
 
     gg->delayed = NULL;
     istream_free(&gg->subst);
 
     if (gg->parser != NULL)
         parser_close(gg->parser);
-    else if (async_ref_defined(&gg->async))
+    else
         async_abort(&gg->async);
 
     pool_unref(gg->pool);
