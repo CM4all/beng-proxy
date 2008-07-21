@@ -63,13 +63,25 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
         strmap_add(headers, "content-type", "text/html; charset=utf-8");
     }
 
+    http_response_handler_invoke_response(&gg->response_handler,
+                                          status, headers, istream);
+}
+
+static void
+gg_set_content_final(struct google_gadget *gg, istream_t istream)
+{
+    gg_set_content(gg, istream);
+
     if (gg->delayed != NULL) {
         gg->delayed = NULL;
         istream_free(&gg->subst);
     }
 
-    http_response_handler_invoke_response(&gg->response_handler,
-                                          status, headers, istream);
+    if (gg->has_locale && gg->waiting_for_locale)
+        google_gadget_msg_close(gg);
+
+    parser_close(gg->parser);
+    pool_unref(gg->pool);
 }
 
 static void
@@ -288,24 +300,12 @@ google_content_tag_finished(struct google_gadget *gg,
                     istream = generate_iframe(gg->pool, uri);
                 else
                     istream = NULL;
-                gg_set_content(gg, istream);
-
-                if (gg->has_locale && gg->waiting_for_locale)
-                    google_gadget_msg_close(gg);
-
-                parser_close(gg->parser);
-                pool_unref(gg->pool);
+                gg_set_content_final(gg, istream);
             }
         } else {
             /* it's TAG_SHORT, handle that gracefully */
 
-            gg_set_content(gg, NULL);
-
-            if (gg->has_locale && gg->waiting_for_locale)
-                google_gadget_msg_close(gg);
-
-            parser_close(gg->parser);
-            pool_unref(gg->pool);
+            gg_set_content_final(gg, NULL);
         }
 
         return;
@@ -315,13 +315,7 @@ google_content_tag_finished(struct google_gadget *gg,
             break;
 
         istream = generate_iframe(gg->pool, gg->from_parser.url);
-        gg_set_content(gg, istream);
-
-        if (gg->has_locale && gg->waiting_for_locale)
-            google_gadget_msg_close(gg);
-
-        parser_close(gg->parser);
-        pool_unref(gg->pool);
+        gg_set_content_final(gg, istream);
         return;
     }
 
