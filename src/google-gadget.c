@@ -124,6 +124,9 @@ istream_google_html_close(istream_t istream)
     assert(gg->parser != NULL);
     assert(gg->from_parser.sending_content);
 
+    if (gg->has_locale && gg->waiting_for_locale)
+        google_gadget_msg_close(gg);
+
     parser_close(gg->parser);
 
     istream_deinit_abort(&gg->output);
