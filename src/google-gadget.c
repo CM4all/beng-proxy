@@ -153,7 +153,7 @@ google_gadget_msg_eof(struct google_gadget *gg)
 
     gg->waiting_for_locale = false;
 
-    if (gg->parser != NULL && !gg->from_parser.in_parser)
+    if (!gg->from_parser.in_parser)
         parser_read(gg->parser);
 }
 
@@ -446,8 +446,6 @@ google_parser_eof(void *ctx, off_t __attr_unused length)
 {
     struct google_gadget *gg = ctx;
 
-    gg->parser = NULL;
-
     if (gg->has_locale && gg->waiting_for_locale)
         google_gadget_msg_close(gg);
 
@@ -464,8 +462,6 @@ static void
 google_parser_abort(void *ctx)
 {
     struct google_gadget *gg = ctx;
-
-    gg->parser = NULL;
 
     if (gg->has_locale && gg->waiting_for_locale)
         google_gadget_msg_close(gg);
