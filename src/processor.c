@@ -752,6 +752,8 @@ processor_parser_abort(void *ctx)
 {
     struct processor *processor = ctx;
 
+    assert(processor->parser != NULL);
+
     processor->parser = NULL;
 
     if (!processor->response_sent) {
