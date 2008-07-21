@@ -70,12 +70,12 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
 static void
 gg_set_content_final(struct google_gadget *gg, istream_t istream)
 {
+    assert(gg->delayed != NULL);
+    assert(gg->parser != NULL);
+
     gg_set_content(gg, istream);
 
-    if (gg->delayed != NULL) {
-        gg->delayed = NULL;
-        istream_free(&gg->subst);
-    }
+    istream_close(gg->subst);
 
     if (gg->has_locale && gg->waiting_for_locale)
         google_gadget_msg_close(gg);
