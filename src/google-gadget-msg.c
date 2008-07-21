@@ -209,6 +209,8 @@ google_gadget_msg_load(struct google_gadget *gg, const char *url)
 void
 google_gadget_msg_close(struct google_gadget *gg)
 {
+    assert(gg->has_locale && gg->waiting_for_locale);
+
     if (gg->msg.parser != NULL)
         parser_close(gg->msg.parser);
     else if (async_ref_defined(&gg->async))
