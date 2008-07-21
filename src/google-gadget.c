@@ -94,8 +94,6 @@ google_send_error(struct google_gadget *gg, const char *msg)
         parser_close(gg->parser);
     else if (async_ref_defined(&gg->async))
         async_abort(&gg->async);
-
-    pool_unref(gg->pool);
 }
 
 
@@ -316,6 +314,7 @@ google_content_tag_finished(struct google_gadget *gg,
     }
 
     google_send_error(gg, "malformed google gadget");
+    pool_unref(gg->pool);
 }
 
 
@@ -405,6 +404,7 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
                 google_send_error(gg, "unknown type attribute");
                 /* don't reset gg->from_parser.in_parser here because
                    the object is already destructed */
+                pool_unref(gg->pool);
                 return;
             }
         } else if (gg->from_parser.type == TYPE_URL &&
@@ -500,6 +500,7 @@ google_gadget_http_response(http_status_t status, struct strmap *headers,
             istream_close(body);
 
         google_send_error(gg, "widget server reported error");
+        pool_unref(gg->pool);
         return;
     }
 
@@ -511,6 +512,7 @@ google_gadget_http_response(http_status_t status, struct strmap *headers,
             istream_close(body);
 
         google_send_error(gg, "text/xml expected");
+        pool_unref(gg->pool);
         return;
     }
 
