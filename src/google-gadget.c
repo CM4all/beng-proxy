@@ -582,6 +582,7 @@ gg_async_abort(struct async_operation *ao)
     else if (async_ref_defined(&gg->async))
         async_abort(&gg->async);
 
+    http_response_handler_invoke_abort(&gg->response_handler);
     pool_unref(gg->pool);
 }
 
