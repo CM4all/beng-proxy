@@ -540,10 +540,9 @@ google_gadget_http_abort(void *ctx)
 {
     struct google_gadget *gg = ctx;
 
-    async_ref_clear(&gg->async);
+    assert(gg->delayed != NULL);
 
-    if (gg->delayed != NULL)
-        istream_free(&gg->delayed);
+    istream_free(&gg->subst);
 
     pool_unref(gg->pool);
 }
