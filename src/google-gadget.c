@@ -129,6 +129,9 @@ istream_google_html_close(istream_t istream)
     assert(gg->from_parser.sending_content);
 
     parser_close(gg->parser);
+
+    istream_deinit_abort(&gg->output);
+    pool_unref(gg->pool);
 }
 
 static const struct istream istream_google_html = {
@@ -292,7 +295,11 @@ google_content_tag_finished(struct google_gadget *gg,
                     istream = NULL;
                 gg_set_content(gg, istream);
 
+                if (gg->has_locale && gg->waiting_for_locale)
+                    google_gadget_msg_close(gg);
+
                 parser_close(gg->parser);
+                pool_unref(gg->pool);
             }
         } else {
             /* it's TAG_SHORT, handle that gracefully */
@@ -309,7 +316,11 @@ google_content_tag_finished(struct google_gadget *gg,
         istream = generate_iframe(gg->pool, gg->from_parser.url);
         gg_set_content(gg, istream);
 
+        if (gg->has_locale && gg->waiting_for_locale)
+            google_gadget_msg_close(gg);
+
         parser_close(gg->parser);
+        pool_unref(gg->pool);
         return;
     }
 
@@ -572,6 +583,8 @@ gg_async_abort(struct async_operation *ao)
         parser_close(gg->parser);
     else if (async_ref_defined(&gg->async))
         async_abort(&gg->async);
+
+    pool_unref(gg->pool);
 }
 
 static struct async_operation_class gg_async_operation = {

@@ -120,6 +120,8 @@ processor_async_abort(struct async_operation *ao)
 
     if (processor->parser != NULL)
         parser_close(processor->parser);
+
+    pool_unref(processor->pool);
 }
 
 static struct async_operation_class processor_async_operation = {
@@ -601,7 +603,10 @@ embed_widget(struct processor *processor, struct processor_env *env,
                            processor->response_handler.handler,
                            processor->response_handler.ctx,
                            processor->async_ref);
+
         parser_close(processor->parser);
+        pool_unref(processor->pool);
+
         return NULL;
     } else {
         istream_t istream;

@@ -48,6 +48,10 @@ struct parser * __attr_malloc
 parser_new(pool_t pool, istream_t input,
            const struct parser_handler *handler, void *handler_ctx);
 
+/**
+ * Close the parser object.  Note that this function does not
+ * (indirectly) invoke the "abort" callback.
+ */
 void
 parser_close(struct parser *parser);
 
