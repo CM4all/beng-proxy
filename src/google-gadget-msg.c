@@ -138,8 +138,6 @@ gg_msg_http_response(http_status_t status, struct strmap *headers,
     struct google_gadget *gg = ctx;
     const char *p;
 
-    async_ref_clear(&gg->async);
-
     if (!http_status_is_success(status)) {
         if (body != NULL)
             istream_close(body);
@@ -169,8 +167,6 @@ static void
 gg_msg_http_abort(void *ctx)
 {
     struct google_gadget *gg = ctx;
-
-    async_ref_clear(&gg->async);
 
     google_gadget_msg_abort(gg);
 }
@@ -204,7 +200,7 @@ google_gadget_msg_load(struct google_gadget *gg, const char *url)
                        HTTP_METHOD_GET, uwa,
                        NULL, NULL,
                        &gg_msg_http_handler, gg,
-                       &gg->async);
+                       &gg->msg.async);
 }
 
 void
@@ -214,6 +210,6 @@ google_gadget_msg_close(struct google_gadget *gg)
 
     if (gg->msg.parser != NULL)
         parser_close(gg->msg.parser);
-    else if (async_ref_defined(&gg->async))
-        async_abort(&gg->async);
+    else
+        async_abort(&gg->msg.async);
 }

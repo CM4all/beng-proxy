@@ -49,6 +49,7 @@ struct google_gadget {
     bool has_locale:1, waiting_for_locale:1;
 
     struct {
+        struct async_operation_ref async;
         struct parser *parser;
         bool in_msg_tag;
         const char *key;
