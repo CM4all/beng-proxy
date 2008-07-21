@@ -503,7 +503,7 @@ google_gadget_http_response(http_status_t status, struct strmap *headers,
     struct google_gadget *gg = ctx;
     const char *p;
 
-    assert(gg->delayed != NULL);
+    gg->delayed = gg->subst = NULL;
 
     if (!http_status_is_success(status)) {
         if (body != NULL)
@@ -525,6 +525,11 @@ google_gadget_http_response(http_status_t status, struct strmap *headers,
         pool_unref(gg->pool);
         return;
     }
+
+    gg->delayed = istream_delayed_new(gg->pool);
+    async_ref_clear(istream_delayed_async(gg->delayed));
+
+    gg->subst = istream_subst_new(gg->pool, gg->delayed);
 
     gg->from_parser.tag = TAG_NONE;
     gg->from_parser.type = TYPE_NONE;
@@ -575,9 +580,9 @@ gg_async_abort(struct async_operation *ao)
     assert(istream_has_handler(gg->subst));
     assert(!gg->from_parser.sending_content);
 
-    istream_close(gg->subst);
-
     if (gg->parser != NULL) {
+        istream_close(gg->subst);
+
         if (gg->has_locale && gg->waiting_for_locale)
             google_gadget_msg_close(gg);
 
@@ -636,10 +641,6 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
     async_init(&gg->async_operation, &gg_async_operation);
     async_ref_set(async_ref, &gg->async_operation);
 
-    gg->delayed = istream_delayed_new(pool);
-    async_ref_clear(istream_delayed_async(gg->delayed));
-
-    gg->subst = istream_subst_new(pool, gg->delayed);
     gg->parser = NULL;
     gg->has_locale = false;
 
