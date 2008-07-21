@@ -403,7 +403,8 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
                 gg->from_parser.type = TYPE_HTML_INLINE;
             else {
                 google_send_error(gg, "unknown type attribute");
-                gg->from_parser.in_parser = false;
+                /* don't reset gg->from_parser.in_parser here because
+                   the object is already destructed */
                 return;
             }
         } else if (gg->from_parser.type == TYPE_URL &&
