@@ -89,9 +89,6 @@ google_send_error(struct google_gadget *gg, const char *msg)
     http_response_handler_invoke_response(&gg->response_handler,
                                           HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                           headers, response);
-
-    if (gg->parser != NULL)
-        parser_close(gg->parser);
 }
 
 
@@ -324,6 +321,7 @@ google_content_tag_finished(struct google_gadget *gg,
     }
 
     google_send_error(gg, "malformed google gadget");
+    parser_close(gg->parser);
     pool_unref(gg->pool);
 }
 
@@ -412,8 +410,7 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
                 gg->from_parser.type = TYPE_HTML_INLINE;
             else {
                 google_send_error(gg, "unknown type attribute");
-                /* don't reset gg->from_parser.in_parser here because
-                   the object is already destructed */
+                parser_close(gg->parser);
                 pool_unref(gg->pool);
                 return;
             }
