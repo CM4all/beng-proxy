@@ -92,8 +92,6 @@ google_send_error(struct google_gadget *gg, const char *msg)
 
     if (gg->parser != NULL)
         parser_close(gg->parser);
-    else if (async_ref_defined(&gg->async))
-        async_abort(&gg->async);
 }
 
 
@@ -456,7 +454,7 @@ google_parser_eof(void *ctx, off_t __attr_unused length)
     if (gg->from_parser.sending_content) {
         gg->from_parser.sending_content = false;
         istream_deinit_eof(&gg->output);
-    } else if (gg->delayed != NULL && !async_ref_defined(&gg->async))
+    } else if (gg->delayed != NULL)
         google_send_error(gg, "google gadget did not contain a valid Content element");
 
     pool_unref(gg->pool);
