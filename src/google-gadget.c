@@ -54,10 +54,6 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
 
     assert(gg != NULL);
 
-    if (gg->has_locale && gg->waiting_for_locale) {
-            /* XXX abort locale */
-    }
-
     if (istream == NULL) {
         status = HTTP_STATUS_NO_CONTENT;
         headers = NULL;
