@@ -569,13 +569,17 @@ gg_async_abort(struct async_operation *ao)
     struct google_gadget *gg = async_to_gg(ao);
 
     assert(gg->delayed != NULL);
+    assert(!gg->from_parser.sending_content);
 
     gg->delayed = NULL;
     istream_free(&gg->subst);
 
-    if (gg->parser != NULL)
+    if (gg->parser != NULL) {
+        if (gg->has_locale && gg->waiting_for_locale)
+            google_gadget_msg_close(gg);
+
         parser_close(gg->parser);
-    else
+    } else
         async_abort(&gg->async);
 
     pool_unref(gg->pool);
