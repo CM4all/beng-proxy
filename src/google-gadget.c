@@ -304,6 +304,12 @@ google_content_tag_finished(struct google_gadget *gg,
             /* it's TAG_SHORT, handle that gracefully */
 
             gg_set_content(gg, NULL);
+
+            if (gg->has_locale && gg->waiting_for_locale)
+                google_gadget_msg_close(gg);
+
+            parser_close(gg->parser);
+            pool_unref(gg->pool);
         }
 
         return;
