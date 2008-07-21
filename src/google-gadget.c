@@ -116,7 +116,8 @@ istream_google_html_read(istream_t istream)
     assert(gg->parser != NULL);
     assert(gg->from_parser.sending_content);
 
-    if (!gg->waiting_for_locale && !gg->from_parser.in_parser)
+    if ((!gg->has_locale || !gg->waiting_for_locale) &&
+        !gg->from_parser.in_parser)
         parser_read(gg->parser);
 }
 
