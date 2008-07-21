@@ -54,8 +54,9 @@ gg_set_content(struct google_gadget *gg, istream_t istream)
 
     assert(gg != NULL);
 
-    if (gg->has_locale && gg->waiting_for_locale)
-        google_gadget_msg_close(gg);
+    if (gg->has_locale && gg->waiting_for_locale) {
+            /* XXX abort locale */
+    }
 
     if (istream == NULL) {
         status = HTTP_STATUS_NO_CONTENT;
@@ -293,6 +294,9 @@ google_content_tag_finished(struct google_gadget *gg,
                     istream = NULL;
                 gg_set_content(gg, istream);
 
+                if (gg->has_locale && gg->waiting_for_locale)
+                    google_gadget_msg_close(gg);
+
                 parser_close(gg->parser);
                 pool_unref(gg->pool);
             }
@@ -310,6 +314,9 @@ google_content_tag_finished(struct google_gadget *gg,
 
         istream = generate_iframe(gg->pool, gg->from_parser.url);
         gg_set_content(gg, istream);
+
+        if (gg->has_locale && gg->waiting_for_locale)
+            google_gadget_msg_close(gg);
 
         parser_close(gg->parser);
         pool_unref(gg->pool);
