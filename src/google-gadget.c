@@ -534,11 +534,6 @@ google_gadget_http_abort(void *ctx)
 {
     struct google_gadget *gg = ctx;
 
-    assert(gg->delayed != NULL);
-    assert(istream_has_handler(gg->subst));
-
-    istream_close(gg->subst);
-
     http_response_handler_invoke_abort(&gg->response_handler);
     pool_unref(gg->pool);
 }
