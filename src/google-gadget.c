@@ -90,12 +90,12 @@ gg_send_error(struct google_gadget *gg, const char *msg)
     struct strmap *headers = strmap_new(gg->pool, 4);
     istream_t response = istream_string_new(gg->pool, msg);
 
-    istream_close(gg->subst);
-
     strmap_add(headers, "content-type", "text/plain");
     http_response_handler_invoke_response(&gg->response_handler,
                                           HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                           headers, response);
+
+    istream_close(gg->subst);
 }
 
 
