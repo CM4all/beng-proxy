@@ -46,8 +46,6 @@ inline_widget_set(struct inline_widget *iw)
                             &iw->stream->async_ref);
         break;
     }
-
-    pool_unref(iw->pool);
 }
 
 static void
@@ -60,7 +58,6 @@ class_lookup_callback(void *_ctx)
     } else {
         async_ref_clear(istream_delayed_async(iw->stream->delayed));
         istream_free(&iw->stream->delayed);
-        pool_unref(iw->pool);
     }
 }
 
@@ -77,8 +74,6 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
 
     if (widget->display == WIDGET_DISPLAY_NONE)
         return NULL;
-
-    pool_ref(pool);
 
     iw->pool = pool;
     iw->env = env;
