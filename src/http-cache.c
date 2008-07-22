@@ -349,7 +349,6 @@ http_cache_response_body_eof(void *ctx)
     struct http_cache_request *request = ctx;
 
     http_cache_put(request);
-    request->input = NULL;
 
     pool_unref(request->pool);
 }
@@ -360,8 +359,6 @@ http_cache_response_body_abort(void *ctx)
     struct http_cache_request *request = ctx;
 
     cache_log(4, "http_cache: body_abort %s\n", request->url);
-
-    request->input = NULL;
 
     pool_unref(request->pool);
 }
