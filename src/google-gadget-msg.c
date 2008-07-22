@@ -200,7 +200,7 @@ google_gadget_msg_load(struct google_gadget *gg, const char *url)
                        HTTP_METHOD_GET, uwa,
                        NULL, NULL,
                        &gg_msg_http_handler, gg,
-                       &gg->msg.async);
+                       &gg->async_ref);
 }
 
 void
@@ -211,5 +211,5 @@ google_gadget_msg_close(struct google_gadget *gg)
     if (gg->msg.parser != NULL)
         parser_close(gg->msg.parser);
     else
-        async_abort(&gg->msg.async);
+        async_abort(&gg->async_ref);
 }

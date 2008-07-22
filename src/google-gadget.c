@@ -577,7 +577,7 @@ gg_async_abort(struct async_operation *ao)
 
         parser_close(gg->parser);
     } else
-        async_abort(&gg->async);
+        async_abort(&gg->async_ref);
 
     pool_unref(gg->pool);
 }
@@ -639,5 +639,5 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
                        HTTP_METHOD_GET, widget->class->address.u.http,
                        NULL, NULL,
                        &google_gadget_handler, gg,
-                       &gg->async);
+                       &gg->async_ref);
 }

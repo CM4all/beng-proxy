@@ -23,7 +23,10 @@ struct google_gadget {
 
     struct http_response_handler_ref response_handler;
 
-    struct async_operation_ref async;
+    /** reference to an operation which we are waiting for; either the
+        HTTP client loading the gadget, or the HTTP client loading the
+        locale */
+    struct async_operation_ref async_ref;
 
     struct parser *parser;
 
@@ -49,7 +52,6 @@ struct google_gadget {
     bool has_locale:1, waiting_for_locale:1;
 
     struct {
-        struct async_operation_ref async;
         struct parser *parser;
         bool in_msg_tag;
         const char *key;
