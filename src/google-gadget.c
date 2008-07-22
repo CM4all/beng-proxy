@@ -565,11 +565,11 @@ gg_async_abort(struct async_operation *ao)
 {
     struct google_gadget *gg = async_to_gg(ao);
 
-    assert(gg->delayed != NULL);
-    assert(istream_has_handler(gg->subst));
-    assert(!gg->from_parser.sending_content);
-
     if (gg->parser != NULL) {
+        assert(gg->delayed != NULL);
+        assert(istream_has_handler(gg->subst));
+        assert(!gg->from_parser.sending_content);
+
         istream_close(gg->subst);
 
         if (gg->has_locale && gg->waiting_for_locale)
