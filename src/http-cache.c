@@ -350,6 +350,8 @@ http_cache_response_body_eof(void *ctx)
 
     http_cache_put(request);
     request->input = NULL;
+
+    pool_unref(request->pool);
 }
 
 static void
@@ -360,6 +362,8 @@ http_cache_response_body_abort(void *ctx)
     cache_log(4, "http_cache: body_abort %s\n", request->url);
 
     request->input = NULL;
+
+    pool_unref(request->pool);
 }
 
 static const struct istream_handler http_cache_response_body_handler = {
