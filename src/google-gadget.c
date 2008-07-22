@@ -85,7 +85,7 @@ gg_set_content_final(struct google_gadget *gg, istream_t istream)
 }
 
 static void
-google_send_error(struct google_gadget *gg, const char *msg)
+gg_send_error(struct google_gadget *gg, const char *msg)
 {
     struct strmap *headers = strmap_new(gg->pool, 4);
     istream_t response = istream_string_new(gg->pool, msg);
@@ -319,7 +319,7 @@ google_content_tag_finished(struct google_gadget *gg,
         return;
     }
 
-    google_send_error(gg, "malformed google gadget");
+    gg_send_error(gg, "malformed google gadget");
     parser_close(gg->parser);
     pool_unref(gg->pool);
 }
@@ -408,7 +408,7 @@ google_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             else if (strref_cmp_literal(&attr->value, "html-inline") == 0)
                 gg->from_parser.type = TYPE_HTML_INLINE;
             else {
-                google_send_error(gg, "unknown type attribute");
+                gg_send_error(gg, "unknown type attribute");
                 parser_close(gg->parser);
                 pool_unref(gg->pool);
                 return;
@@ -449,7 +449,7 @@ google_parser_eof(void *ctx, off_t __attr_unused length)
         gg->from_parser.sending_content = false;
         istream_deinit_eof(&gg->output);
     } else if (gg->delayed != NULL)
-        google_send_error(gg, "google gadget did not contain a valid Content element");
+        gg_send_error(gg, "google gadget did not contain a valid Content element");
 
     pool_unref(gg->pool);
 }
@@ -466,7 +466,7 @@ google_parser_abort(void *ctx)
         gg->from_parser.sending_content = false;
         istream_deinit_abort(&gg->output);
     } else if (gg->delayed != NULL)
-        google_send_error(gg, "google gadget retrieval aborted");
+        gg_send_error(gg, "google gadget retrieval aborted");
 
     pool_unref(gg->pool);
 }
@@ -499,7 +499,7 @@ google_gadget_http_response(http_status_t status, struct strmap *headers,
         if (body != NULL)
             istream_close(body);
 
-        google_send_error(gg, "widget server reported error");
+        gg_send_error(gg, "widget server reported error");
         pool_unref(gg->pool);
         return;
     }
@@ -511,7 +511,7 @@ google_gadget_http_response(http_status_t status, struct strmap *headers,
         if (body != NULL)
             istream_close(body);
 
-        google_send_error(gg, "text/xml expected");
+        gg_send_error(gg, "text/xml expected");
         pool_unref(gg->pool);
         return;
     }
