@@ -194,7 +194,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-istream-replace test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-istream-replace test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed
 
 include demo/Makefile
 
@@ -307,7 +307,13 @@ test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock
 check-widget-registry: test/t-widget-registry
 	./test/t-widget-registry
 
-check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client check-cookie-client check-shm check-dpool check-session check-widget-registry
+test/t-wembed: test/t-wembed.o src/wembed.o src/pool.o src/pstring.o src/widget-stream.o src/istream-delayed.o src/istream-hold.o src/istream-forward.o src/uri-parser.o src/uri-escape.o src/format.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
+check-wembed: test/t-wembed
+	./test/t-wembed
+
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client check-cookie-client check-shm check-dpool check-session check-widget-registry check-wembed
 
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb
