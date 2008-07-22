@@ -348,6 +348,8 @@ http_cache_response_body_eof(void *ctx)
 {
     struct http_cache_request *request = ctx;
 
+    /* the request was successful, and all of the body data has been
+       saved: add it to the cache */
     http_cache_put(request);
 
     pool_unref(request->pool);
