@@ -125,6 +125,7 @@ async_abort(struct async_operation_ref *ref)
     struct async_operation *ao;
 
     assert(ref != NULL);
+    assert(ref->operation != NULL);
 
     ao = ref->operation;
 #ifndef NDEBUG
