@@ -818,6 +818,17 @@ http_client_request_abort(struct async_operation *ao)
 {
     struct http_client_connection *connection
         = async_to_http_client_connection(ao);
+    
+    /* async_abort() can only be used before the response was
+       delivered to our callback */
+    assert(connection->response.read_state == READ_STATUS ||
+           connection->response.read_state == READ_HEADERS);
+
+    /* by setting the state to READ_ABORTED, we bar
+       http_client_request_close() from invoking the "abort"
+       callback */
+    connection->response.read_state = READ_ABORTED;
+    pool_unref(connection->request.caller_pool);
 
     http_client_connection_close(connection);
 }
