@@ -193,6 +193,7 @@ static void
 replace_destroy(struct istream_replace *replace)
 {
     assert(replace != NULL);
+    assert(replace->source_length != (off_t)-1);
 
     /* source_length -1 is the "destroyed" marker */
     replace->source_length = (off_t)-1;
@@ -551,10 +552,12 @@ istream_replace_close(istream_t istream)
 
     replace_destroy(replace);
 
-    if (replace->input == NULL)
-        istream_deinit_abort(&replace->output);
-    else
+    if (replace->input != NULL) {
+        istream_handler_clear(replace->input);
         istream_close(replace->input);
+    }
+
+    istream_deinit_abort(&replace->output);
 }
 
 static const struct istream istream_replace = {
