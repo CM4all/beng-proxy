@@ -171,10 +171,10 @@ replace_substitution_abort(void *ctx)
 
     replace_destroy(replace);
 
-    if (replace->input == NULL)
-        istream_deinit_abort(&replace->output);
-    else
-        istream_close(replace->input);
+    if (replace->input != NULL)
+        istream_free_handler(&replace->input);
+
+    istream_deinit_abort(&replace->output);
 }
 
 static const struct istream_handler replace_substitution_handler = {
@@ -552,10 +552,8 @@ istream_replace_close(istream_t istream)
 
     replace_destroy(replace);
 
-    if (replace->input != NULL) {
-        istream_handler_clear(replace->input);
-        istream_close(replace->input);
-    }
+    if (replace->input != NULL)
+        istream_free_handler(&replace->input);
 
     istream_deinit_abort(&replace->output);
 }
