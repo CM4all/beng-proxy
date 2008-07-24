@@ -107,7 +107,7 @@ file_callback(struct request *request2)
     istream_t body;
     struct stat st;
     enum range_type range = RANGE_NONE;
-    off_t skip, size;
+    off_t skip = 0, size;
     char buffer[64];
     http_status_t status;
 
