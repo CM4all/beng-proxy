@@ -7,7 +7,7 @@
 static istream_t
 create_input(pool_t pool)
 {
-    return istream_string_new(pool, "3\r\nfoo\r\n0\r\n");
+    return istream_string_new(pool, "3\r\nfoo\r\n0\r\n\r\n");
 }
 
 static istream_t
