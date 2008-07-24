@@ -8,6 +8,7 @@
 #include "istream-internal.h"
 
 #include <assert.h>
+#include <string.h>
 
 struct istream_html_escape {
     struct istream output;
