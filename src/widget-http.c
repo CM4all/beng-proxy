@@ -237,9 +237,8 @@ widget_response_process(struct embed *embed, http_status_t status,
     content_type = headers == NULL
         ? NULL : strmap_get(headers, "content-type");
 
-    if (content_type == NULL ||
-        strncmp(content_type, "text/html", 9) != 0) {
-        daemon_log(2, "widget '%s' sent non-HTML response\n",
+    if (content_type == NULL || strncmp(content_type, "text/", 5) != 0) {
+        daemon_log(2, "widget '%s' sent non-text response\n",
                    widget_path(embed->widget));
         istream_close(body);
         http_response_handler_invoke_abort(&embed->handler_ref);
@@ -268,6 +267,21 @@ widget_response_process(struct embed *embed, http_status_t status,
 
         headers = strmap_dup(embed->pool, headers);
         strmap_set(headers, "content-type", "text/html; charset=utf-8");
+    }
+
+    if (strncmp(content_type, "text/html", 9) != 0) {
+        /* convert text to HTML */
+
+        daemon_log(6, "widget '%s': converting text to HTML\n",
+                   widget_path(embed->widget));
+
+        body = istream_html_escape_new(embed->pool, body);
+        body = istream_cat_new(embed->pool,
+                               istream_string_new(embed->pool,
+                                                  "<pre class=\"beng_text_widget\">"),
+                               body,
+                               istream_string_new(embed->pool, "</pre>"),
+                               NULL);
     }
 
     if (embed->widget->class->type == WIDGET_TYPE_RAW) {
