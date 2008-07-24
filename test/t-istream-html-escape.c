@@ -1,5 +1,7 @@
 #include "istream.h"
 
+#define EXPECTED_RESULT "test&lt;foo&amp;bar>test"
+
 static istream_t
 create_input(pool_t pool)
 {

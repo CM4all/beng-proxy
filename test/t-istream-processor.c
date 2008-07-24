@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define EXPECTED_RESULT "foo &c:url; "
+
 void
 widget_class_lookup(pool_t pool __attr_unused, pool_t widget_pool __attr_unused,
                     struct tcache *translate_cache __attr_unused,

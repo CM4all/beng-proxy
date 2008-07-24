@@ -1,5 +1,7 @@
 #include "istream.h"
 
+#define EXPECTED_RESULT "f\xc3\xbc\xc3\xbc"
+
 static istream_t
 create_input(pool_t pool)
 {

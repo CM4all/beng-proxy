@@ -1,6 +1,9 @@
 #include <event.h>
 
 #include <stdio.h>
+#ifdef EXPECTED_RESULT
+#include <string.h>
+#endif
 
 #ifndef FILTER_CLEANUP
 static void
@@ -11,6 +14,11 @@ cleanup(void)
 
 struct ctx {
     bool got_data, eof;
+#ifdef EXPECTED_RESULT
+    bool record;
+    char buffer[sizeof(EXPECTED_RESULT) * 2];
+    size_t buffer_length;
+#endif
     istream_t abort_istream;
 };
 
@@ -33,6 +41,14 @@ my_istream_data(const void *data, size_t length, void *_ctx)
         istream_free(&ctx->abort_istream);
         return 0;
     }
+
+#ifdef EXPECTED_RESULT
+    if (ctx->record) {
+        if (ctx->buffer_length + length < sizeof(ctx->buffer))
+            memcpy(ctx->buffer + ctx->buffer_length, data, length);
+        ctx->buffer_length += length;
+    }
+#endif
 
     return length;
 }
@@ -68,6 +84,10 @@ static void
 my_istream_abort(void *_ctx)
 {
     struct ctx *ctx = _ctx;
+
+#ifdef EXPECTED_RESULT
+    assert(!ctx->record);
+#endif
 
     printf("abort\n");
     ctx->eof = true;
@@ -110,6 +130,13 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
     while (!ctx->eof)
         istream_read_expect(ctx, istream);
 
+#ifdef EXPECTED_RESULT
+    if (ctx->record) {
+        assert(ctx->buffer_length == sizeof(EXPECTED_RESULT) - 1);
+        assert(memcmp(ctx->buffer, EXPECTED_RESULT, ctx->buffer_length) == 0);
+    }
+#endif
+
     pool_trash(pool);
     pool_unref(pool);
     cleanup();
@@ -117,10 +144,13 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 }
 
 static void
-run_istream(pool_t pool, istream_t istream)
+run_istream(pool_t pool, istream_t istream, bool record __attr_unused)
 {
     struct ctx ctx = {
         .abort_istream = NULL,
+#ifdef EXPECTED_RESULT
+        .record = record,
+#endif
     };
 
     run_istream_ctx(&ctx, pool, istream);
@@ -144,7 +174,7 @@ test_normal(pool_t pool)
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
 
-    run_istream(pool, istream);
+    run_istream(pool, istream, true);
 }
 
 /** test with istream_byte */
@@ -156,7 +186,7 @@ test_byte(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_byte_new(pool, create_input(pool)));
-    run_istream(pool, istream);
+    run_istream(pool, istream, true);
 }
 
 /** input fails */
@@ -168,7 +198,7 @@ test_fail(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_fail_new(pool));
-    run_istream(pool, istream);
+    run_istream(pool, istream, false);
 }
 
 /** input fails after the first byte */
@@ -184,7 +214,7 @@ test_fail_1byte(pool_t pool)
                                           istream_head_new(pool, create_input(pool), 1),
                                           istream_fail_new(pool),
                                           NULL));
-    run_istream(pool, istream);
+    run_istream(pool, istream, false);
 }
 
 /** abort without handler */
@@ -211,6 +241,9 @@ test_abort_with_handler(pool_t pool)
     struct ctx ctx = {
         .abort_istream = NULL,
         .eof = false,
+#ifdef EXPECTED_RESULT
+        .record = false,
+#endif
     };
     istream_t istream;
 
@@ -235,6 +268,9 @@ test_abort_in_handler(pool_t pool)
 {
     struct ctx ctx = {
         .eof = false,
+#ifdef EXPECTED_RESULT
+        .record = false,
+#endif
     };
 
     pool = pool_new_linear(pool, "test", 8192);
@@ -267,7 +303,7 @@ test_abort_1byte(pool_t pool)
                                create_test(pool,
                                            create_input(pool)),
                                1);
-    run_istream(pool, istream);
+    run_istream(pool, istream, false);
 }
 
 /** test with istream_later filter */
@@ -279,7 +315,7 @@ test_later(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, istream_later_new(pool, create_input(pool)));
-    run_istream(pool, istream);
+    run_istream(pool, istream, true);
 }
 
 
