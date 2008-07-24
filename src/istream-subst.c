@@ -482,7 +482,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
         /* we have found a partial match which we discard now, instead
            we will write the chunk right before this match */
         chunk_length = first - data;
-    else if (subst->state == STATE_INSERT)
+    else if (subst->state == STATE_MATCH || subst->state == STATE_INSERT)
         chunk_length = 0;
     else
         /* there was no match (maybe a partial match which mismatched
