@@ -118,6 +118,9 @@ istream_read_expect(struct ctx *ctx, istream_t istream)
 
     ret = event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     assert(ctx->eof || ctx->got_data || ret == 0);
+
+    /* give istream_later another chance to breathe */
+    event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
 }
 
 static void
