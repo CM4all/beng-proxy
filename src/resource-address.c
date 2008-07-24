@@ -88,4 +88,5 @@ resource_address_relative(const struct resource_address *base,
     }
 
     assert(false);
+    return NULL;
 }
