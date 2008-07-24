@@ -194,7 +194,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-istream-replace test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-istream-replace test/t-istream-replace2 test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed
 
 include demo/Makefile
 
@@ -258,10 +258,13 @@ test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstrin
 test/t-processor: test/t-processor.o src/processor.o src/penv.o src/parser.o src/istream-replace.o src/widget.o src/widget-class.o src/widget-ref.o src/widget-uri.o src/widget-session.o src/embed.o src/wembed.o src/uri-relative.o src/uri-parser.o src/uri-escape.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/pool.o src/pstring.o src/istream-string.o src/istream-subst.o src/istream-file.o src/istream-cat.o src/istream-memory.o src/istream-delayed.o src/istream-hold.o src/istream-dechunk.o src/istream-chunked.o src/session.o src/cookie-client.o src/header-writer.o src/args.o src/buffered-io.o src/http-stock.o src/stock.o src/hstock.o src/js-filter.o src/client-socket.o src/http-client.o src/http-body.o src/socket-util.o src/format.o src/header-parser.o src/http.o src/strutil.o src/widget-request.o src/google-gadget.o src/google-gadget-msg.o src/istream-tee.o src/istream-null.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
-FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate byte iconv replace
+FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate byte iconv replace replace2
 FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
 
-$(FILTER_TESTS): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o src/growing-buffer.o
+$(filter-out %2,$(FILTER_TESTS)): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o src/growing-buffer.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS) -lz
+
+$(filter %2,$(FILTER_TESTS)): test/t-istream-%2: test/t-istream-%2.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o src/growing-buffer.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS) -lz
 
 test/t-istream-processor: test/t-istream-processor.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/fifo-buffer.o src/format.o src/uri-relative.o src/uri-parser.o src/uri-escape.o src/session.o src/cookie-client.o src/http-string.o src/strmap.o src/hashmap.o src/pstring.o src/penv.o src/processor.o src/widget-request.o src/istream-subst.o src/widget.o src/growing-buffer.o src/js-filter.o src/istream-replace.o src/widget-ref.o src/widget-uri.o src/args.o src/widget-session.o src/parser.o src/widget-class.o src/istream-tee.o src/istream-later.o src/widget-stream.o src/tpool.o src/istream-hold.o src/istream-delayed.o src/istream-catch.o src/rewrite-uri.o src/widget-resolver.o src/uri-address.o src/dhashmap.o src/dpool.o src/shm.o src/dstring.o src/resource-address.o
