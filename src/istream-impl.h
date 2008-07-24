@@ -75,6 +75,9 @@ istream_t
 istream_hold_new(pool_t pool, istream_t input);
 
 istream_t
+istream_html_escape_new(pool_t pool, istream_t input);
+
+istream_t
 istream_deflate_new(pool_t pool, istream_t input);
 
 istream_t
