@@ -56,6 +56,7 @@ resource_address_apply(pool_t pool, const struct resource_address *src,
     }
 
     assert(false);
+    return NULL;
 }
 
 const struct strref *
