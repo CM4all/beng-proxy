@@ -44,6 +44,9 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 
 #ifdef EXPECTED_RESULT
     if (ctx->record) {
+        assert(ctx->buffer_length + length < sizeof(ctx->buffer));
+        assert(memcmp(EXPECTED_RESULT + ctx->buffer_length, data, length) == 0);
+
         if (ctx->buffer_length + length < sizeof(ctx->buffer))
             memcpy(ctx->buffer + ctx->buffer_length, data, length);
         ctx->buffer_length += length;
