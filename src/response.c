@@ -15,6 +15,7 @@
 #include "uri-address.h"
 #include "strref-pool.h"
 #include "growing-buffer.h"
+#include "global.h"
 
 static const char *const copy_headers[] = {
     "age",
@@ -91,8 +92,6 @@ response_invoke_processor(struct request *request2,
     request_make_session(request2);
 
     processor_env_init(request->pool, &request2->env,
-                       request2->translate_cache,
-                       request2->http_cache,
                        request->remote_host,
                        request_absolute_uri(request),
                        &request2->uri,
@@ -162,7 +161,7 @@ response_dispatch(struct request *request2,
 
         pool_ref(request->pool);
 
-        filter_new(request2->http_cache,
+        filter_new(global_http_cache,
                    request->pool,
                    &transformation->u.filter,
                    headers,

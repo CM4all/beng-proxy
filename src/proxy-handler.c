@@ -9,6 +9,7 @@
 #include "http-server.h"
 #include "http-cache.h"
 #include "uri-address.h"
+#include "global.h"
 
 void
 proxy_handler(struct request *request2)
@@ -30,7 +31,7 @@ proxy_handler(struct request *request2)
         request2->body_consumed = true;
     }
 
-    http_cache_request(request2->http_cache, request->pool,
+    http_cache_request(global_http_cache, request->pool,
                        method, tr->address.u.http, NULL, body,
                        &response_handler, request2,
                        request2->async_ref);

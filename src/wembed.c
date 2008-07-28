@@ -11,6 +11,7 @@
 #include "widget-resolver.h"
 #include "widget-stream.h"
 #include "google-gadget.h"
+#include "global.h"
 
 #include <assert.h>
 
@@ -84,7 +85,7 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
     if (widget->class == NULL)
         widget_resolver_new(pool, env->pool,
                             widget,
-                            env->translate_cache,
+                            global_translate_cache,
                             class_lookup_callback, iw, &iw->stream->async_ref);
     else
         inline_widget_set(iw);

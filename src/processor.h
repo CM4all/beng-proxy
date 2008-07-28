@@ -31,10 +31,6 @@ struct async_operation_ref;
 struct processor_env {
     pool_t pool;
 
-    struct tcache *translate_cache;
-
-    struct http_cache *http_cache;
-
     const char *remote_host;
 
     const char *absolute_uri;
@@ -55,8 +51,6 @@ struct processor_env {
 void
 processor_env_init(pool_t pool,
                    struct processor_env *env,
-                   struct tcache *translate_cache,
-                   struct http_cache *http_cache,
                    const char *remote_host,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,

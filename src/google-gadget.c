@@ -15,6 +15,7 @@
 #include "uri-address.h"
 #include "session.h"
 #include "strref-pool.h"
+#include "global.h"
 
 /* XXX make the URL configurable */
 static const char jscript[] =
@@ -630,7 +631,7 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
 
     http_response_handler_set(&gg->response_handler, handler, handler_ctx);
 
-    http_cache_request(env->http_cache, pool,
+    http_cache_request(global_http_cache, pool,
                        HTTP_METHOD_GET, widget->class->address.u.http,
                        NULL, NULL,
                        &google_gadget_handler, gg,

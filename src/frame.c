@@ -10,6 +10,7 @@
 #include "widget.h"
 #include "widget-resolver.h"
 #include "google-gadget.h"
+#include "global.h"
 
 #include <daemon/log.h>
 
@@ -131,7 +132,7 @@ embed_frame_widget(pool_t pool, struct processor_env *env,
         http_response_handler_set(&fcl->handler, handler, handler_ctx);
         fcl->async_ref = async_ref;
         widget_resolver_new(pool, env->pool, widget,
-                            env->translate_cache,
+                            global_translate_cache,
                             frame_class_lookup_callback, fcl, async_ref);
         return;
     }

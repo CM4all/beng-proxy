@@ -14,6 +14,7 @@
 #include "tcache.h"
 #include "http-cache.h"
 #include "child.h"
+#include "global.h"
 
 #include <daemon/daemonize.h>
 
@@ -168,6 +169,9 @@ int main(int argc, char **argv)
     instance.http_client_stock = http_stock_new(instance.pool);
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.http_client_stock);
+
+    global_translate_cache = instance.translate_cache;
+    global_http_cache = instance.http_cache;
 
     /* daemonize */
 

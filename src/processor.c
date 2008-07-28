@@ -16,6 +16,7 @@
 #include "rewrite-uri.h"
 #include "strref2.h"
 #include "strref-pool.h"
+#include "global.h"
 
 #include <daemon/log.h>
 
@@ -415,7 +416,7 @@ transform_uri_attribute(struct processor *processor,
     assert(widget != NULL);
 
     istream = rewrite_widget_uri(processor->pool, processor->env->pool,
-                                 processor->env->translate_cache,
+                                 global_translate_cache,
                                  processor->env->external_uri,
                                  processor->env->args, widget,
                                  processor->env->session_id,

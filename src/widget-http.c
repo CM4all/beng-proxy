@@ -15,6 +15,7 @@
 #include "strref-pool.h"
 #include "dpool.h"
 #include "get.h"
+#include "global.h"
 
 #include <daemon/log.h>
 
@@ -213,7 +214,7 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     headers = widget_request_headers(embed, 0);
 
-    resource_get(embed->env->http_cache,
+    resource_get(global_http_cache,
                  embed->pool,
                  HTTP_METHOD_GET, address, headers, NULL,
                  &widget_response_handler, embed,
@@ -395,7 +396,7 @@ widget_http_request(pool_t pool, struct widget *widget,
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
     embed->async_ref = async_ref;
 
-    resource_get(env->http_cache, pool,
+    resource_get(global_http_cache, pool,
                  widget->from_request.method,
                  widget_address(pool, widget),
                  headers,

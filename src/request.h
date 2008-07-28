@@ -15,10 +15,6 @@
 #include "session.h"
 
 struct request {
-    struct tcache *translate_cache;
-
-    struct http_cache *http_cache;
-
     struct http_server_request *request;
     struct parsed_uri uri;
 

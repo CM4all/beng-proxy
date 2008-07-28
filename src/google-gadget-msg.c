@@ -16,6 +16,7 @@
 #include "widget.h"
 #include "strref2.h"
 #include "strref-pool.h"
+#include "global.h"
 
 static void
 gg_msg_finish(struct google_gadget *gg)
@@ -196,7 +197,7 @@ google_gadget_msg_load(struct google_gadget *gg, const char *url)
 
     gg->msg.parser = NULL;
 
-    http_cache_request(gg->env->http_cache, gg->pool,
+    http_cache_request(global_http_cache, gg->pool,
                        HTTP_METHOD_GET, uwa,
                        NULL, NULL,
                        &gg_msg_http_handler, gg,
