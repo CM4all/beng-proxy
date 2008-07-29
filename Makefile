@@ -270,7 +270,7 @@ $(filter-out %2,$(FILTER_TESTS)): test/t-istream-%: test/t-istream-%.o src/pool.
 $(filter %2,$(FILTER_TESTS)): test/t-istream-%2: test/t-istream-%2.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o src/growing-buffer.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS) -lz
 
-test/t-istream-processor: test/t-istream-processor.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/fifo-buffer.o src/format.o src/uri-relative.o src/uri-parser.o src/uri-escape.o src/session.o src/cookie-client.o src/http-string.o src/strmap.o src/hashmap.o src/pstring.o src/penv.o src/processor.o src/widget-request.o src/istream-subst.o src/widget.o src/growing-buffer.o src/js-filter.o src/istream-replace.o src/widget-ref.o src/widget-uri.o src/args.o src/widget-session.o src/parser.o src/widget-class.o src/istream-tee.o src/istream-later.o src/widget-stream.o src/tpool.o src/istream-hold.o src/istream-delayed.o src/istream-catch.o src/rewrite-uri.o src/widget-resolver.o src/uri-address.o src/dhashmap.o src/dpool.o src/shm.o src/dstring.o src/resource-address.o
+test/t-istream-processor: test/t-istream-processor.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/fifo-buffer.o src/format.o src/uri-relative.o src/uri-parser.o src/uri-escape.o src/session.o src/cookie-client.o src/http-string.o src/strmap.o src/hashmap.o src/pstring.o src/penv.o src/processor.o src/widget-request.o src/istream-subst.o src/widget.o src/growing-buffer.o src/js-filter.o src/istream-replace.o src/widget-ref.o src/widget-uri.o src/args.o src/widget-session.o src/parser.o src/widget-class.o src/istream-tee.o src/istream-later.o src/widget-stream.o src/tpool.o src/istream-hold.o src/istream-delayed.o src/istream-catch.o src/rewrite-uri.o src/widget-resolver.o src/uri-address.o src/dhashmap.o src/dpool.o src/shm.o src/dstring.o src/resource-address.o src/global.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test/t-istream-js: test/t-istream-js.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/js-filter.o src/fifo-buffer.o src/format.o src/istream-later.o
@@ -313,7 +313,7 @@ test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock
 check-widget-registry: test/t-widget-registry
 	./test/t-widget-registry
 
-test/t-wembed: test/t-wembed.o src/wembed.o src/pool.o src/pstring.o src/widget-stream.o src/istream-delayed.o src/istream-hold.o src/istream-forward.o src/uri-parser.o src/uri-escape.o src/format.o
+test/t-wembed: test/t-wembed.o src/wembed.o src/pool.o src/pstring.o src/widget-stream.o src/istream-delayed.o src/istream-hold.o src/istream-forward.o src/uri-parser.o src/uri-escape.o src/format.o src/global.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
 check-wembed: test/t-wembed
