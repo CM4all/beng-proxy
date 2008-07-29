@@ -10,6 +10,7 @@
 #include "client-socket.h"
 #include "http-client.h"
 #include "uri-address.h"
+#include "failure.h"
 
 #include <daemon/log.h>
 
@@ -25,11 +26,34 @@ struct http_stock_connection {
 
     struct async_operation create_operation;
 
+    const struct sockaddr *addr;
+    socklen_t addrlen;
+
     struct async_operation_ref client_socket;
     struct http_client_connection *http;
 
     bool destroyed;
 };
+
+
+static const struct sockaddr *
+uri_address_next_checked(struct uri_with_address *uwa, socklen_t *addrlen_r)
+{
+    const struct sockaddr *first = uri_address_next(uwa, addrlen_r), *ret = first;
+    if (first == NULL)
+        return NULL;
+
+    do {
+        if (!failure_check(first, *addrlen_r))
+            return ret;
+
+        ret = uri_address_next(uwa, addrlen_r);
+        assert(ret != NULL);
+    } while (ret != first);
+
+    /* all addresses failed: */
+    return first;
+}
 
 
 /*
@@ -110,6 +134,9 @@ http_stock_socket_callback(int fd, int err, void *ctx)
     if (err == 0) {
         assert(fd >= 0);
 
+        /* XXX check HTTP status code? */
+        failure_remove(connection->addr, connection->addrlen);
+
         connection->http = http_client_connection_new(connection->stock_item.pool, fd,
                                                       &http_stock_connection_handler, connection);
         stock_item_available(&connection->stock_item);
@@ -117,6 +144,7 @@ http_stock_socket_callback(int fd, int err, void *ctx)
         daemon_log(1, "failed to connect to '%s': %s\n",
                    connection->uri, strerror(err));
 
+        failure_add(connection->addr, connection->addrlen);
         stock_item_failed(&connection->stock_item);
     }
 }
@@ -142,8 +170,6 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
     struct http_stock_connection *connection =
         (struct http_stock_connection *)item;
     struct uri_with_address *uwa = info;
-    const struct sockaddr *addr;
-    socklen_t addrlen;
 
     assert(uri != NULL);
 
@@ -158,14 +184,14 @@ http_stock_create(void *ctx __attr_unused, struct stock_item *item,
     connection->uri = uri;
 
     if (uwa != NULL)
-        addr = uri_address_next(uwa, &addrlen);
+        connection->addr = uri_address_next_checked(uwa, &connection->addrlen);
     else
-        addr = NULL;
+        connection->addr = NULL;
 
-    if (addr != NULL) {
+    if (connection->addr != NULL) {
         client_socket_new(connection->stock_item.pool,
-                          addr->sa_family, SOCK_STREAM, 0,
-                          addr, addrlen,
+                          connection->addr->sa_family, SOCK_STREAM, 0,
+                          connection->addr, connection->addrlen,
                           http_stock_socket_callback, connection,
                           &connection->client_socket);
     } else if (uri[0] != '/') {

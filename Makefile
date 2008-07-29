@@ -170,6 +170,7 @@ SOURCES = src/main.c \
 	src/uri-parser.c \
 	src/uri-address.c \
 	src/uri-escape.c \
+	src/failure.c \
 	src/args.c \
 	src/gmtime.c \
 	src/date.c \

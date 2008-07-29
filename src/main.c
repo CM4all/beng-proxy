@@ -15,6 +15,7 @@
 #include "http-cache.h"
 #include "child.h"
 #include "global.h"
+#include "failure.h"
 
 #include <daemon/daemonize.h>
 
@@ -170,6 +171,8 @@ int main(int argc, char **argv)
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.http_client_stock);
 
+    failure_init(instance.pool);
+
     global_translate_cache = instance.translate_cache;
     global_http_cache = instance.http_cache;
 
@@ -201,6 +204,8 @@ int main(int argc, char **argv)
     event_dispatch();
 
     /* cleanup */
+
+    failure_deinit();
 
     if (instance.listener != NULL)
         listener_free(&instance.listener);
