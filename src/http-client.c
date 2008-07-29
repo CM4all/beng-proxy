@@ -74,16 +74,16 @@ struct http_client_connection {
 };
 
 static inline bool
-http_client_connection_valid(http_client_connection_t connection)
+http_client_connection_valid(struct http_client_connection *connection)
 {
     return connection->fd >= 0;
 }
 
 static void
-http_client_consume_body(http_client_connection_t connection);
+http_client_consume_body(struct http_client_connection *connection);
 
 static void
-http_client_try_read(http_client_connection_t connection);
+http_client_try_read(struct http_client_connection *connection);
 
 
 /*
@@ -91,17 +91,17 @@ http_client_try_read(http_client_connection_t connection);
  *
  */
 
-static inline http_client_connection_t
+static inline struct http_client_connection *
 response_stream_to_connection(istream_t istream)
 {
-    return (http_client_connection_t)(((char*)istream) - offsetof(struct http_client_connection, response.body_reader.output));
+    return (struct http_client_connection *)(((char*)istream) - offsetof(struct http_client_connection, response.body_reader.output));
 }
 
 static off_t
 http_client_response_stream_available(istream_t istream,
                                       bool partial __attr_unused)
 {
-    http_client_connection_t connection = response_stream_to_connection(istream);
+    struct http_client_connection *connection = response_stream_to_connection(istream);
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
@@ -114,7 +114,7 @@ http_client_response_stream_available(istream_t istream,
 static void
 http_client_response_stream_read(istream_t istream)
 {
-    http_client_connection_t connection = response_stream_to_connection(istream);
+    struct http_client_connection *connection = response_stream_to_connection(istream);
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
@@ -136,7 +136,7 @@ http_client_response_stream_read(istream_t istream)
 static void
 http_client_response_stream_close(istream_t istream)
 {
-    http_client_connection_t connection = response_stream_to_connection(istream);
+    struct http_client_connection *connection = response_stream_to_connection(istream);
 
     assert(connection->response.read_state == READ_BODY);
     assert(connection->request.pool != NULL);
@@ -175,7 +175,7 @@ static const struct istream http_client_response_stream = {
 
 /*
 static inline void
-http_client_cork(http_client_connection_t connection)
+http_client_cork(struct http_client_connection *connection)
 {
     assert(connection != NULL);
     assert(connection->fd >= 0);
@@ -191,7 +191,7 @@ http_client_cork(http_client_connection_t connection)
 }
 
 static inline void
-http_client_uncork(http_client_connection_t connection)
+http_client_uncork(struct http_client_connection *connection)
 {
     assert(connection != NULL);
 
@@ -211,7 +211,7 @@ http_client_uncork(http_client_connection_t connection)
  * @return false if the connection is closed
  */
 static bool
-http_client_parse_status_line(http_client_connection_t connection,
+http_client_parse_status_line(struct http_client_connection *connection,
                               const char *line, size_t length)
 {
     const char *space;
@@ -252,7 +252,7 @@ http_client_parse_status_line(http_client_connection_t connection,
  * @return false if the connection is closed
  */
 static bool
-http_client_headers_finished(http_client_connection_t connection)
+http_client_headers_finished(struct http_client_connection *connection)
 {
     const char *header_connection, *value;
     char *endptr;
@@ -315,7 +315,7 @@ http_client_headers_finished(http_client_connection_t connection)
  * @return false if the connection is closed
  */
 static bool
-http_client_handle_line(http_client_connection_t connection,
+http_client_handle_line(struct http_client_connection *connection,
                         const char *line, size_t length)
 {
     assert(connection != NULL);
@@ -335,10 +335,10 @@ http_client_handle_line(http_client_connection_t connection,
 }
 
 static void
-http_client_response_finished(http_client_connection_t connection);
+http_client_response_finished(struct http_client_connection *connection);
 
 static bool
-http_client_parse_headers(http_client_connection_t connection)
+http_client_parse_headers(struct http_client_connection *connection)
 {
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
     size_t length;
@@ -408,7 +408,7 @@ http_client_parse_headers(http_client_connection_t connection)
 }
 
 static void
-http_client_response_finished(http_client_connection_t connection)
+http_client_response_finished(struct http_client_connection *connection)
 {
     assert(http_client_connection_valid(connection));
     assert(connection->response.read_state == READ_BODY);
@@ -450,7 +450,7 @@ http_client_response_finished(http_client_connection_t connection)
 }
 
 static void
-http_client_response_stream_eof(http_client_connection_t connection)
+http_client_response_stream_eof(struct http_client_connection *connection)
 {
     assert(connection->response.read_state == READ_BODY);
     assert(connection->request.pool != NULL);
@@ -465,7 +465,7 @@ http_client_response_stream_eof(http_client_connection_t connection)
 }
 
 static void
-http_client_consume_body(http_client_connection_t connection)
+http_client_consume_body(struct http_client_connection *connection)
 {
     size_t nbytes;
 
@@ -486,7 +486,7 @@ http_client_consume_body(http_client_connection_t connection)
 }
 
 static void
-http_client_consume_headers(http_client_connection_t connection)
+http_client_consume_headers(struct http_client_connection *connection)
 {
     assert(connection != NULL);
     assert(connection->request.pool != NULL);
@@ -505,7 +505,7 @@ http_client_consume_headers(http_client_connection_t connection)
 }
 
 static void
-http_client_try_response_direct(http_client_connection_t connection)
+http_client_try_response_direct(struct http_client_connection *connection)
 {
     ssize_t nbytes;
 
@@ -525,7 +525,7 @@ http_client_try_response_direct(http_client_connection_t connection)
 }
 
 static void
-http_client_try_read_buffered(http_client_connection_t connection)
+http_client_try_read_buffered(struct http_client_connection *connection)
 {
     ssize_t nbytes;
 
@@ -577,7 +577,7 @@ http_client_try_read_buffered(http_client_connection_t connection)
 }
 
 static void
-http_client_try_read(http_client_connection_t connection)
+http_client_try_read(struct http_client_connection *connection)
 {
     if (connection->request.pool != NULL &&
         connection->response.read_state == READ_BODY &&
@@ -591,7 +591,7 @@ http_client_try_read(http_client_connection_t connection)
 static void
 http_client_event_callback(int fd __attr_unused, short event, void *ctx)
 {
-    http_client_connection_t connection = ctx;
+    struct http_client_connection *connection = ctx;
 
     pool_ref(connection->pool);
 
@@ -615,12 +615,12 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
     pool_commit();
 }
 
-http_client_connection_t
+struct http_client_connection *
 http_client_connection_new(pool_t pool, int fd,
                            const struct http_client_connection_handler *handler,
                            void *ctx)
 {
-    http_client_connection_t connection;
+    struct http_client_connection *connection;
     static const struct timeval tv = {
         .tv_sec = 30,
         .tv_usec = 0,
@@ -656,7 +656,7 @@ http_client_connection_new(pool_t pool, int fd,
 }
 
 static void
-http_client_request_close(http_client_connection_t connection)
+http_client_request_close(struct http_client_connection *connection)
 {
     pool_t pool;
 
@@ -688,7 +688,7 @@ http_client_request_close(http_client_connection_t connection)
 }
 
 void
-http_client_connection_close(http_client_connection_t connection)
+http_client_connection_close(struct http_client_connection *connection)
 {
     assert(connection != NULL);
 
@@ -721,7 +721,7 @@ http_client_connection_close(http_client_connection_t connection)
 }
 
 void
-http_client_connection_graceful(http_client_connection_t connection)
+http_client_connection_graceful(struct http_client_connection *connection)
 {
     assert(connection != NULL);
 
@@ -744,7 +744,7 @@ http_client_connection_graceful(http_client_connection_t connection)
 static size_t
 http_client_request_stream_data(const void *data, size_t length, void *ctx)
 {
-    http_client_connection_t connection = ctx;
+    struct http_client_connection *connection = ctx;
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
@@ -771,7 +771,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 static void
 http_client_request_stream_eof(void *ctx)
 {
-    http_client_connection_t connection = ctx;
+    struct http_client_connection *connection = ctx;
 
     assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
@@ -787,7 +787,7 @@ http_client_request_stream_eof(void *ctx)
 static void
 http_client_request_stream_abort(void *ctx)
 {
-    http_client_connection_t connection = ctx;
+    struct http_client_connection *connection = ctx;
 
     assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
@@ -839,7 +839,7 @@ static struct async_operation_class http_client_request_async_operation = {
 
 
 void
-http_client_request(http_client_connection_t connection,
+http_client_request(struct http_client_connection *connection,
                     pool_t pool,
                     http_method_t method, const char *uri,
                     struct growing_buffer *headers,
