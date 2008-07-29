@@ -18,7 +18,6 @@ static_file_get(pool_t pool, const char *path,
                 const struct http_response_handler *handler,
                 void *handler_ctx)
 {
-    struct http_response_handler_ref handler_ref;
     int ret;
     struct stat st;
     off_t size;
@@ -27,22 +26,20 @@ static_file_get(pool_t pool, const char *path,
 
     assert(path != NULL);
 
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
-
     ret = lstat(path, &st);
     if (ret != 0) {
         if (errno == ENOENT)
-            http_response_handler_invoke_response(&handler_ref,
+            http_response_handler_direct_response(handler, handler_ctx,
                                                   HTTP_STATUS_NOT_FOUND,
                                                   NULL,
                                                   istream_string_new(pool, "The requested file does not exist."));
         else
-            http_response_handler_invoke_abort(&handler_ref);
+            http_response_handler_direct_abort(handler, handler_ctx);
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
-        http_response_handler_invoke_response(&handler_ref,
+        http_response_handler_direct_response(handler, handler_ctx,
                                               HTTP_STATUS_NOT_FOUND,
                                               NULL,
                                               istream_string_new(pool, "Not a regular file"));
@@ -54,12 +51,12 @@ static_file_get(pool_t pool, const char *path,
     body = istream_file_new(pool, path, size);
     if (body == NULL) {
         if (errno == ENOENT)
-            http_response_handler_invoke_response(&handler_ref,
+            http_response_handler_direct_response(handler, handler_ctx,
                                                   HTTP_STATUS_NOT_FOUND,
                                                   NULL,
                                                   istream_string_new(pool, "The requested file does not exist."));
         else
-            http_response_handler_invoke_abort(&handler_ref);
+            http_response_handler_direct_abort(handler, handler_ctx);
         return;
     }
 
@@ -67,7 +64,7 @@ static_file_get(pool_t pool, const char *path,
     headers = strmap_new(pool, 4);
     strmap_add(headers, "content-type", "text/html; charset=utf-8");
 
-    http_response_handler_invoke_response(&handler_ref,
+    http_response_handler_direct_response(handler, handler_ctx,
                                           HTTP_STATUS_OK,
                                           headers, body);
 }

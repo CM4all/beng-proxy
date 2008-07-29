@@ -21,8 +21,6 @@ resource_get(struct http_cache *cache, pool_t pool,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
 {
-    struct http_response_handler_ref handler_ref;
-
     assert(cache != NULL);
     assert(address != NULL);
 
@@ -62,6 +60,5 @@ resource_get(struct http_cache *cache, pool_t pool,
     if (body != NULL)
         istream_close(body);
 
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
-    http_response_handler_invoke_abort(&handler_ref);
+    http_response_handler_direct_abort(handler, handler_ctx);
 }

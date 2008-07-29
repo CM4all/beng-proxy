@@ -81,15 +81,12 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
     if (!widget->class->is_container) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
-        struct http_response_handler_ref handler_ref;
-
         daemon_log(4, "frame within non-container requested\n");
 
         if (env->request_body != NULL)
             istream_free(&env->request_body);
 
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_abort(&handler_ref);
+        http_response_handler_direct_abort(handler, handler_ctx);
         return;
     }
 

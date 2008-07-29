@@ -441,9 +441,7 @@ cgi_new(pool_t pool, bool jail,
     pid = beng_fork(pool, body, &input,
                     cgi_child_callback, NULL);
     if (pid < 0) {
-        struct http_response_handler_ref handler_ref;
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_abort(&handler_ref);
+        http_response_handler_direct_abort(handler, handler_ctx);
         return;
     }
 

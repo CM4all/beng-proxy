@@ -528,10 +528,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
     struct http_cache_request *request;
 
     if (info->only_if_cached) {
-        struct http_response_handler_ref handler_ref;
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-
-        http_response_handler_invoke_response(&handler_ref,
+        http_response_handler_direct_response(handler, handler_ctx,
                                               HTTP_STATUS_GATEWAY_TIMEOUT,
                                               NULL, NULL);
         return;

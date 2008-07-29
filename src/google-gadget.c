@@ -602,16 +602,13 @@ embed_google_gadget(pool_t pool, struct processor_env *env,
 
     if (widget->class->address.type != RESOURCE_ADDRESS_HTTP) {
         /* google gadgets must be served from a HTTP server */
-        struct http_response_handler_ref handler_ref;
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_abort(&handler_ref);
+        http_response_handler_direct_abort(handler, handler_ctx);
         return;
     }
 
     if (widget->from_request.proxy && strmap_get(env->args, "save") != NULL) {
-        struct http_response_handler_ref handler_ref;
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_response(&handler_ref, HTTP_STATUS_NO_CONTENT,
+        http_response_handler_direct_response(handler, handler_ctx,
+                                              HTTP_STATUS_NO_CONTENT,
                                               NULL, NULL);
         return;
     }

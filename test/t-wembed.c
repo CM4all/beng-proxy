@@ -32,9 +32,7 @@ widget_http_request(pool_t pool __attr_unused, struct widget *widget __attr_unus
                     void *handler_ctx,
                     struct async_operation_ref *async_ref __attr_unused)
 {
-    struct http_response_handler_ref handler_ref;
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
-    http_response_handler_invoke_abort(&handler_ref);
+    http_response_handler_direct_abort(handler, handler_ctx);
 }
 
 void
@@ -44,9 +42,7 @@ embed_google_gadget(pool_t pool __attr_unused, struct processor_env *env __attr_
                     void *handler_ctx,
                     struct async_operation_ref *async_ref __attr_unused)
 {
-    struct http_response_handler_ref handler_ref;
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
-    http_response_handler_invoke_abort(&handler_ref);
+    http_response_handler_direct_abort(handler, handler_ctx);
 }
 
 struct test_operation {

@@ -55,6 +55,28 @@ http_response_handler_set(struct http_response_handler_ref *ref,
 }
 
 static inline void
+http_response_handler_direct_response(const struct http_response_handler *handler,
+                                      void *ctx,
+                                      http_status_t status,
+                                      struct strmap *headers, istream_t body)
+{
+    assert(handler != NULL);
+    assert(handler->response != NULL);
+
+    handler->response(status, headers, body, ctx);
+}
+
+static inline void
+http_response_handler_direct_abort(const struct http_response_handler *handler,
+                                   void *ctx)
+{
+    assert(handler != NULL);
+    assert(handler->abort != NULL);
+
+    handler->abort(ctx);
+}
+
+static inline void
 http_response_handler_invoke_response(struct http_response_handler_ref *ref,
                                       http_status_t status,
                                       struct strmap *headers, istream_t body)

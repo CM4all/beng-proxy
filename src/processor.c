@@ -217,7 +217,6 @@ processor_new(pool_t pool, istream_t istream,
     processor_parser_init(processor, istream);
 
     if (widget->from_request.proxy_ref == NULL) {
-        struct http_response_handler_ref response_handler;
         struct strmap *headers;
 
         processor->response_sent = true;
@@ -225,9 +224,7 @@ processor_new(pool_t pool, istream_t istream,
         headers = strmap_new(processor->pool, 4);
         strmap_add(headers, "content-type", "text/html; charset=utf-8");
 
-        http_response_handler_set(&response_handler,
-                                  handler, handler_ctx);
-        http_response_handler_invoke_response(&response_handler,
+        http_response_handler_direct_response(handler, handler_ctx,
                                               HTTP_STATUS_OK, headers,
                                               processor->replace);
     } else {
