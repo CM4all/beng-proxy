@@ -49,6 +49,7 @@ http_response_handler_set(struct http_response_handler_ref *ref,
     assert(ref != NULL);
     assert(handler != NULL);
     assert(handler->response != NULL);
+    assert(handler->abort != NULL);
 
     ref->handler = handler;
     ref->ctx = ctx;
