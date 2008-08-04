@@ -156,6 +156,7 @@ SOURCES = src/main.c \
 	src/http-server-response.c \
 	src/http-client.c \
 	src/http-util.c \
+	src/ajp-client.c \
 	src/access-log.c \
 	src/http-stock.c \
 	src/http-request.c \
@@ -197,7 +198,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client
 
 include demo/Makefile
 
@@ -318,6 +319,9 @@ test/t-wembed: test/t-wembed.o src/wembed.o src/pool.o src/pstring.o src/widget-
 
 check-wembed: test/t-wembed
 	./test/t-wembed
+
+test/run-ajp-client: test/run-ajp-client.o src/ajp-client.o src/pool.o src/pstring.o src/buffered-io.o src/fifo-buffer.o src/growing-buffer.o src/socket-util.o src/fd-util.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client check-cookie-client check-shm check-dpool check-session check-widget-registry check-wembed
 
