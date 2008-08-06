@@ -39,6 +39,7 @@ enum beng_translation_command {
     TRANSLATE_INTERPRETER = 27,
     TRANSLATE_ACTION = 28,
     TRANSLATE_SCRIPT_NAME = 29,
+    TRANSLATE_AJP = 30,
 };
 
 struct beng_translation_header {

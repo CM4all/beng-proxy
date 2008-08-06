@@ -20,6 +20,7 @@ enum resource_address_type {
     RESOURCE_ADDRESS_LOCAL,
     RESOURCE_ADDRESS_HTTP,
     RESOURCE_ADDRESS_CGI,
+    RESOURCE_ADDRESS_AJP
 };
 
 struct resource_address {
@@ -83,6 +84,7 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         break;
 
     case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
         assert(src->u.http != NULL);
         dest->u.http = uri_address_dup(pool, src->u.http);
         break;

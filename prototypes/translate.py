@@ -40,6 +40,7 @@ TRANSLATE_JAILCGI = 26
 TRANSLATE_INTERPRETER = 27
 TRANSLATE_ACTION = 28
 TRANSLATE_SCRIPT_NAME = 29
+TRANSLATE_AJP = 30
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
 
@@ -148,6 +149,15 @@ class Translation(Protocol):
             m = re.match(r'^cgi\s+"(\S+)"$', line)
             if m:
                 self._write_packet(TRANSLATE_CGI, m.group(1))
+                continue
+            m = re.match(r'^ajp\s+"(\S+)"\s+"(\S+)"$', line)
+            if m:
+                host, uri = m.group(1), m.group(2)
+                self._write_packet(TRANSLATE_AJP, uri)
+                host, port = (host.split(':', 1) + [None])[0:2]
+                address = gethostbyname(host)
+                if port: address += ':' + port
+                self._write_packet(TRANSLATE_ADDRESS_STRING, address)
                 continue
             m = re.match(r'^path\s+"(\S+)"$', line)
             if m:

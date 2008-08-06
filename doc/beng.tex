@@ -208,6 +208,10 @@ remote HTTP server (proxy mode) \\
 
 \hline
 
+\texttt{AJP} & load the resource from an AJPv13 server \\
+
+\hline
+
 \texttt{CGI} & a local path which is executed as CGI script \\
 
 \hline
@@ -251,7 +255,8 @@ header for this session \\
 
 \texttt{ADDRESS} & after each \texttt{PROXY} packet, there must be one
 or more \texttt{ADDRESS} packets which specify the resolved addresses.
-The payload of each is a \texttt{struct sockaddr}. \\
+The payload of each is a \texttt{struct sockaddr}.
+The same applies to \texttt{AJP} packets. \\
 
 \hline
 \end{tabular}

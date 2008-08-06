@@ -481,6 +481,23 @@ translate_handle_packet(struct translate_connection *connection,
         connection->resource_address->u.cgi.path = payload;
         break;
 
+    case TRANSLATE_AJP:
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
+            daemon_log(2, "misplaced TRANSLATE_AJP packet\n");
+            break;
+        }
+
+        if (payload == NULL) {
+            daemon_log(2, "malformed TRANSLATE_AJP packet\n");
+            break;
+        }
+
+        connection->resource_address->type = RESOURCE_ADDRESS_AJP;
+        connection->resource_address->u.http =
+            uri_address_new(connection->pool, payload);
+        break;
+
     case TRANSLATE_JAILCGI:
         if (connection->resource_address == NULL ||
             connection->resource_address->type != RESOURCE_ADDRESS_CGI) {

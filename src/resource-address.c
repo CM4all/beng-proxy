@@ -28,6 +28,7 @@ resource_address_apply(pool_t pool, const struct resource_address *src,
         return src;
 
     case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
         if (relative_length == 0)
             return src;
 
@@ -77,6 +78,7 @@ resource_address_relative(const struct resource_address *base,
         return NULL;
 
     case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
         strref_set_c(&base_uri, base->u.http->uri);
         strref_set_c(buffer, address->u.http->uri);
         return uri_relative(&base_uri, buffer);

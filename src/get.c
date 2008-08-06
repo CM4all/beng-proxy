@@ -11,9 +11,12 @@
 #include "http-response.h"
 #include "static-file.h"
 #include "cgi.h"
+#include "ajp-request.h"
 
 void
-resource_get(struct http_cache *cache, pool_t pool,
+resource_get(struct http_cache *cache,
+             struct hstock *ajp_client_stock,
+             pool_t pool,
              http_method_t method,
              const struct resource_address *address,
              struct strmap *headers, istream_t body,
@@ -54,6 +57,13 @@ resource_get(struct http_cache *cache, pool_t pool,
                            method, address->u.http,
                            headers, body,
                            handler, handler_ctx, async_ref);
+        return;
+
+    case RESOURCE_ADDRESS_AJP:
+        ajp_stock_request(pool, ajp_client_stock,
+                          method, address->u.http,
+                          headers, body,
+                          handler, handler_ctx, async_ref);
         return;
     }
 
