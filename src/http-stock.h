@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_URL_STOCK_H
-#define __BENG_URL_STOCK_H
+#ifndef __BENG_HTTP_STOCK_H
+#define __BENG_HTTP_STOCK_H
 
 #include "pool.h"
 
