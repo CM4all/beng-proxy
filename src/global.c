@@ -9,3 +9,5 @@
 struct tcache *global_translate_cache;
 
 struct http_cache *global_http_cache;
+
+struct hstock *global_ajp_client_stock;

@@ -10,6 +10,7 @@
 #include "session.h"
 #include "translate.h"
 #include "http-stock.h"
+#include "ajp-stock.h"
 #include "stock.h"
 #include "tcache.h"
 #include "http-cache.h"
@@ -65,6 +66,9 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 
     if (instance->http_client_stock != NULL)
         hstock_free(&instance->http_client_stock);
+
+    if (instance->ajp_client_stock != NULL)
+        hstock_free(&instance->ajp_client_stock);
 
     pool_commit();
 }
@@ -171,10 +175,13 @@ int main(int argc, char **argv)
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.http_client_stock);
 
+    instance.ajp_client_stock = ajp_stock_new(instance.pool);
+
     failure_init(instance.pool);
 
     global_translate_cache = instance.translate_cache;
     global_http_cache = instance.http_cache;
+    global_ajp_client_stock = instance.ajp_client_stock;
 
     /* daemonize */
 
