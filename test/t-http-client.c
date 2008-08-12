@@ -482,10 +482,7 @@ test_body_fail(pool_t pool, struct context *c)
     event_dispatch();
 
     assert(c->client == NULL);
-    assert(c->status == 0);
-    assert(!c->body_eof);
-    assert(c->body_abort);
-    assert(c->body_data == 6);
+    assert(c->aborted);
 }
 
 

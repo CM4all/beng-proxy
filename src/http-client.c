@@ -792,6 +792,7 @@ http_client_request_stream_abort(void *ctx)
     assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
 
+    connection->request.istream = NULL;
     http_client_connection_close(connection);
 }
 
