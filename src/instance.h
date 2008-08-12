@@ -7,7 +7,6 @@
 #ifndef __BENG_INSTANCE_H
 #define __BENG_INSTANCE_H
 
-#include "listener.h"
 #include "config.h"
 
 #include <inline/list.h>
@@ -29,7 +28,7 @@ struct instance {
 
     struct event_base *event_base;
 
-    listener_t listener;
+    struct listener *listener;
     struct list_head connections;
     unsigned num_connections;
 

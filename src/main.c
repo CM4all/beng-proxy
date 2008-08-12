@@ -17,6 +17,7 @@
 #include "child.h"
 #include "global.h"
 #include "failure.h"
+#include "listener.h"
 
 #include <daemon/daemonize.h>
 

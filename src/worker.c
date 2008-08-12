@@ -10,6 +10,7 @@
 #include "connection.h"
 #include "session.h"
 #include "child.h"
+#include "listener.h"
 
 #include <daemon/log.h>
 

@@ -32,7 +32,7 @@ struct listener {
 static void
 listener_event_callback(int fd, short event __attr_unused, void *ctx)
 {
-    listener_t listener = ctx;
+    struct listener *listener = ctx;
     struct sockaddr_storage sa;
     socklen_t sa_len;
     int remote_fd, ret;
@@ -84,9 +84,9 @@ my_htons(uint16_t x)
 int
 listener_tcp_port_new(pool_t pool, int port,
                       listener_callback_t callback, void *ctx,
-                      listener_t *listener_r)
+                      struct listener **listener_r)
 {
-    listener_t listener;
+    struct listener *listener;
     int ret, param;
     struct sockaddr_in6 sa6;
     struct sockaddr_in sa4;
@@ -171,9 +171,9 @@ listener_tcp_port_new(pool_t pool, int port,
 }
 
 void
-listener_free(listener_t *listener_r)
+listener_free(struct listener **listener_r)
 {
-    listener_t listener = *listener_r;
+    struct listener *listener = *listener_r;
     *listener_r = NULL;
 
     assert(listener != NULL);
@@ -184,7 +184,7 @@ listener_free(listener_t *listener_r)
 }
 
 void
-listener_event_add(listener_t listener)
+listener_event_add(struct listener *listener)
 {
     event_set(&listener->event, listener->fd,
               EV_READ|EV_PERSIST, listener_event_callback, listener);
@@ -192,7 +192,7 @@ listener_event_add(listener_t listener)
 }
 
 void
-listener_event_del(listener_t listener)
+listener_event_del(struct listener *listener)
 {
     event_del(&listener->event);
 }

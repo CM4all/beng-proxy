@@ -11,7 +11,7 @@
 
 #include <sys/socket.h>
 
-typedef struct listener *listener_t;
+struct listener;
 
 typedef void (*listener_callback_t)(int fd,
                                     const struct sockaddr *addr, socklen_t addrlen,
@@ -20,15 +20,15 @@ typedef void (*listener_callback_t)(int fd,
 int
 listener_tcp_port_new(pool_t pool, int port,
                       listener_callback_t callback, void *ctx,
-                      listener_t *listener_r);
+                      struct listener **listener_r);
 
 void
-listener_free(listener_t *listener_r);
+listener_free(struct listener **listener_r);
 
 void
-listener_event_add(listener_t listener);
+listener_event_add(struct listener *listener);
 
 void
-listener_event_del(listener_t listener);
+listener_event_del(struct listener *listener);
 
 #endif
