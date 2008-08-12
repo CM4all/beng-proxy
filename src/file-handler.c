@@ -123,9 +123,15 @@ file_callback(struct request *request2)
         request->method != HTTP_METHOD_GET &&
         (!request_processor_enabled(request2) ||
          request->method != HTTP_METHOD_POST)) {
-        http_server_send_message(request,
-                                 HTTP_STATUS_METHOD_NOT_ALLOWED,
-                                 "This method is not allowed.");
+        headers = growing_buffer_new(request->pool, 40);
+        header_write(headers, "content-type", "text/plain");
+        header_write(headers, "allow",
+                     request_processor_enabled(request2)
+                     ? "GET, HEAD, POST" : "GET, HEAD");
+
+        http_server_response(request, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
+                             istream_string_new(request->pool,
+                                                "This method is not allowed."));
         return;
     }
 
