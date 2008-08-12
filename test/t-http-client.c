@@ -17,7 +17,7 @@
 #include <signal.h>
 #include <event.h>
 
-static http_client_connection_t
+static struct http_client_connection *
 connect_mirror(pool_t pool,
                const struct http_client_connection_handler *handler,
                void *ctx)
@@ -54,7 +54,7 @@ connect_mirror(pool_t pool,
     return http_client_connection_new(pool, sv[0], handler, ctx);
 }
 
-static http_client_connection_t
+static struct http_client_connection *
 connect_abort(pool_t pool,
               const struct http_client_connection_handler *handler,
               void *ctx)
@@ -102,7 +102,7 @@ struct context {
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
     struct async_operation_ref async_ref;
-    http_client_connection_t client;
+    struct http_client_connection *client;
     bool idle, aborted;
     http_status_t status;
 

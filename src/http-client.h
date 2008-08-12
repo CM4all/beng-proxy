@@ -15,26 +15,24 @@ struct growing_buffer;
 struct http_response_handler;
 struct async_operation_ref;
 
-typedef struct http_client_connection *http_client_connection_t;
-
 struct http_client_connection_handler {
     void (*idle)(void *ctx);
     void (*free)(void *ctx);
 };
 
-http_client_connection_t __attr_malloc
+struct http_client_connection *__attr_malloc
 http_client_connection_new(pool_t pool, int fd,
                            const struct http_client_connection_handler *handler,
                            void *ctx);
 
 void
-http_client_connection_close(http_client_connection_t connection);
+http_client_connection_close(struct http_client_connection *connection);
 
 void
-http_client_connection_graceful(http_client_connection_t connection);
+http_client_connection_graceful(struct http_client_connection *connection);
 
 void
-http_client_request(http_client_connection_t connection,
+http_client_request(struct http_client_connection *connection,
                     pool_t pool,
                     http_method_t method, const char *uri,
                     struct growing_buffer *headers,
