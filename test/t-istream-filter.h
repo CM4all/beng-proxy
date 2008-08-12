@@ -131,6 +131,9 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 {
     ctx->eof = false;
 
+    istream_available(istream, false);
+    istream_available(istream, true);
+
     istream_handler_set(istream, &my_istream_handler, ctx, 0);
 
     while (!ctx->eof)
