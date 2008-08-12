@@ -13,6 +13,7 @@
 #include "format.h"
 #include "http-util.h"
 #include "growing-buffer.h"
+#include "http-server.h"
 
 #include <assert.h>
 #include <sys/stat.h>

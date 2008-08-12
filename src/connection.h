@@ -7,7 +7,7 @@
 #ifndef __BENG_CONNECTION_H
 #define __BENG_CONNECTION_H
 
-#include "http-server.h"
+#include "pool.h"
 
 #include <inline/list.h>
 
@@ -20,7 +20,7 @@ struct client_connection {
     struct instance *instance;
     pool_t pool;
     const struct config *config;
-    http_server_connection_t http;
+    struct http_server_connection *http;
 };
 
 void

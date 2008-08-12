@@ -16,6 +16,7 @@
 #include "header-writer.h"
 #include "strref-pool.h"
 #include "dpool.h"
+#include "http-server.h"
 
 #include <daemon/log.h>
 

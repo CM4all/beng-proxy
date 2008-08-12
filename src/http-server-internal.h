@@ -77,28 +77,28 @@ struct http_server_connection {
 };
 
 static inline int
-http_server_connection_valid(http_server_connection_t connection)
+http_server_connection_valid(struct http_server_connection *connection)
 {
     return connection->fd >= 0;
 }
 
 struct http_server_request *
-http_server_request_new(http_server_connection_t connection);
+http_server_request_new(struct http_server_connection *connection);
 
 void
-http_server_try_write(http_server_connection_t connection);
+http_server_try_write(struct http_server_connection *connection);
 
 void
-http_server_maybe_send_100_continue(http_server_connection_t connection);
+http_server_maybe_send_100_continue(struct http_server_connection *connection);
 
 void
-http_server_consume_input(http_server_connection_t connection);
+http_server_consume_input(struct http_server_connection *connection);
 
 void
-http_server_try_read(http_server_connection_t connection);
+http_server_try_read(struct http_server_connection *connection);
 
 void
-http_server_consume_body(http_server_connection_t connection);
+http_server_consume_body(struct http_server_connection *connection);
 
 extern const struct istream http_server_request_stream;
 

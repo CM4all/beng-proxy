@@ -18,7 +18,7 @@
 static size_t
 http_server_response_stream_data(const void *data, size_t length, void *ctx)
 {
-    http_server_connection_t connection = ctx;
+    struct http_server_connection *connection = ctx;
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
@@ -46,7 +46,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
 static ssize_t
 http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
-    http_server_connection_t connection = ctx;
+    struct http_server_connection *connection = ctx;
     ssize_t nbytes;
 
     assert(connection->response.istream != NULL);
@@ -76,7 +76,7 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
 static void
 http_server_response_stream_eof(void *ctx)
 {
-    http_server_connection_t connection = ctx;
+    struct http_server_connection *connection = ctx;
 
     assert(connection->request.read_state != READ_START &&
            connection->request.read_state != READ_HEADERS);
@@ -134,7 +134,7 @@ http_server_response_stream_eof(void *ctx)
 static void
 http_server_response_stream_abort(void *ctx)
 {
-    http_server_connection_t connection = ctx;
+    struct http_server_connection *connection = ctx;
 
     assert(connection->response.istream != NULL);
 

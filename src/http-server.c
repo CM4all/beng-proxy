@@ -18,7 +18,7 @@
 #include <string.h>
 
 struct http_server_request *
-http_server_request_new(http_server_connection_t connection)
+http_server_request_new(struct http_server_connection *connection)
 {
     pool_t pool;
     struct http_server_request *request;
@@ -37,7 +37,7 @@ http_server_request_new(http_server_connection_t connection)
 }
 
 static inline void
-http_server_cork(http_server_connection_t connection)
+http_server_cork(struct http_server_connection *connection)
 {
     assert(connection != NULL);
     assert(connection->fd >= 0);
@@ -51,7 +51,7 @@ http_server_cork(http_server_connection_t connection)
 }
 
 static inline void
-http_server_uncork(http_server_connection_t connection)
+http_server_uncork(struct http_server_connection *connection)
 {
     assert(connection != NULL);
 
@@ -66,7 +66,7 @@ http_server_uncork(http_server_connection_t connection)
 
 
 void
-http_server_try_write(http_server_connection_t connection)
+http_server_try_write(struct http_server_connection *connection)
 {
     assert(connection != NULL);
     assert(connection->fd >= 0);
@@ -85,7 +85,7 @@ http_server_try_write(http_server_connection_t connection)
 static void
 http_server_event_callback(int fd __attr_unused, short event, void *ctx)
 {
-    http_server_connection_t connection = ctx;
+    struct http_server_connection *connection = ctx;
 
     pool_ref(connection->pool);
 
@@ -114,9 +114,9 @@ http_server_connection_new(pool_t pool, int fd,
                            const char *remote_host,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
-                           http_server_connection_t *connection_r)
+                           struct http_server_connection **connection_r)
 {
-    http_server_connection_t connection;
+    struct http_server_connection *connection;
     static const struct timeval tv = {
         .tv_sec = 30,
         .tv_usec = 0,
@@ -183,7 +183,7 @@ http_server_request_close(struct http_server_connection *connection)
 }
 
 void
-http_server_connection_close(http_server_connection_t connection)
+http_server_connection_close(struct http_server_connection *connection)
 {
     assert(connection != NULL);
 
@@ -214,7 +214,7 @@ http_server_connection_close(http_server_connection_t connection)
 }
 
 void
-http_server_connection_graceful(http_server_connection_t connection)
+http_server_connection_graceful(struct http_server_connection *connection)
 {
     assert(connection != NULL);
 

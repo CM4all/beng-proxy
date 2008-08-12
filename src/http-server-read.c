@@ -21,7 +21,7 @@
 #include <errno.h>
 
 static void
-http_server_parse_request_line(http_server_connection_t connection,
+http_server_parse_request_line(struct http_server_connection *connection,
                                const char *line, size_t length)
 {
     const char *eol, *space;
@@ -86,7 +86,7 @@ http_server_parse_request_line(http_server_connection_t connection,
 }
 
 static void
-http_server_headers_finished(http_server_connection_t connection)
+http_server_headers_finished(struct http_server_connection *connection)
 {
     struct http_server_request *request = connection->request.request;
     const char *value;
@@ -142,7 +142,7 @@ http_server_headers_finished(http_server_connection_t connection)
 }
 
 static void
-http_server_handle_line(http_server_connection_t connection,
+http_server_handle_line(struct http_server_connection *connection,
                         const char *line, size_t length)
 {
     assert(connection->request.read_state == READ_START ||
@@ -168,7 +168,7 @@ http_server_handle_line(http_server_connection_t connection,
 }
 
 static bool
-http_server_parse_headers(http_server_connection_t connection)
+http_server_parse_headers(struct http_server_connection *connection)
 {
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
     size_t length;
@@ -207,7 +207,7 @@ http_server_parse_headers(http_server_connection_t connection)
 }
 
 void
-http_server_consume_input(http_server_connection_t connection)
+http_server_consume_input(struct http_server_connection *connection)
 {
     if (connection->request.read_state == READ_START ||
         connection->request.read_state == READ_HEADERS) {
@@ -230,7 +230,7 @@ http_server_consume_input(http_server_connection_t connection)
 }
 
 static void
-http_server_try_read_buffered(http_server_connection_t connection)
+http_server_try_read_buffered(struct http_server_connection *connection)
 {
     ssize_t nbytes;
 
@@ -263,7 +263,7 @@ http_server_try_read_buffered(http_server_connection_t connection)
 }
 
 static void
-http_server_try_request_direct(http_server_connection_t connection)
+http_server_try_request_direct(struct http_server_connection *connection)
 {
     ssize_t nbytes;
 
@@ -289,7 +289,7 @@ http_server_try_request_direct(http_server_connection_t connection)
 }
 
 void
-http_server_try_read(http_server_connection_t connection)
+http_server_try_read(struct http_server_connection *connection)
 {
     if (connection->request.read_state == READ_BODY &&
         (connection->request.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) {

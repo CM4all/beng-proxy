@@ -14,11 +14,11 @@
 struct growing_buffer;
 struct async_operation_ref;
 
-typedef struct http_server_connection *http_server_connection_t;
+struct http_server_connection;
 
 struct http_server_request {
     pool_t pool;
-    http_server_connection_t connection;
+    struct http_server_connection *connection;
     const char *remote_host;
 
     /* request metadata */
@@ -45,13 +45,13 @@ http_server_connection_new(pool_t pool, int fd,
                            const char *remote_host,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
-                           http_server_connection_t *connection_r);
+                           struct http_server_connection **connection_r);
 
 void
-http_server_connection_close(http_server_connection_t connection);
+http_server_connection_close(struct http_server_connection *connection);
 
 void
-http_server_connection_graceful(http_server_connection_t connection);
+http_server_connection_graceful(struct http_server_connection *connection);
 
 static inline bool
 http_server_request_has_body(const struct http_server_request *request)

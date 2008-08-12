@@ -10,7 +10,7 @@
 #include "istream-internal.h"
 
 void
-http_server_consume_body(http_server_connection_t connection)
+http_server_consume_body(struct http_server_connection *connection)
 {
     size_t nbytes;
 
@@ -36,17 +36,17 @@ http_server_consume_body(http_server_connection_t connection)
     event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
 }
 
-static inline http_server_connection_t
+static inline struct http_server_connection *
 response_stream_to_connection(istream_t istream)
 {
-    return (http_server_connection_t)(((char*)istream) - offsetof(struct http_server_connection, request.body_reader.output));
+    return (struct http_server_connection *)(((char*)istream) - offsetof(struct http_server_connection, request.body_reader.output));
 }
 
 static off_t
 http_server_request_stream_available(istream_t istream,
                                      bool partial __attr_unused)
 {
-    http_server_connection_t connection = response_stream_to_connection(istream);
+    struct http_server_connection *connection = response_stream_to_connection(istream);
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
@@ -58,7 +58,7 @@ http_server_request_stream_available(istream_t istream,
 static void
 http_server_request_stream_read(istream_t istream)
 {
-    http_server_connection_t connection = response_stream_to_connection(istream);
+    struct http_server_connection *connection = response_stream_to_connection(istream);
 
     assert(connection != NULL);
     assert(connection->fd >= 0);
@@ -78,7 +78,7 @@ http_server_request_stream_read(istream_t istream)
 static void
 http_server_request_stream_close(istream_t istream)
 {
-    http_server_connection_t connection = response_stream_to_connection(istream);
+    struct http_server_connection *connection = response_stream_to_connection(istream);
 
     if (connection->request.read_state == READ_END)
         return;

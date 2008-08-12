@@ -14,7 +14,7 @@
 #include <string.h>
 
 void
-http_server_maybe_send_100_continue(http_server_connection_t connection)
+http_server_maybe_send_100_continue(struct http_server_connection *connection)
 {
     assert(connection->fd >= 0);
     assert(connection->request.read_state == READ_BODY);
@@ -64,7 +64,7 @@ http_server_response(const struct http_server_request *request,
                      struct growing_buffer *headers,
                      istream_t body)
 {
-    http_server_connection_t connection = request->connection;
+    struct http_server_connection *connection = request->connection;
     off_t content_length;
     istream_t status_stream, header_stream;
 
