@@ -327,6 +327,12 @@ test/run-ajp-client: test/run-ajp-client.o src/ajp-client.o src/pool.o src/pstri
 
 check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-http-server check-http-client check-cookie-client check-shm check-dpool check-session check-widget-registry check-wembed
 
+cov: CFLAGS += -fprofile-arcs -ftest-coverage
+cov: LDFLAGS += -fprofile-arcs -ftest-coverage
+cov: check
+	mv {src,test}/*.gcda .
+	gcov src/*.c
+
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb
 	echo -en "handle SIGPIPE noprint nostop\nrun $(DEBUG_ARGS)\n" >/tmp/cm4all-beng-proxy.gdb
