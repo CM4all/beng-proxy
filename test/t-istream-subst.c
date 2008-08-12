@@ -1,11 +1,11 @@
 #include "istream.h"
 
-#define EXPECTED_RESULT "bar fo fo bar bla!"
+#define EXPECTED_RESULT "bar fo fo bar bla! fo"
 
 static istream_t
 create_input(pool_t pool)
 {
-    return istream_string_new(pool, "foo fo fo bar blablablablubb");
+    return istream_string_new(pool, "foo fo fo bar blablablablubb fo");
 }
 
 static istream_t
