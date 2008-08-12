@@ -14,7 +14,7 @@ Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6),
  cm4all-thirdparty-multilog, adduser
 Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
  libcm4all-beng-proxy-js (= ${source:Version})
-Suggests: attr, cm4all-jailcgi-wrapper (> 1.2), cm4all-coma-cgi
+Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi
 Provides: httpd, httpd-cgi
 Conflicts: libevent1 (>= 1.4~)
 Description: HTTP proxy server
