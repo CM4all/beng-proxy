@@ -471,6 +471,23 @@ test_socket_close(pool_t pool, struct context *c)
     assert(c->body == NULL);
 }
 
+static void
+test_body_fail(pool_t pool, struct context *c)
+{
+    c->client = connect_mirror(pool, &my_connection_handler, c);
+    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
+                        istream_fail_new(pool),
+                        &my_response_handler, c, &c->async_ref);
+
+    event_dispatch();
+
+    assert(c->client == NULL);
+    assert(c->status == 0);
+    assert(!c->body_eof);
+    assert(c->body_abort);
+    assert(c->body_data == 6);
+}
+
 
 /*
  * main
@@ -514,6 +531,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_response_body_data);
     run_test(pool, test_data_blocking);
     run_test(pool, test_socket_close);
+    run_test(pool, test_body_fail);
 
     pool_unref(pool);
     pool_commit();
