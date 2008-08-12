@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     struct event_base *event_base;
     pool_t pool;
     int sockfd;
-    http_server_connection_t connection;
+    struct http_server_connection *connection;
 
     (void)argc;
     (void)argv;
