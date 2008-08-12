@@ -3,6 +3,8 @@
 #include "duplex.h"
 #include "async.h"
 #include "socket-util.h"
+#include "growing-buffer.h"
+#include "header-writer.h"
 
 #include <inline/compiler.h>
 
@@ -95,6 +97,7 @@ connect_abort(pool_t pool,
 }
 
 struct context {
+    bool close_idle;
     bool close_early, close_late, close_data, close_abort;
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
@@ -120,6 +123,9 @@ my_connection_idle(void *ctx)
     struct context *c = ctx;
 
     c->idle = true;
+
+    if (c->close_idle)
+        http_client_connection_close(c->client);
 }
 
 static void
@@ -271,6 +277,30 @@ test_body(pool_t pool, struct context *c)
     assert(c->status == HTTP_STATUS_OK);
     assert(c->body_eof);
     assert(c->body_data == 6);
+}
+
+static void
+test_close_idle(pool_t pool, struct context *c)
+{
+    struct growing_buffer *headers = growing_buffer_new(pool, 512);
+
+    header_write(headers, "connection", "keep-alive");
+
+    c->close_idle = true;
+    c->client = connect_mirror(pool, &my_connection_handler, c);
+    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", headers,
+                        istream_string_new(pool, "foobar"),
+                        &my_response_handler, c, &c->async_ref);
+
+    event_dispatch();
+
+    assert(c->client == NULL);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(c->body_data == 6);
+    assert(c->body_eof);
+    assert(!c->body_abort);
+    assert(c->idle);
 }
 
 static void
@@ -474,6 +504,7 @@ int main(int argc, char **argv) {
 
     run_test(pool, test_empty);
     run_test(pool, test_body);
+    run_test(pool, test_close_idle);
     run_test(pool, test_early_close);
     run_test(pool, test_close_early);
     run_test(pool, test_close_late);
