@@ -332,7 +332,7 @@ debug: src/cm4all-beng-proxy
 	echo -en "handle SIGPIPE noprint nostop\nrun $(DEBUG_ARGS)\n" >/tmp/cm4all-beng-proxy.gdb
 	LD_LIBRARY_PATH=/usr/lib/debug:$(LD_LIBRARY_PATH) gdb -x /tmp/cm4all-beng-proxy.gdb $<
 
-profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -g -pg
+profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -DNO_ACCESS_LOG -g -pg
 profile: LDFLAGS = -lc_p -pg
 profile: src/cm4all-beng-proxy
 	./src/cm4all-beng-proxy -D -u max -p 8080
