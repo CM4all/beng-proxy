@@ -75,7 +75,6 @@ ajp_stock_request(pool_t pool,
                   struct async_operation_ref *async_ref)
 {
     struct ajp_request *hr;
-    const char *host_and_port;
 
     assert(uwa != NULL);
     assert(uwa->uri != NULL);
@@ -100,7 +99,7 @@ ajp_stock_request(pool_t pool,
     pool_ref(pool);
 
     hstock_get(http_client_stock,
-               host_and_port, uwa,
+               uwa->uri, uwa,
                ajp_request_stock_callback, hr,
                async_unref_on_abort(pool, async_ref));
 }
