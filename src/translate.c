@@ -443,6 +443,16 @@ translate_handle_packet(struct translate_connection *connection,
         transformation->u.processor.options = PROCESSOR_REWRITE_URL;
         break;
 
+    case TRANSLATE_DOMAIN:
+        if (connection->response.transformation == NULL ||
+            connection->response.transformation->type != TRANSFORMATION_PROCESS) {
+            daemon_log(2, "misplaced TRANSLATE_DOMAIN packet\n");
+            break;
+        }
+
+        connection->response.transformation->u.processor.domain = payload;
+        break;
+
     case TRANSLATE_CONTAINER:
         if (connection->response.transformation == NULL ||
             connection->response.transformation->type != TRANSFORMATION_PROCESS) {

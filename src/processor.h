@@ -31,6 +31,8 @@ struct async_operation_ref;
 struct processor_env {
     pool_t pool;
 
+    const char *partition_domain;
+
     const char *remote_host;
 
     const char *absolute_uri;
@@ -51,6 +53,7 @@ struct processor_env {
 void
 processor_env_init(pool_t pool,
                    struct processor_env *env,
+                   const char *partition_domain,
                    const char *remote_host,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,
