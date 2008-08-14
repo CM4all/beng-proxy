@@ -441,6 +441,7 @@ translate_handle_packet(struct translate_connection *connection,
         transformation = translate_add_transformation(connection);
         transformation->type = TRANSFORMATION_PROCESS;
         transformation->u.processor.options = PROCESSOR_REWRITE_URL;
+        transformation->u.processor.domain = NULL;
         break;
 
     case TRANSLATE_DOMAIN:

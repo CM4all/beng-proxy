@@ -94,6 +94,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
         switch (p->type) {
         case TRANSFORMATION_PROCESS:
             p->u.processor.options = transformation->u.processor.options;
+            p->u.processor.domain = p_strdup_checked(pool, transformation->u.processor.domain);
             break;
 
         case TRANSFORMATION_FILTER:
