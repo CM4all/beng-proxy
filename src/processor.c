@@ -414,6 +414,7 @@ transform_uri_attribute(struct processor *processor,
 
     istream = rewrite_widget_uri(processor->pool, processor->env->pool,
                                  global_translate_cache,
+                                 processor->env->partition_domain,
                                  processor->env->external_uri,
                                  processor->env->args, widget,
                                  processor->env->session_id,
@@ -496,6 +497,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             processor->uri_mode = URI_MODE_FOCUS;
         else if (strref_cmp_literal(&attr->value, "partial") == 0)
             processor->uri_mode = URI_MODE_PARTIAL;
+        else if (strref_cmp_literal(&attr->value, "partition") == 0)
+            processor->uri_mode = URI_MODE_PARTITION;
         else if (strref_cmp_literal(&attr->value, "proxy") == 0)
             processor->uri_mode = URI_MODE_PROXY;
         else

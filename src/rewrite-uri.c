@@ -9,6 +9,7 @@
 #include "widget-stream.h"
 #include "widget-resolver.h"
 #include "strref-pool.h"
+#include "uri-parser.h"
 
 static const char *
 current_frame(const struct widget *widget)
@@ -24,13 +25,57 @@ current_frame(const struct widget *widget)
 }
 
 static const char *
-do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
+generate_widget_hostname(pool_t pool,
+                         struct widget *widget,
+                         const char *domain)
+{
+    assert(widget != NULL);
+    assert(domain != NULL);
+
+    return p_strcat(pool, widget_prefix(widget), ".", domain, NULL);
+}
+
+static const char *
+uri_replace_hostname(pool_t pool, const char *uri, const char *hostname)
+{
+    const char *start, *end;
+
+    assert(hostname != NULL);
+
+    if (*uri == '/')
+        return p_strcat(pool,
+                        "http://", hostname,
+                        uri, NULL);
+
+    start = strchr(uri, ':');
+    if (start == NULL || start[1] != '/' || start[1] != '/' || start[2] == '/')
+        return uri;
+
+    start += 2;
+
+    for (end = start;
+         *end != 0 && *end != ':' && *end != '/';
+         ++end) {
+    }
+
+    return p_strncat(pool,
+                     uri, start - uri,
+                     hostname, strlen(hostname),
+                     end, strlen(end),
+                     NULL);
+}
+
+static const char *
+do_rewrite_widget_uri(pool_t pool,
+                      const char *partition_domain,
+                      const struct parsed_uri *external_uri,
                       struct strmap *args, struct widget *widget,
                       const struct strref *value,
                       enum uri_mode mode)
 {
     const char *frame = NULL;
     bool raw = false;
+    const char *uri;
 
     switch (mode) {
     case URI_MODE_DIRECT:
@@ -46,6 +91,7 @@ do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
         break;
 
     case URI_MODE_PARTIAL:
+    case URI_MODE_PARTITION:
         frame = widget_path(widget);
         break;
 
@@ -55,15 +101,22 @@ do_rewrite_widget_uri(pool_t pool, const struct parsed_uri *external_uri,
         break;
     }
 
-    return widget_external_uri(pool, external_uri, args,
-                               widget,
-                               true,
-                               value->data, value->length,
-                               frame, raw);
+    uri = widget_external_uri(pool, external_uri, args,
+                              widget,
+                              true,
+                              value->data, value->length,
+                              frame, raw);
+    if (mode == URI_MODE_PARTITION)
+        uri = uri_replace_hostname(pool, uri,
+                                   generate_widget_hostname(pool, widget,
+                                                            partition_domain));
+
+    return uri;
 }
 
 struct rewrite_widget_uri {
     pool_t pool;
+    const char *partition_domain;
     const struct parsed_uri *external_uri;
     struct strmap *args;
     struct widget *widget;
@@ -86,8 +139,10 @@ class_lookup_callback(void *ctx)
         if (session != NULL)
             widget_sync_session(rwu->widget, session);
 
-        uri = do_rewrite_widget_uri(rwu->pool, rwu->external_uri, rwu->args,
-                                    rwu->widget, &rwu->value, rwu->mode);
+        uri = do_rewrite_widget_uri(rwu->pool,
+                                    rwu->partition_domain, rwu->external_uri,
+                                    rwu->args, rwu->widget,
+                                    &rwu->value, rwu->mode);
         if (uri != NULL)
             strref_set_c(&rwu->value, uri);
     }
@@ -101,6 +156,7 @@ class_lookup_callback(void *ctx)
 istream_t
 rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct tcache *translate_cache,
+                   const char *partition_domain,
                    const struct parsed_uri *external_uri,
                    struct strmap *args, struct widget *widget,
                    session_id_t session_id,
@@ -112,7 +168,8 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
 
 
     if (widget->class != NULL) {
-        uri = do_rewrite_widget_uri(pool, external_uri, args, widget, value, mode);
+        uri = do_rewrite_widget_uri(pool, partition_domain, external_uri,
+                                    args, widget, value, mode);
         if (uri == NULL)
             return NULL;
 
@@ -122,6 +179,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
         istream_t hold;
 
         rwu->pool = pool;
+        rwu->partition_domain = partition_domain;
         rwu->external_uri = external_uri;
         rwu->args = args;
         rwu->widget = widget;
