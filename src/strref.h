@@ -206,4 +206,14 @@ strref_chr(const struct strref *s, char ch)
     return memchr(s->data, ch, s->length);
 }
 
+static __attr_always_inline const char *
+strref_chr_at(const struct strref *s, char ch, size_t start)
+{
+    assert(s != NULL);
+    assert(s->data != NULL || s->length == 0);
+    assert(start <= s->length);
+
+    return memchr(s->data + start, ch, s->length - start);
+}
+
 #endif
