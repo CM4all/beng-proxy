@@ -440,7 +440,7 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_PROCESS:
         transformation = translate_add_transformation(connection);
         transformation->type = TRANSFORMATION_PROCESS;
-        transformation->u.processor_options = PROCESSOR_REWRITE_URL;
+        transformation->u.processor.options = PROCESSOR_REWRITE_URL;
         break;
 
     case TRANSLATE_CONTAINER:
@@ -450,7 +450,7 @@ translate_handle_packet(struct translate_connection *connection,
             break;
         }
 
-        connection->response.transformation->u.processor_options |= PROCESSOR_CONTAINER;
+        connection->response.transformation->u.processor.options |= PROCESSOR_CONTAINER;
         break;
 
     case TRANSLATE_SESSION:

@@ -113,14 +113,14 @@ response_invoke_processor(struct request *request2,
                                                       strmap_get(request2->env.args, "frame"));
     if (widget->from_request.proxy_ref != NULL) {
         processor_new(request->pool, body, widget, &request2->env,
-                      transformation->u.processor_options,
+                      transformation->u.processor.options,
                       &widget_proxy_handler, request,
                       request2->async_ref);
 
         pool_unref(request->pool);
     } else {
         processor_new(request->pool, body, widget, &request2->env,
-                      transformation->u.processor_options,
+                      transformation->u.processor.options,
                       &response_handler, request2,
                       request2->async_ref);
     }

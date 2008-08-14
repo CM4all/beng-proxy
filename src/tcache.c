@@ -93,7 +93,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
         p->type = transformation->type;
         switch (p->type) {
         case TRANSFORMATION_PROCESS:
-            p->u.processor_options = transformation->u.processor_options;
+            p->u.processor.options = transformation->u.processor.options;
             break;
 
         case TRANSFORMATION_FILTER:
