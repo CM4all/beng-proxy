@@ -42,6 +42,7 @@ TRANSLATE_ACTION = 28
 TRANSLATE_SCRIPT_NAME = 29
 TRANSLATE_AJP = 30
 TRANSLATE_DOMAIN = 31
+TRANSLATE_STATEFUL = 31
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
 
@@ -184,6 +185,8 @@ class Translation(Protocol):
                 self._write_packet(TRANSLATE_PROCESS)
             elif line == 'container':
                 self._write_packet(TRANSLATE_CONTAINER)
+            elif line == 'stateful':
+                self._write_packet(TRANSLATE_STATEFUL)
             elif line == 'google_gadget':
                 self._write_packet(TRANSLATE_GOOGLE_GADGET)
             else:

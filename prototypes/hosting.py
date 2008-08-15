@@ -43,6 +43,7 @@ TRANSLATE_ACTION = 28
 TRANSLATE_SCRIPT_NAME = 29
 TRANSLATE_AJP = 30
 TRANSLATE_DOMAIN = 31
+TRANSLATE_STATEFUL = 31
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
 

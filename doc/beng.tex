@@ -358,6 +358,11 @@ widgets \\
 \texttt{CONTAINER} & this widget can contain other widgets \\
 \hline
 
+\texttt{STATEFUL} & remember the state of this widget, i.e. path info
+and query string \\
+
+\hline
+
 \texttt{GOOGLE\_GADGET} & this is a Google gadget, enable API
 emulation \\
 
@@ -714,7 +719,8 @@ container
 The first line is mandatory: it specifies the widget server.
 \texttt{process} enables the template processor; if that is not
 specified, the HTML output is inserted into the resulting page
-verbatim.  \texttt{container} allows the widget to embed sub widgets.
+verbatim.  \texttt{container} allows the widget to embed sub widgets,
+\texttt{stateful} sets the ``stateful'' flag.
 
 Disabling features may increase the performance dramatically, because
 it allows \emph{beng-proxy} to make better assumptions on data it does

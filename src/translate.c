@@ -464,6 +464,10 @@ translate_handle_packet(struct translate_connection *connection,
         connection->response.transformation->u.processor.options |= PROCESSOR_CONTAINER;
         break;
 
+    case TRANSLATE_STATEFUL:
+        connection->response.stateful = true;
+        break;
+
     case TRANSLATE_SESSION:
         connection->response.session = payload;
         break;
@@ -553,6 +557,8 @@ translate_handle_packet(struct translate_connection *connection,
         break;
 
     case TRANSLATE_GOOGLE_GADGET:
+        /* a google gadget is always stateful */
+        connection->response.stateful = true;
         connection->response.google_gadget = true;
         break;
 
