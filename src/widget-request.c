@@ -149,7 +149,6 @@ widget_copy_from_location(struct widget *widget, struct session *session,
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-    assert(session != NULL);
 
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
@@ -168,8 +167,10 @@ widget_copy_from_location(struct widget *widget, struct session *session,
 
     widget->lazy.address = NULL;
 
-    if (widget->class->stateful) {
+    if (session != NULL) {
         struct widget_session *ws;
+
+        assert(widget->class->stateful);
 
         lock_lock(&session->lock);
 

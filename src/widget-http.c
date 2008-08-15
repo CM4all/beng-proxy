@@ -200,10 +200,11 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (p == NULL)
         return false;
 
-    session = session_get(embed->env->session_id);
-    if (session != NULL)
-        widget_copy_from_location(embed->widget, session,
-                                  p->data, p->length, embed->pool);
+    session = embed->widget->class->stateful
+        ? session_get(embed->env->session_id)
+        : NULL;
+    widget_copy_from_location(embed->widget, session,
+                              p->data, p->length, embed->pool);
 
     ++embed->num_redirects;
 
