@@ -47,13 +47,13 @@ frame_top_widget(pool_t pool, struct processor_env *env,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    struct session *session;
-
     assert(widget->from_request.proxy);
 
-    session = session_get(env->session_id);
-    if (session != NULL)
-        widget_sync_session(widget, session);
+    if (widget->class->stateful) {
+        struct session *session = session_get(env->session_id);
+        if (session != NULL)
+            widget_sync_session(widget, session);
+    }
 
     switch (widget->class->type) {
     case WIDGET_TYPE_RAW:
@@ -76,8 +76,6 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    struct session *session;
-
     if (!widget->class->is_container) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
@@ -90,9 +88,11 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         return;
     }
 
-    session = session_get(env->session_id);
-    if (session != NULL)
-        widget_sync_session(widget, session);
+    if (widget->class->stateful) {
+        struct session *session = session_get(env->session_id);
+        if (session != NULL)
+            widget_sync_session(widget, session);
+    }
 
     if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
         /* the request body is not consumed yet, but the focus is not

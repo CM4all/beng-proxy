@@ -41,6 +41,10 @@ struct widget_class {
 
     /** can this widget contain other widgets? */
     bool is_container:1;
+
+    /** does beng-proxy remember the state (path_info and
+        query_string) of this widget? */
+    bool stateful;
 };
 
 /**

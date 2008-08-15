@@ -53,6 +53,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
     }
 
     class = &lookup->class;
+    class->stateful = true;
     resource_address_copy(lookup->pool, &class->address, &response->address);
 
     if (response->transformation != NULL &&

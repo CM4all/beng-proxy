@@ -12,4 +12,5 @@ const struct widget_class root_widget_class = {
     },
     .type = WIDGET_TYPE_BENG,
     .is_container = true,
+    .stateful = false,
 };

@@ -17,6 +17,10 @@
 static void
 widget_to_session(struct widget_session *ws, const struct widget *widget)
 {
+    assert(widget != NULL);
+    assert(widget->class != NULL);
+    assert(widget->class->stateful); /* cannot save state for stateless widgets */
+
     if (ws->path_info != NULL)
         d_free(ws->session->pool, ws->path_info);
 
@@ -36,6 +40,8 @@ widget_to_session(struct widget_session *ws, const struct widget *widget)
 static void
 session_to_widget(struct widget *widget, const struct widget_session *ws)
 {
+    assert(widget->class != NULL);
+    assert(widget->class->stateful); /* cannot load state from stateless widgets */
     assert(widget->lazy.address == NULL);
 
     widget->from_request.path_info = ws->path_info;
@@ -105,6 +111,8 @@ widget_sync_session(struct widget *widget, struct session *session)
 {
     assert(widget != NULL);
     assert(widget->lazy.address == NULL);
+    assert(widget->class != NULL);
+    assert(widget->class->stateful);
 
     lock_lock(&session->lock);
 
@@ -142,10 +150,10 @@ widget_copy_from_location(struct widget *widget, struct session *session,
                           const char *location, size_t location_length,
                           pool_t pool)
 {
-    struct widget_session *ws;
     const char *qmark;
 
     assert(widget != NULL);
+    assert(widget->class != NULL);
     assert(session != NULL);
 
     widget->from_request.method = HTTP_METHOD_GET;
@@ -165,11 +173,15 @@ widget_copy_from_location(struct widget *widget, struct session *session,
 
     widget->lazy.address = NULL;
 
-    lock_lock(&session->lock);
+    if (widget->class->stateful) {
+        struct widget_session *ws;
 
-    ws = widget_get_session(widget, session, true);
-    if (ws != NULL)
-        widget_to_session(ws, widget);
+        lock_lock(&session->lock);
 
-    lock_unlock(&session->lock);
+        ws = widget_get_session(widget, session, true);
+        if (ws != NULL)
+            widget_to_session(ws, widget);
+
+        lock_unlock(&session->lock);
+    }
 }

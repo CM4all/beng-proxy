@@ -27,11 +27,12 @@ static void
 inline_widget_set(struct inline_widget *iw)
 {
     struct widget *widget = iw->widget;
-    struct session *session;
 
-    session = session_get(iw->env->session_id);
-    if (session != NULL)
-        widget_sync_session(widget, session);
+    if (widget->class->stateful) {
+        struct session *session = session_get(iw->env->session_id);
+        if (session != NULL)
+            widget_sync_session(widget, session);
+    }
 
     switch (widget->class->type) {
     case WIDGET_TYPE_RAW:
