@@ -135,9 +135,11 @@ class_lookup_callback(void *ctx)
         struct session *session;
         const char *uri;
 
-        session = session_get(rwu->session_id);
-        if (session != NULL)
-            widget_sync_session(rwu->widget, session);
+        if (rwu->widget->class->stateful) {
+            session = session_get(rwu->session_id);
+            if (session != NULL)
+                widget_sync_session(rwu->widget, session);
+        }
 
         uri = do_rewrite_widget_uri(rwu->pool,
                                     rwu->partition_domain, rwu->external_uri,
