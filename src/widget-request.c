@@ -117,14 +117,14 @@ widget_sync_session(struct widget *widget, struct session *session)
 
         /* do not save to session when this is a raw or POST request */
         if (!widget->from_request.raw && widget->from_request.body == NULL) {
-            struct widget_session *ws = widget_get_session(widget, session, 1);
+            struct widget_session *ws = widget_get_session(widget, session, true);
             if (ws != NULL)
                 widget_to_session(ws, widget);
         }
     } else {
         /* get query string from session */
 
-        struct widget_session *ws = widget_get_session(widget, session, 0);
+        struct widget_session *ws = widget_get_session(widget, session, false);
         if (ws != NULL)
             session_to_widget(widget, ws);
     }
@@ -167,7 +167,7 @@ widget_copy_from_location(struct widget *widget, struct session *session,
 
     lock_lock(&session->lock);
 
-    ws = widget_get_session(widget, session, 1);
+    ws = widget_get_session(widget, session, true);
     if (ws != NULL)
         widget_to_session(ws, widget);
 
