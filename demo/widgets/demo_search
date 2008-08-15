@@ -1,2 +1,3 @@
 server "http://cfatest01.intern.cm-ag/search.rb"
+stateful
 process
