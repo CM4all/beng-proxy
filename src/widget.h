@@ -197,6 +197,14 @@ widget_prefix(const struct widget *widget)
     return widget->lazy.prefix;
 }
 
+static inline const char *
+widget_get_path_info(const struct widget *widget)
+{
+    return widget->from_request.path_info != NULL
+        ? widget->from_request.path_info
+        : widget->path_info;
+}
+
 /**
  * Returns the widget's session object.  The passed session object
  * must be locked.

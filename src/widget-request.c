@@ -138,11 +138,6 @@ widget_sync_session(struct widget *widget, struct session *session)
     }
 
     lock_unlock(&session->lock);
-
-    if (widget->from_request.path_info == NULL)
-        widget->from_request.path_info = widget->path_info;
-
-    assert(widget->from_request.path_info != NULL);
 }
 
 void

@@ -17,13 +17,15 @@
 void
 widget_determine_address(pool_t pool, struct widget *widget)
 {
-    const char *uri;
+    const char *path_info, *uri;
     struct resource_address *address;
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-    assert(widget->from_request.path_info != NULL);
     assert(widget->lazy.address == NULL);
+
+    path_info = widget_get_path_info(widget);
+    assert(path_info != NULL);
 
     switch (widget->class->address.type) {
     case RESOURCE_ADDRESS_NONE:
@@ -35,7 +37,7 @@ widget_determine_address(pool_t pool, struct widget *widget)
         assert(widget->class->address.u.http->uri != NULL);
 
         if (strref_is_empty(&widget->from_request.query_string) &&
-            *widget->from_request.path_info == 0 &&
+            *path_info == 0 &&
             widget->query_string == NULL)
             break;
 
@@ -44,16 +46,15 @@ widget_determine_address(pool_t pool, struct widget *widget)
         if (!strref_is_empty(&widget->from_request.query_string))
             uri = p_strncat(pool,
                             uri, strlen(uri),
-                            widget->from_request.path_info,
-                            strlen(widget->from_request.path_info),
+                            path_info, strlen(path_info),
                             "?", (size_t)1,
                             widget->from_request.query_string.data,
                             widget->from_request.query_string.length,
                             NULL);
-        else if (*widget->from_request.path_info != 0)
+        else if (*path_info != 0)
             uri = p_strcat(pool,
                            uri,
-                           widget->from_request.path_info,
+                           path_info,
                            NULL);
 
         if (widget->query_string != NULL)
@@ -70,14 +71,14 @@ widget_determine_address(pool_t pool, struct widget *widget)
 
     case RESOURCE_ADDRESS_CGI:
         if (strref_is_empty(&widget->from_request.query_string) &&
-            *widget->from_request.path_info == 0 &&
+            *path_info == 0 &&
             widget->query_string == NULL)
             break;
 
         address = resource_address_dup(pool, &widget->class->address);
 
-        if (*widget->from_request.path_info != 0)
-            address->u.cgi.path_info = widget->from_request.path_info;
+        if (*path_info != 0)
+            address->u.cgi.path_info = path_info;
 
         if (strref_is_empty(&widget->from_request.query_string))
             address->u.cgi.query_string = widget->query_string;
