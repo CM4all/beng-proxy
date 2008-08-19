@@ -249,7 +249,8 @@ static struct stock_class ajp_stock_class = {
     .item_size = sizeof(struct ajp_stock_connection),
     .pool = ajp_stock_pool,
     .create = ajp_stock_create,
-    .validate = ajp_stock_validate,
+    .borrow = ajp_stock_validate,
+    .release = ajp_stock_validate,
     .destroy = ajp_stock_destroy,
 };
 

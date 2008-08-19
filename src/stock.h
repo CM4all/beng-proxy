@@ -41,7 +41,8 @@ struct stock_class {
     void (*create)(void *ctx, struct stock_item *item,
                    const char *uri, void *info,
                    struct async_operation_ref *async_ref);
-    bool (*validate)(void *ctx, struct stock_item *item);
+    bool (*borrow)(void *ctx, struct stock_item *item);
+    bool (*release)(void *ctx, struct stock_item *item);
     void (*destroy)(void *ctx, struct stock_item *item);
 };
 

@@ -788,7 +788,8 @@ static struct stock_class translate_stock_class = {
     .item_size = sizeof(struct translate_connection),
     .pool = translate_stock_pool,
     .create = translate_stock_create,
-    .validate = translate_stock_validate,
+    .borrow = translate_stock_validate,
+    .release = translate_stock_validate,
     .destroy = translate_stock_destroy,
 };
 

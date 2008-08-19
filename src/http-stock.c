@@ -248,7 +248,8 @@ static struct stock_class http_stock_class = {
     .item_size = sizeof(struct http_stock_connection),
     .pool = http_stock_pool,
     .create = http_stock_create,
-    .validate = http_stock_validate,
+    .borrow = http_stock_validate,
+    .release = http_stock_validate,
     .destroy = http_stock_destroy,
 };
 

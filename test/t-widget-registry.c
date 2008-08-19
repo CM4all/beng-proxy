@@ -66,7 +66,8 @@ my_stock_destroy(void *ctx __attr_unused, struct stock_item *item __attr_unused)
 static struct stock_class my_stock_class = {
     .item_size = sizeof(struct stock_item) + 1,
     .create = my_stock_create,
-    .validate = my_stock_validate,
+    .borrow = my_stock_validate,
+    .release = my_stock_validate,
     .destroy = my_stock_destroy,
 };
 

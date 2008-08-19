@@ -32,7 +32,8 @@ stock_new(pool_t pool, const struct stock_class *class,
     assert(class != NULL);
     assert(class->item_size > sizeof(struct stock_item));
     assert(class->create != NULL);
-    assert(class->validate != NULL);
+    assert(class->borrow != NULL);
+    assert(class->release != NULL);
     assert(class->destroy != NULL);
 
     pool = pool_new_linear(pool, "stock", 1024);
@@ -121,7 +122,7 @@ stock_get(struct stock *stock, void *info,
 
         assert(item->is_idle);
 
-        if (stock->class->validate(stock->class_ctx, item)) {
+        if (stock->class->borrow(stock->class_ctx, item)) {
             item->is_idle = false;
 
             list_add(&item->list_head, &stock->busy);
@@ -192,7 +193,7 @@ stock_put(struct stock_item *item, bool destroy)
     --stock->num_busy;
 
     if (destroy || stock->num_idle >= 8 ||
-        !stock->class->validate(stock->class_ctx, item)) {
+        !stock->class->release(stock->class_ctx, item)) {
         destroy_item(stock, item);
     } else {
         item->is_idle = true;

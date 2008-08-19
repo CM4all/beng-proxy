@@ -26,7 +26,8 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx)
     assert(class != NULL);
     assert(class->item_size > sizeof(struct stock_item));
     assert(class->create != NULL);
-    assert(class->validate != NULL);
+    assert(class->borrow != NULL);
+    assert(class->release != NULL);
     assert(class->destroy != NULL);
 
     pool = pool_new_linear(pool, "hstock", 4096);
