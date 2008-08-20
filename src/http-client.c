@@ -801,6 +801,11 @@ static struct async_operation_class http_client_request_async_operation = {
 };
 
 
+/*
+ * constructor
+ *
+ */
+
 void
 http_client_request(pool_t pool, int fd,
                     const struct lease *lease, void *lease_ctx,
