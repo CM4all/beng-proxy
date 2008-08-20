@@ -163,17 +163,10 @@ http_client_response_stream_close(istream_t istream)
     assert(!http_response_handler_defined(&connection->request.handler));
     assert(!http_body_eof(&connection->response.body_reader));
 
-    event2_nand(&connection->event, EV_READ);
-
-    connection->keep_alive = false;
-    connection->response.read_state = READ_NONE;
-
     pool_unref(connection->request.pool);
-    connection->request.pool = NULL;
 
     istream_deinit_abort(&connection->response.body_reader.output);
-
-    http_client_connection_close(connection);
+    http_client_release(connection);
 }
 
 static const struct istream http_client_response_stream = {
