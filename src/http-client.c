@@ -779,13 +779,18 @@ http_client_request_abort(struct async_operation *ao)
            connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
-    /* by setting the state to READ_ABORTED, we bar
-       http_client_request_close() from invoking the "abort"
-       callback */
-    connection->response.read_state = READ_ABORTED;
     pool_unref(connection->request.caller_pool);
 
-    http_client_connection_close(connection);
+    if (connection->response.read_state == READ_NONE) {
+        assert(connection->request.istream != NULL);
+
+        istream_handler_clear(connection->request.istream);
+        istream_close(connection->request.istream);
+    } else {
+        assert(connection->request.istream == NULL);
+    }
+
+    http_client_release(connection, false);
 }
 
 static struct async_operation_class http_client_request_async_operation = {
