@@ -619,40 +619,6 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
     pool_commit();
 }
 
-static struct http_client_connection *
-http_client_connection_new(pool_t pool, int fd,
-                           const struct lease *lease, void *lease_ctx)
-{
-    struct http_client_connection *connection;
-    static const struct timeval tv = {
-        .tv_sec = 30,
-        .tv_usec = 0,
-    };
-
-    assert(fd >= 0);
-
-#ifdef NDEBUG
-    pool_ref(pool);
-#else
-    pool = pool_new_linear(pool, "http_client_connection", 8192);
-#endif
-
-    connection = p_malloc(pool, sizeof(*connection));
-    connection->pool = pool;
-    connection->fd = fd;
-    lease_ref_set(&connection->lease_ref, lease, lease_ctx);
-
-    connection->input = fifo_buffer_new(pool, 4096);
-
-    connection->response.read_state = READ_NONE;
-
-    event2_init(&connection->event, connection->fd,
-                http_client_event_callback, connection,
-                &tv);
-
-    return connection;
-}
-
 static void
 http_client_request_close(struct http_client_connection *connection)
 {
@@ -818,13 +784,28 @@ http_client_request(pool_t pool, int fd,
 {
     struct http_client_connection *connection;
     istream_t request_line_stream, header_stream;
+    static const struct timeval tv = {
+        .tv_sec = 30,
+        .tv_usec = 0,
+    };
 
-    connection = http_client_connection_new(pool, fd, lease, lease_ctx);
-
-    assert(connection != NULL);
-    assert(connection->response.read_state == READ_NONE);
+    assert(fd >= 0);
     assert(handler != NULL);
     assert(handler->response != NULL);
+
+    pool = pool_new_linear(pool, "http_client_request", 8192);
+
+    connection = p_malloc(pool, sizeof(*connection));
+    connection->pool = pool;
+    connection->fd = fd;
+    lease_ref_set(&connection->lease_ref, lease, lease_ctx);
+
+    connection->input = fifo_buffer_new(pool, 4096);
+    connection->response.read_state = READ_NONE;
+
+    event2_init(&connection->event, connection->fd,
+                http_client_event_callback, connection,
+                &tv);
 
     pool_ref(pool);
     connection->request.caller_pool = pool;
