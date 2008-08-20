@@ -155,14 +155,6 @@ http_client_response_stream_close(istream_t istream)
 
     istream_deinit_abort(&connection->response.body_reader.output);
 
-#ifdef POISON
-    poison_undefined(&connection->request, sizeof(connection->request));
-    poison_undefined(&connection->response,
-                     sizeof(connection->response) - sizeof(connection->response.body_reader));
-    connection->request.pool = NULL;
-    connection->response.read_state = READ_NONE;
-#endif
-
     http_client_connection_close(connection);
 }
 
@@ -424,14 +416,6 @@ http_client_response_finished(struct http_client_connection *connection)
         pool_unref(connection->request.pool);
         connection->request.pool = NULL;
     }
-
-#ifdef POISON
-    poison_undefined(&connection->request, sizeof(connection->request));
-    poison_undefined(&connection->response,
-                     sizeof(connection->response) - sizeof(connection->response.body_reader));
-    connection->request.pool = NULL;
-    connection->response.read_state = READ_NONE;
-#endif
 
     if (!fifo_buffer_empty(connection->input)) {
         daemon_log(2, "excess data after HTTP response\n");
