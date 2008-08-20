@@ -308,7 +308,7 @@ istream_dechunk_new(pool_t pool, istream_t input)
     return istream_struct_cast(&dechunk->output);
 }
 
-int
+bool
 istream_dechunk_eof(istream_t istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);

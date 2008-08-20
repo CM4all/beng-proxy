@@ -53,7 +53,7 @@ istream_chunked_new(pool_t pool, istream_t input);
 istream_t
 istream_dechunk_new(pool_t pool, istream_t input);
 
-int
+bool
 istream_dechunk_eof(istream_t istream);
 
 istream_t
