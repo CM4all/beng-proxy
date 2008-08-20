@@ -431,7 +431,7 @@ http_client_parse_headers(struct http_client_connection *connection)
                                               connection->response.body);
         pool_unref(caller_pool);
 
-        if (empty_response && http_client_connection_valid(connection))
+        if (empty_response)
             http_client_response_finished(connection);
     }
 
@@ -441,7 +441,6 @@ http_client_parse_headers(struct http_client_connection *connection)
 static void
 http_client_response_finished(struct http_client_connection *connection)
 {
-    assert(http_client_connection_valid(connection));
     assert(connection->response.read_state == READ_BODY);
     assert(connection->request.istream == NULL);
     assert(!http_response_handler_defined(&connection->request.handler));
@@ -472,8 +471,7 @@ http_client_response_stream_eof(struct http_client_connection *connection)
 
     istream_deinit_eof(&connection->response.body_reader.output);
 
-    if (http_client_connection_valid(connection))
-        http_client_response_finished(connection);
+    http_client_response_finished(connection);
 }
 
 static void
@@ -548,8 +546,6 @@ http_client_try_read_buffered(struct http_client_connection *connection)
 
             http_body_socket_eof(&connection->response.body_reader,
                                  connection->input);
-            if (!http_client_connection_valid(connection))
-                return;
         }
 
         http_client_connection_close(connection);
