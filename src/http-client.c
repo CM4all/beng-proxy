@@ -163,8 +163,7 @@ http_client_response_stream_close(istream_t istream)
     connection->response.read_state = READ_NONE;
 #endif
 
-    if (http_client_connection_valid(connection))
-        http_client_connection_close(connection);
+    http_client_connection_close(connection);
 }
 
 static const struct istream http_client_response_stream = {
