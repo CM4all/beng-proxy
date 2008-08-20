@@ -775,7 +775,8 @@ http_client_request_abort(struct async_operation *ao)
     
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(connection->response.read_state == READ_STATUS ||
+    assert(connection->response.read_state == READ_NONE ||
+           connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
     /* by setting the state to READ_ABORTED, we bar
