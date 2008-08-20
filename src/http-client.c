@@ -40,7 +40,7 @@ struct http_client_connection {
 
     /* request */
     struct {
-        pool_t caller_pool, pool;
+        pool_t caller_pool;
         istream_t istream;
         char request_line_buffer[1024];
         char content_length_buffer[32];
@@ -158,12 +158,9 @@ http_client_response_stream_close(istream_t istream)
     struct http_client_connection *connection = response_stream_to_connection(istream);
 
     assert(connection->response.read_state == READ_BODY);
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
     assert(!http_response_handler_defined(&connection->request.handler));
     assert(!http_body_eof(&connection->response.body_reader));
-
-    pool_unref(connection->request.pool);
 
     istream_deinit_abort(&connection->response.body_reader.output);
     http_client_release(connection, false);
@@ -220,7 +217,6 @@ http_client_parse_status_line(struct http_client_connection *connection,
     const char *space;
 
     assert(connection != NULL);
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
     assert(connection->response.headers == NULL);
     assert(connection->response.read_state == READ_STATUS);
@@ -247,7 +243,7 @@ http_client_parse_status_line(struct http_client_connection *connection,
     }
 
     connection->response.read_state = READ_HEADERS;
-    connection->response.headers = strmap_new(connection->request.pool, 64);
+    connection->response.headers = strmap_new(connection->pool, 64);
     return true;
 }
 
@@ -306,7 +302,7 @@ http_client_headers_finished(struct http_client_connection *connection)
         = http_body_init(&connection->response.body_reader,
                          &http_client_response_stream,
                          connection->pool,
-                         connection->request.pool,
+                         connection->pool,
                          content_length,
                          connection->keep_alive);
 
@@ -322,14 +318,13 @@ http_client_handle_line(struct http_client_connection *connection,
                         const char *line, size_t length)
 {
     assert(connection != NULL);
-    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
     if (connection->response.read_state == READ_STATUS)
         return http_client_parse_status_line(connection, line, length);
     else if (length > 0) {
-        header_parse_line(connection->request.pool,
+        header_parse_line(connection->pool,
                           connection->response.headers,
                           line, length);
         return true;
@@ -348,7 +343,6 @@ http_client_parse_headers(struct http_client_connection *connection)
     bool bret;
 
     assert(connection != NULL);
-    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
@@ -415,18 +409,12 @@ http_client_response_finished(struct http_client_connection *connection)
 {
     assert(http_client_connection_valid(connection));
     assert(connection->response.read_state == READ_BODY);
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
     assert(!http_response_handler_defined(&connection->request.handler));
 
     connection->response.read_state = READ_NONE;
     connection->response.headers = NULL;
     connection->response.body = NULL;
-
-    if (connection->request.pool != NULL) {
-        pool_unref(connection->request.pool);
-        connection->request.pool = NULL;
-    }
 
     if (!fifo_buffer_empty(connection->input)) {
         daemon_log(2, "excess data after HTTP response\n");
@@ -444,7 +432,6 @@ static void
 http_client_response_stream_eof(struct http_client_connection *connection)
 {
     assert(connection->response.read_state == READ_BODY);
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream == NULL);
     assert(!http_response_handler_defined(&connection->request.handler));
     assert(http_body_eof(&connection->response.body_reader));
@@ -480,7 +467,6 @@ static void
 http_client_consume_headers(struct http_client_connection *connection)
 {
     assert(connection != NULL);
-    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
@@ -548,12 +534,6 @@ http_client_try_read_buffered(struct http_client_connection *connection)
         return;
     }
 
-    if (connection->request.pool == NULL) {
-        daemon_log(2, "excess data received on idle HTTP client socket\n");
-        http_client_connection_close(connection);
-        return;
-    }
-
     if (connection->response.read_state == READ_BODY)
         http_client_consume_body(connection);
     else
@@ -570,8 +550,7 @@ http_client_try_read_buffered(struct http_client_connection *connection)
 static void
 http_client_try_read(struct http_client_connection *connection)
 {
-    if (connection->request.pool != NULL &&
-        connection->response.read_state == READ_BODY &&
+    if (connection->response.read_state == READ_BODY &&
         (connection->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 &&
         fifo_buffer_empty(connection->input))
         http_client_try_response_direct(connection);
@@ -631,7 +610,6 @@ http_client_connection_new(pool_t pool, int fd,
 
     connection->input = fifo_buffer_new(pool, 4096);
 
-    connection->request.pool = NULL;
     connection->response.read_state = READ_NONE;
 
     event2_init(&connection->event, connection->fd,
@@ -644,16 +622,10 @@ http_client_connection_new(pool_t pool, int fd,
 static void
 http_client_request_close(struct http_client_connection *connection)
 {
-    pool_t pool;
-
     assert(connection != NULL);
-    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_BODY ||
            connection->response.read_state == READ_ABORTED ||
            http_response_handler_defined(&connection->request.handler));
-
-    pool = connection->request.pool;
-    connection->request.pool = NULL;
 
     if (connection->request.istream != NULL)
         istream_free_handler(&connection->request.istream);
@@ -669,8 +641,6 @@ http_client_request_close(struct http_client_connection *connection)
         http_response_handler_invoke_abort(&connection->request.handler);
         pool_unref(caller_pool);
     }
-
-    pool_unref(pool);
 }
 
 static void
@@ -682,9 +652,7 @@ http_client_connection_close(struct http_client_connection *connection)
     connection->cork = false;
 #endif
 
-    if (connection->request.pool != NULL)
-        http_client_request_close(connection);
-
+    http_client_request_close(connection);
     http_client_release(connection, false);
 }
 
@@ -701,7 +669,6 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
 
     nbytes = write(connection->fd, data, length);
@@ -726,7 +693,6 @@ http_client_request_stream_eof(void *ctx)
 {
     struct http_client_connection *connection = ctx;
 
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
 
     connection->request.istream = NULL;
@@ -742,7 +708,6 @@ http_client_request_stream_abort(void *ctx)
 {
     struct http_client_connection *connection = ctx;
 
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
 
     connection->request.istream = NULL;
@@ -814,14 +779,12 @@ http_client_request(pool_t pool, int fd,
     connection = http_client_connection_new(pool, fd, lease, lease_ctx);
 
     assert(connection != NULL);
-    assert(connection->request.pool == NULL);
     assert(connection->response.read_state == READ_NONE);
     assert(handler != NULL);
     assert(handler->response != NULL);
 
     pool_ref(pool);
     connection->request.caller_pool = pool;
-    connection->request.pool = pool_new_linear(connection->pool, "http_client_request", 8192);
     http_response_handler_set(&connection->request.handler, handler, ctx);
 
     async_init(&connection->request.async, &http_client_request_async_operation);
@@ -835,19 +798,19 @@ http_client_request(pool_t pool, int fd,
              http_method_to_string(method), uri);
 
     request_line_stream
-        = istream_string_new(connection->request.pool,
+        = istream_string_new(connection->pool,
                              connection->request.request_line_buffer);
 
     /* headers */
 
     if (headers == NULL)
-        headers = growing_buffer_new(connection->request.pool, 256);
+        headers = growing_buffer_new(connection->pool, 256);
 
     if (body != NULL) {
         off_t content_length = istream_available(body, false);
         if (content_length == (off_t)-1) {
             header_write(headers, "transfer-encoding", "chunked");
-            body = istream_chunked_new(connection->request.pool, body);
+            body = istream_chunked_new(connection->pool, body);
         } else {
             snprintf(connection->request.content_length_buffer,
                      sizeof(connection->request.content_length_buffer),
@@ -863,7 +826,7 @@ http_client_request(pool_t pool, int fd,
 
     /* request istream */
 
-    connection->request.istream = istream_cat_new(connection->request.pool,
+    connection->request.istream = istream_cat_new(connection->pool,
                                                   request_line_stream,
                                                   header_stream, body,
                                                   NULL);
