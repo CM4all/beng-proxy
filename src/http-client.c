@@ -87,6 +87,24 @@ static void
 http_client_try_read(struct http_client_connection *connection);
 
 
+
+/**
+ * Release resources held by this object: the event object, the socket
+ * lease, and the pool reference.
+ */
+static void
+http_client_release(struct http_client_connection *client)
+{
+    assert(client != NULL);
+
+    event2_set(&client->event, 0);
+    event2_commit(&client->event);
+    client->fd = -1;
+    lease_release(&client->lease_ref, false);
+    pool_unref(client->pool);
+}
+
+
 /*
  * istream implementation for the response body
  *
@@ -674,11 +692,7 @@ http_client_connection_close(struct http_client_connection *connection)
     if (connection->request.pool != NULL)
         http_client_request_close(connection);
 
-    event2_set(&connection->event, 0);
-    event2_commit(&connection->event);
-    connection->fd = -1;
-    lease_release(&connection->lease_ref, false);
-    pool_unref(connection->pool);
+    http_client_release(connection);
 }
 
 
