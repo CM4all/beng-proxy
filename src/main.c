@@ -9,7 +9,7 @@
 #include "connection.h"
 #include "session.h"
 #include "translate.h"
-#include "http-stock.h"
+#include "tcp-stock.h"
 #include "ajp-stock.h"
 #include "stock.h"
 #include "tcache.h"
@@ -65,8 +65,8 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
         instance->http_cache = NULL;
     }
 
-    if (instance->http_client_stock != NULL)
-        hstock_free(&instance->http_client_stock);
+    if (instance->tcp_stock != NULL)
+        hstock_free(&instance->tcp_stock);
 
     if (instance->ajp_client_stock != NULL)
         hstock_free(&instance->ajp_client_stock);
@@ -172,9 +172,9 @@ int main(int argc, char **argv)
     instance.translate_cache = translate_cache_new(instance.pool,
                                                    translate_stock);
 
-    instance.http_client_stock = http_stock_new(instance.pool);
+    instance.tcp_stock = tcp_stock_new(instance.pool);
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
-                                         instance.http_client_stock);
+                                         instance.tcp_stock);
 
     instance.ajp_client_stock = ajp_stock_new(instance.pool);
 

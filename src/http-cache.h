@@ -19,7 +19,7 @@ struct async_operation_ref;
 
 struct http_cache *
 http_cache_new(pool_t pool, size_t max_size,
-               struct hstock *http_client_stock);
+               struct hstock *tcp_stock);
 
 void
 http_cache_close(struct http_cache *cache);

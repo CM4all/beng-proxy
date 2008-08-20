@@ -11,9 +11,14 @@
 #include "istream.h"
 
 struct ajp_connection;
-struct http_client_connection_handler;
 struct http_response_handler;
 struct strmap;
+
+/* XXX remove this */
+struct http_client_connection_handler {
+    void (*idle)(void *ctx);
+    void (*free)(void *ctx);
+};
 
 struct ajp_connection * __attr_malloc
 ajp_new(pool_t pool, int fd,

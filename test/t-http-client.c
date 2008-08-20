@@ -5,6 +5,7 @@
 #include "socket-util.h"
 #include "growing-buffer.h"
 #include "header-writer.h"
+#include "lease.h"
 
 #include <inline/compiler.h>
 
@@ -17,10 +18,8 @@
 #include <signal.h>
 #include <event.h>
 
-static struct http_client_connection *
-connect_mirror(pool_t pool,
-               const struct http_client_connection_handler *handler,
-               void *ctx)
+static int
+connect_mirror(void)
 {
     int ret, sv[2];
     pid_t pid;
@@ -51,59 +50,15 @@ connect_mirror(pool_t pool,
 
     socket_set_nonblock(sv[0], 1);
 
-    return http_client_connection_new(pool, sv[0], handler, ctx);
-}
-
-static struct http_client_connection *
-connect_abort(pool_t pool,
-              const struct http_client_connection_handler *handler,
-              void *ctx)
-{
-    int ret, sv[2];
-    pid_t pid;
-
-    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
-    if (ret < 0) {
-        perror("socketpair() failed");
-        exit(EXIT_FAILURE);
-    }
-
-    pid = fork();
-    if (pid < 0) {
-        perror("fork() failed");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pid == 0) {
-        char buffer[256];
-        ssize_t nbytes;
-
-        close(sv[0]);
-        nbytes = read(sv[1], buffer, sizeof(buffer));
-        assert(nbytes > 0);
-
-        write(sv[1], "200 OK\r\n", 8);
-
-        shutdown(sv[1], SHUT_WR);
-        sleep(1);
-        exit(EXIT_FAILURE);
-    }
-
-    close(sv[1]);
-
-    socket_set_nonblock(sv[0], 1);
-
-    return http_client_connection_new(pool, sv[0], handler, ctx);
+    return sv[0];
 }
 
 struct context {
-    bool close_idle;
-    bool close_early, close_late, close_data, close_abort;
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
     struct async_operation_ref async_ref;
-    struct http_client_connection *client;
-    bool idle, aborted;
+    int fd;
+    bool released, aborted;
     http_status_t status;
 
     istream_t body;
@@ -113,32 +68,22 @@ struct context {
 
 
 /*
- * http_client_connection_handler
+ * lease
  *
  */
 
 static void
-my_connection_idle(void *ctx)
+my_release(bool reuse __attr_unused, void *ctx)
 {
     struct context *c = ctx;
 
-    c->idle = true;
-
-    if (c->close_idle)
-        http_client_connection_close(c->client);
+    close(c->fd);
+    c->fd = -1;
+    c->released = true;
 }
 
-static void
-my_connection_free(void *ctx __attr_unused)
-{
-    struct context *c = ctx;
-
-    c->client = NULL;
-}
-
-static const struct http_client_connection_handler my_connection_handler = {
-    .idle = my_connection_idle,
-    .free = my_connection_free,
+static const struct lease my_lease = {
+    .release = my_release,
 };
 
 
@@ -153,11 +98,6 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
     struct context *c = ctx;
 
     c->body_data += length;
-
-    if (c->close_data) {
-        http_client_connection_close(c->client);
-        return 0;
-    }
 
     if (c->close_response_body_data) {
         istream_close(c->body);
@@ -211,15 +151,10 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
 
     c->status = status;
 
-    if (c->close_early)
-        http_client_connection_close(c->client);
-    else if (c->close_response_body_early)
+    if (c->close_response_body_early)
         istream_close(body);
     else if (body != NULL)
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
-
-    if (c->close_late)
-        http_client_connection_close(c->client);
 
     if (c->close_response_body_late)
         istream_close(c->body);
@@ -231,9 +166,6 @@ my_response_abort(void *ctx)
     struct context *c = ctx;
 
     c->aborted = true;
-
-    if (c->close_abort)
-        http_client_connection_close(c->client);
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -250,13 +182,14 @@ static const struct http_response_handler my_response_handler = {
 static void
 test_empty(pool_t pool, struct context *c)
 {
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL, NULL,
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL, NULL,
                         &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
-    assert(c->client == NULL);
+    assert(c->fd < 0);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
     assert(c->body == NULL);
     assert(!c->body_eof);
@@ -266,122 +199,33 @@ test_empty(pool_t pool, struct context *c)
 static void
 test_body(pool_t pool, struct context *c)
 {
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
-    assert(c->client == NULL);
+    assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
     assert(c->body_eof);
     assert(c->body_data == 6);
-}
-
-static void
-test_close_idle(pool_t pool, struct context *c)
-{
-    struct growing_buffer *headers = growing_buffer_new(pool, 512);
-
-    header_write(headers, "connection", "keep-alive");
-
-    c->close_idle = true;
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", headers,
-                        istream_string_new(pool, "foobar"),
-                        &my_response_handler, c, &c->async_ref);
-
-    event_dispatch();
-
-    assert(c->client == NULL);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
-    assert(c->body_data == 6);
-    assert(c->body_eof);
-    assert(!c->body_abort);
-    assert(c->idle);
-}
-
-static void
-test_early_close(pool_t pool, struct context *c)
-{
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_connection_close(c->client);
-
-    assert(c->client == NULL);
-    assert(c->status == 0);
-}
-
-static void
-test_close_early(pool_t pool, struct context *c)
-{
-    c->close_early = true;
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
-                        istream_string_new(pool, "foobar"),
-                        &my_response_handler, c, &c->async_ref);
-
-    event_dispatch();
-
-    assert(c->client == NULL);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
-    assert(c->body_data == 0);
-    assert(!c->body_eof);
-    assert(!c->body_abort);
-}
-
-static void
-test_close_late(pool_t pool, struct context *c)
-{
-    c->close_late = true;
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
-                        istream_string_new(pool, "foobar"),
-                        &my_response_handler, c, &c->async_ref);
-
-    event_dispatch();
-
-    assert(c->client == NULL);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
-    assert(c->body_data == 0);
-    assert(!c->body_eof);
-    assert(c->body_abort);
-}
-
-static void
-test_close_data(pool_t pool, struct context *c)
-{
-    c->close_data = true;
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
-                        istream_string_new(pool, "foobar"),
-                        &my_response_handler, c, &c->async_ref);
-
-    event_dispatch();
-
-    assert(c->client == NULL);
-    assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
-    assert(c->body_data == 6);
-    assert(!c->body_eof);
-    assert(c->body_abort);
 }
 
 static void
 test_close_response_body_early(pool_t pool, struct context *c)
 {
     c->close_response_body_early = true;
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
-    assert(c->client == NULL);
+    assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
     assert(c->body == NULL);
     assert(c->body_data == 0);
@@ -393,14 +237,15 @@ static void
 test_close_response_body_late(pool_t pool, struct context *c)
 {
     c->close_response_body_late = true;
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
-    assert(c->client == NULL);
+    assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
     assert(c->body == NULL);
     assert(c->body_data == 0);
@@ -412,14 +257,15 @@ static void
 test_close_response_body_data(pool_t pool, struct context *c)
 {
     c->close_response_body_data = true;
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
-    assert(c->client == NULL);
+    assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
     assert(c->body == NULL);
     assert(c->body_data == 6);
@@ -431,8 +277,9 @@ static void
 test_data_blocking(pool_t pool, struct context *c)
 {
     c->data_blocking = 5;
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
                         istream_head_new(pool, istream_zero_new(pool), 65536),
                         &my_response_handler, c, &c->async_ref);
 
@@ -442,46 +289,33 @@ test_data_blocking(pool_t pool, struct context *c)
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
-    assert(c->client != NULL);
+    assert(!c->released);
     assert(c->status == HTTP_STATUS_OK);
     assert(c->body != NULL);
     assert(c->body_data > 0);
     assert(!c->body_eof);
     assert(!c->body_abort);
 
-    http_client_connection_close(c->client);
+    istream_close(c->body);
 
-    assert(c->client == NULL);
+    assert(c->released);
     assert(c->body == NULL);
     assert(!c->body_eof);
     assert(c->body_abort);
 }
 
 static void
-test_socket_close(pool_t pool, struct context *c)
-{
-    c->close_abort = true;
-    c->client = connect_abort(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL, NULL,
-                        &my_response_handler, c, &c->async_ref);
-
-    event_dispatch();
-
-    assert(c->client == NULL);
-    assert(c->body == NULL);
-}
-
-static void
 test_body_fail(pool_t pool, struct context *c)
 {
-    c->client = connect_mirror(pool, &my_connection_handler, c);
-    http_client_request(c->client, pool, HTTP_METHOD_GET, "/foo", NULL,
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
                         istream_fail_new(pool),
                         &my_response_handler, c, &c->async_ref);
 
     event_dispatch();
 
-    assert(c->client == NULL);
+    assert(c->released);
     assert(c->aborted);
 }
 
@@ -518,16 +352,10 @@ int main(int argc, char **argv) {
 
     run_test(pool, test_empty);
     run_test(pool, test_body);
-    run_test(pool, test_close_idle);
-    run_test(pool, test_early_close);
-    run_test(pool, test_close_early);
-    run_test(pool, test_close_late);
-    run_test(pool, test_close_data);
     run_test(pool, test_close_response_body_early);
     run_test(pool, test_close_response_body_late);
     run_test(pool, test_close_response_body_data);
     run_test(pool, test_data_blocking);
-    run_test(pool, test_socket_close);
     run_test(pool, test_body_fail);
 
     pool_unref(pool);

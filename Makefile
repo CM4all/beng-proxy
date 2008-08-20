@@ -158,7 +158,7 @@ SOURCES = src/main.c \
 	src/http-util.c \
 	src/ajp-client.c \
 	src/access-log.c \
-	src/http-stock.c \
+	src/tcp-stock.c \
 	src/http-request.c \
 	src/ajp-stock.c \
 	src/ajp-request.c \

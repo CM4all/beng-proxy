@@ -16,6 +16,7 @@
 #include "istream-internal.h"
 #include "async.h"
 #include "growing-buffer.h"
+#include "lease.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -33,12 +34,9 @@ struct http_client_connection {
 
     /* I/O */
     int fd;
+    struct lease_ref lease_ref;
     struct event2 event;
     fifo_buffer_t input;
-
-    /* handler */
-    const struct http_client_connection_handler *handler;
-    void *handler_ctx;
 
     /* request */
     struct {
@@ -78,6 +76,9 @@ http_client_connection_valid(struct http_client_connection *connection)
 {
     return connection->fd >= 0;
 }
+
+static void
+http_client_connection_close(struct http_client_connection *connection);
 
 static void
 http_client_consume_body(struct http_client_connection *connection);
@@ -438,15 +439,11 @@ http_client_response_finished(struct http_client_connection *connection)
         connection->keep_alive = false;
     }
 
-    if (!connection->keep_alive) {
-        http_client_connection_close(connection);
-        return;
-    }
-
-    event2_or(&connection->event, EV_READ);
-
-    if (connection->handler != NULL && connection->handler->idle != NULL)
-        connection->handler->idle(connection->handler_ctx);
+    event2_set(&connection->event, 0);
+    event2_commit(&connection->event);
+    connection->fd = -1;
+    lease_release(&connection->lease_ref, connection->keep_alive);
+    pool_unref(connection->pool);
 }
 
 static void
@@ -615,10 +612,9 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
     pool_commit();
 }
 
-struct http_client_connection *
+static struct http_client_connection *
 http_client_connection_new(pool_t pool, int fd,
-                           const struct http_client_connection_handler *handler,
-                           void *ctx)
+                           const struct lease *lease, void *lease_ctx)
 {
     struct http_client_connection *connection;
     static const struct timeval tv = {
@@ -627,8 +623,6 @@ http_client_connection_new(pool_t pool, int fd,
     };
 
     assert(fd >= 0);
-    assert(handler != NULL);
-    assert(handler->free != NULL);
 
 #ifdef NDEBUG
     pool_ref(pool);
@@ -639,11 +633,9 @@ http_client_connection_new(pool_t pool, int fd,
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
     connection->fd = fd;
+    lease_ref_set(&connection->lease_ref, lease, lease_ctx);
 
     connection->input = fifo_buffer_new(pool, 4096);
-
-    connection->handler = handler;
-    connection->handler_ctx = ctx;
 
     connection->request.pool = NULL;
     connection->response.read_state = READ_NONE;
@@ -687,19 +679,10 @@ http_client_request_close(struct http_client_connection *connection)
     pool_unref(pool);
 }
 
-void
+static void
 http_client_connection_close(struct http_client_connection *connection)
 {
     assert(connection != NULL);
-
-    pool_ref(connection->pool);
-
-    if (connection->fd >= 0) {
-        event2_set(&connection->event, 0);
-        close(connection->fd);
-        connection->fd = -1;
-        pool_unref(connection->pool);
-    }
 
 #ifdef __linux
     connection->cork = false;
@@ -708,31 +691,11 @@ http_client_connection_close(struct http_client_connection *connection)
     if (connection->request.pool != NULL)
         http_client_request_close(connection);
 
-    if (connection->handler != NULL &&
-        connection->handler->free != NULL) {
-        const struct http_client_connection_handler *handler = connection->handler;
-        void *handler_ctx = connection->handler_ctx;
-        connection->handler = NULL;
-        connection->handler_ctx = NULL;
-        handler->free(handler_ctx);
-    }
-
+    event2_set(&connection->event, 0);
+    event2_commit(&connection->event);
+    connection->fd = -1;
+    lease_release(&connection->lease_ref, false);
     pool_unref(connection->pool);
-}
-
-void
-http_client_connection_graceful(struct http_client_connection *connection)
-{
-    assert(connection != NULL);
-
-    if (connection->request.pool != NULL)
-        /* a request is currently being handled by the server; disable
-           keep_alive so the connection will be closed after this last
-           request */
-        connection->keep_alive = false;
-    else
-        /* the connection is idle; close it immediately */
-        http_client_connection_close(connection);
 }
 
 
@@ -840,8 +803,8 @@ static struct async_operation_class http_client_request_async_operation = {
 
 
 void
-http_client_request(struct http_client_connection *connection,
-                    pool_t pool,
+http_client_request(pool_t pool, int fd,
+                    const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     struct growing_buffer *headers,
                     istream_t body,
@@ -849,7 +812,10 @@ http_client_request(struct http_client_connection *connection,
                     void *ctx,
                     struct async_operation_ref *async_ref)
 {
+    struct http_client_connection *connection;
     istream_t request_line_stream, header_stream;
+
+    connection = http_client_connection_new(pool, fd, lease, lease_ctx);
 
     assert(connection != NULL);
     assert(connection->request.pool == NULL);

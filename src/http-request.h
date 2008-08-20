@@ -18,7 +18,7 @@ struct async_operation_ref;
 
 void
 http_request(pool_t pool,
-             struct hstock *http_client_stock,
+             struct hstock *tcp_stock,
              http_method_t method,
              struct uri_with_address *uwa,
              struct growing_buffer *headers, istream_t body,

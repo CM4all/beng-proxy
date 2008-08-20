@@ -7,13 +7,14 @@
 #include "http-request.h"
 #include "http-response.h"
 #include "header-writer.h"
-#include "http-stock.h"
+#include "tcp-stock.h"
 #include "stock.h"
 #include "async.h"
 #include "http-client.h"
 #include "uri-address.h"
 #include "abort-unref.h"
 #include "growing-buffer.h"
+#include "lease.h"
 
 #include <inline/compiler.h>
 
@@ -22,6 +23,10 @@
 struct http_request {
     pool_t pool;
 
+    struct hstock *tcp_stock;
+    const char *host_and_port;
+    struct stock_item *stock_item;
+
     http_method_t method;
     const char *uri;
     struct growing_buffer *headers;
@@ -29,6 +34,25 @@ struct http_request {
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
+};
+
+
+/*
+ * socket lease
+ *
+ */
+
+static void
+http_socket_release(bool reuse, void *ctx)
+{
+    struct http_request *hr = ctx;
+
+    hstock_put(hr->tcp_stock, hr->host_and_port, hr->stock_item, !reuse);
+    pool_unref(hr->pool);
+}
+
+static const struct lease http_socket_lease = {
+    .release = http_socket_release,
 };
 
 
@@ -47,14 +71,18 @@ http_request_stock_callback(void *ctx, struct stock_item *item)
 
         if (hr->body != NULL)
             istream_close(hr->body);
-    } else
-        http_client_request(http_stock_item_get(item),
-                            hr->pool,
+
+        pool_unref(hr->pool);
+    } else {
+        hr->stock_item = item;
+
+        http_client_request(hr->pool,
+                            tcp_stock_item_get(item),
+                            &http_socket_lease, hr,
                             hr->method, hr->uri, hr->headers, hr->body,
                             hr->handler.handler, hr->handler.ctx,
                             hr->async_ref);
-
-    pool_unref(hr->pool);
+    }
 }
 
 
@@ -65,7 +93,7 @@ http_request_stock_callback(void *ctx, struct stock_item *item)
 
 void
 http_request(pool_t pool,
-             struct hstock *http_client_stock,
+             struct hstock *tcp_stock,
              http_method_t method,
              struct uri_with_address *uwa,
              struct growing_buffer *headers,
@@ -85,6 +113,7 @@ http_request(pool_t pool,
 
     hr = p_malloc(pool, sizeof(*hr));
     hr->pool = pool;
+    hr->tcp_stock = tcp_stock;
     hr->method = method;
 
     hr->headers = headers;
@@ -132,7 +161,8 @@ http_request(pool_t pool,
 
     pool_ref(pool);
 
-    hstock_get(http_client_stock,
+    hr->host_and_port = host_and_port;
+    hstock_get(tcp_stock,
                host_and_port, uwa,
                http_request_stock_callback, hr,
                async_unref_on_abort(pool, async_ref));
