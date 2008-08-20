@@ -517,7 +517,6 @@ http_cache_close(struct http_cache *cache)
 
 static void
 http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
-                pool_t pool,
                 http_method_t method,
                 struct uri_with_address *uwa,
                 struct strmap *headers, istream_t body,
@@ -525,6 +524,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
                 void *handler_ctx,
                 struct async_operation_ref *async_ref)
 {
+    pool_t pool;
     struct http_cache_request *request;
 
     if (info->only_if_cached) {
@@ -533,6 +533,10 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
                                               NULL, NULL);
         return;
     }
+
+    /* the cache request may live longer than the caller pool, so
+       allocate a new pool for it from cache->pool */
+    pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
 
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
@@ -550,6 +554,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
                  headers == NULL ? NULL : headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
                  async_ref);
+    pool_unref(pool);
 }
 
 static void
@@ -577,7 +582,6 @@ http_cache_serve(struct http_cache_item *item,
 
 static void
 http_cache_test(struct http_cache *cache, struct http_cache_item *item,
-                pool_t pool,
                 http_method_t method,
                 struct uri_with_address *uwa,
                 struct strmap *headers, istream_t body,
@@ -585,6 +589,9 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
                 void *handler_ctx,
                 struct async_operation_ref *async_ref)
 {
+    /* the cache request may live longer than the caller pool, so
+       allocate a new pool for it from cache->pool */
+    pool_t pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
     struct http_cache_request *request = p_malloc(pool,
                                                   sizeof(*request));
     request->pool = pool;
@@ -611,6 +618,7 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
                  headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
                  async_ref);
+    pool_unref(pool);
 }
 
 static void
@@ -629,7 +637,7 @@ http_cache_found(struct http_cache *cache,
         (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL)))
         http_cache_serve(item, pool, uwa->uri, body, handler, handler_ctx);
     else
-        http_cache_test(cache, item, pool,
+        http_cache_test(cache, item,
                         method, uwa, headers, body,
                         handler, handler_ctx, async_ref);
 }
@@ -652,7 +660,7 @@ http_cache_request(struct http_cache *cache,
             = (struct http_cache_item *)cache_get(cache->cache, uwa->uri);
 
         if (item == NULL)
-            http_cache_miss(cache, info, pool,
+            http_cache_miss(cache, info,
                             method, uwa, headers, body,
                             handler, handler_ctx, async_ref);
         else
