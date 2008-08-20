@@ -104,6 +104,40 @@ http_client_release(struct http_client_connection *client, bool reuse)
     pool_unref(client->pool);
 }
 
+/**
+ * Abort sending the request to the HTTP server.
+ */
+static void
+http_client_abort_request(struct http_client_connection *client)
+{
+    assert(client->response.read_state == READ_NONE);
+    assert(client->request.istream != NULL);
+
+    istream_handler_clear(client->request.istream);
+    istream_close(client->request.istream);
+
+    http_response_handler_invoke_abort(&client->request.handler);
+    pool_unref(client->request.caller_pool);
+
+    http_client_release(client, false);
+}
+
+/**
+ * Abort receiving the response status/headers from the HTTP server.
+ */
+static void
+http_client_abort_response(struct http_client_connection *client)
+{
+    assert(client->response.read_state == READ_STATUS ||
+           client->response.read_state == READ_HEADERS);
+    assert(client->request.istream == NULL);
+
+    http_response_handler_invoke_abort(&client->request.handler);
+    pool_unref(client->request.caller_pool);
+
+    http_client_release(client, false);
+}
+
 
 /*
  * istream implementation for the response body
@@ -232,13 +266,13 @@ http_client_parse_status_line(struct http_client_connection *connection,
     if (unlikely(length < 3 || !char_is_digit(line[0]) ||
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
         daemon_log(2, "no HTTP status found\n");
-        http_client_connection_close(connection);
+        http_client_abort_response(connection);
         return false;
     }
 
     connection->response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
     if (unlikely(connection->response.status < 100 || connection->response.status > 599)) {
-        http_client_connection_close(connection);
+        http_client_abort_response(connection);
         return false;
     }
 
@@ -275,7 +309,7 @@ http_client_headers_finished(struct http_client_connection *connection)
         if (unlikely(value == NULL)) {
             if (connection->keep_alive) {
                 daemon_log(2, "no Content-Length header in HTTP response\n");
-                http_client_connection_close(connection);
+                http_client_abort_response(connection);
                 return false;
             }
             content_length = (off_t)-1;
@@ -283,7 +317,7 @@ http_client_headers_finished(struct http_client_connection *connection)
             content_length = strtoul(value, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
                 daemon_log(2, "invalid Content-Length header in HTTP response\n");
-                http_client_connection_close(connection);
+                http_client_abort_response(connection);
                 return false;
             }
         }
@@ -684,7 +718,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     daemon_log(1, "write error on HTTP client connection: %s\n",
                strerror(errno));
-    http_client_connection_close(connection);
+    http_client_abort_request(connection);
     return 0;
 }
 
@@ -711,7 +745,11 @@ http_client_request_stream_abort(void *ctx)
     assert(connection->request.istream != NULL);
 
     connection->request.istream = NULL;
-    http_client_connection_close(connection);
+
+    http_response_handler_invoke_abort(&connection->request.handler);
+    pool_unref(connection->request.caller_pool);
+
+    http_client_release(connection, false);
 }
 
 static const struct istream_handler http_client_request_stream_handler = {
