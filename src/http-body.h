@@ -25,9 +25,12 @@ http_body_istream(struct http_body_reader *body)
 }
 
 static inline bool
-http_body_eof(const struct http_body_reader *body)
+http_body_eof(struct http_body_reader *body)
 {
-    return body->rest == 0;
+    return body->rest == 0 ||
+        (/* the dechunker clears our handler when it is finished */
+         body->rest == -1 &&
+         !istream_has_handler(istream_struct_cast(&body->output)));
 }
 
 static inline off_t
