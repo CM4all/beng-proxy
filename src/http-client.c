@@ -490,8 +490,7 @@ http_client_consume_body(struct http_client_connection *connection)
 
     if (http_body_eof(&connection->response.body_reader)) {
         http_client_response_stream_eof(connection);
-        if (!http_client_connection_valid(connection))
-            return;
+        return;
     }
 
     event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
