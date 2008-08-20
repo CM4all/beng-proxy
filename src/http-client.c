@@ -699,6 +699,7 @@ http_client_request_stream_eof(void *ctx)
 
     connection->response.read_state = READ_STATUS;
     connection->response.headers = NULL;
+    connection->input = fifo_buffer_new(connection->pool, 4096);
 
     event2_set(&connection->event, EV_READ);
 }
@@ -800,7 +801,6 @@ http_client_request(pool_t pool, int fd,
     connection->fd = fd;
     lease_ref_set(&connection->lease_ref, lease, lease_ctx);
 
-    connection->input = fifo_buffer_new(pool, 4096);
     connection->response.read_state = READ_NONE;
 
     event2_init(&connection->event, connection->fd,
