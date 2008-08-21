@@ -77,9 +77,6 @@ http_client_connection_valid(struct http_client_connection *connection)
 }
 
 static void
-http_client_connection_close(struct http_client_connection *connection);
-
-static void
 http_client_consume_body(struct http_client_connection *connection);
 
 static void
@@ -632,7 +629,10 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");
-        http_client_connection_close(connection);
+        if (connection->response.read_state == READ_NONE)
+            http_client_abort_request(connection);
+        else
+            http_client_abort_response(connection);
     }
 
     if (http_client_connection_valid(connection) && (event & EV_WRITE) != 0)
@@ -645,41 +645,6 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
 
     pool_unref(connection->pool);
     pool_commit();
-}
-
-static void
-http_client_request_close(struct http_client_connection *connection)
-{
-    assert(connection != NULL);
-    assert(connection->response.read_state == READ_BODY ||
-           connection->response.read_state == READ_ABORTED ||
-           http_response_handler_defined(&connection->request.handler));
-
-    if (connection->request.istream != NULL)
-        istream_free_handler(&connection->request.istream);
-
-    if (connection->response.read_state == READ_BODY) {
-        istream_deinit_abort(&connection->response.body_reader.output);
-    } else if (connection->response.read_state != READ_ABORTED) {
-        /* we're not reading the response yet, but we nonetheless want
-           to notify the caller (callback) that the response object is
-           being freed */
-        http_response_handler_invoke_abort(&connection->request.handler);
-        pool_unref(connection->caller_pool);
-    }
-}
-
-static void
-http_client_connection_close(struct http_client_connection *connection)
-{
-    assert(connection != NULL);
-
-#ifdef __linux
-    connection->cork = false;
-#endif
-
-    http_client_request_close(connection);
-    http_client_release(connection, false);
 }
 
 
