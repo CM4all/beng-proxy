@@ -32,10 +32,6 @@ struct ajp_client {
     struct lease_ref lease_ref;
     struct event2 event;
 
-    /* handler */
-    const struct http_client_connection_handler *handler;
-    void *handler_ctx;
-
     /* request */
     struct {
         istream_t istream;
