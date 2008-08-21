@@ -830,9 +830,9 @@ http_client_request(pool_t caller_pool, int fd,
     /* request istream */
 
     client->request.istream = istream_cat_new(client->pool,
-                                                  request_line_stream,
-                                                  header_stream, body,
-                                                  NULL);
+                                              request_line_stream,
+                                              header_stream, body,
+                                              NULL);
     istream_handler_set(client->request.istream,
                         &http_client_request_stream_handler, client,
                         0);
