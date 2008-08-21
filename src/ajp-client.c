@@ -72,12 +72,12 @@ static void
 ajp_try_read(struct ajp_connection *connection);
 
 void
-ajp_connection_close(struct ajp_connection *connection)
+ajp_connection_close(struct ajp_connection *client)
 {
-    if (connection->fd >= 0) {
-        event2_set(&connection->event, 0);
-        close(connection->fd);
-        connection->fd = -1;
+    if (client->fd >= 0) {
+        event2_set(&client->event, 0);
+        close(client->fd);
+        client->fd = -1;
     }
 }
 
