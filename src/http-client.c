@@ -406,11 +406,7 @@ http_client_response_finished(struct http_client *client)
         client->keep_alive = false;
     }
 
-    event2_set(&client->event, 0);
-    event2_commit(&client->event);
-    client->fd = -1;
-    lease_release(&client->lease_ref, client->keep_alive);
-    pool_unref(client->pool);
+    http_client_release(client, client->keep_alive);
 }
 
 /**
