@@ -414,6 +414,9 @@ http_client_response_finished(struct http_client_connection *connection)
     pool_unref(connection->pool);
 }
 
+/**
+ * @return false if nothing has been parsed
+ */
 static bool
 http_client_parse_headers(struct http_client_connection *connection)
 {
@@ -511,8 +514,6 @@ http_client_consume_body(struct http_client_connection *connection)
         http_client_response_stream_eof(connection);
         return;
     }
-
-    event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
 }
 
 static void
