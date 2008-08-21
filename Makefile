@@ -331,7 +331,7 @@ check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-ht
 cov: CFLAGS += -fprofile-arcs -ftest-coverage
 cov: LDFLAGS += -fprofile-arcs -ftest-coverage
 cov: check
-	cp -s {src,test}/*.{gcda,gcno} .
+	-cp -s {src,test}/*.{gcda,gcno} .
 	gcov src/*.c
 
 debug: src/cm4all-beng-proxy
