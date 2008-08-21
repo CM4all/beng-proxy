@@ -392,7 +392,27 @@ http_client_handle_line(struct http_client_connection *connection,
 }
 
 static void
-http_client_response_finished(struct http_client_connection *connection);
+http_client_response_finished(struct http_client_connection *connection)
+{
+    assert(connection->response.read_state == READ_BODY);
+    assert(connection->request.istream == NULL);
+    assert(!http_response_handler_defined(&connection->request.handler));
+
+    connection->response.read_state = READ_NONE;
+    connection->response.headers = NULL;
+    connection->response.body = NULL;
+
+    if (!fifo_buffer_empty(connection->input)) {
+        daemon_log(2, "excess data after HTTP response\n");
+        connection->keep_alive = false;
+    }
+
+    event2_set(&connection->event, 0);
+    event2_commit(&connection->event);
+    connection->fd = -1;
+    lease_release(&connection->lease_ref, connection->keep_alive);
+    pool_unref(connection->pool);
+}
 
 static bool
 http_client_parse_headers(struct http_client_connection *connection)
@@ -460,29 +480,6 @@ http_client_parse_headers(struct http_client_connection *connection)
     }
 
     return true;
-}
-
-static void
-http_client_response_finished(struct http_client_connection *connection)
-{
-    assert(connection->response.read_state == READ_BODY);
-    assert(connection->request.istream == NULL);
-    assert(!http_response_handler_defined(&connection->request.handler));
-
-    connection->response.read_state = READ_NONE;
-    connection->response.headers = NULL;
-    connection->response.body = NULL;
-
-    if (!fifo_buffer_empty(connection->input)) {
-        daemon_log(2, "excess data after HTTP response\n");
-        connection->keep_alive = false;
-    }
-
-    event2_set(&connection->event, 0);
-    event2_commit(&connection->event);
-    connection->fd = -1;
-    lease_release(&connection->lease_ref, connection->keep_alive);
-    pool_unref(connection->pool);
 }
 
 static void
