@@ -105,7 +105,6 @@ static void
 http_client_abort_request(struct http_client *client)
 {
     assert(client->response.read_state == READ_NONE);
-    assert(client->request.istream != NULL);
 
     istream_handler_clear(client->request.istream);
     istream_close(client->request.istream);
@@ -124,7 +123,6 @@ http_client_abort_response_headers(struct http_client *client)
 {
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
-    assert(client->request.istream == NULL);
 
     http_response_handler_invoke_abort(&client->request.handler);
     pool_unref(client->caller_pool);
@@ -139,7 +137,6 @@ static void
 http_client_abort_response_body(struct http_client *client)
 {
     assert(client->response.read_state == READ_BODY);
-    assert(client->request.istream == NULL);
 
     istream_deinit_abort(&client->response.body_reader.output);
     http_client_release(client, false);
@@ -154,7 +151,6 @@ http_client_abort_response(struct http_client *client)
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS ||
            client->response.read_state == READ_BODY);
-    assert(client->request.istream == NULL);
 
     if (client->response.read_state != READ_BODY)
         http_client_abort_response_headers(client);
@@ -216,7 +212,6 @@ http_client_response_stream_close(istream_t istream)
     struct http_client *client = response_stream_to_connection(istream);
 
     assert(client->response.read_state == READ_BODY);
-    assert(client->request.istream == NULL);
     assert(!http_response_handler_defined(&client->request.handler));
     assert(!http_body_eof(&client->response.body_reader));
 
@@ -275,7 +270,6 @@ http_client_parse_status_line(struct http_client *client,
     const char *space;
 
     assert(client != NULL);
-    assert(client->request.istream == NULL);
     assert(client->response.headers == NULL);
     assert(client->response.read_state == READ_STATUS);
 
@@ -394,7 +388,6 @@ static void
 http_client_response_finished(struct http_client *client)
 {
     assert(client->response.read_state == READ_BODY);
-    assert(client->request.istream == NULL);
     assert(!http_response_handler_defined(&client->request.handler));
 
     if (!fifo_buffer_empty(client->input)) {
@@ -478,7 +471,6 @@ static void
 http_client_response_stream_eof(struct http_client *client)
 {
     assert(client->response.read_state == READ_BODY);
-    assert(client->request.istream == NULL);
     assert(!http_response_handler_defined(&client->request.handler));
     assert(http_body_eof(&client->response.body_reader));
 
@@ -647,7 +639,6 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
     ssize_t nbytes;
 
     assert(client->fd >= 0);
-    assert(client->request.istream != NULL);
 
     nbytes = write(client->fd, data, length);
     if (likely(nbytes >= 0)) {
@@ -671,10 +662,6 @@ http_client_request_stream_eof(void *ctx)
 {
     struct http_client *client = ctx;
 
-    assert(client->request.istream != NULL);
-
-    client->request.istream = NULL;
-
     client->response.read_state = READ_STATUS;
     client->response.headers = NULL;
     client->input = fifo_buffer_new(client->pool, 4096);
@@ -686,10 +673,6 @@ static void
 http_client_request_stream_abort(void *ctx)
 {
     struct http_client *client = ctx;
-
-    assert(client->request.istream != NULL);
-
-    client->request.istream = NULL;
 
     http_response_handler_invoke_abort(&client->request.handler);
     pool_unref(client->caller_pool);
@@ -730,12 +713,8 @@ http_client_request_abort(struct async_operation *ao)
     pool_unref(client->caller_pool);
 
     if (client->response.read_state == READ_NONE) {
-        assert(client->request.istream != NULL);
-
         istream_handler_clear(client->request.istream);
         istream_close(client->request.istream);
-    } else {
-        assert(client->request.istream == NULL);
     }
 
     http_client_release(client, false);
