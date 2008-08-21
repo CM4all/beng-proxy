@@ -46,7 +46,6 @@ struct ajp_client {
             READ_BEGIN,
             READ_BODY,
             READ_END,
-            READ_ABORTED,
         } read_state;
         fifo_buffer_t input;
         http_status_t status;
@@ -96,7 +95,7 @@ ajp_connection_close(struct ajp_client *client)
 
         if (client->response.read_state == READ_BODY) {
             istream_invoke_abort(&client->response.body);
-            client->response.read_state = READ_ABORTED;
+            client->response.read_state = READ_END;
         }
 
         if (client->request.istream != NULL)
@@ -555,10 +554,10 @@ ajp_client_request_abort(struct async_operation *ao)
        delivered to our callback */
     assert(client->response.read_state == READ_BEGIN);
 
-    /* by setting the state to READ_ABORTED, we bar
+    /* by setting the state to READ_END, we bar
        ajp_client_request_close() from invoking the "abort"
        callback */
-    client->response.read_state = READ_ABORTED;
+    client->response.read_state = READ_END;
 
     ajp_connection_close(client);
 }
