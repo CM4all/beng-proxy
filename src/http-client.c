@@ -572,13 +572,11 @@ http_client_try_read_buffered(struct http_client_connection *connection)
 
     if (nbytes == 0) {
         if (connection->response.read_state == READ_BODY) {
-            connection->response.read_state = READ_ABORTED;
-
             http_body_socket_eof(&connection->response.body_reader,
                                  connection->input);
-        }
-
-        http_client_abort_response(connection);
+            http_client_release(connection, false);
+        } else
+            http_client_abort_response_headers(connection);
         return;
     }
 
