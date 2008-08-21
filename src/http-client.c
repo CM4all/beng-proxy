@@ -629,10 +629,8 @@ http_client_request_close(struct http_client_connection *connection)
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
            being freed */
-        pool_t caller_pool = connection->caller_pool;
-
         http_response_handler_invoke_abort(&connection->request.handler);
-        pool_unref(caller_pool);
+        pool_unref(connection->caller_pool);
     }
 }
 
