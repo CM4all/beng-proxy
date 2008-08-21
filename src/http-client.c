@@ -270,7 +270,6 @@ http_client_parse_status_line(struct http_client *client,
     const char *space;
 
     assert(client != NULL);
-    assert(client->response.headers == NULL);
     assert(client->response.read_state == READ_STATUS);
 
     if (length > 4 && memcmp(line, "HTTP", 4) == 0) {
@@ -663,7 +662,6 @@ http_client_request_stream_eof(void *ctx)
     struct http_client *client = ctx;
 
     client->response.read_state = READ_STATUS;
-    client->response.headers = NULL;
     client->input = fifo_buffer_new(client->pool, 4096);
 
     event2_set(&client->event, EV_READ);
