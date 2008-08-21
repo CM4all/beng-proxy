@@ -71,6 +71,16 @@ ajp_consume_input(struct ajp_connection *connection);
 static void
 ajp_try_read(struct ajp_connection *connection);
 
+void
+ajp_connection_close(struct ajp_connection *connection)
+{
+    if (connection->fd >= 0) {
+        event2_set(&connection->event, 0);
+        close(connection->fd);
+        connection->fd = -1;
+    }
+}
+
 
 /*
  * response body stream
@@ -458,16 +468,6 @@ ajp_new(pool_t pool, int fd,
     event2_init(&connection->event, fd, ajp_event_callback, connection, NULL);
 
     return connection;
-}
-
-void
-ajp_connection_close(struct ajp_connection *connection)
-{
-    if (connection->fd >= 0) {
-        event2_set(&connection->event, 0);
-        close(connection->fd);
-        connection->fd = -1;
-    }
 }
 
 
