@@ -591,7 +591,8 @@ http_client_try_read_buffered(struct http_client_connection *connection)
     if (http_client_connection_valid(connection) &&
         connection->response.read_state != READ_NONE) {
         event2_setbit(&connection->event, EV_READ,
-                      (connection->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 ||
+                      (connection->response.read_state == READ_BODY &&
+                       (connection->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) ||
                       !fifo_buffer_full(connection->input));
     }
 }
