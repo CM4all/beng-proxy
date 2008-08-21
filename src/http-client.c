@@ -125,7 +125,7 @@ http_client_abort_request(struct http_client_connection *client)
  * Abort receiving the response status/headers from the HTTP server.
  */
 static void
-http_client_abort_response(struct http_client_connection *client)
+http_client_abort_response_headers(struct http_client_connection *client)
 {
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
@@ -281,13 +281,13 @@ http_client_parse_status_line(struct http_client_connection *connection,
     if (unlikely(length < 3 || !char_is_digit(line[0]) ||
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
         daemon_log(2, "no HTTP status found\n");
-        http_client_abort_response(connection);
+        http_client_abort_response_headers(connection);
         return false;
     }
 
     connection->response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
     if (unlikely(connection->response.status < 100 || connection->response.status > 599)) {
-        http_client_abort_response(connection);
+        http_client_abort_response_headers(connection);
         return false;
     }
 
@@ -324,7 +324,7 @@ http_client_headers_finished(struct http_client_connection *connection)
         if (unlikely(value == NULL)) {
             if (connection->keep_alive) {
                 daemon_log(2, "no Content-Length header in HTTP response\n");
-                http_client_abort_response(connection);
+                http_client_abort_response_headers(connection);
                 return false;
             }
             content_length = (off_t)-1;
@@ -332,7 +332,7 @@ http_client_headers_finished(struct http_client_connection *connection)
             content_length = strtoul(value, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
                 daemon_log(2, "invalid Content-Length header in HTTP response\n");
-                http_client_abort_response(connection);
+                http_client_abort_response_headers(connection);
                 return false;
             }
         }
