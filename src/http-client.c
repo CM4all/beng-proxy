@@ -397,10 +397,6 @@ http_client_response_finished(struct http_client *client)
     assert(client->request.istream == NULL);
     assert(!http_response_handler_defined(&client->request.handler));
 
-    client->response.read_state = READ_NONE;
-    client->response.headers = NULL;
-    client->response.body = NULL;
-
     if (!fifo_buffer_empty(client->input)) {
         daemon_log(2, "excess data after HTTP response\n");
         client->keep_alive = false;
