@@ -421,7 +421,6 @@ http_client_parse_headers(struct http_client_connection *connection)
 
     if (connection->response.read_state != READ_HEADERS) {
         bool empty_response = connection->response.body == NULL;
-        pool_t caller_pool = connection->request.caller_pool;
 
         assert(connection->response.read_state == READ_BODY);
 
@@ -429,7 +428,7 @@ http_client_parse_headers(struct http_client_connection *connection)
                                               connection->response.status,
                                               connection->response.headers,
                                               connection->response.body);
-        pool_unref(caller_pool);
+        pool_unref(connection->request.caller_pool);
 
         if (empty_response)
             http_client_response_finished(connection);
