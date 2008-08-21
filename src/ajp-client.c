@@ -75,11 +75,25 @@ void
 ajp_connection_close(struct ajp_connection *client)
 {
     if (client->fd >= 0) {
+        pool_ref(client->pool);
+
         event2_set(&client->event, 0);
         event2_commit(&client->event);
 
-        close(client->fd);
-        client->fd = -1;
+        if (client->response.read_state == READ_BODY) {
+            istream_invoke_abort(&client->response.body);
+            client->response.read_state = READ_ABORTED;
+        }
+
+        if (client->request.istream != NULL)
+            istream_free_handler(&client->request.istream);
+
+        if (client->fd >= 0) {
+            close(client->fd);
+            client->fd = -1;
+        }
+
+        pool_unref(client->pool);
     }
 }
 
