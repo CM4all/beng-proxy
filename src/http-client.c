@@ -55,7 +55,6 @@ struct http_client_connection {
             READ_STATUS,
             READ_HEADERS,
             READ_BODY,
-            READ_ABORTED
         } read_state;
         http_status_t status;
         struct strmap *headers;
@@ -140,13 +139,10 @@ http_client_abort_response_headers(struct http_client_connection *client)
 static void
 http_client_abort_response_body(struct http_client_connection *client)
 {
-    assert(client->response.read_state == READ_BODY ||
-           client->response.read_state == READ_ABORTED);
+    assert(client->response.read_state == READ_BODY);
     assert(client->request.istream == NULL);
 
-    if (client->response.read_state == READ_BODY)
-        istream_deinit_abort(&client->response.body_reader.output);
-
+    istream_deinit_abort(&client->response.body_reader.output);
     http_client_release(client, false);
 }
 
@@ -158,8 +154,7 @@ http_client_abort_response(struct http_client_connection *client)
 {
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS ||
-           client->response.read_state == READ_BODY ||
-           client->response.read_state == READ_ABORTED);
+           client->response.read_state == READ_BODY);
     assert(client->request.istream == NULL);
 
     if (client->response.read_state == READ_STATUS ||
