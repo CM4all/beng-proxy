@@ -153,6 +153,25 @@ http_client_abort_response_body(struct http_client_connection *client)
     http_client_release(client, false);
 }
 
+/**
+ * Abort receiving the response status/headers from the HTTP server.
+ */
+static void
+http_client_abort_response(struct http_client_connection *client)
+{
+    assert(client->response.read_state == READ_STATUS ||
+           client->response.read_state == READ_HEADERS ||
+           client->response.read_state == READ_BODY ||
+           client->response.read_state == READ_ABORTED);
+    assert(client->request.istream == NULL);
+
+    if (client->response.read_state == READ_STATUS ||
+        client->response.read_state == READ_HEADERS)
+        http_client_abort_response_headers(client);
+    else
+        http_client_abort_response_body(client);
+}
+
 
 /*
  * istream implementation for the response body
@@ -562,7 +581,7 @@ http_client_try_read_buffered(struct http_client_connection *connection)
                                  connection->input);
         }
 
-        http_client_connection_close(connection);
+        http_client_abort_response(connection);
         return;
     }
 
@@ -573,7 +592,7 @@ http_client_try_read_buffered(struct http_client_connection *connection)
         }
 
         daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
-        http_client_connection_close(connection);
+        http_client_abort_response(connection);
         return;
     }
 
