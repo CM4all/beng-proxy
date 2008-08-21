@@ -41,7 +41,6 @@ struct http_client {
     /* request */
     struct {
         istream_t istream;
-        char request_line_buffer[1024];
         char content_length_buffer[32];
 
         struct http_response_handler_ref handler;
@@ -767,6 +766,7 @@ http_client_request(pool_t caller_pool, int fd,
 {
     pool_t pool;
     struct http_client *client;
+    const char *p;
     istream_t request_line_stream, header_stream;
     static const struct timeval tv = {
         .tv_sec = 30,
@@ -799,14 +799,10 @@ http_client_request(pool_t caller_pool, int fd,
 
     /* request line */
 
-    snprintf(client->request.request_line_buffer,
-             sizeof(client->request.request_line_buffer),
-             "%s %s HTTP/1.1\r\n",
-             http_method_to_string(method), uri);
-
-    request_line_stream
-        = istream_string_new(client->pool,
-                             client->request.request_line_buffer);
+    p = p_strcat(client->pool,
+                 http_method_to_string(method), " ", uri,
+                 " HTTP/1.1\r\n", NULL);
+    request_line_stream = istream_string_new(client->pool, p);
 
     /* headers */
 
