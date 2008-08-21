@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-struct ajp_connection {
+struct ajp_client {
     pool_t pool;
 
     /* I/O */
@@ -61,16 +61,16 @@ struct ajp_connection {
 };
 
 static inline bool
-ajp_connection_valid(struct ajp_connection *connection)
+ajp_connection_valid(struct ajp_client *connection)
 {
     return connection->fd >= 0;
 }
 
 static void
-ajp_consume_input(struct ajp_connection *connection);
+ajp_consume_input(struct ajp_client *connection);
 
 static void
-ajp_try_read(struct ajp_connection *connection);
+ajp_try_read(struct ajp_client *connection);
 
 
 /**
@@ -78,7 +78,7 @@ ajp_try_read(struct ajp_connection *connection);
  * lease, and the pool reference.
  */
 static void
-ajp_client_release(struct ajp_connection *client, bool reuse)
+ajp_client_release(struct ajp_client *client, bool reuse)
 {
     assert(client != NULL);
 
@@ -90,7 +90,7 @@ ajp_client_release(struct ajp_connection *client, bool reuse)
 }
 
 static void
-ajp_connection_close(struct ajp_connection *client)
+ajp_connection_close(struct ajp_client *client)
 {
     if (client->fd >= 0) {
         pool_ref(client->pool);
@@ -119,16 +119,16 @@ ajp_connection_close(struct ajp_connection *client)
  *
  */
 
-static inline struct ajp_connection *
+static inline struct ajp_client *
 istream_to_ajp(istream_t istream)
 {
-    return (struct ajp_connection *)(((char*)istream) - offsetof(struct ajp_connection, response.body));
+    return (struct ajp_client *)(((char*)istream) - offsetof(struct ajp_client, response.body));
 }
 
 static void
 istream_ajp_read(istream_t istream)
 {
-    struct ajp_connection *connection = istream_to_ajp(istream);
+    struct ajp_client *connection = istream_to_ajp(istream);
 
     assert(connection->response.read_state == READ_BODY);
 
@@ -141,7 +141,7 @@ istream_ajp_read(istream_t istream)
 static void
 istream_ajp_close(istream_t istream)
 {
-    struct ajp_connection *connection = istream_to_ajp(istream);
+    struct ajp_client *connection = istream_to_ajp(istream);
 
     assert(connection->response.read_state == READ_BODY);
 
@@ -162,7 +162,7 @@ static const struct istream ajp_response_body = {
  */
 
 static bool
-ajp_consume_send_headers(struct ajp_connection *connection,
+ajp_consume_send_headers(struct ajp_client *connection,
                          const char *data, size_t length)
 {
     http_status_t status;
@@ -216,7 +216,7 @@ ajp_consume_send_headers(struct ajp_connection *connection,
 }
 
 static bool
-ajp_consume_packet(struct ajp_connection *connection, ajp_code_t code,
+ajp_consume_packet(struct ajp_client *connection, ajp_code_t code,
                    const char *data, size_t length)
 {
     (void)data; (void)length; /* XXX */
@@ -260,7 +260,7 @@ ajp_consume_packet(struct ajp_connection *connection, ajp_code_t code,
 }
 
 static bool
-ajp_consume_body_chunk(struct ajp_connection *connection)
+ajp_consume_body_chunk(struct ajp_client *connection)
 {
     const char *data;
     size_t length, nbytes;
@@ -285,7 +285,7 @@ ajp_consume_body_chunk(struct ajp_connection *connection)
 }
 
 static bool
-ajp_consume_body_junk(struct ajp_connection *connection)
+ajp_consume_body_junk(struct ajp_client *connection)
 {
     const char *data;
     size_t length;
@@ -307,7 +307,7 @@ ajp_consume_body_junk(struct ajp_connection *connection)
 }
 
 static void
-ajp_consume_input(struct ajp_connection *connection)
+ajp_consume_input(struct ajp_client *connection)
 {
     const char *data;
     size_t length, header_length;
@@ -411,7 +411,7 @@ ajp_consume_input(struct ajp_connection *connection)
 }
  
 static void
-ajp_try_read(struct ajp_connection *connection)
+ajp_try_read(struct ajp_client *connection)
 {
     ssize_t nbytes;
 
@@ -447,7 +447,7 @@ ajp_try_read(struct ajp_connection *connection)
 static void
 ajp_event_callback(int fd __attr_unused, short event, void *ctx)
 {
-    struct ajp_connection *connection = ctx;
+    struct ajp_client *connection = ctx;
 
     pool_ref(connection->pool);
 
@@ -480,7 +480,7 @@ ajp_event_callback(int fd __attr_unused, short event, void *ctx)
 static size_t
 ajp_request_stream_data(const void *data, size_t length, void *ctx)
 {
-    struct ajp_connection *connection = ctx;
+    struct ajp_client *connection = ctx;
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
@@ -506,7 +506,7 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
 static void
 ajp_request_stream_eof(void *ctx)
 {
-    struct ajp_connection *connection = ctx;
+    struct ajp_client *connection = ctx;
 
     assert(connection->request.istream != NULL);
 
@@ -522,7 +522,7 @@ ajp_request_stream_eof(void *ctx)
 static void
 ajp_request_stream_abort(void *ctx)
 {
-    struct ajp_connection *connection = ctx;
+    struct ajp_client *connection = ctx;
 
     assert(connection->request.istream != NULL);
 
@@ -543,16 +543,16 @@ static const struct istream_handler ajp_request_stream_handler = {
  *
  */
 
-static struct ajp_connection *
+static struct ajp_client *
 async_to_ajp_connection(struct async_operation *ao)
 {
-    return (struct ajp_connection*)(((char*)ao) - offsetof(struct ajp_connection, request.async));
+    return (struct ajp_client*)(((char*)ao) - offsetof(struct ajp_client, request.async));
 }
 
 static void
 ajp_client_request_abort(struct async_operation *ao)
 {
-    struct ajp_connection *connection
+    struct ajp_client *connection
         = async_to_ajp_connection(ao);
     
     /* async_abort() can only be used before the response was
@@ -582,7 +582,7 @@ ajp_client_request(pool_t pool, int fd,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    struct ajp_connection *connection;
+    struct ajp_client *connection;
     struct growing_buffer *gb;
     struct ajp_header *header;
     ajp_method_t ajp_method;
