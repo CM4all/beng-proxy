@@ -157,8 +157,7 @@ http_client_abort_response(struct http_client_connection *client)
            client->response.read_state == READ_BODY);
     assert(client->request.istream == NULL);
 
-    if (client->response.read_state == READ_STATUS ||
-        client->response.read_state == READ_HEADERS)
+    if (client->response.read_state != READ_BODY)
         http_client_abort_response_headers(client);
     else
         http_client_abort_response_body(client);
