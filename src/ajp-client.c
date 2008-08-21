@@ -16,6 +16,7 @@
 #include "istream-internal.h"
 #include "ajp-protocol.h"
 #include "ajp-write.h"
+#include "lease.h"
 
 #include <daemon/log.h>
 
@@ -28,6 +29,7 @@ struct ajp_connection {
 
     /* I/O */
     int fd;
+    struct lease_ref lease_ref;
     struct event2 event;
 
     /* handler */
@@ -36,7 +38,6 @@ struct ajp_connection {
 
     /* request */
     struct {
-        pool_t pool;
         istream_t istream;
 
         struct http_response_handler_ref handler;
@@ -71,7 +72,24 @@ ajp_consume_input(struct ajp_connection *connection);
 static void
 ajp_try_read(struct ajp_connection *connection);
 
-void
+
+/**
+ * Release resources held by this object: the event object, the socket
+ * lease, and the pool reference.
+ */
+static void
+ajp_client_release(struct ajp_connection *client, bool reuse)
+{
+    assert(client != NULL);
+
+    event2_set(&client->event, 0);
+    event2_commit(&client->event);
+    client->fd = -1;
+    lease_release(&client->lease_ref, reuse);
+    pool_unref(client->pool);
+}
+
+static void
 ajp_connection_close(struct ajp_connection *client)
 {
     if (client->fd >= 0) {
@@ -88,10 +106,8 @@ ajp_connection_close(struct ajp_connection *client)
         if (client->request.istream != NULL)
             istream_free_handler(&client->request.istream);
 
-        if (client->fd >= 0) {
-            close(client->fd);
-            client->fd = -1;
-        }
+        if (client->fd >= 0)
+            ajp_client_release(client, false);
 
         pool_unref(client->pool);
     }
@@ -114,7 +130,6 @@ istream_ajp_read(istream_t istream)
 {
     struct ajp_connection *connection = istream_to_ajp(istream);
 
-    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_BODY);
 
     if (fifo_buffer_full(connection->response.input))
@@ -128,10 +143,10 @@ istream_ajp_close(istream_t istream)
 {
     struct ajp_connection *connection = istream_to_ajp(istream);
 
-    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_BODY);
 
-    ajp_connection_close(connection);
+    istream_deinit_abort(&connection->response.body);
+    ajp_client_release(connection, false);
 }
 
 static const struct istream ajp_response_body = {
@@ -188,7 +203,7 @@ ajp_consume_send_headers(struct ajp_connection *connection,
         body = NULL;
         connection->response.read_state = READ_END;
     } else {
-        istream_init(&connection->response.body, &ajp_response_body, connection->request.pool);
+        istream_init(&connection->response.body, &ajp_response_body, connection->pool);
         body = istream_struct_cast(&connection->response.body);
         connection->response.read_state = READ_BODY;
         connection->response.chunk_length = 0;
@@ -227,7 +242,8 @@ ajp_consume_packet(struct ajp_connection *connection, ajp_code_t code,
             istream_deinit_eof(&connection->response.body);
         }
 
-        return true;
+        ajp_connection_close(connection);
+        return false;
 
     case AJP_CODE_GET_BODY_CHUNK:
         /* XXX */
@@ -300,7 +316,6 @@ ajp_consume_input(struct ajp_connection *connection)
     bool bret;
 
     assert(connection != NULL);
-    assert(connection->request.pool != NULL);
     assert(connection->response.read_state == READ_BEGIN ||
            connection->response.read_state == READ_BODY);
 
@@ -400,20 +415,12 @@ ajp_try_read(struct ajp_connection *connection)
 {
     ssize_t nbytes;
 
-    if (connection->request.pool == NULL) {
-        char buffer;
-
-        nbytes = read(connection->fd, &buffer, sizeof(buffer));
-    } else {
-        nbytes = read_to_buffer(connection->fd, connection->response.input,
-                                INT_MAX);
-        assert(nbytes != -2);
-    }
+    nbytes = read_to_buffer(connection->fd, connection->response.input,
+                            INT_MAX);
+    assert(nbytes != -2);
 
     if (nbytes == 0) {
-        if (connection->request.pool != NULL)
-            daemon_log(1, "AJP server closed the connection\n");
-
+        daemon_log(1, "AJP server closed the connection\n");
         ajp_connection_close(connection);
         return;
     }
@@ -429,18 +436,11 @@ ajp_try_read(struct ajp_connection *connection)
         return;
     }
 
-    if (connection->request.pool == NULL) {
-        daemon_log(2, "excess data received on idle AJP client socket\n");
-        ajp_connection_close(connection);
-        return;
-    }
-
     ajp_consume_input(connection);
 
     if (ajp_connection_valid(connection) &&
-        (connection->request.pool == NULL || !fifo_buffer_full(connection->response.input)))
+        !fifo_buffer_full(connection->response.input))
         event2_setbit(&connection->event, EV_READ,
-                      connection->request.pool == NULL ||
                       !fifo_buffer_full(connection->response.input));
 }
 
@@ -471,21 +471,6 @@ ajp_event_callback(int fd __attr_unused, short event, void *ctx)
     pool_commit();
 }
 
-struct ajp_connection *
-ajp_new(pool_t pool, int fd,
-        const struct http_client_connection_handler *handler, void *ctx)
-{
-    struct ajp_connection *connection = p_malloc(pool, sizeof(*connection));
-
-    connection->pool = pool;
-    connection->fd = fd;
-    connection->handler = handler;
-    connection->handler_ctx = ctx;
-    event2_init(&connection->event, fd, ajp_event_callback, connection, NULL);
-
-    return connection;
-}
-
 
 /*
  * istream handler for the request
@@ -499,7 +484,6 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
     ssize_t nbytes;
 
     assert(connection->fd >= 0);
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
 
     nbytes = write(connection->fd, data, length);
@@ -524,13 +508,12 @@ ajp_request_stream_eof(void *ctx)
 {
     struct ajp_connection *connection = ctx;
 
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
 
     connection->request.istream = NULL;
 
     connection->response.read_state = READ_BEGIN;
-    connection->response.input = fifo_buffer_new(connection->request.pool, 8192);
+    connection->response.input = fifo_buffer_new(connection->pool, 8192);
     connection->response.headers = NULL;
 
     event2_set(&connection->event, EV_READ);
@@ -541,8 +524,9 @@ ajp_request_stream_abort(void *ctx)
 {
     struct ajp_connection *connection = ctx;
 
-    assert(connection->request.pool != NULL);
     assert(connection->request.istream != NULL);
+
+    connection->request.istream = NULL;
 
     ajp_connection_close(connection);
 }
@@ -579,7 +563,6 @@ ajp_client_request_abort(struct async_operation *ao)
        ajp_client_request_close() from invoking the "abort"
        callback */
     connection->response.read_state = READ_ABORTED;
-    pool_unref(connection->request.pool);
 
     ajp_connection_close(connection);
 }
@@ -590,7 +573,8 @@ static struct async_operation_class ajp_client_request_async_operation = {
 
 
 void
-ajp_request(struct ajp_connection *connection, pool_t pool,
+ajp_request(pool_t pool, int fd,
+            const struct lease *lease, void *lease_ctx,
             http_method_t method, const char *uri,
             struct strmap *headers,
             istream_t body,
@@ -598,6 +582,7 @@ ajp_request(struct ajp_connection *connection, pool_t pool,
             void *handler_ctx,
             struct async_operation_ref *async_ref)
 {
+    struct ajp_connection *connection;
     struct growing_buffer *gb;
     struct ajp_header *header;
     ajp_method_t ajp_method;
@@ -606,6 +591,13 @@ ajp_request(struct ajp_connection *connection, pool_t pool,
     } prefix_and_method;
 
     (void)headers; /* XXX */
+
+    pool_ref(pool);
+    connection = p_malloc(pool, sizeof(*connection));
+    connection->pool = pool;
+    connection->fd = fd;
+    lease_ref_set(&connection->lease_ref, lease, lease_ctx);
+    event2_init(&connection->event, fd, ajp_event_callback, connection, NULL);
 
     gb = growing_buffer_new(pool, 256);
 
@@ -650,7 +642,6 @@ ajp_request(struct ajp_connection *connection, pool_t pool,
 
     growing_buffer_write_buffer(gb, "\xff", 1);
     
-    connection->request.pool = pool;
     connection->request.istream = growing_buffer_istream(gb);
 
     /* XXX is this correct? */

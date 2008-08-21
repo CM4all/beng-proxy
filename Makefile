@@ -160,7 +160,6 @@ SOURCES = src/main.c \
 	src/access-log.c \
 	src/tcp-stock.c \
 	src/http-request.c \
-	src/ajp-stock.c \
 	src/ajp-request.c \
 	src/cgi.c \
 	src/filter.c \

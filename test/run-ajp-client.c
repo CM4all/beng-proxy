@@ -3,6 +3,7 @@
 #include "http-response.h"
 #include "async.h"
 #include "socket-util.h"
+#include "lease.h"
 
 #include <inline/compiler.h>
 
@@ -17,12 +18,11 @@
 #include <netdb.h>
 
 struct context {
-    bool close_early, close_late, close_data, close_abort;
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
     struct async_operation_ref async_ref;
-    struct ajp_connection *client;
-    bool idle, aborted;
+    int fd;
+    bool idle, reuse, aborted;
     http_status_t status;
 
     istream_t body;
@@ -32,29 +32,27 @@ struct context {
 
 
 /*
- * http_client_connection_handler
+ * socket lease
  *
  */
 
 static void
-my_connection_idle(void *ctx)
+ajp_socket_release(bool reuse, void *ctx)
 {
     struct context *c = ctx;
+
+    assert(!c->idle);
+    assert(c->fd >= 0);
 
     c->idle = true;
+    c->reuse = reuse;
+
+    close(c->fd);
+    c->fd = -1;
 }
 
-static void
-my_connection_free(void *ctx __attr_unused)
-{
-    struct context *c = ctx;
-
-    c->client = NULL;
-}
-
-static const struct http_client_connection_handler my_connection_handler = {
-    .idle = my_connection_idle,
-    .free = my_connection_free,
+static const struct lease ajp_socket_lease = {
+    .release = ajp_socket_release,
 };
 
 
@@ -69,11 +67,6 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
     struct context *c = ctx;
 
     c->body_data += length;
-
-    if (c->close_data) {
-        ajp_connection_close(c->client);
-        return 0;
-    }
 
     if (c->close_response_body_data) {
         istream_close(c->body);
@@ -95,8 +88,6 @@ my_istream_eof(void *ctx)
 
     c->body = NULL;
     c->body_eof = true;
-
-    ajp_connection_close(c->client);
 }
 
 static void
@@ -106,8 +97,6 @@ my_istream_abort(void *ctx)
 
     c->body = NULL;
     c->body_abort = true;
-
-    ajp_connection_close(c->client);
 }
 
 static const struct istream_handler my_istream_handler = {
@@ -131,15 +120,10 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
 
     c->status = status;
 
-    if (c->close_early)
-        ajp_connection_close(c->client);
-    else if (c->close_response_body_early)
+    if (c->close_response_body_early)
         istream_close(body);
     else if (body != NULL)
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
-
-    if (c->close_late)
-        ajp_connection_close(c->client);
 
     if (c->close_response_body_late)
         istream_close(c->body);
@@ -151,9 +135,6 @@ my_response_abort(void *ctx)
     struct context *c = ctx;
 
     c->aborted = true;
-
-    if (c->close_abort)
-        ajp_connection_close(c->client);
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -207,8 +188,7 @@ int main(int argc, char **argv) {
 
     /* run test */
 
-    ctx.client = ajp_new(pool, fd, &my_connection_handler, &ctx);
-    ajp_request(ctx.client, pool,
+    ajp_request(pool, fd, &ajp_socket_lease, &ctx,
                 HTTP_METHOD_GET, "/cm4all-bulldog-butch/", NULL, NULL,
                 &my_response_handler, &ctx,
                 &async_ref);

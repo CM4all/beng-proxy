@@ -7,13 +7,14 @@
 #include "ajp-request.h"
 #include "http-response.h"
 #include "header-writer.h"
-#include "ajp-stock.h"
 #include "stock.h"
 #include "async.h"
 #include "ajp-client.h"
 #include "uri-address.h"
 #include "abort-unref.h"
 #include "strmap.h"
+#include "lease.h"
+#include "tcp-stock.h"
 
 #include <inline/compiler.h>
 
@@ -22,6 +23,9 @@
 struct ajp_request {
     pool_t pool;
 
+    struct hstock *tcp_stock;
+    struct stock_item *stock_item;
+
     http_method_t method;
     const char *uri;
     struct strmap *headers;
@@ -29,6 +33,25 @@ struct ajp_request {
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
+};
+
+
+/*
+ * socket lease
+ *
+ */
+
+static void
+ajp_socket_release(bool reuse, void *ctx)
+{
+    struct ajp_request *hr = ctx;
+
+    hstock_put(hr->tcp_stock, hr->uri, hr->stock_item, !reuse);
+    pool_unref(hr->pool);
+}
+
+static const struct lease ajp_socket_lease = {
+    .release = ajp_socket_release,
 };
 
 
@@ -47,12 +70,16 @@ ajp_request_stock_callback(void *ctx, struct stock_item *item)
 
         if (hr->body != NULL)
             istream_close(hr->body);
-    } else
-        ajp_request(ajp_stock_item_get(item),
-                    hr->pool,
+    } else {
+        hr->stock_item = item;
+
+        ajp_request(hr->pool,
+                    tcp_stock_item_get(item),
+                    &ajp_socket_lease, hr,
                     hr->method, hr->uri, hr->headers, hr->body,
                     hr->handler.handler, hr->handler.ctx,
                     hr->async_ref);
+    }
 
     pool_unref(hr->pool);
 }
@@ -65,7 +92,7 @@ ajp_request_stock_callback(void *ctx, struct stock_item *item)
 
 void
 ajp_stock_request(pool_t pool,
-                  struct hstock *http_client_stock,
+                  struct hstock *tcp_stock,
                   http_method_t method,
                   struct uri_with_address *uwa,
                   struct strmap *headers,
@@ -84,6 +111,7 @@ ajp_stock_request(pool_t pool,
 
     hr = p_malloc(pool, sizeof(*hr));
     hr->pool = pool;
+    hr->tcp_stock = tcp_stock;
     hr->method = method;
     hr->uri = uwa->uri;
 
@@ -98,7 +126,7 @@ ajp_stock_request(pool_t pool,
 
     pool_ref(pool);
 
-    hstock_get(http_client_stock,
+    hstock_get(tcp_stock,
                uwa->uri, uwa,
                ajp_request_stock_callback, hr,
                async_unref_on_abort(pool, async_ref));

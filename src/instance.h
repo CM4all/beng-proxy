@@ -44,7 +44,6 @@ struct instance {
     /* stock */
     struct tcache *translate_cache;
     struct hstock *tcp_stock;
-    struct hstock *ajp_client_stock;
 
     /* cache */
     struct http_cache *http_cache;

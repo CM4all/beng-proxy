@@ -10,25 +10,13 @@
 #include "http.h"
 #include "istream.h"
 
-struct ajp_connection;
+struct lease;
 struct http_response_handler;
 struct strmap;
 
-/* XXX remove this */
-struct http_client_connection_handler {
-    void (*idle)(void *ctx);
-    void (*free)(void *ctx);
-};
-
-struct ajp_connection * __attr_malloc
-ajp_new(pool_t pool, int fd,
-        const struct http_client_connection_handler *handler, void *ctx);
-
 void
-ajp_connection_close(struct ajp_connection *connection);
-
-void
-ajp_request(struct ajp_connection *connection, pool_t pool,
+ajp_request(pool_t pool, int fd,
+            const struct lease *lease, void *lease_ctx,
             http_method_t method, const char *uri,
             struct strmap *headers,
             istream_t body,

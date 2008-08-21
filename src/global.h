@@ -9,8 +9,8 @@
 
 extern struct tcache *global_translate_cache;
 
-extern struct http_cache *global_http_cache;
+extern struct hstock *global_tcp_stock;
 
-extern struct hstock *global_ajp_client_stock;
+extern struct http_cache *global_http_cache;
 
 #endif
