@@ -73,12 +73,12 @@ ajp_request_stock_callback(void *ctx, struct stock_item *item)
     } else {
         hr->stock_item = item;
 
-        ajp_request(hr->pool,
-                    tcp_stock_item_get(item),
-                    &ajp_socket_lease, hr,
-                    hr->method, hr->uri, hr->headers, hr->body,
-                    hr->handler.handler, hr->handler.ctx,
-                    hr->async_ref);
+        ajp_client_request(hr->pool,
+                           tcp_stock_item_get(item),
+                           &ajp_socket_lease, hr,
+                           hr->method, hr->uri, hr->headers, hr->body,
+                           hr->handler.handler, hr->handler.ctx,
+                           hr->async_ref);
     }
 
     pool_unref(hr->pool);

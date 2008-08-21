@@ -573,14 +573,14 @@ static struct async_operation_class ajp_client_request_async_operation = {
 
 
 void
-ajp_request(pool_t pool, int fd,
-            const struct lease *lease, void *lease_ctx,
-            http_method_t method, const char *uri,
-            struct strmap *headers,
-            istream_t body,
-            const struct http_response_handler *handler,
-            void *handler_ctx,
-            struct async_operation_ref *async_ref)
+ajp_client_request(pool_t pool, int fd,
+                   const struct lease *lease, void *lease_ctx,
+                   http_method_t method, const char *uri,
+                   struct strmap *headers,
+                   istream_t body,
+                   const struct http_response_handler *handler,
+                   void *handler_ctx,
+                   struct async_operation_ref *async_ref)
 {
     struct ajp_connection *connection;
     struct growing_buffer *gb;

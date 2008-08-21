@@ -188,10 +188,10 @@ int main(int argc, char **argv) {
 
     /* run test */
 
-    ajp_request(pool, fd, &ajp_socket_lease, &ctx,
-                HTTP_METHOD_GET, "/cm4all-bulldog-butch/", NULL, NULL,
-                &my_response_handler, &ctx,
-                &async_ref);
+    ajp_client_request(pool, fd, &ajp_socket_lease, &ctx,
+                       HTTP_METHOD_GET, "/cm4all-bulldog-butch/", NULL, NULL,
+                       &my_response_handler, &ctx,
+                       &async_ref);
 
     event_dispatch();
 
