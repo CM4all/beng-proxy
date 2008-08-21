@@ -768,7 +768,7 @@ static struct async_operation_class http_client_request_async_operation = {
  */
 
 void
-http_client_request(pool_t pool, int fd,
+http_client_request(pool_t caller_pool, int fd,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     struct growing_buffer *headers,
@@ -777,6 +777,7 @@ http_client_request(pool_t pool, int fd,
                     void *ctx,
                     struct async_operation_ref *async_ref)
 {
+    pool_t pool;
     struct http_client_connection *connection;
     istream_t request_line_stream, header_stream;
     static const struct timeval tv = {
@@ -788,7 +789,7 @@ http_client_request(pool_t pool, int fd,
     assert(handler != NULL);
     assert(handler->response != NULL);
 
-    pool = pool_new_linear(pool, "http_client_request", 8192);
+    pool = pool_new_linear(caller_pool, "http_client_request", 8192);
 
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
@@ -801,8 +802,8 @@ http_client_request(pool_t pool, int fd,
                 http_client_event_callback, connection,
                 &tv);
 
-    pool_ref(pool);
-    connection->request.caller_pool = pool;
+    pool_ref(caller_pool);
+    connection->request.caller_pool = caller_pool;
     http_response_handler_set(&connection->request.handler, handler, ctx);
 
     async_init(&connection->request.async, &http_client_request_async_operation);
