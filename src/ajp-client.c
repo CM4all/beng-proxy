@@ -76,6 +76,8 @@ ajp_connection_close(struct ajp_connection *client)
 {
     if (client->fd >= 0) {
         event2_set(&client->event, 0);
+        event2_commit(&client->event);
+
         close(client->fd);
         client->fd = -1;
     }
