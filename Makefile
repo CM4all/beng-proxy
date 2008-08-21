@@ -201,6 +201,7 @@ all: src/cm4all-beng-proxy
 
 clean:
 	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/js test/run-subst $(FILTER_TESTS) test/t-istream-js test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-processor test/run-google-gadget test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client
+	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
 include demo/Makefile
 
@@ -330,7 +331,7 @@ check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) js processor) check-ht
 cov: CFLAGS += -fprofile-arcs -ftest-coverage
 cov: LDFLAGS += -fprofile-arcs -ftest-coverage
 cov: check
-	mv {src,test}/*.{gcda,gcno} .
+	cp -s {src,test}/*.{gcda,gcno} .
 	gcov src/*.c
 
 debug: src/cm4all-beng-proxy
