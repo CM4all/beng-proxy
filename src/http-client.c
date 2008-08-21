@@ -459,8 +459,6 @@ http_client_parse_headers(struct http_client *client)
     fifo_buffer_consume(client->input, next - buffer);
 
     if (client->response.read_state != READ_HEADERS) {
-        bool empty_response = client->response.body == NULL;
-
         assert(client->response.read_state == READ_BODY);
 
         http_response_handler_invoke_response(&client->request.handler,
@@ -469,7 +467,7 @@ http_client_parse_headers(struct http_client *client)
                                               client->response.body);
         pool_unref(client->caller_pool);
 
-        if (empty_response)
+        if (client->response.body == NULL)
             http_client_response_finished(client);
     }
 
