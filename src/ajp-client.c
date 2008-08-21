@@ -61,16 +61,16 @@ struct ajp_client {
 };
 
 static inline bool
-ajp_connection_valid(struct ajp_client *connection)
+ajp_connection_valid(struct ajp_client *client)
 {
-    return connection->fd >= 0;
+    return client->fd >= 0;
 }
 
 static void
-ajp_consume_input(struct ajp_client *connection);
+ajp_consume_input(struct ajp_client *client);
 
 static void
-ajp_try_read(struct ajp_client *connection);
+ajp_try_read(struct ajp_client *client);
 
 
 /**
@@ -128,25 +128,25 @@ istream_to_ajp(istream_t istream)
 static void
 istream_ajp_read(istream_t istream)
 {
-    struct ajp_client *connection = istream_to_ajp(istream);
+    struct ajp_client *client = istream_to_ajp(istream);
 
-    assert(connection->response.read_state == READ_BODY);
+    assert(client->response.read_state == READ_BODY);
 
-    if (fifo_buffer_full(connection->response.input))
-        ajp_consume_input(connection);
+    if (fifo_buffer_full(client->response.input))
+        ajp_consume_input(client);
     else
-        ajp_try_read(connection);
+        ajp_try_read(client);
 }
 
 static void
 istream_ajp_close(istream_t istream)
 {
-    struct ajp_client *connection = istream_to_ajp(istream);
+    struct ajp_client *client = istream_to_ajp(istream);
 
-    assert(connection->response.read_state == READ_BODY);
+    assert(client->response.read_state == READ_BODY);
 
-    istream_deinit_abort(&connection->response.body);
-    ajp_client_release(connection, false);
+    istream_deinit_abort(&client->response.body);
+    ajp_client_release(client, false);
 }
 
 static const struct istream ajp_response_body = {
@@ -162,7 +162,7 @@ static const struct istream ajp_response_body = {
  */
 
 static bool
-ajp_consume_send_headers(struct ajp_client *connection,
+ajp_consume_send_headers(struct ajp_client *client,
                          const char *data, size_t length)
 {
     http_status_t status;
@@ -170,15 +170,15 @@ ajp_consume_send_headers(struct ajp_client *connection,
     unsigned num_headers;
     istream_t body;
 
-    if (connection->response.read_state != READ_BEGIN) {
+    if (client->response.read_state != READ_BEGIN) {
         daemon_log(1, "unexpected SEND_HEADERS packet from AJP server\n");
-        ajp_connection_close(connection);
+        ajp_connection_close(client);
         return false;
     }
 
     if (2 + 3 + 2 > length) {
         daemon_log(1, "malformed SEND_HEADERS packet from AJP server\n");
-        ajp_connection_close(connection);
+        ajp_connection_close(client);
         return false;
     }
 
@@ -186,7 +186,7 @@ ajp_consume_send_headers(struct ajp_client *connection,
     msg_length = ntohs(*(const uint16_t*)(data + 2));
     if (2 + 3 + msg_length + 2 > length) {
         daemon_log(1, "malformed SEND_HEADERS packet from AJP server\n");
-        ajp_connection_close(connection);
+        ajp_connection_close(client);
         return false;
     }
 
@@ -201,22 +201,22 @@ ajp_consume_send_headers(struct ajp_client *connection,
 
     if (http_status_is_empty(status)) {
         body = NULL;
-        connection->response.read_state = READ_END;
+        client->response.read_state = READ_END;
     } else {
-        istream_init(&connection->response.body, &ajp_response_body, connection->pool);
-        body = istream_struct_cast(&connection->response.body);
-        connection->response.read_state = READ_BODY;
-        connection->response.chunk_length = 0;
-        connection->response.junk_length = 0;
+        istream_init(&client->response.body, &ajp_response_body, client->pool);
+        body = istream_struct_cast(&client->response.body);
+        client->response.read_state = READ_BODY;
+        client->response.chunk_length = 0;
+        client->response.junk_length = 0;
     }
 
-    http_response_handler_invoke_response(&connection->request.handler, status,
+    http_response_handler_invoke_response(&client->request.handler, status,
                                           NULL, body);
     return true;
 }
 
 static bool
-ajp_consume_packet(struct ajp_client *connection, ajp_code_t code,
+ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
                    const char *data, size_t length)
 {
     (void)data; (void)length; /* XXX */
@@ -226,7 +226,7 @@ ajp_consume_packet(struct ajp_client *connection, ajp_code_t code,
     case AJP_CODE_SHUTDOWN:
     case AJP_CODE_CPING:
         daemon_log(1, "unexpected request packet from AJP server\n");
-        ajp_connection_close(connection);
+        ajp_connection_close(client);
         return false;
 
     case AJP_CODE_SEND_BODY_CHUNK:
@@ -234,15 +234,15 @@ ajp_consume_packet(struct ajp_client *connection, ajp_code_t code,
         return false;
 
     case AJP_CODE_SEND_HEADERS:
-        return ajp_consume_send_headers(connection, data, length);
+        return ajp_consume_send_headers(client, data, length);
 
     case AJP_CODE_END_RESPONSE:
-        if (connection->response.read_state == READ_BODY) {
-            connection->response.read_state = READ_END;
-            istream_deinit_eof(&connection->response.body);
+        if (client->response.read_state == READ_BODY) {
+            client->response.read_state = READ_END;
+            istream_deinit_eof(&client->response.body);
         }
 
-        ajp_connection_close(connection);
+        ajp_connection_close(client);
         return false;
 
     case AJP_CODE_GET_BODY_CHUNK:
@@ -255,59 +255,59 @@ ajp_consume_packet(struct ajp_client *connection, ajp_code_t code,
     }
 
     daemon_log(1, "unknown packet from AJP server\n");
-    ajp_connection_close(connection);
+    ajp_connection_close(client);
     return false;
 }
 
 static bool
-ajp_consume_body_chunk(struct ajp_client *connection)
+ajp_consume_body_chunk(struct ajp_client *client)
 {
     const char *data;
     size_t length, nbytes;
 
-    assert(connection->response.read_state == READ_BODY);
-    assert(connection->response.chunk_length > 0);
+    assert(client->response.read_state == READ_BODY);
+    assert(client->response.chunk_length > 0);
 
-    data = fifo_buffer_read(connection->response.input, &length);
+    data = fifo_buffer_read(client->response.input, &length);
     if (data == NULL)
         return false;
 
-    if (length > connection->response.chunk_length)
-        length = connection->response.chunk_length;
+    if (length > client->response.chunk_length)
+        length = client->response.chunk_length;
 
-    nbytes = istream_invoke_data(&connection->response.body, data, length);
+    nbytes = istream_invoke_data(&client->response.body, data, length);
     if (nbytes == 0)
         return false;
 
-    fifo_buffer_consume(connection->response.input, nbytes);
-    connection->response.chunk_length -= nbytes;
-    return connection->response.chunk_length == 0;
+    fifo_buffer_consume(client->response.input, nbytes);
+    client->response.chunk_length -= nbytes;
+    return client->response.chunk_length == 0;
 }
 
 static bool
-ajp_consume_body_junk(struct ajp_client *connection)
+ajp_consume_body_junk(struct ajp_client *client)
 {
     const char *data;
     size_t length;
 
-    assert(connection->response.read_state == READ_BODY);
-    assert(connection->response.chunk_length == 0);
-    assert(connection->response.junk_length > 0);
+    assert(client->response.read_state == READ_BODY);
+    assert(client->response.chunk_length == 0);
+    assert(client->response.junk_length > 0);
 
-    data = fifo_buffer_read(connection->response.input, &length);
+    data = fifo_buffer_read(client->response.input, &length);
     if (data == NULL)
         return false;
 
-    if (length > connection->response.junk_length)
-        length = connection->response.junk_length;
+    if (length > client->response.junk_length)
+        length = client->response.junk_length;
 
-    fifo_buffer_consume(connection->response.input, length);
-    connection->response.junk_length -= length;
-    return connection->response.junk_length == 0;
+    fifo_buffer_consume(client->response.input, length);
+    client->response.junk_length -= length;
+    return client->response.junk_length == 0;
 }
 
 static void
-ajp_consume_input(struct ajp_client *connection)
+ajp_consume_input(struct ajp_client *client)
 {
     const char *data;
     size_t length, header_length;
@@ -315,23 +315,23 @@ ajp_consume_input(struct ajp_client *connection)
     ajp_code_t code;
     bool bret;
 
-    assert(connection != NULL);
-    assert(connection->response.read_state == READ_BEGIN ||
-           connection->response.read_state == READ_BODY);
+    assert(client != NULL);
+    assert(client->response.read_state == READ_BEGIN ||
+           client->response.read_state == READ_BODY);
 
     while (true) {
-        data = fifo_buffer_read(connection->response.input, &length);
+        data = fifo_buffer_read(client->response.input, &length);
         if (data == NULL)
             return;
 
-        if (connection->response.read_state == READ_BODY) {
+        if (client->response.read_state == READ_BODY) {
             /* there is data left from the previous body chunk */
-            if (connection->response.chunk_length > 0 &&
-                !ajp_consume_body_chunk(connection))
+            if (client->response.chunk_length > 0 &&
+                !ajp_consume_body_chunk(client))
                 return;
 
-            if (connection->response.junk_length > 0 &&
-                !ajp_consume_body_junk(connection))
+            if (client->response.junk_length > 0 &&
+                !ajp_consume_body_junk(client))
                 return;
         }
 
@@ -344,7 +344,7 @@ ajp_consume_input(struct ajp_client *connection)
 
         if (header->a != 'A' || header->b != 'B' || header_length == 0) {
             daemon_log(1, "malformed AJP response packet\n");
-            ajp_connection_close(connection);
+            ajp_connection_close(client);
             return;
         }
 
@@ -358,9 +358,9 @@ ajp_consume_input(struct ajp_client *connection)
             const struct ajp_send_body_chunk *chunk =
                 (const struct ajp_send_body_chunk *)(header + 1);
 
-            if (connection->response.read_state != READ_BODY) {
+            if (client->response.read_state != READ_BODY) {
                 daemon_log(1, "unexpected SEND_BODY_CHUNK packet from AJP server\n");
-                ajp_connection_close(connection);
+                ajp_connection_close(client);
                 return;
             }
 
@@ -368,22 +368,22 @@ ajp_consume_input(struct ajp_client *connection)
                 /* we need the chunk length */
                 return;
 
-            connection->response.chunk_length = ntohs(chunk->length);
-            if (sizeof(*chunk) + connection->response.chunk_length > header_length) {
+            client->response.chunk_length = ntohs(chunk->length);
+            if (sizeof(*chunk) + client->response.chunk_length > header_length) {
                 daemon_log(1, "malformed AJP SEND_BODY_CHUNK packet\n");
-                ajp_connection_close(connection);
+                ajp_connection_close(client);
                 return;
             }
 
-            connection->response.junk_length = header_length - sizeof(*chunk) - connection->response.chunk_length;
+            client->response.junk_length = header_length - sizeof(*chunk) - client->response.chunk_length;
 
-            fifo_buffer_consume(connection->response.input, sizeof(*header) + sizeof(*chunk));
-            if (connection->response.chunk_length > 0 &&
-                !ajp_consume_body_chunk(connection))
+            fifo_buffer_consume(client->response.input, sizeof(*header) + sizeof(*chunk));
+            if (client->response.chunk_length > 0 &&
+                !ajp_consume_body_chunk(client))
                 return;
 
-            if (connection->response.junk_length > 0 &&
-                !ajp_consume_body_junk(connection))
+            if (client->response.junk_length > 0 &&
+                !ajp_consume_body_junk(client))
                 return;
 
             continue;
@@ -392,82 +392,82 @@ ajp_consume_input(struct ajp_client *connection)
         if (length < sizeof(*header) + header_length) {
             /* the packet is not complete yet */
 
-            if (fifo_buffer_full(connection->response.input)) {
+            if (fifo_buffer_full(client->response.input)) {
                 daemon_log(1, "too large packet from AJP server\n");
-                ajp_connection_close(connection);
+                ajp_connection_close(client);
             }
 
             return;
         }
 
-        bret = ajp_consume_packet(connection, code,
+        bret = ajp_consume_packet(client, code,
                                   data + sizeof(*header) + 1, header_length - 1);
         if (!bret)
             return;
 
-        fifo_buffer_consume(connection->response.input,
+        fifo_buffer_consume(client->response.input,
                             sizeof(*header) + header_length);
     }
 }
  
 static void
-ajp_try_read(struct ajp_client *connection)
+ajp_try_read(struct ajp_client *client)
 {
     ssize_t nbytes;
 
-    nbytes = read_to_buffer(connection->fd, connection->response.input,
+    nbytes = read_to_buffer(client->fd, client->response.input,
                             INT_MAX);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
         daemon_log(1, "AJP server closed the connection\n");
-        ajp_connection_close(connection);
+        ajp_connection_close(client);
         return;
     }
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            event2_or(&connection->event, EV_READ);
+            event2_or(&client->event, EV_READ);
             return;
         }
 
         daemon_log(1, "read error on AJP connection: %s\n", strerror(errno));
-        ajp_connection_close(connection);
+        ajp_connection_close(client);
         return;
     }
 
-    ajp_consume_input(connection);
+    ajp_consume_input(client);
 
-    if (ajp_connection_valid(connection) &&
-        !fifo_buffer_full(connection->response.input))
-        event2_setbit(&connection->event, EV_READ,
-                      !fifo_buffer_full(connection->response.input));
+    if (ajp_connection_valid(client) &&
+        !fifo_buffer_full(client->response.input))
+        event2_setbit(&client->event, EV_READ,
+                      !fifo_buffer_full(client->response.input));
 }
 
 static void
 ajp_event_callback(int fd __attr_unused, short event, void *ctx)
 {
-    struct ajp_client *connection = ctx;
+    struct ajp_client *client = ctx;
 
-    pool_ref(connection->pool);
+    pool_ref(client->pool);
 
-    event2_reset(&connection->event);
-    event2_lock(&connection->event);
+    event2_reset(&client->event);
+    event2_lock(&client->event);
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");
-        ajp_connection_close(connection);
+        ajp_connection_close(client);
     }
 
-    if (ajp_connection_valid(connection) && (event & EV_WRITE) != 0)
-        istream_read(connection->request.istream);
+    if (ajp_connection_valid(client) && (event & EV_WRITE) != 0)
+        istream_read(client->request.istream);
 
-    if (ajp_connection_valid(connection) && (event & EV_READ) != 0)
-        ajp_try_read(connection);
+    if (ajp_connection_valid(client) && (event & EV_READ) != 0)
+        ajp_try_read(client);
 
-    event2_unlock(&connection->event);
+    event2_unlock(&client->event);
 
-    pool_unref(connection->pool);
+    pool_unref(client->pool);
     pool_commit();
 }
 
@@ -480,55 +480,55 @@ ajp_event_callback(int fd __attr_unused, short event, void *ctx)
 static size_t
 ajp_request_stream_data(const void *data, size_t length, void *ctx)
 {
-    struct ajp_client *connection = ctx;
+    struct ajp_client *client = ctx;
     ssize_t nbytes;
 
-    assert(connection->fd >= 0);
-    assert(connection->request.istream != NULL);
+    assert(client->fd >= 0);
+    assert(client->request.istream != NULL);
 
-    nbytes = write(connection->fd, data, length);
+    nbytes = write(client->fd, data, length);
     if (likely(nbytes >= 0)) {
-        event2_or(&connection->event, EV_WRITE);
+        event2_or(&client->event, EV_WRITE);
         return (size_t)nbytes;
     }
 
     if (likely(errno == EAGAIN)) {
-        event2_or(&connection->event, EV_WRITE);
+        event2_or(&client->event, EV_WRITE);
         return 0;
     }
 
     daemon_log(1, "write error on AJP client connection: %s\n",
                strerror(errno));
-    ajp_connection_close(connection);
+    ajp_connection_close(client);
     return 0;
 }
 
 static void
 ajp_request_stream_eof(void *ctx)
 {
-    struct ajp_client *connection = ctx;
+    struct ajp_client *client = ctx;
 
-    assert(connection->request.istream != NULL);
+    assert(client->request.istream != NULL);
 
-    connection->request.istream = NULL;
+    client->request.istream = NULL;
 
-    connection->response.read_state = READ_BEGIN;
-    connection->response.input = fifo_buffer_new(connection->pool, 8192);
-    connection->response.headers = NULL;
+    client->response.read_state = READ_BEGIN;
+    client->response.input = fifo_buffer_new(client->pool, 8192);
+    client->response.headers = NULL;
 
-    event2_set(&connection->event, EV_READ);
+    event2_set(&client->event, EV_READ);
 }
 
 static void
 ajp_request_stream_abort(void *ctx)
 {
-    struct ajp_client *connection = ctx;
+    struct ajp_client *client = ctx;
 
-    assert(connection->request.istream != NULL);
+    assert(client->request.istream != NULL);
 
-    connection->request.istream = NULL;
+    client->request.istream = NULL;
 
-    ajp_connection_close(connection);
+    ajp_connection_close(client);
 }
 
 static const struct istream_handler ajp_request_stream_handler = {
@@ -552,19 +552,19 @@ async_to_ajp_connection(struct async_operation *ao)
 static void
 ajp_client_request_abort(struct async_operation *ao)
 {
-    struct ajp_client *connection
+    struct ajp_client *client
         = async_to_ajp_connection(ao);
     
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(connection->response.read_state == READ_BEGIN);
+    assert(client->response.read_state == READ_BEGIN);
 
     /* by setting the state to READ_ABORTED, we bar
        ajp_client_request_close() from invoking the "abort"
        callback */
-    connection->response.read_state = READ_ABORTED;
+    client->response.read_state = READ_ABORTED;
 
-    ajp_connection_close(connection);
+    ajp_connection_close(client);
 }
 
 static struct async_operation_class ajp_client_request_async_operation = {
@@ -582,7 +582,7 @@ ajp_client_request(pool_t pool, int fd,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    struct ajp_client *connection;
+    struct ajp_client *client;
     struct growing_buffer *gb;
     struct ajp_header *header;
     ajp_method_t ajp_method;
@@ -593,11 +593,11 @@ ajp_client_request(pool_t pool, int fd,
     (void)headers; /* XXX */
 
     pool_ref(pool);
-    connection = p_malloc(pool, sizeof(*connection));
-    connection->pool = pool;
-    connection->fd = fd;
-    lease_ref_set(&connection->lease_ref, lease, lease_ctx);
-    event2_init(&connection->event, fd, ajp_event_callback, connection, NULL);
+    client = p_malloc(pool, sizeof(*client));
+    client->pool = pool;
+    client->fd = fd;
+    lease_ref_set(&client->lease_ref, lease, lease_ctx);
+    event2_init(&client->event, fd, ajp_event_callback, client, NULL);
 
     gb = growing_buffer_new(pool, 256);
 
@@ -642,33 +642,33 @@ ajp_client_request(pool_t pool, int fd,
 
     growing_buffer_write_buffer(gb, "\xff", 1);
     
-    connection->request.istream = growing_buffer_istream(gb);
+    client->request.istream = growing_buffer_istream(gb);
 
     /* XXX is this correct? */
-    header->length = htons(istream_available(connection->request.istream, false) - sizeof(*header));
+    header->length = htons(istream_available(client->request.istream, false) - sizeof(*header));
 
-    http_response_handler_set(&connection->request.handler, handler, handler_ctx);
+    http_response_handler_set(&client->request.handler, handler, handler_ctx);
 
-    async_init(&connection->request.async,
+    async_init(&client->request.async,
                &ajp_client_request_async_operation);
-    async_ref_set(async_ref, &connection->request.async);
+    async_ref_set(async_ref, &client->request.async);
 
     /* XXX append request body */
 
-    connection->response.read_state = READ_BEGIN;
+    client->response.read_state = READ_BEGIN;
 
 
-    istream_handler_set(connection->request.istream,
-                        &ajp_request_stream_handler, connection,
+    istream_handler_set(client->request.istream,
+                        &ajp_request_stream_handler, client,
                         0);
 
-    pool_ref(connection->pool);
+    pool_ref(client->pool);
 
-    event2_lock(&connection->event);
+    event2_lock(&client->event);
 
-    istream_read(connection->request.istream);
+    istream_read(client->request.istream);
 
-    event2_unlock(&connection->event);
+    event2_unlock(&client->event);
 
-    pool_unref(connection->pool);
+    pool_unref(client->pool);
 }
