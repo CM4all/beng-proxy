@@ -590,10 +590,17 @@ static void
 http_client_try_read(struct http_client *client)
 {
     if (client->response.read_state == READ_BODY &&
-        (client->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0 &&
-        fifo_buffer_empty(client->input))
+        (client->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) {
+        if (!fifo_buffer_empty(client->input)) {
+            /* there is still data in the body, which we have to
+               consume before we do direct splice() */
+            http_client_consume_body(client);
+            if (!fifo_buffer_empty(client->input))
+                return;
+        }
+
         http_client_try_response_direct(client);
-    else
+    } else
         http_client_try_read_buffered(client);
 }
 
