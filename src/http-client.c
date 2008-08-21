@@ -30,7 +30,7 @@
 #include <string.h>
 
 struct http_client_connection {
-    pool_t pool;
+    pool_t pool, caller_pool;
 
     /* I/O */
     int fd;
@@ -40,7 +40,6 @@ struct http_client_connection {
 
     /* request */
     struct {
-        pool_t caller_pool;
         istream_t istream;
         char request_line_buffer[1024];
         char content_length_buffer[32];
@@ -117,7 +116,7 @@ http_client_abort_request(struct http_client_connection *client)
     istream_close(client->request.istream);
 
     http_response_handler_invoke_abort(&client->request.handler);
-    pool_unref(client->request.caller_pool);
+    pool_unref(client->caller_pool);
 
     http_client_release(client, false);
 }
@@ -133,7 +132,7 @@ http_client_abort_response(struct http_client_connection *client)
     assert(client->request.istream == NULL);
 
     http_response_handler_invoke_abort(&client->request.handler);
-    pool_unref(client->request.caller_pool);
+    pool_unref(client->caller_pool);
 
     http_client_release(client, false);
 }
@@ -428,7 +427,7 @@ http_client_parse_headers(struct http_client_connection *connection)
                                               connection->response.status,
                                               connection->response.headers,
                                               connection->response.body);
-        pool_unref(connection->request.caller_pool);
+        pool_unref(connection->caller_pool);
 
         if (empty_response)
             http_client_response_finished(connection);
@@ -630,7 +629,7 @@ http_client_request_close(struct http_client_connection *connection)
         /* we're not reading the response yet, but we nonetheless want
            to notify the caller (callback) that the response object is
            being freed */
-        pool_t caller_pool = connection->request.caller_pool;
+        pool_t caller_pool = connection->caller_pool;
 
         http_response_handler_invoke_abort(&connection->request.handler);
         pool_unref(caller_pool);
@@ -708,7 +707,7 @@ http_client_request_stream_abort(void *ctx)
     connection->request.istream = NULL;
 
     http_response_handler_invoke_abort(&connection->request.handler);
-    pool_unref(connection->request.caller_pool);
+    pool_unref(connection->caller_pool);
 
     http_client_release(connection, false);
 }
@@ -743,7 +742,7 @@ http_client_request_abort(struct async_operation *ao)
            connection->response.read_state == READ_STATUS ||
            connection->response.read_state == READ_HEADERS);
 
-    pool_unref(connection->request.caller_pool);
+    pool_unref(connection->caller_pool);
 
     if (connection->response.read_state == READ_NONE) {
         assert(connection->request.istream != NULL);
@@ -803,7 +802,7 @@ http_client_request(pool_t caller_pool, int fd,
                 &tv);
 
     pool_ref(caller_pool);
-    connection->request.caller_pool = caller_pool;
+    connection->caller_pool = caller_pool;
     http_response_handler_set(&connection->request.handler, handler, ctx);
 
     async_init(&connection->request.async, &http_client_request_async_operation);
