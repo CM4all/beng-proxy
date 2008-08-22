@@ -490,7 +490,8 @@ http_client_consume_body(struct http_client *client)
     if (nbytes == 0 || !http_client_connection_valid(client))
         return;
 
-    if (http_body_eof(&client->response.body_reader)) {
+    if (http_client_connection_valid(client) &&
+        http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
         return;
     }
@@ -586,7 +587,8 @@ http_client_try_read(struct http_client *client)
             /* there is still data in the body, which we have to
                consume before we do direct splice() */
             http_client_consume_body(client);
-            if (!fifo_buffer_empty(client->input))
+            if (!http_client_connection_valid(client) ||
+                !fifo_buffer_empty(client->input))
                 return;
         }
 
