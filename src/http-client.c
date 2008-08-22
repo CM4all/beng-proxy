@@ -199,7 +199,8 @@ http_client_response_stream_read(istream_t istream)
 
     http_client_consume_body(client);
 
-    if (!fifo_buffer_full(client->input) &&
+    if (http_client_connection_valid(client) &&
+        !fifo_buffer_full(client->input) &&
         client->response.read_state == READ_BODY)
         http_client_try_read(client);
 
