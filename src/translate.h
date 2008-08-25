@@ -51,7 +51,7 @@ struct translate_response {
     const char *site;
     const char *document_root;
     const char *redirect;
-    bool stateful, google_gadget;
+    bool stateful;
     const char *session;
     const char *user;
     const char *language;

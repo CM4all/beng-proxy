@@ -35,7 +35,6 @@ TRANSLATE_WIDGET_TYPE = 21
 TRANSLATE_CONTAINER = 22
 TRANSLATE_ADDRESS = 23
 TRANSLATE_ADDRESS_STRING = 24
-TRANSLATE_GOOGLE_GADGET = 25
 TRANSLATE_JAILCGI = 26
 TRANSLATE_INTERPRETER = 27
 TRANSLATE_ACTION = 28
@@ -187,8 +186,6 @@ class Translation(Protocol):
                 self._write_packet(TRANSLATE_CONTAINER)
             elif line == 'stateful':
                 self._write_packet(TRANSLATE_STATEFUL)
-            elif line == 'google_gadget':
-                self._write_packet(TRANSLATE_GOOGLE_GADGET)
             else:
                 print "Syntax error in %s: %s" % (path, line)
                 self._write_packet(TRANSLATE_STATUS, struct.pack('H', 500))

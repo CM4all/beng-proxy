@@ -26,7 +26,6 @@ struct session;
 enum widget_type {
     WIDGET_TYPE_RAW,
     WIDGET_TYPE_BENG,
-    WIDGET_TYPE_GOOGLE_GADGET,
 };
 
 /**

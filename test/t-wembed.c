@@ -4,7 +4,6 @@
 #include "widget-http.h"
 #include "widget-resolver.h"
 #include "processor.h"
-#include "google-gadget.h"
 #include "async.h"
 
 #include <stdlib.h>
@@ -28,16 +27,6 @@ widget_sync_session(struct widget *widget __attr_unused,
 void
 widget_http_request(pool_t pool __attr_unused, struct widget *widget __attr_unused,
                     struct processor_env *env __attr_unused,
-                    const struct http_response_handler *handler,
-                    void *handler_ctx,
-                    struct async_operation_ref *async_ref __attr_unused)
-{
-    http_response_handler_direct_abort(handler, handler_ctx);
-}
-
-void
-embed_google_gadget(pool_t pool __attr_unused, struct processor_env *env __attr_unused,
-                    struct widget *widget __attr_unused,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref __attr_unused)

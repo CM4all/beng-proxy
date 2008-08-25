@@ -556,12 +556,6 @@ translate_handle_packet(struct translate_connection *connection,
         connection->resource_address->u.cgi.script_name = payload;
         break;
 
-    case TRANSLATE_GOOGLE_GADGET:
-        /* a google gadget is always stateful */
-        connection->response.stateful = true;
-        connection->response.google_gadget = true;
-        break;
-
     case TRANSLATE_DOCUMENT_ROOT:
         connection->response.document_root = payload;
         break;

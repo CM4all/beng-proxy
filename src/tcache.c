@@ -80,7 +80,6 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->document_root = p_strdup_checked(pool, src->document_root);
     dest->redirect = p_strdup_checked(pool, src->redirect);
     dest->stateful = src->stateful;
-    dest->google_gadget = src->google_gadget;
     dest->session = NULL;
     dest->user = NULL;
     dest->language = NULL;
