@@ -216,8 +216,7 @@ http_client_response_stream_close(istream_t istream)
     assert(!http_response_handler_defined(&client->request.handler));
     assert(!http_body_eof(&client->response.body_reader));
 
-    istream_deinit_abort(&client->response.body_reader.output);
-    http_client_release(client, false);
+    http_client_abort_response_body(client);
 }
 
 static const struct istream http_client_response_stream = {
