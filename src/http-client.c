@@ -69,7 +69,7 @@ struct http_client {
 };
 
 static inline bool
-http_client_connection_valid(struct http_client *client)
+http_client_valid(struct http_client *client)
 {
     return client->fd >= 0;
 }
@@ -165,7 +165,7 @@ http_client_abort_response(struct http_client *client)
  */
 
 static inline struct http_client *
-response_stream_to_connection(istream_t istream)
+response_stream_to_http_client(istream_t istream)
 {
     return (struct http_client *)(((char*)istream) - offsetof(struct http_client, response.body_reader.output));
 }
@@ -174,7 +174,7 @@ static off_t
 http_client_response_stream_available(istream_t istream,
                                       bool partial __attr_unused)
 {
-    struct http_client *client = response_stream_to_connection(istream);
+    struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client != NULL);
     assert(client->fd >= 0);
@@ -187,7 +187,7 @@ http_client_response_stream_available(istream_t istream,
 static void
 http_client_response_stream_read(istream_t istream)
 {
-    struct http_client *client = response_stream_to_connection(istream);
+    struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client != NULL);
     assert(client->fd >= 0);
@@ -199,7 +199,7 @@ http_client_response_stream_read(istream_t istream)
 
     http_client_consume_body(client);
 
-    if (http_client_connection_valid(client) &&
+    if (http_client_valid(client) &&
         !fifo_buffer_full(client->input) &&
         client->response.read_state == READ_BODY)
         http_client_try_read(client);
@@ -210,7 +210,7 @@ http_client_response_stream_read(istream_t istream)
 static void
 http_client_response_stream_close(istream_t istream)
 {
-    struct http_client *client = response_stream_to_connection(istream);
+    struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client->response.read_state == READ_BODY);
     assert(!http_response_handler_defined(&client->request.handler));
@@ -487,10 +487,10 @@ http_client_consume_body(struct http_client *client)
     assert(client->response.read_state == READ_BODY);
 
     nbytes = http_body_consume_body(&client->response.body_reader, client->input);
-    if (nbytes == 0 || !http_client_connection_valid(client))
+    if (nbytes == 0 || !http_client_valid(client))
         return;
 
-    if (http_client_connection_valid(client) &&
+    if (http_client_valid(client) &&
         http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
         return;
@@ -510,7 +510,7 @@ http_client_consume_headers(struct http_client *client)
     } while (client->response.read_state == READ_STATUS ||
              client->response.read_state == READ_HEADERS);
 
-    if (http_client_connection_valid(client) &&
+    if (http_client_valid(client) &&
         client->response.read_state == READ_BODY)
         http_client_consume_body(client);
 }
@@ -569,7 +569,7 @@ http_client_try_read_buffered(struct http_client *client)
     else
         http_client_consume_headers(client);
 
-    if (http_client_connection_valid(client) &&
+    if (http_client_valid(client) &&
         client->response.read_state != READ_NONE) {
         event2_setbit(&client->event, EV_READ,
                       (client->response.read_state == READ_BODY &&
@@ -587,7 +587,7 @@ http_client_try_read(struct http_client *client)
             /* there is still data in the body, which we have to
                consume before we do direct splice() */
             http_client_consume_body(client);
-            if (!http_client_connection_valid(client) ||
+            if (!http_client_valid(client) ||
                 !fifo_buffer_empty(client->input))
                 return;
         }
@@ -615,10 +615,10 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
             http_client_abort_response(client);
     }
 
-    if (http_client_connection_valid(client) && (event & EV_WRITE) != 0)
+    if (http_client_valid(client) && (event & EV_WRITE) != 0)
         istream_read(client->request.istream);
 
-    if (http_client_connection_valid(client) && (event & EV_READ) != 0)
+    if (http_client_valid(client) && (event & EV_READ) != 0)
         http_client_try_read(client);
 
     event2_unlock(&client->event);
@@ -693,7 +693,7 @@ static const struct istream_handler http_client_request_stream_handler = {
  */
 
 static struct http_client *
-async_to_http_client_connection(struct async_operation *ao)
+async_to_http_client(struct async_operation *ao)
 {
     return (struct http_client*)(((char*)ao) - offsetof(struct http_client, request.async));
 }
@@ -702,7 +702,7 @@ static void
 http_client_request_abort(struct async_operation *ao)
 {
     struct http_client *client
-        = async_to_http_client_connection(ao);
+        = async_to_http_client(ao);
     
     /* async_abort() can only be used before the response was
        delivered to our callback */
@@ -720,7 +720,7 @@ http_client_request_abort(struct async_operation *ao)
     http_client_release(client, false);
 }
 
-static struct async_operation_class http_client_request_async_operation = {
+static struct async_operation_class http_client_async_operation = {
     .abort = http_client_request_abort,
 };
 
@@ -770,7 +770,7 @@ http_client_request(pool_t caller_pool, int fd,
     client->caller_pool = caller_pool;
     http_response_handler_set(&client->request.handler, handler, ctx);
 
-    async_init(&client->request.async, &http_client_request_async_operation);
+    async_init(&client->request.async, &http_client_async_operation);
     async_ref_set(async_ref, &client->request.async);
 
     /* request line */
