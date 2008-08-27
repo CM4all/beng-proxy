@@ -11,12 +11,14 @@
 #include "http.h"
 
 struct fcgi_stock;
+struct hstock;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
 void
 fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
+             struct hstock *tcp_stock,
              const char *path,
              http_method_t method, const char *uri,
              const char *script_name, const char *path_info,

@@ -129,7 +129,8 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
         assert(fd >= 0);
 
         /* XXX check HTTP status code? */
-        failure_remove(connection->addr, connection->addrlen);
+        if (connection->addr != NULL)
+            failure_remove(connection->addr, connection->addrlen);
 
         connection->fd = fd;
         connection->event.ev_events = 0;
@@ -141,7 +142,8 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
         daemon_log(1, "failed to connect to '%s': %s\n",
                    connection->uri, strerror(err));
 
-        failure_add(connection->addr, connection->addrlen);
+        if (connection->addr != NULL)
+            failure_add(connection->addr, connection->addrlen);
 
         connection->fd = -1;
         stock_item_failed(&connection->stock_item);
