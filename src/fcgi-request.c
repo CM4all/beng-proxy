@@ -22,6 +22,11 @@
 
 struct fcgi_request {
     pool_t pool;
+
+    struct hstock *tcp_stock;
+    const char *socket_path;
+    struct stock_item *stock_item;
+
     http_method_t method;
     const char *uri;
     const char *script_name;
@@ -30,8 +35,6 @@ struct fcgi_request {
     const char *document_root;
     struct strmap *headers;
     istream_t body;
-
-    struct stock_item *stock_item;
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
@@ -44,11 +47,13 @@ struct fcgi_request {
  */
 
 static void
-fcgi_socket_release(bool reuse __attr_unused, void *ctx)
+fcgi_socket_release(bool reuse, void *ctx)
 {
-    int fd = (int)(size_t)ctx;
+    struct fcgi_request *request = ctx;
 
-    close(fd);
+    hstock_put(request->tcp_stock, request->socket_path,
+               request->stock_item, !reuse);
+    pool_unref(request->pool);
 }
 
 static const struct lease fcgi_socket_lease = {
@@ -68,6 +73,7 @@ fcgi_tcp_stock_callback(void *ctx, struct stock_item *item)
 
     request->stock_item = item;
 
+    pool_ref(request->pool);
     fcgi_client_request(request->pool, tcp_stock_item_get(item),
                         &fcgi_socket_lease, request,
                         request->method, request->uri,
@@ -109,6 +115,8 @@ fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
 
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
+    request->tcp_stock = tcp_stock;
+    request->socket_path = socket_path;
     request->method = method;
     request->uri = uri;
     request->script_name = script_name;
