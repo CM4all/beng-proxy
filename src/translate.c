@@ -6,7 +6,7 @@
 
 #include "translate.h"
 #include "stock.h"
-#include "socket-util.h"
+#include "tcp-stock.h"
 #include "growing-buffer.h"
 #include "processor.h"
 #include "async.h"
@@ -53,10 +53,10 @@ struct translate_request_and_callback {
 };
 
 struct translate_connection {
-    struct stock_item stock_item;
-
     /** the socket connection to the translation server */
     int fd;
+
+    struct stock_item *stock_item;
 
     /** events for the socket */
     struct event event;
@@ -87,6 +87,31 @@ struct translate_connection {
 static struct translate_response error = {
     .status = -1,
 };
+
+
+/**
+ * Release resources held by this object: the event object, the socket
+ * lease, and the pool reference.
+ */
+static void
+translate_client_release(struct translate_connection *client, bool reuse)
+{
+    assert(client != NULL);
+    assert(client->fd >= 0);
+
+    if (client->event.ev_events != 0)
+        event_del(&client->event);
+    client->fd = -1;
+    stock_put(client->stock_item, !reuse);
+    pool_unref(client->pool);
+}
+
+static void
+translate_client_abort(struct translate_connection *client)
+{
+    client->callback(&error, client->ctx);
+    translate_client_release(client, false);
+}
 
 
 /*
@@ -211,34 +236,6 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
 
 
 /*
- * idle event
- */
-
-static void
-translate_idle_event_callback(int fd, short event __attr_unused, void *ctx)
-{
-    struct translate_connection *connection = ctx;
-    unsigned char buffer;
-    ssize_t nbytes;
-
-    /* whatever happens here, we must close the translation server
-       connection: this connection is idle, there is no request, but
-       there is something on the socket */
-
-    nbytes = read(fd, &buffer, sizeof(buffer));
-    if (nbytes < 0)
-        daemon_log(1, "read error from translation server: %s\n",
-                   strerror(errno));
-    else if (nbytes == 0)
-        daemon_log(3, "translation server closed the connection\n");
-    else
-        daemon_log(1, "translation server sent unrequested data\n");
-
-    stock_del(&connection->stock_item);
-}
-
-
-/*
  * receive response
  *
  */
@@ -253,16 +250,13 @@ translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "read timeout on translation server\n");
-        connection->callback(&error, connection->ctx);
-        pool_unref(connection->pool);
-
-        stock_put(&connection->stock_item, true);
+        translate_client_abort(connection);
         return;
     }
 
-    pool_ref(connection->stock_item.pool);
+    pool_ref(connection->pool);
     translate_try_read(connection);
-    pool_unref(connection->stock_item.pool);
+    pool_unref(connection->pool);
 }
 
 static struct translate_transformation *
@@ -319,19 +313,13 @@ translate_handle_packet(struct translate_connection *connection,
     if (command == TRANSLATE_BEGIN) {
         if (connection->response.status != (http_status_t)-1) {
             daemon_log(1, "double BEGIN from translation server\n");
-            connection->callback(&error, connection->ctx);
-            pool_unref(connection->pool);
-
-            stock_put(&connection->stock_item, true);
+            translate_client_abort(connection);
             return;
         }
     } else {
         if (connection->response.status == (http_status_t)-1) {
             daemon_log(1, "no BEGIN from translation server\n");
-            connection->callback(&error, connection->ctx);
-            pool_unref(connection->pool);
-
-            stock_put(&connection->stock_item, true);
+            translate_client_abort(connection);
             return;
         }
     }
@@ -339,14 +327,8 @@ translate_handle_packet(struct translate_connection *connection,
     switch ((enum beng_translation_command)command) {
     case TRANSLATE_END:
         connection->callback(&connection->response, connection->ctx);
-        pool_unref(connection->pool);
-
-        stock_put(&connection->stock_item, false);
-
-        event_set(&connection->event, connection->fd, EV_READ,
-                  translate_idle_event_callback, connection);
-        event_add(&connection->event, NULL);
-        break;
+        translate_client_release(connection, true);
+        return;
 
     case TRANSLATE_BEGIN:
         memset(&connection->response, 0, sizeof(connection->response));
@@ -365,10 +347,7 @@ translate_handle_packet(struct translate_connection *connection,
     case TRANSLATE_STATUS:
         if (payload_length != 2) {
             daemon_log(1, "size mismatch in STATUS packet from translation server\n");
-            connection->callback(&error, connection->ctx);
-            pool_unref(connection->pool);
-
-            stock_put(&connection->stock_item, true);
+            translate_client_abort(connection);
             return;
         }
 
@@ -650,18 +629,12 @@ translate_try_read(struct translate_connection *connection)
         case PACKET_READER_ERROR:
             daemon_log(1, "read error from translation server: %s\n",
                        strerror(errno));
-            connection->callback(&error, connection->ctx);
-            pool_unref(connection->pool);
-
-            stock_put(&connection->stock_item, true);
+            translate_client_abort(connection);
             return;
 
         case PACKET_READER_EOF:
             daemon_log(1, "translation server aborted the connection\n");
-            connection->callback(&error, connection->ctx);
-            pool_unref(connection->pool);
-
-            stock_put(&connection->stock_item, true);
+            translate_client_abort(connection);
             return;
 
         case PACKET_READER_SUCCESS:
@@ -673,7 +646,7 @@ translate_try_read(struct translate_connection *connection)
                                 connection->reader.payload == NULL ? "" : connection->reader.payload,
                                 connection->reader.header.length);
         packet_reader_init(&connection->reader);
-    } while (connection->fd >= 0 && !stock_item_is_idle(&connection->stock_item));
+    } while (connection->fd >= 0);
 }
 
 
@@ -692,9 +665,7 @@ translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "write timeout on translation server\n");
-        connection->callback(&error, connection->ctx);
-        stock_put(&connection->stock_item, true);
-        pool_unref(connection->pool);
+        translate_client_abort(connection);
         return;
     }
 
@@ -716,9 +687,7 @@ translate_try_write(struct translate_connection *connection)
     if (nbytes < 0) {
         daemon_log(1, "write error on translation server: %s\n",
                    strerror(errno));
-        connection->callback(&error, connection->ctx);
-        stock_put(&connection->stock_item, true);
-        pool_unref(connection->pool);
+        translate_client_abort(connection);
         return;
     }
 
@@ -740,79 +709,6 @@ translate_try_write(struct translate_connection *connection)
 
 
 /*
- * stock class
- *
- */
-
-static pool_t
-translate_stock_pool(void *ctx __attr_unused, pool_t parent,
-                     const char *uri __attr_unused)
-{
-    return pool_new_linear(parent, "translate", 1024);
-}
-
-static void
-translate_stock_create(void *ctx __attr_unused, struct stock_item *item,
-                       const char *uri, void *info __attr_unused,
-                       struct async_operation_ref *async_ref __attr_unused)
-{
-    struct translate_connection *connection = (struct translate_connection *)item;
-    int ret;
-
-    connection->fd = socket_unix_connect(uri);
-    if (connection->fd < 0) {
-        daemon_log(1, "failed to connect to %s: %s\n",
-                   uri, strerror(errno));
-        stock_item_failed(item);
-        return;
-    }
-
-    ret = socket_set_nonblock(connection->fd, 1);
-    if (ret < 0) {
-        daemon_log(1, "failed to set non-blocking mode: %s\n",
-                   strerror(errno));
-        stock_item_failed(item);
-        return;
-    }
-
-    connection->event.ev_events = 0;
-
-    stock_item_available(item);
-}
-
-static bool
-translate_stock_validate(void *ctx __attr_unused, struct stock_item *item)
-{
-    struct translate_connection *connection = (struct translate_connection *)item;
-
-    return connection->fd >= 0;
-}
-
-static void
-translate_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
-{
-    struct translate_connection *connection = (struct translate_connection *)item;
-
-    if (stock_item_is_idle(item) && connection->event.ev_events != 0)
-        event_del(&connection->event);
-
-    if (connection->fd >= 0) {
-        close(connection->fd);
-        connection->fd = -1;
-    }
-}
-
-static struct stock_class translate_stock_class = {
-    .item_size = sizeof(struct translate_connection),
-    .pool = translate_stock_pool,
-    .create = translate_stock_create,
-    .borrow = translate_stock_validate,
-    .release = translate_stock_validate,
-    .destroy = translate_stock_destroy,
-};
-
-
-/*
  * async operation
  *
  */
@@ -828,11 +724,7 @@ translate_connection_abort(struct async_operation *ao)
 {
     struct translate_connection *connection = async_to_translate_connection(ao);
 
-    assert(connection->fd >= 0);
-
-    pool_unref(connection->pool);
-
-    stock_put(&connection->stock_item, true);
+    translate_client_release(connection, false);
 }
 
 static struct async_operation_class translate_operation = {
@@ -845,17 +737,11 @@ static struct async_operation_class translate_operation = {
  *
  */
 
-struct stock *
-translate_stock_new(pool_t pool, const char *translation_socket)
-{
-    return stock_new(pool, &translate_stock_class, NULL, translation_socket);
-}
-
 static void
 translate_stock_callback(void *ctx, struct stock_item *item)
 {
     struct translate_request_and_callback *request2 = ctx;
-    struct translate_connection *connection = (struct translate_connection *)item;
+    struct translate_connection *connection;
 
     if (item == NULL) {
         request2->callback(&error, request2->callback_ctx);
@@ -863,9 +749,9 @@ translate_stock_callback(void *ctx, struct stock_item *item)
         return;
     }
 
-    if (connection->event.ev_events != 0)
-        event_del(&connection->event);
-
+    connection = p_malloc(request2->pool, sizeof(*connection));
+    connection->fd = tcp_stock_item_get(item);
+    connection->stock_item = item;
     connection->pool = request2->pool;
     connection->request = marshal_request(connection->pool, request2->request);
     connection->callback = request2->callback;
@@ -875,12 +761,13 @@ translate_stock_callback(void *ctx, struct stock_item *item)
     async_init(&connection->async, &translate_operation);
     async_ref_set(request2->async_ref, &connection->async);
 
+    connection->event.ev_events = 0;
     translate_try_write(connection);
 }
 
 void
 translate(pool_t pool,
-          struct stock *stock,
+          struct hstock *tcp_stock, const char *socket_path,
           const struct translate_request *request,
           translate_callback_t callback,
           void *ctx,
@@ -889,14 +776,11 @@ translate(pool_t pool,
     struct translate_request_and_callback *request2;
 
     assert(pool != NULL);
+    assert(tcp_stock != NULL);
+    assert(socket_path != NULL);
     assert(request != NULL);
     assert(request->uri != NULL || request->widget_type != NULL);
     assert(callback != NULL);
-
-    if (stock == NULL) {
-        callback(&error, ctx);
-        return;
-    }
 
     pool_ref(pool);
 
@@ -907,6 +791,7 @@ translate(pool_t pool,
     request2->callback_ctx = ctx;
     request2->async_ref = async_ref;
 
-    stock_get(stock, NULL, translate_stock_callback, request2,
-              async_unref_on_abort(pool, async_ref));
+    hstock_get(tcp_stock, socket_path, NULL,
+               translate_stock_callback, request2,
+               async_unref_on_abort(pool, async_ref));
 }

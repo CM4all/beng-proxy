@@ -119,7 +119,6 @@ int main(int argc, char **argv)
             .max_connections = 1024,
         },
     };
-    struct stock *translate_stock;
 
 #ifndef NDEBUG
     if (geteuid() != 0)
@@ -164,12 +163,9 @@ int main(int argc, char **argv)
         exit(2);
     }
 
-    translate_stock = translate_stock_new(instance.pool,
-                                          instance.config.translation_socket);
-    instance.translate_cache = translate_cache_new(instance.pool,
-                                                   translate_stock);
-
     instance.tcp_stock = tcp_stock_new(instance.pool);
+    instance.translate_cache = translate_cache_new(instance.pool, instance.tcp_stock,
+                                                   instance.config.translation_socket);
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.tcp_stock);
     instance.fcgi_stock = fcgi_stock_new(instance.pool);

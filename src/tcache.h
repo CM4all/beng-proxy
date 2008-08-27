@@ -12,7 +12,8 @@
 struct tcache;
 
 struct tcache *
-translate_cache_new(pool_t pool, struct stock *translate_stock);
+translate_cache_new(pool_t pool, struct hstock *tcp_stock,
+                    const char *socket_path);
 
 void
 translate_cache_close(struct tcache *tcache);

@@ -12,7 +12,7 @@
 #include "resource-address.h"
 
 struct uri_with_address;
-struct stock;
+struct hstock;
 struct async_operation_ref;
 
 struct translate_request {
@@ -62,12 +62,9 @@ struct translate_response {
 typedef void (*translate_callback_t)(const struct translate_response *response,
                                      void *ctx);
 
-struct stock *
-translate_stock_new(pool_t pool, const char *translation_socket);
-
 void
 translate(pool_t pool,
-          struct stock *stock,
+          struct hstock *tcp_stock, const char *socket_path,
           const struct translate_request *request,
           translate_callback_t callback,
           void *ctx,
