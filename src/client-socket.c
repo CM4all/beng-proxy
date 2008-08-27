@@ -128,12 +128,14 @@ client_socket_new(pool_t pool,
         return;
     }
 
-    ret = socket_set_nodelay(fd, 1);
-    if (ret < 0) {
-        int save_errno = errno;
-        close(fd);
-        callback(-1, save_errno, ctx);
-        return;
+    if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM) {
+        ret = socket_set_nodelay(fd, 1);
+        if (ret < 0) {
+            int save_errno = errno;
+            close(fd);
+            callback(-1, save_errno, ctx);
+            return;
+        }
     }
 
     ret = connect(fd, addr, addrlen);
