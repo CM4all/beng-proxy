@@ -336,7 +336,7 @@ translate_handle_packet(struct translate_connection *connection,
         }
     }
 
-    switch (command) {
+    switch ((enum beng_translation_command)command) {
     case TRANSLATE_END:
         connection->callback(&connection->response, connection->ctx);
         pool_unref(connection->pool);
@@ -352,6 +352,14 @@ translate_handle_packet(struct translate_connection *connection,
         memset(&connection->response, 0, sizeof(connection->response));
         connection->resource_address = &connection->response.address;
         connection->transformation_tail = &connection->response.transformation;
+        break;
+
+    case TRANSLATE_HOST:
+    case TRANSLATE_URI:
+    case TRANSLATE_PARAM:
+    case TRANSLATE_REMOTE_HOST:
+    case TRANSLATE_WIDGET_TYPE:
+        daemon_log(2, "misplaced translate request packet\n");
         break;
 
     case TRANSLATE_STATUS:
