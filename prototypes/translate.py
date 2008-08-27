@@ -42,6 +42,7 @@ TRANSLATE_SCRIPT_NAME = 29
 TRANSLATE_AJP = 30
 TRANSLATE_DOMAIN = 31
 TRANSLATE_STATEFUL = 32
+TRANSLATE_FASTCGI = 33
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
 
@@ -150,6 +151,10 @@ class Translation(Protocol):
             m = re.match(r'^cgi\s+"(\S+)"$', line)
             if m:
                 self._write_packet(TRANSLATE_CGI, m.group(1))
+                continue
+            m = re.match(r'^fastcgi\s+"(\S+)"$', line)
+            if m:
+                self._write_packet(TRANSLATE_FASTCGI, m.group(1))
                 continue
             m = re.match(r'^ajp\s+"(\S+)"\s+"(\S+)"$', line)
             if m:

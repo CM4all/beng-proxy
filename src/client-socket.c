@@ -20,6 +20,7 @@
 
 struct client_socket {
     struct async_operation operation;
+    pool_t pool;
     int fd;
     struct event event;
     client_socket_callback_t callback;
@@ -145,7 +146,9 @@ client_socket_new(pool_t pool,
             .tv_usec = 0,
         };
 
+        pool_ref(pool);
         client_socket = p_malloc(pool, sizeof(*client_socket));
+        client_socket->pool = pool;
         client_socket->fd = fd;
         client_socket->callback = callback;
         client_socket->callback_ctx = ctx;

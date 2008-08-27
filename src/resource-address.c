@@ -41,6 +41,7 @@ resource_address_apply(pool_t pool, const struct resource_address *src,
         return buffer;
 
     case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
         if (relative_length == 0)
             return src;
 
@@ -84,6 +85,7 @@ resource_address_relative(const struct resource_address *base,
         return uri_relative(&base_uri, buffer);
 
     case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
         /* XXX */
         strref_set_c(buffer, address->u.cgi.path_info);
         return buffer;

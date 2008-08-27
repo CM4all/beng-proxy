@@ -47,6 +47,8 @@ struct instance {
 
     /* cache */
     struct http_cache *http_cache;
+
+    struct fcgi_stock *fcgi_stock;
 };
 
 struct client_connection;

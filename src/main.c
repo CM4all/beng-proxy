@@ -13,6 +13,7 @@
 #include "stock.h"
 #include "tcache.h"
 #include "http-cache.h"
+#include "fcgi-stock.h"
 #include "child.h"
 #include "global.h"
 #include "failure.h"
@@ -171,12 +172,14 @@ int main(int argc, char **argv)
     instance.tcp_stock = tcp_stock_new(instance.pool);
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.tcp_stock);
+    instance.fcgi_stock = fcgi_stock_new(instance.pool);
 
     failure_init(instance.pool);
 
     global_translate_cache = instance.translate_cache;
     global_tcp_stock = instance.tcp_stock;
     global_http_cache = instance.http_cache;
+    global_fcgi_stock = instance.fcgi_stock;
 
     /* daemonize */
 

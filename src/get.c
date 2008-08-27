@@ -11,11 +11,13 @@
 #include "http-response.h"
 #include "static-file.h"
 #include "cgi.h"
+#include "fcgi-request.h"
 #include "ajp-request.h"
 
 void
 resource_get(struct http_cache *cache,
              struct hstock *ajp_client_stock,
+             struct fcgi_stock *fcgi_stock,
              pool_t pool,
              http_method_t method,
              const struct resource_address *address,
@@ -50,6 +52,17 @@ resource_get(struct http_cache *cache,
                 address->u.cgi.document_root,
                 headers, body,
                 handler, handler_ctx, async_ref);
+        return;
+
+    case RESOURCE_ADDRESS_FASTCGI:
+        fcgi_request(pool, fcgi_stock, address->u.cgi.path,
+                     method, resource_address_cgi_uri(pool, address),
+                     address->u.cgi.script_name,
+                     address->u.cgi.path_info,
+                     address->u.cgi.query_string,
+                     address->u.cgi.document_root,
+                     headers, body,
+                     handler, handler_ctx, async_ref);
         return;
 
     case RESOURCE_ADDRESS_HTTP:

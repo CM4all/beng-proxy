@@ -20,6 +20,7 @@ enum resource_address_type {
     RESOURCE_ADDRESS_LOCAL,
     RESOURCE_ADDRESS_HTTP,
     RESOURCE_ADDRESS_CGI,
+    RESOURCE_ADDRESS_FASTCGI,
     RESOURCE_ADDRESS_AJP
 };
 
@@ -51,7 +52,8 @@ resource_address_cgi_uri(pool_t pool, const struct resource_address *address)
 {
     const char *p;
 
-    assert(address->type == RESOURCE_ADDRESS_CGI);
+    assert(address->type == RESOURCE_ADDRESS_CGI ||
+           address->type == RESOURCE_ADDRESS_FASTCGI);
 
     p = address->u.cgi.script_name;
     if (p == NULL)
@@ -90,6 +92,7 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         break;
 
     case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
         assert(src->u.cgi.path != NULL);
 
         dest->u.cgi.path = p_strdup(pool, src->u.cgi.path);

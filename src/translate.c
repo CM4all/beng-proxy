@@ -504,6 +504,22 @@ translate_handle_packet(struct translate_connection *connection,
         connection->resource_address->u.cgi.path = payload;
         break;
 
+    case TRANSLATE_FASTCGI:
+        if (connection->resource_address == NULL ||
+            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
+            daemon_log(2, "misplaced TRANSLATE_FASTCGI packet\n");
+            break;
+        }
+
+        if (payload == NULL) {
+            daemon_log(2, "malformed TRANSLATE_FASTCGI packet\n");
+            break;
+        }
+
+        connection->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
+        connection->resource_address->u.cgi.path = payload;
+        break;
+
     case TRANSLATE_AJP:
         if (connection->resource_address == NULL ||
             connection->resource_address->type != RESOURCE_ADDRESS_NONE) {

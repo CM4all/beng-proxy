@@ -12,6 +12,7 @@
 void
 filter_new(struct http_cache *cache,
            struct hstock *ajp_client_stock,
+           struct fcgi_stock *fcgi_stock,
            pool_t pool,
            const struct resource_address *address,
            struct growing_buffer *headers,
@@ -23,7 +24,7 @@ filter_new(struct http_cache *cache,
     struct strmap *headers2 = strmap_new(pool, 16);
     header_parse_buffer(pool, headers2, headers);
 
-    resource_get(cache, ajp_client_stock, pool,
+    resource_get(cache, ajp_client_stock, fcgi_stock, pool,
                  HTTP_METHOD_POST, address,
                  headers2, body,
                  handler, handler_ctx,

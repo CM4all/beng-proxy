@@ -162,7 +162,7 @@ response_dispatch(struct request *request2,
 
         pool_ref(request->pool);
 
-        filter_new(global_http_cache, global_tcp_stock,
+        filter_new(global_http_cache, global_tcp_stock, global_fcgi_stock,
                    request->pool,
                    &transformation->u.filter,
                    headers,
