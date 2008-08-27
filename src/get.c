@@ -16,7 +16,7 @@
 
 void
 resource_get(struct http_cache *cache,
-             struct hstock *ajp_client_stock,
+             struct hstock *tcp_stock,
              struct fcgi_stock *fcgi_stock,
              pool_t pool,
              http_method_t method,
@@ -73,7 +73,7 @@ resource_get(struct http_cache *cache,
         return;
 
     case RESOURCE_ADDRESS_AJP:
-        ajp_stock_request(pool, ajp_client_stock,
+        ajp_stock_request(pool, tcp_stock,
                           method, address->u.http,
                           headers, body,
                           handler, handler_ctx, async_ref);
