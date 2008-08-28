@@ -78,12 +78,6 @@ stock_put(struct stock_item *item, bool destroy);
 void
 stock_del(struct stock_item *item);
 
-static inline bool
-stock_item_is_idle(const struct stock_item *item)
-{
-    return item->is_idle;
-}
-
 
 /* hstock.c */
 
