@@ -22,7 +22,7 @@ http_server_consume_body(struct http_server_connection *connection)
         return;
 
     nbytes = http_body_consume_body(&connection->request.body_reader, connection->input);
-    if (nbytes == 0 || !http_server_connection_valid(connection))
+    if (nbytes == 0)
         return;
 
     if (connection->request.read_state == READ_BODY &&
