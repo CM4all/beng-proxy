@@ -342,7 +342,7 @@ profile: src/cm4all-beng-proxy
 	./src/cm4all-beng-proxy -D -u max -p 8080
 
 # -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
-benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE -DNO_ACCESS_LOG
+benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE -DNO_ACCESS_LOG -g
 benchmark: src/cm4all-beng-proxy
 	./src/cm4all-beng-proxy -D -u max -p 8080
 
