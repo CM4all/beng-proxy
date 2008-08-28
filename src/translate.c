@@ -89,11 +89,9 @@ static void
 translate_client_release(struct translate_client *client, bool reuse)
 {
     assert(client != NULL);
-    assert(client->fd >= 0);
 
     if (client->event.ev_events != 0)
         event_del(&client->event);
-    client->fd = -1;
     stock_put(client->stock_item, !reuse);
     pool_unref(client->pool);
 }
