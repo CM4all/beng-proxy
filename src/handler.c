@@ -336,7 +336,7 @@ handle_http_request(struct client_connection *connection,
         }
     }
 
-    if (connection->config->translation_socket == NULL)
+    if (connection->instance->translate_cache == NULL)
         serve_document_root_file(request2, connection->config);
     else
         ask_translation_server(request2, connection->instance->translate_cache);
