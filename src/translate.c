@@ -42,17 +42,9 @@ struct packet_reader {
     size_t payload_position;
 };
 
-struct translate_request_and_callback {
-    pool_t pool;
-    const struct translate_request *request;
-
-    translate_callback_t callback;
-    void *callback_ctx;
-
-    struct async_operation_ref *async_ref;
-};
-
 struct translate_client {
+    pool_t pool;
+
     /** the socket connection to the translation server */
     int fd;
 
@@ -60,9 +52,6 @@ struct translate_client {
 
     /** events for the socket */
     struct event event;
-
-    /** the request pool */
-    pool_t pool;
 
     /** the marshalled translate request */
     struct growing_buffer *request;
@@ -82,6 +71,8 @@ struct translate_client {
     /** this asynchronous operation is the translate request; aborting
         it causes the request to be cancelled */
     struct async_operation async;
+
+    struct async_operation_ref *async_ref;
 };
 
 static struct translate_response error = {
@@ -740,26 +731,20 @@ static struct async_operation_class translate_operation = {
 static void
 translate_stock_callback(void *ctx, struct stock_item *item)
 {
-    struct translate_request_and_callback *request2 = ctx;
-    struct translate_client *client;
+    struct translate_client *client = ctx;
 
     if (item == NULL) {
-        request2->callback(&error, request2->callback_ctx);
-        pool_unref(request2->pool);
+        client->callback(&error, client->callback_ctx);
+        pool_unref(client->pool);
         return;
     }
 
-    client = p_malloc(request2->pool, sizeof(*client));
     client->fd = tcp_stock_item_get(item);
     client->stock_item = item;
-    client->pool = request2->pool;
-    client->request = marshal_request(client->pool, request2->request);
-    client->callback = request2->callback;
-    client->callback_ctx = request2->callback_ctx;
     client->response.status = (http_status_t)-1;
 
     async_init(&client->async, &translate_operation);
-    async_ref_set(request2->async_ref, &client->async);
+    async_ref_set(client->async_ref, &client->async);
 
     client->event.ev_events = 0;
     translate_try_write(client);
@@ -773,7 +758,7 @@ translate(pool_t pool,
           void *ctx,
           struct async_operation_ref *async_ref)
 {
-    struct translate_request_and_callback *request2;
+    struct translate_client *client;
 
     assert(pool != NULL);
     assert(tcp_stock != NULL);
@@ -784,14 +769,14 @@ translate(pool_t pool,
 
     pool_ref(pool);
 
-    request2 = p_malloc(pool, sizeof(*request2));
-    request2->pool = pool;
-    request2->request = request;
-    request2->callback = callback;
-    request2->callback_ctx = ctx;
-    request2->async_ref = async_ref;
+    client = p_malloc(pool, sizeof(*client));
+    client->pool = pool;
+    client->request = marshal_request(pool, request);
+    client->callback = callback;
+    client->callback_ctx = ctx;
+    client->async_ref = async_ref;
 
     hstock_get(tcp_stock, socket_path, NULL,
-               translate_stock_callback, request2,
+               translate_stock_callback, client,
                async_unref_on_abort(pool, async_ref));
 }
