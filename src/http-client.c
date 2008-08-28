@@ -446,19 +446,6 @@ http_client_parse_headers(struct http_client *client)
     /* remove the parsed part of the buffer */
     fifo_buffer_consume(client->input, next - buffer);
 
-    if (client->response.read_state != READ_HEADERS) {
-        assert(client->response.read_state == READ_BODY);
-
-        http_response_handler_invoke_response(&client->request.handler,
-                                              client->response.status,
-                                              client->response.headers,
-                                              client->response.body);
-        pool_unref(client->caller_pool);
-
-        if (client->response.body == NULL)
-            http_client_response_finished(client);
-    }
-
     return true;
 }
 
@@ -505,20 +492,37 @@ http_client_consume_body(struct http_client *client)
 static bool
 http_client_consume_headers(struct http_client *client)
 {
+    bool bret;
+
     assert(client != NULL);
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
     do {
-        if (!http_client_parse_headers(client))
-            break;
-    } while (client->response.read_state == READ_HEADERS);
+        bret = http_client_parse_headers(client);
+    } while (bret && client->response.read_state == READ_HEADERS);
 
-    if (!http_client_valid(client))
-        return false;
+    if (bret && client->response.read_state != READ_HEADERS) {
+        /* the headers are finished, we can now report the response to
+           the handler */
+        assert(client->response.read_state == READ_BODY);
 
-    if (client->response.read_state == READ_BODY)
+        http_response_handler_invoke_response(&client->request.handler,
+                                              client->response.status,
+                                              client->response.headers,
+                                              client->response.body);
+        pool_unref(client->caller_pool);
+
+        if (!http_client_valid(client))
+            return false;
+
+        if (client->response.body == NULL) {
+            http_client_response_finished(client);
+            return false;
+        }
+
         return http_client_consume_body(client);
+    }
 
     return true;
 }
