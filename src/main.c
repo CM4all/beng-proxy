@@ -164,8 +164,9 @@ int main(int argc, char **argv)
     }
 
     instance.tcp_stock = tcp_stock_new(instance.pool);
-    instance.translate_cache = translate_cache_new(instance.pool, instance.tcp_stock,
-                                                   instance.config.translation_socket);
+    if (instance.config.translation_socket != NULL)
+        instance.translate_cache = translate_cache_new(instance.pool, instance.tcp_stock,
+                                                       instance.config.translation_socket);
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.tcp_stock);
     instance.fcgi_stock = fcgi_stock_new(instance.pool);
