@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 enum packet_reader_result {
     PACKET_READER_EOF,
@@ -275,7 +276,10 @@ parse_address_string(struct sockaddr_in *sin, const char *p)
     return true;
 }
 
-static void
+/**
+ * Returns false if the client has been closed.
+ */
+static bool
 translate_handle_packet(struct translate_client *client,
                         unsigned command, const char *payload,
                         size_t payload_length)
@@ -286,13 +290,13 @@ translate_handle_packet(struct translate_client *client,
         if (client->response.status != (http_status_t)-1) {
             daemon_log(1, "double BEGIN from translation server\n");
             translate_client_abort(client);
-            return;
+            return false;
         }
     } else {
         if (client->response.status == (http_status_t)-1) {
             daemon_log(1, "no BEGIN from translation server\n");
             translate_client_abort(client);
-            return;
+            return false;
         }
     }
 
@@ -300,7 +304,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_END:
         client->callback(&client->response, client->callback_ctx);
         translate_client_release(client, true);
-        return;
+        return false;
 
     case TRANSLATE_BEGIN:
         memset(&client->response, 0, sizeof(client->response));
@@ -320,7 +324,7 @@ translate_handle_packet(struct translate_client *client,
         if (payload_length != 2) {
             daemon_log(1, "size mismatch in STATUS packet from translation server\n");
             translate_client_abort(client);
-            return;
+            return false;
         }
 
         client->response.status = *(const uint16_t*)payload;
@@ -578,12 +582,16 @@ translate_handle_packet(struct translate_client *client,
 
         break;
     }
+
+    return true;
 }
 
 static void
 translate_try_read(struct translate_client *client)
 {
-    do {
+    bool bret;
+
+    while (true) {
         switch (packet_reader_read(client->pool, &client->reader,
                                    client->fd)) {
         case PACKET_READER_INCOMPLETE: {
@@ -611,12 +619,16 @@ translate_try_read(struct translate_client *client)
             break;
         }
 
-        translate_handle_packet(client,
-                                client->reader.header.command,
-                                client->reader.payload == NULL ? "" : client->reader.payload,
-                                client->reader.header.length);
+        bret = translate_handle_packet(client,
+                                       client->reader.header.command,
+                                       client->reader.payload == NULL
+                                       ? "" : client->reader.payload,
+                                       client->reader.header.length);
+        if (!bret)
+            break;
+
         packet_reader_init(&client->reader);
-    } while (client->fd >= 0);
+    }
 }
 
 static void
@@ -630,9 +642,7 @@ translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
         return;
     }
 
-    pool_ref(client->pool);
     translate_try_read(client);
-    pool_unref(client->pool);
 }
 
 
@@ -665,11 +675,9 @@ translate_try_write(struct translate_client *client)
            start reading the response */
         packet_reader_init(&client->reader);
 
-        pool_ref(client->pool);
         event_set(&client->event, client->fd, EV_READ|EV_TIMEOUT,
                   translate_read_event_callback, client);
         translate_try_read(client);
-        pool_unref(client->pool);
         return;
     }
 
