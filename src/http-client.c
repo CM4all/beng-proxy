@@ -486,8 +486,8 @@ http_client_consume_body(struct http_client *client)
 }
 
 /**
- * Returns false if the client has been closed or if the response body
- * handler is blocking.
+ * Returns false if the client has been closed or if the headers are
+ * incomplete.
  */
 static bool
 http_client_consume_headers(struct http_client *client)
