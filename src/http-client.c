@@ -500,9 +500,11 @@ http_client_consume_headers(struct http_client *client)
 
     do {
         bret = http_client_parse_headers(client);
-    } while (bret && client->response.read_state == READ_HEADERS);
+        if (!bret)
+            return false;
+    } while (client->response.read_state == READ_HEADERS);
 
-    if (bret && client->response.read_state != READ_HEADERS) {
+    if (client->response.read_state != READ_HEADERS) {
         /* the headers are finished, we can now report the response to
            the handler */
         assert(client->response.read_state == READ_BODY);
