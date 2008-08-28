@@ -825,13 +825,5 @@ http_client_request(pool_t caller_pool, int fd,
                         &http_client_request_stream_handler, client,
                         0);
 
-    pool_ref(client->pool);
-
-    event2_lock(&client->event);
-
     istream_read(client->request.istream);
-
-    event2_unlock(&client->event);
-
-    pool_unref(client->pool);
 }
