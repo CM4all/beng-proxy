@@ -504,29 +504,25 @@ http_client_consume_headers(struct http_client *client)
             return false;
     } while (client->response.read_state == READ_HEADERS);
 
-    if (client->response.read_state != READ_HEADERS) {
-        /* the headers are finished, we can now report the response to
-           the handler */
-        assert(client->response.read_state == READ_BODY);
+    /* the headers are finished, we can now report the response to
+       the handler */
+    assert(client->response.read_state == READ_BODY);
 
-        http_response_handler_invoke_response(&client->request.handler,
-                                              client->response.status,
-                                              client->response.headers,
-                                              client->response.body);
-        pool_unref(client->caller_pool);
+    http_response_handler_invoke_response(&client->request.handler,
+                                          client->response.status,
+                                          client->response.headers,
+                                          client->response.body);
+    pool_unref(client->caller_pool);
 
-        if (!http_client_valid(client))
-            return false;
+    if (!http_client_valid(client))
+        return false;
 
-        if (client->response.body == NULL) {
-            http_client_response_finished(client);
-            return false;
-        }
-
-        return http_client_consume_body(client);
+    if (client->response.body == NULL) {
+        http_client_response_finished(client);
+        return false;
     }
 
-    return true;
+    return http_client_consume_body(client);
 }
 
 static void
