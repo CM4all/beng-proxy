@@ -167,8 +167,6 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
 {
     const char *uri;
 
-
-
     if (widget->class != NULL) {
         uri = do_rewrite_widget_uri(pool, partition_domain, external_uri,
                                     args, widget, value, mode);
