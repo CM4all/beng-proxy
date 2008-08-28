@@ -693,8 +693,6 @@ translate_try_write(struct translate_client *client)
         return;
     }
 
-    event_set(&client->event, client->fd, EV_WRITE|EV_TIMEOUT,
-              translate_write_event_callback, client);
     event_add(&client->event, &tv);
 }
 
@@ -746,7 +744,8 @@ translate_stock_callback(void *ctx, struct stock_item *item)
     async_init(&client->async, &translate_operation);
     async_ref_set(client->async_ref, &client->async);
 
-    client->event.ev_events = 0;
+    event_set(&client->event, client->fd, EV_WRITE|EV_TIMEOUT,
+              translate_write_event_callback, client);
     translate_try_write(client);
 }
 
