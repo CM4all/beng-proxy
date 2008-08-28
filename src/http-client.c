@@ -74,7 +74,7 @@ http_client_valid(struct http_client *client)
     return client->fd >= 0;
 }
 
-static void
+static bool
 http_client_consume_body(struct http_client *client);
 
 static void
@@ -188,6 +188,7 @@ static void
 http_client_response_stream_read(istream_t istream)
 {
     struct http_client *client = response_stream_to_http_client(istream);
+    bool bret;
 
     assert(client != NULL);
     assert(client->fd >= 0);
@@ -195,9 +196,11 @@ http_client_response_stream_read(istream_t istream)
     assert(client->response.body_reader.output.handler != NULL);
     assert(!http_response_handler_defined(&client->request.handler));
 
-    pool_ref(client->pool);
+    bret = http_client_consume_body(client);
+    if (!bret)
+        return;
 
-    http_client_consume_body(client);
+    pool_ref(client->pool);
 
     if (http_client_valid(client) &&
         !fifo_buffer_full(client->input) &&
@@ -473,7 +476,11 @@ http_client_response_stream_eof(struct http_client *client)
     http_client_response_finished(client);
 }
 
-static void
+/**
+ * Returns true if data has been consumed; false if nothing has been
+ * consumed or if the client has been closed.
+ */
+static bool
 http_client_consume_body(struct http_client *client)
 {
     size_t nbytes;
@@ -483,10 +490,14 @@ http_client_consume_body(struct http_client *client)
 
     nbytes = http_body_consume_body(&client->response.body_reader, client->input);
     if (nbytes == 0)
-        return;
+        return false;
 
-    if (http_body_eof(&client->response.body_reader))
+    if (http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
+        return false;
+    }
+
+    return true;
 }
 
 static void
@@ -531,6 +542,7 @@ static void
 http_client_try_read_buffered(struct http_client *client)
 {
     ssize_t nbytes;
+    bool bret;
 
     nbytes = read_to_buffer(client->fd, client->input, INT_MAX);
     assert(nbytes != -2);
@@ -556,9 +568,11 @@ http_client_try_read_buffered(struct http_client *client)
         return;
     }
 
-    if (client->response.read_state == READ_BODY)
-        http_client_consume_body(client);
-    else
+    if (client->response.read_state == READ_BODY) {
+        bret = http_client_consume_body(client);
+        if (!bret)
+            return;
+    } else
         http_client_consume_headers(client);
 
     if (http_client_valid(client) &&
@@ -573,14 +587,15 @@ http_client_try_read_buffered(struct http_client *client)
 static void
 http_client_try_read(struct http_client *client)
 {
+    bool bret;
+
     if (client->response.read_state == READ_BODY &&
         (client->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) {
         if (!fifo_buffer_empty(client->input)) {
             /* there is still data in the body, which we have to
                consume before we do direct splice() */
-            http_client_consume_body(client);
-            if (!http_client_valid(client) ||
-                !fifo_buffer_empty(client->input))
+            bret = http_client_consume_body(client);
+            if (!bret || !fifo_buffer_empty(client->input))
                 return;
         }
 
