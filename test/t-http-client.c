@@ -186,6 +186,8 @@ test_empty(pool_t pool, struct context *c)
     http_client_request(pool, c->fd, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL, NULL,
                         &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
 
     event_dispatch();
 
@@ -204,6 +206,8 @@ test_body(pool_t pool, struct context *c)
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
 
     event_dispatch();
 
@@ -222,6 +226,8 @@ test_close_response_body_early(pool_t pool, struct context *c)
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
 
     event_dispatch();
 
@@ -242,6 +248,8 @@ test_close_response_body_late(pool_t pool, struct context *c)
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
 
     event_dispatch();
 
@@ -262,6 +270,8 @@ test_close_response_body_data(pool_t pool, struct context *c)
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
 
     event_dispatch();
 
@@ -282,6 +292,8 @@ test_data_blocking(pool_t pool, struct context *c)
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_head_new(pool, istream_zero_new(pool), 65536),
                         &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
 
     while (c->data_blocking > 0) {
         if (c->body != NULL)
@@ -312,6 +324,8 @@ test_body_fail(pool_t pool, struct context *c)
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_fail_new(pool),
                         &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
 
     event_dispatch();
 
@@ -333,7 +347,6 @@ run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
 
     pool = pool_new_linear(pool, "test", 16384);
     test(pool, &c);
-    pool_unref(pool);
     pool_commit();
 }
 
