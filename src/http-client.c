@@ -512,8 +512,7 @@ http_client_consume_headers(struct http_client *client)
     do {
         if (!http_client_parse_headers(client))
             break;
-    } while (client->response.read_state == READ_STATUS ||
-             client->response.read_state == READ_HEADERS);
+    } while (client->response.read_state == READ_HEADERS);
 
     if (!http_client_valid(client))
         return false;
