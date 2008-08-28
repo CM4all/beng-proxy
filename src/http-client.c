@@ -200,12 +200,8 @@ http_client_response_stream_read(istream_t istream)
     if (!bret)
         return;
 
-    pool_ref(client->pool);
-
     if (client->response.read_state == READ_BODY)
         http_client_try_read(client);
-
-    pool_unref(client->pool);
 }
 
 static void
