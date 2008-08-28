@@ -617,8 +617,6 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct http_client *client = ctx;
 
-    pool_ref(client->pool);
-
     event2_reset(&client->event);
     event2_lock(&client->event);
 
@@ -630,6 +628,8 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
             http_client_abort_response(client);
         return;
     }
+
+    pool_ref(client->pool);
 
     if ((event & EV_WRITE) != 0)
         istream_read(client->request.istream);
