@@ -438,6 +438,11 @@ http_client_parse_headers(struct http_client *client)
         start = next;
     }
 
+    if (end == NULL)
+        /* not enough data to finish this line, let libevent handle
+           this */
+        event2_or(&client->event, EV_READ);
+
     if (next == NULL)
         /* not a single line was processed - skip the following
            checks */
