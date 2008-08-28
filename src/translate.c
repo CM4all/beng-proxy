@@ -231,25 +231,6 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
  *
  */
 
-static void
-translate_try_read(struct translate_client *client);
-
-static void
-translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
-{
-    struct translate_client *client = ctx;
-
-    if (event == EV_TIMEOUT) {
-        daemon_log(1, "read timeout on translation server\n");
-        translate_client_abort(client);
-        return;
-    }
-
-    pool_ref(client->pool);
-    translate_try_read(client);
-    pool_unref(client->pool);
-}
-
 static struct translate_transformation *
 translate_add_transformation(struct translate_client *client)
 {
@@ -636,6 +617,22 @@ translate_try_read(struct translate_client *client)
                                 client->reader.header.length);
         packet_reader_init(&client->reader);
     } while (client->fd >= 0);
+}
+
+static void
+translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
+{
+    struct translate_client *client = ctx;
+
+    if (event == EV_TIMEOUT) {
+        daemon_log(1, "read timeout on translation server\n");
+        translate_client_abort(client);
+        return;
+    }
+
+    pool_ref(client->pool);
+    translate_try_read(client);
+    pool_unref(client->pool);
 }
 
 
