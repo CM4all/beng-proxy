@@ -487,14 +487,11 @@ http_client_consume_body(struct http_client *client)
     assert(client->response.read_state == READ_BODY);
 
     nbytes = http_body_consume_body(&client->response.body_reader, client->input);
-    if (nbytes == 0 || !http_client_valid(client))
+    if (nbytes == 0)
         return;
 
-    if (http_client_valid(client) &&
-        http_body_eof(&client->response.body_reader)) {
+    if (http_body_eof(&client->response.body_reader))
         http_client_response_stream_eof(client);
-        return;
-    }
 }
 
 static void
