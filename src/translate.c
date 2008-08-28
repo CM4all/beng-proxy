@@ -647,23 +647,6 @@ translate_try_read(struct translate_client *client)
  */
 
 static void
-translate_try_write(struct translate_client *client);
-
-static void
-translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
-{
-    struct translate_client *client = ctx;
-
-    if (event == EV_TIMEOUT) {
-        daemon_log(1, "write timeout on translation server\n");
-        translate_client_abort(client);
-        return;
-    }
-
-    translate_try_write(client);
-}
-
-static void
 translate_try_write(struct translate_client *client)
 {
     ssize_t nbytes;
@@ -694,6 +677,20 @@ translate_try_write(struct translate_client *client)
     }
 
     event_add(&client->event, &tv);
+}
+
+static void
+translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
+{
+    struct translate_client *client = ctx;
+
+    if (event == EV_TIMEOUT) {
+        daemon_log(1, "write timeout on translation server\n");
+        translate_client_abort(client);
+        return;
+    }
+
+    translate_try_write(client);
 }
 
 
