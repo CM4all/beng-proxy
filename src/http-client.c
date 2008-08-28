@@ -628,9 +628,10 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
             http_client_abort_request(client);
         else
             http_client_abort_response(client);
+        return;
     }
 
-    if (http_client_valid(client) && (event & EV_WRITE) != 0)
+    if ((event & EV_WRITE) != 0)
         istream_read(client->request.istream);
 
     if (http_client_valid(client) && (event & EV_READ) != 0)
