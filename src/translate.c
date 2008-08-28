@@ -46,9 +46,6 @@ struct packet_reader {
 struct translate_client {
     pool_t pool;
 
-    /** the socket connection to the translation server */
-    int fd;
-
     struct stock_item *stock_item;
 
     /** events for the socket */
@@ -585,13 +582,12 @@ translate_handle_packet(struct translate_client *client,
 }
 
 static void
-translate_try_read(struct translate_client *client)
+translate_try_read(struct translate_client *client, int fd)
 {
     bool bret;
 
     while (true) {
-        switch (packet_reader_read(client->pool, &client->reader,
-                                   client->fd)) {
+        switch (packet_reader_read(client->pool, &client->reader, fd)) {
         case PACKET_READER_INCOMPLETE: {
             struct timeval tv = {
                 .tv_sec = 60,
@@ -630,7 +626,7 @@ translate_try_read(struct translate_client *client)
 }
 
 static void
-translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
+translate_read_event_callback(int fd, short event, void *ctx)
 {
     struct translate_client *client = ctx;
 
@@ -640,7 +636,7 @@ translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
         return;
     }
 
-    translate_try_read(client);
+    translate_try_read(client, fd);
 }
 
 
@@ -650,7 +646,7 @@ translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
  */
 
 static void
-translate_try_write(struct translate_client *client)
+translate_try_write(struct translate_client *client, int fd)
 {
     ssize_t nbytes;
     struct timeval tv = {
@@ -658,7 +654,7 @@ translate_try_write(struct translate_client *client)
         .tv_usec = 0,
     };
 
-    nbytes = write_from_gb(client->fd, client->request);
+    nbytes = write_from_gb(fd, client->request);
     assert(nbytes != -2);
 
     if (nbytes < 0) {
@@ -673,9 +669,9 @@ translate_try_write(struct translate_client *client)
            start reading the response */
         packet_reader_init(&client->reader);
 
-        event_set(&client->event, client->fd, EV_READ|EV_TIMEOUT,
+        event_set(&client->event, fd, EV_READ|EV_TIMEOUT,
                   translate_read_event_callback, client);
-        translate_try_read(client);
+        translate_try_read(client, fd);
         return;
     }
 
@@ -683,7 +679,7 @@ translate_try_write(struct translate_client *client)
 }
 
 static void
-translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
+translate_write_event_callback(int fd, short event, void *ctx)
 {
     struct translate_client *client = ctx;
 
@@ -693,7 +689,7 @@ translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
         return;
     }
 
-    translate_try_write(client);
+    translate_try_write(client, fd);
 }
 
 
@@ -730,6 +726,7 @@ static void
 translate_stock_callback(void *ctx, struct stock_item *item)
 {
     struct translate_client *client = ctx;
+    int fd;
 
     if (item == NULL) {
         client->callback(&error, client->callback_ctx);
@@ -737,16 +734,16 @@ translate_stock_callback(void *ctx, struct stock_item *item)
         return;
     }
 
-    client->fd = tcp_stock_item_get(item);
     client->stock_item = item;
     client->response.status = (http_status_t)-1;
 
     async_init(&client->async, &translate_operation);
     async_ref_set(client->async_ref, &client->async);
 
-    event_set(&client->event, client->fd, EV_WRITE|EV_TIMEOUT,
+    fd = tcp_stock_item_get(item);
+    event_set(&client->event, fd, EV_WRITE|EV_TIMEOUT,
               translate_write_event_callback, client);
-    translate_try_write(client);
+    translate_try_write(client, fd);
 }
 
 void
