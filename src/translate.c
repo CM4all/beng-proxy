@@ -241,33 +241,33 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
  */
 
 static void
-translate_try_read(struct translate_client *connection);
+translate_try_read(struct translate_client *client);
 
 static void
 translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
 {
-    struct translate_client *connection = ctx;
+    struct translate_client *client = ctx;
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "read timeout on translation server\n");
-        translate_client_abort(connection);
+        translate_client_abort(client);
         return;
     }
 
-    pool_ref(connection->pool);
-    translate_try_read(connection);
-    pool_unref(connection->pool);
+    pool_ref(client->pool);
+    translate_try_read(client);
+    pool_unref(client->pool);
 }
 
 static struct translate_transformation *
-translate_add_transformation(struct translate_client *connection)
+translate_add_transformation(struct translate_client *client)
 {
     struct translate_transformation *transformation
-        = p_malloc(connection->pool, sizeof(*transformation));
+        = p_malloc(client->pool, sizeof(*transformation));
 
     transformation->next = NULL;
-    *connection->transformation_tail = transformation;
-    connection->transformation_tail = &transformation->next;
+    *client->transformation_tail = transformation;
+    client->transformation_tail = &transformation->next;
 
     return transformation;
 }
@@ -304,36 +304,36 @@ parse_address_string(struct sockaddr_in *sin, const char *p)
 }
 
 static void
-translate_handle_packet(struct translate_client *connection,
+translate_handle_packet(struct translate_client *client,
                         unsigned command, const char *payload,
                         size_t payload_length)
 {
     struct translate_transformation *transformation;
 
     if (command == TRANSLATE_BEGIN) {
-        if (connection->response.status != (http_status_t)-1) {
+        if (client->response.status != (http_status_t)-1) {
             daemon_log(1, "double BEGIN from translation server\n");
-            translate_client_abort(connection);
+            translate_client_abort(client);
             return;
         }
     } else {
-        if (connection->response.status == (http_status_t)-1) {
+        if (client->response.status == (http_status_t)-1) {
             daemon_log(1, "no BEGIN from translation server\n");
-            translate_client_abort(connection);
+            translate_client_abort(client);
             return;
         }
     }
 
     switch ((enum beng_translation_command)command) {
     case TRANSLATE_END:
-        connection->callback(&connection->response, connection->ctx);
-        translate_client_release(connection, true);
+        client->callback(&client->response, client->ctx);
+        translate_client_release(client, true);
         return;
 
     case TRANSLATE_BEGIN:
-        memset(&connection->response, 0, sizeof(connection->response));
-        connection->resource_address = &connection->response.address;
-        connection->transformation_tail = &connection->response.transformation;
+        memset(&client->response, 0, sizeof(client->response));
+        client->resource_address = &client->response.address;
+        client->transformation_tail = &client->response.transformation;
         break;
 
     case TRANSLATE_HOST:
@@ -347,16 +347,16 @@ translate_handle_packet(struct translate_client *connection,
     case TRANSLATE_STATUS:
         if (payload_length != 2) {
             daemon_log(1, "size mismatch in STATUS packet from translation server\n");
-            translate_client_abort(connection);
+            translate_client_abort(client);
             return;
         }
 
-        connection->response.status = *(const uint16_t*)payload;
+        client->response.status = *(const uint16_t*)payload;
         break;
 
     case TRANSLATE_PATH:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             daemon_log(2, "misplaced TRANSLATE_PATH packet\n");
             break;
         }
@@ -366,39 +366,39 @@ translate_handle_packet(struct translate_client *connection,
             break;
         }
 
-        connection->resource_address->type = RESOURCE_ADDRESS_LOCAL;
-        connection->resource_address->u.local.path = payload;
+        client->resource_address->type = RESOURCE_ADDRESS_LOCAL;
+        client->resource_address->u.local.path = payload;
         break;
 
     case TRANSLATE_PATH_INFO:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_CGI) {
-            if (connection->resource_address == NULL ||
-                connection->resource_address->type != RESOURCE_ADDRESS_LOCAL)
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_CGI) {
+            if (client->resource_address == NULL ||
+                client->resource_address->type != RESOURCE_ADDRESS_LOCAL)
                 daemon_log(2, "misplaced TRANSLATE_PATH_INFO packet\n");
             break;
         }
 
-        connection->resource_address->u.cgi.path_info = payload;
+        client->resource_address->u.cgi.path_info = payload;
         break;
 
     case TRANSLATE_SITE:
-        connection->response.site = payload;
+        client->response.site = payload;
         break;
 
     case TRANSLATE_CONTENT_TYPE:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
             daemon_log(2, "misplaced TRANSLATE_CONTENT_TYPE packet\n");
             break;
         }
 
-        connection->resource_address->u.local.content_type = payload;
+        client->resource_address->u.local.content_type = payload;
         break;
 
     case TRANSLATE_PROXY:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             daemon_log(2, "misplaced TRANSLATE_PROXY packet\n");
             break;
         }
@@ -408,68 +408,68 @@ translate_handle_packet(struct translate_client *connection,
             break;
         }
 
-        connection->resource_address->type = RESOURCE_ADDRESS_HTTP;
-        connection->resource_address->u.http =
-            uri_address_new(connection->pool, payload);
+        client->resource_address->type = RESOURCE_ADDRESS_HTTP;
+        client->resource_address->u.http =
+            uri_address_new(client->pool, payload);
         break;
 
     case TRANSLATE_REDIRECT:
-        connection->response.redirect = payload;
+        client->response.redirect = payload;
         break;
 
     case TRANSLATE_FILTER:
-        transformation = translate_add_transformation(connection);
+        transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_FILTER;
         transformation->u.filter.type = RESOURCE_ADDRESS_NONE;
-        connection->resource_address = &transformation->u.filter;
+        client->resource_address = &transformation->u.filter;
         break;
 
     case TRANSLATE_PROCESS:
-        transformation = translate_add_transformation(connection);
+        transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_PROCESS;
         transformation->u.processor.options = PROCESSOR_REWRITE_URL;
         transformation->u.processor.domain = NULL;
         break;
 
     case TRANSLATE_DOMAIN:
-        if (connection->response.transformation == NULL ||
-            connection->response.transformation->type != TRANSFORMATION_PROCESS) {
+        if (client->response.transformation == NULL ||
+            client->response.transformation->type != TRANSFORMATION_PROCESS) {
             daemon_log(2, "misplaced TRANSLATE_DOMAIN packet\n");
             break;
         }
 
-        connection->response.transformation->u.processor.domain = payload;
+        client->response.transformation->u.processor.domain = payload;
         break;
 
     case TRANSLATE_CONTAINER:
-        if (connection->response.transformation == NULL ||
-            connection->response.transformation->type != TRANSFORMATION_PROCESS) {
+        if (client->response.transformation == NULL ||
+            client->response.transformation->type != TRANSFORMATION_PROCESS) {
             daemon_log(2, "misplaced TRANSLATE_CONTAINER packet\n");
             break;
         }
 
-        connection->response.transformation->u.processor.options |= PROCESSOR_CONTAINER;
+        client->response.transformation->u.processor.options |= PROCESSOR_CONTAINER;
         break;
 
     case TRANSLATE_STATEFUL:
-        connection->response.stateful = true;
+        client->response.stateful = true;
         break;
 
     case TRANSLATE_SESSION:
-        connection->response.session = payload;
+        client->response.session = payload;
         break;
 
     case TRANSLATE_USER:
-        connection->response.user = payload;
+        client->response.user = payload;
         break;
 
     case TRANSLATE_LANGUAGE:
-        connection->response.language = payload;
+        client->response.language = payload;
         break;
 
     case TRANSLATE_CGI:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             daemon_log(2, "misplaced TRANSLATE_CGI packet\n");
             break;
         }
@@ -479,13 +479,13 @@ translate_handle_packet(struct translate_client *connection,
             break;
         }
 
-        connection->resource_address->type = RESOURCE_ADDRESS_CGI;
-        connection->resource_address->u.cgi.path = payload;
+        client->resource_address->type = RESOURCE_ADDRESS_CGI;
+        client->resource_address->u.cgi.path = payload;
         break;
 
     case TRANSLATE_FASTCGI:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             daemon_log(2, "misplaced TRANSLATE_FASTCGI packet\n");
             break;
         }
@@ -495,13 +495,13 @@ translate_handle_packet(struct translate_client *connection,
             break;
         }
 
-        connection->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
-        connection->resource_address->u.cgi.path = payload;
+        client->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
+        client->resource_address->u.cgi.path = payload;
         break;
 
     case TRANSLATE_AJP:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_NONE) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             daemon_log(2, "misplaced TRANSLATE_AJP packet\n");
             break;
         }
@@ -511,60 +511,60 @@ translate_handle_packet(struct translate_client *connection,
             break;
         }
 
-        connection->resource_address->type = RESOURCE_ADDRESS_AJP;
-        connection->resource_address->u.http =
-            uri_address_new(connection->pool, payload);
+        client->resource_address->type = RESOURCE_ADDRESS_AJP;
+        client->resource_address->u.http =
+            uri_address_new(client->pool, payload);
         break;
 
     case TRANSLATE_JAILCGI:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_CGI) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_CGI) {
             daemon_log(2, "misplaced TRANSLATE_JAILCGI packet\n");
             break;
         }
 
-        connection->resource_address->u.cgi.jail = true;
+        client->resource_address->u.cgi.jail = true;
         break;
 
     case TRANSLATE_INTERPRETER:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_CGI ||
-            connection->resource_address->u.cgi.interpreter != NULL) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_CGI ||
+            client->resource_address->u.cgi.interpreter != NULL) {
             daemon_log(2, "misplaced TRANSLATE_INTERPRETER packet\n");
             break;
         }
 
-        connection->resource_address->u.cgi.interpreter = payload;
+        client->resource_address->u.cgi.interpreter = payload;
         break;
 
     case TRANSLATE_ACTION:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_CGI ||
-            connection->resource_address->u.cgi.action != NULL) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_CGI ||
+            client->resource_address->u.cgi.action != NULL) {
             daemon_log(2, "misplaced TRANSLATE_ACTION packet\n");
             break;
         }
 
-        connection->resource_address->u.cgi.action = payload;
+        client->resource_address->u.cgi.action = payload;
         break;
 
     case TRANSLATE_SCRIPT_NAME:
-        if (connection->resource_address == NULL ||
-            connection->resource_address->type != RESOURCE_ADDRESS_CGI ||
-            connection->resource_address->u.cgi.script_name != NULL) {
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_CGI ||
+            client->resource_address->u.cgi.script_name != NULL) {
             daemon_log(2, "misplaced TRANSLATE_SCRIPT_NAME packet\n");
             break;
         }
 
-        connection->resource_address->u.cgi.script_name = payload;
+        client->resource_address->u.cgi.script_name = payload;
         break;
 
     case TRANSLATE_DOCUMENT_ROOT:
-        connection->response.document_root = payload;
+        client->response.document_root = payload;
         break;
 
     case TRANSLATE_ADDRESS:
-        if (connection->resource_address->type != RESOURCE_ADDRESS_HTTP) {
+        if (client->resource_address->type != RESOURCE_ADDRESS_HTTP) {
             daemon_log(2, "misplaced TRANSLATE_ADDRESS packet\n");
             break;
         }
@@ -574,13 +574,13 @@ translate_handle_packet(struct translate_client *connection,
             break;
         }
 
-        uri_address_add(connection->resource_address->u.http,
+        uri_address_add(client->resource_address->u.http,
                         (const struct sockaddr *)payload, payload_length);
         break;
 
 
     case TRANSLATE_ADDRESS_STRING:
-        if (connection->resource_address->type != RESOURCE_ADDRESS_HTTP) {
+        if (client->resource_address->type != RESOURCE_ADDRESS_HTTP) {
             daemon_log(2, "misplaced TRANSLATE_ADDRESS_STRING packet\n");
             break;
         }
@@ -600,7 +600,7 @@ translate_handle_packet(struct translate_client *connection,
                 break;
             }
 
-            uri_address_add(connection->resource_address->u.http,
+            uri_address_add(client->resource_address->u.http,
                             (const struct sockaddr *)&sin, sizeof(sin));
         }
 
@@ -609,44 +609,44 @@ translate_handle_packet(struct translate_client *connection,
 }
 
 static void
-translate_try_read(struct translate_client *connection)
+translate_try_read(struct translate_client *client)
 {
     do {
-        switch (packet_reader_read(connection->pool, &connection->reader,
-                                   connection->fd)) {
+        switch (packet_reader_read(client->pool, &client->reader,
+                                   client->fd)) {
         case PACKET_READER_INCOMPLETE: {
             struct timeval tv = {
                 .tv_sec = 60,
                 .tv_usec = 0,
             };
 
-            event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
-                      translate_read_event_callback, connection);
-            event_add(&connection->event, &tv);
+            event_set(&client->event, client->fd, EV_READ|EV_TIMEOUT,
+                      translate_read_event_callback, client);
+            event_add(&client->event, &tv);
             return;
         }
 
         case PACKET_READER_ERROR:
             daemon_log(1, "read error from translation server: %s\n",
                        strerror(errno));
-            translate_client_abort(connection);
+            translate_client_abort(client);
             return;
 
         case PACKET_READER_EOF:
             daemon_log(1, "translation server aborted the connection\n");
-            translate_client_abort(connection);
+            translate_client_abort(client);
             return;
 
         case PACKET_READER_SUCCESS:
             break;
         }
 
-        translate_handle_packet(connection,
-                                connection->reader.header.command,
-                                connection->reader.payload == NULL ? "" : connection->reader.payload,
-                                connection->reader.header.length);
-        packet_reader_init(&connection->reader);
-    } while (connection->fd >= 0);
+        translate_handle_packet(client,
+                                client->reader.header.command,
+                                client->reader.payload == NULL ? "" : client->reader.payload,
+                                client->reader.header.length);
+        packet_reader_init(&client->reader);
+    } while (client->fd >= 0);
 }
 
 
@@ -656,24 +656,24 @@ translate_try_read(struct translate_client *connection)
  */
 
 static void
-translate_try_write(struct translate_client *connection);
+translate_try_write(struct translate_client *client);
 
 static void
 translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
 {
-    struct translate_client *connection = ctx;
+    struct translate_client *client = ctx;
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "write timeout on translation server\n");
-        translate_client_abort(connection);
+        translate_client_abort(client);
         return;
     }
 
-    translate_try_write(connection);
+    translate_try_write(client);
 }
 
 static void
-translate_try_write(struct translate_client *connection)
+translate_try_write(struct translate_client *client)
 {
     ssize_t nbytes;
     struct timeval tv = {
@@ -681,30 +681,30 @@ translate_try_write(struct translate_client *connection)
         .tv_usec = 0,
     };
 
-    nbytes = write_from_gb(connection->fd, connection->request);
+    nbytes = write_from_gb(client->fd, client->request);
     assert(nbytes != -2);
 
     if (nbytes < 0) {
         daemon_log(1, "write error on translation server: %s\n",
                    strerror(errno));
-        translate_client_abort(connection);
+        translate_client_abort(client);
         return;
     }
 
-    if (nbytes == 0 && growing_buffer_empty(connection->request)) {
+    if (nbytes == 0 && growing_buffer_empty(client->request)) {
         /* the buffer is empty, i.e. the request has been sent -
            start reading the response */
-        packet_reader_init(&connection->reader);
+        packet_reader_init(&client->reader);
 
-        pool_ref(connection->pool);
-        translate_try_read(connection);
-        pool_unref(connection->pool);
+        pool_ref(client->pool);
+        translate_try_read(client);
+        pool_unref(client->pool);
         return;
     }
 
-    event_set(&connection->event, connection->fd, EV_WRITE|EV_TIMEOUT,
-              translate_write_event_callback, connection);
-    event_add(&connection->event, &tv);
+    event_set(&client->event, client->fd, EV_WRITE|EV_TIMEOUT,
+              translate_write_event_callback, client);
+    event_add(&client->event, &tv);
 }
 
 
@@ -722,9 +722,9 @@ async_to_translate_connection(struct async_operation *ao)
 static void
 translate_connection_abort(struct async_operation *ao)
 {
-    struct translate_client *connection = async_to_translate_connection(ao);
+    struct translate_client *client = async_to_translate_connection(ao);
 
-    translate_client_release(connection, false);
+    translate_client_release(client, false);
 }
 
 static struct async_operation_class translate_operation = {
@@ -741,7 +741,7 @@ static void
 translate_stock_callback(void *ctx, struct stock_item *item)
 {
     struct translate_request_and_callback *request2 = ctx;
-    struct translate_client *connection;
+    struct translate_client *client;
 
     if (item == NULL) {
         request2->callback(&error, request2->callback_ctx);
@@ -749,20 +749,20 @@ translate_stock_callback(void *ctx, struct stock_item *item)
         return;
     }
 
-    connection = p_malloc(request2->pool, sizeof(*connection));
-    connection->fd = tcp_stock_item_get(item);
-    connection->stock_item = item;
-    connection->pool = request2->pool;
-    connection->request = marshal_request(connection->pool, request2->request);
-    connection->callback = request2->callback;
-    connection->ctx = request2->callback_ctx;
-    connection->response.status = (http_status_t)-1;
+    client = p_malloc(request2->pool, sizeof(*client));
+    client->fd = tcp_stock_item_get(item);
+    client->stock_item = item;
+    client->pool = request2->pool;
+    client->request = marshal_request(client->pool, request2->request);
+    client->callback = request2->callback;
+    client->ctx = request2->callback_ctx;
+    client->response.status = (http_status_t)-1;
 
-    async_init(&connection->async, &translate_operation);
-    async_ref_set(request2->async_ref, &connection->async);
+    async_init(&client->async, &translate_operation);
+    async_ref_set(request2->async_ref, &client->async);
 
-    connection->event.ev_events = 0;
-    translate_try_write(connection);
+    client->event.ev_events = 0;
+    translate_try_write(client);
 }
 
 void
