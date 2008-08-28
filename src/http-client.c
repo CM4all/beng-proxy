@@ -344,11 +344,6 @@ http_client_headers_finished(struct http_client *client)
         content_length = (off_t)-1;
     }
 
-    /* istream_deinit() used poison_noaccess() - make it writable now
-       for re-use */
-    poison_undefined(&client->response.body_reader,
-                     sizeof(client->response.body_reader));
-
     client->response.body
         = http_body_init(&client->response.body_reader,
                          &http_client_response_stream,
