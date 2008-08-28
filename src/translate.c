@@ -611,8 +611,6 @@ translate_try_read(struct translate_client *client)
                 .tv_usec = 0,
             };
 
-            event_set(&client->event, client->fd, EV_READ|EV_TIMEOUT,
-                      translate_read_event_callback, client);
             event_add(&client->event, &tv);
             return;
         }
@@ -671,6 +669,8 @@ translate_try_write(struct translate_client *client)
         packet_reader_init(&client->reader);
 
         pool_ref(client->pool);
+        event_set(&client->event, client->fd, EV_READ|EV_TIMEOUT,
+                  translate_read_event_callback, client);
         translate_try_read(client);
         pool_unref(client->pool);
         return;
