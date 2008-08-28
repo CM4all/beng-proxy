@@ -39,6 +39,9 @@ http_body_available(const struct http_body_reader *body)
     return body->rest;
 }
 
+/**
+ * Returne (size_t)-1 if the buffer is empty.
+ */
 size_t
 http_body_consume_body(struct http_body_reader *body,
                        struct fifo_buffer *buffer);

@@ -474,12 +474,6 @@ http_client_consume_body(struct http_client *client)
     assert(client != NULL);
     assert(client->response.read_state == READ_BODY);
 
-    if (fifo_buffer_empty(client->input)) {
-        /* no data yet - let libevent get us more */
-        event2_or(&client->event, EV_READ);
-        return true;
-    }
-
     nbytes = http_body_consume_body(&client->response.body_reader, client->input);
     if (nbytes == 0)
         return false;
