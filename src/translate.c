@@ -68,7 +68,7 @@ struct translate_client {
     struct growing_buffer *request;
 
     translate_callback_t callback;
-    void *ctx;
+    void *callback_ctx;
 
     struct packet_reader reader;
     struct translate_response response;
@@ -109,7 +109,7 @@ translate_client_release(struct translate_client *client, bool reuse)
 static void
 translate_client_abort(struct translate_client *client)
 {
-    client->callback(&error, client->ctx);
+    client->callback(&error, client->callback_ctx);
     translate_client_release(client, false);
 }
 
@@ -326,7 +326,7 @@ translate_handle_packet(struct translate_client *client,
 
     switch ((enum beng_translation_command)command) {
     case TRANSLATE_END:
-        client->callback(&client->response, client->ctx);
+        client->callback(&client->response, client->callback_ctx);
         translate_client_release(client, true);
         return;
 
@@ -755,7 +755,7 @@ translate_stock_callback(void *ctx, struct stock_item *item)
     client->pool = request2->pool;
     client->request = marshal_request(client->pool, request2->request);
     client->callback = request2->callback;
-    client->ctx = request2->callback_ctx;
+    client->callback_ctx = request2->callback_ctx;
     client->response.status = (http_status_t)-1;
 
     async_init(&client->async, &translate_operation);
