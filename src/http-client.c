@@ -202,9 +202,7 @@ http_client_response_stream_read(istream_t istream)
 
     pool_ref(client->pool);
 
-    if (http_client_valid(client) &&
-        !fifo_buffer_full(client->input) &&
-        client->response.read_state == READ_BODY)
+    if (client->response.read_state == READ_BODY)
         http_client_try_read(client);
 
     pool_unref(client->pool);
