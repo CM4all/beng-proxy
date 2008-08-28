@@ -52,7 +52,7 @@ struct translate_request_and_callback {
     struct async_operation_ref *async_ref;
 };
 
-struct translate_connection {
+struct translate_client {
     /** the socket connection to the translation server */
     int fd;
 
@@ -94,7 +94,7 @@ static struct translate_response error = {
  * lease, and the pool reference.
  */
 static void
-translate_client_release(struct translate_connection *client, bool reuse)
+translate_client_release(struct translate_client *client, bool reuse)
 {
     assert(client != NULL);
     assert(client->fd >= 0);
@@ -107,7 +107,7 @@ translate_client_release(struct translate_connection *client, bool reuse)
 }
 
 static void
-translate_client_abort(struct translate_connection *client)
+translate_client_abort(struct translate_client *client)
 {
     client->callback(&error, client->ctx);
     translate_client_release(client, false);
@@ -241,12 +241,12 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
  */
 
 static void
-translate_try_read(struct translate_connection *connection);
+translate_try_read(struct translate_client *connection);
 
 static void
 translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
 {
-    struct translate_connection *connection = ctx;
+    struct translate_client *connection = ctx;
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "read timeout on translation server\n");
@@ -260,7 +260,7 @@ translate_read_event_callback(int fd __attr_unused, short event, void *ctx)
 }
 
 static struct translate_transformation *
-translate_add_transformation(struct translate_connection *connection)
+translate_add_transformation(struct translate_client *connection)
 {
     struct translate_transformation *transformation
         = p_malloc(connection->pool, sizeof(*transformation));
@@ -304,7 +304,7 @@ parse_address_string(struct sockaddr_in *sin, const char *p)
 }
 
 static void
-translate_handle_packet(struct translate_connection *connection,
+translate_handle_packet(struct translate_client *connection,
                         unsigned command, const char *payload,
                         size_t payload_length)
 {
@@ -609,7 +609,7 @@ translate_handle_packet(struct translate_connection *connection,
 }
 
 static void
-translate_try_read(struct translate_connection *connection)
+translate_try_read(struct translate_client *connection)
 {
     do {
         switch (packet_reader_read(connection->pool, &connection->reader,
@@ -656,12 +656,12 @@ translate_try_read(struct translate_connection *connection)
  */
 
 static void
-translate_try_write(struct translate_connection *connection);
+translate_try_write(struct translate_client *connection);
 
 static void
 translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
 {
-    struct translate_connection *connection = ctx;
+    struct translate_client *connection = ctx;
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "write timeout on translation server\n");
@@ -673,7 +673,7 @@ translate_write_event_callback(int fd __attr_unused, short event, void *ctx)
 }
 
 static void
-translate_try_write(struct translate_connection *connection)
+translate_try_write(struct translate_client *connection)
 {
     ssize_t nbytes;
     struct timeval tv = {
@@ -713,16 +713,16 @@ translate_try_write(struct translate_connection *connection)
  *
  */
 
-static struct translate_connection *
+static struct translate_client *
 async_to_translate_connection(struct async_operation *ao)
 {
-    return (struct translate_connection*)(((char*)ao) - offsetof(struct translate_connection, async));
+    return (struct translate_client*)(((char*)ao) - offsetof(struct translate_client, async));
 }
 
 static void
 translate_connection_abort(struct async_operation *ao)
 {
-    struct translate_connection *connection = async_to_translate_connection(ao);
+    struct translate_client *connection = async_to_translate_connection(ao);
 
     translate_client_release(connection, false);
 }
@@ -741,7 +741,7 @@ static void
 translate_stock_callback(void *ctx, struct stock_item *item)
 {
     struct translate_request_and_callback *request2 = ctx;
-    struct translate_connection *connection;
+    struct translate_client *connection;
 
     if (item == NULL) {
         request2->callback(&error, request2->callback_ctx);
