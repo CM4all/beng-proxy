@@ -614,7 +614,6 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
     struct http_client *client = ctx;
 
     event2_reset(&client->event);
-    event2_lock(&client->event);
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");
@@ -626,6 +625,7 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
     }
 
     pool_ref(client->pool);
+    event2_lock(&client->event);
 
     if ((event & EV_WRITE) != 0)
         istream_read(client->request.istream);
@@ -634,7 +634,6 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
         http_client_try_read(client);
 
     event2_unlock(&client->event);
-
     pool_unref(client->pool);
     pool_commit();
 }
