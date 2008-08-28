@@ -498,7 +498,11 @@ http_client_consume_body(struct http_client *client)
     return true;
 }
 
-static void
+/**
+ * Returns false if the client has been closed or if the response body
+ * handler is blocking.
+ */
+static bool
 http_client_consume_headers(struct http_client *client)
 {
     assert(client != NULL);
@@ -511,9 +515,13 @@ http_client_consume_headers(struct http_client *client)
     } while (client->response.read_state == READ_STATUS ||
              client->response.read_state == READ_HEADERS);
 
-    if (http_client_valid(client) &&
-        client->response.read_state == READ_BODY)
-        http_client_consume_body(client);
+    if (!http_client_valid(client))
+        return false;
+
+    if (client->response.read_state == READ_BODY)
+        return http_client_consume_body(client);
+
+    return true;
 }
 
 static void
@@ -566,20 +574,17 @@ http_client_try_read_buffered(struct http_client *client)
         return;
     }
 
-    if (client->response.read_state == READ_BODY) {
+    if (client->response.read_state == READ_BODY)
         bret = http_client_consume_body(client);
-        if (!bret)
-            return;
-    } else
-        http_client_consume_headers(client);
+    else
+        bret = http_client_consume_headers(client);
+    if (!bret)
+        return;
 
-    if (http_client_valid(client) &&
-        client->response.read_state != READ_NONE) {
-        event2_setbit(&client->event, EV_READ,
-                      (client->response.read_state == READ_BODY &&
-                       (client->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) ||
-                      !fifo_buffer_full(client->input));
-    }
+    event2_setbit(&client->event, EV_READ,
+                  (client->response.read_state == READ_BODY &&
+                   (client->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) ||
+                  !fifo_buffer_full(client->input));
 }
 
 static void
