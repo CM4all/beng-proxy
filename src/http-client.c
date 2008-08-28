@@ -478,6 +478,12 @@ http_client_consume_body(struct http_client *client)
     assert(client != NULL);
     assert(client->response.read_state == READ_BODY);
 
+    if (fifo_buffer_empty(client->input)) {
+        /* no data yet - let libevent get us more */
+        event2_or(&client->event, EV_READ);
+        return true;
+    }
+
     nbytes = http_body_consume_body(&client->response.body_reader, client->input);
     if (nbytes == 0)
         return false;
@@ -487,6 +493,7 @@ http_client_consume_body(struct http_client *client)
         return false;
     }
 
+    event2_or(&client->event, EV_READ);
     return true;
 }
 
@@ -554,7 +561,6 @@ static void
 http_client_try_read_buffered(struct http_client *client)
 {
     ssize_t nbytes;
-    bool bret;
 
     nbytes = read_to_buffer(client->fd, client->input, INT_MAX);
     assert(nbytes != -2);
@@ -581,16 +587,9 @@ http_client_try_read_buffered(struct http_client *client)
     }
 
     if (client->response.read_state == READ_BODY)
-        bret = http_client_consume_body(client);
+        http_client_consume_body(client);
     else
-        bret = http_client_consume_headers(client);
-    if (!bret)
-        return;
-
-    event2_setbit(&client->event, EV_READ,
-                  (client->response.read_state == READ_BODY &&
-                   (client->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) ||
-                  !fifo_buffer_full(client->input));
+        http_client_consume_headers(client);
 }
 
 static void
