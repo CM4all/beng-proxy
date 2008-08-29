@@ -91,19 +91,19 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length)
 static bool
 chunked_write_buffer(struct istream_chunked *chunked)
 {
-    size_t rest, nbytes;
+    size_t length, nbytes;
 
-    rest = sizeof(chunked->buffer) - chunked->buffer_sent;
-    if (rest == 0)
+    length = sizeof(chunked->buffer) - chunked->buffer_sent;
+    if (length == 0)
         return true;
 
     nbytes = istream_invoke_data(&chunked->output,
                                  chunked->buffer + chunked->buffer_sent,
-                                 rest);
+                                 length);
     if (nbytes > 0)
         chunked->buffer_sent += nbytes;
 
-    return nbytes == rest;
+    return nbytes == length;
 }
 
 static size_t
