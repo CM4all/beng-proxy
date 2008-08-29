@@ -65,6 +65,11 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
         instance->http_cache = NULL;
     }
 
+    if (instance->fcgi_stock != NULL) {
+        fcgi_stock_kill(instance->fcgi_stock);
+        instance->fcgi_stock = NULL;
+    }
+
     if (instance->tcp_stock != NULL)
         hstock_free(&instance->tcp_stock);
 
