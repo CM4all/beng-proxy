@@ -57,6 +57,9 @@ bool
 istream_dechunk_eof(istream_t istream);
 
 istream_t
+istream_fcgi_new(pool_t pool, istream_t input, unsigned request_id);
+
+istream_t
 istream_cat_new(pool_t pool, ...);
 
 istream_t
