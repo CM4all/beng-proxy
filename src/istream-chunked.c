@@ -230,7 +230,7 @@ istream_chunked_read(istream_t istream)
     if (chunked_buffer_empty(chunked) &&
         chunked->missing_from_current_chunk == 0) {
         off_t available = istream_available(chunked->input, true);
-        if (available != (off_t)-1 && available > 0)
+        if (available > 0)
             chunked_start_chunk(chunked, available);
     }
 
