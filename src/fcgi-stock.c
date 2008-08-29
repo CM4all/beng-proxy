@@ -54,6 +54,7 @@ fcgi_stock_kill(struct fcgi_stock *stock)
     while ((pair = hashmap_next(stock->children)) != NULL) {
         struct fcgi_child *child = pair->value;
         kill(child->pid, SIGTERM);
+        unlink(child->socket_path);
         child_clear(child->pid);
         pool_unref(child->pool);
     }
