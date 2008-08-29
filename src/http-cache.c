@@ -198,6 +198,7 @@ http_cache_request_dup(pool_t pool, const struct http_cache_request *src)
     struct http_cache_request *dest = p_malloc(pool, sizeof(*dest));
 
     dest->pool = pool;
+    dest->caller_pool = src->caller_pool;
     dest->cache = src->cache;
     dest->url = p_strdup(pool, src->url);
     dest->handler = src->handler;
@@ -384,6 +385,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 {
     struct http_cache_request *request = ctx;
     off_t available;
+    pool_t caller_pool;
 
     if (request->item != NULL && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == NULL);
@@ -447,6 +449,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         request->output = growing_buffer_new(request->pool, buffer_size);
     }
 
+    caller_pool = request->caller_pool;
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
     pool_unref(request->caller_pool);
