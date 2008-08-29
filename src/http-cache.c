@@ -563,7 +563,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
                  method, uwa,
                  headers == NULL ? NULL : headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
-                 async_ref);
+                 async_unref_on_abort(caller_pool, async_ref));
     pool_unref(pool);
 }
 
@@ -630,7 +630,7 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
                  method, uwa,
                  headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
-                 async_ref);
+                 async_unref_on_abort(caller_pool, async_ref));
     pool_unref(pool);
 }
 
