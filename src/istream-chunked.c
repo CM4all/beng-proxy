@@ -243,7 +243,7 @@ istream_chunked_close(istream_t istream)
     struct istream_chunked *chunked = istream_to_chunked(istream);
 
     if (chunked->input != NULL)
-        istream_free_handler(&chunked->input);
+        istream_close_handler(chunked->input);
 
     istream_deinit_abort(&chunked->output);
 }
