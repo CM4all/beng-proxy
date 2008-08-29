@@ -452,7 +452,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     caller_pool = request->caller_pool;
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
-    pool_unref(request->caller_pool);
+    pool_unref(caller_pool);
 }
 
 static void 
