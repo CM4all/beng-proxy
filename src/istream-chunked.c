@@ -100,10 +100,9 @@ chunked_write_buffer(struct istream_chunked *chunked)
     nbytes = istream_invoke_data(&chunked->output,
                                  chunked->buffer + chunked->buffer_sent,
                                  rest);
-    if (nbytes == 0)
-        return false;
+    if (nbytes > 0)
+        chunked->buffer_sent += nbytes;
 
-    chunked->buffer_sent += nbytes;
     return nbytes == rest;
 }
 
