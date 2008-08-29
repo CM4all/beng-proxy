@@ -348,6 +348,13 @@ istream_handler_clear(istream_t _istream)
 }
 
 static inline void
+istream_close_handler(istream_t istream)
+{
+    istream_handler_clear(istream);
+    istream_close(istream);
+}
+
+static inline void
 istream_free_handler(istream_t *istream_r)
 {
     istream_handler_clear(*istream_r);
