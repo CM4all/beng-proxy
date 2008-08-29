@@ -85,29 +85,33 @@ chunked_start_chunk(struct istream_chunked *chunked, size_t length)
     buffer[5] = '\n';
 }
 
-static size_t
+/**
+ * Returns true if the buffer is consumed.
+ */
+static bool
 chunked_write_buffer(struct istream_chunked *chunked)
 {
     size_t rest, nbytes;
 
     rest = sizeof(chunked->buffer) - chunked->buffer_sent;
     if (rest == 0)
-        return 0;
+        return true;
 
     nbytes = istream_invoke_data(&chunked->output,
                                  chunked->buffer + chunked->buffer_sent,
                                  rest);
     if (nbytes == 0)
-        return rest;
+        return false;
 
     chunked->buffer_sent += nbytes;
-    return rest - nbytes;
+    return nbytes == rest;
 }
 
 static size_t
 chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
 {
     size_t total = 0, rest, nbytes;
+    bool bret;
 
     assert(chunked->input != NULL);
 
@@ -116,8 +120,8 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
             chunked->missing_from_current_chunk == 0)
             chunked_start_chunk(chunked, length - total);
 
-        rest = chunked_write_buffer(chunked);
-        if (rest > 0)
+        bret = chunked_write_buffer(chunked);
+        if (!bret)
             return chunked->input == NULL ? 0 : total;
 
         if (chunked->missing_from_current_chunk == 0) {
@@ -174,7 +178,7 @@ static void
 chunked_input_eof(void *ctx)
 {
     struct istream_chunked *chunked = ctx;
-    size_t rest;
+    bool bret;
 
     assert(chunked->input != NULL);
     assert(chunked->missing_from_current_chunk == 0);
@@ -187,8 +191,8 @@ chunked_input_eof(void *ctx)
 
     /* flush the buffer */
 
-    rest = chunked_write_buffer(chunked);
-    if (rest == 0)
+    bret = chunked_write_buffer(chunked);
+    if (bret)
         istream_deinit_eof(&chunked->output);
 }
 
@@ -214,10 +218,10 @@ static void
 istream_chunked_read(istream_t istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
-    size_t rest;
+    bool bret;
 
-    rest = chunked_write_buffer(chunked);
-    if (rest > 0)
+    bret = chunked_write_buffer(chunked);
+    if (!bret)
         return;
 
     if (chunked->input == NULL) {
