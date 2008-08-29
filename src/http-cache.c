@@ -60,7 +60,7 @@ struct http_cache_item {
 };
 
 struct http_cache_request {
-    pool_t pool;
+    pool_t pool, caller_pool;
     struct http_cache *cache;
     const char *url;
     struct http_response_handler_ref handler;
@@ -392,6 +392,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         http_cache_serve(request->item, request->pool,
                          request->url, NULL,
                          request->handler.handler, request->handler.ctx);
+        pool_unref(request->caller_pool);
         return;
     }
 
@@ -408,6 +409,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
+        pool_unref(request->caller_pool);
         return;
     }
 
@@ -447,6 +449,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
+    pool_unref(request->caller_pool);
 }
 
 static void 
@@ -516,7 +519,8 @@ http_cache_close(struct http_cache *cache)
 }
 
 static void
-http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
+http_cache_miss(struct http_cache *cache, pool_t caller_pool,
+                struct http_cache_info *info,
                 http_method_t method,
                 struct uri_with_address *uwa,
                 struct strmap *headers, istream_t body,
@@ -540,6 +544,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
 
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
+    request->caller_pool = caller_pool;
     request->cache = cache;
     request->url = uwa->uri;
     http_response_handler_set(&request->handler, handler, handler_ctx);
@@ -549,6 +554,7 @@ http_cache_miss(struct http_cache *cache, struct http_cache_info *info,
 
     cache_log(4, "http_cache: miss %s\n", uwa->uri);
 
+    pool_ref(caller_pool);
     http_request(pool, cache->stock,
                  method, uwa,
                  headers == NULL ? NULL : headers_dup(pool, headers), body,
@@ -581,7 +587,8 @@ http_cache_serve(struct http_cache_item *item,
 }
 
 static void
-http_cache_test(struct http_cache *cache, struct http_cache_item *item,
+http_cache_test(struct http_cache *cache, pool_t caller_pool,
+                struct http_cache_item *item,
                 http_method_t method,
                 struct uri_with_address *uwa,
                 struct strmap *headers, istream_t body,
@@ -595,6 +602,7 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
     struct http_cache_request *request = p_malloc(pool,
                                                   sizeof(*request));
     request->pool = pool;
+    request->caller_pool = caller_pool;
     request->cache = cache;
     request->url = uwa->uri;
     http_response_handler_set(&request->handler, handler, handler_ctx);
@@ -613,6 +621,7 @@ http_cache_test(struct http_cache *cache, struct http_cache_item *item,
     if (item->info.etag != NULL)
         strmap_set(headers, "if-none-match", item->info.etag);
 
+    pool_ref(caller_pool);
     http_request(pool, cache->stock,
                  method, uwa,
                  headers_dup(pool, headers), body,
@@ -637,7 +646,7 @@ http_cache_found(struct http_cache *cache,
         (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL)))
         http_cache_serve(item, pool, uwa->uri, body, handler, handler_ctx);
     else
-        http_cache_test(cache, item,
+        http_cache_test(cache, pool, item,
                         method, uwa, headers, body,
                         handler, handler_ctx, async_ref);
 }
@@ -660,7 +669,7 @@ http_cache_request(struct http_cache *cache,
             = (struct http_cache_item *)cache_get(cache->cache, uwa->uri);
 
         if (item == NULL)
-            http_cache_miss(cache, info,
+            http_cache_miss(cache, pool, info,
                             method, uwa, headers, body,
                             handler, handler_ctx, async_ref);
         else
