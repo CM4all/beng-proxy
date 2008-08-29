@@ -463,6 +463,7 @@ http_cache_response_abort(void *ctx)
     cache_log(4, "http_cache: response_abort %s\n", request->url);
 
     http_response_handler_invoke_abort(&request->handler);
+    pool_unref(request->caller_pool);
 }
 
 static const struct http_response_handler http_cache_response_handler = {
