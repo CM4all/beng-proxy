@@ -43,7 +43,7 @@ my_istream_data(const void *data, size_t length, void *_ctx)
         return 0;
     }
 
-    if (ctx->half)
+    if (ctx->half && length > 8)
         length = (length + 1) / 2;
 
 #ifdef EXPECTED_RESULT
