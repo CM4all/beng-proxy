@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define EXPECTED_RESULT "foo &c:url; "
+#define EXPECTED_RESULT "foo &c:url; bar"
 
 void
 widget_class_lookup(pool_t pool __attr_unused, pool_t widget_pool __attr_unused,
@@ -29,9 +29,7 @@ istream_t
 embed_inline_widget(pool_t pool, struct processor_env *env __attr_unused,
                     struct widget *widget)
 {
-    return istream_string_new(pool,
-                              widget->class->address.type == RESOURCE_ADDRESS_HTTP
-                              ? widget->class->address.u.http->uri : "bar");
+    return istream_string_new(pool, widget->class_name);
 }
 
 void
