@@ -9,7 +9,6 @@
 #include "args.h"
 #include "widget.h"
 #include "growing-buffer.h"
-#include "js-filter.h"
 #include "tpool.h"
 #include "embed.h"
 #include "async.h"
@@ -73,8 +72,6 @@ struct processor {
     } widget;
 
     bool in_script:1;
-    struct growing_buffer *script;
-    off_t script_start_offset;
 
     struct async_operation async;
 
@@ -247,27 +244,6 @@ processor_new(pool_t pool, istream_t istream,
 }
 
 
-static void
-processor_finish_script(struct processor *processor, off_t end)
-{
-    assert(processor->in_script);
-
-    processor->in_script = false;
-
-    if (processor->script == NULL)
-        return;
-
-    assert(processor->script_start_offset <= end);
-
-    if (processor->script_start_offset < end)
-        processor_replace_add(processor,
-                              processor->script_start_offset, end,
-                              js_filter_new(processor->pool,
-                                            growing_buffer_istream(processor->script)));
-
-    processor->script = NULL;
-}
-
 /*
  * parser callbacks
  *
@@ -306,7 +282,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         if (strref_lower_cmp_literal(&tag->name, "script") != 0)
             return;
 
-        processor_finish_script(processor, tag->start);
+        processor->in_script = false;
     }
 
     if (processor->widget.widget != NULL) {
@@ -459,20 +435,6 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     struct processor *processor = ctx;
 
     processor->had_input = true;
-
-    if (!processor_option_quiet(processor) &&
-        (processor->options & PROCESSOR_JS_FILTER) != 0 &&
-        attr->name.length > 2 &&
-        attr->name.data[0] == 'o' && attr->name.data[1] == 'n' &&
-        !strref_is_empty(&attr->value)) {
-        istream_t value_stream = istream_memory_new(processor->pool,
-                                                    strref_dup(processor->pool, &attr->value),
-                                                    attr->value.length);
-        replace_attribute_value(processor, attr,
-                                js_filter_new(processor->pool,
-                                              value_stream));
-        return;
-    }
 
     if (!processor_option_quiet(processor) &&
         (processor->tag == TAG_A || processor->tag == TAG_FORM ||
@@ -708,26 +670,16 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
                tag->type == TAG_OPEN) {
         processor->in_script = true;
         parser_script(processor->parser);
-
-        if ((processor->options & PROCESSOR_JS_FILTER) != 0) {
-            processor->script = growing_buffer_new(processor->pool, 4096);
-            processor->script_start_offset = tag->end;
-        } else {
-            processor->script = NULL;
-        }
     }
 }
 
 static size_t
-processor_parser_cdata(const char *p, size_t length,
+processor_parser_cdata(const char *p __attr_unused, size_t length,
                        bool escaped __attr_unused, void *ctx)
 {
     struct processor *processor = ctx;
 
     processor->had_input = true;
-
-    if (processor->in_script && processor->script != NULL)
-        growing_buffer_write_buffer(processor->script, p, length);
 
     return length;
 }
