@@ -584,7 +584,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
 }
 
 static istream_t
-embed_element_finished(struct processor *processor)
+widget_element_finished(struct processor *processor)
 {
     struct widget *widget;
 
@@ -627,7 +627,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         if (tag->type == TAG_OPEN)
             return;
 
-        istream = embed_element_finished(processor);
+        istream = widget_element_finished(processor);
         assert(istream == NULL || processor->replace != NULL);
 
         if (processor->replace != NULL)
