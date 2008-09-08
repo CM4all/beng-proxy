@@ -7,6 +7,7 @@
 #include "embed.h"
 #include "widget-registry.h"
 #include "uri-address.h"
+#include "global.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -60,6 +61,9 @@ create_test(pool_t pool, istream_t input)
     static struct processor_env env;
     struct widget_stream *ws;
     istream_t delayed;
+
+    /* HACK, processor.c will ignore c:widget otherwise */
+    global_translate_cache = (struct tcache *)(size_t)1;
 
     uri = "/beng.html";
     ret = uri_parse(pool, &parsed_uri, uri);
