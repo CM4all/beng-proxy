@@ -292,7 +292,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if ((processor->options & PROCESSOR_CONTAINER) == 0 ||
-            global_translate_cache != NULL)
+            global_translate_cache == NULL)
             return;
 
         if (tag->type == TAG_CLOSE) {
