@@ -349,7 +349,7 @@ test_abort_in_handler_half(pool_t pool)
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
-    assert(ctx.abort_istream == NULL);
+    assert(ctx.abort_istream == NULL || ctx.abort_after > 0);
 
     pool_trash(pool);
     pool_unref(pool);
