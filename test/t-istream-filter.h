@@ -13,6 +13,7 @@ cleanup(void)
 #endif
 
 struct ctx {
+    bool half;
     bool got_data, eof;
 #ifdef EXPECTED_RESULT
     bool record;
@@ -41,6 +42,9 @@ my_istream_data(const void *data, size_t length, void *_ctx)
         istream_free(&ctx->abort_istream);
         return 0;
     }
+
+    if (ctx->half)
+        length = (length + 1) / 2;
 
 #ifdef EXPECTED_RESULT
     if (ctx->record) {
@@ -198,6 +202,24 @@ test_byte(pool_t pool)
     run_istream(pool, istream, true);
 }
 
+/** accept only half of the data */
+static void
+test_half(pool_t pool)
+{
+    struct ctx ctx = {
+        .eof = false,
+        .half = true,
+#ifdef EXPECTED_RESULT
+        .record = true,
+#endif
+        .abort_istream = NULL,
+    };
+
+    pool = pool_new_linear(pool, "test", 8192);
+
+    run_istream_ctx(&ctx, pool, create_input(pool));
+}
+
 /** input fails */
 static void
 test_fail(pool_t pool)
@@ -250,6 +272,7 @@ test_abort_with_handler(pool_t pool)
     struct ctx ctx = {
         .abort_istream = NULL,
         .eof = false,
+        .half = false,
 #ifdef EXPECTED_RESULT
         .record = false,
 #endif
@@ -277,6 +300,7 @@ test_abort_in_handler(pool_t pool)
 {
     struct ctx ctx = {
         .eof = false,
+        .half = false,
 #ifdef EXPECTED_RESULT
         .record = false,
 #endif
@@ -349,6 +373,7 @@ int main(int argc, char **argv) {
 
     test_normal(root_pool);
     test_byte(root_pool);
+    test_half(root_pool);
     test_fail(root_pool);
     test_fail_1byte(root_pool);
     test_abort_without_handler(root_pool);
