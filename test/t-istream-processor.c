@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define EXPECTED_RESULT "foo &c:url; bar"
+#define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar"
 
 void
 widget_class_lookup(pool_t pool __attr_unused, pool_t widget_pool __attr_unused,
@@ -46,7 +46,7 @@ embed_frame_widget(pool_t pool __attr_unused,
 static istream_t
 create_input(pool_t pool)
 {
-    return istream_string_new(pool, "foo &c:url; <c:widget id=\"foo\" type=\"bar\"/>");
+    return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
 }
 
 static istream_t
