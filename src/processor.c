@@ -661,9 +661,11 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         processor->widget.params_length += length;
 
         pool_rewind(tpool, &mark);
-    } else if (processor->tag == TAG_SCRIPT &&
-               tag->type == TAG_OPEN) {
-        parser_script(processor->parser);
+    } else if (processor->tag == TAG_SCRIPT) {
+        if (tag->type == TAG_OPEN)
+            parser_script(processor->parser);
+        else if (tag->type == TAG_CLOSE)
+            processor->tag = TAG_NONE;
     }
 }
 
