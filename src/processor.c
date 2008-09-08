@@ -71,8 +71,6 @@ struct processor {
         size_t params_length;
     } widget;
 
-    bool in_script:1;
-
     struct async_operation async;
 
     struct http_response_handler_ref response_handler;
@@ -202,7 +200,6 @@ processor_new(pool_t pool, istream_t istream,
     processor->options = options;
 
     processor->widget.widget = NULL;
-    processor->in_script = false;
 
     if (widget->from_request.proxy_ref == NULL) {
         istream = istream_tee_new(pool, istream, true);
@@ -274,16 +271,14 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
     struct processor *processor = ctx;
 
     processor->had_input = true;
-    processor->tag = TAG_NONE;
 
-    if (processor->in_script) {
+    if (processor->tag == TAG_SCRIPT &&
+        strref_lower_cmp_literal(&tag->name, "script") != 0)
         /* workaround for bugged scripts: ignore all closing tags
            except </SCRIPT> */
-        if (strref_lower_cmp_literal(&tag->name, "script") != 0)
-            return;
+        return;
 
-        processor->in_script = false;
-    }
+    processor->tag = TAG_NONE;
 
     if (processor->widget.widget != NULL) {
         parser_element_start_in_widget(processor, tag->type, &tag->name);
@@ -668,7 +663,6 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         pool_rewind(tpool, &mark);
     } else if (processor->tag == TAG_SCRIPT &&
                tag->type == TAG_OPEN) {
-        processor->in_script = true;
         parser_script(processor->parser);
     }
 }
