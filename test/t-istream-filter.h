@@ -21,6 +21,7 @@ struct ctx {
     size_t buffer_length;
 #endif
     istream_t abort_istream;
+    unsigned abort_after;
 };
 
 /*
@@ -38,7 +39,7 @@ my_istream_data(const void *data, size_t length, void *_ctx)
     printf("data(%zu)\n", length);
     ctx->got_data = true;
 
-    if (ctx->abort_istream != NULL) {
+    if (ctx->abort_istream != NULL && ctx->abort_after-- == 0) {
         istream_free(&ctx->abort_istream);
         return 0;
     }
@@ -304,11 +305,43 @@ test_abort_in_handler(pool_t pool)
 #ifdef EXPECTED_RESULT
         .record = false,
 #endif
+        .abort_after = 0,
     };
 
     pool = pool_new_linear(pool, "test", 8192);
 
     ctx.abort_istream = create_test(pool, create_input(pool));
+    istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);
+
+    while (!ctx.eof) {
+        istream_read_expect(&ctx, ctx.abort_istream);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
+
+    assert(ctx.abort_istream == NULL);
+
+    pool_trash(pool);
+    pool_unref(pool);
+    cleanup();
+    pool_commit();
+}
+
+/** abort in handler, with some data consumed */
+static void
+test_abort_in_handler_half(pool_t pool)
+{
+    struct ctx ctx = {
+        .eof = false,
+        .half = true,
+#ifdef EXPECTED_RESULT
+        .record = false,
+#endif
+        .abort_after = 2,
+    };
+
+    pool = pool_new_linear(pool, "test", 8192);
+
+    ctx.abort_istream = create_test(pool, istream_four_new(pool, create_input(pool)));
     istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);
 
     while (!ctx.eof) {
@@ -379,6 +412,7 @@ int main(int argc, char **argv) {
     test_abort_without_handler(root_pool);
     test_abort_with_handler(root_pool);
     test_abort_in_handler(root_pool);
+    test_abort_in_handler_half(root_pool);
     test_abort_1byte(root_pool);
     test_later(root_pool);
 
