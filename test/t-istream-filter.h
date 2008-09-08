@@ -218,7 +218,7 @@ test_half(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    run_istream_ctx(&ctx, pool, create_input(pool));
+    run_istream_ctx(&ctx, pool, create_test(pool, create_input(pool)));
 }
 
 /** input fails */
