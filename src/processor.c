@@ -292,13 +292,13 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     if (strref_cmp_literal(&tag->name, "c:widget") == 0 &&
         global_translate_cache != NULL) {
+        if ((processor->options & PROCESSOR_CONTAINER) == 0)
+            return;
+
         if (tag->type == TAG_CLOSE) {
             assert(processor->widget.widget == NULL);
             return;
         }
-
-        if ((processor->options & PROCESSOR_CONTAINER) == 0)
-            return;
 
         processor->tag = TAG_WIDGET;
         processor->widget.widget = p_malloc(processor->widget.pool,
