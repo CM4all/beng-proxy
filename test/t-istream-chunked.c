@@ -3,7 +3,7 @@
 static istream_t
 create_input(pool_t pool)
 {
-    return istream_string_new(pool, "foo");
+    return istream_string_new(pool, "foo_bar_0123456789abcdefghijklmnopqrstuvwxyz");
 }
 
 static istream_t
