@@ -27,8 +27,11 @@ head_input_data(const void *data, size_t length, void *ctx)
     struct istream_head *head = ctx;
     size_t nbytes;
 
-    if (head->rest == 0)
+    if (head->rest == 0) {
+        istream_close_handler(head->input);
+        istream_deinit_eof(&head->output);
         return 0;
+    }
 
     if (length > head->rest)
         length = head->rest;
@@ -54,8 +57,11 @@ head_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     struct istream_head *head = ctx;
     ssize_t nbytes;
 
-    if (head->rest == 0)
+    if (head->rest == 0) {
+        istream_close_handler(head->input);
+        istream_deinit_eof(&head->output);
         return -2;
+    }
 
     if (max_length > head->rest)
         max_length = head->rest;
