@@ -13,6 +13,14 @@
 static bool
 http_equals(const char *a, size_t a_length, const char *b, size_t b_length)
 {
+    while (a_length > 0 && char_is_whitespace(a[a_length - 1]))
+        --a_length;
+
+    while (a_length > 0 && char_is_whitespace(a[0])) {
+        ++a;
+        --a_length;
+    }
+
     if (a_length >= 2 && a[0] == '"' && a[a_length - 1] == '"') {
         ++a;
         a_length -= 2;
