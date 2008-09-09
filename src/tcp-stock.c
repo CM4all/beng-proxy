@@ -76,6 +76,7 @@ tcp_create_abort(struct async_operation *ao)
     assert(connection != NULL);
     assert(async_ref_defined(&connection->client_socket));
 
+    async_abort(&connection->client_socket);
     stock_item_aborted(&connection->stock_item);
 }
 
