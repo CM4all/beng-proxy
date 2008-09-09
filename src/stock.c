@@ -90,6 +90,9 @@ stock_free(struct stock **stock_r)
     stock = *stock_r;
     *stock_r = NULL;
 
+    /* must not call stock_free() when there are busy items left */
+    assert(list_empty(&stock->busy));
+
     while (stock->num_idle > 0) {
         struct stock_item *item = (struct stock_item *)stock->idle.next;
 
@@ -102,19 +105,6 @@ stock_free(struct stock **stock_r)
     }
 
     assert(list_empty(&stock->idle));
-
-    while (stock->num_busy > 0) {
-        struct stock_item *item = (struct stock_item *)stock->busy.next;
-
-        assert(!list_empty(&stock->busy));
-
-        list_remove(&item->list_head);
-        --stock->num_busy;
-
-        destroy_item(stock, item);
-    }
-
-    assert(list_empty(&stock->busy));
 
     pool_unref(stock->pool);
 }
