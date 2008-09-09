@@ -10,17 +10,31 @@
 
 #include <string.h>
 
+static bool
+http_equals(const char *a, size_t a_length, const char *b, size_t b_length)
+{
+    if (a_length >= 2 && a[0] == '"' && a[a_length - 1] == '"') {
+        ++a;
+        a_length -= 2;
+    }
+
+    return a_length == b_length &&
+        memcmp(a, b, a_length) == 0;
+}
+
 bool
 http_list_contains(const char *list, const char *item)
 {
     const char *comma;
+    size_t item_length = strlen(item);
 
     while (*list != 0) {
+        /* XXX what if the comma is within an quoted-string? */
         comma = strchr(list, ',');
         if (comma == NULL)
-            return strcmp(list, item) == 0;
+            return http_equals(list, strlen(list), item, item_length);
 
-        if (memcmp(list, item, comma - list) == 0)
+        if (http_equals(list, comma - list, item, item_length))
             return true;
 
         list = comma + 1;
