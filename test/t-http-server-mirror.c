@@ -23,7 +23,7 @@ my_free(void *ctx)
     (void)ctx;
 }
 
-static struct http_server_connection_handler handler = {
+static const struct http_server_connection_handler handler = {
     .request = my_request,
     .free = my_free,
 };

@@ -18,7 +18,7 @@ my_delayed_abort(struct async_operation *ao)
     printf("delayed_abort\n");
 }
 
-static struct async_operation_class my_delayed_operation = {
+static const struct async_operation_class my_delayed_operation = {
     .abort = my_delayed_abort,
 };
 

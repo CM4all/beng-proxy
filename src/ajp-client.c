@@ -562,7 +562,7 @@ ajp_client_request_abort(struct async_operation *ao)
     ajp_connection_close(client);
 }
 
-static struct async_operation_class ajp_client_request_async_operation = {
+static const struct async_operation_class ajp_client_request_async_operation = {
     .abort = ajp_client_request_abort,
 };
 

@@ -313,7 +313,7 @@ cgi_async_abort(struct async_operation *ao)
     istream_close(cgi->input);
 }
 
-static struct async_operation_class cgi_async_operation = {
+static const struct async_operation_class cgi_async_operation = {
     .abort = cgi_async_abort,
 };
 

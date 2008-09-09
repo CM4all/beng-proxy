@@ -51,7 +51,7 @@ client_socket_abort(struct async_operation *ao)
     close(client_socket->fd);
 }
 
-static struct async_operation_class client_socket_operation = {
+static const struct async_operation_class client_socket_operation = {
     .abort = client_socket_abort,
 };
 

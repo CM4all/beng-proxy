@@ -405,7 +405,7 @@ fcgi_client_request_abort(struct async_operation *ao)
     fcgi_client_release(client, false);
 }
 
-static struct async_operation_class fcgi_client_async_operation = {
+static const struct async_operation_class fcgi_client_async_operation = {
     .abort = fcgi_client_request_abort,
 };
 

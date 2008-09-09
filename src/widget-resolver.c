@@ -64,7 +64,7 @@ wrl_abort(struct async_operation *ao)
     pool_unref(listener->pool);
 }
 
-static struct async_operation_class listener_async_operation = {
+static const struct async_operation_class listener_async_operation = {
     .abort = wrl_abort,
 };
 

@@ -120,7 +120,7 @@ processor_async_abort(struct async_operation *ao)
     pool_unref(processor->pool);
 }
 
-static struct async_operation_class processor_async_operation = {
+static const struct async_operation_class processor_async_operation = {
     .abort = processor_async_abort,
 };
 

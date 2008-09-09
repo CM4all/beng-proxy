@@ -79,7 +79,7 @@ tcp_create_abort(struct async_operation *ao)
     stock_item_aborted(&connection->stock_item);
 }
 
-static struct async_operation_class tcp_create_operation = {
+static const struct async_operation_class tcp_create_operation = {
     .abort = tcp_create_abort,
 };
 
@@ -260,7 +260,7 @@ tcp_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
     }
 }
 
-static struct stock_class tcp_stock_class = {
+static const struct stock_class tcp_stock_class = {
     .item_size = sizeof(struct tcp_stock_connection),
     .pool = tcp_stock_pool,
     .create = tcp_stock_create,

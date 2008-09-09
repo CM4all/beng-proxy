@@ -36,7 +36,7 @@ my_abort(struct async_operation *ao __attr_unused)
     aborted = true;
 }
 
-static struct async_operation_class my_operation = {
+static const struct async_operation_class my_operation = {
     .abort = my_abort,
 };
 

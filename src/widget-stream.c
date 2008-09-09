@@ -87,7 +87,7 @@ ws_delayed_abort(struct async_operation *ao)
     async_abort(&ws->async_ref);
 }
 
-static struct async_operation_class ws_delayed_operation = {
+static const struct async_operation_class ws_delayed_operation = {
     .abort = ws_delayed_abort,
 };
 

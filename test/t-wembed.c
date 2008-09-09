@@ -47,7 +47,7 @@ test_abort(struct async_operation *ao __attr_unused)
     pool_unref(to->pool);
 }
 
-static struct async_operation_class test_operation = {
+static const struct async_operation_class test_operation = {
     .abort = test_abort,
 };
 

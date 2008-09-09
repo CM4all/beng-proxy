@@ -722,7 +722,7 @@ http_client_request_abort(struct async_operation *ao)
     http_client_release(client, false);
 }
 
-static struct async_operation_class http_client_async_operation = {
+static const struct async_operation_class http_client_async_operation = {
     .abort = http_client_request_abort,
 };
 

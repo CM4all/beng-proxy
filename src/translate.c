@@ -73,7 +73,7 @@ struct translate_client {
     struct async_operation_ref *async_ref;
 };
 
-static struct translate_response error = {
+static const struct translate_response error = {
     .status = -1,
 };
 
@@ -712,7 +712,7 @@ translate_connection_abort(struct async_operation *ao)
     translate_client_release(client, false);
 }
 
-static struct async_operation_class translate_operation = {
+static const struct async_operation_class translate_operation = {
     .abort = translate_connection_abort,
 };
 

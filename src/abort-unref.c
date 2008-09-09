@@ -47,7 +47,7 @@ uoa_abort(struct async_operation *ao)
     pool_unref_fwd(uoa->pool);
 }
 
-static struct async_operation_class uoa_operation = {
+static const struct async_operation_class uoa_operation = {
     .abort = uoa_abort,
 };
 
