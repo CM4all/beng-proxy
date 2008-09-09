@@ -2,6 +2,7 @@
 #include "async.h"
 #include "stock.h"
 #include "uri-address.h"
+#include "tcp-stock.h"
 #include "tcache.h"
 #include "widget.h"
 
@@ -45,46 +46,13 @@ static struct async_operation_class my_operation = {
  *
  */
 
-static void
-my_stock_create(void *ctx __attr_unused, struct stock_item *item __attr_unused,
-                const char *uri __attr_unused, void *info __attr_unused,
-                struct async_operation_ref *async_ref __attr_unused)
-{
-}
-
-static bool
-my_stock_validate(void *ctx __attr_unused, struct stock_item *item __attr_unused)
-{
-    return true;
-}
-
-static void
-my_stock_destroy(void *ctx __attr_unused, struct stock_item *item __attr_unused)
-{
-}
-
-static struct stock_class my_stock_class = {
-    .item_size = sizeof(struct stock_item) + 1,
-    .create = my_stock_create,
-    .borrow = my_stock_validate,
-    .release = my_stock_validate,
-    .destroy = my_stock_destroy,
-};
-
-
-struct stock *
-translate_stock_new(pool_t pool, const char *translation_socket __attr_unused)
-{
-    return stock_new(pool, &my_stock_class, NULL, NULL);
-}
-
 void
 translate(pool_t pool,
-          struct stock *stock __attr_unused,
+          struct hstock *tcp_stock __attr_unused, const char *socket_path __attr_unused,
           const struct translate_request *request,
           translate_callback_t callback,
           void *ctx,
-          struct async_operation_ref *async_ref __attr_unused)
+          struct async_operation_ref *async_ref)
 {
     assert(request->remote_host == NULL);
     assert(request->host == NULL);
@@ -126,7 +94,7 @@ test_normal(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    tcache = translate_cache_new(pool, translate_stock_new(pool, "/dev/null"));
+    tcache = translate_cache_new(pool, (struct hstock *)(size_t)1, "/dev/null");
 
     aborted = false;
     widget_class_lookup(pool, pool, tcache, "sync",
@@ -158,7 +126,7 @@ test_abort(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    tcache = translate_cache_new(pool, translate_stock_new(pool, "/dev/null"));
+    tcache = translate_cache_new(pool, (struct hstock *)(size_t)1, "/dev/null");
 
     aborted = false;
     widget_class_lookup(pool, pool, tcache,  "block",
