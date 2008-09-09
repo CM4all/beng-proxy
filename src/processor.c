@@ -198,6 +198,7 @@ processor_new(pool_t pool, istream_t istream,
     processor->container = widget;
     processor->env = env;
     processor->options = options;
+    processor->tag = TAG_NONE;
 
     processor->widget.widget = NULL;
 
