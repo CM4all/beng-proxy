@@ -170,8 +170,8 @@ istream_iconv_read(istream_t istream)
     if (ic->input != NULL)
         istream_read(ic->input);
     else {
-        size_t nbytes = istream_buffer_send(&ic->output, ic->buffer);
-        if (nbytes > 0 && fifo_buffer_empty(ic->buffer)) {
+        size_t rest = istream_buffer_consume(&ic->output, ic->buffer);
+        if (rest == 0) {
             iconv_close(ic->iconv);
             istream_deinit_eof(&ic->output);
         }
