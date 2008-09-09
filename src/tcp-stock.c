@@ -142,7 +142,6 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
         if (connection->addr != NULL)
             failure_add(connection->addr, connection->addrlen);
 
-        connection->fd = -1;
         stock_item_failed(&connection->stock_item);
     }
 }

@@ -58,11 +58,9 @@ stock_new(pool_t pool, const struct stock_class *class,
 
 
 static void
-destroy_item(struct stock *stock, struct stock_item *item)
+stock_item_free(struct stock *stock, struct stock_item *item)
 {
     assert(pool_contains(item->pool, item, stock->class->item_size));
-
-    stock->class->destroy(stock->class_ctx, item);
 
     if (item->pool == stock->pool)
         p_free(stock->pool, item);
@@ -70,6 +68,15 @@ destroy_item(struct stock *stock, struct stock_item *item)
         pool_trash(item->pool);
         pool_unref(item->pool);
     }
+}
+
+static void
+destroy_item(struct stock *stock, struct stock_item *item)
+{
+    assert(pool_contains(item->pool, item, stock->class->item_size));
+
+    stock->class->destroy(stock->class_ctx, item);
+    stock_item_free(stock, item);
 }
 
 void
@@ -176,7 +183,7 @@ stock_item_failed(struct stock_item *item)
     struct stock *stock = item->stock;
 
     item->callback(item->callback_ctx, NULL);
-    destroy_item(stock, item);
+    stock_item_free(stock, item);
 }
 
 void
