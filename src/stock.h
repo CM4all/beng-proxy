@@ -28,7 +28,10 @@ struct stock_item {
     struct list_head list_head;
     struct stock *stock;
     pool_t pool;
+
+#ifndef NDEBUG
     bool is_idle;
+#endif
 
     stock_callback_t callback;
     void *callback_ctx;

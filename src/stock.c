@@ -18,8 +18,10 @@ struct stock {
     unsigned num_idle;
     struct list_head idle;
 
+#ifndef NDEBUG
     unsigned num_busy;
     struct list_head busy;
+#endif
 };
 
 
@@ -50,8 +52,11 @@ stock_new(pool_t pool, const struct stock_class *class,
     stock->uri = uri == NULL ? NULL : p_strdup(pool, uri);
     stock->num_idle = 0;
     list_init(&stock->idle);
+
+#ifndef NDEBUG
     stock->num_busy = 0;
     list_init(&stock->busy);
+#endif
 
     return stock;
 }
@@ -129,10 +134,11 @@ stock_get(struct stock *stock, void *info,
         assert(item->is_idle);
 
         if (stock->class->borrow(stock->class_ctx, item)) {
+#ifndef NDEBUG
             item->is_idle = false;
-
             list_add(&item->list_head, &stock->busy);
             ++stock->num_busy;
+#endif
 
             callback(callback_ctx, item);
             return;
@@ -149,7 +155,9 @@ stock_get(struct stock *stock, void *info,
     item = p_malloc(pool, stock->class->item_size);
     item->stock = stock;
     item->pool = pool;
+#ifndef NDEBUG
     item->is_idle = false;
+#endif
     item->callback = callback;
     item->callback_ctx = callback_ctx;
 
@@ -159,10 +167,12 @@ stock_get(struct stock *stock, void *info,
 void
 stock_item_available(struct stock_item *item)
 {
+#ifndef NDEBUG
     struct stock *stock = item->stock;
 
     list_add(&item->list_head, &stock->busy);
     ++stock->num_busy;
+#endif
 
     item->callback(item->callback_ctx, item);
 }
@@ -195,13 +205,17 @@ stock_put(struct stock_item *item, bool destroy)
     assert(stock != NULL);
     assert(pool_contains(item->pool, item, stock->class->item_size));
 
+#ifndef NDEBUG
     list_remove(&item->list_head);
     --stock->num_busy;
-        
+#endif
+
     if (destroy || stock->num_idle >= 8) {
         destroy_item(stock, item);
     } else {
+#ifndef NDEBUG
         item->is_idle = true;
+#endif
         list_add(&item->list_head, &stock->idle);
         ++stock->num_idle;
 
