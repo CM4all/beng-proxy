@@ -197,15 +197,15 @@ stock_put(struct stock_item *item, bool destroy)
 
     list_remove(&item->list_head);
     --stock->num_busy;
-
-    destroy = !stock->class->release(stock->class_ctx, item) ||
-        destroy || stock->num_idle >= 8;
-    if (destroy) {
+        
+    if (destroy || stock->num_idle >= 8) {
         destroy_item(stock, item);
     } else {
         item->is_idle = true;
         list_add(&item->list_head, &stock->idle);
         ++stock->num_idle;
+
+        stock->class->release(stock->class_ctx, item);
     }
 }
 

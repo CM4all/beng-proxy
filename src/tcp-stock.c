@@ -227,15 +227,13 @@ tcp_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
     return true;
 }
 
-static bool
+static void
 tcp_stock_release(void *ctx __attr_unused, struct stock_item *item)
 {
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
 
-    /* XXX no event if "!reuse" */
     event_add(&connection->event, NULL);
-    return true;
 }
 
 static void

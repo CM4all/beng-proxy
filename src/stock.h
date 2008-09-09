@@ -42,7 +42,7 @@ struct stock_class {
                    const char *uri, void *info,
                    struct async_operation_ref *async_ref);
     bool (*borrow)(void *ctx, struct stock_item *item);
-    bool (*release)(void *ctx, struct stock_item *item);
+    void (*release)(void *ctx, struct stock_item *item);
     void (*destroy)(void *ctx, struct stock_item *item);
 };
 
