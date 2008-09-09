@@ -104,6 +104,7 @@ tcp_stock_event(int fd __attr_unused, short event __attr_unused, void *ctx)
         daemon_log(2, "unexpected data in idle idle_socket\n");
 
     stock_del(&connection->stock_item);
+    pool_commit();
 }
 
 
