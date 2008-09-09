@@ -106,8 +106,7 @@ http_client_abort_request(struct http_client *client)
 {
     assert(client->response.read_state == READ_NONE);
 
-    istream_handler_clear(client->request.istream);
-    istream_close(client->request.istream);
+    istream_close_handler(client->request.istream);
 
     http_response_handler_invoke_abort(&client->request.handler);
     pool_unref(client->caller_pool);
@@ -717,10 +716,8 @@ http_client_request_abort(struct async_operation *ao)
 
     pool_unref(client->caller_pool);
 
-    if (client->response.read_state == READ_NONE) {
-        istream_handler_clear(client->request.istream);
-        istream_close(client->request.istream);
-    }
+    if (client->response.read_state == READ_NONE)
+        istream_close_handler(client->request.istream);
 
     http_client_release(client, false);
 }

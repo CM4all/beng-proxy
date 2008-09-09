@@ -82,10 +82,9 @@ istream_delayed_close(istream_t istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
-    if (delayed->input != NULL) {
-        istream_handler_clear(delayed->input);
-        istream_close(delayed->input);
-    } else if (async_ref_defined(&delayed->async))
+    if (delayed->input != NULL)
+        istream_close_handler(delayed->input);
+    else if (async_ref_defined(&delayed->async))
         async_abort(&delayed->async);
 
     istream_deinit_abort(&delayed->output);

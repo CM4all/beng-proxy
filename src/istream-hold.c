@@ -142,8 +142,7 @@ istream_hold_close(istream_t istream)
     else if (hold->output.handler == NULL) {
         /* there is no handler yet - immediately deinitialize this
            istream */
-        istream_handler_clear(hold->input);
-        istream_close(hold->input);
+        istream_close_handler(hold->input);
         istream_deinit(&hold->output);
     } else
         /* the input object is still there; istream_close(hold->input)
