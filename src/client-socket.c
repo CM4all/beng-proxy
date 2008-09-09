@@ -49,6 +49,7 @@ client_socket_abort(struct async_operation *ao)
 
     event_del(&client_socket->event);
     close(client_socket->fd);
+    pool_unref(client_socket->pool);
 }
 
 static const struct async_operation_class client_socket_operation = {
@@ -76,6 +77,8 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
     if (event & EV_TIMEOUT) {
         close(fd);
         client_socket->callback(-1, EINTR, client_socket->callback_ctx);
+        pool_unref(client_socket->pool);
+        pool_commit();
         return;
     }
 
@@ -90,8 +93,7 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
         client_socket->callback(-1, s_err, client_socket->callback_ctx);
     }
 
-    poison_noaccess(client_socket, sizeof(*client_socket));
-
+    pool_unref(client_socket->pool);
     pool_commit();
 }
 
