@@ -13,6 +13,8 @@
 static bool
 http_equals(const char *a, size_t a_length, const char *b, size_t b_length)
 {
+    /* trim */
+
     while (a_length > 0 && char_is_whitespace(a[a_length - 1]))
         --a_length;
 
@@ -21,13 +23,16 @@ http_equals(const char *a, size_t a_length, const char *b, size_t b_length)
         --a_length;
     }
 
+    /* remove quotes from quoted-string */
+
     if (a_length >= 2 && a[0] == '"' && a[a_length - 1] == '"') {
         ++a;
         a_length -= 2;
     }
 
-    return a_length == b_length &&
-        memcmp(a, b, a_length) == 0;
+    /* finally compare */
+
+    return a_length == b_length && memcmp(a, b, a_length) == 0;
 }
 
 bool
