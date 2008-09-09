@@ -74,19 +74,10 @@ head_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     return nbytes;
 }
 
-static void
-head_input_eof(void *ctx)
-{
-    struct istream_head *head = ctx;
-
-    head->input = NULL;
-    istream_deinit_eof(&head->output);
-}
-
 static const struct istream_handler head_input_handler = {
     .data = head_input_data,
     .direct = head_input_direct,
-    .eof = head_input_eof,
+    .eof = istream_forward_eof,
     .abort = istream_forward_abort,
 };
 
