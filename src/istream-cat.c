@@ -54,7 +54,7 @@ cat_close(struct istream_cat *cat)
     while (!cat_is_eof(cat)) {
         input = cat_shift(cat);
         if (input->istream != NULL)
-            istream_free_handler(&input->istream);
+            istream_close_handler(input->istream);
     }
     
     istream_deinit_abort(&cat->output);

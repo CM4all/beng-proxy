@@ -39,7 +39,7 @@ head_input_data(const void *data, size_t length, void *ctx)
     if (nbytes > 0) {
         head->rest -= nbytes;
         if (head->rest == 0) {
-            istream_free_handler(&head->input);
+            istream_close_handler(head->input);
             istream_deinit_eof(&head->output);
             return 0;
         }
@@ -66,7 +66,7 @@ head_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     if (nbytes > 0) {
         head->rest -= (size_t)nbytes;
         if (head->rest == 0) {
-            istream_free_handler(&head->input);
+            istream_close_handler(head->input);
             istream_deinit_eof(&head->output);
         }
     }
@@ -108,7 +108,7 @@ istream_head_read(istream_t istream)
     struct istream_head *head = istream_to_head(istream);
 
     if (head->rest == 0) {
-        istream_free_handler(&head->input);
+        istream_close_handler(head->input);
         istream_deinit_eof(&head->output);
     } else {
         istream_handler_set_direct(head->input, head->output.handler_direct);

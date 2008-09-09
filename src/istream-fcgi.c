@@ -192,7 +192,7 @@ istream_fcgi_close(istream_t istream)
     struct istream_fcgi *fcgi = istream_to_fcgi(istream);
 
     if (fcgi->input != NULL)
-        istream_free_handler(&fcgi->input);
+        istream_close_handler(fcgi->input);
 
     istream_deinit_abort(&fcgi->output);
 }

@@ -44,7 +44,7 @@ fork_close(struct fork *f)
         assert(f->input_fd >= 0);
 
         close(f->input_fd);
-        istream_free_handler(&f->input);
+        istream_close_handler(f->input);
     }
 
     event2_set(&f->event, 0);

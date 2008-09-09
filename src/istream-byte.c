@@ -76,7 +76,7 @@ istream_byte_close(istream_t istream)
 
     assert(byte->input != NULL);
 
-    istream_free_handler(&byte->input);
+    istream_close_handler(byte->input);
     istream_deinit_abort(&byte->output);
 }
 

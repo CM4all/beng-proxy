@@ -79,7 +79,7 @@ istream_four_close(istream_t istream)
 
     assert(four->input != NULL);
 
-    istream_free_handler(&four->input);
+    istream_close_handler(four->input);
     istream_deinit_abort(&four->output);
 }
 

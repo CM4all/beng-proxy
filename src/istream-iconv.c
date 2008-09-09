@@ -70,8 +70,7 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
                        buffer, this might be EOF; we should rather
                        buffer this incomplete sequence and report the
                        caller that we consumed it */
-                    istream_handler_clear(ic->input);
-                    istream_close(ic->input);
+                    istream_close_handler(ic->input);
                     iconv_close(ic->iconv);
                     istream_deinit_abort(&ic->output);
                     return 0;
@@ -187,7 +186,7 @@ istream_iconv_close(istream_t istream)
     ic->buffer = NULL;
 
     if (ic->input != NULL)
-        istream_free_handler(&ic->input);
+        istream_close_handler(ic->input);
     iconv_close(ic->iconv);
     istream_deinit_abort(&ic->output);
 }
