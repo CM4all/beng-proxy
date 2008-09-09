@@ -90,24 +90,18 @@ static const struct async_operation_class tcp_create_operation = {
  */
 
 static void
-tcp_stock_event(int fd __attr_unused, short event, void *ctx)
+tcp_stock_event(int fd __attr_unused, short event __attr_unused, void *ctx)
 {
     struct tcp_stock_connection *connection = ctx;
+    char buffer;
+    ssize_t nbytes;
 
-    if ((event & EV_READ) != 0) {
-        char buffer;
-        ssize_t nbytes;
-
-        nbytes = read(connection->fd, &buffer, sizeof(buffer));
-        if (nbytes < 0)
-            daemon_log(2, "error on idle TCP connection: %s\n",
-                       strerror(errno));
-        else if (nbytes > 0)
-            daemon_log(2, "unexpected data in idle idle_socket\n");
-    } else {
-        assert((event & EV_TIMEOUT) != 0);
-        daemon_log(4, "timeout\n");
-    }
+    nbytes = read(connection->fd, &buffer, sizeof(buffer));
+    if (nbytes < 0)
+        daemon_log(2, "error on idle TCP connection: %s\n",
+                   strerror(errno));
+    else if (nbytes > 0)
+        daemon_log(2, "unexpected data in idle idle_socket\n");
 
     stock_del(&connection->stock_item);
 }
@@ -134,7 +128,7 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
 
         connection->fd = fd;
         connection->event.ev_events = 0;
-        event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
+        event_set(&connection->event, connection->fd, EV_READ,
                   tcp_stock_event, connection);
 
         stock_item_available(&connection->stock_item);
@@ -235,13 +229,9 @@ tcp_stock_release(void *ctx __attr_unused, struct stock_item *item)
 {
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
-    struct timeval tv = {
-        .tv_sec = 60,
-        .tv_usec = 0,
-    };
 
     /* XXX no event if "!reuse" */
-    event_add(&connection->event, &tv);
+    event_add(&connection->event, NULL);
     return true;
 }
 
