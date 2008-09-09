@@ -66,8 +66,10 @@ destroy_item(struct stock *stock, struct stock_item *item)
 
     if (item->pool == stock->pool)
         p_free(stock->pool, item);
-    else
+    else {
+        pool_trash(item->pool);
         pool_unref(item->pool);
+    }
 }
 
 void
