@@ -567,6 +567,11 @@ static const struct async_operation_class ajp_client_request_async_operation = {
 };
 
 
+/*
+ * constructor
+ *
+ */
+
 void
 ajp_client_request(pool_t pool, int fd,
                    const struct lease *lease, void *lease_ctx,

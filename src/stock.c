@@ -22,6 +22,12 @@ struct stock {
     struct list_head busy;
 };
 
+
+/*
+ * constructor
+ *
+ */
+
 struct stock *
 stock_new(pool_t pool, const struct stock_class *class,
           void *class_ctx, const char *uri)
@@ -49,6 +55,7 @@ stock_new(pool_t pool, const struct stock_class *class,
 
     return stock;
 }
+
 
 static void
 destroy_item(struct stock *stock, struct stock_item *item)
