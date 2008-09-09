@@ -189,7 +189,7 @@ stock_item_failed(struct stock_item *item)
 void
 stock_item_aborted(struct stock_item *item)
 {
-    destroy_item(item->stock, item);
+    stock_item_free(item->stock, item);
 }
 
 void
