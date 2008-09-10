@@ -208,7 +208,8 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     ++embed->num_redirects;
 
-    istream_close(body);
+    if (body != NULL)
+        istream_close(body);
 
     uwa = uri_address_dup(embed->pool, embed->widget->class->address.u.http);
     uwa->uri = location;
