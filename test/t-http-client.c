@@ -264,11 +264,11 @@ test_close_response_body_late(pool_t pool, struct context *c)
 static void
 test_close_response_body_data(pool_t pool, struct context *c)
 {
-    c->close_response_body_data = true;
+    c->close_response_body_early = true;
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        istream_string_new(pool, "foobar"),
+                        istream_null_new(pool),
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -357,6 +357,23 @@ test_body_fail(pool_t pool, struct context *c)
     assert(c->aborted);
 }
 
+static void
+test_empty_body_close(pool_t pool, struct context *c)
+{
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
+                        istream_fail_new(pool),
+                        &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->aborted);
+}
+
 
 /*
  * main
@@ -395,6 +412,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_request_body_early);
     run_test(pool, test_data_blocking);
     run_test(pool, test_body_fail);
+    run_test(pool, test_empty_body_close);
 
     pool_unref(pool);
     pool_commit();
