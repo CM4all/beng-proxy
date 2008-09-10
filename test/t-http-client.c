@@ -357,24 +357,6 @@ test_body_fail(pool_t pool, struct context *c)
     assert(c->aborted);
 }
 
-static void
-test_empty_body_close(pool_t pool, struct context *c)
-{
-    c->fd = connect_mirror();
-    c->close_response_body_early = true;
-    http_client_request(pool, c->fd, &my_lease, c,
-                        HTTP_METHOD_GET, "/foo", NULL,
-                        istream_null_new(pool),
-                        &my_response_handler, c, &c->async_ref);
-    pool_unref(pool);
-    pool_commit();
-
-    event_dispatch();
-
-    assert(c->released);
-    assert(c->aborted);
-}
-
 
 /*
  * main
@@ -413,7 +395,6 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_request_body_early);
     run_test(pool, test_data_blocking);
     run_test(pool, test_body_fail);
-    run_test(pool, test_empty_body_close);
 
     pool_unref(pool);
     pool_commit();
