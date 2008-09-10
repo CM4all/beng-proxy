@@ -79,6 +79,10 @@ Description: Translation server prototype
  .
  This package contains a prototype for the beng-proxy translation
  server.
+ .
+ WARNING: this package is for testing and demonstration purposes only.
+ NEVER use it on a production server.  It is inherently insecure and
+ opens wider security holes.
 
 Package: cm4all-beng-proxy-translation-hosting
 Architecture: all
@@ -93,6 +97,10 @@ Description: Translation server prototype for web hosting
  .
  This package contains a prototype for the beng-proxy translation
  server, for web hosting.
+ .
+ WARNING: this package is for testing and demonstration purposes only.
+ NEVER use it on a production server.  It is inherently insecure and
+ opens wider security holes.
 
 Package: cm4all-beng-proxy-demo
 Architecture: all
