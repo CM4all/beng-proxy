@@ -340,8 +340,9 @@ http_client_headers_finished(struct http_client *client)
         content_length = (off_t)-1;
     }
 
-    client->response.body
-        = http_body_init(&client->response.body_reader,
+    client->response.body = content_length == 0
+        ? istream_null_new(client->pool)
+        : http_body_init(&client->response.body_reader,
                          &http_client_response_stream,
                          client->pool,
                          client->pool,
