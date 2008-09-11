@@ -117,6 +117,15 @@ http_server_headers_finished(struct http_server_connection *connection)
                 http_server_connection_close(connection);
                 return;
             }
+
+            if (content_length == 0) {
+                /* empty body */
+
+                request->body = NULL;
+                connection->request.read_state = READ_END;
+
+                return;
+            }
         }
     } else {
         /* chunked */
