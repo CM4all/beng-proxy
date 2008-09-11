@@ -9,7 +9,6 @@ import re
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, Factory
 import struct
-from urlparse import urlparse
 from beng_proxy.translation import *
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
