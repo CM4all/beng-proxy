@@ -12,7 +12,7 @@ from urlparse import urlparse
 from socket import gethostbyname
 from beng_proxy.translation import *
 
-cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi)$')
+cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
 
 class Translation(Protocol):
     def connectionMade(self):
