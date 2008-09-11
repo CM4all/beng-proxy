@@ -298,7 +298,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
         processor->tag = TAG_WIDGET;
         processor->widget.widget = p_malloc(processor->widget.pool,
-                                              sizeof(*processor->widget.widget));
+                                            sizeof(*processor->widget.widget));
         widget_init(processor->widget.widget, NULL);
         processor->widget.params_length = 0;
 
