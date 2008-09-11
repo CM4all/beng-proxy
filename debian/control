@@ -5,8 +5,10 @@ Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 5), gcc (>= 4.1),
  libevent-dev (>= 1.4~), libattr1-dev,
  libcm4all-inline-dev (>= 0.1.1), libcm4all-daemon-dev (>= 0.3),
- tetex-extra (>= 3.0)
+ tetex-extra (>= 3.0), python-central (>= 0.5)
 Standards-Version: 3.8.0
+XS-Python-Standards-Version: 0.4
+XS-Python-Version: all
 
 Package: cm4all-beng-proxy
 Architecture: any
@@ -66,10 +68,23 @@ Description: Development files for libcm4all-istream
  Please note that this package is under heavy development.  All
  interfaces may change at any time.
 
+Package: python-cm4all-beng-proxy
+Architecture: all
+Section: non-free/python
+Provides: ${python:Provides}
+Depends: ${python:Depends}
+Recommends: cm4all-beng-proxy
+XB-Python-Version: ${python:Versions}
+Description: Python bindings for beng-proxy
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This is the Python translation server library.
+
 Package: cm4all-beng-proxy-translation-prototype
 Architecture: all
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, cm4all-utils,
- python-twisted-core
+ python-twisted-core, python-cm4all-beng-proxy (= ${source:Version})
 Conflicts: cm4all-beng-proxy-translation-hosting
 Provides: cm4all-beng-proxy-translation
 Enhances: cm4all-beng-proxy
@@ -87,7 +102,7 @@ Description: Translation server prototype
 Package: cm4all-beng-proxy-translation-hosting
 Architecture: all
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, cm4all-utils,
- python-twisted-core
+ python-twisted-core, python-cm4all-beng-proxy (= ${source:Version})
 Conflicts: cm4all-beng-proxy-translation-prototype
 Provides: cm4all-beng-proxy-translation
 Enhances: cm4all-beng-proxy
