@@ -17,6 +17,8 @@
 #include "growing-buffer.h"
 #include "global.h"
 
+#include <daemon/log.h>
+
 static const char *const copy_headers[] = {
     "age",
     "etag",
@@ -112,6 +114,11 @@ response_invoke_processor(struct request *request2,
 
     widget->from_request.proxy_ref = widget_ref_parse(request->pool,
                                                       strmap_get(request2->env.args, "frame"));
+
+#ifdef DUMP_WIDGET_TREE
+    request2->dump_widget_tree = widget;
+#endif
+
     if (widget->from_request.proxy_ref != NULL) {
         processor_new(request->pool, body, widget, &request2->env,
                       transformation->u.processor.options,
@@ -184,6 +191,26 @@ response_dispatch(struct request *request2,
 
 
 /*
+ * debug
+ *
+ */
+
+#ifdef DUMP_WIDGET_TREE
+static void dump_widget_tree(unsigned indent, const struct widget *widget)
+{
+    const struct widget *child;
+
+    daemon_log(4, "%*swidget id='%s' class='%s'\n", indent, "",
+               widget->id, widget->class_name);
+
+    for (child = (const struct widget *)widget->children.next;
+         &child->siblings != &widget->children;
+         child = (const struct widget *)child->siblings.next)
+        dump_widget_tree(indent + 2, widget);
+}
+#endif
+
+/*
  * HTTP response handler
  *
  */
@@ -200,6 +227,18 @@ response_response(http_status_t status, struct strmap *headers,
 
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
+
+#ifdef DUMP_WIDGET_TREE
+    if (request2->dump_widget_tree != NULL) {
+        if (body == NULL) {
+            daemon_log(4, "dumping widget tree of request '%s'\n", request->uri);
+            dump_widget_tree(0, request2->dump_widget_tree);
+            request2->dump_widget_tree = NULL;
+        } /* else
+             XXX find some way to print widget tree after stream's EOF
+          */
+    }
+#endif
 
     if (headers == NULL) {
         response_headers = growing_buffer_new(request->pool, 1024);

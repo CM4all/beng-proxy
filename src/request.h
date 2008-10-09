@@ -32,6 +32,10 @@ struct request {
 
     struct processor_env env;
 
+#ifdef DUMP_WIDGET_TREE
+    const struct widget *dump_widget_tree;
+#endif
+
     bool body_consumed, response_sent;
     struct async_operation_ref *async_ref;
 };

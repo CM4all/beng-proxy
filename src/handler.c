@@ -317,6 +317,9 @@ handle_http_request(struct client_connection *connection,
     request2->args = NULL;
     request2->cookies = NULL;
     request2->session_id = 0;
+#ifdef DUMP_WIDGET_TREE
+    request2->dump_widget_tree = NULL;
+#endif
     request2->body_consumed = false;
     request2->response_sent = false;
     request2->async_ref = async_ref;
