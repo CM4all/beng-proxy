@@ -34,7 +34,7 @@ case "$1" in
             --pidfile "$PIDFILE" \
             -- \
             --pidfile "$PIDFILE" \
-            --logfile "$LOGFILE" \
+            --output "$LOGFILE" \
             /usr/share/cm4all/beng-proxy/bin/hosting.py \
             $TRANSLATION_SOCKET
 	log_end_msg $?

@@ -83,9 +83,10 @@ Description: Python bindings for beng-proxy
 
 Package: cm4all-beng-proxy-translation-prototype
 Architecture: all
-Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, cm4all-utils,
+Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, daemon,
  python-twisted-core, python-cm4all-beng-proxy (= ${source:Version})
-Conflicts: cm4all-beng-proxy-translation-hosting
+Conflicts: cm4all-beng-proxy-translation-hosting,
+ cm4all-utils (<= 1.11-1)
 Provides: cm4all-beng-proxy-translation
 Enhances: cm4all-beng-proxy
 Description: Translation server prototype
@@ -101,9 +102,10 @@ Description: Translation server prototype
 
 Package: cm4all-beng-proxy-translation-hosting
 Architecture: all
-Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, cm4all-utils,
+Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, daemon,
  python-twisted-core, python-cm4all-beng-proxy (= ${source:Version})
-Conflicts: cm4all-beng-proxy-translation-prototype
+Conflicts: cm4all-beng-proxy-translation-prototype,
+ cm4all-utils (<= 1.11-1)
 Provides: cm4all-beng-proxy-translation
 Enhances: cm4all-beng-proxy
 Description: Translation server prototype for web hosting
