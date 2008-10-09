@@ -136,7 +136,6 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
             failure_remove(connection->addr, connection->addrlen);
 
         connection->fd = fd;
-        connection->event.ev_events = 0;
         event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
                   tcp_stock_event, connection);
 
@@ -228,7 +227,6 @@ tcp_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
         (struct tcp_stock_connection *)item;
 
     event_del(&connection->event);
-    connection->event.ev_events = 0;
     return true;
 }
 
@@ -254,8 +252,7 @@ tcp_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
     if (async_ref_defined(&connection->client_socket))
         async_abort(&connection->client_socket);
     else if (connection->fd >= 0) {
-        if (connection->event.ev_events != 0)
-            event_del(&connection->event);
+        event_del(&connection->event);
         close(connection->fd);
     }
 }
