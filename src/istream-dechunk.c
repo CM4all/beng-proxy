@@ -36,11 +36,16 @@ dechunk_close(struct istream_dechunk *dechunk)
 {
     assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
-    if (dechunk->input != NULL)
-        istream_free_handler(&dechunk->input);
-
     dechunk->state = CLOSED;
-    istream_deinit_abort(&dechunk->output);
+
+    if (dechunk->input != NULL)
+        /* let our input kick off the abort() callback chain; we
+           cannot clear its input here, because it would then think
+           that we have detected EOF.  The http client code depends on
+           this behaviour. */
+        istream_close(dechunk->input);
+    else
+        istream_deinit_abort(&dechunk->output);
 }
 
 
@@ -213,8 +218,6 @@ static void
 dechunk_input_abort(void *ctx)
 {
     struct istream_dechunk *dechunk = ctx;
-
-    assert(dechunk->state != CLOSED);
 
     dechunk->input = NULL;
 
