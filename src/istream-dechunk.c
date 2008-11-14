@@ -40,7 +40,7 @@ dechunk_close(struct istream_dechunk *dechunk)
 
     if (dechunk->input != NULL)
         /* let our input kick off the abort() callback chain; we
-           cannot clear its input here, because it would then think
+           cannot clear its handler here, because it would then think
            that we have detected EOF.  The http client code depends on
            this behaviour. */
         istream_close(dechunk->input);
