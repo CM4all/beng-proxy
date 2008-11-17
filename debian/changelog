@@ -1,5 +1,5 @@
-cm4all-beng-proxy (0.0.0) unstable; urgency=low
+cm4all-beng-proxy (0.1) unstable; urgency=low
 
   * initial release
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 17 Nov 2008 11:59:36 +0100
