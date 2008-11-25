@@ -164,6 +164,8 @@ class_lookup_callback(void *ctx)
                         istream_memory_new(rwu->pool,
                                            rwu->value.data,
                                            rwu->value.length));
+    if (istream_has_handler(rwu->delayed))
+        istream_read(rwu->delayed);
 }
 
 
