@@ -6,7 +6,6 @@
 
 #include "rewrite-uri.h"
 #include "widget.h"
-#include "widget-stream.h"
 #include "widget-resolver.h"
 #include "strref-pool.h"
 #include "uri-parser.h"
@@ -134,7 +133,8 @@ struct rewrite_widget_uri {
     session_id_t session_id;
     struct strref value;
     enum uri_mode mode;
-    struct widget_stream *stream;
+
+    istream_t delayed;
 };
 
 static void
@@ -160,7 +160,7 @@ class_lookup_callback(void *ctx)
             strref_set_c(&rwu->value, uri);
     }
 
-    istream_delayed_set(rwu->stream->delayed,
+    istream_delayed_set(rwu->delayed,
                         istream_memory_new(rwu->pool,
                                            rwu->value.data,
                                            rwu->value.length));
@@ -203,13 +203,13 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
         rwu->session_id = session_id;
         strref_set_dup(pool, &rwu->value, value);
         rwu->mode = mode;
-        rwu->stream = widget_stream_new(pool);
+        rwu->delayed = istream_delayed_new(pool);
 
         widget_resolver_new(pool, widget_pool,
                             widget,
                             translate_cache,
                             class_lookup_callback, rwu,
-                            &rwu->stream->async_ref);
-        return rwu->stream->delayed;
+                            istream_delayed_async(rwu->delayed));
+        return rwu->delayed;
     }
 }
