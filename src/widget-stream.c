@@ -36,20 +36,16 @@ static void
 ws_abort(void *ctx)
 {
     struct widget_stream *ws = ctx;
-    istream_t delayed;
 
     assert(ws->delayed != NULL);
-
-    delayed = ws->delayed;
-    ws->delayed = NULL;
 
     /* clear the delayed async_ref object: we didn't provide an
        istream to the delayed object, and if we close it right now, it
        will trigger the async_abort(), unless we clear its
        async_ref */
-    async_ref_clear(istream_delayed_async(delayed));
+    async_ref_clear(istream_delayed_async(ws->delayed));
 
-    istream_close(delayed);
+    istream_free(&ws->delayed);
 }
 
 const struct http_response_handler widget_stream_response_handler = {
