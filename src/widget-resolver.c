@@ -81,7 +81,6 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
     struct widget_resolver *resolver = widget->resolver;
 
     assert(widget->class == NULL);
-    assert(widget->resolver == resolver);
     assert(resolver != NULL);
     assert(!list_empty(&resolver->listeners));
 
