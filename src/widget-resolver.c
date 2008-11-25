@@ -86,14 +86,14 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
 
     widget->class = class;
 
-    while (!list_empty(&resolver->listeners)) {
+    do {
         struct widget_resolver_listener *listener =
             (struct widget_resolver_listener *)resolver->listeners.next;
 
         list_remove(&listener->siblings);
         listener->callback(listener->callback_ctx);
         pool_unref(listener->pool);
-    }
+    } while (!list_empty(&resolver->listeners));
 
     pool_unref(resolver->pool);
 }
