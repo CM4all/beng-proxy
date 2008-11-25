@@ -176,7 +176,6 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
         return istream_string_new(pool, uri);
     } else {
         struct rewrite_widget_uri *rwu = p_malloc(pool, sizeof(*rwu));
-        istream_t hold;
 
         rwu->pool = pool;
         rwu->partition_domain = partition_domain;
@@ -187,13 +186,12 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
         strref_set_dup(pool, &rwu->value, value);
         rwu->mode = mode;
         rwu->stream = widget_stream_new(pool);
-        hold = istream_hold_new(pool, rwu->stream->delayed);
 
         widget_resolver_new(pool, widget_pool,
                             widget,
                             translate_cache,
                             class_lookup_callback, rwu,
                             &rwu->stream->async_ref);
-        return hold;
+        return rwu->stream->delayed;
     }
 }
