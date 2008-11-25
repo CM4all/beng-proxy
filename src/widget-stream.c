@@ -22,8 +22,7 @@ ws_response(http_status_t status, struct strmap *headers,
     (void)status;
     (void)headers;
 
-    if (ws->delayed == NULL)
-        return;
+    assert(ws->delayed != NULL);
 
     delayed = ws->delayed;
     ws->delayed = NULL;
@@ -44,8 +43,7 @@ ws_abort(void *ctx)
     struct widget_stream *ws = ctx;
     istream_t delayed;
 
-    if (ws->delayed == NULL)
-        return;
+    assert(ws->delayed != NULL);
 
     delayed = ws->delayed;
     ws->delayed = NULL;
