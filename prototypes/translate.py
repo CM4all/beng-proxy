@@ -51,11 +51,7 @@ class Translation(Protocol):
             m = re.match(r'^ajp\s+"(\S+)"\s+"(\S+)"$', line)
             if m:
                 host, uri = m.group(1), m.group(2)
-                response.packet(TRANSLATE_AJP, uri)
-                host, port = (host.split(':', 1) + [None])[0:2]
-                address = gethostbyname(host)
-                if port: address += ':' + port
-                response.packet(TRANSLATE_ADDRESS_STRING, address)
+                response.ajp(host, uri)
                 continue
             m = re.match(r'^path\s+"(\S+)"$', line)
             if m:
