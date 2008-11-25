@@ -131,6 +131,7 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
         new = true;
     }
 
+    assert(resolver->pool == widget_pool);
     assert(pool_contains(widget_pool, widget->resolver,
                          sizeof(*widget->resolver)));
 
