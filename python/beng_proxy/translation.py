@@ -126,5 +126,4 @@ class Response:
 
     def status(self, status):
         assert status >= 200 and status < 600
-        print "FOOOOOOOOOO"
         self.packet(TRANSLATE_STATUS, struct.pack('H', status))
