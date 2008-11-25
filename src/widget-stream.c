@@ -20,20 +20,16 @@ ws_response(__attr_unused http_status_t status,
             istream_t body, void *ctx)
 {
     struct widget_stream *ws = ctx;
-    istream_t delayed;
 
     assert(ws->delayed != NULL);
-
-    delayed = ws->delayed;
-    ws->delayed = NULL;
 
     if (body == NULL)
         body = istream_null_new(ws->pool);
 
-    istream_delayed_set(delayed, body);
+    istream_delayed_set(ws->delayed, body);
 
-    if (istream_has_handler(delayed))
-        istream_read(delayed);
+    if (istream_has_handler(ws->delayed))
+        istream_read(ws->delayed);
 }
 
 static void

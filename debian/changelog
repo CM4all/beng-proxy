@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.2) unstable; urgency=low
   * widget-registry: allocate widget_class from widget_pool
   * widget-stream: eliminated the async operation proxy, because the
     operation cannot be aborted before the constructor returns
+  * widget-stream: don't clear the "delayed" stream in the response() callback
   * rewrite-uri: trigger istream_read(delayed) after istream_delayed_set()
   * doc: clarified XSLT integration
 
