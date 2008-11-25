@@ -28,13 +28,12 @@ ws_response(__attr_unused http_status_t status,
     ws->delayed = NULL;
 
     if (body == NULL)
-        istream_delayed_set_eof(delayed);
-    else {
-        istream_delayed_set(delayed, body);
+        body = istream_null_new(ws->pool);
 
-        if (istream_has_handler(delayed))
-            istream_read(delayed);
-    }
+    istream_delayed_set(delayed, body);
+
+    if (istream_has_handler(delayed))
+        istream_read(delayed);
 }
 
 static void
@@ -73,6 +72,7 @@ widget_stream_new(pool_t pool)
 {
     struct widget_stream *ws = p_malloc(pool, sizeof(*ws));
 
+    ws->pool = pool;
     ws->delayed = istream_delayed_new(pool);
     return ws;
 }

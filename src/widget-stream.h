@@ -13,6 +13,8 @@
 extern const struct http_response_handler widget_stream_response_handler;
 
 struct widget_stream {
+    pool_t pool;
+
     istream_t delayed;
 };
 
