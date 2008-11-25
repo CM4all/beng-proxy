@@ -272,7 +272,8 @@ widget_response_process(struct embed *embed, http_status_t status,
         strmap_set(headers, "content-type", "text/html; charset=utf-8");
     }
 
-    if (strncmp(content_type, "text/html", 9) != 0) {
+    if (strncmp(content_type + 5, "html", 4) != 0 &&
+        strncmp(content_type + 5, "xml", 3) != 0) {
         /* convert text to HTML */
 
         daemon_log(6, "widget '%s': converting text to HTML\n",
