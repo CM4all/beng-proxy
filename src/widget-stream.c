@@ -56,7 +56,7 @@ ws_abort(void *ctx)
        async_ref */
     async_ref_clear(istream_delayed_async(delayed));
 
-    istream_free(&delayed);
+    istream_close(delayed);
 }
 
 const struct http_response_handler widget_stream_response_handler = {
