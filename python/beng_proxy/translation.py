@@ -110,3 +110,16 @@ def write_packet(f, command, payload = ''):
     assert isinstance(payload, str)
     f.write(packet_header(command, len(payload)))
     f.write(payload)
+
+class Response:
+    def __init__(self):
+        self._data = packet_header(TRANSLATE_BEGIN)
+
+    def finish(self):
+        self._data += packet_header(TRANSLATE_END)
+        return self._data
+
+    def packet(self, command, payload = ''):
+        assert isinstance(payload, str)
+        self._data += packet_header(command, len(payload))
+        self._data += payload

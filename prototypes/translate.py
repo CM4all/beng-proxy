@@ -20,20 +20,18 @@ class Translation(Protocol):
         self._request = None
         self._packet = None
 
-    def _write_packet(self, command, payload = ''):
-        write_packet(self.transport, command, payload)
-
     def _handle_widget_lookup(self, request):
         # checks on the name should be here.
         path = "/etc/cm4all/beng/widgets/%s" % request.widget_type
         try:
             f = open(path)
         except IOError:
-            self._write_packet(TRANSLATE_BEGIN)
-            self._write_packet(TRANSLATE_STATUS, struct.pack('H', 404))
-            self._write_packet(TRANSLATE_END)
+            response = Response()
+            response.packet(TRANSLATE_STATUS, struct.pack('H', 404))
+            self.transport.write(response.finish())
             return
-        self._write_packet(TRANSLATE_BEGIN)
+
+        response = Response()
         for line in f.readlines():
             line = line.strip()
             if line == '' or line[0] == '#':
@@ -41,60 +39,60 @@ class Translation(Protocol):
             m = re.match(r'^server\s+"(\S+)"$', line)
             if m:
                 uri = m.group(1)
-                self._write_packet(TRANSLATE_PROXY, uri)
+                response.packet(TRANSLATE_PROXY, uri)
                 host, port = (urlparse(uri)[1].split(':', 1) + [None])[0:2]
                 address = gethostbyname(host)
                 if port: address += ':' + port
-                self._write_packet(TRANSLATE_ADDRESS_STRING, address)
+                response.packet(TRANSLATE_ADDRESS_STRING, address)
                 continue
             m = re.match(r'^cgi\s+"(\S+)"$', line)
             if m:
-                self._write_packet(TRANSLATE_CGI, m.group(1))
+                response.packet(TRANSLATE_CGI, m.group(1))
                 continue
             m = re.match(r'^fastcgi\s+"(\S+)"$', line)
             if m:
-                self._write_packet(TRANSLATE_FASTCGI, m.group(1))
+                response.packet(TRANSLATE_FASTCGI, m.group(1))
                 continue
             m = re.match(r'^ajp\s+"(\S+)"\s+"(\S+)"$', line)
             if m:
                 host, uri = m.group(1), m.group(2)
-                self._write_packet(TRANSLATE_AJP, uri)
+                response.packet(TRANSLATE_AJP, uri)
                 host, port = (host.split(':', 1) + [None])[0:2]
                 address = gethostbyname(host)
                 if port: address += ':' + port
-                self._write_packet(TRANSLATE_ADDRESS_STRING, address)
+                response.packet(TRANSLATE_ADDRESS_STRING, address)
                 continue
             m = re.match(r'^path\s+"(\S+)"$', line)
             if m:
-                self._write_packet(TRANSLATE_PATH, m.group(1))
+                response.packet(TRANSLATE_PATH, m.group(1))
                 continue
             m = re.match(r'^script_name\s+"(\S+)"$', line)
             if m:
-                self._write_packet(TRANSLATE_SCRIPT_NAME, m.group(1))
+                response.packet(TRANSLATE_SCRIPT_NAME, m.group(1))
                 continue
             m = re.match(r'^document_root\s+"(\S+)"$', line)
             if m:
-                self._write_packet(TRANSLATE_DOCUMENT_ROOT, m.group(1))
+                response.packet(TRANSLATE_DOCUMENT_ROOT, m.group(1))
                 continue
             m = re.match(r'^action\s+"(\S+)"$', line)
             if m:
-                self._write_packet(TRANSLATE_ACTION, m.group(1))
+                response.packet(TRANSLATE_ACTION, m.group(1))
                 continue
             m = re.match(r'^interpreter\s+"(\S+)"$', line)
             if m:
-                self._write_packet(TRANSLATE_INTERPRETER, m.group(1))
+                response.packet(TRANSLATE_INTERPRETER, m.group(1))
                 continue
             if line == 'process':
-                self._write_packet(TRANSLATE_PROCESS)
+                response.packet(TRANSLATE_PROCESS)
             elif line == 'container':
-                self._write_packet(TRANSLATE_CONTAINER)
+                response.packet(TRANSLATE_CONTAINER)
             elif line == 'stateful':
-                self._write_packet(TRANSLATE_STATEFUL)
+                response.packet(TRANSLATE_STATEFUL)
             else:
                 print "Syntax error in %s: %s" % (path, line)
-                self._write_packet(TRANSLATE_STATUS, struct.pack('H', 500))
+                response.packet(TRANSLATE_STATUS, struct.pack('H', 500))
                 break
-        self._write_packet(TRANSLATE_END)
+        self.transport.write(response.finish())
 
     def _handle_request(self, request):
         if request.session is not None: print "- session =", request.session
@@ -129,23 +127,23 @@ class Translation(Protocol):
 
         cgi = cgi_re.search(path, 1)
 
-        self._write_packet(TRANSLATE_BEGIN)
-        self._write_packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
+        response = Response()
+        response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
         if cgi:
-            self._write_packet(TRANSLATE_CGI, path)
+            response.packet(TRANSLATE_CGI, path)
         else:
-            self._write_packet(TRANSLATE_PATH, path)
+            response.packet(TRANSLATE_PATH, path)
         if user is not None:
-            self._write_packet(TRANSLATE_USER, user)
+            response.packet(TRANSLATE_USER, user)
         if session is not None:
-            self._write_packet(TRANSLATE_SESSION, session)
-        #self._write_packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_SESSION, session)
+        #response.packet(TRANSLATE_FILTER)
         # .... PROXY 'http://cfatest01.intern.cm-ag/filter.py'
         if not cgi and path[-5:] == '.html':
-            self._write_packet(TRANSLATE_CONTENT_TYPE, 'text/html; charset=utf-8')
-            self._write_packet(TRANSLATE_PROCESS)
-            self._write_packet(TRANSLATE_CONTAINER)
-        self._write_packet(TRANSLATE_END)
+            response.packet(TRANSLATE_CONTENT_TYPE, 'text/html; charset=utf-8')
+            response.packet(TRANSLATE_PROCESS)
+            response.packet(TRANSLATE_CONTAINER)
+        self.transport.write(response.finish())
 
     def _handle_packet(self, packet):
         if packet.command == TRANSLATE_BEGIN:
