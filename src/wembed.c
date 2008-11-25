@@ -33,14 +33,9 @@ inline_widget_set(struct inline_widget *iw)
             widget_sync_session(widget, session);
     }
 
-    switch (widget->class->type) {
-    case WIDGET_TYPE_RAW:
-    case WIDGET_TYPE_BENG:
-        widget_http_request(iw->pool, iw->widget, iw->env,
-                            &widget_stream_response_handler, iw->stream,
-                            widget_stream_async_ref(iw->stream));
-        break;
-    }
+    widget_http_request(iw->pool, iw->widget, iw->env,
+                        &widget_stream_response_handler, iw->stream,
+                        widget_stream_async_ref(iw->stream));
 }
 
 static void

@@ -54,13 +54,8 @@ frame_top_widget(pool_t pool, struct processor_env *env,
             widget_sync_session(widget, session);
     }
 
-    switch (widget->class->type) {
-    case WIDGET_TYPE_RAW:
-    case WIDGET_TYPE_BENG:
-        widget_http_request(pool, widget, env,
-                            handler, handler_ctx, async_ref);
-        break;
-    }
+    widget_http_request(pool, widget, env,
+                        handler, handler_ctx, async_ref);
 }
 
 static void
