@@ -38,7 +38,7 @@ inline_widget_set(struct inline_widget *iw)
     case WIDGET_TYPE_BENG:
         widget_http_request(iw->pool, iw->widget, iw->env,
                             &widget_stream_response_handler, iw->stream,
-                            &iw->stream->async_ref);
+                            widget_stream_async_ref(iw->stream));
         break;
     }
 }
