@@ -303,17 +303,20 @@ is \texttt{POST}, the other HTTP server receives a \texttt{GET}
 request without a body, because the focused widget is going to receive
 the request body.
 
+If the filter URL starts with a slash, \emph{beng-proxy} assumes it is
+the absolute path to a Unix socket.
+
 \subsubsection{Filters}
 \label{filter}
 
 The translation server can tell \emph{beng-proxy} to apply a filter to
-the resource by sending the \texttt{FILTER} command.  This is a
-pointer to a HTTP server (or a CGI script).  \emph{beng-proxy} sends
-the original resource with a POST request and expects the filtered
-resource as response.
+the resource by sending the \texttt{FILTER} command.  It is followed
+by a packet specifying the filter server (\texttt{PROXY},
+\texttt{CGI}, \texttt{FASTCGI}, \texttt{AJP}).
 
-If the filter URL starts with a slash, \emph{beng-proxy} assumes it is
-the absolute path to a Unix socket.
+A filter server is a HTTP server.  \emph{beng-proxy} sends the
+original resource with a POST request and expects the filtered
+resource as response.
 
 There may be more than one filter; the order of the \texttt{PROCESS}
 and \texttt{FILTER} packets is important.
