@@ -24,7 +24,8 @@ it provides a resource in pass-through mode, acting as an HTTP proxy.
 
 It caches resources if possible.
 
-XML resources can be transformed with XSLT.
+It can filter any resources by POSTing it to a HTTP server,
+e.g. to apply XSLT to a XML resource.
 
 On HTML resources, it can apply a simple template language.  This
 language provides commands to insert another HTML page, which is
@@ -372,8 +373,7 @@ and query string \\
 \section{Widget protocol}
 
 A widget server is simply an HTTP server.  Its content type must be
-text/html.  Alternatively, text/xml is allowed, but the caller must
-specify an XSLT file for transformation to HTML.
+text/html or text/xml.
 
 
 \subsection{Hyperlinks}

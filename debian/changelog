@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.2) unstable; urgency=low
 
   * don't quote text/xml widgets
+  * doc: clarified XSLT integration
 
  --
 
