@@ -7,20 +7,20 @@
 #include "widget-stream.h"
 #include "http-response.h"
 
+#include <inline/compiler.h>
+
 /*
  * HTTP response handler
  *
  */
 
 static void
-ws_response(http_status_t status, struct strmap *headers,
+ws_response(__attr_unused http_status_t status,
+            __attr_unused struct strmap *headers,
             istream_t body, void *ctx)
 {
     struct widget_stream *ws = ctx;
     istream_t delayed;
-
-    (void)status;
-    (void)headers;
 
     assert(ws->delayed != NULL);
 
