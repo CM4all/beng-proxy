@@ -184,8 +184,7 @@ processor_new(pool_t pool, istream_t istream,
 
     pool = pool_new_linear(pool, "processor", 32768);
 
-    if (widget->from_request.proxy_ref == NULL &&
-        widget->class->type == WIDGET_TYPE_BENG) {
+    if (widget->from_request.proxy_ref == NULL) {
         istream = istream_subst_new(pool, istream);
         processor_subst_beng_widget(istream, widget, env);
     }
