@@ -123,3 +123,8 @@ class Response:
         assert isinstance(payload, str)
         self._data += packet_header(command, len(payload))
         self._data += payload
+
+    def status(self, status):
+        assert status >= 200 and status < 600
+        print "FOOOOOOOOOO"
+        self.packet(TRANSLATE_STATUS, struct.pack('H', status))

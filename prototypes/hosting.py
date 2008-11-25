@@ -29,14 +29,14 @@ class Translation(Protocol):
     def _handle_request(self, request):
         if request.widget_type is not None:
             response = Response()
-            response.packet(TRANSLATE_STATUS, struct.pack('H', 404))
+            response.status(404)
             self.transport.write(response.finish())
             return
 
         account_id = self._host_account_id(request.host)
         if not account_id:
             response = Response()
-            response.packet(TRANSLATE_STATUS, struct.pack('H', 404))
+            response.status(404)
             self.transport.write(response.finish())
             return
 

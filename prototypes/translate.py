@@ -27,7 +27,7 @@ class Translation(Protocol):
             f = open(path)
         except IOError:
             response = Response()
-            response.packet(TRANSLATE_STATUS, struct.pack('H', 404))
+            response.status(404)
             self.transport.write(response.finish())
             return
 
@@ -90,7 +90,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_STATEFUL)
             else:
                 print "Syntax error in %s: %s" % (path, line)
-                response.packet(TRANSLATE_STATUS, struct.pack('H', 500))
+                response.status(500)
                 break
         self.transport.write(response.finish())
 
