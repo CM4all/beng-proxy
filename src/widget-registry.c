@@ -35,8 +35,6 @@ widget_registry_lookup(pool_t pool,
 struct widget_class_lookup {
     pool_t pool;
 
-    struct widget_class class;
-
     widget_class_callback_t callback;
     void *callback_ctx;
 };
@@ -52,7 +50,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
         return;
     }
 
-    class = &lookup->class;
+    class = p_malloc(lookup->pool, sizeof(*class));
     class->stateful = response->stateful;
     resource_address_copy(lookup->pool, &class->address, &response->address);
 
