@@ -66,33 +66,6 @@ const struct http_response_handler widget_stream_response_handler = {
 
 
 /*
- * async operation
- *
- */
-
-static struct widget_stream *
-async_to_ws(struct async_operation *ao)
-{
-    return (struct widget_stream*)(((char*)ao) - offsetof(struct widget_stream, async));
-}
-
-static void
-ws_delayed_abort(struct async_operation *ao)
-{
-    struct widget_stream *ws = async_to_ws(ao);
-
-    assert(ws->delayed != NULL);
-
-    ws->delayed = NULL;
-    async_abort(&ws->async_ref);
-}
-
-static const struct async_operation_class ws_delayed_operation = {
-    .abort = ws_delayed_abort,
-};
-
-
-/*
  * constructor
  *
  */
@@ -103,9 +76,5 @@ widget_stream_new(pool_t pool)
     struct widget_stream *ws = p_malloc(pool, sizeof(*ws));
 
     ws->delayed = istream_delayed_new(pool);
-
-    async_init(&ws->async, &ws_delayed_operation);
-    async_ref_set(istream_delayed_async(ws->delayed), &ws->async);
-
     return ws;
 }

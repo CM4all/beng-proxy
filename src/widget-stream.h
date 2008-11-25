@@ -14,8 +14,6 @@ extern const struct http_response_handler widget_stream_response_handler;
 
 struct widget_stream {
     istream_t delayed;
-    struct async_operation_ref async_ref;
-    struct async_operation async;
 };
 
 struct widget_stream *
@@ -24,7 +22,7 @@ widget_stream_new(pool_t pool);
 static inline struct async_operation_ref *
 widget_stream_async_ref(struct widget_stream *ws)
 {
-    return &ws->async_ref;
+    return istream_delayed_async(ws->delayed);
 }
 
 #endif
