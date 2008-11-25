@@ -11,6 +11,11 @@
 #include "strref-pool.h"
 #include "uri-parser.h"
 
+/*
+ * The "real" rewriting code
+ *
+ */
+
 static const char *
 current_frame(const struct widget *widget)
 {
@@ -114,6 +119,12 @@ do_rewrite_widget_uri(pool_t pool,
     return uri;
 }
 
+
+/*
+ * widget_resolver callback
+ *
+ */
+
 struct rewrite_widget_uri {
     pool_t pool;
     const char *partition_domain;
@@ -154,6 +165,13 @@ class_lookup_callback(void *ctx)
                                            rwu->value.data,
                                            rwu->value.length));
 }
+
+
+/*
+ * Constructor: optionally load class, and then call
+ * do_rewrite_widget_uri().
+ *
+ */
 
 istream_t
 rewrite_widget_uri(pool_t pool, pool_t widget_pool,
