@@ -80,7 +80,8 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
         widget_resolver_new(pool, env->pool,
                             widget,
                             global_translate_cache,
-                            class_lookup_callback, iw, &iw->stream->async_ref);
+                            class_lookup_callback, iw,
+                            widget_stream_async_ref(iw->stream));
     else
         inline_widget_set(iw);
 
