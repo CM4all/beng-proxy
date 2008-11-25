@@ -127,3 +127,20 @@ class Response:
     def status(self, status):
         assert status >= 200 and status < 600
         self.packet(TRANSLATE_STATUS, struct.pack('H', status))
+
+    def proxy(self, uri, *addresses):
+        assert uri[0] != '/' or len(addresses) == 0
+
+        if uri[0] != '/' and len(addresses) == 0:
+            # parse host:port from URL
+            from urlparse import urlparse
+            from socket import gethostbyname
+
+            host, port = (urlparse(uri)[1].split(':', 1) + [None])[0:2]
+            address = gethostbyname(host)
+            if port: address += ':' + port
+            addresses = (address,)
+
+        self.packet(TRANSLATE_PROXY, uri)
+        for address in addresses:
+            self.packet(TRANSLATE_ADDRESS_STRING, address)

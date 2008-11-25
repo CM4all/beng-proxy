@@ -8,7 +8,6 @@ import re
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, Factory
 import struct
-from urlparse import urlparse
 from socket import gethostbyname
 from beng_proxy.translation import *
 
@@ -39,11 +38,7 @@ class Translation(Protocol):
             m = re.match(r'^server\s+"(\S+)"$', line)
             if m:
                 uri = m.group(1)
-                response.packet(TRANSLATE_PROXY, uri)
-                host, port = (urlparse(uri)[1].split(':', 1) + [None])[0:2]
-                address = gethostbyname(host)
-                if port: address += ':' + port
-                response.packet(TRANSLATE_ADDRESS_STRING, address)
+                response.proxy(uri)
                 continue
             m = re.match(r'^cgi\s+"(\S+)"$', line)
             if m:
