@@ -77,6 +77,8 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_CONTAINER)
             elif line == 'stateful':
                 response.packet(TRANSLATE_STATEFUL)
+            elif line == 'filter':
+                response.packet(TRANSLATE_FILTER)
             else:
                 print "Syntax error in %s: %s" % (path, line)
                 response.status(500)
