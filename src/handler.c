@@ -272,7 +272,7 @@ serve_document_root_file(struct request *request2,
     }
 
     if (process) {
-        struct translate_transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
+        struct transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
         transformation->next = NULL;
         transformation->type = TRANSFORMATION_PROCESS;
         tr->transformation = transformation;

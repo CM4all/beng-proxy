@@ -9,8 +9,8 @@
 
 #include "resource-address.h"
 
-struct translate_transformation {
-    struct translate_transformation *next;
+struct transformation {
+    struct transformation *next;
 
     enum {
         TRANSFORMATION_PROCESS,
@@ -28,10 +28,10 @@ struct translate_transformation {
     } u;
 };
 
-struct translate_transformation *
-transformation_dup(pool_t pool, const struct translate_transformation *src);
+struct transformation *
+transformation_dup(pool_t pool, const struct transformation *src);
 
-struct translate_transformation *
-transformation_dup_chain(pool_t pool, const struct translate_transformation *src);
+struct transformation *
+transformation_dup_chain(pool_t pool, const struct transformation *src);
 
 #endif

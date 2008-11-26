@@ -14,7 +14,7 @@
 struct uri_with_address;
 struct hstock;
 struct async_operation_ref;
-struct translate_transformation;
+struct transformation;
 
 struct translate_request {
     const char *remote_host;
@@ -38,7 +38,7 @@ struct translate_response {
     const char *user;
     const char *language;
 
-    struct translate_transformation *transformation;
+    struct transformation *transformation;
 };
 
 typedef void (*translate_callback_t)(const struct translate_response *response,

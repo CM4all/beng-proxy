@@ -12,10 +12,10 @@ p_strdup_checked(pool_t pool, const char *s)
     return s == NULL ? NULL : p_strdup(pool, s);
 }
 
-struct translate_transformation *
-transformation_dup(pool_t pool, const struct translate_transformation *src)
+struct transformation *
+transformation_dup(pool_t pool, const struct transformation *src)
 {
-    struct translate_transformation *dest = p_malloc(pool, sizeof(*dest));
+    struct transformation *dest = p_malloc(pool, sizeof(*dest));
 
     dest->type = src->type;
     switch (dest->type) {
@@ -34,13 +34,13 @@ transformation_dup(pool_t pool, const struct translate_transformation *src)
     return dest;
 }
 
-struct translate_transformation *
-transformation_dup_chain(pool_t pool, const struct translate_transformation *src)
+struct transformation *
+transformation_dup_chain(pool_t pool, const struct transformation *src)
 {
-    struct translate_transformation *dest = NULL, **tail_p = &dest;
+    struct transformation *dest = NULL, **tail_p = &dest;
 
     for (; src != NULL; src = src->next) {
-        struct translate_transformation *p = transformation_dup(pool, src);
+        struct transformation *p = transformation_dup(pool, src);
         *tail_p = p;
         tail_p = &p->next;
     }

@@ -27,7 +27,7 @@ struct request {
     struct {
         struct translate_request request;
         const struct translate_response *response;
-        const struct translate_transformation *transformation;
+        const struct transformation *transformation;
     } translate;
 
     struct processor_env env;

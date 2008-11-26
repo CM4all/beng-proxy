@@ -69,7 +69,7 @@ static void
 response_invoke_processor(struct request *request2,
                           http_status_t status, struct growing_buffer *response_headers,
                           istream_t body,
-                          const struct translate_transformation *transformation)
+                          const struct transformation *transformation)
 {
     struct http_server_request *request = request2->request;
     istream_t request_body;
@@ -155,7 +155,7 @@ response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
                   istream_t body)
 {
-    const struct translate_transformation *transformation
+    const struct transformation *transformation
         = request2->translate.transformation;
 
     assert(!request2->response_sent);

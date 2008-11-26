@@ -65,7 +65,7 @@ struct translate_client {
     struct resource_address *resource_address;
 
     /** pointer to the tail of the transformation linked list */
-    struct translate_transformation **transformation_tail;
+    struct transformation **transformation_tail;
 
     /** this asynchronous operation is the translate request; aborting
         it causes the request to be cancelled */
@@ -228,10 +228,10 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
  *
  */
 
-static struct translate_transformation *
+static struct transformation *
 translate_add_transformation(struct translate_client *client)
 {
-    struct translate_transformation *transformation
+    struct transformation *transformation
         = p_malloc(client->pool, sizeof(*transformation));
 
     transformation->next = NULL;
@@ -280,7 +280,7 @@ translate_handle_packet(struct translate_client *client,
                         unsigned command, const char *payload,
                         size_t payload_length)
 {
-    struct translate_transformation *transformation;
+    struct transformation *transformation;
 
     if (command == TRANSLATE_BEGIN) {
         if (client->response.status != (http_status_t)-1) {

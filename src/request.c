@@ -14,7 +14,7 @@
 bool
 request_processor_enabled(struct request *request)
 {
-    const struct translate_transformation *transformation;
+    const struct transformation *transformation;
 
     for (transformation = request->translate.response->transformation;
          transformation != NULL;
