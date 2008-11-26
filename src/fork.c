@@ -319,6 +319,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         struct fork *f = (struct fork *)
             istream_new(pool, &istream_fork, sizeof(*f));
 
+        f->input = input;
         if (input != NULL) {
             close(stdin_pipe[0]);
             f->input_fd = stdin_pipe[1];
@@ -326,8 +327,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
             istream_assign_handler(&f->input, input,
                                    &fork_input_handler, f,
                                    ISTREAM_FILE|ISTREAM_PIPE);
-        } else
-            f->input = NULL;
+        }
 
         close(stdout_pipe[1]);
         f->output_fd = stdout_pipe[0];
