@@ -3,6 +3,9 @@ cm4all-beng-proxy (0.3) unstable; urgency=low
   * implemented widget filters
   * translate: initialize all fields of a CGI address
   * python: added class Response
+  * prototypes/translate.py:
+    - support "filter"
+    - support "content_type"
 
  --
 

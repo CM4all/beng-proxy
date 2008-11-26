@@ -71,6 +71,11 @@ class Translation(Protocol):
             if m:
                 response.packet(TRANSLATE_INTERPRETER, m.group(1))
                 continue
+            m = re.match(r'^content_type\s+"([^\"]+)"$', line)
+            if m:
+                response.packet(TRANSLATE_CONTENT_TYPE, m.group(1))
+                continue
+
             if line == 'process':
                 response.packet(TRANSLATE_PROCESS)
             elif line == 'container':
