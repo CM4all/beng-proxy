@@ -21,8 +21,12 @@ filter_new(struct http_cache *cache,
            void *handler_ctx,
            struct async_operation_ref *async_ref)
 {
-    struct strmap *headers2 = strmap_new(pool, 16);
-    header_parse_buffer(pool, headers2, headers);
+    struct strmap *headers2 = NULL;
+
+    if (headers != NULL) {
+        headers2 = strmap_new(pool, 16);
+        header_parse_buffer(pool, headers2, headers);
+    }
 
     resource_get(cache, ajp_client_stock, fcgi_stock, pool,
                  HTTP_METHOD_POST, address,
