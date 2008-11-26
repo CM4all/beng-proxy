@@ -158,6 +158,10 @@ fork_read_from_output(struct fork *f)
             istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
             event2_set(&f->event, EV_READ);
+
+            if (f->input != NULL)
+                /* the CGI may be waiting for more data from stdin */
+                istream_read(f->input);
         } else {
             daemon_log(1, "failed to read from sub process: %s\n",
                        strerror(errno));
@@ -177,6 +181,10 @@ fork_read_from_output(struct fork *f)
             istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
             event2_set(&f->event, EV_READ);
+
+            if (f->input != NULL)
+                /* the CGI may be waiting for more data from stdin */
+                istream_read(f->input);
         } else {
             daemon_log(1, "failed to read from sub process: %s\n",
                        strerror(errno));
