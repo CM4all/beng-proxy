@@ -305,6 +305,21 @@ widget_response_process(struct embed *embed, http_status_t status,
                   embed->async_ref);
 }
 
+/**
+ * A response was received from the widget server; apply
+ * transformations (if enabled) and return it to our handler.
+ */
+static void
+widget_response_dispatch(struct embed *embed, http_status_t status,
+                        struct strmap *headers, istream_t body)
+{
+    if (embed->widget->from_request.raw || body == NULL)
+        http_response_handler_invoke_response(&embed->handler_ref,
+                                              status, headers, body);
+    else
+        widget_response_process(embed, status, headers, body);
+}
+
 static void
 widget_response_response(http_status_t status, struct strmap *headers,
                          istream_t body, void *ctx)
@@ -344,11 +359,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         }
     }
 
-    if (embed->widget->from_request.raw || body == NULL)
-        http_response_handler_invoke_response(&embed->handler_ref,
-                                              status, headers, body);
-    else
-        widget_response_process(embed, status, headers, body);
+    widget_response_dispatch(embed, status, headers, body);
 }
 
 static void
