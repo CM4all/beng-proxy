@@ -56,7 +56,6 @@ lookup_callback(const struct translate_response *response, void *ctx)
     resource_address_copy(lookup->pool, &class->address, &response->address);
     class->transformation =
         transformation_dup_chain(lookup->pool, response->transformation);
-    class->is_container = transformation_is_container(class->transformation);
 
     lookup->callback(class, lookup->callback_ctx);
 }

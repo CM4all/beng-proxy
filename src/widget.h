@@ -38,9 +38,6 @@ struct widget_class {
     /** transformations applied to the widget response */
     const struct transformation *transformation;
 
-    /** can this widget contain other widgets? */
-    bool is_container:1;
-
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */
     bool stateful;
@@ -139,6 +136,9 @@ struct widget_ref {
 
 
 extern const struct widget_class root_widget_class;
+
+bool
+widget_class_is_container(const struct widget_class *class);
 
 
 static inline void
