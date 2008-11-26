@@ -70,4 +70,7 @@ translate(pool_t pool,
           void *ctx,
           struct async_operation_ref *async_ref);
 
+struct translate_transformation *
+transformation_dup(pool_t pool, const struct translate_transformation *src);
+
 #endif
