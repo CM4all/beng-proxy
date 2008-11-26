@@ -10,7 +10,7 @@ cm4all-beng-proxy (0.3) unstable; urgency=low
     - support "content_type"
   * demo: added widget filter demo
 
- -- Max Kellermann <mk@cm4all.com>  Wed, 26 Nov 2008 16:27:29 +0100
+ --
 
 cm4all-beng-proxy (0.2) unstable; urgency=low
 
