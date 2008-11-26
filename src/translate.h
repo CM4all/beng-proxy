@@ -73,4 +73,7 @@ translate(pool_t pool,
 struct translate_transformation *
 transformation_dup(pool_t pool, const struct translate_transformation *src);
 
+struct translate_transformation *
+transformation_dup_chain(pool_t pool, const struct translate_transformation *src);
+
 #endif

@@ -73,9 +73,6 @@ static void
 tcache_dup_response(pool_t pool, struct translate_response *dest,
                     const struct translate_response *src)
 {
-    const struct translate_transformation *transformation;
-    struct translate_transformation **tail_p;
-
     dest->status = src->status;
     resource_address_copy(pool, &dest->address, &src->address);
     dest->site = p_strdup_checked(pool, src->site);
@@ -86,16 +83,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->user = NULL;
     dest->language = NULL;
 
-    dest->transformation = NULL;
-    tail_p = &dest->transformation;
-    for (transformation = src->transformation;
-         transformation != NULL; transformation = transformation->next) {
-        struct translate_transformation *p =
-            transformation_dup(pool, transformation);
-
-        *tail_p = p;
-        tail_p = &p->next;
-    }
+    dest->transformation = transformation_dup_chain(pool, src->transformation);
 }
 
 
