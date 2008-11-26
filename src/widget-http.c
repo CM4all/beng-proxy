@@ -15,6 +15,9 @@
 #include "strref-pool.h"
 #include "dpool.h"
 #include "get.h"
+#include "filter.h"
+#include "header-writer.h"
+#include "transformation.h"
 #include "global.h"
 
 #include <daemon/log.h>
@@ -30,6 +33,11 @@ struct embed {
     struct widget *widget;
     struct processor_env *env;
     const char *host_and_port;
+
+    /**
+     * the next transformation to be applied to the widget response
+     */
+    const struct transformation *transformation;
 
     struct http_response_handler_ref handler_ref;
     struct async_operation_ref *async_ref;
@@ -298,47 +306,82 @@ widget_response_format(pool_t pool, const struct widget *widget,
  * its content type and run the processor (if applicable).
  */
 static void
-widget_response_process(struct embed *embed, http_status_t status,
-                        struct strmap *headers, istream_t body)
+widget_response_process(struct embed *embed, istream_t body,
+                        unsigned options)
 {
-    unsigned options;
-
-    body = widget_response_format(embed->pool, embed->widget, &headers, body);
-    if (body == NULL) {
-        http_response_handler_invoke_abort(&embed->handler_ref);
-        return;
-    }
-
-    if (embed->widget->class->type == WIDGET_TYPE_RAW) {
-        http_response_handler_invoke_response(&embed->handler_ref,
-                                              status, headers, body);
-        return;
-    }
-
-    options = PROCESSOR_REWRITE_URL;
-    if (embed->widget->class->is_container)
-        options |= PROCESSOR_CONTAINER;
-
     processor_new(embed->pool, body,
                   embed->widget, embed->env, options,
-                  embed->handler_ref.handler,
-                  embed->handler_ref.ctx,
+                  &widget_response_handler, embed,
                   embed->async_ref);
 }
 
 /**
+ * Apply a transformation to the widget response and hand it back to
+ * widget_response_handler.
+ */
+static void
+widget_response_transform(struct embed *embed,
+                          struct strmap *headers, istream_t body,
+                          const struct transformation *transformation)
+{
+    assert(body != NULL);
+    assert(transformation != NULL);
+    assert(embed->transformation == transformation->next);
+
+    switch (transformation->type) {
+    case TRANSFORMATION_PROCESS:
+        widget_response_process(embed, body,
+                                transformation->u.processor.options);
+        break;
+
+    case TRANSFORMATION_FILTER:
+        filter_new(global_http_cache, global_tcp_stock, global_fcgi_stock,
+                   embed->pool,
+                   &transformation->u.filter,
+                   headers != NULL ? headers_dup(embed->pool, headers) : NULL,
+                   body,
+                   &widget_response_handler, embed,
+                   embed->async_ref);
+        break;
+    }
+}
+
+/**
  * A response was received from the widget server; apply
- * transformations (if enabled) and return it to our handler.
+ * transformations (if enabled) and return it to our handler.  This
+ * function will be called (semi-)recursively for every transformation
+ * in the chain.
  */
 static void
 widget_response_dispatch(struct embed *embed, http_status_t status,
-                        struct strmap *headers, istream_t body)
+                         struct strmap *headers, istream_t body)
 {
-    if (embed->widget->from_request.raw || body == NULL)
+    const struct transformation *transformation = embed->transformation;
+
+    if (transformation != NULL && body != NULL) {
+        /* transform this response */
+
+        embed->transformation = transformation->next;
+
+        widget_response_transform(embed, headers, body, transformation);
+    } else {
+        /* no transformation left */
+
+        if (body != NULL && !embed->widget->from_request.raw) {
+            /* check if the content-type is correct for embedding into
+               a template, and convert if possible */
+            body = widget_response_format(embed->pool, embed->widget,
+                                          &headers, body);
+            if (body == NULL) {
+                http_response_handler_invoke_abort(&embed->handler_ref);
+                return;
+            }
+        }
+
+        /* finally pass the response to our handler */
         http_response_handler_invoke_response(&embed->handler_ref,
                                               status, headers, body);
-    else
-        widget_response_process(embed, status, headers, body);
+    }
 }
 
 static void
@@ -425,6 +468,8 @@ widget_http_request(pool_t pool, struct widget *widget,
         embed->widget->class->address.type == RESOURCE_ADDRESS_HTTP
         ? uri_host_and_port(pool, embed->widget->class->address.u.http->uri)
         : NULL;
+    embed->transformation = embed->widget->from_request.raw
+        ? NULL : widget->class->transformation;
 
     headers = widget_request_headers(embed, widget->from_request.body != NULL);
 

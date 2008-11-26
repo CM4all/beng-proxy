@@ -1,5 +1,6 @@
 cm4all-beng-proxy (0.3) unstable; urgency=low
 
+  * implemented widget filters
   * python: added class Response
 
  --

@@ -54,15 +54,9 @@ lookup_callback(const struct translate_response *response, void *ctx)
     class = p_malloc(lookup->pool, sizeof(*class));
     class->stateful = response->stateful;
     resource_address_copy(lookup->pool, &class->address, &response->address);
-
-    if (response->transformation != NULL &&
-        response->transformation->type == TRANSFORMATION_PROCESS) {
-        class->type = WIDGET_TYPE_BENG;
-        class->is_container = (response->transformation->u.processor.options & PROCESSOR_CONTAINER) != 0;
-    } else {
-        class->type = WIDGET_TYPE_RAW;
-        class->is_container = false;
-    }
+    class->transformation =
+        transformation_dup_chain(lookup->pool, response->transformation);
+    class->is_container = transformation_is_container(class->transformation);
 
     lookup->callback(class, lookup->callback_ctx);
 }

@@ -35,8 +35,8 @@ struct widget_class {
     /** the base URI of this widget, as specified in the template */
     struct resource_address address;
 
-    /** which API is used by the widget */
-    enum widget_type type;
+    /** transformations applied to the widget response */
+    const struct transformation *transformation;
 
     /** can this widget contain other widgets? */
     bool is_container:1;
