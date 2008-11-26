@@ -226,26 +226,28 @@ widget_response_redirect(struct embed *embed, const char *location,
 }
 
 /**
- * The widget response is going to be embedded into a template; check
- * its content type and run the processor (if applicable).
+ * Ensure that a widget has the correct type for embedding it into a
+ * HTML/XML document.  Returns NULL (and closes body) if that is
+ * impossible.
  */
-static void
-widget_response_process(struct embed *embed, http_status_t status,
-                        struct strmap *headers, istream_t body)
+static istream_t
+widget_response_format(pool_t pool, const struct widget *widget,
+                       struct strmap **headers_r, istream_t body)
 {
+    struct strmap *headers = *headers_r;
     const char *content_type;
     struct strref *charset, charset_buffer;
-    unsigned options;
+
+    assert(body != NULL);
 
     content_type = headers == NULL
         ? NULL : strmap_get(headers, "content-type");
 
     if (content_type == NULL || strncmp(content_type, "text/", 5) != 0) {
         daemon_log(2, "widget '%s' sent non-text response\n",
-                   widget_path(embed->widget));
+                   widget_path(widget));
         istream_close(body);
-        http_response_handler_invoke_abort(&embed->handler_ref);
-        return;
+        return NULL;
     }
 
     charset = http_header_param(&charset_buffer, content_type, "charset");
@@ -254,21 +256,20 @@ widget_response_process(struct embed *embed, http_status_t status,
         /* beng-proxy expects all widgets to send their HTML code in
            utf-8; this widget however used a different charset.
            Automatically convert it with istream_iconv */
-        const char *charset2 = strref_dup(embed->pool, charset);
-        istream_t ic = istream_iconv_new(embed->pool, body, "utf-8", charset2);
+        const char *charset2 = strref_dup(pool, charset);
+        istream_t ic = istream_iconv_new(pool, body, "utf-8", charset2);
         if (ic == NULL) {
             daemon_log(2, "widget '%s' sent unknown charset '%s'\n",
-                       widget_path(embed->widget), charset2);
+                       widget_path(widget), charset2);
             istream_close(body);
-            http_response_handler_invoke_abort(&embed->handler_ref);
-            return;
+            return NULL;
         }
 
         daemon_log(6, "widget '%s': charset conversion '%s' -> utf-8\n",
-                   widget_path(embed->widget), charset2);
+                   widget_path(widget), charset2);
         body = ic;
 
-        headers = strmap_dup(embed->pool, headers);
+        headers = strmap_dup(pool, headers);
         strmap_set(headers, "content-type", "text/html; charset=utf-8");
     }
 
@@ -277,15 +278,35 @@ widget_response_process(struct embed *embed, http_status_t status,
         /* convert text to HTML */
 
         daemon_log(6, "widget '%s': converting text to HTML\n",
-                   widget_path(embed->widget));
+                   widget_path(widget));
 
-        body = istream_html_escape_new(embed->pool, body);
-        body = istream_cat_new(embed->pool,
-                               istream_string_new(embed->pool,
+        body = istream_html_escape_new(pool, body);
+        body = istream_cat_new(pool,
+                               istream_string_new(pool,
                                                   "<pre class=\"beng_text_widget\">"),
                                body,
-                               istream_string_new(embed->pool, "</pre>"),
+                               istream_string_new(pool, "</pre>"),
                                NULL);
+    }
+
+    *headers_r = headers;
+    return body;
+}
+
+/**
+ * The widget response is going to be embedded into a template; check
+ * its content type and run the processor (if applicable).
+ */
+static void
+widget_response_process(struct embed *embed, http_status_t status,
+                        struct strmap *headers, istream_t body)
+{
+    unsigned options;
+
+    body = widget_response_format(embed->pool, embed->widget, &headers, body);
+    if (body == NULL) {
+        http_response_handler_invoke_abort(&embed->handler_ref);
+        return;
     }
 
     if (embed->widget->class->type == WIDGET_TYPE_RAW) {
