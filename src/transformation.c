@@ -5,6 +5,17 @@
  */
 
 #include "transformation.h"
+#include "processor.h"
+
+bool
+transformation_is_container(const struct transformation *t)
+{
+    for (; t != NULL; t = t->next)
+        if (t->type == TRANSFORMATION_PROCESS)
+            return (t->u.processor.options & PROCESSOR_CONTAINER) != 0;
+
+    return false;
+}
 
 static inline const char *
 p_strdup_checked(pool_t pool, const char *s)

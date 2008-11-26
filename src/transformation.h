@@ -28,6 +28,13 @@ struct transformation {
     } u;
 };
 
+/**
+ * Returns true if the first "PROCESS" transformation in the chain (if
+ * any) includes the "CONTAINER" processor option.
+ */
+bool
+transformation_is_container(const struct transformation *t);
+
 struct transformation *
 transformation_dup(pool_t pool, const struct transformation *src);
 
