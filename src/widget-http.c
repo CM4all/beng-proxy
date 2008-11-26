@@ -84,8 +84,8 @@ get_env_request_header(const struct processor_env *env, const char *key)
 }
 
 static void
-headers_copy(struct strmap *in, struct strmap *out,
-             const char *const* keys)
+headers_copy2(struct strmap *in, struct strmap *out,
+              const char *const* keys)
 {
     const char *value;
 
@@ -121,9 +121,9 @@ widget_request_headers(struct embed *embed, int with_body)
     strmap_add(headers, "accept-charset", "utf-8");
 
     if (embed->env->request_headers != NULL) {
-        headers_copy(embed->env->request_headers, headers, copy_headers);
+        headers_copy2(embed->env->request_headers, headers, copy_headers);
         if (with_body)
-            headers_copy(embed->env->request_headers, headers, copy_headers_with_body);
+            headers_copy2(embed->env->request_headers, headers, copy_headers_with_body);
     }
 
     session = session_get(embed->env->session_id);
@@ -141,7 +141,7 @@ widget_request_headers(struct embed *embed, int with_body)
     if (session != NULL && session->language != NULL)
         strmap_add(headers, "accept-language", session->language);
     else if (embed->env->request_headers != NULL)
-        headers_copy(embed->env->request_headers, headers, language_headers);
+        headers_copy2(embed->env->request_headers, headers, language_headers);
 
     if (session != NULL && session->user != NULL)
         strmap_add(headers, "x-cm4all-beng-user", session->user);
