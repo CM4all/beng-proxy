@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "translate.h"
+#include "transformation.h"
 
 static inline const char *
 p_strdup_checked(pool_t pool, const char *s)

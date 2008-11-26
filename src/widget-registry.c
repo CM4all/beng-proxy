@@ -10,6 +10,7 @@
 #include "widget.h"
 #include "tcache.h"
 #include "uri-address.h"
+#include "transformation.h"
 
 static void
 widget_registry_lookup(pool_t pool,

@@ -5,6 +5,7 @@
  */
 
 #include "translate.h"
+#include "transformation.h"
 #include "stock.h"
 #include "tcp-stock.h"
 #include "growing-buffer.h"

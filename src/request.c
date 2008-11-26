@@ -9,6 +9,7 @@
 #include "session.h"
 #include "http-server.h"
 #include "cookie-server.h"
+#include "transformation.h"
 
 bool
 request_processor_enabled(struct request *request)

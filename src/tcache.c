@@ -5,6 +5,7 @@
  */
 
 #include "tcache.h"
+#include "transformation.h"
 #include "cache.h"
 #include "stock.h"
 #include "uri-address.h"

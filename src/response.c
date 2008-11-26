@@ -5,6 +5,7 @@
  */
 
 #include "request.h"
+#include "transformation.h"
 #include "http-server.h"
 #include "header-writer.h"
 #include "widget.h"

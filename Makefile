@@ -110,7 +110,7 @@ SOURCES = src/main.c \
 	src/cookie-server.c \
 	src/connection.c \
 	src/translate.c \
-	src/tutil.c \
+	src/transformation.c \
 	src/tcache.c \
 	src/request.c \
 	src/response.c \
@@ -311,7 +311,7 @@ test/t-session: test/t-session.o src/shm.o src/session.o src/dpool.o src/dstring
 check-session: test/t-session
 	./test/t-session
 
-test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock.o src/pool.o src/pstring.o src/uri-address.o src/tutil.o src/tcache.o src/cache.o src/hashmap.o src/abort-unref.o
+test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock.o src/pool.o src/pstring.o src/uri-address.o src/transformation.o src/tcache.o src/cache.o src/hashmap.o src/abort-unref.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
 check-widget-registry: test/t-widget-registry

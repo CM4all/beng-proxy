@@ -14,6 +14,7 @@
 struct uri_with_address;
 struct hstock;
 struct async_operation_ref;
+struct translate_transformation;
 
 struct translate_request {
     const char *remote_host;
@@ -22,25 +23,6 @@ struct translate_request {
     const char *widget_type;
     const char *session;
     const char *param;
-};
-
-struct translate_transformation {
-    struct translate_transformation *next;
-
-    enum {
-        TRANSFORMATION_PROCESS,
-        TRANSFORMATION_FILTER,
-    } type;
-
-    union {
-        struct {
-            unsigned options;
-
-            const char *domain;
-        } processor;
-
-        struct resource_address filter;
-    } u;
 };
 
 struct translate_response {
@@ -69,11 +51,5 @@ translate(pool_t pool,
           translate_callback_t callback,
           void *ctx,
           struct async_operation_ref *async_ref);
-
-struct translate_transformation *
-transformation_dup(pool_t pool, const struct translate_transformation *src);
-
-struct translate_transformation *
-transformation_dup_chain(pool_t pool, const struct translate_transformation *src);
 
 #endif
