@@ -9,6 +9,11 @@
 #include "istream-buffer.h"
 #include "buffered-io.h"
 #include "event2.h"
+#include "fd-util.h"
+
+#ifdef __linux
+#include "splice.h"
+#endif
 
 #include <daemon/log.h>
 
@@ -89,6 +94,36 @@ fork_input_data(const void *data, size_t length, void *ctx)
     return (size_t)nbytes;
 }
 
+#ifdef __linux
+static ssize_t
+fork_input_direct(__attr_unused istream_direct_t type,
+                  int fd, size_t max_length, void *ctx)
+{
+    struct fork *f = ctx;
+    ssize_t nbytes;
+
+    assert(f->input_fd >= 0);
+
+    nbytes = splice(fd, NULL, f->input_fd, NULL, max_length,
+                    SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
+    if (nbytes < 0) {
+        if (errno == EAGAIN) {
+            if (!fd_ready_for_writing(f->input_fd))
+                return -2;
+        } else {
+            daemon_log(1, "splice() to subprocess failed: %s\n",
+                       strerror(errno));
+            close(f->input_fd);
+            f->input_fd = -1;
+            istream_free_handler(&f->input);
+            return 0;
+        }
+    }
+
+    return nbytes;
+}
+#endif
+
 static void
 fork_input_eof(void *ctx)
 {
@@ -117,6 +152,9 @@ fork_input_abort(void *ctx)
 
 static const struct istream_handler fork_input_handler = {
     .data = fork_input_data,
+#ifdef __linux
+    .direct = fork_input_direct,
+#endif
     .eof = fork_input_eof,
     .abort = fork_input_abort,
 };
@@ -334,7 +372,12 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
 
             istream_assign_handler(&f->input, input,
                                    &fork_input_handler, f,
-                                   ISTREAM_FILE|ISTREAM_PIPE);
+#ifdef __linux
+                                   ISTREAM_ANY
+#else
+                                   0
+#endif
+                                   );
         }
 
         close(stdout_pipe[1]);
