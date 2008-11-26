@@ -69,6 +69,29 @@ p_strdup_checked(pool_t pool, const char *s)
     return s == NULL ? NULL : p_strdup(pool, s);
 }
 
+static struct translate_transformation *
+tcache_dup_transformation(pool_t pool,
+                          const struct translate_transformation *src)
+{
+    struct translate_transformation *dest = p_malloc(pool, sizeof(*dest));
+
+    dest->type = src->type;
+    switch (dest->type) {
+    case TRANSFORMATION_PROCESS:
+        dest->u.processor.options = src->u.processor.options;
+        dest->u.processor.domain = p_strdup_checked(pool, src->u.processor.domain);
+        break;
+
+    case TRANSFORMATION_FILTER:
+        resource_address_copy(pool, &dest->u.filter,
+                              &src->u.filter);
+        break;
+    }
+
+    dest->next = NULL;
+    return dest;
+}
+
 static void
 tcache_dup_response(pool_t pool, struct translate_response *dest,
                     const struct translate_response *src)
@@ -90,22 +113,9 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     tail_p = &dest->transformation;
     for (transformation = src->transformation;
          transformation != NULL; transformation = transformation->next) {
-        struct translate_transformation *p = p_malloc(pool, sizeof(*p));
+        struct translate_transformation *p =
+            tcache_dup_transformation(pool, transformation);
 
-        p->type = transformation->type;
-        switch (p->type) {
-        case TRANSFORMATION_PROCESS:
-            p->u.processor.options = transformation->u.processor.options;
-            p->u.processor.domain = p_strdup_checked(pool, transformation->u.processor.domain);
-            break;
-
-        case TRANSFORMATION_FILTER:
-            resource_address_copy(pool, &p->u.filter,
-                                  &transformation->u.filter);
-            break;
-        }
-
-        p->next = NULL;
         *tail_p = p;
         tail_p = &p->next;
     }
