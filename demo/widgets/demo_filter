@@ -1,0 +1,3 @@
+path "/usr/share/cm4all/beng-proxy/demo/filter.xml"
+filter
+cgi "/usr/share/cm4all/beng-proxy/demo/xslt.sh"

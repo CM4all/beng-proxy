@@ -8,6 +8,7 @@ cm4all-beng-proxy (0.3) unstable; urgency=low
   * prototypes/translate.py:
     - support "filter"
     - support "content_type"
+  * demo: added widget filter demo
 
  --
 

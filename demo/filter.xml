@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beng>
+  <title>Filter-Test</title>
+  <paragraph>
+    Dieses <buzzword>XML</buzzword>-Widget wird per
+    <buzzword>XSLT</buzzword>-Filter zu HTML konvertiert.
+  </paragraph>
+</beng>
