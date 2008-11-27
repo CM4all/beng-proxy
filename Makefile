@@ -268,7 +268,7 @@ test/t-processor: test/t-processor.o src/processor.o src/penv.o src/parser.o src
 FILTER_TEST_CLASSES = cat chunked dechunk pipe hold delayed subst deflate byte iconv replace replace2 html-escape fcgi
 FILTER_TESTS = $(patsubst %,test/t-istream-%,$(FILTER_TEST_CLASSES))
 
-$(filter-out %2,$(FILTER_TESTS)): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-four.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o src/growing-buffer.o
+$(filter-out %2,$(FILTER_TESTS)): test/t-istream-%: test/t-istream-%.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-four.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o src/growing-buffer.o src/fd-util.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS) -lz
 
 $(filter %2,$(FILTER_TESTS)): test/t-istream-%2: test/t-istream-%2.o src/pool.o src/istream-forward.o src/istream-memory.o src/istream-string.o src/istream-byte.o src/istream-four.o src/istream-fail.o src/istream-head.o src/istream-cat.o src/istream-%.o src/fifo-buffer.o src/format.o src/istream-later.o src/growing-buffer.o
