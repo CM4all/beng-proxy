@@ -193,7 +193,17 @@ cgi_input_abort(void *ctx)
     struct cgi *cgi = ctx;
 
     cgi->input = NULL;
-    istream_deinit_abort(&cgi->output);
+
+    if (cgi->headers != NULL) {
+        /* the response hasn't been sent yet: notify the response
+           handler */
+        assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
+
+        http_response_handler_invoke_abort(&cgi->handler);
+        pool_unref(cgi->output.pool);
+    } else
+        /* response has been sent: abort only the output stream */
+        istream_deinit_abort(&cgi->output);
 }
 
 static const struct istream_handler cgi_input_handler = {
