@@ -144,12 +144,10 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 
     nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,
                     SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
-    if (unlikely(nbytes < 0 && errno == EAGAIN))
-        /* we assume that splicing to the pipe cannot possibly block,
-           since we emptied the pipe; assume that it can only be the
-           source file which is blocking */
-        return -1;
-
+    /* don't check EAGAIN here (and don't return -2).  We assume that
+       splicing to the pipe cannot possibly block, since we flushed
+       the pipe; assume that it can only be the source file which is
+       blocking */
     if (nbytes <= 0)
         return nbytes;
 
