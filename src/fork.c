@@ -367,6 +367,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         f->input = input;
         if (input != NULL) {
             close(stdin_pipe[0]);
+            fd_set_cloexec(stdin_pipe[1]);
             f->input_fd = stdin_pipe[1];
 
             istream_assign_handler(&f->input, input,
@@ -380,6 +381,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         }
 
         close(stdout_pipe[1]);
+        fd_set_cloexec(stdout_pipe[0]);
         f->output_fd = stdout_pipe[0];
         event2_init(&f->event, f->output_fd,
                     fork_output_event_callback, f, NULL);

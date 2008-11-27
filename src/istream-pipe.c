@@ -8,6 +8,7 @@
 
 #include "istream-internal.h"
 #include "splice.h"
+#include "fd-util.h"
 
 #include <daemon/log.h>
 
@@ -140,6 +141,9 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
             pipe_close(p);
             return 0;
         }
+
+        fd_set_cloexec(p->fds[0]);
+        fd_set_cloexec(p->fds[1]);
     }
 
     nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,

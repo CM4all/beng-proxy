@@ -6,6 +6,7 @@
 
 #include "istream-buffer.h"
 #include "buffered-io.h"
+#include "fd-util.h"
 
 #include <daemon/log.h>
 
@@ -268,6 +269,8 @@ istream_file_new(pool_t pool, const char *path, off_t length)
                    path, strerror(errno));
         return NULL;
     }
+
+    fd_set_cloexec(fd);
 
     file = (struct file*)istream_new(pool, &istream_file, sizeof(*file));
     file->fd = fd;
