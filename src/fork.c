@@ -112,7 +112,7 @@ fork_input_direct(__attr_unused istream_direct_t type,
                 return -2;
 
             /* try again, just in case connection->fd has become ready
-               between the first istream_direct_to_socket() call and
+               between the first splice() call and
                fd_ready_for_writing() */
             nbytes = splice(fd, NULL, f->input_fd, NULL, max_length,
                             SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
