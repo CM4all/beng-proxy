@@ -211,6 +211,9 @@ test_body(pool_t pool, struct context *c)
 
     event_dispatch();
 
+    if (c->body != NULL)
+        istream_read(c->body);
+
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
     assert(c->body_eof);
@@ -274,6 +277,9 @@ test_close_response_body_data(pool_t pool, struct context *c)
     pool_commit();
 
     event_dispatch();
+
+    if (c->body != NULL)
+        istream_read(c->body);
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
