@@ -360,6 +360,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
 
         dup2(stdout_pipe[1], STDOUT_FILENO);
         close(stdout_pipe[0]);
+        close(stdout_pipe[1]);
     } else {
         struct fork *f = (struct fork *)
             istream_new(pool, &istream_fork, sizeof(*f));
