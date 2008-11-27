@@ -7,6 +7,7 @@
 #include "client-socket.h"
 #include "socket-util.h"
 #include "async.h"
+#include "fd-util.h"
 
 #include <inline/poison.h>
 
@@ -119,6 +120,14 @@ client_socket_new(pool_t pool,
     fd = socket(domain, type, protocol);
     if (fd < 0) {
         callback(-1, errno, ctx);
+        return;
+    }
+
+    ret = fd_set_cloexec(fd);
+    if (ret < 0) {
+        int save_errno = errno;
+        close(fd);
+        callback(-1, save_errno, ctx);
         return;
     }
 
