@@ -116,13 +116,6 @@ fork_input_direct(__attr_unused istream_direct_t type,
                fd_ready_for_writing() */
             nbytes = splice(fd, NULL, f->input_fd, NULL, max_length,
                             SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
-        } else {
-            daemon_log(1, "splice() to subprocess failed: %s\n",
-                       strerror(errno));
-            close(f->input_fd);
-            f->input_fd = -1;
-            istream_free_handler(&f->input);
-            return 0;
         }
     }
 
