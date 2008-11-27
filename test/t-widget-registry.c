@@ -104,8 +104,7 @@ test_normal(pool_t pool)
     assert(data.class != NULL);
     assert(data.class->address.type == RESOURCE_ADDRESS_HTTP);
     assert(strcmp(data.class->address.u.http->uri, "http://foo/") == 0);
-    assert(data.class->type == WIDGET_TYPE_RAW);
-    assert(!data.class->is_container);
+    assert(data.class->transformation == NULL);
 
     pool_unref(pool);
 
