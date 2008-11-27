@@ -11,7 +11,7 @@ cm4all-beng-proxy (0.3.1) unstable; urgency=low
   * processor: hold a reference to the caller's pool
   * debian/rules: enabled test suite
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 27 Nov 2008 16:01:16 +0100
 
 cm4all-beng-proxy (0.3) unstable; urgency=low
 
