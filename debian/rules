@@ -27,6 +27,8 @@ check: debian/stamp-check
 debian/stamp-check: debian/stamp-build
 	dh_testdir
 
+	$(MAKE) check
+
 	touch $@
 
 clean:

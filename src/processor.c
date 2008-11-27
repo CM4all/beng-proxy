@@ -29,7 +29,7 @@ enum uri_base {
 };
 
 struct processor {
-    pool_t pool;
+    pool_t pool, caller_pool;
 
     struct widget *container;
     struct processor_env *env;
@@ -168,7 +168,7 @@ static void
 processor_parser_init(struct processor *processor, istream_t input);
 
 void
-processor_new(pool_t pool, istream_t istream,
+processor_new(pool_t caller_pool, istream_t istream,
               struct widget *widget,
               struct processor_env *env,
               unsigned options,
@@ -176,13 +176,12 @@ processor_new(pool_t pool, istream_t istream,
               void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
+    pool_t pool = pool_new_linear(caller_pool, "processor", 32768);
     struct processor *processor;
 
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
-
-    pool = pool_new_linear(pool, "processor", 32768);
 
     if (widget->from_request.proxy_ref == NULL) {
         istream = istream_subst_new(pool, istream);
@@ -191,6 +190,7 @@ processor_new(pool_t pool, istream_t istream,
 
     processor = p_malloc(pool, sizeof(*processor));
     processor->pool = pool;
+    processor->caller_pool = caller_pool;
 
     processor->widget.pool = env->pool;
 
@@ -226,6 +226,7 @@ processor_new(pool_t pool, istream_t istream,
 
         http_response_handler_set(&processor->response_handler,
                                   handler, handler_ctx);
+        pool_ref(caller_pool);
 
         async_init(&processor->async, &processor_async_operation);
         async_ref_set(async_ref, &processor->async);
@@ -558,10 +559,11 @@ embed_widget(struct processor *processor, struct processor_env *env,
 
     if (widget->from_request.proxy || widget->from_request.proxy_ref != NULL) {
         processor->response_sent = true;
-        embed_frame_widget(pool, env, widget,
+        embed_frame_widget(processor->caller_pool, env, widget,
                            processor->response_handler.handler,
                            processor->response_handler.ctx,
                            processor->async_ref);
+        pool_unref(processor->caller_pool);
 
         parser_close(processor->parser);
         pool_unref(processor->pool);
@@ -697,6 +699,7 @@ processor_parser_eof(void *ctx, off_t length __attr_unused)
         http_response_handler_invoke_message(&processor->response_handler, processor->pool,
                                              HTTP_STATUS_NOT_FOUND,
                                              "Widget not found");
+        pool_unref(processor->caller_pool);
     }
 
     pool_unref(processor->pool);
@@ -714,6 +717,7 @@ processor_parser_abort(void *ctx)
     if (!processor->response_sent) {
         processor->response_sent = true;
         http_response_handler_invoke_abort(&processor->response_handler);
+        pool_unref(processor->caller_pool);
     }
 
     pool_unref(processor->pool);
