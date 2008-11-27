@@ -300,7 +300,7 @@ http_client_parse_status_line(struct http_client *client,
 static bool
 http_client_headers_finished(struct http_client *client)
 {
-    const char *header_connection, *value;
+    const char *header_connection, *transfer_encoding, *content_length_string;
     char *endptr;
     off_t content_length;
 
@@ -314,12 +314,16 @@ http_client_headers_finished(struct http_client *client)
         return true;
     }
 
-    value = strmap_get(client->response.headers, "transfer-encoding");
-    if (value == NULL || strcasecmp(value, "chunked") != 0) {
+    transfer_encoding = strmap_remove(client->response.headers,
+                                      "transfer-encoding");
+    content_length_string = strmap_remove(client->response.headers,
+                                          "content-length");
+
+    if (transfer_encoding == NULL ||
+        strcasecmp(transfer_encoding, "chunked") != 0) {
         /* not chunked */
 
-        value = strmap_get(client->response.headers, "content-length");
-        if (unlikely(value == NULL)) {
+        if (unlikely(content_length_string == NULL)) {
             if (client->keep_alive) {
                 daemon_log(2, "no Content-Length header in HTTP response\n");
                 http_client_abort_response_headers(client);
@@ -327,7 +331,7 @@ http_client_headers_finished(struct http_client *client)
             }
             content_length = (off_t)-1;
         } else {
-            content_length = strtoul(value, &endptr, 10);
+            content_length = strtoul(content_length_string, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
                 daemon_log(2, "invalid Content-Length header in HTTP response\n");
                 http_client_abort_response_headers(client);
