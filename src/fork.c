@@ -110,6 +110,12 @@ fork_input_direct(__attr_unused istream_direct_t type,
         if (errno == EAGAIN) {
             if (!fd_ready_for_writing(f->input_fd))
                 return -2;
+
+            /* try again, just in case connection->fd has become ready
+               between the first istream_direct_to_socket() call and
+               fd_ready_for_writing() */
+            nbytes = splice(fd, NULL, f->input_fd, NULL, max_length,
+                            SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
         } else {
             daemon_log(1, "splice() to subprocess failed: %s\n",
                        strerror(errno));
