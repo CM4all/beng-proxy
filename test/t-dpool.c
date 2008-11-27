@@ -47,7 +47,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     d_free(pool, a);
     assert(dpool_is_fragmented(pool));
 
-    a = d_malloc(pool, 220);
+    a = d_malloc(pool, 240);
     assert(a != NULL);
     assert(!dpool_is_fragmented(pool));
 
