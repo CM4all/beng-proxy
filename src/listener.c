@@ -152,7 +152,7 @@ listener_tcp_port_new(pool_t pool, int port,
         return -1;
     }
 
-    ret = fd_mask_descriptor_flags(listener->fd, ~FD_CLOEXEC, FD_CLOEXEC);
+    ret = fd_set_cloexec(listener->fd);
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
