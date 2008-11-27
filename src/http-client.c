@@ -533,7 +533,7 @@ http_client_consume_headers(struct http_client *client)
         return false;
     }
 
-    return http_client_consume_body(client);
+    return true;
 }
 
 static void
