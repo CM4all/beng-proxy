@@ -17,18 +17,15 @@ class Translation(Protocol):
         self._request = None
         self._packet = None
 
-    def _handle_widget_lookup(self, request):
+    def _handle_widget_lookup(self, request, response):
         # checks on the name should be here.
         path = "/etc/cm4all/beng/widgets/%s" % request.widget_type
         try:
             f = open(path)
         except IOError:
-            response = Response()
             response.status(404)
-            self.transport.write(response.finish())
             return
 
-        response = Response()
         for line in f.readlines():
             line = line.strip()
             if line == '' or line[0] == '#':
@@ -88,7 +85,6 @@ class Translation(Protocol):
                 print "Syntax error in %s: %s" % (path, line)
                 response.status(500)
                 break
-        self.transport.write(response.finish())
 
     def _handle_request(self, request):
         if request.session is not None: print "- session =", request.session
@@ -107,8 +103,16 @@ class Translation(Protocol):
             # 
             user = session = None
 
+        response = Response()
+        if user is not None:
+            response.packet(TRANSLATE_USER, user)
+        if session is not None:
+            response.packet(TRANSLATE_SESSION, session)
+
         if request.widget_type is not None:
-            return self._handle_widget_lookup(request)
+            self._handle_widget_lookup(request, response)
+            self.transport.write(response.finish())
+            return
 
         if request.uri[:19] == '/cm4all-beng-proxy/':
             from sys import argv
@@ -123,16 +127,11 @@ class Translation(Protocol):
 
         cgi = cgi_re.search(path, 1)
 
-        response = Response()
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
         if cgi:
             response.packet(TRANSLATE_CGI, path)
         else:
             response.packet(TRANSLATE_PATH, path)
-        if user is not None:
-            response.packet(TRANSLATE_USER, user)
-        if session is not None:
-            response.packet(TRANSLATE_SESSION, session)
         #response.packet(TRANSLATE_FILTER)
         # .... PROXY 'http://cfatest01.intern.cm-ag/filter.py'
         if not cgi and path[-5:] == '.html':
