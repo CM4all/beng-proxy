@@ -19,8 +19,6 @@ proxy_handler(struct request *request2)
     http_method_t method;
     istream_t body;
 
-    pool_ref(request->pool);
-
     if (http_server_request_has_body(request) &&
         (response_dispatcher_wants_body(request2) || request2->body_consumed)) {
         method = HTTP_METHOD_GET;

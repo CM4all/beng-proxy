@@ -90,8 +90,6 @@ response_invoke_processor(struct request *request2,
         request_body = NULL;
     }
 
-    pool_ref(request->pool);
-
     request_make_session(request2);
 
     processor_env_init(request->pool, &request2->env,
@@ -125,8 +123,6 @@ response_invoke_processor(struct request *request2,
                       transformation->u.processor.options,
                       &widget_proxy_handler, request,
                       request2->async_ref);
-
-        pool_unref(request->pool);
     } else {
         processor_new(request->pool, body, widget, &request2->env,
                       transformation->u.processor.options,
@@ -167,8 +163,6 @@ response_dispatch(struct request *request2,
     if (transformation != NULL &&
         transformation->type == TRANSFORMATION_FILTER) {
         struct http_server_request *request = request2->request;
-
-        pool_ref(request->pool);
 
         filter_new(global_http_cache, global_tcp_stock, global_fcgi_stock,
                    request->pool,
@@ -223,7 +217,6 @@ response_response(http_status_t status, struct strmap *headers,
 {
     struct request *request2 = ctx;
     struct http_server_request *request = request2->request;
-    pool_t pool = request->pool;
     struct growing_buffer *response_headers;
 
     assert(!request2->response_sent);
@@ -255,22 +248,17 @@ response_response(http_status_t status, struct strmap *headers,
     response_dispatch(request2,
                       status, response_headers,
                       body);
-
-    pool_unref(pool);
 }
 
 static void
 response_abort(void *ctx)
 {
     struct request *request = ctx;
-    pool_t pool = request->request->pool;
 
     if (!request->response_sent)
         http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
-
-    pool_unref(pool);
 }
 
 const struct http_response_handler response_handler = {
