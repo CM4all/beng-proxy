@@ -540,8 +540,6 @@ static istream_t
 embed_widget(struct processor *processor, struct processor_env *env,
              struct widget *widget)
 {
-    pool_t pool = processor->pool;
-
     if (widget->class_name == NULL &&
         (widget->class == NULL ||
          widget->class->address.type == RESOURCE_ADDRESS_NONE)) {
@@ -572,9 +570,9 @@ embed_widget(struct processor *processor, struct processor_env *env,
     } else {
         istream_t istream;
 
-        istream = embed_inline_widget(pool, env, widget);
+        istream = embed_inline_widget(processor->pool, env, widget);
         if (istream != NULL)
-            istream = istream_catch_new(pool, istream);
+            istream = istream_catch_new(processor->pool, istream);
 
         return istream;
     }
