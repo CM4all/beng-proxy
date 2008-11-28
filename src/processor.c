@@ -35,8 +35,6 @@ struct processor {
     struct processor_env *env;
     unsigned options;
 
-    bool response_sent:1;
-
     istream_t replace;
 
     struct parser *parser;
@@ -212,8 +210,6 @@ processor_new(pool_t caller_pool, istream_t istream,
     if (widget->from_request.proxy_ref == NULL) {
         struct strmap *headers;
 
-        processor->response_sent = true;
-
         headers = strmap_new(processor->pool, 4);
         strmap_add(headers, "content-type", "text/html; charset=utf-8");
 
@@ -221,8 +217,6 @@ processor_new(pool_t caller_pool, istream_t istream,
                                               HTTP_STATUS_OK, headers,
                                               processor->replace);
     } else {
-        processor->response_sent = false;
-
         http_response_handler_set(&processor->response_handler,
                                   handler, handler_ctx);
         pool_ref(caller_pool);
@@ -235,7 +229,7 @@ processor_new(pool_t caller_pool, istream_t istream,
         do {
             processor->had_input = false;
             parser_read(processor->parser);
-        } while (processor->had_input && !processor->response_sent);
+        } while (processor->had_input && processor->parser != NULL);
         pool_unref(pool);
     }
 }
@@ -560,8 +554,8 @@ embed_widget(struct processor *processor, struct processor_env *env,
             processor->response_handler;
         struct async_operation_ref *async_ref = processor->async_ref;
 
-        processor->response_sent = true;
         parser_close(processor->parser);
+        processor->parser = NULL;
 
         embed_frame_widget(caller_pool, env, widget,
                            handler_ref.handler, handler_ref.ctx,
@@ -694,8 +688,7 @@ processor_parser_eof(void *ctx, off_t length __attr_unused)
     if (processor->replace != NULL)
         istream_replace_finish(processor->replace);
 
-    if (!processor->response_sent) {
-        processor->response_sent = true;
+    if (processor->container->from_request.proxy_ref != NULL) {
         http_response_handler_invoke_message(&processor->response_handler, processor->pool,
                                              HTTP_STATUS_NOT_FOUND,
                                              "Widget not found");
@@ -712,8 +705,7 @@ processor_parser_abort(void *ctx)
 
     processor->parser = NULL;
 
-    if (!processor->response_sent) {
-        processor->response_sent = true;
+    if (processor->container->from_request.proxy_ref != NULL) {
         http_response_handler_invoke_abort(&processor->response_handler);
         pool_unref(processor->caller_pool);
     }
