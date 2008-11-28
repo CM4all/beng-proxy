@@ -17,9 +17,9 @@ class Translation(Protocol):
         self._request = None
         self._packet = None
 
-    def _handle_widget_lookup(self, request, response):
+    def _handle_widget_lookup(self, widget_type, response):
         # checks on the name should be here.
-        path = "/etc/cm4all/beng/widgets/%s" % request.widget_type
+        path = "/etc/cm4all/beng/widgets/%s" % widget_type
         try:
             f = open(path)
         except IOError:
@@ -137,7 +137,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_SESSION, session)
 
         if request.widget_type is not None:
-            self._handle_widget_lookup(request, response)
+            self._handle_widget_lookup(request.widget_type, response)
 
         if request.uri is not None:
             self._handle_http(request.uri, response)
