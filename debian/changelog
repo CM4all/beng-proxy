@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.3.2) unstable; urgency=low
 
   * processor: free memory before calling embed_frame_widget()
+  * parser: hold a reference to the pool
 
  --
 

@@ -529,6 +529,7 @@ parser_input_eof(void *ctx)
 
     parser->input = NULL;
     parser->handler->eof(parser->handler_ctx, parser->position);
+    pool_unref(parser->pool);
 }
 
 static void
@@ -540,6 +541,7 @@ parser_input_abort(void *ctx)
 
     parser->input = NULL;
     parser->handler->abort(parser->handler_ctx);
+    pool_unref(parser->pool);
 }
 
 static const struct istream_handler parser_input_handler = {
@@ -568,6 +570,7 @@ parser_new(struct pool *pool, istream_t input,
     assert(handler->eof != NULL);
     assert(handler->abort != NULL);
 
+    pool_ref(pool);
     parser->pool = pool;
 
     istream_assign_handler(&parser->input, input,
@@ -589,6 +592,7 @@ parser_close(struct parser *parser)
     assert(parser->input != NULL);
 
     istream_free_handler(&parser->input);
+    pool_unref(parser->pool);
 }
 
 void
