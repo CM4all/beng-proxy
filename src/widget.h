@@ -23,11 +23,6 @@ struct processor_env;
 struct parsed_uri;
 struct session;
 
-enum widget_type {
-    WIDGET_TYPE_RAW,
-    WIDGET_TYPE_BENG,
-};
-
 /**
  * A widget class is a server which provides a widget.
  */
