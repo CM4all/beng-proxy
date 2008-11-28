@@ -109,6 +109,8 @@ class Translation(Protocol):
                 from os.path import abspath, dirname, join
                 path = join(dirname(dirname(abspath(argv[0]))), 'js/')
             self._handle_local_file(path + uri[19:], response)
+        elif uri[:11] == '/cfatest01/':
+            response.proxy('http://cfatest01.intern.cm-ag/' + uri[11:])
         else:
             self._handle_local_file('/var/www' + uri, response)
 
