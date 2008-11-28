@@ -556,15 +556,19 @@ embed_widget(struct processor *processor, struct processor_env *env,
     }
 
     if (widget->from_request.proxy || widget->from_request.proxy_ref != NULL) {
-        processor->response_sent = true;
-        embed_frame_widget(processor->caller_pool, env, widget,
-                           processor->response_handler.handler,
-                           processor->response_handler.ctx,
-                           processor->async_ref);
-        pool_unref(processor->caller_pool);
+        pool_t caller_pool = processor->caller_pool;
+        struct http_response_handler_ref handler_ref =
+            processor->response_handler;
+        struct async_operation_ref *async_ref = processor->async_ref;
 
+        processor->response_sent = true;
         parser_close(processor->parser);
         pool_unref(processor->pool);
+
+        embed_frame_widget(caller_pool, env, widget,
+                           handler_ref.handler, handler_ref.ctx,
+                           async_ref);
+        pool_unref(caller_pool);
 
         return NULL;
     } else {
