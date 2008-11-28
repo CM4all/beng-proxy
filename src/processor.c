@@ -116,8 +116,6 @@ processor_async_abort(struct async_operation *ao)
 
     if (processor->parser != NULL)
         parser_close(processor->parser);
-
-    pool_unref(processor->pool);
 }
 
 static const struct async_operation_class processor_async_operation = {
@@ -209,6 +207,7 @@ processor_new(pool_t caller_pool, istream_t istream,
     }
 
     processor_parser_init(processor, istream);
+    pool_unref(pool);
 
     if (widget->from_request.proxy_ref == NULL) {
         struct strmap *headers;
@@ -563,7 +562,6 @@ embed_widget(struct processor *processor, struct processor_env *env,
 
         processor->response_sent = true;
         parser_close(processor->parser);
-        pool_unref(processor->pool);
 
         embed_frame_widget(caller_pool, env, widget,
                            handler_ref.handler, handler_ref.ctx,
@@ -703,8 +701,6 @@ processor_parser_eof(void *ctx, off_t length __attr_unused)
                                              "Widget not found");
         pool_unref(processor->caller_pool);
     }
-
-    pool_unref(processor->pool);
 }
 
 static void
@@ -721,8 +717,6 @@ processor_parser_abort(void *ctx)
         http_response_handler_invoke_abort(&processor->response_handler);
         pool_unref(processor->caller_pool);
     }
-
-    pool_unref(processor->pool);
 }
 
 static const struct parser_handler processor_parser_handler = {
