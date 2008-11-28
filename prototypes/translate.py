@@ -86,6 +86,33 @@ class Translation(Protocol):
                 response.status(500)
                 break
 
+    def _handle_http(self, uri, response):
+        if uri[:19] == '/cm4all-beng-proxy/':
+            from sys import argv
+            if len(argv) >= 3:
+                path = argv[2]
+            else:
+                from os.path import abspath, dirname, join
+                path = join(dirname(dirname(abspath(argv[0]))), 'js/')
+            path += uri[19:]
+        else:
+            path = '/var/www' + uri
+
+        cgi = cgi_re.search(path, 1)
+
+        response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
+        if cgi:
+            response.packet(TRANSLATE_CGI, path)
+        else:
+            response.packet(TRANSLATE_PATH, path)
+        #response.packet(TRANSLATE_FILTER)
+        # .... PROXY 'http://cfatest01.intern.cm-ag/filter.py'
+        if not cgi and path[-5:] == '.html':
+            response.packet(TRANSLATE_CONTENT_TYPE, 'text/html; charset=utf-8')
+            response.packet(TRANSLATE_PROCESS)
+            response.packet(TRANSLATE_CONTAINER)
+        self.transport.write(response.finish())
+
     def _handle_request(self, request):
         if request.session is not None: print "- session =", request.session
         if request.param is not None: print "- param =", request.param
@@ -111,33 +138,10 @@ class Translation(Protocol):
 
         if request.widget_type is not None:
             self._handle_widget_lookup(request, response)
-            self.transport.write(response.finish())
-            return
 
-        if request.uri[:19] == '/cm4all-beng-proxy/':
-            from sys import argv
-            if len(argv) >= 3:
-                path = argv[2]
-            else:
-                from os.path import abspath, dirname, join
-                path = join(dirname(dirname(abspath(argv[0]))), 'js/')
-            path += request.uri[19:]
-        else:
-            path = '/var/www' + request.uri
+        if request.uri is not None:
+            self._handle_http(request.uri, response)
 
-        cgi = cgi_re.search(path, 1)
-
-        response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
-        if cgi:
-            response.packet(TRANSLATE_CGI, path)
-        else:
-            response.packet(TRANSLATE_PATH, path)
-        #response.packet(TRANSLATE_FILTER)
-        # .... PROXY 'http://cfatest01.intern.cm-ag/filter.py'
-        if not cgi and path[-5:] == '.html':
-            response.packet(TRANSLATE_CONTENT_TYPE, 'text/html; charset=utf-8')
-            response.packet(TRANSLATE_PROCESS)
-            response.packet(TRANSLATE_CONTAINER)
         self.transport.write(response.finish())
 
     def _handle_packet(self, packet):
