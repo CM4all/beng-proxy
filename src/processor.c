@@ -412,10 +412,7 @@ parser_widget_attr_finished(struct widget *widget,
             widget->session = WIDGET_SESSION_RESOURCE;
         else if (strref_cmp_literal(value, "site") == 0)
             widget->session = WIDGET_SESSION_SITE;
-    } else if (strref_cmp_literal(name, "tag") == 0)
-        widget->decoration.tag = strref_dup(pool, value);
-    else if (strref_cmp_literal(name, "style") == 0)
-        widget->decoration.style = strref_dup(pool, value);
+    }
 }
 
 static void

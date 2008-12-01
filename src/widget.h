@@ -54,15 +54,6 @@ struct widget {
     /** the widget's instance id, as specified in the template */
     const char *id;
 
-    struct {
-        /** which SGML tag is rendered as container for this widget?  NULL
-            means unset, empty string means don't generate anything */
-        const char *tag;
-
-        /** custom CSS */
-        const char *style;
-    } decoration;
-
     /** in which form should this widget be displayed? */
     enum {
         WIDGET_DISPLAY_INLINE,
@@ -146,8 +137,6 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->class = class;
     widget->resolver = NULL;
     widget->id = NULL;
-    widget->decoration.tag = NULL;
-    widget->decoration.style = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->path_info = "";
     widget->query_string = NULL;
