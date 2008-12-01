@@ -591,7 +591,7 @@ widget_element_finished(struct processor *processor)
     }
 
     if (processor->widget.params_length > 0)
-        widget->query_string = p_strndup(processor->pool,
+        widget->query_string = p_strndup(processor->widget.pool,
                                          processor->widget.params,
                                          processor->widget.params_length);
 
