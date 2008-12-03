@@ -62,7 +62,7 @@ struct processor {
         struct {
             size_t name_length, value_length;
             char name[64];
-            char value[64];
+            char value[512];
         } param;
 
         char params[512];
