@@ -28,9 +28,9 @@ struct widget_resolver_listener {
 };
 
 struct widget_resolver {
-    struct list_head listeners;
-
     pool_t pool;
+
+    struct list_head listeners;
 
     struct async_operation_ref async_ref;
 };
@@ -125,8 +125,8 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
     if (resolver == NULL) {
         pool_ref(widget_pool);
         resolver = p_malloc(widget_pool, sizeof(*widget->resolver));
-        list_init(&resolver->listeners);
         resolver->pool = widget_pool;
+        list_init(&resolver->listeners);
         widget->resolver = resolver;
         new = true;
     }
