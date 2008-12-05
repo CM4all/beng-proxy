@@ -320,7 +320,8 @@ cgi_async_abort(struct async_operation *ao)
 
     assert(cgi->input != NULL);
 
-    istream_close(cgi->input);
+    istream_close_handler(cgi->input);
+    pool_unref(cgi->output.pool);
 }
 
 static const struct async_operation_class cgi_async_operation = {
