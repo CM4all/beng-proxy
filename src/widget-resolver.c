@@ -61,6 +61,7 @@ wrl_abort(struct async_operation *ao)
     if (list_empty(&resolver->listeners)) {
         /* the last listener has been aborted: abort the widget
            registry */
+        resolver->widget->resolver = NULL;
         async_abort(&resolver->async_ref);
         pool_unref(resolver->pool);
     }
