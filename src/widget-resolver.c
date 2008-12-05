@@ -104,6 +104,21 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
  *
  */
 
+static struct widget_resolver *
+widget_resolver_alloc(pool_t pool, struct widget *widget)
+{
+    struct widget_resolver *resolver = p_malloc(pool, sizeof(*resolver));
+
+    pool_ref(pool);
+    
+    resolver->pool = pool;
+    list_init(&resolver->listeners);
+
+    widget->resolver = resolver;
+
+    return resolver;
+}
+
 void
 widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
                     struct tcache *translate_cache,
@@ -123,11 +138,7 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
 
     resolver = widget->resolver;
     if (resolver == NULL) {
-        pool_ref(widget_pool);
-        resolver = p_malloc(widget_pool, sizeof(*widget->resolver));
-        resolver->pool = widget_pool;
-        list_init(&resolver->listeners);
-        widget->resolver = resolver;
+        resolver = widget_resolver_alloc(widget_pool, widget);
         new = true;
     }
 
