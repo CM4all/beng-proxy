@@ -5,7 +5,7 @@ cm4all-beng-proxy (0.3.3) unstable; urgency=low
   * cgi: clear the input's handler in cgi_async_abort()
   * widget-stream: use istream_hold (reverts r4171)
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 05 Dec 2008 14:43:05 +0100
 
 cm4all-beng-proxy (0.3.2) unstable; urgency=low
 
