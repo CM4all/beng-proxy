@@ -55,6 +55,8 @@ wrl_abort(struct async_operation *ao)
     struct widget_resolver_listener *listener = async_to_wrl(ao);
     struct widget_resolver *resolver = listener->resolver;
 
+    assert(resolver->widget->resolver == resolver);
+
     list_remove(&listener->siblings);
     if (list_empty(&resolver->listeners)) {
         /* the last listener has been aborted: abort the widget
@@ -84,6 +86,7 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
 
     assert(widget->class == NULL);
     assert(resolver != NULL);
+    assert(resolver->widget == widget);
     assert(!list_empty(&resolver->listeners));
 
     widget->class = class;
