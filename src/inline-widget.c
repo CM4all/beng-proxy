@@ -56,6 +56,7 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
                     struct widget *widget)
 {
     struct inline_widget *iw = p_malloc(pool, sizeof(*iw));
+    istream_t hold;
 
     assert(pool != NULL);
     assert(env != NULL);
@@ -68,6 +69,7 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
     iw->env = env;
     iw->widget = widget;
     iw->stream = widget_stream_new(pool);
+    hold = istream_hold_new(pool, iw->stream->delayed);
 
     if (widget->class == NULL)
         widget_resolver_new(pool, env->pool,
@@ -78,5 +80,5 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
     else
         inline_widget_set(iw);
 
-    return iw->stream->delayed;
+    return hold;
 }
