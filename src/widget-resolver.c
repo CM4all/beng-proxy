@@ -30,6 +30,8 @@ struct widget_resolver_listener {
 struct widget_resolver {
     pool_t pool;
 
+    struct widget *widget;
+
     struct list_head listeners;
 
     struct async_operation_ref async_ref;
@@ -112,6 +114,7 @@ widget_resolver_alloc(pool_t pool, struct widget *widget)
     pool_ref(pool);
     
     resolver->pool = pool;
+    resolver->widget = widget;
     list_init(&resolver->listeners);
 
     widget->resolver = resolver;
