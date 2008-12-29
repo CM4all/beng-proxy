@@ -68,11 +68,13 @@ struct http_cache_request {
     struct http_cache_item *item;
     struct http_cache_info *info;
 
-    http_status_t status;
-    struct strmap *headers;
-    istream_t input;
-    size_t length;
-    struct growing_buffer *output;
+    struct {
+        http_status_t status;
+        struct strmap *headers;
+        istream_t input;
+        size_t length;
+        struct growing_buffer *output;
+    } response;
 };
 
 
@@ -225,11 +227,11 @@ http_cache_put(struct http_cache_request *request)
         item->item.expires = time(NULL) + 3600;
     else
         item->item.expires = request->info->expires;
-    item->item.size = request->length;
+    item->item.size = request->response.length;
     item->pool = pool;
     http_cache_copy_info(pool, &item->info, request->info);
-    item->status = request->status;
-    item->headers = strmap_dup(pool, request->headers);
+    item->status = request->response.status;
+    item->headers = strmap_dup(pool, request->response.headers);
 
     if (item->item.size == 0) {
         item->data = NULL;
@@ -239,10 +241,10 @@ http_cache_put(struct http_cache_request *request)
         size_t length;
 
         item->data = dest = p_malloc(pool, item->item.size);
-        while ((src = growing_buffer_read(request->output, &length)) != NULL) {
+        while ((src = growing_buffer_read(request->response.output, &length)) != NULL) {
             memcpy(dest, src, length);
             dest += length;
-            growing_buffer_consume(request->output, length);
+            growing_buffer_consume(request->response.output, length);
         }
     }
 
@@ -334,13 +336,13 @@ http_cache_response_body_data(const void *data, size_t length, void *ctx)
 {
     struct http_cache_request *request = ctx;
 
-    request->length += length;
-    if (request->length > (size_t)cacheable_size_limit) {
-        istream_close(request->input);
+    request->response.length += length;
+    if (request->response.length > (size_t)cacheable_size_limit) {
+        istream_close(request->response.input);
         return 0;
     }
 
-    growing_buffer_write_buffer(request->output, data, length);
+    growing_buffer_write_buffer(request->response.output, data, length);
     return length;
 }
 
@@ -416,7 +418,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     }
 
     if (body == NULL) {
-        request->output = NULL;
+        request->response.output = NULL;
         http_cache_put(request);
     } else {
         pool_t pool;
@@ -432,11 +434,12 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
            cache */
         body = istream_tee_new(request->pool, body, false);
 
-        request->status = status;
-        request->headers = strmap_dup(request->pool, headers);
-        request->length = 0;
+        request->response.status = status;
+        request->response.headers = strmap_dup(request->pool, headers);
+        request->response.length = 0;
 
-        istream_assign_handler(&request->input, istream_tee_second(body),
+        istream_assign_handler(&request->response.input,
+                               istream_tee_second(body),
                                &http_cache_response_body_handler, request,
                                0);
 
@@ -446,7 +449,8 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
             buffer_size = 16384;
         else
             buffer_size = (size_t)available;
-        request->output = growing_buffer_new(request->pool, buffer_size);
+        request->response.output = growing_buffer_new(request->pool,
+                                                      buffer_size);
     }
 
     caller_pool = request->caller_pool;
