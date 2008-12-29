@@ -34,6 +34,13 @@ cache_close(struct cache *cache);
 struct cache_item *
 cache_get(struct cache *cache, const char *key);
 
+/**
+ * Add an item to this cache.  Item with the same key are preserved.
+ */
+void
+cache_add(struct cache *cache, const char *key,
+          struct cache_item *item);
+
 void
 cache_put(struct cache *cache, const char *key,
           struct cache_item *item);

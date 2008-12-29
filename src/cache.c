@@ -134,6 +134,23 @@ cache_need_room(struct cache *cache, size_t size)
 }
 
 void
+cache_add(struct cache *cache, const char *key,
+          struct cache_item *item)
+{
+    /* XXX size constraints */
+    if (!cache_need_room(cache, item->size)) {
+        if (cache->class->destroy != NULL)
+            cache->class->destroy(item);
+        return;
+    }
+
+    hashmap_add(cache->items, key, item);
+
+    cache->size += item->size;
+    item->last_accessed = time(NULL);
+}
+
+void
 cache_put(struct cache *cache, const char *key,
           struct cache_item *item)
 {
