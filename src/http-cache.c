@@ -63,6 +63,7 @@ struct http_cache_request {
     pool_t pool, caller_pool;
     struct http_cache *cache;
     const char *url;
+    struct strmap *headers;
     struct http_response_handler_ref handler;
 
     struct http_cache_item *item;
@@ -203,6 +204,8 @@ http_cache_request_dup(pool_t pool, const struct http_cache_request *src)
     dest->caller_pool = src->caller_pool;
     dest->cache = src->cache;
     dest->url = p_strdup(pool, src->url);
+    dest->headers = src->headers == NULL
+        ? NULL : strmap_dup(pool, src->headers);
     dest->handler = src->handler;
     dest->info = http_cache_info_dup(pool, src->info);
     return dest;
@@ -555,6 +558,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     request->caller_pool = caller_pool;
     request->cache = cache;
     request->url = uwa->uri;
+    request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     request->item = NULL;
@@ -613,6 +617,7 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     request->caller_pool = caller_pool;
     request->cache = cache;
     request->url = uwa->uri;
+    request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     request->item = item;
