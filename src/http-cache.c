@@ -15,6 +15,8 @@
 #include "strref2.h"
 #include "growing-buffer.h"
 #include "abort-unref.h"
+#include "tpool.h"
+#include "http-util.h"
 
 #include <string.h>
 #include <time.h>
@@ -45,6 +47,8 @@ struct http_cache_info {
     const char *last_modified;
 
     const char *etag;
+
+    const char *vary;
 };
 
 struct http_cache_item {
@@ -53,6 +57,8 @@ struct http_cache_item {
     pool_t pool;
 
     struct http_cache_info info;
+
+    struct strmap *vary;
 
     http_status_t status;
     struct strmap *headers;
@@ -160,6 +166,37 @@ http_cache_request_evaluate(pool_t pool,
     return info;
 }
 
+static bool
+vary_fits(struct strmap *vary, struct strmap *headers)
+{
+    const struct strmap_pair *pair;
+
+    strmap_rewind(vary);
+
+    while ((pair = strmap_next(vary)) != NULL) {
+        const char *value = headers == NULL ? NULL : strmap_get(headers, pair->key);
+        if (value == NULL)
+            value = "";
+
+        if (strcmp(pair->value, value) != 0)
+            /* mismatch in one of the "Vary" request headers */
+            return false;
+    }
+
+    return true;
+}
+
+/**
+ * Checks whether the specified cache item fits the current request.
+ * This is not true if the Vary headers mismatch.
+ */
+static bool
+http_cache_item_fits(const struct http_cache_item *item,
+                     struct strmap *headers)
+{
+    return item->vary == NULL || vary_fits(item->vary, headers);
+}
+
 /* check whether the request should invalidate the existing cache */
 static bool
 http_cache_request_invalidate(http_method_t method)
@@ -184,6 +221,11 @@ http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
         dest->etag = p_strdup(pool, src->etag);
     else
         dest->etag = NULL;
+
+    if (src->vary != NULL)
+        dest->vary = p_strdup(pool, src->vary);
+    else
+        dest->vary = NULL;
 }
 
 static struct http_cache_info *
@@ -211,6 +253,33 @@ http_cache_request_dup(pool_t pool, const struct http_cache_request *src)
     return dest;
 }
 
+/**
+ * Copy all request headers mentioned in the Vary response header to a
+ * new strmap.
+ */
+static struct strmap *
+http_cache_copy_vary(pool_t pool, const char *vary, struct strmap *headers)
+{
+    struct strmap *dest = strmap_new(pool, 16);
+    struct pool_mark mark;
+    char **list;
+
+    pool_mark(tpool, &mark);
+
+    for (list = http_list_split(tpool, vary);
+         *list != NULL; ++list) {
+        const char *value = strmap_get(headers, *list);
+        if (value == NULL)
+            value = "";
+        strmap_set(dest, p_strdup(pool, *list),
+                   p_strdup(pool, value));
+    }
+
+    pool_rewind(tpool, &mark);
+
+    return dest;
+}
+
 static void
 http_cache_put(struct http_cache_request *request)
 {
@@ -233,6 +302,11 @@ http_cache_put(struct http_cache_request *request)
     item->item.size = request->response.length;
     item->pool = pool;
     http_cache_copy_info(pool, &item->info, request->info);
+
+    item->vary = item->info.vary != NULL
+        ? http_cache_copy_vary(pool, item->info.vary, request->headers)
+        : NULL;
+
     item->status = request->response.status;
     item->headers = strmap_dup(pool, request->response.headers);
 
@@ -317,6 +391,13 @@ http_cache_response_evaluate(struct http_cache_info *info,
 
     info->last_modified = strmap_get(headers, "last-modified");
     info->etag = strmap_get(headers, "etag");
+
+    info->vary = strmap_get(headers, "vary");
+    if (info->vary != NULL && strcmp(info->vary, "*") == 0)
+        /* RFC 2616 13.6: A Vary header field-value of "*" always
+           fails to match and subsequent requests on that resource can
+           only be properly interpreted by the origin server. */
+        return false;
 
     return info->expires != (time_t)-1 || info->last_modified != NULL;
 }
@@ -681,7 +762,7 @@ http_cache_request(struct http_cache *cache,
         struct http_cache_item *item
             = (struct http_cache_item *)cache_get(cache->cache, uwa->uri);
 
-        if (item == NULL)
+        if (item == NULL || !http_cache_item_fits(item, headers))
             http_cache_miss(cache, pool, info,
                             method, uwa, headers, body,
                             handler, handler_ctx, async_ref);
