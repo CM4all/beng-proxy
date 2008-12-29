@@ -20,7 +20,7 @@ struct cache_item {
 };
 
 struct cache_class {
-    int (*validate)(struct cache_item *item);
+    bool (*validate)(struct cache_item *item);
     void (*destroy)(struct cache_item *item);
 };
 

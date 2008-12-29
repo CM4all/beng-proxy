@@ -477,13 +477,13 @@ static const struct http_response_handler http_cache_response_handler = {
  *
  */
 
-static int
+static bool
 http_cache_item_validate(struct cache_item *_item)
 {
     struct http_cache_item *item = (struct http_cache_item *)_item;
 
     (void)item;
-    return 1;
+    return true;
 }
 
 static void

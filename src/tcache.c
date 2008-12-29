@@ -123,10 +123,10 @@ tcache_callback(const struct translate_response *response, void *ctx)
  *
  */
 
-static int
+static bool
 tcache_validate(struct cache_item *item __attr_unused)
 {
-    return 1;
+    return true;
 }
 
 static void
