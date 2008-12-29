@@ -66,6 +66,9 @@ struct widget {
     /** the query string as specified in the template */
     const char *query_string;
 
+    /** HTTP request headers specified in the template */
+    struct strmap *headers;
+
     /** what is the scope of session data? */
     enum {
         /** each resource has its own set of widget sessions */
@@ -140,6 +143,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->display = WIDGET_DISPLAY_INLINE;
     widget->path_info = "";
     widget->query_string = NULL;
+    widget->headers = NULL;
     widget->session = WIDGET_SESSION_RESOURCE;
     widget->from_request.proxy_ref = NULL;
     widget->from_request.focus_ref = NULL;

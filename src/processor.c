@@ -45,6 +45,7 @@ struct processor {
         TAG_WIDGET,
         TAG_WIDGET_PATH_INFO,
         TAG_WIDGET_PARAM,
+        TAG_WIDGET_HEADER,
         TAG_A,
         TAG_FORM,
         TAG_IMG,
@@ -252,6 +253,10 @@ parser_element_start_in_widget(struct processor *processor,
         processor->tag = TAG_WIDGET_PATH_INFO;
     } else if (strref_cmp_literal(name, "param") == 0) {
         processor->tag = TAG_WIDGET_PARAM;
+        processor->widget.param.name_length = 0;
+        processor->widget.param.value_length = 0;
+    } else if (strref_cmp_literal(name, "header") == 0) {
+        processor->tag = TAG_WIDGET_HEADER;
         processor->widget.param.name_length = 0;
         processor->widget.param.value_length = 0;
     } else {
@@ -470,6 +475,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_WIDGET_PARAM:
+    case TAG_WIDGET_HEADER:
         assert(processor->widget.widget != NULL);
 
         if (strref_cmp_literal(&attr->name, "name") == 0) {
@@ -595,6 +601,23 @@ widget_element_finished(struct processor *processor)
     return embed_widget(processor, processor->env, widget);
 }
 
+static bool
+header_name_valid(const char *name, size_t length)
+{
+    /* name must start with "X-" */
+    if (length < 3 ||
+        (name[0] != 'x' && name[0] != 'X') ||
+        name[1] != '-')
+        return false;
+
+    /* the rest must be letters, digits or dash */
+    for (size_t i = 2; i < length;  ++i)
+        if (!char_is_alphanumeric(name[i]) && name[i] != '-')
+            return false;
+
+    return true;
+}
+
 static void
 processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
@@ -654,6 +677,26 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         processor->widget.params_length += length;
 
         pool_rewind(tpool, &mark);
+    } else if (processor->tag == TAG_WIDGET_HEADER) {
+        assert(processor->widget.widget != NULL);
+
+        if (!header_name_valid(processor->widget.param.name,
+                               processor->widget.param.name_length)) {
+            daemon_log(3, "invalid widget HTTP header name\n");
+            return;
+        }
+
+        if (processor->widget.widget->headers == NULL)
+            processor->widget.widget->headers =
+                strmap_new(processor->widget.pool, 16);
+
+        strmap_add(processor->widget.widget->headers,
+                   p_strndup(processor->widget.pool,
+                             processor->widget.param.name,
+                             processor->widget.param.name_length),
+                   p_strndup(processor->widget.pool,
+                             processor->widget.param.value,
+                             processor->widget.param.value_length));
     } else if (processor->tag == TAG_SCRIPT) {
         if (tag->type == TAG_OPEN)
             parser_script(processor->parser);

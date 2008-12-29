@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.3.4) unstable; urgency=low
 
-  * 
+  * processor: added support for custom widget request headers
 
  --
 

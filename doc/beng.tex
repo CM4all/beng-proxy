@@ -520,6 +520,22 @@ the widget URI.
 As usual: never trust user input!  The widget server cannot see if
 input came from the template or from the user's browser.
 
+\subsection{Passing HTTP headers to widgets}
+
+\begin{verbatim*}
+<c:widget id="foo" type="date">
+  <header name="X-CM4all-Foo" value="Bar" />
+</c:widget>
+\end{verbatim*}
+
+\texttt{header} elements create HTTP request headers.  Headers are
+added, not replaced, i.e. you cannot use this to overwrite existing
+headers.  In the header name, only letters, digits and the dash is
+allowed.  It must start with ``X-''.
+
+Again: never trust user input!  The widget server cannot see if input
+came from the template or from the user's browser.
+
 \subsection{Variable substitutions}
 
 \emph{beng-proxy} defines special entities beginning with \texttt{c:}

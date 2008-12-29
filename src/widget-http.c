@@ -172,6 +172,18 @@ widget_request_headers(struct embed *embed, int with_body)
                                 embed->env->remote_host, NULL));
     }
 
+    if (embed->widget->headers != NULL) {
+        /* copy HTTP request headers from template */
+        const struct strmap_pair *pair;
+
+        strmap_rewind(embed->widget->headers);
+
+        while ((pair = strmap_next(embed->widget->headers)) != NULL)
+            strmap_add(headers,
+                       p_strdup(embed->pool, pair->key),
+                       p_strdup(embed->pool, pair->value));
+    }
+
     return headers;
 }
 
