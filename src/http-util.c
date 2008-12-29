@@ -10,6 +10,50 @@
 
 #include <string.h>
 
+char **
+http_list_split(pool_t pool, const char *p)
+{
+    enum { MAX_ITEMS = 64 };
+    char *tmp[MAX_ITEMS + 1]; /* XXX dynamic allocation */
+    size_t num = 0;
+
+    do {
+        const char *comma, *end;
+
+        /* skip whitespace */
+        while (*p != 0 && char_is_whitespace(*p))
+            ++p;
+
+        if (*p == 0)
+            break;
+
+        /* find the next delimiter */
+        end = comma = strchr(p, ',');
+        if (end == NULL)
+            /* last element */
+            end = p + strlen(p);
+
+        /* delete trailing whitespace */
+        while (end > p && char_is_whitespace(end[-1]))
+            --end;
+
+        /* append new list item */
+        tmp[num] = p_strndup(pool, p, end - p);
+        str_to_lower(tmp[num++]);
+
+        if (comma == NULL)
+            /* this was the last element */
+            break;
+
+        /* continue after the comma */
+        p = comma + 1;
+    } while (num < MAX_ITEMS);
+
+    tmp[num++] = NULL;
+
+    return (char**)p_memdup(pool, tmp, num * sizeof(tmp[0]));
+}
+
 static bool
 http_equals(const char *a, size_t a_length, const char *b, size_t b_length)
 {

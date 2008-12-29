@@ -11,6 +11,13 @@
 
 struct strref;
 
+/**
+ * Splits a comma separated list into a string array.  The return
+ * value is NULL terminated.
+ */
+char **
+http_list_split(pool_t pool, const char *p);
+
 bool
 http_list_contains(const char *list, const char *item);
 
