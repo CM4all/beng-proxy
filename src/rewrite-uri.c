@@ -110,7 +110,7 @@ do_rewrite_widget_uri(pool_t pool,
                               true,
                               value->data, value->length,
                               frame, raw);
-    if (mode == URI_MODE_PARTITION)
+    if (mode == URI_MODE_PARTITION && partition_domain != NULL)
         uri = uri_replace_hostname(pool, uri,
                                    generate_widget_hostname(pool, widget,
                                                             partition_domain));
