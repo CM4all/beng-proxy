@@ -2,6 +2,8 @@ cm4all-beng-proxy (0.3.4) unstable; urgency=low
 
   * processor: added support for custom widget request headers
   * http-cache: obey the "Vary" response header
+  * http-cache: pass the new http_cache_info object when testing a cache
+    item
 
  --
 

@@ -681,6 +681,7 @@ http_cache_serve(struct http_cache_item *item,
 
 static void
 http_cache_test(struct http_cache *cache, pool_t caller_pool,
+                struct http_cache_info *info,
                 struct http_cache_item *item,
                 http_method_t method,
                 struct uri_with_address *uwa,
@@ -702,7 +703,7 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     request->item = item;
-    request->info = &item->info;
+    request->info = info;
 
     cache_log(4, "http_cache: test %s\n", uwa->uri);
 
@@ -740,7 +741,7 @@ http_cache_found(struct http_cache *cache,
         (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL)))
         http_cache_serve(item, pool, uwa->uri, body, handler, handler_ctx);
     else
-        http_cache_test(cache, pool, item,
+        http_cache_test(cache, pool, info, item,
                         method, uwa, headers, body,
                         handler, handler_ctx, async_ref);
 }
