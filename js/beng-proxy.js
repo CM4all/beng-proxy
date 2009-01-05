@@ -4,7 +4,8 @@
 // Author: Max Kellermann <mk@cm4all.com>
 //
 
-function beng_widget_uri(base_uri, session_id, frame, focus, mode, path) {
+function beng_widget_uri(base_uri, session_id, frame, focus, mode,
+                         path, translate) {
     if (base_uri == null ||
         (mode != null && mode != "focus" && mode != "frame" &&
          mode != "partial" && mode != "proxy" && mode != "save"))
@@ -36,5 +37,9 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode, path) {
                 uri += query_string;
         }
     }
+
+    if (parameter != null)
+        uri += "&translate=" + escape(translate);
+
     return uri;
 }

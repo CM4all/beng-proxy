@@ -675,7 +675,8 @@ regarded internal, it provides a JavaScript function to generate such
 an URI:
 
 \begin{verbatim*}
-function beng_widget_uri(base_uri, session_id, frame, focus, mode, path);
+function beng_widget_uri(base_uri, session_id, frame, focus, mode,
+                         path, translate);
 \end{verbatim*}
 
 The return value is the URI which can be safely requested by the
@@ -708,6 +709,9 @@ allowed \\
 
 The \texttt{path} argument is an URI relative to the widget.  It may
 include a query string.
+
+The \texttt{translate} argument is passed to the translation server as
+\texttt{PARAM} packet.
 
 
 \section{The prototype translation server}

@@ -2,6 +2,8 @@ cm4all-beng-proxy (0.3.5) unstable; urgency=low
 
   * widget-http: don't check content-type in frame parents
   * istream-subst: allow null bytes in the input stream
+  * js: added the "translate" parameter for passing values to the
+    translation server
 
  --
 
