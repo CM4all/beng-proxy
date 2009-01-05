@@ -379,7 +379,8 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
     } else {
         /* no transformation left */
 
-        if (body != NULL && !embed->widget->from_request.raw) {
+        if (body != NULL && !embed->widget->from_request.raw &&
+            embed->widget->from_request.proxy_ref == NULL) {
             /* check if the content-type is correct for embedding into
                a template, and convert if possible */
             body = widget_response_format(embed->pool, embed->widget,
