@@ -94,14 +94,11 @@ do_rewrite_widget_uri(pool_t pool,
         frame = current_frame(widget);
         break;
 
+    case URI_MODE_PROXY:
+        raw = true;
     case URI_MODE_PARTIAL:
     case URI_MODE_PARTITION:
         frame = widget_path(widget);
-        break;
-
-    case URI_MODE_PROXY:
-        frame = widget_path(widget);
-        raw = true;
         break;
     }
 
