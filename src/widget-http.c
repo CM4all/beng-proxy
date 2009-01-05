@@ -426,7 +426,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
                 session->translate = d_strdup(session->pool, translate);
         }
 
-        if (status >= 300 && status < 400) {
+        if (http_status_is_redirect(status)) {
             const char *location = strmap_get(headers, "location");
             if (location != NULL &&
                 widget_response_redirect(embed, location, body)) {

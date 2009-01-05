@@ -77,6 +77,12 @@ http_status_is_success(http_status_t status)
 }
 
 static inline bool
+http_status_is_redirect(http_status_t status)
+{
+    return status >= 300 && status < 400;
+}
+
+static inline bool
 http_status_is_empty(http_status_t status)
 {
     return status == HTTP_STATUS_NO_CONTENT ||
