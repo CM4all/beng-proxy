@@ -121,7 +121,10 @@ static const struct subst_node *
 subst_find_char(const struct subst_node *node, char ch)
 {
     assert(node != NULL);
-    assert(ch != 0);
+
+    if (ch == 0)
+        /* we cannot support null bytes */
+        return NULL;
 
     do {
         if (node->ch == ch) {
