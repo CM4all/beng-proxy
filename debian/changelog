@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.3.5) unstable; urgency=low
     translation server
   * rewrite-uri: refuse to rewrite a frame URI without widget id
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 05 Jan 2009 16:46:32 +0100
 
 cm4all-beng-proxy (0.3.4) unstable; urgency=low
 
