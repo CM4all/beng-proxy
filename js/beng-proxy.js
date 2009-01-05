@@ -38,7 +38,7 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
         }
     }
 
-    if (parameter != null)
+    if (translate != null)
         uri += "&translate=" + escape(translate);
 
     return uri;
