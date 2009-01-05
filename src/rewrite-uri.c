@@ -99,6 +99,10 @@ do_rewrite_widget_uri(pool_t pool,
     case URI_MODE_PARTIAL:
     case URI_MODE_PARTITION:
         frame = widget_path(widget);
+
+        if (frame == NULL)
+            /* no widget_path available - "frame=" not possible*/
+            return NULL;
         break;
     }
 
