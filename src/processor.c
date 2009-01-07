@@ -680,6 +680,9 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     } else if (processor->tag == TAG_WIDGET_HEADER) {
         assert(processor->widget.widget != NULL);
 
+        if (tag->type == TAG_CLOSE)
+            return;
+
         if (!header_name_valid(processor->widget.param.name,
                                processor->widget.param.name_length)) {
             daemon_log(3, "invalid widget HTTP header name\n");
