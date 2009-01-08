@@ -97,10 +97,10 @@ struct widget {
 
         /** is this the single widget in this whole request which should
             be proxied? */
-        bool proxy:1;
+        bool proxy;
 
         /** should the resource be passed raw, i.e. not processed? */
-        bool raw:1;
+        bool raw;
     } from_request;
 
     struct {
