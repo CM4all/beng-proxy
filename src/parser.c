@@ -55,6 +55,9 @@ enum parser_state {
 
     /** within a CDATA section */
     PARSER_CDATA_SECTION,
+
+    /** within a comment */
+    PARSER_COMMENT,
 };
 
 struct parser {
@@ -82,6 +85,9 @@ struct parser {
     /** in a CDATA section, how many characters have been matching
         CDEnd ("]]>")? */
     size_t cdend_match;
+
+    /** in a comment, how many consecutive minus are there? */
+    unsigned minus_count;
 
     const struct parser_handler *handler;
     void *handler_ctx;
@@ -411,6 +417,13 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                         parser->cdend_match = 0;
                         break;
                     }
+
+                    if (parser->tag_name_length == 2 &&
+                        memcmp(parser->tag_name, "--", 2) == 0) {
+                        parser->state = PARSER_COMMENT;
+                        parser->minus_count = 0;
+                        break;
+                    }
                 } else {
                     parser->state = PARSER_NONE;
                     break;
@@ -489,6 +502,48 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->position += (off_t)nbytes;
                     return nbytes;
                 }
+            }
+
+            break;
+
+        case PARSER_COMMENT:
+            switch (parser->minus_count) {
+            case 0:
+                /* find a minus which introduces the "-->" sequence */
+                p = memchr(buffer, '-', end - buffer);
+                if (p != NULL) {
+                    /* found one - minus_count=1 and go to char after
+                       minus */
+                    buffer = p + 1;
+                    parser->minus_count = 1;
+                } else
+                    /* none found - skip this chunk */
+                    buffer = end;
+
+                break;
+
+            case 1:
+                if (*buffer == '-')
+                    /* second minus found */
+                    parser->minus_count = 2;
+                else
+                    parser->minus_count = 0;
+                ++buffer;
+
+                break;
+
+            case 2:
+                if (*buffer == '>')
+                    /* end of comment */
+                    parser->state = PARSER_NONE;
+                else if (*buffer == '-')
+                    /* another minus... keep minus_count at 2 and go
+                       to next character */
+                    ++buffer;
+                else
+                    parser->minus_count = 0;
+
+                break;
             }
 
             break;
