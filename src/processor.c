@@ -26,6 +26,7 @@ enum uri_base {
     URI_BASE_TEMPLATE,
     URI_BASE_WIDGET,
     URI_BASE_CHILD,
+    URI_BASE_PARENT,
 };
 
 struct processor {
@@ -379,6 +380,14 @@ transform_uri_attribute(struct processor *processor,
 
         strref_clear(&value);
         break;
+
+    case URI_BASE_PARENT:
+        widget = processor->container->parent;
+        if (widget == NULL)
+            return;
+
+        value = attr->value;
+        break;
     }
 
     assert(widget != NULL);
@@ -435,6 +444,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             processor->uri_base = URI_BASE_WIDGET;
         else if (strref_cmp_literal(&attr->value, "child") == 0)
             processor->uri_base = URI_BASE_CHILD;
+        else if (strref_cmp_literal(&attr->value, "parent") == 0)
+            processor->uri_base = URI_BASE_PARENT;
         else
             processor->uri_base = URI_BASE_TEMPLATE;
         istream_replace_add(processor->replace, attr->name_start,
