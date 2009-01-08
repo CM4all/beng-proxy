@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.3.6) unstable; urgency=low
   * widget-http: now really don't check content-type in frame parents
   * parser: skip comments
   * processor: implemented c:base="parent"
+  * processor: added "c:" prefix to c:widget child elements
 
  --
 

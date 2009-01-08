@@ -245,9 +245,14 @@ processor_new(pool_t caller_pool, istream_t istream,
 static void
 parser_element_start_in_widget(struct processor *processor,
                                enum parser_tag_type type,
-                               const struct strref *name)
+                               const struct strref *_name)
 {
-    if (strref_cmp_literal(name, "c:widget") == 0) {
+    struct strref copy = *_name, *const name = &copy;
+
+    if (strref_starts_with_n(name, "c:", 2))
+        strref_skip(name, 2);
+
+    if (strref_cmp_literal(name, "widget") == 0) {
         if (type == TAG_CLOSE)
             processor->tag = TAG_WIDGET;
     } else if (strref_cmp_literal(name, "path-info") == 0) {
