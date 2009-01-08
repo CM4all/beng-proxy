@@ -39,6 +39,12 @@ struct embed {
      */
     const struct transformation *transformation;
 
+    /**
+     * is this widget standalone, i.e. not embedded in another
+     * container?
+     */
+    bool standalone;
+
     struct http_response_handler_ref handler_ref;
     struct async_operation_ref *async_ref;
 };
@@ -380,7 +386,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
         /* no transformation left */
 
         if (body != NULL && !embed->widget->from_request.raw &&
-            embed->widget->from_request.proxy_ref == NULL) {
+            !embed->standalone) {
             /* check if the content-type is correct for embedding into
                a template, and convert if possible */
             body = widget_response_format(embed->pool, embed->widget,
@@ -483,6 +489,8 @@ widget_http_request(pool_t pool, struct widget *widget,
         : NULL;
     embed->transformation = embed->widget->from_request.raw
         ? NULL : widget->class->transformation;
+    embed->standalone = embed->widget->from_request.proxy ||
+        embed->widget->from_request.proxy_ref != NULL;
 
     headers = widget_request_headers(embed, widget->from_request.body != NULL);
 

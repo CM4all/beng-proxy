@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.3.6) unstable; urgency=low
 
   * processor: ignore closing </header>
+  * widget-http: now really don't check content-type in frame parents
 
  --
 
