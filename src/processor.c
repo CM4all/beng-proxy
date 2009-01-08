@@ -257,7 +257,8 @@ parser_element_start_in_widget(struct processor *processor,
             processor->tag = TAG_WIDGET;
     } else if (strref_cmp_literal(name, "path-info") == 0) {
         processor->tag = TAG_WIDGET_PATH_INFO;
-    } else if (strref_cmp_literal(name, "param") == 0) {
+    } else if (strref_cmp_literal(name, "param") == 0 ||
+               strref_cmp_literal(name, "parameter") == 0) {
         processor->tag = TAG_WIDGET_PARAM;
         processor->widget.param.name_length = 0;
         processor->widget.param.value_length = 0;
