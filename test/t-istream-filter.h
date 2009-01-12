@@ -384,6 +384,30 @@ test_later(pool_t pool)
     run_istream(pool, istream, true);
 }
 
+#ifdef EXPECTED_RESULT
+/** test with large input and blocking handler */
+static void
+test_big_hold(pool_t pool)
+{
+    istream_t istream, hold;
+
+    pool = pool_new_linear(pool, "test", 8192);
+
+    istream = create_input(pool);
+    for (unsigned i = 0; i < 1024; ++i)
+        istream = istream_cat_new(pool, istream, create_input(pool), NULL);
+
+    istream = create_test(pool, istream);
+    hold = istream_hold_new(pool, istream);
+
+    istream_read(istream);
+
+    istream_close(hold);
+
+    pool_unref(pool);
+}
+#endif
+
 
 /*
  * main
@@ -415,6 +439,10 @@ int main(int argc, char **argv) {
     test_abort_in_handler_half(root_pool);
     test_abort_1byte(root_pool);
     test_later(root_pool);
+
+#ifdef EXPECTED_RESULT
+    test_big_hold(root_pool);
+#endif
 
     /* cleanup */
 
