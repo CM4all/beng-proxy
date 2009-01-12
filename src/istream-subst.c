@@ -28,9 +28,9 @@ struct subst_node {
 struct istream_subst {
     struct istream output;
     istream_t input;
-    bool had_input:1, had_output:1;
+    bool had_input, had_output;
 
-    bool send_first:1;
+    bool send_first;
 
     struct subst_node *root;
     const struct subst_node *match;
