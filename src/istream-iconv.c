@@ -38,12 +38,12 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
 {
     const char *src = data;
     char *buffer, *dest;
-    size_t dest_left, ret;
+    size_t dest_left, ret, nbytes;
 
     do {
         buffer = dest = fifo_buffer_write(ic->buffer, &dest_left);
         if (buffer == NULL) {
-            size_t nbytes = istream_buffer_send(&ic->output, ic->buffer);
+            nbytes = istream_buffer_send(&ic->output, ic->buffer);
             if (nbytes == 0) {
                 if (ic->buffer == NULL)
                     return 0;
@@ -86,9 +86,17 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
 
             case E2BIG:
                 /* output buffer is full: flush dest */
-                istream_buffer_send(&ic->output, ic->buffer);
-                if (ic->buffer == NULL)
-                    return 0;
+                nbytes = istream_buffer_send(&ic->output, ic->buffer);
+                if (nbytes == 0) {
+                    if (ic->buffer == NULL)
+                        return 0;
+
+                    length = 0;
+                    break;
+                }
+
+                assert(ic->buffer != NULL);
+                break;
             }
         }
     } while (length > 0);
