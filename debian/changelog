@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.3.7) unstable; urgency=low
 
-  * 
+  * istream_subst: exit the loop if state==INSERT
 
  --
 

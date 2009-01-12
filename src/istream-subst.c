@@ -636,7 +636,7 @@ istream_subst_read(istream_t istream)
             subst->had_input = false;
             istream_read(subst->input);
         } while (subst->input != NULL && subst->had_input &&
-                 !subst->had_output);
+                 !subst->had_output && subst->state != STATE_INSERT);
 
         pool_unref(subst->output.pool);
 
