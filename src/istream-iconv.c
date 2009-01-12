@@ -43,6 +43,8 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
     do {
         buffer = dest = fifo_buffer_write(ic->buffer, &dest_left);
         if (buffer == NULL) {
+            /* no space left in the buffer: attempt to flush it */
+
             nbytes = istream_buffer_send(&ic->output, ic->buffer);
             if (nbytes == 0) {
                 if (ic->buffer == NULL)
@@ -91,6 +93,9 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
                     if (ic->buffer == NULL)
                         return 0;
 
+                    /* reset length to 0, to make the loop quit
+                       (there's no "double break" to break out of the
+                       while loop in C) */
                     length = 0;
                     break;
                 }
