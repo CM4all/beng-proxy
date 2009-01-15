@@ -80,7 +80,7 @@ worker_child_callback(int status, void *ctx)
 
     p_free(instance->pool, worker);
 
-    if (WIFSIGNALED(status)) {
+    if (WIFSIGNALED(status) && !instance->should_exit) {
         /* a worker has died due to a signal - this is dangerous for
            all other processes (including us), because the worker may
            have corrupted shared memory.  Our only hope to recover is
