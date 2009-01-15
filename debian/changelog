@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.3.7) unstable; urgency=low
   * istream_iconv: check if the full buffer could be flushed
   * worker: don't reinitialize session manager during shutdown
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 15 Jan 2009 10:39:47 +0100
 
 cm4all-beng-proxy (0.3.6) unstable; urgency=low
 
