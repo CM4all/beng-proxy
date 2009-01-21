@@ -66,6 +66,20 @@ request_absolute_uri(const struct http_server_request *request)
  *
  */
 
+static bool
+processable(struct strmap *headers)
+{
+    const char *content_type;
+
+    if (headers == NULL)
+        return false;
+
+    content_type = strmap_get(headers, "content-type");
+    return content_type != NULL &&
+        (strncmp(content_type, "text/html", 9) == 0 ||
+         strncmp(content_type, "text/xml", 8) == 0);
+}
+
 static void
 response_invoke_processor(struct request *request2,
                           http_status_t status, struct growing_buffer *response_headers,
@@ -90,6 +104,12 @@ response_invoke_processor(struct request *request2,
         header_parse_buffer(request->pool, headers, response_headers);
     } else
         headers = NULL;
+
+    if (!processable(headers)) {
+        http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
+                                 "Invalid template content type");
+        return;
+    }
 
     if (http_server_request_has_body(request) && !request2->body_consumed) {
         request_body = request->body;
