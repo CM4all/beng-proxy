@@ -73,6 +73,7 @@ response_invoke_processor(struct request *request2,
                           const struct transformation *transformation)
 {
     struct http_server_request *request = request2->request;
+    struct strmap *headers;
     istream_t request_body;
     struct widget *widget;
 
@@ -83,6 +84,12 @@ response_invoke_processor(struct request *request2,
         response_dispatch(request2, status, response_headers, NULL);
         return;
     }
+
+    if (response_headers != NULL) {
+        headers = strmap_new(request->pool, 16);
+        header_parse_buffer(request->pool, headers, response_headers);
+    } else
+        headers = NULL;
 
     if (http_server_request_has_body(request) && !request2->body_consumed) {
         request_body = request->body;
@@ -122,23 +129,13 @@ response_invoke_processor(struct request *request2,
     if (widget->from_request.proxy_ref != NULL) {
         /* the client requests a widget in proxy mode */
 
-        processor_new(request->pool, NULL, body,
+        processor_new(request->pool, headers, body,
                       widget, &request2->env,
                       transformation->u.processor.options,
                       &widget_proxy_handler, request,
                       request2->async_ref);
     } else {
-        /* the client requests the whole template - the template's
-           response headers might be important for the processor,
-           parse them */
-        struct strmap *headers;
-
-        if (response_headers != NULL) {
-            headers = strmap_new(request->pool, 16);
-            header_parse_buffer(request->pool, headers, response_headers);
-        } else
-            headers = NULL;
-
+        /* the client requests the whole template */
         processor_new(request->pool, headers, body, widget, &request2->env,
                       transformation->u.processor.options,
                       &response_handler, request2,
