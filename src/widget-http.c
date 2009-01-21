@@ -324,10 +324,11 @@ widget_response_format(pool_t pool, const struct widget *widget,
  * its content type and run the processor (if applicable).
  */
 static void
-widget_response_process(struct embed *embed, istream_t body,
+widget_response_process(struct embed *embed,
+                        struct strmap *headers, istream_t body,
                         unsigned options)
 {
-    processor_new(embed->pool, body,
+    processor_new(embed->pool, headers, body,
                   embed->widget, embed->env, options,
                   &widget_response_handler, embed,
                   embed->async_ref);
@@ -348,7 +349,7 @@ widget_response_transform(struct embed *embed,
 
     switch (transformation->type) {
     case TRANSFORMATION_PROCESS:
-        widget_response_process(embed, body,
+        widget_response_process(embed, headers, body,
                                 transformation->u.processor.options);
         break;
 

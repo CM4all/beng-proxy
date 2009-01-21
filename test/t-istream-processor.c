@@ -85,7 +85,7 @@ create_test(pool_t pool, istream_t input)
     ws = widget_stream_new(pool);
     delayed = ws->delayed;
 
-    processor_new(pool, input, &widget, &env, PROCESSOR_CONTAINER,
+    processor_new(pool, NULL, input, &widget, &env, PROCESSOR_CONTAINER,
                   &widget_stream_response_handler, ws,
                   widget_stream_async_ref(ws));
 

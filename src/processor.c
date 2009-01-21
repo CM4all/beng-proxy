@@ -165,8 +165,21 @@ processor_subst_beng_widget(istream_t istream,
 static void
 processor_parser_init(struct processor *processor, istream_t input);
 
+static void
+headers_copy2(struct strmap *in, struct strmap *out,
+              const char *const* keys)
+{
+    const char *value;
+
+    for (; *keys != NULL; ++keys) {
+        value = strmap_get(in, *keys);
+        if (value != NULL)
+            strmap_set(out, *keys, value);
+    }
+}
+
 void
-processor_new(pool_t caller_pool, istream_t istream,
+processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
               struct widget *widget,
               struct processor_env *env,
               unsigned options,
@@ -210,13 +223,22 @@ processor_new(pool_t caller_pool, istream_t istream,
     pool_unref(pool);
 
     if (widget->from_request.proxy_ref == NULL) {
-        struct strmap *headers;
+        struct strmap *headers2;
 
-        headers = strmap_new(processor->pool, 4);
-        strmap_add(headers, "content-type", "text/html; charset=utf-8");
+        if (headers != NULL) {
+            static const char *const copy_headers[] = {
+                "content-language",
+                "content-type",
+                NULL,
+            };
+
+            headers2 = strmap_new(pool, 8);
+            headers_copy2(headers, headers2, copy_headers);
+        } else
+            headers2 = NULL;
 
         http_response_handler_direct_response(handler, handler_ctx,
-                                              HTTP_STATUS_OK, headers,
+                                              HTTP_STATUS_OK, headers2,
                                               processor->replace);
     } else {
         http_response_handler_set(&processor->response_handler,

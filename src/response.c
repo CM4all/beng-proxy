@@ -16,6 +16,7 @@
 #include "uri-address.h"
 #include "strref-pool.h"
 #include "growing-buffer.h"
+#include "header-parser.h"
 #include "global.h"
 
 #include <daemon/log.h>
@@ -119,12 +120,26 @@ response_invoke_processor(struct request *request2,
 #endif
 
     if (widget->from_request.proxy_ref != NULL) {
-        processor_new(request->pool, body, widget, &request2->env,
+        /* the client requests a widget in proxy mode */
+
+        processor_new(request->pool, NULL, body,
+                      widget, &request2->env,
                       transformation->u.processor.options,
                       &widget_proxy_handler, request,
                       request2->async_ref);
     } else {
-        processor_new(request->pool, body, widget, &request2->env,
+        /* the client requests the whole template - the template's
+           response headers might be important for the processor,
+           parse them */
+        struct strmap *headers;
+
+        if (response_headers != NULL) {
+            headers = strmap_new(request->pool, 16);
+            header_parse_buffer(request->pool, headers, response_headers);
+        } else
+            headers = NULL;
+
+        processor_new(request->pool, headers, body, widget, &request2->env,
                       transformation->u.processor.options,
                       &response_handler, request2,
                       request2->async_ref);
