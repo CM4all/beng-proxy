@@ -311,8 +311,10 @@ http_client_headers_finished(struct http_client *client)
     bool chunked;
 
     header_connection = strmap_get(client->response.headers, "connection");
-    client->keep_alive = header_connection != NULL &&
-        strcasecmp(header_connection, "keep-alive") == 0;
+    client->keep_alive =
+        (header_connection == NULL && client->response.http_1_1) ||
+        (header_connection != NULL &&
+         strcasecmp(header_connection, "keep-alive") == 0);
 
     if (http_status_is_empty(client->response.status)) {
         client->response.body = NULL;
