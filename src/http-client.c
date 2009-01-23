@@ -55,6 +55,7 @@ struct http_client {
             READ_HEADERS,
             READ_BODY,
         } read_state;
+        bool http_1_1;
         http_status_t status;
         struct strmap *headers;
         istream_t body;
@@ -269,12 +270,16 @@ http_client_parse_status_line(struct http_client *client,
     assert(client->response.read_state == READ_STATUS);
 
     if (length > 4 && memcmp(line, "HTTP", 4) == 0) {
+        client->response.http_1_1 = length >= 8 &&
+            memcmp(line + 4, "/1.1", 4) == 0;
+
         space = memchr(line + 4, ' ', length - 4);
         if (space != NULL) {
             length -= space - line + 1;
             line = space + 1;
         }
-    }
+    } else
+        client->response.http_1_1 = false;
 
     if (unlikely(length < 3 || !char_is_digit(line[0]) ||
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
