@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.3.8) unstable; urgency=low
     template
   * http-client: allow chunked response body without keep-alive
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 23 Jan 2009 13:02:42 +0100
 
 cm4all-beng-proxy (0.3.7) unstable; urgency=low
 
