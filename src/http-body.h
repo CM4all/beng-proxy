@@ -61,6 +61,6 @@ http_body_socket_eof(struct http_body_reader *body,
 istream_t
 http_body_init(struct http_body_reader *body,
                const struct istream *stream, pool_t stream_pool,
-               pool_t pool, off_t content_length, bool keep_alive);
+               pool_t pool, off_t content_length, bool chunked);
 
 #endif

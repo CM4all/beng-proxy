@@ -303,6 +303,7 @@ http_client_headers_finished(struct http_client *client)
     const char *header_connection, *transfer_encoding, *content_length_string;
     char *endptr;
     off_t content_length;
+    bool chunked;
 
     header_connection = strmap_get(client->response.headers, "connection");
     client->keep_alive = header_connection != NULL &&
@@ -344,10 +345,13 @@ http_client_headers_finished(struct http_client *client)
                 return true;
             }
         }
+
+        chunked = false;
     } else {
         /* chunked */
 
         content_length = (off_t)-1;
+        chunked = true;
     }
 
     client->response.body
@@ -356,7 +360,7 @@ http_client_headers_finished(struct http_client *client)
                          client->pool,
                          client->pool,
                          content_length,
-                         client->keep_alive);
+                         chunked);
 
     client->response.read_state = READ_BODY;
     return true;

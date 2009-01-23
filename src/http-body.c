@@ -87,7 +87,7 @@ http_body_socket_eof(struct http_body_reader *body, fifo_buffer_t buffer)
 istream_t
 http_body_init(struct http_body_reader *body,
                const struct istream *stream, pool_t stream_pool,
-               pool_t pool, off_t content_length, bool keep_alive)
+               pool_t pool, off_t content_length, bool chunked)
 {
     istream_t istream;
 
@@ -97,8 +97,11 @@ http_body_init(struct http_body_reader *body,
     body->rest = content_length;
 
     istream = http_body_istream(body);
-    if (keep_alive && content_length == (off_t)-1)
+    if (chunked) {
+        assert(content_length == (off_t)-1);
+
         istream = istream_dechunk_new(pool, istream);
+    }
 
     return istream;
 }

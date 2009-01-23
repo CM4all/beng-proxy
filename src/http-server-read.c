@@ -91,6 +91,7 @@ http_server_headers_finished(struct http_server_connection *connection)
     struct http_server_request *request = connection->request.request;
     const char *value;
     off_t content_length;
+    bool chunked;
 
     value = strmap_get(request->headers, "connection");
     connection->keep_alive = value != NULL &&
@@ -127,10 +128,13 @@ http_server_headers_finished(struct http_server_connection *connection)
                 return;
             }
         }
+
+        chunked = false;
     } else {
         /* chunked */
 
         content_length = (off_t)-1;
+        chunked = true;
     }
 
     /* istream_deinit() used poison_noaccess() - make it writable now
@@ -141,7 +145,7 @@ http_server_headers_finished(struct http_server_connection *connection)
     request->body = http_body_init(&connection->request.body_reader,
                                    &http_server_request_stream,
                                    connection->pool, request->pool,
-                                   content_length, true);
+                                   content_length, chunked);
 
     connection->request.read_state = READ_BODY;
 

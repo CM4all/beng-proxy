@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.3.8) unstable; urgency=low
 
   * processor: pass Content-Type and Content-Language headers from
     template
+  * http-client: allow chunked response body without keep-alive
 
  --
 
