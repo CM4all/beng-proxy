@@ -64,6 +64,13 @@ cache_destroy_item(struct cache *cache, struct cache_item *item)
         cache->class->destroy(item);
 }
 
+static bool
+cache_item_validate(const struct cache *cache, struct cache_item *item)
+{
+    return time(NULL) < item->expires &&
+        (cache->class->validate == NULL || cache->class->validate(item));
+}
+
 struct cache_item *
 cache_get(struct cache *cache, const char *key)
 {
@@ -71,15 +78,14 @@ cache_get(struct cache *cache, const char *key)
     if (item == NULL)
         return NULL;
 
-    if (time(NULL) < item->expires &&
-        (cache->class->validate == NULL || cache->class->validate(item))) {
-        item->last_accessed = time(NULL);
-        return item;
+    if (!cache_item_validate(cache, item)) {
+        hashmap_remove(cache->items, key);
+        cache_destroy_item(cache, item);
+        return NULL;
     }
 
-    hashmap_remove(cache->items, key);
-    cache_destroy_item(cache, item);
-    return NULL;
+    item->last_accessed = time(NULL);
+    return item;
 }
 
 static void
