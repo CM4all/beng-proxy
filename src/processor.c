@@ -387,7 +387,7 @@ transform_uri_attribute(struct processor *processor,
                         enum uri_mode mode)
 {
     struct widget *widget = NULL;
-    struct strref value;
+    const struct strref *value;
     istream_t istream;
 
     switch (base) {
@@ -397,7 +397,7 @@ transform_uri_attribute(struct processor *processor,
 
     case URI_BASE_WIDGET:
         widget = processor->container;
-        value = attr->value;
+        value = &attr->value;
         break;
 
     case URI_BASE_CHILD:
@@ -406,7 +406,8 @@ transform_uri_attribute(struct processor *processor,
         if (widget == NULL)
             return;
 
-        strref_clear(&value);
+        /* use the configured/session path-info for the frame */
+        value = NULL;
         break;
 
     case URI_BASE_PARENT:
@@ -414,7 +415,7 @@ transform_uri_attribute(struct processor *processor,
         if (widget == NULL)
             return;
 
-        value = attr->value;
+        value = &attr->value;
         break;
     }
 
@@ -426,7 +427,7 @@ transform_uri_attribute(struct processor *processor,
                                  processor->env->external_uri,
                                  processor->env->args, widget,
                                  processor->env->session_id,
-                                 &value, mode);
+                                 value, mode);
     if (istream != NULL)
         replace_attribute_value(processor, attr, istream);
 }
