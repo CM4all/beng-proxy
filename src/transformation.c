@@ -85,6 +85,7 @@ transformation_dup_view(pool_t pool, const struct transformation_view *src)
 {
     struct transformation_view *dest = p_malloc(pool, sizeof(*dest));
 
+    dest->next = NULL;
     dest->name = src->name != NULL ? p_strdup(pool, src->name) : NULL;
     dest->transformation = transformation_dup_chain(pool, src->transformation);
 
