@@ -136,6 +136,8 @@ widget_absolute_uri(pool_t pool, struct widget *widget,
 {
     const char *base;
 
+    assert(widget_address(pool, widget)->type == RESOURCE_ADDRESS_HTTP);
+
     base = widget_address(pool, widget)->u.http->uri;
     if (relative_uri == NULL)
         return base;
