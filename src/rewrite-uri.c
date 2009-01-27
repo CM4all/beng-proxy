@@ -131,7 +131,13 @@ struct rewrite_widget_uri {
     struct strmap *args;
     struct widget *widget;
     session_id_t session_id;
-    struct strref value;
+
+    /** buffer for #value */
+    struct strref s;
+
+    /** the value passed to rewrite_widget_uri() */
+    struct strref *value;
+
     enum uri_mode mode;
 
     istream_t delayed;
@@ -141,6 +147,7 @@ static void
 class_lookup_callback(void *ctx)
 {
     struct rewrite_widget_uri *rwu = ctx;
+    istream_t istream;
 
     if (rwu->widget->class != NULL) {
         struct session *session;
@@ -155,15 +162,21 @@ class_lookup_callback(void *ctx)
         uri = do_rewrite_widget_uri(rwu->pool,
                                     rwu->partition_domain, rwu->external_uri,
                                     rwu->args, rwu->widget,
-                                    &rwu->value, rwu->mode);
-        if (uri != NULL)
-            strref_set_c(&rwu->value, uri);
+                                    rwu->value, rwu->mode);
+        if (uri != NULL) {
+            strref_set_c(&rwu->s, uri);
+            rwu->value = &rwu->s;
+        }
     }
 
+    if (rwu->value != NULL)
+        istream = istream_memory_new(rwu->pool,
+                                     rwu->value->data, rwu->value->length);
+    else
+        istream = istream_null_new(rwu->pool);
+
     istream_delayed_set(rwu->delayed,
-                        istream_memory_new(rwu->pool,
-                                           rwu->value.data,
-                                           rwu->value.length));
+                        istream);
     if (istream_has_handler(rwu->delayed))
         istream_read(rwu->delayed);
 }
@@ -203,7 +216,13 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
         rwu->args = args;
         rwu->widget = widget;
         rwu->session_id = session_id;
-        strref_set_dup(pool, &rwu->value, value);
+
+        if (value != NULL) {
+            strref_set_dup(pool, &rwu->s, value);
+            rwu->value = &rwu->s;
+        } else
+            rwu->value = NULL;
+
         rwu->mode = mode;
         rwu->delayed = istream_delayed_new(pool);
 
