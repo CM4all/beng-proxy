@@ -109,7 +109,7 @@ do_rewrite_widget_uri(pool_t pool,
     uri = widget_external_uri(pool, external_uri, args,
                               widget,
                               true,
-                              value->data, value->length,
+                              value,
                               frame, raw);
     if (mode == URI_MODE_PARTITION && partition_domain != NULL)
         uri = uri_replace_hostname(pool, uri,

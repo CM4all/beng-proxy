@@ -182,7 +182,7 @@ widget_external_uri(pool_t pool,
                     struct strmap *args,
                     struct widget *widget,
                     bool focus,
-                    const char *relative_uri, size_t relative_uri_length,
+                    const struct strref *relative_uri,
                     const char *frame, bool raw)
 {
     const char *path;
@@ -193,7 +193,7 @@ widget_external_uri(pool_t pool,
     struct pool_mark mark;
 
     assert(focus || frame != NULL);
-    assert(focus || (relative_uri == NULL && relative_uri_length == 0));
+    assert(focus || relative_uri == NULL);
     assert(frame != NULL || !raw);
 
     path = widget_path(widget);
@@ -204,11 +204,9 @@ widget_external_uri(pool_t pool,
 
     pool_mark(tpool, &mark);
 
-    if (focus && relative_uri_length > 0) {
-        assert(relative_uri != NULL);
-
+    if (focus && relative_uri != NULL) {
         p = widget_relative_uri(tpool, widget,
-                                relative_uri, relative_uri_length,
+                                relative_uri->data, relative_uri->length,
                                 &buffer);
         if (p == NULL) {
             pool_rewind(tpool, &mark);
