@@ -72,6 +72,10 @@ class Translation(Protocol):
             if m:
                 response.packet(TRANSLATE_CONTENT_TYPE, m.group(1))
                 continue
+            m = re.match(r'^view\s+"([-_\w]+)"$', line)
+            if m:
+                response.view(m.group(1))
+                continue
 
             if line == 'process':
                 response.packet(TRANSLATE_PROCESS)

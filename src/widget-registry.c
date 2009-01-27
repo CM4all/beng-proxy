@@ -54,8 +54,8 @@ lookup_callback(const struct translate_response *response, void *ctx)
     class = p_malloc(lookup->pool, sizeof(*class));
     class->stateful = response->stateful;
     resource_address_copy(lookup->pool, &class->address, &response->address);
-    class->transformation =
-        transformation_dup_chain(lookup->pool, response->transformation);
+    class->views =
+        transformation_dup_view_chain(lookup->pool, response->views);
 
     lookup->callback(class, lookup->callback_ctx);
 }

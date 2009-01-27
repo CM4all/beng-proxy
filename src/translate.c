@@ -14,6 +14,7 @@
 #include "uri-address.h"
 #include "abort-unref.h"
 #include "gb-io.h"
+#include "strutil.h"
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
@@ -63,6 +64,12 @@ struct translate_client {
 
     /** the current resource address being edited */
     struct resource_address *resource_address;
+
+    /** pointer to the tail of the transformation view linked list */
+    struct transformation_view **transformation_view_tail;
+
+    /** the current transformation */
+    struct transformation *transformation;
 
     /** pointer to the tail of the transformation linked list */
     struct transformation **transformation_tail;
@@ -235,6 +242,7 @@ translate_add_transformation(struct translate_client *client)
         = p_malloc(client->pool, sizeof(*transformation));
 
     transformation->next = NULL;
+    client->transformation = transformation;
     *client->transformation_tail = transformation;
     client->transformation_tail = &transformation->next;
 
@@ -272,6 +280,47 @@ parse_address_string(struct sockaddr_in *sin, const char *p)
     return true;
 }
 
+static bool
+valid_view_name_char(char ch)
+{
+    return char_is_alphanumeric(ch) || ch == '_' || ch == '-';
+}
+
+static bool
+valid_view_name(const char *name)
+{
+    assert(name != NULL);
+
+    do {
+        if (!valid_view_name_char(*name))
+            return false;
+    } while (*++name != 0);
+
+    return true;
+}
+
+static void
+add_view(struct translate_client *client, const char *name)
+{
+    struct transformation_view *view;
+
+    if (!valid_view_name(name)) {
+            daemon_log(1, "invalid view name\n");
+            translate_client_abort(client);
+            return;
+    }
+
+    view = p_malloc(client->pool, sizeof(*view));
+    view->next = NULL;
+    view->name = name;
+    view->transformation = NULL;
+
+    *client->transformation_view_tail = view;
+    client->transformation_view_tail = &view->next;
+    client->transformation_tail = &view->transformation;
+    client->transformation = NULL;
+}
+
 /**
  * Returns false if the client has been closed.
  */
@@ -305,7 +354,9 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_BEGIN:
         memset(&client->response, 0, sizeof(client->response));
         client->resource_address = &client->response.address;
-        client->transformation_tail = &client->response.transformation;
+        client->response.views = p_calloc(client->pool, sizeof(*client->response.views));
+        client->transformation_view_tail = &client->response.views->next;
+        client->transformation_tail = &client->response.views->transformation;
         break;
 
     case TRANSLATE_HOST:
@@ -404,23 +455,23 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_DOMAIN:
-        if (client->response.transformation == NULL ||
-            client->response.transformation->type != TRANSFORMATION_PROCESS) {
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
             daemon_log(2, "misplaced TRANSLATE_DOMAIN packet\n");
             break;
         }
 
-        client->response.transformation->u.processor.domain = payload;
+        client->transformation->u.processor.domain = payload;
         break;
 
     case TRANSLATE_CONTAINER:
-        if (client->response.transformation == NULL ||
-            client->response.transformation->type != TRANSFORMATION_PROCESS) {
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
             daemon_log(2, "misplaced TRANSLATE_CONTAINER packet\n");
             break;
         }
 
-        client->response.transformation->u.processor.options |= PROCESSOR_CONTAINER;
+        client->transformation->u.processor.options |= PROCESSOR_CONTAINER;
         break;
 
     case TRANSLATE_STATEFUL:
@@ -577,6 +628,10 @@ translate_handle_packet(struct translate_client *client,
                             (const struct sockaddr *)&sin, sizeof(sin));
         }
 
+        break;
+
+    case TRANSLATE_VIEW:
+        add_view(client, payload);
         break;
     }
 

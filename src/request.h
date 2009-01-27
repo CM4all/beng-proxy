@@ -13,6 +13,7 @@
 #include "processor.h"
 #include "async.h"
 #include "session.h"
+#include "transformation.h"
 
 struct request {
     struct http_server_request *request;
@@ -43,7 +44,7 @@ struct request {
 static inline bool
 request_transformation_enabled(struct request *request)
 {
-    return request->translate.response->transformation != NULL;
+    return request->translate.response->views->transformation != NULL;
 }
 
 bool

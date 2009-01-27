@@ -15,10 +15,18 @@ const struct widget_class root_widget_class = {
 };
 
 bool
-widget_class_is_container(const struct widget_class *class)
+widget_class_is_container(const struct widget_class *class,
+                          const char *view_name)
 {
+    const struct transformation_view *view;
+
     assert(class != &root_widget_class);
 
-    return transformation_is_container(class->transformation);
+    view = transformation_view_lookup(class->views, view_name);
+    if (view == NULL)
+        /* shouldn't happen, but may not be checked up to now */
+        return false;
+
+    return transformation_is_container(view->transformation);
 }
 

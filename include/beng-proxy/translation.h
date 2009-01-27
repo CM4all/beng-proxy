@@ -42,6 +42,7 @@ enum beng_translation_command {
     TRANSLATE_DOMAIN = 31,
     TRANSLATE_STATEFUL = 32,
     TRANSLATE_FASTCGI = 33,
+    TRANSLATE_VIEW = 34,
 };
 
 struct beng_translation_header {

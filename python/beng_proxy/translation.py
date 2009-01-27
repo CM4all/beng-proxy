@@ -34,6 +34,7 @@ TRANSLATE_AJP = 30
 TRANSLATE_DOMAIN = 31
 TRANSLATE_STATEFUL = 32
 TRANSLATE_FASTCGI = 33
+TRANSLATE_VIEW = 34
 
 class PacketReader:
     def __init__(self):
@@ -127,6 +128,11 @@ class Response:
     def status(self, status):
         assert status >= 200 and status < 600
         self.packet(TRANSLATE_STATUS, struct.pack('H', status))
+
+    def view(self, name):
+        assert isinstance(name, str)
+        assert len(name) > 0
+        self.packet(TRANSLATE_VIEW, name)
 
     def proxy(self, uri, *addresses):
         assert uri[0] != '/' or len(addresses) == 0

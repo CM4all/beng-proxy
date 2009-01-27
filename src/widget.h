@@ -31,7 +31,7 @@ struct widget_class {
     struct resource_address address;
 
     /** transformations applied to the widget response */
-    const struct transformation *transformation;
+    const struct transformation_view *views;
 
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */
@@ -127,8 +127,8 @@ struct widget_ref {
 extern const struct widget_class root_widget_class;
 
 bool
-widget_class_is_container(const struct widget_class *class);
-
+widget_class_is_container(const struct widget_class *class,
+                          const char *view_name);
 
 static inline void
 widget_init(struct widget *widget, const struct widget_class *class)
@@ -190,6 +190,19 @@ widget_get_path_info(const struct widget *widget)
     return widget->from_request.path_info != NULL
         ? widget->from_request.path_info
         : widget->path_info;
+}
+
+/**
+ * Returns the effective view name, as specified in the template or
+ * requested by the client.
+ */
+static inline const char *
+widget_get_view_name(const struct widget *widget)
+{
+    /* XXX implement */
+    (void)widget;
+
+    return NULL;
 }
 
 /**

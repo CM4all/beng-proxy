@@ -472,11 +472,21 @@ widget_http_request(pool_t pool, struct widget *widget,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
+    const struct transformation_view *view;
     struct embed *embed;
     struct strmap *headers;
 
     assert(widget != NULL);
     assert(widget->class != NULL);
+
+    view = transformation_view_lookup(widget->class->views,
+                                      widget_get_view_name(widget));
+    if (view == NULL) {
+        daemon_log(3, "unknown view name for class '%s': '%s'\n",
+                   widget->class_name, widget_get_view_name(widget));
+        http_response_handler_direct_abort(handler, handler_ctx);
+        return;
+    }
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
@@ -489,7 +499,7 @@ widget_http_request(pool_t pool, struct widget *widget,
         ? uri_host_and_port(pool, embed->widget->class->address.u.http->uri)
         : NULL;
     embed->transformation = embed->widget->from_request.raw
-        ? NULL : widget->class->transformation;
+        ? NULL : view->transformation;
     embed->standalone = embed->widget->from_request.proxy ||
         embed->widget->from_request.proxy_ref != NULL;
 

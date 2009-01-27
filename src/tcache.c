@@ -84,7 +84,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->user = NULL;
     dest->language = NULL;
 
-    dest->transformation = transformation_dup_chain(pool, src->transformation);
+    dest->views = transformation_dup_view_chain(pool, src->views);
 }
 
 

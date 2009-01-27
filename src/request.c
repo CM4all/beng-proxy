@@ -16,7 +16,7 @@ request_processor_enabled(struct request *request)
 {
     const struct transformation *transformation;
 
-    for (transformation = request->translate.response->transformation;
+    for (transformation = request->translate.response->views->transformation;
          transformation != NULL;
          transformation = transformation->next)
         if (transformation->type == TRANSFORMATION_PROCESS)

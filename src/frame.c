@@ -65,7 +65,8 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    if (!widget_class_is_container(widget->class)) {
+    if (!widget_class_is_container(widget->class,
+                                   widget_get_view_name(widget))) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
         daemon_log(4, "frame within non-container requested\n");

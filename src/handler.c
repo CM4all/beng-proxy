@@ -76,7 +76,7 @@ translate_callback(const struct translate_response *response,
     struct session *session;
 
     request->translate.response = response;
-    request->translate.transformation = response->transformation;
+    request->translate.transformation = response->views->transformation;
 
     if (response->status == (http_status_t)-1 ||
         (response->status == (http_status_t)0 &&
@@ -90,7 +90,7 @@ translate_callback(const struct translate_response *response,
 
     if (request->session_id != 0 &&
         (response->session != NULL || response->user != NULL ||
-         response->language != NULL || response->transformation != NULL))
+         response->language != NULL || response->views->transformation != NULL))
         session = session_get(request->session_id);
     else
         session = NULL;
@@ -149,7 +149,7 @@ translate_callback(const struct translate_response *response,
     /* always enforce sessions when there is a transformation
        (e.g. the beng template processor); also redirect the client
        when a session has just been created */
-    if ((response->transformation != NULL && session == NULL) ||
+    if ((response->views->transformation != NULL && session == NULL) ||
         (session != NULL && !session->cookie_sent)) {
         session_redirect(request);
         return;
@@ -273,13 +273,20 @@ serve_document_root_file(struct request *request2,
 
     if (process) {
         struct transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
+        struct transformation_view *view = p_malloc(request->pool, sizeof(*view));
+
         transformation->next = NULL;
         transformation->type = TRANSFORMATION_PROCESS;
-        tr->transformation = transformation;
-    } else
-        tr->transformation = NULL;
 
-    request2->translate.transformation = tr->transformation;
+        view->next = NULL;
+        view->name = NULL;
+        view->transformation = transformation;
+
+        tr->views = view;
+    } else
+        tr->views = NULL;
+
+    request2->translate.transformation = tr->views->transformation;
 
     tr->status = 0;
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
