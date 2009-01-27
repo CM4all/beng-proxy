@@ -58,3 +58,52 @@ transformation_dup_chain(pool_t pool, const struct transformation *src)
 
     return dest;
 }
+
+const struct transformation_view *
+transformation_view_lookup(const struct transformation_view *view,
+                           const char *name)
+{
+    assert(view != NULL);
+    assert(view->name == NULL);
+
+    if (name == NULL)
+        /* the default view has no name */
+        return view;
+
+    for (view = view->next; view != NULL; view = view->next) {
+        assert(view->name != NULL);
+
+        if (strcmp(view->name, name) == 0)
+            return view;
+    }
+
+    return NULL;
+}
+
+struct transformation_view *
+transformation_dup_view(pool_t pool, const struct transformation_view *src)
+{
+    struct transformation_view *dest = p_malloc(pool, sizeof(*dest));
+
+    dest->name = src->name != NULL ? p_strdup(pool, src->name) : NULL;
+    dest->transformation = transformation_dup_chain(pool, src->transformation);
+
+    return dest;
+}
+
+struct transformation_view *
+transformation_dup_view_chain(pool_t pool, const struct transformation_view *src)
+{
+    struct transformation_view *dest = NULL, **tail_p = &dest;
+
+    assert(src != NULL);
+    assert(src->name == NULL);
+
+    for (; src != NULL; src = src->next) {
+        struct transformation_view *p = transformation_dup_view(pool, src);
+        *tail_p = p;
+        tail_p = &p->next;
+    }
+
+    return dest;
+}
