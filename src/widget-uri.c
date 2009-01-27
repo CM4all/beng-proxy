@@ -132,10 +132,15 @@ widget_determine_address(pool_t pool, struct widget *widget)
 
 const char *
 widget_absolute_uri(pool_t pool, struct widget *widget,
-                    const char *relative_uri, size_t relative_uri_length)
+                    const struct strref *relative_uri)
 {
-    return uri_absolute(pool, widget_address(pool, widget)->u.http->uri,
-                        relative_uri, relative_uri_length);
+    const char *base;
+
+    base = widget_address(pool, widget)->u.http->uri;
+    if (relative_uri == NULL)
+        return base;
+
+    return uri_absolute(pool, base, relative_uri->data, relative_uri->length);
 }
 
 const char *

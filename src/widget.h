@@ -237,7 +237,7 @@ widget_address(pool_t pool, struct widget *widget)
 
 const char *
 widget_absolute_uri(pool_t pool, struct widget *widget,
-                    const char *relative_uri, size_t relative_uri_length);
+                    const struct strref *relative_uri);
 
 const char *
 widget_translation_uri(pool_t pool,
