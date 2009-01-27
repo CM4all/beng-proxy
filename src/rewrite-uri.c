@@ -107,7 +107,7 @@ do_rewrite_widget_uri(pool_t pool,
 
     uri = widget_external_uri(pool, external_uri, args,
                               widget,
-                              true,
+                              value != NULL,
                               value,
                               frame, raw);
     if (mode == URI_MODE_PARTITION && partition_domain != NULL)
