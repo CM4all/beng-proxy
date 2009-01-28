@@ -5,7 +5,7 @@
 //
 
 function beng_widget_uri(base_uri, session_id, frame, focus, mode,
-                         path, translate) {
+                         path, translate, view) {
     if (base_uri == null ||
         (mode != null && mode != "focus" && mode != "frame" &&
          mode != "partial" && mode != "proxy" && mode != "save"))
@@ -19,8 +19,14 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
         uri += "&focus=" + escape(focus);
         if (mode == "partial" || mode == "proxy" || mode == "save")
             frame = focus;
-        if (frame != null)
+
+        if (frame != null) {
             uri += "&frame=" + escape(frame);
+
+            if (view != null)
+                uri += "&view=" + escape(view);
+        }
+
         if (mode == "proxy")
             uri += "&raw=1";
         if (mode == "save")

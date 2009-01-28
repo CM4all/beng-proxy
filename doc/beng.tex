@@ -699,7 +699,7 @@ an URI:
 
 \begin{verbatim*}
 function beng_widget_uri(base_uri, session_id, frame, focus, mode,
-                         path, translate);
+                         path, translate, view);
 \end{verbatim*}
 
 The return value is the URI which can be safely requested by the
@@ -735,6 +735,10 @@ include a query string.
 
 The \texttt{translate} argument is passed to the translation server as
 \texttt{PARAM} packet.
+
+\texttt{view} is the name of the transformation view to use.  This
+parameter is ignored unless \texttt{frame} is set, or \texttt{mode} is
+``\texttt{partial}''.
 
 
 \section{The prototype translation server}
