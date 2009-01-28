@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import datetime
+from datetime import date
 
-today = datetime.date.today()
+today = date.today()
 
 print "Content-Type: text/html"
 print
