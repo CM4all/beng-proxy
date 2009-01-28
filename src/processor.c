@@ -47,6 +47,7 @@ struct processor {
         TAG_WIDGET_PATH_INFO,
         TAG_WIDGET_PARAM,
         TAG_WIDGET_HEADER,
+        TAG_WIDGET_VIEW,
         TAG_A,
         TAG_FORM,
         TAG_IMG,
@@ -288,6 +289,8 @@ parser_element_start_in_widget(struct processor *processor,
         processor->tag = TAG_WIDGET_HEADER;
         processor->widget.param.name_length = 0;
         processor->widget.param.value_length = 0;
+    } else if (strref_cmp_literal(name, "view") == 0) {
+        processor->tag = TAG_WIDGET_VIEW;
     } else {
         processor->tag = TAG_NONE;
     }
@@ -539,6 +542,21 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
         if (strref_cmp_literal(&attr->name, "value") == 0) {
             processor->widget.widget->path_info
+                = strref_dup(processor->widget.pool, &attr->value);
+        }
+
+        break;
+
+    case TAG_WIDGET_VIEW:
+        assert(processor->widget.widget != NULL);
+
+        if (strref_cmp_literal(&attr->name, "name") == 0) {
+            if (strref_is_empty(&attr->value)) {
+                daemon_log(2, "empty view namen\n");
+                return;
+            }
+
+            processor->widget.widget->view
                 = strref_dup(processor->widget.pool, &attr->value);
         }
 

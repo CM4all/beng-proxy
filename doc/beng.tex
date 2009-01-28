@@ -542,6 +542,18 @@ allowed.  It must start with ``X-''.
 Again: never trust user input!  The widget server cannot see if input
 came from the template or from the user's browser.
 
+\subsection{Selecting the widget view}
+
+\begin{verbatim*}
+<c:widget id="foo" type="bar">
+  <c:view name="raw"/>
+</c:widget>
+\end{verbatim*}
+
+The \texttt{c:view} element selects the transformation view for this
+widget.  It can be one of the view names provided by the widget
+registry (i.e. the translation server).
+
 \subsection{Variable substitutions}
 
 \emph{beng-proxy} defines special entities beginning with \texttt{c:}

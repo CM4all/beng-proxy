@@ -69,6 +69,9 @@ struct widget {
     /** HTTP request headers specified in the template */
     struct strmap *headers;
 
+    /** the name of the view specified in the template */
+    const char *view;
+
     /** what is the scope of session data? */
     enum {
         /** each resource has its own set of widget sessions */
@@ -144,6 +147,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->path_info = "";
     widget->query_string = NULL;
     widget->headers = NULL;
+    widget->view = NULL;
     widget->session = WIDGET_SESSION_RESOURCE;
     widget->from_request.proxy_ref = NULL;
     widget->from_request.focus_ref = NULL;
@@ -199,10 +203,7 @@ widget_get_path_info(const struct widget *widget)
 static inline const char *
 widget_get_view_name(const struct widget *widget)
 {
-    /* XXX implement */
-    (void)widget;
-
-    return NULL;
+    return widget->view;
 }
 
 /**
