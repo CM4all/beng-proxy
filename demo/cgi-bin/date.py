@@ -2,6 +2,8 @@
 
 import datetime
 
+today = datetime.date.today()
+
 print "Content-Type: text/html"
 print
-print datetime.datetime.now().strftime('%x')
+print today.strftime('%x')
