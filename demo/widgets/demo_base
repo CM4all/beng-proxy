@@ -1,2 +1,2 @@
-server "http://cfatest01.intern.cm-ag/base.html"
+server "http://cfatest01.intern.cm-ag/widgets/base.html"
 process

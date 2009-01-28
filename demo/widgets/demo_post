@@ -1,2 +1,2 @@
-server "http://cfatest01.intern.cm-ag/post.py"
+server "http://cfatest01.intern.cm-ag/widgets/post.py"
 process

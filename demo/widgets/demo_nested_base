@@ -1,3 +1,3 @@
-server "http://cfatest01.intern.cm-ag/nested_base.html"
+server "http://cfatest01.intern.cm-ag/widgets/nested_base.html"
 process
 container
