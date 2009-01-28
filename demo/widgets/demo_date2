@@ -1,0 +1,2 @@
+cgi "/usr/share/cm4all/beng-proxy/demo/date2.py"
+script_name "/date2.py"
