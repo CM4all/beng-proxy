@@ -104,6 +104,9 @@ struct widget {
 
         /** should the resource be passed raw, i.e. not processed? */
         bool raw;
+
+        /** the name of the view requested by the client */
+        const char *view;
     } from_request;
 
     struct {
@@ -157,6 +160,7 @@ widget_init(struct widget *widget, const struct widget_class *class)
     widget->from_request.body = NULL;
     widget->from_request.proxy = false;
     widget->from_request.raw = false;
+    widget->from_request.view = NULL;
     widget->lazy.path = NULL;
     widget->lazy.prefix = NULL;
     widget->lazy.address = NULL;
@@ -203,7 +207,9 @@ widget_get_path_info(const struct widget *widget)
 static inline const char *
 widget_get_view_name(const struct widget *widget)
 {
-    return widget->view;
+    return widget->from_request.view != NULL
+        ? widget->from_request.view
+        : widget->view;
 }
 
 /**

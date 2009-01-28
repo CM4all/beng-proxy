@@ -76,6 +76,10 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
             widget->from_request.proxy = true;
             if (strmap_get(env->args, "raw") != NULL)
                 widget->from_request.raw = true;
+
+            /* the client can select the view; he can never explicitly
+               select the default view */
+            widget->from_request.view = strmap_remove(env->args, "view");
         } else
             widget->parent->from_request.proxy_ref = NULL;
     }
