@@ -182,7 +182,7 @@ hashmap_get(struct hashmap *map, const char *key)
 }
 
 static struct slot *
-hashmap_find_value(struct slot *slot, void *value)
+hashmap_find_value(struct slot *slot, const void *value)
 {
     assert(slot != NULL);
 
@@ -196,7 +196,7 @@ hashmap_find_value(struct slot *slot, void *value)
 }
 
 void *
-hashmap_get_next(struct hashmap *map, const char *key, void *prev)
+hashmap_get_next(struct hashmap *map, const char *key, const void *prev)
 {
     unsigned hash = calc_hash(key);
     struct slot *slot;

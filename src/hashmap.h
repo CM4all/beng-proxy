@@ -37,7 +37,7 @@ hashmap_get(struct hashmap *map, const char *key);
  * @return the next value, or NULL if there are no more
  */
 void *
-hashmap_get_next(struct hashmap *map, const char *key, void *prev);
+hashmap_get_next(struct hashmap *map, const char *key, const void *prev);
 
 void
 hashmap_rewind(struct hashmap *map);
