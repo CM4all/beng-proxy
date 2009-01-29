@@ -157,6 +157,42 @@ hashmap_remove(struct hashmap *map, const char *key)
     return NULL;
 }
 
+void
+hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
+{
+    unsigned hash = calc_hash(key);
+    struct slot *slot, *prev;
+
+    assert(key != NULL);
+
+    prev = &map->slots[hash % map->capacity];
+    assert(prev->pair.key != NULL);
+
+    if (prev->pair.value == value) {
+        if (prev->next == NULL) {
+            prev->pair.key = NULL;
+            prev->pair.value = NULL;
+        } else {
+            slot = prev->next;
+            *prev = *slot;
+            p_free(map->pool, slot);
+        }
+        return;
+    }
+
+    for (slot = prev->next;; slot = slot->next) {
+        assert(slot != NULL);
+        assert(slot->pair.key != NULL);
+        assert(slot->pair.value != NULL);
+
+        if (slot->pair.value == value) {
+            prev->next = slot->next;
+            p_free(map->pool, slot);
+            return;
+        }
+    }
+}
+
 void *
 hashmap_get(struct hashmap *map, const char *key)
 {

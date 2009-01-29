@@ -26,6 +26,9 @@ hashmap_set(struct hashmap *map, const char *key, void *value);
 void *
 hashmap_remove(struct hashmap *map, const char *key);
 
+void
+hashmap_remove_value(struct hashmap *map, const char *key, const void *value);
+
 void *
 hashmap_get(struct hashmap *map, const char *key);
 
