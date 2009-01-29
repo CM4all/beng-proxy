@@ -130,6 +130,7 @@ http_cache_request_evaluate(pool_t pool,
     const char *p;
 
     if (method != HTTP_METHOD_GET || body != NULL)
+        /* RFC 2616 13.11 "Write-Through Mandatory" */
         return NULL;
 
     if (headers != NULL) {
