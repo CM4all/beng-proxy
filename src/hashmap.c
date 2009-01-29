@@ -181,6 +181,40 @@ hashmap_get(struct hashmap *map, const char *key)
     return NULL;
 }
 
+static struct slot *
+hashmap_find_value(struct slot *slot, void *value)
+{
+    assert(slot != NULL);
+
+    while (slot->pair.value != value) {
+        slot = slot->next;
+
+        assert(slot != NULL);
+    }
+
+    return slot;
+}
+
+void *
+hashmap_get_next(struct hashmap *map, const char *key, void *prev)
+{
+    unsigned hash = calc_hash(key);
+    struct slot *slot;
+
+    slot = hashmap_find_value(&map->slots[hash % map->capacity], prev);
+
+    while (slot->next != NULL) {
+        slot = slot->next;
+        assert(slot->pair.key != NULL);
+        assert(slot->pair.value != NULL);
+
+        if (strcmp(slot->pair.key, key) == 0)
+            return slot->pair.value;
+    }
+
+    return NULL;
+}
+
 void
 hashmap_rewind(struct hashmap *map)
 {

@@ -29,6 +29,16 @@ hashmap_remove(struct hashmap *map, const char *key);
 void *
 hashmap_get(struct hashmap *map, const char *key);
 
+/**
+ * Returns another value for this key.
+ *
+ * @param prev the previous value returned by hashmap_get() or this
+ * function
+ * @return the next value, or NULL if there are no more
+ */
+void *
+hashmap_get_next(struct hashmap *map, const char *key, void *prev);
+
 void
 hashmap_rewind(struct hashmap *map);
 
