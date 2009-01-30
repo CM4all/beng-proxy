@@ -269,7 +269,9 @@ http_cache_copy_vary(pool_t pool, const char *vary, struct strmap *headers)
 
     for (list = http_list_split(tpool, vary);
          *list != NULL; ++list) {
-        const char *value = strmap_get(headers, *list);
+        const char *value = headers != NULL
+            ? strmap_get(headers, *list)
+            : NULL;
         if (value == NULL)
             value = "";
         strmap_set(dest, p_strdup(pool, *list),

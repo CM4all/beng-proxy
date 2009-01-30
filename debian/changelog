@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.4) unstable; urgency=low
 
   * added support for transformation views
     - in the JavaScript API, mode=proxy is now deprecated
+  * http-cache: fix segfault when request_headers==NULL
 
  --
 
