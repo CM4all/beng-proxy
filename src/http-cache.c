@@ -168,7 +168,7 @@ http_cache_request_evaluate(pool_t pool,
 }
 
 static bool
-vary_fits(struct strmap *vary, struct strmap *headers)
+vary_fits(struct strmap *vary, const struct strmap *headers)
 {
     const struct strmap_pair *pair;
 
