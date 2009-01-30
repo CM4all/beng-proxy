@@ -203,7 +203,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/run-subst $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-http-util test/t-processor test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/run-subst $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-http-util test/t-http-cache test/t-processor test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client
 	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
 include demo/Makefile
@@ -262,6 +262,9 @@ test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstrin
 test/t-http-util: test/t-http-util.o src/http-util.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+test/t-http-cache: test/t-http-cache.o src/pool.o src/pstring.o src/tpool.o src/strmap.o src/hashmap.o src/fifo-buffer.o src/http.o src/header-parser.o src/growing-buffer.o src/strutil.o src/istream-memory.o src/istream-string.o src/http-cache.o src/abort-unref.o src/cache.o src/header-writer.o src/http-util.o src/istream-tee.o src/date.o src/gmtime.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
+
 test/t-processor: test/t-processor.o src/processor.o src/penv.o src/parser.o src/istream-replace.o src/widget.o src/widget-class.o src/widget-ref.o src/widget-uri.o src/widget-session.o src/embed.o src/inline-widget.o src/uri-relative.o src/uri-parser.o src/uri-escape.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/pool.o src/pstring.o src/istream-string.o src/istream-subst.o src/istream-file.o src/istream-cat.o src/istream-memory.o src/istream-delayed.o src/istream-hold.o src/istream-dechunk.o src/istream-chunked.o src/session.o src/cookie-client.o src/header-writer.o src/args.o src/buffered-io.o src/http-stock.o src/stock.o src/hstock.o src/client-socket.o src/http-client.o src/http-body.o src/socket-util.o src/format.o src/header-parser.o src/http.o src/strutil.o src/widget-request.o src/istream-tee.o src/istream-null.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
@@ -288,6 +291,9 @@ check-http-client: test/t-http-client test/t-http-server-mirror
 
 check-http-util: test/t-http-util
 	./test/t-http-util
+
+check-http-cache: test/t-http-cache
+	./test/t-http-cache
 
 check-cookie-client: test/run-cookie-client test/t-cookie-client
 	python ./test/t-cookie-client.py
@@ -326,7 +332,7 @@ check-wembed: test/t-wembed
 test/run-ajp-client: test/run-ajp-client.o src/ajp-client.o src/pool.o src/pstring.o src/buffered-io.o src/fifo-buffer.o src/growing-buffer.o src/socket-util.o src/fd-util.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
-check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) check-http-server check-http-client check-cookie-client check-shm check-dpool check-session check-widget-registry check-wembed
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) check-http-server check-http-client check-http-cache check-cookie-client check-shm check-dpool check-session check-widget-registry check-wembed
 
 cov: CFLAGS += -fprofile-arcs -ftest-coverage
 cov: LDFLAGS += -fprofile-arcs -ftest-coverage
