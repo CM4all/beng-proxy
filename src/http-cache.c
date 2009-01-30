@@ -283,6 +283,16 @@ http_cache_copy_vary(pool_t pool, const char *vary, struct strmap *headers)
     return dest;
 }
 
+static bool
+http_cache_item_match(const struct cache_item *_item, void *ctx)
+{
+    const struct http_cache_item *item =
+        (const struct http_cache_item *)_item;
+    struct strmap *headers = ctx;
+
+    return http_cache_item_fits(item, headers);
+}
+
 static void
 http_cache_put(struct http_cache_request *request)
 {
@@ -328,7 +338,9 @@ http_cache_put(struct http_cache_request *request)
         }
     }
 
-    cache_put(request->cache->cache, p_strdup(pool, request->url), &item->item);
+    cache_put_match(request->cache->cache, p_strdup(pool, request->url),
+                    &item->item,
+                    http_cache_item_match, request->headers);
 }
 
 static time_t
@@ -764,9 +776,11 @@ http_cache_request(struct http_cache *cache,
     info = http_cache_request_evaluate(pool, method, headers, body);
     if (info != NULL) {
         struct http_cache_item *item
-            = (struct http_cache_item *)cache_get(cache->cache, uwa->uri);
+            = (struct http_cache_item *)cache_get_match(cache->cache, uwa->uri,
+                                                        http_cache_item_match,
+                                                        headers);
 
-        if (item == NULL || !http_cache_item_fits(item, headers))
+        if (item == NULL)
             http_cache_miss(cache, pool, info,
                             method, uwa, headers, body,
                             handler, handler_ctx, async_ref);
