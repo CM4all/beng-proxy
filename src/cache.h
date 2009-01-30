@@ -39,7 +39,7 @@ cache_get(struct cache *cache, const char *key);
  * specified matching function.
  *
  * @param cache the cache object
- * @param key the cache itme key
+ * @param key the cache item key
  * @param match the match callback function
  * @param ctx a context pointer for the callback
  */
@@ -58,6 +58,22 @@ cache_add(struct cache *cache, const char *key,
 void
 cache_put(struct cache *cache, const char *key,
           struct cache_item *item);
+
+/**
+ * Adds a new item to this cache, or replaces an existing item which
+ * matches with the specified matching function.
+ *
+ * @param cache the cache object
+ * @param key the cache item key
+ * @param item the new cache item
+ * @param match the match callback function
+ * @param ctx a context pointer for the callback
+ */
+void
+cache_put_match(struct cache *cache, const char *key,
+                struct cache_item *item,
+                bool (*match)(const struct cache_item *, void *),
+                void *ctx);
 
 void
 cache_remove(struct cache *cache, const char *key);
