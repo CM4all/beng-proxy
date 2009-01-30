@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
 
 #ifdef CACHE_LOG
 #include <daemon/log.h>
@@ -385,6 +386,23 @@ http_cache_response_evaluate(struct http_cache_info *info,
                 strref_cmp_literal(s, "no-cache") == 0 ||
                 strref_cmp_literal(s, "no-store") == 0)
                 return false;
+
+            if (strref_starts_with_n(s, "max-age=", 8)) {
+                /* RFC 2616 14.9.3 */
+                size_t length = s->length - 8;
+                char value[16];
+                int seconds;
+
+                if (length >= sizeof(value))
+                    continue;
+
+                memcpy(value, s->data + 8, length);
+                value[length] = 0;
+
+                seconds = atoi(value);
+                if (seconds > 0)
+                    info->expires = time(NULL) + seconds;
+            }
         }
     }
 
@@ -400,9 +418,15 @@ http_cache_response_evaluate(struct http_cache_info *info,
     now = time(NULL);
     offset = now - date;
 
-    info->expires = parse_translate_time(strmap_get(headers, "expires"), offset);
-    if (info->expires != (time_t)-1 && info->expires < now)
-        cache_log(2, "invalid 'expires' header\n");
+    if (info->expires == (time_t)-1) {
+        /* RFC 2616 14.9.3: "If a response includes both an Expires
+           header and a max-age directive, the max-age directive
+           overrides the Expires header" */
+
+        info->expires = parse_translate_time(strmap_get(headers, "expires"), offset);
+        if (info->expires != (time_t)-1 && info->expires < now)
+            cache_log(2, "invalid 'expires' header\n");
+    }
 
     info->last_modified = strmap_get(headers, "last-modified");
     info->etag = strmap_get(headers, "etag");

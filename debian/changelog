@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.4) unstable; urgency=low
     - in the JavaScript API, mode=proxy is now deprecated
   * http-cache: fix segfault when request_headers==NULL
   * http-cache: store multiple (varying) versions of a resource
+  * http-cache: use the "max-age" cache-control response
 
  --
 
