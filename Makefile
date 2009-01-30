@@ -259,8 +259,8 @@ test/t-http-server-mirror: test/t-http-server-mirror.o src/http-server.o src/htt
 test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstring.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/header-writer.o src/istream-forward.o src/istream-string.o src/istream-memory.o src/istream-cat.o src/istream-fail.o src/istream-block.o src/http-body.o src/header-parser.o src/istream-chunked.o src/istream-dechunk.o src/format.o src/http.o src/strutil.o src/buffered-io.o src/fd-util.o src/socket-util.o src/istream-head.o src/istream-null.o src/istream-zero.o src/tpool.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
-test/t-http-util: test/t-http-util.o src/http-util.o
-	$(CC) -o $@ $^ $(LDFLAGS)
+test/t-http-util: test/t-http-util.o src/http-util.o src/pool.o src/pstring.o src/strutil.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
 test/t-http-cache: test/t-http-cache.o src/pool.o src/pstring.o src/tpool.o src/strmap.o src/hashmap.o src/fifo-buffer.o src/http.o src/header-parser.o src/growing-buffer.o src/strutil.o src/istream-memory.o src/istream-string.o src/http-cache.o src/abort-unref.o src/cache.o src/header-writer.o src/http-util.o src/istream-tee.o src/date.o src/gmtime.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
@@ -332,7 +332,7 @@ check-wembed: test/t-wembed
 test/run-ajp-client: test/run-ajp-client.o src/ajp-client.o src/pool.o src/pstring.o src/buffered-io.o src/fifo-buffer.o src/growing-buffer.o src/socket-util.o src/fd-util.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
-check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) check-http-server check-http-client check-http-cache check-cookie-client check-shm check-dpool check-session check-widget-registry check-wembed
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) check-http-server check-http-client check-http-util check-http-cache check-cookie-client check-shm check-dpool check-session check-widget-registry check-wembed
 
 cov: CFLAGS += -fprofile-arcs -ftest-coverage
 cov: LDFLAGS += -fprofile-arcs -ftest-coverage
