@@ -35,6 +35,20 @@ struct cache_item *
 cache_get(struct cache *cache, const char *key);
 
 /**
+ * Find the first cache_item for a key which matches with the
+ * specified matching function.
+ *
+ * @param cache the cache object
+ * @param key the cache itme key
+ * @param match the match callback function
+ * @param ctx a context pointer for the callback
+ */
+struct cache_item *
+cache_get_match(struct cache *cache, const char *key,
+                bool (*match)(const struct cache_item *, void *),
+                void *ctx);
+
+/**
  * Add an item to this cache.  Item with the same key are preserved.
  */
 void

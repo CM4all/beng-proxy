@@ -88,6 +88,44 @@ cache_get(struct cache *cache, const char *key)
     return item;
 }
 
+struct cache_item *
+cache_get_match(struct cache *cache, const char *key,
+                bool (*match)(const struct cache_item *, void *),
+                void *ctx)
+{
+    struct cache_item *item;
+    if (item == NULL)
+        return NULL;
+
+    do {
+        if (item != NULL) {
+            if (!cache_item_validate(cache, item)) {
+                /* expired cache item: delete it, and re-start the
+                   search */
+                hashmap_remove_value(cache->items, key, item);
+                cache_destroy_item(cache, item);
+                item = NULL;
+                continue;
+            }
+
+            if (match(item, ctx)) {
+                /* this one matches: return it to the caller */
+                item->last_accessed = time(NULL);
+                return item;
+            }
+
+            /* find the next cache_item for this key */
+            item = hashmap_get_next(cache->items, key, item);
+        } else {
+            /* find the first cache_item for this key */
+            item = hashmap_get(cache->items, key);
+        }
+    } while (item != NULL);
+
+    /* no match */
+    return NULL;
+}
+
 static void
 cache_destroy_oldest_item(struct cache *cache)
 {
