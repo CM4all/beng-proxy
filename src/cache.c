@@ -93,9 +93,7 @@ cache_get_match(struct cache *cache, const char *key,
                 bool (*match)(const struct cache_item *, void *),
                 void *ctx)
 {
-    struct cache_item *item;
-    if (item == NULL)
-        return NULL;
+    struct cache_item *item = NULL;
 
     do {
         if (item != NULL) {
