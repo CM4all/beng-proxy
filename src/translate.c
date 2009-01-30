@@ -356,6 +356,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address = &client->response.address;
         client->response.views = p_calloc(client->pool, sizeof(*client->response.views));
         client->transformation_view_tail = &client->response.views->next;
+        client->transformation = NULL;
         client->transformation_tail = &client->response.views->transformation;
         break;
 
