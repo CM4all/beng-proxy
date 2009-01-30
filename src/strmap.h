@@ -29,7 +29,7 @@ const char *
 strmap_remove(struct strmap *map, const char *key);
 
 const char *
-strmap_get(struct strmap *map, const char *key);
+strmap_get(const struct strmap *map, const char *key);
 
 void
 strmap_rewind(struct strmap *map);

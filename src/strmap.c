@@ -75,7 +75,7 @@ strmap_remove(struct strmap *map, const char *key)
 }
 
 const char *
-strmap_get(struct strmap *map, const char *key)
+strmap_get(const struct strmap *map, const char *key)
 {
     return (const char*)hashmap_get(map->hashmap, key);
 }
