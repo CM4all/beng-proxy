@@ -76,7 +76,9 @@ translate_callback(const struct translate_response *response,
     struct session *session;
 
     request->translate.response = response;
-    request->translate.transformation = response->views->transformation;
+    request->translate.transformation = response->views != NULL
+        ? response->views->transformation
+        : NULL;
 
     if (response->status == (http_status_t)-1 ||
         (response->status == (http_status_t)0 &&
