@@ -1,0 +1,4 @@
+server "http://cfatest01.intern.cm-ag/widgets/wizard.py/"
+process
+container
+stateful
