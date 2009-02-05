@@ -372,4 +372,4 @@ doc/beng.dvi: doc/beng.tex
 
 # upload the demo widgets to cfatest01
 upload:
-	scp demo/cgi-bin/*.py demo/cgi-bin/*.sh demo/base.html demo/nested_base.html cfatest01:/var/www/vol1/HTO01F/LY/YL/XT/pr_0001/widgets/
+	scp demo/cgi-bin/*.py demo/cgi-bin/*.sh demo/base.html demo/nested_base.html demo/container.html cfatest01:/var/www/vol1/HTO01F/LY/YL/XT/pr_0001/widgets/
