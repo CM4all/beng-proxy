@@ -14,8 +14,7 @@ from email.Utils import formatdate
 
 body = getenv('HTTP_USER_AGENT', '')
 
-today = date.today()
-expires = today + timedelta(days=7)
+expires = date.today() + timedelta(days=7)
 expires = mktime(expires.timetuple())
 
 print "Content-Type: text/plain"
