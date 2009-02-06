@@ -174,6 +174,19 @@ socketpair_read(struct istream_socketpair *sp)
         return;
     }
 
+    if (nbytes == 0) {
+        event2_set(&sp->event, 0);
+        event2_commit(&sp->event);
+
+        close(sp->fd);
+        sp->fd = -1;
+
+        istream_deinit_eof(&sp->output);
+
+        socketpair_close(sp);
+        return;
+    }
+
     rest = istream_buffer_consume(&sp->output, sp->buffer);
     if (rest > 0)
         event2_nand(&sp->event, EV_READ);
