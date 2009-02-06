@@ -245,7 +245,7 @@ istream_socketpair_new(pool_t pool, istream_t input, int *fd_r)
     event2_init(&sp->event, sp->fd,
                 socketpair_event_callback, sp,
                 NULL);
-    event2_set(&sp->event, EV_READ|EV_WRITE);
+    event2_set(&sp->event, EV_READ|EV_WRITE|EV_PERSIST);
 
     sp->buffer = fifo_buffer_new(pool, 4096);
 
