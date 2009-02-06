@@ -204,7 +204,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/run-subst $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server-mirror test/t-http-client test/t-http-util test/t-http-cache test/t-processor test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/run-subst $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server test/t-http-server-mirror test/t-http-client test/t-http-util test/t-http-cache test/t-processor test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client
 	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
 include demo/Makefile
@@ -254,6 +254,9 @@ test/t-html-unescape: test/t-html-unescape.o src/html-escape.o
 test/t-html-escape: test/t-html-escape.o src/html-escape.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+test/t-http-server: test/t-http-server.o src/http-server.o src/http-server-send.o src/http-server-request.o src/http-server-read.o src/http-server-response.o src/fifo-buffer.o src/pool.o src/pstring.o src/buffered-io.o src/strmap.o src/hashmap.o src/header-writer.o src/istream-forward.o src/istream-string.o src/istream-dechunk.o src/istream-chunked.o src/istream-pipe.o src/istream-memory.o src/istream-cat.o src/http-body.o src/date.o src/fd-util.o src/socket-util.o src/growing-buffer.o src/http.o src/header-parser.o src/format.o src/strutil.o src/gmtime.o src/tpool.o src/istream-socketpair.o src/istream-block.o src/istream-catch.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
+
 test/t-http-server-mirror: test/t-http-server-mirror.o src/http-server.o src/http-server-send.o src/http-server-request.o src/http-server-read.o src/http-server-response.o src/fifo-buffer.o src/duplex.o src/pool.o src/pstring.o src/buffered-io.o src/strmap.o src/hashmap.o src/header-writer.o src/istream-forward.o src/istream-string.o src/istream-dechunk.o src/istream-chunked.o src/istream-pipe.o src/istream-memory.o src/istream-cat.o src/http-body.o src/date.o src/fd-util.o src/socket-util.o src/growing-buffer.o src/http.o src/header-parser.o src/format.o src/strutil.o src/gmtime.o src/tpool.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
@@ -284,8 +287,9 @@ test/t-istream-processor: test/t-istream-processor.o src/pool.o src/istream-forw
 $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor): check-filter-%: test/t-istream-%
 	exec $<
 
-check-http-server: test/t-http-server-mirror
+check-http-server: test/t-http-server-mirror test/t-http-server
 	./test/t-http-server.py
+	./test/t-http-server
 
 check-http-client: test/t-http-client test/t-http-server-mirror
 	./test/t-http-client
