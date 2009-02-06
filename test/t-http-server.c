@@ -1,4 +1,5 @@
 #include "http-server.h"
+#include "sink-impl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +42,7 @@ test_catch(pool_t pool)
                               istream_block_new(pool),
                               NULL);
     socket = istream_socketpair_new(pool, request, &fd);
+    sink_null_new(socket);
 
     http_server_connection_new(pool, fd,
                                "localhost", &catch_close_handler, NULL,
