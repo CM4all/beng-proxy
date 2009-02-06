@@ -21,8 +21,11 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     struct http_server_connection *connection = ctx;
     ssize_t nbytes;
 
-    assert(connection->fd >= 0);
+    assert(connection->fd >= 0 || connection->request.request == NULL);
     assert(connection->response.istream != NULL);
+
+    if (connection->fd < 0)
+        return 0;
 
     nbytes = write(connection->fd, data, length);
 
@@ -49,7 +52,11 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     struct http_server_connection *connection = ctx;
     ssize_t nbytes;
 
+    assert(connection->fd >= 0 || connection->request.request == NULL);
     assert(connection->response.istream != NULL);
+
+    if (connection->fd < 0)
+        return 0;
 
     nbytes = istream_direct_to_socket(type, fd, connection->fd, max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
