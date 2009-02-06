@@ -40,7 +40,7 @@ socketpair_close(struct istream_socketpair *sp)
     pool_ref(sp->output.pool);
 
     if (sp->input != NULL)
-        istream_close(sp->input);
+        istream_free_handler(&sp->input);
 
     if (sp->fd >= 0) {
         event2_set(&sp->event, 0);
