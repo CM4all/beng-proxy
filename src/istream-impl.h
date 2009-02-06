@@ -125,4 +125,7 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
 void
 istream_replace_finish(istream_t istream);
 
+istream_t
+istream_socketpair_new(pool_t pool, istream_t input, int *fd_r);
+
 #endif

@@ -93,6 +93,7 @@ ISTREAM_SOURCES = \
 	src/istream-head.c \
 	src/istream-tee.c \
 	src/istream-replace.c \
+	src/istream-socketpair.c \
 	src/format.c \
 	src/fifo-buffer.c \
 	$(POOL_SOURCES)
