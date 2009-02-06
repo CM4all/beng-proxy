@@ -47,6 +47,7 @@ test_catch(pool_t pool)
     http_server_connection_new(pool, fd,
                                "localhost", &catch_close_handler, NULL,
                                &connection);
+    pool_unref(pool);
 
     event_dispatch();
 }
