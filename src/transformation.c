@@ -7,6 +7,8 @@
 #include "transformation.h"
 #include "processor.h"
 
+#include <string.h>
+
 bool
 transformation_is_container(const struct transformation *t)
 {
