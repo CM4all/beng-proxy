@@ -326,6 +326,10 @@ A filter server is a HTTP server.  \emph{beng-proxy} sends the
 original resource with a POST request and expects the filtered
 resource as response.
 
+It is important that a filter is completely stateless.  Running the
+same filter twice on the same source must always render the same
+result, at any time.
+
 There may be more than one filter; the order of the \texttt{PROCESS}
 and \texttt{FILTER} packets is important.
 
