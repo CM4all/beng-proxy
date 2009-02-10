@@ -54,6 +54,33 @@ cache_close(struct cache *cache)
     }
 }
 
+#include <stdio.h>
+static void
+cache_check(const struct cache *cache)
+{
+#ifndef NDEBUG
+    const struct hashmap_pair *pair;
+    size_t size = 0;
+
+    fprintf(stderr, "cache size=%zu\n", cache->size);
+
+    assert(cache != NULL);
+    assert(cache->size <= cache->max_size);
+
+    hashmap_rewind(cache->items);
+    while ((pair = hashmap_next(cache->items)) != NULL) {
+        struct cache_item *item = pair->value;
+
+        size += item->size;
+        assert(size <= cache->size);
+    }
+
+    assert(size == cache->size);
+#else
+    (void)cache;
+#endif
+}
+
 static void
 cache_destroy_item(struct cache *cache, struct cache_item *item)
 {
@@ -81,6 +108,7 @@ cache_get(struct cache *cache, const char *key)
     if (!cache_item_validate(cache, item)) {
         hashmap_remove(cache->items, key);
         cache_destroy_item(cache, item);
+        cache_check(cache);
         return NULL;
     }
 
@@ -159,6 +187,7 @@ cache_destroy_oldest_item(struct cache *cache)
 
     hashmap_remove(cache->items, oldest_key);
     cache_destroy_item(cache, oldest_item);
+    cache_check(cache);
 }
 
 static bool
@@ -186,10 +215,14 @@ cache_add(struct cache *cache, const char *key,
         return;
     }
 
+    cache_check(cache);
+
     hashmap_add(cache->items, key, item);
 
     cache->size += item->size;
     item->last_accessed = time(NULL);
+
+    cache_check(cache);
 }
 
 void
@@ -205,12 +238,16 @@ cache_put(struct cache *cache, const char *key,
         return;
     }
 
+    cache_check(cache);
+
     old = hashmap_set(cache->items, key, item);
     if (old != NULL)
         cache_destroy_item(cache, old);
 
     cache->size += item->size;
     item->last_accessed = time(NULL);
+
+    cache_check(cache);
 }
 
 void
@@ -232,6 +269,8 @@ cache_remove(struct cache *cache, const char *key)
     struct cache_item *old = hashmap_remove(cache->items, key);
     if (old != NULL)
         cache_destroy_item(cache, old);
+
+    cache_check(cache);
 }
 
 void
