@@ -144,6 +144,8 @@ worker_new(struct instance *instance)
     } else {
         struct worker *worker;
 
+        event_reinit(instance->event_base);
+
         worker = p_malloc(instance->pool, sizeof(*worker));
         worker->instance = instance;
         worker->pid = pid;
