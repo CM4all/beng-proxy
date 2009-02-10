@@ -285,8 +285,11 @@ serve_document_root_file(struct request *request2,
         view->transformation = transformation;
 
         tr->views = view;
-    } else
-        tr->views = NULL;
+    } else {
+        struct transformation_view *view = p_calloc(request->pool, sizeof(*view));
+
+        tr->views = view;
+    }
 
     request2->translate.transformation = tr->views->transformation;
 
