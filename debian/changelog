@@ -6,6 +6,7 @@ cm4all-beng-proxy (0.4.1) unstable; urgency=low
   * http-server: send "Keep-Alive" response header
   * worker: after fork(), call event_reinit() in the parent process
   * added valgrind build dependency
+  * build with Debian's libevent-1.4 package
 
  --
 
