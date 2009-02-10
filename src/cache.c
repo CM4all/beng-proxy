@@ -54,15 +54,12 @@ cache_close(struct cache *cache)
     }
 }
 
-#include <stdio.h>
 static void
 cache_check(const struct cache *cache)
 {
 #ifndef NDEBUG
     const struct hashmap_pair *pair;
     size_t size = 0;
-
-    fprintf(stderr, "cache size=%zu\n", cache->size);
 
     assert(cache != NULL);
     assert(cache->size <= cache->max_size);
