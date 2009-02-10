@@ -8,7 +8,7 @@ cm4all-beng-proxy (0.4.1) unstable; urgency=low
   * added valgrind build dependency
   * build with Debian's libevent-1.4 package
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 10 Feb 2009 11:48:53 +0100
 
 cm4all-beng-proxy (0.4) unstable; urgency=low
 
