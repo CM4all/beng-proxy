@@ -390,7 +390,7 @@ transform_uri_attribute(struct processor *processor,
                         enum uri_mode mode)
 {
     struct widget *widget = NULL;
-    const struct strref *value;
+    const struct strref *value = NULL;
     istream_t istream;
 
     switch (base) {
