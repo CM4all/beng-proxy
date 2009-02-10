@@ -324,7 +324,7 @@ test/t-session: test/t-session.o src/shm.o src/session.o src/dpool.o src/dstring
 check-session: test/t-session
 	./test/t-session
 
-test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock.o src/pool.o src/pstring.o src/uri-address.o src/transformation.o src/tcache.o src/cache.o src/hashmap.o src/abort-unref.o src/transformation.o
+test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock.o src/pool.o src/pstring.o src/uri-address.o src/transformation.o src/tcache.o src/cache.o src/hashmap.o src/abort-unref.o src/transformation.o src/resource-address.o src/uri-relative.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
 check-widget-registry: test/t-widget-registry
