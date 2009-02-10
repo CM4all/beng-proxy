@@ -34,10 +34,15 @@ cache_new(pool_t pool, const struct cache_class *class,
     return cache;
 }
 
+static void
+cache_check(const struct cache *cache);
+
 void
 cache_close(struct cache *cache)
 {
     const struct hashmap_pair *pair;
+
+    cache_check(cache);
 
     if (cache->class->destroy != NULL) {
         hashmap_rewind(cache->items);
