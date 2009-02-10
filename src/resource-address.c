@@ -9,6 +9,51 @@
 #include "uri-relative.h"
 #include "strref.h"
 
+void
+resource_address_copy(pool_t pool, struct resource_address *dest,
+                      const struct resource_address *src)
+{
+    dest->type = src->type;
+
+    switch (src->type) {
+    case RESOURCE_ADDRESS_NONE:
+        break;
+
+    case RESOURCE_ADDRESS_LOCAL:
+        assert(src->u.local.path != NULL);
+        dest->u.local.path = p_strdup(pool, src->u.local.path);
+        dest->u.local.content_type = src->u.local.content_type == NULL
+            ? NULL : p_strdup(pool, src->u.local.content_type);
+        break;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        assert(src->u.http != NULL);
+        dest->u.http = uri_address_dup(pool, src->u.http);
+        break;
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+        assert(src->u.cgi.path != NULL);
+
+        dest->u.cgi.path = p_strdup(pool, src->u.cgi.path);
+        dest->u.cgi.jail = src->u.cgi.jail;
+        dest->u.cgi.interpreter = src->u.cgi.interpreter == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.interpreter);
+        dest->u.cgi.action = src->u.cgi.action == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.action);
+        dest->u.cgi.script_name = src->u.cgi.script_name == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.script_name);
+        dest->u.cgi.path_info = src->u.cgi.path_info == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.path_info);
+        dest->u.cgi.query_string = src->u.cgi.query_string == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.query_string);
+        dest->u.cgi.document_root = src->u.cgi.document_root == NULL
+            ? NULL : p_strdup(pool, src->u.cgi.document_root);
+        break;
+    }
+}
+
 const struct resource_address *
 resource_address_apply(pool_t pool, const struct resource_address *src,
                        const char *relative, size_t relative_length,
