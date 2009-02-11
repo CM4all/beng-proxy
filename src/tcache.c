@@ -125,12 +125,6 @@ tcache_callback(const struct translate_response *response, void *ctx)
  *
  */
 
-static bool
-tcache_validate(struct cache_item *item __attr_unused)
-{
-    return true;
-}
-
 static void
 tcache_destroy(struct cache_item *_item)
 {
@@ -140,7 +134,6 @@ tcache_destroy(struct cache_item *_item)
 }
 
 static const struct cache_class tcache_class = {
-    .validate = tcache_validate,
     .destroy = tcache_destroy,
 };
 
