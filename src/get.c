@@ -8,11 +8,13 @@
 #include "get.h"
 #include "resource-address.h"
 #include "http-cache.h"
+#include "http-request.h"
 #include "http-response.h"
 #include "static-file.h"
 #include "cgi.h"
 #include "fcgi-request.h"
 #include "ajp-request.h"
+#include "header-writer.h"
 
 void
 resource_get(struct http_cache *cache,
@@ -26,7 +28,6 @@ resource_get(struct http_cache *cache,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
 {
-    assert(cache != NULL);
     assert(tcp_stock != NULL);
     assert(fcgi_stock != NULL);
     assert(pool != NULL);
@@ -71,10 +72,19 @@ resource_get(struct http_cache *cache,
         return;
 
     case RESOURCE_ADDRESS_HTTP:
-        http_cache_request(cache, pool,
-                           method, address->u.http,
-                           headers, body,
-                           handler, handler_ctx, async_ref);
+        if (cache != NULL)
+            http_cache_request(cache, pool,
+                               method, address->u.http,
+                               headers, body,
+                               handler, handler_ctx, async_ref);
+        else
+            /* no http_cache object passed - fall back to uncached
+               HTTP */
+            http_request(pool, tcp_stock,
+                         method, address->u.http,
+                         headers_dup(pool, headers), body,
+                         handler, handler_ctx, async_ref);
+
         return;
 
     case RESOURCE_ADDRESS_AJP:
