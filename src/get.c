@@ -38,6 +38,7 @@ resource_get(struct http_cache *cache,
 
     case RESOURCE_ADDRESS_LOCAL:
         if (body != NULL)
+            /* static files cannot receive a request body, close it */
             istream_close(body);
 
         static_file_get(pool, address->u.local.path,
@@ -83,6 +84,8 @@ resource_get(struct http_cache *cache,
                           handler, handler_ctx, async_ref);
         return;
     }
+
+    /* the resource could not be located, abort the request */
 
     if (body != NULL)
         istream_close(body);
