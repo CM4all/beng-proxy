@@ -19,6 +19,15 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
+/**
+ * Requests a resource.  This is a glue function which integrates all
+ * client-side protocols implemented by beng-proxy.
+ *
+ * @param cache a HTTP cache object (optional)
+ * @param tcp_stock the stock (pool) for TCP client connections
+ * @param fcgi_stock the stock for FastCGI instances
+ * @param address the address of the resource
+ */
 void
 resource_get(struct http_cache *cache,
              struct hstock *tcp_stock,
