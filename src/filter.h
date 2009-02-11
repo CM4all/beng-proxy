@@ -20,7 +20,7 @@ struct async_operation_ref;
 
 void
 filter_new(struct http_cache *cache,
-           struct hstock *ajp_client_stock,
+           struct hstock *tcp_stock,
            struct fcgi_stock *fcgi_stock,
            pool_t pool,
            const struct resource_address *address,
