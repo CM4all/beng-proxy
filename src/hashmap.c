@@ -110,7 +110,7 @@ hashmap_set(struct hashmap *map, const char *key, void *value)
     }
 
     slot = p_malloc(map->pool, sizeof(*slot));
-    slot->next = NULL;
+    slot->next = prev->next;
     slot->pair.key = key;
     slot->pair.value = value;
     prev->next = slot;
