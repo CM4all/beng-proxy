@@ -27,6 +27,9 @@ resource_get(struct http_cache *cache,
              struct async_operation_ref *async_ref)
 {
     assert(cache != NULL);
+    assert(tcp_stock != NULL);
+    assert(fcgi_stock != NULL);
+    assert(pool != NULL);
     assert(address != NULL);
 
     switch (address->type) {
