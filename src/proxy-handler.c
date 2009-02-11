@@ -21,9 +21,14 @@ proxy_handler(struct request *request2)
 
     if (http_server_request_has_body(request) &&
         (response_dispatcher_wants_body(request2) || request2->body_consumed)) {
+        /* a request with a body - reserve it for the processor, and
+           convert this request to a GET */
+
         method = HTTP_METHOD_GET;
         body = NULL;
     } else {
+        /* forward body (if any) to the real server */
+
         method = request->method;
         body = request->body;
         request2->body_consumed = true;
