@@ -5,10 +5,14 @@
  */
 
 #include "failure.h"
+#include "expiry.h"
+
+#include <daemon/log.h>
 
 #include <assert.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 
 struct failure {
     struct failure *next;
@@ -61,6 +65,8 @@ failure_add(const struct sockaddr *addr, socklen_t addrlen)
 {
     unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure *failure;
+    struct timespec now;
+    int ret;
 
     assert(addr != NULL);
     assert(addrlen >= sizeof(failure->addr));
@@ -74,9 +80,16 @@ failure_add(const struct sockaddr *addr, socklen_t addrlen)
 
     /* insert new failure object into the linked list */
 
+    ret = clock_gettime(CLOCK_MONOTONIC, &now);
+    if (ret < 0) {
+        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
+                   strerror(errno));
+        return;
+    }
+
     failure = p_malloc(fl.pool,
                        sizeof(*failure) - sizeof(failure->addr) + addrlen);
-    failure->expires = time(NULL) + 20;
+    failure->expires = now.tv_sec + 20;
     failure->addrlen = addrlen;
     memcpy(&failure->addr, addr, addrlen);
 
@@ -119,7 +132,7 @@ failure_check(const struct sockaddr *addr, socklen_t addrlen)
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next)
         if (failure->addrlen == addrlen &&
             memcmp(&failure->addr, addr, addrlen) == 0)
-            return time(NULL) >= failure->expires;
+            return is_expired(failure->expires);
 
     return false;
 }

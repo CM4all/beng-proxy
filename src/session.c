@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <event.h>
 
 #define SHM_PAGE_SIZE 4096
@@ -81,9 +82,17 @@ static void
 cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
                        void *ctx __attr_unused)
 {
-    time_t now = time(NULL);
+    struct timespec now;
+    int ret;
     unsigned i;
     struct session *session, *next;
+
+    ret = clock_gettime(CLOCK_MONOTONIC, &now);
+    if (ret < 0) {
+        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
+                   strerror(errno));
+        return;
+    }
 
     lock_lock(&session_manager->lock);
 
@@ -92,7 +101,7 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
              &session->hash_siblings != &session_manager->sessions[i];
              session = next) {
             next = (struct session *)session->hash_siblings.next;
-            if (now >= session->expires)
+            if (now.tv_sec >= session->expires)
                 session_remove(session);
         }
     }
@@ -254,8 +263,17 @@ session_generate_id(void)
 struct session *
 session_new(void)
 {
+    struct timespec now;
+    int ret;
     struct dpool *pool;
     struct session *session;
+
+    ret = clock_gettime(CLOCK_MONOTONIC, &now);
+    if (ret < 0) {
+        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
+                   strerror(errno));
+        return NULL;
+    }
 
     pool = dpool_new(session_manager->shm);
     if (pool == NULL)
@@ -273,7 +291,7 @@ session_new(void)
     lock_init(&session->lock);
     session->uri_id = session_generate_id();
     session->cookie_id = session_generate_id();
-    session->expires = time(NULL) + SESSION_TTL_NEW;
+    session->expires = now.tv_sec + SESSION_TTL_NEW;
     session->translate = NULL;
     session->widgets = NULL;
     session->cookies = cookie_jar_new(pool);
@@ -437,6 +455,22 @@ session_defragment(struct session *src)
     return dest;
 }
 
+static void
+session_touch(struct session *session)
+{
+    struct timespec now;
+    int ret;
+
+    ret = clock_gettime(CLOCK_MONOTONIC, &now);
+    if (ret < 0) {
+        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
+                   strerror(errno));
+        return;
+    }
+
+    session->expires = now.tv_sec + SESSION_TTL;
+}
+
 struct session *
 session_get(session_id_t id)
 {
@@ -453,7 +487,7 @@ session_get(session_id_t id)
         if (session->uri_id == id) {
             lock_unlock(&session_manager->lock);
 
-            session->expires = time(NULL) + SESSION_TTL;
+            session_touch(session);
             return session;
         }
     }
