@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.4.2) unstable; urgency=low
 
   * hashmap: fix corruption in slot chain
+  * use monotonic clock to calculate expiry times
 
  --
 
