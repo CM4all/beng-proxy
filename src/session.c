@@ -12,6 +12,7 @@
 #include "dhashmap.h"
 #include "lock.h"
 #include "refcount.h"
+#include "expiry.h"
 
 #include <daemon/log.h>
 
@@ -455,22 +456,6 @@ session_defragment(struct session *src)
     return dest;
 }
 
-static void
-session_touch(struct session *session)
-{
-    struct timespec now;
-    int ret;
-
-    ret = clock_gettime(CLOCK_MONOTONIC, &now);
-    if (ret < 0) {
-        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
-                   strerror(errno));
-        return;
-    }
-
-    session->expires = now.tv_sec + SESSION_TTL;
-}
-
 struct session *
 session_get(session_id_t id)
 {
@@ -487,7 +472,7 @@ session_get(session_id_t id)
         if (session->uri_id == id) {
             lock_unlock(&session_manager->lock);
 
-            session_touch(session);
+            session->expires = expiry_touch(SESSION_TTL);
             return session;
         }
     }
