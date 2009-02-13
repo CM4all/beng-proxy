@@ -10,6 +10,20 @@
 #include <stdbool.h>
 #include <time.h>
 
+static inline time_t
+expiry_touch(time_t duration)
+{
+    int ret;
+    struct timespec now;
+
+    ret = clock_gettime(CLOCK_MONOTONIC, &now);
+    if (ret < 0)
+        /* system call failed - try to do something not too stupid */
+        return 0;
+
+    return now.tv_sec + duration;
+}
+
 static inline bool
 is_expired(time_t expires)
 {

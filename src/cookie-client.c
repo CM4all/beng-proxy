@@ -13,6 +13,7 @@
 #include "http-string.h"
 #include "tpool.h"
 #include "dpool.h"
+#include "expiry.h"
 
 #include <inline/list.h>
 
@@ -241,7 +242,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
             seconds = strtoul(strref_dup(tpool, &value), &endptr, 10);
             if (seconds > 0 && *endptr == 0)
-                cookie->expires = time(NULL) + seconds;
+                cookie->expires = expiry_touch(seconds);
         }
 
         strref_ltrim(input);
@@ -295,7 +296,8 @@ cookie_jar_http_header(struct cookie_jar *jar,
     struct cookie *cookie, *next;
     size_t length;
     struct pool_mark mark;
-    time_t now;
+    struct timespec now;
+    int ret;
 
     assert(domain != NULL);
     assert(path != NULL);
@@ -307,13 +309,16 @@ cookie_jar_http_header(struct cookie_jar *jar,
     buffer = p_malloc(tpool, buffer_size);
 
     length = 0;
-    now = time(NULL);
+
+    ret = clock_gettime(CLOCK_MONOTONIC, &now);
+    if (ret < 0)
+        return;
 
     for (cookie = (struct cookie *)jar->cookies.next;
          &cookie->siblings != &jar->cookies;
          cookie = next) {
         next = (struct cookie *)cookie->siblings.next;
-        if (cookie->expires != 0 && cookie->expires < now) {
+        if (cookie->expires != 0 && cookie->expires < now.tv_sec) {
             cookie_delete(jar, cookie);
             continue;
         }
