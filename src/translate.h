@@ -34,7 +34,10 @@ struct translate_response {
     const char *redirect;
     bool stateful;
     const char *session;
+
     const char *user;
+    unsigned user_max_age;
+
     const char *language;
 
     struct transformation_view *views;

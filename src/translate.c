@@ -354,6 +354,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_BEGIN:
         memset(&client->response, 0, sizeof(client->response));
         client->resource_address = &client->response.address;
+        client->response.user_max_age = -1;
         client->response.views = p_calloc(client->pool, sizeof(*client->response.views));
         client->transformation_view_tail = &client->response.views->next;
         client->transformation = NULL;
@@ -633,6 +634,21 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_VIEW:
         add_view(client, payload);
+        break;
+
+    case TRANSLATE_MAX_AGE:
+        if (payload_length != 4) {
+            daemon_log(2, "malformed TRANSLATE_MAX_AGE packet\n");
+            break;
+        }
+
+        if (client->response.user != NULL) {
+            client->response.user_max_age = *(const uint32_t *)payload;
+        } else {
+            daemon_log(2, "misplaced TRANSLATE_MAX_AGE packet\n");
+            break;
+        }
+
         break;
     }
 
