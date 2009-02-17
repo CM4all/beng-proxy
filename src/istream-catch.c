@@ -15,7 +15,7 @@ struct istream_catch {
     off_t available;
 };
 
-static char space[] = 
+static const char space[] = 
     "                                "
     "                                "
     "                                "
