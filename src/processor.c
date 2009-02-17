@@ -359,7 +359,10 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->tag = TAG_IMG;
             processor->uri_base = URI_BASE_TEMPLATE;
             processor->uri_mode = URI_MODE_DIRECT;
-        } else if (strref_lower_cmp_literal(&tag->name, "iframe") == 0) {
+        } else if (strref_lower_cmp_literal(&tag->name, "iframe") == 0 ||
+                   strref_lower_cmp_literal(&tag->name, "embed") == 0 ||
+                   strref_lower_cmp_literal(&tag->name, "video") == 0 ||
+                   strref_lower_cmp_literal(&tag->name, "audio") == 0) {
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
             processor->tag = TAG_IMG;
