@@ -52,6 +52,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
     }
 
     class = p_malloc(lookup->pool, sizeof(*class));
+    class->host = response->host;
     class->stateful = response->stateful;
     resource_address_copy(lookup->pool, &class->address, &response->address);
     class->views = response->views != NULL
