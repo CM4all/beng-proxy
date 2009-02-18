@@ -114,6 +114,8 @@ do_rewrite_widget_uri(pool_t pool,
         uri = uri_replace_hostname(pool, uri,
                                    generate_widget_hostname(pool, widget,
                                                             partition_domain));
+    else if (widget->class->host != NULL)
+        uri = uri_replace_hostname(pool, uri, widget->class->host);
 
     return uri;
 }
