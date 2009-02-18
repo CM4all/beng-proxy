@@ -385,6 +385,15 @@ widgets \\
 \texttt{PROCESS} & enable the BENG processor \\
 \hline
 \texttt{CONTAINER} & this widget can contain other widgets \\
+
+\hline
+
+\texttt{HOST} & sets the externally visible host name for requests
+which are proxied to this widget.  This marks the widget as
+``untrusted'' and disallows any other way of embedding it.  This is
+useful for widget code whose JavaScript must not be executed in the
+same context as another widget. \\
+
 \hline
 
 \texttt{STATEFUL} & remember the state of this widget, i.e. path info
