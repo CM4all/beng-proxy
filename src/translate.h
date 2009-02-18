@@ -32,7 +32,10 @@ struct translate_response {
     const char *site;
     const char *document_root;
     const char *redirect;
+
+    const char *host;
     bool stateful;
+
     const char *session;
 
     const char *user;

@@ -361,7 +361,6 @@ translate_handle_packet(struct translate_client *client,
         client->transformation_tail = &client->response.views->transformation;
         break;
 
-    case TRANSLATE_HOST:
     case TRANSLATE_URI:
     case TRANSLATE_PARAM:
     case TRANSLATE_REMOTE_HOST:
@@ -474,6 +473,10 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->transformation->u.processor.options |= PROCESSOR_CONTAINER;
+        break;
+
+    case TRANSLATE_HOST:
+        client->response.host = payload;
         break;
 
     case TRANSLATE_STATEFUL:

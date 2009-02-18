@@ -30,6 +30,13 @@ struct widget_class {
     /** the base URI of this widget, as specified in the template */
     struct resource_address address;
 
+    /**
+     * The (beng-proxy) hostname on which requests to this widget are
+     * allowed.  If not set, then this is a trusted widget.  Requests
+     * from an untrusted widget to a trusted one are forbidden.
+     */
+    const char *host;
+
     /** transformations applied to the widget response */
     const struct transformation_view *views;
 
