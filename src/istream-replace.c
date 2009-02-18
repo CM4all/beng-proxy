@@ -23,8 +23,8 @@ struct istream_replace {
     struct istream output;
     istream_t input;
 
-    bool finished:1, read_locked:1;
-    bool had_input:1, had_output:1;
+    bool finished, read_locked;
+    bool had_input, had_output;
 
     struct growing_buffer *buffer;
     off_t source_length, position;

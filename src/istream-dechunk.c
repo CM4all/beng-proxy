@@ -27,7 +27,7 @@ struct istream_dechunk {
         EOF_DETECTED
     } state;
     size_t size;
-    bool had_input:1, had_output:1;
+    bool had_input, had_output;
 };
 
 

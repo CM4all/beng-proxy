@@ -39,7 +39,7 @@ struct processor {
     istream_t replace;
 
     struct parser *parser;
-    bool had_input:1;
+    bool had_input;
 
     enum {
         TAG_NONE,

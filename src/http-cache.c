@@ -38,7 +38,7 @@ struct http_cache {
 };
 
 struct http_cache_info {
-    bool only_if_cached:1;
+    bool only_if_cached;
 
     /** when will the cached resource expire? (beng-proxy time) */
     time_t expires;

@@ -62,10 +62,10 @@ struct session {
     time_t expires;
 
     /** has a HTTP cookie with this session id already been sent? */
-    bool cookie_sent:1;
+    bool cookie_sent;
 
     /** has a HTTP cookie with this session id already been received? */
-    bool cookie_received:1;
+    bool cookie_received;
 
     /** an opaque string for the translation server */
     const char *translate;
