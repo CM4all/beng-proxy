@@ -455,6 +455,10 @@ this case, since \emph{beng-proxy} does not forward them).  These
 cookies would generate a lot of network load for no good, which would
 have to go through the visitor's narrow upstream with every request.
 
+It is recommended to use (cookie based) sessions only if really
+required.  In many situations, there are more elegant solutions, like
+storing the current state of a widget in its current URI (path info).
+
 \subsection{Authentification}
 
 There is currently no support for HTTP based authentification.
