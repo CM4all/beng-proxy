@@ -467,7 +467,8 @@ Authentification is supported in the translation protocol.  After the
 translation server sets the \texttt{USER} session variable to a
 non-empty string, the session is presumed to be authenticated.  This
 user variable is passed to widget servers in the proprietary
-\texttt{X-CM4all-BENG-User} request header.
+\texttt{X-CM4all-BENG-User} request header.  The user is logged out
+when the translation sends an empty \texttt{USER} packet.
 
 XXX further explanation, samples
 
