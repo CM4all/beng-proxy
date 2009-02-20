@@ -436,12 +436,10 @@ always redirect with ``303 See Other'' as follow-up to a POST request.
 \subsection{POSTing}
 
 Making the browser send a request body with a POST request is
-possible.  Note however that \emph{beng-proxy} may be very aggressive
-about caching POST responses.  To prevent that, you should send a
-``303 See Other'' redirect as a response to a POST request.  The same
-is valid for every request which modifies a resource - always reckon
-that \emph{beng-proxy} may request a resource multiple times, even
-without interaction of the browser.
+possible.  It is recommended that you send a ``303 See Other''
+redirect as a response to a POST request.  Always reckon that
+\emph{beng-proxy} may request a resource multiple times, even without
+interaction of the browser.
 
 \subsection{Session tracking}
 
