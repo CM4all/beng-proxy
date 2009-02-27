@@ -341,7 +341,8 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->uri_mode = URI_MODE_DIRECT;
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
-        if (strref_lower_cmp_literal(&tag->name, "a") == 0) {
+        if (strref_lower_cmp_literal(&tag->name, "a") == 0 ||
+            strref_lower_cmp_literal(&tag->name, "link") == 0) {
             processor->tag = TAG_A;
             processor->uri_base = URI_BASE_TEMPLATE;
             processor->uri_mode = URI_MODE_DIRECT;
