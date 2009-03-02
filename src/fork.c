@@ -12,7 +12,7 @@
 #include "fd-util.h"
 
 #ifdef __linux
-#include "splice.h"
+#include <fcntl.h>
 #endif
 
 #include <daemon/log.h>

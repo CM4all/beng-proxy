@@ -7,7 +7,6 @@
 #ifdef __linux
 
 #include "istream-internal.h"
-#include "splice.h"
 #include "fd-util.h"
 
 #include <daemon/log.h>
@@ -15,6 +14,8 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 /* XXX ISTREAM_SOCKET is not yet supported by Linux 2.6.23 */
 #define SPLICE_SOURCE_TYPES (ISTREAM_FILE | ISTREAM_PIPE)

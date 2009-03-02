@@ -12,10 +12,10 @@
 #include <assert.h>
 
 #ifdef __linux
+#include <fcntl.h>
 #include <sys/sendfile.h>
 
 #ifdef SPLICE
-#include "splice.h"
 #define ISTREAM_DIRECT_SUPPORT (ISTREAM_FILE | ISTREAM_PIPE)
 #else
 #define ISTREAM_DIRECT_SUPPORT ISTREAM_FILE
