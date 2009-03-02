@@ -52,6 +52,7 @@ struct processor {
         TAG_FORM,
         TAG_IMG,
         TAG_SCRIPT,
+        TAG_PARAM,
     } tag;
     enum uri_base uri_base;
     enum uri_mode uri_mode;
@@ -369,6 +370,10 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->tag = TAG_IMG;
             processor->uri_base = URI_BASE_TEMPLATE;
             processor->uri_mode = URI_MODE_DIRECT;
+        } else if (strref_lower_cmp_literal(&tag->name, "param") == 0) {
+            processor->tag = TAG_PARAM;
+            processor->uri_base = URI_BASE_TEMPLATE;
+            processor->uri_mode = URI_MODE_DIRECT;
         } else {
             processor->tag = TAG_NONE;
         }
@@ -588,6 +593,12 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
     case TAG_SCRIPT:
         if (strref_lower_cmp_literal(&attr->name, "src") == 0)
+            transform_uri_attribute(processor, attr, processor->uri_base,
+                                    processor->uri_mode);
+        break;
+
+    case TAG_PARAM:
+        if (strref_lower_cmp_literal(&attr->name, "value") == 0)
             transform_uri_attribute(processor, attr, processor->uri_base,
                                     processor->uri_mode);
         break;
