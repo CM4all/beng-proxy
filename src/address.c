@@ -6,12 +6,13 @@
 
 #include "address.h"
 
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <string.h>
 
 static const struct sockaddr *
-ipv64_normalize_mapped(const struct sockaddr *addr, socklen_t *len) {
+ipv64_normalize_mapped(const struct sockaddr *addr, size_t *len) {
     const struct sockaddr_in6 *a6 = (const struct sockaddr_in6 *)addr;
     static struct sockaddr_in a4;
     struct in_addr inaddr;
@@ -32,7 +33,7 @@ ipv64_normalize_mapped(const struct sockaddr *addr, socklen_t *len) {
 }                                                  
 
 const char *
-address_to_string(pool_t pool, const struct sockaddr *addr, socklen_t addrlen)
+address_to_string(pool_t pool, const struct sockaddr *addr, size_t addrlen)
 {
     int ret;
     char host[512], serv[16];

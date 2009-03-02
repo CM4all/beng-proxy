@@ -9,13 +9,13 @@
 
 #include "pool.h"
 
-#include <sys/socket.h>
+struct sockaddr;
 
 /**
  * Converts a sockaddr into a human-readable string in the form
  * "IP:PORT".
  */
 const char *
-address_to_string(pool_t pool, const struct sockaddr *addr, socklen_t addrlen);
+address_to_string(pool_t pool, const struct sockaddr *addr, size_t addrlen);
 
 #endif
