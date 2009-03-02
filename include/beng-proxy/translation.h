@@ -44,6 +44,7 @@ enum beng_translation_command {
     TRANSLATE_FASTCGI = 33,
     TRANSLATE_VIEW = 34,
     TRANSLATE_MAX_AGE = 36,
+    TRANSLATE_VARY = 37,
 };
 
 struct beng_translation_header {

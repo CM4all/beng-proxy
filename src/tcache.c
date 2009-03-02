@@ -88,8 +88,13 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->views = src->views != NULL
         ? transformation_dup_view_chain(pool, src->views)
         : NULL;
-}
 
+    dest->num_vary = src->num_vary;
+    if (dest->num_vary > 0)
+        dest->vary = (const uint16_t *)
+            p_memdup(pool, src->vary,
+                     dest->num_vary * sizeof(dest->vary[0]));
+}
 
 /*
  * translate callback

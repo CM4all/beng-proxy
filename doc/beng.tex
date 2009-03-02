@@ -300,6 +300,12 @@ not limited.  Currently, this is only supported for the \texttt{USER}
 packet.  \\
 
 \hline
+
+\texttt{VARY} & similar to the HTTP \texttt{Vary} response header;
+the payload contains an array of translation request commands which
+this response depends upon. \\
+
+\hline
 \end{tabular}
 
 If the translation server does not provide the \texttt{CONTENT\_TYPE}

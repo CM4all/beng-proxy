@@ -653,6 +653,17 @@ translate_handle_packet(struct translate_client *client,
         }
 
         break;
+
+    case TRANSLATE_VARY:
+        if (payload_length == 0 ||
+            payload_length % sizeof(client->response.vary[0]) != 0) {
+            daemon_log(2, "malformed TRANSLATE_VARY packet\n");
+            break;
+        }
+
+        client->response.vary = (const uint16_t *)payload;
+        client->response.num_vary = payload_length / sizeof(client->response.vary[0]);
+        break;
     }
 
     return true;

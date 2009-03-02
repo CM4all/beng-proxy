@@ -11,6 +11,8 @@
 #include "http.h"
 #include "resource-address.h"
 
+#include <stdint.h>
+
 struct uri_with_address;
 struct hstock;
 struct async_operation_ref;
@@ -44,6 +46,9 @@ struct translate_response {
     const char *language;
 
     struct transformation_view *views;
+
+    const uint16_t *vary;
+    unsigned num_vary;
 };
 
 typedef void (*translate_callback_t)(const struct translate_response *response,

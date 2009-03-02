@@ -3,6 +3,7 @@ cm4all-beng-proxy (0.4.3) unstable; urgency=low
   * processor: rewrite URI in LINK tags
   * processor: rewrite URI in PARAM tags
   * use splice() from glibc 2.7
+  * translate: added VARY response packet
 
  --
 
