@@ -35,6 +35,8 @@ struct tcache_request {
 
     struct tcache *tcache;
 
+    const struct translate_request *request;
+
     const char *key;
 
     translate_callback_t callback;
@@ -96,6 +98,18 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
                      dest->num_vary * sizeof(dest->vary[0]));
 }
 
+static bool
+tcache_item_match(const struct cache_item *_item, void *ctx)
+{
+    const struct tcache_item *item = (const struct tcache_item *)_item;
+    struct tcache_request *tcr = ctx;
+    const struct translate_request *request = tcr->request;
+
+    /* XXX */
+    (void)request;
+    return item->response.num_vary == 0;
+}
+
 /*
  * translate callback
  *
@@ -117,7 +131,8 @@ tcache_callback(const struct translate_response *response, void *ctx)
         item->pool = pool;
 
         tcache_dup_response(pool, &item->response, response);
-        cache_put(tcr->tcache->cache, p_strdup(pool, tcr->key), &item->item);
+        cache_put_match(tcr->tcache->cache, p_strdup(pool, tcr->key), &item->item,
+                        tcache_item_match, tcr);
     } else {
         cache_log(4, "translate_cache: nocache %s\n", tcr->key);
     }
@@ -197,8 +212,12 @@ translate_cache(pool_t pool, struct tcache *tcache,
     if (tcache_request_evaluate(request)) {
         const char *key = request->uri == NULL
             ? request->widget_type : request->uri;
+        struct tcache_request match_ctx = {
+            .request = request,
+        };
         struct tcache_item *item =
-            (struct tcache_item *)cache_get(tcache->cache, key);
+            (struct tcache_item *)cache_get_match(tcache->cache, key,
+                                                  tcache_item_match, &match_ctx);
 
         if (item == NULL) {
             struct tcache_request *tcr = p_malloc(pool, sizeof(*tcr));
@@ -207,6 +226,7 @@ translate_cache(pool_t pool, struct tcache *tcache,
 
             tcr->pool = pool;
             tcr->tcache = tcache;
+            tcr->request = request;
             tcr->key = key;
             tcr->callback = callback;
             tcr->ctx = ctx;
