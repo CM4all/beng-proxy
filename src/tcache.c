@@ -9,13 +9,20 @@
 #include "cache.h"
 #include "stock.h"
 #include "uri-address.h"
+#include "beng-proxy/translation.h"
 
 #include <time.h>
+#include <string.h>
 
 struct tcache_item {
     struct cache_item item;
 
     pool_t pool;
+
+    struct {
+        const char *remote_host;
+        const char *host;
+    } request;
 
     struct translate_response response;
 };
@@ -99,15 +106,51 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
 }
 
 static bool
+tcache_vary_contains(const struct translate_response *response,
+                     enum beng_translation_command command)
+{
+    for (unsigned i = 0; i < response->num_vary; ++i)
+        if (response->vary[i] == command)
+            return true;
+
+    return false;
+}
+
+static const char *
+tcache_vary_copy(pool_t pool, const char *p,
+                 const struct translate_response *response,
+                 enum beng_translation_command command)
+{
+    return p != NULL && tcache_vary_contains(response, command)
+        ? p_strdup(pool, p)
+        : NULL;
+}
+
+static bool
+tcache_string_match(const char *a, const char *b)
+{
+    if (a == NULL || b == NULL)
+        return a == b;
+
+    return strcmp(a, b);
+}
+
+static bool
 tcache_vary_match(const struct tcache_item *item,
                   const struct translate_request *request,
                   enum beng_translation_command command)
 {
-    (void)item;
-    (void)request;
-    (void)command;
+    switch (command) {
+    case TRANSLATE_REMOTE_HOST:
+        return tcache_string_match(item->request.remote_host,
+                                   request->remote_host);
 
-    return false;
+    case TRANSLATE_HOST:
+        return tcache_string_match(item->request.host, request->host);
+
+    default:
+        return true;
+    }
 }
 
 static bool
@@ -144,6 +187,12 @@ tcache_callback(const struct translate_response *response, void *ctx)
         item->item.expires = time(NULL) + 300;
         item->item.size = 1;
         item->pool = pool;
+
+        item->request.remote_host =
+            tcache_vary_copy(pool, tcr->request->remote_host,
+                             response, TRANSLATE_REMOTE_HOST);
+        item->request.host = tcache_vary_copy(pool, tcr->request->remote_host,
+                                              response, TRANSLATE_HOST);
 
         tcache_dup_response(pool, &item->response, response);
         cache_put_match(tcr->tcache->cache, p_strdup(pool, tcr->key), &item->item,
