@@ -5,7 +5,7 @@ Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 5), gcc (>= 4.1), libc6-dev (>= 2.7),
  libevent-dev (>= 1.4.8~), libattr1-dev,
  libcm4all-inline-dev (>= 0.1.1), libcm4all-daemon-dev (>= 0.3),
- tetex-extra (>= 3.0), python-central (>= 0.5), valgrind
+ texlive, python-central (>= 0.5), valgrind,
 Standards-Version: 3.8.0
 XS-Python-Standards-Version: 0.4
 XS-Python-Version: all
