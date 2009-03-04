@@ -99,15 +99,30 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
 }
 
 static bool
+tcache_vary_match(const struct tcache_item *item,
+                  const struct translate_request *request,
+                  enum beng_translation_command command)
+{
+    (void)item;
+    (void)request;
+    (void)command;
+
+    return false;
+}
+
+static bool
 tcache_item_match(const struct cache_item *_item, void *ctx)
 {
     const struct tcache_item *item = (const struct tcache_item *)_item;
     struct tcache_request *tcr = ctx;
     const struct translate_request *request = tcr->request;
 
-    /* XXX */
-    (void)request;
-    return item->response.num_vary == 0;
+    for (unsigned i = 0; i < item->response.num_vary; ++i)
+        if (!tcache_vary_match(item, request,
+                               (enum beng_translation_command)item->response.vary[i]))
+            return false;
+
+    return true;
 }
 
 /*
