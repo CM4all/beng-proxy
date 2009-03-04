@@ -18,6 +18,7 @@
 #include "dpool.h"
 #include "http-server.h"
 #include "transformation.h"
+#include "expiry.h"
 
 #include <daemon/log.h>
 
@@ -130,10 +131,24 @@ translate_callback(const struct translate_response *response,
             if (session->user == NULL ||
                 strcmp(response->user, session->user) != 0)
                 session->user = d_strdup(session->pool, response->user);
+
+            if (response->user_max_age == (unsigned)-1)
+                /* never expires */
+                session->user_expires = 0;
+            else if (response->user_max_age == 0)
+                /* expires immediately, use only once */
+                session->user_expires = 1;
+            else
+                session->user_expires = expiry_touch(response->user_max_age);
         }
 
         if (old_user != NULL)
             d_free(session->pool, old_user);
+    } else if (session != NULL && session->user != NULL && session->user_expires > 0 &&
+               is_expired(session->user_expires)) {
+        daemon_log(4, "user '%s' has expired\n", session->user);
+        d_free(session->pool, session->user);
+        session->user = NULL;
     }
 
     if (response->language != NULL) {

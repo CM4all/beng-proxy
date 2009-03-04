@@ -74,6 +74,9 @@ struct session {
         by the translation server */
     const char *user;
 
+    /** when will the #user attribute expire? */
+    time_t user_expires;
+
     /** optional  for the "Accept-Language" header, provided
         by the translation server */
     const char *language;
