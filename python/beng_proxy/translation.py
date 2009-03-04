@@ -171,3 +171,8 @@ class Response:
         self.packet(TRANSLATE_AJP, uri)
         for address in addresses:
             self.packet(TRANSLATE_ADDRESS_STRING, address)
+
+    def vary(self, *args):
+        assert len(args) > 0
+        payload = ''.join(map(lambda x: struct.pack('H', x), args))
+        self.packet(TRANSLATE_VARY, payload)
