@@ -22,6 +22,7 @@ struct tcache_item {
     struct {
         const char *remote_host;
         const char *host;
+        const char *accept_language;
     } request;
 
     struct translate_response response;
@@ -148,6 +149,10 @@ tcache_vary_match(const struct tcache_item *item,
     case TRANSLATE_HOST:
         return tcache_string_match(item->request.host, request->host);
 
+    case TRANSLATE_LANGUAGE:
+        return tcache_string_match(item->request.accept_language,
+                                   request->accept_language);
+
     default:
         return true;
     }
@@ -193,6 +198,9 @@ tcache_callback(const struct translate_response *response, void *ctx)
                              response, TRANSLATE_REMOTE_HOST);
         item->request.host = tcache_vary_copy(pool, tcr->request->remote_host,
                                               response, TRANSLATE_HOST);
+        item->request.accept_language =
+            tcache_vary_copy(pool, tcr->request->accept_language,
+                             response, TRANSLATE_LANGUAGE);
 
         tcache_dup_response(pool, &item->response, response);
         cache_put_match(tcr->tcache->cache, p_strdup(pool, tcr->key), &item->item,
