@@ -115,6 +115,8 @@ translate_callback(const struct translate_response *response,
     }
 
     if (response->user != NULL) {
+        const char *old_user = session->user;
+
         if (*response->user == 0) {
             /* log out */
 
@@ -129,9 +131,13 @@ translate_callback(const struct translate_response *response,
                 strcmp(response->user, session->user) != 0)
                 session->user = d_strdup(session->pool, response->user);
         }
+
+        if (old_user != NULL)
+            d_free(session->pool, old_user);
     }
 
     if (response->language != NULL) {
+        const char *old_language = session->language;
         if (*response->language == 0) {
             /* reset language setting */
 
@@ -146,6 +152,9 @@ translate_callback(const struct translate_response *response,
                 strcmp(response->language, session->language) != 0)
                 session->language = d_strdup(session->pool, response->language);
         }
+
+        if (old_language != NULL)
+            d_free(session->pool, old_language);
     }
 
     /* always enforce sessions when there is a transformation
