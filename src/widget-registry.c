@@ -24,6 +24,7 @@ widget_registry_lookup(pool_t pool,
 
     request->remote_host = NULL;
     request->host = NULL;
+    request->accept_language = NULL;
     request->uri = NULL;
     request->widget_type = widget_type;
     request->session = NULL;

@@ -147,6 +147,8 @@ marshal_request(pool_t pool, const struct translate_request *request)
         write_packet(gb, TRANSLATE_REMOTE_HOST, request->remote_host);
     if (request->host != NULL)
         write_packet(gb, TRANSLATE_HOST, request->host);
+    if (request->accept_language != NULL)
+        write_packet(gb, TRANSLATE_LANGUAGE, request->accept_language);
     if (request->uri != NULL)
         write_packet(gb, TRANSLATE_URI, request->uri);
     if (request->widget_type != NULL)

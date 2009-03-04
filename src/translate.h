@@ -20,6 +20,7 @@ struct async_operation_ref;
 struct translate_request {
     const char *remote_host;
     const char *host;
+    const char *accept_language;
     const char *uri;
     const char *widget_type;
     const char *session;

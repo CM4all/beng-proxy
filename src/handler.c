@@ -225,6 +225,8 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
 
     request2->translate.request.remote_host = request->remote_host;
     request2->translate.request.host = strmap_get(request->headers, "host");
+    request2->translate.request.accept_language =
+        strmap_get(request->headers, "accept-language");
     request2->translate.request.uri = strref_dup(request->pool,
                                                  &request2->uri.base);
     request2->translate.request.widget_type = NULL;
