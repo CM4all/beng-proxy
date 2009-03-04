@@ -43,6 +43,7 @@ enum beng_translation_command {
     TRANSLATE_STATEFUL = 32,
     TRANSLATE_FASTCGI = 33,
     TRANSLATE_VIEW = 34,
+    TRANSLATE_USER_AGENT = 35,
     TRANSLATE_MAX_AGE = 36,
     TRANSLATE_VARY = 37,
 };

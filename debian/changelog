@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.4.4) unstable; urgency=low
 
   * forward Accept-Language request header to the translation server
+  * translate: added the USER_AGENT request packet
 
  --
 

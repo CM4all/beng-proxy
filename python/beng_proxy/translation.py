@@ -35,6 +35,7 @@ TRANSLATE_DOMAIN = 31
 TRANSLATE_STATEFUL = 32
 TRANSLATE_FASTCGI = 33
 TRANSLATE_VIEW = 34
+TRANSLATE_USER_AGENT = 35
 TRANSLATE_MAX_AGE = 36
 TRANSLATE_VARY = 37
 
@@ -85,6 +86,7 @@ class Request:
         self.session = None
         self.param = None
         self.remote_host = None
+        self.user_agent = None
         self.accept_language = None
 
     def packetReceived(self, packet):
@@ -102,6 +104,8 @@ class Request:
             self.param = packet.payload
         elif packet.command == TRANSLATE_REMOTE_HOST:
             self.remote_host = packet.payload
+        elif packet.command == TRANSLATE_USER_AGENT:
+            self.user_agent = packet.payload
         elif packet.command == TRANSLATE_LANGUAGE:
             self.accept_language = packet.payload
         else:
