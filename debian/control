@@ -4,7 +4,7 @@ Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 5), gcc (>= 4.1), libc6-dev (>= 2.7),
  libevent-dev (>= 1.4.8~), libattr1-dev,
- libcm4all-inline-dev (>= 0.1.1), libcm4all-daemon-dev (>= 0.3),
+ libcm4all-inline-dev (>= 0.1.2), libcm4all-daemon-dev (>= 0.3),
  texlive, python-central (>= 0.5), valgrind,
 Standards-Version: 3.8.0
 XS-Python-Standards-Version: 0.4
@@ -46,7 +46,8 @@ Description: JavaScript library for cm4all-beng-proxy
 Package: libcm4all-beng-proxy-dev
 Architecture: all
 Section: non-free/libdevel
-Depends: libc6-dev, pkg-config (>= 0.9.0)
+Depends: libc6-dev, pkg-config (>= 0.9.0),
+ libcm4all-inline-dev (>= 0.1.2)
 Description: Development files for cm4all-beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
