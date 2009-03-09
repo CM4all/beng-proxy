@@ -6,6 +6,7 @@ cm4all-beng-proxy (0.4.4) unstable; urgency=low
   * use libcm4all-inline-dev in libcm4all-beng-proxy-dev
   * added pkg-config file for libcm4all-beng-proxy-dev
   * updated python-central dependencies
+  * processor: parse c:base/c:mode attributes in PARAM tags
 
  --
 
