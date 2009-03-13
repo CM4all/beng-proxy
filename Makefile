@@ -10,7 +10,6 @@ LOG_CFLAGS = -DDEBUG_POOL_GROW -DDUMP_POOL_SIZE -DCACHE_LOG
 
 CC = gcc
 CFLAGS = -O0 $(DEBUG_CFLAGS) $(CHECK_CFLAGS) $(LOG_CFLAGS) -DSPLICE
-CFLAGS += -D_GNU_SOURCE
 CFLAGS += -funit-at-a-time
 LDFLAGS = -lpthread -lrt
 
@@ -44,6 +43,7 @@ endif
 
 MORE_CFLAGS = -DVERSION=\"$(VERSION)\" -Iinclude
 MORE_CFLAGS += -I/usr/include/cm4all/libinline-0
+MORE_CFLAGS += -D_GNU_SOURCE
 
 CFLAGS += -DNO_DEFLATE
 
