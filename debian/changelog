@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.4.5) unstable; urgency=low
 
-  * 
+  * http-server: assume keep-alive is enabled on HTTP 1.1
 
  --
 

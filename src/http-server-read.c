@@ -83,6 +83,8 @@ http_server_parse_request_line(struct http_server_connection *connection,
     connection->request.request->method = method;
     connection->request.request->uri = p_strndup(connection->request.request->pool, line, space - line);
     connection->request.read_state = READ_HEADERS;
+    connection->request.http_1_1 = space + 9 <= line + length &&
+        memcmp(space, " HTTP/1.1", 9) == 0;
 }
 
 static void
@@ -94,8 +96,10 @@ http_server_headers_finished(struct http_server_connection *connection)
     bool chunked;
 
     value = strmap_get(request->headers, "connection");
-    connection->keep_alive = value != NULL &&
-        strcasecmp(value, "keep-alive") == 0;
+    connection->keep_alive =
+        (value == NULL && connection->request.http_1_1) ||
+        (value != NULL &&
+         strcasecmp(value, "keep-alive") == 0);
 
     value = strmap_get(request->headers, "transfer-encoding");
     if (value == NULL || strcasecmp(value, "chunked") != 0) {
