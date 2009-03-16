@@ -468,6 +468,36 @@ parser_widget_attr_finished(struct widget *widget,
     }
 }
 
+static enum uri_base
+parse_uri_base(const struct strref *s)
+{
+    if (strref_cmp_literal(s, "widget") == 0)
+        return URI_BASE_WIDGET;
+    else if (strref_cmp_literal(s, "child") == 0)
+        return URI_BASE_CHILD;
+    else if (strref_cmp_literal(s, "parent") == 0)
+        return URI_BASE_PARENT;
+    else
+        return URI_BASE_TEMPLATE;
+}
+
+static enum uri_mode
+parse_uri_mode(const struct strref *s)
+{
+    if (strref_cmp_literal(s, "direct") == 0)
+        return URI_MODE_DIRECT;
+    else if (strref_cmp_literal(s, "focus") == 0)
+        return URI_MODE_FOCUS;
+    else if (strref_cmp_literal(s, "partial") == 0)
+        return URI_MODE_PARTIAL;
+    else if (strref_cmp_literal(s, "partition") == 0)
+        return URI_MODE_PARTITION;
+    else if (strref_cmp_literal(s, "proxy") == 0)
+        return URI_MODE_PROXY;
+    else
+        return URI_MODE_DIRECT;
+}
+
 static void
 processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
@@ -480,14 +510,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
          processor->tag == TAG_IMG || processor->tag == TAG_SCRIPT ||
          processor->tag == TAG_PARAM) &&
         strref_cmp_literal(&attr->name, "c:base") == 0) {
-        if (strref_cmp_literal(&attr->value, "widget") == 0)
-            processor->uri_base = URI_BASE_WIDGET;
-        else if (strref_cmp_literal(&attr->value, "child") == 0)
-            processor->uri_base = URI_BASE_CHILD;
-        else if (strref_cmp_literal(&attr->value, "parent") == 0)
-            processor->uri_base = URI_BASE_PARENT;
-        else
-            processor->uri_base = URI_BASE_TEMPLATE;
+        processor->uri_base = parse_uri_base(&attr->value);
         istream_replace_add(processor->replace, attr->name_start,
                             attr->end, NULL);
         return;
@@ -496,18 +519,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     if (!processor_option_quiet(processor) &&
         processor->tag != TAG_NONE &&
         strref_cmp_literal(&attr->name, "c:mode") == 0) {
-        if (strref_cmp_literal(&attr->value, "direct") == 0)
-            processor->uri_mode = URI_MODE_DIRECT;
-        else if (strref_cmp_literal(&attr->value, "focus") == 0)
-            processor->uri_mode = URI_MODE_FOCUS;
-        else if (strref_cmp_literal(&attr->value, "partial") == 0)
-            processor->uri_mode = URI_MODE_PARTIAL;
-        else if (strref_cmp_literal(&attr->value, "partition") == 0)
-            processor->uri_mode = URI_MODE_PARTITION;
-        else if (strref_cmp_literal(&attr->value, "proxy") == 0)
-            processor->uri_mode = URI_MODE_PROXY;
-        else
-            processor->uri_mode = URI_MODE_DIRECT;
+        processor->uri_mode = parse_uri_mode(&attr->value);
         istream_replace_add(processor->replace, attr->name_start,
                             attr->end, NULL);
         return;
