@@ -382,6 +382,82 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
     }
 }
 
+static enum uri_base
+parse_uri_base(const struct strref *s);
+
+static enum uri_mode
+parse_uri_mode(const struct strref *s);
+
+/**
+ * Parses mode/base attributes from a URI in the form:
+ *
+ *  URI#{mode=x;base=y;}
+ */
+static const struct strref *
+parse_base_mode_from_uri(const struct strref *uri,
+                         enum uri_base *base_r, enum uri_mode *mode_r,
+                         struct strref *s)
+{
+    const char *p, *q, *r, *end;
+    enum uri_base base = *base_r;
+    enum uri_mode mode = *mode_r;
+
+    if (uri->length < 2 + 4 + 1 + 1 + 2 ||
+        uri->data[uri->length - 2] != ';' ||
+        uri->data[uri->length - 1] != '}')
+        return uri;
+
+    end = uri->data + uri->length - 1;
+
+    /* find "#{" */
+
+    p = uri->data;
+    while (true) {
+        p = memchr(p, '#', end - p - 1);
+        if (p == NULL)
+            return uri;
+
+        if (p[1] == '{')
+            break;
+
+        ++p;
+    }
+
+    strref_set2(s, uri->data, p);
+
+    p += 2;
+
+    /* parse the parameters */
+
+    while (p < end) {
+        q = memchr(p, ';', end - p);
+        assert(q != NULL);
+        if (q == p)
+            return uri;
+
+        r = memchr(p, '=', q - p);
+        if (r == p || r == NULL)
+            return uri;
+
+        if (r - p == 4) {
+            struct strref value;
+
+            strref_set2(&value, r + 1, q);
+
+            if (memcmp(p, "base", 4) == 0)
+                base = parse_uri_base(&value);
+            else if (memcmp(p, "mode", 4) == 0)
+                mode = parse_uri_mode(&value);
+        }
+
+        p = q + 1;
+    }
+
+    *base_r = base;
+    *mode_r = mode;
+    return s;
+}
+
 static void
 replace_attribute_value(struct processor *processor,
                         const struct parser_attr *attr,
@@ -400,7 +476,10 @@ transform_uri_attribute(struct processor *processor,
 {
     struct widget *widget = NULL;
     const struct strref *value = &attr->value;
+    struct strref tmp;
     istream_t istream;
+
+    value = parse_base_mode_from_uri(value, &base, &mode, &tmp);
 
     switch (base) {
     case URI_BASE_TEMPLATE:

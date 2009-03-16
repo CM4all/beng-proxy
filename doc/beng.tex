@@ -720,6 +720,16 @@ Example:
 <img c:base="widget" c:mode="proxy" src="foo.jpg"/>
 \end{verbatim*}
 
+\subsubsection{Alternative syntax}
+
+If using the \texttt{c:base} / \texttt{c:mode} attributes is not
+viable for you, you may use an alternative syntax, which is less
+consistent, but should work everywhere:
+
+\begin{verbatim*}
+<img src="foo.jpg#{base=widget;mode=proxy;}"/>
+\end{verbatim*}
+
 \subsection{Frames}
 \label{frames}
 
