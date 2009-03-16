@@ -48,6 +48,7 @@ enum beng_translation_command {
     TRANSLATE_USER_AGENT = 35,
     TRANSLATE_MAX_AGE = 36,
     TRANSLATE_VARY = 37,
+    TRANSLATE_QUERY_STRING = 38,
 };
 
 struct beng_translation_header {

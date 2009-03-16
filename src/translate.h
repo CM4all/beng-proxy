@@ -23,6 +23,7 @@ struct translate_request {
     const char *user_agent;
     const char *accept_language;
     const char *uri;
+    const char *query_string;
     const char *widget_type;
     const char *session;
     const char *param;

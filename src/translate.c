@@ -153,6 +153,8 @@ marshal_request(pool_t pool, const struct translate_request *request)
         write_packet(gb, TRANSLATE_LANGUAGE, request->accept_language);
     if (request->uri != NULL)
         write_packet(gb, TRANSLATE_URI, request->uri);
+    if (request->query_string != NULL)
+        write_packet(gb, TRANSLATE_QUERY_STRING, request->query_string);
     if (request->widget_type != NULL)
         write_packet(gb, TRANSLATE_WIDGET_TYPE, request->widget_type);
     if (request->session != NULL && *request->session != 0)
@@ -370,6 +372,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_REMOTE_HOST:
     case TRANSLATE_WIDGET_TYPE:
     case TRANSLATE_USER_AGENT:
+    case TRANSLATE_QUERY_STRING:
         daemon_log(2, "misplaced translate request packet\n");
         break;
 

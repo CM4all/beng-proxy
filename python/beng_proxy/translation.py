@@ -38,6 +38,7 @@ TRANSLATE_VIEW = 34
 TRANSLATE_USER_AGENT = 35
 TRANSLATE_MAX_AGE = 36
 TRANSLATE_VARY = 37
+TRANSLATE_QUERY_STRING = 38
 
 class PacketReader:
     def __init__(self):
@@ -82,6 +83,7 @@ class Request:
     def __init__(self):
         self.host = None
         self.uri = None
+        self.query_string = None
         self.widget_type = None
         self.session = None
         self.param = None
@@ -96,6 +98,8 @@ class Request:
             self.host = packet.payload
         elif packet.command == TRANSLATE_URI:
             self.uri = packet.payload
+        elif packet.command == TRANSLATE_QUERY_STRING:
+            self.query_string = packet.payload
         elif packet.command == TRANSLATE_WIDGET_TYPE:
             self.widget_type = packet.payload
         elif packet.command == TRANSLATE_SESSION:
