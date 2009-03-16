@@ -399,7 +399,7 @@ transform_uri_attribute(struct processor *processor,
                         enum uri_mode mode)
 {
     struct widget *widget = NULL;
-    const struct strref *value = NULL;
+    const struct strref *value = &attr->value;
     istream_t istream;
 
     switch (base) {
@@ -409,12 +409,11 @@ transform_uri_attribute(struct processor *processor,
 
     case URI_BASE_WIDGET:
         widget = processor->container;
-        value = &attr->value;
         break;
 
     case URI_BASE_CHILD:
         widget = widget_get_child(processor->container,
-                                  strref_dup(processor->pool, &attr->value));
+                                  strref_dup(processor->pool, value));
         if (widget == NULL)
             return;
 
@@ -427,7 +426,6 @@ transform_uri_attribute(struct processor *processor,
         if (widget == NULL)
             return;
 
-        value = &attr->value;
         break;
     }
 
