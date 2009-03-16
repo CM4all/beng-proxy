@@ -24,6 +24,7 @@ struct tcache_item {
         const char *host;
         const char *accept_language;
         const char *user_agent;
+        const char *query_string;
     } request;
 
     struct translate_response response;
@@ -158,6 +159,10 @@ tcache_vary_match(const struct tcache_item *item,
         return tcache_string_match(item->request.user_agent,
                                    request->user_agent);
 
+    case TRANSLATE_QUERY_STRING:
+        return tcache_string_match(item->request.query_string,
+                                   request->query_string);
+
     default:
         return true;
     }
@@ -209,6 +214,9 @@ tcache_callback(const struct translate_response *response, void *ctx)
         item->request.user_agent =
             tcache_vary_copy(pool, tcr->request->user_agent,
                              response, TRANSLATE_USER_AGENT);
+        item->request.query_string =
+            tcache_vary_copy(pool, tcr->request->query_string,
+                             response, TRANSLATE_QUERY_STRING);
 
         tcache_dup_response(pool, &item->response, response);
         cache_put_match(tcr->tcache->cache, p_strdup(pool, tcr->key), &item->item,
