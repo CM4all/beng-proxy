@@ -87,6 +87,7 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
     int ret;
     unsigned i;
     struct session *session, *next;
+    bool non_empty;
 
     ret = clock_gettime(CLOCK_MONOTONIC, &now);
     if (ret < 0) {
@@ -107,9 +108,11 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
         }
     }
 
+    non_empty = session_manager->num_sessions > 0;
+
     lock_unlock(&session_manager->lock);
 
-    if (session_manager->num_sessions > 0) {
+    if (non_empty) {
         struct timeval tv = cleanup_interval;
         evtimer_add(&session_cleanup_event, &tv);
     }
@@ -268,6 +271,7 @@ session_new(void)
     int ret;
     struct dpool *pool;
     struct session *session;
+    unsigned num_sessions;
 
     ret = clock_gettime(CLOCK_MONOTONIC, &now);
     if (ret < 0) {
@@ -302,9 +306,11 @@ session_new(void)
     list_add(&session->hash_siblings, session_slot(session->uri_id));
     ++session_manager->num_sessions;
 
+    num_sessions = session_manager->num_sessions;
+
     lock_unlock(&session_manager->lock);
 
-    if (session_manager->num_sessions == 1) {
+    if (num_sessions == 1) {
         struct timeval tv = cleanup_interval;
         evtimer_add(&session_cleanup_event, &tv);
     }
@@ -440,8 +446,11 @@ session_dup(const struct session *src)
 
     dest->cookies = cookie_jar_dup(pool, src->cookies);
 
+    lock_lock(&session_manager->lock);
     list_add(&dest->hash_siblings, session_slot(dest->uri_id));
     ++session_manager->num_sessions;
+    lock_unlock(&session_manager->lock);
+
     return dest;
 }
 
