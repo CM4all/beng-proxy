@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.4.6) unstable; urgency=low
   * cache: continue search after item was invalidated
   * cache: remove the correct cache item
   * istream-chunked: work around invalid assertion failure
+  * istream-subst: fixed corruption after partial match
 
  --
 

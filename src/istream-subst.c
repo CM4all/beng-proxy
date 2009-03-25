@@ -456,7 +456,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
 
                     ret = subst_feed_mismatch(subst);
                     if (ret)
-                        return subst->state == STATE_CLOSED ? 0 : end - data;
+                        return subst->state == STATE_CLOSED ? 0 : data - data0;
                 }
             }
 
