@@ -52,6 +52,13 @@ chunked_buffer_append(struct istream_chunked *chunked,
     assert(length > 0);
     assert(length <= chunked->buffer_sent);
 
+#ifndef NDEBUG
+    /* simulate a buffer reset; if we don't do this, an assertion in
+       chunked_buffer_set() fails (which is invalid for this special
+       case) */
+    chunked->buffer_sent = sizeof(chunked->buffer);
+#endif
+
     dest = chunked_buffer_set(chunked, old_length + length);
     memmove(dest, old, old_length);
     dest += old_length;

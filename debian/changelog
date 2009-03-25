@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.4.6) unstable; urgency=low
   * date: return UTC time stamp in http_date_parse()
   * cache: continue search after item was invalidated
   * cache: remove the correct cache item
+  * istream-chunked: work around invalid assertion failure
 
  --
 
