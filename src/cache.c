@@ -108,6 +108,7 @@ cache_get(struct cache *cache, const char *key)
         return NULL;
 
     if (!cache_item_validate(cache, item)) {
+        cache_check(cache);
         hashmap_remove(cache->items, key);
         cache_destroy_item(cache, item);
         cache_check(cache);
@@ -130,9 +131,11 @@ cache_get_match(struct cache *cache, const char *key,
             if (!cache_item_validate(cache, item)) {
                 /* expired cache item: delete it, and re-start the
                    search */
+                cache_check(cache);
                 hashmap_remove_value(cache->items, key, item);
                 cache_destroy_item(cache, item);
                 item = NULL;
+                cache_check(cache);
                 continue;
             }
 
@@ -188,6 +191,7 @@ cache_destroy_oldest_item(struct cache *cache)
     if (oldest_item == NULL)
         return;
 
+    cache_check(cache);
     hashmap_remove(cache->items, oldest_key);
     cache_destroy_item(cache, oldest_item);
     cache_check(cache);
@@ -286,8 +290,11 @@ cache_remove_item(struct cache *cache, const char *key,
         /* the specified item has been removed before */
         if (old != NULL)
             hashmap_set(cache->items, key, old);
+        cache_check(cache);
         return;
     }
 
     cache_destroy_item(cache, item);
+
+    cache_check(cache);
 }
