@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.4.6) unstable; urgency=low
 
   * file_handler: fixed logic error in If-Modified-Since check
+  * date: return UTC time stamp in http_date_parse()
 
  --
 

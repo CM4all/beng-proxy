@@ -137,5 +137,5 @@ http_date_parse(const char *p)
     tm.tm_year -= 1900;
     tm.tm_isdst = -1;
 
-    return mktime(&tm);
+    return timegm(&tm);
 }
