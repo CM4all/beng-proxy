@@ -42,6 +42,7 @@ test/run-ajp-client
 test/t-http-util
 test/t-http-cache
 test/t-http-server
+test/t-cache
 
 *.aux
 *.log
