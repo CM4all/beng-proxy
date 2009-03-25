@@ -108,8 +108,12 @@ cache_get(struct cache *cache, const char *key)
         return NULL;
 
     if (!cache_item_validate(cache, item)) {
+        bool found;
+
         cache_check(cache);
-        hashmap_remove(cache->items, key);
+        found = hashmap_remove_value(cache->items, key, item);
+        assert(found);
+
         cache_destroy_item(cache, item);
         cache_check(cache);
         return NULL;
@@ -131,8 +135,12 @@ cache_get_match(struct cache *cache, const char *key,
             if (!cache_item_validate(cache, item)) {
                 /* expired cache item: delete it, and re-start the
                    search */
+                bool found;
+
                 cache_check(cache);
-                hashmap_remove_value(cache->items, key, item);
+                found = hashmap_remove_value(cache->items, key, item);
+                assert(found);
+
                 cache_destroy_item(cache, item);
                 item = NULL;
                 cache_check(cache);
@@ -165,6 +173,7 @@ cache_destroy_oldest_item(struct cache *cache)
     const char *oldest_key = NULL;
     struct cache_item *oldest_item = NULL;
     const time_t now = time(NULL);
+    bool found;
 
     /* XXX this function is O(n^2) */
 
@@ -192,7 +201,9 @@ cache_destroy_oldest_item(struct cache *cache)
         return;
 
     cache_check(cache);
-    hashmap_remove(cache->items, oldest_key);
+    found = hashmap_remove_value(cache->items, oldest_key, oldest_item);
+    assert(found);
+
     cache_destroy_item(cache, oldest_item);
     cache_check(cache);
 }
@@ -284,12 +295,11 @@ void
 cache_remove_item(struct cache *cache, const char *key,
                   struct cache_item *item)
 {
-    struct cache_item *old = hashmap_remove(cache->items, key);
+    bool found;
 
-    if (old != item) {
+    found = hashmap_remove_value(cache->items, key, item);
+    if (!found) {
         /* the specified item has been removed before */
-        if (old != NULL)
-            hashmap_set(cache->items, key, old);
         cache_check(cache);
         return;
     }
