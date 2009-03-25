@@ -125,7 +125,7 @@ cache_get_match(struct cache *cache, const char *key,
 {
     struct cache_item *item = NULL;
 
-    do {
+    while (true) {
         if (item != NULL) {
             if (!cache_item_validate(cache, item)) {
                 /* expired cache item: delete it, and re-start the
@@ -148,10 +148,11 @@ cache_get_match(struct cache *cache, const char *key,
             /* find the first cache_item for this key */
             item = hashmap_get(cache->items, key);
         }
-    } while (item != NULL);
 
-    /* no match */
-    return NULL;
+        if (item == NULL)
+            /* no match */
+            return NULL;
+    };
 }
 
 static void
