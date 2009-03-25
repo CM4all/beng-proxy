@@ -7,7 +7,7 @@ cm4all-beng-proxy (0.4.6) unstable; urgency=low
   * istream-chunked: work around invalid assertion failure
   * istream-subst: fixed corruption after partial match
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Mar 2009 15:03:10 +0100
 
 cm4all-beng-proxy (0.4.5) unstable; urgency=low
 
