@@ -157,7 +157,7 @@ hashmap_remove(struct hashmap *map, const char *key)
     return NULL;
 }
 
-void
+bool
 hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
 {
     unsigned hash = calc_hash(key);
@@ -177,7 +177,7 @@ hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
             *prev = *slot;
             p_free(map->pool, slot);
         }
-        return;
+        return true;
     }
 
     for (slot = prev->next;; slot = slot->next) {
@@ -188,9 +188,12 @@ hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
         if (slot->pair.value == value) {
             prev->next = slot->next;
             p_free(map->pool, slot);
-            return;
+            return true;
         }
     }
+
+    /* not found */
+    return false;
 }
 
 void *

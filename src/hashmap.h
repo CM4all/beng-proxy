@@ -26,7 +26,11 @@ hashmap_set(struct hashmap *map, const char *key, void *value);
 void *
 hashmap_remove(struct hashmap *map, const char *key);
 
-void
+/**
+ * Removes the item with the specified value.  Returns false if no
+ * such value was found.
+ */
+bool
 hashmap_remove_value(struct hashmap *map, const char *key, const void *value);
 
 void *
