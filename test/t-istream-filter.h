@@ -208,6 +208,23 @@ test_normal(pool_t pool)
     run_istream(pool, istream, true);
 }
 
+/** block once after n data() invocations */
+static void
+test_block(pool_t pool)
+{
+    for (int n = 0; n < 8; ++n) {
+        istream_t istream;
+
+        pool = pool_new_linear(pool, "test", 8192);
+
+        istream = create_test(pool, create_input(pool));
+        assert(istream != NULL);
+        assert(!istream_has_handler(istream));
+
+        run_istream_block(pool, istream, true, n);
+    }
+}
+
 /** test with istream_byte */
 static void
 test_byte(pool_t pool)
@@ -450,6 +467,7 @@ int main(int argc, char **argv) {
     /* run test suite */
 
     test_normal(root_pool);
+    test_block(root_pool);
     test_byte(root_pool);
     test_half(root_pool);
     test_fail(root_pool);
