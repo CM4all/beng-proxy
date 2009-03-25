@@ -22,6 +22,8 @@ struct ctx {
 #endif
     istream_t abort_istream;
     int abort_after;
+
+    int block_after;
 };
 
 /*
@@ -46,6 +48,13 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 
     if (ctx->half && length > 8)
         length = (length + 1) / 2;
+
+    if (ctx->block_after >= 0) {
+        --ctx->block_after;
+        if (ctx->block_after == -1)
+            /* block once */
+            return 0;
+    }
 
 #ifdef EXPECTED_RESULT
     if (ctx->record) {
@@ -158,16 +167,24 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 }
 
 static void
-run_istream(pool_t pool, istream_t istream, bool record __attr_unused)
+run_istream_block(pool_t pool, istream_t istream, bool record __attr_unused,
+                  int block_after)
 {
     struct ctx ctx = {
         .abort_istream = NULL,
+        .block_after = block_after,
 #ifdef EXPECTED_RESULT
         .record = record,
 #endif
     };
 
     run_istream_ctx(&ctx, pool, istream);
+}
+
+static void
+run_istream(pool_t pool, istream_t istream, bool record)
+{
+    run_istream_block(pool, istream, record, -1);
 }
 
 
@@ -214,6 +231,7 @@ test_half(pool_t pool)
         .record = true,
 #endif
         .abort_istream = NULL,
+        .block_after = -1,
     };
 
     pool = pool_new_linear(pool, "test", 8192);
@@ -272,6 +290,7 @@ test_abort_with_handler(pool_t pool)
 {
     struct ctx ctx = {
         .abort_istream = NULL,
+        .block_after = -1,
         .eof = false,
         .half = false,
 #ifdef EXPECTED_RESULT
@@ -306,6 +325,7 @@ test_abort_in_handler(pool_t pool)
         .record = false,
 #endif
         .abort_after = 0,
+        .block_after = -1,
     };
 
     pool = pool_new_linear(pool, "test", 8192);
@@ -337,6 +357,7 @@ test_abort_in_handler_half(pool_t pool)
         .record = false,
 #endif
         .abort_after = 2,
+        .block_after = -1,
     };
 
     pool = pool_new_linear(pool, "test", 8192);
