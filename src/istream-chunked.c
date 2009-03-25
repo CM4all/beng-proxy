@@ -123,6 +123,8 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
         if (!bret)
             return chunked->input == NULL ? 0 : total;
 
+        assert(chunked_buffer_empty(chunked));
+
         if (chunked->missing_from_current_chunk == 0) {
             /* we have just written the previous chunk trailer;
                re-start this loop to start a new chunk */
