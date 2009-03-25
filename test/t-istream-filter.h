@@ -483,6 +483,10 @@ int main(int argc, char **argv) {
     test_big_hold(root_pool);
 #endif
 
+#ifdef CUSTOM_TEST
+    test_custom(root_pool);
+#endif
+
     /* cleanup */
 
     pool_unref(root_pool);
