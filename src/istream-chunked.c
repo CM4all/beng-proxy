@@ -44,22 +44,17 @@ static void
 chunked_buffer_append(struct istream_chunked *chunked,
                       const void *data, size_t length)
 {
+    const void *old = chunked->buffer + chunked->buffer_sent;
+    size_t old_length = sizeof(chunked->buffer) - chunked->buffer_sent;
     char *dest;
 
     assert(data != NULL);
     assert(length > 0);
     assert(length <= chunked->buffer_sent);
 
-    if (chunked_buffer_empty(chunked)) {
-        dest = chunked_buffer_set(chunked, length);
-    } else {
-        const void *old = chunked->buffer + chunked->buffer_sent;
-        size_t old_length = sizeof(chunked->buffer) - chunked->buffer_sent;
-
-        dest = chunked_buffer_set(chunked, old_length + length);
-        memmove(dest, old, old_length);
-        dest += old_length;
-    }
+    dest = chunked_buffer_set(chunked, old_length + length);
+    memmove(dest, old, old_length);
+    dest += old_length;
 
     memcpy(dest, data, length);
 }
