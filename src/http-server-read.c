@@ -126,7 +126,7 @@ http_server_headers_finished(struct http_server_connection *connection)
             if (content_length == 0) {
                 /* empty body */
 
-                request->body = NULL;
+                request->body = istream_null_new(request->pool);
                 connection->request.read_state = READ_END;
 
                 return;
