@@ -397,20 +397,13 @@ widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
 }
 
 static struct session * __attr_malloc
-session_dup(const struct session *src)
+session_dup(struct dpool *pool, const struct session *src)
 {
-    struct dpool *pool;
     struct session *dest;
 
-    pool = dpool_new(session_manager->shm);
-    if (pool == NULL)
-        return NULL;
-
     dest = d_malloc(pool, sizeof(*dest));
-    if (dest == NULL) {
-        dpool_destroy(pool);
+    if (dest == NULL)
         return NULL;
-    }
 
     dest->pool = pool;
     lock_init(&dest->lock);
@@ -438,7 +431,6 @@ session_dup(const struct session *src)
     if (src->widgets != NULL) {
         dest->widgets = widget_session_map_dup(pool, src->widgets, dest, NULL);
         if (dest->widgets == NULL) {
-            dpool_destroy(pool);
             return NULL;
         }
     } else
@@ -457,9 +449,18 @@ session_dup(const struct session *src)
 struct session * __attr_malloc
 session_defragment(struct session *src)
 {
-    struct session *dest = session_dup(src);
-    if (dest == NULL)
+    struct dpool *pool;
+    struct session *dest;
+
+    pool = dpool_new(session_manager->shm);
+    if (pool == NULL)
+        return NULL;
+
+    dest = session_dup(pool, src);
+    if (dest == NULL) {
+        dpool_destroy(pool);
         return src;
+    }
 
     session_remove(src);
     return dest;
