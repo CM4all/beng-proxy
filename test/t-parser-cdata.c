@@ -3,77 +3,72 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 static bool should_exit;
-
-/*
- * istream handler
- *
- */
-
-static size_t
-my_istream_data(const void *data, size_t length, void *ctx)
-{
-    struct parser *parser = ctx;
-
-    parser_feed(parser, data, length);
-
-    return length;
-}
-
-static void
-my_istream_eof(void *ctx)
-{
-    (void)ctx;
-    should_exit = true;
-}
-
-static void attr_noreturn
-my_istream_abort(void *ctx)
-{
-    (void)ctx;
-    exit(2);
-}
-
-static const struct istream_handler my_istream_handler = {
-    .data = my_istream_data,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
-};
-
 
 /*
  * parser handler
  *
  */
 
-void
-parser_element_start(struct parser *parser)
+static void
+parser_tag_start(const struct parser_tag *tag, void *ctx)
 {
-    (void)parser;
+    (void)tag;
+    (void)ctx;
 }
 
-void
-parser_element_finished(struct parser *parser, off_t end)
+static void
+parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
-    (void)parser;
-    (void)end;
+    (void)tag;
+    (void)ctx;
 }
 
-void
-parser_attr_finished(struct parser *parser)
+static void
+parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
-    (void)parser;
+    (void)attr;
+    (void)ctx;
 }
 
-void
-parser_cdata(struct parser *parser, const char *p, size_t length, int escaped)
+static size_t
+parser_cdata(const char *p, size_t length, bool escaped, void *ctx)
 {
-    (void)parser;
     (void)escaped;
+    (void)ctx;
 
     write(1, p, length);
+    return length;
 }
+
+static void
+parser_eof(void *ctx, off_t length)
+{
+    (void)ctx;
+    (void)length;
+
+    should_exit = true;
+}
+
+static __attr_noreturn void
+parser_abort(void *ctx)
+{
+    (void)ctx;
+
+    fprintf(stderr, "ABORT\n");
+    exit(2);
+}
+
+static const struct parser_handler my_parser_handler = {
+    .tag_start = parser_tag_start,
+    .tag_finished = parser_tag_finished,
+    .attr_finished = parser_attr_finished,
+    .cdata = parser_cdata,
+    .eof = parser_eof,
+    .abort = parser_abort,
+};
 
 
 /*
@@ -82,24 +77,22 @@ parser_cdata(struct parser *parser, const char *p, size_t length, int escaped)
  */
 
 int main(int argc, char **argv) {
-    struct parser parser;
     pool_t root_pool, pool;
     istream_t istream;
+    struct parser *parser;
 
     (void)argc;
     (void)argv;
-
-    parser_init(&parser);
 
     root_pool = pool_new_libc(NULL, "root");
 
     pool = pool_new_linear(root_pool, "test", 8192);
 
     istream = istream_file_new(pool, "/dev/stdin", (off_t)-1);
-    istream_handler_set(istream, &my_istream_handler, &parser, 0);
+    parser = parser_new(pool, istream, &my_parser_handler, NULL);
 
     while (!should_exit)
-        istream_read(istream);
+        parser_read(parser);
 
     pool_unref(pool);
     pool_unref(root_pool);
