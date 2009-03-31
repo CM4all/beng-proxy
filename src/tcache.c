@@ -199,8 +199,7 @@ tcache_callback(const struct translate_response *response, void *ctx)
 
         cache_log(4, "translate_cache: store %s\n", tcr->key);
 
-        item->item.expires = time(NULL) + 300;
-        item->item.size = 1;
+        cache_item_init(&item->item, time(NULL) + 300, 1);
         item->pool = pool;
 
         item->request.remote_host =

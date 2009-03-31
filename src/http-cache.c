@@ -299,6 +299,7 @@ http_cache_put(struct http_cache_request *request)
 {
     pool_t pool;
     struct http_cache_item *item;
+    time_t expires;
 
     assert(request != NULL);
     assert(request->info != NULL);
@@ -307,13 +308,16 @@ http_cache_put(struct http_cache_request *request)
 
     pool = pool_new_linear(request->cache->pool, "http_cache_item", 1024);
     item = p_malloc(pool, sizeof(*item));
+
     if (request->info->expires == (time_t)-1)
         /* there is no Expires response header; keep it in the cache
            for 1 hour, but check with If-Modified-Since */
-        item->item.expires = time(NULL) + 3600;
+        expires = time(NULL) + 3600;
     else
-        item->item.expires = request->info->expires;
-    item->item.size = request->response.length;
+        expires = request->info->expires;
+
+    cache_item_init(&item->item, expires, request->response.length);
+
     item->pool = pool;
     http_cache_copy_info(pool, &item->info, request->info);
 

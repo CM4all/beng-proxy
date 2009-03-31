@@ -54,8 +54,7 @@ my_cache_item_new(pool_t pool, int match, int value)
 
     pool = pool_new_linear(pool, "my_cache_item", 1024);
     i = p_malloc(pool, sizeof(*i));
-    i->item.expires = time(NULL) + 3600;
-    i->item.size = 1;
+    cache_item_init(&i->item, time(NULL) + 3600, 1);
     i->pool = pool;
     i->match = match;
     i->value = value;

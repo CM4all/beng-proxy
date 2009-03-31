@@ -82,4 +82,16 @@ void
 cache_remove_item(struct cache *cache, const char *key,
                   struct cache_item *item);
 
+/**
+ * Initializes the specified #cache_item.  You should not manually
+ * initialize an item, because you won't notice API changes then.
+ */
+static inline void
+cache_item_init(struct cache_item *item, time_t expires, size_t size)
+{
+    item->expires = expires;
+    item->size = size;
+    item->last_accessed = 0;
+}
+
 #endif
