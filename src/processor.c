@@ -29,6 +29,11 @@ enum uri_base {
     URI_BASE_PARENT,
 };
 
+struct uri_rewrite {
+    enum uri_base base;
+    enum uri_mode mode;
+};
+
 struct processor {
     pool_t pool, caller_pool;
 
@@ -54,8 +59,8 @@ struct processor {
         TAG_SCRIPT,
         TAG_PARAM,
     } tag;
-    enum uri_base uri_base;
-    enum uri_mode uri_mode;
+
+    struct uri_rewrite uri_rewrite;
 
     struct {
         off_t start_offset;
@@ -338,29 +343,29 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->widget.widget->parent = processor->container;
     } else if (strref_lower_cmp_literal(&tag->name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
-        processor->uri_base = URI_BASE_TEMPLATE;
-        processor->uri_mode = URI_MODE_DIRECT;
+        processor->uri_rewrite.base = URI_BASE_TEMPLATE;
+        processor->uri_rewrite.mode = URI_MODE_DIRECT;
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
         if (strref_lower_cmp_literal(&tag->name, "a") == 0 ||
             strref_lower_cmp_literal(&tag->name, "link") == 0) {
             processor->tag = TAG_A;
-            processor->uri_base = URI_BASE_TEMPLATE;
-            processor->uri_mode = URI_MODE_DIRECT;
+            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
+            processor->uri_rewrite.mode = URI_MODE_DIRECT;
         } else if (strref_lower_cmp_literal(&tag->name, "link") == 0) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
             processor->tag = TAG_A;
-            processor->uri_base = URI_BASE_TEMPLATE;
-            processor->uri_mode = URI_MODE_DIRECT;
+            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
+            processor->uri_rewrite.mode = URI_MODE_DIRECT;
         } else if (strref_lower_cmp_literal(&tag->name, "form") == 0) {
             processor->tag = TAG_FORM;
-            processor->uri_base = URI_BASE_TEMPLATE;
-            processor->uri_mode = URI_MODE_DIRECT;
+            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
+            processor->uri_rewrite.mode = URI_MODE_DIRECT;
         } else if (strref_lower_cmp_literal(&tag->name, "img") == 0) {
             processor->tag = TAG_IMG;
-            processor->uri_base = URI_BASE_TEMPLATE;
-            processor->uri_mode = URI_MODE_DIRECT;
+            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
+            processor->uri_rewrite.mode = URI_MODE_DIRECT;
         } else if (strref_lower_cmp_literal(&tag->name, "iframe") == 0 ||
                    strref_lower_cmp_literal(&tag->name, "embed") == 0 ||
                    strref_lower_cmp_literal(&tag->name, "video") == 0 ||
@@ -368,12 +373,12 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
             processor->tag = TAG_IMG;
-            processor->uri_base = URI_BASE_TEMPLATE;
-            processor->uri_mode = URI_MODE_DIRECT;
+            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
+            processor->uri_rewrite.mode = URI_MODE_DIRECT;
         } else if (strref_lower_cmp_literal(&tag->name, "param") == 0) {
             processor->tag = TAG_PARAM;
-            processor->uri_base = URI_BASE_TEMPLATE;
-            processor->uri_mode = URI_MODE_DIRECT;
+            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
+            processor->uri_rewrite.mode = URI_MODE_DIRECT;
         } else {
             processor->tag = TAG_NONE;
         }
@@ -589,7 +594,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
          processor->tag == TAG_IMG || processor->tag == TAG_SCRIPT ||
          processor->tag == TAG_PARAM) &&
         strref_cmp_literal(&attr->name, "c:base") == 0) {
-        processor->uri_base = parse_uri_base(&attr->value);
+        processor->uri_rewrite.base = parse_uri_base(&attr->value);
         istream_replace_add(processor->replace, attr->name_start,
                             attr->end, NULL);
         return;
@@ -598,7 +603,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     if (!processor_option_quiet(processor) &&
         processor->tag != TAG_NONE &&
         strref_cmp_literal(&attr->name, "c:mode") == 0) {
-        processor->uri_mode = parse_uri_mode(&attr->value);
+        processor->uri_rewrite.mode = parse_uri_mode(&attr->value);
         istream_replace_add(processor->replace, attr->name_start,
                             attr->end, NULL);
         return;
@@ -663,34 +668,38 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
     case TAG_IMG:
         if (strref_lower_cmp_literal(&attr->name, "src") == 0)
-            transform_uri_attribute(processor, attr, processor->uri_base,
-                                    processor->uri_mode);
+            transform_uri_attribute(processor, attr, processor->uri_rewrite.base,
+                                    processor->uri_rewrite.mode);
         break;
 
     case TAG_A:
         if (strref_lower_cmp_literal(&attr->name, "href") == 0 &&
             !strref_starts_with_n(&attr->value, "#", 1) &&
             !strref_starts_with_n(&attr->value, "javascript:", 11))
-            transform_uri_attribute(processor, attr, processor->uri_base,
-                                    processor->uri_mode);
+            transform_uri_attribute(processor, attr,
+                                    processor->uri_rewrite.base,
+                                    processor->uri_rewrite.mode);
         break;
 
     case TAG_FORM:
         if (strref_lower_cmp_literal(&attr->name, "action") == 0)
-            transform_uri_attribute(processor, attr, processor->uri_base,
-                                    processor->uri_mode);
+            transform_uri_attribute(processor, attr,
+                                    processor->uri_rewrite.base,
+                                    processor->uri_rewrite.mode);
         break;
 
     case TAG_SCRIPT:
         if (strref_lower_cmp_literal(&attr->name, "src") == 0)
-            transform_uri_attribute(processor, attr, processor->uri_base,
-                                    processor->uri_mode);
+            transform_uri_attribute(processor, attr,
+                                    processor->uri_rewrite.base,
+                                    processor->uri_rewrite.mode);
         break;
 
     case TAG_PARAM:
         if (strref_lower_cmp_literal(&attr->name, "value") == 0)
-            transform_uri_attribute(processor, attr, processor->uri_base,
-                                    processor->uri_mode);
+            transform_uri_attribute(processor, attr,
+                                    processor->uri_rewrite.base,
+                                    processor->uri_rewrite.mode);
         break;
     }
 }
