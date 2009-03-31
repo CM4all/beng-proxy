@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.4.7) unstable; urgency=low
 
   * http-server: use istream_null for empty request body
+  * parser: check for trailing slash only in TAG_OPEN tags
 
  --
 

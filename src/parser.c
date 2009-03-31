@@ -223,7 +223,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             do {
                 if (char_is_whitespace(*buffer)) {
                     ++buffer;
-                } else if (*buffer == '/') {
+                } else if (*buffer == '/' && parser->tag.type == TAG_OPEN) {
                     parser->tag.type = TAG_SHORT;
                     parser->state = PARSER_SHORT;
                     ++buffer;
