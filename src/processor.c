@@ -62,6 +62,11 @@ struct processor {
 
     struct uri_rewrite uri_rewrite;
 
+    /**
+     * The default value for #uri_rewrite.
+     */
+    struct uri_rewrite default_uri_rewrite;
+
     struct {
         off_t start_offset;
 
@@ -232,6 +237,11 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
     if (widget->from_request.proxy_ref == NULL) {
         struct strmap *headers2;
 
+        if (processor_option_rewrite_url(processor)) {
+            processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
+            processor->default_uri_rewrite.mode = URI_MODE_DIRECT;
+        }
+
         if (headers != NULL) {
             static const char *const copy_headers[] = {
                 "content-language",
@@ -343,29 +353,24 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->widget.widget->parent = processor->container;
     } else if (strref_lower_cmp_literal(&tag->name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
-        processor->uri_rewrite.base = URI_BASE_TEMPLATE;
-        processor->uri_rewrite.mode = URI_MODE_DIRECT;
+        processor->uri_rewrite = processor->default_uri_rewrite;
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
         if (strref_lower_cmp_literal(&tag->name, "a") == 0 ||
             strref_lower_cmp_literal(&tag->name, "link") == 0) {
             processor->tag = TAG_A;
-            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
-            processor->uri_rewrite.mode = URI_MODE_DIRECT;
+            processor->uri_rewrite = processor->default_uri_rewrite;
         } else if (strref_lower_cmp_literal(&tag->name, "link") == 0) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
             processor->tag = TAG_A;
-            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
-            processor->uri_rewrite.mode = URI_MODE_DIRECT;
+            processor->uri_rewrite = processor->default_uri_rewrite;
         } else if (strref_lower_cmp_literal(&tag->name, "form") == 0) {
             processor->tag = TAG_FORM;
-            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
-            processor->uri_rewrite.mode = URI_MODE_DIRECT;
+            processor->uri_rewrite = processor->default_uri_rewrite;
         } else if (strref_lower_cmp_literal(&tag->name, "img") == 0) {
             processor->tag = TAG_IMG;
-            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
-            processor->uri_rewrite.mode = URI_MODE_DIRECT;
+            processor->uri_rewrite = processor->default_uri_rewrite;
         } else if (strref_lower_cmp_literal(&tag->name, "iframe") == 0 ||
                    strref_lower_cmp_literal(&tag->name, "embed") == 0 ||
                    strref_lower_cmp_literal(&tag->name, "video") == 0 ||
@@ -373,12 +378,10 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             /* this isn't actually an IMG, but we are only interested
                in the SRC attribute */
             processor->tag = TAG_IMG;
-            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
-            processor->uri_rewrite.mode = URI_MODE_DIRECT;
+            processor->uri_rewrite = processor->default_uri_rewrite;
         } else if (strref_lower_cmp_literal(&tag->name, "param") == 0) {
             processor->tag = TAG_PARAM;
-            processor->uri_rewrite.base = URI_BASE_TEMPLATE;
-            processor->uri_rewrite.mode = URI_MODE_DIRECT;
+            processor->uri_rewrite = processor->default_uri_rewrite;
         } else {
             processor->tag = TAG_NONE;
         }
