@@ -281,7 +281,7 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
  *
  */
 
-static void
+static bool
 parser_element_start_in_widget(struct processor *processor,
                                enum parser_tag_type type,
                                const struct strref *_name)
@@ -309,10 +309,13 @@ parser_element_start_in_widget(struct processor *processor,
         processor->tag = TAG_WIDGET_VIEW;
     } else {
         processor->tag = TAG_NONE;
+        return false;
     }
+
+    return true;
 }
 
-static void
+static bool
 processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 {
     struct processor *processor = ctx;
@@ -323,23 +326,21 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         strref_lower_cmp_literal(&tag->name, "script") != 0)
         /* workaround for bugged scripts: ignore all closing tags
            except </SCRIPT> */
-        return;
+        return false;
 
     processor->tag = TAG_NONE;
 
-    if (processor->widget.widget != NULL) {
-        parser_element_start_in_widget(processor, tag->type, &tag->name);
-        return;
-    }
+    if (processor->widget.widget != NULL)
+        return parser_element_start_in_widget(processor, tag->type, &tag->name);
 
     if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if ((processor->options & PROCESSOR_CONTAINER) == 0 ||
             global_translate_cache == NULL)
-            return;
+            return false;
 
         if (tag->type == TAG_CLOSE) {
             assert(processor->widget.widget == NULL);
-            return;
+            return false;
         }
 
         processor->tag = TAG_WIDGET;
@@ -384,10 +385,14 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->uri_rewrite = processor->default_uri_rewrite;
         } else {
             processor->tag = TAG_NONE;
+            return false;
         }
     } else {
         processor->tag = TAG_NONE;
+        return false;
     }
+
+    return true;
 }
 
 static enum uri_base

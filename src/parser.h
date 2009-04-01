@@ -34,7 +34,14 @@ struct parser_attr {
 };
 
 struct parser_handler {
-    void (*tag_start)(const struct parser_tag *tag, void *ctx);
+    /**
+     * A tag has started, and we already know its name.
+     *
+     * @return true if attributes should be parsed, false otherwise
+     * (saves CPU cycles; tag_finished() is not called)
+     */
+    bool (*tag_start)(const struct parser_tag *tag, void *ctx);
+
     void (*tag_finished)(const struct parser_tag *tag, void *ctx);
     void (*attr_finished)(const struct parser_attr *attr, void *ctx);
     size_t (*cdata)(const char *p, size_t length, bool escaped, void *ctx);

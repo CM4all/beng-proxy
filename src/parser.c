@@ -28,6 +28,9 @@ enum parser_state {
     /** inside the element tag */
     PARSER_ELEMENT_TAG,
 
+    /** inside the element tag, but ignore attributes */
+    PARSER_ELEMENT_BORING,
+
     /** parsing attribute name */
     PARSER_ATTR_NAME,
 
@@ -197,15 +200,17 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     ++buffer;
                 } else if ((char_is_whitespace(*buffer) || *buffer == '/' || *buffer == '>') &&
                            parser->tag_name_length > 0) {
+                    bool interesting;
+
                     strref_set(&parser->tag.name, parser->tag_name, parser->tag_name_length);
 
-                    parser->handler->tag_start(&parser->tag,
-                                               parser->handler_ctx);
+                    interesting = parser->handler->tag_start(&parser->tag,
+                                                             parser->handler_ctx);
 
                     if (parser->input == NULL)
                         return 0;
 
-                    parser->state = PARSER_ELEMENT_TAG;
+                    parser->state = interesting ? PARSER_ELEMENT_TAG : PARSER_ELEMENT_BORING;
                     break;
                 } else if (*buffer == '!' && parser->tag_name_length == 0) {
                     parser->state = PARSER_DECLARATION_NAME;
@@ -252,6 +257,18 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 }
             } while (buffer < end);
 
+            break;
+
+        case PARSER_ELEMENT_BORING:
+            /* ignore this tag */
+
+            p = memchr(buffer, '>', end - buffer);
+            if (p != NULL) {
+                /* the "boring" tag has been closed */
+                buffer = p + 1;
+                parser->state = PARSER_NONE;
+            } else
+                buffer = end;
             break;
 
         case PARSER_ATTR_NAME:

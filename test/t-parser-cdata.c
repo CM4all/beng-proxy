@@ -12,11 +12,13 @@ static bool should_exit;
  *
  */
 
-static void
+static bool
 parser_tag_start(const struct parser_tag *tag, void *ctx)
 {
     (void)tag;
     (void)ctx;
+
+    return false;
 }
 
 static void
