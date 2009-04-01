@@ -86,11 +86,25 @@ cache_check(const struct cache *cache)
 static void
 cache_destroy_item(struct cache *cache, struct cache_item *item)
 {
-    assert(cache->size >= item->size);
-    cache->size -= item->size;
-
     if (cache->class->destroy != NULL)
         cache->class->destroy(item);
+}
+
+static void
+cache_item_removed(struct cache *cache, struct cache_item *item)
+{
+    assert(cache != NULL);
+    assert(item != NULL);
+    assert(item->lock > 0 || !item->removed);
+    assert(cache->size >= item->size);
+
+    cache->size -= item->size;
+
+    if (item->lock == 0)
+        cache_destroy_item(cache, item);
+    else
+        /* this item is locked - postpone the destroy() call */
+        item->removed = true;
 }
 
 static bool
@@ -114,7 +128,8 @@ cache_get(struct cache *cache, const char *key)
         found = hashmap_remove_value(cache->items, key, item);
         assert(found);
 
-        cache_destroy_item(cache, item);
+        cache_item_removed(cache, item);
+
         cache_check(cache);
         return NULL;
     }
@@ -141,7 +156,8 @@ cache_get_match(struct cache *cache, const char *key,
                 found = hashmap_remove_value(cache->items, key, item);
                 assert(found);
 
-                cache_destroy_item(cache, item);
+                cache_item_removed(cache, item);
+
                 item = NULL;
                 cache_check(cache);
                 continue;
@@ -204,7 +220,7 @@ cache_destroy_oldest_item(struct cache *cache)
     found = hashmap_remove_value(cache->items, oldest_key, oldest_item);
     assert(found);
 
-    cache_destroy_item(cache, oldest_item);
+    cache_item_removed(cache, oldest_item);
     cache_check(cache);
 }
 
@@ -250,6 +266,10 @@ cache_put(struct cache *cache, const char *key,
     /* XXX size constraints */
     struct cache_item *old;
 
+    assert(item != NULL);
+    assert(item->lock == 0);
+    assert(!item->removed);
+
     if (!cache_need_room(cache, item->size)) {
         if (cache->class->destroy != NULL)
             cache->class->destroy(item);
@@ -260,7 +280,7 @@ cache_put(struct cache *cache, const char *key,
 
     old = hashmap_set(cache->items, key, item);
     if (old != NULL)
-        cache_destroy_item(cache, old);
+        cache_item_removed(cache, old);
 
     cache->size += item->size;
     item->last_accessed = time(NULL);
@@ -275,6 +295,12 @@ cache_put_match(struct cache *cache, const char *key,
                 void *ctx)
 {
     struct cache_item *old = cache_get_match(cache, key, match, ctx);
+
+    assert(item != NULL);
+    assert(item->lock == 0);
+    assert(!item->removed);
+    assert(old == NULL || !old->removed);
+
     if (old != NULL)
         cache_remove_item(cache, key, old);
 
@@ -287,7 +313,7 @@ cache_remove(struct cache *cache, const char *key)
     struct cache_item *item;
 
     while ((item = hashmap_remove(cache->items, key)) != NULL)
-        cache_destroy_item(cache, item);
+        cache_item_removed(cache, item);
 
     cache_check(cache);
 }
@@ -298,6 +324,12 @@ cache_remove_item(struct cache *cache, const char *key,
 {
     bool found;
 
+    if (item->removed) {
+        /* item has already been removed by somebody else */
+        assert(item->lock > 0);
+        return;
+    }
+
     found = hashmap_remove_value(cache->items, key, item);
     if (!found) {
         /* the specified item has been removed before */
@@ -305,7 +337,26 @@ cache_remove_item(struct cache *cache, const char *key,
         return;
     }
 
-    cache_destroy_item(cache, item);
+    cache_item_removed(cache, item);
 
     cache_check(cache);
+}
+
+void
+cache_item_lock(struct cache_item *item)
+{
+    assert(item != NULL);
+
+    ++item->lock;
+}
+
+void
+cache_item_unlock(struct cache *cache, struct cache_item *item)
+{
+    assert(item != NULL);
+    assert(item->lock > 0);
+
+    if (--item->lock == 0 && item->removed)
+        /* postponed destroy */
+        cache_destroy_item(cache, item);
 }

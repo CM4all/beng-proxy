@@ -17,6 +17,18 @@ struct cache_item {
     time_t expires;
     size_t size;
     time_t last_accessed;
+
+    /**
+     * If non-zero, then this item has been locked by somebody, and
+     * must not be destroyed.
+     */
+    unsigned lock;
+
+    /**
+     * If true, then this item has been removed from the cache, but
+     * could not be destroyed yet, because it is locked.
+     */
+    bool removed;
 };
 
 struct cache_class {
@@ -92,6 +104,18 @@ cache_item_init(struct cache_item *item, time_t expires, size_t size)
     item->expires = expires;
     item->size = size;
     item->last_accessed = 0;
+    item->lock = 0;
+    item->removed = false;
 }
+
+/**
+ * Locks the specified item in memory, i.e. prevents that it is freed
+ * by cache_remove().
+ */
+void
+cache_item_lock(struct cache_item *item);
+
+void
+cache_item_unlock(struct cache *cache, struct cache_item *item);
 
 #endif
