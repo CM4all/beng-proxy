@@ -14,7 +14,7 @@ static inline bool
 uri_harmless_char(char ch)
 {
     return char_is_alphanumeric(ch) ||
-        ch == '_' || ch == '-' || ch == '/' || ch == '.';
+        ch == '_' || ch == '-' || ch == '.';
 }
 
 size_t
