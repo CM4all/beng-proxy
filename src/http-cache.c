@@ -14,9 +14,9 @@
 #include "uri-address.h"
 #include "strref2.h"
 #include "growing-buffer.h"
-#include "abort-unref.h"
 #include "tpool.h"
 #include "http-util.h"
+#include "async.h"
 
 #include <string.h>
 #include <time.h>
@@ -83,6 +83,9 @@ struct http_cache_request {
         size_t length;
         struct growing_buffer *output;
     } response;
+
+    struct async_operation operation;
+    struct async_operation_ref async_ref;
 };
 
 
@@ -604,6 +607,36 @@ static const struct http_response_handler http_cache_response_handler = {
 
 
 /*
+ * async operation
+ *
+ */
+
+static struct http_cache_request *
+async_to_request(struct async_operation *ao)
+{
+    return (struct http_cache_request*)(((char*)ao) - offsetof(struct http_cache_request, operation));
+}
+
+static void
+http_cache_abort(struct async_operation *ao)
+{
+    struct http_cache_request *request = async_to_request(ao);
+    pool_t caller_pool = request->caller_pool;
+
+    async_abort(&request->async_ref);
+
+    /* the async_abort() call may have destroyed request->pool, so
+       we're using a local variable instead of dereferencing
+       request->caller_pool */
+    pool_unref(caller_pool);
+}
+
+static const struct async_operation_class http_cache_async_operation = {
+    .abort = http_cache_abort,
+};
+
+
+/*
  * cache_class
  *
  */
@@ -690,12 +723,15 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
 
     cache_log(4, "http_cache: miss %s\n", uwa->uri);
 
+    async_init(&request->operation, &http_cache_async_operation);
+    async_ref_set(async_ref, &request->operation);
+
     pool_ref(caller_pool);
     http_request(pool, cache->stock,
                  method, uwa,
                  headers == NULL ? NULL : headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
-                 async_unref_on_abort(caller_pool, async_ref));
+                 &request->async_ref);
     pool_unref(pool);
 }
 
@@ -759,12 +795,15 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     if (item->info.etag != NULL)
         strmap_set(headers, "if-none-match", item->info.etag);
 
+    async_init(&request->operation, &http_cache_async_operation);
+    async_ref_set(async_ref, &request->operation);
+
     pool_ref(caller_pool);
     http_request(pool, cache->stock,
                  method, uwa,
                  headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
-                 async_unref_on_abort(caller_pool, async_ref));
+                 &request->async_ref);
     pool_unref(pool);
 }
 
