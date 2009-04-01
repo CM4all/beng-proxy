@@ -720,6 +720,19 @@ Example:
 <img c:base="widget" c:mode="proxy" src="foo.jpg"/>
 \end{verbatim*}
 
+\subsubsection{Processing Instruction syntax}
+
+To set a default value for all following link elements, you may use
+the \texttt{<?cm4all-rewrite-uri?>} XML Processing Instruction:
+
+\begin{verbatim*}
+<?cm4all-rewrite-uri c:base="widget" c:mode="focus"?>
+\end{verbatim*}
+
+This is recommended when many adjacent links share the same URI
+rewrite settings, or when you cannot guarantee the order of attributes
+(many XSLT processors mix the attribute order, which is allowed).
+
 \subsubsection{Alternative syntax}
 
 If using the \texttt{c:base} / \texttt{c:mode} attributes is not

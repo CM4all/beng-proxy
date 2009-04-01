@@ -58,6 +58,7 @@ struct processor {
         TAG_IMG,
         TAG_SCRIPT,
         TAG_PARAM,
+        TAG_REWRITE_URI,
     } tag;
 
     struct uri_rewrite uri_rewrite;
@@ -285,8 +286,12 @@ static bool
 processor_processing_instruction(struct processor *processor,
                                  const struct strref *name)
 {
-    (void)processor;
-    (void)name;
+    if (!processor_option_quiet(processor) &&
+        processor_option_rewrite_url(processor) &&
+        strref_cmp_literal(name, "cm4all-rewrite-uri") == 0) {
+        processor->tag = TAG_REWRITE_URI;
+        return true;
+    }
 
     return false;
 }
@@ -616,7 +621,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     if (!processor_option_quiet(processor) &&
         (processor->tag == TAG_A || processor->tag == TAG_FORM ||
          processor->tag == TAG_IMG || processor->tag == TAG_SCRIPT ||
-         processor->tag == TAG_PARAM) &&
+         processor->tag == TAG_PARAM || processor->tag == TAG_REWRITE_URI) &&
         strref_cmp_literal(&attr->name, "c:base") == 0) {
         processor->uri_rewrite.base = parse_uri_base(&attr->value);
         istream_replace_add(processor->replace, attr->name_start,
@@ -724,6 +729,9 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             transform_uri_attribute(processor, attr,
                                     processor->uri_rewrite.base,
                                     processor->uri_rewrite.mode);
+        break;
+
+    case TAG_REWRITE_URI:
         break;
     }
 }
@@ -901,6 +909,9 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
             parser_script(processor->parser);
         else if (tag->type == TAG_CLOSE)
             processor->tag = TAG_NONE;
+    } else if (processor->tag == TAG_REWRITE_URI) {
+        /* the settings of this tag become the new default */
+        processor->default_uri_rewrite = processor->uri_rewrite;
     }
 }
 
