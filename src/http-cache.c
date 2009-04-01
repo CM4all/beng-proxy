@@ -530,9 +530,11 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
-    if (request->item != NULL)
+    if (request->item != NULL) {
         cache_remove_item(request->cache->cache, request->url,
                           &request->item->item);
+        cache_item_unlock(request->cache->cache, &request->item->item);
+    }
 
     available = body == NULL ? 0 : istream_available(body, true);
 
@@ -596,6 +598,9 @@ http_cache_response_abort(void *ctx)
 
     cache_log(4, "http_cache: response_abort %s\n", request->url);
 
+    if (request->item != NULL)
+        cache_item_unlock(request->cache->cache, &request->item->item);
+
     http_response_handler_invoke_abort(&request->handler);
     pool_unref(request->caller_pool);
 }
@@ -622,6 +627,9 @@ http_cache_abort(struct async_operation *ao)
 {
     struct http_cache_request *request = async_to_request(ao);
     pool_t caller_pool = request->caller_pool;
+
+    if (request->item != NULL)
+        cache_item_unlock(request->cache->cache, &request->item->item);
 
     async_abort(&request->async_ref);
 
@@ -781,6 +789,7 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
+    cache_item_lock(&item->item);
     request->item = item;
     request->info = info;
 
