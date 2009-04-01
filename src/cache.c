@@ -284,9 +284,10 @@ cache_put_match(struct cache *cache, const char *key,
 void
 cache_remove(struct cache *cache, const char *key)
 {
-    struct cache_item *old = hashmap_remove(cache->items, key);
-    if (old != NULL)
-        cache_destroy_item(cache, old);
+    struct cache_item *item;
+
+    while ((item = hashmap_remove(cache->items, key)) != NULL)
+        cache_destroy_item(cache, item);
 
     cache_check(cache);
 }

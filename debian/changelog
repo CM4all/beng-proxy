@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.4.7) unstable; urgency=low
   * parser: added support for XML Processing Instructions
   * processor: implemented XML Processing Instruction "cm4all-rewrite-uri"
   * uri-escape: escape the slash character
+  * cache: remove all matching items in cache_remove()
 
  --
 
