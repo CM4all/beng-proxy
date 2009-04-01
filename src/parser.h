@@ -20,6 +20,9 @@ enum parser_tag_type {
     TAG_OPEN,
     TAG_CLOSE,
     TAG_SHORT,
+
+    /** XML processing instruction */
+    TAG_PI,
 };
 
 struct parser_tag {

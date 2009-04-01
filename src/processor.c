@@ -282,11 +282,24 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
  */
 
 static bool
+processor_processing_instruction(struct processor *processor,
+                                 const struct strref *name)
+{
+    (void)processor;
+    (void)name;
+
+    return false;
+}
+
+static bool
 parser_element_start_in_widget(struct processor *processor,
                                enum parser_tag_type type,
                                const struct strref *_name)
 {
     struct strref copy = *_name, *const name = &copy;
+
+    if (type == TAG_PI)
+        return processor_processing_instruction(processor, _name);
 
     if (strref_starts_with_n(name, "c:", 2))
         strref_skip(name, 2);
@@ -332,6 +345,9 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     if (processor->widget.widget != NULL)
         return parser_element_start_in_widget(processor, tag->type, &tag->name);
+
+    if (tag->type == TAG_PI)
+        return processor_processing_instruction(processor, &tag->name);
 
     if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if ((processor->options & PROCESSOR_CONTAINER) == 0 ||

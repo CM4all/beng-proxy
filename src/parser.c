@@ -198,7 +198,12 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 } else if (*buffer == '/' && parser->tag_name_length == 0) {
                     parser->tag.type = TAG_CLOSE;
                     ++buffer;
-                } else if ((char_is_whitespace(*buffer) || *buffer == '/' || *buffer == '>') &&
+                } else if (*buffer == '?' && parser->tag_name_length == 0) {
+                    /* start of processing instruction */
+                    parser->tag.type = TAG_PI;
+                    ++buffer;
+                } else if ((char_is_whitespace(*buffer) || *buffer == '/' ||
+                            *buffer == '?' || *buffer == '>') &&
                            parser->tag_name_length > 0) {
                     bool interesting;
 
@@ -228,7 +233,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             do {
                 if (char_is_whitespace(*buffer)) {
                     ++buffer;
-                } else if (*buffer == '/' && parser->tag.type == TAG_OPEN) {
+                } else if ((*buffer == '/' && parser->tag.type == TAG_OPEN) ||
+                           (*buffer == '?' && parser->tag.type == TAG_PI)) {
                     parser->tag.type = TAG_SHORT;
                     parser->state = PARSER_SHORT;
                     ++buffer;
