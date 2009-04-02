@@ -5,7 +5,7 @@ cm4all-beng-proxy (0.4.8) unstable; urgency=low
   * http-cache: close all caching connections on exit
   * processor: don't rewrite SCRIPT SRC attribute when proxying
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 02 Apr 2009 15:45:46 +0200
 
 cm4all-beng-proxy (0.4.7) unstable; urgency=low
 
