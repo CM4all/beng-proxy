@@ -8,7 +8,7 @@ cm4all-beng-proxy (0.4.7) unstable; urgency=low
   * cache: remove all matching items in cache_remove()
   * http-cache: lock cache items while holding a reference
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 02 Apr 2009 12:02:53 +0200
 
 cm4all-beng-proxy (0.4.6) unstable; urgency=low
 
