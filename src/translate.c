@@ -533,6 +533,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
+        memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
         client->resource_address->u.cgi.path = payload;
         break;
 
