@@ -3,6 +3,7 @@ cm4all-beng-proxy (0.4.8) unstable; urgency=low
   * translate: allow ADDRESS packets in AJP addresses
   * translate: initialize all fields of a FastCGI address
   * http-cache: close all caching connections on exit
+  * processor: don't rewrite SCRIPT SRC attribute when proxying
 
  --
 

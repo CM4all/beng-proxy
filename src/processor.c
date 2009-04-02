@@ -718,7 +718,9 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_SCRIPT:
-        if (strref_lower_cmp_literal(&attr->name, "src") == 0)
+        if (!processor_option_quiet(processor) &&
+            processor_option_rewrite_url(processor) &&
+            strref_lower_cmp_literal(&attr->name, "src") == 0)
             transform_uri_attribute(processor, attr,
                                     processor->uri_rewrite.base,
                                     processor->uri_rewrite.mode);
