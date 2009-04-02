@@ -191,6 +191,7 @@ test_empty(pool_t pool, struct context *c)
 
     event_dispatch();
 
+    assert(c->released);
     assert(c->fd < 0);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
     assert(c->body == NULL);
