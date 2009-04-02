@@ -35,6 +35,8 @@ struct http_cache {
     pool_t pool;
     struct cache *cache;
     struct hstock *stock;
+
+    struct list_head requests;
 };
 
 struct http_cache_info {
@@ -67,6 +69,8 @@ struct http_cache_item {
 };
 
 struct http_cache_request {
+    struct list_head siblings;
+
     pool_t pool, caller_pool;
     struct http_cache *cache;
     const char *url;
@@ -485,6 +489,7 @@ http_cache_response_body_eof(void *ctx)
        saved: add it to the cache */
     http_cache_put(request);
 
+    list_remove(&request->siblings);
     pool_unref(request->pool);
 }
 
@@ -495,6 +500,7 @@ http_cache_response_body_abort(void *ctx)
 
     cache_log(4, "http_cache: body_abort %s\n", request->url);
 
+    list_remove(&request->siblings);
     pool_unref(request->pool);
 }
 
@@ -583,6 +589,8 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
             buffer_size = (size_t)available;
         request->response.output = growing_buffer_new(request->pool,
                                                       buffer_size);
+
+        list_add(&request->siblings, &request->cache->requests);
     }
 
     caller_pool = request->caller_pool;
@@ -685,12 +693,39 @@ http_cache_new(pool_t pool, size_t max_size,
     cache->pool = pool;
     cache->cache = cache_new(pool, &http_cache_class, max_size);
     cache->stock = tcp_stock;
+
+    list_init(&cache->requests);
+
     return cache;
+}
+
+static inline struct http_cache_request *
+list_head_to_request(struct list_head *head)
+{
+    return (struct http_cache_request *)(((char*)head) - offsetof(struct http_cache_request, siblings));
+}
+
+static void
+http_cache_request_close(struct http_cache_request *request)
+{
+    assert(request != NULL);
+    assert(request->response.input != NULL);
+    assert(request->response.output != NULL);
+
+    istream_close(request->response.input);
 }
 
 void
 http_cache_close(struct http_cache *cache)
 {
+
+    while (!list_empty(&cache->requests)) {
+        struct http_cache_request *request =
+            list_head_to_request(cache->requests.next);
+
+        http_cache_request_close(request);
+    }
+
     cache_close(cache->cache);
 }
 
