@@ -601,7 +601,8 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_ADDRESS:
-        if (client->resource_address->type != RESOURCE_ADDRESS_HTTP) {
+        if (client->resource_address->type != RESOURCE_ADDRESS_HTTP &&
+            client->resource_address->type != RESOURCE_ADDRESS_AJP) {
             daemon_log(2, "misplaced TRANSLATE_ADDRESS packet\n");
             break;
         }
@@ -617,7 +618,8 @@ translate_handle_packet(struct translate_client *client,
 
 
     case TRANSLATE_ADDRESS_STRING:
-        if (client->resource_address->type != RESOURCE_ADDRESS_HTTP) {
+        if (client->resource_address->type != RESOURCE_ADDRESS_HTTP &&
+            client->resource_address->type != RESOURCE_ADDRESS_AJP) {
             daemon_log(2, "misplaced TRANSLATE_ADDRESS_STRING packet\n");
             break;
         }
