@@ -396,20 +396,22 @@ cgi_run(bool jail, const char *interpreter, const char *action,
         }
     }
 
-    strmap_rewind(headers);
-    while ((pair = strmap_next(headers)) != NULL) {
-        for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
-            if (char_is_minuscule_letter(pair->key[i]))
-                buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
-            else if (char_is_capital_letter(pair->key[i]) ||
-                     char_is_digit(pair->key[i]))
-                buffer[5 + i] = pair->key[i];
-            else
-                buffer[5 + i] = '_';
-        }
+    if (headers != NULL) {
+        strmap_rewind(headers);
+        while ((pair = strmap_next(headers)) != NULL) {
+            for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
+                if (char_is_minuscule_letter(pair->key[i]))
+                    buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
+                else if (char_is_capital_letter(pair->key[i]) ||
+                         char_is_digit(pair->key[i]))
+                    buffer[5 + i] = pair->key[i];
+                else
+                    buffer[5 + i] = '_';
+            }
 
-        buffer[5 + i] = 0;
-        setenv(buffer, pair->value, 1);
+            buffer[5 + i] = 0;
+            setenv(buffer, pair->value, 1);
+        }
     }
 
     execl(path, path, arg, NULL);
