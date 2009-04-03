@@ -485,6 +485,8 @@ http_cache_response_body_eof(void *ctx)
 {
     struct http_cache_request *request = ctx;
 
+    request->response.input = NULL;
+
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
     http_cache_put(request);
@@ -499,6 +501,8 @@ http_cache_response_body_abort(void *ctx)
     struct http_cache_request *request = ctx;
 
     cache_log(4, "http_cache: body_abort %s\n", request->url);
+
+    request->response.input = NULL;
 
     list_remove(&request->siblings);
     pool_unref(request->pool);
@@ -591,12 +595,23 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
                                                       buffer_size);
 
         list_add(&request->siblings, &request->cache->requests);
+
+        pool_ref(request->pool);
     }
 
     caller_pool = request->caller_pool;
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
     pool_unref(caller_pool);
+
+    if (body != NULL) {
+        if (request->response.input != NULL)
+            /* just in case our handler has closed the body without
+               looking at it: call istream_read() to start reading */
+            istream_read(request->response.input);
+
+        pool_unref(request->pool);
+    }
 }
 
 static void 
