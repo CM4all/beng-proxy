@@ -99,6 +99,10 @@ void
 children_event_del(void)
 {
     event_del(&sigchld_event);
+
+    /* reset the "shutdown" flag, so the test suite may initialize
+       this library more than once */
+    shutdown = false;
 }
 
 void
