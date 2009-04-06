@@ -43,6 +43,7 @@ test/t-http-util
 test/t-http-cache
 test/t-http-server
 test/t-cache
+test/t-cgi
 
 *.aux
 *.log

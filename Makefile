@@ -207,7 +207,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/run-subst $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server test/t-http-server-mirror test/t-http-client test/t-http-util test/t-http-cache test/t-processor test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client test/t-cache
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/run-subst $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server test/t-http-server-mirror test/t-http-client test/t-http-util test/t-http-cache test/t-processor test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client test/t-cache test/t-cgi
 	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
 include demo/Makefile
@@ -266,6 +266,9 @@ test/t-http-server-mirror: test/t-http-server-mirror.o src/http-server.o src/htt
 test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstring.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/header-writer.o src/istream-forward.o src/istream-string.o src/istream-memory.o src/istream-cat.o src/istream-fail.o src/istream-block.o src/http-body.o src/header-parser.o src/istream-chunked.o src/istream-dechunk.o src/format.o src/http.o src/strutil.o src/buffered-io.o src/fd-util.o src/socket-util.o src/istream-head.o src/istream-null.o src/istream-zero.o src/tpool.o src/event2.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
+test/t-cgi: test/t-cgi.o src/cgi.o src/fork.o src/pool.o src/pstring.o src/fifo-buffer.o src/http.o src/header-parser.o src/strmap.o src/hashmap.o src/event2.o src/socket-util.o src/fd-util.o src/child.o src/buffered-io.o src/tpool.o src/growing-buffer.o src/strutil.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
+
 test/t-http-util: test/t-http-util.o src/http-util.o src/pool.o src/pstring.o src/strutil.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
@@ -307,6 +310,9 @@ check-cookie-client: test/run-cookie-client test/t-cookie-client
 	python ./test/t-cookie-client.py
 	./test/t-cookie-client
 
+check-cgi: test/t-cgi
+	./test/t-cgi
+
 test/t-shm: test/t-shm.o src/shm.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
 
@@ -346,7 +352,17 @@ test/t-cache: test/t-cache.o src/cache.o src/pool.o src/hashmap.o
 check-cache: test/t-cache
 	./test/t-cache
 
-check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) check-http-server check-http-client check-http-util check-http-cache check-cookie-client check-shm check-dpool check-session check-widget-registry check-wembed check-cache
+check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
+	check-cgi \
+	check-http-server check-http-client check-http-util \
+	check-http-cache \
+	check-cookie-client \
+	check-shm \
+	check-dpool \
+	check-session \
+	check-widget-registry \
+	check-wembed \
+	check-cache
 
 cov: CFLAGS += -fprofile-arcs -ftest-coverage
 cov: LDFLAGS += -fprofile-arcs -ftest-coverage
