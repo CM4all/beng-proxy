@@ -31,7 +31,7 @@ cgi_handler(struct request *request2)
             tr->address.u.cgi.path,
             request->method, request->uri,
             tr->address.u.cgi.script_name, tr->address.u.cgi.path_info,
-            query_string, document_root,
+            query_string, tr->address.u.cgi.document_root,
             request->headers, request->body,
             &response_handler, request2,
             request2->async_ref);
