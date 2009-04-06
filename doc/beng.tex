@@ -322,7 +322,13 @@ packet.  \\
 
 \texttt{VARY} & similar to the HTTP \texttt{Vary} response header;
 the payload contains an array of translation request commands which
-this response depends upon. \\
+this response depends upon.
+
+The following request packets are currently supported:
+\texttt{REMOTE\_HOST}, \texttt{HOST}, \texttt{LANGUAGE},
+\texttt{USER\_AGENT}, \texttt{QUERY\_STRING}.
+
+\\
 
 \hline
 \end{supertabular}
