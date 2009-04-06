@@ -30,6 +30,14 @@ struct cgi {
     struct fifo_buffer *buffer;
     struct strmap *headers;
 
+    /**
+     * This flag is true while cgi_parse_headers() is calling
+     * http_response_handler_invoke_response().  In this case,
+     * istream_read(cgi->input) is already up in the stack, and must
+     * not be called again.
+     */
+    bool in_response_callback;
+
     struct async_operation async;
     struct http_response_handler_ref handler;
 };
@@ -91,11 +99,14 @@ cgi_parse_headers(struct cgi *cgi)
         async_poison(&cgi->async);
 
         headers = cgi->headers;
+        cgi->headers = NULL;
+        cgi->in_response_callback = true;
 
         http_response_handler_invoke_response(&cgi->handler,
                                               HTTP_STATUS_OK, headers,
                                               istream_struct_cast(&cgi->output));
-        cgi->headers = NULL;
+
+        cgi->in_response_callback = false;
     }
 }
 
@@ -243,7 +254,7 @@ istream_cgi_available(istream_t istream, bool partial)
     if (cgi->input == NULL)
         return length;
 
-    if (cgi->headers != NULL) {
+    if (cgi->in_response_callback) {
         /* this condition catches the case in cgi_parse_headers():
            http_response_handler_invoke_response() might recursively call
            istream_read(cgi->input) */
@@ -275,7 +286,7 @@ istream_cgi_read(istream_t istream)
         /* this condition catches the case in cgi_parse_headers():
            http_response_handler_invoke_response() might recursively call
            istream_read(cgi->input) */
-        if (cgi->headers == NULL)
+        if (!cgi->in_response_callback)
             istream_read(cgi->input);
     } else {
         size_t rest = istream_buffer_consume(&cgi->output, cgi->buffer);
