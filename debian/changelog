@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.4.9) unstable; urgency=low
   * cgi: clear "headers" variable before publishing the response
   * translate: use DOCUMENT_ROOT as CGI parameter
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 06 Apr 2009 16:21:57 +0200
 
 cm4all-beng-proxy (0.4.8) unstable; urgency=low
 
