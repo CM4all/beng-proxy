@@ -296,6 +296,20 @@ header for this session \\
 
 \hline
 
+\texttt{INTERPRETER} & run a CGI script with the specified
+interpreter; does not require the ``execute'' bit on the CGI script \\
+
+\hline
+
+\texttt{ACTION} & run the specified CGI program \\
+
+\hline
+
+\texttt{SCRIPT\_NAME} & the \texttt{SCRIPT\_NAME} environment variable
+for a CGI \\
+
+\hline
+
 \texttt{ADDRESS} & after each \texttt{PROXY} packet, there must be one
 or more \texttt{ADDRESS} packets which specify the resolved addresses.
 The payload of each is a \texttt{struct sockaddr}.
