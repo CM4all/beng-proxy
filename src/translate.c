@@ -405,6 +405,9 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_PATH_INFO:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_CGI) {
+            /* don't emit this warning when the resource is a local
+               path.  This combination might once be useful, but isn't
+               currently used. */
             if (client->resource_address == NULL ||
                 client->resource_address->type != RESOURCE_ADDRESS_LOCAL)
                 daemon_log(2, "misplaced TRANSLATE_PATH_INFO packet\n");
