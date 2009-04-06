@@ -1,5 +1,6 @@
 \documentclass[a4paper,12pt]{article}
 \usepackage[pdftex,bookmarks]{hyperref}
+\usepackage{supertabular}
 
 \begin{document}
 \title{CM4all Beng}
@@ -211,7 +212,7 @@ by the client (not in the widget registry) \\
 
 \subsubsection{Response}
 
-\begin{tabular}{|l|p{10cm}|}
+\begin{supertabular}{|l|p{10cm}|}
 \hline
 \texttt{STATUS} & HTTP status code, encoded as \texttt{uint16\_t};
 this parameter is usually not used \\
@@ -324,7 +325,7 @@ the payload contains an array of translation request commands which
 this response depends upon. \\
 
 \hline
-\end{tabular}
+\end{supertabular}
 
 If the translation server does not provide the \texttt{CONTENT\_TYPE}
 header, \emph{beng-proxy} will attempt to discover the file type from
