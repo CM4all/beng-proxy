@@ -157,9 +157,9 @@ cache_get_match(struct cache *cache, const char *key,
                 assert(found);
 
                 cache_item_removed(cache, item);
+                cache_check(cache);
 
                 item = NULL;
-                cache_check(cache);
                 continue;
             }
 
