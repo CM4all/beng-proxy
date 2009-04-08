@@ -656,14 +656,22 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
         if (strref_cmp_literal(&attr->name, "name") == 0) {
             size_t length = attr->value.length;
-            if (length > sizeof(processor->widget.param.name))
+
+            if (length > sizeof(processor->widget.param.name)) {
+                daemon_log(2, "parameter/header name too long\n");
                 length = sizeof(processor->widget.param.name);
+            }
+
             processor->widget.param.name_length = length;
             memcpy(processor->widget.param.name, attr->value.data, length);
         } else if (strref_cmp_literal(&attr->name, "value") == 0) {
             size_t length = attr->value.length;
-            if (length > sizeof(processor->widget.param.value))
+
+            if (length > sizeof(processor->widget.param.value)) {
+                daemon_log(2, "parameter/header value too long\n");
                 length = sizeof(processor->widget.param.value);
+            }
+
             processor->widget.param.value_length = length;
             memcpy(processor->widget.param.value, attr->value.data, length);
         }
@@ -685,7 +693,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
         if (strref_cmp_literal(&attr->name, "name") == 0) {
             if (strref_is_empty(&attr->value)) {
-                daemon_log(2, "empty view namen\n");
+                daemon_log(2, "empty view name\n");
                 return;
             }
 
