@@ -81,6 +81,24 @@ data.  All of it can be handed off to a widget.  To enable this,
 send the data to.
 
 
+\section{Installation}
+
+\emph{beng-proxy} requires a Debian Lenny operating system: Linux
+kernel 2.6.26 and glibc 2.7.  For compiling the source code, you need
+a C99 compiler, e.g. gcc 4.3.
+
+Install the package \texttt{cm4all-beng-proxy} and the translation
+server of your choice.  Edit the file
+\texttt{/etc/default/cm4all-beng-proxy}, and set the port number and
+the path of the translation server socket.  Set the \texttt{WORKERS}
+variable to the number of CPU cores in that server (or up to twice as
+large).  Finally, restart \emph{beng-proxy}:
+
+\begin{verbatim*}
+/etc/init.d/cm4all-beng-proxy restart
+\end{verbatim*}
+
+
 \section{Translation}
 
 \emph{beng-proxy} knows two ways to locate the resource a request URI
