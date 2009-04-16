@@ -172,6 +172,7 @@ SOURCES = src/main.c \
 	src/fcgi-request.c \
 	src/filter.c \
 	src/growing-buffer.c \
+	src/expansible-buffer.c \
 	src/gb-io.c \
 	src/duplex.c \
 	$(ISTREAM_SOURCES) \
@@ -330,6 +331,12 @@ test/t-session: test/t-session.o src/shm.o src/session.o src/dpool.o src/dstring
 
 check-session: test/t-session
 	./test/t-session
+
+test/t-expansible-buffer: test/t-expansible-buffer.o src/expansible-buffer.o src/pool.o src/pstring.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
+check-expansible-buffer: test/t-expansible-buffer
+	./test/t-expansible-buffer
 
 test/t-widget-registry: test/t-widget-registry.o src/widget-registry.o src/stock.o src/pool.o src/pstring.o src/uri-address.o src/transformation.o src/tcache.o src/cache.o src/hashmap.o src/abort-unref.o src/transformation.o src/resource-address.o src/uri-relative.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)

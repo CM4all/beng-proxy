@@ -44,6 +44,7 @@ test/t-http-cache
 test/t-http-server
 test/t-cache
 test/t-cgi
+test/t-expansible-buffer
 
 *.aux
 *.log
