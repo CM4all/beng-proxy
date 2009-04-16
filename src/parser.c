@@ -7,6 +7,7 @@
 #include "parser.h"
 #include "pool.h"
 #include "strutil.h"
+#include "expansible-buffer.h"
 
 #include <inline/poison.h>
 
@@ -81,8 +82,7 @@ struct parser {
     char attr_name[64];
     size_t attr_name_length;
     char attr_value_delimiter;
-    char attr_value[1024];
-    size_t attr_value_length;
+    struct expansible_buffer *attr_value;
     struct parser_attr attr;
 
     /** in a CDATA section, how many characters have been matching
@@ -100,7 +100,7 @@ static void
 parser_invoke_attr_finished(struct parser *parser)
 {
     strref_set(&parser->attr.name, parser->attr_name, parser->attr_name_length);
-    strref_set(&parser->attr.value, parser->attr_value, parser->attr_value_length);
+    expansible_buffer_read_strref(parser->attr_value, &parser->attr.value);
 
     parser->handler->attr_finished(&parser->attr, parser->handler_ctx);
     poison_undefined(&parser->attr, sizeof(parser->attr));
@@ -255,7 +255,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->state = PARSER_ATTR_NAME;
                     parser->attr.name_start = parser->position + (off_t)(buffer - start);
                     parser->attr_name_length = 0;
-                    parser->attr_value_length = 0;
+                    expansible_buffer_reset(parser->attr_value);
                     break;
                 } else {
                     parser->state = PARSER_NONE;
@@ -348,13 +348,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else {
-                    if (parser->attr_value_length == sizeof(parser->attr_value)) {
-                        /* value buffer overflowing, cut off */
-                        ++buffer;
-                        continue;
-                    }
-
-                    parser->attr_value[parser->attr_value_length++] = *buffer++;
+                    expansible_buffer_write_buffer(parser->attr_value, buffer, 1);
+                    ++buffer;
                 }
             } while (buffer < end);
 
@@ -364,13 +359,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             /* wait till the value is finished */
             do {
                 if (!char_is_whitespace(*buffer) && *buffer != '>') {
-                    if (parser->attr_value_length == sizeof(parser->attr_value)) {
-                        /* value buffer overflowing, cut off */
-                        ++buffer;
-                        continue;
-                    }
-
-                    parser->attr_value[parser->attr_value_length++] = *buffer++;
+                    expansible_buffer_write_buffer(parser->attr_value, buffer, 1);
+                    ++buffer;
                 } else {
                     parser->attr.value_end = parser->attr.end =
                         parser->position + (off_t)(buffer - start);
@@ -659,6 +649,7 @@ parser_new(struct pool *pool, istream_t input,
     parser->state = PARSER_NONE;
     parser->handler = handler;
     parser->handler_ctx = handler_ctx;
+    parser->attr_value = expansible_buffer_new(pool, 512);
 
     return parser;
 }
