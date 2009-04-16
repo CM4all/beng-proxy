@@ -16,6 +16,7 @@
 #include "strref2.h"
 #include "strref-pool.h"
 #include "global.h"
+#include "expansible-buffer.h"
 
 #include <daemon/log.h>
 
@@ -80,8 +81,7 @@ struct processor {
             char value[512];
         } param;
 
-        char params[512];
-        size_t params_length;
+        struct expansible_buffer *params;
     } widget;
 
     struct async_operation async;
@@ -224,6 +224,7 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
     processor->tag = TAG_NONE;
 
     processor->widget.widget = NULL;
+    processor->widget.params = expansible_buffer_new(pool, 1024);
 
     if (widget->from_request.proxy_ref == NULL) {
         istream = istream_tee_new(pool, istream, true);
@@ -368,7 +369,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->widget.widget = p_malloc(processor->widget.pool,
                                             sizeof(*processor->widget.widget));
         widget_init(processor->widget.widget, NULL);
-        processor->widget.params_length = 0;
+        expansible_buffer_reset(processor->widget.params);
 
         list_add(&processor->widget.widget->siblings,
                  &processor->container->children);
@@ -807,10 +808,9 @@ widget_element_finished(struct processor *processor)
         return NULL;
     }
 
-    if (processor->widget.params_length > 0)
-        widget->query_string = p_strndup(processor->widget.pool,
-                                         processor->widget.params,
-                                         processor->widget.params_length);
+    if (!expansible_buffer_is_empty(processor->widget.params))
+        widget->query_string = expansible_buffer_strdup(processor->widget.params,
+                                                        processor->widget.pool);
 
     return embed_widget(processor, processor->env, widget);
 }
@@ -880,15 +880,9 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
                           NULL, NULL, 0, NULL, NULL, 0, NULL);
         length = strlen(p);
 
-        if (processor->widget.params_length + 1 + length >= sizeof(processor->widget.params)) {
-            pool_rewind(tpool, &mark);
-            return;
-        }
-
-        if (processor->widget.params_length > 0)
-            processor->widget.params[processor->widget.params_length++] = '&';
-        memcpy(processor->widget.params + processor->widget.params_length, p, length);
-        processor->widget.params_length += length;
+        if (!expansible_buffer_is_empty(processor->widget.params))
+            expansible_buffer_write_buffer(processor->widget.params, "&", 1);
+        expansible_buffer_write_buffer(processor->widget.params, p, length);
 
         pool_rewind(tpool, &mark);
     } else if (processor->tag == TAG_WIDGET_HEADER) {
