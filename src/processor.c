@@ -76,9 +76,8 @@ struct processor {
         struct widget *widget;
 
         struct {
-            size_t name_length, value_length;
-            char name[64];
-            char value[512];
+            struct expansible_buffer *name;
+            struct expansible_buffer *value;
         } param;
 
         struct expansible_buffer *params;
@@ -224,6 +223,8 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
     processor->tag = TAG_NONE;
 
     processor->widget.widget = NULL;
+    processor->widget.param.name = expansible_buffer_new(pool, 128);
+    processor->widget.param.value = expansible_buffer_new(pool, 512);
     processor->widget.params = expansible_buffer_new(pool, 1024);
 
     if (widget->from_request.proxy_ref == NULL) {
@@ -318,12 +319,12 @@ parser_element_start_in_widget(struct processor *processor,
     } else if (strref_cmp_literal(name, "param") == 0 ||
                strref_cmp_literal(name, "parameter") == 0) {
         processor->tag = TAG_WIDGET_PARAM;
-        processor->widget.param.name_length = 0;
-        processor->widget.param.value_length = 0;
+        expansible_buffer_reset(processor->widget.param.name);
+        expansible_buffer_reset(processor->widget.param.value);
     } else if (strref_cmp_literal(name, "header") == 0) {
         processor->tag = TAG_WIDGET_HEADER;
-        processor->widget.param.name_length = 0;
-        processor->widget.param.value_length = 0;
+        expansible_buffer_reset(processor->widget.param.name);
+        expansible_buffer_reset(processor->widget.param.value);
     } else if (strref_cmp_literal(name, "view") == 0) {
         processor->tag = TAG_WIDGET_VIEW;
     } else {
@@ -656,25 +657,11 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         assert(processor->widget.widget != NULL);
 
         if (strref_cmp_literal(&attr->name, "name") == 0) {
-            size_t length = attr->value.length;
-
-            if (length > sizeof(processor->widget.param.name)) {
-                daemon_log(2, "parameter/header name too long\n");
-                length = sizeof(processor->widget.param.name);
-            }
-
-            processor->widget.param.name_length = length;
-            memcpy(processor->widget.param.name, attr->value.data, length);
+            expansible_buffer_set_strref(processor->widget.param.name,
+                                         &attr->value);
         } else if (strref_cmp_literal(&attr->name, "value") == 0) {
-            size_t length = attr->value.length;
-
-            if (length > sizeof(processor->widget.param.value)) {
-                daemon_log(2, "parameter/header value too long\n");
-                length = sizeof(processor->widget.param.value);
-            }
-
-            processor->widget.param.value_length = length;
-            memcpy(processor->widget.param.value, attr->value.data, length);
+            expansible_buffer_set_strref(processor->widget.param.value,
+                                         &attr->value);
         }
 
         break;
@@ -867,16 +854,16 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         /* XXX escape */
 
-        if (processor->widget.param.name_length == 0)
+        if (expansible_buffer_is_empty(processor->widget.param.name))
             return;
 
         pool_mark(tpool, &mark);
 
+        p = expansible_buffer_read(processor->widget.param.value, &length);
+
         p = args_format_n(tpool, NULL,
-                          p_strndup(tpool, processor->widget.param.name,
-                                    processor->widget.param.name_length),
-                          processor->widget.param.value,
-                          processor->widget.param.value_length,
+                          expansible_buffer_read_string(processor->widget.param.name),
+                          p, length,
                           NULL, NULL, 0, NULL, NULL, 0, NULL);
         length = strlen(p);
 
@@ -886,13 +873,16 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         pool_rewind(tpool, &mark);
     } else if (processor->tag == TAG_WIDGET_HEADER) {
+        const char *name;
+        size_t length;
+
         assert(processor->widget.widget != NULL);
 
         if (tag->type == TAG_CLOSE)
             return;
 
-        if (!header_name_valid(processor->widget.param.name,
-                               processor->widget.param.name_length)) {
+        name = expansible_buffer_read(processor->widget.param.name, &length);
+        if (!header_name_valid(name, length)) {
             daemon_log(3, "invalid widget HTTP header name\n");
             return;
         }
@@ -902,12 +892,10 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
                 strmap_new(processor->widget.pool, 16);
 
         strmap_add(processor->widget.widget->headers,
-                   p_strndup(processor->widget.pool,
-                             processor->widget.param.name,
-                             processor->widget.param.name_length),
-                   p_strndup(processor->widget.pool,
-                             processor->widget.param.value,
-                             processor->widget.param.value_length));
+                   expansible_buffer_strdup(processor->widget.param.name,
+                                            processor->widget.pool),
+                   expansible_buffer_strdup(processor->widget.param.value,
+                                            processor->widget.pool));
     } else if (processor->tag == TAG_SCRIPT) {
         if (tag->type == TAG_OPEN)
             parser_script(processor->parser);

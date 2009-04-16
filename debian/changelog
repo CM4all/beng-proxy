@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.4.10) unstable; urgency=low
 
-  * processor: log parameters which are too large
+  * processor: lift length limitation for widget parameters
 
  --
 
