@@ -1,10 +1,9 @@
 #include "processor.h"
-#include "uri.h"
+#include "uri-parser.h"
 #include "embed.h"
 #include "widget.h"
 #include "session.h"
-#include "url-stock.h"
-#include "stock.h"
+#include "widget-stream.h"
 
 #include <event.h>
 
@@ -14,7 +13,6 @@
 #include <errno.h>
 #include <string.h>
 
-static struct hstock *url_stock;
 static bool is_eof;
 
 /*
@@ -49,12 +47,11 @@ my_istream_eof(void *ctx)
 {
     (void)ctx;
     fprintf(stderr, "in my_istream_eof()\n");
-    hstock_free(&url_stock);
     session_manager_deinit();
     is_eof = true;
 }
 
-static void attr_noreturn
+static void __attr_noreturn
 my_istream_abort(void *ctx)
 {
     (void)ctx;
@@ -75,7 +72,8 @@ int main(int argc, char **argv) {
     struct parsed_uri parsed_uri;
     struct widget widget;
     struct processor_env env;
-    istream_t processor;
+    struct widget_stream *ws;
+    istream_t delayed;
 
     (void)argc;
     (void)argv;
@@ -93,24 +91,27 @@ int main(int argc, char **argv) {
 
     widget_init(&widget, &root_widget_class);
 
-    session_manager_init(pool);
+    session_manager_init();
 
     processor_env_init(pool, &env,
-                       url_stock = url_hstock_new(pool),
+                       NULL,
                        "localhost:8080",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
                        NULL,
-                       session_new(),
+                       session_new()->uri_id,
                        NULL,
-                       NULL,
-                       embed_widget_callback);
+                       NULL);
 
-    processor = processor_new(pool, istream_file_new(pool, "/dev/stdin", (off_t)-1),
-                              &widget, &env, PROCESSOR_CONTAINER);
-    istream_handler_set(processor, &my_istream_handler, NULL, 0);
+    ws = widget_stream_new(pool);
+    delayed = ws->delayed;
+
+    processor_new(pool, NULL, istream_file_new(pool, "/dev/stdin", (off_t)-1),
+                  &widget, &env, PROCESSOR_CONTAINER,
+                  &widget_stream_response_handler, ws,
+                  widget_stream_async_ref(ws));
                               
-    istream_read(processor);
+    istream_read(delayed);
 
     if (!is_eof)
         event_dispatch();
