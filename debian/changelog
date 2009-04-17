@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.4.10) unstable; urgency=low
 
   * processor: lift length limitation for widget parameters
   * translate: abort if a packet is too large
+  * translate: support MAX_AGE for the whole response
 
  --
 
