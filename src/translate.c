@@ -114,7 +114,7 @@ translate_client_abort(struct translate_client *client)
  *
  */
 
-static void
+static bool
 write_packet(struct growing_buffer *gb, uint16_t command,
              const char *payload)
 {
@@ -124,8 +124,12 @@ write_packet(struct growing_buffer *gb, uint16_t command,
         header.length = 0;
     } else {
         size_t length = strlen(payload);
-        if (length > 0xffff)
-            length = 0xffff;
+        if (length >= 0xffff) {
+            daemon_log(2, "payload for translate command %u too large\n",
+                       command);
+            return false;
+        }
+
         header.length = (uint16_t)length;
     }
 
@@ -134,38 +138,48 @@ write_packet(struct growing_buffer *gb, uint16_t command,
     growing_buffer_write_buffer(gb, &header, sizeof(header));
     if (header.length > 0)
         growing_buffer_write_buffer(gb, payload, header.length);
+
+    return true;
 }
 
 /**
  * Forward the command to write_packet() only if #payload is not NULL.
  */
-static void
+static bool
 write_optional_packet(struct growing_buffer *gb, uint16_t command,
                       const char *payload)
 {
     if (payload == NULL)
-        return;
+        return true;
 
-    write_packet(gb, command, payload);
+    return write_packet(gb, command, payload);
 }
 
 static struct growing_buffer *
 marshal_request(pool_t pool, const struct translate_request *request)
 {
     struct growing_buffer *gb;
+    bool success;
 
     gb = growing_buffer_new(pool, 512);
-    write_packet(gb, TRANSLATE_BEGIN, NULL);
-    write_optional_packet(gb, TRANSLATE_REMOTE_HOST, request->remote_host);
-    write_optional_packet(gb, TRANSLATE_HOST, request->host);
-    write_optional_packet(gb, TRANSLATE_USER_AGENT, request->user_agent);
-    write_optional_packet(gb, TRANSLATE_LANGUAGE, request->accept_language);
-    write_optional_packet(gb, TRANSLATE_URI, request->uri);
-    write_optional_packet(gb, TRANSLATE_QUERY_STRING, request->query_string);
-    write_optional_packet(gb, TRANSLATE_WIDGET_TYPE, request->widget_type);
-    write_optional_packet(gb, TRANSLATE_SESSION, request->session);
-    write_optional_packet(gb, TRANSLATE_PARAM, request->param);
-    write_packet(gb, TRANSLATE_END, NULL);
+
+    success = write_packet(gb, TRANSLATE_BEGIN, NULL) &&
+        write_optional_packet(gb, TRANSLATE_REMOTE_HOST,
+                              request->remote_host) &&
+        write_optional_packet(gb, TRANSLATE_HOST, request->host) &&
+        write_optional_packet(gb, TRANSLATE_USER_AGENT, request->user_agent) &&
+        write_optional_packet(gb, TRANSLATE_LANGUAGE,
+                              request->accept_language) &&
+        write_optional_packet(gb, TRANSLATE_URI, request->uri) &&
+        write_optional_packet(gb, TRANSLATE_QUERY_STRING,
+                              request->query_string) &&
+        write_optional_packet(gb, TRANSLATE_WIDGET_TYPE,
+                              request->widget_type) &&
+        write_optional_packet(gb, TRANSLATE_SESSION, request->session) &&
+        write_optional_packet(gb, TRANSLATE_PARAM, request->param) &&
+        write_packet(gb, TRANSLATE_END, NULL);
+    if (!success)
+        return NULL;
 
     return gb;
 }
@@ -879,6 +893,12 @@ translate(pool_t pool,
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
     client->request = marshal_request(pool, request);
+    if (client->request == NULL) {
+        callback(&error, ctx);
+        pool_unref(pool);
+        return;
+    }
+
     client->callback = callback;
     client->callback_ctx = ctx;
     client->async_ref = async_ref;
