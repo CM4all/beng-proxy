@@ -409,7 +409,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
                          istream_t body, void *ctx)
 {
     struct embed *embed = ctx;
-    const char *translate;
+    /*const char *translate;*/
 
     if (headers != NULL) {
         if (embed->host_and_port != NULL) {
@@ -427,12 +427,14 @@ widget_response_response(http_status_t status, struct strmap *headers,
             }
         }
 
+        /*
         translate = strmap_get(headers, "x-cm4all-beng-translate");
         if (translate != NULL) {
             struct session *session = session_get(embed->env->session_id);
             if (session != NULL)
                 session->translate = d_strdup(session->pool, translate);
         }
+        */
 
         if (http_status_is_redirect(status)) {
             const char *location = strmap_get(headers, "location");
