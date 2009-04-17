@@ -180,8 +180,7 @@ hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
         return true;
     }
 
-    for (slot = prev->next;; slot = slot->next) {
-        assert(slot != NULL);
+    for (slot = prev->next; slot != NULL; prev = slot, slot = prev->next) {
         assert(slot->pair.key != NULL);
         assert(slot->pair.value != NULL);
 
