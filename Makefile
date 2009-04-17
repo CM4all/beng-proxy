@@ -208,7 +208,7 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/run-subst $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server test/t-http-server-mirror test/t-http-client test/t-http-util test/t-http-cache test/t-processor test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client test/t-cache test/t-cgi
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/run-subst $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server test/t-http-server-mirror test/t-http-client test/t-http-util test/t-http-cache test/t-processor test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client test/t-hashmap test/t-cache test/t-cgi test/t-expansible-buffer
 	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
 include demo/Makefile
@@ -352,6 +352,12 @@ check-wembed: test/t-wembed
 
 test/run-ajp-client: test/run-ajp-client.o src/ajp-client.o src/pool.o src/pstring.o src/buffered-io.o src/fifo-buffer.o src/growing-buffer.o src/socket-util.o src/fd-util.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
+
+test/t-hashmap: test/t-hashmap.o src/hashmap.o src/pool.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
+check-hashmap: test/t-hashmap
+	./test/t-hashmap
 
 test/t-cache: test/t-cache.o src/cache.o src/pool.o src/hashmap.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)

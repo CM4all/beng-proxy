@@ -45,6 +45,7 @@ test/t-http-server
 test/t-cache
 test/t-cgi
 test/t-expansible-buffer
+test/t-hashmap
 
 *.aux
 *.log
