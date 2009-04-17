@@ -136,6 +136,19 @@ write_packet(struct growing_buffer *gb, uint16_t command,
         growing_buffer_write_buffer(gb, payload, header.length);
 }
 
+/**
+ * Forward the command to write_packet() only if #payload is not NULL.
+ */
+static void
+write_optional_packet(struct growing_buffer *gb, uint16_t command,
+                      const char *payload)
+{
+    if (payload == NULL)
+        return;
+
+    write_packet(gb, command, payload);
+}
+
 static struct growing_buffer *
 marshal_request(pool_t pool, const struct translate_request *request)
 {
@@ -143,24 +156,15 @@ marshal_request(pool_t pool, const struct translate_request *request)
 
     gb = growing_buffer_new(pool, 512);
     write_packet(gb, TRANSLATE_BEGIN, NULL);
-    if (request->remote_host != NULL)
-        write_packet(gb, TRANSLATE_REMOTE_HOST, request->remote_host);
-    if (request->host != NULL)
-        write_packet(gb, TRANSLATE_HOST, request->host);
-    if (request->user_agent != NULL)
-        write_packet(gb, TRANSLATE_USER_AGENT, request->user_agent);
-    if (request->accept_language != NULL)
-        write_packet(gb, TRANSLATE_LANGUAGE, request->accept_language);
-    if (request->uri != NULL)
-        write_packet(gb, TRANSLATE_URI, request->uri);
-    if (request->query_string != NULL)
-        write_packet(gb, TRANSLATE_QUERY_STRING, request->query_string);
-    if (request->widget_type != NULL)
-        write_packet(gb, TRANSLATE_WIDGET_TYPE, request->widget_type);
-    if (request->session != NULL && *request->session != 0)
-        write_packet(gb, TRANSLATE_SESSION, request->session);
-    if (request->param != NULL)
-        write_packet(gb, TRANSLATE_PARAM, request->param);
+    write_optional_packet(gb, TRANSLATE_REMOTE_HOST, request->remote_host);
+    write_optional_packet(gb, TRANSLATE_HOST, request->host);
+    write_optional_packet(gb, TRANSLATE_USER_AGENT, request->user_agent);
+    write_optional_packet(gb, TRANSLATE_LANGUAGE, request->accept_language);
+    write_optional_packet(gb, TRANSLATE_URI, request->uri);
+    write_optional_packet(gb, TRANSLATE_QUERY_STRING, request->query_string);
+    write_optional_packet(gb, TRANSLATE_WIDGET_TYPE, request->widget_type);
+    write_optional_packet(gb, TRANSLATE_SESSION, request->session);
+    write_optional_packet(gb, TRANSLATE_PARAM, request->param);
     write_packet(gb, TRANSLATE_END, NULL);
 
     return gb;
