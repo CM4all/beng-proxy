@@ -375,6 +375,7 @@ check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-session \
 	check-widget-registry \
 	check-wembed \
+	check-hashmap \
 	check-cache
 
 cov: CFLAGS += -fprofile-arcs -ftest-coverage
