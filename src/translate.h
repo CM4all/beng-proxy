@@ -30,6 +30,8 @@ struct translate_request {
 };
 
 struct translate_response {
+    unsigned max_age;
+
     http_status_t status;
 
     struct resource_address address;

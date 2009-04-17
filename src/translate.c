@@ -381,6 +381,7 @@ translate_handle_packet(struct translate_client *client,
         memset(&client->response, 0, sizeof(client->response));
         client->previous_command = command;
         client->resource_address = &client->response.address;
+        client->response.max_age = -1;
         client->response.user_max_age = -1;
         client->response.views = p_calloc(client->pool, sizeof(*client->response.views));
         client->transformation_view_tail = &client->response.views->next;
@@ -687,6 +688,10 @@ translate_handle_packet(struct translate_client *client,
         }
 
         switch (client->previous_command) {
+        case TRANSLATE_BEGIN:
+            client->response.max_age = *(const uint32_t *)payload;
+            break;
+
         case TRANSLATE_USER:
             client->response.user_max_age = *(const uint32_t *)payload;
             break;

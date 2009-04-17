@@ -73,7 +73,8 @@ tcache_request_evaluate(const struct translate_request *request)
 static bool
 tcache_response_evaluate(const struct translate_response *response)
 {
-    return response != NULL && response->status == 0;
+    return response != NULL && response->max_age != 0 &&
+        response->status == 0;
 }
 
 static inline const char *
@@ -86,6 +87,9 @@ static void
 tcache_dup_response(pool_t pool, struct translate_response *dest,
                     const struct translate_response *src)
 {
+    /* we don't copy the "max_age" attribute, because it's only used
+       by the tcache itself */
+
     dest->status = src->status;
     resource_address_copy(pool, &dest->address, &src->address);
     dest->site = p_strdup_checked(pool, src->site);
@@ -201,10 +205,14 @@ tcache_callback(const struct translate_response *response, void *ctx)
     if (tcache_response_evaluate(response)) {
         pool_t pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 512);
         struct tcache_item *item = p_malloc(pool, sizeof(*item));
+        unsigned max_age = response->max_age;
 
         cache_log(4, "translate_cache: store %s\n", tcr->key);
 
-        cache_item_init(&item->item, time(NULL) + 300, 1);
+        if (max_age > 300)
+            max_age = 300;
+
+        cache_item_init(&item->item, time(NULL) + max_age, 1);
         item->pool = pool;
 
         item->request.remote_host =

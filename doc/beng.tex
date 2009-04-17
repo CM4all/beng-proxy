@@ -349,8 +349,11 @@ name.  The root template has only the default view. \\
 seconds the preceding piece of information is valid without having to
 revalidate.  A value of 0 specifies that \emph{beng-proxy} should not
 remember this value at all.  Without this packet, the maximum age is
-not limited.  Currently, this is only supported for the \texttt{USER}
-packet.  \\
+not limited.  Currently, this is only supported for the following
+packets:
+
+\texttt{BEGIN} (refers to the whole translate response), \texttt{USER}
+\\
 
 \hline
 
