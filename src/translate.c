@@ -62,6 +62,8 @@ struct translate_client {
     struct packet_reader reader;
     struct translate_response response;
 
+    enum beng_translation_command previous_command;
+
     /** the current resource address being edited */
     struct resource_address *resource_address;
 
@@ -377,6 +379,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_BEGIN:
         memset(&client->response, 0, sizeof(client->response));
+        client->previous_command = command;
         client->resource_address = &client->response.address;
         client->response.user_max_age = -1;
         client->response.views = p_calloc(client->pool, sizeof(*client->response.views));
@@ -518,6 +521,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_USER:
         client->response.user = payload;
+        client->previous_command = command;
         break;
 
     case TRANSLATE_LANGUAGE:
@@ -682,9 +686,12 @@ translate_handle_packet(struct translate_client *client,
             break;
         }
 
-        if (client->response.user != NULL) {
+        switch (client->previous_command) {
+        case TRANSLATE_USER:
             client->response.user_max_age = *(const uint32_t *)payload;
-        } else {
+            break;
+
+        default:
             daemon_log(2, "misplaced TRANSLATE_MAX_AGE packet\n");
             break;
         }
