@@ -94,7 +94,12 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->host = p_strdup_checked(pool, src->host);
     dest->stateful = src->stateful;
     dest->session = NULL;
+
+    /* The "user" attribute must not be present in cached responses,
+       because they belong to only that one session.  For the same
+       reason, we won't copy the user_max_age attribute. */
     dest->user = NULL;
+
     dest->language = NULL;
 
     dest->views = src->views != NULL
