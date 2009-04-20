@@ -9,6 +9,8 @@
 #include "expansible-buffer.h"
 #include "strref.h"
 
+#include <inline/poison.h>
+
 #include <assert.h>
 #include <string.h>
 
@@ -36,6 +38,8 @@ expansible_buffer_new(pool_t pool, size_t initial_size)
 void
 expansible_buffer_reset(struct expansible_buffer *eb)
 {
+    poison_undefined(eb->buffer, eb->max_size);
+
     eb->size = 0;
 }
 
