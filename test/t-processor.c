@@ -2,8 +2,8 @@
 #include "uri-parser.h"
 #include "embed.h"
 #include "widget.h"
-#include "session.h"
 #include "widget-stream.h"
+#include "rewrite-uri.h"
 
 #include <event.h>
 
@@ -14,6 +14,67 @@
 #include <string.h>
 
 static bool is_eof;
+
+
+/*
+ * emulate missing librarie
+ *
+ */
+
+const struct widget_class root_widget_class = {
+    .address = {
+        .type = RESOURCE_ADDRESS_NONE,
+    },
+    .stateful = false,
+};
+
+struct tcache *global_translate_cache;
+
+istream_t
+embed_inline_widget(pool_t pool,
+                    __attr_unused struct processor_env *env,
+                    struct widget *widget)
+{
+    const char *s = widget_path(widget);
+    if (s == NULL)
+        s = "widget";
+
+    return istream_string_new(pool, s);
+}
+
+void
+embed_frame_widget(__attr_unused pool_t pool,
+                   __attr_unused struct processor_env *env,
+                   __attr_unused struct widget *widget,
+                   const struct http_response_handler *handler,
+                   void *handler_ctx,
+                   __attr_unused struct async_operation_ref *async_ref)
+{
+    http_response_handler_direct_abort(handler, handler_ctx);
+}
+
+struct widget_session *
+widget_get_session(__attr_unused struct widget *widget,
+                   __attr_unused struct session *session,
+                   __attr_unused bool create)
+{
+    return NULL;
+}
+
+istream_t
+rewrite_widget_uri(__attr_unused pool_t pool, __attr_unused pool_t widget_pool,
+                   __attr_unused struct tcache *translate_cache,
+                   __attr_unused const char *partition_domain,
+                   __attr_unused const struct parsed_uri *external_uri,
+                   __attr_unused struct strmap *args,
+                   __attr_unused struct widget *widget,
+                   __attr_unused session_id_t session_id,
+                   __attr_unused const struct strref *value,
+                   __attr_unused enum uri_mode mode)
+{
+    return NULL;
+}
+
 
 /*
  * istream handler
@@ -47,7 +108,6 @@ my_istream_eof(void *ctx)
 {
     (void)ctx;
     fprintf(stderr, "in my_istream_eof()\n");
-    session_manager_deinit();
     is_eof = true;
 }
 
@@ -91,27 +151,24 @@ int main(int argc, char **argv) {
 
     widget_init(&widget, &root_widget_class);
 
-    session_manager_init();
-
     processor_env_init(pool, &env,
                        NULL,
                        "localhost:8080",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
                        NULL,
-                       session_new()->uri_id,
+                       0xdeadbeef,
                        NULL,
                        NULL);
 
     ws = widget_stream_new(pool);
     delayed = ws->delayed;
+    istream_handler_set(delayed, &my_istream_handler, NULL, 0);
 
     processor_new(pool, NULL, istream_file_new(pool, "/dev/stdin", (off_t)-1),
                   &widget, &env, PROCESSOR_CONTAINER,
                   &widget_stream_response_handler, ws,
                   widget_stream_async_ref(ws));
-                              
-    istream_read(delayed);
 
     if (!is_eof)
         event_dispatch();
