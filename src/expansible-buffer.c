@@ -106,7 +106,7 @@ expansible_buffer_set_strref(struct expansible_buffer *eb,
 }
 
 const void *
-expansible_buffer_read(struct expansible_buffer *eb, size_t *size_r)
+expansible_buffer_read(const struct expansible_buffer *eb, size_t *size_r)
 {
     *size_r = eb->size;
     return eb->buffer;
@@ -125,7 +125,8 @@ expansible_buffer_read_string(struct expansible_buffer *eb)
 }
 
 void
-expansible_buffer_read_strref(struct expansible_buffer *eb, struct strref *s)
+expansible_buffer_read_strref(const struct expansible_buffer *eb,
+                              struct strref *s)
 {
     s->data = expansible_buffer_read(eb, &s->length);
 }
