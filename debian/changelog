@@ -1,9 +1,9 @@
-cm4all-beng-proxy (0.4.11) unstable; urgency=low
+cm4all-beng-proxy (0.5) unstable; urgency=low
 
   * processor: accept c:mode/c:base attributes in any order
   * processor: removed alternative (anchor) rewrite syntax
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 20 Apr 2009 22:04:19 +0200
 
 cm4all-beng-proxy (0.4.10) unstable; urgency=low
 
