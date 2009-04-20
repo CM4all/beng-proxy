@@ -69,6 +69,26 @@ struct processor {
      */
     struct uri_rewrite default_uri_rewrite;
 
+    /**
+     * These values are used to buffer c:mode/c:base values in any
+     * order, even after the actual URI attribute.
+     */
+    struct {
+        bool pending;
+
+        off_t uri_start, uri_end;
+        struct expansible_buffer *value;
+
+        /**
+         * The positions of the c:mode/c:base attributes after the URI
+         * attribute.  These have to be deleted *after* the URI
+         * attribute has been rewritten.
+         */
+        struct {
+            off_t start, end;
+        } delete[2];
+    } postponed_rewrite;
+
     struct {
         off_t start_offset;
 
@@ -222,6 +242,9 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
     processor->options = options;
     processor->tag = TAG_NONE;
 
+    processor->postponed_rewrite.pending = false;
+    processor->postponed_rewrite.value = expansible_buffer_new(pool, 1024);
+
     processor->widget.widget = NULL;
     processor->widget.param.name = expansible_buffer_new(pool, 128);
     processor->widget.param.value = expansible_buffer_new(pool, 512);
@@ -281,6 +304,8 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
 static void
 processor_uri_rewrite_init(struct processor *processor)
 {
+    assert(!processor->postponed_rewrite.pending);
+
     processor->uri_rewrite = processor->default_uri_rewrite;
 }
 
@@ -288,7 +313,27 @@ static void
 processor_uri_rewrite_delete(struct processor *processor,
                              off_t start, off_t end)
 {
-    istream_replace_add(processor->replace, start, end, NULL);
+    unsigned i = 0;
+
+    if (!processor->postponed_rewrite.pending) {
+        /* no URI attribute found yet: delete immediately */
+        istream_replace_add(processor->replace, start, end, NULL);
+        return;
+    }
+
+    /* find a free position in the "delete" array */
+
+    while (processor->postponed_rewrite.delete[i].start > 0) {
+        ++i;
+        if (i >= 2)
+            /* no more room in the array */
+            return;
+    }
+
+    /* postpone the delete until the URI attribute has been replaced */
+
+    processor->postponed_rewrite.delete[i].start = start;
+    processor->postponed_rewrite.delete[i].end = end;
 }
 
 static void
@@ -301,8 +346,53 @@ static void
 processor_uri_rewrite_attribute(struct processor *processor,
                                 const struct parser_attr *attr)
 {
-    transform_uri_attribute(processor, attr, processor->uri_rewrite.base,
+    if (processor->postponed_rewrite.pending)
+        /* cannot rewrite more than one attribute per element */
+        return;
+
+    /* postpone the URI rewrite until the tag is finished: save the
+       attribute value position, save the original attribute value and
+       set the "pending" flag */
+
+    processor->postponed_rewrite.uri_start = attr->value_start;
+    processor->postponed_rewrite.uri_end = attr->value_end;
+    expansible_buffer_set_strref(processor->postponed_rewrite.value,
+                                 &attr->value);
+
+    processor->postponed_rewrite.delete[0].start = 0;
+    processor->postponed_rewrite.delete[1].start = 0;
+    processor->postponed_rewrite.pending = true;
+}
+
+static void
+processor_uri_rewrite_commit(struct processor *processor)
+{
+    struct parser_attr uri_attribute = {
+        .value_start = processor->postponed_rewrite.uri_start,
+        .value_end = processor->postponed_rewrite.uri_end,
+    };
+
+    assert(processor->postponed_rewrite.pending);
+
+    processor->postponed_rewrite.pending = false;
+
+    /* rewrite the URI */
+
+    expansible_buffer_read_strref(processor->postponed_rewrite.value,
+                                  &uri_attribute.value);
+    transform_uri_attribute(processor, &uri_attribute,
+                            processor->uri_rewrite.base,
                             processor->uri_rewrite.mode);
+
+    /* now delete all c:base/c:mode attributes which followed the
+       URI */
+
+    for (unsigned i = 0; i < 2; ++i)
+        if (processor->postponed_rewrite.delete[i].start > 0)
+            istream_replace_add(processor->replace,
+                                processor->postponed_rewrite.delete[i].start,
+                                processor->postponed_rewrite.delete[i].end,
+                                NULL);
 }
 
 
@@ -841,6 +931,9 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     struct processor *processor = ctx;
 
     processor->had_input = true;
+
+    if (processor->postponed_rewrite.pending)
+        processor_uri_rewrite_commit(processor);
 
     if (processor->tag == TAG_WIDGET) {
         istream_t istream;

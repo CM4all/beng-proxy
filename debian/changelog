@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.4.11) unstable; urgency=low
 
-  * 
+  * processor: accept c:mode/c:base attributes in any order
 
  --
 
