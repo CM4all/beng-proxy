@@ -38,6 +38,16 @@
     <a c:base="parent" c:mode="proxy" href="nested_base.html/test">mode=proxy</a>
 </p>
 
+<p>
+    c:base=widget (swapped order)
+    <a href="base.html/test" c:base="widget">Default</a>
+    <a href="base.html/test" c:base="widget" c:mode="direct">mode=direct</a>
+    <a href="base.html/test" c:base="widget" c:mode="focus">mode=focus</a>
+    <a href="base.html/test" c:base="widget" c:mode="partial">mode=partial</a>
+    <a href="base.html/test" c:base="widget" c:mode="partition">mode=partition</a>
+    <a href="base.html/test" c:base="widget" c:mode="proxy">mode=proxy</a>
+</p>
+
 <?cm4all-rewrite-uri c:base="widget"?>
 <p>
     c:base=widget (via processing instruction)
