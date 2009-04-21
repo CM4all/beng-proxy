@@ -338,16 +338,11 @@ http_cache_put(struct http_cache_request *request)
     if (item->item.size == 0) {
         item->data = NULL;
     } else {
-        unsigned char *dest;
-        const void *src;
         size_t length;
 
-        item->data = dest = p_malloc(pool, item->item.size);
-        while ((src = growing_buffer_read(request->response.output, &length)) != NULL) {
-            memcpy(dest, src, length);
-            dest += length;
-            growing_buffer_consume(request->response.output, length);
-        }
+        item->data = growing_buffer_dup(request->response.output, pool,
+                                        &length);
+        assert(length == item->item.size);
     }
 
     cache_put_match(request->cache->cache, p_strdup(pool, request->url),
