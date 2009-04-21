@@ -170,7 +170,6 @@ SOURCES = src/main.c \
 	src/fcgi-stock.c \
 	src/fcgi-client.c \
 	src/fcgi-request.c \
-	src/filter.c \
 	src/growing-buffer.c \
 	src/expansible-buffer.c \
 	src/gb-io.c \
