@@ -12,7 +12,7 @@
 #include "embed.h"
 #include "proxy-widget.h"
 #include "session.h"
-#include "filter.h"
+#include "fcache.h"
 #include "uri-address.h"
 #include "strref-pool.h"
 #include "growing-buffer.h"
@@ -195,14 +195,19 @@ response_dispatch(struct request *request2,
     if (transformation != NULL &&
         transformation->type == TRANSFORMATION_FILTER) {
         struct http_server_request *request = request2->request;
+        struct strmap *headers2;
 
-        filter_new(global_http_cache, global_tcp_stock, global_fcgi_stock,
-                   request->pool,
-                   &transformation->u.filter,
-                   headers,
-                   body,
-                   &response_handler, request2,
-                   request2->async_ref);
+        if (headers != NULL) {
+            headers2 = strmap_new(request->pool, 16);
+            header_parse_buffer(request->pool, headers2, headers);
+        } else
+            headers2 = NULL;
+
+        filter_cache_request(global_filter_cache, request->pool,
+                             &transformation->u.filter,
+                             headers2, body,
+                             &response_handler, request2,
+                             request2->async_ref);
     } else if (transformation != NULL &&
                transformation->type == TRANSFORMATION_PROCESS) {
         response_invoke_processor(request2, status, headers, body,

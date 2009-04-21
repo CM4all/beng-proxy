@@ -48,6 +48,8 @@ struct instance {
     /* cache */
     struct http_cache *http_cache;
 
+    struct filter_cache *filter_cache;
+
     struct fcgi_stock *fcgi_stock;
 };
 

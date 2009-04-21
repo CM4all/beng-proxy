@@ -14,6 +14,7 @@
 #include "tcache.h"
 #include "http-cache.h"
 #include "fcgi-stock.h"
+#include "fcache.h"
 #include "child.h"
 #include "global.h"
 #include "failure.h"
@@ -63,6 +64,11 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     if (instance->http_cache != NULL) {
         http_cache_close(instance->http_cache);
         instance->http_cache = NULL;
+    }
+
+    if (instance->filter_cache != NULL) {
+        filter_cache_close(instance->filter_cache);
+        instance->filter_cache = NULL;
     }
 
     if (instance->fcgi_stock != NULL) {
@@ -175,6 +181,9 @@ int main(int argc, char **argv)
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.tcp_stock);
     instance.fcgi_stock = fcgi_stock_new(instance.pool);
+    instance.filter_cache = filter_cache_new(instance.pool, 32 * 1024 * 1024,
+                                             instance.tcp_stock,
+                                             instance.fcgi_stock);
 
     failure_init(instance.pool);
 
@@ -182,6 +191,7 @@ int main(int argc, char **argv)
     global_tcp_stock = instance.tcp_stock;
     global_http_cache = instance.http_cache;
     global_fcgi_stock = instance.fcgi_stock;
+    global_filter_cache = instance.filter_cache;
 
     /* daemonize */
 

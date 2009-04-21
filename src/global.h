@@ -15,4 +15,6 @@ extern struct http_cache *global_http_cache;
 
 extern struct fcgi_stock *global_fcgi_stock;
 
+extern struct filter_cache *global_filter_cache;
+
 #endif

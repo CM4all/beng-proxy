@@ -191,6 +191,7 @@ SOURCES = src/main.c \
 	src/dhashmap.c \
 	src/cache.c \
 	src/http-cache.c \
+	src/fcache.c \
 	src/stock.c \
 	src/hstock.c \
 	src/abort-unref.c \

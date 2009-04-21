@@ -15,7 +15,7 @@
 #include "strref-pool.h"
 #include "dpool.h"
 #include "get.h"
-#include "filter.h"
+#include "fcache.h"
 #include "header-writer.h"
 #include "transformation.h"
 #include "global.h"
@@ -354,13 +354,11 @@ widget_response_transform(struct embed *embed,
         break;
 
     case TRANSFORMATION_FILTER:
-        filter_new(global_http_cache, global_tcp_stock, global_fcgi_stock,
-                   embed->pool,
-                   &transformation->u.filter,
-                   headers != NULL ? headers_dup(embed->pool, headers) : NULL,
-                   body,
-                   &widget_response_handler, embed,
-                   embed->async_ref);
+        filter_cache_request(global_filter_cache, embed->pool,
+                             &transformation->u.filter,
+                             headers, body,
+                             &widget_response_handler, embed,
+                             embed->async_ref);
         break;
     }
 }

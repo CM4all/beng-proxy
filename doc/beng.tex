@@ -410,6 +410,11 @@ result, at any time.
 There may be more than one filter; the order of the \texttt{PROCESS}
 and \texttt{FILTER} packets is important.
 
+According to the HTTP specification, POST requests are not cached.  To
+gain the necessary performance, \emph{beng-proxy} caches filter
+results, extending the HTTP specification.  This is currently limited
+to resources which have an \emph{ETag} response header.
+
 \subsubsection{Sessions}
 \label{sessions}
 
