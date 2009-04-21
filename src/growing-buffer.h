@@ -31,6 +31,13 @@ growing_buffer_read(struct growing_buffer *gb, size_t *length_r);
 void
 growing_buffer_consume(struct growing_buffer *gb, size_t length);
 
+/**
+ * Duplicates the whole buffer (including all chunks) to one
+ * contiguous buffer.
+ */
+void *
+growing_buffer_dup(struct growing_buffer *gb, pool_t pool, size_t *length_r);
+
 istream_t
 growing_buffer_istream(struct growing_buffer *gb);
 
