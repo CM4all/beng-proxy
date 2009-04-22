@@ -53,6 +53,13 @@ request_processor_enabled(struct request *request);
 bool
 response_dispatcher_wants_body(struct request *request);
 
+/**
+ * Discard the request body if it was not used yet.  Call this before
+ * sending the response to the HTTP server library.
+ */
+void
+request_discard_body(struct request *request);
+
 void
 request_get_session(struct request *request, const char *session_id);
 

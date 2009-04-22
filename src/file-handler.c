@@ -129,6 +129,7 @@ file_callback(struct request *request2)
                      request_processor_enabled(request2)
                      ? "GET, HEAD, POST" : "GET, HEAD");
 
+        request_discard_body(request2);
         http_server_response(request, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
                              istream_string_new(request->pool,
                                                 "This method is not allowed."));
@@ -140,10 +141,12 @@ file_callback(struct request *request2)
     ret = lstat(path, &st);
     if (ret != 0) {
         if (errno == ENOENT) {
+            request_discard_body(request2);
             http_server_send_message(request,
                                      HTTP_STATUS_NOT_FOUND,
                                      "The requested file does not exist.");
         } else {
+            request_discard_body(request2);
             http_server_send_message(request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                      "Internal server error");
@@ -152,6 +155,7 @@ file_callback(struct request *request2)
     }
 
     if (!S_ISREG(st.st_mode)) {
+        request_discard_body(request2);
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Not a regular file");
@@ -167,6 +171,7 @@ file_callback(struct request *request2)
         if (p != NULL) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st.st_mtime <= t) {
+                request_discard_body(request2);
                 http_server_response(request,
                                      HTTP_STATUS_NOT_MODIFIED,
                                      NULL, NULL);
@@ -178,6 +183,7 @@ file_callback(struct request *request2)
         if (p != NULL) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st.st_mtime > t) {
+                request_discard_body(request2);
                 http_server_response(request,
                                      HTTP_STATUS_PRECONDITION_FAILED,
                                      NULL, NULL);
@@ -190,6 +196,7 @@ file_callback(struct request *request2)
             make_etag(buffer, &st);
 
             if (!http_list_contains(p, buffer)) {
+                request_discard_body(request2);
                 http_server_response(request,
                                      HTTP_STATUS_PRECONDITION_FAILED,
                                      NULL, NULL);
@@ -199,6 +206,7 @@ file_callback(struct request *request2)
 
         p = strmap_get(request->headers, "if-none-match");
         if (p != NULL && strcmp(p, "*") == 0) {
+            request_discard_body(request2);
             http_server_response(request,
                                  HTTP_STATUS_PRECONDITION_FAILED,
                                  NULL, NULL);
@@ -209,6 +217,7 @@ file_callback(struct request *request2)
             make_etag(buffer, &st);
 
             if (http_list_contains(p, buffer)) {
+                request_discard_body(request2);
                 http_server_response(request,
                                      HTTP_STATUS_PRECONDITION_FAILED,
                                      NULL, NULL);
@@ -230,10 +239,12 @@ file_callback(struct request *request2)
     body = istream_file_new(request->pool, path, size);
     if (body == NULL) {
         if (errno == ENOENT) {
+            request_discard_body(request2);
             http_server_send_message(request,
                                      HTTP_STATUS_NOT_FOUND,
                                      "The requested file does not exist.");
         } else {
+            request_discard_body(request2);
             http_server_send_message(request,
                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                      "Internal server error");
@@ -272,14 +283,10 @@ file_callback(struct request *request2)
 #endif /* #ifndef NO_XATTR */
     }
 
-    if (!request_processor_enabled(request2)) {
+    if (!request_processor_enabled(request2))
 #ifndef NO_LAST_MODIFIED_HEADER
         header_write(headers, "last-modified", http_date_format(st.st_mtime));
 #endif
-
-        if (request->body != NULL)
-            istream_close(request->body);
-    }
 
     /* generate the Content-Range header */
 

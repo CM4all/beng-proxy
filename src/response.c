@@ -106,6 +106,7 @@ response_invoke_processor(struct request *request2,
         headers = NULL;
 
     if (!processable(headers)) {
+        request_discard_body(request2);
         http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
                                  "Invalid template content type");
         return;
@@ -213,6 +214,8 @@ response_dispatch(struct request *request2,
         response_invoke_processor(request2, status, headers, body,
                                   transformation);
     } else {
+        request_discard_body(request2);
+
         header_write(headers, "server", "beng-proxy v" VERSION);
 
         request2->response_sent = true;
@@ -292,10 +295,12 @@ response_abort(void *ctx)
 {
     struct request *request = ctx;
 
-    if (!request->response_sent)
+    if (!request->response_sent) {
+        request_discard_body(request);
         http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
+    }
 }
 
 const struct http_response_handler response_handler = {

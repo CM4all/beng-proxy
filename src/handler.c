@@ -62,6 +62,7 @@ session_redirect(struct request *request)
 
     session->cookie_sent = true;
 
+    request_discard_body(request);
     http_server_response(request->request,
                          request->request->method == HTTP_METHOD_GET
                          ? HTTP_STATUS_FOUND
@@ -85,6 +86,7 @@ translate_callback(const struct translate_response *response,
         (response->status == (http_status_t)0 &&
          response->address.type == RESOURCE_ADDRESS_NONE &&
          response->redirect == NULL)) {
+        request_discard_body(request);
         http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
@@ -188,14 +190,18 @@ translate_callback(const struct translate_response *response,
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP) {
         proxy_handler(request);
     } else if (response->redirect != NULL) {
+        request_discard_body(request);
         http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
                                   response->redirect, NULL);
     } else if (response->status != (http_status_t)0) {
+        request_discard_body(request);
         http_server_response(request->request,
                              response->status,
                              NULL, NULL);
     } else {
         daemon_log(2, "empty response from translation server\n");
+
+        request_discard_body(request);
         http_server_send_message(request->request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                  "Internal server error");
@@ -209,10 +215,14 @@ request_uri_parse(struct http_server_request *request,
     int ret;
 
     ret = uri_parse(request->pool, dest, request->uri);
-    if (ret < 0)
+    if (ret < 0) {
+        if (request->body != NULL)
+            istream_close(request->body);
+
         http_server_send_message(request,
                                  HTTP_STATUS_BAD_REQUEST,
                                  "Malformed URI");
+    }
 
     return ret;
 }

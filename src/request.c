@@ -35,6 +35,13 @@ response_dispatcher_wants_body(struct request *request)
         request_processor_enabled(request);
 }
 
+void
+request_discard_body(struct request *request)
+{
+    if (request->request->body != NULL && !request->body_consumed)
+        istream_close(request->request->body);
+}
+
 static struct strmap *
 request_get_cookies(struct request *request)
 {
