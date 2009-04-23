@@ -196,11 +196,11 @@ response_dispatch(struct request *request2,
     if (transformation != NULL &&
         transformation->type == TRANSFORMATION_FILTER) {
         struct http_server_request *request = request2->request;
-        const char *id;
+        const char *source_id = request2->resource_id, *id;
         struct strmap *headers2;
 
         id = resource_address_id(&transformation->u.filter, request->pool);
-        request2->resource_id = p_strcat(request->pool, request2->resource_id,
+        request2->resource_id = p_strcat(request->pool, source_id,
                                          "|", id, NULL);
 
         if (headers != NULL) {
@@ -211,7 +211,7 @@ response_dispatch(struct request *request2,
 
         filter_cache_request(global_filter_cache, request->pool,
                              &transformation->u.filter,
-                             headers2, body,
+                             source_id, headers2, body,
                              &response_handler, request2,
                              request2->async_ref);
     } else if (transformation != NULL &&

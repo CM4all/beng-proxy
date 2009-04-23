@@ -17,6 +17,7 @@
 #include "tpool.h"
 #include "http-util.h"
 #include "get.h"
+#include "resource-address.h"
 
 #include <string.h>
 #include <time.h>
@@ -44,8 +45,8 @@ struct filter_cache_info {
     /** when will the cached resource expire? (beng-proxy time) */
     time_t expires;
 
-    /** the ETag header of the input resource */
-    const char *in_etag;
+    /** the final resource id */
+    const char *key;
 };
 
 struct filter_cache_item {
@@ -83,26 +84,27 @@ filter_cache_info_new(pool_t pool)
     struct filter_cache_info *info = p_malloc(pool, sizeof(*info));
 
     info->expires = (time_t)-1;
-    info->in_etag = NULL;
     return info;
 }
 
 /* check whether the request could produce a cacheable response */
 static struct filter_cache_info *
-filter_cache_request_evaluate(pool_t pool, struct strmap *headers)
+filter_cache_request_evaluate(pool_t pool,
+                              const struct resource_address *address,
+                              const char *source_id, struct strmap *headers)
 {
     struct filter_cache_info *info;
-    const char *p;
 
     if (headers == NULL)
-        return false;
+        return NULL;
 
-    p = strmap_get(headers, "etag");
-    if (p == NULL)
-        return false;
+    if (strmap_get(headers, "last-modified") == NULL &&
+        strmap_get(headers, "expires") == NULL)
+        return NULL;
 
     info = filter_cache_info_new(pool);
-    info->in_etag = p;
+    info->key = p_strcat(pool, source_id, "|",
+                         resource_address_id(address, pool), NULL);
 
     return info;
 }
@@ -112,11 +114,7 @@ filter_cache_info_copy(pool_t pool, struct filter_cache_info *dest,
                        const struct filter_cache_info *src)
 {
     dest->expires = src->expires;
-
-    if (src->in_etag != NULL)
-        dest->in_etag = p_strdup(pool, src->in_etag);
-    else
-        dest->in_etag = NULL;
+    dest->key = p_strdup(pool, src->key);
 }
 
 static struct filter_cache_info *
@@ -151,7 +149,7 @@ filter_cache_put(struct filter_cache_request *request)
     assert(request != NULL);
     assert(request->info != NULL);
 
-    cache_log(4, "filter_cache: put %s\n", request->info->in_etag);
+    cache_log(4, "filter_cache: put %s\n", request->info->key);
 
     if (request->info->expires == (time_t)-1)
         expires = time(NULL) + 3600;
@@ -178,7 +176,7 @@ filter_cache_put(struct filter_cache_request *request)
     }
 
     cache_put(request->cache->cache,
-              item->info.in_etag, &item->item);
+              item->info.key, &item->item);
 }
 
 static time_t
@@ -280,7 +278,7 @@ filter_cache_response_body_abort(void *ctx)
 {
     struct filter_cache_request *request = ctx;
 
-    cache_log(4, "filter_cache: body_abort %s\n", request->info->in_etag);
+    cache_log(4, "filter_cache: body_abort %s\n", request->info->key);
 
     request->response.input = NULL;
 
@@ -313,7 +311,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
     if (!filter_cache_response_evaluate(request->info,
                                       status, headers, available)) {
         /* don't cache response */
-        cache_log(4, "filter_cache: nocache %s\n", request->info->in_etag);
+        cache_log(4, "filter_cache: nocache %s\n", request->info->key);
 
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
@@ -379,7 +377,7 @@ filter_cache_response_abort(void *ctx)
 {
     struct filter_cache_request *request = ctx;
 
-    cache_log(4, "filter_cache: response_abort %s\n", request->info->in_etag);
+    cache_log(4, "filter_cache: response_abort %s\n", request->info->key);
 
     http_response_handler_invoke_abort(&request->handler);
     pool_unref(request->caller_pool);
@@ -467,7 +465,7 @@ filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
 
     request->info = info;
 
-    cache_log(4, "filter_cache: miss %s\n", info->in_etag);
+    cache_log(4, "filter_cache: miss %s\n", info->key);
 
     pool_ref(caller_pool);
     resource_get(NULL, cache->tcp_stock, cache->fcgi_stock,
@@ -489,7 +487,7 @@ filter_cache_serve(struct filter_cache_item *item,
     if (body != NULL)
         istream_close(body);
 
-    cache_log(4, "filter_cache: serve %s\n", item->info.in_etag);
+    cache_log(4, "filter_cache: serve %s\n", item->info.key);
 
     http_response_handler_set(&handler_ref, handler, handler_ctx);
 
@@ -512,6 +510,7 @@ void
 filter_cache_request(struct filter_cache *cache,
                      pool_t pool,
                      const struct resource_address *address,
+                     const char *source_id,
                      struct strmap *headers, istream_t body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
@@ -519,11 +518,10 @@ filter_cache_request(struct filter_cache *cache,
 {
     struct filter_cache_info *info;
 
-    info = filter_cache_request_evaluate(pool, headers);
+    info = filter_cache_request_evaluate(pool, address, source_id, headers);
     if (info != NULL) {
         struct filter_cache_item *item
-            = (struct filter_cache_item *)cache_get(cache->cache,
-                                                    info->in_etag);
+            = (struct filter_cache_item *)cache_get(cache->cache, info->key);
 
         if (item == NULL)
             filter_cache_miss(cache, pool, info,

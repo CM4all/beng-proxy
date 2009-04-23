@@ -30,6 +30,7 @@ void
 filter_cache_request(struct filter_cache *cache,
                      pool_t pool,
                      const struct resource_address *address,
+                     const char *source_id,
                      struct strmap *headers, istream_t body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,

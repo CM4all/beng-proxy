@@ -345,7 +345,7 @@ widget_response_transform(struct embed *embed,
                           struct strmap *headers, istream_t body,
                           const struct transformation *transformation)
 {
-    const char *id;
+    const char *source_id, *id;
 
     assert(body != NULL);
     assert(transformation != NULL);
@@ -361,13 +361,14 @@ widget_response_transform(struct embed *embed,
         break;
 
     case TRANSFORMATION_FILTER:
+        source_id = embed->resource_id;
         id = resource_address_id(&transformation->u.filter, embed->pool);
-        embed->resource_id = p_strcat(embed->pool, embed->resource_id,
+        embed->resource_id = p_strcat(embed->pool, source_id,
                                       "|", id, NULL);
 
         filter_cache_request(global_filter_cache, embed->pool,
                              &transformation->u.filter,
-                             headers, body,
+                             source_id, headers, body,
                              &widget_response_handler, embed,
                              embed->async_ref);
         break;
