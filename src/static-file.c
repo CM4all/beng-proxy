@@ -15,6 +15,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#ifndef NO_XATTR
+#include <attr/xattr.h>
+#endif
+
 static void
 make_etag(char *p, const struct stat *st)
 {
@@ -84,8 +88,26 @@ static_file_get(pool_t pool, const char *path, const char *content_type,
 
     headers = strmap_new(pool, 16);
 
-    if (content_type == NULL)
-        content_type = "text/html; charset=utf-8";
+    if (content_type == NULL) {
+#ifndef NO_XATTR
+        ssize_t nbytes;
+        char content_type_buffer[256];
+
+        nbytes = fgetxattr(istream_file_fd(body), "user.Content-Type",
+                           content_type_buffer,
+                           sizeof(content_type_buffer) - 1);
+        if (nbytes > 0) {
+            assert((size_t)nbytes < sizeof(content_type_buffer));
+            content_type_buffer[nbytes] = 0;
+            content_type = p_strdup(pool, content_type_buffer);
+        } else {
+#endif /* #ifndef NO_XATTR */
+            content_type = "application/octet-stream";
+#ifndef NO_XATTR
+        }
+#endif /* #ifndef NO_XATTR */
+    }
+
     strmap_add(headers, "content-type", content_type);
 
     strmap_add(headers, "last-modified", p_strdup(pool, http_date_format(st.st_mtime)));
