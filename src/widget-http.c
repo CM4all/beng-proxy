@@ -45,6 +45,8 @@ struct embed {
      */
     bool standalone;
 
+    const char *resource_id;
+
     struct http_response_handler_ref handler_ref;
     struct async_operation_ref *async_ref;
 };
@@ -343,17 +345,26 @@ widget_response_transform(struct embed *embed,
                           struct strmap *headers, istream_t body,
                           const struct transformation *transformation)
 {
+    const char *id;
+
     assert(body != NULL);
     assert(transformation != NULL);
     assert(embed->transformation == transformation->next);
 
     switch (transformation->type) {
     case TRANSFORMATION_PROCESS:
+        embed->resource_id = p_strcat(embed->pool, embed->resource_id,
+                                      "|process", NULL);
+
         widget_response_process(embed, headers, body,
                                 transformation->u.processor.options);
         break;
 
     case TRANSFORMATION_FILTER:
+        id = resource_address_id(&transformation->u.filter, embed->pool);
+        embed->resource_id = p_strcat(embed->pool, embed->resource_id,
+                                      "|", id, NULL);
+
         filter_cache_request(global_filter_cache, embed->pool,
                              &transformation->u.filter,
                              headers, body,
@@ -475,6 +486,7 @@ widget_http_request(pool_t pool, struct widget *widget,
     const struct transformation_view *view;
     struct embed *embed;
     struct strmap *headers;
+    const struct resource_address *address;
 
     assert(widget != NULL);
     assert(widget->class != NULL);
@@ -508,10 +520,13 @@ widget_http_request(pool_t pool, struct widget *widget,
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
     embed->async_ref = async_ref;
 
+    address = widget_address(pool, widget);
+    embed->resource_id = resource_address_id(address, pool);
+
     resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
                  pool,
                  widget->from_request.method,
-                 widget_address(pool, widget),
+                 address,
                  headers,
                  widget->from_request.body,
                  &widget_response_handler, embed, async_ref);
