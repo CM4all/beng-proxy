@@ -31,6 +31,8 @@ struct request {
         const struct transformation *transformation;
     } translate;
 
+    const char *resource_id;
+
     struct processor_env env;
 
 #ifdef DUMP_WIDGET_TREE

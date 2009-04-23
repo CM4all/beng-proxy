@@ -183,6 +183,8 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
+    request->resource_id = resource_address_id(&response->address, request->request->pool);
+
     if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
         file_callback(request);
     } else if (response->address.type == RESOURCE_ADDRESS_CGI) {
@@ -345,6 +347,8 @@ serve_document_root_file(struct request *request2,
                                          index_file, (size_t)10,
                                          NULL);
     tr->address.u.local.content_type = NULL;
+
+    request2->resource_id = tr->address.u.local.path;
 
     file_callback(request2);
 }

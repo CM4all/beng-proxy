@@ -196,7 +196,12 @@ response_dispatch(struct request *request2,
     if (transformation != NULL &&
         transformation->type == TRANSFORMATION_FILTER) {
         struct http_server_request *request = request2->request;
+        const char *id;
         struct strmap *headers2;
+
+        id = resource_address_id(&transformation->u.filter, request->pool);
+        request2->resource_id = p_strcat(request->pool, request2->resource_id,
+                                         "|", id, NULL);
 
         if (headers != NULL) {
             headers2 = strmap_new(request->pool, 16);
@@ -211,6 +216,10 @@ response_dispatch(struct request *request2,
                              request2->async_ref);
     } else if (transformation != NULL &&
                transformation->type == TRANSFORMATION_PROCESS) {
+        request2->resource_id = p_strcat(request2->request->pool,
+                                         request2->resource_id,
+                                         "|process", NULL);
+
         response_invoke_processor(request2, status, headers, body,
                                   transformation);
     } else {
