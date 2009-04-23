@@ -91,4 +91,11 @@ resource_address_relative(const struct resource_address *base,
                           const struct resource_address *address,
                           struct strref *buffer);
 
+/**
+ * Generates a string identifying the address.  This can be used as a
+ * key in a hash table.
+ */
+const char *
+resource_address_id(const struct resource_address *address, pool_t pool);
+
 #endif
