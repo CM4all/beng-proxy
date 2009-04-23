@@ -8,10 +8,31 @@
 #include "http.h"
 #include "http-response.h"
 #include "strmap.h"
+#include "format.h"
+#include "date.h"
 
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
+
+static void
+make_etag(char *p, const struct stat *st)
+{
+    *p++ = '"';
+
+    p += format_uint32_hex(p, (uint32_t)st->st_dev);
+
+    *p++ = '-';
+
+    p += format_uint32_hex(p, (uint32_t)st->st_ino);
+
+    *p++ = '-';
+
+    p += format_uint32_hex(p, (uint32_t)st->st_mtime);
+
+    *p++ = '"';
+    *p = 0;
+}
 
 void
 static_file_get(pool_t pool, const char *path,
@@ -23,6 +44,7 @@ static_file_get(pool_t pool, const char *path,
     off_t size;
     istream_t body;
     struct strmap *headers;
+    char buffer[64];
 
     assert(path != NULL);
 
@@ -60,9 +82,13 @@ static_file_get(pool_t pool, const char *path,
         return;
     }
 
-    /* XXX response headers */
-    headers = strmap_new(pool, 4);
+    headers = strmap_new(pool, 16);
     strmap_add(headers, "content-type", "text/html; charset=utf-8");
+
+    strmap_add(headers, "last-modified", p_strdup(pool, http_date_format(st.st_mtime)));
+
+    make_etag(buffer, &st);
+    strmap_add(headers, "etag", p_strdup(pool, buffer));
 
     http_response_handler_direct_response(handler, handler_ctx,
                                           HTTP_STATUS_OK,
