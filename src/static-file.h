@@ -13,7 +13,7 @@ struct http_response_handler;
 struct async_operation_ref;
 
 void
-static_file_get(pool_t pool, const char *path,
+static_file_get(pool_t pool, const char *path, const char *content_type,
                 const struct http_response_handler *handler,
                 void *handler_ctx);
 

@@ -43,6 +43,7 @@ resource_get(struct http_cache *cache,
             istream_close(body);
 
         static_file_get(pool, address->u.local.path,
+                        address->u.local.content_type,
                         handler, handler_ctx);
         return;
 

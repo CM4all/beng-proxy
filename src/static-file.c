@@ -35,7 +35,7 @@ make_etag(char *p, const struct stat *st)
 }
 
 void
-static_file_get(pool_t pool, const char *path,
+static_file_get(pool_t pool, const char *path, const char *content_type,
                 const struct http_response_handler *handler,
                 void *handler_ctx)
 {
@@ -83,7 +83,10 @@ static_file_get(pool_t pool, const char *path,
     }
 
     headers = strmap_new(pool, 16);
-    strmap_add(headers, "content-type", "text/html; charset=utf-8");
+
+    if (content_type == NULL)
+        content_type = "text/html; charset=utf-8";
+    strmap_add(headers, "content-type", content_type);
 
     strmap_add(headers, "last-modified", p_strdup(pool, http_date_format(st.st_mtime)));
 
