@@ -38,6 +38,19 @@ make_etag(char *p, const struct stat *st)
     *p = 0;
 }
 
+static void
+send_errno(pool_t pool,
+             const struct http_response_handler *handler, void *handler_ctx)
+{
+    if (errno == ENOENT)
+        http_response_handler_direct_response(handler, handler_ctx,
+                                              HTTP_STATUS_NOT_FOUND,
+                                              NULL,
+                                              istream_string_new(pool, "The requested file does not exist."));
+    else
+        http_response_handler_direct_abort(handler, handler_ctx);
+}
+
 void
 static_file_get(pool_t pool, const char *path, const char *content_type,
                 const struct http_response_handler *handler,
@@ -54,13 +67,7 @@ static_file_get(pool_t pool, const char *path, const char *content_type,
 
     ret = lstat(path, &st);
     if (ret != 0) {
-        if (errno == ENOENT)
-            http_response_handler_direct_response(handler, handler_ctx,
-                                                  HTTP_STATUS_NOT_FOUND,
-                                                  NULL,
-                                                  istream_string_new(pool, "The requested file does not exist."));
-        else
-            http_response_handler_direct_abort(handler, handler_ctx);
+        send_errno(pool, handler, handler_ctx);
         return;
     }
 
@@ -76,13 +83,7 @@ static_file_get(pool_t pool, const char *path, const char *content_type,
 
     body = istream_file_new(pool, path, size);
     if (body == NULL) {
-        if (errno == ENOENT)
-            http_response_handler_direct_response(handler, handler_ctx,
-                                                  HTTP_STATUS_NOT_FOUND,
-                                                  NULL,
-                                                  istream_string_new(pool, "The requested file does not exist."));
-        else
-            http_response_handler_direct_abort(handler, handler_ctx);
+        send_errno(pool, handler, handler_ctx);
         return;
     }
 
