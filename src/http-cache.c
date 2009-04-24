@@ -806,7 +806,11 @@ http_cache_serve(struct http_cache_item *item,
     http_response_handler_set(&handler_ref, handler, handler_ctx);
 
     /* XXX hold reference on item */
-    response_body = istream_memory_new(pool, item->data, item->item.size);
+
+    response_body = item->item.size > 0
+        ? istream_memory_new(pool, item->data, item->item.size)
+        : istream_null_new(pool);
+
     http_response_handler_invoke_response(&handler_ref, item->status,
                                           item->headers, response_body);
 }
