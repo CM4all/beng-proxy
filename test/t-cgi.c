@@ -221,6 +221,28 @@ test_close_data(pool_t pool, struct context *c)
     assert(c->body_abort);
 }
 
+static void
+test_post(pool_t pool, struct context *c)
+{
+    cgi_new(pool, false, NULL, NULL,
+            "./demo/cgi-bin/cat.sh",
+            HTTP_METHOD_POST, "/",
+            "cat.sh", NULL, NULL, "/var/www",
+            NULL, istream_file_new(pool, "Makefile", 8192),
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(c->body_eof);
+    assert(!c->body_abort);
+}
+
 
 /*
  * main
@@ -257,6 +279,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_early);
     run_test(pool, test_close_late);
     run_test(pool, test_close_data);
+    run_test(pool, test_post);
 
     pool_unref(pool);
     pool_commit();
