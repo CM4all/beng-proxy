@@ -1,6 +1,5 @@
 cm4all-beng-proxy (0.5.1) unstable; urgency=low
 
-  * added filter cache
   * processor: fixed base=child assertion failure
   * handler: close request body if it was not consumed
   * static-file: generate Last-Modified and ETag response headers

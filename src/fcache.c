@@ -95,6 +95,10 @@ filter_cache_request_evaluate(pool_t pool,
 {
     struct filter_cache_info *info;
 
+    /* XXX the filter cache is currently disabled */
+    if (true != false)
+        return NULL;
+
     if (source_id == NULL || headers == NULL)
         return NULL;
 
