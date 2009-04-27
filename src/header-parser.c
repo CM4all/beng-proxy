@@ -27,7 +27,7 @@ header_parse_line(pool_t pool, struct strmap *headers,
     key_end = colon;
 
     ++colon;
-    if (likely(*colon == ' '))
+    if (likely(colon < line + length && *colon == ' '))
         ++colon;
     while (colon < line + length && char_is_whitespace(*colon))
         ++colon;
