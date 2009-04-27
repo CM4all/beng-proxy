@@ -95,7 +95,7 @@ filter_cache_request_evaluate(pool_t pool,
 {
     struct filter_cache_info *info;
 
-    if (headers == NULL)
+    if (source_id == NULL || headers == NULL)
         return NULL;
 
     if (strmap_get(headers, "last-modified") == NULL &&
