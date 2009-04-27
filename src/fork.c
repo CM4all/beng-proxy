@@ -27,7 +27,7 @@
 struct fork {
     struct istream output;
     int output_fd;
-    struct event2 event;
+    struct event2 output_event;
     fifo_buffer_t buffer;
 
     istream_t input;
@@ -52,7 +52,7 @@ fork_close(struct fork *f)
         istream_close_handler(f->input);
     }
 
-    event2_set(&f->event, 0);
+    event2_set(&f->output_event, 0);
 
     close(f->output_fd);
     f->output_fd = -1;
@@ -189,12 +189,12 @@ fork_read_from_output(struct fork *f)
         } else if (nbytes > 0) {
             size_t rest = fork_flush_buffer(f);
             if (rest == 0 && f->buffer != NULL)
-                event2_set(&f->event, EV_READ);
+                event2_set(&f->output_event, EV_READ);
         } else if (nbytes == 0) {
             fork_close(f);
             istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
-            event2_set(&f->event, EV_READ);
+            event2_set(&f->output_event, EV_READ);
 
             if (f->input != NULL)
                 /* the CGI may be waiting for more data from stdin */
@@ -212,12 +212,12 @@ fork_read_from_output(struct fork *f)
             /* -2 means the callback wasn't able to consume any data right
                now */
         } else if (nbytes > 0) {
-            event2_set(&f->event, EV_READ);
+            event2_set(&f->output_event, EV_READ);
         } else if (nbytes == 0) {
             fork_close(f);
             istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
-            event2_set(&f->event, EV_READ);
+            event2_set(&f->output_event, EV_READ);
 
             if (f->input != NULL)
                 /* the CGI may be waiting for more data from stdin */
@@ -239,7 +239,7 @@ fork_output_event_callback(int fd __attr_unused, short event __attr_unused,
 
     assert(f->output_fd == fd);
 
-    event2_reset(&f->event);
+    event2_reset(&f->output_event);
     fork_read_from_output(f);
 }
 
@@ -384,7 +384,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         close(stdout_pipe[1]);
         fd_set_cloexec(stdout_pipe[0]);
         f->output_fd = stdout_pipe[0];
-        event2_init(&f->event, f->output_fd,
+        event2_init(&f->output_event, f->output_fd,
                     fork_output_event_callback, f, NULL);
         f->buffer = NULL;
 

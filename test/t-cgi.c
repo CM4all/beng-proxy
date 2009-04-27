@@ -19,6 +19,7 @@ struct context {
 
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
+    bool body_read;
     int fd;
     bool released, aborted;
     http_status_t status;
@@ -105,6 +106,11 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
 
     if (c->close_response_body_late)
         istream_close(c->body);
+
+    if (c->body_read) {
+        assert(body != NULL);
+        istream_read(body);
+    }
 }
 
 static void
@@ -224,6 +230,8 @@ test_close_data(pool_t pool, struct context *c)
 static void
 test_post(pool_t pool, struct context *c)
 {
+    c->body_read = true;
+
     cgi_new(pool, false, NULL, NULL,
             "./demo/cgi-bin/cat.sh",
             HTTP_METHOD_POST, "/",
