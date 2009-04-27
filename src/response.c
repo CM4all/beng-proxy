@@ -18,6 +18,7 @@
 #include "growing-buffer.h"
 #include "header-parser.h"
 #include "global.h"
+#include "resource-tag.h"
 
 #include <daemon/log.h>
 
@@ -196,12 +197,8 @@ response_dispatch(struct request *request2,
     if (transformation != NULL &&
         transformation->type == TRANSFORMATION_FILTER) {
         struct http_server_request *request = request2->request;
-        const char *source_id = request2->resource_id, *id;
+        const char *source_tag;
         struct strmap *headers2;
-
-        id = resource_address_id(&transformation->u.filter, request->pool);
-        request2->resource_id = p_strcat(request->pool, source_id,
-                                         "|", id, NULL);
 
         if (headers != NULL) {
             headers2 = strmap_new(request->pool, 16);
@@ -209,16 +206,21 @@ response_dispatch(struct request *request2,
         } else
             headers2 = NULL;
 
+        source_tag = resource_tag_append_etag(request->pool,
+                                             request2->resource_tag, headers2);
+        request2->resource_tag = source_tag != NULL
+            ? resource_address_id(&transformation->u.filter, request->pool)
+            : NULL;
+
         filter_cache_request(global_filter_cache, request->pool,
                              &transformation->u.filter,
-                             source_id, headers2, body,
+                             source_tag, headers2, body,
                              &response_handler, request2,
                              request2->async_ref);
     } else if (transformation != NULL &&
                transformation->type == TRANSFORMATION_PROCESS) {
-        request2->resource_id = p_strcat(request2->request->pool,
-                                         request2->resource_id,
-                                         "|process", NULL);
+        /* processor responses cannot be cached */
+        request2->resource_tag = NULL;
 
         response_invoke_processor(request2, status, headers, body,
                                   transformation);

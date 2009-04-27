@@ -146,6 +146,7 @@ SOURCES = src/main.c \
 	src/socket-util.c \
 	src/address.c \
 	src/resource-address.c \
+	src/resource-tag.c \
 	src/listener.c \
 	src/client-socket.c \
 	src/buffered-io.c \

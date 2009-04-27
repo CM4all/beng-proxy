@@ -19,6 +19,7 @@
 #include "header-writer.h"
 #include "transformation.h"
 #include "global.h"
+#include "resource-tag.h"
 
 #include <daemon/log.h>
 
@@ -45,7 +46,12 @@ struct embed {
      */
     bool standalone;
 
-    const char *resource_id;
+    /**
+     * An identifier for the source stream of the current
+     * transformation.  This is used by the filter cache to address
+     * resources.
+     */
+    const char *resource_tag;
 
     struct http_response_handler_ref handler_ref;
     struct async_operation_ref *async_ref;
@@ -345,7 +351,7 @@ widget_response_transform(struct embed *embed,
                           struct strmap *headers, istream_t body,
                           const struct transformation *transformation)
 {
-    const char *source_id, *id;
+    const char *source_tag;
 
     assert(body != NULL);
     assert(transformation != NULL);
@@ -353,22 +359,23 @@ widget_response_transform(struct embed *embed,
 
     switch (transformation->type) {
     case TRANSFORMATION_PROCESS:
-        embed->resource_id = p_strcat(embed->pool, embed->resource_id,
-                                      "|process", NULL);
+        /* processor responses cannot be cached */
+        embed->resource_tag = NULL;
 
         widget_response_process(embed, headers, body,
                                 transformation->u.processor.options);
         break;
 
     case TRANSFORMATION_FILTER:
-        source_id = embed->resource_id;
-        id = resource_address_id(&transformation->u.filter, embed->pool);
-        embed->resource_id = p_strcat(embed->pool, source_id,
-                                      "|", id, NULL);
+        source_tag = resource_tag_append_etag(embed->pool,
+                                             embed->resource_tag, headers);
+        embed->resource_tag = source_tag != NULL
+            ? resource_address_id(&transformation->u.filter, embed->pool)
+            : NULL;
 
         filter_cache_request(global_filter_cache, embed->pool,
                              &transformation->u.filter,
-                             source_id, headers, body,
+                             source_tag, headers, body,
                              &widget_response_handler, embed,
                              embed->async_ref);
         break;
@@ -522,7 +529,7 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->async_ref = async_ref;
 
     address = widget_address(pool, widget);
-    embed->resource_id = resource_address_id(address, pool);
+    embed->resource_tag = resource_address_id(address, pool);
 
     resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
                  pool,

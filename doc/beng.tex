@@ -412,7 +412,10 @@ and \texttt{FILTER} packets is important.
 
 According to the HTTP specification, POST requests are not cached.  To
 gain the necessary performance, \emph{beng-proxy} caches filter
-results, extending the HTTP specification.
+results, extending the HTTP specification.  This is limited to
+resources which have an \emph{ETag} response header, because
+\emph{beng-proxy} uses the \emph{ETag} internally to address cache
+items.
 
 \subsubsection{Sessions}
 \label{sessions}

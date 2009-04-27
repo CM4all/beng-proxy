@@ -31,7 +31,12 @@ struct request {
         const struct transformation *transformation;
     } translate;
 
-    const char *resource_id;
+    /**
+     * An identifier for the source stream of the current
+     * transformation.  This is used by the filter cache to address
+     * resources.
+     */
+    const char *resource_tag;
 
     struct processor_env env;
 

@@ -183,7 +183,8 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
-    request->resource_id = resource_address_id(&response->address, request->request->pool);
+    request->resource_tag = resource_address_id(&response->address,
+                                                request->request->pool);
 
     if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
         file_callback(request);
@@ -348,7 +349,7 @@ serve_document_root_file(struct request *request2,
                                          NULL);
     tr->address.u.local.content_type = NULL;
 
-    request2->resource_id = tr->address.u.local.path;
+    request2->resource_tag = tr->address.u.local.path;
 
     file_callback(request2);
 }
