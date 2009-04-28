@@ -127,7 +127,8 @@ response_invoke_processor(struct request *request2,
     widget->from_request.proxy_ref = widget_ref_parse(request->pool,
                                                       strmap_get(request2->args, "frame"));
 
-    if (http_server_request_has_body(request) && !request2->body_consumed) {
+    if (http_server_request_has_body(request) && !request2->body_consumed &&
+        widget->from_request.focus_ref != NULL) {
         request_body = request->body;
         request2->body_consumed = true;
     } else {
