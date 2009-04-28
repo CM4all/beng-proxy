@@ -113,14 +113,26 @@ response_invoke_processor(struct request *request2,
         return;
     }
 
+    request_make_session(request2);
+
+    widget = p_malloc(request->pool, sizeof(*widget));
+    widget_init(widget, &root_widget_class);
+    widget->id = strref_dup(request->pool, &request2->uri.base);
+    widget->lazy.path = "";
+    widget->lazy.prefix = "__";
+
+    widget->from_request.focus_ref = widget_ref_parse(request->pool,
+                                                      strmap_remove(request2->args, "focus"));
+
+    widget->from_request.proxy_ref = widget_ref_parse(request->pool,
+                                                      strmap_get(request2->args, "frame"));
+
     if (http_server_request_has_body(request) && !request2->body_consumed) {
         request_body = request->body;
         request2->body_consumed = true;
     } else {
         request_body = NULL;
     }
-
-    request_make_session(request2);
 
     processor_env_init(request->pool, &request2->env,
                        transformation->u.processor.domain,
@@ -131,18 +143,6 @@ response_invoke_processor(struct request *request2,
                        request2->session_id,
                        request->headers,
                        request_body);
-
-    widget = p_malloc(request->pool, sizeof(*widget));
-    widget_init(widget, &root_widget_class);
-    widget->id = strref_dup(request->pool, &request2->uri.base);
-    widget->lazy.path = "";
-    widget->lazy.prefix = "__";
-
-    widget->from_request.focus_ref = widget_ref_parse(request->pool,
-                                                      strmap_remove(request2->env.args, "focus"));
-
-    widget->from_request.proxy_ref = widget_ref_parse(request->pool,
-                                                      strmap_get(request2->env.args, "frame"));
 
 #ifdef DUMP_WIDGET_TREE
     request2->dump_widget_tree = widget;
