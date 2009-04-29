@@ -3,6 +3,7 @@ cm4all-beng-proxy (0.5.2) unstable; urgency=low
   * added filter cache
   * header-parser: added missing range check in header_parse_line()
   * fork: added event for writing to the child process
+  * fork: don't splice() from a pipe
   * response: don't pass request body to unfocused processor
 
  --
