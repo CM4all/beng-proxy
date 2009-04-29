@@ -151,6 +151,7 @@ fork_input_abort(void *ctx)
 
     assert(f->input_fd >= 0);
 
+    event2_set(&f->input_event, 0);
     f->input = NULL;
 
     fork_close(f);
