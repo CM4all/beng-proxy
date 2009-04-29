@@ -50,7 +50,11 @@ class Translation(Protocol):
                 continue
             m = re.match(r'^path\s+"(\S+)"$', line)
             if m:
-                response.packet(TRANSLATE_PATH, m.group(1))
+                path = m.group(1)
+                response.packet(TRANSLATE_PATH, path)
+                if path[-5:] == '.html':
+                    response.packet(TRANSLATE_CONTENT_TYPE,
+                                    'text/html; charset=utf-8')
                 continue
             m = re.match(r'^script_name\s+"(\S+)"$', line)
             if m:
