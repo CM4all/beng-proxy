@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.5.3) unstable; urgency=low
 
-  * 
+  * cgi: close request body on fork() failure
 
  --
 

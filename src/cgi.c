@@ -12,6 +12,7 @@
 #include "async.h"
 #include "header-parser.h"
 #include "strutil.h"
+#include "abort-flag.h"
 
 #include <daemon/log.h>
 
@@ -465,7 +466,21 @@ cgi_new(pool_t pool, bool jail,
     pid = beng_fork(pool, body, &input,
                     cgi_child_callback, NULL);
     if (pid < 0) {
-        /* XXX close body */
+        if (body != NULL) {
+            /* beng_fork() left the request body open - free this
+               resource, because our caller always assume that we have
+               consumed it */
+            struct abort_flag abort_flag;
+            abort_flag_set(&abort_flag, async_ref);
+
+            istream_close(body);
+
+            if (abort_flag.aborted)
+                /* the operation was aborted - don't call the
+                   http_response_handler */
+                return;
+        }
+
         http_response_handler_direct_abort(handler, handler_ctx);
         return;
     }
