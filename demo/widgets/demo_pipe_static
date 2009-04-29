@@ -1,0 +1,3 @@
+path "/usr/share/cm4all/beng-proxy/demo/hello.html"
+filter
+pipe "/usr/share/cm4all/beng-proxy/demo/pipe.sed"
