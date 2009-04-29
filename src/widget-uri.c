@@ -30,6 +30,7 @@ widget_determine_address(pool_t pool, struct widget *widget)
     switch (widget->class->address.type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
         break;
 
     case RESOURCE_ADDRESS_HTTP:

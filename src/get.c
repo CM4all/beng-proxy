@@ -15,6 +15,7 @@
 #include "fcgi-request.h"
 #include "ajp-request.h"
 #include "header-writer.h"
+#include "pipe.h"
 
 void
 resource_get(struct http_cache *cache,
@@ -45,6 +46,11 @@ resource_get(struct http_cache *cache,
         static_file_get(pool, address->u.local.path,
                         address->u.local.content_type,
                         handler, handler_ctx);
+        return;
+
+    case RESOURCE_ADDRESS_PIPE:
+        pipe_filter(pool, address->u.cgi.path, headers, body,
+                    handler, handler_ctx);
         return;
 
     case RESOURCE_ADDRESS_CGI:

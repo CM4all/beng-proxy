@@ -529,6 +529,23 @@ translate_handle_packet(struct translate_client *client,
         client->response.language = payload;
         break;
 
+    case TRANSLATE_PIPE:
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_NONE) {
+            daemon_log(2, "misplaced TRANSLATE_PIPE packet\n");
+            break;
+        }
+
+        if (payload == NULL) {
+            daemon_log(2, "malformed TRANSLATE_PIPE packet\n");
+            break;
+        }
+
+        client->resource_address->type = RESOURCE_ADDRESS_PIPE;
+        memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
+        client->resource_address->u.cgi.path = payload;
+        break;
+
     case TRANSLATE_CGI:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {

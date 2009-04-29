@@ -39,6 +39,7 @@ TRANSLATE_USER_AGENT = 35
 TRANSLATE_MAX_AGE = 36
 TRANSLATE_VARY = 37
 TRANSLATE_QUERY_STRING = 38
+TRANSLATE_PIPE = 39
 
 class PacketReader:
     def __init__(self):
@@ -180,3 +181,8 @@ class Response:
         assert len(args) > 0
         payload = ''.join(map(lambda x: struct.pack('H', x), args))
         self.packet(TRANSLATE_VARY, payload)
+
+    def pipe(self, path):
+        assert isinstance(path, str)
+        assert len(path) > 0
+        self.packet(TRANSLATE_PIPE, path)

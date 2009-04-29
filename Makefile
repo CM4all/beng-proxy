@@ -167,6 +167,7 @@ SOURCES = src/main.c \
 	src/tcp-stock.c \
 	src/http-request.c \
 	src/ajp-request.c \
+	src/pipe.c \
 	src/cgi.c \
 	src/fcgi-stock.c \
 	src/fcgi-client.c \

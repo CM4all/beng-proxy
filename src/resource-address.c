@@ -32,6 +32,7 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         dest->u.http = uri_address_dup(pool, src->u.http);
         break;
 
+    case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
         assert(src->u.cgi.path != NULL);
@@ -70,6 +71,7 @@ resource_address_apply(pool_t pool, const struct resource_address *src,
         return NULL;
 
     case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
         return src;
 
     case RESOURCE_ADDRESS_HTTP:
@@ -121,6 +123,7 @@ resource_address_relative(const struct resource_address *base,
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
         return NULL;
 
     case RESOURCE_ADDRESS_HTTP:
@@ -154,6 +157,7 @@ resource_address_id(const struct resource_address *address, pool_t pool)
     case RESOURCE_ADDRESS_AJP:
         return p_strdup(pool, address->u.http->uri);
 
+    case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
         return p_strdup(pool, address->u.cgi.path);

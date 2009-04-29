@@ -250,6 +250,14 @@ remote HTTP server (proxy mode) \\
 
 \hline
 
+\texttt{PIPE} & a local program which reads input from stdin and
+prints the modified resource on stdout.  This is a simple alternative
+to CGI: you don't get any request headers, and you cannot specify a
+status or response headers.  The original headers are forwarded
+as-is. \\
+
+\hline
+
 \texttt{CGI} & a local path which is executed as CGI script \\
 
 \hline

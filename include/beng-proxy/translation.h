@@ -49,6 +49,7 @@ enum beng_translation_command {
     TRANSLATE_MAX_AGE = 36,
     TRANSLATE_VARY = 37,
     TRANSLATE_QUERY_STRING = 38,
+    TRANSLATE_PIPE = 39,
 };
 
 struct beng_translation_header {

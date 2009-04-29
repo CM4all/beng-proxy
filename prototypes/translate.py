@@ -35,6 +35,10 @@ class Translation(Protocol):
                 uri = m.group(1)
                 response.proxy(uri)
                 continue
+            m = re.match(r'^pipe\s+"(\S+)"$', line)
+            if m:
+                response.pipe(m.group(1))
+                continue
             m = re.match(r'^cgi\s+"(\S+)"$', line)
             if m:
                 response.packet(TRANSLATE_CGI, m.group(1))
