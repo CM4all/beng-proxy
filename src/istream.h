@@ -18,6 +18,20 @@ enum istream_direct {
     ISTREAM_PIPE = 02,
     ISTREAM_SOCKET = 04,
     ISTREAM_ANY = (ISTREAM_FILE | ISTREAM_PIPE | ISTREAM_SOCKET),
+
+#ifdef __linux
+    ISTREAM_TO_PIPE = ISTREAM_ANY,
+
+#ifdef SPLICE
+    ISTREAM_TO_SOCKET = ISTREAM_FILE | ISTREAM_PIPE,
+#else
+    ISTREAM_TO_SOCKET = ISTREAM_FILE,
+#endif
+
+#else
+    ISTREAM_TO_PIPE = 0,
+    ISTREAM_TO_SOCKET = 0,
+#endif
 };
 
 typedef unsigned istream_direct_t;

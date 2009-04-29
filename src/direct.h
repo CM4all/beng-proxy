@@ -15,13 +15,6 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 
-#ifdef SPLICE
-#define ISTREAM_DIRECT_SUPPORT (ISTREAM_FILE | ISTREAM_PIPE)
-#else
-#define ISTREAM_DIRECT_SUPPORT ISTREAM_FILE
-#endif
-
-
 static inline int
 istream_direct_to_socket(istream_direct_t src_type, int src_fd,
                          int dest_fd, size_t max_length)
@@ -41,10 +34,6 @@ istream_direct_to_socket(istream_direct_t src_type, int src_fd,
     }
 #endif
 }
-
-#else /* #ifdef __linux */
-
-#define ISTREAM_DIRECT_SUPPORT 0
 
 #endif  /* #ifdef __linux */
 

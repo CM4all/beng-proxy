@@ -399,12 +399,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
 
             istream_assign_handler(&f->input, input,
                                    &fork_input_handler, f,
-#ifdef __linux
-                                   ISTREAM_ANY
-#else
-                                   0
-#endif
-                                   );
+                                   ISTREAM_TO_PIPE);
         }
 
         close(stdout_pipe[1]);
