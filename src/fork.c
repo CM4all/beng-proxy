@@ -10,6 +10,7 @@
 #include "buffered-io.h"
 #include "event2.h"
 #include "fd-util.h"
+#include "direct.h"
 
 #ifdef __linux
 #include <fcntl.h>
@@ -101,7 +102,7 @@ fork_input_data(const void *data, size_t length, void *ctx)
 
 #ifdef __linux
 static ssize_t
-fork_input_direct(__attr_unused istream_direct_t type,
+fork_input_direct(istream_direct_t type,
                   int fd, size_t max_length, void *ctx)
 {
     struct fork *f = ctx;
@@ -109,8 +110,7 @@ fork_input_direct(__attr_unused istream_direct_t type,
 
     assert(f->input_fd >= 0);
 
-    nbytes = splice(fd, NULL, f->input_fd, NULL, max_length,
-                    SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
+    nbytes = istream_direct_to_pipe(type, fd, f->input_fd, max_length);
     if (nbytes < 0) {
         if (errno == EAGAIN) {
             if (!fd_ready_for_writing(f->input_fd)) {
@@ -121,8 +121,7 @@ fork_input_direct(__attr_unused istream_direct_t type,
             /* try again, just in case connection->fd has become ready
                between the first splice() call and
                fd_ready_for_writing() */
-            nbytes = splice(fd, NULL, f->input_fd, NULL, max_length,
-                            SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
+            nbytes = istream_direct_to_pipe(type, fd, f->input_fd, max_length);
         }
     }
 

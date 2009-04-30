@@ -113,6 +113,7 @@ SOURCES = src/main.c \
 	src/cookie-client.c \
 	src/cookie-server.c \
 	src/connection.c \
+	src/direct.c \
 	src/translate.c \
 	src/transformation.c \
 	src/tcache.c \
