@@ -271,7 +271,7 @@ test/t-http-server-mirror: test/t-http-server-mirror.o src/http-server.o src/htt
 test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstring.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/header-writer.o src/istream-forward.o src/istream-string.o src/istream-memory.o src/istream-cat.o src/istream-fail.o src/istream-block.o src/http-body.o src/header-parser.o src/istream-chunked.o src/istream-dechunk.o src/format.o src/http.o src/strutil.o src/buffered-io.o src/fd-util.o src/socket-util.o src/istream-head.o src/istream-null.o src/istream-zero.o src/tpool.o src/event2.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
-test/t-cgi: test/t-cgi.o src/cgi.o src/fork.o src/pool.o src/pstring.o src/fifo-buffer.o src/http.o src/header-parser.o src/strmap.o src/hashmap.o src/event2.o src/socket-util.o src/fd-util.o src/child.o src/buffered-io.o src/tpool.o src/growing-buffer.o src/strutil.o src/istream-file.o
+test/t-cgi: test/t-cgi.o src/cgi.o src/fork.o src/pool.o src/pstring.o src/fifo-buffer.o src/http.o src/header-parser.o src/strmap.o src/hashmap.o src/event2.o src/socket-util.o src/fd-util.o src/child.o src/buffered-io.o src/tpool.o src/growing-buffer.o src/strutil.o src/istream-file.o src/abort-flag.o src/direct.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
 
 test/t-http-util: test/t-http-util.o src/http-util.o src/pool.o src/pstring.o src/strutil.o
