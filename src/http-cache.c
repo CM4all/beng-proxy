@@ -535,6 +535,24 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
+    if (request->item != NULL && request->item->info.etag != NULL) {
+        const char *etag = strmap_get(headers, "etag");
+
+        if (etag != NULL && strcmp(etag, request->item->info.etag) == 0) {
+            cache_log(4, "http_cache: matching etag '%s' for %s, using cache entry\n",
+                      etag, request->url);
+
+            if (body != NULL)
+                istream_close(body);
+
+            http_cache_serve(request->item, request->pool,
+                             request->url, NULL,
+                             request->handler.handler, request->handler.ctx);
+            pool_unref(request->caller_pool);
+            return;
+        }
+    }
+
     if (request->item != NULL) {
         cache_remove_item(request->cache->cache, request->url,
                           &request->item->item);
