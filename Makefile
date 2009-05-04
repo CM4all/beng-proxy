@@ -212,7 +212,22 @@ DEBUG_ARGS = -vvvvvD
 all: src/cm4all-beng-proxy
 
 clean:
-	rm -f src/cm4all-beng-proxy src/*.a src/*.o doc/beng.{log,aux,ps,pdf,html} vgcore* core* gmon.out test/*.o test/benchmark-gmtime test/format-http-date test/request-translation test/run-subst $(FILTER_TESTS) test/t-istream-processor test/t-html-unescape test/t-html-unescape test/t-http-server test/t-http-server-mirror test/t-http-client test/t-http-util test/t-http-cache test/t-processor test/run-embed test/run-header-parser test/run-cookie-client test/t-cookie-client test/t-html-escape test/t-parser-cdata test/t-shm test/t-dpool test/t-session test/t-widget-registry test/t-wembed test/run-ajp-client test/t-hashmap test/t-cache test/t-cgi test/t-expansible-buffer
+	rm -f src/cm4all-beng-proxy src/*.a src/*.o \
+		doc/beng.{log,aux,ps,pdf,html} \
+		vgcore* core* gmon.out \
+		test/*.o \
+		test/benchmark-gmtime test/format-http-date \
+		test/request-translation test/run-subst $(FILTER_TESTS) \
+		test/t-istream-processor test/t-html-unescape \
+		test/t-html-unescape test/t-http-server \
+		test/t-http-server-mirror test/t-http-client test/t-http-util \
+		test/t-http-cache test/t-processor test/run-embed \
+		test/run-header-parser test/run-cookie-client \
+		test/t-cookie-client test/t-html-escape test/t-parser-cdata \
+		test/t-shm test/t-dpool test/t-session test/t-widget-registry \
+		test/t-wembed test/run-ajp-client test/t-hashmap test/t-cache \
+		test/t-cgi test/t-expansible-buffer \
+		test/t-widget-stream
 	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
 include demo/Makefile
@@ -273,6 +288,17 @@ test/t-http-client: test/t-http-client.o src/http-client.o src/pool.o src/pstrin
 
 test/t-cgi: test/t-cgi.o src/cgi.o src/fork.o src/pool.o src/pstring.o src/fifo-buffer.o src/http.o src/header-parser.o src/strmap.o src/hashmap.o src/event2.o src/socket-util.o src/fd-util.o src/child.o src/buffered-io.o src/tpool.o src/growing-buffer.o src/strutil.o src/istream-file.o src/abort-flag.o src/direct.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
+
+test/t-widget-stream: test/t-widget-stream.o \
+		src/pool.o src/pstring.o \
+		src/istream-forward.o \
+		src/istream-null.o src/istream-memory.o src/istream-string.o \
+		src/istream-delayed.o \
+		src/widget-stream.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
+
+check-widget-stream: test/t-widget-stream
+	./test/t-widget-stream
 
 test/t-http-util: test/t-http-util.o src/http-util.o src/pool.o src/pstring.o src/strutil.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
@@ -371,6 +397,7 @@ check-cache: test/t-cache
 
 check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-cgi \
+	check-widget-stream \
 	check-http-server check-http-client check-http-util \
 	check-http-cache \
 	check-cookie-client \
