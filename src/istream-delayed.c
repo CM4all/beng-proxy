@@ -112,7 +112,7 @@ istream_delayed_new(pool_t pool)
 }
 
 struct async_operation_ref *
-istream_delayed_async(istream_t i_delayed)
+istream_delayed_async_ref(istream_t i_delayed)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 

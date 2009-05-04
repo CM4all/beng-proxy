@@ -46,7 +46,7 @@ class_lookup_callback(void *_ctx)
     if (iw->widget->class != NULL) {
         inline_widget_set(iw);
     } else {
-        async_ref_clear(istream_delayed_async(iw->stream->delayed));
+        async_ref_clear(widget_stream_async_ref(iw->stream));
         istream_free(&iw->stream->delayed);
     }
 }

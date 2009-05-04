@@ -43,7 +43,7 @@ ws_abort(void *ctx)
        istream to the delayed object, and if we close it right now, it
        will trigger the async_abort(), unless we clear its
        async_ref */
-    async_ref_clear(istream_delayed_async(ws->delayed));
+    async_ref_clear(widget_stream_async_ref(ws));
 
     istream_free(&ws->delayed);
 }

@@ -232,7 +232,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                             widget,
                             translate_cache,
                             class_lookup_callback, rwu,
-                            istream_delayed_async(rwu->delayed));
+                            istream_delayed_async_ref(rwu->delayed));
         return rwu->delayed;
     }
 }

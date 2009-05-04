@@ -30,7 +30,7 @@ create_test(pool_t pool, istream_t input)
 
     async_init(&async, &my_delayed_operation);
     istream = istream_delayed_new(pool);
-    async_ref_set(istream_delayed_async(istream), &async);
+    async_ref_set(istream_delayed_async_ref(istream), &async);
 
     istream_delayed_set(istream, input);
     return istream;

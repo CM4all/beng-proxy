@@ -24,7 +24,7 @@ widget_stream_new(pool_t pool);
 static inline struct async_operation_ref *
 widget_stream_async_ref(struct widget_stream *ws)
 {
-    return istream_delayed_async(ws->delayed);
+    return istream_delayed_async_ref(ws->delayed);
 }
 
 #endif
