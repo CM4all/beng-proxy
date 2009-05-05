@@ -9,11 +9,18 @@
 
 #include "pool.h"
 
+#include <inline/list.h>
+
 #include <sys/time.h>
 
 struct cache;
 
 struct cache_item {
+    /**
+     * This item's siblings, sorted by #last_accessed.
+     */
+    struct list_head sorted_siblings;
+
     time_t expires;
     size_t size;
     time_t last_accessed;

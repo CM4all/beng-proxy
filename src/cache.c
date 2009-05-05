@@ -14,6 +14,12 @@ struct cache {
     const struct cache_class *class;
     size_t max_size, size;
     struct hashmap *items;
+
+    /**
+     * A linked list of all cache items, sorted by last_accessed,
+     * newest first.
+     */
+    struct list_head sorted_items;
 };
 
 struct cache *
@@ -28,6 +34,7 @@ cache_new(pool_t pool, const struct cache_class *class,
     cache->max_size = max_size;
     cache->size = 0;
     cache->items = hashmap_new(pool, 1024);
+    list_init(&cache->sorted_items);
 
     /* event, auto-expire */
 
@@ -52,11 +59,22 @@ cache_close(struct cache *cache)
             assert(cache->size >= item->size);
             cache->size -= item->size;
 
+#ifndef NDEBUG
+            list_remove(&item->sorted_siblings);
+#endif
+
             cache->class->destroy(item);
         }
 
         assert(cache->size == 0);
+        assert(list_empty(&cache->sorted_items));
     }
+}
+
+static inline struct cache_item *
+list_head_to_cache_item(struct list_head *list_head)
+{
+    return (struct cache_item *)(((char*)list_head) - offsetof(struct cache_item, sorted_siblings));
 }
 
 static void
@@ -98,6 +116,8 @@ cache_item_removed(struct cache *cache, struct cache_item *item)
     assert(item->lock > 0 || !item->removed);
     assert(cache->size >= item->size);
 
+    list_remove(&item->sorted_siblings);
+
     cache->size -= item->size;
 
     if (item->lock == 0)
@@ -117,9 +137,11 @@ cache_item_validate(const struct cache *cache, struct cache_item *item)
 static void
 cache_refresh_item(struct cache *cache, struct cache_item *item)
 {
-    (void)cache;
-
     item->last_accessed = time(NULL);
+
+    /* move to the front of the linked list */
+    list_remove(&item->sorted_siblings);
+    list_add(&item->sorted_siblings, &cache->sorted_items);
 }
 
 struct cache_item *
@@ -260,6 +282,7 @@ cache_add(struct cache *cache, const char *key,
     cache_check(cache);
 
     hashmap_add(cache->items, key, item);
+    list_add(&item->sorted_siblings, &cache->sorted_items);
 
     cache->size += item->size;
     item->last_accessed = time(NULL);
@@ -292,6 +315,8 @@ cache_put(struct cache *cache, const char *key,
 
     cache->size += item->size;
     item->last_accessed = time(NULL);
+
+    list_add(&item->sorted_siblings, &cache->sorted_items);
 
     cache_check(cache);
 }
