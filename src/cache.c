@@ -114,6 +114,14 @@ cache_item_validate(const struct cache *cache, struct cache_item *item)
         (cache->class->validate == NULL || cache->class->validate(item));
 }
 
+static void
+cache_refresh_item(struct cache *cache, struct cache_item *item)
+{
+    (void)cache;
+
+    item->last_accessed = time(NULL);
+}
+
 struct cache_item *
 cache_get(struct cache *cache, const char *key)
 {
@@ -134,7 +142,7 @@ cache_get(struct cache *cache, const char *key)
         return NULL;
     }
 
-    item->last_accessed = time(NULL);
+    cache_refresh_item(cache, item);
     return item;
 }
 
@@ -165,7 +173,7 @@ cache_get_match(struct cache *cache, const char *key,
 
             if (match(item, ctx)) {
                 /* this one matches: return it to the caller */
-                item->last_accessed = time(NULL);
+                cache_refresh_item(cache, item);
                 return item;
             }
 
