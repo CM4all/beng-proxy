@@ -39,6 +39,8 @@ struct cgi {
      */
     bool in_response_callback;
 
+    bool had_input, had_output;
+
     struct async_operation async;
     struct http_response_handler_ref handler;
 };
@@ -121,6 +123,8 @@ cgi_input_data(const void *data, size_t length, void *ctx)
 {
     struct cgi *cgi = ctx;
 
+    cgi->had_input = true;
+
     if (cgi->headers != NULL) {
         void *dest;
         size_t max_length;
@@ -148,10 +152,12 @@ cgi_input_data(const void *data, size_t length, void *ctx)
             return 0;
         }
 
-        if (cgi->headers == NULL) {
+        if (cgi->headers == NULL && !fifo_buffer_empty(cgi->buffer)) {
             size_t consumed = istream_buffer_send(&cgi->output, cgi->buffer);
             if (consumed == 0 && cgi->input == NULL)
                 length = 0;
+
+            cgi->had_output = true;
         }
 
         pool_unref(cgi->output.pool);
@@ -166,6 +172,7 @@ cgi_input_data(const void *data, size_t length, void *ctx)
             cgi->buffer = NULL;
         }
 
+        cgi->had_output = true;
         return istream_invoke_data(&cgi->output, data, length);
     }
 }
@@ -176,6 +183,9 @@ cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     struct cgi *cgi = ctx;
 
     assert(cgi->headers == NULL);
+
+    cgi->had_input = true;
+    cgi->had_output = true;
 
     return istream_invoke_direct(&cgi->output, type, fd, max_length);
 }
@@ -287,8 +297,20 @@ istream_cgi_read(istream_t istream)
         /* this condition catches the case in cgi_parse_headers():
            http_response_handler_invoke_response() might recursively call
            istream_read(cgi->input) */
-        if (!cgi->in_response_callback)
+        if (cgi->in_response_callback) {
+            return;
+        }
+
+        pool_ref(cgi->output.pool);
+
+        cgi->had_output = false;
+        do {
+            cgi->had_input = false;
             istream_read(cgi->input);
+        } while (cgi->input != NULL && cgi->had_input &&
+                 !cgi->had_output);
+
+        pool_unref(cgi->output.pool);
     } else {
         size_t rest = istream_buffer_consume(&cgi->output, cgi->buffer);
         if (rest == 0)
