@@ -281,6 +281,7 @@ cache_add(struct cache *cache, const char *key,
 
     cache_check(cache);
 
+    item->key = key;
     hashmap_add(cache->items, key, item);
     list_add(&item->sorted_siblings, &cache->sorted_items);
 
@@ -308,6 +309,8 @@ cache_put(struct cache *cache, const char *key,
     }
 
     cache_check(cache);
+
+    item->key = key;
 
     old = hashmap_set(cache->items, key, item);
     if (old != NULL)

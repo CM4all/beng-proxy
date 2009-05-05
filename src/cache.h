@@ -21,6 +21,11 @@ struct cache_item {
      */
     struct list_head sorted_siblings;
 
+    /**
+     * The key under which this item is stored in the hash table.
+     */
+    const char *key;
+
     time_t expires;
     size_t size;
     time_t last_accessed;
