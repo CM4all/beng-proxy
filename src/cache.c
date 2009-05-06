@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <time.h>
+#include <event.h>
 
 struct cache {
     const struct cache_class *class;
@@ -20,13 +21,26 @@ struct cache {
      * newest first.
      */
     struct list_head sorted_items;
+
+    struct event expire_event;
 };
+
+/** clean up expired cache items every 60 seconds */
+static const struct timeval cache_expire_interval = {
+    .tv_sec = 60,
+    .tv_usec = 0,
+};
+
+static void
+cache_expire_event_callback(int fd __attr_unused, short event __attr_unused,
+                            void *ctx);
 
 struct cache *
 cache_new(pool_t pool, const struct cache_class *class,
           size_t max_size)
 {
     struct cache *cache = p_malloc(pool, sizeof(*cache));
+    struct timeval tv = cache_expire_interval;
 
     assert(class != NULL);
 
@@ -36,7 +50,8 @@ cache_new(pool_t pool, const struct cache_class *class,
     cache->items = hashmap_new(pool, 1024);
     list_init(&cache->sorted_items);
 
-    /* event, auto-expire */
+    evtimer_set(&cache->expire_event, cache_expire_event_callback, cache);
+    evtimer_add(&cache->expire_event, &tv);
 
     return cache;
 }
@@ -48,6 +63,8 @@ void
 cache_close(struct cache *cache)
 {
     const struct hashmap_pair *pair;
+
+    evtimer_del(&cache->expire_event);
 
     cache_check(cache);
 
@@ -395,4 +412,39 @@ cache_item_unlock(struct cache *cache, struct cache_item *item)
     if (--item->lock == 0 && item->removed)
         /* postponed destroy */
         cache_destroy_item(cache, item);
+}
+
+/** clean up expired cache items every 60 seconds */
+static void
+cache_expire_event_callback(int fd __attr_unused, short event __attr_unused,
+                            void *ctx)
+{
+    struct cache *cache = ctx;
+    struct cache_item *item;
+    const time_t now = time(NULL);
+    struct timeval tv = cache_expire_interval;
+
+    cache_check(cache);
+
+    for (item = (struct cache_item *)cache->sorted_items.next;
+         &item->sorted_siblings != &cache->sorted_items;
+         item = (struct cache_item *)item->sorted_siblings.next) {
+        bool found;
+        struct cache_item *item2;
+
+        if (item->expires > now)
+            /* not yet expired */
+            continue;
+
+        found = hashmap_remove_value(cache->items, item->key, item);
+        assert(found);
+
+        item2 = item;
+        item = (struct cache_item *)item->sorted_siblings.prev;
+        cache_item_removed(cache, item2);
+    }
+
+    cache_check(cache);
+
+    evtimer_add(&cache->expire_event, &tv);
 }

@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <time.h>
+#include <event.h>
 
 static void *
 match_to_ptr(int match)
@@ -72,9 +73,12 @@ my_match(const struct cache_item *item, void *ctx)
 }
 
 int main(int argc __attr_unused, char **argv __attr_unused) {
+    struct event_base *event_base;
     pool_t pool;
     struct cache *cache;
     struct my_cache_item *i;
+
+    event_base = event_init();
 
     pool = pool_new_libc(NULL, "root");
 
@@ -169,4 +173,6 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
+
+    event_base_free(event_base);
 }

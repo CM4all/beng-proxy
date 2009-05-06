@@ -390,7 +390,7 @@ check-hashmap: test/t-hashmap
 	./test/t-hashmap
 
 test/t-cache: test/t-cache.o src/cache.o src/pool.o src/hashmap.o
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 check-cache: test/t-cache
 	./test/t-cache
