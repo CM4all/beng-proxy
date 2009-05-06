@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <event.h>
 
 struct request {
     bool cached;
@@ -268,10 +269,13 @@ run_cache_test(pool_t root_pool, unsigned num, bool cached)
 }
 
 int main(int argc, char **argv) {
+    struct event_base *event_base;
     pool_t pool;
 
     (void)argc;
     (void)argv;
+
+    event_base = event_init();
 
     pool = pool_new_libc(NULL, "root");
     tpool_init(pool);
@@ -296,4 +300,6 @@ int main(int argc, char **argv) {
     tpool_deinit();
     pool_commit();
     pool_recycler_clear();
+
+    event_base_free(event_base);
 }

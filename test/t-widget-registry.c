@@ -8,6 +8,7 @@
 #include "transformation.h"
 
 #include <string.h>
+#include <event.h>
 
 struct data {
     bool got_class;
@@ -155,7 +156,10 @@ test_abort(pool_t pool)
  */
 
 int main(int argc __attr_unused, char **argv __attr_unused) {
+    struct event_base *event_base;
     pool_t root_pool;
+
+    event_base = event_init();
 
     root_pool = pool_new_libc(NULL, "root");
 
@@ -170,4 +174,6 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     pool_commit();
 
     pool_recycler_clear();
+
+    event_base_free(event_base);
 }
