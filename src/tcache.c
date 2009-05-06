@@ -240,6 +240,40 @@ tcache_callback(const struct translate_response *response, void *ctx)
     tcr->callback(response, tcr->ctx);
 }
 
+static void
+tcache_hit(pool_t pool, const char *key, const struct tcache_item *item,
+           translate_callback_t callback, void *ctx)
+{
+    struct translate_response *response =
+        p_malloc(pool, sizeof(*response));
+
+    cache_log(4, "translate_cache: hit %s\n", key);
+
+    tcache_dup_response(pool, response, &item->response);
+    callback(response, ctx);
+}
+
+static void
+tcache_miss(pool_t pool, struct tcache *tcache,
+            const struct translate_request *request, const char *key,
+            translate_callback_t callback, void *ctx,
+            struct async_operation_ref *async_ref)
+{
+    struct tcache_request *tcr = p_malloc(pool, sizeof(*tcr));
+
+    cache_log(4, "translate_cache: miss %s\n", key);
+
+    tcr->pool = pool;
+    tcr->tcache = tcache;
+    tcr->request = request;
+    tcr->key = key;
+    tcr->callback = callback;
+    tcr->ctx = ctx;
+
+    translate(pool, tcache->tcp_stock, tcache->socket_path,
+              request, tcache_callback, tcr, async_ref);
+}
+
 
 /*
  * cache class
@@ -319,29 +353,10 @@ translate_cache(pool_t pool, struct tcache *tcache,
             (struct tcache_item *)cache_get_match(tcache->cache, key,
                                                   tcache_item_match, &match_ctx);
 
-        if (item == NULL) {
-            struct tcache_request *tcr = p_malloc(pool, sizeof(*tcr));
-
-            cache_log(4, "translate_cache: miss %s\n", key);
-
-            tcr->pool = pool;
-            tcr->tcache = tcache;
-            tcr->request = request;
-            tcr->key = key;
-            tcr->callback = callback;
-            tcr->ctx = ctx;
-
-            translate(pool, tcache->tcp_stock, tcache->socket_path,
-                      request, tcache_callback, tcr, async_ref);
-        } else {
-            struct translate_response *response =
-                p_malloc(pool, sizeof(*response));
-
-            cache_log(4, "translate_cache: hit %s\n", key);
-
-            tcache_dup_response(pool, response, &item->response);
-            callback(response, ctx);
-        }
+        if (item != NULL)
+            tcache_hit(pool, key, item, callback, ctx);
+        else
+            tcache_miss(pool, tcache, request, key, callback, ctx, async_ref);
     } else {
         cache_log(4, "translate_cache: ignore %s\n",
                   request->uri == NULL ? request->widget_type : request->uri);
