@@ -232,42 +232,19 @@ cache_get_match(struct cache *cache, const char *key,
 static void
 cache_destroy_oldest_item(struct cache *cache)
 {
-    const struct hashmap_pair *pair;
-    const char *oldest_key = NULL;
-    struct cache_item *oldest_item = NULL;
-    const time_t now = time(NULL);
+    struct cache_item *item;
     bool found;
 
-    /* XXX this function is O(n^2) */
-
-    hashmap_rewind(cache->items);
-    while ((pair = hashmap_next(cache->items)) != NULL) {
-        struct cache_item *item = pair->value;
-
-        if (now >= item->expires) {
-            /* this item is expired; although this method should
-               delete the oldest item, we are satisfied for now with
-               deleting any expired item */
-            oldest_key = pair->key;
-            oldest_item = item;
-            break;
-        }
-
-        if (oldest_item == NULL ||
-            item->last_accessed < oldest_item->last_accessed) {
-            oldest_key = pair->key;
-            oldest_item = item;
-        }
-    }
-
-    if (oldest_item == NULL)
+    if (list_empty(&cache->sorted_items))
         return;
 
+    item = list_head_to_cache_item(cache->sorted_items.prev);
+
     cache_check(cache);
-    found = hashmap_remove_value(cache->items, oldest_key, oldest_item);
+    found = hashmap_remove_value(cache->items, item->key, item);
     assert(found);
 
-    cache_item_removed(cache, oldest_item);
+    cache_item_removed(cache, item);
     cache_check(cache);
 }
 

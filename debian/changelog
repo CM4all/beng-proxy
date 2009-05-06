@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.5.3) unstable; urgency=low
   * http-cache: use cache entry when response ETag matches
   * cgi: loop in istream_cgi_read() to prevent blocking
   * cache: check for expired items once a minute
+  * cache: optimize search for oldest item
 
  --
 
