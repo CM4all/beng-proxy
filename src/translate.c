@@ -730,6 +730,10 @@ translate_handle_packet(struct translate_client *client,
         client->response.vary = (const uint16_t *)payload;
         client->response.num_vary = payload_length / sizeof(client->response.vary[0]);
         break;
+
+    case TRANSLATE_BASE:
+        client->response.base = payload;
+        break;
     }
 
     return true;

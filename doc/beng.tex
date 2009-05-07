@@ -292,6 +292,26 @@ this CGI \\
 
 \hline
 
+\texttt{BASE} & Defines a realm in the URI space.  The payload
+specifies the URI prefix (ending with a slash) which contains this
+realm.  All resources in this realm can be addressed by
+\emph{beng-proxy} with a trivial pattern: append the relative URI
+(within the realm) to the resource address (e.g. the \texttt{PATH},
+\texttt{PROXY} or \texttt{PATH\_INFO} value).
+
+The address in this response applies to request URI, not the
+base URI (to allow backwards compatibility with translation clients
+which do not support this packet).
+
+Example: in the request, \texttt{URI} is \texttt{/foo/bar/index.html};
+in the response, \texttt{PATH} is \texttt{/var/www/foo/bar/index.html}
+and \texttt{BASE} is \texttt{/foo/}.  The \emph{beng-proxy}
+translation cache now knows: if a request on \texttt{/foo/test.png} is
+received, it can serve \texttt{/var/www/foo/test.png} without querying
+the translation server. \\
+
+\hline
+
 \texttt{FILTER} & the next resource address (\texttt{PROXY},
 \texttt{CGI}) will denote an output filter, see section \ref{filter}
 \\

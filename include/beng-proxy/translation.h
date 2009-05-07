@@ -50,6 +50,7 @@ enum beng_translation_command {
     TRANSLATE_VARY = 37,
     TRANSLATE_QUERY_STRING = 38,
     TRANSLATE_PIPE = 39,
+    TRANSLATE_BASE = 40,
 };
 
 struct beng_translation_header {
