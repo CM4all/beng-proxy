@@ -179,6 +179,7 @@ SOURCES = src/main.c \
 	src/duplex.c \
 	$(ISTREAM_SOURCES) \
 	src/fork.c \
+	src/delegate-stock.c \
 	src/uri-relative.c \
 	src/uri-parser.c \
 	src/uri-address.c \
