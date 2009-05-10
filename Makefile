@@ -180,6 +180,7 @@ SOURCES = src/main.c \
 	$(ISTREAM_SOURCES) \
 	src/fork.c \
 	src/delegate-stock.c \
+	src/delegate-client.c \
 	src/uri-relative.c \
 	src/uri-parser.c \
 	src/uri-address.c \
@@ -228,6 +229,7 @@ clean:
 		test/t-shm test/t-dpool test/t-session test/t-widget-registry \
 		test/t-wembed test/run-ajp-client test/t-hashmap test/t-cache \
 		test/t-cgi test/t-expansible-buffer \
+		test/run-delegate \
 		test/t-widget-stream
 	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
@@ -398,6 +400,12 @@ test/t-cache: test/t-cache.o src/cache.o src/pool.o src/hashmap.o
 
 check-cache: test/t-cache
 	./test/t-cache
+
+test/run-delegate: test/run-delegate.o \
+	src/delegate-stock.o src/delegate-client.o \
+	src/hashmap.o src/hstock.o src/stock.o \
+	src/pool.o src/pstring.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
 check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-cgi \

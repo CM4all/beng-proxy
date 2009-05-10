@@ -48,6 +48,7 @@ test/t-cgi
 test/t-expansible-buffer
 test/t-hashmap
 test/t-widget-stream
+test/run-delegate
 
 *.aux
 *.log
