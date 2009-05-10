@@ -367,7 +367,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
 
     pid = fork();
     if (pid < 0) {
-        daemon_log(1, "pipe() failed: %s\n", strerror(errno));
+        daemon_log(1, "fork() failed: %s\n", strerror(errno));
         close(stdin_pipe[0]);
         close(stdin_pipe[1]);
         close(stdout_pipe[0]);
