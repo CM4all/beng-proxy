@@ -2,6 +2,7 @@
 *~
 *.o
 src/cm4all-beng-proxy
+src/cm4all-beng-proxy-delegate-helper
 
 test/benchmark-gmtime
 test/format-http-date

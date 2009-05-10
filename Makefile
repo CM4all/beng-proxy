@@ -209,7 +209,7 @@ DEBUG_ARGS = -vvvvvD
 
 .PHONY: all clean
 
-all: src/cm4all-beng-proxy
+all: src/cm4all-beng-proxy src/cm4all-beng-proxy-delegate-helper
 
 clean:
 	rm -f src/cm4all-beng-proxy src/*.a src/*.o \
@@ -238,7 +238,10 @@ src/libcm4all-istream.a: $(ISTREAM_OBJECTS)
 src/cm4all-beng-proxy: $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS) $(LIBATTR_LIBS) -lz
 
-$(OBJECTS): %.o: %.c $(HEADERS)
+src/cm4all-beng-proxy-delegate-helper: src/delegate-helper.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(OBJECTS) src/delegate-helper.o: %.o: %.c $(HEADERS)
 	$(CC) -c -o $@ $< $(ALL_CFLAGS) $(LIBEVENT_CFLAGS) $(LIBDAEMON_CFLAGS) $(LIBATTR_CFLAGS)
 
 test/%.o: test/%.c $(HEADERS) $(wildcard test/*.h)
