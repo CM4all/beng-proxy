@@ -10,6 +10,7 @@
 
 #include "pool.h"
 
+struct lease;
 struct delegate_stock;
 
 typedef void (*delegate_callback_t)(int fd, void *ctx);
@@ -20,7 +21,8 @@ typedef void (*delegate_callback_t)(int fd, void *ctx);
  * @param fd the socket to the helper process
  */
 void
-delegate_open(int fd, pool_t pool, const char *path,
+delegate_open(int fd, const struct lease *lease, void *lease_ctx,
+              pool_t pool, const char *path,
               delegate_callback_t callback, void *ctx);
 
 void

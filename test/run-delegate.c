@@ -2,6 +2,7 @@
 #include "delegate-stock.h"
 #include "stock.h"
 #include "async.h"
+#include "lease.h"
 
 #include <event.h>
 #include <assert.h>
@@ -13,16 +14,24 @@ static const char helper_path[] = "./src/cm4all-beng-proxy-delegate-helper";
 static struct hstock *delegate_stock;
 
 static void
-my_delegate_callback(int fd, void *ctx)
+delegate_socket_release(bool reuse __attr_unused, void *ctx)
 {
-    struct stock_item *item = ctx;
+    struct stock_item *stock_item = ctx;
 
+    hstock_put(delegate_stock, helper_path, stock_item, true);
+}
+
+static const struct lease delegate_socket_lease = {
+    .release = delegate_socket_release,
+};
+
+static void
+my_delegate_callback(int fd, void *ctx __attr_unused)
+{
     if (fd < 0)
         fprintf(stderr, "%s\n", strerror(-fd));
     else
         close(fd);
-
-    hstock_put(delegate_stock, helper_path, item, true);
 }
 
 static void
@@ -30,8 +39,10 @@ my_stock_callback(void *ctx, struct stock_item *item)
 {
     pool_t pool = ctx;
 
-    delegate_open(delegate_stock_item_get(item), pool, "/etc/hosts",
-                  my_delegate_callback, item);
+    delegate_open(delegate_stock_item_get(item),
+                  &delegate_socket_lease, item,
+                  pool, "/etc/hosts",
+                  my_delegate_callback, NULL);
 }
 
 int main(int argc __attr_unused, char **argv __attr_unused)

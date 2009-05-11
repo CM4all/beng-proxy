@@ -7,6 +7,7 @@
 
 #include "delegate-client.h"
 #include "delegate-protocol.h"
+#include "lease.h"
 
 #ifdef __linux
 #include <fcntl.h>
@@ -25,6 +26,7 @@
 #include <sys/socket.h>
 
 struct delegate_client {
+    struct lease_ref lease_ref;
     int fd;
     struct event event;
 
@@ -83,6 +85,9 @@ delegate_try_read(struct delegate_client *d)
     nbytes = recvmsg(d->fd, &msg, 0);
     if (nbytes < 0) {
         fd = -errno;
+
+        lease_release(&d->lease_ref, false);
+
         daemon_log(1, "recvmsg() failed: %s\n", strerror(errno));
         d->callback(fd, d->callback_ctx);
         pool_unref(d->pool);
@@ -90,6 +95,8 @@ delegate_try_read(struct delegate_client *d)
     }
 
     if ((size_t)nbytes != sizeof(header)) {
+        lease_release(&d->lease_ref, false);
+
         daemon_log(1, "short recvmsg()\n");
         d->callback(-EWOULDBLOCK, d->callback_ctx);
         pool_unref(d->pool);
@@ -97,6 +104,8 @@ delegate_try_read(struct delegate_client *d)
     }
 
     if (header.length != 0) {
+        lease_release(&d->lease_ref, false);
+
         daemon_log(1, "Invalid message length\n");
         d->callback(-EINVAL, d->callback_ctx);
         pool_unref(d->pool);
@@ -105,6 +114,9 @@ delegate_try_read(struct delegate_client *d)
 
     if (header.command != 0) {
         /* i/o error */
+
+        lease_release(&d->lease_ref, false);
+
         d->callback(-header.command, d->callback_ctx);
         pool_unref(d->pool);
         return;
@@ -112,6 +124,8 @@ delegate_try_read(struct delegate_client *d)
 
     cmsg = CMSG_FIRSTHDR(&msg);
     if (cmsg == NULL) {
+        lease_release(&d->lease_ref, false);
+
         daemon_log(1, "No fd passed\n");
         d->callback(-EINVAL, d->callback_ctx);
         pool_unref(d->pool);
@@ -119,12 +133,16 @@ delegate_try_read(struct delegate_client *d)
     }
 
     if (!cmsg->cmsg_type == SCM_RIGHTS) {
+        lease_release(&d->lease_ref, false);
+
         daemon_log(1, "got control message of unknown type %d\n",
                    cmsg->cmsg_type);
         d->callback(-EINVAL, d->callback_ctx);
         pool_unref(d->pool);
         return;
     }
+
+    lease_release(&d->lease_ref, true);
 
     fd = *(int*)CMSG_DATA(cmsg);
     d->callback(fd, d->callback_ctx);
@@ -154,6 +172,9 @@ delegate_try_write(struct delegate_client *d)
     nbytes = send(d->fd, d->payload, d->payload_rest, MSG_DONTWAIT);
     if (nbytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
         int fd = -errno;
+
+        lease_release(&d->lease_ref, false);
+
         daemon_log(1, "failed to send to delegate: %s\n", strerror(errno));
         d->callback(fd, d->callback_ctx);
         pool_unref(d->pool);
@@ -173,7 +194,8 @@ delegate_try_write(struct delegate_client *d)
 }
 
 void
-delegate_open(int fd, pool_t pool, const char *path,
+delegate_open(int fd, const struct lease *lease, void *lease_ctx,
+              pool_t pool, const char *path,
               delegate_callback_t callback, void *ctx)
 {
     struct delegate_client *d;
@@ -181,6 +203,7 @@ delegate_open(int fd, pool_t pool, const char *path,
     struct delegate_header header;
 
     d = p_malloc(pool, sizeof(*d));
+    lease_ref_set(&d->lease_ref, lease, lease_ctx);
     d->fd = fd;
     d->pool = pool;
 
@@ -190,12 +213,17 @@ delegate_open(int fd, pool_t pool, const char *path,
     nbytes = send(d->fd, &header, sizeof(header), MSG_DONTWAIT);
     if (nbytes < 0) {
         fd = -errno;
+
+        lease_release(&d->lease_ref, false);
+
         daemon_log(1, "failed to send to delegate: %s\n", strerror(errno));
         callback(fd, ctx);
         return;
     }
 
     if ((size_t)nbytes != sizeof(header)) {
+        lease_release(&d->lease_ref, false);
+
         daemon_log(1, "short send to delegate\n");
         callback(-EWOULDBLOCK, ctx);
         return;
