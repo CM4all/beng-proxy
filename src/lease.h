@@ -9,6 +9,8 @@
 
 #include <inline/poison.h>
 
+#include <assert.h>
+
 struct lease {
     void (*release)(bool reuse, void *ctx);
 };
