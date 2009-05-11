@@ -182,6 +182,7 @@ SOURCES = src/main.c \
 	src/fork.c \
 	src/delegate-stock.c \
 	src/delegate-client.c \
+	src/delegate-glue.c \
 	src/uri-relative.c \
 	src/uri-parser.c \
 	src/uri-address.c \
@@ -403,8 +404,9 @@ check-cache: test/t-cache
 	./test/t-cache
 
 test/run-delegate: test/run-delegate.o \
-	src/delegate-stock.o src/delegate-client.o \
+	src/delegate-stock.o src/delegate-client.o src/delegate-glue.o \
 	src/hashmap.o src/hstock.o src/stock.o \
+	src/defer.o \
 	src/pool.o src/pstring.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 

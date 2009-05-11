@@ -11,7 +11,6 @@
 #include "pool.h"
 
 struct lease;
-struct delegate_stock;
 
 typedef void (*delegate_callback_t)(int fd, void *ctx);
 
@@ -24,10 +23,5 @@ void
 delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               pool_t pool, const char *path,
               delegate_callback_t callback, void *ctx);
-
-void
-delegate_stock_open(struct delegate_stock *stock,
-                    pool_t pool, const char *path,
-                    delegate_callback_t callback, void *ctx);
 
 #endif
