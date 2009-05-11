@@ -105,6 +105,7 @@ SOURCES = src/main.c \
 	src/global.c \
 	src/event2.c \
 	src/child.c \
+	src/defer.c \
 	src/worker.c \
 	src/shm.c \
 	src/dpool.c \
