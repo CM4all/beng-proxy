@@ -55,10 +55,9 @@ class Translation(Protocol):
             m = re.match(r'^path\s+"(\S+)"$', line)
             if m:
                 path = m.group(1)
-                response.packet(TRANSLATE_PATH, path)
+                response.path(path)
                 if path[-5:] == '.html':
-                    response.packet(TRANSLATE_CONTENT_TYPE,
-                                    'text/html; charset=utf-8')
+                    response.content_type('text/html; charset=utf-8')
                 continue
             m = re.match(r'^script_name\s+"(\S+)"$', line)
             if m:
@@ -78,7 +77,7 @@ class Translation(Protocol):
                 continue
             m = re.match(r'^content_type\s+"([^\"]+)"$', line)
             if m:
-                response.packet(TRANSLATE_CONTENT_TYPE, m.group(1))
+                response.content_type(m.group(1))
                 continue
             m = re.match(r'^view\s+"([-_\w]+)"$', line)
             if m:
@@ -105,10 +104,9 @@ class Translation(Protocol):
         if cgi:
             response.packet(TRANSLATE_CGI, path)
         else:
-            response.packet(TRANSLATE_PATH, path)
+            response.path(path)
             if path[-5:] == '.html':
-                response.packet(TRANSLATE_CONTENT_TYPE,
-                                'text/html; charset=utf-8')
+                response.content_type('text/html; charset=utf-8')
                 response.packet(TRANSLATE_PROCESS)
                 response.packet(TRANSLATE_CONTAINER)
 

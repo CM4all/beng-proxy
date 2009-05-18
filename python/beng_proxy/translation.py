@@ -186,3 +186,14 @@ class Response:
         assert isinstance(path, str)
         assert len(path) > 0
         self.packet(TRANSLATE_PIPE, path)
+
+    def path(self, path):
+        assert isinstance(path, str)
+        assert len(path) > 0
+        assert path[0] == '/'
+        self.packet(TRANSLATE_PATH, path)
+
+    def content_type(self, content_type):
+        assert isinstance(content_type, str)
+        assert content_type.find('/') > 0
+        self.packet(TRANSLATE_CONTENT_TYPE, content_type)
