@@ -24,6 +24,8 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         dest->u.local.path = p_strdup(pool, src->u.local.path);
         dest->u.local.content_type = src->u.local.content_type == NULL
             ? NULL : p_strdup(pool, src->u.local.content_type);
+        dest->u.local.delegate = src->u.local.delegate == NULL
+            ? NULL : p_strdup(pool, src->u.local.delegate);
         break;
 
     case RESOURCE_ADDRESS_HTTP:

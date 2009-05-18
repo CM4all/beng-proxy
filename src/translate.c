@@ -736,6 +736,21 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_BASE:
         client->response.base = payload;
         break;
+
+    case TRANSLATE_DELEGATE:
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
+            daemon_log(2, "misplaced TRANSLATE_DELEGATE packet\n");
+            break;
+        }
+
+        if (payload == NULL) {
+            daemon_log(2, "malformed TRANSLATE_DELEGATE packet\n");
+            break;
+        }
+
+        client->resource_address->u.local.delegate = payload;
+        break;
     }
 
     return true;
