@@ -421,6 +421,8 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_LOCAL;
+        memset(&client->resource_address->u.local, 0,
+               sizeof(client->resource_address->u.local));
         client->resource_address->u.local.path = payload;
         break;
 
