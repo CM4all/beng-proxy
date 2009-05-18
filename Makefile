@@ -432,8 +432,8 @@ cov: check
 
 debug: src/cm4all-beng-proxy
 	rm -f /tmp/cm4all-beng-proxy.gdb
-	echo -en "handle SIGPIPE noprint nostop\nrun $(DEBUG_ARGS)\n" >/tmp/cm4all-beng-proxy.gdb
-	LD_LIBRARY_PATH=/usr/lib/debug:$(LD_LIBRARY_PATH) gdb -x /tmp/cm4all-beng-proxy.gdb $<
+	echo -en "handle SIGPIPE noprint nostop\nrun\n" >/tmp/cm4all-beng-proxy.gdb
+	LD_LIBRARY_PATH=/usr/lib/debug:$(LD_LIBRARY_PATH) gdb -x /tmp/cm4all-beng-proxy.gdb --args $< $(DEBUG_ARGS)
 
 profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -DNO_ACCESS_LOG -g -pg
 profile: LDFLAGS = -lc_p -pg
