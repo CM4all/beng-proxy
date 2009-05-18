@@ -14,6 +14,8 @@
 #include "http-util.h"
 #include "growing-buffer.h"
 #include "http-server.h"
+#include "delegate-get.h"
+#include "global.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -133,6 +135,16 @@ file_callback(struct request *request2)
         http_server_response(request, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
                              istream_string_new(request->pool,
                                                 "This method is not allowed."));
+        return;
+    }
+
+    /* delegate? */
+
+    if (tr->address.u.local.delegate != NULL) {
+        delegate_stock_get(global_delegate_stock, request->pool,
+                           tr->address.u.local.delegate, path,
+                           &response_handler, request2,
+                           request2->async_ref);
         return;
     }
 
