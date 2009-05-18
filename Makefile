@@ -183,6 +183,7 @@ SOURCES = src/main.c \
 	src/delegate-stock.c \
 	src/delegate-client.c \
 	src/delegate-glue.c \
+	src/delegate-get.c \
 	src/uri-relative.c \
 	src/uri-parser.c \
 	src/uri-address.c \
