@@ -199,3 +199,11 @@ class Response:
         assert isinstance(content_type, str)
         assert content_type.find('/') > 0
         self.packet(TRANSLATE_CONTENT_TYPE, content_type)
+
+    def delegate(self, helper):
+        assert isinstance(helper, str)
+        self.packet(TRANSLATE_DELEGATE, helper)
+
+    def delegated_path(self, helper, path):
+        self.path(path)
+        self.delegate(helper)
