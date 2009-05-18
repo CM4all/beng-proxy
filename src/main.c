@@ -14,6 +14,7 @@
 #include "tcache.h"
 #include "http-cache.h"
 #include "fcgi-stock.h"
+#include "delegate-stock.h"
 #include "fcache.h"
 #include "child.h"
 #include "global.h"
@@ -78,6 +79,9 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 
     if (instance->tcp_stock != NULL)
         hstock_free(&instance->tcp_stock);
+
+    if (instance->delegate_stock != NULL)
+        hstock_free(&instance->delegate_stock);
 
     pool_commit();
 }
@@ -181,6 +185,7 @@ int main(int argc, char **argv)
     instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
                                          instance.tcp_stock);
     instance.fcgi_stock = fcgi_stock_new(instance.pool);
+    instance.delegate_stock = delegate_stock_new(instance.pool);
     instance.filter_cache = filter_cache_new(instance.pool, 32 * 1024 * 1024,
                                              instance.tcp_stock,
                                              instance.fcgi_stock);
@@ -191,6 +196,7 @@ int main(int argc, char **argv)
     global_tcp_stock = instance.tcp_stock;
     global_http_cache = instance.http_cache;
     global_fcgi_stock = instance.fcgi_stock;
+    global_delegate_stock = instance.delegate_stock;
     global_filter_cache = instance.filter_cache;
 
     /* daemonize */

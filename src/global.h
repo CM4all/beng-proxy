@@ -17,4 +17,6 @@ extern struct fcgi_stock *global_fcgi_stock;
 
 extern struct filter_cache *global_filter_cache;
 
+extern struct hstock *global_delegate_stock;
+
 #endif
