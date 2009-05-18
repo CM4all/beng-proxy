@@ -256,19 +256,12 @@ static const struct istream istream_file = {
 };
 
 istream_t
-istream_file_new(pool_t pool, const char *path, off_t length)
+istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length)
 {
-    int fd;
     struct file *file;
 
+    assert(fd >= 0);
     assert(length >= -1);
-
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        daemon_log(1, "failed to open '%s': %s\n",
-                   path, strerror(errno));
-        return NULL;
-    }
 
     fd_set_cloexec(fd);
 
@@ -279,6 +272,23 @@ istream_file_new(pool_t pool, const char *path, off_t length)
     file->path = path;
 
     return istream_struct_cast(&file->stream);
+}
+
+istream_t
+istream_file_new(pool_t pool, const char *path, off_t length)
+{
+    int fd;
+
+    assert(length >= -1);
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        daemon_log(1, "failed to open '%s': %s\n",
+                   path, strerror(errno));
+        return NULL;
+    }
+
+    return istream_file_fd_new(pool, path, fd, length);
 }
 
 int
