@@ -26,12 +26,14 @@ struct async_operation_ref;
  * @param cache a HTTP cache object (optional)
  * @param tcp_stock the stock (pool) for TCP client connections
  * @param fcgi_stock the stock for FastCGI instances
+ * @param delegate_stock the stock for delegate programs
  * @param address the address of the resource
  */
 void
 resource_get(struct http_cache *cache,
              struct hstock *tcp_stock,
              struct fcgi_stock *fcgi_stock,
+             struct hstock *delegate_stock,
              pool_t pool,
              http_method_t method,
              const struct resource_address *address,

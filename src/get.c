@@ -16,11 +16,13 @@
 #include "ajp-request.h"
 #include "header-writer.h"
 #include "pipe.h"
+#include "delegate-get.h"
 
 void
 resource_get(struct http_cache *cache,
              struct hstock *tcp_stock,
              struct fcgi_stock *fcgi_stock,
+             struct hstock *delegate_stock,
              pool_t pool,
              http_method_t method,
              const struct resource_address *address,
@@ -42,6 +44,20 @@ resource_get(struct http_cache *cache,
         if (body != NULL)
             /* static files cannot receive a request body, close it */
             istream_close(body);
+
+        if (address->u.local.delegate != NULL) {
+            if (delegate_stock == NULL) {
+                http_response_handler_direct_abort(handler, handler_ctx);
+                return;
+            }
+
+            delegate_stock_get(delegate_stock, pool,
+                               address->u.local.delegate,
+                               address->u.local.path,
+                               handler, handler_ctx,
+                               async_ref);
+            return;
+        }
 
         static_file_get(pool, address->u.local.path,
                         address->u.local.content_type,

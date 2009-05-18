@@ -251,6 +251,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     headers = widget_request_headers(embed, 0);
 
     resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
+                 global_delegate_stock,
                  embed->pool,
                  HTTP_METHOD_GET, address, headers, NULL,
                  &widget_response_handler, embed,
@@ -532,6 +533,7 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->resource_tag = resource_address_id(address, pool);
 
     resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
+                 global_delegate_stock,
                  pool,
                  widget->from_request.method,
                  address,
