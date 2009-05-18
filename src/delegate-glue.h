@@ -14,7 +14,8 @@ struct async_operation_ref;
 struct hstock;
 
 void
-delegate_stock_open(struct hstock *stock, pool_t pool, const char *path,
+delegate_stock_open(struct hstock *stock, pool_t pool,
+                    const char *helper, const char *path,
                     delegate_callback_t callback, void *ctx,
                     struct async_operation_ref *async_ref);
 

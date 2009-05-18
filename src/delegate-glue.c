@@ -64,7 +64,8 @@ delegate_stock_callback(void *_ctx, struct stock_item *item)
 }
 
 void
-delegate_stock_open(struct hstock *stock, pool_t pool, const char *path,
+delegate_stock_open(struct hstock *stock, pool_t pool,
+                    const char *helper, const char *path,
                     delegate_callback_t callback, void *ctx,
                     struct async_operation_ref *async_ref)
 {
@@ -76,6 +77,6 @@ delegate_stock_open(struct hstock *stock, pool_t pool, const char *path,
     glue->callback = callback;
     glue->callback_ctx = ctx;
 
-    hstock_get(stock, path, NULL,
+    hstock_get(stock, helper, NULL,
                delegate_stock_callback, glue, async_ref);
 }
