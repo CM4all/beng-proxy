@@ -117,6 +117,20 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
                      dest->num_vary * sizeof(dest->vary[0]));
 }
 
+static void
+tcache_store_response(pool_t pool, struct translate_response *dest,
+                      const struct translate_response *src)
+{
+    tcache_dup_response(pool, dest, src);
+}
+
+static void
+tcache_load_response(pool_t pool, struct translate_response *dest,
+                     const struct translate_response *src)
+{
+    tcache_dup_response(pool, dest, src);
+}
+
 static bool
 tcache_vary_contains(const struct translate_response *response,
                      enum beng_translation_command command)
@@ -250,7 +264,7 @@ tcache_callback(const struct translate_response *response, void *ctx)
             tcache_vary_copy(pool, tcr->request->query_string,
                              response, TRANSLATE_QUERY_STRING);
 
-        tcache_dup_response(pool, &item->response, response);
+        tcache_store_response(pool, &item->response, response);
         cache_put_match(tcr->tcache->cache, p_strdup(pool, tcr->key), &item->item,
                         tcache_item_match, tcr);
     } else {
@@ -269,7 +283,7 @@ tcache_hit(pool_t pool, const char *key, const struct tcache_item *item,
 
     cache_log(4, "translate_cache: hit %s\n", key);
 
-    tcache_dup_response(pool, response, &item->response);
+    tcache_load_response(pool, response, &item->response);
     callback(response, ctx);
 }
 
