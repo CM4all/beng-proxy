@@ -57,6 +57,93 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
     }
 }
 
+static size_t
+base_string(const char *p, const char *suffix)
+{
+    size_t length = strlen(p), suffix_length = strlen(suffix);
+
+    return length > suffix_length && p[length - suffix_length - 1] == '/' &&
+        memcmp(p + length - suffix_length, suffix, suffix_length) == 0
+        ? length - suffix_length
+        : 0;
+}
+
+struct resource_address *
+resource_address_save_base(pool_t pool, const struct resource_address *src,
+                           const char *suffix)
+{
+    struct resource_address *dest;
+    size_t length;
+
+    switch (src->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+        return NULL;
+
+    case RESOURCE_ADDRESS_LOCAL:
+        length = base_string(src->u.local.path, suffix);
+        if (length == 0)
+            return NULL;
+
+        dest = resource_address_dup(pool, src);
+        dest->u.local.path = p_strndup(pool, dest->u.local.path, length);
+        return dest;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        length = base_string(src->u.http->uri, suffix);
+        if (length == 0)
+            return NULL;
+
+        dest = resource_address_dup(pool, src);
+        dest->u.http->uri = p_strndup(pool, dest->u.http->uri, length);
+        return dest;
+    }
+
+    assert(false);
+    return NULL;
+}
+
+struct resource_address *
+resource_address_load_base(pool_t pool, const struct resource_address *src,
+                           const char *suffix)
+{
+    struct resource_address *dest;
+
+    switch (src->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+        assert(false);
+        return NULL;
+
+    case RESOURCE_ADDRESS_LOCAL:
+        assert(src->u.local.path != NULL);
+        assert(*src->u.local.path != 0);
+        assert(src->u.local.path[strlen(src->u.local.path) - 1] == '/');
+
+        dest = resource_address_dup(pool, src);
+        dest->u.local.path = p_strcat(pool, dest->u.local.path, suffix, NULL);
+        return dest;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        assert(src->u.http->uri != NULL);
+        assert(*src->u.http->uri != 0);
+        assert(src->u.http->uri[strlen(src->u.http->uri) - 1] == '/');
+
+        dest = resource_address_dup(pool, src);
+        dest->u.http->uri = p_strcat(pool, dest->u.http->uri, suffix, NULL);
+        return dest;
+    }
+
+    assert(false);
+    return NULL;
+}
+
 const struct resource_address *
 resource_address_apply(pool_t pool, const struct resource_address *src,
                        const char *relative, size_t relative_length,

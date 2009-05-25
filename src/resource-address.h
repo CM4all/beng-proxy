@@ -83,6 +83,29 @@ resource_address_dup(pool_t pool, const struct resource_address *src)
     return dest;
 }
 
+/**
+ * Duplicate a resource address, but return the base address.
+ *
+ * @param src the original resource address
+ * @param suffix the suffix to be removed from #src
+ * @return NULL if the suffix does not match, or if this address type
+ * cannot have a base address
+ */
+struct resource_address *
+resource_address_save_base(pool_t pool, const struct resource_address *src,
+                           const char *suffix);
+
+/**
+ * Duplicate a resource address, and append a suffix.
+ *
+ * @param src the base resource address (must end with a slash)
+ * @param suffix the suffix to be addded to #src
+ * @return NULL if this address type cannot have a base address
+ */
+struct resource_address *
+resource_address_load_base(pool_t pool, const struct resource_address *src,
+                           const char *suffix);
+
 const struct resource_address *
 resource_address_apply(pool_t pool, const struct resource_address *src,
                        const char *relative, size_t relative_length,

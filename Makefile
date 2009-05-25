@@ -233,6 +233,7 @@ clean:
 		test/t-wembed test/run-ajp-client test/t-hashmap test/t-cache \
 		test/t-cgi test/t-expansible-buffer \
 		test/run-delegate \
+		test/t-resource-address \
 		test/t-widget-stream
 	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
@@ -411,6 +412,14 @@ test/run-delegate: test/run-delegate.o \
 	src/pool.o src/pstring.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
 
+test/t-resource-address: test/t-resource-address.o src/resource-address.o \
+	src/uri-address.o src/uri-relative.o \
+	src/pool.o src/pstring.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
+check-resource-address: ./test/t-resource-address
+	$<
+
 check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-cgi \
 	check-widget-stream \
@@ -423,6 +432,7 @@ check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-widget-registry \
 	check-wembed \
 	check-hashmap \
+	check-resource-address \
 	check-cache
 
 cov: CFLAGS += -fprofile-arcs -ftest-coverage
