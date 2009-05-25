@@ -18,6 +18,46 @@ static const struct translate_response response1 = {
     .user_max_age = -1,
 };
 
+static const struct translate_response response2 = {
+    .address = {
+        .type = RESOURCE_ADDRESS_LOCAL,
+        .u = {
+            .local = {
+                .path = "/srv/foo/bar.html",
+            },
+        },
+    },
+    .base = "/foo/",
+    .max_age = -1,
+    .user_max_age = -1,
+};
+
+static const struct translate_response response3 = {
+    .address = {
+        .type = RESOURCE_ADDRESS_LOCAL,
+        .u = {
+            .local = {
+                .path = "/srv/foo/index.html",
+            },
+        },
+    },
+    .max_age = -1,
+    .user_max_age = -1,
+};
+
+static const struct translate_response response4 = {
+    .address = {
+        .type = RESOURCE_ADDRESS_LOCAL,
+        .u = {
+            .local = {
+                .path = "/srv/foo/",
+            },
+        },
+    },
+    .max_age = -1,
+    .user_max_age = -1,
+};
+
 const struct translate_response *next_response, *expected_response;
 
 void
@@ -55,6 +95,18 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     static const struct translate_request request1 = {
         .uri = "/",
     };
+    static const struct translate_request request2 = {
+        .uri = "/foo/bar.html",
+    };
+    static const struct translate_request request3 = {
+        .uri = "/foo/index.html",
+    };
+    static const struct translate_request request4 = {
+        .uri = "/foo/",
+    };
+    static const struct translate_request request5 = {
+        .uri = "/foo",
+    };
     struct async_operation_ref async_ref;
 
     event_base = event_init();
@@ -70,6 +122,19 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
     next_response = NULL;
     translate_cache(pool, cache, &request1, my_callback, NULL, &async_ref);
+
+    next_response = expected_response = &response2;
+    translate_cache(pool, cache, &request2, my_callback, NULL, &async_ref);
+
+    next_response = NULL;
+    expected_response = &response3;
+    translate_cache(pool, cache, &request3, my_callback, NULL, &async_ref);
+
+    expected_response = &response4;
+    translate_cache(pool, cache, &request4, my_callback, NULL, &async_ref);
+
+    expected_response = NULL;
+    translate_cache(pool, cache, &request5, my_callback, NULL, &async_ref);
 
     /* cleanup */
 

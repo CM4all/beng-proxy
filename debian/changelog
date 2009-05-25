@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.5.4) unstable; urgency=low
 
   * implemented delegation of open() to a helper program
+  * added the BASE translation packet, supported by the translation cache
 
  --
 

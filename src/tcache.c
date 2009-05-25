@@ -47,6 +47,9 @@ struct tcache_request {
 
     const struct translate_request *request;
 
+    /** are we looking for a "BASE" cache entry? */
+    bool find_base;
+
     const char *key;
 
     translate_callback_t callback;
@@ -83,6 +86,32 @@ p_strdup_checked(pool_t pool, const char *s)
     return s == NULL ? NULL : p_strdup(pool, s);
 }
 
+/**
+ * Calculate the suffix relative to a base URI from an incoming URI.
+ * Returns NULL if no such suffix is possible (e.g. if the specified
+ * URI is not "within" the base, or if there is no base at all).
+ *
+ * @param uri the URI specified by the tcache client, may be NULL
+ * @param base the base URI, as given by the translation server,
+ * stored in the cache item, may be NULL
+ */
+static const char *
+base_suffix(const char *uri, const char *base)
+{
+    size_t uri_length, base_length;
+
+    if (uri == NULL || base == NULL)
+        return NULL;
+
+    uri_length = strlen(uri);
+    base_length = strlen(base);
+
+    return base_length > 0 && base[base_length - 1] == '/' &&
+        uri_length > base_length && memcmp(uri, base, base_length) == 0
+        ? uri + base_length
+        : NULL;
+}
+
 static void
 tcache_dup_response(pool_t pool, struct translate_response *dest,
                     const struct translate_response *src)
@@ -91,7 +120,8 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
        by the tcache itself */
 
     dest->status = src->status;
-    resource_address_copy(pool, &dest->address, &src->address);
+
+    dest->base = p_strdup_checked(pool, src->base);
     dest->site = p_strdup_checked(pool, src->site);
     dest->document_root = p_strdup_checked(pool, src->document_root);
     dest->redirect = p_strdup_checked(pool, src->redirect);
@@ -117,17 +147,77 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
                      dest->num_vary * sizeof(dest->vary[0]));
 }
 
-static void
-tcache_store_response(pool_t pool, struct translate_response *dest,
-                      const struct translate_response *src)
+/**
+ * Copies the address #src to #dest and returns the new cache key.
+ * Returns NULL if the cache key should not be modified (i.e. if there
+ * is no matching BASE packet).
+ */
+static char *
+tcache_store_address(pool_t pool, struct resource_address *dest,
+                     const struct resource_address *src,
+                     const char *uri, const char *base)
 {
+    const char *suffix = base_suffix(uri, base);
+    if (suffix != NULL) {
+        /* we received a valid BASE packet - store only the base
+           URI */
+        struct resource_address *a =
+            resource_address_save_base(pool, src, suffix);
+        if (a != NULL) {
+            *dest = *a;
+            return p_strndup(pool, uri, suffix - uri);
+        }
+    }
+
+    resource_address_copy(pool, dest, src);
+    return NULL;
+}
+
+static char *
+tcache_store_response(pool_t pool, struct translate_response *dest,
+                      const struct translate_response *src,
+                      const struct translate_request *request)
+{
+    char *key;
+
+    key = tcache_store_address(pool, &dest->address, &src->address,
+                               request->uri, src->base);
     tcache_dup_response(pool, dest, src);
+
+    return key;
+}
+
+/**
+ * Load an address from a cached translate_response object, and apply
+ * any BASE changes (if a BASE is present).
+ */
+static void
+tcache_load_address(pool_t pool, const char *uri,
+                    struct resource_address *dest,
+                    const struct translate_response *src)
+{
+    if (src->base != NULL) {
+        struct resource_address *a;
+
+        assert(memcmp(src->base, uri, strlen(src->base)) == 0);
+
+        a = resource_address_load_base(pool, &src->address,
+                                       uri + strlen(src->base));
+        if (a != NULL) {
+            *dest = *a;
+            return;
+        }
+    }
+
+    resource_address_copy(pool, dest, &src->address);
 }
 
 static void
 tcache_load_response(pool_t pool, struct translate_response *dest,
-                     const struct translate_response *src)
+                     const struct translate_response *src,
+                     const char *uri)
 {
+    tcache_load_address(pool, uri, &dest->address, src);
     tcache_dup_response(pool, dest, src);
 }
 
@@ -198,6 +288,11 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
     struct tcache_request *tcr = ctx;
     const struct translate_request *request = tcr->request;
 
+    if (tcr->find_base && item->response.base == NULL)
+        /* this is a "base" lookup, but this response does not contain
+           a "BASE" packet */
+        return false;
+
     for (unsigned i = 0; i < item->response.num_vary; ++i)
         if (!tcache_vary_match(item, request,
                                (enum beng_translation_command)item->response.vary[i]))
@@ -208,10 +303,11 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
 
 static struct tcache_item *
 tcache_get(struct tcache *tcache, const struct translate_request *request,
-           const char *key)
+           const char *key, bool find_base)
 {
     struct tcache_request match_ctx = {
         .request = request,
+        .find_base = find_base,
     };
 
     return (struct tcache_item *)cache_get_match(tcache->cache, key,
@@ -219,10 +315,41 @@ tcache_get(struct tcache *tcache, const struct translate_request *request,
 }
 
 static struct tcache_item *
-tcache_lookup(struct tcache *tcache,
+tcache_lookup(pool_t pool, struct tcache *tcache,
               const struct translate_request *request, const char *key)
 {
-    return tcache_get(tcache, request, key);
+    struct tcache_item *item;
+    char *uri, *slash;
+
+    item = tcache_get(tcache, request, key, false);
+    if (item != NULL || request->uri == NULL)
+        return item;
+
+    /* no match - look for matching BASE responses */
+
+    uri = p_strdup(pool, key);
+    slash = strrchr(uri, '/');
+
+    if (slash != NULL && slash[1] == 0) {
+        /* if the URI already ends with a slash, don't repeat the
+           original lookup - cut off this slash, and try again */
+        *slash = 0;
+        slash = strrchr(uri, '/');
+    }
+
+    while (slash != NULL) {
+        /* truncate string after slash */
+        slash[1] = 0;
+
+        item = tcache_get(tcache, request, uri, true);
+        if (item != NULL)
+            return item;
+
+        *slash = 0;
+        slash = strrchr(uri, '/');
+    }
+
+    return NULL;
 }
 
 
@@ -240,6 +367,7 @@ tcache_callback(const struct translate_response *response, void *ctx)
         pool_t pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 512);
         struct tcache_item *item = p_malloc(pool, sizeof(*item));
         unsigned max_age = response->max_age;
+        const char *key;
 
         cache_log(4, "translate_cache: store %s\n", tcr->key);
 
@@ -264,8 +392,12 @@ tcache_callback(const struct translate_response *response, void *ctx)
             tcache_vary_copy(pool, tcr->request->query_string,
                              response, TRANSLATE_QUERY_STRING);
 
-        tcache_store_response(pool, &item->response, response);
-        cache_put_match(tcr->tcache->cache, p_strdup(pool, tcr->key), &item->item,
+        key = tcache_store_response(pool, &item->response, response,
+                                    tcr->request);
+        if (key == NULL)
+            key = p_strdup(pool, tcr->key);
+
+        cache_put_match(tcr->tcache->cache, key, &item->item,
                         tcache_item_match, tcr);
     } else {
         cache_log(4, "translate_cache: nocache %s\n", tcr->key);
@@ -283,7 +415,7 @@ tcache_hit(pool_t pool, const char *key, const struct tcache_item *item,
 
     cache_log(4, "translate_cache: hit %s\n", key);
 
-    tcache_load_response(pool, response, &item->response);
+    tcache_load_response(pool, response, &item->response, key);
     callback(response, ctx);
 }
 
@@ -380,7 +512,7 @@ translate_cache(pool_t pool, struct tcache *tcache,
     if (tcache_request_evaluate(request)) {
         const char *key = request->uri == NULL
             ? request->widget_type : request->uri;
-        struct tcache_item *item = tcache_lookup(tcache, request, key);
+        struct tcache_item *item = tcache_lookup(pool, tcache, request, key);
 
         if (item != NULL)
             tcache_hit(pool, key, item, callback, ctx);
