@@ -234,6 +234,7 @@ clean:
 		test/t-cgi test/t-expansible-buffer \
 		test/run-delegate \
 		test/t-resource-address \
+		test/t-tcache \
 		test/t-widget-stream
 	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
@@ -420,6 +421,16 @@ test/t-resource-address: test/t-resource-address.o src/resource-address.o \
 check-resource-address: ./test/t-resource-address
 	$<
 
+test/t-tcache: test/t-tcache.o src/tcache.o src/cache.o \
+	src/hashmap.o \
+	src/resource-address.o src/uri-address.o src/uri-relative.o \
+	src/transformation.o \
+	src/pool.o src/pstring.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
+
+check-tcache: ./test/t-tcache
+	$<
+
 check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-cgi \
 	check-widget-stream \
@@ -433,7 +444,7 @@ check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-wembed \
 	check-hashmap \
 	check-resource-address \
-	check-cache
+	check-cache check-tcache
 
 cov: CFLAGS += -fprofile-arcs -ftest-coverage
 cov: LDFLAGS += -fprofile-arcs -ftest-coverage

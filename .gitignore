@@ -50,6 +50,7 @@ test/t-hashmap
 test/t-widget-stream
 test/run-delegate
 test/t-resource-address
+test/t-tcache
 
 *.aux
 *.log
