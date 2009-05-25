@@ -192,6 +192,26 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
     return true;
 }
 
+static struct tcache_item *
+tcache_get(struct tcache *tcache, const struct translate_request *request,
+           const char *key)
+{
+    struct tcache_request match_ctx = {
+        .request = request,
+    };
+
+    return (struct tcache_item *)cache_get_match(tcache->cache, key,
+                                                 tcache_item_match, &match_ctx);
+}
+
+static struct tcache_item *
+tcache_lookup(struct tcache *tcache,
+              const struct translate_request *request, const char *key)
+{
+    return tcache_get(tcache, request, key);
+}
+
+
 /*
  * translate callback
  *
@@ -346,12 +366,7 @@ translate_cache(pool_t pool, struct tcache *tcache,
     if (tcache_request_evaluate(request)) {
         const char *key = request->uri == NULL
             ? request->widget_type : request->uri;
-        struct tcache_request match_ctx = {
-            .request = request,
-        };
-        struct tcache_item *item =
-            (struct tcache_item *)cache_get_match(tcache->cache, key,
-                                                  tcache_item_match, &match_ctx);
+        struct tcache_item *item = tcache_lookup(tcache, request, key);
 
         if (item != NULL)
             tcache_hit(pool, key, item, callback, ctx);
