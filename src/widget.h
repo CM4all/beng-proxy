@@ -277,7 +277,6 @@ widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
                     struct widget *widget,
-                    bool focus,
                     const struct strref *relative_uri,
                     const char *frame, bool raw);
 

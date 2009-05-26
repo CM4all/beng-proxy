@@ -189,7 +189,6 @@ widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
                     struct widget *widget,
-                    bool focus,
                     const struct strref *relative_uri,
                     const char *frame, bool raw)
 {
@@ -200,8 +199,6 @@ widget_external_uri(pool_t pool,
     const struct strref *p;
     struct pool_mark mark;
 
-    assert(focus || frame != NULL);
-    assert(focus || relative_uri == NULL);
     assert(frame != NULL || !raw);
 
     path = widget_path(widget);
@@ -212,7 +209,7 @@ widget_external_uri(pool_t pool,
 
     pool_mark(tpool, &mark);
 
-    if (focus && relative_uri != NULL) {
+    if (relative_uri != NULL) {
         p = widget_relative_uri(tpool, widget,
                                 relative_uri->data, relative_uri->length,
                                 &buffer);
@@ -227,8 +224,8 @@ widget_external_uri(pool_t pool,
        into an absolute URI to the template page on this server and
        add the appropriate args. */
     args2 = args_format_n(tpool, args,
-                          focus ? "focus" : NULL, path, strlen(path),
-                          focus ? "path" : NULL,
+                          "focus", path, strlen(path),
+                          "path",
                           p == NULL ? NULL : p->data,
                           p == NULL ? (size_t)0 : p->length,
                           frame == NULL ? NULL : "frame", frame,
