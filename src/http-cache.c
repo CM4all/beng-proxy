@@ -883,6 +883,14 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     pool_unref(pool);
 }
 
+static bool
+http_cache_may_serve(struct http_cache_info *info,
+                     struct http_cache_item *item)
+{
+    return info->only_if_cached ||
+        (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL));
+}
+
 static void
 http_cache_found(struct http_cache *cache,
                  struct http_cache_info *info,
@@ -895,8 +903,7 @@ http_cache_found(struct http_cache *cache,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    if (info->only_if_cached ||
-        (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL)))
+    if (http_cache_may_serve(info, item))
         http_cache_serve(item, pool, uwa->uri, body, handler, handler_ctx);
     else
         http_cache_test(cache, pool, info, item,
