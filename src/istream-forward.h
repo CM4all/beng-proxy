@@ -20,4 +20,6 @@ istream_forward_eof(void *ctx);
 void
 istream_forward_abort(void *ctx);
 
+extern const struct istream_handler istream_forward_handler;
+
 #endif

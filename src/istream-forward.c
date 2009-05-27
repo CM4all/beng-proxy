@@ -34,3 +34,10 @@ istream_forward_abort(void *ctx)
     struct istream *istream = ctx;
     istream_deinit_abort(istream);
 }
+
+const struct istream_handler istream_forward_handler = {
+    .data = istream_forward_data,
+    .direct = istream_forward_direct,
+    .eof = istream_forward_eof,
+    .abort = istream_forward_abort,
+};
