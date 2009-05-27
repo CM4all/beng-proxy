@@ -42,6 +42,10 @@ struct http_cache {
 struct http_cache_info {
     bool only_if_cached;
 
+    /** does the request URI have a query string?  This information is
+        important for RFC 2616 13.9 */
+    bool has_query_string;
+
     /** when will the cached resource expire? (beng-proxy time) */
     time_t expires;
 
@@ -130,7 +134,7 @@ http_cache_info_new(pool_t pool)
 /* check whether the request could produce a cacheable response */
 static struct http_cache_info *
 http_cache_request_evaluate(pool_t pool,
-                            http_method_t method,
+                            http_method_t method, const char *uri,
                             struct strmap *headers,
                             istream_t body)
 {
@@ -172,6 +176,9 @@ http_cache_request_evaluate(pool_t pool,
 
     if (info == NULL)
         info = http_cache_info_new(pool);
+
+    info->has_query_string = strchr(uri, '?') != NULL;
+
     return info;
 }
 
@@ -433,6 +440,16 @@ http_cache_response_evaluate(struct http_cache_info *info,
         if (info->expires != (time_t)-1 && info->expires < now)
             cache_log(2, "invalid 'expires' header\n");
     }
+
+    if (info->has_query_string && info->expires == (time_t)-1)
+        /* RFC 2616 13.9: "since some applications have traditionally
+           used GETs and HEADs with query URLs (those containing a "?"
+           in the rel_path part) to perform operations with
+           significant side effects, caches MUST NOT treat responses
+           to such URIs as fresh unless the server provides an
+           explicit expiration time" - this is implemented by not
+           storing the resource at all */
+        return false;
 
     info->last_modified = strmap_get(headers, "last-modified");
     info->etag = strmap_get(headers, "etag");
@@ -923,7 +940,7 @@ http_cache_request(struct http_cache *cache,
 {
     struct http_cache_info *info;
 
-    info = http_cache_request_evaluate(pool, method, headers, body);
+    info = http_cache_request_evaluate(pool, method, uwa->uri, headers, body);
     if (info != NULL) {
         struct http_cache_item *item
             = (struct http_cache_item *)cache_get_match(cache->cache, uwa->uri,

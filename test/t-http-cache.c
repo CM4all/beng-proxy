@@ -58,11 +58,31 @@ struct request requests[] = {
       "vary: x-foo\n",
       .response_body = "bar",
     },
+    { .method = HTTP_METHOD_GET,
+      .uri = "/query?string",
+      .request_headers = NULL,
+      .status = HTTP_STATUS_OK,
+      .response_headers =
+      "date: " DATE "\n"
+      "last-modified: " STAMP1 "\n",
+      .response_body = "foo",
+    },
+    { .method = HTTP_METHOD_GET,
+      .uri = "/query?string2",
+      .request_headers = NULL,
+      .status = HTTP_STATUS_OK,
+      .response_headers =
+      "date: " DATE "\n"
+      "last-modified: " STAMP1 "\n"
+      "expires: " EXPIRES "\n",
+      .response_body = "foo",
+    },
 };
 
 static struct http_cache *cache;
 static unsigned current_request;
 static bool got_request, got_response;
+static bool validated;
 static bool eof;
 static size_t body_read;
 
@@ -106,6 +126,7 @@ http_request(pool_t pool,
              __attr_unused struct async_operation_ref *async_ref)
 {
     const struct request *request = &requests[current_request];
+    struct strmap *headers2 = strmap_new(pool, 64);
     struct strmap *expected_rh;
     struct strmap *response_headers;
     istream_t response_body;
@@ -116,14 +137,16 @@ http_request(pool_t pool,
 
     got_request = true;
 
+    if (headers != NULL)
+        header_parse_buffer(pool, headers2, headers);
+
+    validated = strmap_get(headers2, "if-modified-since") != NULL;
+
     expected_rh = parse_request_headers(pool, request);
     if (expected_rh != NULL) {
-        struct strmap *headers2 = strmap_new(pool, 64);
         const struct strmap_pair *pair;
 
         assert(headers != NULL);
-
-        header_parse_buffer(pool, headers2, headers);
 
         strmap_rewind(expected_rh);
         while ((pair = strmap_next(expected_rh)) != NULL) {
@@ -294,6 +317,19 @@ int main(int argc, char **argv) {
 
     /* see if the second resource is still cached */
     run_cache_test(pool, 1, true);
+
+    /* query string: should not be cached */
+
+    run_cache_test(pool, 2, false);
+
+    validated = false;
+    run_cache_test(pool, 2, false);
+    assert(!validated);
+
+    /* double check with a cacheable query string ("Expires" is
+       set) */
+    run_cache_test(pool, 3, false);
+    run_cache_test(pool, 3, true);
 
     http_cache_close(cache);
     pool_unref(pool);
