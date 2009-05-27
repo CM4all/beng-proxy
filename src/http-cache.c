@@ -465,7 +465,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
 }
 
 static void
-http_cache_serve(struct http_cache_item *item,
+http_cache_serve(struct http_cache *cache, struct http_cache_item *item,
                  pool_t pool,
                  const char *url, istream_t body,
                  const struct http_response_handler *handler,
@@ -545,7 +545,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         assert(body == NULL);
 
         cache_log(5, "http_cache: not_modified %s\n", request->url);
-        http_cache_serve(request->item, request->pool,
+        http_cache_serve(request->cache, request->item, request->pool,
                          request->url, NULL,
                          request->handler.handler, request->handler.ctx);
         pool_unref(request->caller_pool);
@@ -562,7 +562,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
             if (body != NULL)
                 istream_close(body);
 
-            http_cache_serve(request->item, request->pool,
+            http_cache_serve(request->cache, request->item, request->pool,
                              request->url, NULL,
                              request->handler.handler, request->handler.ctx);
             pool_unref(request->caller_pool);
@@ -824,7 +824,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
 }
 
 static void
-http_cache_serve(struct http_cache_item *item,
+http_cache_serve(struct http_cache *cache, struct http_cache_item *item,
                  pool_t pool,
                  const char *url __attr_unused, istream_t body,
                  const struct http_response_handler *handler,
@@ -840,11 +840,12 @@ http_cache_serve(struct http_cache_item *item,
 
     http_response_handler_set(&handler_ref, handler, handler_ctx);
 
-    /* XXX hold reference on item */
-
     response_body = item->item.size > 0
         ? istream_memory_new(pool, item->data, item->item.size)
         : istream_null_new(pool);
+
+    response_body = istream_unlock_new(pool, response_body,
+                                       cache->cache, &item->item);
 
     http_response_handler_invoke_response(&handler_ref, item->status,
                                           item->headers, response_body);
@@ -921,7 +922,8 @@ http_cache_found(struct http_cache *cache,
                  struct async_operation_ref *async_ref)
 {
     if (http_cache_may_serve(info, item))
-        http_cache_serve(item, pool, uwa->uri, body, handler, handler_ctx);
+        http_cache_serve(cache, item, pool,
+                         uwa->uri, body, handler, handler_ctx);
     else
         http_cache_test(cache, pool, info, item,
                         method, uwa, headers, body,

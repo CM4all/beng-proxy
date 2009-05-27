@@ -11,6 +11,8 @@
 #include <stdbool.h>
 
 struct async_operation;
+struct cache;
+struct cache_item;
 
 istream_t
 istream_null_new(pool_t pool);
@@ -130,5 +132,9 @@ istream_replace_finish(istream_t istream);
 
 istream_t
 istream_socketpair_new(pool_t pool, istream_t input, int *fd_r);
+
+istream_t
+istream_unlock_new(pool_t pool, istream_t input,
+                   struct cache *cache, struct cache_item *item);
 
 #endif
