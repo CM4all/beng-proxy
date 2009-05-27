@@ -22,25 +22,9 @@ struct istream_delayed {
  *
  */
 
-static size_t
-delayed_input_data(const void *data, size_t length, void *ctx)
-{
-    struct istream_delayed *delayed = ctx;
-
-    return istream_invoke_data(&delayed->output, data, length);
-}
-
-static ssize_t
-delayed_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
-{
-    struct istream_delayed *delayed = ctx;
-
-    return istream_invoke_direct(&delayed->output, type, fd, max_length);
-}
-
 static const struct istream_handler delayed_input_handler = {
-    .data = delayed_input_data,
-    .direct = delayed_input_direct,
+    .data = istream_forward_data,
+    .direct = istream_forward_direct,
     .eof = istream_forward_eof,
     .abort = istream_forward_abort,
 };
