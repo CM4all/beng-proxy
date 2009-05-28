@@ -99,6 +99,16 @@ request_get_session(struct request *request, const char *session_id)
             p_strdup(request->request->pool, session->translate);
 }
 
+static const char *
+request_get_uri_session_id(const struct request *request)
+{
+    assert(request != NULL);
+
+    return request->args != NULL
+        ? strmap_get(request->args, "session")
+        : NULL;
+}
+
 static session_id_t
 request_get_cookie_session_id(struct request *request)
 {
@@ -118,15 +128,13 @@ request_get_cookie_session_id(struct request *request)
 void
 request_determine_session(struct request *request)
 {
+    const char *session_id;
+
     assert(request != NULL);
 
-    if (request->args != NULL) {
-        const char *session_id;
-
-        session_id = strmap_get(request->args, "session");
-        if (session_id != NULL)
-            request_get_session(request, session_id);
-    }
+    session_id = request_get_uri_session_id(request);
+    if (session_id != NULL)
+        request_get_session(request, session_id);
 
     if (request->session_id != 0) {
         struct session *session = session_get(request->session_id);
