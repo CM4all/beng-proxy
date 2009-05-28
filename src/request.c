@@ -10,6 +10,7 @@
 #include "http-server.h"
 #include "cookie-server.h"
 #include "transformation.h"
+#include "args.h"
 
 bool
 request_processor_enabled(struct request *request)
@@ -40,6 +41,31 @@ request_discard_body(struct request *request)
 {
     if (request->request->body != NULL && !request->body_consumed)
         istream_close(request->request->body);
+}
+
+void
+request_args_parse(struct request *request)
+{
+    const char *session_id;
+
+    assert(request != NULL);
+    assert(request->args == NULL);
+
+    if (strref_is_empty(&request->uri.args)) {
+        request->args = NULL;
+        request->translate.request.param = NULL;
+        request->translate.request.session = NULL;
+        return;
+    }
+
+    request->args = args_parse(request->request->pool,
+                               request->uri.args.data, request->uri.args.length);
+    request->translate.request.param = strmap_remove(request->args, "translate");
+    request->translate.request.session = NULL;
+
+    session_id = strmap_get(request->args, "session");
+    if (session_id != NULL)
+        request_get_session(request, session_id);
 }
 
 static struct strmap *

@@ -68,6 +68,9 @@ void
 request_discard_body(struct request *request);
 
 void
+request_args_parse(struct request *request);
+
+void
 request_get_session(struct request *request, const char *session_id);
 
 session_id_t

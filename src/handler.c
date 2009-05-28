@@ -231,31 +231,6 @@ request_uri_parse(struct http_server_request *request,
 }
 
 static void
-request_args_parse(struct request *request)
-{
-    const char *session_id;
-
-    assert(request != NULL);
-    assert(request->args == NULL);
-
-    if (strref_is_empty(&request->uri.args)) {
-        request->args = NULL;
-        request->translate.request.param = NULL;
-        request->translate.request.session = NULL;
-        return;
-    }
-
-    request->args = args_parse(request->request->pool,
-                               request->uri.args.data, request->uri.args.length);
-    request->translate.request.param = strmap_remove(request->args, "translate");
-    request->translate.request.session = NULL;
-
-    session_id = strmap_get(request->args, "session");
-    if (session_id != NULL)
-        request_get_session(request, session_id);
-}
-
-static void
 ask_translation_server(struct request *request2, struct tcache *tcache)
 {
     struct http_server_request *request = request2->request;
