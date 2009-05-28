@@ -121,11 +121,18 @@ response_invoke_processor(struct request *request2,
     widget->lazy.path = "";
     widget->lazy.prefix = "__";
 
-    widget->from_request.focus_ref = widget_ref_parse(request->pool,
-                                                      strmap_remove(request2->args, "focus"));
+    if (request2->args != NULL) {
+        widget->from_request.focus_ref =
+            widget_ref_parse(request->pool,
+                             strmap_remove(request2->args, "focus"));
 
-    widget->from_request.proxy_ref = widget_ref_parse(request->pool,
-                                                      strmap_get(request2->args, "frame"));
+        widget->from_request.proxy_ref =
+            widget_ref_parse(request->pool,
+                             strmap_get(request2->args, "frame"));
+    } else {
+        widget->from_request.focus_ref = NULL;
+        widget->from_request.proxy_ref = NULL;
+    }
 
     if (http_server_request_has_body(request) && !request2->body_consumed &&
         widget->from_request.focus_ref != NULL) {
