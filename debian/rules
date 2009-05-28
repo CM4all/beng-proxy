@@ -19,7 +19,9 @@ debian/stamp-build:
 	dh_testdir
 
 	#$(MAKE) CFLAGS="$(CFLAGS)" all doc/beng.pdf
-	$(MAKE) src/cm4all-beng-proxy src/libcm4all-istream.a doc/beng.pdf VERSION=$(DEB_VERSION)
+	$(MAKE) src/cm4all-beng-proxy \
+		src/cm4all-beng-proxy-delegate-helper \
+		src/libcm4all-istream.a doc/beng.pdf VERSION=$(DEB_VERSION)
 
 	touch $@
 
