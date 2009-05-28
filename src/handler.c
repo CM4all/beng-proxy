@@ -360,19 +360,7 @@ handle_http_request(struct client_connection *connection,
     request2->async_ref = async_ref;
 
     request_args_parse(request2);
-    if (request2->session_id != 0) {
-        struct session *session = session_get(request2->session_id);
-
-        if (session != NULL) {
-            session_id_t id = request_get_cookie_session_id(request2);
-            if (id == session->cookie_id)
-                session->cookie_received = true;
-            else if (session->cookie_received)
-                /* someone has stolen our URI including the session
-                   id; refuse to continue with this session */
-                request2->session_id = 0;
-        }
-    }
+    request_determine_session(request2);
 
     if (connection->instance->translate_cache == NULL)
         serve_document_root_file(request2, connection->config);

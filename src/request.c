@@ -46,8 +46,6 @@ request_discard_body(struct request *request)
 void
 request_args_parse(struct request *request)
 {
-    const char *session_id;
-
     assert(request != NULL);
     assert(request->args == NULL);
 
@@ -62,10 +60,6 @@ request_args_parse(struct request *request)
                                request->uri.args.data, request->uri.args.length);
     request->translate.request.param = strmap_remove(request->args, "translate");
     request->translate.request.session = NULL;
-
-    session_id = strmap_get(request->args, "session");
-    if (session_id != NULL)
-        request_get_session(request, session_id);
 }
 
 static struct strmap *
@@ -86,7 +80,7 @@ request_get_cookies(struct request *request)
     return request->cookies;
 }
 
-void
+static void
 request_get_session(struct request *request, const char *session_id)
 {
     struct session *session;
@@ -105,7 +99,7 @@ request_get_session(struct request *request, const char *session_id)
             p_strdup(request->request->pool, session->translate);
 }
 
-session_id_t
+static session_id_t
 request_get_cookie_session_id(struct request *request)
 {
     struct strmap *cookies = request_get_cookies(request);
@@ -119,6 +113,34 @@ request_get_cookie_session_id(struct request *request)
         return 0;
 
     return session_id_parse(session_id);
+}
+
+void
+request_determine_session(struct request *request)
+{
+    assert(request != NULL);
+
+    if (request->args != NULL) {
+        const char *session_id;
+
+        session_id = strmap_get(request->args, "session");
+        if (session_id != NULL)
+            request_get_session(request, session_id);
+    }
+
+    if (request->session_id != 0) {
+        struct session *session = session_get(request->session_id);
+
+        if (session != NULL) {
+            session_id_t id = request_get_cookie_session_id(request);
+            if (id == session->cookie_id)
+                session->cookie_received = true;
+            else if (session->cookie_received)
+                /* someone has stolen our URI including the session
+                   id; refuse to continue with this session */
+                request->session_id = 0;
+        }
+    }
 }
 
 struct session *

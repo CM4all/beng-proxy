@@ -71,10 +71,7 @@ void
 request_args_parse(struct request *request);
 
 void
-request_get_session(struct request *request, const char *session_id);
-
-session_id_t
-request_get_cookie_session_id(struct request *request);
+request_determine_session(struct request *request);
 
 struct session *
 request_make_session(struct request *request);
