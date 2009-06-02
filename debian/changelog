@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.5.5) unstable; urgency=low
 
-  * 
+  * processor: allow specifying relative URI in c:base=child
 
  --
 

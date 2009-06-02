@@ -552,6 +552,21 @@ replace_attribute_value(struct processor *processor,
 }
 
 static void
+strref_split(const struct strref *in, char separator,
+             struct strref *before, struct strref *after)
+{
+    const char *x = strref_chr(in, separator);
+
+    if (x != NULL) {
+        strref_set(before, in->data, x - in->data);
+        strref_set(after, x + 1, in->data + in->length - (x + 1));
+    } else {
+        *before = *in;
+        strref_null(after);
+    }
+}
+
+static void
 transform_uri_attribute(struct processor *processor,
                         const struct parser_attr *attr,
                         enum uri_base base,
@@ -559,6 +574,7 @@ transform_uri_attribute(struct processor *processor,
 {
     struct widget *widget = NULL;
     const struct strref *value = &attr->value;
+    struct strref child_id, suffix;
     istream_t istream;
 
     switch (base) {
@@ -571,13 +587,24 @@ transform_uri_attribute(struct processor *processor,
         break;
 
     case URI_BASE_CHILD:
+        strref_split(value, '/', &child_id, &suffix);
+
         widget = widget_get_child(processor->container,
-                                  strref_dup(processor->pool, value));
+                                  strref_dup(processor->pool, &child_id));
         if (widget == NULL)
             return;
 
-        /* use the configured/session path-info for the frame */
-        value = NULL;
+        /* the following check looks awkward - that's because it
+           depends on side effects of uri_absolute() and
+           widget_relative_uri() */
+        if (strref_is_null(&suffix) || !strref_is_empty(&suffix))
+            /* either no slash, or a slash followed by a non-empty
+               relative URI */
+            value = &suffix;
+        else
+            /* only a slash follows the child widget id: pass an empty
+               "path" argument */
+            value = NULL;
         break;
 
     case URI_BASE_PARENT:
