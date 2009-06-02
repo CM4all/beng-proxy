@@ -236,6 +236,7 @@ clean:
 		test/run-delegate \
 		test/t-resource-address \
 		test/t-tcache \
+		test/t-uri-compress \
 		test/t-widget-stream
 	rm -f *.{gcda,gcno,gcov} {src,test}/*.{gcda,gcno}
 
@@ -432,6 +433,13 @@ test/t-tcache: test/t-tcache.o src/tcache.o src/cache.o \
 check-tcache: ./test/t-tcache
 	$<
 
+test/t-uri-compress: test/t-uri-compress.o src/uri-relative.o \
+	src/pool.o src/pstring.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS)
+
+check-uri-compress: ./test/t-uri-compress
+	$<
+
 check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-cgi \
 	check-widget-stream \
@@ -445,6 +453,7 @@ check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-wembed \
 	check-hashmap \
 	check-resource-address \
+	check-uri-compress \
 	check-cache check-tcache
 
 cov: CFLAGS += -fprofile-arcs -ftest-coverage

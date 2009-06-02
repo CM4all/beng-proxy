@@ -9,6 +9,89 @@
 
 #include <string.h>
 
+const char *
+uri_compress(pool_t pool, const char *uri)
+{
+    char *dest, *p;
+
+    assert(pool != NULL);
+    assert(uri != NULL);
+
+    while (uri[0] == '.' && uri[1] == '/')
+        uri += 2;
+
+    if (uri[0] == '.' && uri[1] == '.' &&
+        (uri[2] == '/' || uri[2] == 0))
+        return NULL;
+
+    if (strstr(uri, "//") == NULL &&
+        strstr(uri, "/./") == NULL &&
+        strstr(uri, "/..") == NULL)
+        /* cheap route: the URI is already compressed, do not
+           duplicate anything */
+        return uri;
+
+    dest = p_strdup(pool, uri);
+
+    /* eliminate "//" */
+
+    while ((p = strstr(dest, "//")) != NULL)
+        /* strcpy() might be better here, but it does not allow
+           overlapped arguments */
+        memmove(p + 1, p + 2, strlen(p + 2) + 1);
+
+    /* eliminate "/./" */
+
+    while ((p = strstr(dest, "/./")) != NULL)
+        /* strcpy() might be better here, but it does not allow
+           overlapped arguments */
+        memmove(p + 1, p + 3, strlen(p + 3) + 1);
+
+    /* eliminate "/../" with backtracking */
+
+    while ((p = strstr(dest, "/../")) != NULL) {
+        char *q = p;
+
+        /* backtrack to the previous slash - we can't use strrchr()
+           here, and memrchr() is not portable :( */
+
+        do {
+            if (q <= dest) {
+                /* this ".." cannot be resolved - scream! */
+                p_free(pool, dest);
+                return NULL;
+            }
+
+            --q;
+        } while (*q != '/');
+
+        /* kill it */
+
+        memmove(q + 1, p + 4, strlen(p + 4) + 1);
+    }
+
+    /* eliminate trailing "/." and "/.." */
+
+    p = strrchr(dest, '/');
+    if (p != NULL) {
+        if (p[1] == '.' && p[2] == 0)
+            p[1] = 0;
+        else if (p[1] == '.' && p[2] == '.' && p[3] == 0) {
+            *p = 0;
+
+            p = strrchr(dest, '/');
+            if (p == NULL) {
+                p_free(pool, dest);
+                return NULL;
+            }
+
+            p[1] = 0;
+        }
+    }
+
+    return dest;
+}
+
 static bool
 uri_has_protocol(const char *uri, size_t length)
 {

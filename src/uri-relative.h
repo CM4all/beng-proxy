@@ -12,6 +12,13 @@
 struct strref;
 
 /**
+ * Compresses an URI (eliminates all "/./" and "/../"), and returns
+ * the result.  May return NULL if there are too many "/../".
+ */
+const char *
+uri_compress(pool_t pool, const char *uri);
+
+/**
  * Append a relative URI to an absolute base URI, and return the
  * resulting absolute URI.  Returns NULL if the provided relative URI
  * does not match the base URI.
