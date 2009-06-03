@@ -116,7 +116,7 @@ response_invoke_processor(struct request *request2,
     request_make_session(request2);
 
     widget = p_malloc(request->pool, sizeof(*widget));
-    widget_init(widget, &root_widget_class);
+    widget_init(widget, request->pool, &root_widget_class);
     widget->id = strref_dup(request->pool, &request2->uri.base);
     widget->lazy.path = "";
     widget->lazy.prefix = "__";

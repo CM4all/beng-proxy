@@ -86,7 +86,7 @@ test_abort_resolver(pool_t pool)
         exit(2);
     }
 
-    widget_init(&widget, NULL);
+    widget_init(&widget, pool, NULL);
 
     istream = embed_inline_widget(pool, &env, &widget);
     pool_unref(pool);

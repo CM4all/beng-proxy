@@ -68,7 +68,7 @@ create_test(pool_t pool, istream_t input)
     if (ret != 0)
         abort();
 
-    widget_init(&widget, &root_widget_class);
+    widget_init(&widget, pool, &root_widget_class);
 
     session_manager_init();
 

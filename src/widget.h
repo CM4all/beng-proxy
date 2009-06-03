@@ -52,6 +52,8 @@ struct widget {
     struct list_head siblings, children;
     struct widget *parent;
 
+    pool_t pool;
+
     const char *class_name;
 
     const struct widget_class *class;
@@ -144,10 +146,12 @@ widget_class_is_container(const struct widget_class *class,
                           const char *view_name);
 
 static inline void
-widget_init(struct widget *widget, const struct widget_class *class)
+widget_init(struct widget *widget, pool_t pool,
+            const struct widget_class *class)
 {
     list_init(&widget->children);
     widget->parent = NULL;
+    widget->pool = pool;
 
     widget->class_name = NULL;
     widget->class = class;
