@@ -153,7 +153,7 @@ resource_address_apply(pool_t pool, const struct resource_address *src,
 
     assert(pool != NULL);
     assert(src != NULL);
-    assert(relative != NULL);
+    assert(relative != NULL || relative_length == 0);
 
     switch (src->type) {
     case RESOURCE_ADDRESS_NONE:
