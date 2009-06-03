@@ -15,8 +15,9 @@
 #include <assert.h>
 
 void
-widget_determine_address(pool_t pool, struct widget *widget)
+widget_determine_address(struct widget *widget)
 {
+    pool_t pool = widget->pool;
     const char *path_info, *uri;
     struct resource_address *address;
 
@@ -137,9 +138,9 @@ widget_absolute_uri(pool_t pool, struct widget *widget,
 {
     const char *base;
 
-    assert(widget_address(pool, widget)->type == RESOURCE_ADDRESS_HTTP);
+    assert(widget_address(widget)->type == RESOURCE_ADDRESS_HTTP);
 
-    base = widget_address(pool, widget)->u.http->uri;
+    base = widget_address(widget)->u.http->uri;
     if (relative_uri == NULL)
         return base;
 
@@ -175,7 +176,7 @@ widget_relative_uri(pool_t pool, struct widget *widget,
     struct resource_address address_buffer;
     const struct resource_address *address;
 
-    address = resource_address_apply(pool, widget_address(pool, widget),
+    address = resource_address_apply(pool, widget_address(widget),
                                      relative_uri, relative_uri_length,
                                      &address_buffer);
     if (address == NULL)

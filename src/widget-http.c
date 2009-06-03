@@ -151,8 +151,7 @@ widget_request_headers(struct embed *embed, int with_body)
     session = session_get(embed->env->session_id);
 
     if (embed->host_and_port != NULL && session != NULL) {
-        const char *path = uri_path(widget_address(embed->pool,
-                                                   embed->widget)->u.http->uri);
+        const char *path = uri_path(widget_address(embed->widget)->u.http->uri);
 
         lock_lock(&session->lock);
         cookie_jar_http_header(session->cookies, embed->host_and_port, path,
@@ -223,7 +222,7 @@ widget_response_redirect(struct embed *embed, const char *location,
         return false;
 
     address = resource_address_apply(embed->pool,
-                                     widget_address(embed->pool, embed->widget),
+                                     widget_address(embed->widget),
                                      location, strlen(location),
                                      &address_buffer);
     if (address == NULL)
@@ -529,7 +528,7 @@ widget_http_request(pool_t pool, struct widget *widget,
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
     embed->async_ref = async_ref;
 
-    address = widget_address(pool, widget);
+    address = widget_address(widget);
     embed->resource_tag = resource_address_id(address, pool);
 
     resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,

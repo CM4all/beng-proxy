@@ -255,13 +255,13 @@ widget_copy_from_location(struct widget *widget, struct session *session,
                           pool_t pool);
 
 void
-widget_determine_address(pool_t pool, struct widget *widget);
+widget_determine_address(struct widget *widget);
 
 static inline const struct resource_address *
-widget_address(pool_t pool, struct widget *widget)
+widget_address(struct widget *widget)
 {
     if (widget->lazy.address == NULL)
-        widget_determine_address(pool, widget);
+        widget_determine_address(widget);
 
     return widget->lazy.address;
 }
