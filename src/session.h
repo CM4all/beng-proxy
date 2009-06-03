@@ -52,11 +52,8 @@ struct session {
         maps and the cookie jar */
     struct lock lock;
 
-    /** identification number of this session in the URI */
-    session_id_t uri_id;
-
-    /** identification number of this session in the cookie */
-    session_id_t cookie_id;
+    /** identification number of this session */
+    session_id_t id;
 
     /** when will this session expire? */
     time_t expires;

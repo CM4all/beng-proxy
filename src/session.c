@@ -294,8 +294,7 @@ session_new(void)
 
     session->pool = pool;
     lock_init(&session->lock);
-    session->uri_id = session_generate_id();
-    session->cookie_id = session_generate_id();
+    session->id = session_generate_id();
     session->expires = now.tv_sec + SESSION_TTL_NEW;
     session->translate = NULL;
     session->widgets = NULL;
@@ -303,7 +302,7 @@ session_new(void)
 
     lock_lock(&session_manager->lock);
 
-    list_add(&session->hash_siblings, session_slot(session->uri_id));
+    list_add(&session->hash_siblings, session_slot(session->id));
     ++session_manager->num_sessions;
 
     num_sessions = session_manager->num_sessions;
@@ -407,8 +406,7 @@ session_dup(struct dpool *pool, const struct session *src)
 
     dest->pool = pool;
     lock_init(&dest->lock);
-    dest->uri_id = src->uri_id;
-    dest->cookie_id = src->cookie_id;
+    dest->id = src->id;
     dest->expires = src->expires;
     dest->cookie_sent = src->cookie_sent;
     dest->cookie_received = src->cookie_received;
@@ -439,7 +437,7 @@ session_dup(struct dpool *pool, const struct session *src)
     dest->cookies = cookie_jar_dup(pool, src->cookies);
 
     lock_lock(&session_manager->lock);
-    list_add(&dest->hash_siblings, session_slot(dest->uri_id));
+    list_add(&dest->hash_siblings, session_slot(dest->id));
     ++session_manager->num_sessions;
     lock_unlock(&session_manager->lock);
 
@@ -477,9 +475,9 @@ session_get(session_id_t id)
     for (session = (struct session *)head->next;
          &session->hash_siblings != head;
          session = (struct session *)session->hash_siblings.next) {
-        assert(session_slot(session->uri_id) == head);
+        assert(session_slot(session->id) == head);
 
-        if (session->uri_id == id) {
+        if (session->id == id) {
             lock_unlock(&session_manager->lock);
 
             session->expires = expiry_touch(SESSION_TTL);

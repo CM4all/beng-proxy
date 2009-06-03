@@ -41,7 +41,8 @@ session_redirect(struct request *request)
     session = request_make_session(request);
     assert(session != NULL);
 
-    session_id_format(session_id, session->uri_id);
+    session_id_format(session_id, session->id);
+
     args = args_format(request->request->pool, request->args,
                        "session", session_id, NULL, NULL, NULL);
     header_write(headers, "location",
@@ -54,7 +55,6 @@ session_redirect(struct request *request)
                            request->uri.query.data, request->uri.query.length,
                            NULL));
 
-    session_id_format(session_id, session->cookie_id);
     header_write(headers, "set-cookie",
                  p_strcat(request->request->pool,
                           "beng_proxy_session=", session_id,

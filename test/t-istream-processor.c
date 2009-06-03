@@ -78,7 +78,7 @@ create_test(pool_t pool, istream_t input)
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
                        NULL,
-                       session_new()->uri_id,
+                       session_new()->id,
                        NULL,
                        NULL);
 

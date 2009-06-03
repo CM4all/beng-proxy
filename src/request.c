@@ -80,7 +80,7 @@ request_get_cookies(struct request *request)
     return request->cookies;
 }
 
-static void
+static struct session *
 request_get_session(struct request *request, const char *session_id)
 {
     struct session *session;
@@ -91,12 +91,14 @@ request_get_session(struct request *request, const char *session_id)
 
     request->session_id = session_id_parse(session_id);
     if (request->session_id == 0)
-        return;
+        return NULL;
 
     session = session_get(request->session_id);
     if (session != NULL && session->translate != NULL)
         request->translate.request.session =
             p_strdup(request->request->pool, session->translate);
+
+    return session;
 }
 
 static const char *
@@ -109,45 +111,57 @@ request_get_uri_session_id(const struct request *request)
         : NULL;
 }
 
-static session_id_t
+static const char *
 request_get_cookie_session_id(struct request *request)
 {
     struct strmap *cookies = request_get_cookies(request);
-    const char *session_id;
 
     if (cookies == NULL)
         return 0;
 
-    session_id = strmap_get(cookies, "beng_proxy_session");
-    if (session_id == NULL)
-        return 0;
-
-    return session_id_parse(session_id);
+    return strmap_get(cookies, "beng_proxy_session");
 }
 
 void
 request_determine_session(struct request *request)
 {
     const char *session_id;
+    bool cookie_received = false;
+    struct session *session;
 
     assert(request != NULL);
 
     session_id = request_get_uri_session_id(request);
-    if (session_id != NULL)
-        request_get_session(request, session_id);
+    if (session_id == NULL || *session_id == 0) {
+        session_id = request_get_cookie_session_id(request);
+        if (session_id == NULL)
+            return;
 
-    if (request->session_id != 0) {
-        struct session *session = session_get(request->session_id);
+        cookie_received = true;
+    }
 
-        if (session != NULL) {
-            session_id_t id = request_get_cookie_session_id(request);
-            if (id == session->cookie_id)
-                session->cookie_received = true;
-            else if (session->cookie_received)
-                /* someone has stolen our URI including the session
-                   id; refuse to continue with this session */
-                request->session_id = 0;
-        }
+    session = request_get_session(request, session_id);
+    if (session == NULL) {
+        if (!cookie_received && request->args != NULL)
+            /* remove invalid session id from URI args */
+            strmap_remove(request->args, "session");
+
+        return;
+    }
+
+    if (!cookie_received) {
+        const char *p = request_get_cookie_session_id(request);
+        if (p != NULL && strcmp(p, session_id) == 0)
+            cookie_received = true;
+    }
+
+    if (cookie_received) {
+        session->cookie_received = true;
+
+        if (request->args != NULL)
+            /* we're using cookies, and we can safely remove the
+               session id from the args */
+            strmap_remove(request->args, "session");
     }
 }
 
@@ -165,7 +179,7 @@ request_make_session(struct request *request)
     }
 
     session = session_new();
-    request->session_id = session->uri_id;
+    request->session_id = session->id;
     session_id_format(request->session_id_buffer, request->session_id);
 
     if (request->args == NULL)

@@ -46,7 +46,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
         session_manager_init();
 
         session = session_new();
-        write(fds[1], &session->uri_id, sizeof(session->uri_id));
+        write(fds[1], &session->id, sizeof(session->id));
     } else {
         pid_t pid2;
         int status;
@@ -66,7 +66,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
         session = session_get(session_id);
         assert(session != NULL);
-        assert(session->uri_id == session_id);
+        assert(session->id == session_id);
     }
 
     session_manager_deinit();
