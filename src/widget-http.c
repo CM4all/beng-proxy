@@ -422,6 +422,19 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
 }
 
 static void
+widget_collect_cookies(struct cookie_jar *jar, const struct strmap *headers,
+                       const char *host_and_port)
+{
+    const char *cookies = strmap_get(headers, "set-cookie2");
+
+    if (cookies == NULL)
+        cookies = strmap_get(headers, "set-cookie");
+
+    if (cookies != NULL)
+        cookie_jar_set_cookie2(jar, cookies, host_and_port);
+}
+
+static void
 widget_response_response(http_status_t status, struct strmap *headers,
                          istream_t body, void *ctx)
 {
@@ -430,17 +443,12 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
     if (headers != NULL) {
         if (embed->host_and_port != NULL) {
-            const char *cookies = strmap_get(headers, "set-cookie2");
-            if (cookies == NULL)
-                cookies = strmap_get(headers, "set-cookie");
-            if (cookies != NULL) {
-                struct session *session = session_get(embed->env->session_id);
-                if (session != NULL) {
-                    lock_lock(&session->lock);
-                    cookie_jar_set_cookie2(session->cookies, cookies,
-                                           embed->host_and_port);
-                    lock_unlock(&session->lock);
-                }
+            struct session *session = session_get(embed->env->session_id);
+            if (session != NULL) {
+                lock_lock(&session->lock);
+                widget_collect_cookies(session->cookies, headers,
+                                       embed->host_and_port);
+                lock_unlock(&session->lock);
             }
         }
 
