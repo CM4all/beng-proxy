@@ -425,13 +425,21 @@ static void
 widget_collect_cookies(struct cookie_jar *jar, const struct strmap *headers,
                        const char *host_and_port)
 {
-    const char *cookies = strmap_get(headers, "set-cookie2");
+    const char *key = "set-cookie2";
+    const char *cookies = strmap_get(headers, key);
 
-    if (cookies == NULL)
-        cookies = strmap_get(headers, "set-cookie");
+    if (cookies == NULL) {
+        key = "set-cookie";
+        cookies = strmap_get(headers, key);
+        if (cookies == NULL)
+            return;
+    }
 
-    if (cookies != NULL)
+    do {
         cookie_jar_set_cookie2(jar, cookies, host_and_port);
+
+        cookies = strmap_get_next(headers, key, cookies);
+    } while (cookies != NULL);
 }
 
 static void
