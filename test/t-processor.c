@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
         exit(2);
     }
 
-    widget_init(&widget, &root_widget_class);
+    widget_init(&widget, pool, &root_widget_class);
 
     processor_env_init(pool, &env,
                        NULL,
