@@ -34,7 +34,7 @@ bool
 hashmap_remove_value(struct hashmap *map, const char *key, const void *value);
 
 void *
-hashmap_get(struct hashmap *map, const char *key);
+hashmap_get(const struct hashmap *map, const char *key);
 
 /**
  * Returns another value for this key.
@@ -44,7 +44,7 @@ hashmap_get(struct hashmap *map, const char *key);
  * @return the next value, or NULL if there are no more
  */
 void *
-hashmap_get_next(struct hashmap *map, const char *key, const void *prev);
+hashmap_get_next(const struct hashmap *map, const char *key, const void *prev);
 
 void
 hashmap_rewind(struct hashmap *map);
