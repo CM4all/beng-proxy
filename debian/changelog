@@ -5,7 +5,7 @@ cm4all-beng-proxy (0.5.5) unstable; urgency=low
   * widget: allocate address from widget's pool
   * widget-http: support multiple Set-Cookie response headers
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 04 Jun 2009 15:10:15 +0200
 
 cm4all-beng-proxy (0.5.4) unstable; urgency=low
 
