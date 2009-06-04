@@ -227,6 +227,7 @@ clean:
 		test/t-istream-processor test/t-html-unescape \
 		test/t-html-unescape test/t-http-server \
 		test/t-http-server-mirror test/t-http-client test/t-http-util \
+		test/t-widget-http \
 		test/t-http-cache test/t-processor test/run-embed \
 		test/run-header-parser test/run-cookie-client \
 		test/t-cookie-client test/t-html-escape test/t-parser-cdata \
@@ -318,6 +319,28 @@ test/t-http-util: test/t-http-util.o src/http-util.o src/pool.o src/pstring.o sr
 
 test/t-http-cache: test/t-http-cache.o src/pool.o src/pstring.o src/tpool.o src/strmap.o src/hashmap.o src/fifo-buffer.o src/http.o src/header-parser.o src/growing-buffer.o src/strutil.o src/istream-memory.o src/istream-string.o src/http-cache.o src/abort-unref.o src/cache.o src/header-writer.o src/http-util.o src/istream-tee.o src/date.o src/gmtime.o src/istream-null.o src/istream-unlock.o src/istream-forward.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
+
+test/t-widget-http: test/t-widget-http.o \
+	src/widget-http.o src/widget-uri.o src/widget-request.o \
+	src/widget-session.o src/session.o \
+	src/args.o src/uri-escape.o src/format.o \
+	src/resource-address.o src/uri-address.o src/uri-relative.o \
+	src/resource-tag.o \
+	src/cookie-client.o \
+	src/header-parser.o \
+	src/strmap.o src/hashmap.o \
+	src/growing-buffer.o src/fifo-buffer.o \
+	src/strutil.o src/http-string.o src/http-util.o \
+	src/istream-string.o src/istream-iconv.o src/istream-html-escape.o \
+	src/istream-cat.o src/istream-forward.o src/istream-memory.o \
+	src/istream-null.o \
+	src/transformation.o \
+	src/dpool.o src/dstring.o src/dhashmap.o src/shm.o \
+	src/pool.o src/pstring.o src/tpool.o
+	$(CC) -o $@ $^ $(LDFLAGS) $(LIBDAEMON_LIBS) $(LIBEVENT_LIBS)
+
+check-widget-http: test/t-widget-http
+	./$<
 
 test/t-processor: test/t-processor.o src/processor.o src/penv.o src/parser.o src/istream-replace.o src/widget.o src/widget-ref.o src/uri-relative.o src/uri-parser.o src/uri-escape.o src/strmap.o src/hashmap.o src/growing-buffer.o src/fifo-buffer.o src/pool.o src/pstring.o src/tpool.o src/istream-string.o src/istream-subst.o src/istream-file.o src/istream-cat.o src/istream-memory.o src/istream-delayed.o src/istream-hold.o src/istream-dechunk.o src/istream-chunked.o src/header-writer.o src/args.o src/buffered-io.o src/tcp-stock.o src/stock.o src/hstock.o src/client-socket.o src/socket-util.o src/fd-util.o src/format.o src/header-parser.o src/http.o src/strutil.o src/widget-request.o src/istream-tee.o src/istream-null.o src/event2.o src/failure.o src/uri-address.o src/shm.o src/dpool.o src/dstring.o src/dhashmap.o src/widget-stream.o src/expansible-buffer.o src/istream-forward.o src/istream-catch.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LIBEVENT_LIBS) $(LIBDAEMON_LIBS)
@@ -454,6 +477,7 @@ check: $(patsubst %,check-filter-%,$(FILTER_TEST_CLASSES) processor) \
 	check-hashmap \
 	check-resource-address \
 	check-uri-compress \
+	check-widget-http \
 	check-cache check-tcache
 
 cov: CFLAGS += -fprofile-arcs -ftest-coverage
