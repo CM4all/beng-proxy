@@ -172,16 +172,18 @@ widget_request_headers(struct embed *embed, int with_body)
         p = "beng-proxy v" VERSION;
     strmap_add(headers, "user-agent", p);
 
-    p = get_env_request_header(embed->env, "x-forwarded-for");
+    p = get_env_request_header(embed->env, "via");
     if (p == NULL) {
         if (embed->env->remote_host != NULL)
-            strmap_add(headers, "x-forwarded-for", embed->env->remote_host);
+            strmap_add(headers, "via",
+                       p_strcat(embed->pool, "1.1 ",
+                                embed->env->remote_host, NULL));
     } else {
         if (embed->env->remote_host == NULL)
-            strmap_add(headers, "x-forwarded-for", p);
+            strmap_add(headers, "via", p);
         else
-            strmap_add(headers, "x-forwarded-for",
-                       p_strcat(embed->pool, p, ", ",
+            strmap_add(headers, "via",
+                       p_strcat(embed->pool, p, ", 1.1 ",
                                 embed->env->remote_host, NULL));
     }
 

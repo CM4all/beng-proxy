@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.5.6) unstable; urgency=low
 
-  * 
+  * widget-http: send the "Via" request header instead of "X-Forwarded-For"
 
  --
 
