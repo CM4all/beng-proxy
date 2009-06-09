@@ -91,8 +91,11 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
         strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
         widget->parent->from_request.focus_ref->next == NULL) {
         /* we're in focus.  forward query string and request body. */
-        widget->from_request.path_info =
-            uri_compress(env->pool, strmap_remove(env->args, "path"));
+        widget->from_request.path_info = strmap_remove(env->args, "path");
+        if (widget->from_request.path_info != NULL)
+            widget->from_request.path_info =
+                uri_compress(env->pool, widget->from_request.path_info);
+
         widget->from_request.query_string = env->external_uri->query;
 
         if (env->request_body != NULL) {
