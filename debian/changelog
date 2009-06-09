@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.5.6) unstable; urgency=low
   * proxy-handler: send the "Via" request header
   * widget-request: check the "path" argument before calling uri_compress()
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 09 Jun 2009 12:21:00 +0200
 
 cm4all-beng-proxy (0.5.5) unstable; urgency=low
 
