@@ -31,6 +31,7 @@ static const char *const copy_headers[] = {
     "content-md5",
     "content-range",
     "content-type",
+    "content-disposition",
     "last-modified",
     "retry-after",
     "vary",
@@ -41,6 +42,7 @@ static const char *const copy_headers_processed[] = {
     "cache-control",
     "content-language",
     "content-type",
+    "content-disposition",
     "vary",
     NULL,
 };

@@ -272,6 +272,7 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
             static const char *const copy_headers[] = {
                 "content-language",
                 "content-type",
+                "content-disposition",
                 NULL,
             };
 

@@ -75,6 +75,7 @@ static const char *const copy_headers_with_body[] = {
     "content-md5",
     "content-range",
     "content-type",
+    "content-disposition",
     NULL,
 };
 
