@@ -146,7 +146,7 @@ translate_callback(const struct translate_response *response,
                 session->user_expires = expiry_touch(response->user_max_age);
         }
 
-        if (old_user != NULL)
+        if (old_user != NULL && old_user != session->user)
             d_free(session->pool, old_user);
     } else if (session != NULL && session->user != NULL && session->user_expires > 0 &&
                is_expired(session->user_expires)) {
@@ -173,7 +173,7 @@ translate_callback(const struct translate_response *response,
                 session->language = d_strdup(session->pool, response->language);
         }
 
-        if (old_language != NULL)
+        if (old_language != NULL && old_language != session->language)
             d_free(session->pool, old_language);
     }
 

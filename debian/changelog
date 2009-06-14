@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.5.8) unstable; urgency=low
 
-  * 
+  * handler: fixed double free bug in translate_callback()
 
  --
 
