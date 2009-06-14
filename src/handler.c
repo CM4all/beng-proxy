@@ -119,7 +119,7 @@ translate_callback(const struct translate_response *response,
     }
 
     if (response->user != NULL) {
-        const char *old_user = session->user;
+        const char *old_user = session != NULL ? session->user : NULL;
 
         if (*response->user == 0) {
             /* log out */
@@ -156,7 +156,7 @@ translate_callback(const struct translate_response *response,
     }
 
     if (response->language != NULL) {
-        const char *old_language = session->language;
+        const char *old_language = session != NULL ? session->language : NULL;
         if (*response->language == 0) {
             /* reset language setting */
 
