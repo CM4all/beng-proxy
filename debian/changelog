@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.5.7) unstable; urgency=low
 
-  * 
+  * forward the Content-Disposition header
 
  --
 
