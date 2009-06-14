@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.5.7) unstable; urgency=low
   * handler: assign new session to local variable, fix segfault
   * handler: don't dereference the NULL session
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Sun, 14 Jun 2009 13:01:52 +0200
 
 cm4all-beng-proxy (0.5.6) unstable; urgency=low
 
