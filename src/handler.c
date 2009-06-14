@@ -109,7 +109,8 @@ translate_callback(const struct translate_response *response,
         } else {
             /* set new translate session */
 
-            request_make_session(request);
+            if (session == NULL)
+                session = request_make_session(request);
 
             if (session->translate == NULL ||
                 strcmp(response->session, session->translate) != 0)
@@ -128,7 +129,8 @@ translate_callback(const struct translate_response *response,
         } else {
             /* log in */
 
-            request_make_session(request);
+            if (session == NULL)
+                session = request_make_session(request);
 
             if (session->user == NULL ||
                 strcmp(response->user, session->user) != 0)
@@ -163,7 +165,8 @@ translate_callback(const struct translate_response *response,
         } else {
             /* override language */
 
-            request_make_session(request);
+            if (session == NULL)
+                session = request_make_session(request);
 
             if (session->language == NULL ||
                 strcmp(response->language, session->language) != 0)
