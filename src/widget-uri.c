@@ -194,9 +194,8 @@ widget_external_uri(pool_t pool,
                     const char *frame, bool raw)
 {
     const char *path;
-    const char *new_uri;
-    const char *args2;
-    struct strref buffer;
+    const char *qmark, *args2, *new_uri;
+    struct strref buffer, query_string;
     const struct strref *p;
     struct pool_mark mark;
 
@@ -221,6 +220,15 @@ widget_external_uri(pool_t pool,
     } else
         p = NULL;
 
+    if (p != NULL && (qmark = memchr(p->data, '?', p->length)) != NULL) {
+        /* separate query_string from path_info */
+        strref_set2(&query_string, qmark, strref_end(p));
+        strref_set2(&buffer, p->data, qmark);
+        p = &buffer;
+    } else {
+        strref_null(&query_string);
+    }
+
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
@@ -239,6 +247,7 @@ widget_external_uri(pool_t pool,
                         ";", (size_t)1,
                         args2, strlen(args2),
                         "&raw=1", (size_t)(raw ? 6 : 0),
+                        query_string.data, query_string.length,
                         NULL);
 
     pool_rewind(tpool, &mark);
