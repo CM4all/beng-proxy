@@ -449,6 +449,7 @@ tcache_miss(pool_t pool, struct tcache *tcache,
     tcr->pool = pool;
     tcr->tcache = tcache;
     tcr->request = request;
+    tcr->find_base = false;
     tcr->key = key;
     tcr->callback = callback;
     tcr->ctx = ctx;
