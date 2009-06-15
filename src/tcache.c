@@ -538,7 +538,7 @@ translate_cache_new(pool_t pool, struct hstock *tcp_stock,
     pool_ref(pool);
 
     tcache->pool = pool;
-    tcache->cache = cache_new(pool, &tcache_class, 1024, 1024);
+    tcache->cache = cache_new(pool, &tcache_class, 65521, 131072);
     tcache->tcp_stock = tcp_stock;
     tcache->socket_path = socket_path;
 

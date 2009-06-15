@@ -429,7 +429,7 @@ filter_cache_new(pool_t pool, size_t max_size,
 {
     struct filter_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
-    cache->cache = cache_new(pool, &filter_cache_class, 1024, max_size);
+    cache->cache = cache_new(pool, &filter_cache_class, 65521, max_size);
     cache->tcp_stock = tcp_stock;
     cache->fcgi_stock = fcgi_stock;
     return cache;

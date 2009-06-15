@@ -22,13 +22,13 @@
 #include <event.h>
 
 #define SHM_PAGE_SIZE 4096
-#define SHM_NUM_PAGES 8192
+#define SHM_NUM_PAGES 32768
 #define SM_PAGES ((sizeof(struct session_manager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE)
 
 #define SESSION_TTL_NEW 120
 #define SESSION_TTL 600
 
-#define SESSION_SLOTS 1024
+#define SESSION_SLOTS 16381
 
 struct session_manager {
     struct refcount ref;

@@ -182,11 +182,11 @@ int main(int argc, char **argv)
     if (instance.config.translation_socket != NULL)
         instance.translate_cache = translate_cache_new(instance.pool, instance.tcp_stock,
                                                        instance.config.translation_socket);
-    instance.http_cache = http_cache_new(instance.pool, 64 * 1024 * 1024,
+    instance.http_cache = http_cache_new(instance.pool, 512 * 1024 * 1024,
                                          instance.tcp_stock);
     instance.fcgi_stock = fcgi_stock_new(instance.pool);
     instance.delegate_stock = delegate_stock_new(instance.pool);
-    instance.filter_cache = filter_cache_new(instance.pool, 32 * 1024 * 1024,
+    instance.filter_cache = filter_cache_new(instance.pool, 128 * 1024 * 1024,
                                              instance.tcp_stock,
                                              instance.fcgi_stock);
 
