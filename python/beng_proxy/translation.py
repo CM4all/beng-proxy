@@ -42,6 +42,7 @@ TRANSLATE_QUERY_STRING = 38
 TRANSLATE_PIPE = 39
 TRANSLATE_BASE = 40
 TRANSLATE_DELEGATE = 41
+TRANSLATE_INVALIDATE = 42
 
 class PacketReader:
     def __init__(self):
@@ -183,6 +184,11 @@ class Response:
         assert len(args) > 0
         payload = ''.join(map(lambda x: struct.pack('H', x), args))
         self.packet(TRANSLATE_VARY, payload)
+
+    def invalidate(self, *args):
+        assert len(args) > 0
+        payload = ''.join(map(lambda x: struct.pack('H', x), args))
+        self.packet(TRANSLATE_INVALIDATE, payload)
 
     def pipe(self, path):
         assert isinstance(path, str)

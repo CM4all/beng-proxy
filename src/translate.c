@@ -733,6 +733,18 @@ translate_handle_packet(struct translate_client *client,
         client->response.num_vary = payload_length / sizeof(client->response.vary[0]);
         break;
 
+    case TRANSLATE_INVALIDATE:
+        if (payload_length == 0 ||
+            payload_length % sizeof(client->response.invalidate[0]) != 0) {
+            daemon_log(2, "malformed TRANSLATE_INVALIDATE packet\n");
+            break;
+        }
+
+        client->response.invalidate = (const uint16_t *)payload;
+        client->response.num_invalidate = payload_length /
+            sizeof(client->response.invalidate[0]);
+        break;
+
     case TRANSLATE_BASE:
         client->response.base = payload;
         break;

@@ -146,6 +146,12 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
         dest->vary = (const uint16_t *)
             p_memdup(pool, src->vary,
                      dest->num_vary * sizeof(dest->vary[0]));
+
+    dest->num_invalidate = src->num_invalidate;
+    if (dest->num_invalidate > 0)
+        dest->invalidate = (const uint16_t *)
+            p_memdup(pool, src->invalidate,
+                     dest->num_invalidate * sizeof(dest->invalidate[0]));
 }
 
 /**

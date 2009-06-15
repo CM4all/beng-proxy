@@ -52,6 +52,7 @@ enum beng_translation_command {
     TRANSLATE_PIPE = 39,
     TRANSLATE_BASE = 40,
     TRANSLATE_DELEGATE = 41,
+    TRANSLATE_INVALIDATE = 42,
 };
 
 struct beng_translation_header {

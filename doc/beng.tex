@@ -402,6 +402,21 @@ The following request packets are currently supported:
 \\
 
 \hline
+
+\texttt{INVALIDATE} & Invalidates existing translation cache items
+which depend on some of the request values.  The payload has the same
+format as \texttt{VARY}.
+
+If you specify more than one command, all must match.  If you list a
+command which was not specified in the request (or a command which is
+not supported here), nothing will be deleted.
+
+Example: \texttt{INVALIDATE} on \texttt{SESSION} invalidates all cache
+items for the current session.
+
+\\
+
+\hline
 \end{supertabular}
 
 If the translation server does not provide the \texttt{CONTENT\_TYPE}

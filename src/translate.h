@@ -56,6 +56,9 @@ struct translate_response {
 
     const uint16_t *vary;
     unsigned num_vary;
+
+    const uint16_t *invalidate;
+    unsigned num_invalidate;
 };
 
 typedef void (*translate_callback_t)(const struct translate_response *response,
