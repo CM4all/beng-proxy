@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.5.10) unstable; urgency=low
 
-  * 
+  * widget-http: assign the "address" variable
 
  --
 

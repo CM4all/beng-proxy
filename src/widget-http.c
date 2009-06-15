@@ -211,10 +211,10 @@ widget_response_redirect(struct embed *embed, const char *location,
 {
     const struct resource_address *address;
     struct session *session;
-    struct uri_with_address *uwa;
     struct strmap *headers;
     struct strref strref_buffer;
     const struct strref *p;
+    struct resource_address address_buffer;
 
     if (embed->num_redirects >= 8)
         return false;
@@ -237,11 +237,15 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     ++embed->num_redirects;
 
+    address = resource_address_apply(embed->pool,
+                                     widget_address(embed->widget),
+                                     location, strlen(location),
+                                     &address_buffer);
+    if (address == NULL)
+        return false;
+
     if (body != NULL)
         istream_close(body);
-
-    uwa = uri_address_dup(embed->pool, embed->widget->class->address.u.http);
-    uwa->uri = location;
 
     headers = widget_request_headers(embed, 0);
 
