@@ -209,7 +209,6 @@ static bool
 widget_response_redirect(struct embed *embed, const char *location,
                          istream_t body)
 {
-    struct resource_address address_buffer;
     const struct resource_address *address;
     struct session *session;
     struct uri_with_address *uwa;
@@ -224,15 +223,9 @@ widget_response_redirect(struct embed *embed, const char *location,
         /* a static or CGI widget cannot send redirects */
         return false;
 
-    address = resource_address_apply(embed->pool,
-                                     widget_address(embed->widget),
-                                     location, strlen(location),
-                                     &address_buffer);
-    if (address == NULL)
-        return false;
-
-    p = resource_address_relative(&embed->widget->class->address, address,
-                                  &strref_buffer);
+    p = widget_relative_uri(embed->pool, embed->widget,
+                            location, strlen(location),
+                            &strref_buffer);
     if (p == NULL)
         return false;
 

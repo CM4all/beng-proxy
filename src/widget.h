@@ -276,6 +276,14 @@ widget_translation_uri(pool_t pool,
                        struct strmap *args,
                        const char *translation);
 
+/**
+ * Returns an URI relative to the widget base address.
+ */
+const struct strref *
+widget_relative_uri(pool_t pool, struct widget *widget,
+                    const char *relative_uri, size_t relative_uri_length,
+                    struct strref *buffer);
+
 const char *
 widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
