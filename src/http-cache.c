@@ -736,7 +736,7 @@ http_cache_new(pool_t pool, size_t max_size,
 {
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
-    cache->cache = cache_new(pool, &http_cache_class, max_size);
+    cache->cache = cache_new(pool, &http_cache_class, 1024, max_size);
     cache->stock = tcp_stock;
 
     list_init(&cache->requests);

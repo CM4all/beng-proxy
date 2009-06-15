@@ -82,7 +82,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
     pool = pool_new_libc(NULL, "root");
 
-    cache = cache_new(pool, &my_cache_class, 4);
+    cache = cache_new(pool, &my_cache_class, 1024, 4);
 
     /* add first item */
 

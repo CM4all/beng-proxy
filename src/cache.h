@@ -50,7 +50,7 @@ struct cache_class {
 
 struct cache *
 cache_new(pool_t pool, const struct cache_class *class,
-          size_t max_size);
+          unsigned hashtable_capacity, size_t max_size);
 
 void
 cache_close(struct cache *cache);
