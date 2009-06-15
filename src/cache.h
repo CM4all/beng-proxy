@@ -107,6 +107,16 @@ cache_remove_item(struct cache *cache, const char *key,
                   struct cache_item *item);
 
 /**
+ * Removes all matching cache items.
+ *
+ * @return the number of items which were removed
+ */
+unsigned
+cache_remove_all_match(struct cache *cache,
+                       bool (*match)(const struct cache_item *, void *),
+                       void *ctx);
+
+/**
  * Initializes the specified #cache_item.  You should not manually
  * initialize an item, because you won't notice API changes then.
  */

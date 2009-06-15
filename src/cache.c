@@ -372,6 +372,46 @@ cache_remove_item(struct cache *cache, const char *key,
     cache_check(cache);
 }
 
+struct cache_remove_all_match_data {
+    struct cache *cache;
+    bool (*match)(const struct cache_item *, void *);
+    void *ctx;
+};
+
+static bool
+cache_remove_all_match_callback(__attr_unused const char *key, void *value,
+                                void *ctx)
+{
+    const struct cache_remove_all_match_data *data = ctx;
+    struct cache_item *item = value;
+
+    if (data->match(item, data->ctx)) {
+        cache_item_removed(data->cache, item);
+        return true;
+    } else
+        return false;
+}
+
+unsigned
+cache_remove_all_match(struct cache *cache,
+                       bool (*match)(const struct cache_item *, void *),
+                       void *ctx)
+{
+    struct cache_remove_all_match_data data = {
+        .cache = cache,
+        .match = match,
+        .ctx = ctx,
+    };
+    unsigned removed;
+
+    cache_check(cache);
+    removed = hashmap_remove_all_match(cache->items,
+                                       cache_remove_all_match_callback, &data);
+    cache_check(cache);
+
+    return removed;
+}
+
 void
 cache_item_lock(struct cache_item *item)
 {
