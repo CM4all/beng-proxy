@@ -93,6 +93,27 @@ static const struct translate_response response5b = {
     .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
 };
 
+static const uint16_t response5_invalidate[] = {
+    TRANSLATE_QUERY_STRING,
+};
+
+static const struct translate_response response5c = {
+    .address = {
+        .type = RESOURCE_ADDRESS_LOCAL,
+        .u = {
+            .local = {
+                .path = "/src/qs3",
+            },
+        },
+    },
+    .max_age = -1,
+    .user_max_age = -1,
+    .vary = response5_vary,
+    .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
+    .invalidate = response5_invalidate,
+    .num_invalidate = sizeof(response5_invalidate) / sizeof(response5_invalidate[0]),
+};
+
 const struct translate_response *next_response, *expected_response;
 
 void
@@ -150,6 +171,10 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
         .uri = "/qs",
         .query_string = "xyz",
     };
+    static const struct translate_request request8 = {
+        .uri = "/qs/",
+        .query_string = "xyz",
+    };
     struct async_operation_ref async_ref;
 
     event_base = event_init();
@@ -191,6 +216,22 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
     next_response = NULL;
     expected_response = &response5b;
+    translate_cache(pool, cache, &request7, my_callback, NULL, &async_ref);
+
+    next_response = expected_response = &response5c;
+    translate_cache(pool, cache, &request8, my_callback, NULL, &async_ref);
+
+    next_response = NULL;
+    expected_response = &response5a;
+    translate_cache(pool, cache, &request6, my_callback, NULL, &async_ref);
+
+    next_response = expected_response = &response5c;
+    translate_cache(pool, cache, &request7, my_callback, NULL, &async_ref);
+
+    next_response = expected_response = &response5c;
+    translate_cache(pool, cache, &request8, my_callback, NULL, &async_ref);
+
+    expected_response = &response5c;
     translate_cache(pool, cache, &request7, my_callback, NULL, &async_ref);
 
     /* cleanup */

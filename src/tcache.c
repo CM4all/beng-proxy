@@ -372,6 +372,28 @@ tcache_lookup(pool_t pool, struct tcache *tcache,
     return NULL;
 }
 
+struct tcache_invalidate_data {
+    const struct translate_request *request;
+    const struct translate_response *response;
+};
+
+static bool
+tcache_invalidate_match(const struct cache_item *_item, void *ctx)
+{
+    const struct tcache_item *item = (const struct tcache_item *)_item;
+    const struct tcache_invalidate_data *data = ctx;
+    const uint16_t *invalidate = data->response->invalidate;
+    unsigned num_invalidate = data->response->num_invalidate;
+
+    for (unsigned i = 0; i < num_invalidate; ++i)
+        if (!tcache_vary_match(item, data->request,
+                               (enum beng_translation_command)invalidate[i],
+                               true))
+            return false;
+
+    return true;
+}
+
 
 /*
  * translate callback
@@ -382,6 +404,18 @@ static void
 tcache_callback(const struct translate_response *response, void *ctx)
 {
     struct tcache_request *tcr = ctx;
+
+    if (response != NULL && response->num_invalidate > 0) {
+        struct tcache_invalidate_data data = {
+            .request = tcr->request,
+            .response = response,
+        };
+        unsigned removed;
+
+        removed = cache_remove_all_match(tcr->tcache->cache,
+                                         tcache_invalidate_match, &data);
+        cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
+    }
 
     if (tcache_response_evaluate(response)) {
         pool_t pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 512);
