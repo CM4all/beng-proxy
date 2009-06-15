@@ -405,7 +405,8 @@ The following request packets are currently supported:
 
 \texttt{INVALIDATE} & Invalidates existing translation cache items
 which depend on some of the request values.  The payload has the same
-format as \texttt{VARY}.
+format as \texttt{VARY}.  Additionally, the \texttt{URI} command is
+supported, to invalidate all items pointing to the request URI.
 
 If you specify more than one command, all must match.  If you list a
 command which was not specified in the request (or a command which is

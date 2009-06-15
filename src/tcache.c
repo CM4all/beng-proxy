@@ -272,6 +272,10 @@ tcache_vary_match(const struct tcache_item *item,
                   bool strict)
 {
     switch (command) {
+    case TRANSLATE_URI:
+        return tcache_string_match(item->item.key,
+                                   request->uri, strict);
+
     case TRANSLATE_SESSION:
         return tcache_string_match(item->request.session,
                                    request->session, strict);
