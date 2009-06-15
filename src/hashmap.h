@@ -33,6 +33,18 @@ hashmap_remove(struct hashmap *map, const char *key);
 bool
 hashmap_remove_value(struct hashmap *map, const char *key, const void *value);
 
+/**
+ * Iterates through the hashmap, invokes the match() callback
+ * function, and removes every "matching" value.
+ *
+ * @return the number of items which were removed
+ */
+unsigned
+hashmap_remove_all_match(struct hashmap *map,
+                         bool (*match)(const char *key, void *value,
+                                       void *ctx),
+                         void *ctx);
+
 void *
 hashmap_get(const struct hashmap *map, const char *key);
 

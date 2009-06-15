@@ -195,6 +195,55 @@ hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
     return false;
 }
 
+unsigned
+hashmap_remove_all_match(struct hashmap *map,
+                         bool (*match)(const char *key, void *value,
+                                       void *ctx),
+                         void *ctx)
+{
+    unsigned removed = 0;
+
+    for (unsigned i = 0; i < map->capacity; ++i) {
+        struct slot **slot_r = &map->slots[i].next, *slot;
+
+        /* check the slot chain */
+
+        while ((slot = *slot_r) != NULL) {
+            assert(slot->pair.key != NULL);
+
+            if (match(slot->pair.key, slot->pair.value, ctx)) {
+                *slot_r = slot->next;
+                p_free(map->pool, slot);
+                ++removed;
+            } else
+                slot_r = &slot->next;
+        }
+
+        /* check the base slot */
+
+        slot = &map->slots[i];
+        if (slot->pair.key != NULL &&
+            match(slot->pair.key, slot->pair.value, ctx)) {
+            struct slot *next = slot->next;
+
+            if (next == NULL) {
+                /* clear the base slot */
+                slot->pair.key = NULL;
+                slot->pair.value = NULL;
+            } else {
+                /* overwrite the base slot with the first chained
+                   item */
+                *slot = *next;
+                p_free(map->pool, next);
+            }
+
+            ++removed;
+        }
+    }
+
+    return removed;
+}
+
 void *
 hashmap_get(const struct hashmap *map, const char *key)
 {
