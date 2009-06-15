@@ -243,46 +243,54 @@ tcache_vary_copy(pool_t pool, const char *p,
         : NULL;
 }
 
+/**
+ * @param strict in strict mode, NULL values are a mismatch
+ */
 static bool
-tcache_string_match(const char *a, const char *b)
+tcache_string_match(const char *a, const char *b, bool strict)
 {
     if (a == NULL || b == NULL)
-        return a == b;
+        return !strict && a == b;
 
     return strcmp(a, b) == 0;
 }
 
+/**
+ * @param strict in strict mode, unknown commands and NULL values are
+ * a mismatch
+ */
 static bool
 tcache_vary_match(const struct tcache_item *item,
                   const struct translate_request *request,
-                  enum beng_translation_command command)
+                  enum beng_translation_command command,
+                  bool strict)
 {
     switch (command) {
     case TRANSLATE_SESSION:
         return tcache_string_match(item->request.session,
-                                   request->session);
+                                   request->session, strict);
 
     case TRANSLATE_REMOTE_HOST:
         return tcache_string_match(item->request.remote_host,
-                                   request->remote_host);
+                                   request->remote_host, strict);
 
     case TRANSLATE_HOST:
-        return tcache_string_match(item->request.host, request->host);
+        return tcache_string_match(item->request.host, request->host, strict);
 
     case TRANSLATE_LANGUAGE:
         return tcache_string_match(item->request.accept_language,
-                                   request->accept_language);
+                                   request->accept_language, strict);
 
     case TRANSLATE_USER_AGENT:
         return tcache_string_match(item->request.user_agent,
-                                   request->user_agent);
+                                   request->user_agent, strict);
 
     case TRANSLATE_QUERY_STRING:
         return tcache_string_match(item->request.query_string,
-                                   request->query_string);
+                                   request->query_string, strict);
 
     default:
-        return true;
+        return !strict;
     }
 }
 
@@ -300,7 +308,8 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
 
     for (unsigned i = 0; i < item->response.num_vary; ++i)
         if (!tcache_vary_match(item, request,
-                               (enum beng_translation_command)item->response.vary[i]))
+                               (enum beng_translation_command)item->response.vary[i],
+                               false))
             return false;
 
     return true;
