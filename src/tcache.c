@@ -20,6 +20,7 @@ struct tcache_item {
     pool_t pool;
 
     struct {
+        const char *session;
         const char *remote_host;
         const char *host;
         const char *accept_language;
@@ -257,6 +258,10 @@ tcache_vary_match(const struct tcache_item *item,
                   enum beng_translation_command command)
 {
     switch (command) {
+    case TRANSLATE_SESSION:
+        return tcache_string_match(item->request.session,
+                                   request->session);
+
     case TRANSLATE_REMOTE_HOST:
         return tcache_string_match(item->request.remote_host,
                                    request->remote_host);
@@ -377,6 +382,9 @@ tcache_callback(const struct translate_response *response, void *ctx)
         cache_item_init(&item->item, time(NULL) + max_age, 1);
         item->pool = pool;
 
+        item->request.session =
+            tcache_vary_copy(pool, tcr->request->session,
+                             response, TRANSLATE_SESSION);
         item->request.remote_host =
             tcache_vary_copy(pool, tcr->request->remote_host,
                              response, TRANSLATE_REMOTE_HOST);
