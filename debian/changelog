@@ -1,3 +1,9 @@
+cm4all-beng-proxy (0.5.10) unstable; urgency=low
+
+  * 
+
+ --
+
 cm4all-beng-proxy (0.5.9) unstable; urgency=low
 
   * tcache: fixed typo in tcache_string_match()
