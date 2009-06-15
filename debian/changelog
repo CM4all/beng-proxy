@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.5.9) unstable; urgency=low
   * translate: added the INVALIDATE response packet
   * cache, session: higher size limits
   * widget-uri: separate query_string from path_info
+  * widget-uri: ignore widget parameters in widget_external_uri()
 
  --
 

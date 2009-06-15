@@ -254,6 +254,13 @@ widget_copy_from_location(struct widget *widget, struct session *session,
                           const char *location, size_t location_length,
                           pool_t pool);
 
+/**
+ * Returns the "base" address of the widget, i.e. without the widget
+ * parameters from the parent container.
+ */
+const struct resource_address *
+widget_base_address(pool_t pool, struct widget *widget);
+
 void
 widget_determine_address(struct widget *widget);
 

@@ -14,6 +14,34 @@
 
 #include <assert.h>
 
+const struct resource_address *
+widget_base_address(pool_t pool, struct widget *widget)
+{
+    const struct resource_address *src = widget_address(widget);
+    size_t query_string_length;
+    const char *qmark;
+    struct resource_address *dest;
+
+    if (src->type != RESOURCE_ADDRESS_HTTP || widget->query_string == NULL)
+        return src;
+
+    query_string_length = strlen(widget->query_string);
+    qmark = strchr(src->u.http->uri, '?');
+    if (qmark == NULL ||
+        memcmp(qmark + 1, widget->query_string, query_string_length) != 0 ||
+        (qmark[1 + query_string_length] != 0 &&
+         qmark[1 + query_string_length] != '&'))
+        return src;
+
+    dest = resource_address_dup(pool, src);
+    dest->u.http->uri = p_strncat(pool,
+                                  src->u.http->uri, qmark + 1 - src->u.http->uri,
+                                  qmark + 1 + query_string_length,
+                                  strlen(qmark + 1 + query_string_length),
+                                  NULL);
+    return dest;
+}
+
 void
 widget_determine_address(struct widget *widget)
 {
@@ -176,7 +204,7 @@ widget_relative_uri(pool_t pool, struct widget *widget,
     struct resource_address address_buffer;
     const struct resource_address *address;
 
-    address = resource_address_apply(pool, widget_address(widget),
+    address = resource_address_apply(pool, widget_base_address(pool, widget),
                                      relative_uri, relative_uri_length,
                                      &address_buffer);
     if (address == NULL)
