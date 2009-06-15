@@ -248,7 +248,7 @@ tcache_string_match(const char *a, const char *b)
     if (a == NULL || b == NULL)
         return a == b;
 
-    return strcmp(a, b);
+    return strcmp(a, b) == 0;
 }
 
 static bool
