@@ -2,7 +2,8 @@ Source: cm4all-beng-proxy
 Section: non-free/web
 Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
-Build-Depends: debhelper (>= 5.0.38), gcc (>= 4.1), libc6-dev (>= 2.7),
+Build-Depends: debhelper (>= 7), autoconf (>= 2.60), automake (>= 1.10),
+ gcc (>= 4.1), libc6-dev (>= 2.7),
  libevent-dev (>= 1.4.8~), libattr1-dev,
  libcm4all-inline-dev (>= 0.1.2), libcm4all-daemon-dev (>= 0.3),
  texlive, texlive-latex-extra,

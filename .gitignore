@@ -1,6 +1,7 @@
 .stgit*
 *~
 *.o
+*.a
 src/cm4all-beng-proxy
 src/cm4all-beng-proxy-delegate-helper
 
@@ -17,11 +18,11 @@ test/t-istream-delayed
 test/t-istream-subst
 test/t-istream-deflate
 test/t-istream-byte
-test/t-parser-cdata
-test/t-html-unescape
-test/t-html-escape
+test/run-parser-cdata
+test/run-html-unescape
+test/run-html-escape
 test/t-http-server-mirror
-test/t-processor
+test/run-processor
 test/t-istream-processor
 test/t-istream-replace
 test/t-istream-replace2
@@ -62,3 +63,16 @@ test/t-widget-http
 
 *.pyo
 *.pyc
+
+*.cache
+build
+libtool
+*.log
+*.status
+Makefile
+Makefile.in
+configure
+aclocal.m4
+.libs
+.deps
+.dirstamp
