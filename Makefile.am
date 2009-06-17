@@ -516,7 +516,12 @@ test_format_http_date_SOURCES = test/format-http-date.c \
 	src/gmtime.c src/date.c
 
 test_request_translation_SOURCES = test/request-translation.c \
-	src/translate.c src/growing-buffer.c src/socket-util.c src/stock.c \
+	src/translate.c src/growing-buffer.c src/gb-io.c \
+	src/tcp-stock.c src/failure.c src/client-socket.c \
+	src/fd-util.c src/socket-util.c \
+	src/stock.c src/hstock.c src/hashmap.c \
+	src/abort-unref.c \
+	src/uri-address.c \
 	$(POOL_SRC)
 test_request_translation_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 

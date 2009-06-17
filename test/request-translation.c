@@ -1,29 +1,84 @@
 #include "translate.h"
+#include "transformation.h"
+#include "tcp-stock.h"
+#include "async.h"
 #include "config.h"
 
 #include <stdio.h>
 #include <event.h>
 
 static void
+print_resource_address(const struct resource_address *address)
+{
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+        break;
+
+    case RESOURCE_ADDRESS_LOCAL:
+        printf("path=%s\n", address->u.local.path);
+        if (address->u.local.content_type != NULL)
+            printf("content_type=%s\n",
+                   address->u.local.content_type);
+        break;
+
+    case RESOURCE_ADDRESS_HTTP:
+        printf("proxy=%s\n", address->u.http->uri);
+        break;
+
+    case RESOURCE_ADDRESS_PIPE:
+        printf("pipe=%s\n", address->u.cgi.path);
+        break;
+
+    case RESOURCE_ADDRESS_CGI:
+        printf("cgi=%s\n", address->u.cgi.path);
+        break;
+
+    case RESOURCE_ADDRESS_FASTCGI:
+        printf("fastcgi=%s\n", address->u.cgi.path);
+        break;
+
+    case RESOURCE_ADDRESS_AJP:
+        printf("ajp=%s\n", address->u.http->uri);
+        break;
+    }
+}
+
+static void
 translate_callback(const struct translate_response *response,
                    void *ctx)
 {
+    const struct transformation_view *view;
+
     (void)ctx;
 
     if (response->status != 0)
         printf("status=%d\n", response->status);
-    if (response->path != NULL)
-        printf("path=%s\n", response->path);
-    if (response->content_type != NULL)
-        printf("content_type=%s\n", response->content_type);
-    if (response->proxy != NULL)
-        printf("proxy=%s\n", response->proxy);
+
+    print_resource_address(&response->address);
+
+    for (view = response->views; view != NULL; view = view->next) {
+        const struct transformation *transformation;
+
+        if (view->name != NULL)
+            printf("view=%s\n", view->name);
+
+        for (transformation = view->transformation; transformation != NULL;
+             transformation = transformation->next) {
+            switch (transformation->type) {
+            case TRANSFORMATION_PROCESS:
+                printf("process\n");
+                break;
+
+            case TRANSFORMATION_FILTER:
+                printf("filter\n");
+                print_resource_address(&transformation->u.filter);
+                break;
+            }
+        }
+    }
+
     if (response->redirect != NULL)
         printf("redirect=%s\n", response->redirect);
-    if (response->filter != NULL)
-        printf("filter=%s\n", response->filter);
-    if (response->process)
-        printf("process=true\n");
     if (response->session != NULL)
         printf("session=%s\n", response->session);
     if (response->user != NULL)
@@ -31,15 +86,13 @@ translate_callback(const struct translate_response *response,
 }
 
 int main(int argc, char **argv) {
-    static struct config config = {
-        .translation_socket = "/tmp/beng-proxy-translate",
-    };
     struct translate_request request = {
         .host = "example.com",
         .uri = "/foo/index.html",
     };
     pool_t pool;
-    struct stock *translate_stock;
+    struct hstock *tcp_stock;
+    struct async_operation_ref async_ref;
 
     (void)argc;
     (void)argv;
@@ -48,8 +101,9 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
 
-    translate_stock = translate_stock_new(pool, config.translation_socket);
-    translate(pool, translate_stock, &request, translate_callback, NULL);
+    tcp_stock = tcp_stock_new(pool);
+    translate(pool, tcp_stock, "/tmp/beng-proxy-translate",
+              &request, translate_callback, NULL, &async_ref);
 
     event_dispatch();
 }
