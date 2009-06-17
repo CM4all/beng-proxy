@@ -25,24 +25,6 @@ socket_set_nonblock(int fd, bool value)
     return fd_mask_status_flags(fd, ~O_NONBLOCK, value ? O_NONBLOCK : 0);
 }
 
-#ifdef __linux
-
-int
-socket_set_nodelay(int fd, int value)
-{
-    return setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
-                      &value, sizeof(value));
-}
-
-int
-socket_set_cork(int fd, int value)
-{
-    return setsockopt(fd, IPPROTO_TCP, TCP_CORK,
-                      &value, sizeof(value));
-}
-
-#endif
-
 int
 socket_unix_connect(const char *path)
 {

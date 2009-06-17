@@ -6,6 +6,7 @@
 #include "lease.h"
 
 #include <inline/compiler.h>
+#include <socket/util.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -174,8 +175,8 @@ int main(int argc, char **argv) {
     ret = connect(fd, ai->ai_addr, ai->ai_addrlen);
     assert(ret == 0);
 
-    socket_set_nonblock(fd, 1);
-    socket_set_nodelay(fd, 1);
+    socket_set_nonblock(fd, true);
+    socket_set_nodelay(fd, true);
 
     /* initialize */
 

@@ -17,6 +17,7 @@ AM_CFLAGS +=
 AM_CPPFLAGS += \
 	$(LIBCM4ALL_DAEMON_CFLAGS) \
 	$(LIBCM4ALL_INLINE_CFLAGS) \
+	$(LIBCM4ALL_SOCKET_CFLAGS) \
 	$(LIBEVENT_CFLAGS) \
 	$(LIBATTR_CFLAGS) \
 	$(LIBZ_CFLAGS) \
@@ -192,6 +193,7 @@ src_cm4all_beng_proxy_SOURCES = $(SRC)
 src_cm4all_beng_proxy_LDADD = \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_INLINE_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) \
 	$(LIBATTR_LIBS) \
 	$(LIBZ_LIBS)
@@ -396,7 +398,8 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/tpool.c \
 	src/istream-socketpair.c src/istream-block.c src/istream-catch.c \
 	src/sink-null.c src/event2.c
-test_t_http_server_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS)
+test_t_http_server_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
@@ -415,7 +418,8 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/growing-buffer.c \
 	src/http.c src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
-test_t_http_server_mirror_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS)
+test_t_http_server_mirror_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_client_SOURCES = test/t-http-client.c \
 	src/http-client.c \
@@ -431,7 +435,8 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/format.c src/http.c src/strutil.c \
 	src/buffered-io.c src/fd-util.c src/socket-util.c \
 	src/tpool.c src/event2.c
-test_t_http_client_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS)
+test_t_http_client_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_util_SOURCES = test/t-http-util.c \
 	$(POOL_SRC) \
@@ -523,7 +528,8 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/abort-unref.c \
 	src/uri-address.c \
 	$(POOL_SRC)
-test_request_translation_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
+test_request_translation_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_subst_SOURCES = test/run-subst.c \
 	src/istream-subst.c src/istream-file.c \
@@ -572,14 +578,16 @@ test_run_processor_SOURCES = test/t-processor.c \
 	src/widget-stream.c src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
 	$(POOL_SRC)
-test_run_processor_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
+test_run_processor_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/buffered-io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/socket-util.c src/fd-util.c \
 	src/event2.c \
 	$(POOL_SRC)
-test_run_ajp_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
+test_run_ajp_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_delegate_SOURCES = test/run-delegate.c \
 	src/delegate-stock.c src/delegate-client.c src/delegate-glue.c \

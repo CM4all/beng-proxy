@@ -10,6 +10,7 @@
 #include "fd-util.h"
 
 #include <inline/poison.h>
+#include <socket/util.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -140,8 +141,7 @@ client_socket_new(pool_t pool,
     }
 
     if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM) {
-        ret = socket_set_nodelay(fd, 1);
-        if (ret < 0) {
+        if (!socket_set_nodelay(fd, true)) {
             int save_errno = errno;
             close(fd);
             callback(-1, save_errno, ctx);

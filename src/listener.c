@@ -9,6 +9,7 @@
 #include "fd-util.h"
 
 #include <daemon/log.h>
+#include <socket/util.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -59,8 +60,7 @@ listener_event_callback(int fd, short event __attr_unused, void *ctx)
         return;
     }
 
-    ret = socket_set_nodelay(remote_fd, 1);
-    if (ret < 0) {
+    if (!socket_set_nodelay(remote_fd, true)) {
         daemon_log(1, "setsockopt(TCP_NODELAY) failed: %s\n", strerror(errno));
         close(remote_fd);
         return;

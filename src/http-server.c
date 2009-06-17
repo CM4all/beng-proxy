@@ -6,12 +6,12 @@
 
 #include "http-server-internal.h"
 #include "buffered-io.h"
-#include "socket-util.h"
 #include "istream-internal.h"
 #include "strmap.h"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
+#include <socket/util.h>
 
 #include <assert.h>
 #include <unistd.h>
