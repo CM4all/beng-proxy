@@ -1,5 +1,6 @@
 #include "istream.h"
-#include "compiler.h"
+
+#include <inline/compiler.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -43,7 +44,7 @@ my_istream_eof(void *ctx)
     should_exit = true;
 }
 
-static void attr_noreturn
+static void __attr_noreturn
 my_istream_abort(void *ctx)
 {
     (void)ctx;

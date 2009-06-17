@@ -528,6 +528,7 @@ test_request_translation_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 test_run_subst_SOURCES = test/run-subst.c \
 	src/istream-subst.c src/istream-file.c \
 	src/fifo-buffer.c src/buffered-io.c \
+	src/fd-util.c \
 	$(POOL_SRC)
 test_run_subst_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
