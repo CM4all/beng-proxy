@@ -18,6 +18,9 @@ AC_SYS_LARGEFILE
 
 dnl Checks for libraries.
 
+PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],,
+	[AC_MSG_ERROR([glib 2.16 is required])])
+
 PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.1.2],,
 	[AC_MSG_ERROR([libcm4all-daemon not found])])
 
