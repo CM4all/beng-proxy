@@ -128,6 +128,7 @@ SRC = src/main.c \
 	src/resource-tag.c \
 	src/listener.c \
 	src/client-socket.c \
+	src/udp.c \
 	src/buffered-io.c \
 	src/header-parser.c \
 	src/header-writer.c \
