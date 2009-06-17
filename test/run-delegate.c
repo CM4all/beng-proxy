@@ -31,11 +31,16 @@ my_delegate_callback(int fd, void *ctx __attr_unused)
     defer(pool, my_stop, NULL, NULL);
 }
 
-int main(int argc __attr_unused, char **argv __attr_unused)
+int main(int argc, char **argv)
 {
     struct event_base *event_base;
     pool_t root_pool;
     struct async_operation_ref my_async_ref;
+
+    if (argc != 2) {
+        fprintf(stderr, "usage: run-delegate PATH\n");
+        return 1;
+    }
 
     event_base = event_init();
 
@@ -43,7 +48,7 @@ int main(int argc __attr_unused, char **argv __attr_unused)
     delegate_stock = delegate_stock_new(root_pool);
     pool = pool_new_linear(root_pool, "test", 8192);
 
-    delegate_stock_open(delegate_stock, pool, helper_path,
+    delegate_stock_open(delegate_stock, pool, helper_path, argv[1],
                         my_delegate_callback, NULL, &my_async_ref);
 
     event_dispatch();
