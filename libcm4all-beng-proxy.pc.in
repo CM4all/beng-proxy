@@ -3,7 +3,7 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libcm4all-codb
-Description: CM4all COMA Database library
+Name: libcm4all-beng-proxy
+Description: CM4all BENG proxy library
 Version: @VERSION@
 Cflags: -I${includedir}
