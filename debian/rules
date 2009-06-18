@@ -4,8 +4,6 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-DEB_VERSION := $(shell dpkg-parsechangelog | egrep '^Version:' | cut -d' ' -f2)
-
 CFLAGS = -Wall -g
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
@@ -18,10 +16,24 @@ build: debian/stamp-build
 debian/stamp-build:
 	dh_testdir
 
-	#$(MAKE) CFLAGS="$(CFLAGS)" all doc/beng.pdf
+	mkdir -p build
+	libtoolize --automake --copy --force
+	aclocal
+	automake --add-missing --foreign
+	autoconf
+
+	# ./configure
+	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
+		--disable-dependency-tracking \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--enable-documentation \
+		--enable-debug
+
+	# Build
 	$(MAKE) src/cm4all-beng-proxy \
 		src/cm4all-beng-proxy-delegate-helper \
-		src/libcm4all-istream.a doc/beng.pdf VERSION=$(DEB_VERSION)
+		src/libcm4all-istream.a doc/beng.pdf
 
 	touch $@
 
@@ -38,7 +50,7 @@ clean:
 	dh_testroot
 	rm -f debian/stamp-*
 
-	$(MAKE) clean
+	[ ! -f Makefile ] || $(MAKE) distclean
 
 	dh_clean
 
