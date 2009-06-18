@@ -1,3 +1,2 @@
 include/beng-proxy/*.h usr/include/cm4all/libbeng-proxy-0/beng-proxy
-debian/libcm4all-beng-proxy.pc usr/lib/pkgconfig
 libcm4all-beng-proxy.pc usr/lib/pkgconfig

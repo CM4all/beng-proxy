@@ -95,4 +95,5 @@ dnl
 
 AC_OUTPUT(
 Makefile
+libcm4all-beng-proxy.pc
 )

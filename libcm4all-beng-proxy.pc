@@ -1,7 +1,0 @@
-version=0.4.4
-includedir=/usr/include/cm4all/libbeng-proxy-0
-
-Name: libcm4all-beng-proxy
-Description: CM4all Beng-Proxy protocol headers
-Version: ${version}
-Cflags: -I${includedir}
