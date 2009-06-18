@@ -676,8 +676,8 @@ COMAC = /usr/bin/cm4all-comac --quiet-output
 upload:
 	scp demo/cgi-bin/*.py demo/cgi-bin/*.sh demo/base.html demo/nested_base.html demo/container.html cfatest01:/var/www/vol1/HTO01F/LY/YL/XT/pr_0001/widgets/
 
-COMA_SOURCES = $(wildcard demo/coma/*.cma)
-COMA_CLASSES = $(patsubst %.cma,%.cls,$(COMA_SOURCES))
+COMA_SRC = $(wildcard demo/coma/*.cma)
+COMA_CLASSES = $(patsubst %.cma,%.cls,$(COMA_SRC))
 
 demo-all: $(COMA_CLASSES)
 
