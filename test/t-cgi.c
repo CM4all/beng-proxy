@@ -137,8 +137,16 @@ static const struct http_response_handler my_response_handler = {
 static void
 test_normal(pool_t pool, struct context *c)
 {
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/env.py", NULL);
+    else
+        path = "./demo/cgi-bin/env.py";
+
     cgi_new(pool, false, NULL, NULL,
-            "./demo/cgi-bin/env.py",
+            path,
             HTTP_METHOD_GET, "/",
             "env.py", NULL, NULL, "/var/www",
             NULL, NULL,
@@ -159,10 +167,18 @@ test_normal(pool_t pool, struct context *c)
 static void
 test_close_early(pool_t pool, struct context *c)
 {
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/env.py", NULL);
+    else
+        path = "./demo/cgi-bin/env.py";
+
     c->close_response_body_early = true;
 
     cgi_new(pool, false, NULL, NULL,
-            "./demo/cgi-bin/env.py",
+            path,
             HTTP_METHOD_GET, "/",
             "env.py", NULL, NULL, "/var/www",
             NULL, NULL,
@@ -183,10 +199,18 @@ test_close_early(pool_t pool, struct context *c)
 static void
 test_close_late(pool_t pool, struct context *c)
 {
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/env.py", NULL);
+    else
+        path = "./demo/cgi-bin/env.py";
+
     c->close_response_body_late = true;
 
     cgi_new(pool, false, NULL, NULL,
-            "./demo/cgi-bin/env.py",
+            path,
             HTTP_METHOD_GET, "/",
             "env.py", NULL, NULL, "/var/www",
             NULL, NULL,
@@ -207,10 +231,17 @@ test_close_late(pool_t pool, struct context *c)
 static void
 test_close_data(pool_t pool, struct context *c)
 {
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/env.py", NULL);
+    else
+        path = "./demo/cgi-bin/env.py";
     c->close_response_body_data = true;
 
     cgi_new(pool, false, NULL, NULL,
-            "./demo/cgi-bin/env.py",
+            path,
             HTTP_METHOD_GET, "/",
             "env.py", NULL, NULL, "/var/www",
             NULL, NULL,
@@ -230,10 +261,18 @@ test_close_data(pool_t pool, struct context *c)
 static void
 test_post(pool_t pool, struct context *c)
 {
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/cat.sh", NULL);
+    else
+        path = "./demo/cgi-bin/cat.sh";
+
     c->body_read = true;
 
     cgi_new(pool, false, NULL, NULL,
-            "./demo/cgi-bin/cat.sh",
+            path,
             HTTP_METHOD_POST, "/",
             "cat.sh", NULL, NULL, "/var/www",
             NULL, istream_file_new(pool, "Makefile", 8192),

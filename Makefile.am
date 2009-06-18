@@ -24,7 +24,7 @@ AM_CPPFLAGS += \
 	$(LIBZ_CFLAGS) \
 	-DSPLICE \
 	-D_GNU_SOURCE
-INCLUDES = -Isrc -Iinclude
+INCLUDES = -I$(srcdir)/src -I$(srcdir)/include
 
 if DEFLATE
 else
@@ -659,11 +659,13 @@ valgrind: src/cm4all-beng-proxy
 #
 
 if DOCUMENTATION
-doc/beng.pdf: doc/beng.tex
-	cd $(dir $<) && pdflatex $(notdir $<) && pdflatex $(notdir $<)
+doc/beng.pdf: $(srcdir)/doc/beng.tex
+	@mkdir -p $(@D)
+	pdflatex -output-directory $(@D) $<
 
 doc/beng.dvi: doc/beng.tex
-	cd $(dir $<) && latex $(notdir $<)
+	@mkdir -p $(@D)
+	latex -output-directory $(@D) $<
 endif
 
 #
@@ -676,13 +678,14 @@ COMAC = /usr/bin/cm4all-comac --quiet-output
 upload:
 	scp demo/cgi-bin/*.py demo/cgi-bin/*.sh demo/base.html demo/nested_base.html demo/container.html cfatest01:/var/www/vol1/HTO01F/LY/YL/XT/pr_0001/widgets/
 
-COMA_SRC = $(wildcard demo/coma/*.cma)
-COMA_CLASSES = $(patsubst %.cma,%.cls,$(COMA_SRC))
+COMA_SRC = $(wildcard $(srcdir)/demo/coma/*.cma)
+COMA_CLASSES = $(patsubst $(srcdir)/demo/coma/%.cma,demo/coma/%.cls,$(COMA_SRC))
 
 demo-all: $(COMA_CLASSES)
 
 demo-clean:
 	rm -f $(COMA_CLASSES)
 
-$(COMA_CLASSES): %.cls: %.cma
-	$(COMAC) $<
+$(COMA_CLASSES): demo/coma/%.cls: $(srcdir)/demo/coma/%.cma
+	@mkdir -p $(@D)
+	$(COMAC) -d $(@D) $<
