@@ -1,0 +1,9 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libcm4all-codb
+Description: CM4all COMA Database library
+Version: @VERSION@
+Cflags: -I${includedir}
