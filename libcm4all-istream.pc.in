@@ -1,4 +1,6 @@
-libdir=/usr/lib
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
 includedir=/usr/include/cm4all/libistream-0
 
 Name: libcm4all-istream
