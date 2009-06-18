@@ -68,6 +68,7 @@ AC_ARG_ENABLE(debug,
 	AS_HELP_STRING([--disable-debug],
 		[Disable debugging (default: enabled)]),,
 	enable_debug=yes)
+AM_CONDITIONAL(TEST, test x$enable_test = xyes)
 
 if test x$enable_debug = xyes; then
 	AM_CFLAGS="$AM_CFLAGS -Werror -pedantic-errors"
@@ -88,6 +89,12 @@ AC_ARG_ENABLE(gprof,
 		[enable profiling via gprof (default: disabled)]),,
 	enable_gprof=no)
 AM_CONDITIONAL(GPROF, test x$enable_gprof = xyes)
+
+AC_ARG_ENABLE(unit-test,
+	AS_HELP_STRING([--enable-unit-test],
+		[Enable the unit test suite]),,
+	enable_test=$enable_debug)
+AM_CONDITIONAL(TEST, test x$enable_test = xyes)
 
 dnl
 dnl Output files

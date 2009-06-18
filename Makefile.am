@@ -221,6 +221,8 @@ src_libcm4all_istream_a_SOURCES = $(ISTREAM_SRC)
 # Test suite
 #
 
+if TEST
+
 FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk \
 	test/t-istream-pipe test/t-istream-hold test/t-istream-delayed \
 	test/t-istream-subst test/t-istream-deflate test/t-istream-byte \
@@ -604,6 +606,8 @@ test_run_parser_cdata_SOURCES = test/t-parser-cdata.c \
 	src/fd-util.c \
 	$(POOL_SRC)
 test_run_parser_cdata_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
+
+endif
 
 #
 # Sparse
