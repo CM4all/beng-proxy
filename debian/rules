@@ -27,6 +27,7 @@ debian/stamp-build:
 		--disable-dependency-tracking \
 		--prefix=/usr \
 		--sysconfdir=/etc \
+		--includedir=/usr/include/cm4all/libbeng-proxy-0 \
 		--enable-documentation \
 		--enable-debug
 
