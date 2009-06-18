@@ -230,7 +230,7 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 	test/t-istream-html-escape test/t-istream-fcgi \
 	test/t-istream-processor
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
 	test/t-hashmap test/t-cache test/t-tcache \
 	test/t-resource-address \
 	test/t-uri-compress \
