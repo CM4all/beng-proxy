@@ -22,8 +22,11 @@ debian/stamp-build:
 	automake --add-missing --foreign
 	autoconf
 
+	mkdir -p build/debug build/optimized
+
 	# ./configure
-	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
+	cd build/debug && CFLAGS="$(CFLAGS)" ../../configure \
+		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
 		--prefix=/usr \
 		--sysconfdir=/etc \
@@ -32,9 +35,23 @@ debian/stamp-build:
 		--enable-debug
 
 	# Build
-	$(MAKE) src/cm4all-beng-proxy \
+	$(MAKE) -C build/debug \
+		src/cm4all-beng-proxy \
 		src/cm4all-beng-proxy-delegate-helper \
 		src/libcm4all-istream.a doc/beng.pdf
+
+	# ./configure
+	cd build/optimized && CFLAGS="$(CFLAGS)" ../../configure \
+		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
+		--disable-dependency-tracking \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--enable-documentation \
+		--disable-debug
+
+	# Build
+	$(MAKE) -C build/optimized \
+		src/cm4all-beng-proxy
 
 	touch $@
 
@@ -42,7 +59,7 @@ check: debian/stamp-check
 debian/stamp-check: debian/stamp-build
 	dh_testdir
 
-	$(MAKE) check
+	$(MAKE) -C build/debug check
 
 	touch $@
 
@@ -51,7 +68,7 @@ clean:
 	dh_testroot
 	rm -f debian/stamp-*
 
-	[ ! -f Makefile ] || $(MAKE) distclean
+	rm -rf build
 
 	dh_clean
 

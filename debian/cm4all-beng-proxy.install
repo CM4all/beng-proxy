@@ -1,2 +1,2 @@
-src/cm4all-beng-proxy usr/sbin
-src/cm4all-beng-proxy-delegate-helper usr/sbin
+build/debug/src/cm4all-beng-proxy usr/sbin
+build/debug/src/cm4all-beng-proxy-delegate-helper usr/sbin

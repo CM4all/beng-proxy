@@ -36,6 +36,17 @@ Description: HTTP proxy server
  .
  This package provides the debugging symbols.
 
+Package: cm4all-beng-proxy-optimized
+Architecture: any
+Depends: ${shlibs:Depends}, cm4all-beng-proxy (= ${source:Version})
+Replaces: cm4all-beng-proxy
+Description: HTTP proxy server, optimized build
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This package contains the optimized beng-proxy binary.  Most
+ debugging options are disabled.
+
 Package: libcm4all-beng-proxy-js
 Architecture: all
 Enhances: cm4all-beng-proxy

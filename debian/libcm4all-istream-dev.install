@@ -1,5 +1,5 @@
-src/libcm4all-istream.a usr/lib
+build/debug/src/libcm4all-istream.a usr/lib
 src/pool.h usr/include/cm4all/libistream-0
 src/fifo-buffer.h usr/include/cm4all/libistream-0
 src/istream.h src/istream-{buffer,impl,internal,invoke,new}.h usr/include/cm4all/libistream-0
-libcm4all-istream.pc usr/lib/pkgconfig
+build/debug/libcm4all-istream.pc usr/lib/pkgconfig
