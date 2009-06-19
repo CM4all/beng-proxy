@@ -157,8 +157,10 @@ int main(int argc, char **argv) {
     static struct context ctx;
     struct async_operation_ref async_ref;
 
-    (void)argc;
-    (void)argv;
+    if (argc != 3) {
+        fprintf(stderr, "usage: run-ajp-client HOST[:PORT] URI\n");
+        return 1;
+    }
 
     /* connect socket */
 
@@ -166,7 +168,7 @@ int main(int argc, char **argv) {
     hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = getaddrinfo("cfatest01", "8009", &hints, &ai);
+    ret = getaddrinfo(argv[1], "8009", &hints, &ai);
     assert(ret == 0);
 
     fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -190,7 +192,7 @@ int main(int argc, char **argv) {
     /* run test */
 
     ajp_client_request(pool, fd, &ajp_socket_lease, &ctx,
-                       HTTP_METHOD_GET, "/cm4all-bulldog-butch/", NULL, NULL,
+                       HTTP_METHOD_GET, argv[2], NULL, NULL,
                        &my_response_handler, &ctx,
                        &async_ref);
 
