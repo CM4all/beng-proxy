@@ -115,6 +115,24 @@ udp_free(struct udp *udp)
     close(udp->fd);
 }
 
+bool
+udp_join4(struct udp *udp, const struct in_addr *group)
+{
+    struct ip_mreq r;
+    int ret;
+
+    r.imr_multiaddr = *group;
+    r.imr_interface.s_addr = INADDR_ANY;
+
+    ret = setsockopt(udp->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &r, sizeof(r));
+    if (ret < 0) {
+        daemon_log(1, "Failed to join multicast group: %s\n", strerror(errno));
+        return false;
+    }
+
+    return true;
+}
+
 void
 udp_event_add(struct udp *udp)
 {
