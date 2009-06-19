@@ -94,6 +94,18 @@ growing_buffer_empty(struct growing_buffer *gb)
     return false;
 }
 
+size_t
+growing_buffer_size(const struct growing_buffer *gb)
+{
+    size_t size = 0;
+
+    for (const struct buffer *buffer = &gb->first;
+         buffer != NULL; buffer = buffer->next)
+        size += buffer->length;
+
+    return size;
+}
+
 const void *
 growing_buffer_read(struct growing_buffer *gb, size_t *length_r)
 {

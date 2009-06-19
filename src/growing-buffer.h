@@ -25,6 +25,12 @@ growing_buffer_write_string(struct growing_buffer *gb, const char *p);
 bool
 growing_buffer_empty(struct growing_buffer *gb);
 
+/**
+ * Returns the total size of the buffer.
+ */
+size_t
+growing_buffer_size(const struct growing_buffer *gb);
+
 const void *
 growing_buffer_read(struct growing_buffer *gb, size_t *length_r);
 
