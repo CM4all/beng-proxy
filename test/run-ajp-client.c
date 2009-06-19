@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
     ret = socket_resolve_host_port(argv[1], 8009, &hints, &ai);
     assert(ret == 0);
 
-    fd = socket(AF_INET, SOCK_STREAM, 0);
+    fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
     assert(fd >= 0);
 
     ret = connect(fd, ai->ai_addr, ai->ai_addrlen);
