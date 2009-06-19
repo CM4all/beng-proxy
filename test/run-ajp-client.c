@@ -11,6 +11,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -144,11 +145,13 @@ int main(int argc, char **argv) {
     struct addrinfo hints, *ai;
     struct event_base *event_base;
     pool_t root_pool, pool;
+    http_method_t method;
+    istream_t request_body;
     static struct context ctx;
     struct async_operation_ref async_ref;
 
-    if (argc != 3) {
-        fprintf(stderr, "usage: run-ajp-client HOST[:PORT] URI\n");
+    if (argc < 3 || argc > 4) {
+        fprintf(stderr, "usage: run-ajp-client HOST[:PORT] URI [BODY]\n");
         return 1;
     }
 
@@ -190,10 +193,29 @@ int main(int argc, char **argv) {
     root_pool = pool_new_libc(NULL, "root");
     pool = pool_new_linear(root_pool, "test", 8192);
 
+    /* open request body */
+
+    if (argc >= 4) {
+        struct stat st;
+
+        ret = stat(argv[3], &st);
+        if (ret < 0) {
+            fprintf(stderr, "Failed to stat %s: %s\n",
+                    argv[3], strerror(errno));
+            return 2;
+        }
+
+        method = HTTP_METHOD_POST;
+        request_body = istream_file_new(pool, argv[3], st.st_size);
+    } else {
+        method = HTTP_METHOD_GET;
+        request_body = NULL;
+    }
+
     /* run test */
 
     ajp_client_request(pool, fd, &ajp_socket_lease, &ctx,
-                       HTTP_METHOD_GET, argv[2], NULL, NULL,
+                       method, argv[2], NULL, request_body,
                        &my_response_handler, &ctx,
                        &async_ref);
 
