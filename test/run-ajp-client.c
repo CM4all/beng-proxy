@@ -28,7 +28,6 @@ struct context {
     http_status_t status;
 
     istream_t body;
-    off_t body_data;
     bool body_eof, body_abort;
 };
 
@@ -64,11 +63,10 @@ static const struct lease ajp_socket_lease = {
  */
 
 static size_t
-my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
+my_istream_data(const void *data, size_t length, void *ctx)
 {
     struct context *c = ctx;
-
-    c->body_data += length;
+    ssize_t nbytes;
 
     if (c->close_response_body_data) {
         istream_close(c->body);
@@ -80,7 +78,13 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
         return 0;
     }
 
-    return length;
+    nbytes = write(0, data, length);
+    if (nbytes <= 0) {
+        istream_close(c->body);
+        return 0;
+    }
+
+    return (size_t)nbytes;
 }
 
 static void
@@ -199,7 +203,6 @@ int main(int argc, char **argv) {
 
     event_dispatch();
 
-    assert(ctx.body_data > 0);
     assert(ctx.body_eof);
     assert(!ctx.body_abort);
 
