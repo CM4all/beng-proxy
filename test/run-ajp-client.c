@@ -21,9 +21,6 @@
 #include <errno.h>
 
 struct context {
-    unsigned data_blocking;
-    bool close_response_body_early, close_response_body_late, close_response_body_data;
-    struct async_operation_ref async_ref;
     int fd;
     bool idle, reuse, aborted;
     http_status_t status;
@@ -68,16 +65,6 @@ my_istream_data(const void *data, size_t length, void *ctx)
 {
     struct context *c = ctx;
     ssize_t nbytes;
-
-    if (c->close_response_body_data) {
-        istream_close(c->body);
-        return 0;
-    }
-
-    if (c->data_blocking) {
-        --c->data_blocking;
-        return 0;
-    }
 
     nbytes = write(0, data, length);
     if (nbytes <= 0) {
@@ -127,13 +114,10 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
 
     c->status = status;
 
-    if (c->close_response_body_early)
-        istream_close(body);
-    else if (body != NULL)
+    if (body != NULL)
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
-
-    if (c->close_response_body_late)
-        istream_close(c->body);
+    else
+        c->body_eof = true;
 }
 
 static void
