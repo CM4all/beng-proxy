@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <event.h>
 #include <netdb.h>
+#include <errno.h>
 
 struct context {
     unsigned data_blocking;
@@ -174,13 +175,24 @@ int main(int argc, char **argv) {
     hints.ai_socktype = SOCK_STREAM;
 
     ret = socket_resolve_host_port(argv[1], 8009, &hints, &ai);
-    assert(ret == 0);
+    if (ret != 0) {
+        fprintf(stderr, "Failed to resolve host name\n");
+        return 2;
+    }
 
     fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-    assert(fd >= 0);
+    if (fd < 0) {
+        fprintf(stderr, "socket() failed: %s\n", strerror(errno));
+        return 2;
+    }
 
     ret = connect(fd, ai->ai_addr, ai->ai_addrlen);
-    assert(ret == 0);
+    if (ret < 0) {
+        fprintf(stderr, "connect() failed: %s\n", strerror(errno));
+        return 2;
+    }
+
+    freeaddrinfo(ai);
 
     socket_set_nonblock(fd, true);
     socket_set_nodelay(fd, true);
@@ -203,8 +215,7 @@ int main(int argc, char **argv) {
 
     event_dispatch();
 
-    assert(ctx.body_eof);
-    assert(!ctx.body_abort);
+    assert(ctx.body_eof || ctx.body_abort);
 
     /* cleanup */
 
@@ -216,4 +227,6 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     event_base_free(event_base);
+
+    return ctx.body_eof ? 0 : 2;
 }
