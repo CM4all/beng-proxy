@@ -34,7 +34,7 @@ struct ajp_client {
 
     /* request */
     struct {
-        istream_t istream;
+        struct growing_buffer *buffer;
 
         struct http_response_handler_ref handler;
         struct async_operation async;
@@ -98,9 +98,6 @@ ajp_connection_close(struct ajp_client *client)
             client->response.read_state = READ_END;
         }
 
-        if (client->request.istream != NULL)
-            istream_free_handler(&client->request.istream);
-
         if (client->fd >= 0)
             ajp_client_release(client, false);
 
@@ -149,6 +146,41 @@ static const struct istream ajp_response_body = {
     .read = istream_ajp_read,
     .close = istream_ajp_close,
 };
+
+
+/*
+ * request generator
+ *
+ */
+
+static void
+ajp_try_write(struct ajp_client *client)
+{
+    size_t length;
+    const void *data = growing_buffer_read(client->request.buffer, &length);
+    ssize_t nbytes;
+
+    if (data == NULL) {
+        /* finished sending the request */
+
+        client->response.read_state = READ_BEGIN;
+        client->response.input = fifo_buffer_new(client->pool, 8192);
+        client->response.headers = NULL;
+
+        event2_set(&client->event, EV_READ);
+        return;
+    }
+
+    nbytes = write(client->fd, data, length);
+    if (nbytes < 0) {
+        daemon_log(1, "write error on AJP client connection: %s\n",
+                   strerror(errno));
+        ajp_connection_close(client);
+        return;
+    }
+
+    growing_buffer_consume(client->request.buffer, (size_t)nbytes);
+}
 
 
 /*
@@ -455,7 +487,7 @@ ajp_event_callback(int fd __attr_unused, short event, void *ctx)
     }
 
     if (ajp_connection_valid(client) && (event & EV_WRITE) != 0)
-        istream_read(client->request.istream);
+        ajp_try_write(client);
 
     if (ajp_connection_valid(client) && (event & EV_READ) != 0)
         ajp_try_read(client);
@@ -472,6 +504,7 @@ ajp_event_callback(int fd __attr_unused, short event, void *ctx)
  *
  */
 
+/*
 static size_t
 ajp_request_stream_data(const void *data, size_t length, void *ctx)
 {
@@ -531,6 +564,7 @@ static const struct istream_handler ajp_request_stream_handler = {
     .eof = ajp_request_stream_eof,
     .abort = ajp_request_stream_abort,
 };
+*/
 
 
 /*
@@ -642,10 +676,10 @@ ajp_client_request(pool_t pool, int fd,
 
     growing_buffer_write_buffer(gb, "\xff", 1);
     
-    client->request.istream = growing_buffer_istream(gb);
+    client->request.buffer = gb;
 
     /* XXX is this correct? */
-    header->length = htons(istream_available(client->request.istream, false) - sizeof(*header));
+    header->length = htons(growing_buffer_size(gb) - sizeof(*header));
 
     http_response_handler_set(&client->request.handler, handler, handler_ctx);
 
@@ -657,18 +691,7 @@ ajp_client_request(pool_t pool, int fd,
 
     client->response.read_state = READ_BEGIN;
 
+    event2_set(&client->event, EV_WRITE);
 
-    istream_handler_set(client->request.istream,
-                        &ajp_request_stream_handler, client,
-                        0);
-
-    pool_ref(client->pool);
-
-    event2_lock(&client->event);
-
-    istream_read(client->request.istream);
-
-    event2_unlock(&client->event);
-
-    pool_unref(client->pool);
+    ajp_try_write(client);
 }
