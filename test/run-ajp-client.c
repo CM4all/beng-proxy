@@ -6,6 +6,7 @@
 #include "lease.h"
 
 #include <inline/compiler.h>
+#include <socket/resolver.h>
 #include <socket/util.h>
 
 #include <sys/types.h>
@@ -168,7 +169,7 @@ int main(int argc, char **argv) {
     hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = getaddrinfo(argv[1], "8009", &hints, &ai);
+    ret = socket_resolve_host_port(argv[1], 8009, &hints, &ai);
     assert(ret == 0);
 
     fd = socket(AF_INET, SOCK_STREAM, 0);
