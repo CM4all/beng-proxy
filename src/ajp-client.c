@@ -171,6 +171,7 @@ ajp_write(struct ajp_client *client, const void *data, size_t length)
         return 0;
     }
 
+    event2_or(&client->event, EV_WRITE);
     return (size_t)nbytes;
 }
 
