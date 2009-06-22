@@ -490,15 +490,16 @@ ajp_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct ajp_client *client = ctx;
 
+    if (unlikely(event & EV_TIMEOUT)) {
+        daemon_log(4, "timeout\n");
+        ajp_connection_close(client);
+        return;
+    }
+
     pool_ref(client->pool);
 
     event2_reset(&client->event);
     event2_lock(&client->event);
-
-    if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "timeout\n");
-        ajp_connection_close(client);
-    }
 
     if (ajp_connection_valid(client) && (event & EV_WRITE) != 0)
         ajp_try_write(client);
