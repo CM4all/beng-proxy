@@ -35,6 +35,7 @@ static const char *const copy_headers[] = {
     "last-modified",
     "retry-after",
     "vary",
+    "location",
     NULL,
 };
 
