@@ -7,7 +7,7 @@ cm4all-beng-proxy (0.5.11) unstable; urgency=low
   * tcache: fixed wrong assignment in VARY=HOST
   * translation: added request packet LOCAL_ADDRESS
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 23 Jun 2009 15:42:12 +0200
 
 cm4all-beng-proxy (0.5.10) unstable; urgency=low
 
