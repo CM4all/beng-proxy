@@ -13,11 +13,15 @@
 
 #include <stdint.h>
 
+struct sockaddr;
 struct uri_with_address;
 struct hstock;
 struct async_operation_ref;
 
 struct translate_request {
+    const struct sockaddr *local_address;
+    size_t local_address_length;
+
     const char *remote_host;
     const char *host;
     const char *user_agent;

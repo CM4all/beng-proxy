@@ -18,6 +18,7 @@
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
+#include <socket/address.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -159,6 +160,34 @@ write_optional_packet(struct growing_buffer *gb, uint16_t command,
     return write_packet(gb, command, payload);
 }
 
+static bool
+write_sockaddr(struct growing_buffer *gb,
+               uint16_t command, uint16_t command_string,
+               const struct sockaddr *address, size_t address_length)
+{
+    char address_string[1024];
+
+    assert(address != NULL);
+    assert(address_length > 0);
+
+    return write_packet_n(gb, command, address, address_length) &&
+        (!socket_address_to_string(address_string, sizeof(address_string),
+                                   address, address_length) ||
+         write_packet(gb, command_string, address_string));
+}
+
+static bool
+write_optional_sockaddr(struct growing_buffer *gb,
+                        uint16_t command, uint16_t command_string,
+                        const struct sockaddr *address, size_t address_length)
+{
+    assert((address == NULL) == (address_length == 0));
+
+    return address != NULL
+        ? write_sockaddr(gb, command, command_string, address, address_length)
+        : true;
+}
+
 static struct growing_buffer *
 marshal_request(pool_t pool, const struct translate_request *request)
 {
@@ -168,6 +197,10 @@ marshal_request(pool_t pool, const struct translate_request *request)
     gb = growing_buffer_new(pool, 512);
 
     success = write_packet(gb, TRANSLATE_BEGIN, NULL) &&
+        write_optional_sockaddr(gb, TRANSLATE_LOCAL_ADDRESS,
+                                TRANSLATE_LOCAL_ADDRESS_STRING,
+                                request->local_address,
+                                request->local_address_length) &&
         write_optional_packet(gb, TRANSLATE_REMOTE_HOST,
                               request->remote_host) &&
         write_optional_packet(gb, TRANSLATE_HOST, request->host) &&
