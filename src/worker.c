@@ -125,8 +125,7 @@ worker_new(struct instance *instance)
         list_init(&instance->workers);
         instance->num_workers = 0;
 
-        if (instance->listener != NULL)
-            listener_event_del(instance->listener);
+        all_listeners_event_del(instance);
 
         while (!list_empty(&instance->connections))
             close_connection((struct client_connection*)instance->connections.next);
@@ -139,8 +138,7 @@ worker_new(struct instance *instance)
         ret = session_manager_init();
         assert(ret);
 
-        if (instance->listener != NULL)
-            listener_event_add(instance->listener);
+        all_listeners_event_add(instance);
     } else {
         struct worker *worker;
 

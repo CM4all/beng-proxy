@@ -21,6 +21,12 @@ struct worker {
     pid_t pid;
 };
 
+struct listener_node {
+    struct list_head siblings;
+
+    struct listener *listener;
+};
+
 struct instance {
     pool_t pool;
 
@@ -28,7 +34,7 @@ struct instance {
 
     struct event_base *event_base;
 
-    struct listener *listener;
+    struct list_head listeners;
     struct list_head connections;
     unsigned num_connections;
 
@@ -68,5 +74,11 @@ worker_new(struct instance *instance);
 
 void
 worker_killall(struct instance *instance);
+
+void
+all_listeners_event_add(struct instance *instance);
+
+void
+all_listeners_event_del(struct instance *instance);
 
 #endif

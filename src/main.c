@@ -36,6 +36,34 @@ bool debug_mode = false;
 #endif
 
 static void
+free_all_listeners(struct instance *instance)
+{
+    for (struct listener_node *node = (struct listener_node *)instance->listeners.next;
+         &node->siblings != &instance->listeners;
+         node = (struct listener_node *)node->siblings.next)
+        listener_free(&node->listener);
+    list_init(&instance->listeners);
+}
+
+void
+all_listeners_event_add(struct instance *instance)
+{
+    for (struct listener_node *node = (struct listener_node *)instance->listeners.next;
+         &node->siblings != &instance->listeners;
+         node = (struct listener_node *)node->siblings.next)
+        listener_event_add(node->listener);
+}
+
+void
+all_listeners_event_del(struct instance *instance)
+{
+    for (struct listener_node *node = (struct listener_node *)instance->listeners.next;
+         &node->siblings != &instance->listeners;
+         node = (struct listener_node *)node->siblings.next)
+        listener_event_del(node->listener);
+}
+
+static void
 exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
@@ -46,8 +74,7 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     instance->should_exit = true;
     deinit_signals(instance);
 
-    if (instance->listener != NULL)
-        listener_free(&instance->listener);
+    free_all_listeners(instance);
 
     while (!list_empty(&instance->connections))
         close_connection((struct client_connection*)instance->connections.next);
@@ -124,6 +151,23 @@ deinit_signals(struct instance *instance)
     event_del(&instance->sighup_event);
 }
 
+static void
+add_tcp_listener(struct instance *instance, int port)
+{
+    struct listener_node *node = p_malloc(instance->pool, sizeof(*node));
+    int ret;
+
+    ret = listener_tcp_port_new(instance->pool, port,
+                                &http_listener_callback, instance,
+                                &node->listener);
+    if (ret < 0) {
+        perror("listener_tcp_port_new() failed");
+        exit(2);
+    }
+
+    list_add(&node->siblings, &instance->listeners);
+}
+
 int main(int argc, char **argv)
 {
     int ret;
@@ -154,6 +198,7 @@ int main(int argc, char **argv)
 
     instance.event_base = event_init();
 
+    list_init(&instance.listeners);
     list_init(&instance.connections);
     list_init(&instance.workers);
     instance.pool = pool_new_libc(NULL, "global");
@@ -169,14 +214,7 @@ int main(int argc, char **argv)
         exit(2);
     }
 
-    ret = listener_tcp_port_new(instance.pool,
-                                instance.config.port,
-                                &http_listener_callback, &instance,
-                                &instance.listener);
-    if (ret < 0) {
-        perror("listener_tcp_port_new() failed");
-        exit(2);
-    }
+    add_tcp_listener(&instance, instance.config.port);
 
     instance.tcp_stock = tcp_stock_new(instance.pool);
     if (instance.config.translation_socket != NULL)
@@ -213,7 +251,10 @@ int main(int argc, char **argv)
         pid_t pid;
 
         /* the master process shouldn't work */
-        listener_event_del(instance.listener);
+        for (struct listener_node *node = (struct listener_node *)instance.listeners.next;
+             &node->siblings != &instance.listeners;
+             node = (struct listener_node *)node->siblings.next)
+            listener_event_del(node->listener);
 
         while (instance.num_workers < instance.config.num_workers) {
             pid = worker_new(&instance);
@@ -230,8 +271,7 @@ int main(int argc, char **argv)
 
     failure_deinit();
 
-    if (instance.listener != NULL)
-        listener_free(&instance.listener);
+    free_all_listeners(&instance);
 
 #ifndef PROFILE
     event_base_free(instance.event_base);
