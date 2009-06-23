@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.5.12) unstable; urgency=low
   * response: pass the "Location" response handler
   * added support for multiple listener ports
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 23 Jun 2009 23:34:55 +0200
 
 cm4all-beng-proxy (0.5.11) unstable; urgency=low
 
