@@ -88,6 +88,9 @@ http_listener_callback(int fd,
     struct instance *instance = (struct instance*)ctx;
     pool_t pool;
     struct client_connection *connection;
+    struct sockaddr_storage local_address;
+    socklen_t local_address_length;
+    int ret;
 
     if (instance->num_connections >= instance->config.max_connections) {
         /* XXX rather drop an existing connection? */
@@ -96,6 +99,13 @@ http_listener_callback(int fd,
         close(fd);
         return;
     }
+
+    /* determine the local socket address */
+    local_address_length = sizeof(local_address);
+    ret = getsockname(fd, (struct sockaddr *)&local_address,
+                      &local_address_length);
+    if (ret < 0)
+        local_address_length = 0;
 
     pool = pool_new_linear(instance->pool, "client_connection", 16384);
     pool_set_major(pool);
@@ -109,6 +119,10 @@ http_listener_callback(int fd,
     ++connection->instance->num_connections;
 
     http_server_connection_new(pool, fd,
+                               local_address_length > 0
+                               ? (const struct sockaddr *)&local_address
+                               : NULL,
+                               local_address_length,
                                address_to_string(pool, addr, addrlen),
                                &my_http_server_connection_handler,
                                connection,

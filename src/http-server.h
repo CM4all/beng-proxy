@@ -11,6 +11,7 @@
 #include "http.h"
 #include "istream.h"
 
+struct sockaddr;
 struct growing_buffer;
 struct async_operation_ref;
 
@@ -19,6 +20,10 @@ struct http_server_connection;
 struct http_server_request {
     pool_t pool;
     struct http_server_connection *connection;
+
+    const struct sockaddr *local_address;
+    size_t local_address_length;
+
     const char *remote_host;
 
     /* request metadata */
@@ -42,6 +47,8 @@ struct http_server_connection_handler {
 
 void
 http_server_connection_new(pool_t pool, int fd,
+                           const struct sockaddr *local_address,
+                           size_t local_address_length,
                            const char *remote_host,
                            const struct http_server_connection_handler *handler,
                            void *ctx,

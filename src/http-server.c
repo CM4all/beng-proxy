@@ -30,6 +30,8 @@ http_server_request_new(struct http_server_connection *connection)
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->connection = connection;
+    request->local_address = connection->local_address;
+    request->local_address_length = connection->local_address_length;
     request->remote_host = connection->remote_host;
     request->headers = strmap_new(pool, 64);
 
@@ -111,6 +113,8 @@ http_server_event_callback(int fd __attr_unused, short event, void *ctx)
 
 void
 http_server_connection_new(pool_t pool, int fd,
+                           const struct sockaddr *local_address,
+                           size_t local_address_length,
                            const char *remote_host,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
@@ -125,12 +129,15 @@ http_server_connection_new(pool_t pool, int fd,
     assert(fd >= 0);
     assert(handler != NULL);
     assert(handler->request != NULL);
+    assert((local_address == NULL) == (local_address_length == 0));
 
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
     connection->fd = fd;
     connection->handler = handler;
     connection->handler_ctx = ctx;
+    connection->local_address = local_address;
+    connection->local_address_length = local_address_length;
     connection->remote_host = remote_host;
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
