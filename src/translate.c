@@ -397,6 +397,8 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_WIDGET_TYPE:
     case TRANSLATE_USER_AGENT:
     case TRANSLATE_QUERY_STRING:
+    case TRANSLATE_LOCAL_ADDRESS:
+    case TRANSLATE_LOCAL_ADDRESS_STRING:
         daemon_log(2, "misplaced translate request packet\n");
         break;
 

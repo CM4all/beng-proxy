@@ -197,6 +197,11 @@ just the raw string, without terminating zero.
 
 \begin{tabular}{|l|p{10cm}|}
 \hline
+
+\texttt{LOCAL\_ADDRESS} & The local socket address the request was
+received on.  The payload is a \texttt{struct sockaddr}. \\
+
+\hline
 \texttt{REMOTE\_HOST} & the client's IP address or host name \\
 \hline
 \texttt{HOST} & the \texttt{Host} HTTP request header \\

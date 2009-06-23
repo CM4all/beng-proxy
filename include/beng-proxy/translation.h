@@ -53,6 +53,8 @@ enum beng_translation_command {
     TRANSLATE_BASE = 40,
     TRANSLATE_DELEGATE = 41,
     TRANSLATE_INVALIDATE = 42,
+    TRANSLATE_LOCAL_ADDRESS = 43,
+    TRANSLATE_LOCAL_ADDRESS_STRING = 44,
 };
 
 struct beng_translation_header {
