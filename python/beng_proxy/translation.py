@@ -93,6 +93,7 @@ class Request:
         self.widget_type = None
         self.session = None
         self.param = None
+        self.local_address = None
         self.remote_host = None
         self.user_agent = None
         self.accept_language = None
@@ -112,13 +113,15 @@ class Request:
             self.session = packet.payload
         elif packet.command == TRANSLATE_PARAM:
             self.param = packet.payload
+        elif packet.command == TRANSLATE_LOCAL_ADDRESS_STRING:
+            self.local_address = packet.payload
         elif packet.command == TRANSLATE_REMOTE_HOST:
             self.remote_host = packet.payload
         elif packet.command == TRANSLATE_USER_AGENT:
             self.user_agent = packet.payload
         elif packet.command == TRANSLATE_LANGUAGE:
             self.accept_language = packet.payload
-        else:
+        elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print "Invalid command:", packet.command
         return False
 
