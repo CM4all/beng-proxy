@@ -21,6 +21,10 @@ struct tcache_item {
 
     struct {
         const char *session;
+
+        const struct sockaddr *local_address;
+        size_t local_address_length;
+
         const char *remote_host;
         const char *host;
         const char *accept_language;
@@ -253,6 +257,26 @@ tcache_vary_copy(pool_t pool, const char *p,
  * @param strict in strict mode, NULL values are a mismatch
  */
 static bool
+tcache_buffer_match(const void *a, size_t a_length,
+                    const void *b, size_t b_length,
+                    bool strict)
+{
+    assert((a == NULL) == (a_length == 0));
+    assert((b == NULL) == (b_length == 0));
+
+    if (a == NULL || b == NULL)
+        return !strict && a == b;
+
+    if (a_length != b_length)
+        return false;
+
+    return memcmp(a, b, a_length) == 0;
+}
+
+/**
+ * @param strict in strict mode, NULL values are a mismatch
+ */
+static bool
 tcache_string_match(const char *a, const char *b, bool strict)
 {
     if (a == NULL || b == NULL)
@@ -279,6 +303,13 @@ tcache_vary_match(const struct tcache_item *item,
     case TRANSLATE_SESSION:
         return tcache_string_match(item->request.session,
                                    request->session, strict);
+
+    case TRANSLATE_LOCAL_ADDRESS:
+        return tcache_buffer_match(item->request.local_address,
+                                   item->request.local_address_length,
+                                   request->local_address,
+                                   request->local_address_length,
+                                   strict);
 
     case TRANSLATE_REMOTE_HOST:
         return tcache_string_match(item->request.remote_host,
@@ -438,6 +469,19 @@ tcache_callback(const struct translate_response *response, void *ctx)
         item->request.session =
             tcache_vary_copy(pool, tcr->request->session,
                              response, TRANSLATE_SESSION);
+
+        item->request.local_address =
+            tcr->request->local_address != NULL &&
+            tcache_vary_contains(response, TRANSLATE_LOCAL_ADDRESS)
+            ? (const struct sockaddr *)
+            p_memdup(pool, tcr->request->local_address,
+                     tcr->request->local_address_length)
+            : NULL;
+        item->request.local_address_length =
+            tcr->request->local_address_length;
+
+        tcache_vary_copy(pool, tcr->request->remote_host,
+                         response, TRANSLATE_REMOTE_HOST);
         item->request.remote_host =
             tcache_vary_copy(pool, tcr->request->remote_host,
                              response, TRANSLATE_REMOTE_HOST);
