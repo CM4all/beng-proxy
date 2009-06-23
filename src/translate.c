@@ -117,31 +117,33 @@ translate_client_abort(struct translate_client *client)
  */
 
 static bool
-write_packet(struct growing_buffer *gb, uint16_t command,
-             const char *payload)
+write_packet_n(struct growing_buffer *gb, uint16_t command,
+               const void *payload, size_t length)
 {
     static struct beng_translation_header header;
 
-    if (payload == NULL) {
-        header.length = 0;
-    } else {
-        size_t length = strlen(payload);
-        if (length >= 0xffff) {
-            daemon_log(2, "payload for translate command %u too large\n",
-                       command);
-            return false;
-        }
-
-        header.length = (uint16_t)length;
+    if (length >= 0xffff) {
+        daemon_log(2, "payload for translate command %u too large\n",
+                   command);
+        return false;
     }
 
+    header.length = (uint16_t)length;
     header.command = command;
 
     growing_buffer_write_buffer(gb, &header, sizeof(header));
-    if (header.length > 0)
-        growing_buffer_write_buffer(gb, payload, header.length);
+    if (length > 0)
+        growing_buffer_write_buffer(gb, payload, length);
 
     return true;
+}
+
+static bool
+write_packet(struct growing_buffer *gb, uint16_t command,
+             const char *payload)
+{
+    return write_packet_n(gb, command, payload,
+                          payload != NULL ? strlen(payload) : 0);
 }
 
 /**
