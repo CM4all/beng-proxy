@@ -172,11 +172,14 @@ parse_cmdline(struct config *config, int argc, char **argv)
             break;
 
         case 'p':
-            config->port = (unsigned)strtoul(optarg, &endptr, 10);
+            if (config->num_ports >= MAX_PORTS)
+                arg_error(argv[0], "too many listener ports");
+            ret = (unsigned)strtoul(optarg, &endptr, 10);
             if (*endptr != 0)
                 arg_error(argv[0], "invalid number after --port");
-            if (config->port == 0 || config->port > 0xffff)
+            if (ret <= 0 || ret > 0xffff)
                 arg_error(argv[0], "invalid port after --port");
+            config->ports[config->num_ports++] = ret;
             break;
 
         case 'w':

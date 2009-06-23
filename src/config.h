@@ -10,6 +10,10 @@
 #include <sys/types.h>
 #include <stdbool.h>
 
+enum {
+    MAX_PORTS = 32,
+};
+
 #ifdef NDEBUG
 static const bool debug_mode = false;
 #else
@@ -17,7 +21,8 @@ extern bool debug_mode;
 #endif
 
 struct config {
-    unsigned port;
+    unsigned ports[MAX_PORTS];
+    unsigned num_ports;
 
     const char *document_root;
 

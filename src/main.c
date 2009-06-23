@@ -186,13 +186,14 @@ int main(int argc, char **argv)
 
     /* configuration */
 
-    if (debug_mode)
-        instance.config.port = 8080;
-    else
-        instance.config.port = 80;
     instance.config.document_root = "/var/www";
 
     parse_cmdline(&instance.config, argc, argv);
+
+    if (instance.config.num_ports == 0) {
+        instance.config.ports[instance.config.num_ports++] =
+            debug_mode ? 8080 : 80;
+    }
 
     /* initialize */
 
@@ -214,7 +215,8 @@ int main(int argc, char **argv)
         exit(2);
     }
 
-    add_tcp_listener(&instance, instance.config.port);
+    for (unsigned i = 0; i < instance.config.num_ports; ++i)
+        add_tcp_listener(&instance, instance.config.ports[i]);
 
     instance.tcp_stock = tcp_stock_new(instance.pool);
     if (instance.config.translation_socket != NULL)
