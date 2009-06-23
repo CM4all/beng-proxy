@@ -46,6 +46,23 @@ TRANSLATE_INVALIDATE = 42
 TRANSLATE_LOCAL_ADDRESS = 43
 TRANSLATE_LOCAL_ADDRESS_STRING = 44
 
+def _parse_port(address):
+    if address[0] == '[':
+        i = address.find(']', 1)
+        if i < 0 or len(address) <= i + 2 or address[i + 1] != ':':
+            return None
+        port = address[i + 2:]
+    else:
+        i = address.find(':')
+        if i < 0 or address.find(':', i + 1) > i:
+            # more than one colon: IPv6 address without port
+            return None
+        port = address[i + 1:]
+    try:
+        return int(port)
+    except ParserError:
+        return None
+
 class PacketReader:
     def __init__(self):
         self._header = ''
@@ -94,6 +111,7 @@ class Request:
         self.session = None
         self.param = None
         self.local_address = None
+        self.local_port = None
         self.remote_host = None
         self.user_agent = None
         self.accept_language = None
@@ -115,6 +133,7 @@ class Request:
             self.param = packet.payload
         elif packet.command == TRANSLATE_LOCAL_ADDRESS_STRING:
             self.local_address = packet.payload
+            self.local_port = _parse_port(self.local_address)
         elif packet.command == TRANSLATE_REMOTE_HOST:
             self.remote_host = packet.payload
         elif packet.command == TRANSLATE_USER_AGENT:
