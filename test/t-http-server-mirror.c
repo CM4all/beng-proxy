@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
     }
 
     http_server_connection_new(pool, sockfd,
+                               NULL, 0,
                                "localhost", &handler, NULL,
                                &connection);
 
