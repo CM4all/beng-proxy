@@ -136,7 +136,10 @@ http_server_connection_new(pool_t pool, int fd,
     connection->fd = fd;
     connection->handler = handler;
     connection->handler_ctx = ctx;
-    connection->local_address = local_address;
+    connection->local_address = local_address != NULL
+        ? (const struct sockaddr *)p_memdup(pool, local_address,
+                                            local_address_length)
+        : NULL;
     connection->local_address_length = local_address_length;
     connection->remote_host = remote_host;
     connection->request.read_state = READ_START;
