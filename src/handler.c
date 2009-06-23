@@ -234,24 +234,28 @@ request_uri_parse(struct http_server_request *request,
 }
 
 static void
+fill_translate_request(struct translate_request *t,
+                       const struct http_server_request *request,
+                       const struct parsed_uri *uri)
+{
+    t->remote_host = request->remote_host;
+    t->host = strmap_get(request->headers, "host");
+    t->user_agent = strmap_get(request->headers, "user-agent");
+    t->accept_language = strmap_get(request->headers, "accept-language");
+    t->uri = strref_dup(request->pool, &uri->base);
+    t->query_string = strref_is_empty(&uri->query)
+        ? NULL
+        : strref_dup(request->pool, &uri->query);
+    t->widget_type = NULL;
+}
+
+static void
 ask_translation_server(struct request *request2, struct tcache *tcache)
 {
     struct http_server_request *request = request2->request;
 
-    request2->translate.request.remote_host = request->remote_host;
-    request2->translate.request.host = strmap_get(request->headers, "host");
-    request2->translate.request.user_agent =
-        strmap_get(request->headers, "user-agent");
-    request2->translate.request.accept_language =
-        strmap_get(request->headers, "accept-language");
-    request2->translate.request.uri = strref_dup(request->pool,
-                                                 &request2->uri.base);
-    request2->translate.request.query_string =
-        strref_is_empty(&request2->uri.query)
-        ? NULL
-        : strref_dup(request->pool, &request2->uri.query);
-    request2->translate.request.widget_type = NULL;
-
+    fill_translate_request(&request2->translate.request, request2->request,
+                           &request2->uri);
     translate_cache(request->pool, tcache, &request2->translate.request,
                     translate_callback, request2,
                     request2->async_ref);
