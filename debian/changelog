@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.5.11) unstable; urgency=low
   * use libcm4all-socket, GLib
   * Makefile.am: support out-of-tree builds
   * added optimized Debian package
+  * tcache: fixed wrong assignment in VARY=HOST
 
  --
 

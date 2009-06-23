@@ -441,7 +441,7 @@ tcache_callback(const struct translate_response *response, void *ctx)
         item->request.remote_host =
             tcache_vary_copy(pool, tcr->request->remote_host,
                              response, TRANSLATE_REMOTE_HOST);
-        item->request.host = tcache_vary_copy(pool, tcr->request->remote_host,
+        item->request.host = tcache_vary_copy(pool, tcr->request->host,
                                               response, TRANSLATE_HOST);
         item->request.accept_language =
             tcache_vary_copy(pool, tcr->request->accept_language,
