@@ -22,6 +22,8 @@ widget_registry_lookup(pool_t pool,
 {
     struct translate_request *request = p_malloc(pool, sizeof(*request)); 
 
+    request->local_address = NULL;
+    request->local_address_length = 0;
     request->remote_host = NULL;
     request->host = NULL;
     request->user_agent = NULL;
