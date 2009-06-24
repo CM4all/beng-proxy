@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.5.13) unstable; urgency=low
   * widget-registry: clear local_address in translate request
   * cmdline: added the "--listen" option
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 24 Jun 2009 12:27:17 +0200
 
 cm4all-beng-proxy (0.5.12) unstable; urgency=low
 
