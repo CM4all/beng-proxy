@@ -482,6 +482,7 @@ ajp_event_callback(int fd __attr_unused, short event, void *ctx)
 
     event2_reset(&client->event);
     event2_lock(&client->event);
+    event2_or(&client->event, EV_READ);
 
     if (ajp_connection_valid(client) && (event & EV_WRITE) != 0)
         istream_read(client->request.istream);
@@ -521,11 +522,7 @@ ajp_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    client->response.read_state = READ_BEGIN;
-    client->response.input = fifo_buffer_new(client->pool, 8192);
-    client->response.headers = NULL;
-
-    event2_set(&client->event, EV_READ);
+    event2_nand(&client->event, EV_WRITE);
 }
 
 static void
@@ -674,10 +671,13 @@ ajp_client_request(pool_t pool, int fd,
     /* XXX append request body */
 
     client->response.read_state = READ_BEGIN;
+    client->response.input = fifo_buffer_new(client->pool, 8192);
+    client->response.headers = NULL;
 
     pool_ref(client->pool);
 
     event2_lock(&client->event);
+    event2_set(&client->event, EV_READ);
 
     istream_read(client->request.istream);
 
