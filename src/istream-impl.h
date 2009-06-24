@@ -137,4 +137,10 @@ istream_t
 istream_unlock_new(pool_t pool, istream_t input,
                    struct cache *cache, struct cache_item *item);
 
+istream_t
+istream_ajp_body_new(pool_t pool, istream_t input);
+
+void
+istream_ajp_body_request(istream_t istream, size_t length);
+
 #endif

@@ -142,6 +142,7 @@ SRC = src/main.c \
 	src/http-server-response.c \
 	src/http-client.c \
 	src/http-util.c \
+	src/istream-ajp-body.c \
 	src/ajp-client.c \
 	src/access-log.c \
 	src/tcp-stock.c \
@@ -589,6 +590,8 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/buffered-io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/socket-util.c src/fd-util.c \
 	src/istream-file.c \
+	src/istream-forward.c \
+	src/istream-ajp-body.c \
 	src/event2.c \
 	$(POOL_SRC)
 test_run_ajp_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
