@@ -88,43 +88,22 @@ my_htons(uint16_t x)
 #endif
 }
 
-int
-listener_tcp_port_new(pool_t pool, int port,
-                      listener_callback_t callback, void *ctx,
-                      struct listener **listener_r)
+struct listener *
+listener_new(pool_t pool, int family, int socktype, int protocol,
+             const struct sockaddr *address, size_t address_length,
+             listener_callback_t callback, void *ctx)
 {
     struct listener *listener;
     int ret, param;
-    struct sockaddr_in6 sa6;
-    struct sockaddr_in sa4;
-    const struct sockaddr *sa = (const struct sockaddr*)&sa6;
-    socklen_t addrlen = sizeof(sa6);
 
-    assert(port > 0);
+    assert(address != NULL);
+    assert(address_length > 0);
     assert(callback != NULL);
-    assert(listener_r != NULL);
 
     listener = p_calloc(pool, sizeof(*listener));
-    listener->fd = socket(PF_INET6, SOCK_STREAM, 0);
-    if (listener->fd >= 0) {
-        memset(&sa6, 0, sizeof(sa6));
-        sa6.sin6_family = AF_INET6;
-        sa6.sin6_addr = in6addr_any;
-        sa6.sin6_port = my_htons((uint16_t)port);
-    } else {
-        /* fall back to IPv4 */
-        listener->fd = socket(PF_INET, SOCK_STREAM, 0);
-        if (listener->fd < 0)
-            return -1;
-
-        memset(&sa4, 0, sizeof(sa4));
-        sa4.sin_family = AF_INET;
-        sa4.sin_addr.s_addr = INADDR_ANY;
-        sa4.sin_port = my_htons((uint16_t)port);
-
-        sa = (const struct sockaddr*)&sa4;
-        addrlen = sizeof(sa4);
-    }
+    listener->fd = socket(family, socktype, protocol);
+    if (listener->fd < 0)
+        return NULL;
 
     param = 1;
     ret = setsockopt(listener->fd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
@@ -132,15 +111,15 @@ listener_tcp_port_new(pool_t pool, int port,
         int save_errno = errno;
         close(listener->fd);
         errno = save_errno;
-        return -1;
+        return NULL;
     }
 
-    ret = bind(listener->fd, sa, addrlen);
+    ret = bind(listener->fd, address, address_length);
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
         errno = save_errno;
-        return -1;
+        return NULL;
     }
 
     ret = listen(listener->fd, 16);
@@ -148,7 +127,7 @@ listener_tcp_port_new(pool_t pool, int port,
         int save_errno = errno;
         close(listener->fd);
         errno = save_errno;
-        return -1;
+        return NULL;
     }
 
     ret = socket_set_nonblock(listener->fd, 1);
@@ -156,7 +135,7 @@ listener_tcp_port_new(pool_t pool, int port,
         int save_errno = errno;
         close(listener->fd);
         errno = save_errno;
-        return -1;
+        return NULL;
     }
 
     ret = fd_set_cloexec(listener->fd);
@@ -164,7 +143,7 @@ listener_tcp_port_new(pool_t pool, int port,
         int save_errno = errno;
         close(listener->fd);
         errno = save_errno;
-        return -1;
+        return NULL;
     }
 
     listener->callback = callback;
@@ -172,9 +151,49 @@ listener_tcp_port_new(pool_t pool, int port,
 
     listener_event_add(listener);
 
-    *listener_r = listener;
+    return listener;
+}
 
-    return 0;
+int
+listener_tcp_port_new(pool_t pool, int port,
+                      listener_callback_t callback, void *ctx,
+                      struct listener **listener_r)
+{
+    struct listener *listener;
+    struct sockaddr_in6 sa6;
+    struct sockaddr_in sa4;
+
+    assert(port > 0);
+    assert(callback != NULL);
+    assert(listener_r != NULL);
+
+    memset(&sa6, 0, sizeof(sa6));
+    sa6.sin6_family = AF_INET6;
+    sa6.sin6_addr = in6addr_any;
+    sa6.sin6_port = my_htons((uint16_t)port);
+
+    listener = listener_new(pool, PF_INET6, SOCK_STREAM, 0,
+                            (const struct sockaddr *)&sa6, sizeof(sa6),
+                            callback, ctx);
+    if (listener != NULL) {
+        *listener_r = listener;
+        return 0;
+    }
+
+    memset(&sa4, 0, sizeof(sa4));
+    sa4.sin_family = AF_INET;
+    sa4.sin_addr.s_addr = INADDR_ANY;
+    sa4.sin_port = my_htons((uint16_t)port);
+
+    listener = listener_new(pool, PF_INET, SOCK_STREAM, 0,
+                            (const struct sockaddr *)&sa4, sizeof(sa4),
+                            callback, ctx);
+    if (listener != NULL) {
+        *listener_r = listener;
+        return 0;
+    }
+
+    return -1;
 }
 
 void

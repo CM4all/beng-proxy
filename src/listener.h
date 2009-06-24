@@ -17,6 +17,11 @@ typedef void (*listener_callback_t)(int fd,
                                     const struct sockaddr *addr, socklen_t addrlen,
                                     void *ctx);
 
+struct listener *
+listener_new(pool_t pool, int family, int socktype, int protocol,
+             const struct sockaddr *address, size_t address_length,
+             listener_callback_t callback, void *ctx);
+
 int
 listener_tcp_port_new(pool_t pool, int port,
                       listener_callback_t callback, void *ctx,
