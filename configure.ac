@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT(CM4all BENG-Proxy, 0.5.13, mk@cm4all.com, cm4all-beng-proxy)
+AC_INIT(CM4all BENG-Proxy, 0.5.14, mk@cm4all.com, cm4all-beng-proxy)
 AC_COPYRIGHT(Copyright 2007-2009 Content Management AG)
 AC_CONFIG_SRCDIR(src/main.c)
 AC_CONFIG_AUX_DIR(build)
