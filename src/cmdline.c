@@ -8,12 +8,14 @@
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
+#include <socket/resolver.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <getopt.h>
 #include <string.h>
+#include <netdb.h>
 
 static void usage(void) {
     puts("usage: cm4all-beng-proxy [options]\n\n"
@@ -52,6 +54,10 @@ static void usage(void) {
          " --port PORT\n"
 #endif
          " -p PORT        the TCP port beng-proxy listens on\n"
+#ifdef __GLIBC__
+         " --listen IP:PORT\n"
+#endif
+         " -L IP:PORT     listen on this IP address\n"
 #ifdef __GLIBC__
          " --workers COUNT\n"
 #endif
@@ -107,21 +113,23 @@ parse_cmdline(struct config *config, int argc, char **argv)
         {"user", 1, NULL, 'u'},
         {"logger-user", 1, NULL, 'U'},
         {"port", 1, NULL, 'p'},
+        {"listen", 1, NULL, 'L'},
         {"workers", 1, NULL, 'w'},
         {"document-root", 1, NULL, 'r'},
         {"translation-socket", 1, NULL, 't'},
         {NULL,0,NULL,0}
     };
 #endif
+    struct addrinfo hints;
 
     while (1) {
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:w:r:t:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:w:r:t:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:");
 #endif
         if (ret == -1)
             break;
@@ -180,6 +188,23 @@ parse_cmdline(struct config *config, int argc, char **argv)
             if (ret <= 0 || ret > 0xffff)
                 arg_error(argv[0], "invalid port after --port");
             config->ports[config->num_ports++] = ret;
+            break;
+
+        case 'L':
+            if (config->num_listen >= MAX_LISTEN)
+                arg_error(argv[0], "too many listeners");
+
+            memset(&hints, 0, sizeof(hints));
+            hints.ai_socktype = SOCK_STREAM;
+            hints.ai_flags = AI_PASSIVE;
+
+            ret = socket_resolve_host_port(optarg,
+                                           debug_mode ? 8080 : 80,
+                                           &hints,
+                                           &config->listen[config->num_listen]);
+            if (ret != 0)
+                arg_error(argv[0], "failed to resolve %s", optarg);
+            ++config->num_listen;
             break;
 
         case 'w':

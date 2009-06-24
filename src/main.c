@@ -28,6 +28,7 @@
 #include <sys/signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <netdb.h>
 
 #include <event.h>
 
@@ -152,6 +153,29 @@ deinit_signals(struct instance *instance)
 }
 
 static void
+add_listener(struct instance *instance, struct addrinfo *ai)
+{
+    assert(ai != NULL);
+
+    do {
+        struct listener_node *node = p_malloc(instance->pool, sizeof(*node));
+
+        node->listener = listener_new(instance->pool, ai->ai_family, ai->ai_socktype,
+                                      ai->ai_protocol, ai->ai_addr,
+                                      ai->ai_addrlen,
+                                      &http_listener_callback, instance);
+        if (node->listener == NULL) {
+            perror("listener_tcp_port_new() failed");
+            exit(2);
+        }
+
+        list_add(&node->siblings, &instance->listeners);
+
+        ai = ai->ai_next;
+    } while (ai != NULL);
+}
+
+static void
 add_tcp_listener(struct instance *instance, int port)
 {
     struct listener_node *node = p_malloc(instance->pool, sizeof(*node));
@@ -190,7 +214,7 @@ int main(int argc, char **argv)
 
     parse_cmdline(&instance.config, argc, argv);
 
-    if (instance.config.num_ports == 0) {
+    if (instance.config.num_ports == 0 && instance.config.num_listen == 0) {
         instance.config.ports[instance.config.num_ports++] =
             debug_mode ? 8080 : 80;
     }
@@ -217,6 +241,9 @@ int main(int argc, char **argv)
 
     for (unsigned i = 0; i < instance.config.num_ports; ++i)
         add_tcp_listener(&instance, instance.config.ports[i]);
+
+    for (unsigned i = 0; i < instance.config.num_listen; ++i)
+        add_listener(&instance, instance.config.listen[i]);
 
     instance.tcp_stock = tcp_stock_new(instance.pool);
     if (instance.config.translation_socket != NULL)

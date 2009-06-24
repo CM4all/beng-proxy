@@ -12,6 +12,7 @@
 
 enum {
     MAX_PORTS = 32,
+    MAX_LISTEN = 32,
 };
 
 #ifdef NDEBUG
@@ -23,6 +24,9 @@ extern bool debug_mode;
 struct config {
     unsigned ports[MAX_PORTS];
     unsigned num_ports;
+
+    struct addrinfo *listen[MAX_LISTEN];
+    unsigned num_listen;
 
     const char *document_root;
 
