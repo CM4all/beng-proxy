@@ -410,6 +410,8 @@ ajp_consume_input(struct ajp_client *client)
                 return;
 
             continue;
+        } else if (code == AJP_CODE_GET_BODY_CHUNK) {
+            /* XXX */
         }
 
         if (length < sizeof(*header) + header_length) {
@@ -601,6 +603,7 @@ ajp_client_request(pool_t pool, int fd,
         uint8_t prefix_code, method;
     } prefix_and_method;
     istream_t request;
+    size_t requested;
 
     (void)headers; /* XXX */
 
@@ -639,25 +642,42 @@ ajp_client_request(pool_t pool, int fd,
     gb_write_ajp_integer(gb, body == NULL ? 0 : 1); /* XXX num_headers */
 
     if (body != NULL) {
+        off_t available;
         char buffer[32];
-        off_t content_length = istream_available(body, false);
-        if (content_length == -1) {
+
+        available = istream_available(body, false);
+        if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
+            istream_close(body);
             http_response_handler_direct_abort(handler, handler_ctx);
             return;
         }
 
-        format_uint64(buffer, (uint64_t)content_length);
+        format_uint64(buffer, (uint64_t)available);
         gb_write_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
         gb_write_ajp_string(gb, buffer);
+
+        if (available == 0)
+            istream_free(&body);
+        else
+            requested = available > 1024
+                ? 1024
+                : (size_t)available;
     }
 
     growing_buffer_write_buffer(gb, "\xff", 1);
     
     /* XXX is this correct? */
+
     header->length = htons(growing_buffer_size(gb) - sizeof(*header));
 
     request = growing_buffer_istream(gb);
+    if (body != NULL) {
+        istream_t body2 = istream_ajp_body_new(pool, body);
+        istream_ajp_body_request(body2, requested);
+        request = istream_cat_new(pool, request, body2, NULL);
+    }
+
     istream_assign_handler(&client->request.istream, request,
                            &ajp_request_stream_handler, client,
                            0);

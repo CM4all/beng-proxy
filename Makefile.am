@@ -590,6 +590,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/buffered-io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/socket-util.c src/fd-util.c \
 	src/istream-file.c \
+	src/istream-cat.c \
 	src/istream-forward.c \
 	src/istream-ajp-body.c \
 	src/event2.c \

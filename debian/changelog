@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.5.14) unstable; urgency=low
 
-  * 
+  * ajp-client: implemented request body
 
  --
 
