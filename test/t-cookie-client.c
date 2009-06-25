@@ -50,6 +50,12 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
     assert(strcmp(strmap_get(headers, "cookie"), "c=d; a=b") == 0);
 
+    /* delete a cookie */
+    headers = strmap_new(pool, 4);
+    cookie_jar_set_cookie2(jar, "c=xyz;max-age=0", "foo.bar");
+    cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
+    assert(strcmp(strmap_get(headers, "cookie"), "a=b") == 0);
+
     /* other domain */
     headers = strmap_new(pool, 4);
     cookie_jar_http_header(jar, "other.domain", "/some_path", headers, pool);

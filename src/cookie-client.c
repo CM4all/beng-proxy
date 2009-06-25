@@ -194,6 +194,7 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 {
     struct strref name, value;
     struct cookie *cookie;
+    bool discard = false;
 
     http_next_name_value(tpool, input, &name, &value);
     if (strref_is_empty(&name))
@@ -241,8 +242,12 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
             char *endptr;
 
             seconds = strtoul(strref_dup(tpool, &value), &endptr, 10);
-            if (seconds > 0 && *endptr == 0)
-                cookie->expires = expiry_touch(seconds);
+            if (*endptr == 0) {
+                if (seconds == 0)
+                    discard = true;
+                else
+                    cookie->expires = expiry_touch(seconds);
+            }
         }
 
         strref_ltrim(input);
@@ -250,6 +255,9 @@ parse_next_cookie(struct cookie_jar *jar, struct strref *input,
 
     if (cookie->domain == NULL)
         cookie->domain = d_strdup(jar->pool, domain);
+
+    if (discard)
+        cookie_delete(jar, cookie);
 
     return true;
 }
