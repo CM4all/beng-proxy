@@ -36,6 +36,9 @@ struct ajp_client {
     struct {
         istream_t istream;
 
+        /** an istream_ajp_body */
+        istream_t ajp_body;
+
         struct http_response_handler_ref handler;
         struct async_operation async;
     } request;
@@ -411,7 +414,24 @@ ajp_consume_input(struct ajp_client *client)
 
             continue;
         } else if (code == AJP_CODE_GET_BODY_CHUNK) {
-            /* XXX */
+            const struct ajp_get_body_chunk *chunk =
+                (const struct ajp_get_body_chunk *)(header + 1);
+
+            if (length < sizeof(*header) + sizeof(*chunk)) {
+                daemon_log(1, "malformed AJP GET_BODY_CHUNK packet\n");
+                ajp_connection_close(client);
+                return;
+            }
+
+            if (client->request.istream == NULL ||
+                client->request.ajp_body == NULL) {
+                daemon_log(1, "unexpected AJP GET_BODY_CHUNK packet\n");
+                ajp_connection_close(client);
+                return;
+            }
+
+            istream_ajp_body_request(client->request.ajp_body,
+                                     ntohs(chunk->length));
         }
 
         if (length < sizeof(*header) + header_length) {
@@ -673,9 +693,12 @@ ajp_client_request(pool_t pool, int fd,
 
     request = growing_buffer_istream(gb);
     if (body != NULL) {
-        istream_t body2 = istream_ajp_body_new(pool, body);
-        istream_ajp_body_request(body2, requested);
-        request = istream_cat_new(pool, request, body2, NULL);
+        client->request.ajp_body = istream_ajp_body_new(pool, body);
+        istream_ajp_body_request(client->request.ajp_body, requested);
+        request = istream_cat_new(pool, request, client->request.ajp_body,
+                                  NULL);
+    } else {
+        client->request.ajp_body = NULL;
     }
 
     istream_assign_handler(&client->request.istream, request,
