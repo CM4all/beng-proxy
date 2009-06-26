@@ -100,10 +100,7 @@ get_env_request_header(const struct processor_env *env, const char *key)
 {
     assert(env != NULL);
 
-    if (env->request_headers == NULL)
-        return NULL;
-
-    return strmap_get(env->request_headers, key);
+    return strmap_get_checked(env->request_headers, key);
 }
 
 static void
@@ -274,8 +271,7 @@ widget_response_format(pool_t pool, const struct widget *widget,
 
     assert(body != NULL);
 
-    content_type = headers == NULL
-        ? NULL : strmap_get(headers, "content-type");
+    content_type = strmap_get_checked(headers, "content-type");
 
     if (content_type == NULL || strncmp(content_type, "text/", 5) != 0) {
         daemon_log(2, "widget '%s' sent non-text response\n",

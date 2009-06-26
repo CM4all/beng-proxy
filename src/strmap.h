@@ -40,4 +40,26 @@ strmap_rewind(struct strmap *map);
 const struct strmap_pair *
 strmap_next(struct strmap *map);
 
+/**
+ * This variation of strmap_remove() allows the caller to pass map=NULL.
+ */
+static inline const char *
+strmap_remove_checked(struct strmap *map, const char *key)
+{
+    return map != NULL
+        ? strmap_remove(map, key)
+        : NULL;
+}
+
+/**
+ * This variation of strmap_get() allows the caller to pass map=NULL.
+ */
+static inline const char *
+strmap_get_checked(const struct strmap *map, const char *key)
+{
+    return map != NULL
+        ? strmap_get(map, key)
+        : NULL;
+}
+
 #endif

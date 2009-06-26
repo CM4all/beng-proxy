@@ -106,9 +106,7 @@ request_get_uri_session_id(const struct request *request)
 {
     assert(request != NULL);
 
-    return request->args != NULL
-        ? strmap_get(request->args, "session")
-        : NULL;
+    return strmap_get_checked(request->args, "session");
 }
 
 static const char *
@@ -116,10 +114,7 @@ request_get_cookie_session_id(struct request *request)
 {
     struct strmap *cookies = request_get_cookies(request);
 
-    if (cookies == NULL)
-        return 0;
-
-    return strmap_get(cookies, "beng_proxy_session");
+    return strmap_get_checked(cookies, "beng_proxy_session");
 }
 
 void

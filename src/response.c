@@ -75,10 +75,7 @@ processable(const struct strmap *headers)
 {
     const char *content_type;
 
-    if (headers == NULL)
-        return false;
-
-    content_type = strmap_get(headers, "content-type");
+    content_type = strmap_get_checked(headers, "content-type");
     return content_type != NULL &&
         (strncmp(content_type, "text/html", 9) == 0 ||
          strncmp(content_type, "text/xml", 8) == 0);
@@ -124,18 +121,13 @@ response_invoke_processor(struct request *request2,
     widget->lazy.path = "";
     widget->lazy.prefix = "__";
 
-    if (request2->args != NULL) {
-        widget->from_request.focus_ref =
-            widget_ref_parse(request->pool,
-                             strmap_remove(request2->args, "focus"));
+    widget->from_request.focus_ref =
+        widget_ref_parse(request->pool,
+                         strmap_remove_checked(request2->args, "focus"));
 
-        widget->from_request.proxy_ref =
-            widget_ref_parse(request->pool,
-                             strmap_get(request2->args, "frame"));
-    } else {
-        widget->from_request.focus_ref = NULL;
-        widget->from_request.proxy_ref = NULL;
-    }
+    widget->from_request.proxy_ref =
+        widget_ref_parse(request->pool,
+                         strmap_get_checked(request2->args, "frame"));
 
     if (http_server_request_has_body(request) && !request2->body_consumed &&
         widget->from_request.focus_ref != NULL) {

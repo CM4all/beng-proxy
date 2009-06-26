@@ -190,7 +190,7 @@ vary_fits(struct strmap *vary, const struct strmap *headers)
     strmap_rewind(vary);
 
     while ((pair = strmap_next(vary)) != NULL) {
-        const char *value = headers == NULL ? NULL : strmap_get(headers, pair->key);
+        const char *value = strmap_get_checked(headers, pair->key);
         if (value == NULL)
             value = "";
 
@@ -284,9 +284,7 @@ http_cache_copy_vary(pool_t pool, const char *vary, struct strmap *headers)
 
     for (list = http_list_split(tpool, vary);
          *list != NULL; ++list) {
-        const char *value = headers != NULL
-            ? strmap_get(headers, *list)
-            : NULL;
+        const char *value = strmap_get_checked(headers, *list);
         if (value == NULL)
             value = "";
         strmap_set(dest, p_strdup(pool, *list),
