@@ -346,10 +346,6 @@ ajp_consume_input(struct ajp_client *client)
            client->response.read_state == READ_BODY);
 
     while (true) {
-        data = fifo_buffer_read(client->response.input, &length);
-        if (data == NULL)
-            return;
-
         if (client->response.read_state == READ_BODY) {
             /* there is data left from the previous body chunk */
             if (client->response.chunk_length > 0 &&
@@ -361,7 +357,8 @@ ajp_consume_input(struct ajp_client *client)
                 return;
         }
 
-        if (length < sizeof(*header))
+        data = fifo_buffer_read(client->response.input, &length);
+        if (data == NULL || length < sizeof(*header))
             /* we need a full header */
             return;
 
