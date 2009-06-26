@@ -40,6 +40,7 @@ Package: cm4all-beng-proxy-optimized
 Architecture: any
 Depends: ${shlibs:Depends}, cm4all-beng-proxy (= ${source:Version})
 Replaces: cm4all-beng-proxy
+Conflicts: cm4all-beng-proxy-dbg
 Description: HTTP proxy server, optimized build
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
@@ -51,7 +52,7 @@ Package: cm4all-beng-proxy-optimized-dbg
 Section: non-free/devel
 Architecture: any
 Depends: cm4all-beng-proxy-optimized (= ${binary:Version})
-Replaces: cm4all-beng-proxy-dbg
+Conflicts: cm4all-beng-proxy-dbg
 Description: HTTP proxy server, debug symbols
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
