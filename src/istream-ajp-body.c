@@ -144,6 +144,17 @@ istream_to_ab(istream_t istream)
     return (struct istream_ajp_body *)(((char*)istream) - offsetof(struct istream_ajp_body, output));
 }
 
+static off_t
+istream_ajp_body_available(istream_t istream, bool partial)
+{
+    struct istream_ajp_body *ab = istream_to_ab(istream);
+
+    if (!partial)
+        return -1;
+
+    return istream_available(ab->input, partial);
+}
+
 static void
 istream_ajp_body_read(istream_t istream)
 {
@@ -165,6 +176,7 @@ istream_ajp_body_close(istream_t istream)
 }
 
 static const struct istream istream_ajp_body = {
+    .available = istream_ajp_body_available,
     .read = istream_ajp_body_read,
     .close = istream_ajp_body_close,
 };
