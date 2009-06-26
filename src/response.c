@@ -71,7 +71,7 @@ request_absolute_uri(const struct http_server_request *request)
  */
 
 static bool
-processable(struct strmap *headers)
+processable(const struct strmap *headers)
 {
     const char *content_type;
 
