@@ -102,7 +102,8 @@ binary-arch: build check
 	dh_installinit -a
 	dh_install -a
 	dh_link -a
-	dh_strip -a --dbg-package=cm4all-beng-proxy-dbg
+	dh_strip -p cm4all-beng-proxy --dbg-package=cm4all-beng-proxy-dbg
+	dh_strip -p cm4all-beng-proxy-optimized --dbg-package=cm4all-beng-proxy-optimized-dbg
 	dh_compress -a
 	dh_fixperms -a
 	umask 0022 && dh_pycentral -a
