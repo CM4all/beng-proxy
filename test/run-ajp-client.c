@@ -67,7 +67,7 @@ my_istream_data(const void *data, size_t length, void *ctx)
     struct context *c = ctx;
     ssize_t nbytes;
 
-    nbytes = write(0, data, length);
+    nbytes = write(1, data, length);
     if (nbytes <= 0) {
         istream_close(c->body);
         return 0;
