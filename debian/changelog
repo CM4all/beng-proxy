@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.5.14) unstable; urgency=low
   * cookie-client: obey "max-age=0" properly
   * processor: forward the original HTTP status
   * response: don't allow processing resource without body
+  * widget-http: check the Content-Type before invoking processor
   * debian: added a separate -optimized-dbg package
 
  --

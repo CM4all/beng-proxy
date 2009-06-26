@@ -323,6 +323,17 @@ widget_response_format(pool_t pool, const struct widget *widget,
     return body;
 }
 
+static bool
+processable(const struct strmap *headers)
+{
+    const char *content_type;
+
+    content_type = strmap_get_checked(headers, "content-type");
+    return content_type != NULL &&
+        (strncmp(content_type, "text/html", 9) == 0 ||
+         strncmp(content_type, "text/xml", 8) == 0);
+}
+
 /**
  * The widget response is going to be embedded into a template; check
  * its content type and run the processor (if applicable).
@@ -332,6 +343,13 @@ widget_response_process(struct embed *embed, http_status_t status,
                         struct strmap *headers, istream_t body,
                         unsigned options)
 {
+    if (!processable(headers)) {
+        daemon_log(2, "widget '%s' sent non-HTML response\n",
+                   widget_path(embed->widget));
+        http_response_handler_invoke_abort(&embed->handler_ref);
+        return;
+    }
+
     processor_new(embed->pool, status, headers, body,
                   embed->widget, embed->env, options,
                   &widget_response_handler, embed,
