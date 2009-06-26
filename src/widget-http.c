@@ -343,6 +343,13 @@ widget_response_process(struct embed *embed, http_status_t status,
                         struct strmap *headers, istream_t body,
                         unsigned options)
 {
+    if (body == NULL) {
+        daemon_log(2, "widget '%s' didn't send a response body\n",
+                   widget_path(embed->widget));
+        http_response_handler_invoke_abort(&embed->handler_ref);
+        return;
+    }
+
     if (!processable(headers)) {
         daemon_log(2, "widget '%s' sent non-HTML response\n",
                    widget_path(embed->widget));
@@ -367,7 +374,6 @@ widget_response_transform(struct embed *embed, http_status_t status,
 {
     const char *source_tag;
 
-    assert(body != NULL);
     assert(transformation != NULL);
     assert(embed->transformation == transformation->next);
 
@@ -408,7 +414,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
 {
     const struct transformation *transformation = embed->transformation;
 
-    if (transformation != NULL && body != NULL) {
+    if (transformation != NULL) {
         /* transform this response */
 
         embed->transformation = transformation->next;
