@@ -96,7 +96,9 @@ response_invoke_processor(struct request *request2,
     assert(body == NULL || !istream_has_handler(body));
 
     if (body == NULL) {
-        response_dispatch(request2, status, response_headers, NULL);
+        request_discard_body(request2);
+        http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
+                                 "Empty template cannot be processed");
         return;
     }
 
