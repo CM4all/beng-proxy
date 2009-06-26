@@ -44,7 +44,8 @@ static unsigned test_id;
 static bool got_request, got_response;
 
 void
-processor_new(__attr_unused pool_t pool, __attr_unused struct strmap *headers,
+processor_new(__attr_unused pool_t pool, __attr_unused http_status_t status,
+              __attr_unused struct strmap *headers,
               __attr_unused istream_t istream,
               __attr_unused struct widget *widget,
               __attr_unused struct processor_env *env,

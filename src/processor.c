@@ -211,7 +211,8 @@ headers_copy2(struct strmap *in, struct strmap *out,
 }
 
 void
-processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
+processor_new(pool_t caller_pool, http_status_t status,
+              struct strmap *headers, istream_t istream,
               struct widget *widget,
               struct processor_env *env,
               unsigned options,
@@ -222,6 +223,7 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
     pool_t pool = pool_new_linear(caller_pool, "processor", 32768);
     struct processor *processor;
 
+    assert(!http_status_is_empty(status));
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
@@ -282,7 +284,7 @@ processor_new(pool_t caller_pool, struct strmap *headers, istream_t istream,
             headers2 = NULL;
 
         http_response_handler_direct_response(handler, handler_ctx,
-                                              HTTP_STATUS_OK, headers2,
+                                              status, headers2,
                                               processor->replace);
     } else {
         http_response_handler_set(&processor->response_handler,

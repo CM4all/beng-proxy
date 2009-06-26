@@ -328,11 +328,11 @@ widget_response_format(pool_t pool, const struct widget *widget,
  * its content type and run the processor (if applicable).
  */
 static void
-widget_response_process(struct embed *embed,
+widget_response_process(struct embed *embed, http_status_t status,
                         struct strmap *headers, istream_t body,
                         unsigned options)
 {
-    processor_new(embed->pool, headers, body,
+    processor_new(embed->pool, status, headers, body,
                   embed->widget, embed->env, options,
                   &widget_response_handler, embed,
                   embed->async_ref);
@@ -343,7 +343,7 @@ widget_response_process(struct embed *embed,
  * widget_response_handler.
  */
 static void
-widget_response_transform(struct embed *embed,
+widget_response_transform(struct embed *embed, http_status_t status,
                           struct strmap *headers, istream_t body,
                           const struct transformation *transformation)
 {
@@ -358,7 +358,7 @@ widget_response_transform(struct embed *embed,
         /* processor responses cannot be cached */
         embed->resource_tag = NULL;
 
-        widget_response_process(embed, headers, body,
+        widget_response_process(embed, status, headers, body,
                                 transformation->u.processor.options);
         break;
 
@@ -395,7 +395,8 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
 
         embed->transformation = transformation->next;
 
-        widget_response_transform(embed, headers, body, transformation);
+        widget_response_transform(embed, status, headers,
+                                  body, transformation);
     } else {
         /* no transformation left */
 

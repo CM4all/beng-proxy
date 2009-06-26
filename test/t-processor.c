@@ -165,7 +165,8 @@ int main(int argc, char **argv) {
     delayed = ws->delayed;
     istream_handler_set(delayed, &my_istream_handler, NULL, 0);
 
-    processor_new(pool, NULL, istream_file_new(pool, "/dev/stdin", (off_t)-1),
+    processor_new(pool, HTTP_STATUS_OK, NULL,
+                  istream_file_new(pool, "/dev/stdin", (off_t)-1),
                   &widget, &env, PROCESSOR_CONTAINER,
                   &widget_stream_response_handler, ws,
                   widget_stream_async_ref(ws));

@@ -154,14 +154,15 @@ response_invoke_processor(struct request *request2,
     if (widget->from_request.proxy_ref != NULL) {
         /* the client requests a widget in proxy mode */
 
-        processor_new(request->pool, headers, body,
+        processor_new(request->pool, status, headers, body,
                       widget, &request2->env,
                       transformation->u.processor.options,
                       &widget_proxy_handler, request,
                       request2->async_ref);
     } else {
         /* the client requests the whole template */
-        processor_new(request->pool, headers, body, widget, &request2->env,
+        processor_new(request->pool, status, headers, body,
+                      widget, &request2->env,
                       transformation->u.processor.options,
                       &response_handler, request2,
                       request2->async_ref);

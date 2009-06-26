@@ -60,7 +60,8 @@ processor_env_init(pool_t pool,
                    istream_t request_body);
 
 void
-processor_new(pool_t pool, struct strmap *headers, istream_t istream,
+processor_new(pool_t pool, http_status_t status,
+              struct strmap *headers, istream_t istream,
               struct widget *widget,
               struct processor_env *env,
               unsigned options,
