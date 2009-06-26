@@ -97,7 +97,7 @@ ajp_connection_close(struct ajp_client *client)
         event2_commit(&client->event);
 
         if (client->response.read_state == READ_BODY) {
-            istream_invoke_abort(&client->response.body);
+            istream_deinit_abort(&client->response.body);
             client->response.read_state = READ_END;
         }
 
