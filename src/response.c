@@ -45,6 +45,7 @@ static const char *const copy_headers_processed[] = {
     "content-type",
     "content-disposition",
     "vary",
+    "location",
     NULL,
 };
 

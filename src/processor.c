@@ -275,6 +275,7 @@ processor_new(pool_t caller_pool, http_status_t status,
                 "content-language",
                 "content-type",
                 "content-disposition",
+                "location",
                 NULL,
             };
 
