@@ -12,7 +12,7 @@ cm4all-beng-proxy (0.5.14) unstable; urgency=low
   * translation: added the "APPEND" packet for command line arguments
   * pipe: support command line arguments
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 29 Jun 2009 16:51:16 +0200
 
 cm4all-beng-proxy (0.5.13) unstable; urgency=low
 
