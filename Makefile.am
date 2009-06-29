@@ -496,7 +496,12 @@ test_t_wembed_SOURCES = test/t-wembed.c \
 	$(POOL_SRC) \
 	src/widget-stream.c \
 	src/istream-delayed.c src/istream-hold.c src/istream-forward.c \
-	src/istream-null.c \
+	src/istream-null.c src/istream-iconv.c \
+	src/istream-string.c src/istream-memory.c \
+	src/istream-cat.c src/istream-html-escape.c \
+	src/fifo-buffer.c \
+	src/hashmap.c src/strmap.c \
+	src/http-util.c src/strutil.c \
 	src/uri-parser.c src/uri-escape.c src/format.c src/global.c
 test_t_wembed_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
