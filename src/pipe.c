@@ -7,6 +7,7 @@
 #include "pipe.h"
 #include "http-response.h"
 #include "fork.h"
+#include "fork.h"
 
 #include <daemon/log.h>
 
@@ -32,12 +33,14 @@ pipe_child_callback(int status, void *ctx __attr_unused)
 
 void
 pipe_filter(pool_t pool, const char *path,
+            const char *const* args, unsigned num_args,
             struct strmap *headers, istream_t body,
             const struct http_response_handler *handler,
             void *handler_ctx)
 {
     pid_t pid;
     istream_t response;
+    char *argv[1 + num_args + 1];
 
     pid = beng_fork(pool, body, &response,
                     pipe_child_callback, NULL);
@@ -47,8 +50,12 @@ pipe_filter(pool_t pool, const char *path,
         return;
     }
 
+    argv[0] = p_strdup(pool, path);
+    memcpy(argv + 1, args, num_args * sizeof(argv[0]));
+    argv[1 + num_args] = NULL;
+
     if (pid == 0) {
-        execl(path, path, NULL);
+        execv(path, argv);
         fprintf(stderr, "exec('%s') failed: %s\n",
                 path, strerror(errno));
         _exit(2);

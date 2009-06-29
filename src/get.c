@@ -65,7 +65,9 @@ resource_get(struct http_cache *cache,
         return;
 
     case RESOURCE_ADDRESS_PIPE:
-        pipe_filter(pool, address->u.cgi.path, headers, body,
+        pipe_filter(pool, address->u.cgi.path,
+                    address->u.cgi.args, address->u.cgi.num_args,
+                    headers, body,
                     handler, handler_ctx);
         return;
 
