@@ -187,6 +187,74 @@ response_invoke_processor(struct request *request2,
  *
  */
 
+static void
+response_dispatch_direct(struct request *request2,
+                         http_status_t status, struct growing_buffer *headers,
+                         istream_t body)
+{
+    assert(!request2->response_sent);
+    assert(body == NULL || !istream_has_handler(body));
+
+    request_discard_body(request2);
+
+    header_write(headers, "server", "beng-proxy v" VERSION);
+
+    request2->response_sent = true;
+    http_server_response(request2->request, status, headers, body);
+}
+
+static void
+response_apply_filter(struct request *request2,
+                      struct growing_buffer *headers,
+                      istream_t body,
+                      const struct resource_address *filter)
+{
+    struct http_server_request *request = request2->request;
+    const char *source_tag;
+    struct strmap *headers2;
+
+    if (headers != NULL) {
+        headers2 = strmap_new(request->pool, 16);
+        header_parse_buffer(request->pool, headers2, headers);
+    } else
+        headers2 = NULL;
+
+    source_tag = resource_tag_append_etag(request->pool,
+                                          request2->resource_tag, headers2);
+    request2->resource_tag = source_tag != NULL
+        ? resource_address_id(filter, request->pool)
+        : NULL;
+
+    filter_cache_request(global_filter_cache, request->pool, filter,
+                         source_tag, headers2, body,
+                         &response_handler, request2,
+                         request2->async_ref);
+}
+
+static void
+response_apply_transformation(struct request *request2,
+                              http_status_t status, struct growing_buffer *headers,
+                              istream_t body,
+                              const struct transformation *transformation)
+{
+    assert(transformation != NULL);
+
+    switch (transformation->type) {
+    case TRANSFORMATION_FILTER:
+        response_apply_filter(request2, headers, body,
+                              &transformation->u.filter);
+        break;
+
+    case TRANSFORMATION_PROCESS:
+        /* processor responses cannot be cached */
+        request2->resource_tag = NULL;
+
+        response_invoke_processor(request2, status, headers, body,
+                                  transformation);
+        break;
+    }
+}
+
 void
 response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
@@ -198,48 +266,13 @@ response_dispatch(struct request *request2,
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
 
-    if (transformation)
+    if (transformation != NULL) {
         request2->translate.transformation = transformation->next;
 
-    if (transformation != NULL &&
-        transformation->type == TRANSFORMATION_FILTER) {
-        struct http_server_request *request = request2->request;
-        const char *source_tag;
-        struct strmap *headers2;
-
-        if (headers != NULL) {
-            headers2 = strmap_new(request->pool, 16);
-            header_parse_buffer(request->pool, headers2, headers);
-        } else
-            headers2 = NULL;
-
-        source_tag = resource_tag_append_etag(request->pool,
-                                             request2->resource_tag, headers2);
-        request2->resource_tag = source_tag != NULL
-            ? resource_address_id(&transformation->u.filter, request->pool)
-            : NULL;
-
-        filter_cache_request(global_filter_cache, request->pool,
-                             &transformation->u.filter,
-                             source_tag, headers2, body,
-                             &response_handler, request2,
-                             request2->async_ref);
-    } else if (transformation != NULL &&
-               transformation->type == TRANSFORMATION_PROCESS) {
-        /* processor responses cannot be cached */
-        request2->resource_tag = NULL;
-
-        response_invoke_processor(request2, status, headers, body,
-                                  transformation);
-    } else {
-        request_discard_body(request2);
-
-        header_write(headers, "server", "beng-proxy v" VERSION);
-
-        request2->response_sent = true;
-        http_server_response(request2->request,
-                             status, headers, body);
-    }
+        response_apply_transformation(request2, status, headers, body,
+                                      transformation);
+    } else
+        response_dispatch_direct(request2, status, headers, body);
 }
 
 
