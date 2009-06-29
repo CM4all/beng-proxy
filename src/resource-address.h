@@ -39,6 +39,10 @@ struct resource_address {
 
         struct {
             const char *path;
+
+            const char *args[32];
+            unsigned num_args;
+
             bool jail;
             const char *interpreter;
             const char *action;

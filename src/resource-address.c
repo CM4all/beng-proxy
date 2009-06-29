@@ -40,6 +40,11 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         assert(src->u.cgi.path != NULL);
 
         dest->u.cgi.path = p_strdup(pool, src->u.cgi.path);
+
+        for (unsigned i = 0; i < src->u.cgi.num_args; ++i)
+            dest->u.cgi.args[i] = p_strdup(pool, src->u.cgi.args[i]);
+        dest->u.cgi.num_args = src->u.cgi.num_args;
+
         dest->u.cgi.jail = src->u.cgi.jail;
         dest->u.cgi.interpreter = src->u.cgi.interpreter == NULL
             ? NULL : p_strdup(pool, src->u.cgi.interpreter);
