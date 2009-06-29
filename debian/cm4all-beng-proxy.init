@@ -32,6 +32,9 @@ OPTIONS="-vv"
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
 
+test -n "$PORT" && PORTSPEC=`echo "$PORT" | xargs -rd, -n1 -- echo -n " --port"`
+test -n "$LISTEN" && LISTENSPEC=`echo "$LISTEN" | xargs -rd, -n1 -- echo -n " --listen"`
+
 if test -z "$DAEMON_USER"; then
     log_action_msg "No user configured in /etc/default/cm4all-beng-proxy"
     exit 0
@@ -52,7 +55,7 @@ case "$1" in
             --user "$DAEMON_USER" \
             --logger "$LOGGER" \
             --logger-user "$LOGGER_USER" \
-            --port "$PORT" \
+            $PORTSPEC $LISTENSPEC \
             --workers "$WORKERS" \
             --document-root "$DOCUMENT_ROOT" \
             $OPTIONS
