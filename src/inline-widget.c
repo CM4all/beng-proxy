@@ -123,6 +123,8 @@ inline_widget_response(http_status_t status,
         /* the HTTP status code returned by the widget server is
            non-successful - don't embed this widget into the
            template */
+        if (body != NULL)
+            istream_close(body);
         inline_widget_close(iw);
         return;
     }
