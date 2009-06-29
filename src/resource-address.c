@@ -237,6 +237,16 @@ resource_address_relative(const struct resource_address *base,
     return NULL;
 }
 
+static const char *
+append_args(pool_t pool, const struct resource_address *address,
+            const char *p)
+{
+    for (unsigned i = 0; i < address->u.cgi.num_args; ++i)
+        p = p_strcat(pool, p, "!", address->u.cgi.args[i], NULL);
+
+    return p;
+}
+
 const char *
 resource_address_id(const struct resource_address *address, pool_t pool)
 {
@@ -254,7 +264,7 @@ resource_address_id(const struct resource_address *address, pool_t pool)
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
-        return p_strdup(pool, address->u.cgi.path);
+        return append_args(pool, address, p_strdup(pool, address->u.cgi.path));
     }
 
     assert(false);
