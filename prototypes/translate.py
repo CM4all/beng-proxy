@@ -35,9 +35,17 @@ class Translation(Protocol):
                 uri = m.group(1)
                 response.proxy(uri)
                 continue
-            m = re.match(r'^pipe\s+"(\S+)"$', line)
+            m = re.match(r'^pipe\s+"(\S+)"', line)
             if m:
-                response.pipe(m.group(1))
+                line = line[4:]
+                args = []
+                line = re.sub(r'\s+"([^"]*)"', lambda m: args.append(m.group(1)), line)
+                if not re.match(r'^\s*$', line):
+                    print "Syntax error in %s: %s" % (path, line)
+                    response.status(500)
+                    break
+
+                response.pipe(*args)
                 continue
             m = re.match(r'^cgi\s+"(\S+)"$', line)
             if m:
