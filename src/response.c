@@ -239,6 +239,13 @@ response_apply_transformation(struct request *request2,
 {
     assert(transformation != NULL);
 
+    if (!http_status_is_success(status)) {
+        /* not a successfull HTTP status code: don't apply
+           transformation on the error document */
+        response_dispatch_direct(request2, status, headers, body);
+        return;
+    }
+
     switch (transformation->type) {
     case TRANSFORMATION_FILTER:
         response_apply_filter(request2, headers, body,
