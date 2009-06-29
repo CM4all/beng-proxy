@@ -9,6 +9,7 @@ cm4all-beng-proxy (0.5.14) unstable; urgency=low
   * debian: added a separate -optimized-dbg package
   * added init script support for multiple ports (--port) and multiple listen
     (--listen) command line argumnents
+  * translation: added the "APPEND" packet for command line arguments
 
  --
 

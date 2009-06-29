@@ -20,6 +20,8 @@
 #include <daemon/log.h>
 #include <socket/address.h>
 
+#include <glib.h>
+
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
@@ -799,6 +801,27 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->u.local.delegate = payload;
+        break;
+
+    case TRANSLATE_APPEND:
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_PIPE) {
+            daemon_log(2, "misplaced TRANSLATE_APPEND packet\n");
+            break;
+        }
+
+        if (client->resource_address->u.cgi.num_args >=
+            G_N_ELEMENTS(client->resource_address->u.cgi.args)) {
+            daemon_log(2, "too many TRANSLATE_APPEND packets\n");
+            break;
+        }
+
+        if (payload == NULL) {
+            daemon_log(2, "malformed TRANSLATE_PIPE packet\n");
+            break;
+        }
+
+        client->resource_address->u.cgi.args[client->resource_address->u.cgi.num_args++] = payload;
         break;
     }
 
