@@ -113,11 +113,19 @@ widget_response_format(pool_t pool, const struct widget *widget,
  */
 
 static void
-inline_widget_response(__attr_unused http_status_t status,
+inline_widget_response(http_status_t status,
                        struct strmap *headers,
                        istream_t body, void *ctx)
 {
     struct inline_widget *iw = ctx;
+
+    if (!http_status_is_success(status)) {
+        /* the HTTP status code returned by the widget server is
+           non-successful - don't embed this widget into the
+           template */
+        inline_widget_close(iw);
+        return;
+    }
 
     if (body != NULL) {
         /* check if the content-type is correct for embedding into

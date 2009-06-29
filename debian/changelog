@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.5.15) unstable; urgency=low
 
-  * 
+  * inline-widget: check the widget HTTP response status
 
  --
 
