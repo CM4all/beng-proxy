@@ -215,10 +215,12 @@ class Response:
         payload = ''.join(map(lambda x: struct.pack('H', x), args))
         self.packet(TRANSLATE_INVALIDATE, payload)
 
-    def pipe(self, path):
+    def pipe(self, path, *args):
         assert isinstance(path, str)
         assert len(path) > 0
         self.packet(TRANSLATE_PIPE, path)
+        for arg in args:
+            self.packet(TRANSLATE_APPEND, arg)
 
     def path(self, path):
         assert isinstance(path, str)
