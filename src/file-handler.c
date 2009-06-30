@@ -295,8 +295,8 @@ file_callback(struct request *request2)
 #endif /* #ifndef NO_XATTR */
     }
 
-    if (!request_processor_enabled(request2))
 #ifndef NO_LAST_MODIFIED_HEADER
+    if (!request_processor_enabled(request2))
         header_write(headers, "last-modified", http_date_format(st.st_mtime));
 #endif
 
