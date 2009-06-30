@@ -24,52 +24,6 @@
 
 #include <assert.h>
 
-/**
- * The request had no valid session, but it requires one; redirect the
- * client to a new URI which includes the session id, and send a
- * session cookie.
- */
-static void
-session_redirect(struct request *request)
-{
-    struct session *session;
-    struct growing_buffer *headers =
-        growing_buffer_new(request->request->pool, 512);
-    char session_id[9];
-    const char *args;
-
-    session = request_make_session(request);
-    assert(session != NULL);
-
-    session_id_format(session_id, session->id);
-
-    args = args_format(request->request->pool, request->args,
-                       "session", session_id, NULL, NULL, NULL);
-    header_write(headers, "location",
-                 p_strncat(request->request->pool,
-                           request->uri.base.data, request->uri.base.length,
-                           ";", (size_t)1,
-                           args, strlen(args),
-                           request->uri.query.length == 0 ? NULL : "?",
-                           (size_t)1,
-                           request->uri.query.data, request->uri.query.length,
-                           NULL));
-
-    header_write(headers, "set-cookie",
-                 p_strcat(request->request->pool,
-                          "beng_proxy_session=", session_id,
-                          "; Discard; HttpOnly; Path=/; Version=1", NULL));
-
-    session->cookie_sent = true;
-
-    request_discard_body(request);
-    http_server_response(request->request,
-                         request->request->method == HTTP_METHOD_GET
-                         ? HTTP_STATUS_FOUND
-                         : HTTP_STATUS_TEMPORARY_REDIRECT,
-                         headers, NULL);
-}
-
 static void
 translate_callback(const struct translate_response *response,
                    void *ctx)
@@ -180,11 +134,8 @@ translate_callback(const struct translate_response *response,
     /* always enforce sessions when there is a transformation
        (e.g. the beng template processor); also redirect the client
        when a session has just been created */
-    if ((response->views->transformation != NULL && session == NULL) ||
-        (session != NULL && !session->cookie_sent)) {
-        session_redirect(request);
-        return;
-    }
+    if (response->views->transformation != NULL && session == NULL)
+        session = request_make_session(request);
 
     request->resource_tag = resource_address_id(&response->address,
                                                 request->request->pool);
@@ -263,18 +214,6 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
                     request2->async_ref);
 }
 
-static bool
-request_session_cookie_sent(struct request *request)
-{
-    struct session *session;
-
-    if (request->session_id == 0)
-        return false;
-
-    session = session_get(request->session_id);
-    return session != NULL && session->cookie_sent;
-}
-
 static void
 serve_document_root_file(struct request *request2,
                          const struct config *config)
@@ -297,14 +236,11 @@ serve_document_root_file(struct request *request2,
         process = strref_ends_with_n(&uri->base, ".html", 5);
     }
 
-    if (process && !request_session_cookie_sent(request2)) {
-        session_redirect(request2);
-        return;
-    }
-
     if (process) {
         struct transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
         struct transformation_view *view = p_malloc(request->pool, sizeof(*view));
+
+        request_make_session(request2);
 
         transformation->next = NULL;
         transformation->type = TRANSFORMATION_PROCESS;
@@ -361,6 +297,7 @@ handle_http_request(struct client_connection *connection,
     request2->args = NULL;
     request2->cookies = NULL;
     request2->session_id = 0;
+    request2->send_session_cookie = NULL;
 #ifdef DUMP_WIDGET_TREE
     request2->dump_widget_tree = NULL;
 #endif

@@ -199,6 +199,23 @@ response_dispatch_direct(struct request *request2,
 
     header_write(headers, "server", "beng-proxy v" VERSION);
 
+    if (request2->send_session_cookie) {
+        char session_id[9];
+        struct session *session;
+
+        session_id_format(session_id, request2->session_id);
+
+        header_write(headers, "set-cookie",
+                     p_strcat(request2->request->pool,
+                              "beng_proxy_session=", session_id,
+                              "; Discard; HttpOnly; Path=/; Version=1",
+                              NULL));
+
+        session = request_make_session(request2);
+        if (session != NULL)
+            session->cookie_sent = true;
+    }
+
     request2->response_sent = true;
     http_server_response(request2->request, status, headers, body);
 }
