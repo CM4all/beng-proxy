@@ -268,7 +268,7 @@ file_callback(struct request *request2)
 
     status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
-    if (!request_transformation_enabled(request2)) {
+    if (!request_processor_first(request2)) {
         make_etag(buffer, &st);
         header_write(headers, "etag", buffer);
     }

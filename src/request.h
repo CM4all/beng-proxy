@@ -55,6 +55,17 @@ request_transformation_enabled(struct request *request)
     return request->translate.response->views->transformation != NULL;
 }
 
+/**
+ * Returns true if the first transformation (if any) is the processor.
+ */
+static inline bool
+request_processor_first(struct request *request)
+{
+    return request_transformation_enabled(request) &&
+        request->translate.response->views->transformation->type
+        == TRANSFORMATION_PROCESS;
+}
+
 bool
 request_processor_enabled(struct request *request);
 
