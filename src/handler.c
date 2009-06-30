@@ -111,10 +111,8 @@ translate_callback(const struct translate_response *response,
         }
     }
 
-    /* always enforce sessions when there is a transformation
-       (e.g. the beng template processor); also redirect the client
-       when a session has just been created */
-    if (response->views->transformation != NULL && session == NULL)
+    /* always enforce sessions when the processor is enabled */
+    if (request_processor_enabled(request) && session == NULL)
         session = request_make_session(request);
 
     request->resource_tag = resource_address_id(&response->address,
