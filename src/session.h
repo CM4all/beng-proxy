@@ -58,6 +58,10 @@ struct session {
     /** when will this session expire? */
     time_t expires;
 
+    /** is this a new session, i.e. there hasn't been a second request
+        yet? */
+    bool new;
+
     /** has a HTTP cookie with this session id already been sent? */
     bool cookie_sent;
 

@@ -238,8 +238,11 @@ session_manager_event_del(void)
 static unsigned
 session_purge_score(const struct session *session)
 {
+    if (session->new)
+        return 1000;
+
     if (!session->cookie_received)
-        return 30;
+        return 50;
 
     if (session->user == NULL)
         return 20;
