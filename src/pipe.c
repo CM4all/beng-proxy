@@ -7,7 +7,7 @@
 #include "pipe.h"
 #include "http-response.h"
 #include "fork.h"
-#include "fork.h"
+#include "format.h"
 
 #include <daemon/log.h>
 
@@ -31,6 +31,55 @@ pipe_child_callback(int status, void *ctx __attr_unused)
                    exit_status);
 }
 
+static const char *
+append_etag(pool_t pool, const char *in, const char *suffix)
+{
+    size_t length;
+
+    if (*in != '"')
+        /* simple concatenation */
+        return p_strcat(pool, in, suffix, NULL);
+
+    length = strlen(in + 1);
+    if (in[length] != '"')
+        return p_strcat(pool, in, suffix, NULL);
+
+    return p_strncat(pool, in, length, suffix, strlen(suffix),
+                     "\"", 1, NULL);
+}
+
+static inline unsigned
+calc_hash(const char *p) {
+    unsigned hash = 5381;
+
+    assert(p != NULL);
+
+    while (*p != 0)
+        hash = (hash << 5) + hash + *p++;
+
+    return hash;
+}
+
+static const char *
+make_pipe_etag(pool_t pool, const char *in,
+               const char *path,
+               const char *const* args, unsigned num_args)
+{
+    char suffix[10] = {'-'};
+
+    /* build hash from path and arguments */
+    unsigned hash = calc_hash(path);
+
+    for (unsigned i = 0; i < num_args; ++i)
+        hash ^= calc_hash(args[i]);
+
+    format_uint32_hex_fixed(suffix + 1, hash);
+    suffix[9] = 0;
+
+    /* append the hash to the old ETag */
+    return append_etag(pool, in, suffix);
+}
+
 void
 pipe_filter(pool_t pool, const char *path,
             const char *const* args, unsigned num_args,
@@ -41,6 +90,7 @@ pipe_filter(pool_t pool, const char *path,
     pid_t pid;
     istream_t response;
     char *argv[1 + num_args + 1];
+    const char *etag;
 
     pid = beng_fork(pool, body, &response,
                     pipe_child_callback, NULL);
@@ -59,6 +109,20 @@ pipe_filter(pool_t pool, const char *path,
         fprintf(stderr, "exec('%s') failed: %s\n",
                 path, strerror(errno));
         _exit(2);
+    }
+
+    etag = strmap_get(headers, "etag");
+    if (etag != NULL) {
+        /* we cannot pass the original ETag to the client, because the
+           pipe has modified the resource (which is what the pipe is
+           all about) - append a digest value to the ETag, which is
+           built from the program path and its arguments */
+
+        etag = make_pipe_etag(pool, etag, path, args, num_args);
+        assert(etag != NULL);
+
+        headers = strmap_dup(pool, headers);
+        strmap_set(headers, "etag", etag);
     }
 
     http_response_handler_direct_response(handler, handler_ctx, HTTP_STATUS_OK,

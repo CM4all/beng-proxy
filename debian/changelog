@@ -8,6 +8,7 @@ cm4all-beng-proxy (0.5.15) unstable; urgency=low
   * filter-cache: don't require Last-Modified or Expires
   * file-handler: disable ETag only when processor comes first
   * file-handler: read ETag from xattr
+  * pipe: generate new ETag for piped resource
 
  --
 
