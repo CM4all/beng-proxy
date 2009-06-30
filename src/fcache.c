@@ -91,15 +91,11 @@ filter_cache_info_new(pool_t pool)
 static struct filter_cache_info *
 filter_cache_request_evaluate(pool_t pool,
                               const struct resource_address *address,
-                              const char *source_id, struct strmap *headers)
+                              const char *source_id)
 {
     struct filter_cache_info *info;
 
-    if (source_id == NULL || headers == NULL)
-        return NULL;
-
-    if (strmap_get(headers, "last-modified") == NULL &&
-        strmap_get(headers, "expires") == NULL)
+    if (source_id == NULL)
         return NULL;
 
     info = filter_cache_info_new(pool);
@@ -522,7 +518,7 @@ filter_cache_request(struct filter_cache *cache,
 {
     struct filter_cache_info *info;
 
-    info = filter_cache_request_evaluate(pool, address, source_id, headers);
+    info = filter_cache_request_evaluate(pool, address, source_id);
     if (info != NULL) {
         struct filter_cache_item *item
             = (struct filter_cache_item *)cache_get(cache->cache, info->key);

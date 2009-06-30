@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.5.15) unstable; urgency=low
   * resource-address: include pipe arguments in filter cache key
   * handler: removed session redirect on the first request
   * http-cache: accept ETag response header instead of Last-Modified
+  * filter-cache: don't require Last-Modified or Expires
 
  --
 
