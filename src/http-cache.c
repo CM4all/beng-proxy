@@ -459,7 +459,8 @@ http_cache_response_evaluate(struct http_cache_info *info,
            only be properly interpreted by the origin server. */
         return false;
 
-    return info->expires != (time_t)-1 || info->last_modified != NULL;
+    return info->expires != (time_t)-1 || info->last_modified != NULL ||
+        info->etag != NULL;
 }
 
 static void
