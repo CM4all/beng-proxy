@@ -59,49 +59,34 @@ translate_callback(const struct translate_response *response,
             /* clear translate session */
 
             if (session != NULL)
-                session->translate = NULL;
+                session_clear_translate(session);
         } else {
             /* set new translate session */
 
             if (session == NULL)
                 session = request_make_session(request);
 
-            if (session->translate == NULL ||
-                strcmp(response->session, session->translate) != 0)
-                session->translate = d_strdup(session->pool, response->session);
+            if (session != NULL)
+                session_set_translate(session, response->session);
         }
     }
 
     if (response->user != NULL) {
-        const char *old_user = session != NULL ? session->user : NULL;
-
         if (*response->user == 0) {
             /* log out */
 
             if (session != NULL)
-                session->user = NULL;
+                session_clear_user(session);
         } else {
             /* log in */
 
             if (session == NULL)
                 session = request_make_session(request);
 
-            if (session->user == NULL ||
-                strcmp(response->user, session->user) != 0)
-                session->user = d_strdup(session->pool, response->user);
-
-            if (response->user_max_age == (unsigned)-1)
-                /* never expires */
-                session->user_expires = 0;
-            else if (response->user_max_age == 0)
-                /* expires immediately, use only once */
-                session->user_expires = 1;
-            else
-                session->user_expires = expiry_touch(response->user_max_age);
+            if (session != NULL)
+                session_set_user(session, response->user,
+                                 response->user_max_age);
         }
-
-        if (old_user != NULL && old_user != session->user)
-            d_free(session->pool, old_user);
     } else if (session != NULL && session->user != NULL && session->user_expires > 0 &&
                is_expired(session->user_expires)) {
         daemon_log(4, "user '%s' has expired\n", session->user);
@@ -110,25 +95,20 @@ translate_callback(const struct translate_response *response,
     }
 
     if (response->language != NULL) {
-        const char *old_language = session != NULL ? session->language : NULL;
         if (*response->language == 0) {
             /* reset language setting */
 
             if (session != NULL)
-                session->language = NULL;
+                session_clear_language(session);
         } else {
             /* override language */
 
             if (session == NULL)
                 session = request_make_session(request);
 
-            if (session->language == NULL ||
-                strcmp(response->language, session->language) != 0)
-                session->language = d_strdup(session->pool, response->language);
+            if (session != NULL)
+                session_set_language(session, response->language);
         }
-
-        if (old_language != NULL && old_language != session->language)
-            d_free(session->pool, old_language);
     }
 
     /* always enforce sessions when there is a transformation

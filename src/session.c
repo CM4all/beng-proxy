@@ -317,6 +317,97 @@ session_new(void)
     return session;
 }
 
+void
+session_clear_translate(struct session *session)
+{
+    assert(session != NULL);
+
+    if (session->translate != NULL) {
+        d_free(session->pool, session->translate);
+        session->translate = NULL;
+    }
+}
+
+void
+session_clear_user(struct session *session)
+{
+    assert(session != NULL);
+
+    if (session->user != NULL) {
+        d_free(session->pool, session->user);
+        session->user = NULL;
+    }
+}
+
+void
+session_clear_language(struct session *session)
+{
+    assert(session != NULL);
+
+    if (session->language != NULL) {
+        d_free(session->pool, session->language);
+        session->language = NULL;
+    }
+}
+
+bool
+session_set_translate(struct session *session, const char *translate)
+{
+    assert(session != NULL);
+    assert(translate != NULL);
+
+    if (session->translate != NULL && strcmp(session->translate, translate) == 0)
+        /* same value as before: no-op */
+        return true;
+
+    session_clear_translate(session);
+
+    session->translate = d_strdup(session->pool, translate);
+    return session->translate != NULL;
+}
+
+bool
+session_set_user(struct session *session, const char *user, unsigned max_age)
+{
+    assert(session != NULL);
+    assert(user != NULL);
+
+    if (session->user == NULL || strcmp(session->user, user) != 0) {
+        session_clear_user(session);
+
+        session->user = d_strdup(session->pool, user);
+        if (session->user == NULL)
+            return false;
+    }
+
+    if (max_age == (unsigned)-1)
+        /* never expires */
+        session->user_expires = 0;
+    else if (max_age == 0)
+        /* expires immediately, use only once */
+        session->user_expires = 1;
+    else
+        session->user_expires = expiry_touch(max_age);
+
+    return true;
+}
+
+bool
+session_set_language(struct session *session, const char *language)
+{
+    assert(session != NULL);
+    assert(language != NULL);
+
+    if (session->language != NULL && strcmp(session->language, language) == 0)
+        /* same value as before: no-op */
+        return true;
+
+    session_clear_language(session);
+
+    session->language = d_strdup(session->pool, language);
+    return session->language != NULL;
+}
+
 static struct dhashmap * __attr_malloc
 widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
                        struct session *session, struct widget_session *parent);

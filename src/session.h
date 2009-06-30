@@ -132,6 +132,24 @@ session_id_format(char dest[9], session_id_t id);
 struct session * __attr_malloc
 session_new(void);
 
+void
+session_clear_translate(struct session *session);
+
+void
+session_clear_user(struct session *session);
+
+void
+session_clear_language(struct session *session);
+
+bool
+session_set_translate(struct session *session, const char *translate);
+
+bool
+session_set_user(struct session *session, const char *user, unsigned max_age);
+
+bool
+session_set_language(struct session *session, const char *language);
+
 /**
  * After a while the dpool may have fragmentations, and memory is
  * wasted.  This function duplicates the session into a fresh dpool,
