@@ -94,11 +94,14 @@ request_get_session(struct request *request, const char *session_id)
         return NULL;
 
     session = session_get(request->session_id);
-    if (session != NULL && session->translate != NULL)
+    if (session == NULL)
+        return NULL;
+
+    if (session->translate != NULL)
         request->translate.request.session =
             p_strdup(request->request->pool, session->translate);
 
-    if (session != NULL && !session->cookie_sent)
+    if (!session->cookie_sent)
         request->send_session_cookie = true;
 
     return session;
