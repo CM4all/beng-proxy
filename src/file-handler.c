@@ -269,8 +269,25 @@ file_callback(struct request *request2)
     status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
     if (!request_processor_first(request2)) {
-        make_etag(buffer, &st);
-        header_write(headers, "etag", buffer);
+#ifndef NO_XATTR
+        ssize_t nbytes;
+        char etag[512];
+
+        nbytes = fgetxattr(istream_file_fd(body), "user.ETag",
+                           etag + 1, sizeof(etag) - 3);
+        if (nbytes > 0) {
+            assert((size_t)nbytes < sizeof(etag));
+            etag[0] = '"';
+            etag[nbytes + 1] = '"';
+            etag[nbytes + 2] = 0;
+            header_write(headers, "etag", etag);
+        } else {
+#endif
+            make_etag(buffer, &st);
+            header_write(headers, "etag", buffer);
+#ifndef NO_XATTR
+        }
+#endif
     }
 
     if (tr->address.u.local.content_type != NULL) {

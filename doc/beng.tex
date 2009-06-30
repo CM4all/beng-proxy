@@ -132,8 +132,9 @@ XFS, extended attributes are always enabled.
 
 \subsubsection{ETag}
 
-To generate the \texttt{ETag} response header, \emph{beng-proxy} takes
-the inode number and the modification time into account.  The request
+The \texttt{ETag} response header is read from the \texttt{user.ETag}
+extended attribute (see \ref{xattr}).  If none is present, it is
+generated from the inode number and the modification time.  The request
 headers \texttt{If-Match} and \texttt{If-None-Match} are supported.
 
 \subsubsection{Directory index}
