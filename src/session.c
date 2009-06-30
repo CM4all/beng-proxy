@@ -231,6 +231,67 @@ session_manager_event_del(void)
     event_del(&session_cleanup_event);
 }
 
+/**
+ * Calculates the score for purging the session: higher score means
+ * more likely to be purged.
+ */
+static unsigned
+session_purge_score(const struct session *session)
+{
+    if (!session->cookie_received)
+        return 30;
+
+    if (session->user == NULL)
+        return 20;
+
+    return 1;
+}
+
+/**
+ * Forcefully deletes at least one session.
+ */
+static bool
+session_manager_purge(void)
+{
+    /* collect at most 256 sessions */
+    struct session *sessions[256];
+    unsigned num_sessions = 0, highest_score = 0;
+
+    lock_lock(&session_manager->lock);
+
+    for (unsigned i = 0; i < SESSION_SLOTS; ++i) {
+        for (struct session *s = (struct session *)session_manager->sessions[i].next;
+             &s->hash_siblings != &session_manager->sessions[i];
+             s = (struct session *)s->hash_siblings.next) {
+            unsigned score = session_purge_score(s);
+            if (score > highest_score) {
+                num_sessions = 0;
+                highest_score = score;
+            }
+
+            if (score == highest_score && num_sessions < 256)
+                sessions[num_sessions++] = s;
+        }
+    }
+
+    if (num_sessions == 0) {
+        lock_unlock(&session_manager->lock);
+        return false;
+    }
+
+    daemon_log(3, "purging %u sessions (score=%u)\n",
+               num_sessions, highest_score);
+
+    for (unsigned i = 0; i < num_sessions; ++i) {
+        lock_lock(&sessions[i]->lock);
+        session_remove(sessions[i]);
+    }
+
+    lock_unlock(&session_manager->lock);
+
+    return true;
+}
+
 static struct list_head *
 session_slot(session_id_t id)
 {
@@ -281,8 +342,16 @@ session_new(void)
     }
 
     pool = dpool_new(session_manager->shm);
-    if (pool == NULL)
-        return NULL;
+    if (pool == NULL) {
+        if (!session_manager_purge())
+            return NULL;
+
+        /* at least one session has been purged: try again */
+        pool = dpool_new(session_manager->shm);
+        if (pool == NULL)
+            /* nope. fail. */
+            return NULL;
+    }
 
     session = d_malloc(pool, sizeof(*session));
     if (session == NULL) {

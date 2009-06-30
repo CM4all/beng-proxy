@@ -9,6 +9,7 @@ cm4all-beng-proxy (0.5.15) unstable; urgency=low
   * file-handler: disable ETag only when processor comes first
   * file-handler: read ETag from xattr
   * pipe: generate new ETag for piped resource
+  * session: purge sessions when shared memory is full
 
  --
 
