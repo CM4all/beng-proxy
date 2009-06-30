@@ -1,4 +1,4 @@
-cm4all-beng-proxy (0.5.15) unstable; urgency=low
+cm4all-beng-proxy (0.6) unstable; urgency=low
 
   * inline-widget: check the widget HTTP response status
   * response: don't apply transformation on failed response
@@ -12,7 +12,7 @@ cm4all-beng-proxy (0.5.15) unstable; urgency=low
   * session: purge sessions when shared memory is full
   * handler: don't enforce sessions for filtered responses
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 30 Jun 2009 17:48:20 +0200
 
 cm4all-beng-proxy (0.5.14) unstable; urgency=low
 
