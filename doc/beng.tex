@@ -99,24 +99,20 @@ large).  Finally, restart \emph{beng-proxy}:
 \end{verbatim*}
 
 
-\section{Translation}
+\section{Resources}
 
-\emph{beng-proxy} knows two ways to locate the resource a request URI
-points to:
+\emph{beng-proxy} delivers resources to its HTTP clients.  It obtains
+these resources from several sources.
 
-\begin{itemize}
-\item via an external translation server
-\item static translation
-\end{itemize}
+\subsection{Static files}
+\label{static}
 
-The latter is only for debugging.
-
-\subsection{Static translation}
-
-The URI path is appended to the document root (\texttt{/var/www} by
-default).
+Local ``regular'' files can be served by \emph{beng-proxy}.  This is
+the fastest mode, and should be preferred, if possible.  The
+\texttt{Range} request header is supported (bytes only).
 
 \subsubsection{Content type}
+
 \label{xattr}
 
 In contrast to most other web servers, \emph{beng-proxy} does not use
@@ -133,6 +129,90 @@ setfattr -n user.Content-Type -v "text/html; charset=utf8" \
 Some file systems need explicit support for extended attributes (mount
 option \texttt{user\_xattr}).  On
 XFS, extended attributes are always enabled.
+
+\subsubsection{ETag}
+
+To generate the \texttt{ETag} response header, \emph{beng-proxy} takes
+the inode number and the modification time into account.  The request
+headers \texttt{If-Match} and \texttt{If-None-Match} are supported.
+
+\subsubsection{Directory index}
+
+For security (by obscurity) reasons, \emph{beng-proxy} has no code for
+generating directory listings.
+
+\subsection{HTTP proxying}
+\label{http}
+
+\emph{beng-proxy} implements an HTTP client, which allows it to act as
+a reverse HTTP proxy server.  You should never make \emph{beng-proxy}
+connect to itself.
+
+\subsubsection{Caching}
+
+Responses from the remote servers are cached, if possible.  To allow
+proper caching, the remote server must set the response headers
+\texttt{Last-Modified}, \texttt{Expires} and \texttt{ETag} properly.
+Additionally, they should understand the according request headers
+\texttt{If-Modified-Since} and \texttt{If-Unmodified-Since},
+\texttt{If-Match}, \texttt{If-None-Match}.
+
+\subsubsection{Connection pooling}
+
+\emph{beng-proxy} attempts to use HTTP 1.1 keep-alive, to be able to
+reuse existing connections to a remote server.
+
+\subsubsection{Load balancing, failover}
+
+For a remote URL, more than one server may be specified.
+\texttt{beng-proxy} tries to use all of these equally.  If one server
+fails on the socket level, \texttt{beng-proxy} ignores it for a short
+amount of time.
+
+\subsection{AJP v1.3}
+\label{ajp}
+
+Similar to HTTP proxying, \emph{beng-proxy} can act as a HTTP-to-AJP
+bridge.
+
+The AJP client also supports connection pooling and load balancing.
+
+\subsection{CGI and FastCGI}
+\label{cgi}
+
+Local CGI programs may be used to generate dynamic resources.
+\emph{beng-proxy} supports running these with JailCGI.
+
+The FastCGI implementation is under development, and is not usable
+yet.
+
+\subsection{Pipe filters}
+\label{pipe}
+
+A pipe is a program which filters a resource by reading it from
+standard input, and writing the result to standard output.  This
+option cannot be used to generate a resource, but only for resource
+filters.  The same can be achieved with CGI, but pipes are simpler to
+implement, because they do not need to bother with HTTP status code
+and headers.
+
+
+\section{Translation}
+
+\emph{beng-proxy} knows two ways to locate the resource a request URI
+points to:
+
+\begin{itemize}
+\item via an external translation server
+\item static translation
+\end{itemize}
+
+The latter is only for debugging.
+
+\subsection{Static translation}
+
+The URI path is appended to the document root (\texttt{/var/www} by
+default).
 
 \subsubsection{Directory index}
 
@@ -241,25 +321,24 @@ by the client (not in the widget registry) \\
 this parameter is usually not used \\
 \hline
 
-\texttt{PATH} & absolute path of the local file to be served \\
+\texttt{PATH} & Absolute path of the local file to be served (see
+\ref{static}). \\
 
 \hline
 
 \texttt{PROXY} & this URL parameter may be specified instead of
 \texttt{PATH} to tell \emph{beng-proxy} to obtain the resource from a
-remote HTTP server (proxy mode) \\
+remote HTTP server (see \ref{http}) \\
 
 \hline
 
-\texttt{AJP} & load the resource from an AJPv13 server \\
+\texttt{AJP} & Load the resource from an AJPv13 server (see
+\ref{ajp}). \\
 
 \hline
 
 \texttt{PIPE} & a local program which reads input from stdin and
-prints the modified resource on stdout.  This is a simple alternative
-to CGI: you don't get any request headers, and you cannot specify a
-status or response headers.  The original headers are forwarded
-as-is. \\
+prints the modified resource on stdout (see \ref{pipe}). \\
 
 \hline
 
