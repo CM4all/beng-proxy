@@ -12,6 +12,8 @@
 #include "transformation.h"
 #include "args.h"
 
+#include <daemon/log.h>
+
 bool
 request_processor_enabled(struct request *request)
 {
@@ -182,6 +184,11 @@ request_make_session(struct request *request)
     }
 
     session = session_new();
+    if (session == NULL) {
+        daemon_log(1, "Failed to allocate a session\n");
+        return NULL;
+    }
+
     request->session_id = session->id;
     request->send_session_cookie = true;
     session_id_format(request->session_id_buffer, request->session_id);
