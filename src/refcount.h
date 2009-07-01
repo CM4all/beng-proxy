@@ -7,25 +7,27 @@
 #ifndef __BENG_REFCOUNT_H
 #define __BENG_REFCOUNT_H
 
+#include <glib.h>
+
 #include <stdbool.h>
 #include <assert.h>
 
 struct refcount {
-    unsigned value;
+    volatile gint value;
 };
 
 static inline void
 refcount_init(struct refcount *rc)
 {
-    rc->value = 1;
+    g_atomic_int_set(&rc->value, 1);
 }
 
 static inline void
 refcount_get(struct refcount *rc)
 {
-    assert(rc->value > 0);
+    assert(g_atomic_int_get(&rc->value) > 0);
 
-    ++rc->value;
+    g_atomic_int_inc(&rc->value);
 }
 
 /**
@@ -37,7 +39,7 @@ refcount_put(struct refcount *rc)
 {
     assert(rc->value > 0);
 
-    return --rc->value == 0;
+    return g_atomic_int_dec_and_test(&rc->value);
 }
 
 #endif

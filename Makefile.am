@@ -198,6 +198,7 @@ src_cm4all_beng_proxy_LDADD = \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) \
+	$(GLIB_LIBS) \
 	$(LIBATTR_LIBS) \
 	$(LIBZ_LIBS)
 src_cm4all_beng_proxy_LDFLAGS =
@@ -361,7 +362,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/resource-address.c src/global.c src/transformation.c \
 	src/expansible-buffer.c \
 	$(T_ISTREAM_FILTER_SRC)
-test_t_istream_processor_LDADD = $(T_ISTREAM_FILTER_LIB)
+test_t_istream_processor_LDADD = $(T_ISTREAM_FILTER_LIB) $(GLIB_LIBS)
 
 test_t_cgi_SOURCES = test/t-cgi.c \
 	src/cgi.c src/fork.c \
@@ -468,19 +469,19 @@ test_t_cookie_client_SOURCES = test/t-cookie-client.c \
 	src/http-string.c src/header-writer.c src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c
-test_t_cookie_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) -lrt
+test_t_cookie_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt
 
 test_t_shm_SOURCES = test/t-shm.c src/shm.c
-test_t_shm_LDADD = $(LIBCM4ALL_DAEMON_LIBS) -lrt
+test_t_shm_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt
 
 test_t_dpool_SOURCES = test/t-dpool.c src/shm.c src/dpool.c
-test_t_dpool_LDADD = $(LIBCM4ALL_DAEMON_LIBS) -lrt
+test_t_dpool_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt
 
 test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/dpool.c src/dstring.c src/dhashmap.c \
 	src/format.c \
 	src/session.c
-test_t_session_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) -lrt
+test_t_session_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
 
 test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/widget-registry.c src/stock.c \
@@ -522,7 +523,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/transformation.c \
 	src/dpool.c src/dstring.c src/dhashmap.c src/shm.c \
 	$(POOL_SRC) src/tpool.c
-test_t_widget_http_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
+test_t_widget_http_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_benchmark_gmtime_SOURCES = test/benchmark-gmtime.c \
 	src/gmtime.c test/libcore-gmtime.c
@@ -554,7 +555,7 @@ test_run_cookie_client_SOURCES = test/run-cookie-client.c \
 	src/tpool.c src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c \
 	$(POOL_SRC)
-test_run_cookie_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) -lrt
+test_run_cookie_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt
 
 test_run_header_parser_SOURCES = test/run-header-parser.c \
 	src/header-parser.c src/growing-buffer.c src/fifo-buffer.c \
