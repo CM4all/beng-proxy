@@ -46,8 +46,8 @@ widget_base_address(pool_t pool, struct widget *widget)
     return dest;
 }
 
-void
-widget_determine_address(struct widget *widget)
+const struct resource_address *
+widget_determine_address(const struct widget *widget)
 {
     pool_t pool = widget->pool;
     const char *path_info, *uri;
@@ -100,8 +100,7 @@ widget_determine_address(struct widget *widget)
 
         address = resource_address_dup(pool, &widget->class->address);
         address->u.http->uri = uri;
-        widget->lazy.address = address;
-        return;
+        return address;
 
     case RESOURCE_ADDRESS_CGI:
         if (strref_is_empty(&widget->from_request.query_string) &&
@@ -128,8 +127,7 @@ widget_determine_address(struct widget *widget)
                           widget->query_string, strlen(widget->query_string),
                           NULL);
 
-        widget->lazy.address = address;
-        return;
+        return address;
 
     case RESOURCE_ADDRESS_FASTCGI:
         if (strref_is_empty(&widget->from_request.query_string) &&
@@ -156,12 +154,10 @@ widget_determine_address(struct widget *widget)
                           widget->query_string, strlen(widget->query_string),
                           NULL);
 
-        widget->lazy.address = address;
-        return;
+        return address;
     }
 
-    widget->lazy.address = &widget->class->address;
-    return;
+    return &widget->class->address;
 }
 
 const char *
