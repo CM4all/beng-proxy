@@ -218,8 +218,6 @@ serve_document_root_file(struct request *request2,
         struct transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
         struct transformation_view *view = p_malloc(request->pool, sizeof(*view));
 
-        request_make_session(request2);
-
         transformation->next = NULL;
         transformation->type = TRANSFORMATION_PROCESS;
 
