@@ -50,8 +50,10 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     if (widget->class->stateful) {
         struct session *session = session_get(env->session_id);
-        if (session != NULL)
+        if (session != NULL) {
             widget_sync_session(widget, session);
+            session_put(session);
+        }
     }
 
     widget_http_request(pool, widget, env,
@@ -80,8 +82,10 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
 
     if (widget->class->stateful) {
         struct session *session = session_get(env->session_id);
-        if (session != NULL)
+        if (session != NULL) {
             widget_sync_session(widget, session);
+            session_put(session);
+        }
     }
 
     if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {

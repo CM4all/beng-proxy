@@ -151,13 +151,14 @@ class_lookup_callback(void *ctx)
     istream_t istream;
 
     if (rwu->widget->class != NULL) {
-        struct session *session;
         const char *uri;
 
         if (rwu->widget->class->stateful) {
-            session = session_get(rwu->session_id);
-            if (session != NULL)
+            struct session *session = session_get(rwu->session_id);
+            if (session != NULL) {
                 widget_sync_session(rwu->widget, session);
+                session_put(session);
+            }
         }
 
         uri = do_rewrite_widget_uri(rwu->pool,

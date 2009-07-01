@@ -168,6 +168,8 @@ request_determine_session(struct request *request)
                session id from the args */
             strmap_remove(request->args, "session");
     }
+
+    session_put(session);
 }
 
 struct session *

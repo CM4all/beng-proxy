@@ -115,6 +115,9 @@ translate_callback(const struct translate_response *response,
     if (request_processor_enabled(request) && session == NULL)
         session = request_make_session(request);
 
+    if (session != NULL)
+        session_put(session);
+
     request->resource_tag = resource_address_id(&response->address,
                                                 request->request->pool);
 

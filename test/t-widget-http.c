@@ -197,6 +197,7 @@ test_cookie_client(pool_t pool)
     env.remote_host = "localhost";
     env.request_headers = strmap_new(pool, 16);
     env.session_id = session->id;
+    session_put(session);
 
     widget_init(&widget, pool, &cls);
     widget.from_request.proxy = true;

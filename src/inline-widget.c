@@ -173,8 +173,10 @@ inline_widget_set(struct inline_widget *iw)
 
     if (widget->class->stateful) {
         struct session *session = session_get(iw->env->session_id);
-        if (session != NULL)
+        if (session != NULL) {
             widget_sync_session(widget, session);
+            session_put(session);
+        }
     }
 
     widget_http_request(iw->pool, iw->widget, iw->env,

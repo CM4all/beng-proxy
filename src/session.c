@@ -57,6 +57,10 @@ static struct session_manager *session_manager;
    event struct */
 static struct event session_cleanup_event;
 
+#ifndef NDEBUG
+static unsigned num_locked_sessions;
+#endif
+
 static void
 session_destroy(struct session *session)
 {
@@ -190,6 +194,7 @@ session_manager_deinit(void)
 {
     assert(session_manager != NULL);
     assert(session_manager->shm != NULL);
+    assert(num_locked_sessions == 0);
 
     event_del(&session_cleanup_event);
 
@@ -379,6 +384,8 @@ session_new(void)
 
     num_sessions = session_manager->num_sessions;
 
+    ++num_locked_sessions;
+    lock_lock(&session->lock);
     lock_unlock(&session_manager->lock);
 
     if (num_sessions == 1) {
@@ -641,6 +648,8 @@ session_get(session_id_t id)
         assert(session_slot(session->id) == head);
 
         if (session->id == id) {
+            ++num_locked_sessions;
+            lock_lock(&session->lock);
             lock_unlock(&session_manager->lock);
 
             session->expires = expiry_touch(SESSION_TTL);
@@ -651,6 +660,14 @@ session_get(session_id_t id)
     lock_unlock(&session_manager->lock);
 
     return NULL;
+}
+
+void
+session_put(struct session *session)
+{
+    assert(num_locked_sessions-- > 0);
+
+    lock_unlock(&session->lock);
 }
 
 static struct widget_session *

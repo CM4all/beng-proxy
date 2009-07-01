@@ -132,6 +132,9 @@ session_id_format(char dest[9], session_id_t id);
 
 /**
  * Create a new session with a random session id.
+ *
+ * The returned session object is locked and must be unlocked with
+ * session_put().
  */
 struct session * __attr_malloc
 session_new(void);
@@ -159,12 +162,25 @@ session_set_language(struct session *session, const char *language);
  * wasted.  This function duplicates the session into a fresh dpool,
  * and frees the old session instance.  Of course, this requires that
  * there is enough free shared memory.
+ *
+ * The returned session is still locked, and must be unlocked with
+ * session_put().
  */
 struct session * __attr_malloc
 session_defragment(struct session *src);
 
+/**
+ * Finds the session with the specified id.  The returned object is
+ * locked, and must be unlocked with session_put().
+ */
 struct session *
 session_get(session_id_t id);
+
+/**
+ * Unlocks the specified session.
+ */
+void
+session_put(struct session *session);
 
 struct widget_session *
 session_get_widget(struct session *session, const char *id, bool create);

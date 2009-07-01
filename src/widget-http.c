@@ -142,10 +142,8 @@ widget_request_headers(struct embed *embed, int with_body)
     if (embed->host_and_port != NULL && session != NULL) {
         const char *path = uri_path(widget_address(embed->widget)->u.http->uri);
 
-        lock_lock(&session->lock);
         cookie_jar_http_header(session->cookies, embed->host_and_port, path,
                                headers, embed->pool);
-        lock_unlock(&session->lock);
     }
 
     if (session != NULL && session->language != NULL)
@@ -157,6 +155,8 @@ widget_request_headers(struct embed *embed, int with_body)
     if (session != NULL && session->user != NULL)
         strmap_add(headers, "x-cm4all-beng-user",
                    p_strdup(embed->pool, session->user));
+
+    session_put(session);
 
     p = get_env_request_header(embed->env, "user-agent");
     if (p == NULL)
@@ -224,6 +224,8 @@ widget_response_redirect(struct embed *embed, const char *location,
         : NULL;
     widget_copy_from_location(embed->widget, session,
                               p->data, p->length, embed->pool);
+    if (session != NULL)
+        session_put(session);
 
     ++embed->num_redirects;
 
@@ -388,10 +390,9 @@ widget_response_response(http_status_t status, struct strmap *headers,
         if (embed->host_and_port != NULL) {
             struct session *session = session_get(embed->env->session_id);
             if (session != NULL) {
-                lock_lock(&session->lock);
                 widget_collect_cookies(session->cookies, headers,
                                        embed->host_and_port);
-                lock_unlock(&session->lock);
+                session_put(session);
             }
         }
 
@@ -401,6 +402,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
             struct session *session = session_get(embed->env->session_id);
             if (session != NULL)
                 session->translate = d_strdup(session->pool, translate);
+            session_put(session);
         }
         */
 

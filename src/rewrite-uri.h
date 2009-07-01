@@ -14,7 +14,6 @@ struct tcache;
 struct parsed_uri;
 struct strmap;
 struct widget;
-struct session;
 struct strref;
 
 enum uri_mode {

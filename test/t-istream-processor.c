@@ -57,6 +57,7 @@ create_test(pool_t pool, istream_t input)
     static struct parsed_uri parsed_uri;
     static struct widget widget;
     static struct processor_env env;
+    struct session *session;
     struct widget_stream *ws;
     istream_t delayed;
 
@@ -72,15 +73,17 @@ create_test(pool_t pool, istream_t input)
 
     session_manager_init();
 
+    session = session_new();
     processor_env_init(pool, &env,
                        NULL,
                        "localhost:8080",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
                        NULL,
-                       session_new()->id,
+                       session->id,
                        NULL,
                        NULL);
+    session_put(session);
 
     ws = widget_stream_new(pool);
     delayed = ws->delayed;

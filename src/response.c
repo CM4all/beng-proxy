@@ -91,6 +91,7 @@ response_invoke_processor(struct request *request2,
     struct http_server_request *request = request2->request;
     struct strmap *headers;
     istream_t request_body;
+    struct session *session;
     struct widget *widget;
 
     assert(!request2->response_sent);
@@ -116,7 +117,10 @@ response_invoke_processor(struct request *request2,
         return;
     }
 
-    request_make_session(request2);
+    /* make sure we have a session */
+    session = request_make_session(request2);
+    if (session != NULL)
+        session_put(session);
 
     widget = p_malloc(request->pool, sizeof(*widget));
     widget_init(widget, request->pool, &root_widget_class);
@@ -212,8 +216,10 @@ response_dispatch_direct(struct request *request2,
                               NULL));
 
         session = request_make_session(request2);
-        if (session != NULL)
+        if (session != NULL) {
             session->cookie_sent = true;
+            session_put(session);
+        }
     }
 
     request2->response_sent = true;

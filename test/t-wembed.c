@@ -19,6 +19,11 @@ session_get(session_id_t id __attr_unused)
 }
 
 void
+session_put(struct session *session __attr_unused)
+{
+}
+
+void
 widget_sync_session(struct widget *widget __attr_unused,
                     struct session *session __attr_unused)
 {
