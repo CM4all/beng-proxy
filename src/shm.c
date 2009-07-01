@@ -105,7 +105,7 @@ shm_close(struct shm *shm)
 
     assert(shm != NULL);
 
-    if (refcount_put(&shm->ref) == 0)
+    if (refcount_put(&shm->ref))
         lock_destroy(&shm->lock);
 
     header_pages = calc_header_pages(shm->page_size, shm->num_pages);

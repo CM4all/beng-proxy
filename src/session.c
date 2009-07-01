@@ -193,7 +193,7 @@ session_manager_deinit(void)
 
     event_del(&session_cleanup_event);
 
-    if (refcount_put(&session_manager->ref) == 0)
+    if (refcount_put(&session_manager->ref))
         session_manager_destroy(session_manager);
 
     /* we always destroy the SHM section, because it is not used

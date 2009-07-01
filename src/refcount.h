@@ -7,6 +7,7 @@
 #ifndef __BENG_REFCOUNT_H
 #define __BENG_REFCOUNT_H
 
+#include <stdbool.h>
 #include <assert.h>
 
 struct refcount {
@@ -27,12 +28,16 @@ refcount_get(struct refcount *rc)
     ++rc->value;
 }
 
-static inline unsigned
+/**
+ * Decreases the reference counter, and returns true if the counter
+ * has reached 0.
+ */
+static inline bool
 refcount_put(struct refcount *rc)
 {
     assert(rc->value > 0);
 
-    return --rc->value;
+    return --rc->value == 0;
 }
 
 #endif
