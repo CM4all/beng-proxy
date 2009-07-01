@@ -14,7 +14,11 @@
 
 #include <assert.h>
 
-const struct resource_address *
+/**
+ * Returns the "base" address of the widget, i.e. without the widget
+ * parameters from the parent container.
+ */
+static const struct resource_address *
 widget_base_address(pool_t pool, struct widget *widget)
 {
     const struct resource_address *src = widget_address(widget);
