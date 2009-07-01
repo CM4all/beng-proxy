@@ -46,7 +46,7 @@ debian/stamp-build:
 		--disable-dependency-tracking \
 		--prefix=/usr \
 		--sysconfdir=/etc \
-		--enable-documentation \
+		--disable-documentation \
 		--disable-debug
 
 	# Build
