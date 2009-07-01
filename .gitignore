@@ -76,3 +76,4 @@ aclocal.m4
 .libs
 .deps
 .dirstamp
+*.pc
