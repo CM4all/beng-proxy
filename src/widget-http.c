@@ -149,12 +149,14 @@ widget_request_headers(struct embed *embed, int with_body)
     }
 
     if (session != NULL && session->language != NULL)
-        strmap_add(headers, "accept-language", session->language);
+        strmap_add(headers, "accept-language",
+                   p_strdup(embed->pool, session->language));
     else if (embed->env->request_headers != NULL)
         headers_copy2(embed->env->request_headers, headers, language_headers);
 
     if (session != NULL && session->user != NULL)
-        strmap_add(headers, "x-cm4all-beng-user", session->user);
+        strmap_add(headers, "x-cm4all-beng-user",
+                   p_strdup(embed->pool, session->user));
 
     p = get_env_request_header(embed->env, "user-agent");
     if (p == NULL)
