@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.6.1) unstable; urgency=low
   * rewrite-uri: check if widget_external_uri() returns NULL
   * widget-uri: don't generate the "path" argument when it's NULL
   * widget-uri: strip superfluous question mark from widget_base_address()
+  * widget-uri: append parameters from the template first
 
  --
 

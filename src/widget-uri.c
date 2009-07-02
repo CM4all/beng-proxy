@@ -87,19 +87,8 @@ widget_determine_address(const struct widget *widget)
 
         uri = widget->class->address.u.http->uri;
 
-        if (!strref_is_empty(&widget->from_request.query_string))
-            uri = p_strncat(pool,
-                            uri, strlen(uri),
-                            path_info, strlen(path_info),
-                            "?", (size_t)1,
-                            widget->from_request.query_string.data,
-                            widget->from_request.query_string.length,
-                            NULL);
-        else if (*path_info != 0)
-            uri = p_strcat(pool,
-                           uri,
-                           path_info,
-                           NULL);
+        if (*path_info != 0)
+            uri = p_strcat(pool, uri, path_info, NULL);
 
         if (widget->query_string != NULL)
             uri = p_strcat(pool,
@@ -107,6 +96,15 @@ widget_determine_address(const struct widget *widget)
                            strchr(uri, '?') == NULL ? "?" : "&",
                            widget->query_string,
                            NULL);
+
+        if (!strref_is_empty(&widget->from_request.query_string))
+            uri = p_strncat(pool,
+                            uri, strlen(uri),
+                            strchr(uri, '?') == NULL ? "?" : "&",
+                            (size_t)1,
+                            widget->from_request.query_string.data,
+                            widget->from_request.query_string.length,
+                            NULL);
 
         address = resource_address_dup(pool, &widget->class->address);
         address->u.http->uri = uri;
