@@ -262,7 +262,7 @@ widget_external_uri(pool_t pool,
        add the appropriate args. */
     args2 = args_format_n(tpool, args,
                           "focus", path, strlen(path),
-                          "path",
+                          p == NULL ? NULL : "path",
                           p == NULL ? NULL : p->data,
                           p == NULL ? (size_t)0 : p->length,
                           frame == NULL ? NULL : "frame", frame,
