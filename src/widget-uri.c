@@ -40,6 +40,14 @@ widget_base_address(pool_t pool, struct widget *widget)
     end = qmark;
     qmark += 1 + query_string_length;
 
+    if (*qmark == '&' && widget->from_request.query_string.length > 0 &&
+        memcmp(qmark + 1, widget->from_request.query_string.data,
+               widget->from_request.query_string.length) == 0 &&
+        (qmark[1 + widget->from_request.query_string.length] == 0 ||
+         qmark[1 + widget->from_request.query_string.length] == '&'))
+        /* skip query string from the request */
+        qmark += 1 + widget->from_request.query_string.length;
+
     if (*qmark != 0) {
         /* there is more data in this query string: include the
            question mark, skip the '&' */
