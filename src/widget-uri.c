@@ -23,7 +23,7 @@ widget_base_address(pool_t pool, struct widget *widget)
 {
     const struct resource_address *src = widget_address(widget);
     size_t query_string_length;
-    const char *qmark;
+    const char *qmark, *end;
     struct resource_address *dest;
 
     if (src->type != RESOURCE_ADDRESS_HTTP || widget->query_string == NULL)
@@ -37,11 +37,21 @@ widget_base_address(pool_t pool, struct widget *widget)
          qmark[1 + query_string_length] != '&'))
         return src;
 
+    end = qmark;
+    qmark += 1 + query_string_length;
+
+    if (*qmark != 0) {
+        /* there is more data in this query string: include the
+           question mark, skip the '&' */
+
+        ++end;
+        ++qmark;
+    }
+
     dest = resource_address_dup(pool, src);
     dest->u.http->uri = p_strncat(pool,
-                                  src->u.http->uri, qmark + 1 - src->u.http->uri,
-                                  qmark + 1 + query_string_length,
-                                  strlen(qmark + 1 + query_string_length),
+                                  src->u.http->uri, end - src->u.http->uri,
+                                  qmark, strlen(qmark),
                                   NULL);
     return dest;
 }
