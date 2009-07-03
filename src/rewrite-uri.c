@@ -106,7 +106,7 @@ do_rewrite_widget_uri(pool_t pool,
     }
 
     uri = widget_external_uri(pool, external_uri, args,
-                              widget,
+                              widget, true,
                               value,
                               frame, raw);
     if (uri == NULL)

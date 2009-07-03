@@ -225,7 +225,7 @@ const char *
 widget_external_uri(pool_t pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
-                    struct widget *widget,
+                    struct widget *widget, bool stateful,
                     const struct strref *relative_uri,
                     const char *frame, bool raw)
 {
@@ -246,7 +246,7 @@ widget_external_uri(pool_t pool,
     pool_mark(tpool, &mark);
 
     if (relative_uri != NULL) {
-        p = widget_relative_uri(tpool, widget, true,
+        p = widget_relative_uri(tpool, widget, stateful,
                                 relative_uri->data, relative_uri->length,
                                 &buffer);
         if (p == NULL) {
