@@ -248,6 +248,18 @@ widget_external_uri(pool_t pool,
     } else
         p = NULL;
 
+    if (p != NULL && strref_chr(relative_uri, '?') == 0 &&
+        widget->query_string != NULL) {
+        /* no query string in relative_uri: if there is one in the new
+           URI, check it and remove the configured parameters */
+        const char *uri =
+            uri_delete_query_string(tpool, strref_dup(tpool, p),
+                                    widget->query_string,
+                                    strlen(widget->query_string));
+        strref_set_c(&buffer, uri);
+        p = &buffer;
+    }
+
     if (p != NULL && (qmark = memchr(p->data, '?', p->length)) != NULL) {
         /* separate query_string from path_info */
         strref_set2(&query_string, qmark, strref_end(p));
