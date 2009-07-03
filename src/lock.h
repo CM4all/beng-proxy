@@ -62,9 +62,10 @@ lock_lock(struct lock *lock)
 {
     assert(lock->magic1 == LOCK_MAGIC1);
     assert(lock->magic2 == LOCK_MAGIC2);
-    assert(lock->pid != getpid());
 
     sem_wait(&lock->semaphore);
+
+    assert(lock->pid != getpid());
 
 #ifndef NDEBUG
     lock->pid = getpid();
@@ -78,11 +79,11 @@ lock_unlock(struct lock *lock)
     assert(lock->magic2 == LOCK_MAGIC2);
     assert(lock->pid == getpid());
 
-    sem_post(&lock->semaphore);
-
 #ifndef NDEBUG
     lock->pid = 0;
 #endif
+
+    sem_post(&lock->semaphore);
 }
 
 static inline bool

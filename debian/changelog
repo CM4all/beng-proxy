@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.6.2) unstable; urgency=low
 
-  * 
+  * lock: fixed race condition in debug flag updates
 
  --
 
