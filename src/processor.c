@@ -598,16 +598,11 @@ transform_uri_attribute(struct processor *processor,
         if (widget == NULL)
             return;
 
-        /* the following check looks awkward - that's because it
-           depends on side effects of uri_absolute() and
-           widget_relative_uri() */
-        if (strref_is_null(&suffix) || !strref_is_empty(&suffix))
-            /* either no slash, or a slash followed by a non-empty
-               relative URI */
+        if (!strref_is_null(&suffix))
+            /* a slash followed by a relative URI */
             value = &suffix;
         else
-            /* only a slash follows the child widget id: pass an empty
-               "path" argument */
+            /* no slash, use the default path_info */
             value = NULL;
         break;
 
