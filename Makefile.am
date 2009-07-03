@@ -163,6 +163,7 @@ SRC = src/main.c \
 	src/delegate-client.c \
 	src/delegate-glue.c \
 	src/delegate-get.c \
+	src/uri-edit.c \
 	src/uri-relative.c \
 	src/uri-parser.c \
 	src/uri-address.c \
@@ -279,7 +280,8 @@ test_t_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/hashmap.c \
-	src/resource-address.c src/uri-address.c src/uri-relative.c \
+	src/resource-address.c src/uri-address.c \
+	src/uri-relative.c src/uri-edit.c \
 	src/transformation.c \
 	$(POOL_SRC)
 test_t_tcache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) -lrt
@@ -348,7 +350,7 @@ test_t_istream_fcgi_SOURCES = test/t-istream-cat.c $(T_ISTREAM_FILTER_SRC)
 test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_processor_SOURCES = test/t-istream-processor.c \
-	src/uri-relative.c src/uri-parser.c src/uri-escape.c \
+	src/uri-relative.c src/uri-parser.c src/uri-escape.c src/uri-edit.c \
 	src/session.c src/cookie-client.c \
 	src/http-string.c \
 	src/strmap.c src/hashmap.c \
@@ -510,7 +512,8 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
 	src/widget-session.c src/session.c \
 	src/args.c src/uri-escape.c src/format.c \
-	src/resource-address.c src/uri-address.c src/uri-relative.c \
+	src/resource-address.c src/uri-address.c \
+	src/uri-relative.c src/uri-edit.c \
 	src/resource-tag.c \
 	src/cookie-client.c \
 	src/header-parser.c \
@@ -571,7 +574,8 @@ test_run_processor_SOURCES = test/t-processor.c \
 	src/processor.c src/penv.c src/parser.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-ref.c \
-	src/uri-relative.c src/uri-parser.c src/uri-escape.c \
+	src/uri-relative.c src/uri-edit.c \
+	src/uri-parser.c src/uri-escape.c \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/tpool.c \

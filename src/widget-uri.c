@@ -7,8 +7,10 @@
 #include "widget.h"
 #include "uri-relative.h"
 #include "uri-parser.h"
+#include "uri-edit.h"
 #include "args.h"
 #include "tpool.h"
+#include "strref.h"
 #include "strref-pool.h"
 #include "uri-address.h"
 
@@ -22,45 +24,27 @@ static const struct resource_address *
 widget_base_address(pool_t pool, struct widget *widget)
 {
     const struct resource_address *src = widget_address(widget);
-    size_t query_string_length;
-    const char *qmark, *end;
+    const char *uri;
     struct resource_address *dest;
 
     if (src->type != RESOURCE_ADDRESS_HTTP || widget->query_string == NULL)
         return src;
 
-    query_string_length = strlen(widget->query_string);
-    qmark = strchr(src->u.http->uri, '?');
-    if (qmark == NULL ||
-        memcmp(qmark + 1, widget->query_string, query_string_length) != 0 ||
-        (qmark[1 + query_string_length] != 0 &&
-         qmark[1 + query_string_length] != '&'))
+    uri = uri_delete_query_string(pool, src->u.http->uri,
+                                  widget->query_string,
+                                  strlen(widget->query_string));
+
+
+    if (!strref_is_empty(&widget->from_request.query_string))
+        uri = uri_delete_query_string(pool, src->u.http->uri,
+                                      widget->from_request.query_string.data,
+                                      widget->from_request.query_string.length);
+
+    if (uri == src->u.http->uri)
         return src;
 
-    end = qmark;
-    qmark += 1 + query_string_length;
-
-    if (*qmark == '&' && widget->from_request.query_string.length > 0 &&
-        memcmp(qmark + 1, widget->from_request.query_string.data,
-               widget->from_request.query_string.length) == 0 &&
-        (qmark[1 + widget->from_request.query_string.length] == 0 ||
-         qmark[1 + widget->from_request.query_string.length] == '&'))
-        /* skip query string from the request */
-        qmark += 1 + widget->from_request.query_string.length;
-
-    if (*qmark != 0) {
-        /* there is more data in this query string: include the
-           question mark, skip the '&' */
-
-        ++end;
-        ++qmark;
-    }
-
     dest = resource_address_dup(pool, src);
-    dest->u.http->uri = p_strncat(pool,
-                                  src->u.http->uri, end - src->u.http->uri,
-                                  qmark, strlen(qmark),
-                                  NULL);
+    dest->u.http->uri = uri;
     return dest;
 }
 
@@ -99,20 +83,13 @@ widget_determine_address(const struct widget *widget)
             uri = p_strcat(pool, uri, path_info, NULL);
 
         if (widget->query_string != NULL)
-            uri = p_strcat(pool,
-                           uri,
-                           strchr(uri, '?') == NULL ? "?" : "&",
-                           widget->query_string,
-                           NULL);
+            uri = uri_insert_query_string(pool, uri,
+                                          widget->query_string);
 
         if (!strref_is_empty(&widget->from_request.query_string))
-            uri = p_strncat(pool,
-                            uri, strlen(uri),
-                            strchr(uri, '?') == NULL ? "?" : "&",
-                            (size_t)1,
-                            widget->from_request.query_string.data,
-                            widget->from_request.query_string.length,
-                            NULL);
+            uri = uri_append_query_string_n(pool, uri,
+                                            widget->from_request.query_string.data,
+                                            widget->from_request.query_string.length);
 
         address = resource_address_dup(pool, &widget->class->address);
         address->u.http->uri = uri;
