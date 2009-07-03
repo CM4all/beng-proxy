@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.6.1) unstable; urgency=low
   * widget-uri: don't generate the "path" argument when it's NULL
   * widget-uri: strip superfluous question mark from widget_base_address()
   * widget-uri: append parameters from the template first
+  * widget-uri: re-add configured query string in widget_absolute_uri()
 
  --
 

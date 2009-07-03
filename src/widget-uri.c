@@ -157,7 +157,7 @@ const char *
 widget_absolute_uri(pool_t pool, struct widget *widget,
                     const struct strref *relative_uri)
 {
-    const char *base;
+    const char *base, *uri;
 
     assert(widget_address(widget)->type == RESOURCE_ADDRESS_HTTP);
 
@@ -165,7 +165,14 @@ widget_absolute_uri(pool_t pool, struct widget *widget,
     if (relative_uri == NULL)
         return base;
 
-    return uri_absolute(pool, base, relative_uri->data, relative_uri->length);
+    uri = uri_absolute(pool, base, relative_uri->data, relative_uri->length);
+    if (!strref_is_empty(relative_uri) && widget->query_string != NULL)
+        /* the relative_uri is non-empty, and uri_absolute() has
+           removed the query string: re-add the configured query
+           string */
+        uri = uri_insert_query_string(pool, uri, widget->query_string);
+
+    return uri;
 }
 
 const char *
