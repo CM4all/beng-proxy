@@ -113,9 +113,9 @@ assert_istream_equals(pool_t pool, istream_t istream, const char *value)
 }
 
 static void
-assert_rewrite_check(pool_t widget_pool, struct widget *widget,
-                     const char *value, enum uri_mode mode,
-                     const char *result)
+assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
+                      const char *value, enum uri_mode mode, bool stateful,
+                      const char *result)
 {
     pool_t pool = pool_new_libc(widget_pool, "rewrite");
     struct strref value2;
@@ -128,13 +128,21 @@ assert_rewrite_check(pool_t widget_pool, struct widget *widget,
                                  "cm4all.com", &external_uri,
                                  NULL, widget, 1,
                                  value != NULL ? &value2 : NULL,
-                                 mode);
+                                 mode, stateful);
     if (result == NULL)
         assert(istream == NULL);
     else
         assert_istream_equals(pool, istream, result);
 
     pool_unref(pool);
+}
+
+static void
+assert_rewrite_check(pool_t widget_pool, struct widget *widget,
+                     const char *value, enum uri_mode mode,
+                     const char *result)
+{
+    assert_rewrite_check2(widget_pool, widget, value, mode, true, result);
 }
 
 
@@ -298,6 +306,26 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                          "http://widget-server/1/789/?a=b&e=f");
     assert_rewrite_check(pool, &widget, "", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=789%2f?e=f");
+
+    /* session data, but stateless */
+
+    widget.lazy.address = NULL;
+    widget.lazy.stateless_address = NULL;
+
+    assert_rewrite_check2(pool, &widget, NULL, URI_MODE_DIRECT, false,
+                          "http://widget-server/1/456/?a=b");
+    assert_rewrite_check2(pool, &widget, NULL, URI_MODE_FOCUS, false,
+                          "/index.html;focus=1");
+
+    assert_rewrite_check2(pool, &widget, "123", URI_MODE_DIRECT, false,
+                          "http://widget-server/1/456/123?a=b");
+    assert_rewrite_check2(pool, &widget, "123", URI_MODE_FOCUS, false,
+                          "/index.html;focus=1&path=456%2f123");
+
+    assert_rewrite_check2(pool, &widget, "", URI_MODE_DIRECT, false,
+                          "http://widget-server/1/456/?a=b");
+    assert_rewrite_check2(pool, &widget, "", URI_MODE_FOCUS, false,
+                          "/index.html;focus=1&path=456%2f");
 
     /* without trailing slash in server URI; first with an invalid
        suffix, which does not match the server URI */

@@ -75,7 +75,7 @@ do_rewrite_widget_uri(pool_t pool,
                       const struct parsed_uri *external_uri,
                       struct strmap *args, struct widget *widget,
                       const struct strref *value,
-                      enum uri_mode mode)
+                      enum uri_mode mode, bool stateful)
 {
     const char *frame = NULL;
     bool raw = false;
@@ -87,7 +87,7 @@ do_rewrite_widget_uri(pool_t pool,
             /* the browser can only contact HTTP widgets directly */
             return NULL;
 
-        return widget_absolute_uri(pool, widget, true, value);
+        return widget_absolute_uri(pool, widget, stateful, value);
 
     case URI_MODE_FOCUS:
         frame = current_frame(widget);
@@ -106,7 +106,7 @@ do_rewrite_widget_uri(pool_t pool,
     }
 
     uri = widget_external_uri(pool, external_uri, args,
-                              widget, true,
+                              widget, stateful,
                               value,
                               frame, raw);
     if (uri == NULL)
@@ -143,6 +143,7 @@ struct rewrite_widget_uri {
     struct strref *value;
 
     enum uri_mode mode;
+    bool stateful;
 
     istream_t delayed;
 };
@@ -167,7 +168,7 @@ class_lookup_callback(void *ctx)
         uri = do_rewrite_widget_uri(rwu->pool,
                                     rwu->partition_domain, rwu->external_uri,
                                     rwu->args, rwu->widget,
-                                    rwu->value, rwu->mode);
+                                    rwu->value, rwu->mode, rwu->stateful);
         if (uri != NULL) {
             strref_set_c(&rwu->s, uri);
             rwu->value = &rwu->s;
@@ -201,13 +202,13 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct strmap *args, struct widget *widget,
                    session_id_t session_id,
                    const struct strref *value,
-                   enum uri_mode mode)
+                   enum uri_mode mode, bool stateful)
 {
     const char *uri;
 
     if (widget->class != NULL) {
         uri = do_rewrite_widget_uri(pool, partition_domain, external_uri,
-                                    args, widget, value, mode);
+                                    args, widget, value, mode, stateful);
         if (uri == NULL)
             return NULL;
 
@@ -229,6 +230,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
             rwu->value = NULL;
 
         rwu->mode = mode;
+        rwu->stateful = stateful;
         rwu->delayed = istream_delayed_new(pool);
 
         widget_resolver_new(pool, widget_pool,

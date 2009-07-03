@@ -622,7 +622,7 @@ transform_uri_attribute(struct processor *processor,
                                  processor->env->external_uri,
                                  processor->env->args, widget,
                                  processor->env->session_id,
-                                 value, mode);
+                                 value, mode, widget == processor->container);
     if (istream != NULL)
         replace_attribute_value(processor, attr, istream);
 }

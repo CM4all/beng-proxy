@@ -24,6 +24,10 @@ enum uri_mode {
     URI_MODE_PROXY,
 };
 
+/**
+ * @param stateful if true, then the current request/session state is
+ * taken into account (path_info and query_string)
+ */
 istream_t
 rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct tcache *translate_cache,
@@ -32,6 +36,6 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct strmap *args, struct widget *widget,
                    session_id_t session_id,
                    const struct strref *value,
-                   enum uri_mode mode);
+                   enum uri_mode mode, bool stateful);
 
 #endif
