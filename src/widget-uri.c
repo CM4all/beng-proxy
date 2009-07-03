@@ -49,7 +49,7 @@ widget_base_address(pool_t pool, struct widget *widget)
 }
 
 const struct resource_address *
-widget_determine_address(const struct widget *widget)
+widget_determine_address(const struct widget *widget, bool stateful)
 {
     pool_t pool = widget->pool;
     const char *path_info, *uri;
@@ -57,9 +57,8 @@ widget_determine_address(const struct widget *widget)
 
     assert(widget != NULL);
     assert(widget->class != NULL);
-    assert(widget->lazy.address == NULL);
 
-    path_info = widget_get_path_info(widget);
+    path_info = stateful ? widget_get_path_info(widget) : widget->path_info;
     assert(path_info != NULL);
 
     switch (widget->class->address.type) {
@@ -72,7 +71,8 @@ widget_determine_address(const struct widget *widget)
     case RESOURCE_ADDRESS_AJP:
         assert(widget->class->address.u.http->uri != NULL);
 
-        if (strref_is_empty(&widget->from_request.query_string) &&
+        if ((!stateful ||
+             strref_is_empty(&widget->from_request.query_string)) &&
             *path_info == 0 &&
             widget->query_string == NULL)
             break;
@@ -86,7 +86,7 @@ widget_determine_address(const struct widget *widget)
             uri = uri_insert_query_string(pool, uri,
                                           widget->query_string);
 
-        if (!strref_is_empty(&widget->from_request.query_string))
+        if (stateful && !strref_is_empty(&widget->from_request.query_string))
             uri = uri_append_query_string_n(pool, uri,
                                             widget->from_request.query_string.data,
                                             widget->from_request.query_string.length);
@@ -96,7 +96,8 @@ widget_determine_address(const struct widget *widget)
         return address;
 
     case RESOURCE_ADDRESS_CGI:
-        if (strref_is_empty(&widget->from_request.query_string) &&
+        if ((!stateful ||
+             strref_is_empty(&widget->from_request.query_string)) &&
             *path_info == 0 &&
             widget->query_string == NULL)
             break;
@@ -106,7 +107,9 @@ widget_determine_address(const struct widget *widget)
         if (*path_info != 0)
             address->u.cgi.path_info = path_info;
 
-        if (strref_is_empty(&widget->from_request.query_string))
+        if (!stateful)
+            address->u.cgi.query_string = widget->query_string;
+        else if (strref_is_empty(&widget->from_request.query_string))
             address->u.cgi.query_string = widget->query_string;
         else if (widget->query_string == NULL)
             address->u.cgi.query_string =
@@ -123,7 +126,8 @@ widget_determine_address(const struct widget *widget)
         return address;
 
     case RESOURCE_ADDRESS_FASTCGI:
-        if (strref_is_empty(&widget->from_request.query_string) &&
+        if ((!stateful ||
+             strref_is_empty(&widget->from_request.query_string)) &&
             *path_info == 0 &&
             widget->query_string == NULL)
             break;
@@ -133,7 +137,9 @@ widget_determine_address(const struct widget *widget)
         if (*path_info != 0)
             address->u.cgi.path_info = path_info;
 
-        if (strref_is_empty(&widget->from_request.query_string))
+        if (!stateful)
+            address->u.cgi.query_string = widget->query_string;
+        else if (strref_is_empty(&widget->from_request.query_string))
             address->u.cgi.query_string = widget->query_string;
         else if (widget->query_string == NULL)
             address->u.cgi.query_string =
