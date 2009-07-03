@@ -384,7 +384,9 @@ session_new(void)
 
     num_sessions = session_manager->num_sessions;
 
+#ifndef NDEBUG
     ++num_locked_sessions;
+#endif
     lock_lock(&session->lock);
     lock_unlock(&session_manager->lock);
 
@@ -648,7 +650,9 @@ session_get(session_id_t id)
         assert(session_slot(session->id) == head);
 
         if (session->id == id) {
+#ifndef NDEBUG
             ++num_locked_sessions;
+#endif
             lock_lock(&session->lock);
             lock_unlock(&session_manager->lock);
 
