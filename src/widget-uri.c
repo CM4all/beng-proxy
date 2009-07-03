@@ -21,9 +21,10 @@
  * parameters from the parent container.
  */
 static const struct resource_address *
-widget_base_address(pool_t pool, struct widget *widget)
+widget_base_address(pool_t pool, struct widget *widget, bool stateful)
 {
-    const struct resource_address *src = widget_address(widget);
+    const struct resource_address *src = stateful
+        ? widget_address(widget) : widget_stateless_address(widget);
     const char *uri;
     struct resource_address *dest;
 
@@ -204,14 +205,14 @@ widget_translation_uri(pool_t pool,
 }
 
 const struct strref *
-widget_relative_uri(pool_t pool, struct widget *widget,
+widget_relative_uri(pool_t pool, struct widget *widget, bool stateful,
                     const char *relative_uri, size_t relative_uri_length,
                     struct strref *buffer)
 {
     struct resource_address address_buffer;
     const struct resource_address *address;
 
-    address = resource_address_apply(pool, widget_base_address(pool, widget),
+    address = resource_address_apply(pool, widget_base_address(pool, widget, stateful),
                                      relative_uri, relative_uri_length,
                                      &address_buffer);
     if (address == NULL)
@@ -245,7 +246,7 @@ widget_external_uri(pool_t pool,
     pool_mark(tpool, &mark);
 
     if (relative_uri != NULL) {
-        p = widget_relative_uri(tpool, widget,
+        p = widget_relative_uri(tpool, widget, true,
                                 relative_uri->data, relative_uri->length,
                                 &buffer);
         if (p == NULL) {

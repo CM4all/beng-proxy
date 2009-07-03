@@ -213,7 +213,7 @@ widget_response_redirect(struct embed *embed, const char *location,
         /* a static or CGI widget cannot send redirects */
         return false;
 
-    p = widget_relative_uri(embed->pool, embed->widget,
+    p = widget_relative_uri(embed->pool, embed->widget, true,
                             location, strlen(location),
                             &strref_buffer);
     if (p == NULL)
