@@ -160,14 +160,15 @@ widget_determine_address(const struct widget *widget, bool stateful)
 }
 
 const char *
-widget_absolute_uri(pool_t pool, struct widget *widget,
+widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
                     const struct strref *relative_uri)
 {
     const char *base, *uri;
 
     assert(widget_address(widget)->type == RESOURCE_ADDRESS_HTTP);
 
-    base = widget_address(widget)->u.http->uri;
+    base = (stateful ? widget_address(widget)
+            : widget_stateless_address(widget))->u.http->uri;
     if (relative_uri == NULL)
         return base;
 

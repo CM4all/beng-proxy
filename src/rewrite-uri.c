@@ -87,7 +87,7 @@ do_rewrite_widget_uri(pool_t pool,
             /* the browser can only contact HTTP widgets directly */
             return NULL;
 
-        return widget_absolute_uri(pool, widget, value);
+        return widget_absolute_uri(pool, widget, true, value);
 
     case URI_MODE_FOCUS:
         frame = current_frame(widget);

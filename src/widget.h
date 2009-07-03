@@ -284,7 +284,7 @@ widget_stateless_address(struct widget *widget)
 }
 
 const char *
-widget_absolute_uri(pool_t pool, struct widget *widget,
+widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
                     const struct strref *relative_uri);
 
 const char *
