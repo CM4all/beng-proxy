@@ -127,6 +127,12 @@ struct widget {
             as class->address, except when the user clicked on a
             relative link */
         const struct resource_address *address;
+
+        /**
+         * The widget address including path_info and the query string
+         * from the template.  See widget_stateless_address().
+         */
+        const struct resource_address *stateless_address;
     } lazy;
 };
 
@@ -175,6 +181,7 @@ widget_init(struct widget *widget, pool_t pool,
     widget->lazy.path = NULL;
     widget->lazy.prefix = NULL;
     widget->lazy.address = NULL;
+    widget->lazy.stateless_address = NULL;
 }
 
 void
@@ -264,6 +271,16 @@ widget_address(struct widget *widget)
         widget->lazy.address = widget_determine_address(widget, true);
 
     return widget->lazy.address;
+}
+
+static inline const struct resource_address *
+widget_stateless_address(struct widget *widget)
+{
+    if (widget->lazy.stateless_address == NULL)
+        widget->lazy.stateless_address =
+            widget_determine_address(widget, false);
+
+    return widget->lazy.stateless_address;
 }
 
 const char *

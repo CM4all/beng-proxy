@@ -228,6 +228,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* with configured path_info */
 
     widget.lazy.address = NULL;
+    widget.lazy.stateless_address = NULL;
     widget.path_info = "456/";
 
     assert_rewrite_check(pool, &widget, NULL, URI_MODE_DIRECT,
@@ -248,6 +249,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* with configured query string */
 
     widget.lazy.address = NULL;
+    widget.lazy.stateless_address = NULL;
     widget.query_string = "a=b";
 
     assert_rewrite_check(pool, &widget, NULL, URI_MODE_DIRECT,
@@ -275,6 +277,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* session data */
 
     widget.lazy.address = NULL;
+    widget.lazy.stateless_address = NULL;
     widget.query_string = "a=b";
     widget.from_request.path_info = "789/";
     strref_set_c(&widget.from_request.query_string, "e=f");
