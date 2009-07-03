@@ -245,6 +245,7 @@ check_PROGRAMS = \
 	test/t-http-cache \
 	test/t-cookie-client \
 	test/t-shm test/t-dpool test/t-session \
+	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-wembed test/t-widget-http \
 	test/benchmark-gmtime test/format-http-date \
@@ -269,6 +270,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-http-cache \
 	test/t-cookie-client.py test/t-cookie-client \
 	test/t-shm test/t-dpool test/t-session \
+	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-wembed test/t-widget-http
 
@@ -484,6 +486,21 @@ test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/format.c \
 	src/session.c
 test_t_session_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
+
+test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
+	$(POOL_SRC) src/tpool.c \
+	src/rewrite-uri.c src/widget-uri.c src/widget.c \
+	src/istream-null.c src/istream-delayed.c src/istream-memory.c \
+	src/istream-forward.c src/istream-string.c \
+	src/sink-gstring.c \
+	src/args.c \
+	src/strmap.c src/hashmap.c \
+	src/resource-address.c src/uri-address.c \
+	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
+	src/format.c
+test_t_rewrite_uri_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBEVENT_LIBS) \
+	$(GLIB_LIBS)
 
 test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/widget-registry.c src/stock.c \

@@ -54,6 +54,7 @@ test/t-resource-address
 test/t-tcache
 test/t-uri-compress
 test/t-widget-http
+test/t-rewrite-uri
 
 *.aux
 *.log
