@@ -88,7 +88,7 @@ widget_request_headers(struct embed *embed, bool with_body)
     session = session_get(embed->env->session_id);
 
     headers = forward_request_headers(embed->pool, embed->env->request_headers,
-                                      embed->env->remote_host, with_body,
+                                      embed->env->remote_host, with_body, false,
                                       session,
                                       embed->host_and_port,
                                       uri_path(widget_address(embed->widget)->u.http->uri));

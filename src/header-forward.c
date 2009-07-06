@@ -47,7 +47,7 @@ headers_copy2(const struct strmap *in, struct strmap *out,
 struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *remote_host,
-                        bool with_body,
+                        bool with_body, bool forward_charset,
                         const struct session *session,
                         const char *host_and_port, const char *uri)
 {
@@ -55,13 +55,19 @@ forward_request_headers(pool_t pool, struct strmap *src,
     const char *p;
 
     dest = strmap_new(pool, 32);
-    strmap_add(dest, "accept-charset", "utf-8");
 
     if (src != NULL) {
         headers_copy2(src, dest, request_headers);
         if (with_body)
             headers_copy2(src, dest, body_request_headers);
     }
+
+    p = forward_charset
+        ? strmap_get_checked(src, "accept-charset")
+        : NULL;
+    if (p == NULL)
+        p = "utf-8";
+    strmap_add(dest, "accept-charset", p);
 
     if (session != NULL && host_and_port != NULL && uri != NULL)
         cookie_jar_http_header(session->cookies, host_and_port, uri,

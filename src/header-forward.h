@@ -14,7 +14,7 @@ struct session;
 struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *remote_host,
-                        bool with_body,
+                        bool with_body, bool forward_charset,
                         const struct session *session,
                         const char *host_and_port, const char *uri);
 

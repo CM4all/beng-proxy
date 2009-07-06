@@ -42,6 +42,7 @@ proxy_handler(struct request *request2)
 
     headers = forward_request_headers(request->pool, request->headers,
                                       request->remote_host, body != NULL,
+                                      !request_processor_enabled(request2),
                                       NULL, NULL, NULL);
 
     /* do it */
