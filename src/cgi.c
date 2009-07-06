@@ -66,7 +66,7 @@ cgi_parse_headers(struct cgi *cgi)
 {
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
     size_t length;
-    int ret = 0;
+    bool finished = false;
 
     buffer = fifo_buffer_read(cgi->buffer, &length);
     if (buffer == NULL)
@@ -84,8 +84,8 @@ cgi_parse_headers(struct cgi *cgi)
         while (unlikely(end >= start && char_is_whitespace(*end)))
             --end;
 
-        ret = cgi_handle_line(cgi, start, end - start + 1);
-        if (ret)
+        finished = cgi_handle_line(cgi, start, end - start + 1);
+        if (finished)
             break;
 
         start = next;
@@ -96,7 +96,7 @@ cgi_parse_headers(struct cgi *cgi)
 
     fifo_buffer_consume(cgi->buffer, next - buffer);
 
-    if (ret) {
+    if (finished) {
         struct strmap *headers;
 
         async_poison(&cgi->async);
