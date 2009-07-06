@@ -10,6 +10,7 @@
 #include "http-cache.h"
 #include "uri-address.h"
 #include "global.h"
+#include "header-forward.h"
 
 void
 proxy_handler(struct request *request2)
@@ -17,28 +18,8 @@ proxy_handler(struct request *request2)
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
     http_method_t method;
-    struct strmap *headers;
-    const char *p;
     istream_t body;
-
-    headers = strmap_new(request->pool, 32);
-
-    /* generate the "Via" request header */
-
-    p = strmap_get(request->headers, "via");
-    if (p == NULL) {
-        if (request->remote_host != NULL)
-            strmap_add(headers, "via",
-                       p_strcat(request->pool, "1.1 ",
-                                request->remote_host, NULL));
-    } else {
-        if (request->remote_host == NULL)
-            strmap_add(headers, "via", p);
-        else
-            strmap_add(headers, "via",
-                       p_strcat(request->pool, p, ", 1.1 ",
-                                request->remote_host, NULL));
-    }
+    struct strmap *headers;
 
     /* send a request body? */
 
@@ -56,6 +37,12 @@ proxy_handler(struct request *request2)
         body = request->body;
         request2->body_consumed = true;
     }
+
+    /* generate request headers */
+
+    headers = forward_request_headers(request->pool, request->headers,
+                                      request->remote_host, body != NULL,
+                                      NULL, NULL, NULL);
 
     /* do it */
 
