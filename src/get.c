@@ -26,7 +26,7 @@ resource_get(struct http_cache *cache,
              pool_t pool,
              http_method_t method,
              const struct resource_address *address,
-             struct strmap *headers, istream_t body,
+             http_status_t status, struct strmap *headers, istream_t body,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
@@ -67,7 +67,7 @@ resource_get(struct http_cache *cache,
     case RESOURCE_ADDRESS_PIPE:
         pipe_filter(pool, address->u.cgi.path,
                     address->u.cgi.args, address->u.cgi.num_args,
-                    HTTP_STATUS_OK, headers, body,
+                    status, headers, body,
                     handler, handler_ctx);
         return;
 

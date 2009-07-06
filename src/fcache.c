@@ -465,7 +465,8 @@ filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
 
     pool_ref(caller_pool);
     resource_get(NULL, cache->tcp_stock, cache->fcgi_stock, NULL,
-                 pool, HTTP_METHOD_POST, address, headers, body,
+                 pool, HTTP_METHOD_POST, address,
+                 HTTP_STATUS_OK, headers, body,
                  &filter_cache_response_handler, request,
                  async_unref_on_abort(caller_pool, async_ref));
     pool_unref(pool);
@@ -532,7 +533,8 @@ filter_cache_request(struct filter_cache *cache,
                                handler, handler_ctx);
     } else {
         resource_get(NULL, cache->tcp_stock, cache->fcgi_stock, NULL,
-                     pool, HTTP_METHOD_POST, address, headers, body,
+                     pool, HTTP_METHOD_POST, address,
+                     HTTP_STATUS_OK, headers, body,
                      handler, handler_ctx, async_ref);
     }
 }

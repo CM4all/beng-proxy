@@ -171,7 +171,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
                  global_delegate_stock,
                  embed->pool,
-                 HTTP_METHOD_GET, address, headers, NULL,
+                 HTTP_METHOD_GET, address, HTTP_STATUS_OK, headers, NULL,
                  &widget_response_handler, embed,
                  embed->async_ref);
 
@@ -414,7 +414,7 @@ widget_http_request(pool_t pool, struct widget *widget,
                  pool,
                  widget->from_request.method,
                  address,
-                 headers,
+                 HTTP_STATUS_OK, headers,
                  widget->from_request.body,
                  &widget_response_handler, embed, async_ref);
 }

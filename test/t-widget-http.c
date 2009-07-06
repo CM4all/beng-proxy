@@ -86,7 +86,7 @@ resource_get(__attr_unused struct http_cache *cache,
              pool_t pool,
              http_method_t method,
              __attr_unused const struct resource_address *address,
-             struct strmap *headers, istream_t body,
+             http_status_t status, struct strmap *headers, istream_t body,
              const struct http_response_handler *handler,
              void *handler_ctx,
              __attr_unused struct async_operation_ref *async_ref)
@@ -143,7 +143,7 @@ resource_get(__attr_unused struct http_cache *cache,
     }
 
     http_response_handler_direct_response(handler, handler_ctx,
-                                          200, response_headers,
+                                          status, response_headers,
                                           response_body);
 }
 

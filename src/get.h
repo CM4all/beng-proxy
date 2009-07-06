@@ -28,6 +28,7 @@ struct async_operation_ref;
  * @param fcgi_stock the stock for FastCGI instances
  * @param delegate_stock the stock for delegate programs
  * @param address the address of the resource
+ * @param status a HTTP status code for protocols which do have one
  */
 void
 resource_get(struct http_cache *cache,
@@ -37,7 +38,7 @@ resource_get(struct http_cache *cache,
              pool_t pool,
              http_method_t method,
              const struct resource_address *address,
-             struct strmap *headers, istream_t body,
+             http_status_t status, struct strmap *headers, istream_t body,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref);
