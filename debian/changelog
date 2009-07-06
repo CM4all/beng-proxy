@@ -8,7 +8,7 @@ cm4all-beng-proxy (0.6.2) unstable; urgency=low
   * fcache: forward original HTTP status over "pipe" filter
   * cgi: support the "Status" line
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 06 Jul 2009 16:38:26 +0200
 
 cm4all-beng-proxy (0.6.1) unstable; urgency=low
 
