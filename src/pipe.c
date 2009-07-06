@@ -83,7 +83,7 @@ make_pipe_etag(pool_t pool, const char *in,
 void
 pipe_filter(pool_t pool, const char *path,
             const char *const* args, unsigned num_args,
-            struct strmap *headers, istream_t body,
+            http_status_t status, struct strmap *headers, istream_t body,
             const struct http_response_handler *handler,
             void *handler_ctx)
 {
@@ -96,10 +96,11 @@ pipe_filter(pool_t pool, const char *path,
         /* if the resource does not have a body (which is different
            from Content-Length:0), don't filter it */
         http_response_handler_direct_response(handler, handler_ctx,
-                                              HTTP_STATUS_NO_CONTENT,
-                                              headers, NULL);
+                                              status, headers, NULL);
         return;
     }
+
+    assert(!http_status_is_empty(status));
 
     pid = beng_fork(pool, body, &response,
                     pipe_child_callback, NULL);
@@ -134,6 +135,6 @@ pipe_filter(pool_t pool, const char *path,
         strmap_set(headers, "etag", etag);
     }
 
-    http_response_handler_direct_response(handler, handler_ctx, HTTP_STATUS_OK,
+    http_response_handler_direct_response(handler, handler_ctx, status,
                                           headers, response);
 }
