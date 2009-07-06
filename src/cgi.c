@@ -62,6 +62,24 @@ cgi_handle_line(struct cgi *cgi, const char *line, size_t length)
 }
 
 static void
+cgi_return_response(struct cgi *cgi)
+{
+    struct strmap *headers;
+
+    async_poison(&cgi->async);
+
+    headers = cgi->headers;
+    cgi->headers = NULL;
+    cgi->in_response_callback = true;
+
+    http_response_handler_invoke_response(&cgi->handler,
+                                          HTTP_STATUS_OK, headers,
+                                          istream_struct_cast(&cgi->output));
+
+    cgi->in_response_callback = false;
+}
+
+static void
 cgi_parse_headers(struct cgi *cgi)
 {
     const char *buffer, *buffer_end, *start, *end, *next = NULL;
@@ -96,21 +114,8 @@ cgi_parse_headers(struct cgi *cgi)
 
     fifo_buffer_consume(cgi->buffer, next - buffer);
 
-    if (finished) {
-        struct strmap *headers;
-
-        async_poison(&cgi->async);
-
-        headers = cgi->headers;
-        cgi->headers = NULL;
-        cgi->in_response_callback = true;
-
-        http_response_handler_invoke_response(&cgi->handler,
-                                              HTTP_STATUS_OK, headers,
-                                              istream_struct_cast(&cgi->output));
-
-        cgi->in_response_callback = false;
-    }
+    if (finished)
+        cgi_return_response(cgi);
 }
 
 /*
