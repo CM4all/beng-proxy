@@ -14,6 +14,7 @@
 #include "get.h"
 #include "fcache.h"
 #include "header-writer.h"
+#include "header-forward.h"
 #include "transformation.h"
 #include "global.h"
 #include "resource-tag.h"
@@ -48,28 +49,6 @@ struct embed {
     struct async_operation_ref *async_ref;
 };
 
-static const char *const copy_headers[] = {
-    "accept",
-    "from",
-    "cache-control",
-    NULL,
-};
-
-static const char *const language_headers[] = {
-    "accept-language",
-    NULL,
-};
-
-static const char *const copy_headers_with_body[] = {
-    "content-encoding",
-    "content-language",
-    "content-md5",
-    "content-range",
-    "content-type",
-    "content-disposition",
-    NULL,
-};
-
 static const char *
 uri_host_and_port(pool_t pool, const char *uri)
 {
@@ -84,27 +63,6 @@ uri_host_and_port(pool_t pool, const char *uri)
         return uri;
 
     return p_strndup(pool, uri, slash - uri);
-}
-
-static const char *
-get_env_request_header(const struct processor_env *env, const char *key)
-{
-    assert(env != NULL);
-
-    return strmap_get_checked(env->request_headers, key);
-}
-
-static void
-headers_copy2(struct strmap *in, struct strmap *out,
-              const char *const* keys)
-{
-    const char *value;
-
-    for (; *keys != NULL; ++keys) {
-        value = strmap_get(in, *keys);
-        if (value != NULL)
-            strmap_set(out, *keys, value);
-    }
 }
 
 static const char *
@@ -126,57 +84,16 @@ widget_request_headers(struct embed *embed, bool with_body)
 {
     struct strmap *headers;
     struct session *session;
-    const char *p;
-
-    headers = strmap_new(embed->pool, 32);
-    strmap_add(headers, "accept-charset", "utf-8");
-
-    if (embed->env->request_headers != NULL) {
-        headers_copy2(embed->env->request_headers, headers, copy_headers);
-        if (with_body)
-            headers_copy2(embed->env->request_headers, headers, copy_headers_with_body);
-    }
 
     session = session_get(embed->env->session_id);
 
-    if (embed->host_and_port != NULL && session != NULL) {
-        const char *path = uri_path(widget_address(embed->widget)->u.http->uri);
-
-        cookie_jar_http_header(session->cookies, embed->host_and_port, path,
-                               headers, embed->pool);
-    }
-
-    if (session != NULL && session->language != NULL)
-        strmap_add(headers, "accept-language",
-                   p_strdup(embed->pool, session->language));
-    else if (embed->env->request_headers != NULL)
-        headers_copy2(embed->env->request_headers, headers, language_headers);
-
-    if (session != NULL && session->user != NULL)
-        strmap_add(headers, "x-cm4all-beng-user",
-                   p_strdup(embed->pool, session->user));
+    headers = forward_request_headers(embed->pool, embed->env->request_headers,
+                                      embed->env->remote_host, with_body,
+                                      session,
+                                      embed->host_and_port,
+                                      uri_path(widget_address(embed->widget)->u.http->uri));
 
     session_put(session);
-
-    p = get_env_request_header(embed->env, "user-agent");
-    if (p == NULL)
-        p = "beng-proxy v" VERSION;
-    strmap_add(headers, "user-agent", p);
-
-    p = get_env_request_header(embed->env, "via");
-    if (p == NULL) {
-        if (embed->env->remote_host != NULL)
-            strmap_add(headers, "via",
-                       p_strcat(embed->pool, "1.1 ",
-                                embed->env->remote_host, NULL));
-    } else {
-        if (embed->env->remote_host == NULL)
-            strmap_add(headers, "via", p);
-        else
-            strmap_add(headers, "via",
-                       p_strcat(embed->pool, p, ", 1.1 ",
-                                embed->env->remote_host, NULL));
-    }
 
     if (embed->widget->headers != NULL) {
         /* copy HTTP request headers from template */
