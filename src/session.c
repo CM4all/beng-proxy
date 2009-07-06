@@ -11,6 +11,7 @@
 #include "dpool.h"
 #include "dhashmap.h"
 #include "lock.h"
+#include "rwlock.h"
 #include "refcount.h"
 #include "expiry.h"
 
@@ -36,7 +37,7 @@ struct session_manager {
     struct shm *shm;
 
     /** this lock protects the following hash table */
-    struct lock lock;
+    struct rwlock lock;
 
     struct list_head sessions[SESSION_SLOTS];
     unsigned num_sessions;
@@ -71,7 +72,7 @@ session_destroy(struct session *session)
 static void
 session_remove(struct session *session)
 {
-    assert(lock_is_locked(&session_manager->lock));
+    assert(rwlock_is_wlocked(&session_manager->lock));
     assert(session_manager->num_sessions > 0);
 
     list_remove(&session->hash_siblings);
@@ -100,7 +101,7 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
         return;
     }
 
-    lock_lock(&session_manager->lock);
+    rwlock_wlock(&session_manager->lock);
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
         for (session = (struct session *)session_manager->sessions[i].next;
@@ -114,7 +115,7 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
 
     non_empty = session_manager->num_sessions > 0;
 
-    lock_unlock(&session_manager->lock);
+    rwlock_wunlock(&session_manager->lock);
 
     if (non_empty) {
         struct timeval tv = cleanup_interval;
@@ -139,7 +140,7 @@ session_manager_new(void)
     refcount_init(&sm->ref);
     sm->shm = shm;
 
-    lock_init(&sm->lock);
+    rwlock_init(&sm->lock);
 
     for (i = 0; i < SESSION_SLOTS; ++i)
         list_init(&sm->sessions[i]);
@@ -176,7 +177,7 @@ session_manager_destroy(struct session_manager *sm)
 {
     unsigned i;
 
-    lock_lock(&sm->lock);
+    rwlock_wlock(&sm->lock);
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
         while (!list_empty(&sm->sessions[i])) {
@@ -185,8 +186,8 @@ session_manager_destroy(struct session_manager *sm)
         }
     }
 
-    lock_unlock(&sm->lock);
-    lock_destroy(&sm->lock);
+    rwlock_wunlock(&sm->lock);
+    rwlock_destroy(&sm->lock);
 }
 
 void
@@ -265,7 +266,7 @@ session_manager_purge(void)
     struct session *sessions[256];
     unsigned num_sessions = 0, highest_score = 0;
 
-    lock_lock(&session_manager->lock);
+    rwlock_wlock(&session_manager->lock);
 
     for (unsigned i = 0; i < SESSION_SLOTS; ++i) {
         for (struct session *s = (struct session *)session_manager->sessions[i].next;
@@ -283,7 +284,7 @@ session_manager_purge(void)
     }
 
     if (num_sessions == 0) {
-        lock_unlock(&session_manager->lock);
+        rwlock_wunlock(&session_manager->lock);
         return false;
     }
 
@@ -295,7 +296,7 @@ session_manager_purge(void)
         session_remove(sessions[i]);
     }
 
-    lock_unlock(&session_manager->lock);
+    rwlock_wunlock(&session_manager->lock);
 
     return true;
 }
@@ -377,7 +378,7 @@ session_new(void)
     session->widgets = NULL;
     session->cookies = cookie_jar_new(pool);
 
-    lock_lock(&session_manager->lock);
+    rwlock_wlock(&session_manager->lock);
 
     list_add(&session->hash_siblings, session_slot(session->id));
     ++session_manager->num_sessions;
@@ -388,7 +389,7 @@ session_new(void)
     ++num_locked_sessions;
 #endif
     lock_lock(&session->lock);
-    lock_unlock(&session_manager->lock);
+    rwlock_wunlock(&session_manager->lock);
 
     if (num_sessions == 1) {
         struct timeval tv = cleanup_interval;
@@ -608,10 +609,10 @@ session_dup(struct dpool *pool, const struct session *src)
 
     dest->cookies = cookie_jar_dup(pool, src->cookies);
 
-    lock_lock(&session_manager->lock);
+    rwlock_wlock(&session_manager->lock);
     list_add(&dest->hash_siblings, session_slot(dest->id));
     ++session_manager->num_sessions;
-    lock_unlock(&session_manager->lock);
+    rwlock_wunlock(&session_manager->lock);
 
     return dest;
 }
@@ -642,7 +643,7 @@ session_get(session_id_t id)
     struct list_head *head = session_slot(id);
     struct session *session;
 
-    lock_lock(&session_manager->lock);
+    rwlock_rlock(&session_manager->lock);
 
     for (session = (struct session *)head->next;
          &session->hash_siblings != head;
@@ -654,14 +655,14 @@ session_get(session_id_t id)
             ++num_locked_sessions;
 #endif
             lock_lock(&session->lock);
-            lock_unlock(&session_manager->lock);
+            rwlock_runlock(&session_manager->lock);
 
             session->expires = expiry_touch(SESSION_TTL);
             return session;
         }
     }
 
-    lock_unlock(&session_manager->lock);
+    rwlock_runlock(&session_manager->lock);
 
     return NULL;
 }
