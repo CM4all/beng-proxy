@@ -19,7 +19,7 @@ struct context {
 
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
-    bool body_read;
+    bool body_read, no_content;
     int fd;
     bool released, aborted;
     http_status_t status;
@@ -91,10 +91,12 @@ static const struct istream_handler my_istream_handler = {
 
 static void
 my_response(http_status_t status, struct strmap *headers __attr_unused,
-            istream_t body __attr_unused,
+            istream_t body,
             void *ctx)
 {
     struct context *c = ctx;
+
+    assert(!c->no_content || body == NULL);
 
     c->status = status;
 
@@ -111,6 +113,9 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
         assert(body != NULL);
         istream_read(body);
     }
+
+    if (c->no_content)
+        children_shutdown();
 }
 
 static void
@@ -290,6 +295,70 @@ test_post(pool_t pool, struct context *c)
     assert(!c->body_abort);
 }
 
+static void
+test_status(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/status.sh", NULL);
+    else
+        path = "./demo/cgi-bin/status.sh";
+
+    c->body_read = true;
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "status.sh", NULL, NULL, "/var/www",
+            NULL, NULL,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->status == HTTP_STATUS_CREATED);
+    assert(c->body == NULL);
+    assert(c->body_eof);
+    assert(!c->body_abort);
+}
+
+static void
+test_no_content(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/no_content.sh", NULL);
+    else
+        path = "./demo/cgi-bin/no_content.sh";
+
+    c->no_content = true;
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "no_content.sh", NULL, NULL, "/var/www",
+            NULL, NULL,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+}
+
 
 /*
  * main
@@ -327,6 +396,8 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_late);
     run_test(pool, test_close_data);
     run_test(pool, test_post);
+    run_test(pool, test_status);
+    run_test(pool, test_no_content);
 
     pool_unref(pool);
     pool_commit();

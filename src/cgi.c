@@ -65,6 +65,8 @@ static void
 cgi_return_response(struct cgi *cgi)
 {
     struct strmap *headers;
+    const char *p;
+    http_status_t status = HTTP_STATUS_OK;
 
     async_poison(&cgi->async);
 
@@ -72,9 +74,26 @@ cgi_return_response(struct cgi *cgi)
     cgi->headers = NULL;
     cgi->in_response_callback = true;
 
-    http_response_handler_invoke_response(&cgi->handler,
-                                          HTTP_STATUS_OK, headers,
-                                          istream_struct_cast(&cgi->output));
+    p = strmap_remove(headers, "status");
+    if (p != NULL) {
+        int i = atoi(p);
+        if (i >= 200 && i < 600)
+            status = (http_status_t)i;
+    }
+
+    if (http_status_is_empty(status)) {
+        /* this response does not have a response body, as indicated
+           by the HTTP status code */
+
+        istream_free_handler(&cgi->input);
+        http_response_handler_invoke_response(&cgi->handler,
+                                              status, headers,
+                                              NULL);
+        pool_unref(cgi->output.pool);
+    } else
+        http_response_handler_invoke_response(&cgi->handler,
+                                              status, headers,
+                                              istream_struct_cast(&cgi->output));
 
     cgi->in_response_callback = false;
 }
