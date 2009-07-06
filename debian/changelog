@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.6.2) unstable; urgency=low
   * proxy-handler: pass request headers to the remote HTTP server
   * proxy-handler: forward original Accept-Charset if processor is disabled
   * pipe: don't filter resources without a body
+  * fcache: forward original HTTP status over "pipe" filter
 
  --
 

@@ -228,7 +228,7 @@ response_dispatch_direct(struct request *request2,
 
 static void
 response_apply_filter(struct request *request2,
-                      struct growing_buffer *headers,
+                      http_status_t status, struct growing_buffer *headers,
                       istream_t body,
                       const struct resource_address *filter)
 {
@@ -249,7 +249,7 @@ response_apply_filter(struct request *request2,
         : NULL;
 
     filter_cache_request(global_filter_cache, request->pool, filter,
-                         source_tag, headers2, body,
+                         source_tag, status, headers2, body,
                          &response_handler, request2,
                          request2->async_ref);
 }
@@ -271,7 +271,7 @@ response_apply_transformation(struct request *request2,
 
     switch (transformation->type) {
     case TRANSFORMATION_FILTER:
-        response_apply_filter(request2, headers, body,
+        response_apply_filter(request2, status, headers, body,
                               &transformation->u.filter);
         break;
 

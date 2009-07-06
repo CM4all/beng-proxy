@@ -250,7 +250,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
 
         filter_cache_request(global_filter_cache, embed->pool,
                              &transformation->u.filter,
-                             source_tag, headers, body,
+                             source_tag, status, headers, body,
                              &widget_response_handler, embed,
                              embed->async_ref);
         break;

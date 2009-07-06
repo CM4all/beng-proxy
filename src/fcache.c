@@ -441,7 +441,7 @@ static void
 filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
                   struct filter_cache_info *info,
                   const struct resource_address *address,
-                  struct strmap *headers, istream_t body,
+                  http_status_t status, struct strmap *headers, istream_t body,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref)
@@ -466,7 +466,7 @@ filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
     pool_ref(caller_pool);
     resource_get(NULL, cache->tcp_stock, cache->fcgi_stock, NULL,
                  pool, HTTP_METHOD_POST, address,
-                 HTTP_STATUS_OK, headers, body,
+                 status, headers, body,
                  &filter_cache_response_handler, request,
                  async_unref_on_abort(caller_pool, async_ref));
     pool_unref(pool);
@@ -512,7 +512,7 @@ filter_cache_request(struct filter_cache *cache,
                      pool_t pool,
                      const struct resource_address *address,
                      const char *source_id,
-                     struct strmap *headers, istream_t body,
+                     http_status_t status, struct strmap *headers, istream_t body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
                      struct async_operation_ref *async_ref)
@@ -526,7 +526,7 @@ filter_cache_request(struct filter_cache *cache,
 
         if (item == NULL)
             filter_cache_miss(cache, pool, info,
-                              address, headers, body,
+                              address, status, headers, body,
                               handler, handler_ctx, async_ref);
         else
             filter_cache_found(item, pool, body,
@@ -534,7 +534,7 @@ filter_cache_request(struct filter_cache *cache,
     } else {
         resource_get(NULL, cache->tcp_stock, cache->fcgi_stock, NULL,
                      pool, HTTP_METHOD_POST, address,
-                     HTTP_STATUS_OK, headers, body,
+                     status, headers, body,
                      handler, handler_ctx, async_ref);
     }
 }
