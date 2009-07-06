@@ -92,6 +92,15 @@ pipe_filter(pool_t pool, const char *path,
     char *argv[1 + num_args + 1];
     const char *etag;
 
+    if (body == NULL) {
+        /* if the resource does not have a body (which is different
+           from Content-Length:0), don't filter it */
+        http_response_handler_direct_response(handler, handler_ctx,
+                                              HTTP_STATUS_NO_CONTENT,
+                                              headers, NULL);
+        return;
+    }
+
     pid = beng_fork(pool, body, &response,
                     pipe_child_callback, NULL);
     if (pid < 0) {
