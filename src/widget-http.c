@@ -79,6 +79,16 @@ uri_path(const char *uri)
     return p;
 }
 
+static const char *
+widget_uri(struct widget *widget)
+{
+    const struct resource_address *address = widget_address(widget);
+    if (address == NULL || address->type != RESOURCE_ADDRESS_HTTP)
+        return NULL;
+
+    return uri_path(address->u.http->uri);
+}
+
 static struct strmap *
 widget_request_headers(struct embed *embed, bool with_body)
 {
@@ -91,7 +101,7 @@ widget_request_headers(struct embed *embed, bool with_body)
                                       embed->env->remote_host, with_body, false,
                                       session,
                                       embed->host_and_port,
-                                      uri_path(widget_address(embed->widget)->u.http->uri));
+                                      widget_uri(embed->widget));
 
     session_put(session);
 
