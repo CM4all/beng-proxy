@@ -122,7 +122,7 @@ uri_path(const char *uri)
 }
 
 static struct strmap *
-widget_request_headers(struct embed *embed, int with_body)
+widget_request_headers(struct embed *embed, bool with_body)
 {
     struct strmap *headers;
     struct session *session;
@@ -239,7 +239,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (body != NULL)
         istream_close(body);
 
-    headers = widget_request_headers(embed, 0);
+    headers = widget_request_headers(embed, false);
 
     resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
                  global_delegate_stock,
