@@ -66,11 +66,9 @@ session information may be managed by \emph{beng-proxy}.
 Since all widgets are put together into a single HTML page, all of the
 JavaScript runs in the same security context.  That will open the door
 for malicious widget servers, which are now able to take over the full
-web site, including all other widgets.  For that reason, JavaScript is
-only allowed for very few well-known and trusted widget servers.  For
-all other widget servers, JavaScript use is rejected, or it must be
-embedded in an IFRAME, which has technical and practical
-disadvantages.
+web site, including all other widgets.  For that reason, only
+well-known and trusted widget servers should be allowed to be inlined.
+All other widget must be embedded in an IFRAME in another domain.
 
 
 \subsection{Forms}
