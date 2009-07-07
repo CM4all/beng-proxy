@@ -75,10 +75,9 @@ disadvantages.
 
 \subsection{Forms}
 
-\emph{beng-proxy} itself does not use the HTTP query string or POST
-data.  All of it can be handed off to a widget.  To enable this,
-\emph{beng-proxy} rewrites forms, and remembers which widget server to
-send the data to.
+\emph{beng-proxy} itself does not use the query string and the request
+body.  Both is forwarded to the ``focused'' widget.  See \ref{rewrite}
+for information on widget focus.
 
 
 \section{Installation}
@@ -823,6 +822,7 @@ this variable for redirecting \\
 \end{tabular}
 
 \subsection{Relative URIs}
+\label{rewrite}
 
 Relative links are difficult with \emph{beng-proxy}, because the
 browser interprets links as relative to the document by default.  A
