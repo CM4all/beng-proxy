@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.6.3) unstable; urgency=low
   * widget-request: pass original HTTP method to widget
   * session: automatically defragment sessions
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 07 Jul 2009 16:57:22 +0200
 
 cm4all-beng-proxy (0.6.2) unstable; urgency=low
 
