@@ -781,6 +781,7 @@ http_client_request(pool_t caller_pool, int fd,
     };
 
     assert(fd >= 0);
+    assert(http_method_is_valid(method));
     assert(handler != NULL);
     assert(handler->response != NULL);
 

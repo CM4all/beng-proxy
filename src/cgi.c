@@ -407,6 +407,7 @@ cgi_run(bool jail, const char *interpreter, const char *action,
     const char *arg = NULL;
 
     assert(path != NULL);
+    assert(http_method_is_valid(method));
     assert(uri != NULL);
 
     if (script_name == NULL)

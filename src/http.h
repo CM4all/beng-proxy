@@ -48,6 +48,12 @@ typedef enum {
 
 extern const char *http_method_to_string_data[HTTP_METHOD_INVALID];
 
+static inline bool
+http_method_is_valid(http_method_t method)
+{
+    return method > HTTP_METHOD_NULL && method < HTTP_METHOD_INVALID;
+}
+
 static inline const char *
 http_method_to_string(http_method_t method)
 {

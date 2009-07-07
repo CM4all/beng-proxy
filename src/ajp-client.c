@@ -622,6 +622,8 @@ ajp_client_request(pool_t pool, int fd,
     istream_t request;
     size_t requested;
 
+    assert(http_method_is_valid(method));
+
     (void)headers; /* XXX */
 
     pool_ref(pool);

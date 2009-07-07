@@ -501,6 +501,8 @@ fcgi_client_request(pool_t caller_pool, int fd,
     pool_t pool;
     struct fcgi_client *client;
 
+    assert(http_method_is_valid(method));
+
     pool = pool_new_linear(caller_pool, "fcgi_client_request", 8192);
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
