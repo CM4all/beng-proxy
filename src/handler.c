@@ -121,7 +121,8 @@ translate_callback(const struct translate_response *response,
     request->resource_tag = resource_address_id(&response->address,
                                                 request->request->pool);
 
-    request->processor_focus = request_processor_enabled(request) &&
+    request->processor_focus = request->args != NULL &&
+        request_processor_enabled(request) &&
         strmap_get(request->args, "focus") != NULL;
 
     if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
