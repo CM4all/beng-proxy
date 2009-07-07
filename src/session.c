@@ -611,15 +611,19 @@ session_dup(struct dpool *pool, const struct session *src)
 
     dest->cookies = cookie_jar_dup(pool, src->cookies);
 
-    rwlock_wlock(&session_manager->lock);
     list_add(&dest->hash_siblings, session_slot(dest->id));
     ++session_manager->num_sessions;
-    rwlock_wunlock(&session_manager->lock);
 
     return dest;
 }
 
-struct session * __attr_malloc
+/**
+ * After a while the dpool may have fragmentations, and memory is
+ * wasted.  This function duplicates the session into a fresh dpool,
+ * and frees the old session instance.  Of course, this requires that
+ * there is enough free shared memory.
+ */
+static struct session * __attr_malloc
 session_defragment(struct session *src)
 {
     struct dpool *pool;
@@ -677,12 +681,51 @@ session_get(session_id_t id)
     return session;
 }
 
-void
-session_put(struct session *session)
+static void
+session_put_internal(struct session *session)
 {
     assert(num_locked_sessions-- > 0);
 
     lock_unlock(&session->lock);
+}
+
+static void
+session_defragment_id(session_id_t id)
+{
+    struct session *session = session_find(id);
+    if (session_find == NULL)
+        return;
+
+    /* unlock the session, because session_defragment() may call
+       session_remove(), and session_remove() expects the session to
+       be unlocked.  This is ok, because we're holding the session
+       manager lock at this point. */
+    session_put_internal(session);
+
+    session_defragment(session);
+}
+
+void
+session_put(struct session *session)
+{
+    session_id_t defragment;
+
+    defragment = (session->counter % 1024) == 0 &&
+        dpool_is_fragmented(session->pool)
+        ? session->id
+        : 0;
+
+    session_put_internal(session);
+
+    if (defragment != 0) {
+        /* the shared memory pool has become too fragmented;
+           defragment the session by duplicating it into a new shared
+           memory pool */
+
+        rwlock_wlock(&session_manager->lock);
+        session_defragment_id(defragment);
+        rwlock_wunlock(&session_manager->lock);
+    }
 }
 
 static struct widget_session *

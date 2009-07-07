@@ -163,18 +163,6 @@ bool
 session_set_language(struct session *session, const char *language);
 
 /**
- * After a while the dpool may have fragmentations, and memory is
- * wasted.  This function duplicates the session into a fresh dpool,
- * and frees the old session instance.  Of course, this requires that
- * there is enough free shared memory.
- *
- * The returned session is still locked, and must be unlocked with
- * session_put().
- */
-struct session * __attr_malloc
-session_defragment(struct session *src);
-
-/**
  * Finds the session with the specified id.  The returned object is
  * locked, and must be unlocked with session_put().
  */
