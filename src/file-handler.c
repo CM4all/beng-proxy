@@ -140,11 +140,8 @@ file_callback(struct request *request2)
 
     if (request->method != HTTP_METHOD_HEAD &&
         request->method != HTTP_METHOD_GET &&
-        (!request_processor_enabled(request2) ||
-         request->method != HTTP_METHOD_POST)) {
-        method_not_allowed(request2,
-                           request_processor_enabled(request2)
-                           ? "GET, HEAD, POST" : "GET, HEAD");
+        !request2->processor_focus) {
+        method_not_allowed(request2, "GET, HEAD");
         return;
     }
 
