@@ -637,13 +637,11 @@ session_defragment(struct session *src)
     return dest;
 }
 
-struct session *
-session_get(session_id_t id)
+static struct session *
+session_find(session_id_t id)
 {
     struct list_head *head = session_slot(id);
     struct session *session;
-
-    rwlock_rlock(&session_manager->lock);
 
     for (session = (struct session *)head->next;
          &session->hash_siblings != head;
@@ -655,16 +653,25 @@ session_get(session_id_t id)
             ++num_locked_sessions;
 #endif
             lock_lock(&session->lock);
-            rwlock_runlock(&session_manager->lock);
 
             session->expires = expiry_touch(SESSION_TTL);
             return session;
         }
     }
 
+    return NULL;
+}
+
+struct session *
+session_get(session_id_t id)
+{
+    struct session *session;
+
+    rwlock_rlock(&session_manager->lock);
+    session = session_find(id);
     rwlock_runlock(&session_manager->lock);
 
-    return NULL;
+    return session;
 }
 
 void
