@@ -645,13 +645,16 @@ body.  This is always correct for ``303 See Other'', but may not be
 for the other redirection types.  Widget servers should therefore
 always redirect with ``303 See Other'' as follow-up to a POST request.
 
-\subsection{POSTing}
+\subsection{POSTing and other methods}
 
 Making the browser send a request body with a POST request is
 possible.  It is recommended that you send a ``303 See Other''
 redirect as a response to a POST request.  Always reckon that
 \emph{beng-proxy} may request a resource multiple times, even without
 interaction of the browser.
+
+The same is true for other HTTP methods: \texttt{PUT}, \texttt{DELETE}
+and others are passed to the focused widget.
 
 \subsection{Session tracking}
 

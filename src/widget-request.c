@@ -98,12 +98,9 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
 
         widget->from_request.query_string = env->external_uri->query;
 
-        if (env->request_body != NULL) {
-            /* XXX which method? */
-            widget->from_request.method = HTTP_METHOD_POST;
-            widget->from_request.body = env->request_body;
-            env->request_body = NULL;
-        }
+        widget->from_request.method = env->method;
+        widget->from_request.body = env->request_body;
+        env->request_body = NULL;
     } else if (widget->parent->from_request.focus_ref != NULL &&
                strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
                widget->parent->from_request.focus_ref->next != NULL) {
