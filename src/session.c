@@ -706,7 +706,10 @@ session_put_internal(struct session *session)
     assert(session == locked_session);
 
     lock_unlock(&session->lock);
+
+#ifndef NDEBUG
     locked_session = NULL;
+#endif
 }
 
 static void
