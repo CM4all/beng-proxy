@@ -281,7 +281,11 @@ handle_http_request(struct client_connection *connection,
     request2->dump_widget_tree = NULL;
 #endif
     request2->body_consumed = false;
+
+#ifndef NDEBUG
     request2->response_sent = false;
+#endif
+
     request2->async_ref = async_ref;
 
     request_args_parse(request2);

@@ -45,7 +45,12 @@ struct request {
     const struct widget *dump_widget_tree;
 #endif
 
-    bool body_consumed, response_sent;
+    bool body_consumed;
+
+#ifndef NDEBUG
+    bool response_sent;
+#endif
+
     struct async_operation_ref *async_ref;
 };
 

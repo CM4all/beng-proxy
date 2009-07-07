@@ -222,7 +222,10 @@ response_dispatch_direct(struct request *request2,
         }
     }
 
+#ifndef NDEBUG
     request2->response_sent = true;
+#endif
+
     http_server_response(request2->request, status, headers, body);
 }
 
@@ -376,12 +379,16 @@ response_abort(void *ctx)
 {
     struct request *request = ctx;
 
-    if (!request->response_sent) {
-        request_discard_body(request);
-        http_server_send_message(request->request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Internal server error");
-    }
+    assert(!request->response_sent);
+
+#ifndef NDEBUG
+    request->response_sent = true;
+#endif
+
+    request_discard_body(request);
+    http_server_send_message(request->request,
+                             HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                             "Internal server error");
 }
 
 const struct http_response_handler response_handler = {
