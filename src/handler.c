@@ -121,6 +121,9 @@ translate_callback(const struct translate_response *response,
     request->resource_tag = resource_address_id(&response->address,
                                                 request->request->pool);
 
+    request->processor_focus = request_processor_enabled(request) &&
+        strmap_get(request->args, "focus") != NULL;
+
     if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
         file_callback(request);
     } else if (response->address.type == RESOURCE_ADDRESS_CGI) {
@@ -249,6 +252,8 @@ serve_document_root_file(struct request *request2,
     tr->address.u.local.content_type = NULL;
 
     request2->resource_tag = tr->address.u.local.path;
+    request2->processor_focus = process &&
+        strmap_get(request2->args, "focus") != NULL;
 
     file_callback(request2);
 }

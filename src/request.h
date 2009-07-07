@@ -47,6 +47,11 @@ struct request {
 
     bool body_consumed;
 
+    /**
+     * Is the processor active, and is there a focused widget?
+     */
+    bool processor_focus;
+
 #ifndef NDEBUG
     bool response_sent;
 #endif
