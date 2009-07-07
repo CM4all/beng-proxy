@@ -78,7 +78,7 @@ rwlock_wlock(struct rwlock *lock)
        because lock->write is locked */
 
     while (rwlock_is_rlocked(lock))
-        usleep(1);
+        g_usleep(1);
 }
 
 static inline void
