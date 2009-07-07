@@ -516,10 +516,9 @@ status.
 When proxying HTTP requests with the a \texttt{PROXY} packet,
 \emph{beng-proxy} forwards the request to the specified location,
 including the HTTP method and the request body.  There is one
-exception: if \texttt{PROCESS} is enabled and the original HTTP method
-is \texttt{POST}, the other HTTP server receives a \texttt{GET}
-request without a body, because the focused widget is going to receive
-the request body.
+exception: if \texttt{PROCESS} is enabled and a widget is focused, the
+other HTTP server receives a \texttt{GET} request without a body,
+because the focused widget is going to receive the request body.
 
 If the filter URL starts with a slash, \emph{beng-proxy} assumes it is
 the absolute path to a Unix socket.

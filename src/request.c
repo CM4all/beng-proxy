@@ -28,16 +28,6 @@ request_processor_enabled(const struct request *request)
     return false;
 }
 
-bool
-response_dispatcher_wants_body(const struct request *request)
-{
-    assert(http_server_request_has_body(request->request));
-    assert(!request->body_consumed);
-
-    return request->request->method == HTTP_METHOD_POST &&
-        request_processor_enabled(request);
-}
-
 void
 request_discard_body(struct request *request)
 {

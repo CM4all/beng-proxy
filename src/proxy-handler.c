@@ -25,9 +25,8 @@ proxy_handler(struct request *request2)
 
     /* send a request body? */
 
-    if (http_server_request_has_body(request) &&
-        response_dispatcher_wants_body(request2)) {
-        /* a request with a body - reserve it for the processor, and
+    if (request2->processor_focus) {
+        /* reserve method+body for the processor, and
            convert this request to a GET */
 
         method = HTTP_METHOD_GET;

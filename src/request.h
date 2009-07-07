@@ -79,9 +79,6 @@ request_processor_first(const struct request *request)
 bool
 request_processor_enabled(const struct request *request);
 
-bool
-response_dispatcher_wants_body(const struct request *request);
-
 /**
  * Discard the request body if it was not used yet.  Call this before
  * sending the response to the HTTP server library.
