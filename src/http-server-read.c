@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <unistd.h>
 
 static void
 http_server_parse_request_line(struct http_server_connection *connection,
@@ -84,6 +85,17 @@ http_server_parse_request_line(struct http_server_connection *connection,
     }
 
     space = memchr(line, ' ', eol - line);
+    if (unlikely(space == NULL || space + 6 > line + length ||
+                 memcmp(space + 1, "HTTP/", 5) != 0)) {
+        /* refuse HTTP 0.9 requests */
+        static const char msg[] =
+            "This server requires HTTP 1.1.";
+
+        write(connection->fd, msg, sizeof(msg) - 1);
+        http_server_connection_close(connection);
+        return;
+    }
+
     if (unlikely(space == NULL))
         space = eol;
 
@@ -92,7 +104,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
     connection->request.request->uri = p_strndup(connection->request.request->pool, line, space - line);
     connection->request.read_state = READ_HEADERS;
     connection->request.http_1_1 = space + 9 <= line + length &&
-        memcmp(space, " HTTP/1.1", 9) == 0;
+        memcmp(space + 6, "1.1", 3) == 0;
 }
 
 static void
