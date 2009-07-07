@@ -39,6 +39,14 @@ http_server_parse_request_line(struct http_server_connection *connection,
     eol = line + length;
 
     switch (line[0]) {
+    case 'D':
+        if (likely(line[1] == 'E' && line[2] == 'L' && line[3] == 'E' &&
+                   line[4] == 'T' && line[5] == 'E' && line[6] == ' ')) {
+            method = HTTP_METHOD_DELETE;
+            line += 7;
+        }
+        break;
+
     case 'G':
         if (likely(line[1] == 'E' && line[2] == 'T' && line[3] == ' ')) {
             method = HTTP_METHOD_GET;
