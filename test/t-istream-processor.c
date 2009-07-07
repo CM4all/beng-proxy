@@ -81,7 +81,7 @@ create_test(pool_t pool, istream_t input)
                        &parsed_uri,
                        NULL,
                        session->id,
-                       NULL,
+                       HTTP_METHOD_GET, NULL,
                        NULL);
     session_put(session);
 

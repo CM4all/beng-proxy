@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
                        &parsed_uri,
                        NULL,
                        0xdeadbeef,
-                       NULL,
+                       HTTP_METHOD_GET, NULL,
                        NULL);
 
     ws = widget_stream_new(pool);

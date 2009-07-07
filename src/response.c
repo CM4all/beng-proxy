@@ -151,7 +151,7 @@ response_invoke_processor(struct request *request2,
                        &request2->uri,
                        request2->args,
                        request2->session_id,
-                       request->headers,
+                       request->method, request->headers,
                        request_body);
 
 #ifdef DUMP_WIDGET_TREE

@@ -15,6 +15,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    const struct parsed_uri *uri,
                    struct strmap *args,
                    session_id_t session_id,
+                   http_method_t method,
                    struct strmap *request_headers,
                    istream_t request_body)
 {
@@ -32,6 +33,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
     else
         env->args = args;
 
+    env->method = method;
     env->request_headers = request_headers;
     env->request_body = request_body;
 

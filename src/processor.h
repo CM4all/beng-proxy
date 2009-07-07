@@ -40,6 +40,11 @@ struct processor_env {
     /** semicolon-arguments in the external URI */
     struct strmap *args;
 
+    /**
+     * The HTTP method of the original request.
+     */
+    http_method_t method;
+
     struct strmap *request_headers;
 
     istream_t request_body;
@@ -56,6 +61,7 @@ processor_env_init(pool_t pool,
                    const struct parsed_uri *uri,
                    struct strmap *args,
                    session_id_t session_id,
+                   http_method_t method,
                    struct strmap *request_headers,
                    istream_t request_body);
 
