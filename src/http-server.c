@@ -169,11 +169,14 @@ http_server_connection_new(pool_t pool, int fd,
 static void
 http_server_request_close(struct http_server_connection *connection)
 {
+    pool_t pool;
+
     assert(connection->request.read_state != READ_START);
     assert(connection->request.request != NULL);
 
-    pool_unref(connection->request.request->pool);
-    pool_trash(connection->request.request->pool);
+    pool = connection->request.request->pool;
+    pool_unref(pool);
+    pool_trash(pool);
     connection->request.request = NULL;
 
     if ((connection->request.read_state == READ_BODY ||
