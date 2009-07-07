@@ -21,10 +21,12 @@ proxy_handler(struct request *request2)
     istream_t body;
     struct strmap *headers;
 
+    assert(!request2->body_consumed);
+
     /* send a request body? */
 
     if (http_server_request_has_body(request) &&
-        (response_dispatcher_wants_body(request2) || request2->body_consumed)) {
+        response_dispatcher_wants_body(request2)) {
         /* a request with a body - reserve it for the processor, and
            convert this request to a GET */
 
