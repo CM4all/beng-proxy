@@ -25,8 +25,4 @@ const char *
 uri_delete_query_string(pool_t pool, const char *uri,
                         const char *needle, size_t needle_length);
 
-bool
-uri_forward_query_string(pool_t pool, const char *uri,
-                         const char *needle, size_t needle_length);
-
 #endif
