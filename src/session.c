@@ -59,7 +59,12 @@ static struct session_manager *session_manager;
 static struct event session_cleanup_event;
 
 #ifndef NDEBUG
-static unsigned num_locked_sessions;
+/**
+ * A process must not lock more than one session at a time, or it will
+ * risk deadlocking itself.  For the assertions in this source, this
+ * variable holds a reference to the locked session.
+ */
+static const struct session *locked_session;
 #endif
 
 static void
@@ -93,6 +98,8 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
     unsigned i;
     struct session *session, *next;
     bool non_empty;
+
+    assert(locked_session == NULL);
 
     ret = clock_gettime(CLOCK_MONOTONIC, &now);
     if (ret < 0) {
@@ -177,6 +184,8 @@ session_manager_destroy(struct session_manager *sm)
 {
     unsigned i;
 
+    assert(locked_session == NULL);
+
     rwlock_wlock(&sm->lock);
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
@@ -195,7 +204,7 @@ session_manager_deinit(void)
 {
     assert(session_manager != NULL);
     assert(session_manager->shm != NULL);
-    assert(num_locked_sessions == 0);
+    assert(locked_session == NULL);
 
     event_del(&session_cleanup_event);
 
@@ -265,6 +274,8 @@ session_manager_purge(void)
     /* collect at most 256 sessions */
     struct session *sessions[256];
     unsigned num_sessions = 0, highest_score = 0;
+
+    assert(locked_session == NULL);
 
     rwlock_wlock(&session_manager->lock);
 
@@ -343,6 +354,8 @@ session_new(void)
     struct session *session;
     unsigned num_sessions;
 
+    assert(locked_session == NULL);
+
     ret = clock_gettime(CLOCK_MONOTONIC, &now);
     if (ret < 0) {
         daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
@@ -387,7 +400,7 @@ session_new(void)
     num_sessions = session_manager->num_sessions;
 
 #ifndef NDEBUG
-    ++num_locked_sessions;
+    locked_session = session;
 #endif
     lock_lock(&session->lock);
     rwlock_wunlock(&session_manager->lock);
@@ -574,6 +587,8 @@ session_dup(struct dpool *pool, const struct session *src)
 {
     struct session *dest;
 
+    assert(locked_session == NULL);
+
     dest = d_malloc(pool, sizeof(*dest));
     if (dest == NULL)
         return NULL;
@@ -649,6 +664,8 @@ session_find(session_id_t id)
     struct list_head *head = session_slot(id);
     struct session *session;
 
+    assert(locked_session == NULL);
+
     for (session = (struct session *)head->next;
          &session->hash_siblings != head;
          session = (struct session *)session->hash_siblings.next) {
@@ -656,7 +673,7 @@ session_find(session_id_t id)
 
         if (session->id == id) {
 #ifndef NDEBUG
-            ++num_locked_sessions;
+            locked_session = session;
 #endif
             lock_lock(&session->lock);
 
@@ -674,6 +691,8 @@ session_get(session_id_t id)
 {
     struct session *session;
 
+    assert(locked_session == NULL);
+
     rwlock_rlock(&session_manager->lock);
     session = session_find(id);
     rwlock_runlock(&session_manager->lock);
@@ -684,9 +703,10 @@ session_get(session_id_t id)
 static void
 session_put_internal(struct session *session)
 {
-    assert(num_locked_sessions-- > 0);
+    assert(session == locked_session);
 
     lock_unlock(&session->lock);
+    locked_session = NULL;
 }
 
 static void
