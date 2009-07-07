@@ -203,6 +203,7 @@ http_server_connection_close(struct http_server_connection *connection)
 
     if (connection->fd >= 0) {
         event2_set(&connection->event, 0);
+        event2_commit(&connection->event);
         close(connection->fd);
         connection->fd = -1;
     }
