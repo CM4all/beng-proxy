@@ -55,7 +55,7 @@ struct request {
 };
 
 static inline bool
-request_transformation_enabled(struct request *request)
+request_transformation_enabled(const struct request *request)
 {
     return request->translate.response->views->transformation != NULL;
 }
@@ -64,7 +64,7 @@ request_transformation_enabled(struct request *request)
  * Returns true if the first transformation (if any) is the processor.
  */
 static inline bool
-request_processor_first(struct request *request)
+request_processor_first(const struct request *request)
 {
     return request_transformation_enabled(request) &&
         request->translate.response->views->transformation->type
@@ -72,10 +72,10 @@ request_processor_first(struct request *request)
 }
 
 bool
-request_processor_enabled(struct request *request);
+request_processor_enabled(const struct request *request);
 
 bool
-response_dispatcher_wants_body(struct request *request);
+response_dispatcher_wants_body(const struct request *request);
 
 /**
  * Discard the request body if it was not used yet.  Call this before

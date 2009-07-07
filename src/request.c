@@ -15,7 +15,7 @@
 #include <daemon/log.h>
 
 bool
-request_processor_enabled(struct request *request)
+request_processor_enabled(const struct request *request)
 {
     const struct transformation *transformation;
 
@@ -29,7 +29,7 @@ request_processor_enabled(struct request *request)
 }
 
 bool
-response_dispatcher_wants_body(struct request *request)
+response_dispatcher_wants_body(const struct request *request)
 {
     assert(http_server_request_has_body(request->request));
     assert(!request->body_consumed);
