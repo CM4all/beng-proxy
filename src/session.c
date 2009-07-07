@@ -374,6 +374,7 @@ session_new(void)
     lock_init(&session->lock);
     session->id = session_generate_id();
     session->expires = now.tv_sec + SESSION_TTL_NEW;
+    session->counter = 1;
     session->translate = NULL;
     session->widgets = NULL;
     session->cookies = cookie_jar_new(pool);
@@ -581,6 +582,7 @@ session_dup(struct dpool *pool, const struct session *src)
     lock_init(&dest->lock);
     dest->id = src->id;
     dest->expires = src->expires;
+    dest->counter = 1;
     dest->cookie_sent = src->cookie_sent;
     dest->cookie_received = src->cookie_received;
 
@@ -655,6 +657,7 @@ session_find(session_id_t id)
             lock_lock(&session->lock);
 
             session->expires = expiry_touch(SESSION_TTL);
+            ++session->counter;
             return session;
         }
     }

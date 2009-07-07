@@ -58,6 +58,11 @@ struct session {
     /** when will this session expire? */
     time_t expires;
 
+    /**
+     * Counts how often this session has been used.
+     */
+    unsigned counter;
+
     /** is this a new session, i.e. there hasn't been a second request
         yet? */
     bool new;
