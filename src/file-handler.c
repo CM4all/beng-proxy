@@ -99,6 +99,23 @@ make_etag(char *p, const struct stat *st)
     *p = 0;
 }
 
+static void
+method_not_allowed(struct request *request2, const char *allow)
+{
+    struct http_server_request *request = request2->request;
+    struct growing_buffer *headers = growing_buffer_new(request->pool, 128);
+
+    assert(allow != NULL);
+
+    header_write(headers, "content-type", "text/plain");
+    header_write(headers, "allow", allow);
+
+    request_discard_body(request2);
+    http_server_response(request, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
+                         istream_string_new(request->pool,
+                                            "This method is not allowed."));
+}
+
 void
 file_callback(struct request *request2)
 {
@@ -125,16 +142,9 @@ file_callback(struct request *request2)
         request->method != HTTP_METHOD_GET &&
         (!request_processor_enabled(request2) ||
          request->method != HTTP_METHOD_POST)) {
-        headers = growing_buffer_new(request->pool, 40);
-        header_write(headers, "content-type", "text/plain");
-        header_write(headers, "allow",
-                     request_processor_enabled(request2)
-                     ? "GET, HEAD, POST" : "GET, HEAD");
-
-        request_discard_body(request2);
-        http_server_response(request, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
-                             istream_string_new(request->pool,
-                                                "This method is not allowed."));
+        method_not_allowed(request2,
+                           request_processor_enabled(request2)
+                           ? "GET, HEAD, POST" : "GET, HEAD");
         return;
     }
 
