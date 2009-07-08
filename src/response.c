@@ -201,7 +201,8 @@ response_dispatch_direct(struct request *request2,
 
     request_discard_body(request2);
 
-    header_write(headers, "server", "beng-proxy v" VERSION);
+    /* RFC 2616 3.8: Product Tokens */
+    header_write(headers, "server", "beng-proxy/" VERSION);
 
     if (request2->send_session_cookie) {
         char session_id[9];
