@@ -19,6 +19,7 @@
 
 #include <daemon/log.h>
 #include <socket/address.h>
+#include <socket/resolver.h>
 
 #include <glib.h>
 
@@ -33,6 +34,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <netdb.h>
 
 enum packet_reader_result {
     PACKET_READER_EOF,
@@ -313,33 +315,23 @@ translate_add_transformation(struct translate_client *client)
 }
 
 static bool
-parse_address_string(struct sockaddr_in *sin, const char *p)
+parse_address_string(struct uri_with_address *address, const char *p)
 {
+    struct addrinfo hints, *ai;
     int ret;
-    const char *colon;
-    char ip[32];
-    int port = 80;
 
-    colon = strchr(p, ':');
-    if (colon != NULL) {
-        if (colon >= p + sizeof(ip))
-            /* too long */
-            return false;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_NUMERICHOST;
+    hints.ai_socktype = SOCK_STREAM;
 
-        memcpy(ip, p, colon - p);
-        ip[colon - p] = 0;
-        p = ip;
-
-        port = atoi(colon + 1);
-    }
-
-    ret = inet_aton(p, &sin->sin_addr);
-    if (!ret)
+    ret = socket_resolve_host_port(p, 80, &hints, &ai);
+    if (ret != 0)
         return false;
 
-    sin->sin_family = AF_INET;
-    sin->sin_port = htons(port);
-    memset(&sin->sin_zero, 0, sizeof(sin->sin_zero));
+    for (const struct addrinfo *i = ai; i != NULL; i = i->ai_next)
+        uri_address_add(address, i->ai_addr, i->ai_addrlen);
+
+    freeaddrinfo(ai);
     return true;
 }
 
@@ -720,17 +712,13 @@ translate_handle_packet(struct translate_client *client,
         }
 
         {
-            struct sockaddr_in sin;
             bool ret;
 
-            ret = parse_address_string(&sin, payload);
+            ret = parse_address_string(client->resource_address->u.http, payload);
             if (!ret) {
                 daemon_log(2, "malformed TRANSLATE_ADDRESS_STRING packet\n");
                 break;
             }
-
-            uri_address_add(client->resource_address->u.http,
-                            (const struct sockaddr *)&sin, sizeof(sin));
         }
 
         break;
