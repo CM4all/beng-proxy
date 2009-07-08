@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.6.4) unstable; urgency=low
 
   * http-client: don't read response body in HEAD requests
+  * ajp-client: invoke the "abort" handler on error
 
  --
 
