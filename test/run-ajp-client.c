@@ -158,7 +158,6 @@ int main(int argc, char **argv) {
     /* connect socket */
 
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
     ret = socket_resolve_host_port(argv[1], 8009, &hints, &ai);
