@@ -62,6 +62,7 @@ udp_new(pool_t pool, const char *host_and_port, int default_port,
     assert(host_and_port != NULL);
 
     memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_PASSIVE;
     hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_DGRAM;
 
