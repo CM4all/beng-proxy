@@ -220,7 +220,7 @@ int main(int argc, char **argv) {
 
     event_dispatch();
 
-    assert(ctx.body_eof || ctx.body_abort);
+    assert(ctx.body_eof || ctx.body_abort || ctx.aborted);
 
     /* cleanup */
 
