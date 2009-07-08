@@ -364,6 +364,27 @@ test_body_fail(pool_t pool, struct context *c)
     assert(c->aborted);
 }
 
+static void
+test_head(pool_t pool, struct context *c)
+{
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, &my_lease, c,
+                        HTTP_METHOD_HEAD, "/foo", NULL,
+                        istream_string_new(pool, "foobar"),
+                        &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->fd < 0);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+}
+
 
 /*
  * main
@@ -402,6 +423,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_request_body_early);
     run_test(pool, test_data_blocking);
     run_test(pool, test_body_fail);
+    run_test(pool, test_head);
 
     pool_unref(pool);
     pool_commit();

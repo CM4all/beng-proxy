@@ -55,6 +55,14 @@ struct http_client {
             READ_HEADERS,
             READ_BODY,
         } read_state;
+
+        /**
+         * This flag is true in HEAD requests.  HEAD responses may
+         * contain a Content-Length header, but no response body will
+         * follow (RFC 2616 4.3).
+         */
+        bool no_body;
+
         bool http_1_1;
         http_status_t status;
         struct strmap *headers;
@@ -316,7 +324,8 @@ http_client_headers_finished(struct http_client *client)
         (header_connection != NULL &&
          strcasecmp(header_connection, "keep-alive") == 0);
 
-    if (http_status_is_empty(client->response.status)) {
+    if (http_status_is_empty(client->response.status) ||
+        client->response.no_body) {
         client->response.body = NULL;
         client->response.read_state = READ_BODY;
         return true;
@@ -793,6 +802,7 @@ http_client_request(pool_t caller_pool, int fd,
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
 
     client->response.read_state = READ_NONE;
+    client->response.no_body = method == HTTP_METHOD_HEAD;
 
     event2_init(&client->event, client->fd,
                 http_client_event_callback, client,
