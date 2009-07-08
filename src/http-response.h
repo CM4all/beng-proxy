@@ -87,6 +87,7 @@ http_response_handler_invoke_response(struct http_response_handler_ref *ref,
     assert(ref != NULL);
     assert(ref->handler != NULL);
     assert(ref->handler->response != NULL);
+    assert(!http_status_is_empty(status) || body == NULL);
 
     handler = ref->handler;
 #ifndef NDEBUG
