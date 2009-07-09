@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.6.4) unstable; urgency=low
   * ajp-client: invoke the "abort" handler on error
   * filter-cache: lock cache items while they are served
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 09 Jul 2009 14:36:14 +0200
 
 cm4all-beng-proxy (0.6.3) unstable; urgency=low
 
