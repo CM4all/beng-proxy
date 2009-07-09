@@ -45,7 +45,7 @@ append_etag(pool_t pool, const char *in, const char *suffix)
         return p_strcat(pool, in, suffix, NULL);
 
     return p_strncat(pool, in, length, suffix, strlen(suffix),
-                     "\"", 1, NULL);
+                     "\"", (size_t)1, NULL);
 }
 
 static inline unsigned
