@@ -228,12 +228,6 @@ filter_cache_response_evaluate(struct filter_cache_info *info,
     return true;
 }
 
-static void
-filter_cache_serve(struct filter_cache_item *item,
-                   pool_t pool, istream_t body,
-                   const struct http_response_handler *handler,
-                   void *handler_ctx);
-
 
 /*
  * istream handler
@@ -473,7 +467,7 @@ filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
 }
 
 static void
-filter_cache_serve(struct filter_cache_item *item,
+filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
                    pool_t pool, istream_t body,
                    const struct http_response_handler *handler,
                    void *handler_ctx)
@@ -494,17 +488,21 @@ filter_cache_serve(struct filter_cache_item *item,
         ? istream_memory_new(pool, item->data, item->item.size)
         : istream_null_new(pool);
 
+    response_body = istream_unlock_new(pool, response_body,
+                                       cache->cache, &item->item);
+
     http_response_handler_invoke_response(&handler_ref, item->status,
                                           item->headers, response_body);
 }
 
 static void
-filter_cache_found(struct filter_cache_item *item,
+filter_cache_found(struct filter_cache *cache,
+                   struct filter_cache_item *item,
                    pool_t pool, istream_t body,
                    const struct http_response_handler *handler,
                    void *handler_ctx)
 {
-    filter_cache_serve(item, pool, body, handler, handler_ctx);
+    filter_cache_serve(cache, item, pool, body, handler, handler_ctx);
 }
 
 void
@@ -529,7 +527,7 @@ filter_cache_request(struct filter_cache *cache,
                               address, status, headers, body,
                               handler, handler_ctx, async_ref);
         else
-            filter_cache_found(item, pool, body,
+            filter_cache_found(cache, item, pool, body,
                                handler, handler_ctx);
     } else {
         resource_get(NULL, cache->tcp_stock, cache->fcgi_stock, NULL,
