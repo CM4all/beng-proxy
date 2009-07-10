@@ -68,7 +68,8 @@ shm_new(size_t page_size, unsigned num_pages)
 
     header_pages = calc_header_pages(page_size, num_pages);
     p = mmap(NULL, page_size * (header_pages + num_pages),
-             PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED, -1, 0);
+             PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED|MAP_NORESERVE,
+             -1, 0);
     if (p == NULL)
         return NULL;
 
