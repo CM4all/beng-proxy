@@ -751,6 +751,24 @@ session_put(struct session *session)
     }
 }
 
+void
+session_delete(session_id_t id)
+{
+    struct session *session;
+
+    assert(locked_session == NULL);
+
+    rwlock_wlock(&session_manager->lock);
+
+    session = session_find(id);
+    if (session != NULL) {
+        session_put_internal(session);
+        session_remove(session);
+    }
+
+    rwlock_wunlock(&session_manager->lock);
+}
+
 static struct widget_session *
 hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
                              const char *id, bool create)

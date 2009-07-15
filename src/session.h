@@ -175,6 +175,13 @@ session_get(session_id_t id);
 void
 session_put(struct session *session);
 
+/**
+ * Deletes the session with the specified id.  The current process
+ * must not hold a sssion lock.
+ */
+void
+session_delete(session_id_t id);
+
 struct widget_session *
 session_get_widget(struct session *session, const char *id, bool create);
 
