@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.6.5) unstable; urgency=low
   * proxy-handler: support cookies
   * translation: added DISCARD_SESSION packet
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 15 Jul 2009 18:00:33 +0200
 
 cm4all-beng-proxy (0.6.4) unstable; urgency=low
 
