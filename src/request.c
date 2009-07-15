@@ -186,3 +186,16 @@ request_make_session(struct request *request)
 
     return session;
 }
+
+void
+request_discard_session(struct request *request)
+{
+    if (request->session_id == 0)
+        return;
+
+    if (request->args != NULL)
+        strmap_remove(request->args, "session");
+
+    session_delete(request->session_id);
+    request->session_id = 0;
+}

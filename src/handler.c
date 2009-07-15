@@ -31,6 +31,9 @@ translate_callback(const struct translate_response *response,
     struct request *request = ctx;
     struct session *session;
 
+    if (response->discard_session)
+        request_discard_session(request);
+
     request->translate.response = response;
     request->translate.transformation = response->views != NULL
         ? response->views->transformation

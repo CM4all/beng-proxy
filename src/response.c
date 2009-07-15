@@ -221,6 +221,12 @@ response_dispatch_direct(struct request *request2,
             session->cookie_sent = true;
             session_put(session);
         }
+    } else if (request2->translate.response->discard_session &&
+               request2->session_id == 0) {
+        /* delete the cookie for the discarded session */
+        header_write(headers, "set-cookie",
+                     "beng_proxy_session=; Discard; HttpOnly; "
+                     "Path=/; Max-Age=0; Version=1");
     }
 
 #ifndef NDEBUG

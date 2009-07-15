@@ -103,6 +103,9 @@ request_get_session(struct request *request)
 struct session *
 request_make_session(struct request *request);
 
+void
+request_discard_session(struct request *request);
+
 
 struct growing_buffer;
 
