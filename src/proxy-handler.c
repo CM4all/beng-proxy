@@ -11,6 +11,101 @@
 #include "uri-address.h"
 #include "global.h"
 #include "header-forward.h"
+#include "cookie-client.h"
+
+static const char *
+uri_host_and_port(pool_t pool, const char *uri)
+{
+    const char *slash;
+
+    if (memcmp(uri, "http://", 7) != 0)
+        return NULL;
+
+    uri += 7;
+    slash = strchr(uri, '/');
+    if (slash == NULL)
+        return uri;
+
+    return p_strndup(pool, uri, slash - uri);
+}
+
+static const char *
+uri_path(const char *uri)
+{
+    const char *p = strchr(uri, ':');
+    if (p == NULL || p[1] != '/')
+        return uri;
+    if (p[2] != '/')
+        return p + 1;
+    p = strchr(p + 3, '/');
+    if (p == NULL)
+        return "";
+    return p;
+}
+
+static void
+proxy_collect_cookies(struct request *request2, const struct strmap *headers,
+                      const char *uri)
+{
+    const char *key = "set-cookie2";
+    const char *cookies, *host_and_port;
+    struct session *session;
+
+    if (headers == NULL)
+        return;
+
+    cookies = strmap_get(headers, key);
+    if (cookies == NULL) {
+        key = "set-cookie";
+        cookies = strmap_get(headers, key);
+        if (cookies == NULL)
+            return;
+    }
+
+    host_and_port = uri_host_and_port(request2->request->pool, uri);
+    if (host_and_port == NULL)
+        return;
+
+    session = request_make_session(request2);
+    if (session == NULL)
+        return;
+
+    do {
+        cookie_jar_set_cookie2(session->cookies, cookies, host_and_port);
+
+        cookies = strmap_get_next(headers, key, cookies);
+    } while (cookies != NULL);
+
+    session_put(session);
+}
+
+static void
+proxy_response(http_status_t status, struct strmap *headers,
+               istream_t body, void *ctx)
+{
+    struct request *request2 = ctx;
+    const struct translate_response *tr = request2->translate.response;
+
+    assert(tr->address.type == RESOURCE_ADDRESS_HTTP);
+
+    proxy_collect_cookies(request2, headers, tr->address.u.http->uri);
+
+    http_response_handler_direct_response(&response_handler, request2,
+                                          status, headers, body);
+}
+
+static void
+proxy_abort(void *ctx)
+{
+    struct request *request2 = ctx;
+
+    http_response_handler_direct_abort(&response_handler, request2);
+}
+
+static const struct http_response_handler proxy_response_handler = {
+    .response = proxy_response,
+    .abort = proxy_abort,
+};
 
 void
 proxy_handler(struct request *request2)
@@ -19,9 +114,11 @@ proxy_handler(struct request *request2)
     const struct translate_response *tr = request2->translate.response;
     http_method_t method;
     istream_t body;
+    struct session *session;
     struct strmap *headers;
 
     assert(!request2->body_consumed);
+    assert(tr->address.type == RESOURCE_ADDRESS_HTTP);
 
     /* send a request body? */
 
@@ -41,15 +138,21 @@ proxy_handler(struct request *request2)
 
     /* generate request headers */
 
+    session = request_get_session(request2);
     headers = forward_request_headers(request->pool, request->headers,
                                       request->remote_host, body != NULL,
                                       !request_processor_enabled(request2),
-                                      NULL, NULL, NULL);
+                                      session,
+                                      uri_host_and_port(request->pool,
+                                                        tr->address.u.http->uri),
+                                      uri_path(tr->address.u.http->uri));
+    if (session != NULL)
+        session_put(session);
 
     /* do it */
 
     http_cache_request(global_http_cache, request->pool,
                        method, tr->address.u.http, headers, body,
-                       &response_handler, request2,
+                       &proxy_response_handler, request2,
                        request2->async_ref);
 }
