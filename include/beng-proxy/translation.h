@@ -56,6 +56,7 @@ enum beng_translation_command {
     TRANSLATE_LOCAL_ADDRESS = 43,
     TRANSLATE_LOCAL_ADDRESS_STRING = 44,
     TRANSLATE_APPEND = 45,
+    TRANSLATE_DISCARD_SESSION = 46,
 };
 
 struct beng_translation_header {

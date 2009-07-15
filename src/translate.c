@@ -811,6 +811,9 @@ translate_handle_packet(struct translate_client *client,
 
         client->resource_address->u.cgi.args[client->resource_address->u.cgi.num_args++] = payload;
         break;
+
+    case TRANSLATE_DISCARD_SESSION:
+        break;
     }
 
     return true;
