@@ -49,6 +49,8 @@ struct translate_response {
     const char *host;
     bool stateful;
 
+    bool discard_session;
+
     const char *session;
 
     const char *user;

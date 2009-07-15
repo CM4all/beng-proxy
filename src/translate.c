@@ -813,6 +813,7 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_DISCARD_SESSION:
+        client->response.discard_session = true;
         break;
     }
 

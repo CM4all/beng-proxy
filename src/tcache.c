@@ -132,6 +132,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->redirect = p_strdup_checked(pool, src->redirect);
     dest->host = p_strdup_checked(pool, src->host);
     dest->stateful = src->stateful;
+    dest->discard_session = src->discard_session;
     dest->session = NULL;
 
     /* The "user" attribute must not be present in cached responses,
