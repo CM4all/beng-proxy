@@ -129,6 +129,9 @@ class Translation(Protocol):
             self._handle_local_file(path + uri[19:], response)
         elif uri[:11] == '/cfatest01/':
             response.proxy('http://cfatest01.intern.cm-ag/' + uri[11:])
+        elif uri == '/discard':
+            response.packet(TRANSLATE_DISCARD_SESSION)
+            response.status(204)
         else:
             self._handle_local_file('/var/www' + uri, response)
 
