@@ -47,10 +47,9 @@ translate_callback(const struct translate_response *response,
         return;
     }
 
-    if (request->session_id != 0 &&
-        (response->session != NULL || response->user != NULL ||
-         response->language != NULL || response->views->transformation != NULL))
-        session = session_get(request->session_id);
+    if (response->session != NULL || response->user != NULL ||
+        response->language != NULL || response->views->transformation != NULL)
+        session = request_get_session(request);
     else
         session = NULL;
 

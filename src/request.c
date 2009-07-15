@@ -73,7 +73,7 @@ request_get_cookies(struct request *request)
 }
 
 static struct session *
-request_get_session(struct request *request, const char *session_id)
+request_load_session(struct request *request, const char *session_id)
 {
     struct session *session;
 
@@ -82,10 +82,7 @@ request_get_session(struct request *request, const char *session_id)
     assert(session_id != NULL);
 
     request->session_id = session_id_parse(session_id);
-    if (request->session_id == 0)
-        return NULL;
-
-    session = session_get(request->session_id);
+    session = request_get_session(request);
     if (session == NULL)
         return NULL;
 
@@ -135,7 +132,7 @@ request_determine_session(struct request *request)
         cookie_received = true;
     }
 
-    session = request_get_session(request, session_id);
+    session = request_load_session(request, session_id);
     if (session == NULL) {
         if (!cookie_received && request->args != NULL)
             /* remove invalid session id from URI args */
@@ -169,11 +166,9 @@ request_make_session(struct request *request)
 
     assert(request != NULL);
 
-    if (request->session_id != 0) {
-        session = session_get(request->session_id);
-        if (session != NULL)
-            return session;
-    }
+    session = request_get_session(request);
+    if (session != NULL)
+        return session;
 
     session = session_new();
     if (session == NULL) {

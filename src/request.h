@@ -92,6 +92,14 @@ request_args_parse(struct request *request);
 void
 request_determine_session(struct request *request);
 
+static inline struct session *
+request_get_session(struct request *request)
+{
+    return request->session_id != 0
+        ? session_get(request->session_id)
+        : NULL;
+}
+
 struct session *
 request_make_session(struct request *request);
 
