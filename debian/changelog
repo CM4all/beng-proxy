@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.6.6) unstable; urgency=low
 
   * added missing GLib build dependency
+  * cgi-handler: set the "body_consumed" flag
 
  --
 

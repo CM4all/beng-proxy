@@ -16,6 +16,10 @@ cgi_handler(struct request *request2)
     const struct translate_response *tr = request2->translate.response;
     const char *query_string, *document_root;
 
+    assert(!request2->body_consumed);
+
+    request2->body_consumed = true;
+
     query_string = strchr(request->uri, '?');
     if (query_string == NULL)
         query_string = "";
