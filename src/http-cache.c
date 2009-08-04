@@ -34,7 +34,7 @@ static const off_t cacheable_size_limit = 256 * 1024;
 struct http_cache {
     pool_t pool;
     struct cache *cache;
-    struct hstock *stock;
+    struct hstock *tcp_stock;
 
     struct list_head requests;
 };
@@ -738,7 +738,7 @@ http_cache_new(pool_t pool, size_t max_size,
     cache->pool = pool;
     cache->cache = cache_new(pool, &http_cache_class,
                              65521, max_size);
-    cache->stock = tcp_stock;
+    cache->tcp_stock = tcp_stock;
 
     list_init(&cache->requests);
 
@@ -816,7 +816,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     async_ref_set(async_ref, &request->operation);
 
     pool_ref(caller_pool);
-    http_request(pool, cache->stock,
+    http_request(pool, cache->tcp_stock,
                  method, uwa,
                  headers == NULL ? NULL : headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
@@ -894,7 +894,7 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     async_ref_set(async_ref, &request->operation);
 
     pool_ref(caller_pool);
-    http_request(pool, cache->stock,
+    http_request(pool, cache->tcp_stock,
                  method, uwa,
                  headers_dup(pool, headers), body,
                  &http_cache_response_handler, request,
@@ -969,7 +969,7 @@ http_cache_request(struct http_cache *cache,
         headers2 = headers == NULL
             ? NULL : headers_dup(pool, headers);
 
-        http_request(pool, cache->stock,
+        http_request(pool, cache->tcp_stock,
                      method, uwa,
                      headers2, body,
                      handler, handler_ctx,
