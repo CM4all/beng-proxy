@@ -159,7 +159,8 @@ growing_buffer_consume(struct growing_buffer *gb, size_t length)
 }
 
 void *
-growing_buffer_dup(struct growing_buffer *gb, pool_t pool, size_t *length_r)
+growing_buffer_dup(const struct growing_buffer *gb, pool_t pool,
+                   size_t *length_r)
 {
     const struct buffer *buffer;
     unsigned char *dest;
