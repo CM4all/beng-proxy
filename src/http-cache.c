@@ -135,7 +135,7 @@ http_cache_info_new(pool_t pool)
 static struct http_cache_info *
 http_cache_request_evaluate(pool_t pool,
                             http_method_t method, const char *uri,
-                            struct strmap *headers,
+                            const struct strmap *headers,
                             istream_t body)
 {
     struct http_cache_info *info = NULL;
@@ -208,7 +208,7 @@ vary_fits(struct strmap *vary, const struct strmap *headers)
  */
 static bool
 http_cache_item_fits(const struct http_cache_item *item,
-                     struct strmap *headers)
+                     const struct strmap *headers)
 {
     return item->vary == NULL || vary_fits(item->vary, headers);
 }
@@ -274,7 +274,8 @@ http_cache_request_dup(pool_t pool, const struct http_cache_request *src)
  * new strmap.
  */
 static struct strmap *
-http_cache_copy_vary(pool_t pool, const char *vary, struct strmap *headers)
+http_cache_copy_vary(pool_t pool, const char *vary,
+                     const struct strmap *headers)
 {
     struct strmap *dest = strmap_new(pool, 16);
     struct pool_mark mark;
@@ -373,7 +374,7 @@ parse_translate_time(const char *p, time_t offset)
 /** check whether the HTTP response should be put into the cache */
 static bool
 http_cache_response_evaluate(struct http_cache_info *info,
-                             http_status_t status, struct strmap *headers,
+                             http_status_t status, const struct strmap *headers,
                              off_t body_available)
 {
     time_t date, now, offset;
