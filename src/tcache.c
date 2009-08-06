@@ -573,7 +573,8 @@ static const struct cache_class tcache_class = {
 
 struct tcache *
 translate_cache_new(pool_t pool, struct hstock *tcp_stock,
-                    const char *socket_path)
+                    const char *socket_path,
+                    unsigned max_size)
 {
     struct tcache *tcache = p_malloc(pool, sizeof(*tcache));
 
@@ -583,7 +584,7 @@ translate_cache_new(pool_t pool, struct hstock *tcp_stock,
     pool_ref(pool);
 
     tcache->pool = pool;
-    tcache->cache = cache_new(pool, &tcache_class, 65521, 131072);
+    tcache->cache = cache_new(pool, &tcache_class, 65521, max_size);
     tcache->tcp_stock = tcp_stock;
     tcache->socket_path = socket_path;
 

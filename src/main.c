@@ -250,7 +250,8 @@ int main(int argc, char **argv)
     instance.tcp_stock = tcp_stock_new(instance.pool);
     if (instance.config.translation_socket != NULL)
         instance.translate_cache = translate_cache_new(instance.pool, instance.tcp_stock,
-                                                       instance.config.translation_socket);
+                                                       instance.config.translation_socket,
+                                                       131072);
     instance.http_cache = http_cache_new(instance.pool,
                                          instance.config.http_cache_size,
                                          instance.tcp_stock);
