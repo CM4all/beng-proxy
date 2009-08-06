@@ -70,6 +70,10 @@ static void usage(void) {
          " --translation-socket PATH\n"
 #endif
          " -t PATH        set the path to the translation server socket\n"
+#ifdef __GLIBC__
+         " --set NAME=VALUE  tweak an internal variable, see manual for details\n"
+#endif
+         " -s NAME=VALUE  \n"
          "\n"
          );
 }
@@ -96,6 +100,40 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
     exit(1);
 }
 
+static void
+handle_set2(struct config *config, const char *argv0,
+            const char *name, size_t name_length, const char *value)
+{
+    static const char max_connections[] = "max_connections";
+    char *endptr;
+    long l;
+
+    if (name_length == sizeof(max_connections) - 1 &&
+        memcmp(name, max_connections, sizeof(max_connections) - 1) == 0) {
+        l = strtol(value, &endptr, 10);
+        if (*endptr != 0 || l <= 0 || l >= 1024 * 1024)
+            arg_error(argv0, "Invalid value for max_connections");
+
+        config->max_connections = l;
+    } else
+        arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
+}
+
+static void
+handle_set(struct config *config, const char *argv0, const char *p)
+{
+    const char *eq;
+
+    eq = strchr(p, '=');
+    if (eq == NULL)
+        arg_error(argv0, "No '=' found in --set argument");
+
+    if (eq == p)
+        arg_error(argv0, "No name found in --set argument");
+
+    handle_set2(config, argv0, p, eq - p, eq + 1);
+}
+
 /** read configuration options from the command line */
 void
 parse_cmdline(struct config *config, int argc, char **argv)
@@ -117,6 +155,7 @@ parse_cmdline(struct config *config, int argc, char **argv)
         {"workers", 1, NULL, 'w'},
         {"document-root", 1, NULL, 'r'},
         {"translation-socket", 1, NULL, 't'},
+        {"set", 1, NULL, 's'},
         {NULL,0,NULL,0}
     };
 #endif
@@ -126,10 +165,10 @@ parse_cmdline(struct config *config, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:s:");
 #endif
         if (ret == -1)
             break;
@@ -221,6 +260,10 @@ parse_cmdline(struct config *config, int argc, char **argv)
 
         case 't':
             config->translation_socket = optarg;
+            break;
+
+        case 's':
+            handle_set(config, argv[0], optarg);
             break;
 
         case '?':

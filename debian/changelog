@@ -1,6 +1,8 @@
 cm4all-beng-proxy (0.6.7) unstable; urgency=low
 
   * file-handler: generate Expires from xattr user.MaxAge
+  * cmdline: added option --set to configure:
+    - max_connections
 
  --
 
