@@ -202,6 +202,7 @@ int main(int argc, char **argv)
             .max_connections = 1024,
             .http_cache_size = 512 * 1024 * 1024,
             .filter_cache_size = 128 * 1024 * 1024,
+            .translate_cache_size = 131072,
         },
     };
 
@@ -251,7 +252,7 @@ int main(int argc, char **argv)
     if (instance.config.translation_socket != NULL)
         instance.translate_cache = translate_cache_new(instance.pool, instance.tcp_stock,
                                                        instance.config.translation_socket,
-                                                       131072);
+                                                       instance.config.translate_cache_size);
     instance.http_cache = http_cache_new(instance.pool,
                                          instance.config.http_cache_size,
                                          instance.tcp_stock);
