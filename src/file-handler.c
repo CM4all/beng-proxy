@@ -295,6 +295,28 @@ file_callback(struct request *request2)
 #ifndef NO_XATTR
         }
 #endif
+
+#ifndef NO_XATTR
+        nbytes = fgetxattr(istream_file_fd(body), "user.MaxAge",
+                           buffer, sizeof(buffer) - 1);
+        if (nbytes > 0) {
+            char *endptr;
+            long max_age;
+
+            buffer[nbytes] = 0;
+            max_age = strtol(buffer, &endptr, 10);
+
+            if (*endptr == 0 && max_age > 0) {
+                if (max_age > 365 * 24 * 3600)
+                    /* limit max_age to approximately one year */
+                    max_age = 365 * 24 * 3600;
+
+                /* generate an "Expires" response header */
+                header_write(headers, "expires",
+                             http_date_format(time(NULL) + max_age));
+            }
+        }
+#endif
     }
 
     if (tr->address.u.local.content_type != NULL) {
