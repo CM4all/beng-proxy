@@ -36,6 +36,10 @@ struct config {
 
     /** maximum number of simultaneous connections */
     unsigned max_connections;
+
+    size_t http_cache_size;
+
+    size_t filter_cache_size;
 };
 
 void

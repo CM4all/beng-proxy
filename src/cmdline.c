@@ -105,6 +105,8 @@ handle_set2(struct config *config, const char *argv0,
             const char *name, size_t name_length, const char *value)
 {
     static const char max_connections[] = "max_connections";
+    static const char http_cache_size[] = "http_cache_size";
+    static const char filter_cache_size[] = "filter_cache_size";
     char *endptr;
     long l;
 
@@ -115,6 +117,22 @@ handle_set2(struct config *config, const char *argv0,
             arg_error(argv0, "Invalid value for max_connections");
 
         config->max_connections = l;
+    } else if (name_length == sizeof(http_cache_size) - 1 &&
+               memcmp(name, http_cache_size,
+                      sizeof(http_cache_size) - 1) == 0) {
+        l = strtol(value, &endptr, 10);
+        if (*endptr != 0 || l < 0)
+            arg_error(argv0, "Invalid value for http_cache_size");
+
+        config->http_cache_size = l;
+    } else if (name_length == sizeof(filter_cache_size) - 1 &&
+               memcmp(name, filter_cache_size,
+                      sizeof(filter_cache_size) - 1) == 0) {
+        l = strtol(value, &endptr, 10);
+        if (*endptr != 0 || l < 0)
+            arg_error(argv0, "Invalid value for filter_cache_size");
+
+        config->filter_cache_size = l;
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }

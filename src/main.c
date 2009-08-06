@@ -200,6 +200,8 @@ int main(int argc, char **argv)
     static struct instance instance = {
         .config = {
             .max_connections = 1024,
+            .http_cache_size = 512 * 1024 * 1024,
+            .filter_cache_size = 128 * 1024 * 1024,
         },
     };
 
@@ -249,11 +251,13 @@ int main(int argc, char **argv)
     if (instance.config.translation_socket != NULL)
         instance.translate_cache = translate_cache_new(instance.pool, instance.tcp_stock,
                                                        instance.config.translation_socket);
-    instance.http_cache = http_cache_new(instance.pool, 512 * 1024 * 1024,
+    instance.http_cache = http_cache_new(instance.pool,
+                                         instance.config.http_cache_size,
                                          instance.tcp_stock);
     instance.fcgi_stock = fcgi_stock_new(instance.pool);
     instance.delegate_stock = delegate_stock_new(instance.pool);
-    instance.filter_cache = filter_cache_new(instance.pool, 128 * 1024 * 1024,
+    instance.filter_cache = filter_cache_new(instance.pool,
+                                             instance.config.filter_cache_size,
                                              instance.tcp_stock,
                                              instance.fcgi_stock);
 
