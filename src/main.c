@@ -116,9 +116,15 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 
 static void
 reload_event_callback(int fd __attr_unused, short event __attr_unused,
-                      void *ctx __attr_unused)
+                      void *ctx)
 {
+    struct instance *instance = (struct instance*)ctx;
+
     daemonize_reopen_logfile();
+
+    translate_cache_flush(instance->translate_cache);
+    http_cache_flush(instance->http_cache);
+    filter_cache_flush(instance->filter_cache);
 }
 
 void
