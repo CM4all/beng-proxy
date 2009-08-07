@@ -775,6 +775,12 @@ http_cache_close(struct http_cache *cache)
     cache_close(cache->cache);
 }
 
+void
+http_cache_flush(struct http_cache *cache)
+{
+    cache_flush(cache->cache);
+}
+
 static void
 http_cache_miss(struct http_cache *cache, pool_t caller_pool,
                 struct http_cache_info *info,

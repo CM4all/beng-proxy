@@ -25,6 +25,9 @@ void
 http_cache_close(struct http_cache *cache);
 
 void
+http_cache_flush(struct http_cache *cache);
+
+void
 http_cache_request(struct http_cache *cache,
                    pool_t pool,
                    http_method_t method,
