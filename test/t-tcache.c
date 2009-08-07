@@ -181,7 +181,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
     pool = pool_new_libc(NULL, "root");
 
-    cache = translate_cache_new(pool, tcp_stock, "/does/not/exist");
+    cache = translate_cache_new(pool, tcp_stock, "/does/not/exist", 1024);
 
     /* test */
 

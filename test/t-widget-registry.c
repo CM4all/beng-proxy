@@ -97,7 +97,7 @@ test_normal(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    tcache = translate_cache_new(pool, (struct hstock *)(size_t)1, "/dev/null");
+    tcache = translate_cache_new(pool, (struct hstock *)(size_t)1, "/dev/null", 1024);
 
     aborted = false;
     widget_class_lookup(pool, pool, tcache, "sync",
@@ -130,7 +130,7 @@ test_abort(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    tcache = translate_cache_new(pool, (struct hstock *)(size_t)1, "/dev/null");
+    tcache = translate_cache_new(pool, (struct hstock *)(size_t)1, "/dev/null", 1024);
 
     aborted = false;
     widget_class_lookup(pool, pool, tcache,  "block",
