@@ -26,6 +26,9 @@ filter_cache_new(pool_t pool, size_t max_size,
 void
 filter_cache_close(struct filter_cache *cache);
 
+void
+filter_cache_flush(struct filter_cache *cache);
+
 /**
  * @param source_id uniquely identifies the source; NULL means disable
  * the cache

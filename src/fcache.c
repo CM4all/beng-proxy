@@ -431,6 +431,12 @@ filter_cache_close(struct filter_cache *cache)
     cache_close(cache->cache);
 }
 
+void
+filter_cache_flush(struct filter_cache *cache)
+{
+    cache_flush(cache->cache);
+}
+
 static void
 filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
                   struct filter_cache_info *info,
