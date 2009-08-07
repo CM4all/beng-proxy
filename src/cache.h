@@ -55,6 +55,9 @@ cache_new(pool_t pool, const struct cache_class *class,
 void
 cache_close(struct cache *cache);
 
+void
+cache_flush(struct cache *cache);
+
 struct cache_item *
 cache_get(struct cache *cache, const char *key);
 

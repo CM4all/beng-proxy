@@ -144,6 +144,30 @@ cache_item_removed(struct cache *cache, struct cache_item *item)
         item->removed = true;
 }
 
+void
+cache_flush(struct cache *cache)
+{
+    struct cache_item *item;
+
+    cache_check(cache);
+
+    for (item = (struct cache_item *)cache->sorted_items.next;
+         &item->sorted_siblings != &cache->sorted_items;
+         item = (struct cache_item *)item->sorted_siblings.next) {
+        bool found;
+        struct cache_item *item2;
+
+        found = hashmap_remove_value(cache->items, item->key, item);
+        assert(found);
+
+        item2 = item;
+        item = (struct cache_item *)item->sorted_siblings.prev;
+        cache_item_removed(cache, item2);
+    }
+
+    cache_check(cache);
+}
+
 static bool
 cache_item_validate(const struct cache *cache, struct cache_item *item)
 {
