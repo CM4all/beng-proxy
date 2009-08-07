@@ -8,7 +8,7 @@ cm4all-beng-proxy (0.6.7) unstable; urgency=low
     - translate_cache_size
   * flush caches on SIGHUP
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 07 Aug 2009 11:41:10 +0200
 
 cm4all-beng-proxy (0.6.6) unstable; urgency=low
 
