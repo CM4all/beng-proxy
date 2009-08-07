@@ -604,6 +604,12 @@ translate_cache_close(struct tcache *tcache)
     pool_unref(tcache->pool);
 }
 
+void
+translate_cache_flush(struct tcache *tcache)
+{
+    cache_flush(tcache->cache);
+}
+
 
 /*
  * methods
