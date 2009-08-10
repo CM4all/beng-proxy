@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-cache.h"
+#include "http-cache-internal.h"
 #include "cache.h"
 #include "http-request.h"
 #include "header-writer.h"
@@ -22,52 +22,12 @@
 #include <time.h>
 #include <stdlib.h>
 
-#ifdef CACHE_LOG
-#include <daemon/log.h>
-#define cache_log(...) daemon_log(__VA_ARGS__)
-#else
-#define cache_log(...) do {} while (0)
-#endif
-
-static const off_t cacheable_size_limit = 256 * 1024;
-
 struct http_cache {
     pool_t pool;
     struct cache *cache;
     struct hstock *tcp_stock;
 
     struct list_head requests;
-};
-
-struct http_cache_info {
-    bool only_if_cached;
-
-    /** does the request URI have a query string?  This information is
-        important for RFC 2616 13.9 */
-    bool has_query_string;
-
-    /** when will the cached resource expire? (beng-proxy time) */
-    time_t expires;
-
-    /** when was the cached resource last modified on the widget
-        server? (widget server time) */
-    const char *last_modified;
-
-    const char *etag;
-
-    const char *vary;
-};
-
-struct http_cache_document {
-    struct http_cache_info info;
-
-    struct strmap *vary;
-
-    http_status_t status;
-    struct strmap *headers;
-
-    size_t size;
-    unsigned char *data;
 };
 
 struct http_cache_item {
