@@ -58,18 +58,24 @@ struct http_cache_info {
     const char *vary;
 };
 
-struct http_cache_item {
-    struct cache_item item;
-
-    pool_t pool;
-
+struct http_cache_document {
     struct http_cache_info info;
 
     struct strmap *vary;
 
     http_status_t status;
     struct strmap *headers;
+
+    size_t size;
     unsigned char *data;
+};
+
+struct http_cache_item {
+    struct cache_item item;
+
+    pool_t pool;
+
+    struct http_cache_document document;
 };
 
 struct http_cache_request {
@@ -207,10 +213,10 @@ vary_fits(struct strmap *vary, const struct strmap *headers)
  * This is not true if the Vary headers mismatch.
  */
 static bool
-http_cache_item_fits(const struct http_cache_item *item,
-                     const struct strmap *headers)
+http_cache_document_fits(const struct http_cache_document *document,
+                         const struct strmap *headers)
 {
-    return item->vary == NULL || vary_fits(item->vary, headers);
+    return document->vary == NULL || vary_fits(document->vary, headers);
 }
 
 /* check whether the request should invalidate the existing cache */
@@ -304,7 +310,27 @@ http_cache_item_match(const struct cache_item *_item, void *ctx)
         (const struct http_cache_item *)_item;
     struct strmap *headers = ctx;
 
-    return http_cache_item_fits(item, headers);
+    return http_cache_document_fits(&item->document, headers);
+}
+
+static void
+http_cache_document_init(struct http_cache_document *document, pool_t pool,
+                         const struct http_cache_info *info,
+                         struct strmap *request_headers,
+                         http_status_t status,
+                         struct strmap *response_headers,
+                         const struct growing_buffer *body)
+{
+    http_cache_copy_info(pool, &document->info, info);
+
+    document->vary = document->info.vary != NULL
+        ? http_cache_copy_vary(pool, document->info.vary, request_headers)
+        : NULL;
+
+    document->status = status;
+    document->headers = strmap_dup(pool, response_headers);
+
+    document->data = growing_buffer_dup(body, pool, &document->size);
 }
 
 static void
@@ -332,24 +358,13 @@ http_cache_put(struct http_cache_request *request)
     cache_item_init(&item->item, expires, request->response.length);
 
     item->pool = pool;
-    http_cache_copy_info(pool, &item->info, request->info);
 
-    item->vary = item->info.vary != NULL
-        ? http_cache_copy_vary(pool, item->info.vary, request->headers)
-        : NULL;
-
-    item->status = request->response.status;
-    item->headers = strmap_dup(pool, request->response.headers);
-
-    if (item->item.size == 0) {
-        item->data = NULL;
-    } else {
-        size_t length;
-
-        item->data = growing_buffer_dup(request->response.output, pool,
-                                        &length);
-        assert(length == item->item.size);
-    }
+    http_cache_document_init(&item->document, pool, request->info,
+                             request->headers,
+                             request->response.status,
+                             request->response.headers,
+                             request->response.output);
+    assert(item->document.size == request->response.length);
 
     cache_put_match(request->cache->cache, p_strdup(pool, request->url),
                     &item->item,
@@ -552,10 +567,10 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
-    if (request->item != NULL && request->item->info.etag != NULL) {
+    if (request->item != NULL && request->item->document.info.etag != NULL) {
         const char *etag = strmap_get(headers, "etag");
 
-        if (etag != NULL && strcmp(etag, request->item->info.etag) == 0) {
+        if (etag != NULL && strcmp(etag, request->item->document.info.etag) == 0) {
             cache_log(4, "http_cache: matching etag '%s' for %s, using cache entry\n",
                       etag, request->url);
 
@@ -830,6 +845,15 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     pool_unref(pool);
 }
 
+static istream_t
+http_cache_document_istream(pool_t pool,
+                            const struct http_cache_document *document)
+{
+    return document->size > 0
+        ? istream_memory_new(pool, document->data, document->size)
+        : istream_null_new(pool);
+}
+
 static void
 http_cache_serve(struct http_cache *cache, struct http_cache_item *item,
                  pool_t pool,
@@ -847,15 +871,12 @@ http_cache_serve(struct http_cache *cache, struct http_cache_item *item,
 
     http_response_handler_set(&handler_ref, handler, handler_ctx);
 
-    response_body = item->item.size > 0
-        ? istream_memory_new(pool, item->data, item->item.size)
-        : istream_null_new(pool);
-
+    response_body = http_cache_document_istream(pool, &item->document);
     response_body = istream_unlock_new(pool, response_body,
                                        cache->cache, &item->item);
 
-    http_response_handler_invoke_response(&handler_ref, item->status,
-                                          item->headers, response_body);
+    http_response_handler_invoke_response(&handler_ref, item->document.status,
+                                          item->document.headers, response_body);
 }
 
 static void
@@ -890,11 +911,12 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     if (headers == NULL)
         headers = strmap_new(pool, 16);
 
-    if (item->info.last_modified != NULL)
-        strmap_set(headers, "if-modified-since", item->info.last_modified);
+    if (item->document.info.last_modified != NULL)
+        strmap_set(headers, "if-modified-since",
+                   item->document.info.last_modified);
 
-    if (item->info.etag != NULL)
-        strmap_set(headers, "if-none-match", item->info.etag);
+    if (item->document.info.etag != NULL)
+        strmap_set(headers, "if-none-match", item->document.info.etag);
 
     async_init(&request->operation, &http_cache_async_operation);
     async_ref_set(async_ref, &request->operation);
@@ -910,10 +932,11 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
 
 static bool
 http_cache_may_serve(struct http_cache_info *info,
-                     struct http_cache_item *item)
+                     const struct http_cache_document *document)
 {
     return info->only_if_cached ||
-        (item->info.expires != (time_t)-1 && item->info.expires >= time(NULL));
+        (document->info.expires != (time_t)-1 &&
+         document->info.expires >= time(NULL));
 }
 
 static void
@@ -928,7 +951,7 @@ http_cache_found(struct http_cache *cache,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    if (http_cache_may_serve(info, item))
+    if (http_cache_may_serve(info, &item->document))
         http_cache_serve(cache, item, pool,
                          uwa->uri, body, handler, handler_ctx);
     else
