@@ -10,6 +10,8 @@
 #define cache_log(...) do {} while (0)
 #endif
 
+struct growing_buffer;
+
 static const off_t cacheable_size_limit = 256 * 1024;
 
 struct http_cache_info {
@@ -55,6 +57,14 @@ http_cache_request_evaluate(pool_t pool,
                             http_method_t method, const char *uri,
                             const struct strmap *headers,
                             istream_t body);
+
+void
+http_cache_document_init(struct http_cache_document *document, pool_t pool,
+                         const struct http_cache_info *info,
+                         struct strmap *request_headers,
+                         http_status_t status,
+                         struct strmap *response_headers,
+                         const struct growing_buffer *body);
 
 /**
  * Checks whether the specified cache item fits the current request.
