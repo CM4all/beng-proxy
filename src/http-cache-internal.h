@@ -43,4 +43,32 @@ struct http_cache_document {
     unsigned char *data;
 };
 
+struct http_cache_info *
+http_cache_request_evaluate(pool_t pool,
+                            http_method_t method, const char *uri,
+                            const struct strmap *headers,
+                            istream_t body);
+
+/**
+ * Checks whether the specified cache item fits the current request.
+ * This is not true if the Vary headers mismatch.
+ */
+bool
+http_cache_document_fits(const struct http_cache_document *document,
+                         const struct strmap *headers);
+
+/**
+ * Check whether the request should invalidate the existing cache.
+ */
+bool
+http_cache_request_invalidate(http_method_t method);
+
+/**
+ * Check whether the HTTP response should be put into the cache.
+ */
+bool
+http_cache_response_evaluate(struct http_cache_info *info,
+                             http_status_t status, const struct strmap *headers,
+                             off_t body_available);
+
 #endif
