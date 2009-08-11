@@ -126,6 +126,14 @@ http_cache_put(struct http_cache_request *request)
 }
 
 static void
+http_cache_remove(struct http_cache *cache, const char *url,
+                  struct http_cache_item *item)
+{
+    cache_remove_item(cache->cache, url, &item->item);
+    cache_item_unlock(cache->cache, &item->item);
+}
+
+static void
 http_cache_serve(struct http_cache *cache, struct http_cache_item *item,
                  pool_t pool,
                  const char *url, istream_t body,
@@ -228,11 +236,8 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
-    if (request->item != NULL) {
-        cache_remove_item(request->cache->cache, request->url,
-                          &request->item->item);
-        cache_item_unlock(request->cache->cache, &request->item->item);
-    }
+    if (request->item != NULL)
+        http_cache_remove(request->cache, request->url, request->item);
 
     available = body == NULL ? 0 : istream_available(body, true);
 
