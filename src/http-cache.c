@@ -5,7 +5,6 @@
  */
 
 #include "http-cache-internal.h"
-#include "cache.h"
 #include "http-request.h"
 #include "header-writer.h"
 #include "strmap.h"
@@ -29,14 +28,6 @@ struct http_cache {
     struct list_head requests;
 };
 
-struct http_cache_item {
-    struct cache_item item;
-
-    pool_t pool;
-
-    struct http_cache_document document;
-};
-
 struct http_cache_request {
     struct list_head siblings;
 
@@ -46,7 +37,7 @@ struct http_cache_request {
     struct strmap *headers;
     struct http_response_handler_ref handler;
 
-    struct http_cache_item *item;
+    struct http_cache_document *document;
     struct http_cache_info *info;
 
     struct {
@@ -77,77 +68,42 @@ http_cache_request_dup(pool_t pool, const struct http_cache_request *src)
     return dest;
 }
 
-static bool
-http_cache_item_match(const struct cache_item *_item, void *ctx)
-{
-    const struct http_cache_item *item =
-        (const struct http_cache_item *)_item;
-    struct strmap *headers = ctx;
-
-    return http_cache_document_fits(&item->document, headers);
-}
-
 static void
 http_cache_put(struct http_cache_request *request)
 {
-    pool_t pool;
-    struct http_cache_item *item;
-    time_t expires;
-
     assert(request != NULL);
     assert(request->info != NULL);
 
     cache_log(4, "http_cache: put %s\n", request->url);
 
-    pool = pool_new_linear(request->cache->pool, "http_cache_item", 1024);
-    item = p_malloc(pool, sizeof(*item));
-
-    if (request->info->expires == (time_t)-1)
-        /* there is no Expires response header; keep it in the cache
-           for 1 hour, but check with If-Modified-Since */
-        expires = time(NULL) + 3600;
-    else
-        expires = request->info->expires;
-
-    cache_item_init(&item->item, expires, request->response.length);
-
-    item->pool = pool;
-
-    http_cache_document_init(&item->document, pool, request->info,
-                             request->headers,
-                             request->response.status,
-                             request->response.headers,
-                             request->response.output);
-    assert(item->document.size == request->response.length);
-
-    cache_put_match(request->cache->cache, p_strdup(pool, request->url),
-                    &item->item,
-                    http_cache_item_match, request->headers);
+    http_cache_heap_put(request->cache->cache, request->cache->pool, request->url,
+                        request->info, request->headers, request->response.status,
+                        request->response.headers, request->response.output);
 }
 
 static void
 http_cache_remove(struct http_cache *cache, const char *url,
-                  struct http_cache_item *item)
+                  struct http_cache_document *document)
 {
-    cache_remove_item(cache->cache, url, &item->item);
-    cache_item_unlock(cache->cache, &item->item);
+    http_cache_heap_remove(cache->cache, url, document);
 }
 
 static void
-http_cache_lock(struct http_cache_item *item)
+http_cache_lock(struct http_cache_document *document)
 {
-    cache_item_lock(&item->item);
+    http_cache_heap_lock(document);
 }
 
 static void
 http_cache_unlock(struct http_cache *cache,
-                  struct http_cache_item *item)
+                  struct http_cache_document *document)
 {
-    cache_item_unlock(cache->cache, &item->item);
+    http_cache_heap_unlock(cache->cache, document);
 }
 
 static void
-http_cache_serve(struct http_cache *cache, struct http_cache_item *item,
+http_cache_serve(struct http_cache *cache,
+                 struct http_cache_document *document,
                  pool_t pool,
                  const char *url, istream_t body,
                  const struct http_response_handler *handler,
@@ -223,34 +179,34 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     off_t available;
     pool_t caller_pool;
 
-    if (request->item != NULL && status == HTTP_STATUS_NOT_MODIFIED) {
+    if (request->document != NULL && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == NULL);
 
         cache_log(5, "http_cache: not_modified %s\n", request->url);
-        http_cache_serve(request->cache, request->item, request->pool,
+        http_cache_serve(request->cache, request->document, request->pool,
                          request->url, NULL,
                          request->handler.handler, request->handler.ctx);
         pool_unref(request->caller_pool);
         return;
     }
 
-    if (request->item != NULL &&
-        http_cache_prefer_cached(&request->item->document, headers)) {
+    if (request->document != NULL &&
+        http_cache_prefer_cached(request->document, headers)) {
         cache_log(4, "http_cache: matching etag '%s' for %s, using cache entry\n",
-                  request->item->document.info.etag, request->url);
+                  request->document->info.etag, request->url);
 
         if (body != NULL)
             istream_close(body);
 
-        http_cache_serve(request->cache, request->item, request->pool,
+        http_cache_serve(request->cache, request->document, request->pool,
                          request->url, NULL,
                          request->handler.handler, request->handler.ctx);
         pool_unref(request->caller_pool);
         return;
     }
 
-    if (request->item != NULL)
-        http_cache_remove(request->cache, request->url, request->item);
+    if (request->document != NULL)
+        http_cache_remove(request->cache, request->url, request->document);
 
     available = body == NULL ? 0 : istream_available(body, true);
 
@@ -327,8 +283,8 @@ http_cache_response_abort(void *ctx)
 
     cache_log(4, "http_cache: response_abort %s\n", request->url);
 
-    if (request->item != NULL)
-        http_cache_unlock(request->cache, request->item);
+    if (request->document != NULL)
+        http_cache_unlock(request->cache, request->document);
 
     http_response_handler_invoke_abort(&request->handler);
     pool_unref(request->caller_pool);
@@ -357,8 +313,8 @@ http_cache_abort(struct async_operation *ao)
     struct http_cache_request *request = async_to_request(ao);
     pool_t caller_pool = request->caller_pool;
 
-    if (request->item != NULL)
-        http_cache_unlock(request->cache, request->item);
+    if (request->document != NULL)
+        http_cache_unlock(request->cache, request->document);
 
     async_abort(&request->async_ref);
 
@@ -374,34 +330,6 @@ static const struct async_operation_class http_cache_async_operation = {
 
 
 /*
- * cache_class
- *
- */
-
-static bool
-http_cache_item_validate(struct cache_item *_item)
-{
-    struct http_cache_item *item = (struct http_cache_item *)_item;
-
-    (void)item;
-    return true;
-}
-
-static void
-http_cache_item_destroy(struct cache_item *_item)
-{
-    struct http_cache_item *item = (struct http_cache_item *)_item;
-
-    pool_unref(item->pool);
-}
-
-static const struct cache_class http_cache_class = {
-    .validate = http_cache_item_validate,
-    .destroy = http_cache_item_destroy,
-};
-
-
-/*
  * constructor and public methods
  *
  */
@@ -412,8 +340,7 @@ http_cache_new(pool_t pool, size_t max_size,
 {
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
-    cache->cache = cache_new(pool, &http_cache_class,
-                             65521, max_size);
+    cache->cache = http_cache_heap_new(pool, max_size);
     cache->tcp_stock = tcp_stock;
 
     list_init(&cache->requests);
@@ -448,13 +375,13 @@ http_cache_close(struct http_cache *cache)
         http_cache_request_close(request);
     }
 
-    cache_close(cache->cache);
+    http_cache_heap_free(cache->cache);
 }
 
 void
 http_cache_flush(struct http_cache *cache)
 {
-    cache_flush(cache->cache);
+    http_cache_heap_flush(cache->cache);
 }
 
 static void
@@ -489,7 +416,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
-    request->item = NULL;
+    request->document = NULL;
     request->info = info;
 
     cache_log(4, "http_cache: miss %s\n", uwa->uri);
@@ -516,7 +443,8 @@ http_cache_document_istream(pool_t pool,
 }
 
 static void
-http_cache_serve(struct http_cache *cache, struct http_cache_item *item,
+http_cache_serve(struct http_cache *cache,
+                 struct http_cache_document *document,
                  pool_t pool,
                  const char *url __attr_unused, istream_t body,
                  const struct http_response_handler *handler,
@@ -532,18 +460,18 @@ http_cache_serve(struct http_cache *cache, struct http_cache_item *item,
 
     http_response_handler_set(&handler_ref, handler, handler_ctx);
 
-    response_body = http_cache_document_istream(pool, &item->document);
-    response_body = istream_unlock_new(pool, response_body,
-                                       cache->cache, &item->item);
+    response_body = http_cache_document_istream(pool, document);
+    response_body = http_cache_heap_wrap(pool, response_body,
+                                         cache->cache, document);
 
-    http_response_handler_invoke_response(&handler_ref, item->document.status,
-                                          item->document.headers, response_body);
+    http_response_handler_invoke_response(&handler_ref, document->status,
+                                          document->headers, response_body);
 }
 
 static void
 http_cache_test(struct http_cache *cache, pool_t caller_pool,
                 struct http_cache_info *info,
-                struct http_cache_item *item,
+                struct http_cache_document *document,
                 http_method_t method,
                 struct uri_with_address *uwa,
                 struct strmap *headers, istream_t body,
@@ -563,8 +491,8 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
-    http_cache_lock(item);
-    request->item = item;
+    http_cache_lock(document);
+    request->document = document;
     request->info = info;
 
     cache_log(4, "http_cache: test %s\n", uwa->uri);
@@ -572,12 +500,12 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     if (headers == NULL)
         headers = strmap_new(pool, 16);
 
-    if (item->document.info.last_modified != NULL)
+    if (document->info.last_modified != NULL)
         strmap_set(headers, "if-modified-since",
-                   item->document.info.last_modified);
+                   document->info.last_modified);
 
-    if (item->document.info.etag != NULL)
-        strmap_set(headers, "if-none-match", item->document.info.etag);
+    if (document->info.etag != NULL)
+        strmap_set(headers, "if-none-match", document->info.etag);
 
     async_init(&request->operation, &http_cache_async_operation);
     async_ref_set(async_ref, &request->operation);
@@ -603,7 +531,7 @@ http_cache_may_serve(struct http_cache_info *info,
 static void
 http_cache_found(struct http_cache *cache,
                  struct http_cache_info *info,
-                 struct http_cache_item *item,
+                 struct http_cache_document *document,
                  pool_t pool,
                  http_method_t method,
                  struct uri_with_address *uwa,
@@ -612,11 +540,11 @@ http_cache_found(struct http_cache *cache,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    if (http_cache_may_serve(info, &item->document))
-        http_cache_serve(cache, item, pool,
+    if (http_cache_may_serve(info, document))
+        http_cache_serve(cache, document, pool,
                          uwa->uri, body, handler, handler_ctx);
     else
-        http_cache_test(cache, pool, info, item,
+        http_cache_test(cache, pool, info, document,
                         method, uwa, headers, body,
                         handler, handler_ctx, async_ref);
 }
@@ -635,24 +563,22 @@ http_cache_request(struct http_cache *cache,
 
     info = http_cache_request_evaluate(pool, method, uwa->uri, headers, body);
     if (info != NULL) {
-        struct http_cache_item *item
-            = (struct http_cache_item *)cache_get_match(cache->cache, uwa->uri,
-                                                        http_cache_item_match,
-                                                        headers);
+        struct http_cache_document *document
+            = http_cache_heap_get(cache->cache, uwa->uri, headers);
 
-        if (item == NULL)
+        if (document == NULL)
             http_cache_miss(cache, pool, info,
                             method, uwa, headers, body,
                             handler, handler_ctx, async_ref);
         else
-            http_cache_found(cache, info, item, pool,
+            http_cache_found(cache, info, document, pool,
                              method, uwa, headers, body,
                              handler, handler_ctx, async_ref);
     } else {
         struct growing_buffer *headers2;
 
         if (http_cache_request_invalidate(method))
-            cache_remove(cache->cache, uwa->uri);
+            http_cache_heap_remove_url(cache->cache, uwa->uri);
 
         cache_log(4, "http_cache: ignore %s\n", uwa->uri);
 

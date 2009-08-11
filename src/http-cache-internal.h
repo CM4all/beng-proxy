@@ -96,4 +96,44 @@ bool
 http_cache_prefer_cached(const struct http_cache_document *document,
                          const struct strmap *response_headers);
 
+struct cache *
+http_cache_heap_new(pool_t pool, size_t max_size);
+
+void
+http_cache_heap_free(struct cache *cache);
+
+struct http_cache_document *
+http_cache_heap_get(struct cache *cache, const char *uri,
+                    struct strmap *request_headers);
+
+void
+http_cache_heap_put(struct cache *cache, pool_t pool, const char *url,
+                    const struct http_cache_info *info,
+                    struct strmap *request_headers,
+                    http_status_t status,
+                    struct strmap *response_headers,
+                    const struct growing_buffer *body);
+
+void
+http_cache_heap_remove(struct cache *cache, const char *url,
+                       struct http_cache_document *document);
+
+void
+http_cache_heap_remove_url(struct cache *cache, const char *url);
+
+void
+http_cache_heap_flush(struct cache *cache);
+
+void
+http_cache_heap_lock(struct http_cache_document *document);
+
+void
+http_cache_heap_unlock(struct cache *cache,
+                       struct http_cache_document *document);
+
+istream_t
+http_cache_heap_wrap(pool_t pool, istream_t istream,
+                     struct cache *cache,
+                     struct http_cache_document *document);
+
 #endif
