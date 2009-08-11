@@ -134,6 +134,19 @@ http_cache_remove(struct http_cache *cache, const char *url,
 }
 
 static void
+http_cache_lock(struct http_cache_item *item)
+{
+    cache_item_lock(&item->item);
+}
+
+static void
+http_cache_unlock(struct http_cache *cache,
+                  struct http_cache_item *item)
+{
+    cache_item_unlock(cache->cache, &item->item);
+}
+
+static void
 http_cache_serve(struct http_cache *cache, struct http_cache_item *item,
                  pool_t pool,
                  const char *url, istream_t body,
@@ -315,7 +328,7 @@ http_cache_response_abort(void *ctx)
     cache_log(4, "http_cache: response_abort %s\n", request->url);
 
     if (request->item != NULL)
-        cache_item_unlock(request->cache->cache, &request->item->item);
+        http_cache_unlock(request->cache, request->item);
 
     http_response_handler_invoke_abort(&request->handler);
     pool_unref(request->caller_pool);
@@ -345,7 +358,7 @@ http_cache_abort(struct async_operation *ao)
     pool_t caller_pool = request->caller_pool;
 
     if (request->item != NULL)
-        cache_item_unlock(request->cache->cache, &request->item->item);
+        http_cache_unlock(request->cache, request->item);
 
     async_abort(&request->async_ref);
 
@@ -550,7 +563,7 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
-    cache_item_lock(&item->item);
+    http_cache_lock(item);
     request->item = item;
     request->info = info;
 
