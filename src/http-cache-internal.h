@@ -43,6 +43,13 @@ struct http_cache_document {
     unsigned char *data;
 };
 
+void
+http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
+                     const struct http_cache_info *src);
+
+struct http_cache_info *
+http_cache_info_dup(pool_t pool, const struct http_cache_info *src);
+
 struct http_cache_info *
 http_cache_request_evaluate(pool_t pool,
                             http_method_t method, const char *uri,

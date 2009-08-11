@@ -180,6 +180,7 @@ SRC = src/main.c \
 	src/cache.c \
 	src/istream-unlock.c \
 	src/http-cache.c \
+	src/http-cache-info.c \
 	src/http-cache-rfc.c \
 	src/fcache.c \
 	src/stock.c \
