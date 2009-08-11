@@ -238,3 +238,19 @@ http_cache_response_evaluate(struct http_cache_info *info,
     return info->expires != (time_t)-1 || info->last_modified != NULL ||
         info->etag != NULL;
 }
+
+bool
+http_cache_prefer_cached(const struct http_cache_document *document,
+                         const struct strmap *response_headers)
+{
+    const char *etag;
+
+    if (document->info.etag == NULL)
+        return false;
+
+    etag = strmap_get_checked(response_headers, "etag");
+
+    /* if the ETags are the same, then the resource hasn't changed,
+       but the server was too lazy to check that properly */
+    return etag != NULL && strcmp(etag, document->info.etag) == 0;
+}

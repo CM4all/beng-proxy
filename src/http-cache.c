@@ -293,22 +293,19 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
-    if (request->item != NULL && request->item->document.info.etag != NULL) {
-        const char *etag = strmap_get(headers, "etag");
+    if (request->item != NULL &&
+        http_cache_prefer_cached(&request->item->document, headers)) {
+        cache_log(4, "http_cache: matching etag '%s' for %s, using cache entry\n",
+                  request->item->document.info.etag, request->url);
 
-        if (etag != NULL && strcmp(etag, request->item->document.info.etag) == 0) {
-            cache_log(4, "http_cache: matching etag '%s' for %s, using cache entry\n",
-                      etag, request->url);
+        if (body != NULL)
+            istream_close(body);
 
-            if (body != NULL)
-                istream_close(body);
-
-            http_cache_serve(request->cache, request->item, request->pool,
-                             request->url, NULL,
-                             request->handler.handler, request->handler.ctx);
-            pool_unref(request->caller_pool);
-            return;
-        }
+        http_cache_serve(request->cache, request->item, request->pool,
+                         request->url, NULL,
+                         request->handler.handler, request->handler.ctx);
+        pool_unref(request->caller_pool);
+        return;
     }
 
     if (request->item != NULL) {

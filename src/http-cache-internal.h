@@ -71,4 +71,12 @@ http_cache_response_evaluate(struct http_cache_info *info,
                              http_status_t status, const struct strmap *headers,
                              off_t body_available);
 
+/**
+ * The server sent us a non-"Not Modified" response.  Check if we want
+ * to serve the cache item anyway, and discard the server's response.
+ */
+bool
+http_cache_prefer_cached(const struct http_cache_document *document,
+                         const struct strmap *response_headers);
+
 #endif
