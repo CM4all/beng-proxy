@@ -168,6 +168,7 @@ SRC = src/main.c \
 	src/uri-relative.c \
 	src/uri-parser.c \
 	src/uri-address.c \
+	src/uri-resolver.c \
 	src/uri-escape.c \
 	src/failure.c \
 	src/args.c \
