@@ -340,7 +340,9 @@ http_cache_new(pool_t pool, size_t max_size,
 {
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
-    cache->cache = http_cache_heap_new(pool, max_size);
+    cache->cache = max_size > 0
+        ? http_cache_heap_new(pool, max_size)
+        : NULL;
     cache->tcp_stock = tcp_stock;
 
     list_init(&cache->requests);
@@ -375,13 +377,15 @@ http_cache_close(struct http_cache *cache)
         http_cache_request_close(request);
     }
 
-    http_cache_heap_free(cache->cache);
+    if (cache->cache != NULL)
+        http_cache_heap_free(cache->cache);
 }
 
 void
 http_cache_flush(struct http_cache *cache)
 {
-    http_cache_heap_flush(cache->cache);
+    if (cache->cache != NULL)
+        http_cache_heap_flush(cache->cache);
 }
 
 static void
@@ -561,7 +565,9 @@ http_cache_request(struct http_cache *cache,
 {
     struct http_cache_info *info;
 
-    info = http_cache_request_evaluate(pool, method, uwa->uri, headers, body);
+    info = cache->cache != NULL
+        ? http_cache_request_evaluate(pool, method, uwa->uri, headers, body)
+        : NULL;
     if (info != NULL) {
         struct http_cache_document *document
             = http_cache_heap_get(cache->cache, uwa->uri, headers);
