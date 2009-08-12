@@ -1,4 +1,5 @@
 #include "http-cache.h"
+#include "http-cache-internal.h"
 #include "http-request.h"
 #include "resource-address.h"
 #include "growing-buffer.h"
@@ -9,6 +10,8 @@
 #include "tpool.h"
 
 #include <inline/compiler.h>
+
+#include <glib.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -85,6 +88,28 @@ static bool got_request, got_response;
 static bool validated;
 static bool eof;
 static size_t body_read;
+
+void
+http_cache_memcached_get(G_GNUC_UNUSED pool_t pool,
+                         G_GNUC_UNUSED struct memcached_stock *stock,
+                         G_GNUC_UNUSED const char *uri,
+                         G_GNUC_UNUSED struct strmap *request_headers,
+                         G_GNUC_UNUSED http_cache_memcached_get_t callback,
+                         G_GNUC_UNUSED void *callback_ctx,
+                         G_GNUC_UNUSED struct async_operation_ref *async_ref)
+{
+}
+
+void
+http_cache_memcached_put(G_GNUC_UNUSED pool_t pool,
+                         G_GNUC_UNUSED struct memcached_stock *stock,
+                         G_GNUC_UNUSED const char *uri,
+                         G_GNUC_UNUSED const struct growing_buffer *body,
+                         G_GNUC_UNUSED http_cache_memcached_put_t put,
+                         G_GNUC_UNUSED void *callback_ctx,
+                         G_GNUC_UNUSED struct async_operation_ref *async_ref)
+{
+}
 
 static struct strmap *
 parse_headers(pool_t pool, const char *raw)
@@ -302,7 +327,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
     tpool_init(pool);
-    cache = http_cache_new(pool, 1024 * 1024, NULL);
+    cache = http_cache_new(pool, 1024 * 1024, NULL, NULL);
 
     /* request one resource, cold and warm cache */
     run_cache_test(pool, 0, false);

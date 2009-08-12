@@ -186,6 +186,7 @@ SRC = src/main.c \
 	src/http-cache-document.c \
 	src/http-cache-heap.c \
 	src/http-cache-info.c \
+	src/http-cache-memcached.c \
 	src/http-cache-rfc.c \
 	src/fcache.c \
 	src/stock.c \

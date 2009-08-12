@@ -136,4 +136,22 @@ http_cache_heap_wrap(pool_t pool, istream_t istream,
                      struct cache *cache,
                      struct http_cache_document *document);
 
+typedef void (*http_cache_memcached_get_t)(struct http_cache_document *document,
+                                           istream_t body, void *ctx);
+
+typedef void (*http_cache_memcached_put_t)(void *ctx);
+
+void
+http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
+                         const char *uri, struct strmap *request_headers,
+                         http_cache_memcached_get_t callback,
+                         void *callback_ctx,
+                         struct async_operation_ref *async_ref);
+
+void
+http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
+                         const char *uri, const struct growing_buffer *body,
+                         http_cache_memcached_put_t put, void *callback_ctx,
+                         struct async_operation_ref *async_ref);
+
 #endif

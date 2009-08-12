@@ -10,6 +10,7 @@
 #include "istream.h"
 #include "http.h"
 
+struct memcached_stock;
 struct http_cache;
 struct hstock;
 struct uri_with_address;
@@ -19,6 +20,7 @@ struct async_operation_ref;
 
 struct http_cache *
 http_cache_new(pool_t pool, size_t max_size,
+               struct memcached_stock *memcached_stock,
                struct hstock *tcp_stock);
 
 void

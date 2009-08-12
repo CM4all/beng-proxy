@@ -272,6 +272,7 @@ int main(int argc, char **argv)
                                                        instance.config.translate_cache_size);
     instance.http_cache = http_cache_new(instance.pool,
                                          instance.config.http_cache_size,
+                                         instance.memcached_stock,
                                          instance.tcp_stock);
     instance.fcgi_stock = fcgi_stock_new(instance.pool);
     instance.delegate_stock = delegate_stock_new(instance.pool);

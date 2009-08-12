@@ -23,6 +23,7 @@
 struct http_cache {
     pool_t pool;
     struct cache *cache;
+    struct memcached_stock *memcached_stock;
     struct hstock *tcp_stock;
 
     struct list_head requests;
@@ -33,6 +34,8 @@ struct http_cache_request {
 
     pool_t pool, caller_pool;
     struct http_cache *cache;
+    http_method_t method;
+    struct uri_with_address *uwa;
     const char *url;
     struct strmap *headers;
     struct http_response_handler_ref handler;
@@ -69,6 +72,14 @@ http_cache_request_dup(pool_t pool, const struct http_cache_request *src)
 }
 
 static void
+http_cache_memcached_put_callback(void *ctx)
+{
+    struct http_cache_request *request = ctx;
+
+    list_remove(&request->siblings);
+}
+
+static void
 http_cache_put(struct http_cache_request *request)
 {
     assert(request != NULL);
@@ -76,9 +87,15 @@ http_cache_put(struct http_cache_request *request)
 
     cache_log(4, "http_cache: put %s\n", request->url);
 
-    http_cache_heap_put(request->cache->cache, request->cache->pool, request->url,
-                        request->info, request->headers, request->response.status,
-                        request->response.headers, request->response.output);
+    if (request->cache->cache != NULL)
+        http_cache_heap_put(request->cache->cache, request->cache->pool, request->url,
+                            request->info, request->headers, request->response.status,
+                            request->response.headers, request->response.output);
+    else
+        http_cache_memcached_put(request->pool, request->cache->memcached_stock, request->url,
+                                 request->response.output,
+                                 http_cache_memcached_put_callback, request,
+                                 &request->async_ref);
 }
 
 static void
@@ -141,7 +158,9 @@ http_cache_response_body_eof(void *ctx)
        saved: add it to the cache */
     http_cache_put(request);
 
-    list_remove(&request->siblings);
+    if (request->cache->cache != NULL)
+        list_remove(&request->siblings);
+
     pool_unref(request->pool);
 }
 
@@ -336,13 +355,15 @@ static const struct async_operation_class http_cache_async_operation = {
 
 struct http_cache *
 http_cache_new(pool_t pool, size_t max_size,
+               struct memcached_stock *memcached_stock,
                struct hstock *tcp_stock)
 {
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
-    cache->cache = max_size > 0
+    cache->cache = memcached_stock == NULL && max_size > 0
         ? http_cache_heap_new(pool, max_size)
         : NULL;
+    cache->memcached_stock = memcached_stock;
     cache->tcp_stock = tcp_stock;
 
     list_init(&cache->requests);
@@ -360,10 +381,13 @@ static void
 http_cache_request_close(struct http_cache_request *request)
 {
     assert(request != NULL);
-    assert(request->response.input != NULL);
+    assert(request->response.input != NULL || request->cache->memcached_stock != NULL);
     assert(request->response.output != NULL);
 
-    istream_close(request->response.input);
+    if (request->response.input != NULL)
+        istream_close(request->response.input);
+    else
+        async_abort(&request->async_ref);
 }
 
 void
@@ -577,6 +601,106 @@ http_cache_heap_use(struct http_cache *cache,
                          handler, handler_ctx, async_ref);
 }
 
+static void
+http_cache_memcached_forward(struct http_cache_request *request,
+                             const struct http_response_handler *handler,
+                             void *handler_ctx)
+{
+    struct growing_buffer *headers2;
+
+    cache_log(4, "http_cache: miss %s\n", request->url);
+
+    headers2 = request->headers == NULL
+        ? NULL : headers_dup(request->pool, request->headers);
+
+    http_request(request->pool, request->cache->tcp_stock,
+                 request->method, request->uwa,
+                 headers2, NULL,
+                 handler, handler_ctx, &request->async_ref);
+}
+
+static void
+http_cache_memcached_miss(struct http_cache_request *request)
+{
+    struct http_cache_info *info = request->info;
+
+    if (info->only_if_cached) {
+        http_response_handler_invoke_response(&request->handler,
+                                              HTTP_STATUS_GATEWAY_TIMEOUT,
+                                              NULL, NULL);
+        return;
+    }
+
+    cache_log(4, "http_cache: miss %s\n", request->url);
+
+    request->document = NULL;
+
+    http_cache_memcached_forward(request,
+                                 &http_cache_response_handler, request);
+}
+
+static void
+http_cache_memcached_get_callback(struct http_cache_document *document,
+                                  istream_t body, void *ctx)
+{
+    struct http_cache_request *request = ctx;
+
+    (void)document;
+
+    if (body == NULL) {
+        http_cache_memcached_miss(request);
+        return;
+    }
+
+    cache_log(4, "http_cache: serve %s\n", request->url);
+
+    http_response_handler_invoke_response(&request->handler,
+                                          HTTP_STATUS_OK, NULL, body);
+    pool_unref(request->caller_pool);
+}
+
+static void
+http_cache_memcached_use(struct http_cache *cache,
+                         pool_t caller_pool,
+                         http_method_t method,
+                         struct uri_with_address *uwa,
+                         struct strmap *headers,
+                         struct http_cache_info *info,
+                         const struct http_response_handler *handler,
+                         void *handler_ctx,
+                         struct async_operation_ref *async_ref)
+{
+    struct http_cache_request *request;
+    pool_t pool;
+
+    assert(cache->memcached_stock != NULL);
+
+    /* the cache request may live longer than the caller pool, so
+       allocate a new pool for it from cache->pool */
+    pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
+
+    request = p_malloc(pool, sizeof(*request));
+    request->pool = pool;
+    request->caller_pool = caller_pool;
+    request->cache = cache;
+    request->method = method;
+    request->uwa = uwa;
+    request->url = uwa->uri;
+    request->headers = headers;
+    http_response_handler_set(&request->handler, handler, handler_ctx);
+
+    request->info = info;
+
+    async_init(&request->operation, &http_cache_async_operation);
+    async_ref_set(async_ref, &request->operation);
+
+    pool_ref(caller_pool);
+    http_cache_memcached_get(pool, cache->memcached_stock, uwa->uri, headers,
+                             http_cache_memcached_get_callback, request,
+                             &request->async_ref);
+    pool_unref(pool);
+}
+
 void
 http_cache_request(struct http_cache *cache,
                    pool_t pool,
@@ -589,12 +713,18 @@ http_cache_request(struct http_cache *cache,
 {
     struct http_cache_info *info;
 
-    info = cache->cache != NULL
+    info = cache->cache != NULL || cache->memcached_stock != NULL
         ? http_cache_request_evaluate(pool, method, uwa->uri, headers, body)
         : NULL;
     if (info != NULL) {
-        http_cache_heap_use(cache, pool, method, uwa, headers, body, info,
-                            handler, handler_ctx, async_ref);
+        assert(body == NULL);
+
+        if (cache->cache != NULL)
+            http_cache_heap_use(cache, pool, method, uwa, headers, body, info,
+                                handler, handler_ctx, async_ref);
+        else
+            http_cache_memcached_use(cache, pool, method, uwa, headers,
+                                     info, handler, handler_ctx, async_ref);
     } else {
         struct growing_buffer *headers2;
 
