@@ -465,7 +465,10 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/growing-buffer.c \
 	src/strutil.c \
 	src/istream-memory.c src/istream-string.c \
-	src/http-cache.c src/abort-unref.c src/cache.c \
+	src/http-cache.c src/http-cache-rfc.c \
+	src/http-cache-info.c src/http-cache-document.c \
+	src/http-cache-heap.c \
+	src/abort-unref.c src/cache.c \
 	src/header-writer.c src/http-util.c \
 	src/istream-tee.c \
 	src/date.c src/gmtime.c \
