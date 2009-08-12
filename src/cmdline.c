@@ -5,6 +5,7 @@
  */
 
 #include "config.h"
+#include "uri-resolver.h"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -70,6 +71,10 @@ static void usage(void) {
          " --translation-socket PATH\n"
 #endif
          " -t PATH        set the path to the translation server socket\n"
+#ifdef __GLIBC__
+         " --memcached-server IP:PORT\n"
+#endif
+         " -M IP:PORT     use this memcached server\n"
 #ifdef __GLIBC__
          " --set NAME=VALUE  tweak an internal variable, see manual for details\n"
 #endif
@@ -163,7 +168,7 @@ handle_set(struct config *config, const char *argv0, const char *p)
 
 /** read configuration options from the command line */
 void
-parse_cmdline(struct config *config, int argc, char **argv)
+parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 {
     int ret;
     char *endptr;
@@ -182,6 +187,7 @@ parse_cmdline(struct config *config, int argc, char **argv)
         {"workers", 1, NULL, 'w'},
         {"document-root", 1, NULL, 'r'},
         {"translation-socket", 1, NULL, 't'},
+        {"memcached-server", 1, NULL, 'M'},
         {"set", 1, NULL, 's'},
         {NULL,0,NULL,0}
     };
@@ -192,10 +198,10 @@ parse_cmdline(struct config *config, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:s:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:M:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:s:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:M:s:");
 #endif
         if (ret == -1)
             break;
@@ -287,6 +293,17 @@ parse_cmdline(struct config *config, int argc, char **argv)
 
         case 't':
             config->translation_socket = optarg;
+            break;
+
+        case 'M':
+            if (config->memcached_server != NULL)
+                arg_error(argv[0], "duplicate memcached-server option");
+
+            memset(&hints, 0, sizeof(hints));
+            hints.ai_socktype = SOCK_STREAM;
+
+            config->memcached_server = uri_address_new_resolve(pool, optarg,
+                                                               11211, &hints);
             break;
 
         case 's':

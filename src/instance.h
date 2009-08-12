@@ -50,6 +50,7 @@ struct instance {
     /* stock */
     struct tcache *translate_cache;
     struct hstock *tcp_stock;
+    struct memcached_stock *memcached_stock;
 
     /* cache */
     struct http_cache *http_cache;

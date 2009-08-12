@@ -7,6 +7,8 @@
 #ifndef __BENG_CONFIG_H
 #define __BENG_CONFIG_H
 
+#include "pool.h"
+
 #include <sys/types.h>
 #include <stdbool.h>
 
@@ -32,6 +34,8 @@ struct config {
 
     const char *translation_socket;
 
+    struct uri_with_address *memcached_server;
+
     unsigned num_workers;
 
     /** maximum number of simultaneous connections */
@@ -45,6 +49,6 @@ struct config {
 };
 
 void
-parse_cmdline(struct config *config, int argc, char **argv);
+parse_cmdline(struct config *config, pool_t pool, int argc, char **argv);
 
 #endif

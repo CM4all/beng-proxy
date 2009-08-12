@@ -11,6 +11,8 @@ extern struct tcache *global_translate_cache;
 
 extern struct hstock *global_tcp_stock;
 
+extern struct memcached_stock *global_memcached_stock;
+
 extern struct http_cache *global_http_cache;
 
 extern struct fcgi_stock *global_fcgi_stock;

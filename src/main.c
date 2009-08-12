@@ -10,6 +10,7 @@
 #include "session.h"
 #include "translate.h"
 #include "tcp-stock.h"
+#include "memcached-stock.h"
 #include "stock.h"
 #include "tcache.h"
 #include "http-cache.h"
@@ -104,6 +105,9 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
         fcgi_stock_kill(instance->fcgi_stock);
         instance->fcgi_stock = NULL;
     }
+
+    if (instance->memcached_stock != NULL)
+        memcached_stock_free(instance->memcached_stock);
 
     if (instance->tcp_stock != NULL)
         hstock_free(&instance->tcp_stock);
@@ -217,11 +221,14 @@ int main(int argc, char **argv)
         debug_mode = true;
 #endif
 
+    instance.pool = pool_new_libc(NULL, "global");
+    tpool_init(instance.pool);
+
     /* configuration */
 
     instance.config.document_root = "/var/www";
 
-    parse_cmdline(&instance.config, argc, argv);
+    parse_cmdline(&instance.config, instance.pool, argc, argv);
 
     if (instance.config.num_ports == 0 && instance.config.num_listen == 0) {
         instance.config.ports[instance.config.num_ports++] =
@@ -235,8 +242,6 @@ int main(int argc, char **argv)
     list_init(&instance.listeners);
     list_init(&instance.connections);
     list_init(&instance.workers);
-    instance.pool = pool_new_libc(NULL, "global");
-    tpool_init(instance.pool);
 
     init_signals(&instance);
 
@@ -255,6 +260,12 @@ int main(int argc, char **argv)
         add_listener(&instance, instance.config.listen[i]);
 
     instance.tcp_stock = tcp_stock_new(instance.pool);
+
+    if (instance.config.memcached_server != NULL)
+        instance.memcached_stock =
+            memcached_stock_new(instance.pool, instance.tcp_stock,
+                                instance.config.memcached_server);
+
     if (instance.config.translation_socket != NULL)
         instance.translate_cache = translate_cache_new(instance.pool, instance.tcp_stock,
                                                        instance.config.translation_socket,
@@ -273,6 +284,7 @@ int main(int argc, char **argv)
 
     global_translate_cache = instance.translate_cache;
     global_tcp_stock = instance.tcp_stock;
+    global_memcached_stock = instance.memcached_stock;
     global_http_cache = instance.http_cache;
     global_fcgi_stock = instance.fcgi_stock;
     global_delegate_stock = instance.delegate_stock;
