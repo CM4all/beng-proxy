@@ -553,6 +553,30 @@ http_cache_found(struct http_cache *cache,
                         handler, handler_ctx, async_ref);
 }
 
+static void
+http_cache_heap_use(struct http_cache *cache,
+                    pool_t pool,
+                    http_method_t method,
+                    struct uri_with_address *uwa,
+                    struct strmap *headers, istream_t body,
+                    struct http_cache_info *info,
+                    const struct http_response_handler *handler,
+                    void *handler_ctx,
+                    struct async_operation_ref *async_ref)
+{
+    struct http_cache_document *document
+        = http_cache_heap_get(cache->cache, uwa->uri, headers);
+
+    if (document == NULL)
+        http_cache_miss(cache, pool, info,
+                        method, uwa, headers, body,
+                        handler, handler_ctx, async_ref);
+    else
+        http_cache_found(cache, info, document, pool,
+                         method, uwa, headers, body,
+                         handler, handler_ctx, async_ref);
+}
+
 void
 http_cache_request(struct http_cache *cache,
                    pool_t pool,
@@ -569,17 +593,8 @@ http_cache_request(struct http_cache *cache,
         ? http_cache_request_evaluate(pool, method, uwa->uri, headers, body)
         : NULL;
     if (info != NULL) {
-        struct http_cache_document *document
-            = http_cache_heap_get(cache->cache, uwa->uri, headers);
-
-        if (document == NULL)
-            http_cache_miss(cache, pool, info,
-                            method, uwa, headers, body,
+        http_cache_heap_use(cache, pool, method, uwa, headers, body, info,
                             handler, handler_ctx, async_ref);
-        else
-            http_cache_found(cache, info, document, pool,
-                             method, uwa, headers, body,
-                             handler, handler_ctx, async_ref);
     } else {
         struct growing_buffer *headers2;
 
