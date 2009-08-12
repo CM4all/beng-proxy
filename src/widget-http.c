@@ -208,6 +208,7 @@ widget_response_process(struct embed *embed, http_status_t status,
     if (!processable(headers)) {
         daemon_log(2, "widget '%s' sent non-HTML response\n",
                    widget_path(embed->widget));
+        istream_close(body);
         http_response_handler_invoke_abort(&embed->handler_ref);
         return;
     }
