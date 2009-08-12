@@ -41,6 +41,7 @@ test/t-session
 test/run-header-parser
 test/t-wembed
 test/run-ajp-client
+test/run-memcached-client
 test/t-http-util
 test/t-http-cache
 test/t-http-server
