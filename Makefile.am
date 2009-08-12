@@ -150,6 +150,7 @@ SRC = src/main.c \
 	src/http-request.c \
 	src/ajp-request.c \
 	src/memcached-client.c \
+	src/memcached-stock.c \
 	src/pipe.c \
 	src/cgi.c \
 	src/fcgi-stock.c \
