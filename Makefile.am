@@ -642,6 +642,7 @@ test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/memcached-client.c src/buffered-io.c src/fifo-buffer.c \
 	src/socket-util.c src/fd-util.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
+	src/istream-string.c \
 	src/event2.c \
 	$(POOL_SRC)
 test_run_memcached_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \

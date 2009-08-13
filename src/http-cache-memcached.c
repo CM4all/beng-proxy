@@ -6,7 +6,6 @@
 
 #include "http-cache-internal.h"
 #include "memcached-stock.h"
-#include "growing-buffer.h"
 
 #include <glib.h>
 
@@ -66,7 +65,7 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
     memcached_stock_invoke(pool, stock, MEMCACHED_OPCODE_GET,
                            NULL, 0,
                            uri, strlen(uri),
-                           NULL, 0,
+                           NULL,
                            http_cache_memcached_get_callback, request,
                            async_ref);
 }
@@ -85,13 +84,11 @@ http_cache_memcached_put_callback(G_GNUC_UNUSED enum memcached_response_status s
 
 void
 http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
-                         const char *uri, const struct growing_buffer *body,
+                         const char *uri, istream_t value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
                          struct async_operation_ref *async_ref)
 {
     struct http_cache_memcached_request *request = p_malloc(pool, sizeof(*request));
-    size_t value_size;
-    void *value = growing_buffer_dup(body, pool, &value_size);
 
     request->extras.set.flags = 0;
     request->extras.set.expiration = g_htonl(300); /* XXX */
@@ -103,7 +100,7 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
                            MEMCACHED_OPCODE_SET,
                            &request->extras, sizeof(request->extras),
                            uri, strlen(uri),
-                           value, value_size,
+                           value,
                            http_cache_memcached_put_callback, request,
                            async_ref);
 }

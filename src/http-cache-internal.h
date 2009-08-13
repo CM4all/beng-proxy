@@ -150,7 +150,7 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
 
 void
 http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
-                         const char *uri, const struct growing_buffer *body,
+                         const char *uri, istream_t value,
                          http_cache_memcached_put_t put, void *callback_ctx,
                          struct async_operation_ref *async_ref);
 

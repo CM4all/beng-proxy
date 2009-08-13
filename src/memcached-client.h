@@ -23,7 +23,7 @@ memcached_client_invoke(pool_t pool, int fd,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
-                        const void *value, size_t value_length,
+                        istream_t value,
                         memcached_response_handler_t handler, void *handler_ctx,
                         struct async_operation_ref *async_ref);
 

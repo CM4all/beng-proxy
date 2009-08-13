@@ -484,15 +484,22 @@ memcached_client_invoke(pool_t pool, int fd,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
-                        const void *value, size_t value_length,
+                        istream_t value,
                         memcached_response_handler_t handler, void *handler_ctx,
                         struct async_operation_ref *async_ref)
 {
     struct memcached_client *client;
     istream_t header, extras_stream, request;
+    off_t value_length;
 
     assert(extras_length <= 0xff);
     assert(key_length < 0x1000);
+
+    value_length = value != NULL ? istream_available(value, false) : 0;
+    if (value_length == -1 || value_length >= 0x10000000) {
+        handler(-1, NULL, handler_ctx);
+        return;
+    }
 
     pool_ref(pool);
     client = p_malloc(pool, sizeof(*client));
@@ -521,9 +528,7 @@ memcached_client_invoke(pool_t pool, int fd,
     request = istream_cat_new(pool, header, extras_stream,
                               key_length == 0 ? istream_null_new(pool)
                               : istream_memory_new(pool, key, key_length),
-                              value_length == 0 ? NULL
-                              : istream_memory_new(pool, value, value_length),
-                              NULL);
+                              value, NULL);
 
     istream_assign_handler(&client->request.istream, request,
                            &memcached_request_stream_handler, client,

@@ -93,7 +93,7 @@ http_cache_put(struct http_cache_request *request)
                             request->response.headers, request->response.output);
     else
         http_cache_memcached_put(request->pool, request->cache->memcached_stock, request->url,
-                                 request->response.output,
+                                 growing_buffer_istream(request->response.output),
                                  http_cache_memcached_put_callback, request,
                                  &request->async_ref);
 }

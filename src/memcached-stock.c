@@ -52,8 +52,7 @@ struct memcached_stock_request {
     const void *key;
     size_t key_length;
 
-    const void *value;
-    size_t value_length;
+    istream_t value;
 
     memcached_response_handler_t handler;
     void *handler_ctx;
@@ -104,7 +103,7 @@ memcached_stock_callback(void *ctx, struct stock_item *item)
                             request->opcode,
                             request->extras, request->extras_length,
                             request->key, request->key_length,
-                            request->value, request->value_length,
+                            request->value,
                             request->handler, request->handler_ctx,
                             request->async_ref);
 }
@@ -114,7 +113,7 @@ memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
-                       const void *value, size_t value_length,
+                       istream_t value,
                        memcached_response_handler_t handler,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref)
@@ -129,7 +128,6 @@ memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
     request->key = key;
     request->key_length = key_length;
     request->value = value;
-    request->value_length = value_length;
     request->handler = handler;
     request->handler_ctx = handler_ctx;
     request->async_ref = async_ref;
