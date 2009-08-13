@@ -158,26 +158,46 @@ growing_buffer_consume(struct growing_buffer *gb, size_t length)
     }
 }
 
+static size_t
+growing_buffer_length(const struct growing_buffer *gb)
+{
+    size_t length = 0;
+
+    for (const struct buffer *buffer = &gb->first; buffer != NULL;
+         buffer = buffer->next)
+        length += buffer->length;
+
+    return length;
+}
+
+static void *
+growing_buffer_copy(void *dest0, const struct growing_buffer *gb)
+{
+    unsigned char *dest = dest0;
+
+    for (const struct buffer *buffer = &gb->first; buffer != NULL;
+         buffer = buffer->next) {
+        memcpy(dest, buffer->data, buffer->length);
+        dest += buffer->length;
+    }
+
+    return dest;
+}
+
 void *
 growing_buffer_dup(const struct growing_buffer *gb, pool_t pool,
                    size_t *length_r)
 {
-    const struct buffer *buffer;
     unsigned char *dest;
-    size_t length = 0, position = 0;
+    size_t length;
 
-    for (buffer = &gb->first; buffer != NULL; buffer = buffer->next)
-        length += buffer->length;
-
+    length = growing_buffer_length(gb);
     *length_r = length;
     if (length == 0)
         return NULL;
 
     dest = p_malloc(pool, length);
-    for (buffer = &gb->first; buffer != NULL; buffer = buffer->next) {
-        memcpy(dest + position, buffer->data, buffer->length);
-        position += buffer->length;
-    }
+    growing_buffer_copy(dest, gb);
 
     return dest;
 }
