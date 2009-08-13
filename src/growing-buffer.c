@@ -158,7 +158,7 @@ growing_buffer_consume(struct growing_buffer *gb, size_t length)
     }
 }
 
-static size_t
+size_t
 growing_buffer_length(const struct growing_buffer *gb)
 {
     size_t length = 0;

@@ -37,6 +37,9 @@ growing_buffer_read(struct growing_buffer *gb, size_t *length_r);
 void
 growing_buffer_consume(struct growing_buffer *gb, size_t length);
 
+size_t
+growing_buffer_length(const struct growing_buffer *gb);
+
 /**
  * Duplicates the whole buffer (including all chunks) to one
  * contiguous buffer.
