@@ -202,6 +202,25 @@ growing_buffer_dup(const struct growing_buffer *gb, pool_t pool,
     return dest;
 }
 
+void *
+growing_buffer_dup2(const struct growing_buffer *a,
+                    const struct growing_buffer *b,
+                    pool_t pool, size_t *length_r)
+{
+    void *dest;
+    size_t length;
+
+    length = growing_buffer_length(a) + growing_buffer_length(b);
+    *length_r = length;
+    if (length == 0)
+        return NULL;
+
+    dest = p_malloc(pool, length);
+    growing_buffer_copy(growing_buffer_copy(dest, a), b);
+
+    return dest;
+}
+
 
 static inline struct growing_buffer *
 istream_to_gb(istream_t istream)

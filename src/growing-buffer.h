@@ -45,6 +45,15 @@ void *
 growing_buffer_dup(const struct growing_buffer *gb, pool_t pool,
                    size_t *length_r);
 
+/**
+ * Similar to growing_buffer_dup(), but concatenates two
+ * #growing_buffer objects.
+ */
+void *
+growing_buffer_dup2(const struct growing_buffer *a,
+                    const struct growing_buffer *b,
+                    pool_t pool, size_t *length_r);
+
 istream_t
 growing_buffer_istream(struct growing_buffer *gb);
 
