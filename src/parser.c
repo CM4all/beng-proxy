@@ -258,6 +258,10 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     expansible_buffer_reset(parser->attr_value);
                     break;
                 } else {
+                    parser->tag.end = parser->position + (off_t)(buffer - start);
+                    parser->handler->tag_finished(&parser->tag,
+                                                  parser->handler_ctx);
+
                     parser->state = PARSER_NONE;
                     break;
                 }

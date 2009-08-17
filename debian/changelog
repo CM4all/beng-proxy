@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.6.10) unstable; urgency=low
 
-  * 
+  * parser: finish tag before bailing out
 
  --
 
