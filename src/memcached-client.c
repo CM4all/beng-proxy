@@ -152,8 +152,11 @@ istream_memcached_read(istream_t istream)
 
     if (fifo_buffer_full(client->response.input))
         memcached_consume_input(client);
-    else
+    else {
+        pool_ref(client->pool);
         memcached_client_try_read(client);
+        pool_unref(client->pool);
+    }
 }
 
 static void
