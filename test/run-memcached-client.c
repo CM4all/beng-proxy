@@ -202,7 +202,7 @@ int main(int argc, char **argv) {
                             opcode,
                             extras, extras_length,
                             key, key != NULL ? strlen(key) : 0,
-                            istream_string_new(pool, value),
+                            value != NULL ? istream_string_new(pool, value) : NULL,
                             &my_response_handler, &ctx,
                             &async_ref);
 
