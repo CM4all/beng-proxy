@@ -56,6 +56,7 @@ test/t-tcache
 test/t-uri-compress
 test/t-widget-http
 test/t-rewrite-uri
+test/t-sink-header
 
 *.aux
 *.log

@@ -5,6 +5,14 @@
 #include <string.h>
 #endif
 
+enum {
+#ifdef NO_BLOCKING
+    enable_blocking = false,
+#else
+    enable_blocking = true,
+#endif
+};
+
 #ifndef FILTER_CLEANUP
 static void
 cleanup(void)
@@ -156,8 +164,13 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 
     istream_handler_set(istream, &my_istream_handler, ctx, 0);
 
+#ifndef NO_GOT_DATA_ASSERT
     while (!ctx->eof)
         istream_read_expect(ctx, istream);
+#else
+    for (int i = 0; i < 1000 && !ctx->eof; ++i)
+           istream_read_event(istream);
+#endif
 
 #ifdef EXPECTED_RESULT
     if (ctx->record) {
@@ -473,15 +486,18 @@ int main(int argc, char **argv) {
     /* run test suite */
 
     test_normal(root_pool);
-    test_block(root_pool);
-    test_byte(root_pool);
+    if (enable_blocking)
+        test_block(root_pool);
+    if (enable_blocking)
+        test_byte(root_pool);
     test_half(root_pool);
     test_fail(root_pool);
     test_fail_1byte(root_pool);
     test_abort_without_handler(root_pool);
     test_abort_with_handler(root_pool);
     test_abort_in_handler(root_pool);
-    test_abort_in_handler_half(root_pool);
+    if (enable_blocking)
+        test_abort_in_handler_half(root_pool);
     test_abort_1byte(root_pool);
     test_later(root_pool);
 

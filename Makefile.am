@@ -75,6 +75,7 @@ ISTREAM_SRC = \
 	src/format.c \
 	src/fifo-buffer.c \
 	src/sink-null.c \
+	src/sink-header.c \
 	$(POOL_SRC)
 
 SRC = src/main.c \
@@ -240,6 +241,7 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 	test/t-istream-subst test/t-istream-deflate test/t-istream-byte \
 	test/t-istream-iconv test/t-istream-replace test/t-istream-replace2 \
 	test/t-istream-html-escape test/t-istream-fcgi \
+	test/t-sink-header \
 	test/t-istream-processor
 
 check_PROGRAMS = \
@@ -377,6 +379,10 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/expansible-buffer.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_processor_LDADD = $(T_ISTREAM_FILTER_LIB) $(GLIB_LIBS)
+
+test_t_sink_header_SOURCES = test/t-sink-header.c \
+	$(T_ISTREAM_FILTER_SRC)
+test_t_sink_header_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_cgi_SOURCES = test/t-cgi.c \
 	src/cgi.c src/fork.c \
