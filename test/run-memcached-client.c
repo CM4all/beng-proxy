@@ -141,6 +141,8 @@ int main(int argc, char **argv) {
         opcode = MEMCACHED_OPCODE_GET;
     else if (strcmp(argv[2], "set") == 0)
         opcode = MEMCACHED_OPCODE_SET;
+    else if (strcmp(argv[2], "delete") == 0)
+        opcode = MEMCACHED_OPCODE_DELETE;
     else {
         fprintf(stderr, "unknown opcode\n");
         return 1;
