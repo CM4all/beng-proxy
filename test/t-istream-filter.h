@@ -123,6 +123,13 @@ static const struct istream_handler my_istream_handler = {
  *
  */
 
+static int
+istream_read_event(istream_t istream)
+{
+    istream_read(istream);
+    return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+}
+
 static void
 istream_read_expect(struct ctx *ctx, istream_t istream)
 {
@@ -131,9 +138,8 @@ istream_read_expect(struct ctx *ctx, istream_t istream)
     assert(!ctx->eof);
 
     ctx->got_data = false;
-    istream_read(istream);
 
-    ret = event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    ret = istream_read_event(istream);
     assert(ctx->eof || ctx->got_data || ret == 0);
 
     /* give istream_later another chance to breathe */
