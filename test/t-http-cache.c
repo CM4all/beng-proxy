@@ -104,7 +104,7 @@ void
 http_cache_memcached_put(G_GNUC_UNUSED pool_t pool,
                          G_GNUC_UNUSED struct memcached_stock *stock,
                          G_GNUC_UNUSED const char *uri,
-                         G_GNUC_UNUSED const struct growing_buffer *body,
+                         G_GNUC_UNUSED istream_t value,
                          G_GNUC_UNUSED http_cache_memcached_put_t put,
                          G_GNUC_UNUSED void *callback_ctx,
                          G_GNUC_UNUSED struct async_operation_ref *async_ref)
