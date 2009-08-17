@@ -187,7 +187,7 @@ processor_subst_beng_widget(istream_t istream,
     istream_subst_add(istream, "&c:prefix;", widget_prefix(widget));
     istream_subst_add(istream, "&c:uri;", env->absolute_uri);
     istream_subst_add(istream, "&c:base;",
-                      base_uri(env->pool, env->absolute_uri));
+                      base_uri(env->pool, env->uri));
     istream_subst_add(istream, "&c:frame;",
                       strmap_get(env->args, "frame"));
     istream_subst_add(istream, "&c:session;",

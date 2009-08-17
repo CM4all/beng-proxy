@@ -32,6 +32,8 @@ struct processor_env {
 
     const char *remote_host;
 
+    const char *uri;
+
     const char *absolute_uri;
 
     /** the URI which was requested by the beng-proxy client */
@@ -57,6 +59,7 @@ processor_env_init(pool_t pool,
                    struct processor_env *env,
                    const char *partition_domain,
                    const char *remote_host,
+                   const char *request_uri,
                    const char *absolute_uri,
                    const struct parsed_uri *uri,
                    struct strmap *args,

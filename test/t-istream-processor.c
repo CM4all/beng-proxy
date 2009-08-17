@@ -77,6 +77,7 @@ create_test(pool_t pool, istream_t input)
     processor_env_init(pool, &env,
                        NULL,
                        "localhost:8080",
+                       "/beng.html",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
                        NULL,
