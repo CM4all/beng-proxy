@@ -275,6 +275,8 @@ memcached_consume_value(struct memcached_client *client)
     if (nbytes == 0)
         return false;
 
+    fifo_buffer_consume(client->response.input, nbytes);
+
     client->response.value_remaining -= nbytes;
     if (client->response.value_remaining > 0)
         return false;
