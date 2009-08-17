@@ -131,12 +131,17 @@ http_request(pool_t pool,
 
         p = uwa->uri + 7;
         slash = strchr(p, '/');
-        if (slash == NULL || slash == p) {
+        if (slash == p) {
             http_response_handler_invoke_abort(&hr->handler);
             return;
         }
 
-        host_and_port = p_strndup(hr->pool, p, slash - p);
+        if (slash == NULL) {
+            host_and_port = p;
+            slash = "/";
+        } else
+            host_and_port = p_strndup(hr->pool, p, slash - p);
+
         header_write(hr->headers, "host", host_and_port);
 
         hr->uri = slash;
