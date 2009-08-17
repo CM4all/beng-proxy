@@ -160,6 +160,7 @@ SRC = src/main.c \
 	src/growing-buffer.c \
 	src/expansible-buffer.c \
 	src/gb-io.c \
+	src/serialize.c \
 	src/duplex.c \
 	$(ISTREAM_SRC) \
 	src/fork.c \
