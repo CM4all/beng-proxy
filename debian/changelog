@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.6.9) unstable; urgency=low
 
-  * 
+  * direct: disable SPLICE_F_NONBLOCK (temporary NFS EAGAIN workaround)
 
  --
 

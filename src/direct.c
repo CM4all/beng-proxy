@@ -24,7 +24,7 @@ istream_direct_pipe_to_pipe(int src_fd, int dest_fd, size_t max_length)
 
     if (pipe_to_pipe_supported) {
         nbytes = splice(src_fd, NULL, dest_fd, NULL, max_length,
-                        SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
+                        /* SPLICE_F_NONBLOCK | */ SPLICE_F_MORE | SPLICE_F_MOVE);
         if (nbytes != -1 || errno != EINVAL)
             return nbytes;
 
@@ -43,7 +43,7 @@ istream_direct_pipe_to_pipe(int src_fd, int dest_fd, size_t max_length)
 
     /* first duplicate the buffers with tee() .. */
     nbytes = tee(src_fd, dest_fd, max_length,
-                 SPLICE_F_NONBLOCK | SPLICE_F_MORE);
+                 /* SPLICE_F_NONBLOCK | */ SPLICE_F_MORE);
     if (nbytes <= 0)
         return nbytes;
 
