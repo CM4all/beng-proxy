@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.6.10) unstable; urgency=low
   * istream-file: pass options O_CLOEXEC|O_NOCTTY to open()
   * response: check if the "Host" request header is valid
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 18 Aug 2009 16:37:19 +0200
 
 cm4all-beng-proxy (0.6.9) unstable; urgency=low
 
