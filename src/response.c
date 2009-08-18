@@ -19,6 +19,7 @@
 #include "header-parser.h"
 #include "global.h"
 #include "resource-tag.h"
+#include "hostname.h"
 
 #include <daemon/log.h>
 
@@ -55,7 +56,7 @@ request_absolute_uri(const struct http_server_request *request)
 {
     const char *host = strmap_get(request->headers, "host");
 
-    if (host == NULL)
+    if (host == NULL || !hostname_is_well_formed(host))
         return NULL;
 
     return p_strcat(request->pool,

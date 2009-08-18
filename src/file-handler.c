@@ -381,5 +381,6 @@ file_callback(struct request *request2)
 
     /* finished, dispatch this response */
 
+    body = istream_cat_new(request->pool, body, istream_block_new(request->pool), NULL);
     response_dispatch(request2, status, headers, body);
 }

@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.6.10) unstable; urgency=low
   * http-request: allow URLs without path component
   * fork: clear event in read() method
   * istream-file: pass options O_CLOEXEC|O_NOCTTY to open()
+  * response: check if the "Host" request header is valid
 
  --
 

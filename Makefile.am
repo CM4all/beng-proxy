@@ -124,6 +124,7 @@ SRC = src/main.c \
 	src/frame.c \
 	src/fd-util.c \
 	src/socket-util.c \
+	src/hostname.c \
 	src/address.c \
 	src/resource-address.c \
 	src/resource-tag.c \
