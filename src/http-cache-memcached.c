@@ -138,6 +138,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
     struct http_cache_memcached_request *request = ctx;
     struct strref header;
     http_status_t status;
+    struct http_cache_document document;
     struct strmap *headers;
 
     if (tail == NULL) {
@@ -148,6 +149,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
     strref_set(&header, header_ptr, length);
 
     deserialize_uint32(&header);
+    document.info.expires = deserialize_uint64(&header);
     status = deserialize_uint16(&header);
     headers = deserialize_strmap(&header, request->pool);
 
@@ -157,7 +159,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
         return;
     }
 
-    request->callback.get(NULL, status, headers, tail, request->callback_ctx);
+    request->callback.get(&document, status, headers, tail, request->callback_ctx);
 }
 
 static void
@@ -218,6 +220,7 @@ http_cache_memcached_put_callback(G_GNUC_UNUSED enum memcached_response_status s
 void
 http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
                          const char *uri,
+                         const struct http_cache_info *info,
                          http_status_t status, struct strmap *response_headers,
                          istream_t value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
@@ -230,6 +233,8 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
 
     /* signature */
     serialize_uint32(gb, 1);
+
+    serialize_uint64(gb, info->expires);
 
     /* serialize status + response headers */
     serialize_uint16(gb, status);

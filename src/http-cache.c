@@ -95,6 +95,7 @@ http_cache_put(struct http_cache_request *request)
                             request->response.headers, request->response.output);
     else
         http_cache_memcached_put(request->pool, request->cache->memcached_stock, request->url,
+                                 request->info,
                                  request->response.status, request->response.headers,
                                  growing_buffer_istream(request->response.output),
                                  http_cache_memcached_put_callback, request,
@@ -675,9 +676,13 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
 {
     struct http_cache_request *request = ctx;
 
-    (void)document;
-
     if (body == NULL) {
+        http_cache_memcached_miss(request);
+        return;
+    }
+
+    if (!http_cache_may_serve(request->info, document)) {
+        istream_close(body);
         http_cache_memcached_miss(request);
         return;
     }
