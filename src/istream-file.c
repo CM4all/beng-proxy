@@ -18,6 +18,12 @@
 #include <string.h>
 #include <limits.h>
 
+#ifndef O_CLOEXEC
+enum {
+    O_CLOEXEC = 0,
+};
+#endif
+
 struct file {
     struct istream stream;
     int fd;
@@ -299,7 +305,7 @@ istream_file_new(pool_t pool, const char *path, off_t length)
 
     assert(length >= -1);
 
-    fd = open(path, O_RDONLY);
+    fd = open(path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
     if (fd < 0) {
         daemon_log(1, "failed to open '%s': %s\n",
                    path, strerror(errno));
