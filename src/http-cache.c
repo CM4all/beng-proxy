@@ -27,6 +27,8 @@ struct http_cache {
     struct hstock *tcp_stock;
 
     struct list_head requests;
+
+    struct async_operation_ref flush_operation_ref;
 };
 
 struct http_cache_request {
@@ -368,6 +370,7 @@ http_cache_new(pool_t pool, size_t max_size,
     cache->tcp_stock = tcp_stock;
 
     list_init(&cache->requests);
+    async_ref_clear(&cache->flush_operation_ref);
 
     return cache;
 }
@@ -402,8 +405,24 @@ http_cache_close(struct http_cache *cache)
         http_cache_request_close(request);
     }
 
+    if (async_ref_defined(&cache->flush_operation_ref))
+        async_abort(&cache->flush_operation_ref);
+
     if (cache->cache != NULL)
         http_cache_heap_free(cache->cache);
+}
+
+static void
+http_cache_flush_callback(bool success, void *ctx)
+{
+    struct http_cache *cache = ctx;
+
+    async_ref_clear(&cache->flush_operation_ref);
+
+    if (success)
+        cache_log(5, "http_cache_memcached: flushed\n");
+    else
+        cache_log(5, "http_cache_memcached: flush has failed\n");
 }
 
 void
@@ -411,6 +430,15 @@ http_cache_flush(struct http_cache *cache)
 {
     if (cache->cache != NULL)
         http_cache_heap_flush(cache->cache);
+    else if (!async_ref_defined(&cache->flush_operation_ref)) {
+        pool_t pool = pool_new_linear(cache->pool,
+                                      "http_cache_memcached_flush", 1024);
+
+        http_cache_memcached_flush(pool, cache->memcached_stock,
+                                   http_cache_flush_callback, cache,
+                                   &cache->flush_operation_ref);
+        pool_unref(pool);
+    }
 }
 
 static void

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.6.11) unstable; urgency=low
 
-  * 
+  * http-cache-memcached: store HTTP status and response headers
+  * http-cache-memcached: implemented flush (SIGHUP)
 
  --
 

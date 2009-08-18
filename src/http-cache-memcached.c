@@ -29,6 +29,7 @@ struct http_cache_memcached_request {
     } extras;
 
     union {
+        http_cache_memcached_flush_t flush;
         http_cache_memcached_get_t get;
         http_cache_memcached_put_t put;
     } callback;
@@ -96,6 +97,39 @@ static const struct istream_handler mcd_value_handler = {
  * Public functions and memcached-client callbacks
  *
  */
+
+static void
+http_cache_memcached_flush_callback(enum memcached_response_status status,
+                                    istream_t value, void *ctx)
+{
+    struct http_cache_memcached_request *request = ctx;
+
+    if (value != NULL)
+        istream_close(value);
+
+    request->callback.flush(status == MEMCACHED_STATUS_NO_ERROR,
+                            request->callback_ctx);
+}
+
+void
+http_cache_memcached_flush(pool_t pool, struct memcached_stock *stock,
+                           http_cache_memcached_flush_t callback,
+                           void *callback_ctx,
+                           struct async_operation_ref *async_ref)
+{
+    struct http_cache_memcached_request *request = p_malloc(pool, sizeof(*request));
+
+    request->pool = pool;
+    request->callback.flush = callback;
+    request->callback_ctx = callback_ctx;
+
+    memcached_stock_invoke(pool, stock, MEMCACHED_OPCODE_FLUSH,
+                           NULL, 0,
+                           NULL, 0,
+                           NULL,
+                           http_cache_memcached_flush_callback, request,
+                           async_ref);
+}
 
 static void
 http_cache_memcached_header_callback(void *header_ptr, size_t length,
