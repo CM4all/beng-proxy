@@ -32,6 +32,15 @@ serialize_uint32(struct growing_buffer *gb, uint32_t value)
     memcpy(dest, &src, sizeof(src));
 }
 
+void
+serialize_uint64(struct growing_buffer *gb, uint64_t value)
+{
+    uint64_t src = GUINT64_TO_BE(value);
+    void *dest = growing_buffer_write(gb, sizeof(src));
+
+    memcpy(dest, &src, sizeof(src));
+}
+
 /*
 static void
 serialize_size_t(struct growing_buffer *gb, size_t value)
@@ -94,6 +103,22 @@ deserialize_uint32(struct strref *input)
     }
 
     value = g_ntohl(*(const uint32_t *)input->data);
+    strref_skip(input, sizeof(value));
+
+    return value;
+}
+
+uint64_t
+deserialize_uint64(struct strref *input)
+{
+    uint64_t value;
+
+    if (input->length < sizeof(value)) {
+        strref_null(input);
+        return 0;
+    }
+
+    value = GUINT64_FROM_BE(*(const uint64_t *)input->data);
     strref_skip(input, sizeof(value));
 
     return value;

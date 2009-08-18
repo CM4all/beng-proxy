@@ -22,6 +22,9 @@ void
 serialize_uint32(struct growing_buffer *gb, uint32_t value);
 
 void
+serialize_uint64(struct growing_buffer *gb, uint64_t value);
+
+void
 serialize_string(struct growing_buffer *gb, const char *value);
 
 void
@@ -32,6 +35,9 @@ deserialize_uint16(struct strref *input);
 
 uint32_t
 deserialize_uint32(struct strref *input);
+
+uint64_t
+deserialize_uint64(struct strref *input);
 
 const char *
 deserialize_string(struct strref *input);
