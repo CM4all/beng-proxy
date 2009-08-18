@@ -43,70 +43,6 @@ file_abort(struct file *file)
     istream_deinit_abort(&file->stream);
 }
 
-static inline struct file *
-istream_to_file(istream_t istream)
-{
-    return (struct file *)(((char*)istream) - offsetof(struct file, stream));
-}
-
-static off_t
-istream_file_available(istream_t istream, bool partial)
-{
-    struct file *file = istream_to_file(istream);
-    off_t available = 0;
-
-    if (file->rest != (off_t)-1)
-        available = file->rest;
-    else if (!partial)
-        return (off_t)-1;
-    else
-        available = 0;
-
-    if (file->buffer != NULL) {
-        const void *data;
-        size_t length;
-
-        data = fifo_buffer_read(file->buffer, &length);
-        if (data != NULL)
-            available += length;
-    }
-
-    return available;
-}
-
-static off_t
-istream_file_skip(istream_t istream, off_t length)
-{
-    struct file *file = istream_to_file(istream);
-
-    if (file->rest == (off_t)-1)
-        return (off_t)-1;
-
-    if (length == 0)
-        return 0;
-
-    if (file->buffer != NULL)
-        /* clear the buffer; later we could optimize this function by
-           flushing only the skipped number of bytes */
-        fifo_buffer_clear(file->buffer);
-
-    if (length >= file->rest) {
-        /* skip beyond EOF */
-
-        length = file->rest;
-        file->rest = 0;
-    } else {
-        /* seek the file descriptor */
-
-        off_t ret = lseek(file->fd, length, SEEK_CUR);
-        if (ret < 0)
-            return -1;
-        file->rest -= length;
-    }
-
-    return length;
-}
-
 /**
  * @return the number of bytes still in the buffer
  */
@@ -228,16 +164,92 @@ istream_file_try_direct(struct file *file)
 }
 
 static void
+file_try_read(struct file *file)
+{
+    if ((file->stream.handler_direct & ISTREAM_FILE) == 0)
+        istream_file_try_data(file);
+    else
+        istream_file_try_direct(file);
+}
+
+
+/*
+ * istream implementation
+ *
+ */
+
+static inline struct file *
+istream_to_file(istream_t istream)
+{
+    return (struct file *)(((char*)istream) - offsetof(struct file, stream));
+}
+
+static off_t
+istream_file_available(istream_t istream, bool partial)
+{
+    struct file *file = istream_to_file(istream);
+    off_t available = 0;
+
+    if (file->rest != (off_t)-1)
+        available = file->rest;
+    else if (!partial)
+        return (off_t)-1;
+    else
+        available = 0;
+
+    if (file->buffer != NULL) {
+        const void *data;
+        size_t length;
+
+        data = fifo_buffer_read(file->buffer, &length);
+        if (data != NULL)
+            available += length;
+    }
+
+    return available;
+}
+
+static off_t
+istream_file_skip(istream_t istream, off_t length)
+{
+    struct file *file = istream_to_file(istream);
+
+    if (file->rest == (off_t)-1)
+        return (off_t)-1;
+
+    if (length == 0)
+        return 0;
+
+    if (file->buffer != NULL)
+        /* clear the buffer; later we could optimize this function by
+           flushing only the skipped number of bytes */
+        fifo_buffer_clear(file->buffer);
+
+    if (length >= file->rest) {
+        /* skip beyond EOF */
+
+        length = file->rest;
+        file->rest = 0;
+    } else {
+        /* seek the file descriptor */
+
+        off_t ret = lseek(file->fd, length, SEEK_CUR);
+        if (ret < 0)
+            return -1;
+        file->rest -= length;
+    }
+
+    return length;
+}
+
+static void
 istream_file_read(istream_t istream)
 {
     struct file *file = istream_to_file(istream);
 
     assert(file->stream.handler != NULL);
 
-    if ((file->stream.handler_direct & ISTREAM_FILE) == 0)
-        istream_file_try_data(file);
-    else
-        istream_file_try_direct(file);
+    file_try_read(file);
 }
 
 static void
@@ -254,6 +266,12 @@ static const struct istream istream_file = {
     .read = istream_file_read,
     .close = istream_file_close,
 };
+
+
+/*
+ * constructor and public methods
+ *
+ */
 
 istream_t
 istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length)
