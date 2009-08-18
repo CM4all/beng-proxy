@@ -93,6 +93,7 @@ http_cache_put(struct http_cache_request *request)
                             request->response.headers, request->response.output);
     else
         http_cache_memcached_put(request->pool, request->cache->memcached_stock, request->url,
+                                 request->response.status, request->response.headers,
                                  growing_buffer_istream(request->response.output),
                                  http_cache_memcached_put_callback, request,
                                  &request->async_ref);
@@ -302,7 +303,7 @@ http_cache_response_abort(void *ctx)
 
     cache_log(4, "http_cache: response_abort %s\n", request->url);
 
-    if (request->document != NULL)
+    if (request->document != NULL && request->cache->cache != NULL)
         http_cache_unlock(request->cache, request->document);
 
     http_response_handler_invoke_abort(&request->handler);
@@ -332,7 +333,7 @@ http_cache_abort(struct async_operation *ao)
     struct http_cache_request *request = async_to_request(ao);
     pool_t caller_pool = request->caller_pool;
 
-    if (request->document != NULL)
+    if (request->document != NULL && request->cache->cache != NULL)
         http_cache_unlock(request->cache, request->document);
 
     async_abort(&request->async_ref);
@@ -641,6 +642,7 @@ http_cache_memcached_miss(struct http_cache_request *request)
 
 static void
 http_cache_memcached_get_callback(struct http_cache_document *document,
+                                  http_status_t status, struct strmap *headers,
                                   istream_t body, void *ctx)
 {
     struct http_cache_request *request = ctx;
@@ -655,7 +657,7 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
     cache_log(4, "http_cache: serve %s\n", request->url);
 
     http_response_handler_invoke_response(&request->handler,
-                                          HTTP_STATUS_OK, NULL, body);
+                                          status, headers, body);
     pool_unref(request->caller_pool);
 }
 

@@ -6,6 +6,10 @@
 
 #include "http-cache-internal.h"
 #include "memcached-stock.h"
+#include "growing-buffer.h"
+#include "serialize.h"
+#include "sink-impl.h"
+#include "strref.h"
 
 #include <glib.h>
 
@@ -18,6 +22,8 @@ struct http_cache_memcached_request {
 
     struct strmap *request_headers;
 
+    uint32_t header_size;
+
     union {
         struct memcached_set_extras set;
     } extras;
@@ -28,7 +34,97 @@ struct http_cache_memcached_request {
     } callback;
 
     void *callback_ctx;
+
+    struct async_operation_ref *async_ref;
 };
+
+/*
+ * istream handler
+ *
+ */
+
+/*
+static size_t
+mcd_value_data(const void *data, size_t length, void *ctx)
+{
+    struct http_cache_request *request = ctx;
+
+    request->response.length += length;
+    if (request->response.length > (size_t)cacheable_size_limit) {
+        istream_close(request->response.input);
+        return 0;
+    }
+
+    growing_buffer_write_buffer(request->response.output, data, length);
+    return length;
+}
+
+static void
+mcd_value_eof(void *ctx)
+{
+    struct http_cache_request *request = ctx;
+
+    request->response.input = NULL;
+
+    if (request->cache->cache != NULL)
+        list_remove(&request->siblings);
+
+    pool_unref(request->pool);
+}
+
+static void
+mcd_value_abort(void *ctx)
+{
+    struct http_cache_request *request = ctx;
+
+    cache_log(4, "http_cache: body_abort %s\n", request->url);
+
+    request->response.input = NULL;
+
+    list_remove(&request->siblings);
+    pool_unref(request->pool);
+}
+
+static const struct istream_handler mcd_value_handler = {
+    .data = mcd_value_data,
+    .eof = mcd_value_eof,
+    .abort = mcd_value_abort,
+};
+*/
+
+/*
+ * Public functions and memcached-client callbacks
+ *
+ */
+
+static void
+http_cache_memcached_header_callback(void *header_ptr, size_t length,
+                                     istream_t tail, void *ctx)
+{
+    struct http_cache_memcached_request *request = ctx;
+    struct strref header;
+    http_status_t status;
+    struct strmap *headers;
+
+    if (tail == NULL) {
+        request->callback.get(NULL, 0, NULL, NULL, request->callback_ctx);
+        return;
+    }
+
+    strref_set(&header, header_ptr, length);
+
+    deserialize_uint32(&header);
+    status = deserialize_uint16(&header);
+    headers = deserialize_strmap(&header, request->pool);
+
+    if (strref_is_null(&header)) {
+        istream_close(tail);
+        request->callback.get(NULL, 0, NULL, NULL, request->callback_ctx);
+        return;
+    }
+
+    request->callback.get(NULL, status, headers, tail, request->callback_ctx);
+}
 
 static void
 http_cache_memcached_get_callback(enum memcached_response_status status,
@@ -40,11 +136,13 @@ http_cache_memcached_get_callback(enum memcached_response_status status,
         if (value != NULL)
             istream_close(value);
 
-        request->callback.get(NULL, NULL, request->callback_ctx);
+        request->callback.get(NULL, 0, NULL, NULL, request->callback_ctx);
         return;
     }
 
-    request->callback.get(NULL, value, request->callback_ctx);
+    sink_header_new(request->pool, value,
+                    http_cache_memcached_header_callback, request,
+                    request->async_ref);
 }
 
 void
@@ -61,6 +159,7 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
     request->request_headers = request_headers;
     request->callback.get = callback;
     request->callback_ctx = callback_ctx;
+    request->async_ref = async_ref;
 
     memcached_stock_invoke(pool, stock, MEMCACHED_OPCODE_GET,
                            NULL, 0,
@@ -84,11 +183,31 @@ http_cache_memcached_put_callback(G_GNUC_UNUSED enum memcached_response_status s
 
 void
 http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
-                         const char *uri, istream_t value,
+                         const char *uri,
+                         http_status_t status, struct strmap *response_headers,
+                         istream_t value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
                          struct async_operation_ref *async_ref)
 {
     struct http_cache_memcached_request *request = p_malloc(pool, sizeof(*request));
+    struct growing_buffer *gb;
+
+    gb = growing_buffer_new(pool, 1024);
+
+    /* signature */
+    serialize_uint32(gb, 1);
+
+    /* serialize status + response headers */
+    serialize_uint16(gb, status);
+    serialize_strmap(gb, response_headers);
+
+    request->header_size = g_htonl(growing_buffer_length(gb));
+
+    /* append response body */
+    value = istream_cat_new(pool,
+                            istream_memory_new(pool, &request->header_size,
+                                               sizeof(request->header_size)),
+                            growing_buffer_istream(gb), value, NULL);
 
     request->extras.set.flags = 0;
     request->extras.set.expiration = g_htonl(300); /* XXX */
