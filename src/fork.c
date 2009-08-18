@@ -283,8 +283,10 @@ istream_fork_read(istream_t istream)
     size_t rest;
 
     rest = fork_flush_buffer(f);
-    if (rest == 0)
+    if (rest == 0) {
+        event2_set(&f->output_event, 0);
         fork_read_from_output(f);
+    }
 }
 
 static void
