@@ -69,6 +69,12 @@ serialize_strmap(struct growing_buffer *gb, struct strmap *map)
 {
     const struct strmap_pair *pair;
 
+    if (map == NULL) {
+        /* same as empty map */
+        serialize_string(gb, "");
+        return;
+    }
+
     strmap_rewind(map);
 
     while ((pair = strmap_next(map)) != NULL) {
