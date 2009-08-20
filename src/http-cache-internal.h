@@ -151,8 +151,6 @@ http_cache_heap_istream(pool_t pool, struct cache *cache,
 typedef void (*http_cache_memcached_flush_t)(bool success, void *ctx);
 
 typedef void (*http_cache_memcached_get_t)(struct http_cache_document *document,
-                                           http_status_t status,
-                                           struct strmap *headers,
                                            istream_t body, void *ctx);
 
 typedef void (*http_cache_memcached_put_t)(void *ctx);

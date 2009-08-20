@@ -144,12 +144,10 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
     struct http_cache_memcached_request *request = ctx;
     struct strref header;
     enum http_cache_memcached_type type;
-    http_status_t status;
     struct http_cache_document document;
-    struct strmap *headers;
 
     if (tail == NULL) {
-        request->callback.get(NULL, 0, NULL, NULL, request->callback_ctx);
+        request->callback.get(NULL, 0, request->callback_ctx);
         return;
     }
 
@@ -157,7 +155,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
 
     type = deserialize_uint32(&header);
     if (type != TYPE_DOCUMENT) {
-        request->callback.get(NULL, 0, NULL, NULL, request->callback_ctx);
+        request->callback.get(NULL, 0, request->callback_ctx);
         return;
     }
 
@@ -165,20 +163,21 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
 
     document.info.expires = deserialize_uint64(&header);
     document.vary = deserialize_strmap(&header, request->pool);
-    status = deserialize_uint16(&header);
-    headers = deserialize_strmap(&header, request->pool);
+    document.status = deserialize_uint16(&header);
+    document.headers = deserialize_strmap(&header, request->pool);
 
     if (strref_is_null(&header)) {
         istream_close(tail);
-        request->callback.get(NULL, 0, NULL, NULL, request->callback_ctx);
+        request->callback.get(NULL, 0, request->callback_ctx);
         return;
     }
 
-    document.info.last_modified = strmap_get_checked(headers, "last-modified");
-    document.info.etag = strmap_get_checked(headers, "etag");
-    document.info.vary = strmap_get_checked(headers, "vary");
+    document.info.last_modified =
+        strmap_get_checked(document.headers, "last-modified");
+    document.info.etag = strmap_get_checked(document.headers, "etag");
+    document.info.vary = strmap_get_checked(document.headers, "vary");
 
-    request->callback.get(&document, status, headers, tail, request->callback_ctx);
+    request->callback.get(&document, tail, request->callback_ctx);
 }
 
 static void
@@ -191,7 +190,7 @@ http_cache_memcached_get_callback(enum memcached_response_status status,
         if (value != NULL)
             istream_close(value);
 
-        request->callback.get(NULL, 0, NULL, NULL, request->callback_ctx);
+        request->callback.get(NULL, 0, request->callback_ctx);
         return;
     }
 

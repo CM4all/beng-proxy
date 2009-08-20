@@ -673,7 +673,6 @@ http_cache_memcached_miss(struct http_cache_request *request)
 
 static void
 http_cache_memcached_get_callback(struct http_cache_document *document,
-                                  http_status_t status, struct strmap *headers,
                                   istream_t body, void *ctx)
 {
     struct http_cache_request *request = ctx;
@@ -692,7 +691,8 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
     cache_log(4, "http_cache: serve %s\n", request->url);
 
     http_response_handler_invoke_response(&request->handler,
-                                          status, headers, body);
+                                          document->status, document->headers,
+                                          body);
     pool_unref(request->caller_pool);
 }
 
