@@ -35,21 +35,56 @@ struct http_cache_request {
     struct list_head siblings;
 
     pool_t pool, caller_pool;
+
+    /**
+     * The cache object which got this request.
+     */
     struct http_cache *cache;
     http_method_t method;
     struct uri_with_address *uwa;
     const char *url;
+
+    /** headers from the original request */
     struct strmap *headers;
+
     struct http_response_handler_ref handler;
 
-    struct http_cache_document *document;
+    /**
+     * Information on the request passed to http_cache_request().
+     */
     struct http_cache_info *info;
 
+    /**
+     * The document which was found in the cache, in case this is a
+     * request to test the validity of the cache entry.  If this is
+     * NULL, then we had a cache miss.
+     */
+    struct http_cache_document *document;
+
+    /**
+     * This struct holds response information while this module
+     * receives the response body.
+     */
     struct {
         http_status_t status;
         struct strmap *headers;
+
+        /**
+         * The response body istream we got from the http_request()
+         * callback.
+         */
         istream_t input;
+
+        /**
+         * The current size of #output.  We could use
+         * growing_buffer_length() here, but that would be too
+         * expensive.
+         */
         size_t length;
+
+        /**
+         * A sink for the response body, read from #input.
+         */
         struct growing_buffer *output;
     } response;
 
