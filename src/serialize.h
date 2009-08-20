@@ -28,6 +28,9 @@ void
 serialize_string(struct growing_buffer *gb, const char *value);
 
 void
+serialize_string_null(struct growing_buffer *gb, const char *value);
+
+void
 serialize_strmap(struct growing_buffer *gb, struct strmap *map);
 
 uint16_t
@@ -41,6 +44,9 @@ deserialize_uint64(struct strref *input);
 
 const char *
 deserialize_string(struct strref *input);
+
+const char *
+deserialize_string_null(struct strref *input);
 
 struct strmap *
 deserialize_strmap(struct strref *input, pool_t pool);

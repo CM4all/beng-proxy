@@ -52,8 +52,16 @@ serialize_size_t(struct growing_buffer *gb, size_t value)
 void
 serialize_string(struct growing_buffer *gb, const char *value)
 {
+    assert(value != NULL);
+
     /* write the string including the null terminator */
     growing_buffer_write_buffer(gb, value, strlen(value) + 1);
+}
+
+void
+serialize_string_null(struct growing_buffer *gb, const char *value)
+{
+    serialize_string(gb, value != NULL ? value : "");
 }
 
 void
@@ -137,6 +145,15 @@ deserialize_string(struct strref *input)
     value = input->data;
 
     strref_skip(input, end + 1 - value);
+    return value;
+}
+
+const char *
+deserialize_string_null(struct strref *input)
+{
+    const char *value = deserialize_string(input);
+    if (value != NULL && *value == 0)
+        value = NULL;
     return value;
 }
 
