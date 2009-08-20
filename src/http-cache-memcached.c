@@ -15,6 +15,10 @@
 
 #include <string.h>
 
+enum http_cache_memcached_type {
+    TYPE_DOCUMENT = 1,
+};
+
 struct http_cache_memcached_request {
     pool_t pool;
 
@@ -137,6 +141,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
 {
     struct http_cache_memcached_request *request = ctx;
     struct strref header;
+    enum http_cache_memcached_type type;
     http_status_t status;
     struct http_cache_document document;
     struct strmap *headers;
@@ -148,7 +153,12 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
 
     strref_set(&header, header_ptr, length);
 
-    deserialize_uint32(&header);
+    type = deserialize_uint32(&header);
+    if (type != TYPE_DOCUMENT) {
+        request->callback.get(NULL, 0, NULL, NULL, request->callback_ctx);
+        return;
+    }
+
     document.info.expires = deserialize_uint64(&header);
     status = deserialize_uint16(&header);
     headers = deserialize_strmap(&header, request->pool);
@@ -231,8 +241,8 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
 
     gb = growing_buffer_new(pool, 1024);
 
-    /* signature */
-    serialize_uint32(gb, 1);
+    /* type */
+    serialize_uint32(gb, TYPE_DOCUMENT);
 
     serialize_uint64(gb, info->expires);
 
