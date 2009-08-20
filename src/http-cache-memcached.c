@@ -10,6 +10,7 @@
 #include "serialize.h"
 #include "sink-impl.h"
 #include "strref.h"
+#include "strmap.h"
 
 #include <glib.h>
 
@@ -170,6 +171,10 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
         request->callback.get(NULL, 0, NULL, NULL, request->callback_ctx);
         return;
     }
+
+    document.info.last_modified = strmap_get_checked(headers, "last-modified");
+    document.info.etag = strmap_get_checked(headers, "etag");
+    document.info.vary = strmap_get_checked(headers, "vary");
 
     request->callback.get(&document, status, headers, tail, request->callback_ctx);
 }
