@@ -39,10 +39,7 @@ http_cache_info_new(pool_t pool)
 {
     struct http_cache_info *info = p_malloc(pool, sizeof(*info));
 
-    info->only_if_cached = false;
-    info->expires = (time_t)-1;
-    info->last_modified = NULL;
-    info->etag = NULL;
+    http_cache_info_init(info);
     return info;
 }
 

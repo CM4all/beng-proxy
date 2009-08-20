@@ -159,6 +159,8 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
         return;
     }
 
+    http_cache_info_init(&document.info);
+
     document.info.expires = deserialize_uint64(&header);
     status = deserialize_uint16(&header);
     headers = deserialize_strmap(&header, request->pool);

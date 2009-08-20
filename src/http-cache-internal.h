@@ -45,6 +45,15 @@ struct http_cache_document {
     unsigned char *data;
 };
 
+static inline void
+http_cache_info_init(struct http_cache_info *info)
+{
+    info->only_if_cached = false;
+    info->expires = (time_t)-1;
+    info->last_modified = NULL;
+    info->etag = NULL;
+}
+
 void
 http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
                      const struct http_cache_info *src);
