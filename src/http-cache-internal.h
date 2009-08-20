@@ -98,6 +98,14 @@ http_cache_response_evaluate(struct http_cache_info *info,
                              off_t body_available);
 
 /**
+ * Copy all request headers mentioned in the Vary response header to a
+ * new strmap.
+ */
+struct strmap *
+http_cache_copy_vary(pool_t pool, const char *vary,
+                     const struct strmap *headers);
+
+/**
  * The server sent us a non-"Not Modified" response.  Check if we want
  * to serve the cache item anyway, and discard the server's response.
  */

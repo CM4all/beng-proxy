@@ -6,9 +6,11 @@
  */
 
 #include "http-cache-internal.h"
+#include "http-util.h"
 #include "strref2.h"
 #include "strmap.h"
 #include "date.h"
+#include "tpool.h"
 
 #include <stdlib.h>
 
@@ -234,6 +236,30 @@ http_cache_response_evaluate(struct http_cache_info *info,
 
     return info->expires != (time_t)-1 || info->last_modified != NULL ||
         info->etag != NULL;
+}
+
+struct strmap *
+http_cache_copy_vary(pool_t pool, const char *vary,
+                     const struct strmap *headers)
+{
+    struct strmap *dest = strmap_new(pool, 16);
+    struct pool_mark mark;
+    char **list;
+
+    pool_mark(tpool, &mark);
+
+    for (list = http_list_split(tpool, vary);
+         *list != NULL; ++list) {
+        const char *value = strmap_get_checked(headers, *list);
+        if (value == NULL)
+            value = "";
+        strmap_set(dest, p_strdup(pool, *list),
+                   p_strdup(pool, value));
+    }
+
+    pool_rewind(tpool, &mark);
+
+    return dest;
 }
 
 bool
