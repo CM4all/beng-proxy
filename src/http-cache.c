@@ -492,15 +492,6 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     pool_unref(pool);
 }
 
-static istream_t
-http_cache_document_istream(pool_t pool,
-                            const struct http_cache_document *document)
-{
-    return document->size > 0
-        ? istream_memory_new(pool, document->data, document->size)
-        : istream_null_new(pool);
-}
-
 static void
 http_cache_serve(struct http_cache *cache,
                  struct http_cache_document *document,
@@ -519,9 +510,7 @@ http_cache_serve(struct http_cache *cache,
 
     http_response_handler_set(&handler_ref, handler, handler_ctx);
 
-    response_body = http_cache_document_istream(pool, document);
-    response_body = http_cache_heap_wrap(pool, response_body,
-                                         cache->cache, document);
+    response_body = http_cache_heap_istream(pool, cache->cache, document);
 
     http_response_handler_invoke_response(&handler_ref, document->status,
                                           document->headers, response_body);

@@ -40,9 +40,6 @@ struct http_cache_document {
 
     http_status_t status;
     struct strmap *headers;
-
-    size_t size;
-    unsigned char *data;
 };
 
 static inline void
@@ -72,8 +69,7 @@ http_cache_document_init(struct http_cache_document *document, pool_t pool,
                          const struct http_cache_info *info,
                          struct strmap *request_headers,
                          http_status_t status,
-                         struct strmap *response_headers,
-                         const struct growing_buffer *body);
+                         struct strmap *response_headers);
 
 /**
  * Checks whether the specified cache item fits the current request.
@@ -149,9 +145,8 @@ http_cache_heap_unlock(struct cache *cache,
                        struct http_cache_document *document);
 
 istream_t
-http_cache_heap_wrap(pool_t pool, istream_t istream,
-                     struct cache *cache,
-                     struct http_cache_document *document);
+http_cache_heap_istream(pool_t pool, struct cache *cache,
+                        struct http_cache_document *document);
 
 typedef void (*http_cache_memcached_flush_t)(bool success, void *ctx);
 

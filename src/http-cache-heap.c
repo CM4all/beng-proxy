@@ -16,6 +16,9 @@ struct http_cache_item {
     pool_t pool;
 
     struct http_cache_document document;
+
+    size_t size;
+    unsigned char *data;
 };
 
 static inline struct http_cache_item *
@@ -74,7 +77,8 @@ http_cache_heap_put(struct cache *cache, pool_t pool, const char *url,
     item->pool = pool;
 
     http_cache_document_init(&item->document, pool, info,
-                             request_headers, status, response_headers, body);
+                             request_headers, status, response_headers);
+    item->data = growing_buffer_dup(body, pool, &item->size);
 
     cache_put_match(cache, p_strdup(pool, url),
                     &item->item,
@@ -121,12 +125,17 @@ http_cache_heap_unlock(struct cache *cache,
 }
 
 istream_t
-http_cache_heap_wrap(pool_t pool, istream_t istream,
-                     struct cache *cache,
-                     struct http_cache_document *document)
+http_cache_heap_istream(pool_t pool, struct cache *cache,
+                        struct http_cache_document *document)
 {
     struct http_cache_item *item = document_to_item(document);
+    istream_t istream;
 
+    if (item->size == 0)
+        /* don't lock the item */
+        return istream_null_new(pool);
+
+    istream = istream_memory_new(pool, item->data, item->size);
     return istream_unlock_new(pool, istream,
                               cache, &item->item);
 }
