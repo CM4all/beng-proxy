@@ -527,15 +527,43 @@ http_cache_serve(struct http_cache *cache,
 }
 
 static void
-http_cache_test(struct http_cache *cache, pool_t caller_pool,
-                struct http_cache_info *info,
-                struct http_cache_document *document,
+http_cache_test(struct http_cache_request *request,
                 http_method_t method,
                 struct uri_with_address *uwa,
-                struct strmap *headers, istream_t body,
-                const struct http_response_handler *handler,
-                void *handler_ctx,
-                struct async_operation_ref *async_ref)
+                struct strmap *headers, istream_t body)
+{
+    struct http_cache *cache = request->cache;
+    struct http_cache_document *document = request->document;
+
+    cache_log(4, "http_cache: test %s\n", uwa->uri);
+
+    if (headers == NULL)
+        headers = strmap_new(request->pool, 16);
+
+    if (document->info.last_modified != NULL)
+        strmap_set(headers, "if-modified-since",
+                   document->info.last_modified);
+
+    if (document->info.etag != NULL)
+        strmap_set(headers, "if-none-match", document->info.etag);
+
+    http_request(request->pool, cache->tcp_stock,
+                 method, uwa,
+                 headers_dup(request->pool, headers), body,
+                 &http_cache_response_handler, request,
+                 &request->async_ref);
+}
+
+static void
+http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
+                     struct http_cache_info *info,
+                     struct http_cache_document *document,
+                     http_method_t method,
+                     struct uri_with_address *uwa,
+                     struct strmap *headers, istream_t body,
+                     const struct http_response_handler *handler,
+                     void *handler_ctx,
+                     struct async_operation_ref *async_ref)
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
@@ -553,28 +581,12 @@ http_cache_test(struct http_cache *cache, pool_t caller_pool,
     request->document = document;
     request->info = info;
 
-    cache_log(4, "http_cache: test %s\n", uwa->uri);
-
-    if (headers == NULL)
-        headers = strmap_new(pool, 16);
-
-    if (document->info.last_modified != NULL)
-        strmap_set(headers, "if-modified-since",
-                   document->info.last_modified);
-
-    if (document->info.etag != NULL)
-        strmap_set(headers, "if-none-match", document->info.etag);
-
     async_init(&request->operation, &http_cache_async_operation);
     async_ref_set(async_ref, &request->operation);
 
     pool_ref(caller_pool);
-    http_request(pool, cache->tcp_stock,
-                 method, uwa,
-                 headers_dup(pool, headers), body,
-                 &http_cache_response_handler, request,
-                 &request->async_ref);
-    pool_unref(pool);
+    http_cache_test(request, method, uwa, headers, body);
+    pool_unref(request->pool);
 }
 
 static bool
@@ -602,9 +614,9 @@ http_cache_found(struct http_cache *cache,
         http_cache_serve(cache, document, pool,
                          uwa->uri, body, handler, handler_ctx);
     else
-        http_cache_test(cache, pool, info, document,
-                        method, uwa, headers, body,
-                        handler, handler_ctx, async_ref);
+        http_cache_heap_test(cache, pool, info, document,
+                             method, uwa, headers, body,
+                             handler, handler_ctx, async_ref);
 }
 
 static void
