@@ -179,6 +179,7 @@ void
 http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
                          const char *uri,
                          const struct http_cache_info *info,
+                         struct strmap *request_headers,
                          http_status_t status, struct strmap *response_headers,
                          istream_t value,
                          http_cache_memcached_put_t put, void *callback_ctx,

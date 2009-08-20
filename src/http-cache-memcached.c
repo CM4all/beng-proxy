@@ -11,13 +11,14 @@
 #include "sink-impl.h"
 #include "strref.h"
 #include "strmap.h"
+#include "tpool.h"
 
 #include <glib.h>
 
 #include <string.h>
 
 enum http_cache_memcached_type {
-    TYPE_DOCUMENT = 1,
+    TYPE_DOCUMENT = 2,
 };
 
 struct http_cache_memcached_request {
@@ -163,6 +164,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
     http_cache_info_init(&document.info);
 
     document.info.expires = deserialize_uint64(&header);
+    document.vary = deserialize_strmap(&header, request->pool);
     status = deserialize_uint16(&header);
     headers = deserialize_strmap(&header, request->pool);
 
@@ -238,13 +240,17 @@ void
 http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
                          const char *uri,
                          const struct http_cache_info *info,
+                         struct strmap *request_headers,
                          http_status_t status, struct strmap *response_headers,
                          istream_t value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
                          struct async_operation_ref *async_ref)
 {
     struct http_cache_memcached_request *request = p_malloc(pool, sizeof(*request));
+    struct pool_mark mark;
     struct growing_buffer *gb;
+
+    pool_mark(tpool, &mark);
 
     gb = growing_buffer_new(pool, 1024);
 
@@ -252,6 +258,10 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
     serialize_uint32(gb, TYPE_DOCUMENT);
 
     serialize_uint64(gb, info->expires);
+
+    serialize_strmap(gb, info->vary != NULL
+                     ? http_cache_copy_vary(tpool, info->vary, request_headers)
+                     : NULL);
 
     /* serialize status + response headers */
     serialize_uint16(gb, status);
@@ -270,6 +280,8 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
 
     request->callback.put = callback;
     request->callback_ctx = callback_ctx;
+
+    pool_rewind(tpool, &mark);
 
     memcached_stock_invoke(pool, stock,
                            MEMCACHED_OPCODE_SET,
