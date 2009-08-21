@@ -144,7 +144,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
     struct http_cache_memcached_request *request = ctx;
     struct strref header;
     enum http_cache_memcached_type type;
-    struct http_cache_document document;
+    struct http_cache_document *document;
 
     if (tail == NULL) {
         request->callback.get(NULL, 0, request->callback_ctx);
@@ -159,12 +159,14 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
         return;
     }
 
-    http_cache_info_init(&document.info);
+    document = p_malloc(request->pool, sizeof(*document));
 
-    document.info.expires = deserialize_uint64(&header);
-    document.vary = deserialize_strmap(&header, request->pool);
-    document.status = deserialize_uint16(&header);
-    document.headers = deserialize_strmap(&header, request->pool);
+    http_cache_info_init(&document->info);
+
+    document->info.expires = deserialize_uint64(&header);
+    document->vary = deserialize_strmap(&header, request->pool);
+    document->status = deserialize_uint16(&header);
+    document->headers = deserialize_strmap(&header, request->pool);
 
     if (strref_is_null(&header)) {
         istream_close(tail);
@@ -172,12 +174,12 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
         return;
     }
 
-    document.info.last_modified =
-        strmap_get_checked(document.headers, "last-modified");
-    document.info.etag = strmap_get_checked(document.headers, "etag");
-    document.info.vary = strmap_get_checked(document.headers, "vary");
+    document->info.last_modified =
+        strmap_get_checked(document->headers, "last-modified");
+    document->info.etag = strmap_get_checked(document->headers, "etag");
+    document->info.vary = strmap_get_checked(document->headers, "vary");
 
-    request->callback.get(&document, tail, request->callback_ctx);
+    request->callback.get(document, tail, request->callback_ctx);
 }
 
 static void
