@@ -106,6 +106,8 @@ static const struct istream_handler mcd_value_handler = {
 
 static void
 http_cache_memcached_flush_callback(enum memcached_response_status status,
+                                    G_GNUC_UNUSED const void *key,
+                                    G_GNUC_UNUSED size_t key_length,
                                     istream_t value, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
@@ -184,6 +186,8 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
 
 static void
 http_cache_memcached_get_callback(enum memcached_response_status status,
+                                  G_GNUC_UNUSED const void *key,
+                                  G_GNUC_UNUSED size_t key_length,
                                   istream_t value, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
@@ -227,6 +231,8 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
 
 static void
 http_cache_memcached_put_callback(G_GNUC_UNUSED enum memcached_response_status status,
+                                  G_GNUC_UNUSED const void *key,
+                                  G_GNUC_UNUSED size_t key_length,
                                   istream_t value, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;

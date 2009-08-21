@@ -43,6 +43,7 @@ struct memcached_client {
         enum {
             READ_HEADER,
             READ_EXTRAS,
+            READ_KEY,
             READ_VALUE,
             READ_END,
         } read_state;
@@ -50,6 +51,12 @@ struct memcached_client {
         struct memcached_response_header header;
 
         struct fifo_buffer *input;
+
+        struct {
+            void *buffer;
+            unsigned char *tail;
+            size_t remaining;
+        } key;
 
         struct istream value;
         size_t value_remaining;
@@ -92,7 +99,8 @@ memcached_connection_close(struct memcached_client *client)
     switch (client->response.read_state) {
     case READ_HEADER:
     case READ_EXTRAS:
-        client->request.handler(-1, NULL, client->request.handler_ctx);
+    case READ_KEY:
+        client->request.handler(-1, NULL, 0, NULL, client->request.handler_ctx);
         client->response.read_state = READ_END;
         break;
 
@@ -198,6 +206,7 @@ memcached_consume_header(struct memcached_client *client)
 
     client->response.value_remaining =
         g_ntohl(client->response.header.body_length) -
+        g_ntohs(client->response.header.key_length) -
         client->response.header.extras_length;
     if (client->response.header.magic != MEMCACHED_MAGIC_RESPONSE ||
         client->response.value_remaining > G_MAXINT) {
@@ -226,6 +235,42 @@ memcached_consume_extras(struct memcached_client *client)
                             client->response.header.extras_length);
     }
 
+    client->response.read_state = READ_KEY;
+    client->response.key.remaining =
+        g_ntohs(client->response.header.key_length);
+    if (client->response.key.remaining > 0)
+        client->response.key.buffer
+            = client->response.key.tail
+            = p_malloc(client->pool, client->response.key.remaining);
+    else
+        client->response.key.buffer = NULL;
+
+    return true;
+}
+
+static bool
+memcached_consume_key(struct memcached_client *client)
+{
+    assert(client->response.read_state == READ_KEY);
+
+    if (client->response.key.remaining > 0) {
+        size_t length;
+        const void *data = fifo_buffer_read(client->response.input, &length);
+
+        if (data == NULL)
+            return false;
+
+        if (length > client->response.key.remaining)
+            length = client->response.key.remaining;
+
+        memcpy(client->response.key.tail, data, length);
+        client->response.key.tail += length;
+        client->response.key.remaining -= length;
+
+        if (client->response.key.remaining > 0)
+            return false;
+    }
+
     if (client->response.value_remaining > 0) {
         /* there's a value: pass it to the callback, continue
            reading */
@@ -240,6 +285,8 @@ memcached_consume_extras(struct memcached_client *client)
 
         pool_ref(client->pool);
         client->request.handler(g_ntohs(client->response.header.status),
+                                client->response.key.buffer,
+                                g_ntohs(client->response.header.key_length),
                                 value, client->request.handler_ctx);
 
         /* check if the callback has closed the value istream */
@@ -252,6 +299,8 @@ memcached_consume_extras(struct memcached_client *client)
         client->response.read_state = READ_END;
 
         client->request.handler(g_ntohs(client->response.header.status),
+                                client->response.key.buffer,
+                                g_ntohs(client->response.header.key_length),
                                 NULL, client->request.handler_ctx);
 
         memcached_connection_close(client);
@@ -300,6 +349,10 @@ memcached_consume_input(struct memcached_client *client)
 
     if (client->response.read_state == READ_EXTRAS &&
         !memcached_consume_extras(client))
+        return false;
+
+    if (client->response.read_state == READ_KEY &&
+        !memcached_consume_key(client))
         return false;
 
     assert(client->response.read_state == READ_VALUE);
@@ -506,7 +559,7 @@ memcached_client_invoke(pool_t pool, int fd,
 
     value_length = value != NULL ? istream_available(value, false) : 0;
     if (value_length == -1 || value_length >= 0x10000000) {
-        handler(-1, NULL, handler_ctx);
+        handler(-1, NULL, 0, NULL, handler_ctx);
         return;
     }
 

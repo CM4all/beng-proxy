@@ -91,7 +91,7 @@ memcached_stock_callback(void *ctx, struct stock_item *item)
     struct memcached_stock_request *request = ctx;
 
     if (item == NULL) {
-        request->handler(-1, NULL, request->handler_ctx);
+        request->handler(-1, NULL, 0, NULL, request->handler_ctx);
         pool_unref(request->pool);
         return;
     }
