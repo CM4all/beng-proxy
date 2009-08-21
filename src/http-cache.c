@@ -62,6 +62,13 @@ struct http_cache_request {
     struct http_cache_document *document;
 
     /**
+     * The response body from the http_cache_document.  This is not
+     * used for the heap backend: it creates the #istream_t on demand
+     * with http_cache_heap_istream().
+     */
+    istream_t document_body;
+
+    /**
      * This struct holds response information while this module
      * receives the response body.
      */
@@ -540,11 +547,25 @@ http_cache_heap_serve(struct cache *cache,
 }
 
 static void
+http_cache_memcached_serve(struct http_cache_request *request)
+{
+    cache_log(4, "http_cache: serve %s\n", request->url);
+
+    http_response_handler_invoke_response(&request->handler,
+                                          request->document->status,
+                                          request->document->headers,
+                                          request->document_body);
+}
+
+static void
 http_cache_serve(struct http_cache_request *request)
 {
-    http_cache_heap_serve(request->cache->cache, request->document,
-                          request->pool, request->url,
-                          request->handler.handler, request->handler.ctx);
+    if (request->cache->cache != NULL)
+        http_cache_heap_serve(request->cache->cache, request->document,
+                              request->pool, request->url,
+                              request->handler.handler, request->handler.ctx);
+    else
+        http_cache_memcached_serve(request);
 }
 
 static void
@@ -708,23 +729,26 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
 {
     struct http_cache_request *request = ctx;
 
-    if (body == NULL) {
+    if (document == NULL) {
         http_cache_memcached_miss(request);
         return;
     }
 
-    if (!http_cache_may_serve(request->info, document)) {
-        istream_close(body);
-        http_cache_memcached_miss(request);
-        return;
+    if (http_cache_may_serve(request->info, document)) {
+        cache_log(4, "http_cache: serve %s\n", request->url);
+
+        http_response_handler_invoke_response(&request->handler,
+                                              document->status,
+                                              document->headers,
+                                              body);
+        pool_unref(request->caller_pool);
+    } else {
+        request->document = document;
+        request->document_body = istream_hold_new(request->pool, body);
+
+        http_cache_test(request, request->method, request->uwa,
+                        request->headers);
     }
-
-    cache_log(4, "http_cache: serve %s\n", request->url);
-
-    http_response_handler_invoke_response(&request->handler,
-                                          document->status, document->headers,
-                                          body);
-    pool_unref(request->caller_pool);
 }
 
 static void
