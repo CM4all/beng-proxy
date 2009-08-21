@@ -159,7 +159,7 @@ istream_memcached_read(istream_t istream)
 
     assert(client->response.read_state == READ_VALUE);
 
-    if (fifo_buffer_full(client->response.input))
+    if (!fifo_buffer_empty(client->response.input))
         memcached_consume_input(client);
     else {
         pool_ref(client->pool);
