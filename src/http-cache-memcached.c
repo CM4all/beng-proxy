@@ -183,6 +183,13 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
     document->info.etag = strmap_get_checked(document->headers, "etag");
     document->info.vary = strmap_get_checked(document->headers, "vary");
 
+    if (!http_cache_document_fits(document, request->request_headers)) {
+        /* Vary mismatch */
+        istream_close(tail);
+        request->callback.get(NULL, 0, request->callback_ctx);
+        return;
+    }
+
     request->callback.get(document, tail, request->callback_ctx);
 }
 
