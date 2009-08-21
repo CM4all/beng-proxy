@@ -91,11 +91,11 @@ memcached_connection_close(struct memcached_client *client)
 
     switch (client->response.read_state) {
     case READ_HEADER:
+    case READ_EXTRAS:
         client->request.handler(-1, NULL, client->request.handler_ctx);
         client->response.read_state = READ_END;
         break;
 
-    case READ_EXTRAS:
     case READ_VALUE:
         istream_deinit_abort(&client->response.value);
         client->response.read_state = READ_END;
@@ -136,8 +136,7 @@ istream_memcached_available(istream_t istream, G_GNUC_UNUSED bool partial)
 {
     struct memcached_client *client = istream_to_memcached_client(istream);
 
-    assert(client->response.read_state == READ_EXTRAS ||
-           client->response.read_state == READ_VALUE);
+    assert(client->response.read_state == READ_VALUE);
 
     return client->response.value_remaining;
 }
@@ -147,8 +146,7 @@ istream_memcached_read(istream_t istream)
 {
     struct memcached_client *client = istream_to_memcached_client(istream);
 
-    assert(client->response.read_state == READ_EXTRAS ||
-           client->response.read_state == READ_VALUE);
+    assert(client->response.read_state == READ_VALUE);
 
     if (fifo_buffer_full(client->response.input))
         memcached_consume_input(client);
@@ -164,8 +162,7 @@ istream_memcached_close(istream_t istream)
 {
     struct memcached_client *client = istream_to_memcached_client(istream);
 
-    assert(client->response.read_state == READ_EXTRAS ||
-           client->response.read_state == READ_VALUE);
+    assert(client->response.read_state == READ_VALUE);
 
     istream_deinit_abort(&client->response.value);
     memcached_client_release(client, false);
@@ -187,8 +184,6 @@ memcached_consume_header(struct memcached_client *client)
 {
     size_t length;
     const void *data = fifo_buffer_read(client->response.input, &length);
-    istream_t value;
-    bool valid;
 
     assert(client->response.read_state == READ_HEADER);
 
@@ -211,21 +206,7 @@ memcached_consume_header(struct memcached_client *client)
         return false;
     }
 
-    if (client->response.value_remaining > 0) {
-        istream_init(&client->response.value, &memcached_response_value,
-                     client->pool);
-        value = istream_struct_cast(&client->response.value);
-    } else
-        value = NULL;
-
-    pool_ref(client->pool);
-    client->request.handler(g_ntohs(client->response.header.status),
-                            value, client->request.handler_ctx);
-
-    valid = memcached_connection_valid(client);
-    pool_unref(client->pool);
-
-    return valid;
+    return true;
 }
 
 static bool
@@ -246,10 +227,33 @@ memcached_consume_extras(struct memcached_client *client)
     }
 
     if (client->response.value_remaining > 0) {
+        /* there's a value: pass it to the callback, continue
+           reading */
+        istream_t value;
+        bool valid;
+
         client->response.read_state = READ_VALUE;
-        return true;
+
+        istream_init(&client->response.value, &memcached_response_value,
+                     client->pool);
+        value = istream_struct_cast(&client->response.value);
+
+        pool_ref(client->pool);
+        client->request.handler(g_ntohs(client->response.header.status),
+                                value, client->request.handler_ctx);
+
+        /* check if the callback has closed the value istream */
+        valid = memcached_connection_valid(client);
+        pool_unref(client->pool);
+
+        return valid;
     } else {
+        /* no value: invoke the callback, quit */
         client->response.read_state = READ_END;
+
+        client->request.handler(g_ntohs(client->response.header.status),
+                                NULL, client->request.handler_ctx);
+
         memcached_connection_close(client);
         return false;
     }
