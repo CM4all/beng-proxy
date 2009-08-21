@@ -52,6 +52,8 @@ struct memcached_client {
 
         struct fifo_buffer *input;
 
+        unsigned char *extras;
+
         struct {
             void *buffer;
             unsigned char *tail;
@@ -100,7 +102,8 @@ memcached_connection_close(struct memcached_client *client)
     case READ_HEADER:
     case READ_EXTRAS:
     case READ_KEY:
-        client->request.handler(-1, NULL, 0, NULL, client->request.handler_ctx);
+        client->request.handler(-1, NULL, 0, NULL, 0, NULL,
+                                client->request.handler_ctx);
         client->response.read_state = READ_END;
         break;
 
@@ -231,9 +234,15 @@ memcached_consume_extras(struct memcached_client *client)
             length < sizeof(client->response.header.extras_length))
             return false;
 
+        client->response.extras = p_malloc(client->pool,
+                                           client->response.header.extras_length);
+        memcpy(client->response.extras, data,
+               client->response.header.extras_length);
+
         fifo_buffer_consume(client->response.input,
                             client->response.header.extras_length);
-    }
+    } else
+        client->response.extras = NULL;
 
     client->response.read_state = READ_KEY;
     client->response.key.remaining =
@@ -285,6 +294,8 @@ memcached_consume_key(struct memcached_client *client)
 
         pool_ref(client->pool);
         client->request.handler(g_ntohs(client->response.header.status),
+                                client->response.extras,
+                                client->response.header.extras_length,
                                 client->response.key.buffer,
                                 g_ntohs(client->response.header.key_length),
                                 value, client->request.handler_ctx);
@@ -299,6 +310,8 @@ memcached_consume_key(struct memcached_client *client)
         client->response.read_state = READ_END;
 
         client->request.handler(g_ntohs(client->response.header.status),
+                                client->response.extras,
+                                client->response.header.extras_length,
                                 client->response.key.buffer,
                                 g_ntohs(client->response.header.key_length),
                                 NULL, client->request.handler_ctx);
@@ -559,7 +572,7 @@ memcached_client_invoke(pool_t pool, int fd,
 
     value_length = value != NULL ? istream_available(value, false) : 0;
     if (value_length == -1 || value_length >= 0x10000000) {
-        handler(-1, NULL, 0, NULL, handler_ctx);
+        handler(-1, NULL, 0, NULL, 0, NULL, handler_ctx);
         return;
     }
 

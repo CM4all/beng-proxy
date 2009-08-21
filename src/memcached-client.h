@@ -15,6 +15,7 @@ struct http_response_handler;
 struct strmap;
 
 typedef void (*memcached_response_handler_t)(enum memcached_response_status status,
+                                             const void *extras, size_t extras_length,
                                              const void *key, size_t key_length,
                                              istream_t value, void *ctx);
 
