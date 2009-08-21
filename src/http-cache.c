@@ -159,12 +159,7 @@ http_cache_unlock(struct http_cache *cache,
 }
 
 static void
-http_cache_serve(struct http_cache *cache,
-                 struct http_cache_document *document,
-                 pool_t pool,
-                 const char *url,
-                 const struct http_response_handler *handler,
-                 void *handler_ctx);
+http_cache_serve(struct http_cache_request *request);
 
 
 /*
@@ -242,9 +237,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         assert(body == NULL);
 
         cache_log(5, "http_cache: not_modified %s\n", request->url);
-        http_cache_serve(request->cache, request->document, request->pool,
-                         request->url,
-                         request->handler.handler, request->handler.ctx);
+        http_cache_serve(request);
         pool_unref(request->caller_pool);
         return;
     }
@@ -257,9 +250,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         if (body != NULL)
             istream_close(body);
 
-        http_cache_serve(request->cache, request->document, request->pool,
-                         request->url,
-                         request->handler.handler, request->handler.ctx);
+        http_cache_serve(request);
         pool_unref(request->caller_pool);
         return;
     }
@@ -528,12 +519,12 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
 }
 
 static void
-http_cache_serve(struct http_cache *cache,
-                 struct http_cache_document *document,
-                 pool_t pool,
-                 const char *url __attr_unused,
-                 const struct http_response_handler *handler,
-                 void *handler_ctx)
+http_cache_heap_serve(struct cache *cache,
+                      struct http_cache_document *document,
+                      pool_t pool,
+                      const char *url __attr_unused,
+                      const struct http_response_handler *handler,
+                      void *handler_ctx)
 {
     struct http_response_handler_ref handler_ref;
     istream_t response_body;
@@ -542,10 +533,18 @@ http_cache_serve(struct http_cache *cache,
 
     http_response_handler_set(&handler_ref, handler, handler_ctx);
 
-    response_body = http_cache_heap_istream(pool, cache->cache, document);
+    response_body = http_cache_heap_istream(pool, cache, document);
 
     http_response_handler_invoke_response(&handler_ref, document->status,
                                           document->headers, response_body);
+}
+
+static void
+http_cache_serve(struct http_cache_request *request)
+{
+    http_cache_heap_serve(request->cache->cache, request->document,
+                          request->pool, request->url,
+                          request->handler.handler, request->handler.ctx);
 }
 
 static void
@@ -633,8 +632,8 @@ http_cache_found(struct http_cache *cache,
                  struct async_operation_ref *async_ref)
 {
     if (http_cache_may_serve(info, document))
-        http_cache_serve(cache, document, pool,
-                         uwa->uri, handler, handler_ctx);
+        http_cache_heap_serve(cache->cache, document, pool,
+                              uwa->uri, handler, handler_ctx);
     else
         http_cache_heap_test(cache, pool, info, document,
                              method, uwa, headers,
