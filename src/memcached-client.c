@@ -5,6 +5,7 @@
  */
 
 #include "memcached-client.h"
+#include "memcached-packet.h"
 #include "lease.h"
 #include "async.h"
 #include "event2.h"
@@ -32,8 +33,6 @@ struct memcached_client {
         void *handler_ctx;
 
         struct async_operation async;
-
-        struct memcached_request_header header;
 
         istream_t istream;
     } request;
@@ -564,14 +563,15 @@ memcached_client_invoke(pool_t pool, int fd,
                         struct async_operation_ref *async_ref)
 {
     struct memcached_client *client;
-    istream_t header, extras_stream, request;
-    off_t value_length;
+    istream_t request;
 
     assert(extras_length <= 0xff);
     assert(key_length < 0x1000);
 
-    value_length = value != NULL ? istream_available(value, false) : 0;
-    if (value_length == -1 || value_length >= 0x10000000) {
+    request = memcached_request_packet(pool, opcode, extras, extras_length,
+                                       key, key_length, value,
+                                       0x1234 /* XXX? */);
+    if (request == NULL) {
         handler(-1, NULL, 0, NULL, 0, NULL, handler_ctx);
         return;
     }
@@ -583,27 +583,6 @@ memcached_client_invoke(pool_t pool, int fd,
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
     event2_init(&client->event, fd,
                 memcached_client_event_callback, client, NULL);
-
-    client->request.header.magic = MEMCACHED_MAGIC_REQUEST;
-    client->request.header.opcode = opcode;
-    client->request.header.key_length = g_htons(key_length);
-    client->request.header.extras_length = extras_length;
-    client->request.header.data_type = 0;
-    client->request.header.reserved = 0;
-    client->request.header.body_length =
-        g_htonl(extras_length + key_length + value_length);
-    client->request.header.message_id = 0x1234; /* should we set this? */
-    memset(client->request.header.cas, 0, sizeof(client->request.header.cas));
-
-    header = istream_memory_new(pool, &client->request.header,
-                                sizeof(client->request.header));
-    extras_stream = extras_length > 0
-        ? istream_memory_new(pool, extras, extras_length)
-        : istream_null_new(pool),
-    request = istream_cat_new(pool, header, extras_stream,
-                              key_length == 0 ? istream_null_new(pool)
-                              : istream_memory_new(pool, key, key_length),
-                              value, NULL);
 
     istream_assign_handler(&client->request.istream, request,
                            &memcached_request_stream_handler, client,

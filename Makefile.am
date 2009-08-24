@@ -152,6 +152,7 @@ SRC = src/main.c \
 	src/http-request.c \
 	src/ajp-request.c \
 	src/memcached-client.c \
+	src/memcached-packet.c \
 	src/memcached-stock.c \
 	src/pipe.c \
 	src/cgi.c \
@@ -647,7 +648,8 @@ test_run_ajp_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_memcached_client_SOURCES = test/run-memcached-client.c \
-	src/memcached-client.c src/buffered-io.c src/fifo-buffer.c \
+	src/memcached-client.c src/memcached-packet.c \
+	src/buffered-io.c src/fifo-buffer.c \
 	src/socket-util.c src/fd-util.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
 	src/istream-string.c \
