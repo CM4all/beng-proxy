@@ -6,6 +6,7 @@
 #include <socket/resolver.h>
 #include <socket/util.h>
 
+#include <glib.h>
 #include <event.h>
 
 #include <unistd.h>
@@ -100,6 +101,10 @@ static const struct istream_handler my_istream_handler = {
 
 static void
 my_response_handler(enum memcached_response_status status,
+                    G_GNUC_UNUSED const void *extras,
+                    G_GNUC_UNUSED size_t extras_length,
+                    G_GNUC_UNUSED const void *key,
+                    G_GNUC_UNUSED size_t key_length,
                     istream_t value, void *ctx)
 {
     struct context *c = ctx;
