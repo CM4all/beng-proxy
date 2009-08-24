@@ -189,6 +189,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
 
     type = deserialize_uint32(&header);
     if (type != TYPE_DOCUMENT) {
+        istream_close(tail);
         request->callback.get(NULL, 0, request->callback_ctx);
         return;
     }
