@@ -90,6 +90,15 @@ static bool eof;
 static size_t body_read;
 
 void
+http_cache_memcached_flush(G_GNUC_UNUSED pool_t pool,
+                           G_GNUC_UNUSED struct memcached_stock *stock,
+                           G_GNUC_UNUSED http_cache_memcached_flush_t callback,
+                           G_GNUC_UNUSED void *callback_ctx,
+                           G_GNUC_UNUSED struct async_operation_ref *async_ref)
+{
+}
+
+void
 http_cache_memcached_get(G_GNUC_UNUSED pool_t pool,
                          G_GNUC_UNUSED struct memcached_stock *stock,
                          G_GNUC_UNUSED const char *uri,
@@ -104,6 +113,8 @@ void
 http_cache_memcached_put(G_GNUC_UNUSED pool_t pool,
                          G_GNUC_UNUSED struct memcached_stock *stock,
                          G_GNUC_UNUSED const char *uri,
+                         G_GNUC_UNUSED const struct http_cache_info *info,
+                         G_GNUC_UNUSED struct strmap *request_headers,
                          G_GNUC_UNUSED http_status_t status,
                          G_GNUC_UNUSED struct strmap *response_headers,
                          G_GNUC_UNUSED istream_t value,

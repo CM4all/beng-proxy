@@ -483,7 +483,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/http-cache-heap.c \
 	src/abort-unref.c src/cache.c \
 	src/header-writer.c src/http-util.c \
-	src/istream-tee.c \
+	src/istream-tee.c src/istream-hold.c \
 	src/date.c src/gmtime.c \
 	src/istream-null.c src/istream-unlock.c src/istream-forward.c
 test_t_http_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
