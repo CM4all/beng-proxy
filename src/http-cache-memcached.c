@@ -188,21 +188,19 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
     strref_set(&header, header_ptr, length);
 
     type = deserialize_uint32(&header);
-    if (type != TYPE_DOCUMENT) {
-        istream_close(tail);
-        request->callback.get(NULL, 0, request->callback_ctx);
+    switch (type) {
+    case TYPE_DOCUMENT:
+        document = mcd_deserialize_document(request->pool, &header,
+                                            request->request_headers);
+        if (document == NULL)
+            break;
+
+        request->callback.get(document, tail, request->callback_ctx);
         return;
     }
 
-    document = mcd_deserialize_document(request->pool, &header,
-                                        request->request_headers);
-    if (document == NULL) {
-        istream_close(tail);
-        request->callback.get(NULL, 0, request->callback_ctx);
-        return;
-    }
-
-    request->callback.get(document, tail, request->callback_ctx);
+    istream_close(tail);
+    request->callback.get(NULL, 0, request->callback_ctx);
 }
 
 static void
