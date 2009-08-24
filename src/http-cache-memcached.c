@@ -141,6 +141,36 @@ http_cache_memcached_flush(pool_t pool, struct memcached_stock *stock,
                            async_ref);
 }
 
+static struct http_cache_document *
+mcd_deserialize_document(pool_t pool, struct strref *header,
+                         const struct strmap *request_headers)
+{
+    struct http_cache_document *document;
+
+    document = p_malloc(pool, sizeof(*document));
+
+    http_cache_info_init(&document->info);
+
+    document->info.expires = deserialize_uint64(header);
+    document->vary = deserialize_strmap(header, pool);
+    document->status = deserialize_uint16(header);
+    document->headers = deserialize_strmap(header, pool);
+
+    if (strref_is_null(header))
+        return NULL;
+
+    document->info.last_modified =
+        strmap_get_checked(document->headers, "last-modified");
+    document->info.etag = strmap_get_checked(document->headers, "etag");
+    document->info.vary = strmap_get_checked(document->headers, "vary");
+
+    if (!http_cache_document_fits(document, request_headers))
+        /* Vary mismatch */
+        return NULL;
+
+    return document;
+}
+
 static void
 http_cache_memcached_header_callback(void *header_ptr, size_t length,
                                      istream_t tail, void *ctx)
@@ -163,28 +193,9 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
         return;
     }
 
-    document = p_malloc(request->pool, sizeof(*document));
-
-    http_cache_info_init(&document->info);
-
-    document->info.expires = deserialize_uint64(&header);
-    document->vary = deserialize_strmap(&header, request->pool);
-    document->status = deserialize_uint16(&header);
-    document->headers = deserialize_strmap(&header, request->pool);
-
-    if (strref_is_null(&header)) {
-        istream_close(tail);
-        request->callback.get(NULL, 0, request->callback_ctx);
-        return;
-    }
-
-    document->info.last_modified =
-        strmap_get_checked(document->headers, "last-modified");
-    document->info.etag = strmap_get_checked(document->headers, "etag");
-    document->info.vary = strmap_get_checked(document->headers, "vary");
-
-    if (!http_cache_document_fits(document, request->request_headers)) {
-        /* Vary mismatch */
+    document = mcd_deserialize_document(request->pool, &header,
+                                        request->request_headers);
+    if (document == NULL) {
         istream_close(tail);
         request->callback.get(NULL, 0, request->callback_ctx);
         return;
