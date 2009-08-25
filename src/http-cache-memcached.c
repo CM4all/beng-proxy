@@ -315,7 +315,7 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
 
     memcached_stock_invoke(pool, stock,
                            MEMCACHED_OPCODE_SET,
-                           &request->extras, sizeof(request->extras),
+                           &request->extras.set, sizeof(request->extras.set),
                            uri, strlen(uri),
                            value,
                            http_cache_memcached_put_callback, request,
