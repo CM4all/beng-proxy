@@ -75,6 +75,7 @@ ISTREAM_SRC = \
 	src/format.c \
 	src/fifo-buffer.c \
 	src/sink-null.c \
+	src/sink-buffer.c \
 	src/sink-header.c \
 	$(POOL_SRC)
 
