@@ -34,6 +34,7 @@ enum memcached_response_status {
     MEMCACHED_STATUS_UNKNOWN_COMMAND = 0x0081,
     MEMCACHED_STATUS_KEY_NOT_FOUND = 0x0001,
     MEMCACHED_STATUS_KEY_EXISTS = 0x0002,
+    MEMCACHED_STATUS_ITEM_NOT_STORED = 0x0005,
 };
 
 struct memcached_request_header {
