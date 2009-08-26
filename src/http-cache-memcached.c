@@ -5,6 +5,7 @@
  */
 
 #include "http-cache-internal.h"
+#include "http-cache-choice.h"
 #include "memcached-stock.h"
 #include "growing-buffer.h"
 #include "serialize.h"
@@ -24,9 +25,14 @@ enum http_cache_memcached_type {
 struct http_cache_memcached_request {
     pool_t pool;
 
+    struct memcached_stock *stock;
+
     const char *uri;
 
     struct strmap *request_headers;
+
+    bool in_choice;
+    struct http_cache_choice *choice;
 
     uint32_t header_size;
 
@@ -172,6 +178,31 @@ mcd_deserialize_document(pool_t pool, struct strref *header,
 }
 
 static void
+http_cache_memcached_get_callback(enum memcached_response_status status,
+                                  const void *extras, size_t extras_length,
+                                  const void *key, size_t key_length,
+                                  istream_t value, void *ctx);
+
+static void
+mcd_choice_get_callback(const char *key, void *ctx)
+{
+    struct http_cache_memcached_request *request = ctx;
+
+    if (key == NULL) {
+        request->callback.get(NULL, 0, request->callback_ctx);
+        return;
+    }
+
+    request->in_choice = true;
+    memcached_stock_invoke(request->pool, request->stock, MEMCACHED_OPCODE_GET,
+                           NULL, 0,
+                           key, strlen(key),
+                           NULL,
+                           http_cache_memcached_get_callback, request,
+                           request->async_ref);
+}
+
+static void
 http_cache_memcached_header_callback(void *header_ptr, size_t length,
                                      istream_t tail, void *ctx)
 {
@@ -192,8 +223,16 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
     case TYPE_DOCUMENT:
         document = mcd_deserialize_document(request->pool, &header,
                                             request->request_headers);
-        if (document == NULL)
-            break;
+        if (document == NULL) {
+            if (request->in_choice)
+                break;
+
+            http_cache_choice_get(request->pool, request->stock,
+                                  request->uri, request->request_headers,
+                                  mcd_choice_get_callback, request,
+                                  request->async_ref);
+            return;
+        }
 
         request->callback.get(document, tail, request->callback_ctx);
         return;
@@ -212,6 +251,17 @@ http_cache_memcached_get_callback(enum memcached_response_status status,
                                   istream_t value, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
+
+    if (status == MEMCACHED_STATUS_KEY_NOT_FOUND && !request->in_choice) {
+        if (value != NULL)
+            istream_close(value);
+
+        http_cache_choice_get(request->pool, request->stock,
+                              request->uri, request->request_headers,
+                              mcd_choice_get_callback, request,
+                              request->async_ref);
+        return;
+    }
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
         if (value != NULL)
@@ -234,24 +284,37 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
                          struct async_operation_ref *async_ref)
 {
     struct http_cache_memcached_request *request = p_malloc(pool, sizeof(*request));
+    const char *key;
 
     request->pool = pool;
+    request->stock = stock;
     request->uri = uri;
     request->request_headers = request_headers;
+    request->in_choice = false;
     request->callback.get = callback;
     request->callback_ctx = callback_ctx;
     request->async_ref = async_ref;
 
+    key = http_cache_choice_vary_key(pool, uri, NULL);
+
     memcached_stock_invoke(pool, stock, MEMCACHED_OPCODE_GET,
                            NULL, 0,
-                           uri, strlen(uri),
+                           key, strlen(key),
                            NULL,
                            http_cache_memcached_get_callback, request,
                            async_ref);
 }
 
 static void
-http_cache_memcached_put_callback(G_GNUC_UNUSED enum memcached_response_status status,
+mcd_choice_commit_callback(void *ctx)
+{
+    struct http_cache_memcached_request *request = ctx;
+
+    request->callback.put(request->callback_ctx);
+}
+
+static void
+http_cache_memcached_put_callback(enum memcached_response_status status,
                                   G_GNUC_UNUSED const void *extras,
                                   G_GNUC_UNUSED size_t extras_length,
                                   G_GNUC_UNUSED const void *key,
@@ -263,7 +326,15 @@ http_cache_memcached_put_callback(G_GNUC_UNUSED enum memcached_response_status s
     if (value != NULL)
         istream_close(value);
 
-    request->callback.put(request->callback_ctx);
+    if (status != MEMCACHED_STATUS_NO_ERROR || /* error */
+        request->choice == NULL) { /* or no choice entry needed */
+        request->callback.put(request->callback_ctx);
+        return;
+    }
+
+    http_cache_choice_commit(request->choice, request->stock,
+                             mcd_choice_commit_callback, request,
+                             request->async_ref);
 }
 
 void
@@ -278,9 +349,26 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
 {
     struct http_cache_memcached_request *request = p_malloc(pool, sizeof(*request));
     struct pool_mark mark;
+    struct strmap *vary;
     struct growing_buffer *gb;
+    const char *key;
+
+    request->pool = pool;
+    request->stock = stock;
+    request->uri = uri;
+    request->async_ref = async_ref;
 
     pool_mark(tpool, &mark);
+
+    vary = info->vary != NULL
+        ? http_cache_copy_vary(tpool, info->vary, request_headers)
+        : NULL;
+
+    request->choice = vary != NULL
+        ? http_cache_choice_prepare(pool, uri, info, vary)
+        : NULL;
+
+    key = http_cache_choice_vary_key(pool, uri, vary);
 
     gb = growing_buffer_new(pool, 1024);
 
@@ -288,10 +376,7 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
     serialize_uint32(gb, TYPE_DOCUMENT);
 
     serialize_uint64(gb, info->expires);
-
-    serialize_strmap(gb, info->vary != NULL
-                     ? http_cache_copy_vary(tpool, info->vary, request_headers)
-                     : NULL);
+    serialize_strmap(gb, vary);
 
     /* serialize status + response headers */
     serialize_uint16(gb, status);
@@ -316,7 +401,7 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
     memcached_stock_invoke(pool, stock,
                            MEMCACHED_OPCODE_SET,
                            &request->extras.set, sizeof(request->extras.set),
-                           uri, strlen(uri),
+                           key, strlen(key),
                            value,
                            http_cache_memcached_put_callback, request,
                            async_ref);
