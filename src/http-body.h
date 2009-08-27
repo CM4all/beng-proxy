@@ -16,6 +16,10 @@ struct fifo_buffer;
 struct http_body_reader {
     struct istream output;
     off_t rest;
+
+#ifndef NDEBUG
+    bool chunked;
+#endif
 };
 
 static inline istream_t
@@ -27,6 +31,19 @@ http_body_istream(struct http_body_reader *body)
 static inline bool
 http_body_eof(struct http_body_reader *body)
 {
+#ifndef NDEBUG
+    if (!body->chunked && body->rest == -1)
+        /* this is a workaround for the partially incorrect
+           assert(!http_body_eof) in
+           http_client_response_stream_close(): if the response is
+           _not_ chunked, and the handler has been cleared right
+           before http_client_response_stream_close() is called, the
+           assertion fails, because this function thinks EOF has been
+           reached; the debug-only variable body->chunked works around
+           that flaw */
+        return false;
+#endif
+
     return body->rest == 0 ||
         (/* the dechunker clears our handler when it is finished */
          body->rest == -1 &&

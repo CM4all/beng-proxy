@@ -96,6 +96,10 @@ http_body_init(struct http_body_reader *body,
     istream_init(&body->output, stream, stream_pool);
     body->rest = content_length;
 
+#ifndef NDEBUG
+    body->chunked = chunked;
+#endif
+
     istream = http_body_istream(body);
     if (chunked) {
         assert(content_length == (off_t)-1);
