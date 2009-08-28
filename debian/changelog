@@ -2,7 +2,7 @@ cm4all-beng-proxy (0.6.12) unstable; urgency=low
 
   * http-cache: don't attempt to remove cache items when the cache is disabled
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 28 Aug 2009 15:40:48 +0200
 
 cm4all-beng-proxy (0.6.11) unstable; urgency=low
 
