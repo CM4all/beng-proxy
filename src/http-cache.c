@@ -149,7 +149,15 @@ static void
 http_cache_remove(struct http_cache *cache, const char *url,
                   struct http_cache_document *document)
 {
-    http_cache_heap_remove(cache->cache, url, document);
+    if (cache->cache != NULL)
+        http_cache_heap_remove(cache->cache, url, document);
+}
+
+static void
+http_cache_remove_url(struct http_cache *cache, const char *url)
+{
+    if (cache->cache != NULL)
+        http_cache_heap_remove_url(cache->cache, url);
 }
 
 static void
@@ -821,7 +829,7 @@ http_cache_request(struct http_cache *cache,
         struct growing_buffer *headers2;
 
         if (http_cache_request_invalidate(method))
-            http_cache_heap_remove_url(cache->cache, uwa->uri);
+            http_cache_remove_url(cache, uwa->uri);
 
         cache_log(4, "http_cache: ignore %s\n", uwa->uri);
 
