@@ -273,6 +273,7 @@ check_PROGRAMS = \
 	test/run-processor \
 	test/run-ajp-client \
 	test/run-memcached-client \
+	test/dump-memcached-choice \
 	test/run-delegate \
 	test/run-parser-cdata
 
@@ -658,6 +659,21 @@ test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/event2.c \
 	$(POOL_SRC)
 test_run_memcached_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
+
+test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
+	src/memcached-client.c src/memcached-packet.c \
+	src/buffered-io.c src/fifo-buffer.c \
+	src/socket-util.c src/fd-util.c \
+	src/istream-cat.c src/istream-memory.c src/istream-null.c \
+	src/istream-string.c \
+	src/event2.c \
+	src/serialize.c \
+	src/growing-buffer.c src/sink-buffer.c \
+	src/strmap.c src/hashmap.c \
+	src/tpool.c \
+	$(POOL_SRC)
+test_dump_memcached_choice_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_delegate_SOURCES = test/run-delegate.c \

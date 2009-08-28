@@ -57,6 +57,7 @@ test/t-uri-compress
 test/t-widget-http
 test/t-rewrite-uri
 test/t-sink-header
+test/dump-memcached-choice
 
 *.aux
 *.log
