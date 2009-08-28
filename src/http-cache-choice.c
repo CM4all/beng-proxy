@@ -137,7 +137,7 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
 }
 
 static void
-http_cache_choice_get_callback(G_GNUC_UNUSED enum memcached_response_status status,
+http_cache_choice_get_callback(enum memcached_response_status status,
                                G_GNUC_UNUSED const void *extras,
                                G_GNUC_UNUSED size_t extras_length,
                                G_GNUC_UNUSED const void *key,
@@ -146,7 +146,10 @@ http_cache_choice_get_callback(G_GNUC_UNUSED enum memcached_response_status stat
 {
     struct http_cache_choice *choice = ctx;
 
-    if (value == NULL) {
+    if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
+        if (value != NULL)
+            istream_close(value);
+
         choice->callback.get(NULL, choice->callback_ctx);
         return;
     }
