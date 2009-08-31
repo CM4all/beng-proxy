@@ -54,7 +54,7 @@ request_args_parse(struct request *request)
     request->translate.request.session = NULL;
 }
 
-static struct strmap *
+static const struct strmap *
 request_get_cookies(struct request *request)
 {
     const char *cookie;
@@ -109,7 +109,7 @@ request_get_uri_session_id(const struct request *request)
 static const char *
 request_get_cookie_session_id(struct request *request)
 {
-    struct strmap *cookies = request_get_cookies(request);
+    const struct strmap *cookies = request_get_cookies(request);
 
     return strmap_get_checked(cookies, "beng_proxy_session");
 }
