@@ -135,7 +135,9 @@ http_cache_put(struct http_cache_request *request)
         http_cache_heap_put(request->cache->cache, request->cache->pool, request->url,
                             request->info, request->headers, request->response.status,
                             request->response.headers, request->response.output);
-    else
+    else {
+        list_add(&request->siblings, &request->cache->requests);
+
         http_cache_memcached_put(request->pool, request->cache->memcached_stock, request->url,
                                  request->info,
                                  request->headers,
@@ -143,6 +145,7 @@ http_cache_put(struct http_cache_request *request)
                                  growing_buffer_istream(request->response.output),
                                  http_cache_memcached_put_callback, request,
                                  &request->async_ref);
+    }
 }
 
 static void
@@ -204,12 +207,11 @@ http_cache_response_body_eof(void *ctx)
 
     request->response.input = NULL;
 
+    list_remove(&request->siblings);
+
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
     http_cache_put(request);
-
-    if (request->cache->cache != NULL)
-        list_remove(&request->siblings);
 
     pool_unref(request->pool);
 }
