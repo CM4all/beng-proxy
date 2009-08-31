@@ -32,5 +32,8 @@ cookie_map_parse(struct strmap *cookies, const char *p, pool_t pool)
         strref_ltrim(&input);
         if (strref_is_empty(&input) || input.data[0] != ';')
             break;
+
+        strref_skip(&input, 1);
+        strref_ltrim(&input);
     }
 }
