@@ -15,6 +15,7 @@
 #include "tpool.h"
 #include "http-util.h"
 #include "async.h"
+#include "background.h"
 
 #include <string.h>
 #include <time.h>
@@ -28,7 +29,11 @@ struct http_cache {
 
     struct list_head requests;
 
-    struct async_operation_ref flush_operation_ref;
+    struct background_manager background;
+};
+
+struct http_cache_flush {
+    struct background_job background;
 };
 
 struct http_cache_request {
@@ -415,7 +420,7 @@ http_cache_new(pool_t pool, size_t max_size,
     cache->tcp_stock = tcp_stock;
 
     list_init(&cache->requests);
-    async_ref_clear(&cache->flush_operation_ref);
+    background_manager_init(&cache->background);
 
     return cache;
 }
@@ -450,8 +455,7 @@ http_cache_close(struct http_cache *cache)
         http_cache_request_close(request);
     }
 
-    if (async_ref_defined(&cache->flush_operation_ref))
-        async_abort(&cache->flush_operation_ref);
+    background_manager_abort_all(&cache->background);
 
     if (cache->cache != NULL)
         http_cache_heap_free(cache->cache);
@@ -460,9 +464,9 @@ http_cache_close(struct http_cache *cache)
 static void
 http_cache_flush_callback(bool success, void *ctx)
 {
-    struct http_cache *cache = ctx;
+    struct http_cache_flush *flush = ctx;
 
-    async_ref_clear(&cache->flush_operation_ref);
+    background_manager_remove(&flush->background);
 
     if (success)
         cache_log(5, "http_cache_memcached: flushed\n");
@@ -475,13 +479,15 @@ http_cache_flush(struct http_cache *cache)
 {
     if (cache->cache != NULL)
         http_cache_heap_flush(cache->cache);
-    else if (!async_ref_defined(&cache->flush_operation_ref)) {
+    else {
         pool_t pool = pool_new_linear(cache->pool,
                                       "http_cache_memcached_flush", 1024);
+        struct http_cache_flush *flush = p_malloc(pool, sizeof(*flush));
 
         http_cache_memcached_flush(pool, cache->memcached_stock,
-                                   http_cache_flush_callback, cache,
-                                   &cache->flush_operation_ref);
+                                   http_cache_flush_callback, flush,
+                                   background_job_add(&cache->background,
+                                                      &flush->background));
         pool_unref(pool);
     }
 }
