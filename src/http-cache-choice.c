@@ -106,13 +106,13 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
     strref_set(&data, data0, length);
 
     while (!strref_is_empty(&data)) {
-        pool_mark(tpool, &mark);
-
         magic = deserialize_uint32(&data);
         if (magic != CHOICE_MAGIC)
             break;
 
         document.info.expires = deserialize_uint64(&data);
+
+        pool_mark(tpool, &mark);
         document.vary = deserialize_strmap(&data, tpool);
 
         if (strref_is_null(&data)) {
