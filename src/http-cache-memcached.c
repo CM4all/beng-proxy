@@ -27,6 +27,9 @@ struct http_cache_memcached_request {
 
     struct memcached_stock *stock;
 
+    pool_t background_pool;
+    struct background_manager *background;
+
     const char *uri;
 
     struct strmap *request_headers;
@@ -278,6 +281,8 @@ http_cache_memcached_get_callback(enum memcached_response_status status,
 
 void
 http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
+                         pool_t background_pool,
+                         struct background_manager *background,
                          const char *uri, struct strmap *request_headers,
                          http_cache_memcached_get_t callback,
                          void *callback_ctx,
@@ -288,6 +293,8 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
 
     request->pool = pool;
     request->stock = stock;
+    request->background_pool = background_pool;
+    request->background = background;
     request->uri = uri;
     request->request_headers = request_headers;
     request->in_choice = false;
@@ -339,6 +346,8 @@ http_cache_memcached_put_callback(enum memcached_response_status status,
 
 void
 http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
+                         pool_t background_pool,
+                         struct background_manager *background,
                          const char *uri,
                          const struct http_cache_info *info,
                          struct strmap *request_headers,
@@ -355,6 +364,8 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
 
     request->pool = pool;
     request->stock = stock;
+    request->background_pool = background_pool;
+    request->background = background;
     request->uri = uri;
     request->async_ref = async_ref;
 

@@ -11,6 +11,7 @@
 #endif
 
 struct growing_buffer;
+struct background_manager;
 
 static const off_t cacheable_size_limit = 256 * 1024;
 
@@ -163,6 +164,8 @@ http_cache_memcached_flush(pool_t pool, struct memcached_stock *stock,
 
 void
 http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
+                         pool_t background_pool,
+                         struct background_manager *background,
                          const char *uri, struct strmap *request_headers,
                          http_cache_memcached_get_t callback,
                          void *callback_ctx,
@@ -170,6 +173,8 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
 
 void
 http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
+                         pool_t background_pool,
+                         struct background_manager *background,
                          const char *uri,
                          const struct http_cache_info *info,
                          struct strmap *request_headers,

@@ -143,7 +143,10 @@ http_cache_put(struct http_cache_request *request)
     else {
         list_add(&request->siblings, &request->cache->requests);
 
-        http_cache_memcached_put(request->pool, request->cache->memcached_stock, request->url,
+        http_cache_memcached_put(request->pool, request->cache->memcached_stock,
+                                 request->cache->pool,
+                                 &request->cache->background,
+                                 request->url,
                                  request->info,
                                  request->headers,
                                  request->response.status, request->response.headers,
@@ -803,7 +806,10 @@ http_cache_memcached_use(struct http_cache *cache,
     async_ref_set(async_ref, &request->operation);
 
     pool_ref(caller_pool);
-    http_cache_memcached_get(pool, cache->memcached_stock, uwa->uri, headers,
+    http_cache_memcached_get(pool, cache->memcached_stock,
+                             request->cache->pool,
+                             &cache->background,
+                             uwa->uri, headers,
                              http_cache_memcached_get_callback, request,
                              &request->async_ref);
     pool_unref(pool);
