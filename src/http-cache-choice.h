@@ -17,6 +17,7 @@ struct async_operation_ref;
 
 typedef void (*http_cache_choice_get_t)(const char *key, void *ctx);
 typedef void (*http_cache_choice_commit_t)(void *ctx);
+typedef void (*http_cache_choice_cleanup_t)(void *ctx);
 
 const char *
 http_cache_choice_vary_key(pool_t pool, const char *uri, struct strmap *vary);
@@ -39,5 +40,15 @@ http_cache_choice_commit(struct http_cache_choice *choice,
                          http_cache_choice_commit_t callback,
                          void *callback_ctx,
                          struct async_operation_ref *async_ref);
+
+/**
+ * Clean up the choice record, removing expired items.
+ */
+void
+http_cache_choice_cleanup(pool_t pool, struct memcached_stock *stock,
+                          const char *uri,
+                          http_cache_choice_cleanup_t callback,
+                          void *callback_ctx,
+                          struct async_operation_ref *async_ref);
 
 #endif

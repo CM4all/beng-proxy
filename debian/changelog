@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.6.13) unstable; urgency=low
 
   * cookie-server: fix parsing multiple cookies
+  * http-cache-memcached: clean up expired "choice" items
 
  --
 

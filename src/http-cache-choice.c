@@ -38,6 +38,7 @@ struct http_cache_choice {
     union {
         http_cache_choice_get_t get;
         http_cache_choice_commit_t commit;
+        http_cache_choice_commit_t cleanup;
     } callback;
 
     void *callback_ctx;
@@ -287,5 +288,142 @@ http_cache_choice_commit(struct http_cache_choice *choice,
                            NULL, 0,
                            choice->key, strlen(choice->key), value,
                            http_cache_choice_prepend_callback, choice,
+                           async_ref);
+}
+
+static void
+http_cache_choice_cleanup_set_callback(G_GNUC_UNUSED enum memcached_response_status status,
+                                       G_GNUC_UNUSED const void *extras,
+                                       G_GNUC_UNUSED size_t extras_length,
+                                       G_GNUC_UNUSED const void *key,
+                                       G_GNUC_UNUSED size_t key_length,
+                                       G_GNUC_UNUSED istream_t value, void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    if (value != NULL)
+        istream_close(value);
+
+    choice->callback.cleanup(choice->callback_ctx);
+}
+
+
+static void
+http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
+                                          void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+    struct strref data;
+    const char *current;
+    char *dest;
+    time_t now = time(NULL);
+    struct pool_mark mark;
+    uint32_t magic;
+    struct http_cache_document document;
+
+    if (data0 == NULL) {
+        choice->callback.get(NULL, choice->callback_ctx);
+        return;
+    }
+
+    strref_set(&data, data0, length);
+    dest = data0;
+
+    while (!strref_is_empty(&data)) {
+        current = data.data;
+
+        magic = deserialize_uint32(&data);
+        if (magic != CHOICE_MAGIC)
+            break;
+
+        document.info.expires = deserialize_uint64(&data);
+
+        pool_mark(tpool, &mark);
+        document.vary = deserialize_strmap(&data, tpool);
+        pool_rewind(tpool, &mark);
+
+        if (strref_is_null(&data))
+            /* deserialization failure */
+            break;
+
+        if (document.info.expires == -1 || document.info.expires >= now) {
+            memmove(dest, current, strref_end(&data) - current);
+            data.data -= current - dest;
+            dest += data.data - current;
+        }
+    }
+
+    if (dest - length == data0)
+        /* no change */
+        choice->callback.cleanup(choice->callback_ctx);
+    else if (dest == data0)
+        /* no entries left */
+        /* XXX use CAS */
+        memcached_stock_invoke(choice->pool, choice->stock,
+                               MEMCACHED_OPCODE_DELETE,
+                               NULL, 0,
+                               choice->key, strlen(choice->key),
+                               NULL,
+                               http_cache_choice_cleanup_set_callback, choice,
+                               choice->async_ref);
+    else
+        /* send new contents */
+        /* XXX use CAS */
+        memcached_stock_invoke(choice->pool, choice->stock,
+                               MEMCACHED_OPCODE_REPLACE,
+                               NULL, 0,
+                               choice->key, strlen(choice->key),
+                               istream_memory_new(choice->pool, data0,
+                                                  dest - (char *)data0),
+                               http_cache_choice_cleanup_set_callback, choice,
+                               choice->async_ref);
+}
+
+static void
+http_cache_choice_cleanup_get_callback(enum memcached_response_status status,
+                                       G_GNUC_UNUSED const void *extras,
+                                       G_GNUC_UNUSED size_t extras_length,
+                                       G_GNUC_UNUSED const void *key,
+                                       G_GNUC_UNUSED size_t key_length,
+                                       istream_t value, void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
+        if (value != NULL)
+            istream_close(value);
+
+        choice->callback.cleanup(choice->callback_ctx);
+        return;
+    }
+
+    sink_buffer_new(choice->pool, value,
+                    http_cache_choice_cleanup_buffer_callback, choice,
+                    choice->async_ref);
+}
+
+void
+http_cache_choice_cleanup(pool_t pool, struct memcached_stock *stock,
+                          const char *uri,
+                          http_cache_choice_commit_t callback,
+                          void *callback_ctx,
+                          struct async_operation_ref *async_ref)
+{
+    struct http_cache_choice *choice = p_malloc(pool, sizeof(*choice));
+
+    choice->pool = pool;
+    choice->stock = stock;
+    choice->uri = uri;
+    choice->key = p_strcat(pool, uri, " choice", NULL);
+    choice->callback.commit = callback;
+    choice->callback_ctx = callback_ctx;
+    choice->async_ref = async_ref;
+
+    memcached_stock_invoke(pool, stock,
+                           MEMCACHED_OPCODE_GET,
+                           NULL, 0,
+                           choice->key, strlen(choice->key),
+                           NULL,
+                           http_cache_choice_cleanup_get_callback, choice,
                            async_ref);
 }
