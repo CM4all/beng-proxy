@@ -13,6 +13,7 @@
 #include "strref.h"
 #include "strmap.h"
 #include "tpool.h"
+#include "background.h"
 
 #include <glib.h>
 
@@ -187,9 +188,31 @@ http_cache_memcached_get_callback(enum memcached_response_status status,
                                   istream_t value, void *ctx);
 
 static void
-mcd_choice_get_callback(const char *key, void *ctx)
+mcd_choice_cleanup_callback(void *ctx)
+{
+    struct background_job *job = ctx;
+
+    background_manager_remove(job);
+}
+
+static void
+mcd_choice_get_callback(const char *key, bool unclean, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
+
+    if (unclean) {
+        /* this choice record is unclean - start cleanup as a
+           background job */
+        pool_t pool = pool_new_linear(request->background_pool,
+                                      "http_cache_choice_cleanup", 8192);
+        struct background_job *job = p_malloc(pool, sizeof(*job));
+
+        http_cache_choice_cleanup(pool, request->stock, request->uri,
+                                  mcd_choice_cleanup_callback, job,
+                                  background_job_add(request->background,
+                                                     job));
+        pool_unref(pool);
+    }
 
     if (key == NULL) {
         request->callback.get(NULL, 0, request->callback_ctx);

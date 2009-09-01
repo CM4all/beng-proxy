@@ -15,7 +15,7 @@ struct strmap;
 struct memcached_stock;
 struct async_operation_ref;
 
-typedef void (*http_cache_choice_get_t)(const char *key, void *ctx);
+typedef void (*http_cache_choice_get_t)(const char *key, bool unclean, void *ctx);
 typedef void (*http_cache_choice_commit_t)(void *ctx);
 typedef void (*http_cache_choice_cleanup_t)(void *ctx);
 

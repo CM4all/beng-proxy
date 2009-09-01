@@ -98,9 +98,10 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
     struct pool_mark mark;
     uint32_t magic;
     struct http_cache_document document;
+    bool unclean = false;
 
     if (data0 == NULL) {
-        choice->callback.get(NULL, choice->callback_ctx);
+        choice->callback.get(NULL, true, choice->callback_ctx);
         return;
     }
 
@@ -119,22 +120,25 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
         if (strref_is_null(&data)) {
             /* deserialization failure */
             pool_rewind(tpool, &mark);
+            unclean = true;
             break;
         }
 
-        if ((document.info.expires == -1 || document.info.expires >= now) &&
-            http_cache_document_fits(&document, choice->request_headers)) {
+        if (document.info.expires != -1 && document.info.expires < now)
+            unclean = true;
+        else if (http_cache_document_fits(&document,
+                                          choice->request_headers)) {
             const char *uri = http_cache_choice_vary_key(choice->pool, choice->uri,
                                                          document.vary);
             pool_rewind(tpool, &mark);
-            choice->callback.get(uri, choice->callback_ctx);
+            choice->callback.get(uri, unclean, choice->callback_ctx);
             return;
         }
 
         pool_rewind(tpool, &mark);
     }
 
-    choice->callback.get(NULL, choice->callback_ctx);
+    choice->callback.get(NULL, unclean, choice->callback_ctx);
 }
 
 static void
@@ -151,7 +155,7 @@ http_cache_choice_get_callback(enum memcached_response_status status,
         if (value != NULL)
             istream_close(value);
 
-        choice->callback.get(NULL, choice->callback_ctx);
+        choice->callback.get(NULL, false, choice->callback_ctx);
         return;
     }
 
@@ -322,7 +326,7 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
     struct http_cache_document document;
 
     if (data0 == NULL) {
-        choice->callback.get(NULL, choice->callback_ctx);
+        choice->callback.get(NULL, true, choice->callback_ctx);
         return;
     }
 
