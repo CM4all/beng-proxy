@@ -11,7 +11,7 @@
 struct istream_tee {
     struct {
         struct istream istream;
-        unsigned enabled;
+        bool enabled;
     } outputs[2];
     istream_t input;
     bool fragile;
@@ -147,7 +147,7 @@ istream_tee_close1(istream_t istream)
 
     assert(tee->outputs[0].enabled);
 
-    tee->outputs[0].enabled = 0;
+    tee->outputs[0].enabled = false;
 
     if (tee->input != NULL) {
         if (!tee->outputs[1].enabled)
@@ -202,7 +202,7 @@ istream_tee_close2(istream_t istream)
 
     assert(tee->outputs[1].enabled);
 
-    tee->outputs[1].enabled = 0;
+    tee->outputs[1].enabled = false;
 
     if (tee->input != NULL) {
         if (!tee->outputs[0].enabled)
@@ -237,8 +237,8 @@ istream_tee_new(pool_t pool, istream_t input, bool fragile)
 
     istream_init(&tee->outputs[1].istream, &istream_tee2, tee->outputs[0].istream.pool);
 
-    tee->outputs[0].enabled = 1;
-    tee->outputs[1].enabled = 1;
+    tee->outputs[0].enabled = true;
+    tee->outputs[1].enabled = true;
 
     istream_assign_handler(&tee->input, input,
                            &tee_input_handler, tee,
