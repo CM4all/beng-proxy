@@ -156,7 +156,12 @@ istream_tee_close1(istream_t istream)
             istream_close(tee->input);
     }
 
-    istream_deinit_abort(&tee->outputs[0].istream);
+    istream_invoke_abort(&tee->outputs[0].istream);
+
+    if (tee->input != NULL && tee->outputs[1].enabled)
+        istream_read(tee->input);
+
+    istream_deinit(&tee->outputs[0].istream);
 }
 
 static const struct istream istream_tee1 = {
@@ -211,7 +216,12 @@ istream_tee_close2(istream_t istream)
             istream_close(tee->input);
     }
 
-    istream_deinit_abort(&tee->outputs[1].istream);
+    istream_invoke_abort(&tee->outputs[1].istream);
+
+    if (tee->input != NULL && tee->outputs[0].enabled)
+        istream_read(tee->input);
+
+    istream_deinit(&tee->outputs[1].istream);
 }
 
 static const struct istream istream_tee2 = {
