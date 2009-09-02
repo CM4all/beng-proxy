@@ -100,6 +100,7 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
     struct http_cache_document document;
     const char *uri = NULL;
     bool unclean = false;
+    unsigned hash, first_hash = 0;
 
     if (data0 == NULL) {
         choice->callback.get(NULL, true, choice->callback_ctx);
@@ -123,6 +124,16 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
             pool_rewind(tpool, &mark);
             unclean = true;
             break;
+        }
+
+        hash = mcd_vary_hash(document.vary);
+        if (hash != 0) {
+            if (first_hash == 0)
+                first_hash = hash;
+            else if (first_hash == hash)
+                /* first item is duplicate: mark the record as
+                   "unclean", queue the garbage collector */
+                unclean = true;
         }
 
         if (document.info.expires != -1 && document.info.expires < now)
@@ -328,6 +339,7 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
     struct pool_mark mark;
     uint32_t magic;
     struct http_cache_document document;
+    unsigned hash, first_hash = 0;
 
     if (data0 == NULL) {
         choice->callback.get(NULL, true, choice->callback_ctx);
@@ -348,17 +360,22 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
 
         pool_mark(tpool, &mark);
         document.vary = deserialize_strmap(&data, tpool);
+        hash = mcd_vary_hash(document.vary);
         pool_rewind(tpool, &mark);
 
         if (strref_is_null(&data))
             /* deserialization failure */
             break;
 
-        if (document.info.expires == -1 || document.info.expires >= now) {
+        if ((document.info.expires == -1 || document.info.expires >= now) &&
+            hash != first_hash) {
             memmove(dest, current, strref_end(&data) - current);
             data.data -= current - dest;
             dest += data.data - current;
         }
+
+        if (first_hash == 0)
+            first_hash = hash;
     }
 
     if (dest - length == data0)
