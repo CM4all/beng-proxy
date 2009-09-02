@@ -391,17 +391,22 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
                                NULL,
                                http_cache_choice_cleanup_set_callback, choice,
                                choice->async_ref);
-    else
+    else {
         /* send new contents */
         /* XXX use CAS */
+
+        choice->extras.flags = 0;
+        choice->extras.expiration = g_htonl(600); /* XXX */
+
         memcached_stock_invoke(choice->pool, choice->stock,
                                MEMCACHED_OPCODE_REPLACE,
-                               NULL, 0,
+                               &choice->extras, sizeof(choice->extras),
                                choice->key, strlen(choice->key),
                                istream_memory_new(choice->pool, data0,
                                                   dest - (char *)data0),
                                http_cache_choice_cleanup_set_callback, choice,
                                choice->async_ref);
+    }
 }
 
 static void
