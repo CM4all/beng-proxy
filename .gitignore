@@ -58,6 +58,7 @@ test/t-widget-http
 test/t-rewrite-uri
 test/t-sink-header
 test/dump-memcached-choice
+test/t-istream-tee
 
 *.aux
 *.log
