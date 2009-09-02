@@ -370,7 +370,6 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
         if ((document.info.expires == -1 || document.info.expires >= now) &&
             hash != first_hash) {
             memmove(dest, current, strref_end(&data) - current);
-            data.data -= current - dest;
             dest += data.data - current;
         }
 
