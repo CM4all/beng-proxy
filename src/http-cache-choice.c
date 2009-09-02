@@ -98,6 +98,7 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
     struct pool_mark mark;
     uint32_t magic;
     struct http_cache_document document;
+    const char *uri = NULL;
     bool unclean = false;
 
     if (data0 == NULL) {
@@ -126,19 +127,22 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
 
         if (document.info.expires != -1 && document.info.expires < now)
             unclean = true;
-        else if (http_cache_document_fits(&document,
-                                          choice->request_headers)) {
-            const char *uri = http_cache_choice_vary_key(choice->pool, choice->uri,
-                                                         document.vary);
-            pool_rewind(tpool, &mark);
-            choice->callback.get(uri, unclean, choice->callback_ctx);
-            return;
-        }
+        else if (uri == NULL &&
+                 http_cache_document_fits(&document,
+                                          choice->request_headers))
+            uri = http_cache_choice_vary_key(choice->pool, choice->uri,
+                                             document.vary);
 
         pool_rewind(tpool, &mark);
+
+        if (uri != NULL && unclean)
+            /* we have already found something, and we think that this
+               record is unclean - no point in parsing more, abort
+               here */
+            break;
     }
 
-    choice->callback.get(NULL, unclean, choice->callback_ctx);
+    choice->callback.get(uri, unclean, choice->callback_ctx);
 }
 
 static void
