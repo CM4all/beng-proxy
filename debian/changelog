@@ -5,7 +5,7 @@ cm4all-beng-proxy (0.6.13) unstable; urgency=low
   * sink-gstring: use callback instead of public struct
   * istream-tee: restart reading when one output is closed
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 02 Sep 2009 17:02:53 +0200
 
 cm4all-beng-proxy (0.6.12) unstable; urgency=low
 
