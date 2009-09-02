@@ -5,6 +5,7 @@
 #include "uri-parser.h"
 #include "sink-gstring.h"
 #include "tpool.h"
+#include "async.h"
 
 #include <glib.h>
 
@@ -92,24 +93,39 @@ widget_resolver_new(G_GNUC_UNUSED pool_t pool, G_GNUC_UNUSED pool_t widget_pool,
 
 static struct parsed_uri external_uri;
 
+struct sink_gstring_ctx {
+    GString *value;
+    bool finished;
+};
+
+static void
+sink_gstring_callback(GString *value, void *_ctx)
+{
+    struct sink_gstring_ctx *ctx = _ctx;
+
+    ctx->value = value;
+    ctx->finished = true;
+}
+
 static void
 assert_istream_equals(pool_t pool, istream_t istream, const char *value)
 {
-    struct sink_gstring *sg;
+    struct sink_gstring_ctx ctx = { .finished = false };
+    struct async_operation_ref async_ref;
 
     assert(istream != NULL);
     assert(value != NULL);
 
-    sg = sink_gstring_new(pool, istream);
+    sink_gstring_new(pool, istream, sink_gstring_callback, &ctx, &async_ref);
 
-    while (!sg->finished)
+    while (!ctx.finished)
         istream_read(istream);
 
-    assert(sg->value != NULL);
+    assert(ctx.value != NULL);
     /*g_print("value='%s'\n", sg->value->str);*/
-    assert(strcmp(sg->value->str, value) == 0);
+    assert(strcmp(ctx.value->str, value) == 0);
 
-    g_string_free(sg->value, true);
+    g_string_free(ctx.value, true);
 }
 
 static void

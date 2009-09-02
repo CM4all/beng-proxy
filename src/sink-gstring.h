@@ -5,12 +5,11 @@
 
 #include <glib.h>
 
-struct sink_gstring {
-    GString *value;
-    bool finished;
-};
+struct async_operation_ref;
 
-struct sink_gstring *
-sink_gstring_new(pool_t pool, istream_t istream);
+void
+sink_gstring_new(pool_t pool, istream_t input,
+                 void (*callback)(GString *value, void *ctx),
+                 void *ctx, struct async_operation_ref *async_ref);
 
 #endif
