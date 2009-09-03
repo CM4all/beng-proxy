@@ -125,6 +125,11 @@ cache. \\
 \hline
 \end{tabular}
 
+\label{memcached}
+You may specify \texttt{--memcached-server} followed by a server name.
+This disables the local heap cache, and allows \emph{beng-proxy} to
+share the cache with several (distributed) workers.  With the local
+heap cache disabled, all of its configuration options are ignored.
 
 \section{Running}
 
@@ -199,6 +204,10 @@ proper caching, the remote server must set the response headers
 Additionally, they should understand the according request headers
 \texttt{If-Modified-Since} and \texttt{If-Unmodified-Since},
 \texttt{If-Match}, \texttt{If-None-Match}.
+
+The cache is local to a \emph{beng-proxy} worker.  To share the cache
+across workers and even across hosts, you may use a memcached server
+(see \ref{memcached}).
 
 \subsubsection{Connection pooling}
 
