@@ -15,6 +15,12 @@ struct istream_tee {
     } outputs[2];
     istream_t input;
     bool fragile;
+
+    /**
+     * These flags control whether istream_tee_close[12]() may restart
+     * reading for the other output.
+     */
+    bool reading, in_data;
 };
 
 
@@ -55,8 +61,14 @@ tee_input_data(const void *data, size_t length, void *ctx)
     struct istream_tee *tee = ctx;
     size_t nbytes;
 
+    assert(!tee->in_data);
+
     pool_ref(tee->outputs[0].istream.pool);
+    tee->in_data = true;
+
     nbytes = tee_feed(tee, data, length);
+
+    tee->in_data = false;
     pool_unref(tee->outputs[0].istream.pool);
 
     return nbytes;
@@ -137,8 +149,15 @@ istream_tee_read1(istream_t istream)
     struct istream_tee *tee = istream_to_tee1(istream);
 
     assert(tee->outputs[0].enabled);
+    assert(!tee->reading);
 
+    pool_ref(tee->outputs[0].istream.pool);
+
+    tee->reading = true;
     istream_read(tee->input);
+    tee->reading = false;
+
+    pool_unref(tee->outputs[0].istream.pool);
 }
 
 static void
@@ -159,7 +178,8 @@ istream_tee_close1(istream_t istream)
 
     istream_invoke_abort(&tee->outputs[0].istream);
 
-    if (tee->input != NULL && tee->outputs[1].enabled)
+    if (tee->input != NULL && tee->outputs[1].enabled &&
+        !tee->in_data && !tee->reading)
         istream_read(tee->input);
 
     istream_deinit(&tee->outputs[0].istream);
@@ -198,7 +218,15 @@ istream_tee_read2(istream_t istream)
 {
     struct istream_tee *tee = istream_to_tee2(istream);
 
+    assert(!tee->reading);
+
+    pool_ref(tee->outputs[1].istream.pool);
+
+    tee->reading = true;
     istream_read(tee->input);
+    tee->reading = false;
+
+    pool_unref(tee->outputs[1].istream.pool);
 }
 
 static void
@@ -219,7 +247,8 @@ istream_tee_close2(istream_t istream)
 
     istream_invoke_abort(&tee->outputs[1].istream);
 
-    if (tee->input != NULL && tee->outputs[0].enabled)
+    if (tee->input != NULL && tee->outputs[0].enabled &&
+        !tee->in_data && !tee->reading)
         istream_read(tee->input);
 
     istream_deinit(&tee->outputs[1].istream);
@@ -256,6 +285,8 @@ istream_tee_new(pool_t pool, istream_t input, bool fragile)
                            0);
 
     tee->fragile = fragile;
+    tee->reading = false;
+    tee->in_data = false;
 
     return istream_struct_cast(&tee->outputs[0].istream);
 }
