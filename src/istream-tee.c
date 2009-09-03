@@ -18,20 +18,10 @@ struct istream_tee {
 };
 
 
-/*
- * istream handler
- *
- */
-
 static size_t
-tee_input_data(const void *data, size_t length, void *ctx)
+tee_feed(struct istream_tee *tee, const void *data, size_t length)
 {
-    struct istream_tee *tee = ctx;
     size_t nbytes1, nbytes2;
-#ifndef NDEBUG
-    struct pool_notify notify;
-    int denotify;
-#endif
 
     if (tee->outputs[0].enabled) {
         nbytes1 = istream_invoke_data(&tee->outputs[0].istream, data, length);
@@ -41,24 +31,35 @@ tee_input_data(const void *data, size_t length, void *ctx)
         nbytes1 = length;
 
     if (tee->outputs[1].enabled) {
-#ifndef NDEBUG
-        pool_notify(tee->outputs[1].istream.pool, &notify);
-#endif
-
         nbytes2 = istream_invoke_data(&tee->outputs[1].istream, data, nbytes1);
-
-#ifndef NDEBUG
-        denotify = pool_denotify(&notify);
-#endif
 
         /* XXX it is currently asserted that the second handler will
            always consume all data; later, buffering should probably be
            added */
-        assert(nbytes2 == nbytes1 || (nbytes2 == 0 && (denotify || !tee->outputs[1].enabled)));
+        assert(nbytes2 == nbytes1 || (nbytes2 == 0 && !tee->outputs[1].enabled));
     } else
         nbytes2 = nbytes1;
 
     return nbytes2;
+}
+
+
+/*
+ * istream handler
+ *
+ */
+
+static size_t
+tee_input_data(const void *data, size_t length, void *ctx)
+{
+    struct istream_tee *tee = ctx;
+    size_t nbytes;
+
+    pool_ref(tee->outputs[0].istream.pool);
+    nbytes = tee_feed(tee, data, length);
+    pool_unref(tee->outputs[0].istream.pool);
+
+    return nbytes;
 }
 
 static void
