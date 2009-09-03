@@ -14,6 +14,7 @@
 #include "serialize.h"
 #include "growing-buffer.h"
 #include "sink-impl.h"
+#include "uset.h"
 
 #include <glib.h>
 
@@ -100,7 +101,8 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
     struct http_cache_document document;
     const char *uri = NULL;
     bool unclean = false;
-    unsigned hash, first_hash = 0;
+    struct uset uset;
+    unsigned hash;
 
     if (data0 == NULL) {
         choice->callback.get(NULL, true, choice->callback_ctx);
@@ -108,6 +110,7 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
     }
 
     strref_set(&data, data0, length);
+    uset_init(&uset);
 
     while (!strref_is_empty(&data)) {
         magic = deserialize_uint32(&data);
@@ -128,10 +131,8 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
 
         hash = mcd_vary_hash(document.vary);
         if (hash != 0) {
-            if (first_hash == 0)
-                first_hash = hash;
-            else if (first_hash == hash)
-                /* first item is duplicate: mark the record as
+            if (uset_contains_or_add(&uset, hash))
+                /* duplicate: mark the record as
                    "unclean", queue the garbage collector */
                 unclean = true;
         }
@@ -339,7 +340,9 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
     struct pool_mark mark;
     uint32_t magic;
     struct http_cache_document document;
-    unsigned hash, first_hash = 0;
+    struct uset uset;
+    unsigned hash;
+    bool duplicate;
 
     if (data0 == NULL) {
         choice->callback.get(NULL, true, choice->callback_ctx);
@@ -348,6 +351,7 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
 
     strref_set(&data, data0, length);
     dest = data0;
+    uset_init(&uset);
 
     while (!strref_is_empty(&data)) {
         current = data.data;
@@ -367,14 +371,12 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
             /* deserialization failure */
             break;
 
+        duplicate = uset_contains_or_add(&uset, hash);
         if ((document.info.expires == -1 || document.info.expires >= now) &&
-            hash != first_hash) {
+            !duplicate) {
             memmove(dest, current, strref_end(&data) - current);
             dest += data.data - current;
         }
-
-        if (first_hash == 0)
-            first_hash = hash;
     }
 
     if (dest - length == data0)
