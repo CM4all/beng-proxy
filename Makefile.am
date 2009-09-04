@@ -275,6 +275,7 @@ check_PROGRAMS = \
 	test/run-ajp-client \
 	test/run-memcached-client \
 	test/dump-memcached-choice \
+	test/cleanup-memcached-choice \
 	test/run-delegate \
 	test/run-parser-cdata
 
@@ -681,6 +682,27 @@ test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/tpool.c \
 	$(POOL_SRC)
 test_dump_memcached_choice_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
+
+test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
+	src/uri-address.c src/uri-resolver.c \
+	src/failure.c src/tcp-stock.c \
+	src/client-socket.c src/socket-util.c src/fd-util.c \
+	src/stock.c src/hstock.c \
+	src/memcached-client.c src/memcached-packet.c \
+	src/memcached-stock.c \
+	src/http-cache-choice.c src/http-cache-rfc.c \
+	src/date.c src/http-util.c src/format.c src/gmtime.c src/strutil.c \
+	src/serialize.c \
+	src/istream-null.c src/istream-memory.c src/istream-cat.c \
+	src/sink-buffer.c \
+	src/growing-buffer.c \
+	src/buffered-io.c src/fifo-buffer.c \
+	src/hashmap.c src/strmap.c \
+	src/event2.c \
+	src/tpool.c \
+	$(POOL_SRC)
+test_cleanup_memcached_choice_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_delegate_SOURCES = test/run-delegate.c \
