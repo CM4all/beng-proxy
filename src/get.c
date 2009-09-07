@@ -18,6 +18,37 @@
 #include "pipe.h"
 #include "delegate-get.h"
 
+#include <string.h>
+
+static const char *
+extract_remote_host(const struct strmap *headers)
+{
+    const char *p = strmap_get_checked(headers, "via");
+    if (p == NULL)
+        return "";
+
+    p = strrchr(p, ',');
+    if (p == NULL)
+        return "";
+
+    p = strchr(p + 1, ' ');
+    if (p == NULL)
+        return "";
+
+    return p + 1;
+}
+
+static const char *
+extract_server_name(const struct strmap *headers)
+{
+    const char *p = strmap_get_checked(headers, "host");
+    if (p == NULL)
+        return ""; /* XXX */
+
+    /* XXX remove port? */
+    return p;
+}
+
 void
 resource_get(struct http_cache *cache,
              struct hstock *tcp_stock,
@@ -114,6 +145,11 @@ resource_get(struct http_cache *cache,
 
     case RESOURCE_ADDRESS_AJP:
         ajp_stock_request(pool, tcp_stock,
+                          "http", extract_remote_host(headers),
+                          extract_remote_host(headers),
+                          extract_server_name(headers),
+                          80, /* XXX */
+                          false,
                           method, address->u.http,
                           headers, body,
                           handler, handler_ctx, async_ref);

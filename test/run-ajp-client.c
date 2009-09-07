@@ -214,6 +214,8 @@ int main(int argc, char **argv) {
     /* run test */
 
     ajp_client_request(pool, fd, &ajp_socket_lease, &ctx,
+                       "http", "127.0.0.1", "localhost",
+                       "localhost", 80, false,
                        method, argv[2], NULL, request_body,
                        &my_response_handler, &ctx,
                        &async_ref);

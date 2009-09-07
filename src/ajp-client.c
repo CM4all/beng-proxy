@@ -615,6 +615,9 @@ static const struct async_operation_class ajp_client_request_async_operation = {
 void
 ajp_client_request(pool_t pool, int fd,
                    const struct lease *lease, void *lease_ctx,
+                   const char *protocol, const char *remote_addr,
+                   const char *remote_host, const char *server_name,
+                   unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
                    struct strmap *headers,
                    istream_t body,
@@ -632,6 +635,10 @@ ajp_client_request(pool_t pool, int fd,
     istream_t request;
     size_t requested;
 
+    assert(protocol != NULL);
+    assert(remote_addr != NULL);
+    assert(remote_host != NULL);
+    assert(server_name != NULL);
     assert(http_method_is_valid(method));
 
     (void)headers; /* XXX */
@@ -661,13 +668,13 @@ ajp_client_request(pool_t pool, int fd,
 
     growing_buffer_write_buffer(gb, &prefix_and_method, sizeof(prefix_and_method));
 
-    gb_write_ajp_string(gb, "http");
+    gb_write_ajp_string(gb, protocol);
     gb_write_ajp_string(gb, uri);
-    gb_write_ajp_string(gb, "127.0.0.1"); /* XXX remote_addr */
-    gb_write_ajp_string(gb, "localhost"); /* XXX remote_host */
-    gb_write_ajp_string(gb, "localhost"); /* XXX server_name */
-    gb_write_ajp_integer(gb, 80); /* XXX server_port */
-    gb_write_ajp_bool(gb, false); /* is_ssl */
+    gb_write_ajp_string(gb, remote_addr);
+    gb_write_ajp_string(gb, remote_host);
+    gb_write_ajp_string(gb, server_name);
+    gb_write_ajp_integer(gb, server_port);
+    gb_write_ajp_bool(gb, is_ssl);
     gb_write_ajp_integer(gb, body == NULL ? 0 : 1); /* XXX num_headers */
 
     if (body != NULL) {

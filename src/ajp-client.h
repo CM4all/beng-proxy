@@ -17,6 +17,9 @@ struct strmap;
 void
 ajp_client_request(pool_t pool, int fd,
                    const struct lease *lease, void *lease_ctx,
+                   const char *protocol, const char *remote_addr,
+                   const char *remote_host, const char *server_name,
+                   unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
                    struct strmap *headers,
                    istream_t body,

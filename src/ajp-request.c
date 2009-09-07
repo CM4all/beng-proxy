@@ -26,6 +26,13 @@ struct ajp_request {
     struct hstock *tcp_stock;
     struct stock_item *stock_item;
 
+    const char *protocol;
+    const char *remote_addr;
+    const char *remote_host;
+    const char *server_name;
+    unsigned server_port;
+    bool is_ssl;
+
     http_method_t method;
     const char *uri;
     struct strmap *headers;
@@ -76,6 +83,9 @@ ajp_request_stock_callback(void *ctx, struct stock_item *item)
         ajp_client_request(hr->pool,
                            tcp_stock_item_get(item),
                            &ajp_socket_lease, hr,
+                           hr->protocol, hr->remote_addr,
+                           hr->remote_host, hr->server_name,
+                           hr->server_port, hr->is_ssl,
                            hr->method, hr->uri, hr->headers, hr->body,
                            hr->handler.handler, hr->handler.ctx,
                            hr->async_ref);
@@ -93,6 +103,9 @@ ajp_request_stock_callback(void *ctx, struct stock_item *item)
 void
 ajp_stock_request(pool_t pool,
                   struct hstock *tcp_stock,
+                  const char *protocol, const char *remote_addr,
+                  const char *remote_host, const char *server_name,
+                  unsigned server_port, bool is_ssl,
                   http_method_t method,
                   struct uri_with_address *uwa,
                   struct strmap *headers,
@@ -112,6 +125,12 @@ ajp_stock_request(pool_t pool,
     hr = p_malloc(pool, sizeof(*hr));
     hr->pool = pool;
     hr->tcp_stock = tcp_stock;
+    hr->protocol = protocol;
+    hr->remote_addr = remote_addr;
+    hr->remote_host = remote_host;
+    hr->server_name = server_name;
+    hr->server_port = server_port;
+    hr->is_ssl = is_ssl;
     hr->method = method;
     hr->uri = uwa->uri;
 
