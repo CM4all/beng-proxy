@@ -54,7 +54,6 @@ ajp_socket_release(bool reuse, void *ctx)
     struct ajp_request *hr = ctx;
 
     hstock_put(hr->tcp_stock, hr->uri, hr->stock_item, !reuse);
-    pool_unref(hr->pool);
 }
 
 static const struct lease ajp_socket_lease = {
