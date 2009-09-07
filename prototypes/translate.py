@@ -129,6 +129,8 @@ class Translation(Protocol):
             self._handle_local_file(path + uri[19:], response)
         elif uri[:11] == '/cfatest01/':
             response.proxy('http://cfatest01.intern.cm-ag/' + uri[11:])
+        elif uri[:5] == '/ajp/':
+            response.ajp('cfatest01.intern.cm-ag:8009', uri[4:])
         elif uri == '/discard':
             response.packet(TRANSLATE_DISCARD_SESSION)
             response.status(204)
