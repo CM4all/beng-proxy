@@ -133,6 +133,8 @@ translate_callback(const struct translate_response *response,
         cgi_handler(request);
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP) {
         proxy_handler(request);
+    } else if (response->address.type == RESOURCE_ADDRESS_AJP) {
+        ajp_handler(request);
     } else if (response->redirect != NULL) {
         request_discard_body(request);
         http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
