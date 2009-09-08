@@ -50,6 +50,15 @@ struct ajp_client {
             READ_BODY,
             READ_END,
         } read_state;
+
+        /**
+         * This flag is true if ajp_consume_send_headers() is
+         * currently calling the HTTP response handler.  During this
+         * period, istream_ajp_read() does nothing, to prevent
+         * recursion.
+         */
+        bool in_handler;
+
         fifo_buffer_t input;
         http_status_t status;
         struct strmap *headers;
@@ -139,6 +148,9 @@ istream_ajp_read(istream_t istream)
     struct ajp_client *client = istream_to_ajp(istream);
 
     assert(client->response.read_state == READ_BODY);
+
+    if (client->response.in_handler)
+        return;
 
     if (fifo_buffer_full(client->response.input))
         ajp_consume_input(client);
@@ -246,8 +258,11 @@ ajp_consume_send_headers(struct ajp_client *client,
         client->response.junk_length = 0;
     }
 
+    client->response.in_handler = true;
     http_response_handler_invoke_response(&client->request.handler, status,
                                           NULL, body);
+    client->response.in_handler = false;
+
     return true;
 }
 
@@ -730,6 +745,7 @@ ajp_client_request(pool_t pool, int fd,
     /* XXX append request body */
 
     client->response.read_state = READ_BEGIN;
+    client->response.in_handler = false;
     client->response.input = fifo_buffer_new(client->pool, 8192);
     client->response.headers = NULL;
 
