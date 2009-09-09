@@ -82,7 +82,7 @@ ajp_try_read(struct ajp_client *client);
 
 /**
  * Release resources held by this object: the event object, the socket
- * lease, and the pool reference.
+ * lease, the request body and the pool reference.
  */
 static void
 ajp_client_release(struct ajp_client *client, bool reuse)
@@ -92,6 +92,10 @@ ajp_client_release(struct ajp_client *client, bool reuse)
     event2_set(&client->event, 0);
     event2_commit(&client->event);
     client->fd = -1;
+
+    if (client->request.istream != NULL)
+        istream_free_handler(&client->request.istream);
+
     lease_release(&client->lease_ref, reuse);
     pool_unref(client->pool);
 }
@@ -119,9 +123,6 @@ ajp_connection_close(struct ajp_client *client)
         case READ_END:
             break;
         }
-
-        if (client->request.istream != NULL)
-            istream_free_handler(&client->request.istream);
 
         if (client->fd >= 0)
             ajp_client_release(client, false);
