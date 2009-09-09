@@ -269,8 +269,6 @@ static bool
 ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
                    const char *data, size_t length)
 {
-    (void)data; (void)length; /* XXX */
-
     switch (code) {
     case AJP_CODE_FORWARD_REQUEST:
     case AJP_CODE_SHUTDOWN:
