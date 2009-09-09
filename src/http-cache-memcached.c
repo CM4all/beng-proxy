@@ -416,7 +416,7 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
     serialize_uint16(gb, status);
     serialize_strmap(gb, response_headers);
 
-    request->header_size = g_htonl(growing_buffer_length(gb));
+    request->header_size = g_htonl(growing_buffer_size(gb));
 
     /* append response body */
     value = istream_cat_new(pool,

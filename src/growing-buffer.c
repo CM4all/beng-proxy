@@ -158,18 +158,6 @@ growing_buffer_consume(struct growing_buffer *gb, size_t length)
     }
 }
 
-size_t
-growing_buffer_length(const struct growing_buffer *gb)
-{
-    size_t length = 0;
-
-    for (const struct buffer *buffer = &gb->first; buffer != NULL;
-         buffer = buffer->next)
-        length += buffer->length;
-
-    return length;
-}
-
 static void *
 growing_buffer_copy(void *dest0, const struct growing_buffer *gb)
 {
@@ -191,7 +179,7 @@ growing_buffer_dup(const struct growing_buffer *gb, pool_t pool,
     unsigned char *dest;
     size_t length;
 
-    length = growing_buffer_length(gb);
+    length = growing_buffer_size(gb);
     *length_r = length;
     if (length == 0)
         return NULL;
@@ -210,7 +198,7 @@ growing_buffer_dup2(const struct growing_buffer *a,
     void *dest;
     size_t length;
 
-    length = growing_buffer_length(a) + growing_buffer_length(b);
+    length = growing_buffer_size(a) + growing_buffer_size(b);
     *length_r = length;
     if (length == 0)
         return NULL;

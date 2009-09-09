@@ -89,7 +89,7 @@ struct http_cache_request {
 
         /**
          * The current size of #output.  We could use
-         * growing_buffer_length() here, but that would be too
+         * growing_buffer_size() here, but that would be too
          * expensive.
          */
         size_t length;
