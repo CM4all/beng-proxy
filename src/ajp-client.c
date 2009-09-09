@@ -164,8 +164,8 @@ istream_ajp_close(istream_t istream)
 
     assert(client->response.read_state == READ_BODY);
 
-    istream_deinit_abort(&client->response.body);
     ajp_client_release(client, false);
+    istream_deinit_abort(&client->response.body);
 }
 
 static const struct istream ajp_response_body = {
