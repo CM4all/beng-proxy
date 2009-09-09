@@ -88,6 +88,7 @@ static void
 ajp_client_release(struct ajp_client *client, bool reuse)
 {
     assert(client != NULL);
+    assert(client->fd >= 0);
 
     event2_set(&client->event, 0);
     event2_commit(&client->event);
@@ -105,9 +106,6 @@ ajp_connection_close(struct ajp_client *client)
 {
     if (client->fd >= 0) {
         pool_ref(client->pool);
-
-        event2_set(&client->event, 0);
-        event2_commit(&client->event);
 
         switch (client->response.read_state) {
         case READ_BEGIN:
