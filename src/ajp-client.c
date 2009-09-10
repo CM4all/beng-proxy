@@ -320,6 +320,7 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
 
         istream_ajp_body_request(client->request.ajp_body,
                                  ntohs(chunk->length));
+        event2_or(&client->event, EV_WRITE);
         return true;
 
     case AJP_CODE_CPONG_REPLY:
