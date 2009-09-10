@@ -270,6 +270,8 @@ static bool
 ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
                    const char *data, size_t length)
 {
+    const struct ajp_get_body_chunk *chunk;
+
     switch (code) {
     case AJP_CODE_FORWARD_REQUEST:
     case AJP_CODE_SHUTDOWN:
@@ -296,8 +298,24 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
         return false;
 
     case AJP_CODE_GET_BODY_CHUNK:
-        /* XXX */
-        break;
+        chunk = (const struct ajp_get_body_chunk *)(data - 1);
+
+        if (length < sizeof(*chunk) - 1) {
+            daemon_log(1, "malformed AJP GET_BODY_CHUNK packet\n");
+            ajp_connection_close(client);
+            return false;
+        }
+
+        if (client->request.istream == NULL ||
+            client->request.ajp_body == NULL) {
+            daemon_log(1, "unexpected AJP GET_BODY_CHUNK packet\n");
+            ajp_connection_close(client);
+            return false;
+        }
+
+        istream_ajp_body_request(client->request.ajp_body,
+                                 ntohs(chunk->length));
+        return true;
 
     case AJP_CODE_CPONG_REPLY:
         /* XXX */
@@ -434,25 +452,6 @@ ajp_consume_input(struct ajp_client *client)
                 return;
 
             continue;
-        } else if (code == AJP_CODE_GET_BODY_CHUNK) {
-            const struct ajp_get_body_chunk *chunk =
-                (const struct ajp_get_body_chunk *)(header + 1);
-
-            if (length < sizeof(*header) + sizeof(*chunk)) {
-                daemon_log(1, "malformed AJP GET_BODY_CHUNK packet\n");
-                ajp_connection_close(client);
-                return;
-            }
-
-            if (client->request.istream == NULL ||
-                client->request.ajp_body == NULL) {
-                daemon_log(1, "unexpected AJP GET_BODY_CHUNK packet\n");
-                ajp_connection_close(client);
-                return;
-            }
-
-            istream_ajp_body_request(client->request.ajp_body,
-                                     ntohs(chunk->length));
         }
 
         if (length < sizeof(*header) + header_length) {
