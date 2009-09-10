@@ -24,17 +24,21 @@ struct istream_ajp_body {
 };
 
 static void
-ajp_body_start_packet(struct istream_ajp_body *ab)
+ajp_body_start_packet(struct istream_ajp_body *ab, size_t length)
 {
     assert(ab->requested > 0);
+    assert(length > 0);
 
-    ab->packet_remaining = ab->requested;
-    if (ab->packet_remaining > 8192 - sizeof(ab->header))
+    if (length > ab->requested)
+        length = ab->requested;
+
+    if (length > 8192 - sizeof(ab->header))
         /* limit packets to 8 kB - up to 65535 might be possible,
            but has never been tested */
-        ab->packet_remaining = 8192 - sizeof(ab->header);
+        length = 8192 - sizeof(ab->header);
 
-    ab->requested -= ab->packet_remaining;
+    ab->packet_remaining = length;
+    ab->requested -= length;
 
     ab->header.header.a = 0x12;
     ab->header.header.b = 0x34;
@@ -94,13 +98,13 @@ ajp_body_write_data(struct istream_ajp_body *ab)
  * Returns true if the caller may write the packet body.
  */
 static bool
-ajp_body_make_packet(struct istream_ajp_body *ab)
+ajp_body_make_packet(struct istream_ajp_body *ab, size_t length)
 {
     if (ab->packet_remaining == 0) {
         if (ab->requested == 0)
             return false;
 
-        ajp_body_start_packet(ab);
+        ajp_body_start_packet(ab, length);
     }
 
     return ajp_body_write_header(ab);
@@ -118,7 +122,7 @@ ajp_body_input_data(const void *data, size_t length, void *ctx)
     struct istream_ajp_body *ab = ctx;
     size_t nbytes;
 
-    if (!ajp_body_make_packet(ab))
+    if (!ajp_body_make_packet(ab, length))
         return 0;
 
     if (length > ab->packet_remaining)
