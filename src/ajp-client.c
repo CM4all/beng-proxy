@@ -19,6 +19,7 @@
 #include "lease.h"
 
 #include <daemon/log.h>
+#include <socket/util.h>
 
 #include <string.h>
 #include <unistd.h>
@@ -526,8 +527,12 @@ ajp_event_callback(int fd __attr_unused, short event, void *ctx)
     event2_lock(&client->event);
     event2_or(&client->event, EV_READ);
 
-    if (ajp_connection_valid(client) && (event & EV_WRITE) != 0)
+    if (ajp_connection_valid(client) && (event & EV_WRITE) != 0) {
+        socket_set_cork(client->fd, true);
         istream_read(client->request.istream);
+        if (client->fd >= 0)
+            socket_set_cork(client->fd, false);
+    }
 
     if (ajp_connection_valid(client) && (event & EV_READ) != 0)
         ajp_try_read(client);
@@ -752,7 +757,10 @@ ajp_client_request(pool_t pool, int fd,
     event2_lock(&client->event);
     event2_set(&client->event, EV_READ);
 
+    socket_set_cork(client->fd, true);
     istream_read(client->request.istream);
+    if (client->fd >= 0)
+        socket_set_cork(client->fd, false);
 
     event2_unlock(&client->event);
 
