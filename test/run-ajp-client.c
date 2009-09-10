@@ -224,6 +224,8 @@ int main(int argc, char **argv) {
 
     assert(ctx.body_eof || ctx.body_abort || ctx.aborted);
 
+    fprintf(stderr, "reuse=%d\n", ctx.reuse);
+
     /* cleanup */
 
     pool_unref(pool);
