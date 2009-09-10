@@ -8,6 +8,7 @@ cm4all-beng-proxy (0.6.15) unstable; urgency=low
   * ajp-client: reuse connection after END_RESPONSE packet
   * ajp-client: enable TCP_CORK while sending
   * istream-ajp-body: added a second "length" header field
+  * ajp-client: auto-send empty request body chunk
 
  --
 

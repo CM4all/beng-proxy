@@ -68,6 +68,10 @@ struct ajp_client {
     } response;
 };
 
+static const struct ajp_header empty_body_chunk = {
+    .a = 0x12, .b = 0x34,
+};
+
 static inline bool
 ajp_connection_valid(struct ajp_client *client)
 {
@@ -308,9 +312,10 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
 
         if (client->request.istream == NULL ||
             client->request.ajp_body == NULL) {
-            daemon_log(1, "unexpected AJP GET_BODY_CHUNK packet\n");
-            ajp_connection_close(client);
-            return false;
+            /* we always send empty_body_chunk to the AJP server, so
+               we can safely ignore all other AJP_CODE_GET_BODY_CHUNK
+               requests here */
+            return true;
         }
 
         istream_ajp_body_request(client->request.ajp_body,
@@ -724,11 +729,17 @@ ajp_client_request(pool_t pool, int fd,
 
     header->length = htons(growing_buffer_size(gb) - sizeof(*header));
 
+    if (body == NULL)
+        growing_buffer_write_buffer(gb, &empty_body_chunk,
+                                    sizeof(empty_body_chunk));
+
     request = growing_buffer_istream(gb);
     if (body != NULL) {
         client->request.ajp_body = istream_ajp_body_new(pool, body);
         istream_ajp_body_request(client->request.ajp_body, requested);
         request = istream_cat_new(pool, request, client->request.ajp_body,
+                                  istream_memory_new(pool, &empty_body_chunk,
+                                                     sizeof(empty_body_chunk)),
                                   NULL);
     } else {
         client->request.ajp_body = NULL;
