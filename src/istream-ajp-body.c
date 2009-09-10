@@ -16,7 +16,10 @@ struct istream_ajp_body {
 
     size_t requested, packet_remaining;
 
-    struct ajp_header header;
+    __attr_packed struct {
+        struct ajp_header header;
+        uint16_t length;
+    } header;
     size_t header_sent;
 };
 
@@ -33,8 +36,10 @@ ajp_body_start_packet(struct istream_ajp_body *ab)
 
     ab->requested -= ab->packet_remaining;
 
-    ab->header.a = 0x12;
-    ab->header.b = 0x34;
+    ab->header.header.a = 0x12;
+    ab->header.header.b = 0x34;
+    ab->header.header.length =
+        htons(ab->packet_remaining + sizeof(ab->header.length));
     ab->header.length = htons(ab->packet_remaining);
     ab->header_sent = 0;
 }
