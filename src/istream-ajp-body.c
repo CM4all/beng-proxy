@@ -218,17 +218,9 @@ void
 istream_ajp_body_request(istream_t istream, size_t length)
 {
     struct istream_ajp_body *ab = istream_to_ab(istream);
-    off_t available = istream_available(ab->input, false);
 
-    assert(available == -1 ||
-           (off_t)ab->requested + (off_t)ab->packet_remaining <= available);
-
+    /* we're not checking if this becomes larger than the request body
+       - although Tomcat should know better, it requests more and
+       more */
     ab->requested += length;
-
-    if (available != -1 &&
-        (off_t)ab->requested + (off_t)ab->packet_remaining > available) {
-        /* GET_BODY_CHUNK packet was too large - abort this stream */
-        istream_free_handler(&ab->input);
-        istream_deinit_abort(&ab->output);
-    }
 }

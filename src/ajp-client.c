@@ -718,9 +718,7 @@ ajp_client_request(pool_t pool, int fd,
         if (available == 0)
             istream_free(&body);
         else
-            requested = available > 1024
-                ? 1024
-                : (size_t)available;
+            requested = 1024;
     }
 
     growing_buffer_write_buffer(gb, "\xff", 1);
