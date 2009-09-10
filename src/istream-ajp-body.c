@@ -29,10 +29,10 @@ ajp_body_start_packet(struct istream_ajp_body *ab)
     assert(ab->requested > 0);
 
     ab->packet_remaining = ab->requested;
-    if (ab->packet_remaining > 8192)
+    if (ab->packet_remaining > 8192 - sizeof(ab->header))
         /* limit packets to 8 kB - up to 65535 might be possible,
            but has never been tested */
-        ab->packet_remaining = 8192;
+        ab->packet_remaining = 8192 - sizeof(ab->header);
 
     ab->requested -= ab->packet_remaining;
 
