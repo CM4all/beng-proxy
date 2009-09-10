@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.6.15) unstable; urgency=low
   * ajp-request: unref pool only on tcp_stock failure
   * ajp-client: prevent parser recursion
   * ajp-client: free request body when response is closed
+  * ajp-client: reuse connection after END_RESPONSE packet
 
  --
 

@@ -287,10 +287,11 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
     case AJP_CODE_END_RESPONSE:
         if (client->response.read_state == READ_BODY) {
             client->response.read_state = READ_END;
+            ajp_client_release(client, true);
             istream_deinit_eof(&client->response.body);
-        }
+        } else
+            ajp_client_release(client, true);
 
-        ajp_connection_close(client);
         return false;
 
     case AJP_CODE_GET_BODY_CHUNK:
