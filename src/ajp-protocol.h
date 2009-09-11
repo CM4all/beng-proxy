@@ -9,6 +9,8 @@
 
 #include "http.h"
 
+#include <inline/compiler.h>
+
 #include <stdint.h>
 
 typedef enum {
@@ -26,9 +28,23 @@ typedef enum {
     AJP_METHOD_TRACE = 7,
 } ajp_method_t;
 
-typedef enum {
+enum ajp_header_code {
+    AJP_HEADER_NONE,
+    AJP_HEADER_ACCEPT = 0xa001,
+    AJP_HEADER_ACCEPT_CHARSET = 0xa002,
+    AJP_HEADER_ACCEPT_ENCODING = 0xa003,
+    AJP_HEADER_ACCEPT_LANGUAGE = 0xa004,
+    AJP_HEADER_AUTHORIZATION = 0xa005,
+    AJP_HEADER_CONNECTION = 0xa006,
+    AJP_HEADER_CONTENT_TYPE = 0xa007,
     AJP_HEADER_CONTENT_LENGTH = 0xa008,
-} ajp_header_t;
+    AJP_HEADER_COOKIE = 0xa009,
+    AJP_HEADER_COOKIE2 = 0xa00a,
+    AJP_HEADER_HOST = 0xa00b,
+    AJP_HEADER_PRAGMA = 0xa00c,
+    AJP_HEADER_REFERER = 0xa00d,
+    AJP_HEADER_USER_AGENT = 0xa00e,
+};
 
 typedef enum {
     AJP_CODE_FORWARD_REQUEST = 2,
@@ -82,5 +98,11 @@ to_ajp_method(http_method_t method)
 
     return AJP_METHOD_NULL;
 }
+
+enum ajp_header_code
+ajp_encode_header_name(const char *name);
+
+const char *
+ajp_decode_header_name(enum ajp_header_code code);
 
 #endif

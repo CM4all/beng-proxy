@@ -103,6 +103,7 @@ SRC = src/main.c \
 	src/file-handler.c \
 	src/cgi-handler.c \
 	src/proxy-handler.c \
+	src/ajp-protocol.c \
 	src/ajp-handler.c \
 	src/widget.c \
 	src/widget-class.c \
