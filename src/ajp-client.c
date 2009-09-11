@@ -224,6 +224,7 @@ ajp_consume_send_headers(struct ajp_client *client,
     unsigned num_headers;
     istream_t body;
     struct strref packet;
+    struct strmap *headers;
 
     if (client->response.read_state != READ_BEGIN) {
         daemon_log(1, "unexpected SEND_HEADERS packet from AJP server\n");
@@ -236,13 +237,17 @@ ajp_consume_send_headers(struct ajp_client *client,
     deserialize_ajp_string(&packet);
     num_headers = deserialize_uint16(&packet);
 
+    if (num_headers > 0) {
+        headers = strmap_new(client->pool, 17);
+        deserialize_ajp_headers(client->pool, headers, &packet, num_headers);
+    } else
+        headers = NULL;
+
     if (strref_is_null(&packet)) {
         daemon_log(1, "malformed SEND_HEADERS packet from AJP server\n");
         ajp_connection_close(client);
         return false;
     }
-
-    /* XXX parse headers */
 
     if (http_status_is_empty(status)) {
         body = NULL;
@@ -257,7 +262,7 @@ ajp_consume_send_headers(struct ajp_client *client,
 
     client->response.in_handler = true;
     http_response_handler_invoke_response(&client->request.handler, status,
-                                          NULL, body);
+                                          headers, body);
     client->response.in_handler = false;
 
     return true;
