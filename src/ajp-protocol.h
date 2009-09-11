@@ -30,6 +30,7 @@ typedef enum {
 
 enum ajp_header_code {
     AJP_HEADER_NONE,
+    AJP_HEADER_CODE_START = 0xa000,
     AJP_HEADER_ACCEPT = 0xa001,
     AJP_HEADER_ACCEPT_CHARSET = 0xa002,
     AJP_HEADER_ACCEPT_ENCODING = 0xa003,

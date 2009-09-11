@@ -105,6 +105,7 @@ SRC = src/main.c \
 	src/proxy-handler.c \
 	src/ajp-protocol.c \
 	src/ajp-serialize.c \
+	src/ajp-headers.c \
 	src/ajp-handler.c \
 	src/widget.c \
 	src/widget-class.c \
@@ -651,10 +652,12 @@ test_run_processor_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 
 test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/ajp-serialize.c \
+	src/ajp-headers.c src/ajp-protocol.c \
 	src/serialize.c \
 	src/buffered-io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/socket-util.c src/fd-util.c \
 	src/strmap.c src/hashmap.c \
+	src/strutil.c \
 	src/istream-file.c \
 	src/istream-cat.c \
 	src/istream-memory.c \
