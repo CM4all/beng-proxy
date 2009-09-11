@@ -11,7 +11,7 @@
 #include <string.h>
 
 void
-gb_write_ajp_string(struct growing_buffer *gb, const char *s)
+serialize_ajp_string(struct growing_buffer *gb, const char *s)
 {
     size_t length = strlen(s);
     char *p;
@@ -25,7 +25,7 @@ gb_write_ajp_string(struct growing_buffer *gb, const char *s)
 }
 
 void
-gb_write_ajp_integer(struct growing_buffer *gb, int i)
+serialize_ajp_integer(struct growing_buffer *gb, int i)
 {
     uint16_t *p;
 
@@ -34,7 +34,7 @@ gb_write_ajp_integer(struct growing_buffer *gb, int i)
 }
 
 void
-gb_write_ajp_bool(struct growing_buffer *gb, bool b)
+serialize_ajp_bool(struct growing_buffer *gb, bool b)
 {
     bool *p;
 

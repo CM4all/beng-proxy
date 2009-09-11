@@ -12,12 +12,12 @@
 struct growing_buffer;
 
 void
-gb_write_ajp_string(struct growing_buffer *gb, const char *s);
+serialize_ajp_string(struct growing_buffer *gb, const char *s);
 
 void
-gb_write_ajp_integer(struct growing_buffer *gb, int i);
+serialize_ajp_integer(struct growing_buffer *gb, int i);
 
 void
-gb_write_ajp_bool(struct growing_buffer *gb, bool b);
+serialize_ajp_bool(struct growing_buffer *gb, bool b);
 
 #endif

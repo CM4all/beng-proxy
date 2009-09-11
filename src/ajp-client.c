@@ -692,14 +692,14 @@ ajp_client_request(pool_t pool, int fd,
 
     growing_buffer_write_buffer(gb, &prefix_and_method, sizeof(prefix_and_method));
 
-    gb_write_ajp_string(gb, protocol);
-    gb_write_ajp_string(gb, uri);
-    gb_write_ajp_string(gb, remote_addr);
-    gb_write_ajp_string(gb, remote_host);
-    gb_write_ajp_string(gb, server_name);
-    gb_write_ajp_integer(gb, server_port);
-    gb_write_ajp_bool(gb, is_ssl);
-    gb_write_ajp_integer(gb, body == NULL ? 0 : 1); /* XXX num_headers */
+    serialize_ajp_string(gb, protocol);
+    serialize_ajp_string(gb, uri);
+    serialize_ajp_string(gb, remote_addr);
+    serialize_ajp_string(gb, remote_host);
+    serialize_ajp_string(gb, server_name);
+    serialize_ajp_integer(gb, server_port);
+    serialize_ajp_bool(gb, is_ssl);
+    serialize_ajp_integer(gb, body == NULL ? 0 : 1); /* XXX num_headers */
 
     if (body != NULL) {
         off_t available;
@@ -714,8 +714,8 @@ ajp_client_request(pool_t pool, int fd,
         }
 
         format_uint64(buffer, (uint64_t)available);
-        gb_write_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
-        gb_write_ajp_string(gb, buffer);
+        serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
+        serialize_ajp_string(gb, buffer);
 
         if (available == 0)
             istream_free(&body);
