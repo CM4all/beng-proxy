@@ -39,6 +39,17 @@ growing_buffer_new(pool_t pool, size_t initial_size)
     return gb;
 }
 
+static void
+growing_buffer_append_buffer(struct growing_buffer *gb, struct buffer *buffer)
+{
+    assert(gb != NULL);
+    assert(buffer != NULL);
+    assert(buffer->next == NULL);
+
+    gb->tail->next = buffer;
+    gb->tail = buffer;
+}
+
 void *
 growing_buffer_write(struct growing_buffer *gb, size_t length)
 {
@@ -54,8 +65,8 @@ growing_buffer_write(struct growing_buffer *gb, size_t length)
         buffer->next = NULL;
         buffer->length = 0;
         buffer->position = 0;
-        gb->tail->next = buffer;
-        gb->tail = buffer;
+
+        growing_buffer_append_buffer(gb, buffer);
     }
 
     assert(buffer->length + length <= gb->size);
