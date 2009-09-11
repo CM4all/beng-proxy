@@ -246,7 +246,8 @@ http_cache_copy_vary(pool_t pool, const char *vary,
     struct pool_mark mark;
     char **list;
 
-    pool_mark(tpool, &mark);
+    if (pool != tpool)
+        pool_mark(tpool, &mark);
 
     for (list = http_list_split(tpool, vary);
          *list != NULL; ++list) {
@@ -257,7 +258,8 @@ http_cache_copy_vary(pool_t pool, const char *vary,
                    p_strdup(pool, value));
     }
 
-    pool_rewind(tpool, &mark);
+    if (pool != tpool)
+        pool_rewind(tpool, &mark);
 
     return dest;
 }
