@@ -16,6 +16,8 @@
 #include "istream-internal.h"
 #include "ajp-protocol.h"
 #include "ajp-serialize.h"
+#include "serialize.h"
+#include "strref.h"
 #include "lease.h"
 
 #include <daemon/log.h>
@@ -219,9 +221,9 @@ ajp_consume_send_headers(struct ajp_client *client,
                          const char *data, size_t length)
 {
     http_status_t status;
-    size_t msg_length;
     unsigned num_headers;
     istream_t body;
+    struct strref packet;
 
     if (client->response.read_state != READ_BEGIN) {
         daemon_log(1, "unexpected SEND_HEADERS packet from AJP server\n");
@@ -229,26 +231,16 @@ ajp_consume_send_headers(struct ajp_client *client,
         return false;
     }
 
-    if (2 + 3 + 2 > length) {
+    strref_set(&packet, data, length);
+    status = deserialize_uint16(&packet);
+    deserialize_ajp_string(&packet);
+    num_headers = deserialize_uint16(&packet);
+
+    if (strref_is_null(&packet)) {
         daemon_log(1, "malformed SEND_HEADERS packet from AJP server\n");
         ajp_connection_close(client);
         return false;
     }
-
-    status = ntohs(*(const uint16_t*)data);
-    msg_length = ntohs(*(const uint16_t*)(data + 2));
-    if (2 + 3 + msg_length + 2 > length) {
-        daemon_log(1, "malformed SEND_HEADERS packet from AJP server\n");
-        ajp_connection_close(client);
-        return false;
-    }
-
-    data += 2 + 3 + msg_length;
-    length -= 2 + 3 + msg_length;
-
-    num_headers = ntohs(*(const uint16_t*)data);
-    data += 2;
-    length -= 2;
 
     /* XXX parse headers */
 
