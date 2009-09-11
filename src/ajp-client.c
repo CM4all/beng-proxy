@@ -653,7 +653,7 @@ ajp_client_request(pool_t pool, int fd,
     struct {
         uint8_t prefix_code, method;
     } prefix_and_method;
-    struct growing_buffer *headers_buffer;
+    struct growing_buffer *headers_buffer = NULL;
     unsigned num_headers;
     istream_t request;
     size_t requested;
