@@ -22,6 +22,9 @@ growing_buffer_write_buffer(struct growing_buffer *gb, const void *p, size_t len
 void
 growing_buffer_write_string(struct growing_buffer *gb, const char *p);
 
+void
+growing_buffer_cat(struct growing_buffer *dest, struct growing_buffer *src);
+
 bool
 growing_buffer_empty(struct growing_buffer *gb);
 
