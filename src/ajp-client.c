@@ -5,7 +5,7 @@
  */
 
 #include "ajp-client.h"
-#include "http-client.h"
+#include "ajp-headers.h"
 #include "http-response.h"
 #include "async.h"
 #include "fifo-buffer.h"
@@ -656,6 +656,8 @@ ajp_client_request(pool_t pool, int fd,
     struct {
         uint8_t prefix_code, method;
     } prefix_and_method;
+    struct growing_buffer *headers_buffer;
+    unsigned num_headers;
     istream_t request;
     size_t requested;
 
@@ -699,7 +701,24 @@ ajp_client_request(pool_t pool, int fd,
     serialize_ajp_string(gb, server_name);
     serialize_ajp_integer(gb, server_port);
     serialize_ajp_bool(gb, is_ssl);
-    serialize_ajp_integer(gb, body == NULL ? 0 : 1); /* XXX num_headers */
+
+    if (headers != NULL) {
+        /* serialize the request headers - note that
+           serialize_ajp_headers() ignores the Content-Length header,
+           we will append it later */
+        headers_buffer = growing_buffer_new(pool, 2048);
+        num_headers = serialize_ajp_headers(headers_buffer, headers);
+    } else
+        num_headers = 0;
+
+    if (body != NULL)
+        /* if there's a request body, we'll append the Content-Length
+           header */
+        ++num_headers;
+
+    serialize_ajp_integer(gb, num_headers);
+    if (headers != NULL)
+        growing_buffer_cat(gb, headers_buffer);
 
     if (body != NULL) {
         off_t available;

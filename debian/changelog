@@ -10,6 +10,7 @@ cm4all-beng-proxy (0.6.15) unstable; urgency=low
   * istream-ajp-body: added a second "length" header field
   * ajp-client: auto-send empty request body chunk
   * ajp-client: register "write" event after GET_BODY_CHUNK packet
+  * ajp-client: implemented request headers
 
  --
 
