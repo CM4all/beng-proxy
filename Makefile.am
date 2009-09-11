@@ -651,8 +651,10 @@ test_run_processor_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 
 test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/ajp-serialize.c \
+	src/serialize.c \
 	src/buffered-io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/socket-util.c src/fd-util.c \
+	src/strmap.c src/hashmap.c \
 	src/istream-file.c \
 	src/istream-cat.c \
 	src/istream-memory.c \

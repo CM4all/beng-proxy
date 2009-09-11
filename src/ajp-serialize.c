@@ -5,6 +5,7 @@
  */
 
 #include "ajp-serialize.h"
+#include "serialize.h"
 #include "growing-buffer.h"
 
 #include <netinet/in.h>
@@ -27,10 +28,7 @@ serialize_ajp_string(struct growing_buffer *gb, const char *s)
 void
 serialize_ajp_integer(struct growing_buffer *gb, int i)
 {
-    uint16_t *p;
-
-    p = growing_buffer_write(gb, sizeof(*p));
-    *p = htons(i);
+    serialize_uint16(gb, i);
 }
 
 void
