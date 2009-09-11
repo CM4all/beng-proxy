@@ -17,28 +17,28 @@
 void
 serialize_uint16(struct growing_buffer *gb, uint16_t value)
 {
-    uint16_t src = g_htons(value);
-    void *dest = growing_buffer_write(gb, sizeof(src));
+    uint16_t *dest;
 
-    memcpy(dest, &src, sizeof(src));
+    dest = growing_buffer_write(gb, sizeof(*dest));
+    *dest = g_htons(value);
 }
 
 void
 serialize_uint32(struct growing_buffer *gb, uint32_t value)
 {
-    uint32_t src = g_htonl(value);
-    void *dest = growing_buffer_write(gb, sizeof(src));
+    uint32_t *dest;
 
-    memcpy(dest, &src, sizeof(src));
+    dest = growing_buffer_write(gb, sizeof(*dest));
+    *dest = g_htonl(value);
 }
 
 void
 serialize_uint64(struct growing_buffer *gb, uint64_t value)
 {
-    uint64_t src = GUINT64_TO_BE(value);
-    void *dest = growing_buffer_write(gb, sizeof(src));
+    uint32_t *dest;
 
-    memcpy(dest, &src, sizeof(src));
+    dest = growing_buffer_write(gb, sizeof(*dest));
+    *dest = GUINT64_TO_BE(value);
 }
 
 /*
