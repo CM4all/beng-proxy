@@ -15,12 +15,13 @@
 #include "buffered-io.h"
 #include "istream-internal.h"
 #include "ajp-protocol.h"
-#include "ajp-write.h"
+#include "ajp-serialize.h"
 #include "lease.h"
 
 #include <daemon/log.h>
 #include <socket/util.h>
 
+#include <netinet/in.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>

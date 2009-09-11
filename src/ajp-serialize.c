@@ -4,14 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_AJP_WRITE_H
-#define __BENG_AJP_WRITE_H
-
+#include "ajp-serialize.h"
 #include "growing-buffer.h"
 
 #include <netinet/in.h>
+#include <string.h>
 
-static void
+void
 gb_write_ajp_string(struct growing_buffer *gb, const char *s)
 {
     size_t length = strlen(s);
@@ -25,7 +24,7 @@ gb_write_ajp_string(struct growing_buffer *gb, const char *s)
     memcpy(p + 2, s, length + 1);
 }
 
-static void
+void
 gb_write_ajp_integer(struct growing_buffer *gb, int i)
 {
     uint16_t *p;
@@ -34,7 +33,7 @@ gb_write_ajp_integer(struct growing_buffer *gb, int i)
     *p = htons(i);
 }
 
-static void
+void
 gb_write_ajp_bool(struct growing_buffer *gb, bool b)
 {
     bool *p;
@@ -42,5 +41,3 @@ gb_write_ajp_bool(struct growing_buffer *gb, bool b)
     p = growing_buffer_write(gb, sizeof(*p));
     *p = b ? 1 : 0;
 }
-
-#endif
