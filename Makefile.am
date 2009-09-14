@@ -182,6 +182,7 @@ SRC = src/main.c \
 	src/uri-resolver.c \
 	src/uri-escape.c \
 	src/failure.c \
+	src/bulldog.c \
 	src/args.c \
 	src/gmtime.c \
 	src/date.c \
