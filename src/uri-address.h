@@ -34,4 +34,10 @@ uri_address_add(struct uri_with_address *uwa,
 const struct sockaddr *
 uri_address_next(struct uri_with_address *uwa, socklen_t *addrlen_r);
 
+/**
+ * Is there no more than one address?
+ */
+bool
+uri_address_is_single(const struct uri_with_address *uwa);
+
 #endif

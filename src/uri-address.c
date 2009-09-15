@@ -75,3 +75,9 @@ uri_address_next(struct uri_with_address *uwa, socklen_t *addrlen_r)
     return &ua->address;
 }
 
+bool
+uri_address_is_single(const struct uri_with_address *uwa)
+{
+    return uwa->addresses.next->next == &uwa->addresses;
+}
+
