@@ -75,7 +75,7 @@ bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
             daemon_log(2, "Failed to open %s: %s\n",
                        bulldog.path, strerror(errno));
         else
-            daemon_log(3, "No such bulldog-tyke status file: %s\n",
+            daemon_log(4, "No such bulldog-tyke status file: %s\n",
                        bulldog.path);
         return true;
     }

@@ -142,11 +142,13 @@ sink_buffer_new(pool_t pool, istream_t input,
 
     available = istream_available(input, false);
     if (available == -1 || available >= 0x10000000) {
+        istream_close(input);
         callback(NULL, 0, ctx);
         return;
     }
 
     if (available == 0) {
+        istream_close(input);
         callback(empty_buffer, 0, ctx);
         return;
     }
