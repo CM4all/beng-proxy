@@ -76,6 +76,10 @@ static void usage(void) {
 #endif
          " -M IP:PORT     use this memcached server\n"
 #ifdef __GLIBC__
+         " --bulldog-path PATH\n"
+#endif
+         " -B PATH        obtain worker status information from the Bulldog-Tyke path\n"
+#ifdef __GLIBC__
          " --set NAME=VALUE  tweak an internal variable, see manual for details\n"
 #endif
          " -s NAME=VALUE  \n"
@@ -188,6 +192,7 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
         {"document-root", 1, NULL, 'r'},
         {"translation-socket", 1, NULL, 't'},
         {"memcached-server", 1, NULL, 'M'},
+        {"bulldog-path", 1, NULL, 'B'},
         {"set", 1, NULL, 's'},
         {NULL,0,NULL,0}
     };
@@ -198,10 +203,10 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:M:s:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:M:B:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:M:s:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:M:B:s:");
 #endif
         if (ret == -1)
             break;
@@ -304,6 +309,10 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 
             config->memcached_server = uri_address_new_resolve(pool, optarg,
                                                                11211, &hints);
+            break;
+
+        case 'B':
+            config->bulldog_path = optarg;
             break;
 
         case 's':

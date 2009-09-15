@@ -36,6 +36,11 @@ struct config {
 
     struct uri_with_address *memcached_server;
 
+    /**
+     * The Bulldog data path.
+     */
+    const char *bulldog_path;
+
     unsigned num_workers;
 
     /** maximum number of simultaneous connections */

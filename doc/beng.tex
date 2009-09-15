@@ -131,6 +131,11 @@ This disables the local heap cache, and allows \emph{beng-proxy} to
 share the cache with several (distributed) workers.  With the local
 heap cache disabled, all of its configuration options are ignored.
 
+\label{bulldog}
+With \texttt{--bulldog-path}, \emph{beng-proxy} reads status
+information on servers it contacts from the Bulldog-Tyke data
+directory.
+
 \section{Running}
 
 \subsection{Signals}
@@ -220,6 +225,9 @@ For a remote URL, more than one server may be specified.
 \texttt{beng-proxy} tries to use all of these equally.  If one server
 fails on the socket level, \texttt{beng-proxy} ignores it for a short
 amount of time.
+
+Advanced users may take advantage of Bulldog-Tyke data, by passing
+with the option \texttt{--bulldog-path} (see \ref{bulldog}).
 
 \subsection{AJP v1.3}
 \label{ajp}

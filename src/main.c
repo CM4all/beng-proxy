@@ -20,6 +20,7 @@
 #include "child.h"
 #include "global.h"
 #include "failure.h"
+#include "bulldog.h"
 #include "listener.h"
 
 #include <daemon/daemonize.h>
@@ -282,6 +283,7 @@ int main(int argc, char **argv)
                                              instance.fcgi_stock);
 
     failure_init(instance.pool);
+    bulldog_init(instance.config.bulldog_path);
 
     global_translate_cache = instance.translate_cache;
     global_tcp_stock = instance.tcp_stock;
@@ -323,6 +325,7 @@ int main(int argc, char **argv)
 
     /* cleanup */
 
+    bulldog_deinit();
     failure_deinit();
 
     free_all_listeners(&instance);
