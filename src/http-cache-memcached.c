@@ -253,6 +253,8 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
             if (request->in_choice)
                 break;
 
+            istream_close(tail);
+
             http_cache_choice_get(request->pool, request->stock,
                                   request->uri, request->request_headers,
                                   mcd_choice_get_callback, request,

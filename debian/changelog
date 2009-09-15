@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.6.16) unstable; urgency=low
 
   * tcp-stock: added support for bulldog-tyke
   * sink-buffer: close input if it's not used in the constructor
+  * http-cache-memcached: close response body when deserialization fails
 
  --
 
