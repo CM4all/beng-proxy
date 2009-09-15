@@ -72,15 +72,18 @@ bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
     fd = open(bulldog.path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
     if (fd < 0) {
         if (errno != ENOENT)
-            fprintf(stderr, "Failed to open %s: %s\n",
-                    bulldog.path, strerror(errno));
+            daemon_log(2, "Failed to open %s: %s\n",
+                       bulldog.path, strerror(errno));
+        else
+            daemon_log(3, "No such bulldog-tyke status file: %s\n",
+                       bulldog.path);
         return true;
     }
 
     nbytes = read(fd, buffer, sizeof(buffer));
     if (nbytes < 0) {
-        fprintf(stderr, "Failed to read %s: %s\n",
-                bulldog.path, strerror(errno));
+        daemon_log(2, "Failed to read %s: %s\n",
+                   bulldog.path, strerror(errno));
         close(fd);
         return true;
     }
@@ -93,6 +96,8 @@ bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
         p = buffer + nbytes;
 
     *p = 0;
+
+    daemon_log(5, "bulldog: %s='%s'\n", bulldog.path, buffer);
 
     return strcmp(buffer, "alive") == 0;
 }
