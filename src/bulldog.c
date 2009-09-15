@@ -29,6 +29,9 @@ static struct {
 void
 bulldog_init(const char *path)
 {
+    if (path == NULL)
+        return;
+
     if (strlen(path) + sizeof(WORKERS) + sizeof(SUFFIX) >=
         sizeof(bulldog.path)) {
         daemon_log(1, "bulldog path is too long\n");
