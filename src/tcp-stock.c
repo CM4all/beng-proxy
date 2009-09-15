@@ -10,6 +10,7 @@
 #include "client-socket.h"
 #include "uri-address.h"
 #include "failure.h"
+#include "bulldog.h"
 
 #include <daemon/log.h>
 
@@ -45,7 +46,8 @@ uri_address_next_checked(struct uri_with_address *uwa, socklen_t *addrlen_r)
         return NULL;
 
     do {
-        if (!failure_check(first, *addrlen_r))
+        if (!failure_check(ret, *addrlen_r) &&
+            bulldog_check(ret, *addrlen_r))
             return ret;
 
         ret = uri_address_next(uwa, addrlen_r);

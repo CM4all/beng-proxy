@@ -591,7 +591,7 @@ test_format_http_date_SOURCES = test/format-http-date.c \
 
 test_request_translation_SOURCES = test/request-translation.c \
 	src/translate.c src/growing-buffer.c src/gb-io.c \
-	src/tcp-stock.c src/failure.c src/client-socket.c \
+	src/tcp-stock.c src/failure.c src/bulldog.c src/client-socket.c \
 	src/fd-util.c src/socket-util.c \
 	src/stock.c src/hstock.c src/hashmap.c \
 	src/abort-unref.c \
@@ -643,7 +643,7 @@ test_run_processor_SOURCES = test/t-processor.c \
 	src/format.c src/header-parser.c src/http.c src/strutil.c \
 	src/widget-request.c \
 	src/istream-tee.c src/istream-null.c \
-	src/event2.c src/failure.c src/uri-address.c \
+	src/event2.c src/failure.c src/bulldog.c src/uri-address.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/widget-stream.c src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
@@ -697,7 +697,7 @@ test_dump_memcached_choice_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/uri-address.c src/uri-resolver.c \
-	src/failure.c src/tcp-stock.c \
+	src/failure.c src/bulldog.c src/tcp-stock.c \
 	src/client-socket.c src/socket-util.c src/fd-util.c \
 	src/stock.c src/hstock.c \
 	src/memcached-client.c src/memcached-packet.c \
