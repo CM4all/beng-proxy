@@ -5,7 +5,7 @@ cm4all-beng-proxy (0.6.16) unstable; urgency=low
   * http-cache-memcached: close response body when deserialization fails
   * serialize: fix regression in serialize_uint64()
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 15 Sep 2009 19:26:07 +0200
 
 cm4all-beng-proxy (0.6.15) unstable; urgency=low
 
