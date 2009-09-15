@@ -35,7 +35,7 @@ serialize_uint32(struct growing_buffer *gb, uint32_t value)
 void
 serialize_uint64(struct growing_buffer *gb, uint64_t value)
 {
-    uint32_t *dest;
+    uint64_t *dest;
 
     dest = growing_buffer_write(gb, sizeof(*dest));
     *dest = GUINT64_TO_BE(value);
