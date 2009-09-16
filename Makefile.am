@@ -183,6 +183,7 @@ SRC = src/main.c \
 	src/uri-escape.c \
 	src/failure.c \
 	src/bulldog.c \
+	src/balancer.c \
 	src/args.c \
 	src/gmtime.c \
 	src/date.c \
@@ -312,13 +313,15 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/uri-relative.c src/uri-edit.c \
 	src/transformation.c \
 	$(POOL_SRC)
-test_t_tcache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) -lrt
+test_t_tcache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBEVENT_LIBS) -lrt
 
 test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/resource-address.c \
 	src/uri-address.c src/uri-relative.c \
 	$(POOL_SRC)
-test_t_resource_address_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
+test_t_resource_address_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_uri_compress_SOURCES = test/t-uri-compress.c \
 	src/uri-relative.c \
@@ -392,7 +395,9 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/resource-address.c src/global.c src/transformation.c \
 	src/expansible-buffer.c \
 	$(T_ISTREAM_FILTER_SRC)
-test_t_istream_processor_LDADD = $(T_ISTREAM_FILTER_LIB) $(GLIB_LIBS)
+test_t_istream_processor_LDADD = $(T_ISTREAM_FILTER_LIB) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
 
 test_t_sink_header_SOURCES = test/t-sink-header.c \
 	$(T_ISTREAM_FILTER_SRC)
@@ -537,6 +542,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
 	src/format.c
 test_t_rewrite_uri_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) \
 	$(GLIB_LIBS)
 
@@ -547,7 +553,9 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/tcache.c src/cache.c \
 	src/hashmap.c src/abort-unref.c \
 	src/resource-address.c src/uri-relative.c
-test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
+test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBEVENT_LIBS)
 
 test_t_wembed_SOURCES = test/t-wembed.c \
 	src/inline-widget.c \
@@ -581,7 +589,9 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/transformation.c \
 	src/dpool.c src/dstring.c src/dhashmap.c src/shm.c \
 	$(POOL_SRC) src/tpool.c
-test_t_widget_http_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
+test_t_widget_http_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
 
 test_benchmark_gmtime_SOURCES = test/benchmark-gmtime.c \
 	src/gmtime.c test/libcore-gmtime.c
@@ -591,7 +601,8 @@ test_format_http_date_SOURCES = test/format-http-date.c \
 
 test_request_translation_SOURCES = test/request-translation.c \
 	src/translate.c src/growing-buffer.c src/gb-io.c \
-	src/tcp-stock.c src/failure.c src/bulldog.c src/client-socket.c \
+	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
+	src/tcp-stock.c src/client-socket.c \
 	src/fd-util.c src/socket-util.c \
 	src/stock.c src/hstock.c src/hashmap.c \
 	src/abort-unref.c \
@@ -643,7 +654,8 @@ test_run_processor_SOURCES = test/t-processor.c \
 	src/format.c src/header-parser.c src/http.c src/strutil.c \
 	src/widget-request.c \
 	src/istream-tee.c src/istream-null.c \
-	src/event2.c src/failure.c src/bulldog.c src/uri-address.c \
+	src/event2.c src/failure.c src/bulldog.c \
+	src/balancer.c src/uri-address.c src/cache.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/widget-stream.c src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
@@ -697,7 +709,8 @@ test_dump_memcached_choice_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/uri-address.c src/uri-resolver.c \
-	src/failure.c src/bulldog.c src/tcp-stock.c \
+	src/failure.c src/bulldog.c src/balancer.c src/tcp-stock.c \
+	src/cache.c \
 	src/client-socket.c src/socket-util.c src/fd-util.c \
 	src/stock.c src/hstock.c \
 	src/memcached-client.c src/memcached-packet.c \
