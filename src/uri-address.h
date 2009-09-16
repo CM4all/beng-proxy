@@ -32,6 +32,9 @@ uri_address_add(struct uri_with_address *uwa,
                 const struct sockaddr *addr, socklen_t addrlen);
 
 const struct sockaddr *
+uri_address_first(const struct uri_with_address *uwa, socklen_t *addrlen_r);
+
+const struct sockaddr *
 uri_address_next(struct uri_with_address *uwa, socklen_t *addrlen_r);
 
 /**

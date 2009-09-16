@@ -58,6 +58,19 @@ uri_address_add(struct uri_with_address *uwa,
 }
 
 const struct sockaddr *
+uri_address_first(const struct uri_with_address *uwa, socklen_t *addrlen_r)
+{
+    struct uri_address *ua;
+
+    if (list_empty(&uwa->addresses))
+        return NULL;
+
+    ua = (struct uri_address *)uwa->addresses.next;
+    *addrlen_r = ua->length;
+    return &ua->address;
+}
+
+const struct sockaddr *
 uri_address_next(struct uri_with_address *uwa, socklen_t *addrlen_r)
 {
     struct uri_address *ua;
