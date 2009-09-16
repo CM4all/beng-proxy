@@ -43,4 +43,11 @@ uri_address_next(struct uri_with_address *uwa, socklen_t *addrlen_r);
 bool
 uri_address_is_single(const struct uri_with_address *uwa);
 
+/**
+ * Generates a unique string which identifies this object in a hash
+ * table.  This string stored in a statically allocated buffer.
+ */
+const char *
+uri_address_key(const struct uri_with_address *uwa);
+
 #endif

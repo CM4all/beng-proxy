@@ -6,6 +6,8 @@
 
 #include "uri-address.h"
 
+#include <socket/address.h>
+
 #include <string.h>
 
 struct uri_address {
@@ -94,3 +96,28 @@ uri_address_is_single(const struct uri_with_address *uwa)
     return uwa->addresses.next->next == &uwa->addresses;
 }
 
+const char *
+uri_address_key(const struct uri_with_address *uwa)
+{
+    static char buffer[2048];
+    size_t length = 0;
+    const struct uri_address *ua;
+    bool success;
+
+    for (ua = (const struct uri_address *)uwa->addresses.next;
+         ua != (const struct uri_address *)&uwa->addresses;
+         ua = (const struct uri_address *)ua->siblings.next) {
+        if (length > 0 && length < sizeof(buffer) - 1)
+            buffer[length++] = ' ';
+
+        success = socket_address_to_string(buffer + length,
+                                           sizeof(buffer) - length,
+                                           &ua->address, ua->length);
+        if (success)
+            length += strlen(buffer + length);
+    }
+
+    buffer[length] = 0;
+
+    return buffer;
+}
