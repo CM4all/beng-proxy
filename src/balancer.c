@@ -7,7 +7,10 @@
 #include "balancer.h"
 #include "cache.h"
 #include "uri-address.h"
+#include "failure.h"
+#include "bulldog.h"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <time.h>
 
@@ -28,6 +31,26 @@ struct balancer {
      */
     struct cache *cache;
 };
+
+static const struct sockaddr *
+uri_address_next_checked(struct uri_with_address *uwa, socklen_t *addrlen_r)
+{
+    const struct sockaddr *first = uri_address_next(uwa, addrlen_r), *ret = first;
+    if (first == NULL || uri_address_is_single(uwa))
+        return NULL;
+
+    do {
+        if (!failure_check(ret, *addrlen_r) &&
+            bulldog_check(ret, *addrlen_r))
+            return ret;
+
+        ret = uri_address_next(uwa, addrlen_r);
+        assert(ret != NULL);
+    } while (ret != first);
+
+    /* all addresses failed: */
+    return first;
+}
 
 /*
  * cache class
@@ -95,5 +118,5 @@ balancer_get(struct balancer *balancer,
         cache_put(balancer->cache, p_strdup(pool, key), &item->item);
     }
 
-    return uri_address_next(item->uwa, address_size_r);
+    return uri_address_next_checked(item->uwa, address_size_r);
 }
