@@ -21,6 +21,7 @@
 #include "global.h"
 #include "failure.h"
 #include "bulldog.h"
+#include "balancer.h"
 #include "listener.h"
 
 #include <daemon/daemonize.h>
@@ -260,7 +261,8 @@ int main(int argc, char **argv)
     for (unsigned i = 0; i < instance.config.num_listen; ++i)
         add_listener(&instance, instance.config.listen[i]);
 
-    instance.tcp_stock = tcp_stock_new(instance.pool);
+    instance.balancer = balancer_new(instance.pool);
+    instance.tcp_stock = tcp_stock_new(instance.pool, instance.balancer);
 
     if (instance.config.memcached_server != NULL)
         instance.memcached_stock =

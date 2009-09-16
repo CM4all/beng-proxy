@@ -9,8 +9,8 @@
 #include "async.h"
 #include "client-socket.h"
 #include "uri-address.h"
+#include "balancer.h"
 #include "failure.h"
-#include "bulldog.h"
 
 #include <daemon/log.h>
 
@@ -36,27 +36,6 @@ struct tcp_stock_connection {
 
     struct event event;
 };
-
-
-static const struct sockaddr *
-uri_address_next_checked(struct uri_with_address *uwa, socklen_t *addrlen_r)
-{
-    const struct sockaddr *first = uri_address_next(uwa, addrlen_r), *ret = first;
-    if (first == NULL || uri_address_is_single(uwa))
-        return NULL;
-
-    do {
-        if (!failure_check(ret, *addrlen_r) &&
-            bulldog_check(ret, *addrlen_r))
-            return ret;
-
-        ret = uri_address_next(uwa, addrlen_r);
-        assert(ret != NULL);
-    } while (ret != first);
-
-    /* all addresses failed: */
-    return first;
-}
 
 
 /*
@@ -167,10 +146,11 @@ tcp_stock_pool(void *ctx __attr_unused, pool_t parent,
 }
 
 static void
-tcp_stock_create(void *ctx __attr_unused, struct stock_item *item,
+tcp_stock_create(void *ctx, struct stock_item *item,
                  const char *uri, void *info,
                  struct async_operation_ref *async_ref)
 {
+    struct balancer *balancer = ctx;
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
     struct uri_with_address *uwa = info;
@@ -185,7 +165,7 @@ tcp_stock_create(void *ctx __attr_unused, struct stock_item *item,
     connection->uri = uri;
 
     if (uwa != NULL)
-        connection->addr = uri_address_next_checked(uwa, &connection->addrlen);
+        connection->addr = balancer_get(balancer, uwa, &connection->addrlen);
     else
         connection->addr = NULL;
 
@@ -275,9 +255,9 @@ static const struct stock_class tcp_stock_class = {
  */
 
 struct hstock *
-tcp_stock_new(pool_t pool)
+tcp_stock_new(pool_t pool, struct balancer *balancer)
 {
-    return hstock_new(pool, &tcp_stock_class, NULL);
+    return hstock_new(pool, &tcp_stock_class, balancer);
 }
 
 int

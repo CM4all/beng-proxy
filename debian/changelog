@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.6.17) unstable; urgency=low
 
-  * 
+  * tcp-stock: implemented a load balancer
 
  --
 

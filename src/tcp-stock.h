@@ -9,10 +9,11 @@
 
 #include "pool.h"
 
+struct balancer;
 struct stock_item;
 
 struct hstock *
-tcp_stock_new(pool_t pool);
+tcp_stock_new(pool_t pool, struct balancer *balancer);
 
 int
 tcp_stock_item_get(struct stock_item *item);
