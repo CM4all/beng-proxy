@@ -6,6 +6,7 @@
 
 #include "tpool.h"
 #include "instance.h"
+#include "worker.h"
 #include "connection.h"
 #include "session.h"
 #include "translate.h"

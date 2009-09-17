@@ -13,14 +13,6 @@
 
 #include <event.h>
 
-struct worker {
-    struct list_head siblings;
-
-    struct instance *instance;
-
-    pid_t pid;
-};
-
 struct listener_node {
     struct list_head siblings;
 
@@ -70,12 +62,6 @@ init_signals(struct instance *instance);
 
 void
 deinit_signals(struct instance *instance);
-
-pid_t
-worker_new(struct instance *instance);
-
-void
-worker_killall(struct instance *instance);
 
 void
 all_listeners_event_add(struct instance *instance);
