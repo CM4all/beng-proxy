@@ -112,6 +112,7 @@ response_invoke_processor(struct request *request2,
         headers = NULL;
 
     if (!processable(headers)) {
+        istream_close(body);
         request_discard_body(request2);
         http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
                                  "Invalid template content type");
