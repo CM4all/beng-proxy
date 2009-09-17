@@ -11,6 +11,7 @@ from twisted.internet.protocol import Protocol, Factory
 from beng_proxy.translation import *
 
 widgets_path = '/etc/cm4all/beng/widgets'
+helpers_path = '/usr/bin'
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
 
@@ -108,7 +109,7 @@ class Translation(Protocol):
                 response.status(500)
                 break
 
-    def _handle_local_file(self, path, response):
+    def _handle_local_file(self, path, response, delegate=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
 
         cgi = cgi_re.search(path, 1)
@@ -116,6 +117,9 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CGI, path)
         else:
             response.path(path)
+            if delegate:
+                response.delegate(os.path.join(helpers_path,
+                                               'cm4all-beng-proxy-delegate-helper'))
             if path[-5:] == '.html':
                 response.content_type('text/html; charset=utf-8')
                 response.packet(TRANSLATE_PROCESS)
@@ -137,6 +141,8 @@ class Translation(Protocol):
         elif uri == '/discard':
             response.packet(TRANSLATE_DISCARD_SESSION)
             response.status(204)
+        elif uri[:10] == '/delegate/':
+            self._handle_local_file('/var/www' + uri[9:], response, True)
         else:
             self._handle_local_file('/var/www' + uri, response)
 
@@ -205,7 +211,9 @@ if __name__ == '__main__':
 
     if argv[0].find('prototypes/') >= 0:
         # debug mode, run from svn working directory
+        import os
         widgets_path = 'demo/widgets'
+        helpers_path = os.path.join(os.getcwd(), 'src')
 
     if len(argv) >= 2:
         path = argv[1]
