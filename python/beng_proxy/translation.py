@@ -177,10 +177,11 @@ class Response:
         assert len(name) > 0
         self.packet(TRANSLATE_VIEW, name)
 
-    def proxy(self, uri, *addresses):
+    def proxy(self, uri, addresses=None):
         assert uri[0] != '/' or len(addresses) == 0
+        assert addresses is None or hasattr(addresses, '__iter__')
 
-        if uri[0] != '/' and len(addresses) == 0:
+        if uri[0] != '/' and addresses is None:
             # parse host:port from URL
             from urlparse import urlparse
             from socket import gethostbyname
