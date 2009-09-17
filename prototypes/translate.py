@@ -58,7 +58,7 @@ class Translation(Protocol):
             m = re.match(r'^ajp\s+"(\S+)"\s+"(\S+)"$', line)
             if m:
                 host, uri = m.group(1), m.group(2)
-                response.ajp(host, uri)
+                response.ajp(uri, host)
                 continue
             m = re.match(r'^path\s+"(\S+)"$', line)
             if m:
@@ -130,7 +130,7 @@ class Translation(Protocol):
         elif uri[:11] == '/cfatest01/':
             response.proxy('http://cfatest01.intern.cm-ag/' + uri[11:])
         elif uri[:5] == '/ajp/':
-            response.ajp('cfatest01.intern.cm-ag:8009', uri[4:])
+            response.ajp(uri[4:], 'cfatest01.intern.cm-ag:8009')
         elif uri == '/discard':
             response.packet(TRANSLATE_DISCARD_SESSION)
             response.status(204)

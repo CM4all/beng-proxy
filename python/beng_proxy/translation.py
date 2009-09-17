@@ -194,13 +194,15 @@ class Response:
         for address in addresses:
             self.packet(TRANSLATE_ADDRESS_STRING, address)
 
-    def ajp(self, host, uri):
-        from socket import gethostbyname
+    def ajp(self, uri, addresses):
+        assert isinstance(addresses, str) or hasattr(address, '__iter__')
 
-        host, port = (host.split(':', 1) + [None])[:2]
-        address = gethostbyname(host)
-        if port: address += ':' + port
-        addresses = (address,)
+        if isinstance(addresses, str):
+            from socket import gethostbyname
+            host, port = (addresses.split(':', 1) + [None])[:2]
+            address = gethostbyname(host)
+            if port: address += ':' + port
+            addresses = (address,)
 
         self.packet(TRANSLATE_AJP, uri)
         for address in addresses:
