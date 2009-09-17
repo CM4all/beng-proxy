@@ -21,6 +21,12 @@ struct http_server_connection {
     struct event2 event;
     fifo_buffer_t input;
 
+    /**
+     * This timeout event limits the time clients have for sending all
+     * of the headers.
+     */
+    struct event timeout;
+
     /* handler */
     const struct http_server_connection_handler *handler;
     void *handler_ctx;

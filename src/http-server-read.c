@@ -27,6 +27,10 @@ http_server_parse_request_line(struct http_server_connection *connection,
 {
     const char *eol, *space;
     http_method_t method = HTTP_METHOD_NULL;
+    static const struct timeval tv = {
+        .tv_sec = 20,
+        .tv_usec = 0,
+    };
 
     assert(connection != NULL);
     assert(connection->request.read_state == READ_START);
@@ -105,6 +109,10 @@ http_server_parse_request_line(struct http_server_connection *connection,
     connection->request.read_state = READ_HEADERS;
     connection->request.http_1_1 = space + 9 <= line + length &&
         memcmp(space + 6, "1.1", 3) == 0;
+
+    /* install the header timeout event when we start reading the
+       headers */
+    evtimer_add(&connection->timeout, &tv);
 }
 
 static void
@@ -114,6 +122,8 @@ http_server_headers_finished(struct http_server_connection *connection)
     const char *value;
     off_t content_length;
     bool chunked;
+
+    evtimer_del(&connection->timeout);
 
     value = strmap_get(request->headers, "connection");
     connection->keep_alive =

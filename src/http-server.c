@@ -111,6 +111,16 @@ http_server_event_callback(int fd __attr_unused, short event, void *ctx)
     pool_commit();
 }
 
+static void
+http_server_timeout_callback(int fd __attr_unused, short event __attr_unused,
+                             void *ctx)
+{
+    struct http_server_connection *connection = ctx;
+
+    daemon_log(4, "header timeout\n");
+    http_server_connection_close(connection);
+}
+
 void
 http_server_connection_new(pool_t pool, int fd,
                            const struct sockaddr *local_address,
@@ -157,6 +167,9 @@ http_server_connection_new(pool_t pool, int fd,
                 http_server_event_callback, connection,
                 &tv);
     event2_lock(&connection->event);
+
+    evtimer_set(&connection->timeout,
+                http_server_timeout_callback, connection);
 
     *connection_r = connection;
 
@@ -206,6 +219,8 @@ http_server_connection_close(struct http_server_connection *connection)
         event2_commit(&connection->event);
         close(connection->fd);
         connection->fd = -1;
+
+        evtimer_del(&connection->timeout);
     }
 
 #ifdef __linux
