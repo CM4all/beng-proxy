@@ -5,9 +5,12 @@
 # Author: Max Kellermann <mk@cm4all.com>
 
 import re
+import os.path
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, Factory
 from beng_proxy.translation import *
+
+widgets_path = '/etc/cm4all/beng/widgets'
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
 
@@ -19,7 +22,7 @@ class Translation(Protocol):
 
     def _handle_widget_lookup(self, widget_type, response):
         # checks on the name should be here.
-        path = "/etc/cm4all/beng/widgets/%s" % widget_type
+        path = os.path.join(widgets_path, widget_type)
         try:
             f = open(path)
         except IOError:
@@ -199,6 +202,11 @@ factory.protocol = Translation
 
 if __name__ == '__main__':
     from sys import argv
+
+    if argv[0].find('prototypes/') >= 0:
+        # debug mode, run from svn working directory
+        widgets_path = 'demo/widgets'
+
     if len(argv) >= 2:
         path = argv[1]
     else:
