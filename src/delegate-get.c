@@ -7,6 +7,7 @@
 
 #include "delegate-get.h"
 #include "delegate-glue.h"
+#include "static-headers.h"
 #include "http-response.h"
 
 #include <sys/types.h>
@@ -25,6 +26,7 @@ delegate_get_callback(int fd, void *ctx)
     struct delegate_get *get = ctx;
     int ret;
     struct stat st;
+    struct strmap *headers;
     istream_t body;
 
     if (fd < 0) {
@@ -46,11 +48,13 @@ delegate_get_callback(int fd, void *ctx)
     }
 
     /* XXX handle if-modified-since, ... */
-    /* XXX headers */
+
+    headers = strmap_new(get->pool, 13);
+    static_response_headers(get->pool, headers, fd, &st, NULL);
 
     body = istream_file_fd_new(get->pool, get->path, fd, st.st_size);
-    http_response_handler_invoke_response(&get->handler, HTTP_STATUS_OK, NULL,
-                                          body);
+    http_response_handler_invoke_response(&get->handler, HTTP_STATUS_OK,
+                                          headers, body);
 }
 
 void
