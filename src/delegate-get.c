@@ -9,10 +9,12 @@
 #include "delegate-glue.h"
 #include "static-headers.h"
 #include "http-response.h"
+#include "http-error.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 struct delegate_get {
     pool_t pool;
@@ -31,20 +33,23 @@ delegate_get_callback(int fd, void *ctx)
     istream_t body;
 
     if (fd < 0) {
-        http_response_handler_invoke_abort(&get->handler);
+        http_response_handler_invoke_errno(&get->handler, get->pool, -fd);
         return;
     }
 
     ret = fstat(fd, &st);
     if (ret < 0) {
+        int error = errno;
         close(fd);
-        http_response_handler_invoke_abort(&get->handler);
+        http_response_handler_invoke_errno(&get->handler, get->pool, error);
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
         close(fd);
-        http_response_handler_invoke_abort(&get->handler);
+        http_response_handler_invoke_message(&get->handler, get->pool,
+                                             HTTP_STATUS_NOT_FOUND,
+                                             "Not a regular file");
         return;
     }
 
