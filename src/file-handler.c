@@ -27,12 +27,6 @@
 #include <attr/xattr.h>
 #endif
 
-enum range_type {
-    RANGE_NONE,
-    RANGE_VALID,
-    RANGE_INVALID
-};
-
 static enum range_type
 parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
 {
@@ -116,160 +110,99 @@ method_not_allowed(struct request *request2, const char *allow)
                                             "This method is not allowed."));
 }
 
-void
-file_callback(struct request *request2)
+bool
+file_evaluate_request(struct request *request2, const struct stat *st,
+                      struct file_request *file_request)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
-    const char *path;
-    int ret;
-    struct growing_buffer *headers;
-    istream_t body;
-    struct stat st;
-    enum range_type range = RANGE_NONE;
-    off_t skip = 0, size;
+    const char *p;
     char buffer[64];
-    http_status_t status;
 
-    assert(tr != NULL);
-    assert(tr->address.u.local.path != NULL);
+    if (request_transformation_enabled(request2))
+        return true;
 
-    path = tr->address.u.local.path;
+    if (tr->status == 0 && request->method == HTTP_METHOD_GET &&
+        !request_transformation_enabled(request2)) {
+        p = strmap_get(request->headers, "range");
 
-    /* check request */
-
-    if (request->method != HTTP_METHOD_HEAD &&
-        request->method != HTTP_METHOD_GET &&
-        !request2->processor_focus) {
-        method_not_allowed(request2, "GET, HEAD");
-        return;
+        if (p != NULL)
+            file_request->range =
+                parse_range_header(p, &file_request->skip,
+                                   &file_request->size);
     }
 
-    /* delegate? */
-
-    if (tr->address.u.local.delegate != NULL) {
-        delegate_stock_get(global_delegate_stock, request->pool,
-                           tr->address.u.local.delegate, path,
-                           &response_handler, request2,
-                           request2->async_ref);
-        return;
-    }
-
-    /* get file information */
-
-    ret = lstat(path, &st);
-    if (ret != 0) {
-        if (errno == ENOENT) {
+    p = strmap_get(request->headers, "if-modified-since");
+    if (p != NULL) {
+        time_t t = http_date_parse(p);
+        if (t != (time_t)-1 && st->st_mtime <= t) {
             request_discard_body(request2);
-            http_server_send_message(request,
-                                     HTTP_STATUS_NOT_FOUND,
-                                     "The requested file does not exist.");
-        } else {
-            request_discard_body(request2);
-            http_server_send_message(request,
-                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                     "Internal server error");
+            http_server_response(request,
+                                 HTTP_STATUS_NOT_MODIFIED,
+                                 NULL, NULL);
+            return false;
         }
-        return;
     }
 
-    if (!S_ISREG(st.st_mode)) {
-        request_discard_body(request2);
-        http_server_send_message(request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Not a regular file");
-        return;
-    }
-
-    size = st.st_size;
-
-    /* request options */
-
-    if (!request_transformation_enabled(request2)) {
-        const char *p = strmap_get(request->headers, "if-modified-since");
-        if (p != NULL) {
-            time_t t = http_date_parse(p);
-            if (t != (time_t)-1 && st.st_mtime <= t) {
-                request_discard_body(request2);
-                http_server_response(request,
-                                     HTTP_STATUS_NOT_MODIFIED,
-                                     NULL, NULL);
-                return;
-            }
-        }
-
-        p = strmap_get(request->headers, "if-unmodified-since");
-        if (p != NULL) {
-            time_t t = http_date_parse(p);
-            if (t != (time_t)-1 && st.st_mtime > t) {
-                request_discard_body(request2);
-                http_server_response(request,
-                                     HTTP_STATUS_PRECONDITION_FAILED,
-                                     NULL, NULL);
-                return;
-            }
-        }
-
-        p = strmap_get(request->headers, "if-match");
-        if (p != NULL && strcmp(p, "*") != 0) {
-            make_etag(buffer, &st);
-
-            if (!http_list_contains(p, buffer)) {
-                request_discard_body(request2);
-                http_server_response(request,
-                                     HTTP_STATUS_PRECONDITION_FAILED,
-                                     NULL, NULL);
-                return;
-            }
-        }
-
-        p = strmap_get(request->headers, "if-none-match");
-        if (p != NULL && strcmp(p, "*") == 0) {
+    p = strmap_get(request->headers, "if-unmodified-since");
+    if (p != NULL) {
+        time_t t = http_date_parse(p);
+        if (t != (time_t)-1 && st->st_mtime > t) {
             request_discard_body(request2);
             http_server_response(request,
                                  HTTP_STATUS_PRECONDITION_FAILED,
                                  NULL, NULL);
-            return;
-        }
-
-        if (p != NULL) {
-            make_etag(buffer, &st);
-
-            if (http_list_contains(p, buffer)) {
-                request_discard_body(request2);
-                http_server_response(request,
-                                     HTTP_STATUS_PRECONDITION_FAILED,
-                                     NULL, NULL);
-                return;
-            }
+            return false;
         }
     }
 
-    if (tr->status == 0 && request->method == HTTP_METHOD_GET &&
-        !request_transformation_enabled(request2)) {
-        const char *p = strmap_get(request->headers, "range");
+    p = strmap_get(request->headers, "if-match");
+    if (p != NULL && strcmp(p, "*") != 0) {
+        make_etag(buffer, st);
 
-        if (p != NULL)
-            range = parse_range_header(p, &skip, &size);
-    }
-
-    /* build the response */
-
-    body = istream_file_new(request->pool, path, size);
-    if (body == NULL) {
-        if (errno == ENOENT) {
+        if (!http_list_contains(p, buffer)) {
             request_discard_body(request2);
-            http_server_send_message(request,
-                                     HTTP_STATUS_NOT_FOUND,
-                                     "The requested file does not exist.");
-        } else {
-            request_discard_body(request2);
-            http_server_send_message(request,
-                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                     "Internal server error");
+            http_server_response(request,
+                                 HTTP_STATUS_PRECONDITION_FAILED,
+                                 NULL, NULL);
+            return false;
         }
-        return;
     }
+
+    p = strmap_get(request->headers, "if-none-match");
+    if (p != NULL && strcmp(p, "*") == 0) {
+        request_discard_body(request2);
+        http_server_response(request,
+                             HTTP_STATUS_PRECONDITION_FAILED,
+                             NULL, NULL);
+        return false;
+    }
+
+    if (p != NULL) {
+        make_etag(buffer, st);
+
+        if (http_list_contains(p, buffer)) {
+            request_discard_body(request2);
+            http_server_response(request,
+                                 HTTP_STATUS_PRECONDITION_FAILED,
+                                 NULL, NULL);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void
+file_dispatch(struct request *request2, const struct stat *st,
+              const struct file_request *file_request,
+              istream_t body)
+{
+    struct http_server_request *request = request2->request;
+    const struct translate_response *tr = request2->translate.response;
+    struct growing_buffer *headers;
+    http_status_t status;
+    char buffer[64];
 
     headers = growing_buffer_new(request->pool, 2048);
 
@@ -290,7 +223,7 @@ file_callback(struct request *request2)
             header_write(headers, "etag", etag);
         } else {
 #endif
-            make_etag(buffer, &st);
+            make_etag(buffer, st);
             header_write(headers, "etag", buffer);
 #ifndef NO_XATTR
         }
@@ -343,29 +276,30 @@ file_callback(struct request *request2)
 
 #ifndef NO_LAST_MODIFIED_HEADER
     if (!request_processor_enabled(request2))
-        header_write(headers, "last-modified", http_date_format(st.st_mtime));
+        header_write(headers, "last-modified", http_date_format(st->st_mtime));
 #endif
 
     /* generate the Content-Range header */
 
     header_write(headers, "accept-ranges", "bytes");
 
-    switch (range) {
+    switch (file_request->range) {
     case RANGE_NONE:
         break;
 
     case RANGE_VALID:
-        istream_skip(body, skip);
+        istream_skip(body, file_request->skip);
 
-        assert(istream_available(body, false) == size - skip);
+        assert(istream_available(body, false) ==
+               file_request->size - file_request->skip);
 
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
         header_write(headers, "content-range",
                      p_sprintf(request->pool, "bytes %lu-%lu/%lu",
-                               (unsigned long)skip,
-                               (unsigned long)(size - 1),
-                               (unsigned long)st.st_size));
+                               (unsigned long)file_request->skip,
+                               (unsigned long)(file_request->size - 1),
+                               (unsigned long)st->st_size));
         break;
 
     case RANGE_INVALID:
@@ -373,7 +307,7 @@ file_callback(struct request *request2)
 
         header_write(headers, "content-range",
                      p_sprintf(request->pool, "bytes */%lu",
-                               (unsigned long)st.st_size));
+                               (unsigned long)st->st_size));
 
         istream_free(&body);
         break;
@@ -382,4 +316,96 @@ file_callback(struct request *request2)
     /* finished, dispatch this response */
 
     response_dispatch(request2, status, headers, body);
+}
+
+void
+file_callback(struct request *request2)
+{
+    struct http_server_request *request = request2->request;
+    const struct translate_response *tr = request2->translate.response;
+    const char *path;
+    int ret;
+    istream_t body;
+    struct stat st;
+    struct file_request file_request = {
+        .range = RANGE_NONE,
+        .skip = 0,
+    };
+
+    assert(tr != NULL);
+    assert(tr->address.u.local.path != NULL);
+
+    path = tr->address.u.local.path;
+
+    /* check request */
+
+    if (request->method != HTTP_METHOD_HEAD &&
+        request->method != HTTP_METHOD_GET &&
+        !request2->processor_focus) {
+        method_not_allowed(request2, "GET, HEAD");
+        return;
+    }
+
+    /* delegate? */
+
+    if (tr->address.u.local.delegate != NULL) {
+        delegate_stock_get(global_delegate_stock, request->pool,
+                           tr->address.u.local.delegate, path,
+                           &response_handler, request2,
+                           request2->async_ref);
+        return;
+    }
+
+    /* get file information */
+
+    ret = lstat(path, &st);
+    if (ret != 0) {
+        if (errno == ENOENT) {
+            request_discard_body(request2);
+            http_server_send_message(request,
+                                     HTTP_STATUS_NOT_FOUND,
+                                     "The requested file does not exist.");
+        } else {
+            request_discard_body(request2);
+            http_server_send_message(request,
+                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                     "Internal server error");
+        }
+        return;
+    }
+
+    if (!S_ISREG(st.st_mode)) {
+        request_discard_body(request2);
+        http_server_send_message(request,
+                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                 "Not a regular file");
+        return;
+    }
+
+    file_request.size = st.st_size;
+
+    /* request options */
+
+    if (!file_evaluate_request(request2, &st, &file_request))
+        return;
+
+    /* build the response */
+
+    body = istream_file_new(request->pool, path, file_request.size);
+    if (body == NULL) {
+        if (errno == ENOENT) {
+            request_discard_body(request2);
+            http_server_send_message(request,
+                                     HTTP_STATUS_NOT_FOUND,
+                                     "The requested file does not exist.");
+        } else {
+            request_discard_body(request2);
+            http_server_send_message(request,
+                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                     "Internal server error");
+        }
+        return;
+    }
+
+    file_dispatch(request2, &st, &file_request, body);
 }
