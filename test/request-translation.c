@@ -1,5 +1,6 @@
 #include "translate.h"
 #include "transformation.h"
+#include "balancer.h"
 #include "tcp-stock.h"
 #include "async.h"
 #include "config.h"
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
 
-    tcp_stock = tcp_stock_new(pool);
+    tcp_stock = tcp_stock_new(pool, balancer_new(pool));
     translate(pool, tcp_stock, "/tmp/beng-proxy-translate",
               &request, translate_callback, NULL, &async_ref);
 
