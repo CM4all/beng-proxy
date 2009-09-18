@@ -5,6 +5,7 @@
  */
 
 #include "handler.h"
+#include "file-handler.h"
 #include "request.h"
 #include "connection.h"
 #include "config.h"

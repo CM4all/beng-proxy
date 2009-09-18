@@ -13,9 +13,6 @@ struct http_server_request;
 struct async_operation_ref;
 
 void
-file_callback(struct request *request);
-
-void
 cgi_handler(struct request *request2);
 
 void
