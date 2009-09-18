@@ -17,6 +17,7 @@
 struct delegate_get {
     pool_t pool;
     const char *path;
+    const char *content_type;
     struct http_response_handler_ref handler;
 };
 
@@ -50,7 +51,7 @@ delegate_get_callback(int fd, void *ctx)
     /* XXX handle if-modified-since, ... */
 
     headers = strmap_new(get->pool, 13);
-    static_response_headers(get->pool, headers, fd, &st, NULL);
+    static_response_headers(get->pool, headers, fd, &st, get->content_type);
 
     body = istream_file_fd_new(get->pool, get->path, fd, st.st_size);
     http_response_handler_invoke_response(&get->handler, HTTP_STATUS_OK,
@@ -60,6 +61,7 @@ delegate_get_callback(int fd, void *ctx)
 void
 delegate_stock_get(struct hstock *stock, pool_t pool,
                    const char *helper, const char *path,
+                   const char *content_type,
                    const struct http_response_handler *handler, void *ctx,
                    struct async_operation_ref *async_ref)
 {
@@ -67,6 +69,7 @@ delegate_stock_get(struct hstock *stock, pool_t pool,
 
     get->pool = pool;
     get->path = path;
+    get->content_type = content_type;
     http_response_handler_set(&get->handler, handler, ctx);
 
     delegate_stock_open(stock, pool,

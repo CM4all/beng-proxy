@@ -351,6 +351,7 @@ file_callback(struct request *request2)
     if (tr->address.u.local.delegate != NULL) {
         delegate_stock_get(global_delegate_stock, request->pool,
                            tr->address.u.local.delegate, path,
+                           tr->address.u.local.content_type,
                            &response_handler, request2,
                            request2->async_ref);
         return;

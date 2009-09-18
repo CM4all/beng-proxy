@@ -85,6 +85,7 @@ resource_get(struct http_cache *cache,
             delegate_stock_get(delegate_stock, pool,
                                address->u.local.delegate,
                                address->u.local.path,
+                               address->u.local.content_type,
                                handler, handler_ctx,
                                async_ref);
             return;
