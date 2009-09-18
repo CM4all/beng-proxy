@@ -5,38 +5,14 @@
  */
 
 #include "static-file.h"
+#include "static-headers.h"
 #include "http.h"
 #include "http-response.h"
 #include "strmap.h"
-#include "format.h"
-#include "date.h"
 
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
-
-#ifndef NO_XATTR
-#include <attr/xattr.h>
-#endif
-
-static void
-make_etag(char *p, const struct stat *st)
-{
-    *p++ = '"';
-
-    p += format_uint32_hex(p, (uint32_t)st->st_dev);
-
-    *p++ = '-';
-
-    p += format_uint32_hex(p, (uint32_t)st->st_ino);
-
-    *p++ = '-';
-
-    p += format_uint32_hex(p, (uint32_t)st->st_mtime);
-
-    *p++ = '"';
-    *p = 0;
-}
 
 static void
 send_errno(pool_t pool,
@@ -61,7 +37,6 @@ static_file_get(pool_t pool, const char *path, const char *content_type,
     off_t size;
     istream_t body;
     struct strmap *headers;
-    char buffer[64];
 
     assert(path != NULL);
 
@@ -88,33 +63,9 @@ static_file_get(pool_t pool, const char *path, const char *content_type,
     }
 
     headers = strmap_new(pool, 16);
-
-    if (content_type == NULL) {
-#ifndef NO_XATTR
-        ssize_t nbytes;
-        char content_type_buffer[256];
-
-        nbytes = fgetxattr(istream_file_fd(body), "user.Content-Type",
-                           content_type_buffer,
-                           sizeof(content_type_buffer) - 1);
-        if (nbytes > 0) {
-            assert((size_t)nbytes < sizeof(content_type_buffer));
-            content_type_buffer[nbytes] = 0;
-            content_type = p_strdup(pool, content_type_buffer);
-        } else {
-#endif /* #ifndef NO_XATTR */
-            content_type = "application/octet-stream";
-#ifndef NO_XATTR
-        }
-#endif /* #ifndef NO_XATTR */
-    }
-
-    strmap_add(headers, "content-type", content_type);
-
-    strmap_add(headers, "last-modified", p_strdup(pool, http_date_format(st.st_mtime)));
-
-    make_etag(buffer, &st);
-    strmap_add(headers, "etag", p_strdup(pool, buffer));
+    static_response_headers(pool, headers,
+                            istream_file_fd(body), &st,
+                            content_type);
 
     http_response_handler_direct_response(handler, handler_ctx,
                                           HTTP_STATUS_OK,
