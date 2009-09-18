@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
 
 struct memcached_client {
     pool_t pool;
