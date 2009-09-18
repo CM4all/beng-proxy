@@ -36,7 +36,7 @@ static const struct sockaddr *
 uri_address_next_checked(struct uri_with_address *uwa, socklen_t *addrlen_r)
 {
     const struct sockaddr *first = uri_address_next(uwa, addrlen_r), *ret = first;
-    if (first == NULL || uri_address_is_single(uwa))
+    if (first == NULL)
         return NULL;
 
     do {
