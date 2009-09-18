@@ -7,7 +7,7 @@ cm4all-beng-proxy (0.6.17) unstable; urgency=low
   * delegate-get: implemented response headers
   * delegate-get: provide status codes and error messages
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 18 Sep 2009 15:36:57 +0200
 
 cm4all-beng-proxy (0.6.16) unstable; urgency=low
 
