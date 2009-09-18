@@ -37,10 +37,11 @@ static_file_get(pool_t pool, const char *path, const char *content_type,
     }
 
     if (!S_ISREG(st.st_mode)) {
-        http_response_handler_direct_response(handler, handler_ctx,
-                                              HTTP_STATUS_NOT_FOUND,
-                                              NULL,
-                                              istream_string_new(pool, "Not a regular file"));
+        struct http_response_handler_ref handler_ref;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_message(&handler_ref, pool,
+                                             HTTP_STATUS_NOT_FOUND,
+                                             "Not a regular file");
         return;
     }
 
