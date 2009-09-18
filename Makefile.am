@@ -156,6 +156,7 @@ SRC = src/main.c \
 	src/access-log.c \
 	src/tcp-stock.c \
 	src/http-request.c \
+	src/http-error.c \
 	src/ajp-request.c \
 	src/memcached-client.c \
 	src/memcached-packet.c \

@@ -114,6 +114,9 @@ http_response_handler_invoke_abort(struct http_response_handler_ref *ref)
     handler->abort(ref->ctx);
 }
 
+/**
+ * Sends a plain-text message.
+ */
 static inline void
 http_response_handler_invoke_message(struct http_response_handler_ref *ref,
                                      pool_t pool,

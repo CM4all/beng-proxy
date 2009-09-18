@@ -8,24 +8,12 @@
 #include "static-headers.h"
 #include "http.h"
 #include "http-response.h"
+#include "http-error.h"
 #include "strmap.h"
 
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
-
-static void
-send_errno(pool_t pool,
-             const struct http_response_handler *handler, void *handler_ctx)
-{
-    if (errno == ENOENT)
-        http_response_handler_direct_response(handler, handler_ctx,
-                                              HTTP_STATUS_NOT_FOUND,
-                                              NULL,
-                                              istream_string_new(pool, "The requested file does not exist."));
-    else
-        http_response_handler_direct_abort(handler, handler_ctx);
-}
 
 void
 static_file_get(pool_t pool, const char *path, const char *content_type,
@@ -42,7 +30,9 @@ static_file_get(pool_t pool, const char *path, const char *content_type,
 
     ret = lstat(path, &st);
     if (ret != 0) {
-        send_errno(pool, handler, handler_ctx);
+        struct http_response_handler_ref handler_ref;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_errno(&handler_ref, pool, errno);
         return;
     }
 
@@ -58,7 +48,9 @@ static_file_get(pool_t pool, const char *path, const char *content_type,
 
     body = istream_file_new(pool, path, size);
     if (body == NULL) {
-        send_errno(pool, handler, handler_ctx);
+        struct http_response_handler_ref handler_ref;
+        http_response_handler_set(&handler_ref, handler, handler_ctx);
+        http_response_handler_invoke_errno(&handler_ref, pool, errno);
         return;
     }
 
