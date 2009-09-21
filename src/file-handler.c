@@ -6,9 +6,7 @@
 
 #include "file-handler.h"
 #include "request.h"
-#include "connection.h"
 #include "header-writer.h"
-#include "processor.h"
 #include "date.h"
 #include "format.h"
 #include "http-util.h"
@@ -20,7 +18,6 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <string.h>
 #include <stdlib.h>
 
 #ifndef NO_XATTR
