@@ -46,7 +46,7 @@ parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
         if (v >= (unsigned long)*size_r)
             return RANGE_NONE;
 
-        *size_r = v;
+        *skip_r = *size_r - v;
     } else {
         *skip_r = strtoul(p, &endptr, 10);
         if (*skip_r >= *size_r)
