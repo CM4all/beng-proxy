@@ -13,6 +13,9 @@ struct http_server_request;
 struct async_operation_ref;
 
 void
+delegate_handler(struct request *request);
+
+void
 cgi_handler(struct request *request2);
 
 void

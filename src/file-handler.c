@@ -12,7 +12,6 @@
 #include "http-util.h"
 #include "growing-buffer.h"
 #include "http-server.h"
-#include "delegate-get.h"
 #include "global.h"
 
 #include <assert.h>
@@ -331,6 +330,7 @@ file_callback(struct request *request2)
 
     assert(tr != NULL);
     assert(tr->address.u.local.path != NULL);
+    assert(tr->address.u.local.delegate == NULL);
 
     path = tr->address.u.local.path;
 
@@ -340,17 +340,6 @@ file_callback(struct request *request2)
         request->method != HTTP_METHOD_GET &&
         !request2->processor_focus) {
         method_not_allowed(request2, "GET, HEAD");
-        return;
-    }
-
-    /* delegate? */
-
-    if (tr->address.u.local.delegate != NULL) {
-        delegate_stock_get(global_delegate_stock, request->pool,
-                           tr->address.u.local.delegate, path,
-                           tr->address.u.local.content_type,
-                           &response_handler, request2,
-                           request2->async_ref);
         return;
     }
 

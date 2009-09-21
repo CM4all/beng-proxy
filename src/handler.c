@@ -129,7 +129,10 @@ translate_callback(const struct translate_response *response,
         strmap_get(request->args, "focus") != NULL;
 
     if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
-        file_callback(request);
+        if (response->address.u.local.delegate != NULL)
+            delegate_handler(request);
+        else
+            file_callback(request);
     } else if (response->address.type == RESOURCE_ADDRESS_CGI) {
         cgi_handler(request);
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP) {
