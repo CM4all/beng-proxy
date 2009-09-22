@@ -8,6 +8,7 @@
 #include "delegate-client.h"
 #include "delegate-protocol.h"
 #include "lease.h"
+#include "fd-util.h"
 
 #ifdef __linux
 #include <fcntl.h>
@@ -145,6 +146,7 @@ delegate_try_read(struct delegate_client *d)
     lease_release(&d->lease_ref, true);
 
     fd = *(int*)CMSG_DATA(cmsg);
+    fd_set_cloexec(fd);
     d->callback(fd, d->callback_ctx);
     pool_unref(d->pool);
 }
