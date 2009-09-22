@@ -287,7 +287,9 @@ istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length)
     assert(fd >= 0);
     assert(length >= -1);
 
+#ifndef O_CLOEXEC
     fd_set_cloexec(fd);
+#endif
 
     file = (struct file*)istream_new(pool, &istream_file, sizeof(*file));
     file->fd = fd;

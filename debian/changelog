@@ -3,6 +3,7 @@ cm4all-beng-proxy (0.6.18) unstable; urgency=low
   * delegate-handler: support conditional GET and ranges
   * file-handler: fix suffix-byte-range-spec parser
   * delegate-helper: call open() with O_CLOEXEC|O_NOCTTY
+  * istream-file: don't set FD_CLOEXEC if O_CLOEXEC is available
 
  --
 
