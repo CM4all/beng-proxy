@@ -258,6 +258,7 @@ serve_document_root_file(struct request *request2,
                                          uri->base.length,
                                          index_file, (size_t)10,
                                          NULL);
+    tr->address.u.local.delegate = NULL;
     tr->address.u.local.content_type = NULL;
 
     request2->resource_tag = tr->address.u.local.path;
