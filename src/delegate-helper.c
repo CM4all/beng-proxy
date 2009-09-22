@@ -20,6 +20,12 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#ifndef O_CLOEXEC
+enum {
+    O_CLOEXEC = 0,
+};
+#endif
+
 int main(int argc __attr_unused, char **argv __attr_unused)
 {
     struct delegate_header header;
@@ -68,7 +74,7 @@ int main(int argc __attr_unused, char **argv __attr_unused)
 
         payload[length] = 0;
 
-        fd = open(payload, O_RDONLY);
+        fd = open(payload, O_RDONLY|O_CLOEXEC|O_NOCTTY);
         if (fd >= 0) {
             struct iovec vec = {
                 .iov_base = &header,
