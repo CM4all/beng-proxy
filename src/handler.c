@@ -262,7 +262,7 @@ serve_document_root_file(struct request *request2,
 
     request2->resource_tag = tr->address.u.local.path;
     request2->processor_focus = process &&
-        strmap_get(request2->args, "focus") != NULL;
+        strmap_get_checked(request2->args, "focus") != NULL;
 
     file_callback(request2);
 }
