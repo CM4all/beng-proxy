@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 static void
 method_not_allowed(struct request *request2, const char *allow)
