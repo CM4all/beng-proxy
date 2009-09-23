@@ -65,6 +65,11 @@ struct memcached_client {
     } response;
 };
 
+static const struct timeval timeout = {
+    .tv_sec = 5,
+    .tv_usec = 0,
+};
+
 static inline bool
 memcached_connection_valid(const struct memcached_client *client)
 {
@@ -583,7 +588,7 @@ memcached_client_invoke(pool_t pool, int fd,
     client->fd = fd;
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
     event2_init(&client->event, fd,
-                memcached_client_event_callback, client, NULL);
+                memcached_client_event_callback, client, &timeout);
 
     istream_assign_handler(&client->request.istream, request,
                            &memcached_request_stream_handler, client,
