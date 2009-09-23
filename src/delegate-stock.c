@@ -8,6 +8,7 @@
 #include "stock.h"
 #include "async.h"
 #include "failure.h"
+#include "fd-util.h"
 
 #include <daemon/log.h>
 
@@ -108,6 +109,8 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     /* in the parent */
 
     close(fds[1]);
+
+    fd_set_cloexec(fds[0]);
 
     process->pid = pid;
     process->fd = fds[0];
