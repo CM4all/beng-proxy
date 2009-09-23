@@ -115,6 +115,9 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     if (instance->tcp_stock != NULL)
         hstock_free(&instance->tcp_stock);
 
+    if (instance->balancer != NULL)
+        balancer_free(instance->balancer);
+
     if (instance->delegate_stock != NULL)
         hstock_free(&instance->delegate_stock);
 
