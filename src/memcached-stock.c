@@ -72,7 +72,6 @@ memcached_socket_release(bool reuse, void *ctx)
 
     hstock_put(request->stock->tcp_stock, request->stock->address->uri,
                request->item, !reuse);
-    pool_unref(request->pool);
 }
 
 static const struct lease memcached_socket_lease = {
@@ -92,7 +91,6 @@ memcached_stock_callback(void *ctx, struct stock_item *item)
 
     if (item == NULL) {
         request->handler(-1, NULL, 0, NULL, 0, NULL, request->handler_ctx);
-        pool_unref(request->pool);
         return;
     }
 
@@ -132,8 +130,8 @@ memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
     request->handler_ctx = handler_ctx;
     request->async_ref = async_ref;
 
-    pool_ref(pool);
-    hstock_get(stock->tcp_stock, stock->address->uri, stock->address,
+    hstock_get(stock->tcp_stock, pool,
+               stock->address->uri, stock->address,
                memcached_stock_callback, request,
                async_ref);
 }

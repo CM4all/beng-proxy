@@ -969,7 +969,6 @@ translate_stock_callback(void *ctx, struct stock_item *item)
 
     if (item == NULL) {
         client->callback(&error, client->callback_ctx);
-        pool_unref(client->pool);
         return;
     }
 
@@ -982,6 +981,8 @@ translate_stock_callback(void *ctx, struct stock_item *item)
     fd = tcp_stock_item_get(item);
     event_set(&client->event, fd, EV_WRITE|EV_TIMEOUT,
               translate_write_event_callback, client);
+
+    pool_ref(client->pool);
     translate_try_write(client, fd);
 }
 
@@ -1002,8 +1003,6 @@ translate(pool_t pool,
     assert(request->uri != NULL || request->widget_type != NULL);
     assert(callback != NULL);
 
-    pool_ref(pool);
-
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
     client->request = marshal_request(pool, request);
@@ -1017,7 +1016,7 @@ translate(pool_t pool,
     client->callback_ctx = ctx;
     client->async_ref = async_ref;
 
-    hstock_get(tcp_stock, socket_path, NULL,
+    hstock_get(tcp_stock, pool, socket_path, NULL,
                translate_stock_callback, client,
                async_unref_on_abort(pool, async_ref));
 }

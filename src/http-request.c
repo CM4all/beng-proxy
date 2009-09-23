@@ -48,7 +48,6 @@ http_socket_release(bool reuse, void *ctx)
     struct http_request *hr = ctx;
 
     hstock_put(hr->tcp_stock, hr->host_and_port, hr->stock_item, !reuse);
-    pool_unref(hr->pool);
 }
 
 static const struct lease http_socket_lease = {
@@ -71,8 +70,6 @@ http_request_stock_callback(void *ctx, struct stock_item *item)
 
         if (hr->body != NULL)
             istream_close(hr->body);
-
-        pool_unref(hr->pool);
     } else {
         hr->stock_item = item;
 
@@ -164,10 +161,8 @@ http_request(pool_t pool,
 
     header_write(hr->headers, "connection", "keep-alive");
 
-    pool_ref(pool);
-
     hr->host_and_port = host_and_port;
-    hstock_get(tcp_stock,
+    hstock_get(tcp_stock, pool,
                host_and_port, uwa,
                http_request_stock_callback, hr,
                async_unref_on_abort(pool, async_ref));

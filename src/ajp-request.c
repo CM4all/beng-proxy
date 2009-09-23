@@ -89,8 +89,6 @@ ajp_request_stock_callback(void *ctx, struct stock_item *item)
                            hr->handler.handler, hr->handler.ctx,
                            hr->async_ref);
     }
-
-    pool_unref(hr->pool);
 }
 
 
@@ -142,9 +140,7 @@ ajp_stock_request(pool_t pool,
     http_response_handler_set(&hr->handler, handler, handler_ctx);
     hr->async_ref = async_ref;
 
-    pool_ref(pool);
-
-    hstock_get(tcp_stock,
+    hstock_get(tcp_stock, pool,
                uwa->uri, uwa,
                ajp_request_stock_callback, hr,
                async_unref_on_abort(pool, async_ref));

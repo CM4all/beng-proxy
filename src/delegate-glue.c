@@ -79,6 +79,6 @@ delegate_stock_open(struct hstock *stock, pool_t pool,
     glue->callback = callback;
     glue->callback_ctx = ctx;
 
-    hstock_get(stock, helper, NULL,
+    hstock_get(stock, pool, helper, NULL,
                delegate_stock_callback, glue, async_ref);
 }

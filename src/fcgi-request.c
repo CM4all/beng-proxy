@@ -53,7 +53,6 @@ fcgi_socket_release(bool reuse, void *ctx)
 
     hstock_put(request->tcp_stock, request->socket_path,
                request->stock_item, !reuse);
-    pool_unref(request->pool);
 }
 
 static const struct lease fcgi_socket_lease = {
@@ -73,7 +72,6 @@ fcgi_tcp_stock_callback(void *ctx, struct stock_item *item)
 
     request->stock_item = item;
 
-    pool_ref(request->pool);
     fcgi_client_request(request->pool, tcp_stock_item_get(item),
                         &fcgi_socket_lease, request,
                         request->method, request->uri,
@@ -128,7 +126,7 @@ fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
     http_response_handler_set(&request->handler, handler, handler_ctx);
     request->async_ref = async_ref;
 
-    hstock_get(tcp_stock,
+    hstock_get(tcp_stock, pool,
                socket_path, NULL,
                fcgi_tcp_stock_callback, request,
                async_ref);

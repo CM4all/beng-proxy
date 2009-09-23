@@ -33,6 +33,7 @@ struct stock_item {
     bool is_idle;
 #endif
 
+    pool_t caller_pool;
     stock_callback_t callback;
     void *callback_ctx;
 };
@@ -62,7 +63,7 @@ void
 stock_free(struct stock **stock_r);
 
 void
-stock_get(struct stock *stock, void *info,
+stock_get(struct stock *stock, pool_t pool, void *info,
           stock_callback_t callback, void *callback_ctx,
           struct async_operation_ref *async_ref);
 
@@ -93,7 +94,7 @@ void
 hstock_free(struct hstock **hstock_r);
 
 void
-hstock_get(struct hstock *hstock,
+hstock_get(struct hstock *hstock, pool_t pool,
            const char *uri, void *info,
            stock_callback_t callback, void *callback_ctx,
            struct async_operation_ref *async_ref);

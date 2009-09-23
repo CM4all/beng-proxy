@@ -115,7 +115,7 @@ stock_free(struct stock **stock_r)
 }
 
 void
-stock_get(struct stock *stock, void *info,
+stock_get(struct stock *stock, pool_t caller_pool, void *info,
           stock_callback_t callback, void *callback_ctx,
           struct async_operation_ref *async_ref)
 {
@@ -158,15 +158,18 @@ stock_get(struct stock *stock, void *info,
 #ifndef NDEBUG
     item->is_idle = false;
 #endif
+    item->caller_pool = caller_pool;
     item->callback = callback;
     item->callback_ctx = callback_ctx;
 
+    pool_ref(caller_pool);
     stock->class->create(stock->class_ctx, item, stock->uri, info, async_ref);
 }
 
 void
 stock_item_available(struct stock_item *item)
 {
+    pool_t caller_pool = item->caller_pool;
 #ifndef NDEBUG
     struct stock *stock = item->stock;
 
@@ -175,6 +178,7 @@ stock_item_available(struct stock_item *item)
 #endif
 
     item->callback(item->callback_ctx, item);
+    pool_unref(caller_pool);
 }
 
 void
@@ -183,6 +187,7 @@ stock_item_failed(struct stock_item *item)
     struct stock *stock = item->stock;
 
     item->callback(item->callback_ctx, NULL);
+    pool_unref(item->caller_pool);
     stock_item_free(stock, item);
 }
 
