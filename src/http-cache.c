@@ -256,14 +256,14 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 {
     struct http_cache_request *request = ctx;
     off_t available;
-    pool_t caller_pool;
+    pool_t caller_pool = request->caller_pool;
 
     if (request->document != NULL && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == NULL);
 
         cache_log(5, "http_cache: not_modified %s\n", request->url);
         http_cache_serve(request);
-        pool_unref(request->caller_pool);
+        pool_unref(caller_pool);
         return;
     }
 
@@ -276,7 +276,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
             istream_close(body);
 
         http_cache_serve(request);
-        pool_unref(request->caller_pool);
+        pool_unref(caller_pool);
         return;
     }
 
@@ -292,7 +292,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
-        pool_unref(request->caller_pool);
+        pool_unref(caller_pool);
         return;
     }
 
@@ -336,7 +336,6 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         pool_ref(request->pool);
     }
 
-    caller_pool = request->caller_pool;
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
     pool_unref(caller_pool);
@@ -355,6 +354,7 @@ static void
 http_cache_response_abort(void *ctx)
 {
     struct http_cache_request *request = ctx;
+    pool_t caller_pool = request->caller_pool;
 
     cache_log(4, "http_cache: response_abort %s\n", request->url);
 
@@ -362,7 +362,7 @@ http_cache_response_abort(void *ctx)
         http_cache_unlock(request->cache, request->document);
 
     http_response_handler_invoke_abort(&request->handler);
-    pool_unref(request->caller_pool);
+    pool_unref(caller_pool);
 }
 
 static const struct http_response_handler http_cache_response_handler = {
@@ -754,13 +754,15 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
     }
 
     if (http_cache_may_serve(request->info, document)) {
+        pool_t caller_pool = request->caller_pool;
+
         cache_log(4, "http_cache: serve %s\n", request->url);
 
         http_response_handler_invoke_response(&request->handler,
                                               document->status,
                                               document->headers,
                                               body);
-        pool_unref(request->caller_pool);
+        pool_unref(caller_pool);
     } else {
         request->document = document;
         request->document_body = istream_hold_new(request->pool, body);
