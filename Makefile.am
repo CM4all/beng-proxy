@@ -743,6 +743,7 @@ test_run_delegate_SOURCES = test/run-delegate.c \
 	src/delegate-stock.c src/delegate-client.c src/delegate-glue.c \
 	src/hashmap.c src/hstock.c src/stock.c \
 	src/defer.c \
+	src/fd-util.c \
 	$(POOL_SRC)
 test_run_delegate_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
