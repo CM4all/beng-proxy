@@ -578,6 +578,10 @@ memcached_client_invoke(pool_t pool, int fd,
                                        key, key_length, value,
                                        0x1234 /* XXX? */);
     if (request == NULL) {
+        struct lease_ref lease_ref;
+        lease_ref_set(&lease_ref, lease, lease_ctx);
+        lease_release(&lease_ref, true);
+
         handler(-1, NULL, 0, NULL, 0, NULL, handler_ctx);
         return;
     }
