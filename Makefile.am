@@ -790,16 +790,19 @@ valgrind: AM_CPPFLAGS += -DPOOL_LIBC_ONLY
 valgrind: src/cm4all-beng-proxy
 	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy $(DEBUG_ARGS)
 
-.PHONY: debug valgrind
+perf: src/cm4all-beng-proxy
+	perf record -f $< -D -u max -p 8080
+
+# -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
+benchmark: AM_CPPFLAGS += -DNDEBUG -DALWAYS_INLINE -DNO_ACCESS_LOG -DNO_XATTR
+benchmark: src/cm4all-beng-proxy
+	./src/cm4all-beng-proxy -D -u max -p 8080 -w 4
+
+.PHONY: debug valgrind perf benchmark
 
 #profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -DNO_ACCESS_LOG -g -pg
 #profile: LDFLAGS = -lc_p -pg
 #profile: src/cm4all-beng-proxy
-#	./src/cm4all-beng-proxy -D -u max -p 8080
-#
-## -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
-#benchmark: CFLAGS = -O3 -DNDEBUG -DALWAYS_INLINE -DNO_ACCESS_LOG -g
-#benchmark: src/cm4all-beng-proxy
 #	./src/cm4all-beng-proxy -D -u max -p 8080
 
 #

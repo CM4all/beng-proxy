@@ -84,3 +84,4 @@ aclocal.m4
 .deps
 .dirstamp
 *.pc
+perf.data
