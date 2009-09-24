@@ -9,7 +9,7 @@ cm4all-beng-proxy (0.6.18) unstable; urgency=low
   * memcached-client: enable socket timeout
   * delegate-stock: set FD_CLOEXEC on socket
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 24 Sep 2009 10:50:53 +0200
 
 cm4all-beng-proxy (0.6.17) unstable; urgency=low
 
