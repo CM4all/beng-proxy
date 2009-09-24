@@ -9,6 +9,10 @@
 
 #include <assert.h>
 
+enum {
+    MAX_IDLE = 8,
+};
+
 struct stock {
     pool_t pool;
     const struct stock_class *class;
@@ -215,7 +219,7 @@ stock_put(struct stock_item *item, bool destroy)
     --stock->num_busy;
 #endif
 
-    if (destroy || stock->num_idle >= 8) {
+    if (destroy || stock->num_idle >= MAX_IDLE) {
         destroy_item(stock, item);
     } else {
 #ifndef NDEBUG
