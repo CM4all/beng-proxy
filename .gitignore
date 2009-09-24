@@ -33,6 +33,7 @@ test/run-google-gadget
 test/run-embed
 test/t-http-client
 test/run-cookie-client
+test/run-cookie-server
 test/t-shm
 test/t-dpool
 test/t-cookie-client

@@ -278,6 +278,7 @@ check_PROGRAMS = \
 	test/request-translation \
 	test/run-subst \
 	test/run-cookie-client \
+	test/run-cookie-server \
 	test/run-header-parser \
 	test/run-html-unescape test/run-html-escape \
 	test/run-processor \
@@ -628,6 +629,12 @@ test_run_cookie_client_SOURCES = test/run-cookie-client.c \
 	src/shm.c src/dpool.c src/dstring.c \
 	$(POOL_SRC)
 test_run_cookie_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt
+
+test_run_cookie_server_SOURCES = test/run-cookie-server.c \
+	src/cookie-server.c src/http-string.c \
+	src/strmap.c src/hashmap.c \
+	$(POOL_SRC)
+test_run_cookie_server_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt
 
 test_run_header_parser_SOURCES = test/run-header-parser.c \
 	src/header-parser.c src/growing-buffer.c src/fifo-buffer.c \
