@@ -198,6 +198,7 @@ stock_item_failed(struct stock_item *item)
 void
 stock_item_aborted(struct stock_item *item)
 {
+    pool_unref(item->caller_pool);
     stock_item_free(item->stock, item);
 }
 

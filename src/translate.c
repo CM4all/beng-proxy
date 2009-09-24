@@ -12,7 +12,6 @@
 #include "processor.h"
 #include "async.h"
 #include "uri-address.h"
-#include "abort-unref.h"
 #include "gb-io.h"
 #include "strutil.h"
 #include "beng-proxy/translation.h"
@@ -1018,5 +1017,5 @@ translate(pool_t pool,
 
     hstock_get(tcp_stock, pool, socket_path, NULL,
                translate_stock_callback, client,
-               async_unref_on_abort(pool, async_ref));
+               async_ref);
 }

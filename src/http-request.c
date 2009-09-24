@@ -12,7 +12,6 @@
 #include "async.h"
 #include "http-client.h"
 #include "uri-address.h"
-#include "abort-unref.h"
 #include "growing-buffer.h"
 #include "lease.h"
 
@@ -165,5 +164,5 @@ http_request(pool_t pool,
     hstock_get(tcp_stock, pool,
                host_and_port, uwa,
                http_request_stock_callback, hr,
-               async_unref_on_abort(pool, async_ref));
+               async_ref);
 }

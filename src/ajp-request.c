@@ -11,7 +11,6 @@
 #include "async.h"
 #include "ajp-client.h"
 #include "uri-address.h"
-#include "abort-unref.h"
 #include "strmap.h"
 #include "lease.h"
 #include "tcp-stock.h"
@@ -143,5 +142,5 @@ ajp_stock_request(pool_t pool,
     hstock_get(tcp_stock, pool,
                uwa->uri, uwa,
                ajp_request_stock_callback, hr,
-               async_unref_on_abort(pool, async_ref));
+               async_ref);
 }
