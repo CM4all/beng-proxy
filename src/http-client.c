@@ -104,6 +104,7 @@ http_client_release(struct http_client *client, bool reuse)
     event2_commit(&client->event);
     client->fd = -1;
     lease_release(&client->lease_ref, reuse);
+    pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
 
@@ -118,8 +119,6 @@ http_client_abort_request(struct http_client *client)
     istream_close_handler(client->request.istream);
 
     http_response_handler_invoke_abort(&client->request.handler);
-    pool_unref(client->caller_pool);
-
     http_client_release(client, false);
 }
 
@@ -133,8 +132,6 @@ http_client_abort_response_headers(struct http_client *client)
            client->response.read_state == READ_HEADERS);
 
     http_response_handler_invoke_abort(&client->request.handler);
-    pool_unref(client->caller_pool);
-
     http_client_release(client, false);
 }
 
@@ -551,7 +548,6 @@ http_client_consume_headers(struct http_client *client)
                                           client->response.status,
                                           client->response.headers,
                                           client->response.body);
-    pool_unref(client->caller_pool);
 
     if (!http_client_valid(client))
         return false;
@@ -717,8 +713,6 @@ http_client_request_stream_abort(void *ctx)
     struct http_client *client = ctx;
 
     http_response_handler_invoke_abort(&client->request.handler);
-    pool_unref(client->caller_pool);
-
     http_client_release(client, false);
 }
 
@@ -751,8 +745,6 @@ http_client_request_abort(struct async_operation *ao)
     assert(client->response.read_state == READ_NONE ||
            client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
-
-    pool_unref(client->caller_pool);
 
     if (client->response.read_state == READ_NONE)
         istream_close_handler(client->request.istream);
