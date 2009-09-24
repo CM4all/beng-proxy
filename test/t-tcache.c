@@ -1,4 +1,5 @@
 #include "tcache.h"
+#include "tstock.h"
 #include "async.h"
 #include "beng-proxy/translation.h"
 
@@ -117,13 +118,10 @@ static const struct translate_response response5c = {
 const struct translate_response *next_response, *expected_response;
 
 void
-translate(__attr_unused pool_t pool,
-          __attr_unused struct hstock *tcp_stock,
-          __attr_unused const char *socket_path,
-          __attr_unused const struct translate_request *request,
-          translate_callback_t callback,
-          void *ctx,
-          __attr_unused struct async_operation_ref *async_ref)
+tstock_translate(__attr_unused struct tstock *stock, __attr_unused pool_t pool,
+                 __attr_unused const struct translate_request *request,
+                 translate_callback_t callback, void *ctx,
+                 __attr_unused struct async_operation_ref *async_ref)
 {
     callback(next_response, ctx);
 }
@@ -144,7 +142,7 @@ my_callback(const struct translate_response *response,
 }
 
 int main(int argc __attr_unused, char **argv __attr_unused) {
-    void *const tcp_stock = (void *)0x1;
+    struct tstock *const translate_stock = (void *)0x1;
     struct event_base *event_base;
     pool_t pool;
     struct tcache *cache;
@@ -181,7 +179,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
     pool = pool_new_libc(NULL, "root");
 
-    cache = translate_cache_new(pool, tcp_stock, "/does/not/exist", 1024);
+    cache = translate_cache_new(pool, translate_stock, 1024);
 
     /* test */
 

@@ -5,6 +5,7 @@
  */
 
 #include "tcache.h"
+#include "tstock.h"
 #include "transformation.h"
 #include "cache.h"
 #include "stock.h"
@@ -40,9 +41,7 @@ struct tcache {
 
     struct cache *cache;
 
-    struct hstock *tcp_stock;
-
-    const char *socket_path;
+    struct tstock *stock;
 };
 
 struct tcache_request {
@@ -543,8 +542,8 @@ tcache_miss(pool_t pool, struct tcache *tcache,
     tcr->callback = callback;
     tcr->ctx = ctx;
 
-    translate(pool, tcache->tcp_stock, tcache->socket_path,
-              request, tcache_callback, tcr, async_ref);
+    tstock_translate(tcache->stock, pool,
+                     request, tcache_callback, tcr, async_ref);
 }
 
 
@@ -572,21 +571,18 @@ static const struct cache_class tcache_class = {
  */
 
 struct tcache *
-translate_cache_new(pool_t pool, struct hstock *tcp_stock,
-                    const char *socket_path,
+translate_cache_new(pool_t pool, struct tstock *stock,
                     unsigned max_size)
 {
     struct tcache *tcache = p_malloc(pool, sizeof(*tcache));
 
-    assert(tcp_stock != NULL);
-    assert(socket_path != NULL);
+    assert(stock != NULL);
 
     pool_ref(pool);
 
     tcache->pool = pool;
     tcache->cache = cache_new(pool, &tcache_class, 65521, max_size);
-    tcache->tcp_stock = tcp_stock;
-    tcache->socket_path = socket_path;
+    tcache->stock = stock;
 
     return tcache;
 }
@@ -596,8 +592,7 @@ translate_cache_close(struct tcache *tcache)
 {
     assert(tcache != NULL);
     assert(tcache->cache != NULL);
-    assert(tcache->tcp_stock != NULL);
-    assert(tcache->socket_path != NULL);
+    assert(tcache->stock != NULL);
 
     cache_close(tcache->cache);
 
@@ -636,7 +631,7 @@ translate_cache(pool_t pool, struct tcache *tcache,
         cache_log(4, "translate_cache: ignore %s\n",
                   request->uri == NULL ? request->widget_type : request->uri);
 
-        translate(pool, tcache->tcp_stock, tcache->socket_path,
-                  request, callback, ctx, async_ref);
+        tstock_translate(tcache->stock, pool,
+                         request, callback, ctx, async_ref);
     }
 }

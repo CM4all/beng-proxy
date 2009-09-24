@@ -2,8 +2,8 @@
 #include "async.h"
 #include "stock.h"
 #include "uri-address.h"
-#include "tcp-stock.h"
 #include "tcache.h"
+#include "tstock.h"
 #include "widget.h"
 #include "transformation.h"
 
@@ -44,17 +44,16 @@ static const struct async_operation_class my_operation = {
 
 
 /*
- * translate.c emulation
+ * tstock.c emulation
  *
  */
 
 void
-translate(pool_t pool,
-          struct hstock *tcp_stock __attr_unused, const char *socket_path __attr_unused,
-          const struct translate_request *request,
-          translate_callback_t callback,
-          void *ctx,
-          struct async_operation_ref *async_ref)
+tstock_translate(__attr_unused struct tstock *stock, pool_t pool,
+                 const struct translate_request *request,
+                 translate_callback_t callback,
+                 void *ctx,
+                 struct async_operation_ref *async_ref)
 {
     assert(request->remote_host == NULL);
     assert(request->host == NULL);
@@ -92,12 +91,13 @@ test_normal(pool_t pool)
     struct data data = {
         .got_class = false,
     };
+    struct tstock *const translate_stock = (void *)0x1;
     struct tcache *tcache;
     struct async_operation_ref async_ref;
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    tcache = translate_cache_new(pool, (struct hstock *)(size_t)1, "/dev/null", 1024);
+    tcache = translate_cache_new(pool, translate_stock, 1024);
 
     aborted = false;
     widget_class_lookup(pool, pool, tcache, "sync",
@@ -125,12 +125,13 @@ test_abort(pool_t pool)
     struct data data = {
         .got_class = false,
     };
+    struct tstock *const translate_stock = (void *)0x1;
     struct tcache *tcache;
     struct async_operation_ref async_ref;
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    tcache = translate_cache_new(pool, (struct hstock *)(size_t)1, "/dev/null", 1024);
+    tcache = translate_cache_new(pool, translate_stock, 1024);
 
     aborted = false;
     widget_class_lookup(pool, pool, tcache,  "block",

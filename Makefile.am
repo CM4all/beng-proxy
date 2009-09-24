@@ -96,6 +96,7 @@ SRC = src/main.c \
 	src/direct.c \
 	src/translate.c \
 	src/transformation.c \
+	src/tstock.c \
 	src/tcache.c \
 	src/request.c \
 	src/response.c \
@@ -604,7 +605,7 @@ test_format_http_date_SOURCES = test/format-http-date.c \
 	src/gmtime.c src/date.c
 
 test_request_translation_SOURCES = test/request-translation.c \
-	src/translate.c src/growing-buffer.c src/gb-io.c \
+	src/translate.c src/tstock.c src/growing-buffer.c src/gb-io.c \
 	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
 	src/tcp-stock.c src/client-socket.c \
 	src/fd-util.c src/socket-util.c \

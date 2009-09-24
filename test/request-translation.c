@@ -1,4 +1,4 @@
-#include "translate.h"
+#include "tstock.h"
 #include "transformation.h"
 #include "balancer.h"
 #include "tcp-stock.h"
@@ -93,6 +93,7 @@ int main(int argc, char **argv) {
     };
     pool_t pool;
     struct hstock *tcp_stock;
+    struct tstock *translate_stock;
     struct async_operation_ref async_ref;
 
     (void)argc;
@@ -103,8 +104,10 @@ int main(int argc, char **argv) {
     pool = pool_new_libc(NULL, "root");
 
     tcp_stock = tcp_stock_new(pool, balancer_new(pool));
-    translate(pool, tcp_stock, "/tmp/beng-proxy-translate",
-              &request, translate_callback, NULL, &async_ref);
+    translate_stock = tstock_new(pool, tcp_stock, "/tmp/beng-proxy-translate");
+
+    tstock_translate(translate_stock, pool,
+                     &request, translate_callback, NULL, &async_ref);
 
     event_dispatch();
 }

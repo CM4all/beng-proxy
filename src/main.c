@@ -9,7 +9,7 @@
 #include "worker.h"
 #include "connection.h"
 #include "session.h"
-#include "translate.h"
+#include "tstock.h"
 #include "tcp-stock.h"
 #include "memcached-stock.h"
 #include "stock.h"
@@ -273,10 +273,15 @@ int main(int argc, char **argv)
             memcached_stock_new(instance.pool, instance.tcp_stock,
                                 instance.config.memcached_server);
 
-    if (instance.config.translation_socket != NULL)
-        instance.translate_cache = translate_cache_new(instance.pool, instance.tcp_stock,
-                                                       instance.config.translation_socket,
+    if (instance.config.translation_socket != NULL) {
+        struct tstock *translate_stock =
+            tstock_new(instance.pool, instance.tcp_stock,
+                       instance.config.translation_socket);
+
+        instance.translate_cache = translate_cache_new(instance.pool, translate_stock,
                                                        instance.config.translate_cache_size);
+    }
+
     instance.http_cache = http_cache_new(instance.pool,
                                          instance.config.http_cache_size,
                                          instance.memcached_stock,

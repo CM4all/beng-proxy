@@ -6,8 +6,7 @@
 
 #include "translate.h"
 #include "transformation.h"
-#include "stock.h"
-#include "tcp-stock.h"
+#include "lease.h"
 #include "growing-buffer.h"
 #include "processor.h"
 #include "async.h"
@@ -52,7 +51,8 @@ struct packet_reader {
 struct translate_client {
     pool_t pool;
 
-    struct stock_item *stock_item;
+    int fd;
+    struct lease_ref lease_ref;
 
     /** events for the socket */
     struct event event;
@@ -83,8 +83,6 @@ struct translate_client {
     /** this asynchronous operation is the translate request; aborting
         it causes the request to be cancelled */
     struct async_operation async;
-
-    struct async_operation_ref *async_ref;
 };
 
 static const struct translate_response error = {
@@ -103,7 +101,7 @@ translate_client_release(struct translate_client *client, bool reuse)
 
     if (client->event.ev_events != 0)
         event_del(&client->event);
-    stock_put(client->stock_item, !reuse);
+    lease_release(&client->lease_ref, reuse);
     pool_unref(client->pool);
 }
 
@@ -960,34 +958,9 @@ static const struct async_operation_class translate_operation = {
  *
  */
 
-static void
-translate_stock_callback(void *ctx, struct stock_item *item)
-{
-    struct translate_client *client = ctx;
-    int fd;
-
-    if (item == NULL) {
-        client->callback(&error, client->callback_ctx);
-        return;
-    }
-
-    client->stock_item = item;
-    client->response.status = (http_status_t)-1;
-
-    async_init(&client->async, &translate_operation);
-    async_ref_set(client->async_ref, &client->async);
-
-    fd = tcp_stock_item_get(item);
-    event_set(&client->event, fd, EV_WRITE|EV_TIMEOUT,
-              translate_write_event_callback, client);
-
-    pool_ref(client->pool);
-    translate_try_write(client, fd);
-}
-
 void
-translate(pool_t pool,
-          struct hstock *tcp_stock, const char *socket_path,
+translate(pool_t pool, int fd,
+          const struct lease *lease, void *lease_ctx,
           const struct translate_request *request,
           translate_callback_t callback,
           void *ctx,
@@ -997,14 +970,18 @@ translate(pool_t pool,
     struct translate_client *client;
 
     assert(pool != NULL);
-    assert(tcp_stock != NULL);
-    assert(socket_path != NULL);
+    assert(fd >= 0);
+    assert(lease != NULL);
     assert(request != NULL);
     assert(request->uri != NULL || request->widget_type != NULL);
     assert(callback != NULL);
 
     gb = marshal_request(pool, request);
     if (gb == NULL) {
+        struct lease_ref lease_ref;
+        lease_ref_set(&lease_ref, lease, lease_ctx);
+        lease_release(&lease_ref, true);
+
         callback(&error, ctx);
         pool_unref(pool);
         return;
@@ -1012,13 +989,20 @@ translate(pool_t pool,
 
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
-    client->request = gb;
+    client->fd = fd;
+    lease_ref_set(&client->lease_ref, lease, lease_ctx);
 
+    event_set(&client->event, fd, EV_WRITE|EV_TIMEOUT,
+              translate_write_event_callback, client);
+
+    client->request = gb;
     client->callback = callback;
     client->callback_ctx = ctx;
-    client->async_ref = async_ref;
+    client->response.status = (http_status_t)-1;
 
-    hstock_get(tcp_stock, pool, socket_path, NULL,
-               translate_stock_callback, client,
-               async_ref);
+    async_init(&client->async, &translate_operation);
+    async_ref_set(async_ref, &client->async);
+
+    pool_ref(client->pool);
+    translate_try_write(client, fd);
 }

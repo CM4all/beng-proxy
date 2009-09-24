@@ -10,10 +10,10 @@
 #include "translate.h"
 
 struct tcache;
+struct tstock;
 
 struct tcache *
-translate_cache_new(pool_t pool, struct hstock *tcp_stock,
-                    const char *socket_path,
+translate_cache_new(pool_t pool, struct tstock *stock,
                     unsigned max_size);
 
 void

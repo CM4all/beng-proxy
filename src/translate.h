@@ -14,8 +14,7 @@
 #include <stdint.h>
 
 struct sockaddr;
-struct uri_with_address;
-struct hstock;
+struct lease;
 struct async_operation_ref;
 
 struct translate_request {
@@ -71,8 +70,8 @@ typedef void (*translate_callback_t)(const struct translate_response *response,
                                      void *ctx);
 
 void
-translate(pool_t pool,
-          struct hstock *tcp_stock, const char *socket_path,
+translate(pool_t pool, int fd,
+          const struct lease *lease, void *lease_ctx,
           const struct translate_request *request,
           translate_callback_t callback,
           void *ctx,
