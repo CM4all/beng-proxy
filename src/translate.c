@@ -993,6 +993,7 @@ translate(pool_t pool,
           void *ctx,
           struct async_operation_ref *async_ref)
 {
+    struct growing_buffer *gb;
     struct translate_client *client;
 
     assert(pool != NULL);
@@ -1002,14 +1003,16 @@ translate(pool_t pool,
     assert(request->uri != NULL || request->widget_type != NULL);
     assert(callback != NULL);
 
-    client = p_malloc(pool, sizeof(*client));
-    client->pool = pool;
-    client->request = marshal_request(pool, request);
-    if (client->request == NULL) {
+    gb = marshal_request(pool, request);
+    if (gb == NULL) {
         callback(&error, ctx);
         pool_unref(pool);
         return;
     }
+
+    client = p_malloc(pool, sizeof(*client));
+    client->pool = pool;
+    client->request = gb;
 
     client->callback = callback;
     client->callback_ctx = ctx;
