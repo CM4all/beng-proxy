@@ -148,6 +148,7 @@ tcp_stock_pool(void *ctx __attr_unused, pool_t parent,
 static void
 tcp_stock_create(void *ctx, struct stock_item *item,
                  const char *uri, void *info,
+                 pool_t caller_pool,
                  struct async_operation_ref *async_ref)
 {
     struct balancer *balancer = ctx;
@@ -170,7 +171,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
         connection->addr = NULL;
 
     if (connection->addr != NULL) {
-        client_socket_new(connection->stock_item.pool,
+        client_socket_new(caller_pool,
                           connection->addr->sa_family, SOCK_STREAM, 0,
                           connection->addr, connection->addrlen,
                           tcp_stock_socket_callback, connection,
@@ -194,7 +195,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
         sun.sun_family = AF_UNIX;
         memcpy(sun.sun_path, uri, path_length + 1);
 
-        client_socket_new(connection->stock_item.pool,
+        client_socket_new(caller_pool,
                           PF_UNIX, SOCK_STREAM, 0,
                           (const struct sockaddr*)&sun, sizeof(sun),
                           tcp_stock_socket_callback, connection,

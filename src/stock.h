@@ -33,7 +33,6 @@ struct stock_item {
     bool is_idle;
 #endif
 
-    pool_t caller_pool;
     stock_callback_t callback;
     void *callback_ctx;
 };
@@ -44,6 +43,7 @@ struct stock_class {
     pool_t (*pool)(void *ctx, pool_t parent, const char *uri);
     void (*create)(void *ctx, struct stock_item *item,
                    const char *uri, void *info,
+                   pool_t caller_pool,
                    struct async_operation_ref *async_ref);
     bool (*borrow)(void *ctx, struct stock_item *item);
     void (*release)(void *ctx, struct stock_item *item);

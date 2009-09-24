@@ -75,6 +75,7 @@ delegate_stock_pool(void *ctx __attr_unused, pool_t parent,
 static void
 delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
                       const char *uri, void *info __attr_unused,
+                      pool_t caller_pool __attr_unused,
                       struct async_operation_ref *async_ref __attr_unused)
 {
     struct delegate_process *process = (struct delegate_process *)item;
