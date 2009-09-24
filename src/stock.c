@@ -7,6 +7,8 @@
 #include "stock.h"
 #include "async.h"
 
+#include <event.h>
+
 #include <assert.h>
 
 enum {
@@ -19,6 +21,8 @@ struct stock {
     void *class_ctx;
     const char *uri;
 
+    struct event cleanup_event;
+
     unsigned num_idle;
     struct list_head idle;
 
@@ -27,6 +31,53 @@ struct stock {
     struct list_head busy;
 #endif
 };
+
+static void
+destroy_item(struct stock *stock, struct stock_item *item);
+
+/*
+ * cleanup
+ *
+ */
+
+static void
+stock_schedule_cleanup(struct stock *stock)
+{
+    static const struct timeval tv = { .tv_sec = 5, .tv_usec = 0 };
+
+    evtimer_add(&stock->cleanup_event, &tv);
+}
+
+static void
+stock_unschedule_cleanup(struct stock *stock)
+{
+    evtimer_del(&stock->cleanup_event);
+}
+
+static void
+stock_cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
+                             void *ctx)
+{
+    struct stock *stock = ctx;
+
+    /* destroy half of the idle items */
+
+    for (unsigned i = (stock->num_idle + 1) / 2; i > 0; --i) {
+        struct stock_item *item = (struct stock_item *)stock->idle.next;
+
+        assert(!list_empty(&stock->idle));
+
+        list_remove(&item->list_head);
+        --stock->num_idle;
+
+        destroy_item(stock, item);
+    }
+
+    /* schedule next cleanup */
+
+    if (stock->num_idle > MAX_IDLE)
+        stock_schedule_cleanup(stock);
+}
 
 
 /*
@@ -54,6 +105,9 @@ stock_new(pool_t pool, const struct stock_class *class,
     stock->class = class;
     stock->class_ctx = class_ctx;
     stock->uri = uri == NULL ? NULL : p_strdup(pool, uri);
+
+    evtimer_set(&stock->cleanup_event, stock_cleanup_event_callback, stock);
+
     stock->num_idle = 0;
     list_init(&stock->idle);
 
@@ -102,6 +156,8 @@ stock_free(struct stock **stock_r)
     /* must not call stock_free() when there are busy items left */
     assert(list_empty(&stock->busy));
 
+    evtimer_del(&stock->cleanup_event);
+
     while (stock->num_idle > 0) {
         struct stock_item *item = (struct stock_item *)stock->idle.next;
 
@@ -134,6 +190,9 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
         item = (struct stock_item *)stock->idle.next;
         list_remove(&item->list_head);
         --stock->num_idle;
+
+        if (stock->num_idle == MAX_IDLE)
+            stock_unschedule_cleanup(stock);
 
         assert(item->is_idle);
 
@@ -220,12 +279,16 @@ stock_put(struct stock_item *item, bool destroy)
     --stock->num_busy;
 #endif
 
-    if (destroy || stock->num_idle >= MAX_IDLE) {
+    if (destroy) {
         destroy_item(stock, item);
     } else {
 #ifndef NDEBUG
         item->is_idle = true;
 #endif
+
+        if (stock->num_idle == MAX_IDLE)
+            stock_schedule_cleanup(stock);
+
         list_add(&item->list_head, &stock->idle);
         ++stock->num_idle;
 
@@ -249,6 +312,9 @@ stock_del(struct stock_item *item)
     assert(pool_contains(item->pool, item, stock->class->item_size));
     assert(item->list_head.next->prev == &item->list_head);
     assert(item->list_head.prev->next == &item->list_head);
+
+    if (stock->num_idle == MAX_IDLE)
+        stock_unschedule_cleanup(stock);
 
     list_remove(&item->list_head);
     --stock->num_idle;
