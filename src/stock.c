@@ -26,8 +26,8 @@ struct stock {
     unsigned num_idle;
     struct list_head idle;
 
-#ifndef NDEBUG
     unsigned num_busy;
+#ifndef NDEBUG
     struct list_head busy;
 #endif
 };
@@ -111,8 +111,8 @@ stock_new(pool_t pool, const struct stock_class *class,
     stock->num_idle = 0;
     list_init(&stock->idle);
 
-#ifndef NDEBUG
     stock->num_busy = 0;
+#ifndef NDEBUG
     list_init(&stock->busy);
 #endif
 
@@ -194,8 +194,8 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
 #ifndef NDEBUG
             item->is_idle = false;
             list_add(&item->list_head, &stock->busy);
-            ++stock->num_busy;
 #endif
+            ++stock->num_busy;
 
             callback(callback_ctx, item);
             return;
@@ -229,8 +229,8 @@ stock_item_available(struct stock_item *item)
     struct stock *stock = item->stock;
 
     list_add(&item->list_head, &stock->busy);
-    ++stock->num_busy;
 #endif
+    ++stock->num_busy;
 
     item->callback(item->callback_ctx, item);
 }
@@ -265,8 +265,8 @@ stock_put(struct stock_item *item, bool destroy)
 
 #ifndef NDEBUG
     list_remove(&item->list_head);
-    --stock->num_busy;
 #endif
+    --stock->num_busy;
 
     if (destroy) {
         destroy_item(stock, item);
