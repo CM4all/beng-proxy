@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
 
     event_dispatch();
 
-    hstock_free(&tcp_stock);
+    hstock_free(tcp_stock);
 
     /* cleanup */
 

@@ -17,7 +17,7 @@ static pool_t pool;
 static void
 my_stop(void *ctx __attr_unused)
 {
-    hstock_free(&delegate_stock);
+    hstock_free(delegate_stock);
 }
 
 static void

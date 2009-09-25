@@ -41,23 +41,18 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx)
 }
 
 void
-hstock_free(struct hstock **hstock_r)
+hstock_free(struct hstock *hstock)
 {
-    struct hstock *hstock;
     const struct hashmap_pair *pair;
 
-    assert(hstock_r != NULL);
-    assert(*hstock_r != NULL);
-
-    hstock = *hstock_r;
-    *hstock_r = NULL;
+    assert(hstock != NULL);
 
     hashmap_rewind(hstock->stocks);
 
     while ((pair = hashmap_next(hstock->stocks)) != NULL) {
         struct stock *stock = (struct stock *)pair->value;
 
-        stock_free(&stock);
+        stock_free(stock);
     }
 
     pool_unref(hstock->pool);

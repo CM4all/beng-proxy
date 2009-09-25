@@ -143,15 +143,9 @@ destroy_item(struct stock *stock, struct stock_item *item)
 }
 
 void
-stock_free(struct stock **stock_r)
+stock_free(struct stock *stock)
 {
-    struct stock *stock;
-
-    assert(stock_r != NULL);
-    assert(*stock_r != NULL);
-
-    stock = *stock_r;
-    *stock_r = NULL;
+    assert(stock != NULL);
 
     /* must not call stock_free() when there are busy items left */
     assert(list_empty(&stock->busy));

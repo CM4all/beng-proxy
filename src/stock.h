@@ -60,7 +60,7 @@ stock_new(pool_t pool, const struct stock_class *class,
           void *class_ctx, const char *uri);
 
 void
-stock_free(struct stock **stock_r);
+stock_free(struct stock *stock);
 
 void
 stock_get(struct stock *stock, pool_t pool, void *info,
@@ -91,7 +91,7 @@ struct hstock *
 hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx);
 
 void
-hstock_free(struct hstock **hstock_r);
+hstock_free(struct hstock *hstock);
 
 void
 hstock_get(struct hstock *hstock, pool_t pool,
