@@ -7,6 +7,10 @@
 #include "stock.h"
 #include "hashmap.h"
 
+#include <daemon/log.h>
+
+#include <event.h>
+
 #include <assert.h>
 
 struct hstock {
@@ -15,7 +19,45 @@ struct hstock {
     void *class_ctx;
 
     struct hashmap *stocks;
+
+    struct event cleanup_event;
 };
+
+static void
+hstock_schedule_cleanup(struct hstock *hstock)
+{
+    static const struct timeval tv = { .tv_sec = 120, .tv_usec = 0 };
+
+    evtimer_add(&hstock->cleanup_event, &tv);
+}
+
+static bool
+hstock_match_empty_stock(const char *key, void *value, void *ctx)
+{
+    struct hstock *hstock = ctx;
+    struct stock *stock = value;
+
+    if (stock_is_empty(stock)) {
+        daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
+                   (const void *)hstock, (const void *)stock, key);
+
+        stock_free(stock);
+        return true;
+    } else
+        return false;
+}
+
+static void
+hstock_cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
+                              void *ctx)
+{
+    struct hstock *hstock = ctx;
+
+    daemon_log(6, "hstock_cleanup_event_callback(%p)\n", (const void *)hstock);
+
+    hashmap_remove_all_match(hstock->stocks, hstock_match_empty_stock, hstock);
+    hstock_schedule_cleanup(hstock);
+}
 
 struct hstock *
 hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx)
@@ -37,6 +79,9 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx)
     hstock->class_ctx = class_ctx;
     hstock->stocks = hashmap_new(pool, 64);
 
+    evtimer_set(&hstock->cleanup_event, hstock_cleanup_event_callback, hstock);
+    hstock_schedule_cleanup(hstock);
+
     return hstock;
 }
 
@@ -46,6 +91,8 @@ hstock_free(struct hstock *hstock)
     const struct hashmap_pair *pair;
 
     assert(hstock != NULL);
+
+    evtimer_del(&hstock->cleanup_event);
 
     hashmap_rewind(hstock->stocks);
 
