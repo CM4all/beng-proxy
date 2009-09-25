@@ -64,7 +64,7 @@ trace_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 
     fprintf(stderr, "%p direct(0x%x, %zd)\n", (const void*)trace,
             trace->output.handler_direct, max_length);
-    nbytes = istream_invoke_direct(&trace->output, type, fd, 1);
+    nbytes = istream_invoke_direct(&trace->output, type, fd, max_length);
     fprintf(stderr, "%p direct(0x%x, %zd)=%zd\n", (const void*)trace,
             trace->output.handler_direct, max_length, nbytes);
 
