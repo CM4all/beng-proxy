@@ -62,6 +62,13 @@ stock_new(pool_t pool, const struct stock_class *class,
 void
 stock_free(struct stock *stock);
 
+/**
+ * Returns true if there are no items in the stock - neither idle nor
+ * busy.
+ */
+bool
+stock_is_empty(const struct stock *stock);
+
 void
 stock_get(struct stock *stock, pool_t pool, void *info,
           stock_callback_t callback, void *callback_ctx,

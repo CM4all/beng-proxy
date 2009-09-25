@@ -216,6 +216,12 @@ stock_free(struct stock *stock)
     pool_unref(stock->pool);
 }
 
+bool
+stock_is_empty(const struct stock *stock)
+{
+    return stock->num_idle == 0 && stock->num_busy == 0;
+}
+
 void
 stock_get(struct stock *stock, pool_t caller_pool, void *info,
           stock_callback_t callback, void *callback_ctx,
