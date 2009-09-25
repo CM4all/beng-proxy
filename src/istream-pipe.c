@@ -159,7 +159,8 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     assert(p->piped == 0);
     p->piped = (size_t)nbytes;
 
-    pipe_consume(p);
+    if (pipe_consume(p) < 0)
+        return -1;
 
     return nbytes;
 }
