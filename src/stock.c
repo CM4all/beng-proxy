@@ -7,6 +7,8 @@
 #include "stock.h"
 #include "async.h"
 
+#include <daemon/log.h>
+
 #include <event.h>
 
 #include <assert.h>
@@ -22,6 +24,7 @@ struct stock {
     const char *uri;
 
     struct event cleanup_event;
+    struct event clear_event;
 
     unsigned num_idle;
     struct list_head idle;
@@ -30,6 +33,8 @@ struct stock {
 #ifndef NDEBUG
     struct list_head busy;
 #endif
+
+    bool may_clear;
 };
 
 static void
@@ -81,6 +86,57 @@ stock_cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
 
 
 /*
+ * clear after 60 seconds idle
+ *
+ */
+
+static void
+stock_schedule_clear(struct stock *stock)
+{
+    static const struct timeval tv = { .tv_sec = 60, .tv_usec = 0 };
+
+    evtimer_add(&stock->clear_event, &tv);
+}
+
+static void
+stock_clear_idle(struct stock *stock)
+{
+    daemon_log(5, "stock_clear_idle(%p, '%s') num_idle=%u num_busy=%u\n",
+               (const void *)stock, stock->uri,
+               stock->num_idle, stock->num_busy);
+
+    while (stock->num_idle > 0) {
+        struct stock_item *item = (struct stock_item *)stock->idle.next;
+
+        assert(!list_empty(&stock->idle));
+
+        list_remove(&item->list_head);
+        --stock->num_idle;
+
+        destroy_item(stock, item);
+    }
+
+    assert(list_empty(&stock->idle));
+}
+
+static void
+stock_clear_event_callback(int fd __attr_unused, short event __attr_unused,
+                           void *ctx)
+{
+    struct stock *stock = ctx;
+
+    daemon_log(6, "stock_clear_event_callback(%p, '%s') may_clear=%d\n",
+               (const void *)stock, stock->uri, stock->may_clear);
+
+    if (stock->may_clear)
+        stock_clear_idle(stock);
+
+    stock->may_clear = true;
+    stock_schedule_clear(stock);
+}
+
+
+/*
  * constructor
  *
  */
@@ -107,6 +163,7 @@ stock_new(pool_t pool, const struct stock_class *class,
     stock->uri = uri == NULL ? NULL : p_strdup(pool, uri);
 
     evtimer_set(&stock->cleanup_event, stock_cleanup_event_callback, stock);
+    evtimer_set(&stock->clear_event, stock_clear_event_callback, stock);
 
     stock->num_idle = 0;
     list_init(&stock->idle);
@@ -152,19 +209,9 @@ stock_free(struct stock *stock)
     assert(list_empty(&stock->busy));
 
     evtimer_del(&stock->cleanup_event);
+    evtimer_del(&stock->clear_event);
 
-    while (stock->num_idle > 0) {
-        struct stock_item *item = (struct stock_item *)stock->idle.next;
-
-        assert(!list_empty(&stock->idle));
-
-        list_remove(&item->list_head);
-        --stock->num_idle;
-
-        destroy_item(stock, item);
-    }
-
-    assert(list_empty(&stock->idle));
+    stock_clear_idle(stock);
 
     pool_unref(stock->pool);
 }
@@ -178,6 +225,8 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
     struct stock_item *item;
 
     assert(stock != NULL);
+
+    stock->may_clear = false;
 
     while (stock->num_idle > 0) {
         assert(!list_empty(&stock->idle));
@@ -260,6 +309,7 @@ stock_put(struct stock_item *item, bool destroy)
     assert(!item->is_idle);
 
     stock = item->stock;
+    stock->may_clear = false;
 
     assert(stock->num_busy > 0);
 
