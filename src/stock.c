@@ -146,6 +146,7 @@ void
 stock_free(struct stock *stock)
 {
     assert(stock != NULL);
+    assert(stock->num_busy == 0);
 
     /* must not call stock_free() when there are busy items left */
     assert(list_empty(&stock->busy));
@@ -259,6 +260,8 @@ stock_put(struct stock_item *item, bool destroy)
     assert(!item->is_idle);
 
     stock = item->stock;
+
+    assert(stock->num_busy > 0);
 
     assert(stock != NULL);
     assert(pool_contains(item->pool, item, stock->class->item_size));
