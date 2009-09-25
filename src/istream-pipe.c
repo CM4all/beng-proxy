@@ -70,7 +70,7 @@ pipe_consume(struct istream_pipe *p)
     }
 
     if (nbytes > 0) {
-        assert((size_t)nbytes < p->piped);
+        assert((size_t)nbytes <= p->piped);
         p->piped -= (size_t)nbytes;
 
         if (p->piped == 0 && p->input == NULL) {
