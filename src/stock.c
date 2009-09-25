@@ -226,9 +226,9 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
 void
 stock_item_available(struct stock_item *item)
 {
-#ifndef NDEBUG
     struct stock *stock = item->stock;
 
+#ifndef NDEBUG
     list_add(&item->list_head, &stock->busy);
 #endif
     ++stock->num_busy;
