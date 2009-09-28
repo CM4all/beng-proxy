@@ -10,7 +10,7 @@ Build-Depends: debhelper (>= 7), autoconf (>= 2.60), automake (>= 1.10),
  libcm4all-socket-dev,
  texlive, texlive-latex-extra,
  python-central (>= 0.5.6), valgrind,
-Standards-Version: 3.8.0
+Standards-Version: 3.8.3
 XS-Python-Standards-Version: 0.4
 XS-Python-Version: all
 
