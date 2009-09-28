@@ -442,3 +442,56 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
                            http_cache_memcached_put_callback, request,
                            async_ref);
 }
+
+static void
+mcd_background_callback(G_GNUC_UNUSED enum memcached_response_status status,
+                        G_GNUC_UNUSED const void *extras,
+                        G_GNUC_UNUSED size_t extras_length,
+                        G_GNUC_UNUSED const void *key,
+                        G_GNUC_UNUSED size_t key_length,
+                        istream_t value, void *ctx)
+{
+    struct background_job *job = ctx;
+
+    if (value != NULL)
+        istream_close(value);
+
+    background_manager_remove(job);
+}
+
+static void
+mcd_delete_callback(void *ctx)
+{
+    struct background_job *job = ctx;
+
+    background_manager_remove(job);
+}
+
+void
+http_cache_memcached_remove_uri(struct memcached_stock *stock,
+                                pool_t background_pool,
+                                struct background_manager *background,
+                                const char *uri)
+{
+    pool_t pool = pool_new_linear(background_pool,
+                                  "http_cache_memcached_remove_uri", 8192);
+    struct background_job *job;
+    const char *key;
+
+    job = p_malloc(pool, sizeof(*job));
+    key = http_cache_choice_vary_key(pool, uri, NULL);
+    memcached_stock_invoke(pool, stock,
+                           MEMCACHED_OPCODE_DELETE,
+                           NULL, 0,
+                           key, strlen(key),
+                           NULL,
+                           mcd_background_callback, job,
+                           background_job_add(background, job));
+
+    job = p_malloc(pool, sizeof(*job));
+    http_cache_choice_delete(pool, stock, uri,
+                             mcd_delete_callback, job,
+                             background_job_add(background, job));
+
+    pool_unref(pool);
+}

@@ -169,6 +169,10 @@ http_cache_remove_url(struct http_cache *cache, const char *url)
 {
     if (cache->cache != NULL)
         http_cache_heap_remove_url(cache->cache, url);
+    else
+        http_cache_memcached_remove_uri(cache->memcached_stock,
+                                        cache->pool, &cache->background,
+                                        url);
 }
 
 static void

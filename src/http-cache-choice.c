@@ -40,6 +40,7 @@ struct http_cache_choice {
         http_cache_choice_get_t get;
         http_cache_choice_commit_t commit;
         http_cache_choice_commit_t cleanup;
+        http_cache_choice_delete_t delete;
     } callback;
 
     void *callback_ctx;
@@ -456,5 +457,47 @@ http_cache_choice_cleanup(pool_t pool, struct memcached_stock *stock,
                            choice->key, strlen(choice->key),
                            NULL,
                            http_cache_choice_cleanup_get_callback, choice,
+                           async_ref);
+}
+
+static void
+http_cache_choice_delete_callback(G_GNUC_UNUSED enum memcached_response_status status,
+                                  G_GNUC_UNUSED const void *extras,
+                                  G_GNUC_UNUSED size_t extras_length,
+                                  G_GNUC_UNUSED const void *key,
+                                  G_GNUC_UNUSED size_t key_length,
+                                  istream_t value, void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    if (value != NULL)
+        istream_close(value);
+
+    choice->callback.delete(choice->callback_ctx);
+}
+
+void
+http_cache_choice_delete(pool_t pool, struct memcached_stock *stock,
+                         const char *uri,
+                         http_cache_choice_delete_t callback,
+                         void *callback_ctx,
+                         struct async_operation_ref *async_ref)
+{
+    struct http_cache_choice *choice = p_malloc(pool, sizeof(*choice));
+
+    choice->pool = pool;
+    choice->stock = stock;
+    choice->uri = uri;
+    choice->key = p_strcat(pool, uri, " choice", NULL);
+    choice->callback.commit = callback;
+    choice->callback_ctx = callback_ctx;
+    choice->async_ref = async_ref;
+
+    memcached_stock_invoke(pool, stock,
+                           MEMCACHED_OPCODE_GET,
+                           NULL, 0,
+                           choice->key, strlen(choice->key),
+                           NULL,
+                           http_cache_choice_delete_callback, choice,
                            async_ref);
 }

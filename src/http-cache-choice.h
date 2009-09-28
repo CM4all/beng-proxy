@@ -18,6 +18,7 @@ struct async_operation_ref;
 typedef void (*http_cache_choice_get_t)(const char *key, bool unclean, void *ctx);
 typedef void (*http_cache_choice_commit_t)(void *ctx);
 typedef void (*http_cache_choice_cleanup_t)(void *ctx);
+typedef void (*http_cache_choice_delete_t)(void *ctx);
 
 const char *
 http_cache_choice_vary_key(pool_t pool, const char *uri, struct strmap *vary);
@@ -50,5 +51,19 @@ http_cache_choice_cleanup(pool_t pool, struct memcached_stock *stock,
                           http_cache_choice_cleanup_t callback,
                           void *callback_ctx,
                           struct async_operation_ref *async_ref);
+
+/**
+ * Deletes the choice record.
+ *
+ * The data records are not deleted, but since no pointer exists
+ * anymore, they are unused.  We could optimize later by deleting
+ * those, too.
+ */
+void
+http_cache_choice_delete(pool_t pool, struct memcached_stock *stock,
+                         const char *uri,
+                         http_cache_choice_delete_t callback,
+                         void *callback_ctx,
+                         struct async_operation_ref *async_ref);
 
 #endif

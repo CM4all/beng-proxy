@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.6.20) unstable; urgency=low
   * hstock: remove empty stocks
   * istream-pipe: fix the direct() return value on error
   * istream-pipe: fix formula in range assertion
+  * http-cache-memcached: implemented "remove"
 
  --
 

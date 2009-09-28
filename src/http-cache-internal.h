@@ -183,4 +183,10 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
                          http_cache_memcached_put_t put, void *callback_ctx,
                          struct async_operation_ref *async_ref);
 
+void
+http_cache_memcached_remove_uri(struct memcached_stock *stock,
+                                pool_t background_pool,
+                                struct background_manager *background,
+                                const char *uri);
+
 #endif
