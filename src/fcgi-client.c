@@ -77,6 +77,7 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
     event_del(&client->event);
     client->fd = -1;
     lease_release(&client->lease_ref, reuse);
+    pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
 
@@ -91,7 +92,6 @@ fcgi_client_abort_response_headers(struct fcgi_client *client)
            client->response.read_state == READ_HEADERS);
 
     http_response_handler_invoke_abort(&client->handler);
-    pool_unref(client->caller_pool);
 
     fcgi_client_release(client, false);
 }
@@ -263,7 +263,6 @@ fcgi_client_try_write(struct fcgi_client *client)
 
     p = growing_buffer_read(client->request, &length);
     if (p == NULL) {
-        pool_t caller_pool = client->caller_pool;
         struct strmap *headers;
         /* XXX read headers from stdout? */
 
@@ -281,7 +280,6 @@ fcgi_client_try_write(struct fcgi_client *client)
         strmap_add(headers, "content-type", "text/html");
         http_response_handler_invoke_response(&client->handler, HTTP_STATUS_OK, headers,
                                               istream_struct_cast(&client->response.body));
-        pool_unref(caller_pool);
         return;
     }
 
@@ -290,7 +288,7 @@ fcgi_client_try_write(struct fcgi_client *client)
         daemon_log(3, "write to FastCGI application failed: %s\n",
                    strerror(errno));
         http_response_handler_invoke_abort(&client->handler);
-        pool_unref(client->caller_pool);
+        fcgi_client_release(client, false);
         return;
     }
 
@@ -397,8 +395,6 @@ fcgi_client_request_abort(struct async_operation *ao)
     assert(client->response.read_state == READ_NONE ||
            client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
-
-    pool_unref(client->caller_pool);
 
     /* XXX close request body */
 
