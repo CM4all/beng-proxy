@@ -12,6 +12,7 @@ from beng_proxy.translation import *
 
 widgets_path = '/etc/cm4all/beng/widgets'
 helpers_path = '/usr/bin'
+test_path = os.path.join(os.getcwd(), 'test')
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
 
@@ -138,6 +139,8 @@ class Translation(Protocol):
             response.proxy('http://cfatest01.intern.cm-ag/' + uri[11:])
         elif uri[:5] == '/ajp/':
             response.ajp(uri[4:], 'cfatest01.intern.cm-ag:8009')
+        elif uri[:8] == '/fcgi.rb':
+            response.packet(TRANSLATE_FASTCGI, os.path.join(test_path, 'fcgi.rb'))
         elif uri == '/discard':
             response.packet(TRANSLATE_DISCARD_SESSION)
             response.status(204)
