@@ -19,6 +19,9 @@ void
 cgi_handler(struct request *request2);
 
 void
+fcgi_handler(struct request *request2);
+
+void
 proxy_handler(struct request *request);
 
 void
