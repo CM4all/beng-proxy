@@ -128,6 +128,14 @@ http_cache_memcached_put(G_GNUC_UNUSED pool_t pool,
 {
 }
 
+void
+http_cache_memcached_remove_uri(G_GNUC_UNUSED struct memcached_stock *stock,
+                                G_GNUC_UNUSED pool_t background_pool,
+                                G_GNUC_UNUSED struct background_manager *background,
+                                G_GNUC_UNUSED const char *uri)
+{
+}
+
 static struct strmap *
 parse_headers(pool_t pool, const char *raw)
 {
