@@ -234,9 +234,7 @@ http_server_parse_headers(struct http_server_connection *connection)
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
         --end;
-        if (likely(*end == '\r'))
-            --end;
-        while (unlikely(end >= start && char_is_whitespace(*end)))
+        while (end >= start && char_is_whitespace(*end))
             --end;
 
         http_server_handle_line(connection, start, end - start + 1);

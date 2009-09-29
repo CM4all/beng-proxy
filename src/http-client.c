@@ -443,9 +443,7 @@ http_client_parse_headers(struct http_client *client)
 
         /* strip the line */
         --end;
-        if (likely(*end == '\r'))
-            --end;
-        while (unlikely(end >= start && char_is_whitespace(*end)))
+        while (end >= start && char_is_whitespace(*end))
             --end;
 
         /* handle this line */
