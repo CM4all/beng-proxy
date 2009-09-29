@@ -12,6 +12,8 @@
 #include "buffered-io.h"
 #include "istream-internal.h"
 #include "lease.h"
+#include "strutil.h"
+#include "header-parser.h"
 
 #include <daemon/log.h>
 
@@ -51,6 +53,8 @@ struct fcgi_client {
             READ_BODY,
             READ_END
         } read_state;
+
+        struct strmap *headers;
 
         struct istream body;
     } response;
@@ -126,6 +130,71 @@ fcgi_client_abort_response(struct fcgi_client *client)
         fcgi_client_abort_response_body(client);
 }
 
+static bool
+fcgi_client_handle_line(struct fcgi_client *client,
+                        const char *line, size_t length)
+{
+    assert(client != NULL);
+    assert(client->response.headers != NULL);
+    assert(line != NULL);
+
+    if (length > 0) {
+        header_parse_line(client->pool, client->response.headers,
+                          line, length);
+        return false;
+    } else {
+        client->response.read_state = READ_BODY;
+        return true;
+    }
+}
+
+static size_t
+fcgi_client_parse_headers(struct fcgi_client *client,
+                          const char *data, size_t length)
+{
+    const char *p, *data_end, *eol, *next = NULL;
+    bool finished = false;
+
+    p = data;
+    data_end = data + length;
+
+    while ((eol = memchr(p, '\n', data_end - p)) != NULL) {
+        next = eol + 1;
+        --eol;
+        while (eol >= p && char_is_whitespace(*eol))
+            --eol;
+
+        finished = fcgi_client_handle_line(client, p, eol - p + 1);
+        if (finished)
+            break;
+
+        p = next;
+    }
+
+    return next != NULL ? next - data : 0;
+}
+
+static size_t
+fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
+{
+    switch (client->response.read_state) {
+    case READ_NONE:
+    case READ_STATUS:
+    case READ_END:
+        assert(false);
+        break;
+
+    case READ_HEADERS:
+        return fcgi_client_parse_headers(client, data, length);
+
+    case READ_BODY:
+        return istream_invoke_data(&client->response.body, data, length);
+    }
+
+    /* unreachable */
+    return 0;
+}
+
 /**
  * Consume data from the input buffer.  Returns false if the buffer is
  * full or if this object has been destructed.
@@ -143,17 +212,29 @@ fcgi_client_consume_input(struct fcgi_client *client)
             return true;
 
         if (client->content_length > 0) {
+            bool at_headers = client->response.read_state == READ_HEADERS;
             size_t nbytes;
 
             if (length > client->content_length)
                 length = client->content_length;
 
-            nbytes = istream_invoke_data(&client->response.body, data, length);
+            nbytes = fcgi_client_feed(client, data, length);
             if (nbytes == 0)
-                return false;
+                return at_headers && !fifo_buffer_full(client->input);
 
             fifo_buffer_consume(client->input, nbytes);
             client->content_length -= nbytes;
+
+            if (at_headers && client->response.read_state == READ_BODY) {
+                /* the read_state has been switched from HEADERS to
+                   BODY: we have to deliver the response now */
+                fcgi_client_response_body_init(client);
+                http_response_handler_invoke_response(&client->handler,
+                                                      HTTP_STATUS_OK,
+                                                      client->response.headers,
+                                                      istream_struct_cast(&client->response.body));
+                return false;
+            }
 
             if (client->content_length > 0)
                 return true;
@@ -263,23 +344,14 @@ fcgi_client_try_write(struct fcgi_client *client)
 
     p = growing_buffer_read(client->request, &length);
     if (p == NULL) {
-        struct strmap *headers;
-        /* XXX read headers from stdout? */
-
-        client->response.read_state = READ_BODY;
+        client->response.read_state = READ_HEADERS;
+        client->response.headers = strmap_new(client->pool, 17);
         client->content_length = 0;
         client->skip_length = 0;
 
         event_set(&client->event, client->fd, EV_READ,
                   fcgi_client_event, client);
         event_add(&client->event, NULL);
-
-        fcgi_client_response_body_init(client);
-        /* XXX */
-        headers = strmap_new(client->pool, 4);
-        strmap_add(headers, "content-type", "text/html");
-        http_response_handler_invoke_response(&client->handler, HTTP_STATUS_OK, headers,
-                                              istream_struct_cast(&client->response.body));
         return;
     }
 
