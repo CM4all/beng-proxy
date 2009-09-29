@@ -10,7 +10,7 @@ cm4all-beng-proxy (0.6.20) unstable; urgency=low
   * fcgi-client: unref caller pool after socket release
   * fcgi-client: implemented response headers
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 29 Sep 2009 14:07:13 +0200
 
 cm4all-beng-proxy (0.6.19) unstable; urgency=low
 
