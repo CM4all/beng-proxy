@@ -16,7 +16,7 @@
 #include "ajp-request.h"
 #include "header-writer.h"
 #include "pipe.h"
-#include "delegate-get.h"
+#include "delegate-request.h"
 
 #include <string.h>
 
@@ -82,12 +82,12 @@ resource_get(struct http_cache *cache,
                 return;
             }
 
-            delegate_stock_get(delegate_stock, pool,
-                               address->u.local.delegate,
-                               address->u.local.path,
-                               address->u.local.content_type,
-                               handler, handler_ctx,
-                               async_ref);
+            delegate_stock_request(delegate_stock, pool,
+                                   address->u.local.delegate,
+                                   address->u.local.path,
+                                   address->u.local.content_type,
+                                   handler, handler_ctx,
+                                   async_ref);
             return;
         }
 

@@ -178,7 +178,7 @@ SRC = src/main.c \
 	src/delegate-stock.c \
 	src/delegate-client.c \
 	src/delegate-glue.c \
-	src/delegate-get.c \
+	src/delegate-request.c \
 	src/delegate-handler.c \
 	src/uri-edit.c \
 	src/uri-relative.c \

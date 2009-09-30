@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate-get.h"
+#include "delegate-request.h"
 #include "delegate-glue.h"
 #include "static-headers.h"
 #include "http-response.h"
@@ -64,11 +64,11 @@ delegate_get_callback(int fd, void *ctx)
 }
 
 void
-delegate_stock_get(struct hstock *stock, pool_t pool,
-                   const char *helper, const char *path,
-                   const char *content_type,
-                   const struct http_response_handler *handler, void *ctx,
-                   struct async_operation_ref *async_ref)
+delegate_stock_request(struct hstock *stock, pool_t pool,
+                       const char *helper, const char *path,
+                       const char *content_type,
+                       const struct http_response_handler *handler, void *ctx,
+                       struct async_operation_ref *async_ref)
 {
     struct delegate_get *get = p_malloc(pool, sizeof(*get));
 
