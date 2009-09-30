@@ -288,13 +288,15 @@ http_client_parse_status_line(struct http_client *client,
 
     if (unlikely(length < 3 || !char_is_digit(line[0]) ||
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
-        daemon_log(2, "no HTTP status found\n");
+        daemon_log(2, "http_client: no HTTP status found\n");
         http_client_abort_response_headers(client);
         return false;
     }
 
     client->response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
     if (unlikely(client->response.status < 100 || client->response.status > 599)) {
+        daemon_log(2, "http_client: invalid HTTP status %d\n",
+                   client->response.status);
         http_client_abort_response_headers(client);
         return false;
     }
@@ -339,7 +341,7 @@ http_client_headers_finished(struct http_client *client)
 
         if (unlikely(content_length_string == NULL)) {
             if (client->keep_alive) {
-                daemon_log(2, "no Content-Length header in HTTP response\n");
+                daemon_log(2, "http_client: no Content-Length header response\n");
                 http_client_abort_response_headers(client);
                 return false;
             }
@@ -347,7 +349,7 @@ http_client_headers_finished(struct http_client *client)
         } else {
             content_length = strtoul(content_length_string, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
-                daemon_log(2, "invalid Content-Length header in HTTP response\n");
+                daemon_log(2, "http_client: invalid Content-Length header in response\n");
                 http_client_abort_response_headers(client);
                 return false;
             }
@@ -569,7 +571,7 @@ http_client_try_response_direct(struct http_client *client)
     nbytes = http_body_try_direct(&client->response.body_reader, client->fd);
     if (nbytes < 0) {
         /* XXX EAGAIN? */
-        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
+        daemon_log(1, "htt_client: read error (%s)\n", strerror(errno));
         http_client_abort_response_body(client);
         return;
     }
@@ -591,8 +593,12 @@ http_client_try_read_buffered(struct http_client *client)
             http_body_socket_eof(&client->response.body_reader,
                                  client->input);
             http_client_release(client, false);
-        } else
+        } else {
+            daemon_log(2, "http_client: server closed connection "
+                       "during response headers\n");
             http_client_abort_response_headers(client);
+        }
+
         return;
     }
 
@@ -602,7 +608,7 @@ http_client_try_read_buffered(struct http_client *client)
             return;
         }
 
-        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
+        daemon_log(1, "http_client: read error (%s)\n", strerror(errno));
         http_client_abort_response(client);
         return;
     }
@@ -641,7 +647,7 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
     event2_reset(&client->event);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "timeout\n");
+        daemon_log(4, "http_client: timeout\n");
         if (client->response.read_state == READ_NONE)
             http_client_abort_request(client);
         else
@@ -688,8 +694,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    daemon_log(1, "write error on HTTP client connection: %s\n",
-               strerror(errno));
+    daemon_log(1, "http_client: write error (%s)\n", strerror(errno));
     http_client_abort_request(client);
     return 0;
 }

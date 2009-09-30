@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.6.21) unstable; urgency=low
 
-  * 
+  * http-client: log more error messages
 
  --
 
