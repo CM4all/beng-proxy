@@ -194,6 +194,19 @@ The maximum accepted value for \texttt{user.MaxAge} is one year.
 For security (by obscurity) reasons, \emph{beng-proxy} has no code for
 generating directory listings.
 
+\subsection{Delegates}
+\label{delegate}
+
+A ``delegate'' is a helper program which opens a local file and passes
+the file descriptor to \emph{beng-proxy}.  The major reason for using
+a delegate is to take advantage of the kernel's validation: the
+delegate program may run with different privileges, different resource
+limits or in a chroot/vserver.
+
+The delegate reads requests on standard input.  The protocol is
+similar to the translation protocol.  The file descriptor is sent to
+\emph{beng-proxy} in a \texttt{SOL\_SOCKET} ancillary message.
+
 \subsection{HTTP proxying}
 \label{http}
 
@@ -442,7 +455,8 @@ this CGI \\
 \hline
 
 \texttt{DELEGATE} & After \texttt{PATH}: delegates opening the file to
-a program.  The payload is the path of the delegate program. \\
+a program.  The payload is the path of the delegate program.  See
+section \ref{delegate} for details. \\
 
 \hline
 
