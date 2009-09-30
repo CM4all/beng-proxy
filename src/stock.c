@@ -150,6 +150,7 @@ stock_new(pool_t pool, const struct stock_class *class,
     assert(pool != NULL);
     assert(class != NULL);
     assert(class->item_size > sizeof(struct stock_item));
+    assert(class->pool != NULL);
     assert(class->create != NULL);
     assert(class->borrow != NULL);
     assert(class->release != NULL);
@@ -260,10 +261,7 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
         destroy_item(stock, item);
     }
 
-    if (stock->class->pool == NULL)
-        pool = stock->pool;
-    else
-        pool = stock->class->pool(stock->class_ctx, stock->pool, stock->uri);
+    pool = stock->class->pool(stock->class_ctx, stock->pool, stock->uri);
 
     item = p_malloc(pool, stock->class->item_size);
     item->stock = stock;
