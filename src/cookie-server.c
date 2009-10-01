@@ -23,7 +23,7 @@ cookie_map_parse(struct strmap *cookies, const char *p, pool_t pool)
     strref_set_c(&input, p);
 
     while (1) {
-        http_next_name_value(pool, &input, &name, &value);
+        http_next_name_value(pool, &input, &name, &value, true);
         if (strref_is_empty(&name))
             break;
 
