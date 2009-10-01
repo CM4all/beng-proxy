@@ -57,7 +57,9 @@ widget_response_format(pool_t pool, const struct widget *widget,
 
     content_type = strmap_get_checked(headers, "content-type");
 
-    if (content_type == NULL || strncmp(content_type, "text/", 5) != 0) {
+    if (content_type == NULL ||
+        (strncmp(content_type, "text/", 5) != 0 &&
+         strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
         daemon_log(2, "widget '%s' sent non-text response\n",
                    widget_path(widget));
         istream_close(body);
@@ -87,7 +89,8 @@ widget_response_format(pool_t pool, const struct widget *widget,
         strmap_set(headers, "content-type", "text/html; charset=utf-8");
     }
 
-    if (strncmp(content_type + 5, "html", 4) != 0 &&
+    if (strncmp(content_type, "text/", 5) == 0 &&
+        strncmp(content_type + 5, "html", 4) != 0 &&
         strncmp(content_type + 5, "xml", 3) != 0) {
         /* convert text to HTML */
 

@@ -186,7 +186,8 @@ processable(const struct strmap *headers)
     content_type = strmap_get_checked(headers, "content-type");
     return content_type != NULL &&
         (strncmp(content_type, "text/html", 9) == 0 ||
-         strncmp(content_type, "text/xml", 8) == 0);
+         strncmp(content_type, "text/xml", 8) == 0 ||
+         strncmp(content_type, "application/xhtml+xml", 21) == 0);
 }
 
 /**
