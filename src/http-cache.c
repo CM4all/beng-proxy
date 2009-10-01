@@ -204,6 +204,7 @@ http_cache_response_body_data(const void *data, size_t length, void *ctx)
 
     request->response.length += length;
     if (request->response.length > (size_t)cacheable_size_limit) {
+        cache_log(4, "http_cache: too large %s\n", request->url);
         istream_close(request->response.input);
         return 0;
     }
@@ -233,7 +234,8 @@ http_cache_response_body_abort(void *ctx)
 {
     struct http_cache_request *request = ctx;
 
-    cache_log(4, "http_cache: body_abort %s\n", request->url);
+    if (request->response.length <= (size_t)cacheable_size_limit)
+        cache_log(4, "http_cache: body_abort %s\n", request->url);
 
     request->response.input = NULL;
 
