@@ -14,7 +14,7 @@ cgi_handler(struct request *request2)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
-    const char *query_string, *document_root;
+    const char *query_string;
 
     assert(!request2->body_consumed);
 
@@ -25,10 +25,6 @@ cgi_handler(struct request *request2)
         query_string = "";
     else
         ++query_string;
-
-    document_root = tr->document_root;
-    if (document_root == NULL)
-        document_root = "/var/www";
 
     cgi_new(request->pool, tr->address.u.cgi.jail,
             tr->address.u.cgi.interpreter, tr->address.u.cgi.action,

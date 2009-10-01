@@ -15,7 +15,7 @@ fcgi_handler(struct request *request2)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
-    const char *query_string, *document_root;
+    const char *query_string;
 
     assert(!request2->body_consumed);
 
@@ -26,10 +26,6 @@ fcgi_handler(struct request *request2)
         query_string = "";
     else
         ++query_string;
-
-    document_root = tr->document_root;
-    if (document_root == NULL)
-        document_root = "/var/www";
 
     fcgi_request(request->pool, global_fcgi_stock, global_tcp_stock,
                  tr->address.u.cgi.path,
