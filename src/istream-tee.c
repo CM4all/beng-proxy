@@ -85,11 +85,15 @@ tee_input_eof(void *ctx)
 
     tee->input = NULL;
 
-    if (tee->outputs[0].enabled)
+    if (tee->outputs[0].enabled) {
+        tee->outputs[0].enabled = false;
         istream_deinit_eof(&tee->outputs[0].istream);
+    }
 
-    if (tee->outputs[1].enabled)
+    if (tee->outputs[1].enabled) {
+        tee->outputs[1].enabled = false;
         istream_deinit_eof(&tee->outputs[1].istream);
+    }
 
     pool_unref(tee->outputs[0].istream.pool);
 }
@@ -105,11 +109,15 @@ tee_input_abort(void *ctx)
 
     tee->input = NULL;
 
-    if (tee->outputs[0].enabled)
+    if (tee->outputs[0].enabled) {
+        tee->outputs[0].enabled = false;
         istream_deinit_abort(&tee->outputs[0].istream);
+    }
 
-    if (tee->outputs[1].enabled)
+    if (tee->outputs[1].enabled) {
+        tee->outputs[1].enabled = false;
         istream_deinit_abort(&tee->outputs[1].istream);
+    }
 
     pool_unref(tee->outputs[0].istream.pool);
 }
