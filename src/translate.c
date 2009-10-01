@@ -672,11 +672,15 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_DOCUMENT_ROOT:
-        if (client->resource_address == NULL ||
-            client->resource_address->type != RESOURCE_ADDRESS_CGI)
-            client->response.document_root = payload;
-        else
+        if (client->resource_address != NULL &&
+            client->resource_address->type == RESOURCE_ADDRESS_CGI)
             client->resource_address->u.cgi.document_root = payload;
+        else if (client->resource_address != NULL &&
+                 client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
+                 client->resource_address->u.local.delegate != NULL)
+            client->resource_address->u.local.document_root = payload;
+        else
+            client->response.document_root = payload;
         break;
 
     case TRANSLATE_ADDRESS:
