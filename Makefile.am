@@ -272,6 +272,7 @@ check_PROGRAMS = \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
 	test/t-cookie-client \
+	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
@@ -302,6 +303,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
 	test/t-cookie-client.py test/t-cookie-client \
+	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
@@ -523,6 +525,13 @@ test_t_cookie_client_SOURCES = test/t-cookie-client.c \
 	src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c
 test_t_cookie_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt
+
+test_t_cookie_server_SOURCES = test/t-cookie-server.c \
+	$(POOL_SRC) \
+	src/cookie-server.c \
+	src/http-string.c \
+	src/strmap.c src/hashmap.c
+test_t_cookie_server_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt
 
 test_t_shm_SOURCES = test/t-shm.c src/shm.c
 test_t_shm_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt

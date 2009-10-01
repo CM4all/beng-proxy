@@ -37,6 +37,7 @@ test/run-cookie-server
 test/t-shm
 test/t-dpool
 test/t-cookie-client
+test/t-cookie-server
 test/t-widget-registry
 test/t-session
 test/run-header-parser
