@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.6.21) unstable; urgency=low
   * cookie-server: allow square brackets in unquoted cookie values
     (violating RFC 2109 and RFC 2616)
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 01 Oct 2009 13:55:40 +0200
 
 cm4all-beng-proxy (0.6.20) unstable; urgency=low
 
