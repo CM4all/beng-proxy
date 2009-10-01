@@ -33,6 +33,7 @@ struct resource_address {
             const char *path;
             const char *content_type;
             const char *delegate;
+            const char *document_root;
         } local;
 
         struct uri_with_address *http;

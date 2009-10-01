@@ -262,6 +262,7 @@ serve_document_root_file(struct request *request2,
                                          NULL);
     tr->address.u.local.delegate = NULL;
     tr->address.u.local.content_type = NULL;
+    tr->address.u.local.document_root = NULL;
 
     request2->resource_tag = tr->address.u.local.path;
     request2->processor_focus = process &&
