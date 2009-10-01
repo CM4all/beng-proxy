@@ -16,8 +16,8 @@ struct async_operation_ref;
 
 void
 delegate_stock_request(struct hstock *stock, pool_t pool,
-                       const char *helper, const char *path,
-                       const char *content_type,
+                       const char *helper, const char *document_root,
+                       const char *path, const char *content_type,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref *async_ref);
 

@@ -207,6 +207,11 @@ The delegate reads requests on standard input.  The protocol is
 similar to the translation protocol.  The file descriptor is sent to
 \emph{beng-proxy} in a \texttt{SOL\_SOCKET} ancillary message.
 
+If the \texttt{DELEGATE} translation packet was followed by a
+\texttt{DOCUMENT\_ROOT} packet, then all helper processes are grouped
+by their document root, and text \texttt{DOCUMENT\_ROOT} environment
+variable is set.
+
 \subsection{HTTP proxying}
 \label{http}
 

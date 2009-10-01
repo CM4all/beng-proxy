@@ -18,9 +18,18 @@
 #include <unistd.h>
 #include <sys/un.h>
 #include <event.h>
+#include <stdlib.h>
+
+struct delegate_info {
+    const char *helper;
+
+    const char *document_root;
+};
 
 struct delegate_process {
     struct stock_item stock_item;
+
+    const char *uri;
 
     pid_t pid;
     int fd;
@@ -74,13 +83,23 @@ delegate_stock_pool(void *ctx __attr_unused, pool_t parent,
 
 static void
 delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
-                      const char *uri, void *info __attr_unused,
+                      const char *uri, void *_info,
                       pool_t caller_pool __attr_unused,
                       struct async_operation_ref *async_ref __attr_unused)
 {
     struct delegate_process *process = (struct delegate_process *)item;
     int ret, fds[2];
     pid_t pid;
+    const char *helper, *document_root;
+
+    if (_info != NULL) {
+        struct delegate_info *info = _info;
+        helper = info->helper;
+        document_root = info->document_root;
+    } else {
+        helper = uri;
+        document_root = NULL;
+    }
 
     ret = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
     if (ret < 0) {
@@ -103,7 +122,10 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
         close(fds[0]);
         close(fds[1]);
 
-        execl(uri, uri, NULL);
+        if (document_root != NULL)
+            setenv("DOCUMENT_ROOT", document_root, true);
+
+        execl(helper, helper, NULL);
         _exit(1);
     }
 
@@ -113,6 +135,7 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
 
     fd_set_cloexec(fds[0]);
 
+    process->uri = uri;
     process->pid = pid;
     process->fd = fds[0];
 
@@ -175,6 +198,38 @@ struct hstock *
 delegate_stock_new(pool_t pool)
 {
     return hstock_new(pool, &delegate_stock_class, NULL);
+}
+
+void
+delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
+                   const char *helper, const char *document_root,
+                   stock_callback_t callback, void *callback_ctx,
+                   struct async_operation_ref *async_ref)
+{
+    const char *uri;
+    struct delegate_info *info;
+
+    if (document_root != NULL) {
+        uri = p_strcat(pool, helper, "|", document_root, NULL);
+        info = p_malloc(pool, sizeof(*info));
+        info->helper = helper;
+        info->document_root = document_root;
+    } else {
+        uri = helper;
+        info = NULL;
+    }
+
+    hstock_get(delegate_stock, pool, uri, info,
+               callback, callback_ctx, async_ref);
+}
+
+void
+delegate_stock_put(struct hstock *delegate_stock,
+                   struct stock_item *item, bool destroy)
+{
+    struct delegate_process *process = (struct delegate_process *)item;
+
+    hstock_put(delegate_stock, process->uri, item, destroy);
 }
 
 int

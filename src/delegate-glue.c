@@ -18,7 +18,6 @@ struct hstock;
 struct delegate_glue {
     pool_t pool;
 
-    const char *helper;
     const char *path;
 
     struct hstock *stock;
@@ -33,7 +32,7 @@ delegate_socket_release(bool reuse, void *ctx)
 {
     struct delegate_glue *glue = ctx;
 
-    hstock_put(glue->stock, glue->helper, glue->item, !reuse);
+    delegate_stock_put(glue->stock, glue->item, !reuse);
 }
 
 static const struct lease delegate_socket_lease = {
@@ -66,19 +65,19 @@ delegate_stock_callback(void *_ctx, struct stock_item *item)
 
 void
 delegate_stock_open(struct hstock *stock, pool_t pool,
-                    const char *helper, const char *path,
+                    const char *helper, const char *document_root,
+                    const char *path,
                     delegate_callback_t callback, void *ctx,
                     struct async_operation_ref *async_ref)
 {
     struct delegate_glue *glue = p_malloc(pool, sizeof(*glue));
 
     glue->pool = pool;
-    glue->helper = helper;
     glue->path = path;
     glue->stock = stock;
     glue->callback = callback;
     glue->callback_ctx = ctx;
 
-    hstock_get(stock, pool, helper, NULL,
-               delegate_stock_callback, glue, async_ref);
+    delegate_stock_get(stock, pool, helper, document_root,
+                       delegate_stock_callback, glue, async_ref);
 }
