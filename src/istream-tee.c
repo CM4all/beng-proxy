@@ -43,6 +43,13 @@ tee_feed(struct istream_tee *tee, const void *data, size_t length)
            always consume all data; later, buffering should probably be
            added */
         assert(nbytes2 == nbytes1 || (nbytes2 == 0 && !tee->outputs[1].enabled));
+
+        if (nbytes2 == 0 && !tee->outputs[1].enabled &&
+            tee->outputs[0].enabled)
+            /* during the data callback, outputs[1] has been closed,
+               but outputs[0] continues; instead of returning 0 here,
+               use outputs[0]'s result */
+            nbytes2 = nbytes1;
     } else
         nbytes2 = nbytes1;
 

@@ -1,6 +1,8 @@
 cm4all-beng-proxy (0.6.22) unstable; urgency=low
 
   * istream-tee: clear both "enabled" flags in the eof/abort handler
+  * istream-tee: fall back to first data() return value if second stream
+    closed itself
 
  --
 
