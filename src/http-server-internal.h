@@ -55,8 +55,8 @@ struct http_server_connection {
             READ_END
         } read_state;
 
-        /** has the client sent a HTTP/1.1 request? */
-        bool http_1_1;
+        /** has the client sent a HTTP/1.0 request? */
+        bool http_1_0;
 
         /** did the client send an "Expect: 100-continue" header? */
         bool expect_100_continue;

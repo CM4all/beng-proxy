@@ -104,8 +104,8 @@ http_server_parse_request_line(struct http_server_connection *connection,
     connection->request.request->method = method;
     connection->request.request->uri = p_strndup(connection->request.request->pool, line, space - line);
     connection->request.read_state = READ_HEADERS;
-    connection->request.http_1_1 = space + 9 <= line + length &&
-        memcmp(space + 6, "1.1", 3) == 0;
+    connection->request.http_1_0 = space + 9 <= line + length &&
+        space[8] == '0' && space[7] == '.' && space[6] == '1';
 
     /* install the header timeout event when we start reading the
        headers */
@@ -124,7 +124,7 @@ http_server_headers_finished(struct http_server_connection *connection)
 
     value = strmap_get(request->headers, "connection");
     connection->keep_alive =
-        (value == NULL && connection->request.http_1_1) ||
+        (value == NULL && !connection->request.http_1_0) ||
         (value != NULL &&
          strcasecmp(value, "keep-alive") == 0);
 

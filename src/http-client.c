@@ -63,7 +63,11 @@ struct http_client {
          */
         bool no_body;
 
-        bool http_1_1;
+        /**
+         * Has the server sent a HTTP/1.0 response?
+         */
+        bool http_1_0;
+
         http_status_t status;
         struct strmap *headers;
         istream_t body;
@@ -274,17 +278,18 @@ http_client_parse_status_line(struct http_client *client,
     assert(client != NULL);
     assert(client->response.read_state == READ_STATUS);
 
-    if (length > 4 && memcmp(line, "HTTP", 4) == 0) {
-        client->response.http_1_1 = length >= 8 &&
-            memcmp(line + 4, "/1.1", 4) == 0;
+    if (length < 10 || memcmp(line, "HTTP/", 5) != 0 ||
+        (space = memchr(line + 6, ' ', length - 6)) == NULL) {
+        daemon_log(2, "http_client: malformed HTTP status line\n");
+        http_client_abort_response_headers(client);
+        return false;
+    }
 
-        space = memchr(line + 4, ' ', length - 4);
-        if (space != NULL) {
-            length -= space - line + 1;
-            line = space + 1;
-        }
-    } else
-        client->response.http_1_1 = false;
+    client->response.http_1_0 = line[7] == '0' &&
+        line[6] == '.' && line[5] == '1';
+
+    length = line + length - space - 1;
+    line = space + 1;
 
     if (unlikely(length < 3 || !char_is_digit(line[0]) ||
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
@@ -319,7 +324,7 @@ http_client_headers_finished(struct http_client *client)
 
     header_connection = strmap_get(client->response.headers, "connection");
     client->keep_alive =
-        (header_connection == NULL && client->response.http_1_1) ||
+        (header_connection == NULL && !client->response.http_1_0) ||
         (header_connection != NULL &&
          strcasecmp(header_connection, "keep-alive") == 0);
 
