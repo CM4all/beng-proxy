@@ -122,6 +122,8 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
         close(fds[0]);
         close(fds[1]);
 
+        clearenv();
+
         if (document_root != NULL)
             setenv("DOCUMENT_ROOT", document_root, true);
 
