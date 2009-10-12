@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.6.23) unstable; urgency=low
 
   * header-forward: log session information
   * prototypes/translate.py: added /cgi-bin/ location
+  * http-server: disable keep-alive for HTTP/1.0 clients
 
  --
 

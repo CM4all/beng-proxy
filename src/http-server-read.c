@@ -123,10 +123,12 @@ http_server_headers_finished(struct http_server_connection *connection)
     evtimer_del(&connection->timeout);
 
     value = strmap_get(request->headers, "connection");
-    connection->keep_alive =
-        (value == NULL && !connection->request.http_1_0) ||
-        (value != NULL &&
-         strcasecmp(value, "keep-alive") == 0);
+
+    /* we disable keep-alive support on ancient HTTP 1.0, because that
+       feature was not well-defined and led to problems with some
+       clients */
+    connection->keep_alive = !connection->request.http_1_0 &&
+        (value == NULL || strcasecmp(value, "keep-alive") == 0);
 
     value = strmap_get(request->headers, "transfer-encoding");
     if (value == NULL || strcasecmp(value, "chunked") != 0) {
