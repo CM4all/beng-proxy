@@ -100,9 +100,6 @@ http_server_parse_request_line(struct http_server_connection *connection,
         return;
     }
 
-    if (unlikely(space == NULL))
-        space = eol;
-
     connection->request.request = http_server_request_new(connection);
     connection->request.request->method = method;
     connection->request.request->uri = p_strndup(connection->request.request->pool, line, space - line);
