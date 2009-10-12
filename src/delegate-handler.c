@@ -119,6 +119,7 @@ delegate_handler(struct request *request2)
     delegate_stock_open(global_delegate_stock, request->pool,
                         tr->address.u.local.delegate,
                         tr->address.u.local.document_root,
+                        tr->address.u.local.jail,
                         tr->address.u.local.path,
                         delegate_handler_callback, request2,
                         request2->async_ref);

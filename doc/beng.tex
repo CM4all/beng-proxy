@@ -210,7 +210,8 @@ similar to the translation protocol.  The file descriptor is sent to
 If the \texttt{DELEGATE} translation packet was followed by a
 \texttt{DOCUMENT\_ROOT} packet, then all helper processes are grouped
 by their document root, and text \texttt{DOCUMENT\_ROOT} environment
-variable is set.
+variable is set.  In this case, it is possible to run the delegate
+helper inside JailCGI by specifying the \texttt{JAILCGI} packet.
 
 \subsection{HTTP proxying}
 \label{http}

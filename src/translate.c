@@ -629,13 +629,19 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_JAILCGI:
-        if (client->resource_address == NULL ||
-            client->resource_address->type != RESOURCE_ADDRESS_CGI) {
+        if (client->resource_address != NULL &&
+            client->resource_address->type == RESOURCE_ADDRESS_CGI)
+            client->resource_address->u.cgi.jail = true;
+        else if (client->resource_address != NULL &&
+                 client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
+                 client->resource_address->u.local.delegate != NULL &&
+                 client->resource_address->u.local.document_root != NULL)
+            client->resource_address->u.local.jail = true;
+        else {
             daemon_log(2, "misplaced TRANSLATE_JAILCGI packet\n");
             break;
         }
 
-        client->resource_address->u.cgi.jail = true;
         break;
 
     case TRANSLATE_INTERPRETER:

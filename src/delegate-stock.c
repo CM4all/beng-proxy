@@ -24,6 +24,8 @@ struct delegate_info {
     const char *helper;
 
     const char *document_root;
+
+    bool jail;
 };
 
 struct delegate_process {
@@ -91,14 +93,17 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     int ret, fds[2];
     pid_t pid;
     const char *helper, *document_root;
+    bool jail;
 
     if (_info != NULL) {
         struct delegate_info *info = _info;
         helper = info->helper;
         document_root = info->document_root;
+        jail = info->jail;
     } else {
         helper = uri;
         document_root = NULL;
+        jail = false;
     }
 
     ret = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
@@ -126,6 +131,16 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
 
         if (document_root != NULL)
             setenv("DOCUMENT_ROOT", document_root, true);
+
+        if (jail) {
+            /* jailcgi-wrapper expects to be run as CGI...  faking
+               this here until JailCGI has a dedicated program for
+               this */
+            setenv("GATEWAY_INTERFACE", "CGI", true);
+
+            setenv("JAILCGI_FILENAME", helper, true);
+            helper = "/usr/lib/cm4all/jailcgi/bin/wrapper";
+        }
 
         execl(helper, helper, NULL);
         _exit(1);
@@ -205,6 +220,7 @@ delegate_stock_new(pool_t pool)
 void
 delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
                    const char *helper, const char *document_root,
+                   bool jail,
                    stock_callback_t callback, void *callback_ctx,
                    struct async_operation_ref *async_ref)
 {
@@ -212,10 +228,12 @@ delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
     struct delegate_info *info;
 
     if (document_root != NULL) {
-        uri = p_strcat(pool, helper, "|", document_root, NULL);
+        uri = p_strcat(pool, helper, "|", document_root,
+                       jail ? "|jail" : NULL, NULL);
         info = p_malloc(pool, sizeof(*info));
         info->helper = helper;
         info->document_root = document_root;
+        info->jail = jail;
     } else {
         uri = helper;
         info = NULL;

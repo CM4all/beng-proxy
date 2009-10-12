@@ -34,6 +34,11 @@ struct resource_address {
             const char *content_type;
             const char *delegate;
             const char *document_root;
+
+            /**
+             * Should the delegate be jailed?
+             */
+            bool jail;
         } local;
 
         struct uri_with_address *http;
