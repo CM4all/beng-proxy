@@ -9,6 +9,10 @@
 #include "session.h"
 #include "cookie-client.h"
 
+#ifndef NDEBUG
+#include <daemon/log.h>
+#endif
+
 static const char *const request_headers[] = {
     "accept",
     "from",
@@ -53,6 +57,18 @@ forward_request_headers(pool_t pool, struct strmap *src,
 {
     struct strmap *dest;
     const char *p;
+
+#ifndef NDEBUG
+    if (session != NULL && daemon_log_config.verbose >= 10)
+        daemon_log(10, "forward_request_headers remote_host='%s' "
+                   "host='%s' uri='%s' session=%p user='%s' cookie='%s'\n",
+                   remote_host, host_and_port, uri,
+                   (const void *)session, session->user,
+                   host_and_port != NULL && uri != NULL
+                   ? cookie_jar_http_header_value(session->cookies,
+                                                  host_and_port, uri, pool)
+                   : NULL);
+#endif
 
     dest = strmap_new(pool, 32);
 
