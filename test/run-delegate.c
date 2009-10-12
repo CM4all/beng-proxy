@@ -48,7 +48,8 @@ int main(int argc, char **argv)
     delegate_stock = delegate_stock_new(root_pool);
     pool = pool_new_linear(root_pool, "test", 8192);
 
-    delegate_stock_open(delegate_stock, pool, helper_path, NULL, argv[1],
+    delegate_stock_open(delegate_stock, pool, helper_path, NULL, false,
+                        argv[1],
                         my_delegate_callback, NULL, &my_async_ref);
 
     event_dispatch();
