@@ -116,7 +116,7 @@ delegate_try_read(struct delegate_client *d)
     if (header.command != 0) {
         /* i/o error */
 
-        lease_release(&d->lease_ref, false);
+        lease_release(&d->lease_ref, true);
 
         d->callback(-header.command, d->callback_ctx);
         pool_unref(d->pool);
