@@ -12,6 +12,7 @@ from beng_proxy.translation import *
 
 widgets_path = '/etc/cm4all/beng/widgets'
 helpers_path = '/usr/bin'
+cgi_path = '/usr/lib/cgi-bin'
 test_path = os.path.join(os.getcwd(), 'test')
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
@@ -135,6 +136,8 @@ class Translation(Protocol):
                 from os.path import abspath, dirname, join
                 path = join(dirname(dirname(abspath(argv[0]))), 'js/')
             self._handle_local_file(path + uri[19:], response)
+        elif uri[:9] == '/cgi-bin/':
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, uri[9:]))
         elif uri[:11] == '/cfatest01/':
             response.proxy('http://cfatest01.intern.cm-ag/' + uri[11:])
         elif uri[:5] == '/ajp/':
@@ -217,6 +220,7 @@ if __name__ == '__main__':
         import os
         widgets_path = 'demo/widgets'
         helpers_path = os.path.join(os.getcwd(), 'src')
+        cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
 
     if len(argv) >= 2:
         path = argv[1]
