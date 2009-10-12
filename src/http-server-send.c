@@ -126,8 +126,6 @@ http_server_response(const struct http_server_request *request,
 
     header_write(headers, "connection",
                  connection->keep_alive ? "keep-alive" : "close");
-    if (connection->keep_alive)
-        header_write(headers, "keep-alive", "timeout=60");
 
     growing_buffer_write_buffer(headers, "\r\n", 2);
 
