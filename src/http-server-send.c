@@ -124,8 +124,8 @@ http_server_response(const struct http_server_request *request,
 #endif
 #endif
 
-    header_write(headers, "connection",
-                 connection->keep_alive ? "keep-alive" : "close");
+    if (!connection->keep_alive && !connection->request.http_1_0)
+        header_write(headers, "connection", "close");
 
     growing_buffer_write_buffer(headers, "\r\n", 2);
 
