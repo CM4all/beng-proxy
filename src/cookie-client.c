@@ -294,10 +294,10 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
     /* XXX log error */
 }
 
-void
-cookie_jar_http_header(struct cookie_jar *jar,
-                       const char *domain, const char *path,
-                       struct strmap *headers, pool_t pool)
+char *
+cookie_jar_http_header_value(struct cookie_jar *jar,
+                             const char *domain, const char *path,
+                             pool_t pool)
 {
     static const size_t buffer_size = 4096;
     char *buffer;
@@ -306,12 +306,13 @@ cookie_jar_http_header(struct cookie_jar *jar,
     struct pool_mark mark;
     struct timespec now;
     int ret;
+    char *value;
 
     assert(domain != NULL);
     assert(path != NULL);
 
     if (list_empty(&jar->cookies))
-        return;
+        return NULL;
 
     pool_mark(tpool, &mark);
     buffer = p_malloc(tpool, buffer_size);
@@ -320,7 +321,7 @@ cookie_jar_http_header(struct cookie_jar *jar,
 
     ret = clock_gettime(CLOCK_MONOTONIC, &now);
     if (ret < 0)
-        return;
+        return NULL;
 
     for (cookie = (struct cookie *)jar->cookies.next;
          &cookie->siblings != &jar->cookies;
@@ -354,10 +355,24 @@ cookie_jar_http_header(struct cookie_jar *jar,
         }
     }
 
-    if (length > 0) {
-        strmap_add(headers, "cookie2", "$Version=\"1\"");
-        strmap_add(headers, "cookie", p_strndup(pool, buffer, length));
-    }
-   
+    if (length > 0)
+        value = p_strndup(pool, buffer, length);
+    else
+        value = NULL;
+
     pool_rewind(tpool, &mark);
+    return value;
+}
+
+void
+cookie_jar_http_header(struct cookie_jar *jar,
+                       const char *domain, const char *path,
+                       struct strmap *headers, pool_t pool)
+{
+    char *cookie = cookie_jar_http_header_value(jar, domain, path, pool);
+
+    if (cookie != NULL) {
+        strmap_add(headers, "cookie2", "$Version=\"1\"");
+        strmap_add(headers, "cookie", cookie);
+    }
 }

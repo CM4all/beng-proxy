@@ -31,6 +31,14 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
                        const char *domain);
 
 /**
+ * Generate the HTTP request header for cookies in the jar.
+ */
+char *
+cookie_jar_http_header_value(struct cookie_jar *jar,
+                             const char *domain, const char *path,
+                             pool_t pool);
+
+/**
  * Generate HTTP request headers passing for all cookies in the linked
  * list.
  */
