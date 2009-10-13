@@ -61,9 +61,9 @@ forward_request_headers(pool_t pool, struct strmap *src,
 #ifndef NDEBUG
     if (session != NULL && daemon_log_config.verbose >= 10)
         daemon_log(10, "forward_request_headers remote_host='%s' "
-                   "host='%s' uri='%s' session=%p user='%s' cookie='%s'\n",
+                   "host='%s' uri='%s' session=%x user='%s' cookie='%s'\n",
                    remote_host, host_and_port, uri,
-                   (const void *)session, session->user,
+                   session->id, session->user,
                    host_and_port != NULL && uri != NULL
                    ? cookie_jar_http_header_value(session->cookies,
                                                   host_and_port, uri, pool)
