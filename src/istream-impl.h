@@ -10,6 +10,7 @@
 
 #include <stdbool.h>
 
+struct stat;
 struct async_operation;
 struct cache;
 struct cache_item;
@@ -40,6 +41,12 @@ istream_string_new(pool_t pool, const char *s);
 
 istream_t
 istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length);
+
+/**
+ * Opens a file and stats it.
+ */
+istream_t
+istream_file_stat_new(pool_t pool, const char *path, struct stat *st);
 
 istream_t __attr_malloc
 istream_file_new(pool_t pool, const char *path, off_t length);

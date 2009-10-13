@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -298,6 +299,34 @@ istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length)
     file->path = path;
 
     return istream_struct_cast(&file->stream);
+}
+
+istream_t
+istream_file_stat_new(pool_t pool, const char *path, struct stat *st)
+{
+    int fd, ret;
+
+    assert(path != NULL);
+    assert(st != NULL);
+
+    fd = open(path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
+    if (fd < 0) {
+        daemon_log(1, "failed to open '%s': %s\n",
+                   path, strerror(errno));
+        return NULL;
+    }
+
+    ret = fstat(fd, st);
+    if (ret < 0) {
+        int save_errno = errno;
+        daemon_log(1, "failed to stat '%s': %s\n",
+                   path, strerror(errno));
+        close(fd);
+        errno = save_errno;
+        return NULL;
+    }
+
+    return istream_file_fd_new(pool, path, fd, st->st_size);
 }
 
 istream_t
