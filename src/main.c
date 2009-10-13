@@ -215,7 +215,7 @@ int main(int argc, char **argv)
     int __attr_unused ref;
     static struct instance instance = {
         .config = {
-            .max_connections = 1024,
+            .max_connections = 8192,
             .http_cache_size = 512 * 1024 * 1024,
             .filter_cache_size = 128 * 1024 * 1024,
             .translate_cache_size = 131072,
