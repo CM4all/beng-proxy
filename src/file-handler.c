@@ -320,7 +320,6 @@ file_callback(struct request *request2)
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
     const char *path;
-    int ret;
     istream_t body;
     struct stat st;
     struct file_request file_request = {
@@ -343,10 +342,10 @@ file_callback(struct request *request2)
         return;
     }
 
-    /* get file information */
+    /* open the file */
 
-    ret = lstat(path, &st);
-    if (ret != 0) {
+    body = istream_file_stat_new(request->pool, path, &st);
+    if (body == NULL) {
         if (errno == ENOENT) {
             request_discard_body(request2);
             http_server_send_message(request,
@@ -361,7 +360,10 @@ file_callback(struct request *request2)
         return;
     }
 
+    /* check file type */
+
     if (!S_ISREG(st.st_mode)) {
+        istream_close(body);
         request_discard_body(request2);
         http_server_send_message(request,
                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -377,22 +379,6 @@ file_callback(struct request *request2)
         return;
 
     /* build the response */
-
-    body = istream_file_new(request->pool, path, file_request.size);
-    if (body == NULL) {
-        if (errno == ENOENT) {
-            request_discard_body(request2);
-            http_server_send_message(request,
-                                     HTTP_STATUS_NOT_FOUND,
-                                     "The requested file does not exist.");
-        } else {
-            request_discard_body(request2);
-            http_server_send_message(request,
-                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                     "Internal server error");
-        }
-        return;
-    }
 
     file_dispatch(request2, &st, &file_request, body);
 }
