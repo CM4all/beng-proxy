@@ -13,6 +13,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
 {
 #ifndef NDEBUG
     struct pool_notify notify;
+    const struct istream_handler *handler; /* for post-mortem debugging */
 #endif
     size_t nbytes;
 
@@ -28,6 +29,8 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
            (off_t)length <= istream->available_full);
 
 #ifndef NDEBUG
+    handler = istream->handler;
+
     pool_notify(istream->pool, &notify);
     istream->in_data = true;
 #endif
@@ -66,6 +69,7 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
 {
 #ifndef NDEBUG
     struct pool_notify notify;
+    const struct istream_handler *handler; /* for post-mortem debugging */
 #endif
     ssize_t nbytes;
 
@@ -79,6 +83,8 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
     assert(!istream->eof);
 
 #ifndef NDEBUG
+    handler = istream->handler;
+
     pool_notify(istream->pool, &notify);
     istream->in_data = true;
 #endif
