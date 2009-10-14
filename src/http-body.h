@@ -64,7 +64,8 @@ http_body_consume_body(struct http_body_reader *body,
                        struct fifo_buffer *buffer);
 
 ssize_t
-http_body_try_direct(struct http_body_reader *body, int fd);
+http_body_try_direct(struct http_body_reader *body, int fd,
+                     enum istream_direct fd_type);
 
 /**
  * The underlying socket has been closed by the remote.  Handle the

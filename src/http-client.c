@@ -34,6 +34,7 @@ struct http_client {
 
     /* I/O */
     int fd;
+    enum istream_direct fd_type;
     struct lease_ref lease_ref;
     struct event2 event;
     fifo_buffer_t input;
@@ -573,7 +574,8 @@ http_client_try_response_direct(struct http_client *client)
     assert(client->fd >= 0);
     assert(client->response.read_state == READ_BODY);
 
-    nbytes = http_body_try_direct(&client->response.body_reader, client->fd);
+    nbytes = http_body_try_direct(&client->response.body_reader,
+                                  client->fd, client->fd_type);
     if (nbytes < 0) {
         /* XXX EAGAIN? */
         daemon_log(1, "htt_client: read error (%s)\n", strerror(errno));
@@ -630,7 +632,7 @@ http_client_try_read(struct http_client *client)
     bool bret;
 
     if (client->response.read_state == READ_BODY &&
-        (client->response.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) {
+        (client->response.body_reader.output.handler_direct & client->fd_type) != 0) {
         if (!fifo_buffer_empty(client->input)) {
             /* there is still data in the body, which we have to
                consume before we do direct splice() */
@@ -771,7 +773,7 @@ static const struct async_operation_class http_client_async_operation = {
  */
 
 void
-http_client_request(pool_t caller_pool, int fd,
+http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     struct growing_buffer *headers,
@@ -799,6 +801,7 @@ http_client_request(pool_t caller_pool, int fd,
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
     client->fd = fd;
+    client->fd_type = fd_type;
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
 
     client->response.read_state = READ_NONE;

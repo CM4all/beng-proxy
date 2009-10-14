@@ -183,7 +183,7 @@ static void
 test_empty(pool_t pool, struct context *c)
 {
     c->fd = connect_mirror();
-    http_client_request(pool, c->fd, &my_lease, c,
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL, NULL,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
@@ -203,7 +203,7 @@ static void
 test_body(pool_t pool, struct context *c)
 {
     c->fd = connect_mirror();
-    http_client_request(pool, c->fd, &my_lease, c,
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
@@ -226,7 +226,7 @@ test_close_response_body_early(pool_t pool, struct context *c)
 {
     c->close_response_body_early = true;
     c->fd = connect_mirror();
-    http_client_request(pool, c->fd, &my_lease, c,
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
@@ -248,7 +248,7 @@ test_close_response_body_late(pool_t pool, struct context *c)
 {
     c->close_response_body_late = true;
     c->fd = connect_mirror();
-    http_client_request(pool, c->fd, &my_lease, c,
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
@@ -270,7 +270,7 @@ test_close_response_body_data(pool_t pool, struct context *c)
 {
     c->close_response_body_data = true;
     c->fd = connect_mirror();
-    http_client_request(pool, c->fd, &my_lease, c,
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);
@@ -296,7 +296,7 @@ test_close_request_body_early(pool_t pool, struct context *c)
     istream_t request_body = istream_block_new(pool);
 
     c->fd = connect_mirror();
-    http_client_request(pool, c->fd, &my_lease, c,
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
                         request_body,
                         &my_response_handler, c, &c->async_ref);
@@ -319,7 +319,7 @@ test_data_blocking(pool_t pool, struct context *c)
 {
     c->data_blocking = 5;
     c->fd = connect_mirror();
-    http_client_request(pool, c->fd, &my_lease, c,
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_head_new(pool, istream_zero_new(pool), 65536),
                         &my_response_handler, c, &c->async_ref);
@@ -351,7 +351,7 @@ static void
 test_body_fail(pool_t pool, struct context *c)
 {
     c->fd = connect_mirror();
-    http_client_request(pool, c->fd, &my_lease, c,
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_fail_new(pool),
                         &my_response_handler, c, &c->async_ref);
@@ -368,7 +368,7 @@ static void
 test_head(pool_t pool, struct context *c)
 {
     c->fd = connect_mirror();
-    http_client_request(pool, c->fd, &my_lease, c,
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_HEAD, "/foo", NULL,
                         istream_string_new(pool, "foobar"),
                         &my_response_handler, c, &c->async_ref);

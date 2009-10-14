@@ -122,7 +122,7 @@ http_server_timeout_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 void
-http_server_connection_new(pool_t pool, int fd,
+http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
                            const char *remote_host,
@@ -144,6 +144,7 @@ http_server_connection_new(pool_t pool, int fd,
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
     connection->fd = fd;
+    connection->fd_type = fd_type,
     connection->handler = handler;
     connection->handler_ctx = ctx;
     connection->local_address = local_address != NULL

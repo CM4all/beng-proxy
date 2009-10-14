@@ -18,6 +18,7 @@ struct http_server_connection {
 
     /* I/O */
     int fd;
+    enum istream_direct fd_type;
     struct event2 event;
     fifo_buffer_t input;
 

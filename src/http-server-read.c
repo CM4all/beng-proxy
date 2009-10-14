@@ -318,7 +318,8 @@ http_server_try_request_direct(struct http_server_connection *connection)
     if (!http_server_connection_valid(connection))
         return;
 
-    nbytes = http_body_try_direct(&connection->request.body_reader, connection->fd);
+    nbytes = http_body_try_direct(&connection->request.body_reader,
+                                  connection->fd, connection->fd_type);
     if (nbytes < 0) {
         /* XXX EAGAIN? */
         daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
@@ -336,7 +337,7 @@ void
 http_server_try_read(struct http_server_connection *connection)
 {
     if (connection->request.read_state == READ_BODY &&
-        (connection->request.body_reader.output.handler_direct & ISTREAM_SOCKET) != 0) {
+        (connection->request.body_reader.output.handler_direct & connection->fd_type) != 0) {
         if (fifo_buffer_empty(connection->input))
             http_server_try_request_direct(connection);
         else

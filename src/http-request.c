@@ -74,6 +74,7 @@ http_request_stock_callback(void *ctx, struct stock_item *item)
 
         http_client_request(hr->pool,
                             tcp_stock_item_get(item),
+                            ISTREAM_SOCKET,
                             &http_socket_lease, hr,
                             hr->method, hr->uri, hr->headers, hr->body,
                             hr->handler.handler, hr->handler.ctx,

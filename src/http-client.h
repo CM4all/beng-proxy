@@ -17,7 +17,7 @@ struct http_response_handler;
 struct async_operation_ref;
 
 void
-http_client_request(pool_t pool, int fd,
+http_client_request(pool_t pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     struct growing_buffer *headers,

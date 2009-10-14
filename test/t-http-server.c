@@ -44,7 +44,7 @@ test_catch(pool_t pool)
     socket = istream_socketpair_new(pool, request, &fd);
     sink_null_new(socket);
 
-    http_server_connection_new(pool, fd,
+    http_server_connection_new(pool, fd, ISTREAM_SOCKET,
                                NULL, 0,
                                "localhost", &catch_close_handler, NULL,
                                &connection);

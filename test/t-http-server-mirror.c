@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
         exit(2);
     }
 
-    http_server_connection_new(pool, sockfd,
+    http_server_connection_new(pool, sockfd, ISTREAM_SOCKET,
                                NULL, 0,
                                "localhost", &handler, NULL,
                                &connection);

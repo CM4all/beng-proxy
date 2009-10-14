@@ -56,16 +56,17 @@ http_body_consume_body(struct http_body_reader *body,
 }
 
 ssize_t
-http_body_try_direct(struct http_body_reader *body, int fd)
+http_body_try_direct(struct http_body_reader *body, int fd,
+                     enum istream_direct fd_type)
 {
     ssize_t nbytes;
 
     assert(fd >= 0);
-    assert(body->output.handler_direct & ISTREAM_SOCKET);
+    assert(body->output.handler_direct & fd_type);
     assert(body->output.handler->direct != NULL);
 
     nbytes = istream_invoke_direct(&body->output,
-                                   ISTREAM_SOCKET, fd,
+                                   fd_type, fd,
                                    http_body_max_read(body, INT_MAX));
     if (nbytes > 0)
         http_body_consumed(body, (size_t)nbytes);

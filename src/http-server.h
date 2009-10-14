@@ -46,7 +46,7 @@ struct http_server_connection_handler {
 
 
 void
-http_server_connection_new(pool_t pool, int fd,
+http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
                            const char *remote_host,
