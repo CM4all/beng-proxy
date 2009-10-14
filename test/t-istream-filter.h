@@ -1,3 +1,5 @@
+#include "direct.h"
+
 #include <event.h>
 
 #include <stdio.h>
@@ -479,6 +481,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    direct_global_init();
     event_base = event_init();
 
     root_pool = pool_new_libc(NULL, "root");
@@ -517,4 +520,5 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     event_base_free(event_base);
+    direct_global_deinit();
 }

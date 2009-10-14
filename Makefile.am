@@ -342,6 +342,7 @@ test_t_expansible_buffer_SOURCES = test/t-expansible-buffer.c \
 test_t_expansible_buffer_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
 T_ISTREAM_FILTER_SRC = $(ISTREAM_SRC) \
+	src/direct.c \
 	src/buffered-io.c src/event2.c \
 	src/growing-buffer.c src/fd-util.c src/socket-util.c
 T_ISTREAM_FILTER_LIB = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) -lz
@@ -447,6 +448,7 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
 	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
+	src/direct.c \
 	src/http-body.c src/date.c \
 	src/fd-util.c src/socket-util.c \
 	src/growing-buffer.c \
@@ -471,6 +473,7 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
 	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
+	src/direct.c \
 	src/http-body.c src/date.c \
 	src/fd-util.c src/socket-util.c \
 	src/growing-buffer.c \

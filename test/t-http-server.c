@@ -1,5 +1,6 @@
 #include "http-server.h"
 #include "sink-impl.h"
+#include "direct.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +61,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    direct_global_init();
     event_base = event_init();
 
     pool = pool_new_libc(NULL, "root");
@@ -71,4 +73,5 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     event_base_free(event_base);
+    direct_global_deinit();
 }

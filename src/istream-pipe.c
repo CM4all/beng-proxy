@@ -8,6 +8,7 @@
 
 #include "istream-internal.h"
 #include "fd-util.h"
+#include "direct.h"
 
 #include <daemon/log.h>
 
@@ -17,16 +18,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-/* XXX ISTREAM_SOCKET is not yet supported by Linux 2.6.23 */
-#define SPLICE_SOURCE_TYPES (ISTREAM_FILE | ISTREAM_PIPE)
-
 struct istream_pipe {
     struct istream output;
     istream_t input;
     int fds[2];
     size_t piped;
 };
-
 
 static void
 pipe_close(struct istream_pipe *p)
@@ -129,7 +126,7 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
            need for wrapping it into a pipe */
         return istream_invoke_direct(&p->output, type, fd, max_length);
 
-    assert((type & SPLICE_SOURCE_TYPES) == type);
+    assert((type & ISTREAM_TO_PIPE) == type);
 
     if (p->fds[1] < 0) {
         int ret;
@@ -222,7 +219,7 @@ istream_pipe_read(istream_t istream)
 
     /* XXX is this update required? */
     istream_handler_set_direct(p->input,
-                               p->output.handler_direct | SPLICE_SOURCE_TYPES);
+                               p->output.handler_direct | ISTREAM_TO_PIPE);
 
     if (unlikely(p->input == NULL)) {
         assert(p->piped > 0);
@@ -266,7 +263,7 @@ istream_pipe_new(pool_t pool, istream_t input)
 
     istream_assign_handler(&p->input, input,
                            &pipe_input_handler, p,
-                           SPLICE_SOURCE_TYPES);
+                           ISTREAM_TO_PIPE);
 
     return istream_struct_cast(&p->output);
 }
