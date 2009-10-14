@@ -34,7 +34,9 @@ struct istream_handler {
      * @param data the buffer
      * @param length the number of bytes available in the buffer, greater than 0
      * @param ctx the istream_handler context pointer
-     * @return the number of bytes consumed
+     * @return the number of bytes consumed, 0 if writing would block
+     * (caller is responsible for registering an event) or if the
+     * stream has been closed
      */
     size_t (*data)(const void *data, size_t length, void *ctx);
 
@@ -46,8 +48,10 @@ struct istream_handler {
      * @param fd the file descriptor
      * @param max_length don't read more than this number of bytes
      * @param ctx the istream_handler context pointer
-     * @return the number of bytes consumed, -1 on error (errno set),
-     *   -2 if writing would block
+     * @return the number of bytes consumed, 0 if there is no more
+     * data in the provided file descriptor, -1 on unhandled error
+     * (errno set), -2 if writing would block (caller is responsible
+     * for registering an event)
      */
     ssize_t (*direct)(istream_direct_t type, int fd, size_t max_length, void *ctx);
 
