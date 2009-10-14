@@ -8,55 +8,54 @@
 
 #include <unistd.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #ifdef __linux
 #ifdef SPLICE
 
-static int dev_null = -1;
+unsigned ISTREAM_TO_PIPE = ISTREAM_FILE;
 
-/** is splicing between two pipes supported by the kernel? */
-static bool pipe_to_pipe_supported = true;
-
-ssize_t
-istream_direct_pipe_to_pipe(int src_fd, int dest_fd, size_t max_length)
+/**
+ * Checks whether the kernel supports splice() between the two
+ * specified file handle types.
+ */
+static bool
+splice_supported(int src, int dest)
 {
-    ssize_t nbytes;
+    return splice(src, NULL, dest, NULL, 1, SPLICE_F_NONBLOCK) >= 0 ||
+        errno != EINVAL;
+}
 
-    if (pipe_to_pipe_supported) {
-        nbytes = splice(src_fd, NULL, dest_fd, NULL, max_length,
-                        /* SPLICE_F_NONBLOCK | */ SPLICE_F_MORE | SPLICE_F_MOVE);
-        if (nbytes != -1 || errno != EINVAL)
-            return nbytes;
+void
+direct_global_init(void)
+{
+    int a[2], b[2];
 
-        pipe_to_pipe_supported = false;
-    }
+    /* create a pipe and feed some data into it */
 
-    /* splice() between two pipes is not supported by the kernel:
-       tee() should always work though, because it is only defined for
-       pipes.  We play a trick now: */
+    if (pipe(a) < 0)
+        abort();
 
-    if (dev_null < 0) {
-        dev_null = open("/dev/null", O_WRONLY);
-        if (dev_null < 0)
-            return -1;
-    }
+    /* check splice(pipe, pipe) */
 
-    /* first duplicate the buffers with tee() .. */
-    nbytes = tee(src_fd, dest_fd, max_length,
-                 /* SPLICE_F_NONBLOCK | */ SPLICE_F_MORE);
-    if (nbytes <= 0)
-        return nbytes;
+    if (pipe(b) < 0)
+        abort();
 
-    /* .. then discard the original version with splice() to
-       /dev/null */
+    if (splice_supported(a[0], b[1]))
+        ISTREAM_TO_PIPE |= ISTREAM_PIPE;
 
-    /* XXX check for splice() errors? */
-    splice(src_fd, NULL, dev_null, NULL, (size_t)nbytes, SPLICE_F_MOVE);
+    close(b[0]);
+    close(b[1]);
 
-    /* for a better solution, see
-       http://lkml.org/lkml/2009/4/30/164 */
+    /* cleanup */
 
-    return nbytes;
+    close(a[0]);
+    close(a[1]);
+}
+
+void
+direct_global_deinit(void)
+{
 }
 
 #endif /* #ifdefSPLICE */

@@ -18,9 +18,16 @@
 #ifdef SPLICE
 
 enum {
-    ISTREAM_TO_PIPE = ISTREAM_FILE | ISTREAM_PIPE,
     ISTREAM_TO_SOCKET = ISTREAM_FILE | ISTREAM_PIPE,
 };
+
+extern unsigned ISTREAM_TO_PIPE;
+
+void
+direct_global_init(void);
+
+void
+direct_global_deinit(void);
 
 #else /* !SPLICE */
 
@@ -60,17 +67,13 @@ static inline int
 istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
                        int dest_fd, size_t max_length)
 {
-#ifdef SPLICE
-    if (src_type == ISTREAM_PIPE) {
-        return istream_direct_pipe_to_pipe(src_fd, dest_fd, max_length);
-    } else {
-#endif
-        (void)src_type;
+    (void)src_type;
 
-        return splice(src_fd, NULL, dest_fd, NULL, max_length,
-                      /* SPLICE_F_NONBLOCK | */ SPLICE_F_MORE | SPLICE_F_MOVE);
 #ifdef SPLICE
-    }
+    return splice(src_fd, NULL, dest_fd, NULL, max_length,
+                  /* SPLICE_F_NONBLOCK | */ SPLICE_F_MORE | SPLICE_F_MOVE);
+#else
+    return -1;
 #endif
 }
 
@@ -82,5 +85,15 @@ enum {
 };
 
 #endif /* !__linux */
+
+#if !defined(__linux) || !defined(SPLICE)
+
+static inline void
+direct_global_init(void) {}
+
+static inline void
+direct_global_deinit(void) {}
+
+#endif
 
 #endif

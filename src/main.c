@@ -5,6 +5,7 @@
  */
 
 #include "tpool.h"
+#include "direct.h"
 #include "instance.h"
 #include "worker.h"
 #include "connection.h"
@@ -227,6 +228,8 @@ int main(int argc, char **argv)
         debug_mode = true;
 #endif
 
+    direct_global_init();
+
     instance.pool = pool_new_libc(NULL, "global");
     tpool_init(instance.pool);
 
@@ -353,4 +356,6 @@ int main(int argc, char **argv)
     pool_recycler_clear();
 
     daemonize_cleanup();
+
+    direct_global_deinit();
 }
