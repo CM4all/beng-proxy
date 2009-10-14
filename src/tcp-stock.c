@@ -262,10 +262,10 @@ tcp_stock_new(pool_t pool, struct balancer *balancer)
 }
 
 int
-tcp_stock_item_get(struct stock_item *item)
+tcp_stock_item_get(const struct stock_item *item)
 {
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)item;
+    const struct tcp_stock_connection *connection =
+        (const struct tcp_stock_connection *)item;
 
     assert(item != NULL);
 
