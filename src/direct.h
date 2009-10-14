@@ -19,6 +19,7 @@
 
 enum {
     ISTREAM_TO_SOCKET = ISTREAM_FILE | ISTREAM_PIPE,
+    ISTREAM_TO_TCP = ISTREAM_FILE | ISTREAM_PIPE,
 };
 
 extern unsigned ISTREAM_TO_PIPE;
@@ -34,6 +35,7 @@ direct_global_deinit(void);
 enum {
     ISTREAM_TO_PIPE = 0,
     ISTREAM_TO_SOCKET = ISTREAM_FILE,
+    ISTREAM_TO_TCP = ISTREAM_FILE,
 }
 
 #endif /* !SPLICE */
@@ -82,6 +84,7 @@ istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
 enum {
     ISTREAM_TO_PIPE = 0,
     ISTREAM_TO_SOCKET = 0,
+    ISTREAM_TO_TCP = 0,
 };
 
 #endif /* !__linux */

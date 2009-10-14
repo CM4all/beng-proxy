@@ -30,7 +30,7 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
                                                       "100 Continue\r\n\r\n");
     istream_handler_set(connection->response.istream,
                         &http_server_response_stream_handler, connection,
-                        ISTREAM_TO_SOCKET);
+                        ISTREAM_TO_TCP);
 
     connection->response.writing_100_continue = true;
 
@@ -154,7 +154,7 @@ http_server_response(const struct http_server_request *request,
     connection->response.istream = body;
     istream_handler_set(connection->response.istream,
                         &http_server_response_stream_handler, connection,
-                        ISTREAM_TO_SOCKET);
+                        ISTREAM_TO_TCP);
 
     connection->response.writing_100_continue = false;
 

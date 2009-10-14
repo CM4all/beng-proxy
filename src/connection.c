@@ -118,7 +118,7 @@ http_listener_callback(int fd,
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;
 
-    http_server_connection_new(pool, fd, ISTREAM_SOCKET,
+    http_server_connection_new(pool, fd, ISTREAM_TCP,
                                local_address_length > 0
                                ? (const struct sockaddr *)&local_address
                                : NULL,
