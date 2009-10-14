@@ -7,6 +7,7 @@
 #include "direct.h"
 
 #include <unistd.h>
+#include <sys/socket.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -29,7 +30,7 @@ splice_supported(int src, int dest)
 void
 direct_global_init(void)
 {
-    int a[2], b[2];
+    int a[2], b[2], fd;
 
     /* create a pipe and feed some data into it */
 
@@ -46,6 +47,27 @@ direct_global_init(void)
 
     close(b[0]);
     close(b[1]);
+
+    /* check splice(AF_LOCAL, pipe) */
+    /* (unsupported in Linux 2.6.31) */
+
+    fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+    if (fd >= 0) {
+        if (splice_supported(fd, a[1]))
+            ISTREAM_TO_PIPE |= ISTREAM_SOCKET;
+
+        close(fd);
+    }
+
+    /* check splice(TCP, pipe) */
+
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd >= 0) {
+        if (splice_supported(fd, a[1]))
+            ISTREAM_TO_PIPE |= ISTREAM_TCP;
+
+        close(fd);
+    }
 
     /* cleanup */
 
