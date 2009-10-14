@@ -25,7 +25,7 @@ enum {
 #else /* !SPLICE */
 
 enum {
-    ISTREAM_TO_PIPE = ISTREAM_FILE,
+    ISTREAM_TO_PIPE = 0,
     ISTREAM_TO_SOCKET = ISTREAM_FILE,
 }
 
