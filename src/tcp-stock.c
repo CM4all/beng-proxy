@@ -32,7 +32,7 @@ struct tcp_stock_connection {
 
     struct async_operation_ref client_socket;
 
-    int fd;
+    int fd, domain;
 
     struct event event;
 };
@@ -171,6 +171,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
         connection->addr = NULL;
 
     if (connection->addr != NULL) {
+        connection->domain = connection->addr->sa_family;
         client_socket_new(caller_pool,
                           connection->addr->sa_family, SOCK_STREAM, 0,
                           connection->addr, connection->addrlen,
@@ -195,6 +196,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
         sun.sun_family = AF_UNIX;
         memcpy(sun.sun_path, uri, path_length + 1);
 
+        connection->domain = connection->addr->sa_family;
         client_socket_new(caller_pool,
                           PF_UNIX, SOCK_STREAM, 0,
                           (const struct sockaddr*)&sun, sizeof(sun),
@@ -272,3 +274,14 @@ tcp_stock_item_get(const struct stock_item *item)
     return connection->fd;
 }
 
+int
+tcp_stock_item_get_domain(const struct stock_item *item)
+{
+    const struct tcp_stock_connection *connection =
+        (const struct tcp_stock_connection *)item;
+
+    assert(item != NULL);
+    assert(connection->fd >= 0);
+
+    return connection->fd;
+}

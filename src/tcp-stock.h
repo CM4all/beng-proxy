@@ -18,4 +18,7 @@ tcp_stock_new(pool_t pool, struct balancer *balancer);
 int
 tcp_stock_item_get(const struct stock_item *item);
 
+int
+tcp_stock_item_get_domain(const struct stock_item *item);
+
 #endif
