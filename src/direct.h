@@ -15,6 +15,22 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 
+#ifdef SPLICE
+
+enum {
+    ISTREAM_TO_PIPE = ISTREAM_FILE | ISTREAM_PIPE,
+    ISTREAM_TO_SOCKET = ISTREAM_FILE | ISTREAM_PIPE,
+};
+
+#else /* !SPLICE */
+
+enum {
+    ISTREAM_TO_PIPE = ISTREAM_FILE,
+    ISTREAM_TO_SOCKET = ISTREAM_FILE,
+}
+
+#endif /* !SPLICE */
+
 static inline int
 istream_direct_to_socket(istream_direct_t src_type, int src_fd,
                          int dest_fd, size_t max_length)
@@ -58,6 +74,13 @@ istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
 #endif
 }
 
-#endif  /* #ifdef __linux */
+#else /* !__linux */
+
+enum {
+    ISTREAM_TO_PIPE = 0,
+    ISTREAM_TO_SOCKET = 0,
+};
+
+#endif /* !__linux */
 
 #endif
