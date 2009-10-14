@@ -6,6 +6,7 @@
  */
 
 #include "istream-internal.h"
+#include "istream-forward.h"
 
 #include <event.h>
 
@@ -42,22 +43,6 @@ static void later_schedule(struct istream_later *later)
  *
  */
 
-static size_t
-later_input_data(const void *data, size_t length, void *ctx)
-{
-    struct istream_later *later = ctx;
-
-    return istream_invoke_data(&later->output, data, length);
-}
-
-static ssize_t
-later_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
-{
-    struct istream_later *later = ctx;
-
-    return istream_invoke_direct(&later->output, type, fd, max_length);
-}
-
 static void
 later_input_eof(void *ctx)
 {
@@ -80,8 +65,8 @@ later_input_abort(void *ctx)
 }
 
 static const struct istream_handler later_input_handler = {
-    .data = later_input_data,
-    .direct = later_input_direct,
+    .data = istream_forward_data,
+    .direct = istream_forward_direct,
     .eof = later_input_eof,
     .abort = later_input_abort,
 };
