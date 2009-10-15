@@ -60,7 +60,7 @@ head_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     if (head->rest == 0) {
         istream_close_handler(head->input);
         istream_deinit_eof(&head->output);
-        return -2;
+        return -3;
     }
 
     if (max_length > head->rest)
@@ -74,6 +74,7 @@ head_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         if (head->rest == 0) {
             istream_close_handler(head->input);
             istream_deinit_eof(&head->output);
+            return -3;
         }
     }
 

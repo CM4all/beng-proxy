@@ -59,11 +59,14 @@ pipe_consume(struct istream_pipe *p)
     assert(p->piped > 0);
 
     nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
+    if (unlikely(nbytes == -3))
+        return -3;
+
     if (unlikely(nbytes < 0 && errno != EAGAIN)) {
         int save_errno = errno;
         pipe_abort(p);
         errno = save_errno;
-        return -1;
+        return -3;
     }
 
     if (nbytes > 0) {
@@ -75,6 +78,7 @@ pipe_consume(struct istream_pipe *p)
                waiting for the pipe buffer to become empty */
             istream_deinit_eof(&p->output);
             pipe_close(p);
+            return -3;
         }
     }
 
@@ -95,7 +99,10 @@ pipe_input_data(const void *data, size_t length, void *ctx)
     assert(p->output.handler != NULL);
 
     if (p->piped > 0) {
-        pipe_consume(p);
+        ssize_t nbytes = pipe_consume(p);
+        if (nbytes == -3)
+            return 0;
+
         if (p->piped > 0 || p->output.handler == NULL)
             return 0;
     }
@@ -116,9 +123,14 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     assert((p->output.handler_direct & ISTREAM_PIPE) != 0);
 
     if (p->piped > 0) {
-        pipe_consume(p);
-        if (p->piped > 0 || p->output.handler == NULL)
-            return 0;
+        nbytes = pipe_consume(p);
+        if (nbytes <= 0)
+            return nbytes;
+
+        if (p->piped > 0)
+            /* if the pipe still isn't empty, we can't start reading
+               new input */
+            return -2;
     }
 
     if ((p->output.handler_direct & type) != 0)
@@ -137,7 +149,7 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         if (ret < 0) {
             daemon_log(1, "pipe() failed: %s\n", strerror(errno));
             pipe_close(p);
-            return 0;
+            return -3;
         }
 
         fd_set_cloexec(p->fds[0]);
@@ -156,8 +168,8 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     assert(p->piped == 0);
     p->piped = (size_t)nbytes;
 
-    if (pipe_consume(p) < 0)
-        return -1;
+    if (pipe_consume(p) == -3)
+        return -3;
 
     return nbytes;
 }

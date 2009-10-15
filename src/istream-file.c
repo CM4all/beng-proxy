@@ -145,6 +145,10 @@ istream_file_try_direct(struct file *file)
 
     nbytes = istream_invoke_direct(&file->stream, ISTREAM_FILE, file->fd,
                                    istream_file_max_read(file));
+    if (nbytes == -3)
+        /* this stream was closed during the direct() callback */
+        return;
+
     if (nbytes > 0 || nbytes == -2) {
         /* -2 means the callback wasn't able to consume any data right
            now */

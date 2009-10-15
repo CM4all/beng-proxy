@@ -576,6 +576,12 @@ http_client_try_response_direct(struct http_client *client)
 
     nbytes = http_body_try_direct(&client->response.body_reader,
                                   client->fd, client->fd_type);
+    if (nbytes == -2 || nbytes == -3)
+        /* either the destination fd blocks (-2) or the stream (and
+           the whole connection) has been closed during the direct()
+           callback (-3); no further checks */
+        return;
+
     if (nbytes < 0) {
         /* XXX EAGAIN? */
         daemon_log(1, "htt_client: read error (%s)\n", strerror(errno));

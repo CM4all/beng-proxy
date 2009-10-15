@@ -51,7 +51,7 @@ struct istream_handler {
      * @return the number of bytes consumed, 0 if there is no more
      * data in the provided file descriptor, -1 on unhandled error
      * (errno set), -2 if writing would block (caller is responsible
-     * for registering an event)
+     * for registering an event), -3 if the stream has been closed
      */
     ssize_t (*direct)(istream_direct_t type, int fd, size_t max_length, void *ctx);
 

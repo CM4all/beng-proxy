@@ -216,7 +216,7 @@ fork_read_from_output(struct fork *f)
     } else {
         nbytes = istream_invoke_direct(&f->output, ISTREAM_PIPE,
                                        f->output_fd, INT_MAX);
-        if (nbytes == -2) {
+        if (nbytes == -2 || nbytes == -3) {
             /* -2 means the callback wasn't able to consume any data right
                now */
         } else if (nbytes > 0) {
