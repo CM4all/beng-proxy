@@ -148,7 +148,6 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         ret = pipe(p->fds);
         if (ret < 0) {
             daemon_log(1, "pipe() failed: %s\n", strerror(errno));
-            pipe_close(p);
             return -3;
         }
 
