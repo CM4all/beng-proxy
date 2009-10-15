@@ -257,8 +257,13 @@ istream_pipe_read(istream_t istream)
         pipe_consume(p);
     } else {
         /* XXX is this update required? */
-        istream_handler_set_direct(p->input,
-                                   p->output.handler_direct | ISTREAM_TO_PIPE);
+        istream_direct_t mask = p->output.handler_direct;
+        if (mask & ISTREAM_PIPE)
+            /* if the handler supports the pipe, we offer our
+               services */
+            mask |= ISTREAM_TO_PIPE;
+
+        istream_handler_set_direct(p->input, mask);
 
         istream_read(p->input);
     }
