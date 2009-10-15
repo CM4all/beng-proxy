@@ -44,10 +44,10 @@ pipe_abort(struct istream_pipe *p)
 {
     pipe_close(p);
 
-    if (p->input == NULL)
-        istream_deinit_abort(&p->output);
-    else
-        istream_close(p->input);
+    if (p->input != NULL)
+        istream_close_handler(p->input);
+
+    istream_deinit_abort(&p->output);
 }
 
 static ssize_t
