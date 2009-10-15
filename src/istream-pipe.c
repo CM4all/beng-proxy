@@ -112,6 +112,25 @@ pipe_input_data(const void *data, size_t length, void *ctx)
     return istream_invoke_data(&p->output, data, length);
 }
 
+static bool
+pipe_create(struct istream_pipe *p)
+{
+    int ret;
+
+    assert(p->fds[0] < 0);
+    assert(p->fds[1] < 0);
+
+    ret = pipe(p->fds);
+    if (ret < 0) {
+        daemon_log(1, "pipe() failed: %s\n", strerror(errno));
+        return false;
+    }
+
+    fd_set_cloexec(p->fds[0]);
+    fd_set_cloexec(p->fds[1]);
+    return true;
+}
+
 static ssize_t
 pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
@@ -140,20 +159,8 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 
     assert((type & ISTREAM_TO_PIPE) == type);
 
-    if (p->fds[1] < 0) {
-        int ret;
-
-        assert(p->fds[0] < 0);
-
-        ret = pipe(p->fds);
-        if (ret < 0) {
-            daemon_log(1, "pipe() failed: %s\n", strerror(errno));
-            return -3;
-        }
-
-        fd_set_cloexec(p->fds[0]);
-        fd_set_cloexec(p->fds[1]);
-    }
+    if (p->fds[1] < 0 && !pipe_create(p))
+        return -3;
 
     nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,
                     /* SPLICE_F_NONBLOCK | */ SPLICE_F_MORE | SPLICE_F_MOVE);
