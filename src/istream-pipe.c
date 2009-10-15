@@ -217,15 +217,15 @@ istream_pipe_read(istream_t istream)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
 
-    /* XXX is this update required? */
-    istream_handler_set_direct(p->input,
-                               p->output.handler_direct | ISTREAM_TO_PIPE);
-
     if (unlikely(p->input == NULL)) {
         assert(p->piped > 0);
 
         pipe_consume(p);
     } else {
+        /* XXX is this update required? */
+        istream_handler_set_direct(p->input,
+                                   p->output.handler_direct | ISTREAM_TO_PIPE);
+
         istream_read(p->input);
     }
 }
