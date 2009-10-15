@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.6.24) unstable; urgency=low
   * istream-pipe: fix segmentation fault after incomplete direct transfer
   * istream-pipe: implement the "available" method
   * istream-pipe: allocate pipe only if handler supports it
+  * istream-pipe: flush the pipe before reading from input
   * direct: support splice() from TCP socket to pipe
   * istream: direct() returns -3 if stream has been closed
   * allow 8192 connections by default
