@@ -76,8 +76,8 @@ pipe_consume(struct istream_pipe *p)
         if (p->piped == 0 && p->input == NULL) {
             /* p->input has already reported EOF, and we have been
                waiting for the pipe buffer to become empty */
-            istream_deinit_eof(&p->output);
             pipe_close(p);
+            istream_deinit_eof(&p->output);
             return -3;
         }
     }
@@ -186,10 +186,8 @@ pipe_input_eof(void *ctx)
     }
 
     if (p->piped == 0) {
-        pool_ref(p->output.pool);
-        istream_deinit_eof(&p->output);
         pipe_close(p);
-        pool_unref(p->output.pool);
+        istream_deinit_eof(&p->output);
     }
 }
 
