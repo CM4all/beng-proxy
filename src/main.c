@@ -306,6 +306,7 @@ int main(int argc, char **argv)
     global_fcgi_stock = instance.fcgi_stock;
     global_delegate_stock = instance.delegate_stock;
     global_filter_cache = instance.filter_cache;
+    global_pipe_stock = instance.pipe_stock;
 
     /* daemonize */
 

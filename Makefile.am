@@ -208,6 +208,7 @@ SRC = src/main.c \
 	src/fcache.c \
 	src/stock.c \
 	src/hstock.c \
+	src/pipe-stock.c \
 	src/abort-unref.c \
 	src/abort-flag.c \
 	src/tpool.c
