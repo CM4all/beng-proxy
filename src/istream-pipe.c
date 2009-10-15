@@ -224,6 +224,28 @@ istream_to_pipe(istream_t istream)
     return (struct istream_pipe *)(((char*)istream) - offsetof(struct istream_pipe, output));
 }
 
+static off_t
+istream_pipe_available(istream_t istream, bool partial)
+{
+    struct istream_pipe *p = istream_to_pipe(istream);
+
+    if (likely(p->input != NULL)) {
+        off_t available = istream_available(p->input, partial);
+        if (p->piped > 0) {
+            if (available != -1)
+                available += p->piped;
+            else if (partial)
+                available = p->piped;
+        }
+
+        return available;
+    } else {
+        assert(p->piped > 0);
+
+        return p->piped;
+    }
+}
+
 static void
 istream_pipe_read(istream_t istream)
 {
@@ -251,6 +273,7 @@ istream_pipe_close(istream_t istream)
 }
 
 static const struct istream istream_pipe = {
+    .available = istream_pipe_available,
     .read = istream_pipe_read,
     .close = istream_pipe_close,
 };
