@@ -19,3 +19,5 @@ struct fcgi_stock *global_fcgi_stock;
 struct filter_cache *global_filter_cache;
 
 struct hstock *global_delegate_stock;
+
+struct stock *global_pipe_stock;

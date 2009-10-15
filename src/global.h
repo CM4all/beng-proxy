@@ -21,4 +21,6 @@ extern struct filter_cache *global_filter_cache;
 
 extern struct hstock *global_delegate_stock;
 
+extern struct stock *global_pipe_stock;
+
 #endif

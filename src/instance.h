@@ -53,6 +53,8 @@ struct instance {
     struct fcgi_stock *fcgi_stock;
 
     struct hstock *delegate_stock;
+
+    struct stock *pipe_stock;
 };
 
 struct client_connection;

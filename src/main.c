@@ -25,6 +25,7 @@
 #include "bulldog.h"
 #include "balancer.h"
 #include "listener.h"
+#include "pipe-stock.h"
 
 #include <daemon/daemonize.h>
 
@@ -121,6 +122,9 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 
     if (instance->delegate_stock != NULL)
         hstock_free(instance->delegate_stock);
+
+    if (instance->pipe_stock != NULL)
+        stock_free(instance->pipe_stock);
 
     pool_commit();
 }
@@ -291,6 +295,7 @@ int main(int argc, char **argv)
                                          instance.tcp_stock);
     instance.fcgi_stock = fcgi_stock_new(instance.pool);
     instance.delegate_stock = delegate_stock_new(instance.pool);
+    instance.pipe_stock = pipe_stock_new(instance.pool);
     instance.filter_cache = filter_cache_new(instance.pool,
                                              instance.config.filter_cache_size,
                                              instance.tcp_stock,

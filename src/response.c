@@ -235,7 +235,8 @@ response_dispatch_direct(struct request *request2,
 
 #ifdef SPLICE
     if (body != NULL)
-        body = istream_pipe_new(request2->request->pool, body, NULL);
+        body = istream_pipe_new(request2->request->pool, body,
+                                global_pipe_stock);
 #endif
 
 #ifndef NDEBUG

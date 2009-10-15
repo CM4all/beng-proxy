@@ -9,6 +9,7 @@
 #include "http-server.h"
 #include "http-util.h"
 #include "growing-buffer.h"
+#include "global.h"
 
 /*
  * processor_env.response_handler
@@ -52,7 +53,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 #endif
 #ifdef SPLICE
     if (body != NULL)
-        body = istream_pipe_new(request->pool, body, NULL);
+        body = istream_pipe_new(request->pool, body, global_pipe_stock);
 #else
     {}
 #endif
