@@ -48,7 +48,13 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
         http_client_accepts_encoding(request->headers, "deflate")) {
         header_write(headers2, "content-encoding", "deflate");
         body = istream_deflate_new(request->pool, body);
-    }
+    } else
+#endif
+#ifdef SPLICE
+    if (body != NULL)
+        body = istream_pipe_new(request->pool, body);
+#else
+    {}
 #endif
 
     http_server_response(request, status, headers2, body);

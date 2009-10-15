@@ -117,13 +117,6 @@ http_server_response(const struct http_server_request *request,
            do." */
         istream_free(&body);
 
-#ifdef __linux
-#ifdef SPLICE
-    if (body != NULL)
-        body = istream_pipe_new(request->pool, body);
-#endif
-#endif
-
     if (!connection->keep_alive && !connection->request.http_1_0)
         header_write(headers, "connection", "close");
 

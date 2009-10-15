@@ -233,6 +233,11 @@ response_dispatch_direct(struct request *request2,
                      "Path=/; Max-Age=0; Version=1");
     }
 
+#ifdef SPLICE
+    if (body != NULL)
+        body = istream_pipe_new(request2->request->pool, body);
+#endif
+
 #ifndef NDEBUG
     request2->response_sent = true;
 #endif
