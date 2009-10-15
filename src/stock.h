@@ -74,6 +74,14 @@ stock_get(struct stock *stock, pool_t pool, void *info,
           stock_callback_t callback, void *callback_ctx,
           struct async_operation_ref *async_ref);
 
+/**
+ * Obtains an item from the stock without going through the callback.
+ * This requires a stock class which finishes the create() method
+ * immediately.
+ */
+struct stock_item *
+stock_get_now(struct stock *stock, pool_t pool, void *info);
+
 void
 stock_item_available(struct stock_item *item);
 

@@ -276,6 +276,41 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
                          caller_pool, async_ref);
 }
 
+struct now_data {
+#ifndef NDEBUG
+    bool created;
+#endif
+    struct stock_item *item;
+};
+
+static void
+stock_now_callback(void *ctx, struct stock_item *item)
+{
+    struct now_data *data = ctx;
+
+#ifndef NDEBUG
+    data->created = true;
+#endif
+
+    data->item = item;
+}
+
+struct stock_item *
+stock_get_now(struct stock *stock, pool_t pool, void *info)
+{
+    struct now_data data = {
+#ifndef NDEBUG
+        .created = false
+#endif
+    };
+    struct async_operation_ref async_ref;
+
+    stock_get(stock, pool, info, stock_now_callback, &data, &async_ref);
+    assert(data.created);
+
+    return data.item;
+}
+
 void
 stock_item_available(struct stock_item *item)
 {
