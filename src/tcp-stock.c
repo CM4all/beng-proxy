@@ -196,7 +196,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
         sun.sun_family = AF_UNIX;
         memcpy(sun.sun_path, uri, path_length + 1);
 
-        connection->domain = connection->addr->sa_family;
+        connection->domain = AF_LOCAL;
         client_socket_new(caller_pool,
                           PF_UNIX, SOCK_STREAM, 0,
                           (const struct sockaddr*)&sun, sizeof(sun),
