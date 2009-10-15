@@ -11,7 +11,7 @@ create_input(pool_t pool)
 static istream_t
 create_test(pool_t pool, istream_t input)
 {
-    return istream_pipe_new(pool, input);
+    return istream_pipe_new(pool, input, NULL);
 }
 
 #include "t-istream-filter.h"

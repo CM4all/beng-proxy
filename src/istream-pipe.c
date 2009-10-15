@@ -9,6 +9,8 @@
 #include "istream-internal.h"
 #include "fd-util.h"
 #include "direct.h"
+#include "pipe-stock.h"
+#include "stock.h"
 
 #include <daemon/log.h>
 
@@ -21,6 +23,8 @@
 struct istream_pipe {
     struct istream output;
     istream_t input;
+    struct stock *stock;
+    struct stock_item *stock_item;
     int fds[2];
     size_t piped;
 };
@@ -28,14 +32,20 @@ struct istream_pipe {
 static void
 pipe_close(struct istream_pipe *p)
 {
-    if (p->fds[0] >= 0) {
-        close(p->fds[0]);
-        p->fds[0] = -1;
-    }
+    if (p->stock != NULL) {
+        if (p->stock_item != NULL)
+            /* reuse the pipe only if it's empty */
+            stock_put(p->stock_item, p->piped > 0);
+    } else {
+        if (p->fds[0] >= 0) {
+            close(p->fds[0]);
+            p->fds[0] = -1;
+        }
 
-    if (p->fds[1] >= 0) {
-        close(p->fds[1]);
-        p->fds[1] = -1;
+        if (p->fds[1] >= 0) {
+            close(p->fds[1]);
+            p->fds[1] = -1;
+        }
     }
 }
 
@@ -120,14 +130,25 @@ pipe_create(struct istream_pipe *p)
     assert(p->fds[0] < 0);
     assert(p->fds[1] < 0);
 
-    ret = pipe(p->fds);
-    if (ret < 0) {
-        daemon_log(1, "pipe() failed: %s\n", strerror(errno));
-        return false;
+    if (p->stock != NULL) {
+        assert(p->stock_item == NULL);
+
+        p->stock_item = stock_get_now(p->stock, p->output.pool, NULL);
+        if (p->stock_item == NULL)
+            return false;
+
+        pipe_stock_item_get(p->stock_item, p->fds);
+    } else {
+        ret = pipe(p->fds);
+        if (ret < 0) {
+            daemon_log(1, "pipe() failed: %s\n", strerror(errno));
+            return false;
+        }
+
+        fd_set_cloexec(p->fds[0]);
+        fd_set_cloexec(p->fds[1]);
     }
 
-    fd_set_cloexec(p->fds[0]);
-    fd_set_cloexec(p->fds[1]);
     return true;
 }
 
@@ -187,7 +208,7 @@ pipe_input_eof(void *ctx)
 
     p->input = NULL;
 
-    if (p->fds[1] >= 0) {
+    if (p->stock == NULL && p->fds[1] >= 0) {
         close(p->fds[1]);
         p->fds[1] = -1;
     }
@@ -294,13 +315,15 @@ static const struct istream istream_pipe = {
  */
 
 istream_t
-istream_pipe_new(pool_t pool, istream_t input)
+istream_pipe_new(pool_t pool, istream_t input, struct stock *pipe_stock)
 {
     struct istream_pipe *p = istream_new_macro(pool, pipe);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
+    p->stock = pipe_stock;
+    p->stock_item = NULL;
     p->fds[0] = -1;
     p->fds[1] = -1;
     p->piped = 0;

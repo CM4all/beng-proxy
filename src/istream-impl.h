@@ -12,6 +12,7 @@
 
 struct stat;
 struct async_operation;
+struct stock;
 struct cache;
 struct cache_item;
 
@@ -56,7 +57,7 @@ istream_file_fd(istream_t istream);
 
 #ifdef __linux
 istream_t
-istream_pipe_new(pool_t pool, istream_t input);
+istream_pipe_new(pool_t pool, istream_t input, struct stock *pipe_stock);
 #endif
 
 istream_t

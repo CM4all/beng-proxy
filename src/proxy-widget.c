@@ -52,7 +52,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 #endif
 #ifdef SPLICE
     if (body != NULL)
-        body = istream_pipe_new(request->pool, body);
+        body = istream_pipe_new(request->pool, body, NULL);
 #else
     {}
 #endif
