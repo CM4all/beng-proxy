@@ -223,22 +223,15 @@ stock_is_empty(const struct stock *stock)
     return stock->num_idle == 0 && stock->num_busy == 0;
 }
 
-void
-stock_get(struct stock *stock, pool_t caller_pool, void *info,
-          stock_callback_t callback, void *callback_ctx,
-          struct async_operation_ref *async_ref)
+static bool
+stock_get_idle(struct stock *stock,
+               stock_callback_t callback, void *callback_ctx)
 {
-    pool_t pool;
-    struct stock_item *item;
-
-    assert(stock != NULL);
-
-    stock->may_clear = false;
-
     while (stock->num_idle > 0) {
+        struct stock_item *item = (struct stock_item *)stock->idle.next;
+
         assert(!list_empty(&stock->idle));
 
-        item = (struct stock_item *)stock->idle.next;
         list_remove(&item->list_head);
         --stock->num_idle;
 
@@ -255,11 +248,22 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
             ++stock->num_busy;
 
             callback(callback_ctx, item);
-            return;
+            return true;
         }
 
         destroy_item(stock, item);
     }
+
+    return false;
+}
+
+static void
+stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
+                 stock_callback_t callback, void *callback_ctx,
+                 struct async_operation_ref *async_ref)
+{
+    pool_t pool;
+    struct stock_item *item;
 
     pool = stock->class->pool(stock->class_ctx, stock->pool, stock->uri);
 
@@ -274,6 +278,22 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
 
     stock->class->create(stock->class_ctx, item, stock->uri, info,
                          caller_pool, async_ref);
+}
+
+void
+stock_get(struct stock *stock, pool_t caller_pool, void *info,
+          stock_callback_t callback, void *callback_ctx,
+          struct async_operation_ref *async_ref)
+{
+    assert(stock != NULL);
+
+    stock->may_clear = false;
+
+    if (stock_get_idle(stock, callback, callback_ctx))
+        return;
+
+    stock_get_create(stock, caller_pool, info,
+                     callback, callback_ctx, async_ref);
 }
 
 struct now_data {
