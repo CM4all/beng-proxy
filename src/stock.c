@@ -34,6 +34,8 @@ struct stock {
     struct list_head busy;
 #endif
 
+    unsigned num_create;
+
     bool may_clear;
 };
 
@@ -174,6 +176,8 @@ stock_new(pool_t pool, const struct stock_class *class,
     list_init(&stock->busy);
 #endif
 
+    stock->num_create = 0;
+
     return stock;
 }
 
@@ -205,6 +209,7 @@ stock_free(struct stock *stock)
 {
     assert(stock != NULL);
     assert(stock->num_busy == 0);
+    assert(stock->num_create == 0);
 
     /* must not call stock_free() when there are busy items left */
     assert(list_empty(&stock->busy));
@@ -220,7 +225,8 @@ stock_free(struct stock *stock)
 bool
 stock_is_empty(const struct stock *stock)
 {
-    return stock->num_idle == 0 && stock->num_busy == 0;
+    return stock->num_idle == 0 && stock->num_busy == 0 &&
+        stock->num_create == 0;
 }
 
 static bool
@@ -275,6 +281,8 @@ stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
 #endif
     item->callback = callback;
     item->callback_ctx = callback_ctx;
+
+    ++stock->num_create;
 
     stock->class->create(stock->class_ctx, item, stock->uri, info,
                          caller_pool, async_ref);
@@ -336,6 +344,9 @@ stock_item_available(struct stock_item *item)
 {
     struct stock *stock = item->stock;
 
+    assert(stock->num_create > 0);
+    --stock->num_create;
+
 #ifndef NDEBUG
     list_add(&item->list_head, &stock->busy);
 #endif
@@ -349,6 +360,9 @@ stock_item_failed(struct stock_item *item)
 {
     struct stock *stock = item->stock;
 
+    assert(stock->num_create > 0);
+    --stock->num_create;
+
     item->callback(item->callback_ctx, NULL);
     stock_item_free(stock, item);
 }
@@ -356,7 +370,12 @@ stock_item_failed(struct stock_item *item)
 void
 stock_item_aborted(struct stock_item *item)
 {
-    stock_item_free(item->stock, item);
+    struct stock *stock = item->stock;
+
+    assert(stock->num_create > 0);
+    --stock->num_create;
+
+    stock_item_free(stock, item);
 }
 
 void

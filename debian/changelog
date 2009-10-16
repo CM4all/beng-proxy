@@ -9,6 +9,7 @@ cm4all-beng-proxy (0.6.24) unstable; urgency=low
   * istream-pipe: reuse pipes in a stock
   * direct: support splice() from TCP socket to pipe
   * istream: direct() returns -3 if stream has been closed
+  * hstock: don't destroy stocks while items are being created
   * allow 8192 connections by default
   * allow 65536 file handles by default
 
