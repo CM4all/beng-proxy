@@ -260,7 +260,7 @@ static const struct stock_class tcp_stock_class = {
 struct hstock *
 tcp_stock_new(pool_t pool, struct balancer *balancer)
 {
-    return hstock_new(pool, &tcp_stock_class, balancer);
+    return hstock_new(pool, &tcp_stock_class, balancer, 0);
 }
 
 int

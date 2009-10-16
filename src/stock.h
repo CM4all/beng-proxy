@@ -57,7 +57,7 @@ struct stock;
 
 struct stock *
 stock_new(pool_t pool, const struct stock_class *class,
-          void *class_ctx, const char *uri);
+          void *class_ctx, const char *uri, unsigned limit);
 
 void
 stock_free(struct stock *stock);
@@ -103,7 +103,8 @@ stock_del(struct stock_item *item);
 struct hstock;
 
 struct hstock *
-hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx);
+hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx,
+           unsigned limit);
 
 void
 hstock_free(struct hstock *hstock);

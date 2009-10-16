@@ -23,6 +23,13 @@ struct stock {
     void *class_ctx;
     const char *uri;
 
+    /**
+     * The maximum number of items in this stock.  If any more items
+     * are requested, they are put into the #waiting list, which gets
+     * checked as soon as stock_put() is called.
+     */
+    unsigned limit;
+
     struct event cleanup_event;
     struct event clear_event;
 
@@ -36,7 +43,21 @@ struct stock {
 
     unsigned num_create;
 
+    struct list_head waiting;
+
     bool may_clear;
+};
+
+struct stock_waiting {
+    struct list_head siblings;
+
+    struct async_operation operation;
+
+    pool_t pool;
+    void *info;
+    stock_callback_t callback;
+    void *callback_ctx;
+    struct async_operation_ref *async_ref;
 };
 
 static void
@@ -84,6 +105,88 @@ stock_cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
 
     if (stock->num_idle > MAX_IDLE)
         stock_schedule_cleanup(stock);
+}
+
+
+/*
+ * wait operation
+ *
+ */
+
+static struct stock_waiting *
+async_to_waiting(struct async_operation *ao)
+{
+    return (struct stock_waiting*)(((char*)ao) - offsetof(struct stock_waiting, operation));
+}
+
+static void
+stock_wait_abort(struct async_operation *ao)
+{
+    struct stock_waiting *waiting = async_to_waiting(ao);
+
+    list_remove(&waiting->siblings);
+    pool_unref(waiting->pool);
+}
+
+static const struct async_operation_class stock_wait_operation = {
+    .abort = stock_wait_abort,
+};
+
+static bool
+stock_get_idle(struct stock *stock,
+               stock_callback_t callback, void *callback_ctx);
+
+static void
+stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
+                 stock_callback_t callback, void *callback_ctx,
+                 struct async_operation_ref *async_ref);
+
+/**
+ * Retry the waiting requests.  This is called after the number of
+ * busy items was reduced.
+ */
+static void
+stock_retry_waiting(struct stock *stock)
+{
+    if (stock->limit == 0)
+        /* no limit configured, no waiters possible */
+        return;
+
+    /* first try to serve existing idle items */
+
+    while (stock->num_idle > 0) {
+        struct stock_waiting *waiting =
+            (struct stock_waiting *)stock->waiting.next;
+
+        if (list_empty(&stock->waiting))
+            return;
+
+        list_remove(&waiting->siblings);
+
+        if (stock_get_idle(stock, waiting->callback, waiting->callback_ctx))
+            pool_unref(waiting->pool);
+        else
+            /* didn't work (probably because borrowing the item has
+               failed) - re-add to "waiting" list */
+            list_add(&waiting->siblings, &stock->waiting);
+    }
+
+    /* if we're below the limit, create a bunch of new items */
+
+    for (unsigned i = stock->limit - stock->num_busy - stock->num_create;
+         stock->num_busy + stock->num_create < stock->limit && i > 0; --i) {
+        struct stock_waiting *waiting =
+            (struct stock_waiting *)stock->waiting.next;
+
+        if (list_empty(&stock->waiting))
+            return;
+
+        list_remove(&waiting->siblings);
+        stock_get_create(stock, waiting->pool, waiting->info,
+                         waiting->callback, waiting->callback_ctx,
+                         waiting->async_ref);
+        pool_unref(waiting->pool);
+    }
 }
 
 
@@ -145,7 +248,7 @@ stock_clear_event_callback(int fd __attr_unused, short event __attr_unused,
 
 struct stock *
 stock_new(pool_t pool, const struct stock_class *class,
-          void *class_ctx, const char *uri)
+          void *class_ctx, const char *uri, unsigned limit)
 {
     struct stock *stock;
 
@@ -164,6 +267,7 @@ stock_new(pool_t pool, const struct stock_class *class,
     stock->class = class;
     stock->class_ctx = class_ctx;
     stock->uri = uri == NULL ? NULL : p_strdup(pool, uri);
+    stock->limit = limit;
 
     evtimer_set(&stock->cleanup_event, stock_cleanup_event_callback, stock);
     evtimer_set(&stock->clear_event, stock_clear_event_callback, stock);
@@ -177,6 +281,9 @@ stock_new(pool_t pool, const struct stock_class *class,
 #endif
 
     stock->num_create = 0;
+
+    if (limit > 0)
+        list_init(&stock->waiting);
 
     return stock;
 }
@@ -300,6 +407,26 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
     if (stock_get_idle(stock, callback, callback_ctx))
         return;
 
+    if (stock->limit > 0 &&
+        stock->num_busy + stock->num_create >= stock->limit) {
+        /* item limit reached: wait for an item to return */
+        struct stock_waiting *waiting =
+            p_malloc(caller_pool, sizeof(*waiting));
+
+        pool_ref(caller_pool);
+        waiting->pool = caller_pool;
+        waiting->info = info;
+        waiting->callback = callback;
+        waiting->callback_ctx = callback_ctx;
+        waiting->async_ref = async_ref;
+
+        async_init(&waiting->operation, &stock_wait_operation);
+        async_ref_set(async_ref, &waiting->operation);
+
+        list_add(&waiting->siblings, &stock->waiting);
+        return;
+    }
+
     stock_get_create(stock, caller_pool, info,
                      callback, callback_ctx, async_ref);
 }
@@ -333,6 +460,9 @@ stock_get_now(struct stock *stock, pool_t pool, void *info)
     };
     struct async_operation_ref async_ref;
 
+    /* cannot call this on a limited stock */
+    assert(stock->limit == 0);
+
     stock_get(stock, pool, info, stock_now_callback, &data, &async_ref);
     assert(data.created);
 
@@ -365,6 +495,8 @@ stock_item_failed(struct stock_item *item)
 
     item->callback(item->callback_ctx, NULL);
     stock_item_free(stock, item);
+
+    stock_retry_waiting(stock);
 }
 
 void
@@ -376,6 +508,8 @@ stock_item_aborted(struct stock_item *item)
     --stock->num_create;
 
     stock_item_free(stock, item);
+
+    stock_retry_waiting(stock);
 }
 
 void
@@ -414,6 +548,8 @@ stock_put(struct stock_item *item, bool destroy)
 
         stock->class->release(stock->class_ctx, item);
     }
+
+    stock_retry_waiting(stock);
 }
 
 void

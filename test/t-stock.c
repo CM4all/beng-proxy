@@ -94,12 +94,12 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     pool_t pool;
     struct stock *stock;
     struct async_operation_ref async_ref;
-    struct stock_item *item, *second;
+    struct stock_item *item, *second, *third;
 
     event_base = event_init();
     pool = pool_new_libc(NULL, "root");
 
-    stock = stock_new(pool, &my_stock_class, NULL, NULL);
+    stock = stock_new(pool, &my_stock_class, NULL, NULL, 3);
 
     /* create first item */
 
@@ -149,17 +149,70 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     assert(num_create == 2 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
 
+    /* create third item */
+
+    next_fail = false;
+    got_item = false;
+    last_item = NULL;
+    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    assert(got_item);
+    assert(last_item != NULL);
+    assert(num_create == 3 && num_fail == 1);
+    assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+    third = last_item;
+
+    /* fourth item waiting */
+
+    got_item = false;
+    last_item = NULL;
+    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    assert(!got_item);
+    assert(num_create == 3 && num_fail == 1);
+    assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+
+    /* fifth item waiting */
+
+    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    assert(!got_item);
+    assert(num_create == 3 && num_fail == 1);
+    assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
+
+    /* return third item */
+
+    stock_put(third, false);
+    assert(num_create == 3 && num_fail == 1);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 0);
+    assert(got_item);
+    assert(last_item == third);
+
+    /* destroy second item */
+
+    got_item = false;
+    last_item = NULL;
+    stock_put(second, true);
+    assert(num_create == 4 && num_fail == 1);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
+    assert(got_item);
+    assert(last_item != NULL);
+    second = last_item;
+
     /* destroy first item */
 
     stock_put(item, true);
-    assert(num_create == 2 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 1);
+    assert(num_create == 4 && num_fail == 1);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
 
     /* destroy second item */
 
     stock_put(second, true);
-    assert(num_create == 2 && num_fail == 1);
-    assert(num_borrow == 1 && num_release == 1 && num_destroy == 2);
+    assert(num_create == 4 && num_fail == 1);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 3);
+
+    /* destroy third item */
+
+    stock_put(third, true);
+    assert(num_create == 4 && num_fail == 1);
+    assert(num_borrow == 2 && num_release == 2 && num_destroy == 4);
 
     /* cleanup */
 

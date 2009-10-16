@@ -18,6 +18,11 @@ struct hstock {
     const struct stock_class *class;
     void *class_ctx;
 
+    /**
+     * The maximum number of items in each stock.
+     */
+    unsigned limit;
+
     struct hashmap *stocks;
 
     struct event cleanup_event;
@@ -60,7 +65,8 @@ hstock_cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 struct hstock *
-hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx)
+hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx,
+           unsigned limit)
 {
     struct hstock *hstock;
 
@@ -77,6 +83,7 @@ hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx)
     hstock->pool = pool;
     hstock->class = class;
     hstock->class_ctx = class_ctx;
+    hstock->limit = limit;
     hstock->stocks = hashmap_new(pool, 64);
 
     evtimer_set(&hstock->cleanup_event, hstock_cleanup_event_callback, hstock);
@@ -118,7 +125,8 @@ hstock_get(struct hstock *hstock, pool_t pool,
     stock = (struct stock *)hashmap_get(hstock->stocks, uri);
 
     if (stock == NULL) {
-        stock = stock_new(hstock->pool, hstock->class, hstock->class_ctx, uri);
+        stock = stock_new(hstock->pool, hstock->class, hstock->class_ctx, uri,
+                          hstock->limit);
         hashmap_set(hstock->stocks, p_strdup(hstock->pool, uri), stock);
     }
 

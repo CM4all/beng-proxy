@@ -214,7 +214,7 @@ static const struct stock_class delegate_stock_class = {
 struct hstock *
 delegate_stock_new(pool_t pool)
 {
-    return hstock_new(pool, &delegate_stock_class, NULL);
+    return hstock_new(pool, &delegate_stock_class, NULL, 0);
 }
 
 void
