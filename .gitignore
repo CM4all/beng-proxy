@@ -49,6 +49,7 @@ test/t-http-util
 test/t-http-cache
 test/t-http-server
 test/t-cache
+test/t-stock
 test/t-cgi
 test/t-expansible-buffer
 test/t-hashmap

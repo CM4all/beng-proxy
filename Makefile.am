@@ -263,6 +263,7 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 
 check_PROGRAMS = \
 	test/t-hashmap test/t-cache test/t-tcache \
+	test/t-stock \
 	test/t-resource-address \
 	test/t-uri-compress \
 	test/t-expansible-buffer \
@@ -294,6 +295,7 @@ check_PROGRAMS = \
 	test/run-parser-cdata
 
 TESTS = test/t-hashmap test/t-cache test/t-tcache \
+	test/t-stock \
 	test/t-resource-address \
 	test/t-uri-compress \
 	test/t-expansible-buffer \
@@ -325,6 +327,9 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 test_t_tcache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) -lrt
+
+test_t_stock_SOURCES = test/t-stock.c src/stock.c $(POOL_SRC)
+test_t_stock_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/resource-address.c \
