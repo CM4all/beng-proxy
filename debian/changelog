@@ -1,4 +1,4 @@
-cm4all-beng-proxy (0.6.24) unstable; urgency=low
+cm4all-beng-proxy (0.7) unstable; urgency=low
 
   * ajp-client: check if connection was closed during response callback
   * header-forward: log session id
