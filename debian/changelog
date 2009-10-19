@@ -1,5 +1,6 @@
 cm4all-beng-proxy (0.6.24) unstable; urgency=low
 
+  * ajp-client: check if connection was closed during response callback
   * header-forward: log session id
   * istream: separate TCP splicing checks
   * istream-pipe: fix segmentation fault after incomplete direct transfer

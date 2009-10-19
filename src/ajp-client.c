@@ -265,7 +265,7 @@ ajp_consume_send_headers(struct ajp_client *client,
                                           headers, body);
     client->response.in_handler = false;
 
-    return true;
+    return client->fd >= 0;
 }
 
 static bool
