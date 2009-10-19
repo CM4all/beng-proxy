@@ -6,53 +6,53 @@
 
 #include "uri-parser.h"
 #include "uri-escape.h"
+#include "uri-string.h"
 #include "strref-pool.h"
 
 #include <string.h>
 
-static size_t
-uri_path_canonicalize_inplace(char *src, size_t length)
+static bool
+uri_segment_verify(const char *src, const char *end)
 {
-    char *end = src + length, *current = src, *p;
+    if (src == end)
+        /* double slash not allowed, see RFC 2396 3.3: "The path may
+           consist of a sequence of path segments separated by a
+           single slash "/" character." */
+        return false;
+
+    do {
+        /* XXX check for invalid escaped characters? */
+
+        if (!char_is_uri_pchar(*src))
+            return false;
+    } while (++src < end);
+
+    return true;
+}
+
+static bool
+uri_base_verify(const char *src, size_t length)
+{
+    const char *end = src + length, *slash;
 
     if (src[0] != '/')
         /* path must begin with slash */
         return 0;
 
-    while ((p = memchr(current, '/', end - current - 1)) != NULL) {
-        if (p[1] == '/') {
-            /* remove double slash */
-            memmove(p + 1, p + 2, end - p - 2);
-            --end;
-            continue;
-        }
+    ++src;
+    while (src < end) {
+        slash = memchr(src, '/', end - src);
+        if (slash == NULL)
+            slash = end;
 
-        if (p[1] == '.') {
-            if (p >= end - 2) {
-                /* remove trailing "/." */
-                end = p + 1;
-                break;
-            }
+        if (!uri_segment_verify(src, slash))
+            return false;
 
-            if (p[2] == '/') {
-                /* remove "/./" */
-                memmove(p + 1, p + 3, end - p - 3);
-                end -= 2;
-                continue;
-            }
-
-            if (p[2] == '.')
-                /* no double dot after slash allowed */
-                return 0;
-        }
-
-        current = p + 1;
+        src = slash + 1;
     }
 
-    return end - src;
+    return true;
 }
-
-/* XXX this is quick and dirty */
 
 bool
 uri_parse(pool_t pool, struct parsed_uri *dest, const char *src)
@@ -80,8 +80,7 @@ uri_parse(pool_t pool, struct parsed_uri *dest, const char *src)
     if (dest->base.length == 0)
         return false;
 
-    dest->base.length = uri_path_canonicalize_inplace(p, dest->base.length);
-    if (dest->base.length == 0)
+    if (!uri_base_verify(dest->base.data, dest->base.length))
         return false;
 
     if (semicolon == NULL) {
