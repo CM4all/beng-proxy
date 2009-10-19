@@ -128,7 +128,13 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_CONTAINER)
 
     def _handle_http(self, uri, response):
-        if uri[:19] == '/cm4all-beng-proxy/':
+        if uri.find('/./') >= 0 or uri.find('/../') >= 0 or \
+               uri[-2:] == '/.' or uri[-3:] == '/..' or \
+               uri.find('//') >= 0 or uri.find('\0') >= 0:
+            # these sequences are dangerous and may be used by
+            # malicious users to attack our server
+            response.status(400)
+        elif uri[:19] == '/cm4all-beng-proxy/':
             from sys import argv
             if len(argv) >= 3:
                 path = argv[2]
