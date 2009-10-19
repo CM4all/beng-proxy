@@ -160,14 +160,14 @@ translate_callback(const struct translate_response *response,
     }
 }
 
-static int
+static bool
 request_uri_parse(struct http_server_request *request,
                   struct parsed_uri *dest)
 {
-    int ret;
+    bool ret;
 
     ret = uri_parse(request->pool, dest, request->uri);
-    if (ret < 0) {
+    if (!ret) {
         if (request->body != NULL)
             istream_close(request->body);
 
@@ -277,7 +277,7 @@ handle_http_request(struct client_connection *connection,
                     struct async_operation_ref *async_ref)
 {
     struct request *request2;
-    int ret;
+    bool ret;
 
     assert(request != NULL);
 
@@ -285,7 +285,7 @@ handle_http_request(struct client_connection *connection,
     request2->request = request;
 
     ret = request_uri_parse(request, &request2->uri);
-    if (ret < 0)
+    if (!ret)
         return;
 
     assert(!strref_is_empty(&request2->uri.base));

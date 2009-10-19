@@ -169,7 +169,7 @@ assert_rewrite_check(pool_t widget_pool, struct widget *widget,
 
 int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 {
-    int ret;
+    bool ret;
     pool_t root_pool, pool;
     struct widget container, widget;
     struct strref value;
@@ -187,7 +187,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     container.lazy.prefix = "__";
 
     ret = uri_parse(pool, &external_uri, "/index.html;x=y?foo=bar");
-    assert(ret == 0);
+    assert(ret);
 
     /* test all modes with a normal widget */
 

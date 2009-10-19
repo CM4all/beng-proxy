@@ -54,7 +54,7 @@ uri_path_canonicalize_inplace(char *src, size_t length)
 
 /* XXX this is quick and dirty */
 
-int
+bool
 uri_parse(pool_t pool, struct parsed_uri *dest, const char *src)
 {
     char *p;
@@ -78,11 +78,11 @@ uri_parse(pool_t pool, struct parsed_uri *dest, const char *src)
     dest->base.data = p = strref_dup(pool, &dest->base);
     dest->base.length = uri_unescape_inplace(p, dest->base.length);
     if (dest->base.length == 0)
-        return -1;
+        return false;
 
     dest->base.length = uri_path_canonicalize_inplace(p, dest->base.length);
     if (dest->base.length == 0)
-        return -1;
+        return false;
 
     if (semicolon == NULL) {
         strref_clear(&dest->args);
@@ -100,5 +100,5 @@ uri_parse(pool_t pool, struct parsed_uri *dest, const char *src)
     else
         strref_set_c(&dest->query, qmark + 1);
 
-    return 0;
+    return true;
 }

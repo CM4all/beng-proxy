@@ -52,7 +52,7 @@ create_input(pool_t pool)
 static istream_t
 create_test(pool_t pool, istream_t input)
 {
-    int ret;
+    bool ret;
     const char *uri;
     static struct parsed_uri parsed_uri;
     static struct widget widget;
@@ -66,7 +66,7 @@ create_test(pool_t pool, istream_t input)
 
     uri = "/beng.html";
     ret = uri_parse(pool, &parsed_uri, uri);
-    if (ret != 0)
+    if (!ret)
         abort();
 
     widget_init(&widget, pool, &root_widget_class);

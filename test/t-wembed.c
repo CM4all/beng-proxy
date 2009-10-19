@@ -76,7 +76,7 @@ static void
 test_abort_resolver(pool_t pool)
 {
     const char *uri;
-    int ret;
+    bool ret;
     struct parsed_uri parsed_uri;
     struct widget widget;
     struct processor_env env;
@@ -86,7 +86,7 @@ test_abort_resolver(pool_t pool)
 
     uri = "/beng.html";
     ret = uri_parse(pool, &parsed_uri, uri);
-    if (ret != 0) {
+    if (!ret) {
         fprintf(stderr, "uri_parse() failed\n");
         exit(2);
     }

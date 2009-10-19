@@ -10,13 +10,15 @@
 #include "strref.h"
 #include "pool.h"
 
+#include <stdbool.h>
+
 struct parsed_uri {
     struct strref base;
     struct strref args;
     struct strref query;
 };
 
-int
+bool
 uri_parse(pool_t pool, struct parsed_uri *dest, const char *src);
 
 #endif
