@@ -300,7 +300,7 @@ http_client_parse_status_line(struct http_client *client,
     }
 
     client->response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
-    if (unlikely(client->response.status < 100 || client->response.status > 599)) {
+    if (unlikely(!http_status_is_valid(client->response.status))) {
         daemon_log(2, "http_client: invalid HTTP status %d\n",
                    client->response.status);
         http_client_abort_response_headers(client);

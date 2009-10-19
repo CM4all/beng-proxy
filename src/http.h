@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef enum {
     HTTP_METHOD_NULL = 0,
@@ -66,12 +67,20 @@ http_method_to_string(http_method_t method)
 
 extern const char *http_status_to_string_data[6][20];
 
+static inline bool
+http_status_is_valid(http_status_t status)
+{
+    return (status / 100) < sizeof(http_status_to_string_data) /
+        sizeof(http_status_to_string_data[0]) &&
+        status % 100 < sizeof(http_status_to_string_data[0]) /
+        sizeof(http_status_to_string_data[0][0]) &&
+        http_status_to_string_data[status / 100][status % 100] != NULL;
+}
+
 static inline const char *
 http_status_to_string(http_status_t status)
 {
-    assert((status / 100) < sizeof(http_status_to_string_data) / sizeof(http_status_to_string_data[0]));
-    assert(status % 100 < sizeof(http_status_to_string_data[0]) / sizeof(http_status_to_string_data[0][0]));
-    assert(http_status_to_string_data[status / 100][status % 100]);
+    assert(http_status_is_valid(status));
 
     return http_status_to_string_data[status / 100][status % 100];
 }

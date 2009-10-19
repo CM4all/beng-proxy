@@ -166,7 +166,7 @@ mcd_deserialize_document(pool_t pool, struct strref *header,
     document->status = deserialize_uint16(header);
     document->headers = deserialize_strmap(header, pool);
 
-    if (strref_is_null(header))
+    if (strref_is_null(header) || !http_status_is_valid(document->status))
         return NULL;
 
     document->info.last_modified =

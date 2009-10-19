@@ -14,6 +14,8 @@ http_cache_document_init(struct http_cache_document *document, pool_t pool,
                          http_status_t status,
                          struct strmap *response_headers)
 {
+    assert(http_status_is_valid(status));
+
     http_cache_copy_info(pool, &document->info, info);
 
     document->vary = document->info.vary != NULL

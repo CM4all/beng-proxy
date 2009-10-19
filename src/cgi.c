@@ -77,7 +77,7 @@ cgi_return_response(struct cgi *cgi)
     p = strmap_remove(headers, "status");
     if (p != NULL) {
         int i = atoi(p);
-        if (i >= 200 && i < 600)
+        if (http_status_is_valid(i))
             status = (http_status_t)i;
     }
 

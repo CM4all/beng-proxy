@@ -249,6 +249,12 @@ ajp_consume_send_headers(struct ajp_client *client,
         return false;
     }
 
+    if (!http_status_is_valid(status)) {
+        daemon_log(1, "invalid status %u from AJP server\n", status);
+        ajp_connection_close(client);
+        return false;
+    }
+
     if (http_status_is_empty(status)) {
         body = NULL;
         client->response.read_state = READ_END;

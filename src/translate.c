@@ -434,6 +434,14 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->response.status = *(const uint16_t*)payload;
+
+        if (!http_status_is_valid(client->response.status)) {
+            daemon_log(1, "invalid HTTP status code %u\n",
+                       client->response.status);
+            translate_client_abort(client);
+            return false;
+        }
+
         break;
 
     case TRANSLATE_PATH:

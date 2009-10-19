@@ -410,6 +410,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/uri-address.c src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
 	src/resource-address.c src/global.c src/transformation.c \
 	src/expansible-buffer.c \
+	src/http.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_processor_LDADD = $(T_ISTREAM_FILTER_LIB) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -441,6 +442,7 @@ test_t_widget_stream_SOURCES = test/t-widget-stream.c \
 	$(POOL_SRC) \
 	src/istream-forward.c src/istream-null.c src/istream-memory.c \
 	src/istream-string.c src/istream-delayed.c \
+	src/http.c \
 	src/widget-stream.c
 test_t_widget_stream_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS)
 
@@ -615,6 +617,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/istream-null.c \
 	src/transformation.c \
 	src/dpool.c src/dstring.c src/dhashmap.c src/shm.c \
+	src/http.c \
 	$(POOL_SRC) src/tpool.c
 test_t_widget_http_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -634,6 +637,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/stock.c src/hstock.c src/hashmap.c \
 	src/abort-unref.c \
 	src/uri-address.c \
+	src/http.c \
 	$(POOL_SRC)
 test_request_translation_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
@@ -692,6 +696,7 @@ test_run_processor_SOURCES = test/t-processor.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/widget-stream.c src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
+	src/http.c \
 	$(POOL_SRC)
 test_run_processor_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
@@ -704,6 +709,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/growing-buffer.c src/socket-util.c src/fd-util.c \
 	src/strmap.c src/hashmap.c \
 	src/strutil.c \
+	src/http.c \
 	src/istream-file.c \
 	src/istream-cat.c \
 	src/istream-memory.c \
