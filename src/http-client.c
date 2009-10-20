@@ -17,6 +17,7 @@
 #include "async.h"
 #include "growing-buffer.h"
 #include "lease.h"
+#include "uri-verify.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -801,6 +802,12 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     assert(http_method_is_valid(method));
     assert(handler != NULL);
     assert(handler->response != NULL);
+
+    if (!uri_verify_quick(uri)) {
+        daemon_log(4, "http-client: malformed request URI '%s'\n", uri);
+        http_response_handler_direct_abort(handler, ctx);
+        return;
+    }
 
     pool = pool_new_linear(caller_pool, "http_client_request", 8192);
 

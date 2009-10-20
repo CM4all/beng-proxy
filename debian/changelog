@@ -17,6 +17,7 @@ cm4all-beng-proxy (0.7) unstable; urgency=low
   * prototypes/translate.py: disallow "/../" and null bytes
   * uri-parser: strict RFC 2396 URI verification
   * uri-parser: don't unescape the URI path
+  * http-client, ajp-client: verify the request URI
   * allow 8192 connections by default
   * allow 65536 file handles by default
 

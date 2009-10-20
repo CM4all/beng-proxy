@@ -37,4 +37,12 @@ uri_path_verify(const char *src, size_t length);
 bool
 uri_path_verify_paranoid(const char *uri);
 
+/**
+ * Quickly verify the validity of an URI (path plus query).  This may
+ * be used before passing it to another server, not to be parsed by
+ * this process.
+ */
+bool
+uri_verify_quick(const char *uri);
+
 #endif

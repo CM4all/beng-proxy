@@ -19,6 +19,7 @@
 #include "serialize.h"
 #include "strref.h"
 #include "lease.h"
+#include "uri-verify.h"
 
 #include <daemon/log.h>
 #include <socket/util.h>
@@ -670,7 +671,11 @@ ajp_client_request(pool_t pool, int fd,
     assert(server_name != NULL);
     assert(http_method_is_valid(method));
 
-    (void)headers; /* XXX */
+    if (!uri_verify_quick(uri)) {
+        daemon_log(4, "ajp-client: malformed request URI '%s'\n", uri);
+        http_response_handler_direct_abort(handler, handler_ctx);
+        return;
+    }
 
     pool_ref(pool);
     client = p_malloc(pool, sizeof(*client));

@@ -117,3 +117,17 @@ uri_path_verify_paranoid(const char *uri)
 
     return true;
 }
+
+bool
+uri_verify_quick(const char *uri)
+{
+    if (*uri != '/')
+        /* must begin with a slash */
+        return false;
+
+    for (++uri; *uri != 0; ++uri)
+        if ((signed char)*uri <= 0x20)
+            return false;
+
+    return uri;
+}

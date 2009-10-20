@@ -511,6 +511,7 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/http-body.c src/header-parser.c \
 	src/format.c src/http.c src/strutil.c \
 	src/buffered-io.c src/fd-util.c src/socket-util.c \
+	src/uri-verify.c \
 	src/tpool.c src/event2.c
 test_t_http_client_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
@@ -714,6 +715,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \
 	src/serialize.c \
+	src/uri-verify.c \
 	src/buffered-io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/socket-util.c src/fd-util.c \
 	src/strmap.c src/hashmap.c \
