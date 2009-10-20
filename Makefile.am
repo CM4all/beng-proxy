@@ -322,7 +322,7 @@ test_t_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/hashmap.c \
 	src/resource-address.c src/uri-address.c \
-	src/uri-relative.c src/uri-edit.c \
+	src/uri-relative.c src/uri-edit.c src/uri-verify.c \
 	src/transformation.c \
 	$(POOL_SRC)
 test_t_tcache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
@@ -334,7 +334,7 @@ test_t_stock_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/resource-address.c \
-	src/uri-address.c src/uri-relative.c \
+	src/uri-address.c src/uri-relative.c src/uri-verify.c \
 	$(POOL_SRC)
 test_t_resource_address_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
@@ -584,7 +584,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/uri-address.c src/transformation.c \
 	src/tcache.c src/cache.c \
 	src/hashmap.c src/abort-unref.c \
-	src/resource-address.c src/uri-relative.c
+	src/resource-address.c src/uri-relative.c src/uri-verify.c
 test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS)
@@ -607,7 +607,8 @@ test_t_wembed_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
 	src/widget-session.c src/session.c \
-	src/args.c src/uri-escape.c src/format.c \
+	src/args.c src/uri-escape.c src/uri-verify.c \
+	src/format.c \
 	src/resource-address.c src/uri-address.c \
 	src/uri-relative.c src/uri-edit.c \
 	src/resource-tag.c \

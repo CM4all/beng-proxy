@@ -7,6 +7,7 @@
 
 #include "resource-address.h"
 #include "uri-relative.h"
+#include "uri-verify.h"
 #include "strref.h"
 
 void
@@ -119,6 +120,9 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
                            const char *suffix)
 {
     struct resource_address *dest;
+
+    if (!uri_path_verify_paranoid(suffix))
+        return NULL;
 
     switch (src->type) {
     case RESOURCE_ADDRESS_NONE:

@@ -35,6 +35,33 @@ int main(int argc, char **argv) {
     assert(b->type == RESOURCE_ADDRESS_LOCAL);
     assert(strcmp(b->u.local.path, "/var/www/foo/index.html") == 0);
 
+    b = resource_address_load_base(pool, a, "../hackme");
+    assert(b == NULL);
+
+    b = resource_address_load_base(pool, a, ".%2e/hackme");
+    assert(b == NULL);
+
+    b = resource_address_load_base(pool, a, "foo//bar");
+    assert(b == NULL);
+
+    b = resource_address_load_base(pool, a, "foo/./bar");
+    assert(b == NULL);
+
+    b = resource_address_load_base(pool, a, "foo/../bar");
+    assert(b == NULL);
+
+    b = resource_address_load_base(pool, a, "foo/%2e/bar");
+    assert(b == NULL);
+
+    b = resource_address_load_base(pool, a, "foo/.%2e/bar");
+    assert(b == NULL);
+
+    b = resource_address_load_base(pool, a, "foo/.%2e");
+    assert(b == NULL);
+
+    b = resource_address_load_base(pool, a, "f%00");
+    assert(b == NULL);
+
     pool_unref(pool);
     pool_commit();
 
