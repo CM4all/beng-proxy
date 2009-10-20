@@ -74,6 +74,7 @@ uri_unescape_inplace(char *src, size_t length)
         *p = ch;
         memmove(p + 1, p + 3, end - p - 3);
         end -= 2;
+        current = p + 1;
     }
 
     return end - src;
