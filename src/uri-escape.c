@@ -51,11 +51,11 @@ parse_hexdigit(char ch)
 size_t
 uri_unescape_inplace(char *src, size_t length)
 {
-    char *end = src + length, *current = src, *p;
+    char *end = src + length, *p = src;
     int digit1, digit2;
     char ch;
 
-    while ((p = memchr(current, '%', end - current)) != NULL) {
+    while ((p = memchr(p, '%', end - p)) != NULL) {
         if (p >= end - 2)
             /* percent sign at the end of string */
             return 0;
@@ -71,10 +71,9 @@ uri_unescape_inplace(char *src, size_t length)
             /* no %00 hack allowed! */
             return 0;
 
-        *p = ch;
-        memmove(p + 1, p + 3, end - p - 3);
+        *p++ = ch;
+        memmove(p, p + 2, end - p - 2);
         end -= 2;
-        current = p + 1;
     }
 
     return end - src;
