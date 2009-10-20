@@ -182,6 +182,7 @@ SRC = src/main.c \
 	src/delegate-handler.c \
 	src/uri-edit.c \
 	src/uri-relative.c \
+	src/uri-verify.c \
 	src/uri-parser.c \
 	src/uri-address.c \
 	src/uri-resolver.c \
@@ -398,6 +399,7 @@ test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/uri-relative.c src/uri-parser.c src/uri-escape.c src/uri-edit.c \
+	src/uri-verify.c \
 	src/session.c src/cookie-client.c \
 	src/http-string.c \
 	src/strmap.c src/hashmap.c \
@@ -569,6 +571,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/strmap.c src/hashmap.c \
 	src/resource-address.c src/uri-address.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
+	src/uri-verify.c \
 	src/format.c
 test_t_rewrite_uri_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -597,7 +600,8 @@ test_t_wembed_SOURCES = test/t-wembed.c \
 	src/fifo-buffer.c \
 	src/hashmap.c src/strmap.c \
 	src/http-util.c src/strutil.c \
-	src/uri-parser.c src/uri-escape.c src/format.c src/global.c
+	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
+	src/format.c src/global.c
 test_t_wembed_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_widget_http_SOURCES = test/t-widget-http.c \
@@ -678,7 +682,7 @@ test_run_processor_SOURCES = test/t-processor.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c \
-	src/uri-parser.c src/uri-escape.c \
+	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/tpool.c \
