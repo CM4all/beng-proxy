@@ -186,7 +186,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     container.lazy.path = "";
     container.lazy.prefix = "__";
 
-    ret = uri_parse(pool, &external_uri, "/index.html;x=y?foo=bar");
+    ret = uri_parse(&external_uri, "/index.html;x=y?foo=bar");
     assert(ret);
 
     /* test all modes with a normal widget */

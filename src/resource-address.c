@@ -8,6 +8,7 @@
 #include "resource-address.h"
 #include "uri-relative.h"
 #include "uri-verify.h"
+#include "uri-escape.h"
 #include "strref.h"
 
 void
@@ -77,6 +78,15 @@ base_string(const char *p, const char *suffix)
         : 0;
 }
 
+static size_t
+base_string_unescape(pool_t pool, const char *p, const char *suffix)
+{
+    char *unescaped = p_strdup(pool, suffix);
+    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
+
+    return base_string(p, unescaped);
+}
+
 struct resource_address *
 resource_address_save_base(pool_t pool, const struct resource_address *src,
                            const char *suffix)
@@ -92,7 +102,7 @@ resource_address_save_base(pool_t pool, const struct resource_address *src,
         return NULL;
 
     case RESOURCE_ADDRESS_LOCAL:
-        length = base_string(src->u.local.path, suffix);
+        length = base_string_unescape(pool, src->u.local.path, suffix);
         if (length == 0)
             return NULL;
 
@@ -120,6 +130,7 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
                            const char *suffix)
 {
     struct resource_address *dest;
+    char *unescaped;
 
     if (!uri_path_verify_paranoid(suffix))
         return NULL;
@@ -137,8 +148,12 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
         assert(*src->u.local.path != 0);
         assert(src->u.local.path[strlen(src->u.local.path) - 1] == '/');
 
+        unescaped = p_strdup(pool, suffix);
+        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
+
         dest = resource_address_dup(pool, src);
-        dest->u.local.path = p_strcat(pool, dest->u.local.path, suffix, NULL);
+        dest->u.local.path = p_strcat(pool, dest->u.local.path,
+                                      unescaped, NULL);
         return dest;
 
     case RESOURCE_ADDRESS_HTTP:

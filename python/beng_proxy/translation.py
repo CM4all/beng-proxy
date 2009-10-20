@@ -1,6 +1,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 
 import struct
+import urllib
 
 TRANSLATE_BEGIN = 1
 TRANSLATE_END = 2
@@ -107,7 +108,7 @@ class PacketReader:
 class Request:
     def __init__(self):
         self.host = None
-        self.uri = None
+        self.raw_uri = None
         self.query_string = None
         self.widget_type = None
         self.session = None
@@ -118,13 +119,22 @@ class Request:
         self.user_agent = None
         self.accept_language = None
 
+    def __getattr__(self, name):
+        if name == 'uri':
+            # compatibility with pre-0.7: return the unquoted URI
+            if self.raw_uri is None:
+                return None
+            return urllib.unquote(self.raw_uri)
+        else:
+            return self.AttributeError(name)
+
     def packetReceived(self, packet):
         if packet.command == TRANSLATE_END:
             return True
         elif packet.command == TRANSLATE_HOST:
             self.host = packet.payload
         elif packet.command == TRANSLATE_URI:
-            self.uri = packet.payload
+            self.raw_uri = packet.payload
         elif packet.command == TRANSLATE_QUERY_STRING:
             self.query_string = packet.payload
         elif packet.command == TRANSLATE_WIDGET_TYPE:

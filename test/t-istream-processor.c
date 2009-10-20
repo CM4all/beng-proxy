@@ -65,7 +65,7 @@ create_test(pool_t pool, istream_t input)
     global_translate_cache = (struct tcache *)(size_t)1;
 
     uri = "/beng.html";
-    ret = uri_parse(pool, &parsed_uri, uri);
+    ret = uri_parse(&parsed_uri, uri);
     if (!ret)
         abort();
 

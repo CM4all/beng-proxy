@@ -18,6 +18,14 @@ int main(int argc, char **argv) {
             },
         },
     };
+    static const struct resource_address ra2 = {
+        .type = RESOURCE_ADDRESS_LOCAL,
+        .u = {
+            .local = {
+                .path = "/var/www/foo/space .txt",
+            },
+        },
+    };
     struct resource_address *a, *b;
 
     (void)argc;
@@ -61,6 +69,16 @@ int main(int argc, char **argv) {
 
     b = resource_address_load_base(pool, a, "f%00");
     assert(b == NULL);
+
+    a = resource_address_save_base(pool, &ra2, "space%20.txt");
+    assert(a != NULL);
+    assert(a->type == RESOURCE_ADDRESS_LOCAL);
+    assert(strcmp(a->u.local.path, "/var/www/foo/") == 0);
+
+    b = resource_address_load_base(pool, a, "index%2ehtml");
+    assert(b != NULL);
+    assert(b->type == RESOURCE_ADDRESS_LOCAL);
+    assert(strcmp(b->u.local.path, "/var/www/foo/index.html") == 0);
 
     pool_unref(pool);
     pool_commit();

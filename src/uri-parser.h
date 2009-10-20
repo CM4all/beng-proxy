@@ -19,6 +19,6 @@ struct parsed_uri {
 };
 
 bool
-uri_parse(pool_t pool, struct parsed_uri *dest, const char *src);
+uri_parse(struct parsed_uri *dest, const char *src);
 
 #endif

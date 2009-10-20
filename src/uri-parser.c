@@ -12,9 +12,8 @@
 #include <string.h>
 
 bool
-uri_parse(pool_t pool, struct parsed_uri *dest, const char *src)
+uri_parse(struct parsed_uri *dest, const char *src)
 {
-    char *p;
     const char *semicolon, *qmark;
 
     qmark = strchr(src, '?');
@@ -31,11 +30,6 @@ uri_parse(pool_t pool, struct parsed_uri *dest, const char *src)
         dest->base.length = qmark - src;
     else
         dest->base.length = strlen(src);
-
-    dest->base.data = p = strref_dup(pool, &dest->base);
-    dest->base.length = uri_unescape_inplace(p, dest->base.length);
-    if (dest->base.length == 0)
-        return false;
 
     if (!uri_path_verify(dest->base.data, dest->base.length))
         return false;

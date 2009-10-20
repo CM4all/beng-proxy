@@ -166,7 +166,7 @@ request_uri_parse(struct http_server_request *request,
 {
     bool ret;
 
-    ret = uri_parse(request->pool, dest, request->uri);
+    ret = uri_parse(dest, request->uri);
     if (!ret) {
         if (request->body != NULL)
             istream_close(request->body);

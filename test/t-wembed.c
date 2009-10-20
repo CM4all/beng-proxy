@@ -85,7 +85,7 @@ test_abort_resolver(pool_t pool)
     pool = pool_new_linear(pool, "test", 4096);
 
     uri = "/beng.html";
-    ret = uri_parse(pool, &parsed_uri, uri);
+    ret = uri_parse(&parsed_uri, uri);
     if (!ret) {
         fprintf(stderr, "uri_parse() failed\n");
         exit(2);

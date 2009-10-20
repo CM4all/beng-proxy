@@ -127,7 +127,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_PROCESS)
                 response.packet(TRANSLATE_CONTAINER)
 
-    def _handle_http(self, uri, response):
+    def _handle_http(self, raw_uri, uri, response):
         if uri.find('/./') >= 0 or uri.find('/../') >= 0 or \
                uri[-2:] == '/.' or uri[-3:] == '/..' or \
                uri.find('//') >= 0 or uri.find('\0') >= 0:
@@ -144,10 +144,10 @@ class Translation(Protocol):
             self._handle_local_file(path + uri[19:], response)
         elif uri[:9] == '/cgi-bin/':
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, uri[9:]))
-        elif uri[:11] == '/cfatest01/':
-            response.proxy('http://cfatest01.intern.cm-ag/' + uri[11:])
-        elif uri[:5] == '/ajp/':
-            response.ajp(uri[4:], 'cfatest01.intern.cm-ag:8009')
+        elif raw_uri[:11] == '/cfatest01/':
+            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
+        elif raw_uri[:5] == '/ajp/':
+            response.ajp(raw_uri[4:], 'cfatest01.intern.cm-ag:8009')
         elif uri[:8] == '/fcgi.rb':
             response.packet(TRANSLATE_FASTCGI, os.path.join(test_path, 'fcgi.rb'))
         elif uri == '/discard':
@@ -188,7 +188,7 @@ class Translation(Protocol):
             self._handle_widget_lookup(request.widget_type, response)
 
         if request.uri is not None:
-            self._handle_http(request.uri, response)
+            self._handle_http(request.raw_uri, request.uri, response)
 
         self.transport.write(response.finish())
 
