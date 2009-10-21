@@ -15,6 +15,7 @@ cm4all-beng-proxy (0.7) unstable; urgency=low
   * translate, http-client, ajp-client, cgi, http-cache: verify the HTTP
     response status
   * prototypes/translate.py: disallow "/../" and null bytes
+  * prototypes/translate.py: added "/jail-delegate/" location
   * uri-parser: strict RFC 2396 URI verification
   * uri-parser: don't unescape the URI path
   * http-client, ajp-client: verify the request URI

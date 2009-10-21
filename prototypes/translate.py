@@ -111,7 +111,7 @@ class Translation(Protocol):
                 response.status(500)
                 break
 
-    def _handle_local_file(self, path, response, delegate=False):
+    def _handle_local_file(self, path, response, delegate=False, jail=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
 
         cgi = cgi_re.search(path, 1)
@@ -119,7 +119,13 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CGI, path)
         else:
             response.path(path)
-            if delegate:
+            if delegate and jail:
+                response.delegate('/usr/bin/cm4all-beng-proxy-delegate-helper')
+                # need another DOCUMENT_ROOT reference, for the
+                # following JAILCGI packet
+                response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
+                response.packet(TRANSLATE_JAILCGI)
+            elif delegate:
                 response.delegate(os.path.join(helpers_path,
                                                'cm4all-beng-proxy-delegate-helper'))
             if path[-5:] == '.html':
@@ -155,6 +161,8 @@ class Translation(Protocol):
             response.status(204)
         elif uri[:10] == '/delegate/':
             self._handle_local_file('/var/www' + uri[9:], response, True)
+        elif uri[:15] == '/jail-delegate/':
+            self._handle_local_file('/home/www' + uri[14:], response, True, True)
         else:
             self._handle_local_file('/var/www' + uri, response)
 
