@@ -283,5 +283,5 @@ tcp_stock_item_get_domain(const struct stock_item *item)
     assert(item != NULL);
     assert(connection->fd >= 0);
 
-    return connection->fd;
+    return connection->domain;
 }
