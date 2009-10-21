@@ -20,7 +20,8 @@ Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6),
  cm4all-thirdparty-multilog, adduser
 Recommends: cm4all-beng-proxy-translation | cm4all-jetserv-daemon,
  libcm4all-beng-proxy-js (= ${source:Version})
-Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi
+Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi,
+ cm4all-jailed-beng-proxy-delegate-helper
 Provides: httpd, httpd-cgi
 Conflicts: libevent1 (>= 1.4~), libevent2
 Description: HTTP proxy server
@@ -59,6 +60,17 @@ Description: HTTP proxy server, debug symbols
  processor.
  .
  This package provides the debugging symbols for the optimized build.
+
+Package: cm4all-jailed-beng-proxy-delegate-helper
+Architecture: any
+Depends: cm4all-jailed-root-lib (>= 0.4.3)
+Enhances: cm4all-beng-proxy, cm4all-beng-proxy-optimized
+Description: HTTP proxy server, delegate helper for JailCGI
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This package adds the delegate helper to the JailCGI root.  It can be
+ used to open files safely.
 
 Package: libcm4all-beng-proxy-js
 Architecture: all
