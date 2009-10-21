@@ -140,7 +140,7 @@ http_cache_put(struct http_cache_request *request)
         http_cache_heap_put(request->cache->cache, request->cache->pool, request->url,
                             request->info, request->headers, request->response.status,
                             request->response.headers, request->response.output);
-    else {
+    else if (request->cache->memcached_stock != NULL) {
         list_add(&request->siblings, &request->cache->requests);
 
         http_cache_memcached_put(request->pool, request->cache->memcached_stock,
@@ -169,7 +169,7 @@ http_cache_remove_url(struct http_cache *cache, const char *url)
 {
     if (cache->cache != NULL)
         http_cache_heap_remove_url(cache->cache, url);
-    else
+    else if (cache->memcached_stock != NULL)
         http_cache_memcached_remove_uri(cache->memcached_stock,
                                         cache->pool, &cache->background,
                                         url);
@@ -488,7 +488,7 @@ http_cache_flush(struct http_cache *cache)
 {
     if (cache->cache != NULL)
         http_cache_heap_flush(cache->cache);
-    else {
+    else if (cache->memcached_stock != NULL) {
         pool_t pool = pool_new_linear(cache->pool,
                                       "http_cache_memcached_flush", 1024);
         struct http_cache_flush *flush = p_malloc(pool, sizeof(*flush));
@@ -589,7 +589,7 @@ http_cache_serve(struct http_cache_request *request)
         http_cache_heap_serve(request->cache->cache, request->document,
                               request->pool, request->url,
                               request->handler.handler, request->handler.ctx);
-    else
+    else if (request->cache->memcached_stock != NULL)
         http_cache_memcached_serve(request);
 }
 
@@ -844,7 +844,7 @@ http_cache_request(struct http_cache *cache,
         if (cache->cache != NULL)
             http_cache_heap_use(cache, pool, method, uwa, headers, info,
                                 handler, handler_ctx, async_ref);
-        else
+        else if (cache->memcached_stock != NULL)
             http_cache_memcached_use(cache, pool, method, uwa, headers,
                                      info, handler, handler_ctx, async_ref);
     } else {
