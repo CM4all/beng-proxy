@@ -836,7 +836,7 @@ p_free(pool_t pool, const void *cptr)
 static inline void
 clear_memory(void *p, size_t size)
 {
-#if defined(__x86_64__)
+#if defined(__GNUC__) && defined(__x86_64__)
     size_t n = (size + 7) / 8;
     size_t __attr_unused dummy0, dummy1;
     asm volatile("cld\n\t"
