@@ -105,6 +105,11 @@ settings:
 
 \texttt{max\_connections} & The maximum number of incoming HTTP
 connections. \\
+\hline
+
+\texttt{tcp\_stock\_limit} & The maximum number of outgoing TCP
+connections per remote host.  0 means unlimited, which has shown to be
+a bad choice, because many servers do not scale well. \\
 
 \hline
 

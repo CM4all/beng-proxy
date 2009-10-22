@@ -51,6 +51,8 @@ struct config {
     size_t filter_cache_size;
 
     unsigned translate_cache_size;
+
+    unsigned tcp_stock_limit;
 };
 
 void

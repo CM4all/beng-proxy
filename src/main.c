@@ -224,6 +224,7 @@ int main(int argc, char **argv)
             .http_cache_size = 512 * 1024 * 1024,
             .filter_cache_size = 128 * 1024 * 1024,
             .translate_cache_size = 131072,
+            .tcp_stock_limit = 256,
         },
     };
 
@@ -273,7 +274,8 @@ int main(int argc, char **argv)
         add_listener(&instance, instance.config.listen[i]);
 
     instance.balancer = balancer_new(instance.pool);
-    instance.tcp_stock = tcp_stock_new(instance.pool, instance.balancer, 256);
+    instance.tcp_stock = tcp_stock_new(instance.pool, instance.balancer,
+                                       instance.config.tcp_stock_limit);
 
     if (instance.config.memcached_server != NULL)
         instance.memcached_stock =
