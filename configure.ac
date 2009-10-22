@@ -3,7 +3,7 @@ AC_INIT(CM4all BENG-Proxy, 0.7.1, mk@cm4all.com, cm4all-beng-proxy)
 AC_COPYRIGHT(Copyright 2007-2009 Content Management AG)
 AC_CONFIG_SRCDIR(src/main.c)
 AC_CONFIG_AUX_DIR(build)
-AM_INIT_AUTOMAKE([foreign 1.10 dist-bzip2])
+AM_INIT_AUTOMAKE([foreign 1.10 no-dist subdir-objects])
 
 dnl Checks for programs.
 

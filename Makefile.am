@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS = foreign 1.10 dist-bzip2
+AUTOMAKE_OPTIONS = foreign 1.10 no-dist subdir-objects
 
 #
 # Compiler/linker flags
