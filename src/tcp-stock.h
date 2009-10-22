@@ -12,8 +12,16 @@
 struct balancer;
 struct stock_item;
 
+/**
+ * Creates a new TCP connection stock.
+ *
+ * @param pool the memory pool
+ * @param balancer the load balancer object
+ * @param limit the maximum number of connections per host
+ * @return the new TCP connections stock (this function cannot fail)
+ */
 struct hstock *
-tcp_stock_new(pool_t pool, struct balancer *balancer);
+tcp_stock_new(pool_t pool, struct balancer *balancer, unsigned limit);
 
 int
 tcp_stock_item_get(const struct stock_item *item);

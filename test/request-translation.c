@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
 
-    tcp_stock = tcp_stock_new(pool, balancer_new(pool));
+    tcp_stock = tcp_stock_new(pool, balancer_new(pool), 0);
     translate_stock = tstock_new(pool, tcp_stock, "/tmp/beng-proxy-translate");
 
     tstock_translate(translate_stock, pool,

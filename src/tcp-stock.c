@@ -258,9 +258,9 @@ static const struct stock_class tcp_stock_class = {
  */
 
 struct hstock *
-tcp_stock_new(pool_t pool, struct balancer *balancer)
+tcp_stock_new(pool_t pool, struct balancer *balancer, unsigned limit)
 {
-    return hstock_new(pool, &tcp_stock_class, balancer, 256);
+    return hstock_new(pool, &tcp_stock_class, balancer, limit);
 }
 
 int

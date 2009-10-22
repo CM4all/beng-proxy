@@ -273,7 +273,7 @@ int main(int argc, char **argv)
         add_listener(&instance, instance.config.listen[i]);
 
     instance.balancer = balancer_new(instance.pool);
-    instance.tcp_stock = tcp_stock_new(instance.pool, instance.balancer);
+    instance.tcp_stock = tcp_stock_new(instance.pool, instance.balancer, 256);
 
     if (instance.config.memcached_server != NULL)
         instance.memcached_stock =
