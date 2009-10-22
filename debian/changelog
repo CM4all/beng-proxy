@@ -5,7 +5,7 @@ cm4all-beng-proxy (0.7.1) unstable; urgency=low
   * cmdline: added option "--set tcp_stock_limit"
   * Makefile.am: enable the "subdir-objects" option
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 22 Oct 2009 12:17:11 +0200
 
 cm4all-beng-proxy (0.7) unstable; urgency=low
 
