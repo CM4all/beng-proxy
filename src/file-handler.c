@@ -375,8 +375,10 @@ file_callback(struct request *request2)
 
     /* request options */
 
-    if (!file_evaluate_request(request2, &st, &file_request))
+    if (!file_evaluate_request(request2, &st, &file_request)) {
+        istream_close(body);
         return;
+    }
 
     /* build the response */
 
