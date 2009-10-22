@@ -1,3 +1,9 @@
+cm4all-beng-proxy (0.7.2) unstable; urgency=low
+
+  * 
+
+ --
+
 cm4all-beng-proxy (0.7.1) unstable; urgency=low
 
   * file-handler: close the stream on "304 Not Modified"
