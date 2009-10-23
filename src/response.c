@@ -283,8 +283,6 @@ response_apply_transformation(struct request *request2,
     assert(transformation != NULL);
 
     if (!http_status_is_success(status)) {
-        /* not a successfull HTTP status code: don't apply
-           transformation on the error document */
         response_dispatch_direct(request2, status, headers, body);
         return;
     }
@@ -316,7 +314,9 @@ response_dispatch(struct request *request2,
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
 
-    if (transformation != NULL) {
+    /* if HTTP status code is not successful: don't apply
+       transformation on the error document */
+    if (transformation != NULL && http_status_is_success(status)) {
         request2->translate.transformation = transformation->next;
 
         response_apply_transformation(request2, status, headers, body,
