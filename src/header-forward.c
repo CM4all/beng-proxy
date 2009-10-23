@@ -5,9 +5,11 @@
  */
 
 #include "header-forward.h"
+#include "header-writer.h"
 #include "strmap.h"
 #include "session.h"
 #include "cookie-client.h"
+#include "growing-buffer.h"
 
 #ifndef NDEBUG
 #include <daemon/log.h>
@@ -32,6 +34,23 @@ static const char *const body_request_headers[] = {
     "content-range",
     "content-type",
     "content-disposition",
+    NULL,
+};
+
+static const char *const response_headers[] = {
+    "age",
+    "etag",
+    "cache-control",
+    "content-encoding",
+    "content-language",
+    "content-md5",
+    "content-range",
+    "content-type",
+    "content-disposition",
+    "last-modified",
+    "retry-after",
+    "vary",
+    "location",
     NULL,
 };
 
@@ -113,6 +132,21 @@ forward_request_headers(pool_t pool, struct strmap *src,
         else
             strmap_add(dest, "via",
                        p_strcat(pool, p, ", 1.1 ", remote_host, NULL));
+    }
+
+    return dest;
+}
+
+struct growing_buffer *
+forward_print_response_headers(pool_t pool, struct strmap *src)
+{
+    struct growing_buffer *dest;
+
+    if (src == NULL) {
+        dest = growing_buffer_new(pool, 1024);
+    } else {
+        dest = growing_buffer_new(pool, 2048);
+        headers_copy(src, dest, response_headers);
     }
 
     return dest;

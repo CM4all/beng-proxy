@@ -8,6 +8,7 @@
 #include "transformation.h"
 #include "http-server.h"
 #include "header-writer.h"
+#include "header-forward.h"
 #include "widget.h"
 #include "embed.h"
 #include "proxy-widget.h"
@@ -22,23 +23,6 @@
 #include "hostname.h"
 
 #include <daemon/log.h>
-
-static const char *const copy_headers[] = {
-    "age",
-    "etag",
-    "cache-control",
-    "content-encoding",
-    "content-language",
-    "content-md5",
-    "content-range",
-    "content-type",
-    "content-disposition",
-    "last-modified",
-    "retry-after",
-    "vary",
-    "location",
-    NULL,
-};
 
 static const char *
 request_absolute_uri(const struct http_server_request *request)
@@ -366,12 +350,7 @@ response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
-    if (headers == NULL) {
-        response_headers = growing_buffer_new(request->pool, 1024);
-    } else {
-        response_headers = growing_buffer_new(request->pool, 2048);
-        headers_copy(headers, response_headers, copy_headers);
-    }
+    response_headers = forward_print_response_headers(request->pool, headers);
 
     response_dispatch(request2,
                       status, response_headers,
