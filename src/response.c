@@ -247,20 +247,13 @@ response_dispatch_direct(struct request *request2,
 }
 
 static void
-response_apply_filter(struct request *request2,
-                      http_status_t status, struct growing_buffer *headers,
-                      istream_t body,
-                      const struct resource_address *filter)
+response_apply_filter2(struct request *request2,
+                       http_status_t status, struct strmap *headers2,
+                       istream_t body,
+                       const struct resource_address *filter)
 {
     struct http_server_request *request = request2->request;
     const char *source_tag;
-    struct strmap *headers2;
-
-    if (headers != NULL) {
-        headers2 = strmap_new(request->pool, 16);
-        header_parse_buffer(request->pool, headers2, headers);
-    } else
-        headers2 = NULL;
 
     source_tag = resource_tag_append_etag(request->pool,
                                           request2->resource_tag, headers2);
@@ -272,6 +265,24 @@ response_apply_filter(struct request *request2,
                          source_tag, status, headers2, body,
                          &response_handler, request2,
                          request2->async_ref);
+}
+
+static void
+response_apply_filter(struct request *request2,
+                      http_status_t status, struct growing_buffer *headers,
+                      istream_t body,
+                      const struct resource_address *filter)
+{
+    struct http_server_request *request = request2->request;
+    struct strmap *headers2;
+
+    if (headers != NULL) {
+        headers2 = strmap_new(request->pool, 16);
+        header_parse_buffer(request->pool, headers2, headers);
+    } else
+        headers2 = NULL;
+
+    response_apply_filter2(request2, status, headers2, body, filter);
 }
 
 static void
