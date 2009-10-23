@@ -40,17 +40,6 @@ static const char *const copy_headers[] = {
     NULL,
 };
 
-static const char *const copy_headers_processed[] = {
-    "cache-control",
-    "content-language",
-    "content-type",
-    "content-disposition",
-    "vary",
-    "location",
-    NULL,
-};
-
-
 static const char *
 request_absolute_uri(const struct http_server_request *request)
 {
@@ -366,15 +355,22 @@ response_response(http_status_t status, struct strmap *headers,
     }
 #endif
 
+    if (request2->translate.transformation != NULL &&
+        http_status_is_success(status)) {
+        const struct transformation *transformation
+            = request2->translate.transformation;
+        request2->translate.transformation = transformation->next;
+
+        response_apply_transformation(request2, status, headers, body,
+                                      transformation);
+        return;
+    }
+
     if (headers == NULL) {
         response_headers = growing_buffer_new(request->pool, 1024);
     } else {
         response_headers = growing_buffer_new(request->pool, 2048);
-        if (request2->translate.transformation != NULL &&
-            request2->translate.transformation->type == TRANSFORMATION_PROCESS)
-            headers_copy(headers, response_headers, copy_headers_processed);
-        else
-            headers_copy(headers, response_headers, copy_headers);
+        headers_copy(headers, response_headers, copy_headers);
     }
 
     response_dispatch(request2,
