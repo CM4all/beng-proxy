@@ -86,12 +86,12 @@ processable(const struct strmap *headers)
 
 static void
 response_invoke_processor(struct request *request2,
-                          http_status_t status, struct growing_buffer *response_headers,
+                          http_status_t status,
+                          struct strmap *response_headers,
                           istream_t body,
                           const struct transformation *transformation)
 {
     struct http_server_request *request = request2->request;
-    struct strmap *headers;
     istream_t request_body;
     struct session *session;
     struct widget *widget;
@@ -106,13 +106,7 @@ response_invoke_processor(struct request *request2,
         return;
     }
 
-    if (response_headers != NULL) {
-        headers = strmap_new(request->pool, 16);
-        header_parse_buffer(request->pool, headers, response_headers);
-    } else
-        headers = NULL;
-
-    if (!processable(headers)) {
+    if (!processable(response_headers)) {
         istream_close(body);
         request_discard_body(request2);
         http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
@@ -165,14 +159,14 @@ response_invoke_processor(struct request *request2,
     if (widget->from_request.proxy_ref != NULL) {
         /* the client requests a widget in proxy mode */
 
-        processor_new(request->pool, status, headers, body,
+        processor_new(request->pool, status, response_headers, body,
                       widget, &request2->env,
                       transformation->u.processor.options,
                       &widget_proxy_handler, request,
                       request2->async_ref);
     } else {
         /* the client requests the whole template */
-        processor_new(request->pool, status, headers, body,
+        processor_new(request->pool, status, response_headers, body,
                       widget, &request2->env,
                       transformation->u.processor.options,
                       &response_handler, request2,
@@ -247,10 +241,10 @@ response_dispatch_direct(struct request *request2,
 }
 
 static void
-response_apply_filter2(struct request *request2,
-                       http_status_t status, struct strmap *headers2,
-                       istream_t body,
-                       const struct resource_address *filter)
+response_apply_filter(struct request *request2,
+                      http_status_t status, struct strmap *headers2,
+                      istream_t body,
+                      const struct resource_address *filter)
 {
     struct http_server_request *request = request2->request;
     const char *source_tag;
@@ -268,26 +262,8 @@ response_apply_filter2(struct request *request2,
 }
 
 static void
-response_apply_filter(struct request *request2,
-                      http_status_t status, struct growing_buffer *headers,
-                      istream_t body,
-                      const struct resource_address *filter)
-{
-    struct http_server_request *request = request2->request;
-    struct strmap *headers2;
-
-    if (headers != NULL) {
-        headers2 = strmap_new(request->pool, 16);
-        header_parse_buffer(request->pool, headers2, headers);
-    } else
-        headers2 = NULL;
-
-    response_apply_filter2(request2, status, headers2, body, filter);
-}
-
-static void
 response_apply_transformation(struct request *request2,
-                              http_status_t status, struct growing_buffer *headers,
+                              http_status_t status, struct strmap *headers,
                               istream_t body,
                               const struct transformation *transformation)
 {
@@ -323,9 +299,18 @@ response_dispatch(struct request *request2,
     /* if HTTP status code is not successful: don't apply
        transformation on the error document */
     if (transformation != NULL && http_status_is_success(status)) {
+        struct strmap *headers2;
+
         request2->translate.transformation = transformation->next;
 
-        response_apply_transformation(request2, status, headers, body,
+        if (headers != NULL) {
+            struct http_server_request *request = request2->request;
+            headers2 = strmap_new(request->pool, 41);
+            header_parse_buffer(request->pool, headers2, headers);
+        } else
+            headers2 = NULL;
+
+        response_apply_transformation(request2, status, headers2, body,
                                       transformation);
     } else
         response_dispatch_direct(request2, status, headers, body);
