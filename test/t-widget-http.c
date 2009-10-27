@@ -195,6 +195,7 @@ test_cookie_client(pool_t pool)
 
     session = session_new();
 
+    env.local_host = "localhost";
     env.remote_host = "localhost";
     env.request_headers = strmap_new(pool, 16);
     env.session_id = session->id;

@@ -155,6 +155,7 @@ int main(int argc, char **argv) {
     processor_env_init(pool, &env,
                        NULL,
                        "localhost:8080",
+                       "localhost:8080",
                        "/beng.html",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,

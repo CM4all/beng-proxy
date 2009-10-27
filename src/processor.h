@@ -30,6 +30,7 @@ struct processor_env {
 
     const char *partition_domain;
 
+    const char *local_host;
     const char *remote_host;
 
     const char *uri;
@@ -58,6 +59,7 @@ void
 processor_env_init(pool_t pool,
                    struct processor_env *env,
                    const char *partition_domain,
+                   const char *local_host,
                    const char *remote_host,
                    const char *request_uri,
                    const char *absolute_uri,
