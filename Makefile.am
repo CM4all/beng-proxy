@@ -454,6 +454,7 @@ test_t_widget_stream_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS)
 test_t_http_server_SOURCES = test/t-http-server.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
+	src/address.c \
 	src/fifo-buffer.c \
 	$(POOL_SRC) \
 	src/buffered-io.c \
@@ -479,6 +480,7 @@ test_t_http_server_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
+	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
 	$(POOL_SRC) \
