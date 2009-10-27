@@ -134,6 +134,18 @@ forward_request_headers(pool_t pool, struct strmap *src,
                        p_strcat(pool, p, ", 1.1 ", remote_host, NULL));
     }
 
+    p = strmap_get_checked(src, "x-forwarded-for");
+    if (p == NULL) {
+        if (remote_host != NULL)
+            strmap_add(dest, "x-forwarded-for", remote_host);
+    } else {
+        if (remote_host == NULL)
+            strmap_add(dest, "x-forwarded-for", p);
+        else
+            strmap_add(dest, "x-forwarded-for",
+                       p_strcat(pool, p, ", ", remote_host, NULL));
+    }
+
     return dest;
 }
 
