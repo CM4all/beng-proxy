@@ -69,7 +69,7 @@ headers_copy2(const struct strmap *in, struct strmap *out,
 
 struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
-                        const char *remote_host,
+                        const char *local_host, const char *remote_host,
                         bool with_body, bool forward_charset,
                         const struct session *session,
                         const char *host_and_port, const char *uri)
@@ -123,15 +123,15 @@ forward_request_headers(pool_t pool, struct strmap *src,
 
     p = strmap_get_checked(src, "via");
     if (p == NULL) {
-        if (remote_host != NULL)
+        if (local_host != NULL)
             strmap_add(dest, "via",
-                       p_strcat(pool, "1.1 ", remote_host, NULL));
+                       p_strcat(pool, "1.1 ", local_host, NULL));
     } else {
-        if (remote_host == NULL)
+        if (local_host == NULL)
             strmap_add(dest, "via", p);
         else
             strmap_add(dest, "via",
-                       p_strcat(pool, p, ", 1.1 ", remote_host, NULL));
+                       p_strcat(pool, p, ", 1.1 ", local_host, NULL));
     }
 
     p = strmap_get_checked(src, "x-forwarded-for");
