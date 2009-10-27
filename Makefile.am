@@ -619,7 +619,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/uri-relative.c src/uri-edit.c \
 	src/resource-tag.c \
 	src/cookie-client.c \
-	src/header-parser.c src/header-forward.c \
+	src/header-parser.c src/header-forward.c src/header-writer.c \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/strutil.c src/http-string.c src/http-util.c \
