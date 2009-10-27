@@ -6,6 +6,7 @@
 
 #include "handler.h"
 #include "request.h"
+#include "request-forward.h"
 #include "http-server.h"
 #include "cgi.h"
 
@@ -14,11 +15,10 @@ cgi_handler(struct request *request2)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
+    struct forward_request forward;
     const char *query_string;
 
-    assert(!request2->body_consumed);
-
-    request2->body_consumed = true;
+    request_forward(&forward, request2, NULL, NULL);
 
     query_string = strchr(request->uri, '?');
     if (query_string == NULL)
@@ -29,10 +29,10 @@ cgi_handler(struct request *request2)
     cgi_new(request->pool, tr->address.u.cgi.jail,
             tr->address.u.cgi.interpreter, tr->address.u.cgi.action,
             tr->address.u.cgi.path,
-            request->method, request->uri,
+            forward.method, request->uri,
             tr->address.u.cgi.script_name, tr->address.u.cgi.path_info,
             query_string, tr->address.u.cgi.document_root,
-            request->headers, request->body,
+            forward.headers, forward.body,
             &response_handler, request2,
             request2->async_ref);
 }

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.2) unstable; urgency=low
 
   * response: optimized transformed response headers
+  * handler: mangle CGI and FastCGI headers
 
  --
 

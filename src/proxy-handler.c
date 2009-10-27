@@ -6,11 +6,11 @@
 
 #include "handler.h"
 #include "request.h"
+#include "request-forward.h"
 #include "http-server.h"
 #include "http-cache.h"
 #include "uri-address.h"
 #include "global.h"
-#include "header-forward.h"
 #include "cookie-client.h"
 
 static const char *
@@ -112,47 +112,17 @@ proxy_handler(struct request *request2)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
-    http_method_t method;
-    istream_t body;
-    struct session *session;
-    struct strmap *headers;
+    struct forward_request forward;
 
-    assert(!request2->body_consumed);
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP);
 
-    /* send a request body? */
-
-    if (request2->processor_focus) {
-        /* reserve method+body for the processor, and
-           convert this request to a GET */
-
-        method = HTTP_METHOD_GET;
-        body = NULL;
-    } else {
-        /* forward body (if any) to the real server */
-
-        method = request->method;
-        body = request->body;
-        request2->body_consumed = true;
-    }
-
-    /* generate request headers */
-
-    session = request_get_session(request2);
-    headers = forward_request_headers(request->pool, request->headers,
-                                      request->remote_host, body != NULL,
-                                      !request_processor_enabled(request2),
-                                      session,
-                                      uri_host_and_port(request->pool,
-                                                        tr->address.u.http->uri),
-                                      uri_path(tr->address.u.http->uri));
-    if (session != NULL)
-        session_put(session);
-
-    /* do it */
+    request_forward(&forward, request2,
+                    uri_host_and_port(request->pool, tr->address.u.http->uri),
+                    uri_path(tr->address.u.http->uri));
 
     http_cache_request(global_http_cache, request->pool,
-                       method, tr->address.u.http, headers, body,
+                       forward.method, tr->address.u.http,
+                       forward.headers, forward.body,
                        &proxy_response_handler, request2,
                        request2->async_ref);
 }

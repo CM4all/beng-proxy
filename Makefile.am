@@ -99,6 +99,7 @@ SRC = src/main.c \
 	src/tstock.c \
 	src/tcache.c \
 	src/request.c \
+	src/request-forward.c \
 	src/response.c \
 	src/handler.c \
 	src/file-handler.c \
