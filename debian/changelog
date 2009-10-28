@@ -1,5 +1,6 @@
 cm4all-beng-proxy (0.7.2) unstable; urgency=low
 
+  * fcache: close all caching connections on exit
   * response: optimized transformed response headers
   * handler: mangle CGI and FastCGI headers
   * header-forward: generate the X-Forwarded-For header

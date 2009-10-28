@@ -39,6 +39,8 @@ struct filter_cache {
     struct hstock *tcp_stock;
 
     struct fcgi_stock *fcgi_stock;
+
+    struct list_head requests;
 };
 
 struct filter_cache_info {
@@ -62,6 +64,8 @@ struct filter_cache_item {
 };
 
 struct filter_cache_request {
+    struct list_head siblings;
+
     pool_t pool, caller_pool;
     struct filter_cache *cache;
     struct http_response_handler_ref handler;
@@ -260,6 +264,7 @@ filter_cache_response_body_eof(void *ctx)
        saved: add it to the cache */
     filter_cache_put(request);
 
+    list_remove(&request->siblings);
     pool_unref(request->pool);
 }
 
@@ -272,6 +277,7 @@ filter_cache_response_body_abort(void *ctx)
 
     request->response.input = NULL;
 
+    list_remove(&request->siblings);
     pool_unref(request->pool);
 }
 
@@ -345,6 +351,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
                                                       buffer_size);
 
         pool_ref(request->pool);
+        list_add(&request->siblings, &request->cache->requests);
     }
 
     caller_pool = request->caller_pool;
@@ -422,12 +429,36 @@ filter_cache_new(pool_t pool, size_t max_size,
     cache->cache = cache_new(pool, &filter_cache_class, 65521, max_size);
     cache->tcp_stock = tcp_stock;
     cache->fcgi_stock = fcgi_stock;
+    list_init(&cache->requests);
     return cache;
+}
+
+static inline struct filter_cache_request *
+list_head_to_request(struct list_head *head)
+{
+    return (struct filter_cache_request *)(((char*)head) - offsetof(struct filter_cache_request, siblings));
+}
+
+static void
+filter_cache_request_close(struct filter_cache_request *request)
+{
+    assert(request != NULL);
+    assert(request->response.input != NULL);
+    assert(request->response.output != NULL);
+
+    istream_close(request->response.input);
 }
 
 void
 filter_cache_close(struct filter_cache *cache)
 {
+    while (!list_empty(&cache->requests)) {
+        struct filter_cache_request *request =
+            list_head_to_request(cache->requests.next);
+
+        filter_cache_request_close(request);
+    }
+
     cache_close(cache->cache);
 }
 
