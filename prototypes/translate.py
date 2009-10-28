@@ -13,6 +13,7 @@ from beng_proxy.translation import *
 widgets_path = '/etc/cm4all/beng/widgets'
 helpers_path = '/usr/bin'
 cgi_path = '/usr/lib/cgi-bin'
+demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
@@ -163,6 +164,8 @@ class Translation(Protocol):
             self._handle_local_file('/var/www' + uri[9:], response, True)
         elif uri[:15] == '/jail-delegate/':
             self._handle_local_file('/home/www' + uri[14:], response, True, True)
+        elif uri[:6] == '/demo/':
+            self._handle_local_file(demo_path + uri[5:], response)
         else:
             self._handle_local_file('/var/www' + uri, response)
 
@@ -235,6 +238,7 @@ if __name__ == '__main__':
         widgets_path = 'demo/widgets'
         helpers_path = os.path.join(os.getcwd(), 'src')
         cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
+        demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')
 
     if len(argv) >= 2:
         path = argv[1]
