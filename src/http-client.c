@@ -26,7 +26,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
 
@@ -599,7 +599,7 @@ http_client_try_read_buffered(struct http_client *client)
 {
     ssize_t nbytes;
 
-    nbytes = read_to_buffer(client->fd, client->input, INT_MAX);
+    nbytes = recv_to_buffer(client->fd, client->input, INT_MAX);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
@@ -697,7 +697,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     assert(client->fd >= 0);
 
-    nbytes = write(client->fd, data, length);
+    nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (likely(nbytes >= 0)) {
         event2_or(&client->event, EV_WRITE);
         return (size_t)nbytes;
