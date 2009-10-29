@@ -19,6 +19,7 @@
 #include <sys/un.h>
 #include <event.h>
 #include <stdlib.h>
+#include <sys/socket.h>
 
 struct delegate_info {
     const char *helper;
@@ -58,7 +59,7 @@ delegate_stock_event(int fd, short event, void *ctx)
 
         assert((event & EV_READ) != 0);
 
-        nbytes = read(fd, &buffer, sizeof(buffer));
+        nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle delegate process: %s\n",
                        strerror(errno));
