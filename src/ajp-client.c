@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
 #include <errno.h>
 
 struct ajp_client {
@@ -199,7 +200,7 @@ ajp_write(struct ajp_client *client, const void *data, size_t length)
     assert(data != NULL);
     assert(length > 0);
 
-    nbytes = write(client->fd, data, length);
+    nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0) {
         daemon_log(1, "write error on AJP client connection: %s\n",
                    strerror(errno));
@@ -491,7 +492,7 @@ ajp_try_read(struct ajp_client *client)
 {
     ssize_t nbytes;
 
-    nbytes = read_to_buffer(client->fd, client->response.input,
+    nbytes = recv_to_buffer(client->fd, client->response.input,
                             INT_MAX);
     assert(nbytes != -2);
 
