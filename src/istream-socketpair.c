@@ -69,7 +69,7 @@ socketpair_input_data(const void *data, size_t length, void *ctx)
 
     assert(sp->fd >= 0);
 
-    nbytes = write(sp->fd, data, length);
+    nbytes = send(sp->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (likely(nbytes >= 0)) {
         event2_or(&sp->event, EV_WRITE);
         return (size_t)nbytes;
@@ -162,7 +162,7 @@ socketpair_read(struct istream_socketpair *sp)
     ssize_t nbytes;
     size_t rest;
 
-    nbytes = read_to_buffer(sp->fd, sp->buffer, INT_MAX);
+    nbytes = recv_to_buffer(sp->fd, sp->buffer, INT_MAX);
     if (nbytes == -2) {
         event2_nand(&sp->event, EV_WRITE);
         return;
@@ -239,8 +239,7 @@ istream_socketpair_new(pool_t pool, istream_t input, int *fd_r)
         return NULL;
     }
 
-    if (socket_set_nonblock(fds[0], true) < 0 ||
-        socket_set_nonblock(fds[1], true) < 0) {
+    if (socket_set_nonblock(fds[1], true) < 0) {
         daemon_log(1, "socket_set_nonblock() failed: %s\n", strerror(errno));
         close(fds[0]);
         close(fds[1]);
