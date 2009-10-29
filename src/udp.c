@@ -5,7 +5,6 @@
  */
 
 #include "udp.h"
-#include "socket-util.h"
 #include "fd-util.h"
 
 #include <daemon/log.h>
@@ -93,7 +92,6 @@ udp_new(pool_t pool, const char *host_and_port, int default_port,
     freeaddrinfo(ai);
 
     fd_set_cloexec(udp->fd);
-    socket_set_nonblock(udp->fd, true);
 
     event_set(&udp->event, udp->fd,
               EV_READ|EV_PERSIST, udp_event_callback, udp);
