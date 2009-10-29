@@ -139,7 +139,7 @@ sock_event_callback(int fd, short event, void *ctx)
     event2_reset(&duplex->sock_event);
 
     if ((event & EV_READ) != 0) {
-        nbytes = read_to_buffer(fd, duplex->to_write, INT_MAX);
+        nbytes = recv_to_buffer(fd, duplex->to_write, INT_MAX);
         if (nbytes == -1) {
             daemon_log(1, "failed to read: %s\n", strerror(errno));
             duplex_close(duplex);
@@ -160,7 +160,7 @@ sock_event_callback(int fd, short event, void *ctx)
         event2_or(&duplex->sock_event, EV_READ);
 
     if ((event & EV_WRITE) != 0) {
-        nbytes = write_from_buffer(fd, duplex->from_read);
+        nbytes = send_from_buffer(fd, duplex->from_read);
         if (nbytes == -1) {
             duplex_close(duplex);
             return;
@@ -191,8 +191,7 @@ duplex_new(pool_t pool, int read_fd, int write_fd)
     if (ret < 0)
         return -1;
 
-    if (socket_set_nonblock(fds[0], 1) < 0 ||
-        socket_set_nonblock(fds[1], 1) < 0) {
+    if (socket_set_nonblock(fds[1], 1) < 0) {
         int save_errno = errno;
         close(fds[0]);
         close(fds[1]);
