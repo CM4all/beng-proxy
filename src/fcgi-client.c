@@ -18,7 +18,7 @@
 #include <daemon/log.h>
 
 #include <netinet/in.h>
-#include <unistd.h>
+#include <sys/socket.h>
 #include <string.h>
 #include <errno.h>
 #include <event.h>
@@ -309,7 +309,7 @@ fcgi_client_try_read(struct fcgi_client *client)
 {
     ssize_t nbytes;
 
-    nbytes = read_to_buffer(client->fd, client->input, 4096);
+    nbytes = recv_to_buffer(client->fd, client->input, 4096);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
@@ -355,7 +355,7 @@ fcgi_client_try_write(struct fcgi_client *client)
         return;
     }
 
-    nbytes = write(client->fd, p, length);
+    nbytes = send(client->fd, p, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0) {
         daemon_log(3, "write to FastCGI application failed: %s\n",
                    strerror(errno));
