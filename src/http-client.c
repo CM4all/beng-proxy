@@ -584,8 +584,12 @@ http_client_try_response_direct(struct http_client *client)
         return;
 
     if (nbytes < 0) {
-        /* XXX EAGAIN? */
-        daemon_log(1, "htt_client: read error (%s)\n", strerror(errno));
+        if (errno == EAGAIN) {
+            event2_or(&client->event, EV_READ);
+            return;
+        }
+
+        daemon_log(1, "http_client: read error (%s)\n", strerror(errno));
         http_client_abort_response_body(client);
         return;
     }
