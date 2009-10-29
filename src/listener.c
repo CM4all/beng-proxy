@@ -53,13 +53,6 @@ listener_event_callback(int fd, short event __attr_unused, void *ctx)
         return;
     }
 
-    ret = socket_set_nonblock(remote_fd, 1);
-    if (ret < 0) {
-        daemon_log(1, "fcntl(O_NONBLOCK) failed: %s\n", strerror(errno));
-        close(remote_fd);
-        return;
-    }
-
     if (!socket_set_nodelay(remote_fd, true)) {
         daemon_log(1, "setsockopt(TCP_NODELAY) failed: %s\n", strerror(errno));
         close(remote_fd);
