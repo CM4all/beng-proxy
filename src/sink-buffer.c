@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 struct sink_buffer {
     pool_t pool;
@@ -60,7 +61,9 @@ sink_buffer_input_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
     if (length > max_length)
         length = max_length;
 
-    nbytes = read(fd, buffer->data + buffer->position, length);
+    nbytes = type == ISTREAM_SOCKET || type == ISTREAM_TCP
+        ? recv(fd, buffer->data + buffer->position, length, MSG_DONTWAIT)
+        : read(fd, buffer->data + buffer->position, length);
     if (nbytes > 0)
         buffer->position += (size_t)nbytes;
 
