@@ -17,7 +17,7 @@
 #include <glib.h>
 
 #include <errno.h>
-#include <unistd.h>
+#include <sys/socket.h>
 #include <string.h>
 
 struct memcached_client {
@@ -385,7 +385,7 @@ memcached_client_try_read(struct memcached_client *client)
 
     assert(memcached_connection_valid(client));
 
-    nbytes = read_to_buffer(client->fd, client->response.input,
+    nbytes = recv_to_buffer(client->fd, client->response.input,
                             G_MAXINT);
     assert(nbytes != -2);
 
@@ -462,7 +462,7 @@ memcached_write(struct memcached_client *client, const void *data, size_t length
     assert(data != NULL);
     assert(length > 0);
 
-    nbytes = write(client->fd, data, length);
+    nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0) {
         daemon_log(1, "write error on memcached connection: %s\n",
                    strerror(errno));
