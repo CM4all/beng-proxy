@@ -247,8 +247,9 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
     if (reader->header_position < sizeof(reader->header)) {
         char *p = (char*)&reader->header;
 
-        nbytes = read(fd, p + reader->header_position,
-                      sizeof(reader->header) - reader->header_position);
+        nbytes = recv(fd, p + reader->header_position,
+                      sizeof(reader->header) - reader->header_position,
+                      MSG_DONTWAIT);
         if (nbytes < 0 && errno == EAGAIN)
             return PACKET_READER_INCOMPLETE;
 
@@ -271,8 +272,9 @@ packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
 
     assert(reader->payload_position < reader->header.length);
 
-    nbytes = read(fd, reader->payload + reader->payload_position,
-                  reader->header.length - reader->payload_position);
+    nbytes = recv(fd, reader->payload + reader->payload_position,
+                  reader->header.length - reader->payload_position,
+                  MSG_DONTWAIT);
     if (nbytes == 0)
         return PACKET_READER_EOF;
 
@@ -908,7 +910,7 @@ translate_try_write(struct translate_client *client, int fd)
         .tv_usec = 0,
     };
 
-    nbytes = write_from_gb(fd, client->request);
+    nbytes = send_from_gb(fd, client->request);
     assert(nbytes != -2);
 
     if (nbytes < 0) {
