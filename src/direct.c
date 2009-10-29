@@ -24,7 +24,7 @@ static bool
 splice_supported(int src, int dest)
 {
     return splice(src, NULL, dest, NULL, 1, SPLICE_F_NONBLOCK) >= 0 ||
-        errno != EINVAL;
+        (errno != EINVAL && errno != ENOSYS);
 }
 
 void
