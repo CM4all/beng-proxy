@@ -47,7 +47,7 @@ istream_direct_to_socket(istream_direct_t src_type, int src_fd,
 #ifdef SPLICE
     if (src_type == ISTREAM_PIPE) {
         return splice(src_fd, NULL, dest_fd, NULL, max_length,
-                      /* SPLICE_F_NONBLOCK | */ SPLICE_F_MORE | SPLICE_F_MOVE);
+                      SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
     } else {
 #endif
         assert(src_type == ISTREAM_FILE);
@@ -73,7 +73,7 @@ istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
 
 #ifdef SPLICE
     return splice(src_fd, NULL, dest_fd, NULL, max_length,
-                  /* SPLICE_F_NONBLOCK | */ SPLICE_F_MORE | SPLICE_F_MOVE);
+                  SPLICE_F_NONBLOCK | SPLICE_F_MORE | SPLICE_F_MOVE);
 #else
     return -1;
 #endif
