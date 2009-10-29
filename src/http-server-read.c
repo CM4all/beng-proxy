@@ -19,7 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <unistd.h>
+#include <sys/socket.h>
 
 static void
 http_server_parse_request_line(struct http_server_connection *connection,
@@ -95,7 +95,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
         static const char msg[] =
             "This server requires HTTP 1.1.";
 
-        write(connection->fd, msg, sizeof(msg) - 1);
+        send(connection->fd, msg, sizeof(msg) - 1, MSG_DONTWAIT|MSG_NOSIGNAL);
         http_server_connection_close(connection);
         return;
     }
@@ -284,7 +284,7 @@ http_server_try_read_buffered(struct http_server_connection *connection)
             return;
     }
 
-    nbytes = read_to_buffer(connection->fd, connection->input, INT_MAX);
+    nbytes = recv_to_buffer(connection->fd, connection->input, INT_MAX);
 
     if (unlikely(nbytes < 0 && nbytes != -2)) {
         if (errno == EAGAIN) {

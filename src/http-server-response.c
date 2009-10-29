@@ -11,7 +11,7 @@
 
 #include <daemon/log.h>
 
-#include <unistd.h>
+#include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
 
@@ -27,7 +27,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     if (connection->fd < 0)
         return 0;
 
-    nbytes = write(connection->fd, data, length);
+    nbytes = send(connection->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
 
     if (likely(nbytes >= 0)) {
         connection->response.length += (off_t)nbytes;
