@@ -21,4 +21,14 @@ struct growing_buffer;
 ssize_t
 write_from_gb(int fd, struct growing_buffer *gb);
 
+/**
+ * Sends data from the buffer to the socket.
+ *
+ * @param fd the destination socket
+ * @param buffer the source buffer
+ * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
+ */
+ssize_t
+send_from_gb(int fd, struct growing_buffer *gb);
+
 #endif
