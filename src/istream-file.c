@@ -19,15 +19,33 @@
 #include <string.h>
 #include <limits.h>
 
+#include <event.h>
+
 #ifndef O_CLOEXEC
 enum {
     O_CLOEXEC = 0,
 };
 #endif
 
+/**
+ * If EAGAIN occurs (on NFS), we try again after 100ms.  We can't
+ * check EV_READ, because the kernel always indicates VFS files as
+ * "readable without blocking".
+ */
+static const struct timeval file_retry_timeout = {
+    .tv_sec = 0,
+    .tv_usec = 100000,
+};
+
 struct file {
     struct istream stream;
     int fd;
+
+    /**
+     * A timer to retry reading after EAGAIN.
+     */
+    struct event event;
+
     off_t rest;
     fifo_buffer_t buffer;
     const char *path;
@@ -37,6 +55,8 @@ static void
 file_close(struct file *file)
 {
     if (file->fd >= 0) {
+        evtimer_del(&file->event);
+
         close(file->fd);
         file->fd = -1;
     }
@@ -166,6 +186,12 @@ istream_file_try_direct(struct file *file)
                        file->path);
             file_abort(file);
         }
+    } else if (errno == EAGAIN) {
+        /* this should only happen for splice(SPLICE_F_NONBLOCK) from
+           NFS files - unfortunately we cannot use EV_READ here, so we
+           just install a timer which retries after 100ms */
+
+        evtimer_add(&file->event, &file_retry_timeout);
     } else {
         /* XXX */
         daemon_log(1, "failed to read from '%s': %s\n",
@@ -181,6 +207,15 @@ file_try_read(struct file *file)
         istream_file_try_data(file);
     else
         istream_file_try_direct(file);
+}
+
+static void
+file_event_callback(__attr_unused int fd, __attr_unused short event,
+                    void *ctx)
+{
+    struct file *file = ctx;
+
+    file_try_read(file);
 }
 
 
@@ -225,6 +260,8 @@ istream_file_skip(istream_t istream, off_t length)
 {
     struct file *file = istream_to_file(istream);
 
+    evtimer_del(&file->event);
+
     if (file->rest == (off_t)-1)
         return (off_t)-1;
 
@@ -259,6 +296,8 @@ istream_file_read(istream_t istream)
     struct file *file = istream_to_file(istream);
 
     assert(file->stream.handler != NULL);
+
+    evtimer_del(&file->event);
 
     file_try_read(file);
 }
@@ -301,6 +340,8 @@ istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length)
     file->rest = length;
     file->buffer = NULL;
     file->path = path;
+
+    evtimer_set(&file->event, file_event_callback, file);
 
     return istream_struct_cast(&file->stream);
 }
