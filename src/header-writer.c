@@ -61,10 +61,48 @@ headers_copy_all(struct strmap *in, struct growing_buffer *out)
         header_write(out, pair->key, pair->value);
 }
 
+/**
+ * Determines if the specified name is a hop-by-hop header.  In
+ * addition to the list in RFC 2616 13.5.1, "Content-Length" is also a
+ * hop-by-hop header according to this function.
+ */
+static bool
+is_hop_by_hop_header(const char *name)
+{
+    return strcmp(name, "connection") == 0 ||
+        strcmp(name, "keep-alive") == 0 ||
+        strcmp(name, "proxy-authenticate") == 0 ||
+        strcmp(name, "proxy-authorization") == 0 ||
+        strcmp(name, "te") == 0 ||
+        /* typo in RFC 2616? */
+        strcmp(name, "trailer") == 0 || strcmp(name, "trailers") == 0 ||
+        strcmp(name, "upgrade") == 0 ||
+        strcmp(name, "transfer-encoding") == 0 ||
+        strcmp(name, "content-length") == 0;
+}
+
+/**
+ * Like headers_copy_all(), but doesn't copy hop-by-hop headers.
+ */
+static void
+headers_copy_most(struct strmap *in, struct growing_buffer *out)
+{
+    const struct strmap_pair *pair;
+
+    assert(in != NULL);
+    assert(out != NULL);
+
+    strmap_rewind(in);
+
+    while ((pair = strmap_next(in)) != NULL)
+        if (!is_hop_by_hop_header(pair->key))
+            header_write(out, pair->key, pair->value);
+}
+
 struct growing_buffer *
 headers_dup(pool_t pool, struct strmap *in)
 {
     struct growing_buffer *out = growing_buffer_new(pool, 2048);
-    headers_copy_all(in, out);
+    headers_copy_most(in, out);
     return out;
 }
