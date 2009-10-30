@@ -324,7 +324,7 @@ http_client_headers_finished(struct http_client *client)
     off_t content_length;
     bool chunked;
 
-    header_connection = strmap_get(client->response.headers, "connection");
+    header_connection = strmap_remove(client->response.headers, "connection");
     client->keep_alive =
         (header_connection == NULL && !client->response.http_1_0) ||
         (header_connection != NULL &&
@@ -341,6 +341,10 @@ http_client_headers_finished(struct http_client *client)
                                       "transfer-encoding");
     content_length_string = strmap_remove(client->response.headers,
                                           "content-length");
+
+    /* remove the other hop-by-hop response headers */
+    strmap_remove(client->response.headers, "proxy-authenticate");
+    strmap_remove(client->response.headers, "upgrade");
 
     if (transfer_encoding == NULL ||
         strcasecmp(transfer_encoding, "chunked") != 0) {
