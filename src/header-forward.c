@@ -15,7 +15,7 @@
 #include <daemon/log.h>
 #endif
 
-static const char *const request_headers[] = {
+static const char *const basic_request_headers[] = {
     "accept",
     "from",
     "cache-control",
@@ -67,6 +67,15 @@ headers_copy2(const struct strmap *in, struct strmap *out,
     }
 }
 
+static void
+forward_basic_headers(struct strmap *dest, const struct strmap *src,
+                      bool with_body)
+{
+    headers_copy2(src, dest, basic_request_headers);
+    if (with_body)
+        headers_copy2(src, dest, body_request_headers);
+}
+
 struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
@@ -91,11 +100,8 @@ forward_request_headers(pool_t pool, struct strmap *src,
 
     dest = strmap_new(pool, 32);
 
-    if (src != NULL) {
-        headers_copy2(src, dest, request_headers);
-        if (with_body)
-            headers_copy2(src, dest, body_request_headers);
-    }
+    if (src != NULL)
+        forward_basic_headers(dest, src, with_body);
 
     p = forward_charset
         ? strmap_get_checked(src, "accept-charset")
