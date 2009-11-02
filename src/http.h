@@ -104,4 +104,12 @@ http_status_is_empty(http_status_t status)
         status == HTTP_STATUS_NOT_MODIFIED;
 }
 
+/**
+ * Determines if the specified name is a hop-by-hop header.  In
+ * addition to the list in RFC 2616 13.5.1, "Content-Length" is also a
+ * hop-by-hop header according to this function.
+ */
+bool
+http_header_is_hop_by_hop(const char *name);
+
 #endif

@@ -6,6 +6,9 @@
 
 #include "http.h"
 
+#include <assert.h>
+#include <string.h>
+
 const char *http_method_to_string_data[HTTP_METHOD_INVALID] = {
     [HTTP_METHOD_HEAD] = "HEAD",
     [HTTP_METHOD_GET] = "GET",
@@ -46,3 +49,20 @@ const char *http_status_to_string_data[6][20] = {
         [HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED - 500] = "505 HTTP Version Not Supported",
     },
 };
+
+bool
+http_header_is_hop_by_hop(const char *name)
+{
+    assert(name != NULL);
+
+    return strcmp(name, "connection") == 0 ||
+        strcmp(name, "keep-alive") == 0 ||
+        strcmp(name, "proxy-authenticate") == 0 ||
+        strcmp(name, "proxy-authorization") == 0 ||
+        strcmp(name, "te") == 0 ||
+        /* typo in RFC 2616? */
+        strcmp(name, "trailer") == 0 || strcmp(name, "trailers") == 0 ||
+        strcmp(name, "upgrade") == 0 ||
+        strcmp(name, "transfer-encoding") == 0 ||
+        strcmp(name, "content-length") == 0;
+}

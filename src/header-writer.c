@@ -7,6 +7,7 @@
 #include "header-writer.h"
 #include "strmap.h"
 #include "growing-buffer.h"
+#include "http.h"
 
 #include <string.h>
 
@@ -62,26 +63,6 @@ headers_copy_all(struct strmap *in, struct growing_buffer *out)
 }
 
 /**
- * Determines if the specified name is a hop-by-hop header.  In
- * addition to the list in RFC 2616 13.5.1, "Content-Length" is also a
- * hop-by-hop header according to this function.
- */
-static bool
-is_hop_by_hop_header(const char *name)
-{
-    return strcmp(name, "connection") == 0 ||
-        strcmp(name, "keep-alive") == 0 ||
-        strcmp(name, "proxy-authenticate") == 0 ||
-        strcmp(name, "proxy-authorization") == 0 ||
-        strcmp(name, "te") == 0 ||
-        /* typo in RFC 2616? */
-        strcmp(name, "trailer") == 0 || strcmp(name, "trailers") == 0 ||
-        strcmp(name, "upgrade") == 0 ||
-        strcmp(name, "transfer-encoding") == 0 ||
-        strcmp(name, "content-length") == 0;
-}
-
-/**
  * Like headers_copy_all(), but doesn't copy hop-by-hop headers.
  */
 static void
@@ -95,7 +76,7 @@ headers_copy_most(struct strmap *in, struct growing_buffer *out)
     strmap_rewind(in);
 
     while ((pair = strmap_next(in)) != NULL)
-        if (!is_hop_by_hop_header(pair->key))
+        if (!http_header_is_hop_by_hop(pair->key))
             header_write(out, pair->key, pair->value);
 }
 
