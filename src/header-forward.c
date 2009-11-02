@@ -76,6 +76,49 @@ forward_basic_headers(struct strmap *dest, const struct strmap *src,
         headers_copy2(src, dest, body_request_headers);
 }
 
+static void
+forward_user_agent(struct strmap *dest, const struct strmap *src)
+{
+    const char *p;
+
+    p = strmap_get_checked(src, "user-agent");
+    if (p == NULL)
+        p = "beng-proxy v" VERSION;
+    strmap_add(dest, "user-agent", p);
+}
+
+static void
+forward_via(pool_t pool, struct strmap *dest, const struct strmap *src,
+            const char *local_host, const char *remote_host)
+{
+    const char *p;
+
+    p = strmap_get_checked(src, "via");
+    if (p == NULL) {
+        if (local_host != NULL)
+            strmap_add(dest, "via",
+                       p_strcat(pool, "1.1 ", local_host, NULL));
+    } else {
+        if (local_host == NULL)
+            strmap_add(dest, "via", p);
+        else
+            strmap_add(dest, "via",
+                       p_strcat(pool, p, ", 1.1 ", local_host, NULL));
+    }
+
+    p = strmap_get_checked(src, "x-forwarded-for");
+    if (p == NULL) {
+        if (remote_host != NULL)
+            strmap_add(dest, "x-forwarded-for", remote_host);
+    } else {
+        if (remote_host == NULL)
+            strmap_add(dest, "x-forwarded-for", p);
+        else
+            strmap_add(dest, "x-forwarded-for",
+                       p_strcat(pool, p, ", ", remote_host, NULL));
+    }
+}
+
 struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
@@ -122,35 +165,8 @@ forward_request_headers(pool_t pool, struct strmap *src,
     if (session != NULL && session->user != NULL)
         strmap_add(dest, "x-cm4all-beng-user", p_strdup(pool, session->user));
 
-    p = strmap_get_checked(src, "user-agent");
-    if (p == NULL)
-        p = "beng-proxy v" VERSION;
-    strmap_add(dest, "user-agent", p);
-
-    p = strmap_get_checked(src, "via");
-    if (p == NULL) {
-        if (local_host != NULL)
-            strmap_add(dest, "via",
-                       p_strcat(pool, "1.1 ", local_host, NULL));
-    } else {
-        if (local_host == NULL)
-            strmap_add(dest, "via", p);
-        else
-            strmap_add(dest, "via",
-                       p_strcat(pool, p, ", 1.1 ", local_host, NULL));
-    }
-
-    p = strmap_get_checked(src, "x-forwarded-for");
-    if (p == NULL) {
-        if (remote_host != NULL)
-            strmap_add(dest, "x-forwarded-for", remote_host);
-    } else {
-        if (remote_host == NULL)
-            strmap_add(dest, "x-forwarded-for", p);
-        else
-            strmap_add(dest, "x-forwarded-for",
-                       p_strcat(pool, p, ", ", remote_host, NULL));
-    }
+    forward_user_agent(dest, src);
+    forward_via(pool, dest, src, local_host, remote_host);
 
     return dest;
 }
