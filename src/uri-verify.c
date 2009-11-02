@@ -33,9 +33,9 @@ uri_path_verify(const char *src, size_t length)
 {
     const char *end = src + length, *slash;
 
-    if (src[0] != '/')
+    if (length == 0 || src[0] != '/')
         /* path must begin with slash */
-        return 0;
+        return false;
 
     ++src;
     while (src < end) {
