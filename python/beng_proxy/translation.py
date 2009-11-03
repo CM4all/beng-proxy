@@ -187,6 +187,11 @@ class Response:
         assert len(name) > 0
         self.packet(TRANSLATE_VIEW, name)
 
+    def process(self, container=False):
+        self.packet(TRANSLATE_PROCESS)
+        if container:
+            self.packet(TRANSLATE_CONTAINER)
+
     def proxy(self, uri, addresses=None):
         assert uri[0] != '/' or len(addresses) == 0
         assert addresses is None or hasattr(addresses, '__iter__')

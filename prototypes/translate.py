@@ -100,7 +100,7 @@ class Translation(Protocol):
                 continue
 
             if line == 'process':
-                response.packet(TRANSLATE_PROCESS)
+                response.process()
             elif line == 'container':
                 response.packet(TRANSLATE_CONTAINER)
             elif line == 'stateful':
@@ -131,8 +131,7 @@ class Translation(Protocol):
                                                'cm4all-beng-proxy-delegate-helper'))
             if path[-5:] == '.html':
                 response.content_type('text/html; charset=utf-8')
-                response.packet(TRANSLATE_PROCESS)
-                response.packet(TRANSLATE_CONTAINER)
+                response.process(container=True)
 
     def _handle_http(self, raw_uri, uri, response):
         if uri.find('/./') >= 0 or uri.find('/../') >= 0 or \
