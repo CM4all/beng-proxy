@@ -21,7 +21,6 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    struct strmap *request_headers,
                    istream_t request_body)
 {
-    assert(session_id != 0);
     assert(request_body == NULL || !istream_has_handler(request_body));
 
     env->pool = pool;

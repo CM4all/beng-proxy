@@ -104,7 +104,8 @@ widget_request_headers(struct embed *embed, bool with_body)
                                       embed->host_and_port,
                                       widget_uri(embed->widget));
 
-    session_put(session);
+    if (session != NULL)
+        session_put(session);
 
     if (embed->widget->headers != NULL) {
         /* copy HTTP request headers from template */
