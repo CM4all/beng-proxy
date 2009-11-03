@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.7.3) unstable; urgency=low
 
   * uri-verify: don't reject double slash after first segment
   * processor: allow processing without session
+  * widget-http: don't query session if !stateful
   * request: disable session management for known bots
   * python: fixed AttributeError in __getattr__()
   * python: added method Response.process()

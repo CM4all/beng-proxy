@@ -49,6 +49,14 @@ struct embed {
     struct async_operation_ref *async_ref;
 };
 
+static struct session *
+session_get_if_stateful(const struct embed *embed)
+{
+    return embed->widget->class->stateful
+        ? session_get(embed->env->session_id)
+        : NULL;
+}
+
 static const char *
 uri_host_and_port(pool_t pool, const char *uri)
 {
@@ -95,7 +103,7 @@ widget_request_headers(struct embed *embed, bool with_body)
     struct strmap *headers;
     struct session *session;
 
-    session = session_get(embed->env->session_id);
+    session = session_get_if_stateful(embed);
 
     headers = forward_request_headers(embed->pool, embed->env->request_headers,
                                       embed->env->local_host,
@@ -148,9 +156,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (p == NULL)
         return false;
 
-    session = embed->widget->class->stateful
-        ? session_get(embed->env->session_id)
-        : NULL;
+    session = session_get_if_stateful(embed);
     widget_copy_from_location(embed->widget, session,
                               p->data, p->length, embed->pool);
     if (session != NULL)
@@ -319,7 +325,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
     if (headers != NULL) {
         if (embed->host_and_port != NULL) {
-            struct session *session = session_get(embed->env->session_id);
+            struct session *session = session_get_if_stateful(embed);
             if (session != NULL) {
                 widget_collect_cookies(session->cookies, headers,
                                        embed->host_and_port);
@@ -330,7 +336,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         /*
         translate = strmap_get(headers, "x-cm4all-beng-translate");
         if (translate != NULL) {
-            struct session *session = session_get(embed->env->session_id);
+            struct session *session = session_get_if_stateful(embed);
             if (session != NULL)
                 session->translate = d_strdup(session->pool, translate);
             session_put(session);
