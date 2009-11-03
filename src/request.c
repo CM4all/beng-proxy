@@ -11,6 +11,7 @@
 #include "cookie-server.h"
 #include "transformation.h"
 #include "args.h"
+#include "bot.h"
 
 #include <daemon/log.h>
 
@@ -117,11 +118,18 @@ request_get_cookie_session_id(struct request *request)
 void
 request_determine_session(struct request *request)
 {
+    const char *user_agent;
     const char *session_id;
     bool cookie_received = false;
     struct session *session;
 
     assert(request != NULL);
+
+    user_agent = strmap_get(request->request->headers, "user-agent");
+    request->stateless = user_agent == NULL ||
+        user_agent_is_bot(user_agent);
+    if (request->stateless)
+        return;
 
     session_id = request_get_uri_session_id(request);
     if (session_id == NULL || *session_id == 0) {
@@ -165,6 +173,9 @@ request_make_session(struct request *request)
     struct session *session;
 
     assert(request != NULL);
+
+    if (request->stateless)
+        return NULL;
 
     session = request_get_session(request);
     if (session != NULL)

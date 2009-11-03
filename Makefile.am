@@ -83,6 +83,7 @@ SRC = src/main.c \
 	src/cmdline.c \
 	src/global.c \
 	src/event2.c \
+	src/bot.c \
 	src/child.c \
 	src/defer.c \
 	src/worker.c \

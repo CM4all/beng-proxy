@@ -26,6 +26,8 @@ struct request {
     session_id_t session_id;
     bool send_session_cookie;
 
+    bool stateless;
+
     struct {
         struct translate_request request;
         const struct translate_response *response;
