@@ -126,7 +126,7 @@ class Request:
                 return None
             return urllib.unquote(self.raw_uri)
         else:
-            return self.AttributeError(name)
+            raise AttributeError(name)
 
     def packetReceived(self, packet):
         if packet.command == TRANSLATE_END:
