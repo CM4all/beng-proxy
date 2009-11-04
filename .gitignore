@@ -64,6 +64,7 @@ test/t-sink-header
 test/dump-memcached-choice
 test/cleanup-memcached-choice
 test/t-istream-tee
+test/t-header-forward
 
 *.aux
 *.log

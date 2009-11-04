@@ -266,6 +266,7 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 
 check_PROGRAMS = \
 	test/t-hashmap test/t-cache test/t-tcache \
+	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
 	test/t-uri-compress \
@@ -298,6 +299,7 @@ check_PROGRAMS = \
 	test/run-parser-cdata
 
 TESTS = test/t-hashmap test/t-cache test/t-tcache \
+	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
 	test/t-uri-compress \
@@ -331,6 +333,18 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 test_t_tcache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) -lrt
+
+test_t_header_forward_SOURCES = test/t-header-forward.c \
+	src/header-forward.c src/header-writer.c \
+	src/http.c src/http-string.c \
+	src/hashmap.c src/strmap.c \
+	src/growing-buffer.c \
+	src/cookie-client.c \
+	src/shm.c src/dpool.c src/dstring.c \
+	src/tpool.c $(POOL_SRC)
+test_t_header_forward_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
+	$(GLIB_LIBS) \
+	-lrt
 
 test_t_stock_SOURCES = test/t-stock.c src/stock.c $(POOL_SRC)
 test_t_stock_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
