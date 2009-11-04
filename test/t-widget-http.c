@@ -187,6 +187,7 @@ test_cookie_client(pool_t pool)
             },
         },
         .views = &view,
+        .stateful = true,
     };
     struct widget widget;
     struct session *session;
