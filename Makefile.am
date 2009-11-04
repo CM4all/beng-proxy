@@ -545,7 +545,8 @@ test_t_http_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 test_t_cookie_client_SOURCES = test/t-cookie-client.c \
 	$(POOL_SRC) src/tpool.c \
 	src/cookie-client.c \
-	src/http-string.c src/header-writer.c src/growing-buffer.c \
+	src/http.c src/http-string.c \
+	src/header-writer.c src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c
 test_t_cookie_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS) -lrt
@@ -667,6 +668,7 @@ test_run_subst_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 test_run_cookie_client_SOURCES = test/run-cookie-client.c \
 	src/cookie-client.c src/http-string.c \
 	src/header-writer.c src/growing-buffer.c \
+	src/http.c \
 	src/tpool.c src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c \
 	$(POOL_SRC)
