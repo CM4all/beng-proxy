@@ -11,6 +11,7 @@
 
 void
 request_forward(struct forward_request *dest, struct request *request2,
+                const struct header_forward_settings *header_forward,
                 const char *host_and_port, const char *uri)
 {
     struct http_server_request *request = request2->request;
@@ -42,6 +43,7 @@ request_forward(struct forward_request *dest, struct request *request2,
                                             request->remote_host,
                                             dest->body != NULL,
                                             !request_processor_enabled(request2),
+                                            header_forward,
                                             session, host_and_port, uri);
     if (session != NULL)
         session_put(session);

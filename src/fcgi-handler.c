@@ -19,7 +19,9 @@ fcgi_handler(struct request *request2)
     struct forward_request forward;
     const char *query_string;
 
-    request_forward(&forward, request2, NULL, NULL);
+    request_forward(&forward, request2,
+                    &tr->request_header_forward,
+                    NULL, NULL);
 
     query_string = strchr(request->uri, '?');
     if (query_string == NULL)

@@ -123,11 +123,14 @@ struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
                         bool with_body, bool forward_charset,
+                        const struct header_forward_settings *settings,
                         const struct session *session,
                         const char *host_and_port, const char *uri)
 {
     struct strmap *dest;
     const char *p;
+
+    assert(settings != NULL);
 
 #ifndef NDEBUG
     if (session != NULL && daemon_log_config.verbose >= 10)

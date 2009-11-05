@@ -114,6 +114,7 @@ ajp_handler(struct request *request2)
     assert(tr->address.type == RESOURCE_ADDRESS_AJP);
 
     request_forward(&forward, request2,
+                    &tr->request_header_forward,
                     uri_host_and_port(request->pool, tr->address.u.http->uri),
                     tr->address.u.http->uri);
 

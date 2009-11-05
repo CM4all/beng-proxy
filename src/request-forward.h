@@ -10,6 +10,7 @@
 #include "http.h"
 #include "istream.h"
 
+struct header_forward_settings;
 struct request;
 
 struct forward_request {
@@ -22,6 +23,7 @@ struct forward_request {
 
 void
 request_forward(struct forward_request *dest, struct request *src,
+                const struct header_forward_settings *header_forward,
                 const char *host_and_port, const char *uri);
 
 #endif

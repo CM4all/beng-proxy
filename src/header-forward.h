@@ -65,6 +65,7 @@ struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
                         bool with_body, bool forward_charset,
+                        const struct header_forward_settings *settings,
                         const struct session *session,
                         const char *host_and_port, const char *uri);
 
