@@ -77,13 +77,17 @@ forward_basic_headers(struct strmap *dest, const struct strmap *src,
 }
 
 static void
-forward_user_agent(struct strmap *dest, const struct strmap *src)
+forward_user_agent(struct strmap *dest, const struct strmap *src,
+                   bool mangle)
 {
     const char *p;
 
-    p = strmap_get_checked(src, "user-agent");
+    p = !mangle
+        ? strmap_get_checked(src, "user-agent")
+        : NULL;
     if (p == NULL)
         p = "beng-proxy v" VERSION;
+
     strmap_add(dest, "user-agent", p);
 }
 
@@ -168,7 +172,10 @@ forward_request_headers(pool_t pool, struct strmap *src,
     if (session != NULL && session->user != NULL)
         strmap_add(dest, "x-cm4all-beng-user", p_strdup(pool, session->user));
 
-    forward_user_agent(dest, src);
+    if (settings->capabilities != HEADER_FORWARD_NO)
+        forward_user_agent(dest, src,
+                           settings->capabilities == HEADER_FORWARD_MANGLE);
+
     forward_via(pool, dest, src, local_host, remote_host);
 
     return dest;

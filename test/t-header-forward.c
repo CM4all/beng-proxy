@@ -144,6 +144,33 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
 
+    /* don't forward user-agent */
+
+    settings.capabilities = HEADER_FORWARD_NO;
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+                 "from=foo;"
+                 "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
+                 "x-forwarded-for=10.0.0.2, 192.168.0.3;");
+
+    /* mangle user-agent */
+
+    settings.capabilities = HEADER_FORWARD_MANGLE;
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    assert(g_str_has_prefix(strmap_remove(out, "user-agent"), "beng-proxy"));
+    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+                 "from=foo;"
+                 "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
+                 "x-forwarded-for=10.0.0.2, 192.168.0.3;");
+
     /* cleanup */
 
     tpool_deinit();
