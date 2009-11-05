@@ -198,6 +198,19 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
+    /* forward cookies */
+
+    settings.cookie = HEADER_FORWARD_YES;
+
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+                 "cookie=a=b;"
+                 "from=foo;");
+
     /* cleanup */
 
     tpool_deinit();

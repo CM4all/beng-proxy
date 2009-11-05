@@ -37,6 +37,12 @@ static const char *const body_request_headers[] = {
     NULL,
 };
 
+static const char *const cookie_request_headers[] = {
+    "cookie",
+    "cookie2",
+    NULL,
+};
+
 static const char *const response_headers[] = {
     "age",
     "etag",
@@ -161,7 +167,11 @@ forward_request_headers(pool_t pool, struct strmap *src,
         p = "utf-8";
     strmap_add(dest, "accept-charset", p);
 
-    if (session != NULL && host_and_port != NULL && uri != NULL)
+    if (settings->cookie == HEADER_FORWARD_YES) {
+        if (src != NULL)
+            headers_copy2(src, dest, cookie_request_headers);
+    } else if (settings->cookie == HEADER_FORWARD_MANGLE &&
+               session != NULL && host_and_port != NULL && uri != NULL)
         cookie_jar_http_header(session->cookies, host_and_port, uri,
                                dest, pool);
 
