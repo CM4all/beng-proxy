@@ -409,6 +409,23 @@ translate_handle_packet(struct translate_client *client,
         memset(&client->response, 0, sizeof(client->response));
         client->previous_command = command;
         client->resource_address = &client->response.address;
+
+        client->response.request_header_forward =
+            (struct header_forward_settings){
+            .identity = HEADER_FORWARD_MANGLE,
+            .capabilities = HEADER_FORWARD_YES,
+            .cookie = HEADER_FORWARD_MANGLE,
+            .other = HEADER_FORWARD_NO,
+        };
+
+        client->response.response_header_forward =
+            (struct header_forward_settings){
+            .identity = HEADER_FORWARD_NO,
+            .capabilities = HEADER_FORWARD_YES,
+            .cookie = HEADER_FORWARD_MANGLE,
+            .other = HEADER_FORWARD_NO,
+        };
+
         client->response.max_age = -1;
         client->response.user_max_age = -1;
         client->response.views = p_calloc(client->pool, sizeof(*client->response.views));

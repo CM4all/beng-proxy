@@ -264,6 +264,20 @@ serve_document_root_file(struct request *request2,
     tr->address.u.local.content_type = NULL;
     tr->address.u.local.document_root = NULL;
 
+    tr->request_header_forward = (struct header_forward_settings){
+        .identity = HEADER_FORWARD_NO,
+        .capabilities = HEADER_FORWARD_YES,
+        .cookie = HEADER_FORWARD_MANGLE,
+        .other = HEADER_FORWARD_NO,
+    };
+
+    tr->response_header_forward = (struct header_forward_settings){
+        .identity = HEADER_FORWARD_NO,
+        .capabilities = HEADER_FORWARD_MANGLE,
+        .cookie = HEADER_FORWARD_MANGLE,
+        .other = HEADER_FORWARD_NO,
+    };
+
     request2->resource_tag = tr->address.u.local.path;
     request2->processor_focus = process &&
         strmap_get_checked(request2->args, "focus") != NULL;

@@ -10,6 +10,7 @@
 #include "pool.h"
 #include "http.h"
 #include "resource-address.h"
+#include "header-forward.h"
 
 #include <stdint.h>
 
@@ -38,6 +39,16 @@ struct translate_response {
     http_status_t status;
 
     struct resource_address address;
+
+    /**
+     * Which request headers are forwarded?
+     */
+    struct header_forward_settings request_header_forward;
+
+    /**
+     * Which response headers are forwarded?
+     */
+    struct header_forward_settings response_header_forward;
 
     const char *base;
 
