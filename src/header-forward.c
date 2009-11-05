@@ -10,6 +10,7 @@
 #include "session.h"
 #include "cookie-client.h"
 #include "growing-buffer.h"
+#include "http.h"
 
 #ifndef NDEBUG
 #include <daemon/log.h>
@@ -40,6 +41,18 @@ static const char *const body_request_headers[] = {
 static const char *const cookie_request_headers[] = {
     "cookie",
     "cookie2",
+    NULL,
+};
+
+/**
+ * A list of request headers to be excluded from the "other" setting.
+ */
+static const char *const exclude_request_headers[] = {
+    "accept-charset",
+    "accept-language",
+    "user-agent",
+    "via",
+    "x-forwarded-for",
     NULL,
 };
 
@@ -130,6 +143,34 @@ forward_via(pool_t pool, struct strmap *dest, const struct strmap *src,
     }
 }
 
+static bool
+string_in_array(const char *const array[], const char *value)
+{
+    for (unsigned i = 0; array[i] != NULL; ++i)
+        if (strcmp(array[i], value) == 0)
+            return true;
+
+    return false;
+}
+
+static void
+forward_other_headers(struct strmap *dest, struct strmap *src)
+{
+    const struct strmap_pair *pair;
+
+    strmap_rewind(src);
+    while ((pair = strmap_next(src)) != NULL)
+        if (!string_in_array(basic_request_headers, pair->key) &&
+            !string_in_array(body_request_headers, pair->key) &&
+            !string_in_array(language_request_headers, pair->key) &&
+            !string_in_array(cookie_request_headers, pair->key) &&
+            !string_in_array(exclude_request_headers, pair->key) &&
+            memcmp(pair->key, "x-cm4all-beng-", 14) != 0 &&
+            !string_in_array(exclude_request_headers, pair->key) &&
+            !http_header_is_hop_by_hop(pair->key))
+            strmap_add(dest, pair->key, pair->value);
+}
+
 struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
@@ -159,6 +200,9 @@ forward_request_headers(pool_t pool, struct strmap *src,
 
     if (src != NULL)
         forward_basic_headers(dest, src, with_body);
+
+    if (src != NULL && settings->other == HEADER_FORWARD_YES)
+        forward_other_headers(dest, src);
 
     p = forward_charset
         ? strmap_get_checked(src, "accept-charset")

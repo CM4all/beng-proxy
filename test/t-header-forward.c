@@ -211,6 +211,19 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                  "cookie=a=b;"
                  "from=foo;");
 
+    /* forward other headers */
+
+    settings.cookie = HEADER_FORWARD_NO;
+    settings.other = HEADER_FORWARD_YES;
+
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
+                 "from=foo;");
+
     /* cleanup */
 
     tpool_deinit();
