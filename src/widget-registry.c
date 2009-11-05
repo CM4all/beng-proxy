@@ -64,6 +64,9 @@ lookup_callback(const struct translate_response *response, void *ctx)
         ? transformation_dup_view_chain(lookup->pool, response->views)
         : NULL;
 
+    class->request_header_forward = response->request_header_forward;
+    class->response_header_forward = response->response_header_forward;
+
     lookup->callback(class, lookup->callback_ctx);
 }
 

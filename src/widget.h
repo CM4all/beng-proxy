@@ -12,6 +12,7 @@
 #include "http.h"
 #include "istream.h"
 #include "resource-address.h"
+#include "header-forward.h"
 
 #include <inline/list.h>
 
@@ -43,6 +44,16 @@ struct widget_class {
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */
     bool stateful;
+
+    /**
+     * Which request headers are forwarded?
+     */
+    struct header_forward_settings request_header_forward;
+
+    /**
+     * Which response headers are forwarded?
+     */
+    struct header_forward_settings response_header_forward;
 };
 
 /**
