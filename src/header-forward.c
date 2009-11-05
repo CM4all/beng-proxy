@@ -93,17 +93,18 @@ forward_user_agent(struct strmap *dest, const struct strmap *src,
 
 static void
 forward_via(pool_t pool, struct strmap *dest, const struct strmap *src,
-            const char *local_host, const char *remote_host)
+            const char *local_host, const char *remote_host,
+            bool mangle)
 {
     const char *p;
 
     p = strmap_get_checked(src, "via");
     if (p == NULL) {
-        if (local_host != NULL)
+        if (local_host != NULL && mangle)
             strmap_add(dest, "via",
                        p_strcat(pool, "1.1 ", local_host, NULL));
     } else {
-        if (local_host == NULL)
+        if (local_host == NULL || !mangle)
             strmap_add(dest, "via", p);
         else
             strmap_add(dest, "via",
@@ -112,10 +113,10 @@ forward_via(pool_t pool, struct strmap *dest, const struct strmap *src,
 
     p = strmap_get_checked(src, "x-forwarded-for");
     if (p == NULL) {
-        if (remote_host != NULL)
+        if (remote_host != NULL && mangle)
             strmap_add(dest, "x-forwarded-for", remote_host);
     } else {
-        if (remote_host == NULL)
+        if (remote_host == NULL || !mangle)
             strmap_add(dest, "x-forwarded-for", p);
         else
             strmap_add(dest, "x-forwarded-for",
@@ -176,7 +177,9 @@ forward_request_headers(pool_t pool, struct strmap *src,
         forward_user_agent(dest, src,
                            settings->capabilities == HEADER_FORWARD_MANGLE);
 
-    forward_via(pool, dest, src, local_host, remote_host);
+    if (settings->identity != HEADER_FORWARD_NO)
+        forward_via(pool, dest, src, local_host, remote_host,
+                    settings->identity == HEADER_FORWARD_MANGLE);
 
     return dest;
 }

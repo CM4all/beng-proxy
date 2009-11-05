@@ -171,6 +171,33 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
 
+    /* forward via/x-forwarded-for as-is */
+
+    settings.capabilities = HEADER_FORWARD_NO;
+    settings.identity = HEADER_FORWARD_YES;
+
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+                 "from=foo;"
+                 "via=1.1 192.168.0.1;"
+                 "x-forwarded-for=10.0.0.2;");
+
+    /* no via/x-forwarded-for */
+
+    settings.identity = HEADER_FORWARD_NO;
+
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+                 "from=foo;");
+
     /* cleanup */
 
     tpool_deinit();
