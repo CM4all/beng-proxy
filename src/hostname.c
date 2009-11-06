@@ -7,7 +7,7 @@ valid_hostname_char(char ch)
     /* we are allowing ':' here because it is a valid character in the
        HTTP "Host" request header */
 
-    return char_is_alphanumeric(ch) || ch == '.' || ch == ':';
+    return char_is_alphanumeric(ch) || ch == '-' || ch == '.' || ch == ':';
 }
 
 bool
