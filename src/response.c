@@ -26,11 +26,12 @@
 
 static const char *
 request_absolute_uri(const struct http_server_request *request,
-                     const char *uri)
+                     const char *host, const char *uri)
 {
-    const char *host = strmap_get(request->headers, "host");
-
     assert(uri != NULL);
+
+    if (host == NULL)
+        host = strmap_get(request->headers, "host");
 
     if (host == NULL || !hostname_is_well_formed(host))
         return NULL;
@@ -126,7 +127,9 @@ response_invoke_processor(struct request *request2,
                        transformation->u.processor.domain,
                        request->local_host, request->remote_host,
                        uri,
-                       request_absolute_uri(request, uri),
+                       request_absolute_uri(request,
+                                            request2->translate.response->host,
+                                            uri),
                        &request2->uri,
                        request2->args,
                        request2->session_id,
