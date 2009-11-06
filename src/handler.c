@@ -278,6 +278,7 @@ serve_document_root_file(struct request *request2,
         .other = HEADER_FORWARD_NO,
     };
 
+    tr->scheme = NULL;
     tr->host = NULL;
     tr->uri = NULL;
 

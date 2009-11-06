@@ -564,6 +564,15 @@ translate_handle_packet(struct translate_client *client,
         client->transformation->u.processor.options |= PROCESSOR_CONTAINER;
         break;
 
+    case TRANSLATE_SCHEME:
+        if (strncmp(payload, "http", 4) != 0) {
+            daemon_log(2, "malformed TRANSLATE_SCHEME packet\n");
+            break;
+        }
+
+        client->response.scheme = payload;
+        break;
+
     case TRANSLATE_HOST:
         client->response.host = payload;
         break;

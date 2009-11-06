@@ -7,7 +7,7 @@ cm4all-beng-proxy (0.7.3) unstable; urgency=low
   * request: disable session management for known bots
   * python: fixed AttributeError in __getattr__()
   * python: added method Response.process()
-  * translation: added the response packets URI, HOST
+  * translation: added the response packets URI, HOST, SCHEME
 
  --
 

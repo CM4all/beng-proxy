@@ -26,9 +26,12 @@
 
 static const char *
 request_absolute_uri(const struct http_server_request *request,
-                     const char *host, const char *uri)
+                     const char *scheme, const char *host, const char *uri)
 {
     assert(uri != NULL);
+
+    if (scheme == NULL)
+        scheme = "http";
 
     if (host == NULL)
         host = strmap_get(request->headers, "host");
@@ -37,7 +40,7 @@ request_absolute_uri(const struct http_server_request *request,
         return NULL;
 
     return p_strcat(request->pool,
-                    "http://",
+                    scheme, "://",
                     host,
                     uri,
                     NULL);
@@ -128,6 +131,7 @@ response_invoke_processor(struct request *request2,
                        request->local_host, request->remote_host,
                        uri,
                        request_absolute_uri(request,
+                                            request2->translate.response->scheme,
                                             request2->translate.response->host,
                                             uri),
                        &request2->uri,

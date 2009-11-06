@@ -413,6 +413,12 @@ query string); this is used to override the URI, e.g. when
 the \texttt{Host} HTTP request header \\
 
 \hline
+
+\texttt{SCHEME} & the scheme for generating absolute URLs; default is
+\texttt{http}.  This packet is useful if \emph{beng-proxy} is behind
+\texttt{stunnel} \\
+
+\hline
 \texttt{STATUS} & HTTP status code, encoded as \texttt{uint16\_t};
 this parameter is usually not used \\
 \hline
