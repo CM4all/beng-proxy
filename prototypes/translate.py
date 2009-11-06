@@ -165,6 +165,12 @@ class Translation(Protocol):
             self._handle_local_file('/home/www' + uri[14:], response, True, True)
         elif uri[:6] == '/demo/':
             self._handle_local_file(demo_path + uri[5:], response)
+        elif uri[:6] == '/base/':
+            response.packet(TRANSLATE_BASE, '/base/')
+            response.packet(TRANSLATE_SCHEME, 'https')
+            response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
+            response.packet(TRANSLATE_URI, '/foo/' + uri[6:])
+            self._handle_local_file('/var/www' + uri[5:], response)
         else:
             self._handle_local_file('/var/www' + uri, response)
 
