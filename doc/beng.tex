@@ -1,6 +1,6 @@
 \documentclass[a4paper,12pt]{article}
 \usepackage[pdftex,bookmarks]{hyperref}
-\usepackage{supertabular}
+\usepackage{longtable}
 
 \begin{document}
 \title{CM4all Beng}
@@ -100,7 +100,7 @@ large).  Finally, restart \emph{beng-proxy}:
 The command line argument \texttt{--set} allows you to tweak some
 settings:
 
-\begin{tabular}{|l|p{10cm}|}
+\begin{longtable}{|l|p{10cm}|}
 \hline
 
 \texttt{max\_connections} & The maximum number of incoming HTTP
@@ -128,7 +128,7 @@ translation server responses.  Set to 0 to disable the translate
 cache. \\
 
 \hline
-\end{tabular}
+\end{longtable}
 
 \label{memcached}
 You may specify \texttt{--memcached-server} followed by a server name.
@@ -359,7 +359,7 @@ just the raw string, without terminating zero.
 
 \subsubsection{Request}
 
-\begin{tabular}{|l|p{10cm}|}
+\begin{longtable}{|l|p{10cm}|}
 \hline
 
 \texttt{LOCAL\_ADDRESS} & The local socket address the request was
@@ -395,11 +395,11 @@ by the client (not in the widget registry) \\
 
 \hline
 
-\end{tabular}
+\end{longtable}
 
 \subsubsection{Response}
 
-\begin{supertabular}{|l|p{10cm}|}
+\begin{longtable}{|l|p{10cm}|}
 \hline
 \texttt{STATUS} & HTTP status code, encoded as \texttt{uint16\_t};
 this parameter is usually not used \\
@@ -597,7 +597,7 @@ items for the current session.
 \\
 
 \hline
-\end{supertabular}
+\end{longtable}
 
 If the translation server does not provide the \texttt{CONTENT\_TYPE}
 header, \emph{beng-proxy} will attempt to discover the file type from
@@ -669,7 +669,7 @@ following packets:
 
 The translation server's response consists of these packets:
 
-\begin{tabular}{|l|p{10cm}|}
+\begin{longtable}{|l|p{10cm}|}
 \hline
 \texttt{STATUS} & in case of a lookup error, this packet provides the
 HTTP status code \\
@@ -703,7 +703,7 @@ same context as another widget. \\
 and query string \\
 
 \hline
-\end{tabular}
+\end{longtable}
 
 
 \section{Widget protocol}
@@ -812,7 +812,7 @@ To add a widget, use the following command:
 
 The following attributes may be specified:
 
-\begin{tabular}{|l|p{8cm}|}
+\begin{longtable}{|l|p{8cm}|}
 \hline
 \texttt{id} & unique identification of this widget; this is required
 for proper session and form management if there are several widgets
@@ -834,7 +834,7 @@ default and means that two documents have different sessions;
 \texttt{site} means documents in the same site share session data \\
 
 \hline
-\end{tabular}
+\end{longtable}
 
 Registered widgets are not yet implemented.
 
