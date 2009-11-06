@@ -265,17 +265,21 @@ serve_document_root_file(struct request *request2,
     tr->address.u.local.document_root = NULL;
 
     tr->request_header_forward = (struct header_forward_settings){
-        .identity = HEADER_FORWARD_NO,
-        .capabilities = HEADER_FORWARD_YES,
-        .cookie = HEADER_FORWARD_MANGLE,
-        .other = HEADER_FORWARD_NO,
+        .modes = {
+            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
+            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+        },
     };
 
     tr->response_header_forward = (struct header_forward_settings){
-        .identity = HEADER_FORWARD_NO,
-        .capabilities = HEADER_FORWARD_MANGLE,
-        .cookie = HEADER_FORWARD_MANGLE,
-        .other = HEADER_FORWARD_NO,
+        .modes = {
+            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
+            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+        },
     };
 
     tr->scheme = NULL;

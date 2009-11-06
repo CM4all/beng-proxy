@@ -201,7 +201,8 @@ forward_request_headers(pool_t pool, struct strmap *src,
     if (src != NULL)
         forward_basic_headers(dest, src, with_body);
 
-    if (src != NULL && settings->other == HEADER_FORWARD_YES)
+    if (src != NULL &&
+        settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
         forward_other_headers(dest, src);
 
     p = forward_charset
@@ -211,10 +212,10 @@ forward_request_headers(pool_t pool, struct strmap *src,
         p = "utf-8";
     strmap_add(dest, "accept-charset", p);
 
-    if (settings->cookie == HEADER_FORWARD_YES) {
+    if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
         if (src != NULL)
             headers_copy2(src, dest, cookie_request_headers);
-    } else if (settings->cookie == HEADER_FORWARD_MANGLE &&
+    } else if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_MANGLE &&
                session != NULL && host_and_port != NULL && uri != NULL)
         cookie_jar_http_header(session->cookies, host_and_port, uri,
                                dest, pool);
@@ -227,13 +228,13 @@ forward_request_headers(pool_t pool, struct strmap *src,
     if (session != NULL && session->user != NULL)
         strmap_add(dest, "x-cm4all-beng-user", p_strdup(pool, session->user));
 
-    if (settings->capabilities != HEADER_FORWARD_NO)
+    if (settings->modes[HEADER_GROUP_CAPABILITIES] != HEADER_FORWARD_NO)
         forward_user_agent(dest, src,
-                           settings->capabilities == HEADER_FORWARD_MANGLE);
+                           settings->modes[HEADER_GROUP_CAPABILITIES] == HEADER_FORWARD_MANGLE);
 
-    if (settings->identity != HEADER_FORWARD_NO)
+    if (settings->modes[HEADER_GROUP_IDENTITY] != HEADER_FORWARD_NO)
         forward_via(pool, dest, src, local_host, remote_host,
-                    settings->identity == HEADER_FORWARD_MANGLE);
+                    settings->modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
 
     return dest;
 }

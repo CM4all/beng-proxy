@@ -12,32 +12,7 @@
 #include <beng-proxy/headers.h>
 
 struct header_forward_settings {
-    /**
-     * Reveal the identity of the real communication partner?  This
-     * affects "Via", "X-Forwarded-For".
-     */
-    enum beng_header_forward_mode identity;
-
-    /**
-     * Forward headers showing the capabilities of the real
-     * communication partner?  Affects "Server", "User-Agent",
-     * "Accept-*" and others.
-     *
-     * Note that the "Server" response header is always sent, even
-     * when this attribute is set to #HEADER_FORWARD_NO.
-     */
-    enum beng_header_forward_mode capabilities;
-
-    /**
-     * Forward cookie headers?
-     */
-    enum beng_header_forward_mode cookie;
-
-    /**
-     * Forwarding mode for "other" headers: headers not explicitly
-     * handled here.  This does not include hop-by-hop headers.
-     */
-    enum beng_header_forward_mode other;
+    enum beng_header_forward_mode modes[HEADER_GROUP_MAX];
 };
 
 struct session;
