@@ -7,8 +7,6 @@
 #ifndef __BENG_PROXY_TRANSLATION_H
 #define __BENG_PROXY_TRANSLATION_H
 
-#include <inline/compiler.h>
-
 #include <stdint.h>
 
 enum beng_translation_command {
@@ -63,6 +61,6 @@ enum beng_translation_command {
 struct beng_translation_header {
     uint16_t length;
     uint16_t command;
-} __attr_packed;
+};
 
 #endif
