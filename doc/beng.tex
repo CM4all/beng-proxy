@@ -400,6 +400,13 @@ by the client (not in the widget registry) \\
 \subsubsection{Response}
 
 \begin{longtable}{|l|p{10cm}|}
+
+\hline
+
+\texttt{URI} & the ``real'' raw URI from the HTTP request (without the
+query string); this is used to override the URI, e.g. when
+\emph{beng-proxy} is behind another proxy which modifies the URI \\
+
 \hline
 \texttt{STATUS} & HTTP status code, encoded as \texttt{uint16\_t};
 this parameter is usually not used \\
@@ -472,7 +479,8 @@ section \ref{delegate} for details. \\
 \hline
 
 \texttt{BASE} & Defines a realm in the URI space.  The payload
-specifies the URI prefix (ending with a slash) which contains this
+specifies the URI prefix (of the original request URI, ending with a
+slash) which contains this
 realm.  All resources in this realm can be addressed by
 \emph{beng-proxy} with a trivial pattern: append the relative URI
 (within the realm) to the resource address (e.g. the \texttt{PATH},

@@ -57,6 +57,8 @@ struct translate_response {
     const char *redirect;
 
     const char *host;
+    const char *uri;
+
     bool stateful;
 
     bool discard_session;

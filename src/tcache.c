@@ -130,6 +130,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->document_root = p_strdup_checked(pool, src->document_root);
     dest->redirect = p_strdup_checked(pool, src->redirect);
     dest->host = p_strdup_checked(pool, src->host);
+    dest->uri = p_strdup_checked(pool, src->uri);
     dest->stateful = src->stateful;
     dest->discard_session = src->discard_session;
     dest->session = NULL;
@@ -156,6 +157,17 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
         dest->invalidate = (const uint16_t *)
             p_memdup(pool, src->invalidate,
                      dest->num_invalidate * sizeof(dest->invalidate[0]));
+}
+
+static size_t
+base_string(const char *p, const char *suffix)
+{
+    size_t length = strlen(p), suffix_length = strlen(suffix);
+
+    return length > suffix_length && p[length - suffix_length - 1] == '/' &&
+        memcmp(p + length - suffix_length, suffix, suffix_length) == 0
+        ? length - suffix_length
+        : 0;
 }
 
 /**
@@ -194,6 +206,17 @@ tcache_store_response(pool_t pool, struct translate_response *dest,
     key = tcache_store_address(pool, &dest->address, &src->address,
                                request->uri, src->base);
     tcache_dup_response(pool, dest, src);
+
+    if (dest->uri != NULL) {
+        const char *suffix = base_suffix(request->uri, src->base);
+
+        if (suffix != NULL) {
+            size_t length = base_string(dest->uri, suffix);
+            dest->uri = length > 0
+                ? p_strndup(pool, dest->uri, length)
+                : NULL;
+        }
+    }
 
     return key;
 }

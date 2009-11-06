@@ -434,7 +434,6 @@ translate_handle_packet(struct translate_client *client,
         client->transformation_tail = &client->response.views->transformation;
         break;
 
-    case TRANSLATE_URI:
     case TRANSLATE_PARAM:
     case TRANSLATE_REMOTE_HOST:
     case TRANSLATE_WIDGET_TYPE:
@@ -567,6 +566,15 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_HOST:
         client->response.host = payload;
+        break;
+
+    case TRANSLATE_URI:
+        if (*payload != '/') {
+            daemon_log(2, "malformed TRANSLATE_URI packet\n");
+            break;
+        }
+
+        client->response.uri = payload;
         break;
 
     case TRANSLATE_STATEFUL:

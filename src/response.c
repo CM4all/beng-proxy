@@ -25,9 +25,12 @@
 #include <daemon/log.h>
 
 static const char *
-request_absolute_uri(const struct http_server_request *request)
+request_absolute_uri(const struct http_server_request *request,
+                     const char *uri)
 {
     const char *host = strmap_get(request->headers, "host");
+
+    assert(uri != NULL);
 
     if (host == NULL || !hostname_is_well_formed(host))
         return NULL;
@@ -35,7 +38,7 @@ request_absolute_uri(const struct http_server_request *request)
     return p_strcat(request->pool,
                     "http://",
                     host,
-                    request->uri,
+                    uri,
                     NULL);
 }
 
@@ -68,6 +71,7 @@ response_invoke_processor(struct request *request2,
     istream_t request_body;
     struct session *session;
     struct widget *widget;
+    const char *uri;
 
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
@@ -114,11 +118,15 @@ response_invoke_processor(struct request *request2,
         request_body = NULL;
     }
 
+    uri = request2->translate.response->uri != NULL
+        ? request2->translate.response->uri
+        : request->uri;
+
     processor_env_init(request->pool, &request2->env,
                        transformation->u.processor.domain,
                        request->local_host, request->remote_host,
-                       request->uri,
-                       request_absolute_uri(request),
+                       uri,
+                       request_absolute_uri(request, uri),
                        &request2->uri,
                        request2->args,
                        request2->session_id,
