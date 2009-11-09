@@ -10,7 +10,7 @@ cm4all-beng-proxy (0.7.3) unstable; urgency=low
   * translation: added the response packets URI, HOST, SCHEME
   * translation: added header forward packets
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 09 Nov 2009 16:40:27 +0100
 
 cm4all-beng-proxy (0.7.2) unstable; urgency=low
 
