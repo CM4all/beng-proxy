@@ -112,8 +112,7 @@ forward_user_agent(struct strmap *dest, const struct strmap *src,
 
 static void
 forward_via(pool_t pool, struct strmap *dest, const struct strmap *src,
-            const char *local_host, const char *remote_host,
-            bool mangle)
+            const char *local_host, bool mangle)
 {
     const char *p;
 
@@ -129,6 +128,13 @@ forward_via(pool_t pool, struct strmap *dest, const struct strmap *src,
             strmap_add(dest, "via",
                        p_strcat(pool, p, ", 1.1 ", local_host, NULL));
     }
+}
+
+static void
+forward_xff(pool_t pool, struct strmap *dest, const struct strmap *src,
+            const char *remote_host, bool mangle)
+{
+    const char *p;
 
     p = strmap_get_checked(src, "x-forwarded-for");
     if (p == NULL) {
@@ -141,6 +147,15 @@ forward_via(pool_t pool, struct strmap *dest, const struct strmap *src,
             strmap_add(dest, "x-forwarded-for",
                        p_strcat(pool, p, ", ", remote_host, NULL));
     }
+}
+
+static void
+forward_identity(pool_t pool, struct strmap *dest, const struct strmap *src,
+                 const char *local_host, const char *remote_host,
+                 bool mangle)
+{
+    forward_via(pool, dest, src, local_host, mangle);
+    forward_xff(pool, dest, src, remote_host, mangle);
 }
 
 static bool
@@ -232,8 +247,8 @@ forward_request_headers(pool_t pool, struct strmap *src,
                            settings->modes[HEADER_GROUP_CAPABILITIES] == HEADER_FORWARD_MANGLE);
 
     if (settings->modes[HEADER_GROUP_IDENTITY] != HEADER_FORWARD_NO)
-        forward_via(pool, dest, src, local_host, remote_host,
-                    settings->modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
+        forward_identity(pool, dest, src, local_host, remote_host,
+                         settings->modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
 
     return dest;
 }
