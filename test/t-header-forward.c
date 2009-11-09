@@ -63,10 +63,12 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     pool_t pool;
     struct strmap *headers, *out;
     struct header_forward_settings settings = {
-        .identity = HEADER_FORWARD_MANGLE,
-        .capabilities = HEADER_FORWARD_YES,
-        .cookie = HEADER_FORWARD_MANGLE,
-        .other = HEADER_FORWARD_NO,
+        .modes = {
+            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
+            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+        },
     };
 
     pool = pool_new_libc(NULL, "root");
@@ -146,7 +148,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     /* don't forward user-agent */
 
-    settings.capabilities = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false,
@@ -159,7 +161,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     /* mangle user-agent */
 
-    settings.capabilities = HEADER_FORWARD_MANGLE;
+    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_MANGLE;
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false,
@@ -173,8 +175,8 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     /* forward via/x-forwarded-for as-is */
 
-    settings.capabilities = HEADER_FORWARD_NO;
-    settings.identity = HEADER_FORWARD_YES;
+    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_YES;
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
@@ -188,7 +190,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     /* no via/x-forwarded-for */
 
-    settings.identity = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
@@ -200,7 +202,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     /* forward cookies */
 
-    settings.cookie = HEADER_FORWARD_YES;
+    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_YES;
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
@@ -213,8 +215,8 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     /* forward other headers */
 
-    settings.cookie = HEADER_FORWARD_NO;
-    settings.other = HEADER_FORWARD_YES;
+    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_YES;
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
