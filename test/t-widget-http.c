@@ -188,6 +188,23 @@ test_cookie_client(pool_t pool)
         },
         .views = &view,
         .stateful = true,
+
+        .request_header_forward = {
+            .modes = {
+                [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
+                [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
+                [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+                [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+            },
+        },
+        .response_header_forward = {
+            .modes = {
+                [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO,
+                [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
+                [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+                [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+            },
+        }
     };
     struct widget widget;
     struct session *session;
