@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_HEADERS_H
 #define BENG_PROXY_HEADERS_H
 
+#include <stdint.h>
+
 /**
  * How is a specific set of headers forwarded?
  */
@@ -69,5 +71,22 @@ enum beng_header_group {
      */
     HEADER_GROUP_MAX,
 };
+
+struct beng_header_forward_packet {
+    /**
+     * See #beng_header_group
+     */
+    int16_t group;
+
+    /**
+     * See #beng_header_forward_mode
+     */
+    uint8_t mode;
+
+    /**
+     * Unused padding byte.  Set 0.
+     */
+    uint8_t reserved;
+} __attr_packed;
 
 #endif

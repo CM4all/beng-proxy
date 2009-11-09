@@ -616,6 +616,46 @@ items for the current session.
 \\
 
 \hline
+
+\texttt{REQUEST\_HEADER\_FORWARD} &
+
+This packet specifies which request headers are forwarded to the
+request handler.  The payload is a list of group/mode pairs
+(\texttt{struct beng\_header\_forward\_packet}).  Group is one of:
+
+\begin{itemize}
+\item \texttt{IDENTITY}: headers \texttt{Via} and
+  \texttt{X-Forwarded-For}
+\item \texttt{CAPABILITIES}: \texttt{Server}, \texttt{User-Agent},
+  \texttt{Accept-*}
+\item \texttt{COOKIE}: \texttt{Cookie[2]}, \texttt{Set-Cookie[2]}
+\item \texttt{OTHER}: other end-to-end headers not explicitly
+  mentioned here
+\item \texttt{ALL}: all of the above
+\end{itemize}
+
+Mode is one of:
+
+\begin{itemize}
+\item \texttt{NO}: don't forward the headers
+\item \texttt{YES}: forward the headers
+\item \texttt{MANGLE}: \emph{beng-proxy} processes the headers
+\end{itemize}
+
+\emph{beng-proxy}'s session management is only active when
+\texttt{COOKIE} is \texttt{MANGLE} (which is the default).  The
+behavior of the \texttt{COOKIE} setting on widgets is undefined.
+
+\\
+
+\hline
+
+\texttt{RESPONSE\_HEADER\_FORWARD} &
+
+Same as \texttt{REQUEST\_HEADER\_FORWARD}, but applies to response
+headers forwarded to the client. \\
+
+\hline
 \end{longtable}
 
 If the translation server does not provide the \texttt{CONTENT\_TYPE}

@@ -56,6 +56,8 @@ enum beng_translation_command {
     TRANSLATE_APPEND = 45,
     TRANSLATE_DISCARD_SESSION = 46,
     TRANSLATE_SCHEME = 47,
+    TRANSLATE_REQUEST_HEADER_FORWARD = 48,
+    TRANSLATE_RESPONSE_HEADER_FORWARD = 49,
 };
 
 struct beng_translation_header {

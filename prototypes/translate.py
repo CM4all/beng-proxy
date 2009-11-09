@@ -152,6 +152,14 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, uri[9:]))
         elif raw_uri[:11] == '/cfatest01/':
             response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
+        elif raw_uri[:7] == '/proxy/':
+            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[7:])
+            response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_YES))
+            response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_YES))
+        elif raw_uri[:8] == '/mangle/':
+            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[8:])
+            response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
+            response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
         elif raw_uri[:5] == '/ajp/':
             response.ajp(raw_uri[4:], 'cfatest01.intern.cm-ag:8009')
         elif uri[:8] == '/fcgi.rb':

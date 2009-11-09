@@ -49,6 +49,18 @@ TRANSLATE_LOCAL_ADDRESS_STRING = 44
 TRANSLATE_APPEND = 45
 TRANSLATE_DISCARD_SESSION = 46
 TRANSLATE_SCHEME = 47
+TRANSLATE_REQUEST_HEADER_FORWARD = 48
+TRANSLATE_RESPONSE_HEADER_FORWARD = 49
+
+HEADER_FORWARD_NO = 0
+HEADER_FORWARD_YES = 1
+HEADER_FORWARD_MANGLE = 2
+
+HEADER_GROUP_ALL = -1
+HEADER_GROUP_IDENTITY = 0
+HEADER_GROUP_CAPABILITIES = 1
+HEADER_GROUP_COOKIE = 2
+HEADER_GROUP_OTHER = 3
 
 def _parse_port(address):
     if address[0] == '[':
@@ -260,3 +272,22 @@ class Response:
     def delegated_path(self, helper, path):
         self.path(path)
         self.delegate(helper)
+
+    def header_forward(self, command, *args):
+        payload = ''
+        for x in args:
+            assert isinstance(x, tuple)
+            assert len(x) == 2
+            assert isinstance(x[0], int)
+            assert isinstance(x[1], int)
+
+            payload += struct.pack('hBx', *x)
+        self.packet(command, payload)
+
+    def request_header_forward(self, *args):
+        self.header_forward(TRANSLATE_REQUEST_HEADER_FORWARD,
+                            *args)
+
+    def response_header_forward(self, *args):
+        self.header_forward(TRANSLATE_RESPONSE_HEADER_FORWARD,
+                            *args)

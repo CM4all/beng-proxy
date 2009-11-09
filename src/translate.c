@@ -375,6 +375,41 @@ add_view(struct translate_client *client, const char *name)
     client->transformation = NULL;
 }
 
+static bool
+parse_header_forward(struct header_forward_settings *settings,
+                     const void *payload, size_t payload_length)
+{
+    const struct beng_header_forward_packet *packet = payload;
+
+    if (payload_length % sizeof(*packet) != 0) {
+        daemon_log(2, "malformed header forward packet\n");
+        return false;
+    }
+
+    while (payload_length > 0) {
+        if (packet->group < HEADER_GROUP_ALL ||
+            packet->group >= HEADER_GROUP_MAX ||
+            (packet->mode != HEADER_FORWARD_NO &&
+             packet->mode != HEADER_FORWARD_YES &&
+             packet->mode != HEADER_FORWARD_MANGLE) ||
+            packet->reserved != 0) {
+            daemon_log(2, "malformed header forward packet\n");
+            return false;
+        }
+
+        if (packet->group == HEADER_GROUP_ALL)
+            for (unsigned i = 0; i < HEADER_GROUP_MAX; ++i)
+                settings->modes[i] = packet->mode;
+        else
+            settings->modes[packet->group] = packet->mode;
+
+        ++packet;
+        payload_length -= sizeof(*packet);
+    }
+
+    return true;
+}
+
 /**
  * Returns false if the client has been closed.
  */
@@ -869,6 +904,16 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_DISCARD_SESSION:
         client->response.discard_session = true;
+        break;
+
+    case TRANSLATE_REQUEST_HEADER_FORWARD:
+        parse_header_forward(&client->response.request_header_forward,
+                             payload, payload_length);
+        break;
+
+    case TRANSLATE_RESPONSE_HEADER_FORWARD:
+        parse_header_forward(&client->response.response_header_forward,
+                             payload, payload_length);
         break;
     }
 
