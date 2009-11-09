@@ -150,7 +150,7 @@ response_invoke_processor(struct request *request2,
         processor_new(request->pool, status, response_headers, body,
                       widget, &request2->env,
                       transformation->u.processor.options,
-                      &widget_proxy_handler, request,
+                      &widget_proxy_handler, request2,
                       request2->async_ref);
     } else {
         /* the client requests the whole template */
@@ -186,9 +186,6 @@ response_dispatch_direct(struct request *request2,
     assert(body == NULL || !istream_has_handler(body));
 
     request_discard_body(request2);
-
-    /* RFC 2616 3.8: Product Tokens */
-    header_write(headers, "server", "beng-proxy/" VERSION);
 
     if (request2->send_session_cookie) {
         char session_id[9];
@@ -365,7 +362,12 @@ response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
-    response_headers = forward_print_response_headers(request->pool, headers);
+    headers = forward_response_headers(request->pool, headers,
+                                       request->local_host,
+                                       &request2->translate.response->response_header_forward);
+    response_headers = headers != NULL
+        ? headers_dup(request->pool, headers)
+        : NULL;
 
     response_dispatch(request2,
                       status, response_headers,

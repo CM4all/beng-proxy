@@ -25,7 +25,9 @@ forward_request_headers(pool_t pool, struct strmap *src,
                         const struct session *session,
                         const char *host_and_port, const char *uri);
 
-struct growing_buffer *
-forward_print_response_headers(pool_t pool, struct strmap *src);
+struct strmap *
+forward_response_headers(pool_t pool, struct strmap *src,
+                         const char *local_host,
+                         const struct header_forward_settings *settings);
 
 #endif

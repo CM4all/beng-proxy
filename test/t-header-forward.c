@@ -226,6 +226,75 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
+    /* response headers: NULL */
+
+    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_NO;
+
+    out = forward_response_headers(pool, NULL,
+                                   "192.168.0.2",
+                                   &settings);
+    assert(g_str_has_prefix(strmap_remove(out, "server"), "beng-proxy"));
+    check_strmap(out, "");
+
+    /* response headers: basic test */
+
+    headers = strmap_new(pool, 17);
+    strmap_add(headers, "server", "apache");
+    strmap_add(headers, "abc", "def");
+    strmap_add(headers, "set-cookie", "a=b");
+    strmap_add(headers, "content-type", "image/jpeg");
+    strmap_add(headers, "via", "1.1 192.168.0.1");
+
+    out = forward_response_headers(pool, headers,
+                                   "192.168.0.2",
+                                   &settings);
+    assert(g_str_has_prefix(strmap_remove(out, "server"), "beng-proxy"));
+    check_strmap(out, "content-type=image/jpeg;");
+
+    /* response headers: server */
+
+    settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES;
+
+    out = forward_response_headers(pool, headers,
+                                   "192.168.0.2",
+                                   &settings);
+    check_strmap(out, "content-type=image/jpeg;server=apache;");
+
+    /* response: forward via/x-forwarded-for as-is */
+
+    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_YES;
+
+    out = forward_response_headers(pool, headers,
+                                   "192.168.0.2",
+                                   &settings);
+    check_strmap(out, "content-type=image/jpeg;server=apache;"
+                 "via=1.1 192.168.0.1;");
+
+    /* response: mangle via/x-forwarded-for */
+
+    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
+
+    out = forward_response_headers(pool, headers,
+                                   "192.168.0.2",
+                                   &settings);
+    check_strmap(out, "content-type=image/jpeg;server=apache;"
+                 "via=1.1 192.168.0.1, 1.1 192.168.0.2;");
+
+    settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
+
+    /* forward cookies */
+
+    settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_YES;
+
+    out = forward_response_headers(pool, headers,
+                                   "192.168.0.2",
+                                   &settings);
+    check_strmap(out, "content-type=image/jpeg;server=apache;"
+                 "set-cookie=a=b;");
+
     /* cleanup */
 
     tpool_deinit();

@@ -5,43 +5,26 @@
  */
 
 #include "proxy-widget.h"
+#include "request.h"
 #include "header-writer.h"
+#include "header-forward.h"
 #include "http-server.h"
 #include "http-util.h"
-#include "growing-buffer.h"
 #include "global.h"
-
-/*
- * processor_env.response_handler
- *
- */
 
 static void
 widget_proxy_response(http_status_t status, struct strmap *headers,
                       istream_t body, void *ctx)
 {
-    struct http_server_request *request = ctx;
+    struct request *request2 = ctx;
+    struct http_server_request *request = request2->request;
     struct growing_buffer *headers2;
-    static const char *const copy_headers[] = {
-        "age",
-        "etag",
-        "content-encoding",
-        "content-language",
-        "content-md5",
-        "content-range",
-        "content-type",
-        "content-disposition",
-        "last-modified",
-        "location",
-        "retry-after",
-        "vary",
-        NULL,
-    };
 
-    headers2 = growing_buffer_new(request->pool, 2048);
+    headers = forward_response_headers(request->pool, headers,
+                                       request->local_host,
+                                       &request2->translate.response->response_header_forward);
 
-    if (headers != NULL)
-        headers_copy(headers, headers2, copy_headers);
+    headers2 = headers_dup(request->pool, headers);
 
 #ifndef NO_DEFLATE
     if (body != NULL && istream_available(body, false) == (off_t)-1 &&
@@ -64,7 +47,8 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 static void
 widget_proxy_abort(void *ctx)
 {
-    struct http_server_request *request = ctx;
+    struct request *request2 = ctx;
+    struct http_server_request *request = request2->request;
 
     http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
                              "Upstream server failed");

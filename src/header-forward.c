@@ -56,7 +56,7 @@ static const char *const exclude_request_headers[] = {
     NULL,
 };
 
-static const char *const response_headers[] = {
+static const char *const basic_response_headers[] = {
     "age",
     "etag",
     "cache-control",
@@ -70,6 +70,21 @@ static const char *const response_headers[] = {
     "retry-after",
     "vary",
     "location",
+    NULL,
+};
+
+static const char *const cookie_response_headers[] = {
+    "set-cookie",
+    "set-cookie2",
+    NULL,
+};
+
+/**
+ * A list of response headers to be excluded from the "other" setting.
+ */
+static const char *const exclude_response_headers[] = {
+    "server",
+    "via",
     NULL,
 };
 
@@ -253,17 +268,63 @@ forward_request_headers(pool_t pool, struct strmap *src,
     return dest;
 }
 
-struct growing_buffer *
-forward_print_response_headers(pool_t pool, struct strmap *src)
+static void
+forward_other_response_headers(struct strmap *dest, struct strmap *src)
 {
-    struct growing_buffer *dest;
+    const struct strmap_pair *pair;
 
-    if (src == NULL) {
-        dest = growing_buffer_new(pool, 1024);
-    } else {
-        dest = growing_buffer_new(pool, 2048);
-        headers_copy(src, dest, response_headers);
+    strmap_rewind(src);
+    while ((pair = strmap_next(src)) != NULL)
+        if (!string_in_array(basic_response_headers, pair->key) &&
+            !string_in_array(cookie_response_headers, pair->key) &&
+            !string_in_array(exclude_response_headers, pair->key) &&
+            memcmp(pair->key, "x-cm4all-beng-", 14) != 0 &&
+            !http_header_is_hop_by_hop(pair->key))
+            strmap_add(dest, pair->key, pair->value);
+}
+
+static void
+forward_server(struct strmap *dest, const struct strmap *src,
+               bool mangle)
+{
+    const char *p;
+
+    p = !mangle
+        ? strmap_get_checked(src, "server")
+        : NULL;
+    if (p == NULL)
+        p = "beng-proxy v" VERSION;
+
+    strmap_add(dest, "server", p);
+}
+
+struct strmap *
+forward_response_headers(pool_t pool, struct strmap *src,
+                         const char *local_host,
+                         const struct header_forward_settings *settings)
+{
+    struct strmap *dest;
+
+    assert(settings != NULL);
+
+    dest = strmap_new(pool, 61);
+    if (src != NULL) {
+        headers_copy2(src, dest, basic_response_headers);
+
+        if (settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
+            forward_other_response_headers(dest, src);
+
+        if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES)
+            headers_copy2(src, dest, cookie_response_headers);
     }
+
+    /* RFC 2616 3.8: Product Tokens */
+    forward_server(dest, src,
+                   settings->modes[HEADER_GROUP_CAPABILITIES] != HEADER_FORWARD_YES);
+
+    if (settings->modes[HEADER_GROUP_IDENTITY] != HEADER_FORWARD_NO)
+        forward_via(pool, dest, src, local_host,
+                    settings->modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
 
     return dest;
 }

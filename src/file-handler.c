@@ -202,6 +202,9 @@ file_dispatch(struct request *request2, const struct stat *st,
 
     headers = growing_buffer_new(request->pool, 2048);
 
+    /* RFC 2616 3.8: Product Tokens */
+    header_write(headers, "server", "beng-proxy/" VERSION);
+
     status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
     if (!request_processor_first(request2)) {
