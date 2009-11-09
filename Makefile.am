@@ -872,9 +872,11 @@ if DOCUMENTATION
 doc/beng.pdf: $(srcdir)/doc/beng.tex
 	@mkdir -p $(@D)
 	pdflatex -output-directory $(@D) $<
+	pdflatex -output-directory $(@D) $<
 
 doc/beng.dvi: doc/beng.tex
 	@mkdir -p $(@D)
+	latex -output-directory $(@D) $<
 	latex -output-directory $(@D) $<
 endif
 
