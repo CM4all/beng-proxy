@@ -166,7 +166,6 @@ forward_other_headers(struct strmap *dest, struct strmap *src)
             !string_in_array(cookie_request_headers, pair->key) &&
             !string_in_array(exclude_request_headers, pair->key) &&
             memcmp(pair->key, "x-cm4all-beng-", 14) != 0 &&
-            !string_in_array(exclude_request_headers, pair->key) &&
             !http_header_is_hop_by_hop(pair->key))
             strmap_add(dest, pair->key, pair->value);
 }
