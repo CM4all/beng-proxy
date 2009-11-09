@@ -40,6 +40,14 @@ translate_callback(const struct translate_response *response,
         ? response->views->transformation
         : NULL;
 
+    if (response->request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE ||
+        response->response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE) {
+        /* disable session management if cookies are not mangled by
+           beng-proxy */
+        request->session_id = 0;
+        request->stateless = true;
+    }
+
     if (response->status == (http_status_t)-1 ||
         (response->status == (http_status_t)0 &&
          response->address.type == RESOURCE_ADDRESS_NONE &&
