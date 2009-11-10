@@ -10,6 +10,7 @@
 
 #include "istream-internal.h"
 #include "istream-buffer.h"
+#include "fd_util.h"
 #include "socket-util.h"
 #include "fifo-buffer.h"
 #include "buffered-io.h"
@@ -240,7 +241,7 @@ istream_socketpair_new(pool_t pool, istream_t input, int *fd_r)
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
+    ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds);
     if (ret < 0) {
         daemon_log(1, "socketpair() failed: %s\n", strerror(errno));
         return NULL;

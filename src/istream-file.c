@@ -6,7 +6,7 @@
 
 #include "istream-buffer.h"
 #include "buffered-io.h"
-#include "fd-util.h"
+#include "fd_util.h"
 
 #include <daemon/log.h>
 
@@ -344,10 +344,6 @@ istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length)
     assert(fd >= 0);
     assert(length >= -1);
 
-#ifndef O_CLOEXEC
-    fd_set_cloexec(fd);
-#endif
-
     file = (struct file*)istream_new(pool, &istream_file, sizeof(*file));
     file->fd = fd;
     file->rest = length;
@@ -367,7 +363,7 @@ istream_file_stat_new(pool_t pool, const char *path, struct stat *st)
     assert(path != NULL);
     assert(st != NULL);
 
-    fd = open(path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
+    fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
     if (fd < 0) {
         daemon_log(1, "failed to open '%s': %s\n",
                    path, strerror(errno));
@@ -394,7 +390,7 @@ istream_file_new(pool_t pool, const char *path, off_t length)
 
     assert(length >= -1);
 
-    fd = open(path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
+    fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
     if (fd < 0) {
         daemon_log(1, "failed to open '%s': %s\n",
                    path, strerror(errno));

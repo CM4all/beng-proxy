@@ -12,6 +12,7 @@
 #include "fifo-buffer.h"
 #include "event2.h"
 #include "buffered-io.h"
+#include "fd_util.h"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -188,7 +189,7 @@ duplex_new(pool_t pool, int read_fd, int write_fd)
     assert(read_fd >= 0);
     assert(write_fd >= 0);
 
-    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
+    ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds);
     if (ret < 0)
         return -1;
 

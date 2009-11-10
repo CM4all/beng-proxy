@@ -8,7 +8,7 @@
 #include "stock.h"
 #include "async.h"
 #include "failure.h"
-#include "fd-util.h"
+#include "fd_util.h"
 #include "pevent.h"
 
 #include <daemon/log.h>
@@ -109,7 +109,7 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
         jail = false;
     }
 
-    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
+    ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds);
     if (ret < 0) {
         daemon_log(1, "socketpair() failed: %s\n", strerror(errno));
         stock_item_failed(item);
@@ -152,8 +152,6 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     /* in the parent */
 
     close(fds[1]);
-
-    fd_set_cloexec(fds[0]);
 
     process->uri = uri;
     process->pid = pid;

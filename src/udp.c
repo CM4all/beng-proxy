@@ -5,7 +5,7 @@
  */
 
 #include "udp.h"
-#include "fd-util.h"
+#include "fd_util.h"
 
 #include <daemon/log.h>
 #include <socket/resolver.h>
@@ -72,7 +72,8 @@ udp_new(pool_t pool, const char *host_and_port, int default_port,
     }
 
     udp = p_malloc(pool, sizeof(*udp));
-    udp->fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    udp->fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype,
+                                      ai->ai_protocol);
     if (udp->fd >= 0) {
         daemon_log(1, "Failed to create socket: %s\n",
                    strerror(errno));
@@ -90,8 +91,6 @@ udp_new(pool_t pool, const char *host_and_port, int default_port,
     }
 
     freeaddrinfo(ai);
-
-    fd_set_cloexec(udp->fd);
 
     event_set(&udp->event, udp->fd,
               EV_READ|EV_PERSIST, udp_event_callback, udp);

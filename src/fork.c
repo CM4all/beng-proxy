@@ -5,6 +5,7 @@
  */
 
 #include "fork.h"
+#include "fd_util.h"
 #include "socket-util.h"
 #include "istream-buffer.h"
 #include "buffered-io.h"
@@ -363,7 +364,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         stdin_fd = -1;
 
     if (input != NULL) {
-        ret = pipe(stdin_pipe);
+        ret = pipe_cloexec(stdin_pipe);
         if (ret < 0)
             return -1;
 
@@ -376,7 +377,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         }
     }
 
-    ret = pipe(stdout_pipe);
+    ret = pipe_cloexec(stdout_pipe);
     if (ret < 0) {
         daemon_log(1, "pipe() failed: %s\n", strerror(errno));
 
@@ -436,7 +437,6 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         f->input = input;
         if (input != NULL) {
             close(stdin_pipe[0]);
-            fd_set_cloexec(stdin_pipe[1]);
             f->input_fd = stdin_pipe[1];
 
             event_set(&f->input_event, f->input_fd, EV_WRITE,
@@ -451,7 +451,6 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
             close(stdin_fd);
 
         close(stdout_pipe[1]);
-        fd_set_cloexec(stdout_pipe[0]);
         f->output_fd = stdout_pipe[0];
         event_set(&f->output_event, f->output_fd, EV_READ,
                   fork_output_event_callback, f);

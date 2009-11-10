@@ -5,7 +5,7 @@
  */
 
 #include "random.h"
-
+#include "fd_util.h"
 #include "socket-util.h"
 
 #include <daemon/log.h>
@@ -20,7 +20,7 @@
 static unsigned
 read_some_entropy(const char *path, guint32 *dest, unsigned max)
 {
-    int fd = open(path, O_RDONLY);
+    int fd = open_cloexec(path, O_RDONLY, 0);
     if (fd < 0) {
         daemon_log(2, "Failed to open %s: %s\n", path, strerror(errno));
         return 0;

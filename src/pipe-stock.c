@@ -6,7 +6,7 @@
 
 #include "pipe-stock.h"
 #include "stock.h"
-#include "fd-util.h"
+#include "fd_util.h"
 
 #include <glib.h>
 
@@ -44,15 +44,12 @@ pipe_stock_create(void *ctx __attr_unused, struct stock_item *_item,
     struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
     int ret;
 
-    ret = pipe(item->fds);
+    ret = pipe_cloexec_nonblock(item->fds);
     if (ret < 0) {
         daemon_log(1, "pipe() failed: %s\n", strerror(errno));
         stock_item_failed(&item->base);
         return;
     }
-
-    fd_set_cloexec(item->fds[0]);
-    fd_set_cloexec(item->fds[1]);
 
     stock_item_available(&item->base);
 }

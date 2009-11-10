@@ -7,7 +7,7 @@
 #include "client-socket.h"
 #include "socket-util.h"
 #include "async.h"
-#include "fd-util.h"
+#include "fd_util.h"
 #include "stopwatch.h"
 #include "pevent.h"
 
@@ -138,25 +138,9 @@ client_socket_new(pool_t pool,
     assert(addrlen > 0);
     assert(callback != NULL);
 
-    fd = socket(domain, type, protocol);
+    fd = socket_cloexec_nonblock(domain, type, protocol);
     if (fd < 0) {
         callback(-1, errno, ctx);
-        return;
-    }
-
-    ret = fd_set_cloexec(fd);
-    if (ret < 0) {
-        int save_errno = errno;
-        close(fd);
-        callback(-1, save_errno, ctx);
-        return;
-    }
-
-    ret = socket_set_nonblock(fd, 1);
-    if (ret < 0) {
-        int save_errno = errno;
-        close(fd);
-        callback(-1, save_errno, ctx);
         return;
     }
 

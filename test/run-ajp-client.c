@@ -2,7 +2,7 @@
 #include "http-client.h"
 #include "http-response.h"
 #include "async.h"
-#include "socket-util.h"
+#include "fd_util.h"
 #include "lease.h"
 #include "direct.h"
 
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
     if (fd < 0) {
         fprintf(stderr, "socket() failed: %s\n", strerror(errno));
         return 2;
@@ -182,9 +182,6 @@ int main(int argc, char **argv) {
     }
 
     freeaddrinfo(ai);
-
-    socket_set_nonblock(fd, true);
-    socket_set_nodelay(fd, true);
 
     /* initialize */
 

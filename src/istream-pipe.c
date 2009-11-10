@@ -7,7 +7,7 @@
 #ifdef __linux
 
 #include "istream-internal.h"
-#include "fd-util.h"
+#include "fd_util.h"
 #include "direct.h"
 #include "pipe-stock.h"
 #include "stock.h"
@@ -140,14 +140,11 @@ pipe_create(struct istream_pipe *p)
 
         pipe_stock_item_get(p->stock_item, p->fds);
     } else {
-        ret = pipe(p->fds);
+        ret = pipe_cloexec_nonblock(p->fds);
         if (ret < 0) {
             daemon_log(1, "pipe() failed: %s\n", strerror(errno));
             return false;
         }
-
-        fd_set_cloexec(p->fds[0]);
-        fd_set_cloexec(p->fds[1]);
     }
 
     return true;

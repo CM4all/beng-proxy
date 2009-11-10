@@ -9,7 +9,7 @@
 #include "delegate-protocol.h"
 #include "async.h"
 #include "please.h"
-#include "fd-util.h"
+#include "fd_util.h"
 #include "pevent.h"
 
 #ifdef __linux
@@ -96,7 +96,6 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
     const int *fd_p = (const int *)CMSG_DATA(cmsg);
 
     int fd = *fd_p;
-    fd_set_cloexec(fd);
     d->callback(fd, d->callback_ctx);
     pool_unref(d->pool);
 }
@@ -172,7 +171,7 @@ delegate_try_read(struct delegate_client *d)
     iov.iov_base = &header;
     iov.iov_len = sizeof(header);
 
-    nbytes = recvmsg(d->fd, &msg, 0);
+    nbytes = recvmsg_cloexec(d->fd, &msg, 0);
     if (nbytes < 0) {
         fd = -errno;
 

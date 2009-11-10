@@ -20,6 +20,7 @@
 #include "uri-verify.h"
 #include "direct.h"
 #include "fd-util.h"
+#include "fd_util.h"
 #include "stopwatch.h"
 
 #include <inline/compiler.h>
@@ -302,11 +303,9 @@ http_client_response_stream_as_fd(istream_t istream)
         http_body_istream(&client->response.body_reader) != client->response.body)
         return -1;
 
-    int fd = dup(client->fd);
+    int fd = dup_cloexec(client->fd);
     if (fd < 0)
         return -1;
-
-    fd_set_cloexec(fd);
 
     istream_deinit(&client->response.body_reader.output);
     http_client_release(client, false);

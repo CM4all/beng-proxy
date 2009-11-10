@@ -8,6 +8,7 @@
 #include "lease.h"
 #include "direct.h"
 #include "istream-internal.h"
+#include "fd_util.h"
 
 #include <glib.h>
 
@@ -26,7 +27,7 @@ connect_fake_server(void)
     int ret, sv[2];
     pid_t pid;
 
-    ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sv);
+    ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv);
     if (ret < 0) {
         perror("socketpair() failed");
         exit(EXIT_FAILURE);

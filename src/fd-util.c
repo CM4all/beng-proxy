@@ -11,26 +11,6 @@
 #include <poll.h>
 
 int
-fd_mask_descriptor_flags(int fd, int and_mask, int xor_mask)
-{
-    int ret;
-
-    assert(fd >= 0);
-
-    ret = fcntl(fd, F_GETFD, 0);
-    if (ret < 0)
-        return ret;
-
-    return fcntl(fd, F_SETFD, (ret & and_mask) ^ xor_mask);
-}
-
-int
-fd_set_cloexec(int fd)
-{
-    return fd_mask_descriptor_flags(fd, ~FD_CLOEXEC, FD_CLOEXEC);
-}
-
-int
 fd_mask_status_flags(int fd, int and_mask, int xor_mask)
 {
     int ret;

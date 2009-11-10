@@ -6,7 +6,7 @@
 
 #include "listener.h"
 #include "socket-util.h"
-#include "fd-util.h"
+#include "fd_util.h"
 
 #include <daemon/log.h>
 #include <socket/util.h>
@@ -35,21 +35,14 @@ listener_event_callback(int fd, short event __attr_unused, void *ctx)
 {
     struct listener *listener = ctx;
     struct sockaddr_storage sa;
-    socklen_t sa_len;
-    int remote_fd, ret;
+    size_t sa_len;
+    int remote_fd;
 
     sa_len = sizeof(sa);
-    remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);
+    remote_fd = accept_cloexec_nonblock(fd, (struct sockaddr*)&sa, &sa_len);
     if (remote_fd < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK)
             daemon_log(1, "accept() failed: %s\n", strerror(errno));
-        return;
-    }
-
-    ret = fd_set_cloexec(remote_fd);
-    if (ret < 0) {
-        daemon_log(1, "fd_set_cloexec() failed: %s\n", strerror(errno));
-        close(remote_fd);
         return;
     }
 
@@ -94,7 +87,7 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
     assert(callback != NULL);
 
     listener = p_calloc(pool, sizeof(*listener));
-    listener->fd = socket(family, socktype, protocol);
+    listener->fd = socket_cloexec_nonblock(family, socktype, protocol);
     if (listener->fd < 0)
         return NULL;
 
@@ -116,22 +109,6 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
     }
 
     ret = listen(listener->fd, 16);
-    if (ret < 0) {
-        int save_errno = errno;
-        close(listener->fd);
-        errno = save_errno;
-        return NULL;
-    }
-
-    ret = socket_set_nonblock(listener->fd, 1);
-    if (ret < 0) {
-        int save_errno = errno;
-        close(listener->fd);
-        errno = save_errno;
-        return NULL;
-    }
-
-    ret = fd_set_cloexec(listener->fd);
     if (ret < 0) {
         int save_errno = errno;
         close(listener->fd);
