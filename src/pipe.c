@@ -8,6 +8,7 @@
 #include "http-response.h"
 #include "fork.h"
 #include "format.h"
+#include "stopwatch.h"
 
 #include <daemon/log.h>
 
@@ -87,6 +88,7 @@ pipe_filter(pool_t pool, const char *path,
             const struct http_response_handler *handler,
             void *handler_ctx)
 {
+    struct stopwatch *stopwatch;
     pid_t pid;
     istream_t response;
     char *argv[1 + num_args + 1];
@@ -101,6 +103,8 @@ pipe_filter(pool_t pool, const char *path,
     }
 
     assert(!http_status_is_empty(status));
+
+    stopwatch = stopwatch_new(pool, path);
 
     pid = beng_fork(pool, body, &response,
                     pipe_child_callback, NULL);
@@ -121,6 +125,8 @@ pipe_filter(pool_t pool, const char *path,
         _exit(2);
     }
 
+    stopwatch_event(stopwatch, "fork");
+
     etag = strmap_get(headers, "etag");
     if (etag != NULL) {
         /* we cannot pass the original ETag to the client, because the
@@ -134,6 +140,8 @@ pipe_filter(pool_t pool, const char *path,
         headers = strmap_dup(pool, headers);
         strmap_set(headers, "etag", etag);
     }
+
+    response = istream_stopwatch_new(pool, response, stopwatch);
 
     http_response_handler_direct_response(handler, handler_ctx, status,
                                           headers, response);

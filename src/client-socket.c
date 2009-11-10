@@ -8,9 +8,14 @@
 #include "socket-util.h"
 #include "async.h"
 #include "fd-util.h"
+#include "stopwatch.h"
 
 #include <inline/poison.h>
 #include <socket/util.h>
+
+#ifdef ENABLE_STOPWATCH
+#include <socket/address.h>
+#endif
 
 #include <assert.h>
 #include <stddef.h>
@@ -27,6 +32,10 @@ struct client_socket {
     struct event event;
     client_socket_callback_t callback;
     void *callback_ctx;
+
+#ifdef ENABLE_STOPWATCH
+    struct stopwatch *stopwatch;
+#endif
 };
 
 
@@ -89,6 +98,11 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
         s_err = errno;
 
     if (s_err == 0) {
+#ifdef ENABLE_STOPWATCH
+        stopwatch_event(client_socket->stopwatch, "connect");
+        stopwatch_dump(client_socket->stopwatch);
+#endif
+
         client_socket->callback(fd, 0, client_socket->callback_ctx);
     } else {
         close(fd);
@@ -113,6 +127,9 @@ client_socket_new(pool_t pool,
                   struct async_operation_ref *async_ref)
 {
     int fd, ret;
+#ifdef ENABLE_STOPWATCH
+    struct stopwatch *stopwatch;
+#endif
 
     assert(addr != NULL);
     assert(addrlen > 0);
@@ -149,8 +166,17 @@ client_socket_new(pool_t pool,
         }
     }
 
+#ifdef ENABLE_STOPWATCH
+    stopwatch = stopwatch_sockaddr_new(pool, addr, addrlen, NULL);
+#endif
+
     ret = connect(fd, addr, addrlen);
     if (ret == 0) {
+#ifdef ENABLE_STOPWATCH
+        stopwatch_event(stopwatch, "connect");
+        stopwatch_dump(stopwatch);
+#endif
+
         callback(fd, 0, ctx);
     } else if (errno == EINPROGRESS) {
         struct client_socket *client_socket;
@@ -165,6 +191,10 @@ client_socket_new(pool_t pool,
         client_socket->fd = fd;
         client_socket->callback = callback;
         client_socket->callback_ctx = ctx;
+
+#ifdef ENABLE_STOPWATCH
+        client_socket->stopwatch = stopwatch;
+#endif
 
         async_init(&client_socket->operation, &client_socket_operation);
         async_ref_set(async_ref, &client_socket->operation);

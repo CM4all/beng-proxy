@@ -216,6 +216,10 @@ SRC = src/main.c \
 	src/abort-flag.c \
 	src/tpool.c
 
+if ENABLE_STOPWATCH
+SRC += src/stopwatch.c src/istream-stopwatch.c
+endif
+
 #
 # Programs
 #

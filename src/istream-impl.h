@@ -15,6 +15,7 @@ struct async_operation;
 struct stock;
 struct cache;
 struct cache_item;
+struct stopwatch;
 
 istream_t
 istream_null_new(pool_t pool);
@@ -150,5 +151,25 @@ istream_ajp_body_new(pool_t pool, istream_t input);
 
 void
 istream_ajp_body_request(istream_t istream, size_t length);
+
+#ifdef ENABLE_STOPWATCH
+
+istream_t
+istream_stopwatch_new(pool_t pool, istream_t input,
+                      struct stopwatch *_stopwatch);
+
+#else /* !ENABLE_STOPWATCH */
+
+static inline istream_t
+istream_stopwatch_new(pool_t pool, istream_t input,
+                      struct stopwatch *_stopwatch)
+{
+    (void)pool;
+    (void)_stopwatch;
+
+    return input;
+}
+
+#endif /* !ENABLE_STOPWATCH */
 
 #endif

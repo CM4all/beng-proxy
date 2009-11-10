@@ -18,6 +18,7 @@
 #include "growing-buffer.h"
 #include "lease.h"
 #include "uri-verify.h"
+#include "stopwatch.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -32,6 +33,8 @@
 
 struct http_client {
     pool_t pool, caller_pool;
+
+    struct stopwatch *stopwatch;
 
     /* I/O */
     int fd;
@@ -105,6 +108,8 @@ static void
 http_client_release(struct http_client *client, bool reuse)
 {
     assert(client != NULL);
+
+    stopwatch_dump(client->stopwatch);
 
     event2_set(&client->event, 0);
     event2_commit(&client->event);
@@ -224,6 +229,7 @@ http_client_response_stream_close(istream_t istream)
     assert(!http_response_handler_defined(&client->request.handler));
     assert(!http_body_eof(&client->response.body_reader));
 
+    stopwatch_event(client->stopwatch, "close");
     http_client_abort_response_body(client);
 }
 
@@ -283,6 +289,7 @@ http_client_parse_status_line(struct http_client *client,
     if (length < 10 || memcmp(line, "HTTP/", 5) != 0 ||
         (space = memchr(line + 6, ' ', length - 6)) == NULL) {
         daemon_log(2, "http_client: malformed HTTP status line\n");
+        stopwatch_event(client->stopwatch, "malformed");
         http_client_abort_response_headers(client);
         return false;
     }
@@ -296,6 +303,7 @@ http_client_parse_status_line(struct http_client *client,
     if (unlikely(length < 3 || !char_is_digit(line[0]) ||
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
         daemon_log(2, "http_client: no HTTP status found\n");
+        stopwatch_event(client->stopwatch, "malformed");
         http_client_abort_response_headers(client);
         return false;
     }
@@ -304,6 +312,7 @@ http_client_parse_status_line(struct http_client *client,
     if (unlikely(!http_status_is_valid(client->response.status))) {
         daemon_log(2, "http_client: invalid HTTP status %d\n",
                    client->response.status);
+        stopwatch_event(client->stopwatch, "malformed");
         http_client_abort_response_headers(client);
         return false;
     }
@@ -323,6 +332,8 @@ http_client_headers_finished(struct http_client *client)
     char *endptr;
     off_t content_length;
     bool chunked;
+
+    stopwatch_event(client->stopwatch, "headers");
 
     header_connection = strmap_remove(client->response.headers, "connection");
     client->keep_alive =
@@ -353,6 +364,7 @@ http_client_headers_finished(struct http_client *client)
         if (unlikely(content_length_string == NULL)) {
             if (client->keep_alive) {
                 daemon_log(2, "http_client: no Content-Length header response\n");
+                stopwatch_event(client->stopwatch, "malformed");
                 http_client_abort_response_headers(client);
                 return false;
             }
@@ -361,6 +373,7 @@ http_client_headers_finished(struct http_client *client)
             content_length = strtoul(content_length_string, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
                 daemon_log(2, "http_client: invalid Content-Length header in response\n");
+                stopwatch_event(client->stopwatch, "malformed");
                 http_client_abort_response_headers(client);
                 return false;
             }
@@ -419,6 +432,8 @@ http_client_response_finished(struct http_client *client)
 {
     assert(client->response.read_state == READ_BODY);
     assert(!http_response_handler_defined(&client->request.handler));
+
+    stopwatch_event(client->stopwatch, "end");
 
     if (!fifo_buffer_empty(client->input)) {
         daemon_log(2, "excess data after HTTP response\n");
@@ -594,6 +609,7 @@ http_client_try_response_direct(struct http_client *client)
         }
 
         daemon_log(1, "http_client: read error (%s)\n", strerror(errno));
+        stopwatch_event(client->stopwatch, "error");
         http_client_abort_response_body(client);
         return;
     }
@@ -612,12 +628,14 @@ http_client_try_read_buffered(struct http_client *client)
 
     if (nbytes == 0) {
         if (client->response.read_state == READ_BODY) {
+            stopwatch_event(client->stopwatch, "end");
             http_body_socket_eof(&client->response.body_reader,
                                  client->input);
             http_client_release(client, false);
         } else {
             daemon_log(2, "http_client: server closed connection "
                        "during response headers\n");
+            stopwatch_event(client->stopwatch, "error");
             http_client_abort_response_headers(client);
         }
 
@@ -631,6 +649,7 @@ http_client_try_read_buffered(struct http_client *client)
         }
 
         daemon_log(1, "http_client: read error (%s)\n", strerror(errno));
+        stopwatch_event(client->stopwatch, "error");
         http_client_abort_response(client);
         return;
     }
@@ -670,6 +689,7 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "http_client: timeout\n");
+        stopwatch_event(client->stopwatch, "timeout");
         if (client->response.read_state == READ_NONE)
             http_client_abort_request(client);
         else
@@ -717,6 +737,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
     }
 
     daemon_log(1, "http_client: write error (%s)\n", strerror(errno));
+    stopwatch_event(client->stopwatch, "error");
     http_client_abort_request(client);
     return 0;
 }
@@ -725,6 +746,8 @@ static void
 http_client_request_stream_eof(void *ctx)
 {
     struct http_client *client = ctx;
+
+    stopwatch_event(client->stopwatch, "request");
 
     client->response.read_state = READ_STATUS;
     client->input = fifo_buffer_new(client->pool, 4096);
@@ -736,6 +759,8 @@ static void
 http_client_request_stream_abort(void *ctx)
 {
     struct http_client *client = ctx;
+
+    stopwatch_event(client->stopwatch, "abort");
 
     http_response_handler_invoke_abort(&client->request.handler);
     http_client_release(client, false);
@@ -764,7 +789,9 @@ http_client_request_abort(struct async_operation *ao)
 {
     struct http_client *client
         = async_to_http_client(ao);
-    
+
+    stopwatch_event(client->stopwatch, "abort");
+
     /* async_abort() can only be used before the response was
        delivered to our callback */
     assert(client->response.read_state == READ_NONE ||
@@ -820,6 +847,7 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     pool = pool_new_linear(caller_pool, "http_client_request", 8192);
 
     client = p_malloc(pool, sizeof(*client));
+    client->stopwatch = stopwatch_fd_new(pool, fd, uri);
     client->pool = pool;
     client->fd = fd;
     client->fd_type = fd_type;

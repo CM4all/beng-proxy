@@ -149,6 +149,30 @@ On \texttt{SIGHUP}, the log file is reopened and all caches are
 flushed.
 
 
+\section{Tuning}
+
+\subsection{The Stopwatch}
+\label{stopwatch}
+
+The stopwatch measures the latency of external resources (e.g. remote
+HTTP servers, CGI and pipe programs).  It is only available in the
+debug build (compile-time option \texttt{--enable-stopwatch}).
+
+Example output:
+
+\texttt{stopwatch[172.30.0.23:80 /test.py]: request=5ms headers=85ms end=88ms (beng-proxy=1+2ms)}
+
+Here, the HTTP request to \texttt{172.30.0.23:80} was sent within 5
+milliseconds.  After 85 milliseconds, the response headers were
+received, and after 3 more milliseconds, the response body was
+received.  All of these refer to wallclock time, relative to the start
+of the operation.  Each client library may have its own set of
+breakpoints.
+
+During this HTTP request, \emph{beng-proxy} consumed 3 milliseconds or
+raw CPU time (not wallclock time): 1 millisecond in user space, and 2
+milliseconds for the kernel.
+
 \section{Resources}
 
 \emph{beng-proxy} delivers resources to its HTTP clients.  It obtains

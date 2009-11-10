@@ -13,6 +13,7 @@
 #include "header-parser.h"
 #include "strutil.h"
 #include "abort-flag.h"
+#include "stopwatch.h"
 
 #include <daemon/log.h>
 
@@ -26,6 +27,8 @@
 
 struct cgi {
     struct istream output;
+
+    struct stopwatch *stopwatch;
 
     istream_t input;
     struct fifo_buffer *buffer;
@@ -85,15 +88,21 @@ cgi_return_response(struct cgi *cgi)
         /* this response does not have a response body, as indicated
            by the HTTP status code */
 
+        stopwatch_event(cgi->stopwatch, "empty");
+        stopwatch_dump(cgi->stopwatch);
+
         istream_free_handler(&cgi->input);
         http_response_handler_invoke_response(&cgi->handler,
                                               status, headers,
                                               NULL);
         pool_unref(cgi->output.pool);
-    } else
+    } else {
+        stopwatch_event(cgi->stopwatch, "headers");
+
         http_response_handler_invoke_response(&cgi->handler,
                                               status, headers,
                                               istream_struct_cast(&cgi->output));
+    }
 
     cgi->in_response_callback = false;
 }
@@ -221,12 +230,17 @@ cgi_input_eof(void *ctx)
 
     if (cgi->headers != NULL) {
         daemon_log(1, "premature end of headers from CGI script\n");
+        stopwatch_event(cgi->stopwatch, "malformed");
+        stopwatch_dump(cgi->stopwatch);
 
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
 
         http_response_handler_invoke_abort(&cgi->handler);
         pool_unref(cgi->output.pool);
     } else if (cgi->buffer == NULL || fifo_buffer_empty(cgi->buffer)) {
+        stopwatch_event(cgi->stopwatch, "end");
+        stopwatch_dump(cgi->stopwatch);
+
         istream_deinit_eof(&cgi->output);
     }
 }
@@ -235,6 +249,9 @@ static void
 cgi_input_abort(void *ctx)
 {
     struct cgi *cgi = ctx;
+
+    stopwatch_event(cgi->stopwatch, "abort");
+    stopwatch_dump(cgi->stopwatch);
 
     cgi->input = NULL;
 
@@ -335,8 +352,12 @@ istream_cgi_read(istream_t istream)
         pool_unref(cgi->output.pool);
     } else {
         size_t rest = istream_buffer_consume(&cgi->output, cgi->buffer);
-        if (rest == 0)
+        if (rest == 0) {
+            stopwatch_event(cgi->stopwatch, "end");
+            stopwatch_dump(cgi->stopwatch);
+
             istream_deinit_eof(&cgi->output);
+        }
     }
 }
 
@@ -504,9 +525,12 @@ cgi_new(pool_t pool, bool jail,
         void *handler_ctx,
         struct async_operation_ref *async_ref)
 {
+    struct stopwatch *stopwatch;
     struct cgi *cgi;
     pid_t pid;
     istream_t input;
+
+    stopwatch = stopwatch_new(pool, path);
 
     pid = beng_fork(pool, body, &input,
                     cgi_child_callback, NULL);
@@ -535,7 +559,10 @@ cgi_new(pool_t pool, bool jail,
                 script_name, path_info, query_string, document_root,
                 headers);
 
+    stopwatch_event(stopwatch, "fork");
+
     cgi = (struct cgi *)istream_new(pool, &istream_cgi, sizeof(*cgi));
+    cgi->stopwatch = stopwatch;
     istream_assign_handler(&cgi->input, input,
                            &cgi_input_handler, cgi, 0);
 

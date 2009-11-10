@@ -100,6 +100,15 @@ if test x$enable_dump_pool_grow = xyes; then
 	AC_DEFINE(DEBUG_POOL_GROW, 1)
 fi
 
+AC_ARG_ENABLE(stopwatch,
+	AS_HELP_STRING([--enable-stopwatch],
+		[Measure the time it takes to load resources]),,
+	enable_stopwatch=$enable_debug)
+AM_CONDITIONAL(ENABLE_STOPWATCH, test x$enable_stopwatch = xyes)
+if test x$enable_stopwatch = xyes; then
+	AC_DEFINE(ENABLE_STOPWATCH, 1)
+fi
+
 AC_ARG_ENABLE(gprof,
 	AS_HELP_STRING([--enable-gprof],
 		[enable profiling via gprof (default: disabled)]),,

@@ -13,6 +13,7 @@
 #include "uri-address.h"
 #include "gb-io.h"
 #include "strutil.h"
+#include "stopwatch.h"
 #include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
@@ -50,6 +51,8 @@ struct packet_reader {
 
 struct translate_client {
     pool_t pool;
+
+    struct stopwatch *stopwatch;
 
     int fd;
     struct lease_ref lease_ref;
@@ -99,6 +102,8 @@ translate_client_release(struct translate_client *client, bool reuse)
 {
     assert(client != NULL);
 
+    stopwatch_dump(client->stopwatch);
+
     if (client->event.ev_events != 0)
         event_del(&client->event);
     lease_release(&client->lease_ref, reuse);
@@ -108,6 +113,8 @@ translate_client_release(struct translate_client *client, bool reuse)
 static void
 translate_client_abort(struct translate_client *client)
 {
+    stopwatch_event(client->stopwatch, "error");
+
     client->callback(&error, client->callback_ctx);
     translate_client_release(client, false);
 }
@@ -436,6 +443,7 @@ translate_handle_packet(struct translate_client *client,
 
     switch ((enum beng_translation_command)command) {
     case TRANSLATE_END:
+        stopwatch_event(client->stopwatch, "end");
         client->callback(&client->response, client->callback_ctx);
         translate_client_release(client, true);
         return false;
@@ -1006,6 +1014,9 @@ translate_try_write(struct translate_client *client, int fd)
     if (nbytes == 0 && growing_buffer_empty(client->request)) {
         /* the buffer is empty, i.e. the request has been sent -
            start reading the response */
+
+        stopwatch_event(client->stopwatch, "request");
+
         packet_reader_init(&client->reader);
 
         event_set(&client->event, fd, EV_READ|EV_TIMEOUT,
@@ -1048,6 +1059,7 @@ translate_connection_abort(struct async_operation *ao)
 {
     struct translate_client *client = async_to_translate_connection(ao);
 
+    stopwatch_event(client->stopwatch, "abort");
     translate_client_release(client, false);
 }
 
@@ -1092,6 +1104,9 @@ translate(pool_t pool, int fd,
 
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
+    client->stopwatch = stopwatch_fd_new(pool, fd,
+                                         request->uri != NULL ? request->uri
+                                         : request->widget_type);
     client->fd = fd;
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
 
