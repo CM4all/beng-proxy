@@ -103,7 +103,7 @@ widget_request_headers(struct embed *embed, bool with_body)
     struct strmap *headers;
     struct session *session;
 
-    session = session_get_if_stateful(embed);
+    session = session_get(embed->env->session_id);
 
     headers = forward_request_headers(embed->pool, embed->env->request_headers,
                                       embed->env->local_host,
@@ -326,7 +326,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
     if (headers != NULL) {
         if (embed->host_and_port != NULL) {
-            struct session *session = session_get_if_stateful(embed);
+            struct session *session = session_get(embed->env->session_id);
             if (session != NULL) {
                 widget_collect_cookies(session->cookies, headers,
                                        embed->host_and_port);
@@ -337,7 +337,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         /*
         translate = strmap_get(headers, "x-cm4all-beng-translate");
         if (translate != NULL) {
-            struct session *session = session_get_if_stateful(embed);
+            struct session *session = session_get(embed->env->session_id);
             if (session != NULL)
                 session->translate = d_strdup(session->pool, translate);
             session_put(session);
