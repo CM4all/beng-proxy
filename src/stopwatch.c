@@ -45,6 +45,16 @@ struct stopwatch {
     struct rusage self;
 };
 
+static bool stopwatch_enabled;
+
+void
+stopwatch_enable(void)
+{
+    assert(!stopwatch_enabled);
+
+    stopwatch_enabled = true;
+}
+
 static void
 stopwatch_event_init(struct stopwatch_event *event, const char *name)
 {
@@ -59,7 +69,7 @@ stopwatch_new(pool_t pool, const char *name)
 {
     struct stopwatch *stopwatch;
 
-    if (daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return NULL;
 
     stopwatch = p_malloc(pool, sizeof(*stopwatch));
@@ -82,7 +92,7 @@ stopwatch_sockaddr_new(pool_t pool, const struct sockaddr *address,
 {
     char buffer[1024];
 
-    if (daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return NULL;
 
     if (!socket_address_to_string(buffer, sizeof(buffer),
@@ -100,7 +110,7 @@ stopwatch_fd_new(pool_t pool, int fd, const char *suffix)
     struct sockaddr_storage address;
     socklen_t address_length = sizeof(address);
 
-    if (daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return NULL;
 
     return getpeername(fd, (struct sockaddr *)&address, &address_length) >= 0
@@ -112,7 +122,7 @@ stopwatch_fd_new(pool_t pool, int fd, const char *suffix)
 void
 stopwatch_event(struct stopwatch *stopwatch, const char *name)
 {
-    if (daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return;
 
     assert(stopwatch != NULL);
@@ -146,7 +156,7 @@ stopwatch_dump(const struct stopwatch *stopwatch)
     GString *message;
     struct rusage self;
 
-    if (daemon_log_config.verbose < STOPWATCH_VERBOSE)
+    if (!stopwatch_enabled || daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return;
 
     assert(stopwatch != NULL);

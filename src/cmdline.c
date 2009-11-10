@@ -6,6 +6,7 @@
 
 #include "config.h"
 #include "uri-resolver.h"
+#include "stopwatch.h"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -118,6 +119,7 @@ handle_set2(struct config *config, const char *argv0,
     static const char http_cache_size[] = "http_cache_size";
     static const char filter_cache_size[] = "filter_cache_size";
     static const char translate_cache_size[] = "translate_cache_size";
+    static const char stopwatch[] = "stopwatch";
     char *endptr;
     long l;
 
@@ -160,6 +162,12 @@ handle_set2(struct config *config, const char *argv0,
             arg_error(argv0, "Invalid value for translate_cache_size");
 
         config->translate_cache_size = l;
+    } else if (name_length == sizeof(stopwatch) - 1 &&
+               memcmp(name, stopwatch, sizeof(stopwatch) - 1) == 0) {
+        if (strcmp(value, "yes") == 0)
+            stopwatch_enable();
+        else if (strcmp(value, "no") != 0)
+            arg_error(argv0, "Invalid value for stopwatch");
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }
