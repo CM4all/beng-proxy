@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.7.4) unstable; urgency=low
   * measure the latency of external resources
   * widget-http: partially revert "don't query session if !stateful"
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 10 Nov 2009 15:06:03 +0100
 
 cm4all-beng-proxy (0.7.3) unstable; urgency=low
 
