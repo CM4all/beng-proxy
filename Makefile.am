@@ -460,8 +460,11 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/socket-util.c src/fd-util.c \
 	src/child.c \
 	src/strutil.c \
+	src/stopwatch.c \
 	src/istream-file.c src/abort-flag.c src/direct.c
-test_t_cgi_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS)
+test_t_cgi_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBEVENT_LIBS) \
+	$(GLIB_LIBS) 
 
 test_t_widget_stream_SOURCES = test/t-widget-stream.c \
 	$(POOL_SRC) \
@@ -534,9 +537,11 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/format.c src/http.c src/strutil.c \
 	src/buffered-io.c src/fd-util.c src/socket-util.c \
 	src/uri-verify.c \
+	src/stopwatch.c \
 	src/tpool.c src/event2.c
 test_t_http_client_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
 
 test_t_http_util_SOURCES = test/t-http-util.c \
 	$(POOL_SRC) \
@@ -672,9 +677,11 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/abort-unref.c \
 	src/uri-address.c \
 	src/http.c \
+	src/stopwatch.c \
 	$(POOL_SRC)
 test_request_translation_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
 
 test_run_subst_SOURCES = test/run-subst.c \
 	src/istream-subst.c src/istream-file.c \
@@ -731,9 +738,11 @@ test_run_processor_SOURCES = test/t-processor.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/widget-stream.c src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
+	src/stopwatch.c \
 	$(POOL_SRC)
 test_run_processor_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
 
 test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/ajp-serialize.c \
@@ -799,9 +808,11 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/hashmap.c src/strmap.c \
 	src/event2.c \
 	src/tpool.c \
+	src/stopwatch.c \
 	$(POOL_SRC)
 test_cleanup_memcached_choice_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
 
 test_run_delegate_SOURCES = test/run-delegate.c \
 	src/delegate-stock.c src/delegate-client.c src/delegate-glue.c \
