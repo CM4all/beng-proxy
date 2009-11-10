@@ -16,6 +16,8 @@ dnl Checks for OS features
 
 AC_SYS_LARGEFILE
 
+AC_CHECK_FUNCS(pipe2 accept4)
+
 dnl Checks for libraries.
 
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],,

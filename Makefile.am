@@ -303,6 +303,8 @@ SRC = src/main.c \
 	src/inline-widget.c \
 	src/frame.c \
 	src/fd-util.c \
+	src/fd_util.c \
+	src/fd_util.h \
 	src/socket-util.c \
 	src/hostname.c \
 	src/address.c \
