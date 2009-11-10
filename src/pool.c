@@ -695,6 +695,8 @@ p_malloc_libc(pool_t pool, size_t size TRACE_ARGS_DECL)
     chunk->info.file = file;
     chunk->info.line = line;
     chunk->info.size = size;
+#else
+    TRACE_ARGS_IGNORE;
 #endif
 
     list_add(&chunk->siblings, &pool->current_area.libc);
@@ -740,6 +742,8 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
 #ifdef DEBUG_POOL_GROW
         pool_dump_allocations(pool);
         daemon_log(6, "+ %s:%u %zu\n", file, line, size - LINEAR_PREFIX);
+#else
+        TRACE_ARGS_IGNORE;
 #endif
         if (size > new_area_size)
             new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
