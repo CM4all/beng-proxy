@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <sys/socket.h>
 #include <string.h>
+#include <sys/resource.h>
 
 enum {
     STOPWATCH_VERBOSE = 3,
@@ -36,6 +37,12 @@ struct stopwatch {
 
     unsigned num_events;
     struct stopwatch_event events[MAX_EVENTS];
+
+    /**
+     * Our own resource usage, measured when the stopwatch was
+     * started.
+     */
+    struct rusage self;
 };
 
 static void
@@ -63,6 +70,8 @@ stopwatch_new(pool_t pool, const char *name)
 
     stopwatch_event_init(&stopwatch->events[0], stopwatch->name);
     stopwatch->num_events = 1;
+
+    getrusage(RUSAGE_SELF, &stopwatch->self);
 
     return stopwatch;
 }
@@ -124,10 +133,18 @@ timespec_diff_ms(const struct timespec *a, const struct timespec *b)
         (a->tv_nsec - b->tv_nsec) / 1000000;
 }
 
+static long
+timeval_diff_ms(const struct timeval *a, const struct timeval *b)
+{
+    return (a->tv_sec - b->tv_sec) * 1000 +
+        (a->tv_usec - b->tv_usec) / 1000;
+}
+
 void
 stopwatch_dump(const struct stopwatch *stopwatch)
 {
     GString *message;
+    struct rusage self;
 
     if (daemon_log_config.verbose < STOPWATCH_VERBOSE)
         return;
@@ -148,6 +165,13 @@ stopwatch_dump(const struct stopwatch *stopwatch)
                                stopwatch->events[i].name,
                                timespec_diff_ms(&stopwatch->events[i].time,
                                                 &stopwatch->events[0].time));
+
+    getrusage(RUSAGE_SELF, &self);
+    g_string_append_printf(message, " (beng-proxy=%ld+%ldms)",
+                           timeval_diff_ms(&self.ru_utime,
+                                           &stopwatch->self.ru_utime),
+                           timeval_diff_ms(&self.ru_stime,
+                                           &stopwatch->self.ru_stime));
 
     daemon_log(STOPWATCH_VERBOSE, "%s\n", message->str);
 
