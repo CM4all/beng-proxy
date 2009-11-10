@@ -75,13 +75,29 @@ if test x$enable_debug = xyes; then
 	AM_CPPFLAGS="$AM_CPPFLAGS -DPOISON -DVALGRIND"
 	AM_CPPFLAGS="$AM_CPPFLAGS -DTRACE"
 	AM_CPPFLAGS="$AM_CPPFLAGS -DDEBUG_POOL_REF"
-	AM_CPPFLAGS="$AM_CPPFLAGS -DDEBUG_POOL_GROW -DDUMP_POOL_SIZE -DCACHE_LOG"
+	AM_CPPFLAGS="$AM_CPPFLAGS -DCACHE_LOG"
 	# -DISTREAM_POOL
 	# -DDUMP_POOL_UNREF
 	# -DDUMP_WIDGET_TREE
 	# -DDUMP_POOL_ALLOC_ALL
 else
 	AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
+fi
+
+AC_ARG_ENABLE(dump-pool-size,
+	AS_HELP_STRING([--enable-dump-pool-size],
+		[Log the final size of pools (default: disabled)]),,
+	enable_dump_pool_size=no)
+if test x$enable_dump_pool_size = xyes; then
+	AC_DEFINE(DUMP_POOL_SIZE, 1)
+fi
+
+AC_ARG_ENABLE(dump-pool-grow,
+	AS_HELP_STRING([--enable-dump-pool-grow],
+		[Log when a pool grows (default: disabled)]),,
+	enable_dump_pool_grow=no)
+if test x$enable_dump_pool_grow = xyes; then
+	AC_DEFINE(DEBUG_POOL_GROW, 1)
 fi
 
 AC_ARG_ENABLE(gprof,
