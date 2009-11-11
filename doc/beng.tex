@@ -2,6 +2,9 @@
 \usepackage[pdftex,bookmarks]{hyperref}
 \usepackage{longtable}
 
+\setlength\LTleft{0pt}
+\setlength\LTright{0pt}
+
 \begin{document}
 \title{CM4all Beng}
 \author{Max Kellermann}
@@ -100,7 +103,7 @@ large).  Finally, restart \emph{beng-proxy}:
 The command line argument \texttt{--set} allows you to tweak some
 settings:
 
-\begin{longtable}{|l|p{10cm}|}
+\begin{longtable}{|l|p{8cm}|}
 \hline
 
 \texttt{max\_connections} & The maximum number of incoming HTTP
@@ -165,7 +168,10 @@ debug build (compile-time option \texttt{--enable-stopwatch}).
 
 Example output:
 
-\texttt{stopwatch[172.30.0.23:80 /test.py]: request=5ms headers=85ms end=88ms (beng-proxy=1+2ms)}
+\begin{verbatim*}
+stopwatch[172.30.0.23:80 /test.py]: request=5ms headers=85ms
+end=88ms (beng-proxy=1+2ms)
+\end{verbatim*}
 
 Here, the HTTP request to \texttt{172.30.0.23:80} was sent within 5
 milliseconds.  After 85 milliseconds, the response headers were
@@ -428,7 +434,7 @@ by the client (not in the widget registry) \\
 
 \subsubsection{Response}
 
-\begin{longtable}{|l|p{10cm}|}
+\begin{longtable}{|l|p{8cm}|}
 
 \hline
 
@@ -749,15 +755,15 @@ The translation server provides access to the widget database, where
 all widget servers are registered.  A widget request can use the
 following packets:
 
-\begin{tabular}{|l|p{10cm}|}
+\begin{longtable}{|l|p{10cm}|}
 \hline
 \texttt{WIDGET\_TYPE} & the name of the widget type \\
 \hline
-\end{tabular}
+\end{longtable}
 
 The translation server's response consists of these packets:
 
-\begin{longtable}{|l|p{10cm}|}
+\begin{longtable}{|l|p{8cm}|}
 \hline
 \texttt{STATUS} & in case of a lookup error, this packet provides the
 HTTP status code \\
@@ -797,7 +803,7 @@ and query string \\
 \section{Widget protocol}
 
 A widget server is simply an HTTP server.  Its content type must be
-text/html or text/xml.
+\texttt{text/html} or \texttt{text/xml}.
 
 
 \subsection{Hyperlinks}
@@ -1114,8 +1120,8 @@ let \emph{beng-proxy} rewrite the URI:
 
 \begin{verbatim}
 <c:widget id="post" type="demo_post" display="none"/>
-<iframe width="200" height="200" c:base="child" c:mode="partial"
-  src="post"/>
+<iframe width="200" height="200" c:base="child"
+  c:mode="partial" src="post"/>
 \end{verbatim}
 
 This may be used for any HTML tag which is supported by the
@@ -1144,8 +1150,9 @@ regarded internal, it provides a JavaScript function to generate such
 an URI:
 
 \begin{verbatim*}
-function beng_widget_uri(base_uri, session_id, frame, focus, mode,
-                         path, translate, view);
+function
+beng_widget_uri(base_uri, session_id, frame, focus, mode,
+                path, translate, view);
 \end{verbatim*}
 
 The return value is the URI which can be safely requested by the
@@ -1159,7 +1166,7 @@ different widget than the current one.
 
 \texttt{mode} is one of the following:
 
-\begin{tabular}{|l|p{12cm}|}
+\begin{longtable}{|l|p{11cm}|}
 \hline
 
 \texttt{focus} & the full page (the default if \texttt{null} is
@@ -1175,7 +1182,7 @@ passed) \\
 \textbf{Deprecated}: use \texttt{partial} and the \texttt{view}
 parameter instead \\
 \hline
-\end{tabular}
+\end{longtable}
 
 The \texttt{path} argument is an URI relative to the widget.  It may
 include a query string.
@@ -1228,7 +1235,7 @@ absolute path of a CGI script which will serve the widget, or
 \texttt{path} for a static widget.
 
 For CGI widgets, you can also specify the options
-\texttt{script\_name}, \texttt{document\_root}, \texttt{action},
+\texttt{script\_name}, \texttt{docu\-ment\_root}, \texttt{action},
 \texttt{interpreter} and \texttt{jailcgi}.
 
 \end{document}
