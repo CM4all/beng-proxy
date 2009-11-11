@@ -159,6 +159,85 @@ flushed.
 
 \section{Tuning}
 
+\subsection{Optimized Build}
+
+The default package \texttt{cm4all-beng-proxy} is built with debugging
+code enabled.  It is about 2-10 times slower than the optimized build.
+If performance really counts, you should install the package
+\texttt{cm4all\--beng\--proxy\--optimized} instead (and restart the
+daemon).
+
+To switch back to the debug build, uninstall
+\texttt{cm4all\--beng\--proxy\--op\-ti\-mi\-zed} and then reinstall
+\texttt{cm4all\--beng\--proxy} to get the old
+\texttt{/usr/sbin/cm4all\--beng\--proxy} back.  Finally, restart the
+daemon.
+
+\subsection{Resource Limits}
+
+\emph{beng-proxy} needs to open a lot of file handles at a time,
+because it serves many connections in one process.  Make sure that the
+file handle limit is adequate.  The default init script sets it to
+65536.  The only reason set that limit at all is to detect bugs (file
+descriptor leaks).
+
+Keep in mind that \emph{beng-proxy} may open more than one file
+descriptor per connection.
+
+\subsection{Connection Limits}
+
+\emph{beng-proxy} is very good at managing lots of incoming
+connections, and manages system resources economically.  The default
+value is 8192.
+
+There are good reasons to limit the number of outgoing connections per
+host (\texttt{tcp\_stock\_limit}): most servers don't handle so many
+connections as well as \emph{beng-proxy}, and performance degrades
+when there are too many.  The default value is 256.
+
+\subsection{Firewall}
+
+Benchmarks have demonstrated that Netfilter (and its connection
+tracking) account for a good amount of the CPU load on a busy server.
+A good server does not need to depend on a firewall for security:
+rather than blocking protocols and ports, the administrator should
+make sure that these services aren't bound to public interfaces in the
+first place.  An internal services bound on all interfaces is an
+indicator for misconfiguration.
+
+It is a good idea to disable the firewall (in the kernel
+configuration) and audit all listeners.  If you cannot do without a
+firewall, you can disable connection tracking for \emph{beng-proxy}
+connections:
+
+\begin{verbatim*}
+table raw {
+  chain PREROUTING proto tcp dport http NOTRACK;
+  chain OUTPUT proto tcp sport http NOTRACK;
+}
+\end{verbatim*}
+
+\subsection{Cacheable Widgets and Containers}
+
+If you do a lot of direct communication with widgets, its container
+should be cacheable.  If not, the container will be queried each time
+a request for a widget is handled.  On pages with many widgets, you
+should try to make all of them cacheable.  See \ref{caching} for
+details.
+
+\subsection{Disabling Widget Options}
+
+Don't enable widget options when you don't need them.  That affects
+the options ``processor'', ``container'', ``stateful'' and others.
+Each of them adds some bloat to the response handler, and slows down
+the application.  See \ref{registry} for details.
+
+\subsection{Load Balancing}
+
+If a machine serving a resource is too slow, you may be able to
+parallelize its work.  Note that this increases throughput, but
+usually does not reduce latency considerably.  See \ref{balancing}.
+
 \subsection{The Stopwatch}
 \label{stopwatch}
 
@@ -261,6 +340,7 @@ a reverse HTTP proxy server.  You should never make \emph{beng-proxy}
 connect to itself.
 
 \subsubsection{Caching}
+\label{caching}
 
 Responses from the remote servers are cached, if possible.  To allow
 proper caching, the remote server must set the response headers
@@ -279,6 +359,7 @@ across workers and even across hosts, you may use a memcached server
 reuse existing connections to a remote server.
 
 \subsubsection{Load balancing, failover}
+\label{balancing}
 
 For a remote URL, more than one server may be specified.
 \texttt{beng-proxy} tries to use all of these equally.  If one server
@@ -750,6 +831,7 @@ which case it omits this parameter).  With every response, the
 translation server may provide a new value (which may be empty).
 
 \subsubsection{Widget registry}
+\label{registry}
 
 The translation server provides access to the widget database, where
 all widget servers are registered.  A widget request can use the
