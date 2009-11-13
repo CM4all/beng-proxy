@@ -188,14 +188,13 @@ response_dispatch_direct(struct request *request2,
     request_discard_body(request2);
 
     if (request2->send_session_cookie) {
-        char session_id[9];
         struct session *session;
-
-        session_id_format(session_id, request2->session_id);
 
         header_write(headers, "set-cookie",
                      p_strcat(request2->request->pool,
-                              "beng_proxy_session=", session_id,
+                              "beng_proxy_session=",
+                              session_id_format(request2->session_id,
+                                                &request2->session_id_string),
                               "; Discard; HttpOnly; Path=/; Version=1",
                               NULL));
 

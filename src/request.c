@@ -189,11 +189,12 @@ request_make_session(struct request *request)
 
     request->session_id = session->id;
     request->send_session_cookie = true;
-    session_id_format(request->session_id_buffer, request->session_id);
 
     if (request->args == NULL)
         request->args = strmap_new(request->request->pool, 4);
-    strmap_set(request->args, "session", request->session_id_buffer);
+    strmap_set(request->args, "session",
+               session_id_format(request->session_id,
+                                 &request->session_id_string));
 
     return session;
 }

@@ -22,8 +22,8 @@ struct request {
     struct strmap *args;
 
     struct strmap *cookies;
-    char session_id_buffer[9];
     session_id_t session_id;
+    struct session_id_string session_id_string;
     bool send_session_cookie;
 
     bool stateless;

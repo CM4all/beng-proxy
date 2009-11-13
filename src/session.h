@@ -21,6 +21,16 @@ struct dhashmap;
 typedef unsigned session_id_t;
 
 /**
+ * Buffer for the function session_id_format().
+ */
+struct session_id_string {
+    /**
+     * Two hex characters per byte, plus the terminating zero.
+     */
+    char buffer[sizeof(session_id_t) * 2 + 1];
+};
+
+/**
  * Session data associated with a widget instance (struct widget).
  */
 struct widget_session {
@@ -132,8 +142,8 @@ session_manager_event_del(void);
 session_id_t
 session_id_parse(const char *p);
 
-void
-session_id_format(char dest[9], session_id_t id);
+const char *
+session_id_format(session_id_t id, struct session_id_string *string);
 
 /**
  * Create a new session with a random session id.

@@ -331,11 +331,12 @@ session_id_parse(const char *p)
     return (session_id_t)id;
 }
 
-void
-session_id_format(char dest[9], session_id_t id)
+const char *
+session_id_format(session_id_t id, struct session_id_string *string)
 {
-    format_uint32_hex_fixed(dest, id);
-    dest[8] = 0;
+    format_uint32_hex_fixed(string->buffer, id);
+    string->buffer[sizeof(string->buffer) - 1] = 0;
+    return string->buffer;
 }
 
 static session_id_t
