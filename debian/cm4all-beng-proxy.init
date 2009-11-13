@@ -22,7 +22,7 @@ source /lib/lsb/init-functions
 
 PIDFILE=/var/run/cm4all/beng-proxy.pid
 DAEMON_USER=cm4all-beng-proxy
-LOGGER="exec /usr/bin/multilog t s1048576 /var/log/cm4all/beng-proxy"
+LOGGER="exec /usr/bin/multilog t s4194304 n16 /var/log/cm4all/beng-proxy"
 LOGGER_USER=cm4all-logger
 PORT=80
 WORKERS=4
