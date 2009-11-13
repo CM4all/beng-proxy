@@ -740,7 +740,7 @@ session_put(struct session *session)
 
     session_put_internal(session);
 
-    if (defragment != 0) {
+    if (session_id_is_defined(defragment)) {
         /* the shared memory pool has become too fragmented;
            defragment the session by duplicating it into a new shared
            memory pool */

@@ -204,7 +204,7 @@ response_dispatch_direct(struct request *request2,
             session_put(session);
         }
     } else if (request2->translate.response->discard_session &&
-               request2->session_id == 0) {
+               !session_id_is_defined(request2->session_id)) {
         /* delete the cookie for the discarded session */
         header_write(headers, "set-cookie",
                      "beng_proxy_session=; Discard; HttpOnly; "

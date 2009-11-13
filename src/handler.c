@@ -44,7 +44,7 @@ translate_callback(const struct translate_response *response,
         response->response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE) {
         /* disable session management if cookies are not mangled by
            beng-proxy */
-        request->session_id = 0;
+        session_id_clear(&request->session_id);
         request->stateless = true;
     }
 
@@ -323,7 +323,7 @@ handle_http_request(struct client_connection *connection,
 
     request2->args = NULL;
     request2->cookies = NULL;
-    request2->session_id = 0;
+    session_id_clear(&request2->session_id);
     request2->send_session_cookie = NULL;
 #ifdef DUMP_WIDGET_TREE
     request2->dump_widget_tree = NULL;

@@ -79,7 +79,7 @@ request_load_session(struct request *request, const char *session_id)
     struct session *session;
 
     assert(request != NULL);
-    assert(request->session_id == 0);
+    assert(!session_id_is_defined(request->session_id));
     assert(session_id != NULL);
 
     request->session_id = session_id_parse(session_id);
@@ -202,12 +202,12 @@ request_make_session(struct request *request)
 void
 request_discard_session(struct request *request)
 {
-    if (request->session_id == 0)
+    if (!session_id_is_defined(request->session_id))
         return;
 
     if (request->args != NULL)
         strmap_remove(request->args, "session");
 
     session_delete(request->session_id);
-    request->session_id = 0;
+    session_id_clear(&request->session_id);
 }

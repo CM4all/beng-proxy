@@ -140,6 +140,18 @@ session_manager_event_add(void);
 void
 session_manager_event_del(void);
 
+static inline bool
+session_id_is_defined(session_id_t id)
+{
+    return id != 0;
+}
+
+static inline void
+session_id_clear(session_id_t *id_p)
+{
+    *id_p = 0;
+}
+
 session_id_t
 session_id_parse(const char *p);
 

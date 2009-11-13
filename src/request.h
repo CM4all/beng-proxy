@@ -97,7 +97,7 @@ request_determine_session(struct request *request);
 static inline struct session *
 request_get_session(const struct request *request)
 {
-    return request->session_id != 0
+    return session_id_is_defined(request->session_id)
         ? session_get(request->session_id)
         : NULL;
 }
