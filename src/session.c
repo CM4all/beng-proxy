@@ -321,10 +321,10 @@ session_slot(session_id_t id)
 session_id_t
 session_id_parse(const char *p)
 {
-    unsigned long id;
+    guint64 id;
     char *endptr;
 
-    id = strtoul(p, &endptr, 16);
+    id = g_ascii_strtoull(p, &endptr, 16);
     if (id == 0 || *endptr != 0)
         return 0;
 
@@ -334,7 +334,7 @@ session_id_parse(const char *p)
 const char *
 session_id_format(session_id_t id, struct session_id_string *string)
 {
-    format_uint32_hex_fixed(string->buffer, id);
+    format_uint64_hex_fixed(string->buffer, id);
     string->buffer[sizeof(string->buffer) - 1] = 0;
     return string->buffer;
 }
@@ -342,8 +342,7 @@ session_id_format(session_id_t id, struct session_id_string *string)
 static session_id_t
 session_generate_id(void)
 {
-
-    return (session_id_t)random();
+    return (session_id_t)random() | (session_id_t)random() << 32;
 }
 
 struct session *

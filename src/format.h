@@ -57,6 +57,12 @@ format_uint32_hex_fixed(char dest[8], uint32_t number) {
     dest[7] = hex_digits[number & 0xf];
 }
 
+static __attr_always_inline void
+format_uint64_hex_fixed(char dest[16], uint64_t number) {
+    format_uint32_hex_fixed(dest, number >> 32);
+    format_uint32_hex_fixed(dest + 8, number);
+}
+
 /**
  * Format a 64 bit unsigned integer into a decimal string.
  */

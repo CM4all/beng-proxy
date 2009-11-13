@@ -1,5 +1,6 @@
 cm4all-beng-proxy (0.7.5) unstable; urgency=low
 
+  * session: 64 bit session ids
   * debian: larger default log file (16 * 4MB)
 
  --

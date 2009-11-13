@@ -14,11 +14,12 @@
 
 #include <time.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 struct dpool;
 struct dhashmap;
 
-typedef unsigned session_id_t;
+typedef uint64_t session_id_t;
 
 /**
  * Buffer for the function session_id_format().
