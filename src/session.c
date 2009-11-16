@@ -315,12 +315,34 @@ session_manager_purge(void)
 static struct list_head *
 session_slot(session_id_t id)
 {
+#ifdef SESSION_ID_WORDS
+    return &session_manager->sessions[id.data[0] % SESSION_SLOTS];
+#else
     return &session_manager->sessions[id % SESSION_SLOTS];
+#endif
 }
 
 bool
 session_id_parse(const char *p, session_id_t *id_r)
 {
+#ifdef SESSION_ID_WORDS
+    char segment[9];
+    session_id_t id;
+    char *endptr;
+
+    if (strlen(p) != SESSION_ID_WORDS * 8)
+        return false;
+
+    segment[8] = 0;
+    for (unsigned i = 0; i < SESSION_ID_WORDS; ++i) {
+        memcpy(segment, p + i * 8, 8);
+        id.data[i] = strtoul(segment, &endptr, 16);
+        if (endptr != segment + 8)
+            return false;
+    }
+
+    *id_r = id;
+#else
     guint64 id;
     char *endptr;
 
@@ -329,13 +351,20 @@ session_id_parse(const char *p, session_id_t *id_r)
         return false;
 
     *id_r = (session_id_t)id;
+#endif
+
     return true;
 }
 
 const char *
 session_id_format(session_id_t id, struct session_id_string *string)
 {
+#ifdef SESSION_ID_WORDS
+    for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
+        format_uint32_hex_fixed(string->buffer + i * 8, id.data[i]);
+#else
     format_uint64_hex_fixed(string->buffer, id);
+#endif
     string->buffer[sizeof(string->buffer) - 1] = 0;
     return string->buffer;
 }
@@ -343,7 +372,12 @@ session_id_format(session_id_t id, struct session_id_string *string)
 static void
 session_generate_id(session_id_t *id_r)
 {
+#ifdef SESSION_ID_WORDS
+    for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
+        id_r->data[i] = random();
+#else
     *id_r = (session_id_t)random() | (session_id_t)random() << 32;
+#endif
 }
 
 struct session *
@@ -659,6 +693,16 @@ session_defragment(struct session *src)
     return dest;
 }
 
+static inline bool
+session_id_equals(const session_id_t a, const session_id_t b)
+{
+#ifdef SESSION_ID_WORDS
+    return memcmp(&a, &b, sizeof(a)) == 0;
+#else
+    return a == b;
+#endif
+}
+
 static struct session *
 session_find(session_id_t id)
 {
@@ -672,7 +716,7 @@ session_find(session_id_t id)
          session = (struct session *)session->hash_siblings.next) {
         assert(session_slot(session->id) == head);
 
-        if (session->id == id) {
+        if (session_id_equals(session->id, id)) {
 #ifndef NDEBUG
             locked_session = session;
 #endif

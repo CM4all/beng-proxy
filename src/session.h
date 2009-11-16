@@ -19,7 +19,18 @@
 struct dpool;
 struct dhashmap;
 
+#ifdef SESSION_ID_SIZE
+#define SESSION_ID_WORDS (((SESSION_ID_SIZE) + 1) / 4)
+
+typedef struct {
+    uint32_t data[SESSION_ID_WORDS];
+} session_id_t;
+
+#else
+
 typedef uint64_t session_id_t;
+
+#endif
 
 /**
  * Buffer for the function session_id_format().
@@ -143,13 +154,24 @@ session_manager_event_del(void);
 static inline bool
 session_id_is_defined(session_id_t id)
 {
+#ifdef SESSION_ID_WORDS
+    for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
+        if (id.data[i] != 0)
+            return true;
+    return false;
+#else
     return id != 0;
+#endif
 }
 
 static inline void
 session_id_clear(session_id_t *id_p)
 {
+#ifdef SESSION_ID_WORDS
+    memset(id_p, 0, sizeof(*id_p));
+#else
     *id_p = 0;
+#endif
 }
 
 /**
