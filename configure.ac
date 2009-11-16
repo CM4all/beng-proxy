@@ -63,7 +63,7 @@ AM_CONDITIONAL(DEFLATE, test x$enable_deflate = xyes)
 AC_ARG_WITH(session-id,
 	AS_HELP_STRING([--session-id=SIZE],
 		[Sets the size of the session id (default: 8)]))
-if test x$with_session_id != xno; then
+if test x$with_session_id != x; then
 	AC_DEFINE_UNQUOTED([SESSION_ID_SIZE], $with_session_id)
 fi
 
