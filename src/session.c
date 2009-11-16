@@ -734,10 +734,11 @@ session_put(struct session *session)
 {
     session_id_t defragment;
 
-    defragment = (session->counter % 1024) == 0 &&
-        dpool_is_fragmented(session->pool)
-        ? session->id
-        : 0;
+    if ((session->counter % 1024) == 0 &&
+        dpool_is_fragmented(session->pool))
+        defragment = session->id;
+    else
+        session_id_clear(&defragment);
 
     session_put_internal(session);
 
