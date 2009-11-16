@@ -16,6 +16,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef SESSION_ID_SIZE
+#include <string.h> /* for memset() */
+#endif
+
 struct dpool;
 struct dhashmap;
 
