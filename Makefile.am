@@ -344,10 +344,11 @@ test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/hashmap.c src/strmap.c \
 	src/growing-buffer.c \
 	src/cookie-client.c \
-	src/shm.c src/dpool.c src/dstring.c \
+	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
+	src/session.c src/format.c \
 	src/tpool.c $(POOL_SRC)
 test_t_header_forward_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
-	$(GLIB_LIBS) \
+	$(GLIB_LIBS) $(LIBEVENT_LIBS) \
 	-lrt
 
 test_t_stock_SOURCES = test/t-stock.c src/stock.c $(POOL_SRC)
