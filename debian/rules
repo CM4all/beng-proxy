@@ -22,7 +22,7 @@ debian/stamp-build:
 	automake --add-missing --foreign
 	autoconf
 
-	mkdir -p build/debug build/optimized
+	mkdir -p build/debug build/optimized build/toi
 
 	# ./configure
 	cd build/debug && CFLAGS="$(CFLAGS)" ../../configure \
@@ -51,6 +51,20 @@ debian/stamp-build:
 
 	# Build
 	$(MAKE) -C build/optimized \
+		src/cm4all-beng-proxy
+
+	# ./configure
+	cd build/toi && CFLAGS="$(CFLAGS)" ../../configure \
+		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
+		--disable-dependency-tracking \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--disable-documentation \
+		--disable-debug \
+		--with-session-id=20
+
+	# Build
+	$(MAKE) -C build/toi \
 		src/cm4all-beng-proxy
 
 	touch $@
@@ -104,6 +118,7 @@ binary-arch: build check
 	dh_link -a
 	dh_strip -p cm4all-beng-proxy --dbg-package=cm4all-beng-proxy-dbg
 	dh_strip -p cm4all-beng-proxy-optimized --dbg-package=cm4all-beng-proxy-optimized-dbg
+	dh_strip -p cm4all-beng-proxy-toi --dbg-package=cm4all-beng-proxy-toi-dbg
 	dh_compress -a
 	dh_fixperms -a
 	umask 0022 && dh_pycentral -a
