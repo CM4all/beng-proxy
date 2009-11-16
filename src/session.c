@@ -340,10 +340,10 @@ session_id_format(session_id_t id, struct session_id_string *string)
     return string->buffer;
 }
 
-static session_id_t
-session_generate_id(void)
+static void
+session_generate_id(session_id_t *id_r)
 {
-    return (session_id_t)random() | (session_id_t)random() << 32;
+    *id_r = (session_id_t)random() | (session_id_t)random() << 32;
 }
 
 struct session *
@@ -386,7 +386,7 @@ session_new(void)
 
     session->pool = pool;
     lock_init(&session->lock);
-    session->id = session_generate_id();
+    session_generate_id(&session->id);
     session->expires = now.tv_sec + SESSION_TTL_NEW;
     session->counter = 1;
     session->translate = NULL;
