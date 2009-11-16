@@ -214,15 +214,18 @@ forward_request_headers(pool_t pool, struct strmap *src,
     assert(settings != NULL);
 
 #ifndef NDEBUG
-    if (session != NULL && daemon_log_config.verbose >= 10)
+    if (session != NULL && daemon_log_config.verbose >= 10) {
+        struct session_id_string s;
         daemon_log(10, "forward_request_headers remote_host='%s' "
-                   "host='%s' uri='%s' session=%llx user='%s' cookie='%s'\n",
+                   "host='%s' uri='%s' session=%s user='%s' cookie='%s'\n",
                    remote_host, host_and_port, uri,
-                   (unsigned long long)session->id, session->user,
+                   session_id_format(session->id, &s),
+                   session->user,
                    host_and_port != NULL && uri != NULL
                    ? cookie_jar_http_header_value(session->cookies,
                                                   host_and_port, uri, pool)
                    : NULL);
+    }
 #endif
 
     dest = strmap_new(pool, 32);
