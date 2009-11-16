@@ -318,17 +318,18 @@ session_slot(session_id_t id)
     return &session_manager->sessions[id % SESSION_SLOTS];
 }
 
-session_id_t
-session_id_parse(const char *p)
+bool
+session_id_parse(const char *p, session_id_t *id_r)
 {
     guint64 id;
     char *endptr;
 
     id = g_ascii_strtoull(p, &endptr, 16);
     if (id == 0 || *endptr != 0)
-        return 0;
+        return false;
 
-    return (session_id_t)id;
+    *id_r = (session_id_t)id;
+    return true;
 }
 
 const char *

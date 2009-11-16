@@ -152,8 +152,13 @@ session_id_clear(session_id_t *id_p)
     *id_p = 0;
 }
 
-session_id_t
-session_id_parse(const char *p);
+/**
+ * Parse a session id from a string.
+ *
+ * @return true on success, false on error
+ */
+bool
+session_id_parse(const char *p, session_id_t *id_r);
 
 const char *
 session_id_format(session_id_t id, struct session_id_string *string);

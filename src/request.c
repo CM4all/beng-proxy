@@ -82,7 +82,9 @@ request_load_session(struct request *request, const char *session_id)
     assert(!session_id_is_defined(request->session_id));
     assert(session_id != NULL);
 
-    request->session_id = session_id_parse(session_id);
+    if (!session_id_parse(session_id, &request->session_id))
+        return NULL;
+
     session = request_get_session(request);
     if (session == NULL)
         return NULL;
