@@ -18,6 +18,7 @@
 #ifdef SPLICE
 
 enum {
+    ISTREAM_TO_FILE = ISTREAM_PIPE,
     ISTREAM_TO_SOCKET = ISTREAM_FILE | ISTREAM_PIPE,
     ISTREAM_TO_TCP = ISTREAM_FILE | ISTREAM_PIPE,
 };
@@ -33,6 +34,7 @@ direct_global_deinit(void);
 #else /* !SPLICE */
 
 enum {
+    ISTREAM_TO_FILE = 0,
     ISTREAM_TO_PIPE = 0,
     ISTREAM_TO_SOCKET = ISTREAM_FILE,
     ISTREAM_TO_TCP = ISTREAM_FILE,
@@ -79,6 +81,26 @@ istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
 #endif
 }
 
+static inline enum istream_direct
+istream_direct_mask_to(enum istream_direct type)
+{
+    switch (type) {
+    case ISTREAM_FILE:
+        return ISTREAM_TO_FILE;
+
+    case ISTREAM_PIPE:
+        return ISTREAM_TO_PIPE;
+
+    case ISTREAM_SOCKET:
+        return ISTREAM_TO_SOCKET;
+
+    case ISTREAM_TCP:
+        return ISTREAM_TO_TCP;
+    }
+
+    return 0;
+}
+
 #else /* !__linux */
 
 enum {
@@ -86,6 +108,13 @@ enum {
     ISTREAM_TO_SOCKET = 0,
     ISTREAM_TO_TCP = 0,
 };
+
+static inline enum istream_direct
+istream_direct_mask_to(enum istream_direct type)
+{
+    (void)type;
+    return 0;
+}
 
 #endif /* !__linux */
 
