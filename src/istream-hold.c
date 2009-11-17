@@ -44,7 +44,7 @@ hold_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     struct istream_hold *hold = ctx;
 
     if (hold->output.handler == NULL)
-        return 0;
+        return -2;
 
     return istream_invoke_direct(&hold->output, type, fd, max_length);
 }

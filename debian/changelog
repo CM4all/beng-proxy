@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.6) unstable; urgency=low
 
-  * 
+  * istream-hold: return -2 if handler is not available yet
 
  --
 
