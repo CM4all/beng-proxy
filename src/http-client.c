@@ -18,6 +18,8 @@
 #include "growing-buffer.h"
 #include "lease.h"
 #include "uri-verify.h"
+#include "direct.h"
+#include "fd-util.h"
 #include "stopwatch.h"
 
 #include <inline/compiler.h>
@@ -742,6 +744,36 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
     return 0;
 }
 
+#ifdef __linux
+static ssize_t
+http_client_request_stream_direct(istream_direct_t type, int fd,
+                                  size_t max_length, void *ctx)
+{
+    struct http_client *client = ctx;
+    ssize_t nbytes;
+
+    assert(client->fd >= 0);
+
+    nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
+    if (unlikely(nbytes < 0 && errno == EAGAIN)) {
+        if (!fd_ready_for_writing(client->fd)) {
+            event2_or(&client->event, EV_WRITE);
+            return -2;
+        }
+
+        /* try again, just in case connection->fd has become ready
+           between the first istream_direct_to_socket() call and
+           fd_ready_for_writing() */
+        nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
+    }
+
+    if (likely(nbytes > 0))
+        event2_or(&client->event, EV_WRITE);
+
+    return nbytes;
+}
+#endif
+
 static void
 http_client_request_stream_eof(void *ctx)
 {
@@ -768,6 +800,9 @@ http_client_request_stream_abort(void *ctx)
 
 static const struct istream_handler http_client_request_stream_handler = {
     .data = http_client_request_stream_data,
+#ifdef __linux
+    .direct = http_client_request_stream_direct,
+#endif
     .eof = http_client_request_stream_eof,
     .abort = http_client_request_stream_abort,
 };
@@ -903,9 +938,10 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                                               request_line_stream,
                                               header_stream, body,
                                               NULL);
+
     istream_handler_set(client->request.istream,
                         &http_client_request_stream_handler, client,
-                        0);
+                        istream_direct_mask_to(fd_type));
 
     istream_read(client->request.istream);
 }
