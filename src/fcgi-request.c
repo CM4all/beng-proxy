@@ -122,7 +122,9 @@ fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
     request->query_string = query_string;
     request->document_root = document_root;
     request->headers = headers;
-    request->body = body;
+    request->body = body != NULL
+        ? istream_hold_new(pool, body)
+        : NULL;
     http_response_handler_set(&request->handler, handler, handler_ctx);
     request->async_ref = async_ref;
 

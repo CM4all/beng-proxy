@@ -134,7 +134,9 @@ ajp_stock_request(pool_t pool,
     if (hr->headers == NULL)
         hr->headers = strmap_new(pool, 16);
 
-    hr->body = body;
+    hr->body = body != NULL
+        ? istream_hold_new(pool, body)
+        : NULL;
 
     http_response_handler_set(&hr->handler, handler, handler_ctx);
     hr->async_ref = async_ref;
