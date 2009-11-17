@@ -126,6 +126,9 @@ response_invoke_processor(struct request *request2,
         ? request2->translate.response->uri
         : request->uri;
 
+    if (request2->translate.response->uri != NULL)
+        strref_set_c(&request2->uri.base, request2->translate.response->uri);
+
     processor_env_init(request->pool, &request2->env,
                        transformation->u.processor.domain,
                        request->local_host, request->remote_host,
