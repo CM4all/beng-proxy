@@ -1,0 +1,3 @@
+cgi "/usr/share/cm4all/beng-proxy/demo/hello.sh"
+filter
+server "http://cfatest01.intern.cm-ag/widgets/filter.sh"
