@@ -18,6 +18,9 @@ enum istream_direct {
     ISTREAM_PIPE = 02,
     ISTREAM_SOCKET = 04,
     ISTREAM_TCP = 010,
+};
+
+enum {
     ISTREAM_ANY = (ISTREAM_FILE | ISTREAM_PIPE | ISTREAM_SOCKET | ISTREAM_TCP),
 };
 
