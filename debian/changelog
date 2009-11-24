@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.7) unstable; urgency=low
 
   * http-client: start receiving before request is sent
+  * http-client: try to read response after write error
 
  --
 

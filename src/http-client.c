@@ -735,6 +735,28 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
     }
 
     daemon_log(1, "http_client: write error (%s)\n", strerror(errno));
+
+    if (errno == EPIPE || errno == ECONNRESET) {
+        /* the server has closed the connection, probably because he's
+           not interested in our request body - if he has already sent
+           the response, everything's fine */
+        bool valid;
+
+        pool_ref(client->pool);
+        /* see if we can receive the full response now */
+        http_client_try_read(client);
+        valid = http_client_valid(client);
+        pool_unref(client->pool);
+
+        if (!valid)
+            /* this client is done (either response finished or an
+               error occured) - return */
+            return 0;
+
+        /* at this point, the response is not finished, and we bail
+           out by aborting the HTTP client */
+    }
+
     stopwatch_event(client->stopwatch, "error");
     http_client_abort_response(client);
     return 0;
