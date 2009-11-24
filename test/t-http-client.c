@@ -39,11 +39,10 @@ connect_mirror(void)
 
     if (pid == 0) {
         dup2(sv[1], 0);
-        dup2(sv[1], 1);
         close(sv[0]);
         close(sv[1]);
         execl("./test/t-http-server-mirror", "t-http-server-mirror",
-              "0", "1", NULL);
+              "0", "0", NULL);
         perror("exec() failed");
         exit(EXIT_FAILURE);
     }

@@ -48,11 +48,14 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
 
-    sockfd = duplex_new(pool, in_fd, out_fd);
-    if (sockfd < 0) {
-        perror("duplex_new() failed");
-        exit(2);
-    }
+    if (in_fd != out_fd) {
+        sockfd = duplex_new(pool, in_fd, out_fd);
+        if (sockfd < 0) {
+            perror("duplex_new() failed");
+            exit(2);
+        }
+    } else
+        sockfd = in_fd;
 
     http_server_connection_new(pool, sockfd, ISTREAM_SOCKET,
                                NULL, 0,
