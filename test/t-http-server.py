@@ -21,7 +21,7 @@ class Server:
         if len(ready_to_read) == 0: return None
         return os.read(self._rd, 4096)
 
-def start_server(path):
+def start_server(path, *args):
     to_server = os.pipe()
     from_server = os.pipe()
     pid = os.fork()
@@ -30,13 +30,13 @@ def start_server(path):
         os.dup2(from_server[1], 1)
         for fd in to_server + from_server:
             os.close(fd)
-        os.execv(path, [os.path.basename(path)])
+        os.execv(path, [os.path.basename(path)] + list(args))
     os.close(to_server[0])
     os.close(from_server[1])
     return pid, from_server[0], to_server[1]
 
 def start_mirror():
-    return start_server('./test/t-http-server-mirror')
+    return start_server('./test/t-http-server-mirror', '0', '1')
 
 server = Server(*start_mirror())
 

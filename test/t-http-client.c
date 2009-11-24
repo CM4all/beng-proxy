@@ -42,7 +42,8 @@ connect_mirror(void)
         dup2(sv[1], 1);
         close(sv[0]);
         close(sv[1]);
-        execl("./test/t-http-server-mirror", "t-http-server-mirror", NULL);
+        execl("./test/t-http-server-mirror", "t-http-server-mirror",
+              "0", "1", NULL);
         perror("exec() failed");
         exit(EXIT_FAILURE);
     }
