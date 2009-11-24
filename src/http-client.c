@@ -57,7 +57,6 @@ struct http_client {
     /* response */
     struct {
         enum {
-            READ_NONE,
             READ_STATUS,
             READ_HEADERS,
             READ_BODY,
@@ -122,20 +121,6 @@ http_client_release(struct http_client *client, bool reuse)
 }
 
 /**
- * Abort sending the request to the HTTP server.
- */
-static void
-http_client_abort_request(struct http_client *client)
-{
-    assert(client->response.read_state == READ_NONE);
-
-    istream_close_handler(client->request.istream);
-
-    http_response_handler_invoke_abort(&client->request.handler);
-    http_client_release(client, false);
-}
-
-/**
  * Abort receiving the response status/headers from the HTTP server.
  */
 static void
@@ -143,6 +128,9 @@ http_client_abort_response_headers(struct http_client *client)
 {
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
+
+    if (client->request.istream != NULL)
+        istream_close_handler(client->request.istream);
 
     http_response_handler_invoke_abort(&client->request.handler);
     http_client_release(client, false);
@@ -155,6 +143,9 @@ static void
 http_client_abort_response_body(struct http_client *client)
 {
     assert(client->response.read_state == READ_BODY);
+
+    if (client->request.istream != NULL)
+        istream_close_handler(client->request.istream);
 
     istream_deinit_abort(&client->response.body_reader.output);
     http_client_release(client, false);
@@ -442,7 +433,11 @@ http_client_response_finished(struct http_client *client)
         client->keep_alive = false;
     }
 
-    http_client_release(client, client->keep_alive);
+    if (client->request.istream != NULL)
+        istream_close_handler(client->request.istream);
+
+    http_client_release(client, client->keep_alive &&
+                        client->request.istream == NULL);
 }
 
 /**
@@ -631,6 +626,10 @@ http_client_try_read_buffered(struct http_client *client)
     if (nbytes == 0) {
         if (client->response.read_state == READ_BODY) {
             stopwatch_event(client->stopwatch, "end");
+
+            if (client->request.istream != NULL)
+                istream_close_handler(client->request.istream);
+
             http_body_socket_eof(&client->response.body_reader,
                                  client->input);
             http_client_release(client, false);
@@ -692,10 +691,7 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "http_client: timeout\n");
         stopwatch_event(client->stopwatch, "timeout");
-        if (client->response.read_state == READ_NONE)
-            http_client_abort_request(client);
-        else
-            http_client_abort_response(client);
+        http_client_abort_response(client);
         return;
     }
 
@@ -740,7 +736,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     daemon_log(1, "http_client: write error (%s)\n", strerror(errno));
     stopwatch_event(client->stopwatch, "error");
-    http_client_abort_request(client);
+    http_client_abort_response(client);
     return 0;
 }
 
@@ -781,8 +777,7 @@ http_client_request_stream_eof(void *ctx)
 
     stopwatch_event(client->stopwatch, "request");
 
-    client->response.read_state = READ_STATUS;
-    client->input = fifo_buffer_new(client->pool, 4096);
+    client->request.istream = NULL;
 
     event2_set(&client->event, EV_READ);
 }
@@ -829,11 +824,10 @@ http_client_request_abort(struct async_operation *ao)
 
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(client->response.read_state == READ_NONE ||
-           client->response.read_state == READ_STATUS ||
+    assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
-    if (client->response.read_state == READ_NONE)
+    if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
 
     http_client_release(client, false);
@@ -888,12 +882,14 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     client->fd_type = fd_type;
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
 
-    client->response.read_state = READ_NONE;
+    client->response.read_state = READ_STATUS;
     client->response.no_body = method == HTTP_METHOD_HEAD;
 
     event2_init(&client->event, client->fd,
                 http_client_event_callback, client,
                 &tv);
+
+    client->input = fifo_buffer_new(client->pool, 4096);
 
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;
