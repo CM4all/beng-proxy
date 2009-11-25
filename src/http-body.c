@@ -36,7 +36,7 @@ http_body_consumed(struct http_body_reader *body, size_t nbytes)
 
 size_t
 http_body_consume_body(struct http_body_reader *body,
-                       fifo_buffer_t buffer)
+                       struct fifo_buffer *buffer)
 {
     const void *data;
     size_t length, consumed;
@@ -75,7 +75,7 @@ http_body_try_direct(struct http_body_reader *body, int fd,
 }
 
 void
-http_body_socket_eof(struct http_body_reader *body, fifo_buffer_t buffer)
+http_body_socket_eof(struct http_body_reader *body, struct fifo_buffer *buffer)
 {
     (void)buffer; /* XXX there may still be data in here */
 

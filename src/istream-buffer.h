@@ -14,11 +14,11 @@
  * @return the number of bytes still in the buffer
  */
 static inline size_t
-istream_buffer_consume(struct istream *istream, fifo_buffer_t buffer)
+istream_buffer_consume(struct istream *istream, struct fifo_buffer *buffer)
 {
     const void *data;
     size_t length, consumed;
-    
+
     data = fifo_buffer_read(buffer, &length);
     if (data == NULL)
         return 0;
@@ -33,11 +33,11 @@ istream_buffer_consume(struct istream *istream, fifo_buffer_t buffer)
  * @return the number of bytes consumed
  */
 static inline size_t
-istream_buffer_send(struct istream *istream, fifo_buffer_t buffer)
+istream_buffer_send(struct istream *istream, struct fifo_buffer *buffer)
 {
     const void *data;
     size_t length, consumed;
-    
+
     data = fifo_buffer_read(buffer, &length);
     if (data == NULL)
         return 0;

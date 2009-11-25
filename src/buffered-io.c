@@ -12,7 +12,7 @@
 #include <sys/socket.h>
 
 ssize_t
-read_to_buffer(int fd, fifo_buffer_t buffer, size_t length)
+read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
 {
     void *dest;
     size_t max_length;
@@ -36,7 +36,7 @@ read_to_buffer(int fd, fifo_buffer_t buffer, size_t length)
 }
 
 ssize_t
-write_from_buffer(int fd, fifo_buffer_t buffer)
+write_from_buffer(int fd, struct fifo_buffer *buffer)
 {
     const void *data;
     size_t length;
@@ -58,7 +58,7 @@ write_from_buffer(int fd, fifo_buffer_t buffer)
 }
 
 ssize_t
-recv_to_buffer(int fd, fifo_buffer_t buffer, size_t length)
+recv_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
 {
     void *dest;
     size_t max_length;
@@ -82,7 +82,7 @@ recv_to_buffer(int fd, fifo_buffer_t buffer, size_t length)
 }
 
 ssize_t
-send_from_buffer(int fd, fifo_buffer_t buffer)
+send_from_buffer(int fd, struct fifo_buffer *buffer)
 {
     const void *data;
     size_t length;

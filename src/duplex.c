@@ -28,8 +28,8 @@ struct duplex {
     int write_fd;
     int sock_fd;
     bool sock_eof;
-    fifo_buffer_t from_read;
-    fifo_buffer_t to_write;
+    struct fifo_buffer *from_read;
+    struct fifo_buffer *to_write;
 
     struct event2 read_event, write_event, sock_event;
 };

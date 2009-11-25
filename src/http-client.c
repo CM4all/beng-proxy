@@ -43,7 +43,7 @@ struct http_client {
     enum istream_direct fd_type;
     struct lease_ref lease_ref;
     struct event2 event;
-    fifo_buffer_t input;
+    struct fifo_buffer *input;
 
     /* request */
     struct {

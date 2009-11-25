@@ -20,7 +20,7 @@ struct http_server_connection {
     int fd;
     enum istream_direct fd_type;
     struct event2 event;
-    fifo_buffer_t input;
+    struct fifo_buffer *input;
 
     /**
      * This timeout event limits the time clients have for sending all

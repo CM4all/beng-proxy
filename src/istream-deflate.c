@@ -15,7 +15,7 @@
 struct istream_deflate {
     struct istream output;
     istream_t input;
-    fifo_buffer_t buffer;
+    struct fifo_buffer *buffer;
     bool z_initialized, z_stream_end;
     z_stream z;
     bool had_input, had_output;

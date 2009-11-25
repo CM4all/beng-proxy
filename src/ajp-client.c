@@ -65,7 +65,7 @@ struct ajp_client {
          */
         bool in_handler;
 
-        fifo_buffer_t input;
+        struct fifo_buffer *input;
         http_status_t status;
         struct strmap *headers;
         struct istream body;

@@ -29,7 +29,7 @@ struct fork {
     struct istream output;
     int output_fd;
     struct event2 output_event;
-    fifo_buffer_t buffer;
+    struct fifo_buffer *buffer;
 
     istream_t input;
     int input_fd;

@@ -27,14 +27,14 @@ struct fifo_buffer {
     unsigned char buffer[sizeof(size_t)];
 };
 
-fifo_buffer_t
+struct fifo_buffer *
 fifo_buffer_new(pool_t pool, size_t size)
 {
-    fifo_buffer_t buffer;
+    struct fifo_buffer *buffer;
 
     assert(size > 0);
 
-    buffer = (fifo_buffer_t)p_malloc(pool, sizeof(*buffer) - sizeof(buffer->buffer) + size);
+    buffer = p_malloc(pool, sizeof(*buffer) - sizeof(buffer->buffer) + size);
     buffer->size = size;
     buffer->start = 0;
     buffer->end = 0;
@@ -43,7 +43,7 @@ fifo_buffer_new(pool_t pool, size_t size)
 }
 
 void
-fifo_buffer_clear(fifo_buffer_t buffer)
+fifo_buffer_clear(struct fifo_buffer *buffer)
 {
     assert(buffer != NULL);
     buffer->start = 0;
@@ -51,7 +51,7 @@ fifo_buffer_clear(fifo_buffer_t buffer)
 }
 
 const void *
-fifo_buffer_read(const fifo_buffer_t buffer, size_t *length_r)
+fifo_buffer_read(const struct fifo_buffer *buffer, size_t *length_r)
 {
     assert(buffer != NULL);
     assert(buffer->end >= buffer->start);
@@ -65,7 +65,7 @@ fifo_buffer_read(const fifo_buffer_t buffer, size_t *length_r)
 }
 
 void
-fifo_buffer_consume(fifo_buffer_t buffer, size_t length)
+fifo_buffer_consume(struct fifo_buffer *buffer, size_t length)
 {
     assert(buffer != NULL);
     assert(buffer->end >= buffer->start);
@@ -75,7 +75,7 @@ fifo_buffer_consume(fifo_buffer_t buffer, size_t length)
 }
 
 static void
-fifo_buffer_move(fifo_buffer_t buffer)
+fifo_buffer_move(struct fifo_buffer *buffer)
 {
     if (buffer->start == 0)
         return;
@@ -89,7 +89,7 @@ fifo_buffer_move(fifo_buffer_t buffer)
 }
 
 void *
-fifo_buffer_write(fifo_buffer_t buffer, size_t *max_length_r)
+fifo_buffer_write(struct fifo_buffer *buffer, size_t *max_length_r)
 {
     assert(buffer != NULL);
     assert(buffer->size > 0);
@@ -110,7 +110,7 @@ fifo_buffer_write(fifo_buffer_t buffer, size_t *max_length_r)
 }
 
 void
-fifo_buffer_append(fifo_buffer_t buffer, size_t length)
+fifo_buffer_append(struct fifo_buffer *buffer, size_t length)
 {
     assert(buffer != NULL);
     assert(buffer->size > 0);
@@ -121,7 +121,7 @@ fifo_buffer_append(fifo_buffer_t buffer, size_t length)
 }
 
 int
-fifo_buffer_empty(fifo_buffer_t buffer)
+fifo_buffer_empty(struct fifo_buffer *buffer)
 {
     assert(buffer != NULL);
     assert(buffer->size > 0);
@@ -130,7 +130,7 @@ fifo_buffer_empty(fifo_buffer_t buffer)
 }
 
 int
-fifo_buffer_full(fifo_buffer_t buffer)
+fifo_buffer_full(struct fifo_buffer *buffer)
 {
     assert(buffer != NULL);
     assert(buffer->size > 0);

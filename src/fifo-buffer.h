@@ -24,36 +24,35 @@
 
 #include <stddef.h>
 
-typedef struct fifo_buffer *fifo_buffer_t;
-
+struct fifo_buffer;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-fifo_buffer_t __attr_malloc
+struct fifo_buffer *__attr_malloc
 fifo_buffer_new(pool_t pool, size_t size);
 
 void
-fifo_buffer_clear(fifo_buffer_t buffer);
+fifo_buffer_clear(struct fifo_buffer *buffer);
 
 const void *
-fifo_buffer_read(const fifo_buffer_t buffer, size_t *length_r);
+fifo_buffer_read(const struct fifo_buffer *buffer, size_t *length_r);
 
 void
-fifo_buffer_consume(fifo_buffer_t buffer, size_t length);
+fifo_buffer_consume(struct fifo_buffer *buffer, size_t length);
 
 void *
-fifo_buffer_write(fifo_buffer_t buffer, size_t *max_length_r);
+fifo_buffer_write(struct fifo_buffer *buffer, size_t *max_length_r);
 
 void
-fifo_buffer_append(fifo_buffer_t buffer, size_t length);
+fifo_buffer_append(struct fifo_buffer *buffer, size_t length);
 
 int
-fifo_buffer_empty(fifo_buffer_t buffer);
+fifo_buffer_empty(struct fifo_buffer *buffer);
 
 int
-fifo_buffer_full(fifo_buffer_t buffer);
+fifo_buffer_full(struct fifo_buffer *buffer);
 
 #ifdef __cplusplus
 }

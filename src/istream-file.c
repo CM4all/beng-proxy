@@ -47,7 +47,7 @@ struct file {
     struct event event;
 
     off_t rest;
-    fifo_buffer_t buffer;
+    struct fifo_buffer *buffer;
     const char *path;
 };
 
