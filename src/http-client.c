@@ -99,7 +99,17 @@ http_client_consume_body(struct http_client *client);
 static void
 http_client_try_read(struct http_client *client);
 
-
+/**
+ * Release the socket held by this object.
+ */
+static void
+http_client_release_socket(struct http_client *client, bool reuse)
+{
+    event2_set(&client->event, 0);
+    event2_commit(&client->event);
+    client->fd = -1;
+    lease_release(&client->lease_ref, reuse);
+}
 
 /**
  * Release resources held by this object: the event object, the socket
@@ -112,10 +122,8 @@ http_client_release(struct http_client *client, bool reuse)
 
     stopwatch_dump(client->stopwatch);
 
-    event2_set(&client->event, 0);
-    event2_commit(&client->event);
-    client->fd = -1;
-    lease_release(&client->lease_ref, reuse);
+    http_client_release_socket(client, reuse);
+
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
