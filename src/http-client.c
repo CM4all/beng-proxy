@@ -663,10 +663,9 @@ http_client_try_read_buffered(struct http_client *client)
         return;
     }
 
-    if (client->response.read_state == READ_BODY)
+    if (client->response.read_state == READ_BODY ||
+        http_client_consume_headers(client))
         http_client_consume_body(client);
-    else
-        http_client_consume_headers(client);
 }
 
 static void
