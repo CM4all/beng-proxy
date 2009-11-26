@@ -616,6 +616,9 @@ transform_uri_attribute(struct processor *processor,
 
     assert(widget != NULL);
 
+    if (widget->class == NULL && widget->class_name == NULL)
+        return;
+
     istream = rewrite_widget_uri(processor->pool, processor->env->pool,
                                  global_translate_cache,
                                  processor->env->partition_domain,
