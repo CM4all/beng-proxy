@@ -821,8 +821,9 @@ http_client_request_stream_abort(void *ctx)
 
     stopwatch_event(client->stopwatch, "abort");
 
-    http_response_handler_invoke_abort(&client->request.handler);
-    http_client_release(client, false);
+    client->request.istream = NULL;
+
+    http_client_abort_response(client);
 }
 
 static const struct istream_handler http_client_request_stream_handler = {
