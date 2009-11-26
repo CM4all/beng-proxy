@@ -55,12 +55,16 @@ connect_mirror(void)
 }
 
 struct context {
+    pool_t pool;
+
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
     struct async_operation_ref async_ref;
     int fd;
     bool released, aborted;
     http_status_t status;
+
+    istream_t delayed;
 
     istream_t body;
     off_t body_data;
@@ -159,6 +163,11 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
 
     if (c->close_response_body_late)
         istream_close(c->body);
+
+    if (c->delayed != NULL) {
+        istream_delayed_set(c->delayed, istream_fail_new(c->pool));
+        istream_read(c->delayed);
+    }
 }
 
 static void
@@ -320,6 +329,34 @@ test_close_request_body_early(pool_t pool, struct context *c)
 }
 
 static void
+test_close_request_body_fail(pool_t pool, struct context *c)
+{
+    istream_t delayed = istream_delayed_new(pool);
+    istream_t request_body =
+        istream_cat_new(pool,
+                        istream_head_new(pool, istream_zero_new(pool), 8192),
+                        delayed,
+                        NULL);
+
+    c->delayed = delayed;
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
+                        request_body,
+                        &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->status == 200);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(c->body_abort);
+}
+
+static void
 test_data_blocking(pool_t pool, struct context *c)
 {
     c->data_blocking = 5;
@@ -401,6 +438,7 @@ run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
     struct context c;
 
     memset(&c, 0, sizeof(c));
+    c.pool = pool;
 
     pool = pool_new_linear(pool, "test", 16384);
     test(pool, &c);
@@ -427,6 +465,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_response_body_late);
     run_test(pool, test_close_response_body_data);
     run_test(pool, test_close_request_body_early);
+    run_test(pool, test_close_request_body_fail);
     run_test(pool, test_data_blocking);
     run_test(pool, test_body_fail);
     run_test(pool, test_head);
