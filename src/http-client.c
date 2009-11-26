@@ -90,7 +90,7 @@ struct http_client {
 static inline bool
 http_client_valid(struct http_client *client)
 {
-    return client->fd >= 0;
+    return client->input != NULL;
 }
 
 static bool
@@ -105,6 +105,8 @@ http_client_try_read(struct http_client *client);
 static void
 http_client_release_socket(struct http_client *client, bool reuse)
 {
+    assert(client->fd >= 0);
+
     event2_set(&client->event, 0);
     event2_commit(&client->event);
     client->fd = -1;
@@ -122,7 +124,10 @@ http_client_release(struct http_client *client, bool reuse)
 
     stopwatch_dump(client->stopwatch);
 
-    http_client_release_socket(client, reuse);
+    client->input = NULL;
+
+    if (client->fd >= 0)
+        http_client_release_socket(client, reuse);
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -134,6 +139,7 @@ http_client_release(struct http_client *client, bool reuse)
 static void
 http_client_abort_response_headers(struct http_client *client)
 {
+    assert(client->fd >= 0);
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
@@ -160,7 +166,8 @@ http_client_abort_response_body(struct http_client *client)
 }
 
 /**
- * Abort receiving the response status/headers from the HTTP server.
+ * Abort receiving the response status/headers/body from the HTTP
+ * server.
  */
 static void
 http_client_abort_response(struct http_client *client)
@@ -194,7 +201,10 @@ http_client_response_stream_available(istream_t istream,
     struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client != NULL);
-    assert(client->fd >= 0);
+    assert(client->input != NULL);
+    assert(client->fd >= 0 ||
+           http_body_socket_is_done(&client->response.body_reader,
+                                    client->input));
     assert(client->response.read_state == READ_BODY);
     assert(!http_response_handler_defined(&client->request.handler));
 
@@ -208,7 +218,10 @@ http_client_response_stream_read(istream_t istream)
     bool bret;
 
     assert(client != NULL);
-    assert(client->fd >= 0);
+    assert(client->input != NULL);
+    assert(client->fd >= 0 ||
+           http_body_socket_is_done(&client->response.body_reader,
+                                    client->input));
     assert(client->response.read_state == READ_BODY);
     assert(client->response.body_reader.output.handler != NULL);
     assert(!http_response_handler_defined(&client->request.handler));
@@ -217,7 +230,7 @@ http_client_response_stream_read(istream_t istream)
     if (!bret)
         return;
 
-    if (client->response.read_state == READ_BODY)
+    if (client->response.read_state == READ_BODY && client->fd >= 0)
         http_client_try_read(client);
 }
 
@@ -575,6 +588,12 @@ http_client_consume_headers(struct http_client *client)
        the handler */
     assert(client->response.read_state == READ_BODY);
 
+    if (client->response.body == NULL ||
+        http_body_socket_is_done(&client->response.body_reader, client->input))
+        /* we don't need the socket anymore, we've got everything we
+           need in the input buffer */
+        http_client_release_socket(client, client->keep_alive);
+
     http_response_handler_invoke_response(&client->request.handler,
                                           client->response.status,
                                           client->response.headers,
@@ -664,14 +683,25 @@ http_client_try_read_buffered(struct http_client *client)
     }
 
     if (client->response.read_state == READ_BODY ||
-        http_client_consume_headers(client))
+        http_client_consume_headers(client)) {
+        assert(client->response.body != NULL);
+
+        if (client->fd >= 0 &&
+            http_body_socket_is_done(&client->response.body_reader, client->input))
+            /* we don't need the socket anymore, we've got everything we
+               need in the input buffer */
+            http_client_release_socket(client, client->keep_alive);
+
         http_client_consume_body(client);
+    }
 }
 
 static void
 http_client_try_read(struct http_client *client)
 {
     bool bret;
+
+    assert(client->fd >= 0);
 
     if (client->response.read_state == READ_BODY &&
         (client->response.body_reader.output.handler_direct & client->fd_type) != 0) {
@@ -693,6 +723,8 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct http_client *client = ctx;
 
+    assert(client->fd >= 0);
+
     event2_reset(&client->event);
 
     if (unlikely(event & EV_TIMEOUT)) {
@@ -708,7 +740,7 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
     if ((event & EV_WRITE) != 0)
         istream_read(client->request.istream);
 
-    if (http_client_valid(client) && (event & EV_READ) != 0)
+    if (client->fd >= 0 && (event & EV_READ) != 0)
         http_client_try_read(client);
 
     if (client->fd >= 0 && !fifo_buffer_full(client->input))

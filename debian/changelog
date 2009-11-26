@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.7.7) unstable; urgency=low
   * http-client: start receiving before request is sent
   * http-client: try to read response after write error
   * http-client: deliver response body after headers are finished
+  * http-client: release socket as early as possible
   * istream-chunked: clear input stream in abort handler
 
  --

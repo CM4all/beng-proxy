@@ -68,6 +68,15 @@ http_body_try_direct(struct http_body_reader *body, int fd,
                      enum istream_direct fd_type);
 
 /**
+ * Determines whether the socket can be released now.  This is true if
+ * the body is empty, or if the data in the buffer contains enough for
+ * the full response.
+ */
+bool
+http_body_socket_is_done(struct http_body_reader *body,
+                         const struct fifo_buffer *buffer);
+
+/**
  * The underlying socket has been closed by the remote.  Handle the
  * rest from the input buffer and forward eof/abort to the istream
  * handler.
