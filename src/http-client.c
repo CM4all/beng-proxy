@@ -711,6 +711,9 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
     if (http_client_valid(client) && (event & EV_READ) != 0)
         http_client_try_read(client);
 
+    if (client->fd >= 0 && !fifo_buffer_full(client->input))
+        event2_or(&client->event, EV_READ);
+
     event2_unlock(&client->event);
     pool_unref(client->pool);
     pool_commit();
@@ -968,5 +971,12 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                         &http_client_request_stream_handler, client,
                         istream_direct_mask_to(fd_type));
 
+    pool_ref(pool);
+    event2_lock(&client->event);
+    event2_set(&client->event, EV_READ);
+
     istream_read(client->request.istream);
+
+    event2_unlock(&client->event);
+    pool_unref(pool);
 }
