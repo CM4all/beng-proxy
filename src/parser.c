@@ -6,7 +6,7 @@
 
 #include "parser.h"
 #include "pool.h"
-#include "strutil.h"
+#include "html-chars.h"
 #include "expansible-buffer.h"
 
 #include <inline/poison.h>
@@ -187,7 +187,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         case PARSER_ELEMENT_NAME:
             /* copy element name */
             while (buffer < end) {
-                if (char_is_alphanumeric(*buffer) || *buffer == ':' || *buffer == '-' || *buffer == '_') {
+                if (is_html_name_char(*buffer)) {
                     if (parser->tag_name_length == sizeof(parser->tag_name)) {
                         /* name buffer overflowing */
                         parser->state = PARSER_NONE;
