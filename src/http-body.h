@@ -77,11 +77,12 @@ http_body_socket_is_done(struct http_body_reader *body,
                          const struct fifo_buffer *buffer);
 
 /**
- * The underlying socket has been closed by the remote.  Handle the
- * rest from the input buffer and forward eof/abort to the istream
- * handler.
+ * The underlying socket has been closed by the remote.
+ *
+ * @return true if there is data left in the buffer, false if the body
+ * has been finished (with or without error)
  */
-void
+bool
 http_body_socket_eof(struct http_body_reader *body,
                      struct fifo_buffer *buffer);
 

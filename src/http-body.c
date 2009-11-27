@@ -93,15 +93,42 @@ http_body_socket_is_done(struct http_body_reader *body,
          (off_t)fifo_buffer_size(buffer) >= body->rest);
 }
 
-void
+bool
 http_body_socket_eof(struct http_body_reader *body, struct fifo_buffer *buffer)
 {
-    (void)buffer; /* XXX there may still be data in here */
+    const void *data;
+    size_t length;
 
-    if (body->rest != 0 && body->rest != (off_t)-1)
-        istream_deinit_abort(&body->output);
-    else
+    /* see how much is left in the buffer */
+    data = fifo_buffer_read(buffer, &length);
+    if (data == NULL)
+        length = 0;
+
+    if (body->rest == -1) {
+        if (length > 0) {
+            /* serve the rest of the buffer, then end the body
+               stream */
+            body->rest = length;
+            return true;
+        }
+
+        /* the socket is closed, which ends the body */
         istream_deinit_eof(&body->output);
+        return false;
+    } else if (body->rest == (off_t)length) {
+        if (length > 0)
+            /* serve the rest of the buffer, then end the body
+               stream */
+            return true;
+
+        istream_deinit_eof(&body->output);
+        return false;
+    } else {
+        /* something has gone wrong: either not enough or too much
+           data left in the buffer */
+        istream_deinit_abort(&body->output);
+        return false;
+    }
 }
 
 istream_t

@@ -657,9 +657,14 @@ http_client_try_read_buffered(struct http_client *client)
             if (client->request.istream != NULL)
                 istream_close_handler(client->request.istream);
 
-            http_body_socket_eof(&client->response.body_reader,
-                                 client->input);
-            http_client_release(client, false);
+            if (http_body_socket_eof(&client->response.body_reader,
+                                     client->input))
+                /* there's data left in the buffer: only release the
+                   socket, continue serving the buffer */
+                http_client_release_socket(client, false);
+            else
+                /* finished: close the HTTP client */
+                http_client_release(client, false);
         } else {
             daemon_log(2, "http_client: server closed connection "
                        "during response headers\n");
