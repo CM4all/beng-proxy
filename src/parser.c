@@ -251,7 +251,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                         return 0;
 
                     break;
-                } else if (char_is_letter(*buffer)) {
+                } else if (is_html_name_start_char(*buffer)) {
                     parser->state = PARSER_ATTR_NAME;
                     parser->attr.name_start = parser->position + (off_t)(buffer - start);
                     parser->attr_name_length = 0;
@@ -284,7 +284,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         case PARSER_ATTR_NAME:
             /* copy attribute name */
             do {
-                if (char_is_alphanumeric(*buffer) || *buffer == ':') {
+                if (is_html_name_char(*buffer)) {
                     if (parser->attr_name_length == sizeof(parser->attr_name)) {
                         /* name buffer overflowing */
                         parser->state = PARSER_ELEMENT_TAG;
