@@ -20,7 +20,7 @@ static inline bool
 is_html_name_char(char ch)
 {
     return is_html_name_start_char(ch) || char_is_digit(ch) ||
-        ch == '-';
+        ch == '-' || ch == '.';
 }
 
 #endif
