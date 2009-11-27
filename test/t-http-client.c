@@ -59,6 +59,7 @@ struct context {
 
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
+    bool response_body_byte;
     struct async_operation_ref async_ref;
     int fd;
     bool released, aborted;
@@ -67,7 +68,7 @@ struct context {
     istream_t delayed;
 
     istream_t body;
-    off_t body_data;
+    off_t body_data, consumed_body_data;
     bool body_eof, body_abort;
 };
 
@@ -114,6 +115,7 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
         return 0;
     }
 
+    c->consumed_body_data += length;
     return length;
 }
 
@@ -155,6 +157,11 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
     struct context *c = ctx;
 
     c->status = status;
+
+    if (c->response_body_byte) {
+        assert(body != NULL);
+        body = istream_byte_new(c->pool, body);
+    }
 
     if (c->close_response_body_early)
         istream_close(body);
@@ -389,6 +396,52 @@ test_data_blocking(pool_t pool, struct context *c)
     assert(c->body_abort);
 }
 
+/**
+ * This produces a closed socket while the HTTP client has data left
+ * in the buffer.
+ */
+static void
+test_data_blocking2(pool_t pool, struct context *c)
+{
+    struct growing_buffer *request_headers;
+
+    request_headers = growing_buffer_new(pool, 1024);
+    header_write(request_headers, "connection", "close");
+
+    c->response_body_byte = true;
+    c->fd = connect_mirror();
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", request_headers,
+                        istream_head_new(pool, istream_zero_new(pool), 256),
+                        &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    if (c->body != NULL)
+        istream_read(c->body);
+    event_dispatch();
+
+    /* the socket is released by now, but the body isn't finished
+       yet */
+    assert(c->released);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body != NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+    assert(c->consumed_body_data < 256);
+
+    /* receive the rest of the response body from the buffer */
+    while (c->body != NULL) {
+        istream_read(c->body);
+        event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
+    }
+
+    assert(c->released);
+    assert(c->body_eof);
+    assert(!c->body_abort);
+    assert(c->consumed_body_data == 256);
+}
+
 static void
 test_body_fail(pool_t pool, struct context *c)
 {
@@ -438,10 +491,8 @@ run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
     struct context c;
 
     memset(&c, 0, sizeof(c));
-    c.pool = pool;
-
-    pool = pool_new_linear(pool, "test", 16384);
-    test(pool, &c);
+    c.pool = pool_new_linear(pool, "test", 16384);
+    test(c.pool, &c);
     pool_commit();
 }
 
@@ -467,6 +518,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_request_body_early);
     run_test(pool, test_close_request_body_fail);
     run_test(pool, test_data_blocking);
+    run_test(pool, test_data_blocking2);
     run_test(pool, test_body_fail);
     run_test(pool, test_head);
 

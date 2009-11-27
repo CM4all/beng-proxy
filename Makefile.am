@@ -535,6 +535,7 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/istream-chunked.c src/istream-dechunk.c \
 	src/istream-head.c src/istream-null.c src/istream-zero.c \
 	src/istream-delayed.c \
+	src/istream-byte.c \
 	src/direct.c \
 	src/http-body.c src/header-parser.c \
 	src/format.c src/http.c src/strutil.c \
