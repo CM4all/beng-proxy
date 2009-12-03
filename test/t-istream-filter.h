@@ -166,6 +166,9 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 
     istream_handler_set(istream, &my_istream_handler, ctx, 0);
 
+    pool_unref(pool);
+    pool_commit();
+
 #ifndef NO_GOT_DATA_ASSERT
     while (!ctx->eof)
         istream_read_expect(ctx, istream);
@@ -181,8 +184,6 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
     }
 #endif
 
-    pool_trash(pool);
-    pool_unref(pool);
     cleanup();
     pool_commit();
 }
@@ -316,10 +317,11 @@ test_abort_without_handler(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool, create_input(pool));
+    pool_unref(pool);
+    pool_commit();
+
     istream_close(istream);
 
-    pool_trash(pool);
-    pool_unref(pool);
     cleanup();
     pool_commit();
 }
@@ -343,11 +345,11 @@ test_abort_with_handler(pool_t pool)
 
     istream = create_test(pool, create_input(pool));
     istream_handler_set(istream, &my_istream_handler, &ctx, 0);
+    pool_unref(pool);
+    pool_commit();
 
     istream_close(istream);
 
-    pool_trash(pool);
-    pool_unref(pool);
     cleanup();
     pool_commit();
 
@@ -372,6 +374,8 @@ test_abort_in_handler(pool_t pool)
 
     ctx.abort_istream = create_test(pool, create_input(pool));
     istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);
+    pool_unref(pool);
+    pool_commit();
 
     while (!ctx.eof) {
         istream_read_expect(&ctx, ctx.abort_istream);
@@ -380,8 +384,6 @@ test_abort_in_handler(pool_t pool)
 
     assert(ctx.abort_istream == NULL);
 
-    pool_trash(pool);
-    pool_unref(pool);
     cleanup();
     pool_commit();
 }
@@ -404,6 +406,8 @@ test_abort_in_handler_half(pool_t pool)
 
     ctx.abort_istream = create_test(pool, istream_four_new(pool, create_input(pool)));
     istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);
+    pool_unref(pool);
+    pool_commit();
 
     while (!ctx.eof) {
         istream_read_expect(&ctx, ctx.abort_istream);
@@ -412,8 +416,6 @@ test_abort_in_handler_half(pool_t pool)
 
     assert(ctx.abort_istream == NULL || ctx.abort_after >= 0);
 
-    pool_trash(pool);
-    pool_unref(pool);
     cleanup();
     pool_commit();
 }
