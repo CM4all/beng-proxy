@@ -231,12 +231,14 @@ test_normal(pool_t pool)
 
 /** block once after n data() invocations */
 static void
-test_block(pool_t pool)
+test_block(pool_t parent_pool)
 {
+    pool_t pool;
+
     for (int n = 0; n < 8; ++n) {
         istream_t istream;
 
-        pool = pool_new_linear(pool, "test", 8192);
+        pool = pool_new_linear(parent_pool, "test", 8192);
 
         istream = create_test(pool, create_input(pool));
         assert(istream != NULL);
