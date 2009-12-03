@@ -8,6 +8,7 @@ cm4all-beng-proxy (0.7.7) unstable; urgency=low
   * http-client: release socket as early as possible
   * http-client: serve buffer after socket has been closed
   * istream-chunked: clear input stream in abort handler
+  * growing-buffer: fix crash after close in "data" callback
 
  --
 
