@@ -277,6 +277,7 @@ check_PROGRAMS = \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
+	test/t-growing-buffer \
 	test/t-cgi test/t-widget-stream \
 	test/t-http-server-mirror test/t-http-server \
 	test/t-http-client test/t-http-util \
@@ -310,6 +311,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
+	test/t-growing-buffer \
 	test/t-cgi test/t-widget-stream \
 	test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
@@ -450,6 +452,10 @@ test_t_istream_tee_SOURCES = test/t-istream-tee.c \
 	src/sink-gstring.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_tee_LDADD = $(T_ISTREAM_FILTER_LIB) $(GLIB_LIBS)
+
+test_t_growing_buffer_SOURCES = test/t-growing-buffer.c \
+	$(T_ISTREAM_FILTER_SRC)
+test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB) $(GLIB_LIBS)
 
 test_t_cgi_SOURCES = test/t-cgi.c \
 	src/cgi.c src/fork.c \
