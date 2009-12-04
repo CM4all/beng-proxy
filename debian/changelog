@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.8) unstable; urgency=low
 
-  * 
+  * http-body: support partial response in method available()
 
  --
 

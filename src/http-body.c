@@ -11,6 +11,18 @@
 #include <assert.h>
 #include <limits.h>
 
+off_t
+http_body_available(const struct http_body_reader *body,
+                    const struct fifo_buffer *buffer, bool partial)
+{
+    if (body->rest >= 0)
+        return body->rest;
+
+    return partial
+        ? (off_t)fifo_buffer_available(buffer)
+        : -1;
+}
+
 /** determine how much can be read from the body */
 static inline size_t
 http_body_max_read(struct http_body_reader *body, size_t length)

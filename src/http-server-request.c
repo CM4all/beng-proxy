@@ -43,8 +43,7 @@ response_stream_to_connection(istream_t istream)
 }
 
 static off_t
-http_server_request_stream_available(istream_t istream,
-                                     bool partial __attr_unused)
+http_server_request_stream_available(istream_t istream, bool partial)
 {
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
@@ -52,7 +51,8 @@ http_server_request_stream_available(istream_t istream,
     assert(connection->fd >= 0);
     assert(connection->request.read_state == READ_BODY);
 
-    return http_body_available(&connection->request.body_reader);
+    return http_body_available(&connection->request.body_reader,
+                               connection->input, partial);
 }
 
 static void

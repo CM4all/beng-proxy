@@ -195,8 +195,7 @@ response_stream_to_http_client(istream_t istream)
 }
 
 static off_t
-http_client_response_stream_available(istream_t istream,
-                                      bool partial __attr_unused)
+http_client_response_stream_available(istream_t istream, bool partial)
 {
     struct http_client *client = response_stream_to_http_client(istream);
 
@@ -208,7 +207,8 @@ http_client_response_stream_available(istream_t istream,
     assert(client->response.read_state == READ_BODY);
     assert(!http_response_handler_defined(&client->request.handler));
 
-    return http_body_available(&client->response.body_reader);
+    return http_body_available(&client->response.body_reader,
+                               client->input, partial);
 }
 
 static void
