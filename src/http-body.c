@@ -74,23 +74,13 @@ http_body_try_direct(struct http_body_reader *body, int fd,
     return nbytes;
 }
 
-static size_t
-fifo_buffer_size(const struct fifo_buffer *buffer)
-{
-    const void *data;
-    size_t length;
-
-    data = fifo_buffer_read(buffer, &length);
-    return data != NULL ? length : 0;
-}
-
 bool
 http_body_socket_is_done(struct http_body_reader *body,
                          const struct fifo_buffer *buffer)
 {
     return body->rest != -1 &&
         (body->rest == 0 ||
-         (off_t)fifo_buffer_size(buffer) >= body->rest);
+         (off_t)fifo_buffer_available(buffer) >= body->rest);
 }
 
 bool
