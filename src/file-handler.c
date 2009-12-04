@@ -189,30 +189,23 @@ file_evaluate_request(struct request *request2, const struct stat *st,
     return true;
 }
 
-void
-file_dispatch(struct request *request2, const struct stat *st,
-              const struct file_request *file_request,
-              istream_t body)
+static void
+file_headers(struct growing_buffer *headers,
+             const struct translate_response *tr,
+             int fd, const struct stat *st,
+             bool processor_enabled, bool processor_first)
 {
-    struct http_server_request *request = request2->request;
-    const struct translate_response *tr = request2->translate.response;
-    struct growing_buffer *headers;
-    http_status_t status;
     char buffer[64];
-
-    headers = growing_buffer_new(request->pool, 2048);
 
     /* RFC 2616 3.8: Product Tokens */
     header_write(headers, "server", "beng-proxy/" VERSION);
 
-    status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
-
-    if (!request_processor_first(request2)) {
+    if (!processor_first) {
 #ifndef NO_XATTR
         ssize_t nbytes;
         char etag[512];
 
-        nbytes = fgetxattr(istream_file_fd(body), "user.ETag",
+        nbytes = fgetxattr(fd, "user.ETag",
                            etag + 1, sizeof(etag) - 3);
         if (nbytes > 0) {
             assert((size_t)nbytes < sizeof(etag));
@@ -229,7 +222,7 @@ file_dispatch(struct request *request2, const struct stat *st,
 #endif
 
 #ifndef NO_XATTR
-        nbytes = fgetxattr(istream_file_fd(body), "user.MaxAge",
+        nbytes = fgetxattr(fd, "user.MaxAge",
                            buffer, sizeof(buffer) - 1);
         if (nbytes > 0) {
             char *endptr;
@@ -259,7 +252,7 @@ file_dispatch(struct request *request2, const struct stat *st,
         ssize_t nbytes;
         char content_type[256];
 
-        nbytes = fgetxattr(istream_file_fd(body), "user.Content-Type",
+        nbytes = fgetxattr(fd, "user.Content-Type",
                            content_type, sizeof(content_type) - 1);
         if (nbytes > 0) {
             assert((size_t)nbytes < sizeof(content_type));
@@ -274,9 +267,27 @@ file_dispatch(struct request *request2, const struct stat *st,
     }
 
 #ifndef NO_LAST_MODIFIED_HEADER
-    if (!request_processor_enabled(request2))
+    if (!processor_enabled)
         header_write(headers, "last-modified", http_date_format(st->st_mtime));
 #endif
+}
+
+void
+file_dispatch(struct request *request2, const struct stat *st,
+              const struct file_request *file_request,
+              istream_t body)
+{
+    struct http_server_request *request = request2->request;
+    const struct translate_response *tr = request2->translate.response;
+    struct growing_buffer *headers;
+    http_status_t status;
+
+    headers = growing_buffer_new(request->pool, 2048);
+    file_headers(headers, tr, istream_file_fd(body), st,
+                 request_processor_enabled(request2),
+                 request_processor_first(request2));
+
+    status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
     /* generate the Content-Range header */
 
