@@ -84,12 +84,6 @@ tcache_response_evaluate(const struct translate_response *response)
         response->status == 0;
 }
 
-static inline const char *
-p_strdup_checked(pool_t pool, const char *s)
-{
-    return s == NULL ? NULL : p_strdup(pool, s);
-}
-
 /**
  * Calculate the suffix relative to a base URI from an incoming URI.
  * Returns NULL if no such suffix is possible (e.g. if the specified

@@ -19,12 +19,6 @@ transformation_is_container(const struct transformation *t)
     return false;
 }
 
-static inline const char *
-p_strdup_checked(pool_t pool, const char *s)
-{
-    return s == NULL ? NULL : p_strdup(pool, s);
-}
-
 struct transformation *
 transformation_dup(pool_t pool, const struct transformation *src)
 {

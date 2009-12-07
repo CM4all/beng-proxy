@@ -129,6 +129,12 @@ p_memdup(pool_t pool, const void *src, size_t length);
 char * __attr_malloc
 p_strdup(pool_t pool, const char *src);
 
+static inline const char *
+p_strdup_checked(pool_t pool, const char *s)
+{
+    return s == NULL ? NULL : p_strdup(pool, s);
+}
+
 char * __attr_malloc
 p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL);
 
