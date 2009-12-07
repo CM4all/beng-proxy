@@ -132,6 +132,9 @@ class Translation(Protocol):
             if path[-5:] == '.html':
                 response.content_type('text/html; charset=utf-8')
                 response.process(container=True)
+            elif path[-4:] == '.txt':
+                response.content_type('text/plain; charset=utf-8')
+                response.gzipped(path + '.gz')
 
     def _handle_http(self, raw_uri, uri, response):
         if uri.find('/./') >= 0 or uri.find('/../') >= 0 or \

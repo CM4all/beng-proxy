@@ -31,6 +31,8 @@ struct resource_address {
     union {
         struct {
             const char *path;
+            const char *deflated;
+            const char *gzipped;
             const char *content_type;
             const char *delegate;
             const char *document_root;

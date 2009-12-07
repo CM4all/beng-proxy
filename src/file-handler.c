@@ -328,6 +328,56 @@ file_dispatch(struct request *request2, const struct stat *st,
     response_dispatch(request2, status, headers, body);
 }
 
+static bool
+file_dispatch_compressed(struct request *request2, const struct stat *st,
+                         istream_t body, const char *encoding,
+                         const char *path)
+{
+    struct http_server_request *request = request2->request;
+    const struct translate_response *tr = request2->translate.response;
+    const char *accept_encoding;
+    struct growing_buffer *headers;
+    http_status_t status;
+    istream_t compressed_body;
+    struct stat st2;
+
+    accept_encoding = strmap_get(request->headers, "accept-encoding");
+    if (accept_encoding == NULL ||
+        !http_list_contains(accept_encoding, encoding))
+        /* encoding not supported by the client */
+        return false;
+
+    /* open compressed file */
+
+    compressed_body = istream_file_stat_new(request->pool, path, &st2);
+    if (compressed_body == NULL)
+        return false;
+
+    if (!S_ISREG(st2.st_mode)) {
+        istream_close(compressed_body);
+        return false;
+    }
+
+    /* response headers with information from uncompressed file */
+
+    headers = growing_buffer_new(request->pool, 2048);
+    file_headers(headers, tr, istream_file_fd(body), st,
+                 request_processor_enabled(request2),
+                 request_processor_first(request2));
+
+    header_write(headers, "content-encoding", encoding);
+
+    /* close original file */
+
+    istream_close(body);
+
+    /* finished, dispatch this response */
+
+    status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
+    response_dispatch(request2, status, headers, compressed_body);
+    return true;
+}
+
 void
 file_callback(struct request *request2)
 {
@@ -393,6 +443,18 @@ file_callback(struct request *request2)
         istream_close(body);
         return;
     }
+
+    /* precompressed? */
+
+    if (file_request.range == RANGE_NONE &&
+        !request_transformation_enabled(request2) &&
+        ((tr->address.u.local.deflated != NULL &&
+          file_dispatch_compressed(request2, &st, body, "deflate",
+                                   tr->address.u.local.deflated)) ||
+         (tr->address.u.local.gzipped != NULL &&
+          file_dispatch_compressed(request2, &st, body, "gzip",
+                                   tr->address.u.local.gzipped))))
+        return;
 
     /* build the response */
 

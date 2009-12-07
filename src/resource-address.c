@@ -24,6 +24,8 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_LOCAL:
         assert(src->u.local.path != NULL);
         dest->u.local.path = p_strdup(pool, src->u.local.path);
+        dest->u.local.deflated = p_strdup_checked(pool, src->u.local.deflated);
+        dest->u.local.gzipped = p_strdup_checked(pool, src->u.local.gzipped);
         dest->u.local.content_type =
             p_strdup_checked(pool, src->u.local.content_type);
         dest->u.local.delegate = p_strdup_checked(pool, src->u.local.delegate);
@@ -105,6 +107,10 @@ resource_address_save_base(pool_t pool, const struct resource_address *src,
 
         dest = resource_address_dup(pool, src);
         dest->u.local.path = p_strndup(pool, dest->u.local.path, length);
+
+        /* BASE+DEFLATED is not supported */
+        dest->u.local.deflated = NULL;
+        dest->u.local.gzipped = NULL;
         return dest;
 
     case RESOURCE_ADDRESS_HTTP:

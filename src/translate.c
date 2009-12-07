@@ -542,6 +542,26 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->u.cgi.path_info = payload;
         break;
 
+    case TRANSLATE_DEFLATED:
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
+            daemon_log(2, "misplaced TRANSLATE_DEFLATED packet\n");
+            break;
+        }
+
+        client->resource_address->u.local.deflated = payload;
+        break;
+
+    case TRANSLATE_GZIPPED:
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
+            daemon_log(2, "misplaced TRANSLATE_GZIPPED packet\n");
+            break;
+        }
+
+        client->resource_address->u.local.gzipped = payload;
+        break;
+
     case TRANSLATE_SITE:
         client->response.site = payload;
         break;

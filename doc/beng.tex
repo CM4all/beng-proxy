@@ -544,6 +544,18 @@ this parameter is usually not used \\
 
 \hline
 
+\texttt{DEFLATED} & Absolute path of a precompressed version of the
+file.  The file is compressed with the ``deflate'' algorithm, without
+\texttt{gzip} headers.  May follow the \texttt{PATH} packet. \\
+
+\hline
+
+\texttt{GZIPPED} & Absolute path of a precompressed version of the
+file.  The file is compressed with \texttt{gzip}.  May follow the
+\texttt{PATH} packet. \\
+
+\hline
+
 \texttt{PROXY} & this URL parameter may be specified instead of
 \texttt{PATH} to tell \emph{beng-proxy} to obtain the resource from a
 remote HTTP server (see \ref{http}) \\

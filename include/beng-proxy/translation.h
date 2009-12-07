@@ -58,6 +58,8 @@ enum beng_translation_command {
     TRANSLATE_SCHEME = 47,
     TRANSLATE_REQUEST_HEADER_FORWARD = 48,
     TRANSLATE_RESPONSE_HEADER_FORWARD = 49,
+    TRANSLATE_DEFLATED = 50,
+    TRANSLATE_GZIPPED = 51,
 };
 
 struct beng_translation_header {
