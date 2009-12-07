@@ -870,9 +870,12 @@ debug: src/cm4all-beng-proxy
 	echo -en "handle SIGPIPE noprint nostop\nrun\n" >/tmp/cm4all-beng-proxy.gdb
 	LD_LIBRARY_PATH=/usr/lib/debug:$(LD_LIBRARY_PATH) gdb -x /tmp/cm4all-beng-proxy.gdb --args $< $(DEBUG_ARGS)
 
+VALGRIND_FLAGS = --leak-check=yes --show-reachable=yes
+VALGRIND_FLAGS += --track-fds=yes
+
 valgrind: AM_CPPFLAGS += -DPOOL_LIBC_ONLY
 valgrind: src/cm4all-beng-proxy
-	valgrind --show-reachable=yes --leak-check=yes ./src/cm4all-beng-proxy $(DEBUG_ARGS)
+	valgrind $(VALGRIND_FLAGS) ./src/cm4all-beng-proxy $(DEBUG_ARGS)
 
 perf: src/cm4all-beng-proxy
 	perf record -f $< -D -u max -p 8080
