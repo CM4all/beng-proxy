@@ -24,12 +24,11 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_LOCAL:
         assert(src->u.local.path != NULL);
         dest->u.local.path = p_strdup(pool, src->u.local.path);
-        dest->u.local.content_type = src->u.local.content_type == NULL
-            ? NULL : p_strdup(pool, src->u.local.content_type);
-        dest->u.local.delegate = src->u.local.delegate == NULL
-            ? NULL : p_strdup(pool, src->u.local.delegate);
-        dest->u.local.document_root = src->u.local.document_root == NULL
-            ? NULL : p_strdup(pool, src->u.local.document_root);
+        dest->u.local.content_type =
+            p_strdup_checked(pool, src->u.local.content_type);
+        dest->u.local.delegate = p_strdup_checked(pool, src->u.local.delegate);
+        dest->u.local.document_root =
+            p_strdup_checked(pool, src->u.local.document_root);
         dest->u.local.jail = src->u.local.jail;
         break;
 
@@ -51,18 +50,16 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         dest->u.cgi.num_args = src->u.cgi.num_args;
 
         dest->u.cgi.jail = src->u.cgi.jail;
-        dest->u.cgi.interpreter = src->u.cgi.interpreter == NULL
-            ? NULL : p_strdup(pool, src->u.cgi.interpreter);
-        dest->u.cgi.action = src->u.cgi.action == NULL
-            ? NULL : p_strdup(pool, src->u.cgi.action);
-        dest->u.cgi.script_name = src->u.cgi.script_name == NULL
-            ? NULL : p_strdup(pool, src->u.cgi.script_name);
-        dest->u.cgi.path_info = src->u.cgi.path_info == NULL
-            ? NULL : p_strdup(pool, src->u.cgi.path_info);
-        dest->u.cgi.query_string = src->u.cgi.query_string == NULL
-            ? NULL : p_strdup(pool, src->u.cgi.query_string);
-        dest->u.cgi.document_root = src->u.cgi.document_root == NULL
-            ? NULL : p_strdup(pool, src->u.cgi.document_root);
+        dest->u.cgi.interpreter =
+            p_strdup_checked(pool, src->u.cgi.interpreter);
+        dest->u.cgi.action = p_strdup_checked(pool, src->u.cgi.action);
+        dest->u.cgi.script_name =
+            p_strdup_checked(pool, src->u.cgi.script_name);
+        dest->u.cgi.path_info = p_strdup_checked(pool, src->u.cgi.path_info);
+        dest->u.cgi.query_string =
+            p_strdup_checked(pool, src->u.cgi.query_string);
+        dest->u.cgi.document_root =
+            p_strdup_checked(pool, src->u.cgi.document_root);
         break;
     }
 }
