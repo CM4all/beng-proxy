@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.7.8) unstable; urgency=low
 
   * http-body: support partial response in method available()
   * file-handler: support pre-compressed static files
+  * fcache: honor the "Cache-Control: no-store" response header
 
  --
 

@@ -210,6 +210,10 @@ filter_cache_response_evaluate(struct filter_cache_info *info,
         /* too large for the cache */
         return false;
 
+    p = strmap_get(headers, "cache-control");
+    if (p != NULL && http_list_contains(p, "no-store"))
+        return false;
+
     now = time(NULL);
 
     p = strmap_get(headers, "date");
