@@ -369,6 +369,50 @@ amount of time.
 Advanced users may take advantage of Bulldog-Tyke data, by passing
 with the option \texttt{--bulldog-path} (see \ref{bulldog}).
 
+\subsubsection{Forwarded headers}
+
+Not all request and response headers are forwarded, for various
+reasons:
+
+\begin{itemize}
+\item hop-by-hop headers (RFC 2616 13.5.1) must not be forwarded
+\item headers describing the body are not forwarded if there is no
+  body
+\item cookie forwarding and \texttt{beng-proxy}'s own session
+  management are mutually exclusive
+\item some headers reveal otherwise private information about the
+  communication partner at the other end (e.g. IP address)
+\item some servers rely on the authenticity of the
+  \texttt{X-CM4all-BENG-User} header
+\item due to imponderable security implications, much of the header
+  forwarding is opt-in
+\end{itemize}
+
+By default, only the following original request headers are forwarded
+to the remote HTTP server:
+
+\begin{itemize}
+\item the \texttt{Accept-*} headers
+\item \texttt{User-Agent}
+\item \texttt{Cache-Control}
+\item in the presence of a forwarded request body:
+  \texttt{Content-Type} and the other \texttt{Content-*} headers
+\item \texttt{Cookie2} is taken from the current session
+\end{itemize}
+
+Response headers forwarded to \texttt{beng-proxy}'s client:
+
+\begin{itemize}
+\item \texttt{Age}, \texttt{ETag}, \texttt{Cache-Control},
+  \texttt{Last-Modified}, \texttt{Retry-After}, \texttt{Vary},
+  \texttt{Location}
+\item \texttt{Content-Type} and the other \texttt{Content-*} headers
+\item \texttt{Set-Cookie2} is generated from the current session
+\end{itemize}
+
+The translation server can change the header forwarding policy, see
+\ref{tfwdheader}.
+
 \subsection{AJP v1.3}
 \label{ajp}
 
@@ -745,6 +789,7 @@ items for the current session.
 
 \hline
 
+\label{tfwdheader}
 \texttt{REQUEST\_HEADER\_FORWARD} &
 
 This packet specifies which request headers are forwarded to the
