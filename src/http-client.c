@@ -638,8 +638,13 @@ http_client_try_response_direct(struct http_client *client)
         return;
     }
 
-    if (nbytes > 0 && http_body_eof(&client->response.body_reader))
+    if (nbytes == 0)
+        return;
+
+    if (http_body_eof(&client->response.body_reader))
         http_client_response_stream_eof(client);
+    else
+        event2_or(&client->event, EV_READ);
 }
 
 static void
