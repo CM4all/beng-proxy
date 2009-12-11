@@ -72,6 +72,15 @@ http_server_response(const struct http_server_request *request,
 
     async_ref_poison(&connection->request.async_ref);
 
+    if (connection->request.read_state == READ_BODY) {
+        /* if we didn't send "100 Continue" yet, we should do it now;
+           we don't know if the request body will be used, but at
+           least it hasn't been closed yet */
+        http_server_maybe_send_100_continue(connection);
+        if (!http_server_connection_valid(connection))
+            return;
+    }
+
     connection->response.status = status;
     status_stream
         = istream_memory_new(request->pool,

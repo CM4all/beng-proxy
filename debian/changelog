@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.9) unstable; urgency=low
 
   * http: "Expect" is a hop-by-hop header
+  * http-server: send "100 Continue" unless request body closed
 
  --
 
