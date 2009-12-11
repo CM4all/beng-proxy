@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <limits.h>
 
 struct ajp_client {
     pool_t pool;
