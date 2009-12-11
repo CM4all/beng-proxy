@@ -63,6 +63,7 @@ http_header_is_hop_by_hop(const char *name)
         /* typo in RFC 2616? */
         strcmp(name, "trailer") == 0 || strcmp(name, "trailers") == 0 ||
         strcmp(name, "upgrade") == 0 ||
+        strcmp(name, "expect") == 0 || /* RFC 2616 14.20 */
         strcmp(name, "transfer-encoding") == 0 ||
         strcmp(name, "content-length") == 0;
 }
