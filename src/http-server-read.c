@@ -320,17 +320,31 @@ http_server_try_request_direct(struct http_server_connection *connection)
 
     nbytes = http_body_try_direct(&connection->request.body_reader,
                                   connection->fd, connection->fd_type);
+    if (nbytes == -2 || nbytes == -3)
+        /* either the destination fd blocks (-2) or the stream (and
+           the whole connection) has been closed during the direct()
+           callback (-3); no further checks */
+        return;
+
     if (nbytes < 0) {
-        /* XXX EAGAIN? */
+        if (errno == EAGAIN) {
+            event2_or(&connection->event, EV_READ);
+            return;
+        }
+
         daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
         http_server_connection_close(connection);
         return;
     }
 
-    if (nbytes > 0 && http_body_eof(&connection->request.body_reader)) {
+    if (nbytes == 0)
+        return;
+
+    if (http_body_eof(&connection->request.body_reader)) {
         connection->request.read_state = READ_END;
         istream_deinit_eof(&connection->request.body_reader.output);
-    }
+    } else
+        event2_or(&connection->event, EV_READ);
 }
 
 void
