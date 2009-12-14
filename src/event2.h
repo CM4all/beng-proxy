@@ -56,6 +56,12 @@ event2_reset(struct event2 *event)
 }
 
 static inline void
+event2_persist(struct event2 *event)
+{
+    event->always_mask |= EV_PERSIST;
+}
+
+static inline void
 event2_set(struct event2 *event, short mask)
 {
     event->new_mask = mask;
