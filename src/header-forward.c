@@ -16,6 +16,8 @@
 #include <daemon/log.h>
 #endif
 
+#include <string.h>
+
 static const char *const basic_request_headers[] = {
     "accept",
     "from",
