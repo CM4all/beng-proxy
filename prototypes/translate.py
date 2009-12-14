@@ -182,6 +182,14 @@ class Translation(Protocol):
             response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
             response.packet(TRANSLATE_URI, '/foo/' + uri[6:])
             self._handle_local_file('/var/www' + uri[5:], response)
+        elif raw_uri == '/filter':
+            # two filters chained
+            response.packet(TRANSLATE_DOCUMENT_ROOT, demo_path)
+            response.path(os.path.join(demo_path, 'hello.txt'))
+            response.packet(TRANSLATE_FILTER)
+            response.pipe(os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_FILTER)
+            response.pipe(os.path.join(cgi_path, 'pipe2.sed'))
         else:
             self._handle_local_file('/var/www' + uri, response)
 
