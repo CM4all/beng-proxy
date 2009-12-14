@@ -6,6 +6,7 @@ cm4all-beng-proxy (0.7.9) unstable; urgency=low
   * http-server: handle EAGAIN after splice
   * http-server: send a 417 response on unrecognized "Expect" request
   * response, widget-http: append filter id to resource tag
+  * resource-tag: check for "Cache-Control: no-store"
 
  --
 
