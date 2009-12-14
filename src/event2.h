@@ -17,7 +17,7 @@
 struct event2 {
     struct event event;
     unsigned locked;
-    short new_mask, old_mask;
+    short always_mask, new_mask, old_mask;
     int fd;
     void (*callback)(int, short, void *arg);
     void *ctx;

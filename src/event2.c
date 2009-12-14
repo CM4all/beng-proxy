@@ -19,12 +19,16 @@ event2_init(struct event2 *event, int fd,
     assert(callback != NULL);
 
     event->locked = 0;
+    event->always_mask = 0;
     event->new_mask = 0;
     event->old_mask = 0;
     event->fd = fd;
     event->callback = callback;
     event->ctx = ctx;
     event->tv = tv;
+
+    if (tv != NULL)
+        event->always_mask |= EV_TIMEOUT;
 }
 
 void
@@ -35,11 +39,7 @@ event2_commit(struct event2 *event)
             event_del(&event->event);
 
         if (event->new_mask != 0) {
-            short mask = event->new_mask;
-
-            if (event->tv != NULL) {
-                mask |= EV_TIMEOUT;
-            }
+            short mask = event->new_mask | event->always_mask;
 
             event_set(&event->event, event->fd, mask,
                       event->callback, event->ctx);
