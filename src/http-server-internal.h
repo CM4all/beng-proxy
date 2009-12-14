@@ -63,6 +63,9 @@ struct http_server_connection {
         /** did the client send an "Expect: 100-continue" header? */
         bool expect_100_continue;
 
+        /** send a "417 Expectation Failed" response? */
+        bool expect_failed;
+
         struct http_server_request *request;
 
         /** the request body reader; this variable is only valid if

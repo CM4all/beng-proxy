@@ -125,6 +125,8 @@ http_server_headers_finished(struct http_server_connection *connection)
     value = strmap_get(request->headers, "expect");
     connection->request.expect_100_continue = value != NULL &&
         strcmp(value, "100-continue") == 0;
+    connection->request.expect_failed = value != NULL &&
+        strcmp(value, "100-continue") != 0;
 
     value = strmap_get(request->headers, "connection");
 
@@ -250,6 +252,21 @@ http_server_parse_headers(struct http_server_connection *connection)
     return true;
 }
 
+static void
+http_server_submit_request(struct http_server_connection *connection)
+{
+    if (connection->request.expect_failed) {
+        http_server_send_message(connection->request.request,
+                                 HTTP_STATUS_EXPECTATION_FAILED,
+                                 "Unrecognized expectation");
+        return;
+    }
+
+    connection->handler->request(connection->request.request,
+                                 connection->handler_ctx,
+                                 &connection->request.async_ref);
+}
+
 void
 http_server_consume_input(struct http_server_connection *connection)
 {
@@ -258,9 +275,7 @@ http_server_consume_input(struct http_server_connection *connection)
         if (http_server_parse_headers(connection) &&
             (connection->request.read_state == READ_BODY ||
              connection->request.read_state == READ_END))
-            connection->handler->request(connection->request.request,
-                                         connection->handler_ctx,
-                                         &connection->request.async_ref);
+            http_server_submit_request(connection);
     } else if (connection->request.read_state == READ_BODY) {
         http_server_consume_body(connection);
     }
