@@ -39,6 +39,9 @@ ARGF.each do |line|
     uri.sub!(/(\/action=(?:getThumbnail|create))\/.*/, '\1')
     uri.sub!(/(\/res\/).*/, '\1')
     uri.sub!(/(\/pid)\/p\d+/, '\1')
+    uri.sub!(/^(\/widgetserver\/.+\.action).*/, '\1')
+    uri.sub!(/^(\/widgetserver\/\w+\/static\/).*/, '\1')
+    uri.sub!(/^(\/login-service\/service\/(?:cred|i|sam)\/).*/, '\1')
 
     # no static files
     next if uri =~ /\.(?:png|jpg|js|css|gif|conf|ico)(?:\?.*)?$/
