@@ -36,17 +36,14 @@ event2_commit(struct event2 *event)
 
         if (event->new_mask != 0) {
             short mask = event->new_mask;
-            struct timeval tv;
 
             if (event->tv != NULL) {
-                tv = *event->tv;
                 mask |= EV_TIMEOUT;
             }
 
             event_set(&event->event, event->fd, mask,
                       event->callback, event->ctx);
-            event_add(&event->event,
-                      event->tv != NULL ? &tv : NULL);
+            event_add(&event->event, event->tv);
         }
 
         event->old_mask = event->new_mask;
