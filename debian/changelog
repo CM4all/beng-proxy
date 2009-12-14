@@ -8,7 +8,7 @@ cm4all-beng-proxy (0.7.9) unstable; urgency=low
   * response, widget-http: append filter id to resource tag
   * resource-tag: check for "Cache-Control: no-store"
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 14 Dec 2009 13:05:15 +0100
 
 cm4all-beng-proxy (0.7.8) unstable; urgency=low
 
