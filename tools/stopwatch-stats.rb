@@ -20,7 +20,7 @@ ARGF.each do |line|
 
     # remove some useless query parameters
     uri.gsub!(/(\/(?:config|preview|show|thumbnail)).*/, '\1')
-    uri.gsub!(/(?:beng_session|step|u|d|kc|k|\w+Id|max\w+|domain|path|address|companyname|type|guestbookId|plz|width|page_no|cc|wiid|effect|generic|search|firstResult|maxResults|descending|orderBy|header|project|parentStateId|_statemachineId|parentStatemachineId|color|trigger|direction|isWizard|preset|output|cm-[-\w]+)=[-\w\+%\$]*/, '')
+    uri.gsub!(/(?:beng_session|step|u|d|kc|k|\w+Id|max\w+|domain|path|address|companyname|type|guestbookId|plz|width|page_no|cc|wiid|effect|generic|search|firstResult|maxResults|descending|orderBy|header|project|parentStateId|_statemachineId|parentStatemachineId|color|trigger|direction|isWizard|preset|output|referrer|redirect|ctimestamp|name|email|entries_per_page|text|homepage|cm-[-\w]+)=[-\w\+%\$]*/, '')
     uri.gsub!(/\/(pageId|skin|wcid|initParams|bodyonly)=[\w.$]*/, '')
 
     # little bit of cleanup
