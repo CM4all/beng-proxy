@@ -122,6 +122,10 @@ http_server_headers_finished(struct http_server_connection *connection)
 
     evtimer_del(&connection->timeout);
 
+    value = strmap_get(request->headers, "expect");
+    connection->request.expect_100_continue = value != NULL &&
+        strcmp(value, "100-continue") == 0;
+
     value = strmap_get(request->headers, "connection");
 
     /* we disable keep-alive support on ancient HTTP 1.0, because that
@@ -181,10 +185,6 @@ http_server_headers_finished(struct http_server_connection *connection)
                                    content_length, chunked);
 
     connection->request.read_state = READ_BODY;
-
-    value = strmap_get(request->headers, "expect");
-    connection->request.expect_100_continue = value != NULL &&
-        strcmp(value, "100-continue") == 0;
 }
 
 static void
