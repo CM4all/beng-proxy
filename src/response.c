@@ -239,7 +239,9 @@ response_apply_filter(struct request *request2,
     source_tag = resource_tag_append_etag(request->pool,
                                           request2->resource_tag, headers2);
     request2->resource_tag = source_tag != NULL
-        ? resource_address_id(filter, request->pool)
+        ? p_strcat(request->pool, source_tag, "|",
+                   resource_address_id(filter, request->pool),
+                   NULL)
         : NULL;
 
     filter_cache_request(global_filter_cache, request->pool, filter,

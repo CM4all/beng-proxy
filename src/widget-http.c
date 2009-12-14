@@ -256,7 +256,10 @@ widget_response_transform(struct embed *embed, http_status_t status,
         source_tag = resource_tag_append_etag(embed->pool,
                                              embed->resource_tag, headers);
         embed->resource_tag = source_tag != NULL
-            ? resource_address_id(&transformation->u.filter, embed->pool)
+            ? p_strcat(embed->pool, source_tag, "|",
+                       resource_address_id(&transformation->u.filter,
+                                           embed->pool),
+                       NULL)
             : NULL;
 
         filter_cache_request(global_filter_cache, embed->pool,
