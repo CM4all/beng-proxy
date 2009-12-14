@@ -57,6 +57,8 @@ stopwatch_sockaddr_new(pool_t pool, const struct sockaddr *address,
     (void)address;
     (void)address_length;
     (void)suffix;
+
+    return NULL;
 }
 
 static inline struct stopwatch *
