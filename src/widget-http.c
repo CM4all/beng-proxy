@@ -239,10 +239,23 @@ widget_response_transform(struct embed *embed, http_status_t status,
                           struct strmap *headers, istream_t body,
                           const struct transformation *transformation)
 {
-    const char *source_tag;
+    const char *p, *source_tag;
 
     assert(transformation != NULL);
     assert(embed->transformation == transformation->next);
+
+    p = strmap_get_checked(headers, "content-encoding");
+    if (p != NULL && strcmp(p, "identity") != 0) {
+        daemon_log(2, "widget '%s' sent non-identity response, "
+                   "cannot transform\n",
+                   widget_path(embed->widget));
+
+        if (body != NULL)
+            istream_close(body);
+
+        http_response_handler_invoke_abort(&embed->handler_ref);
+        return;
+    }
 
     switch (transformation->type) {
     case TRANSFORMATION_PROCESS:

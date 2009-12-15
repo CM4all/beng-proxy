@@ -50,10 +50,18 @@ widget_response_format(pool_t pool, const struct widget *widget,
                        struct strmap **headers_r, istream_t body)
 {
     struct strmap *headers = *headers_r;
-    const char *content_type;
+    const char *p, *content_type;
     struct strref *charset, charset_buffer;
 
     assert(body != NULL);
+
+    p = strmap_get_checked(headers, "content-encoding");
+    if (p != NULL && strcmp(p, "identity") != 0) {
+        daemon_log(2, "widget '%s' sent non-identity response, cannot embed\n",
+                   widget_path(widget));
+        istream_close(body);
+        return NULL;
+    }
 
     content_type = strmap_get_checked(headers, "content-type");
 
