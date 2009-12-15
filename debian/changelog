@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.11) unstable; urgency=low
 
-  * 
+  * ajp-client: fix disappearing event for duplex socket
 
  --
 
