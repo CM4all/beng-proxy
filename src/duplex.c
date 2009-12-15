@@ -123,7 +123,7 @@ write_event_callback(int fd, short event __attr_unused, void *ctx)
         return;
     }
 
-    if (nbytes > 0)
+    if (!fifo_buffer_empty(duplex->to_write))
         event2_or(&duplex->write_event, EV_WRITE);
 
     if (!duplex->sock_eof && !fifo_buffer_full(duplex->to_write))
