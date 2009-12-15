@@ -735,8 +735,6 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
 
     assert(client->fd >= 0);
 
-    event2_reset(&client->event);
-
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "http_client: timeout\n");
         stopwatch_event(client->stopwatch, "timeout");
@@ -746,6 +744,7 @@ http_client_event_callback(int fd __attr_unused, short event, void *ctx)
 
     pool_ref(client->pool);
     event2_lock(&client->event);
+    event2_nand(&client->event, event);
 
     if ((event & EV_WRITE) != 0)
         istream_read(client->request.istream);
@@ -963,6 +962,7 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     event2_init(&client->event, client->fd,
                 http_client_event_callback, client,
                 &tv);
+    event2_persist(&client->event);
 
     client->input = fifo_buffer_new(client->pool, 4096);
 
