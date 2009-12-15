@@ -99,8 +99,10 @@ headers_copy2(const struct strmap *in, struct strmap *out,
 
     for (; *keys != NULL; ++keys) {
         value = strmap_get(in, *keys);
-        if (value != NULL)
-            strmap_set(out, *keys, value);
+        while (value != NULL) {
+            strmap_add(out, *keys, value);
+            value = strmap_get_next(in, *keys, value);
+        }
     }
 }
 

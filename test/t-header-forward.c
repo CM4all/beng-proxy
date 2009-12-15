@@ -213,6 +213,19 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                  "cookie=a=b;"
                  "from=foo;");
 
+    /* forward 2 cookies */
+
+    strmap_add(headers, "cookie", "c=d");
+
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    check_strmap(out, "accept=text/*;accept-charset=utf-8;"
+                 "cookie=c=d;cookie=a=b;"
+                 "from=foo;");
+
     /* forward other headers */
 
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_NO;
