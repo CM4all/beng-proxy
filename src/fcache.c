@@ -32,6 +32,13 @@
 
 static const off_t cacheable_size_limit = 256 * 1024;
 
+/**
+ * This constant is added to each cache_item's response body size, to
+ * account for the cost of the supplemental attributes (such as
+ * headers).
+ */
+static const size_t fcache_item_base_size = 1024;
+
 struct filter_cache {
     pool_t pool;
     struct cache *cache;
@@ -158,21 +165,22 @@ filter_cache_put(struct filter_cache_request *request)
 
     pool = pool_new_linear(request->cache->pool, "filter_cache_item", 1024);
     item = p_malloc(pool, sizeof(*item));
-    cache_item_init(&item->item, expires, request->response.length);
+    cache_item_init(&item->item, expires,
+                    fcache_item_base_size + request->response.length);
     item->pool = pool;
     filter_cache_info_copy(pool, &item->info, request->info);
 
     item->status = request->response.status;
     item->headers = strmap_dup(pool, request->response.headers);
 
-    if (item->item.size == 0) {
+    if (request->response.length == 0) {
         item->data = NULL;
     } else {
         size_t length;
 
         item->data = growing_buffer_dup(request->response.output, pool,
                                         &length);
-        assert(length == item->item.size);
+        assert(length == item->item.size - fcache_item_base_size);
     }
 
     cache_put(request->cache->cache,
@@ -525,8 +533,11 @@ filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
 
     /* XXX hold reference on item */
 
-    response_body = item->item.size > 0
-        ? istream_memory_new(pool, item->data, item->item.size)
+    assert(item->item.size >= fcache_item_base_size);
+    size_t size = item->item.size - fcache_item_base_size;
+
+    response_body = size > 0
+        ? istream_memory_new(pool, item->data, size)
         : istream_null_new(pool);
 
     response_body = istream_unlock_new(pool, response_body,
