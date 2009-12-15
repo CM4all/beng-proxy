@@ -107,7 +107,8 @@ widget_request_headers(struct embed *embed, bool with_body)
 
     headers = forward_request_headers(embed->pool, embed->env->request_headers,
                                       embed->env->local_host,
-                                      embed->env->remote_host, with_body, false,
+                                      embed->env->remote_host, with_body,
+                                      false, false,
                                       &embed->widget->class->request_header_forward,
                                       session,
                                       embed->host_and_port,

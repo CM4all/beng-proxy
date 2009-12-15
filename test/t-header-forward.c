@@ -91,7 +91,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* NULL test */
     out = forward_request_headers(pool, NULL,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false,
+                                  false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     assert(g_str_has_prefix(strmap_remove(out, "user-agent"), "beng-proxy"));
@@ -102,7 +102,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     strmap_add(headers, "user-agent", "firesomething");
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false,
+                                  false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -115,7 +115,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false,
+                                  false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -126,7 +126,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* now accept-charset is forwarded */
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, true,
+                                  false, true, false,
                                   &settings,
                                   NULL, NULL, NULL);
     check_strmap(out, "accept=text/*;accept-charset=iso-8859-1;"
@@ -137,7 +137,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* with request body */
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  true, false,
+                                  true, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -151,7 +151,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false,
+                                  false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -164,7 +164,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_MANGLE;
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false,
+                                  false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     assert(g_str_has_prefix(strmap_remove(out, "user-agent"), "beng-proxy"));
@@ -180,7 +180,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false,
+                                  false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -194,7 +194,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false,
+                                  false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -206,7 +206,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false,
+                                  false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -220,7 +220,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false,
+                                  false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"

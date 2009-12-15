@@ -51,6 +51,7 @@ static const char *const cookie_request_headers[] = {
  */
 static const char *const exclude_request_headers[] = {
     "accept-charset",
+    "accept-encoding",
     "accept-language",
     "user-agent",
     "via",
@@ -206,6 +207,7 @@ struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
                         bool with_body, bool forward_charset,
+                        bool forward_encoding,
                         const struct header_forward_settings *settings,
                         const struct session *session,
                         const char *host_and_port, const char *uri)
@@ -245,6 +247,10 @@ forward_request_headers(pool_t pool, struct strmap *src,
     if (p == NULL)
         p = "utf-8";
     strmap_add(dest, "accept-charset", p);
+
+    if (forward_encoding &&
+        (p = strmap_get_checked(src, "accept-encoding")) != NULL)
+        strmap_add(dest, "accept-encoding", p);
 
     if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
         if (src != NULL)

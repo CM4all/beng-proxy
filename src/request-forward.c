@@ -43,6 +43,7 @@ request_forward(struct forward_request *dest, struct request *request2,
                                             request->remote_host,
                                             dest->body != NULL,
                                             !request_processor_enabled(request2),
+                                            !request_transformation_enabled(request2),
                                             header_forward,
                                             session, host_and_port, uri);
     if (session != NULL)
