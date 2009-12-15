@@ -63,16 +63,16 @@ duplex_close(struct duplex *duplex)
     }
 }
 
-static int
+static bool
 duplex_check_close(struct duplex *duplex)
 {
     if (duplex->read_fd < 0 && duplex->sock_eof &&
         fifo_buffer_empty(duplex->from_read) &&
         fifo_buffer_empty(duplex->to_write)) {
         duplex_close(duplex);
-        return 1;
+        return true;
     } else
-        return 0;
+        return false;
 }
 
 static void
