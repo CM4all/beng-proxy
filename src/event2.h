@@ -51,6 +51,8 @@ event2_unlock(struct event2 *event)
 static inline void
 event2_reset(struct event2 *event)
 {
+    assert((event->always_mask & EV_PERSIST) == 0);
+
     event->old_mask = 0;
     event->new_mask = 0;
 }
@@ -58,6 +60,8 @@ event2_reset(struct event2 *event)
 static inline void
 event2_persist(struct event2 *event)
 {
+    assert((event->always_mask & EV_PERSIST) == 0);
+
     event->always_mask |= EV_PERSIST;
 }
 
