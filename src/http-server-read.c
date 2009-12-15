@@ -365,6 +365,8 @@ http_server_try_request_direct(struct http_server_connection *connection)
 void
 http_server_try_read(struct http_server_connection *connection)
 {
+    event2_nand(&connection->event, EV_READ);
+
     if (connection->request.read_state == READ_BODY &&
         (connection->request.body_reader.output.handler_direct & connection->fd_type) != 0) {
         if (fifo_buffer_empty(connection->input))

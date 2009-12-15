@@ -81,6 +81,7 @@ http_server_try_write(struct http_server_connection *connection)
 
     http_server_cork(connection);
     event2_lock(&connection->event);
+    event2_nand(&connection->event, EV_WRITE);
     istream_read(connection->response.istream);
     event2_unlock(&connection->event);
     http_server_uncork(connection);
@@ -93,8 +94,8 @@ http_server_event_callback(int fd __attr_unused, short event, void *ctx)
 
     pool_ref(connection->pool);
 
-    event2_reset(&connection->event);
     event2_lock(&connection->event);
+    event2_nand(&connection->event, event);
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");
@@ -172,6 +173,7 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
     event2_init(&connection->event, connection->fd,
                 http_server_event_callback, connection,
                 &tv);
+    event2_persist(&connection->event);
     event2_lock(&connection->event);
 
     evtimer_set(&connection->timeout,
