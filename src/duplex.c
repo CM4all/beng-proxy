@@ -57,6 +57,7 @@ duplex_close(struct duplex *duplex)
 
     if (duplex->sock_fd >= 0) {
         event2_set(&duplex->sock_event, 0);
+        event2_commit(&duplex->sock_event);
 
         close(duplex->sock_fd);
         duplex->sock_fd = -1;
@@ -136,7 +137,8 @@ sock_event_callback(int fd, short event, void *ctx)
     struct duplex *duplex = ctx;
     ssize_t nbytes;
 
-    event2_reset(&duplex->sock_event);
+    event2_lock(&duplex->sock_event);
+    event2_nand(&duplex->sock_event, event);
 
     if ((event & EV_READ) != 0) {
         nbytes = recv_to_buffer(fd, duplex->to_write, INT_MAX);
@@ -154,10 +156,10 @@ sock_event_callback(int fd, short event, void *ctx)
 
         if (likely(nbytes > 0))
             event2_or(&duplex->write_event, EV_WRITE);
-    }
 
-    if (likely(!duplex->sock_eof && !fifo_buffer_full(duplex->to_write)))
-        event2_or(&duplex->sock_event, EV_READ);
+        if (!fifo_buffer_full(duplex->to_write))
+            event2_or(&duplex->sock_event, EV_READ);
+    }
 
     if ((event & EV_WRITE) != 0) {
         nbytes = send_from_buffer(fd, duplex->from_read);
@@ -166,15 +168,14 @@ sock_event_callback(int fd, short event, void *ctx)
             return;
         }
 
-        if (nbytes > 0)
-            event2_or(&duplex->sock_event, EV_WRITE);
-
-        if (duplex->read_fd >= 0 && !fifo_buffer_full(duplex->from_read))
+        if (nbytes > 0 && duplex->read_fd >= 0)
             event2_or(&duplex->read_event, EV_READ);
-    } else {
+
         if (!fifo_buffer_empty(duplex->from_read))
             event2_or(&duplex->sock_event, EV_WRITE);
     }
+
+    event2_unlock(&duplex->sock_event);
 }
 
 int
@@ -216,6 +217,7 @@ duplex_new(pool_t pool, int read_fd, int write_fd)
 
     event2_init(&duplex->sock_event, duplex->sock_fd,
                 sock_event_callback, duplex, NULL);
+    event2_persist(&duplex->sock_event);
     event2_set(&duplex->sock_event, EV_READ);
 
     return fds[1];
