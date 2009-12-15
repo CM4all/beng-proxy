@@ -366,6 +366,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
                  request_processor_first(request2));
 
     header_write(headers, "content-encoding", encoding);
+    header_write(headers, "vary", "accept-encoding");
 
     /* close original file */
 
