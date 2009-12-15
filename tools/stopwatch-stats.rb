@@ -61,7 +61,7 @@ end
 # calculate average time
 l = []
 data.each_pair do |uri, times|
-    l << [times[1] / times[0], times[2], times[3], times[0], uri]
+    l << [times[1] / times[0], times[2], times[3], times[1], times[0], uri]
 end
 
 # sort the list by average
@@ -70,7 +70,7 @@ l.sort! do |a, b|
 end
 
 # print it
-puts "avg\tmin\tmax\tcount\turi"
+puts "avg\tmin\tmax\ttotal\tcount\turi"
 l.each do |i|
     puts i.join("\t")
 end
