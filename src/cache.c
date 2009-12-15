@@ -130,6 +130,7 @@ cache_item_removed(struct cache *cache, struct cache_item *item)
 {
     assert(cache != NULL);
     assert(item != NULL);
+    assert(item->size > 0);
     assert(item->lock > 0 || !item->removed);
     assert(cache->size >= item->size);
 
@@ -317,6 +318,7 @@ cache_put(struct cache *cache, const char *key,
     struct cache_item *old;
 
     assert(item != NULL);
+    assert(item->size > 0);
     assert(item->lock == 0);
     assert(!item->removed);
 
@@ -351,6 +353,7 @@ cache_put_match(struct cache *cache, const char *key,
     struct cache_item *old = cache_get_match(cache, key, match, ctx);
 
     assert(item != NULL);
+    assert(item->size > 0);
     assert(item->lock == 0);
     assert(!item->removed);
     assert(old == NULL || !old->removed);
