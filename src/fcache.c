@@ -22,6 +22,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <event.h>
 
 #ifdef CACHE_LOG
 #include <daemon/log.h>
@@ -38,6 +39,8 @@ static const off_t cacheable_size_limit = 256 * 1024;
  * headers).
  */
 static const size_t fcache_item_base_size = 1024;
+
+static const struct timeval fcache_timeout = { .tv_sec = 60 };
 
 struct filter_cache {
     pool_t pool;
@@ -86,6 +89,12 @@ struct filter_cache_request {
         size_t length;
         struct growing_buffer *output;
     } response;
+
+    /**
+     * This event is initialized by the response callback, and limits
+     * the duration for receiving the response body.
+     */
+    struct event timeout;
 };
 
 
@@ -244,6 +253,17 @@ filter_cache_response_evaluate(struct filter_cache_info *info,
     return true;
 }
 
+static void
+fcache_timeout_callback(int fd __attr_unused, short event __attr_unused,
+                        void *ctx)
+{
+    struct filter_cache_request *request = ctx;
+
+    /* reading the response has taken too long already; don't store
+       this resource */
+    cache_log(4, "filter_cache: timeout %s\n", request->info->key);
+    istream_close(request->response.input);
+}
 
 /*
  * istream handler
@@ -272,6 +292,8 @@ filter_cache_response_body_eof(void *ctx)
 
     request->response.input = NULL;
 
+    evtimer_del(&request->timeout);
+
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
     filter_cache_put(request);
@@ -288,6 +310,8 @@ filter_cache_response_body_abort(void *ctx)
     cache_log(4, "filter_cache: body_abort %s\n", request->info->key);
 
     request->response.input = NULL;
+
+    evtimer_del(&request->timeout);
 
     list_remove(&request->siblings);
     pool_unref(request->pool);
@@ -364,6 +388,9 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         pool_ref(request->pool);
         list_add(&request->siblings, &request->cache->requests);
+
+        evtimer_set(&request->timeout, fcache_timeout_callback, request);
+        evtimer_add(&request->timeout, &fcache_timeout);
     }
 
     caller_pool = request->caller_pool;

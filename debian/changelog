@@ -6,6 +6,7 @@ cm4all-beng-proxy (0.7.11) unstable; urgency=low
   * widget-http, inline-widget: check Content-Encoding before processing
   * file-handler: send "Vary: Accept-Encoding" for compressed response
   * header-forward: support duplicate headers
+  * fcache: implemented a 60 seconds timeout
 
  --
 
