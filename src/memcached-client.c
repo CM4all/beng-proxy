@@ -409,8 +409,7 @@ memcached_client_try_read(struct memcached_client *client)
 
     memcached_consume_input(client);
 
-    if (memcached_connection_valid(client) &&
-        !fifo_buffer_full(client->response.input))
+    if (memcached_connection_valid(client))
         event2_setbit(&client->event, EV_READ,
                       !fifo_buffer_full(client->response.input));
 }
