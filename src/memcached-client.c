@@ -430,9 +430,8 @@ memcached_client_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
 
     pool_ref(client->pool);
 
-    event2_reset(&client->event);
     event2_lock(&client->event);
-    event2_or(&client->event, EV_READ);
+    event2_nand(&client->event, event);
 
     if (memcached_connection_valid(client) && (event & EV_WRITE) != 0)
         istream_read(client->request.istream);
@@ -592,6 +591,7 @@ memcached_client_invoke(pool_t pool, int fd,
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
     event2_init(&client->event, fd,
                 memcached_client_event_callback, client, &timeout);
+    event2_persist(&client->event);
 
     istream_assign_handler(&client->request.istream, request,
                            &memcached_request_stream_handler, client,
