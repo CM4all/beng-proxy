@@ -462,6 +462,11 @@ memcached_write(struct memcached_client *client, const void *data, size_t length
 
     nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0) {
+        if (errno == EAGAIN) {
+            event2_or(&client->event, EV_WRITE);
+            return 0;
+        }
+
         daemon_log(1, "write error on memcached connection: %s\n",
                    strerror(errno));
         memcached_connection_close(client);

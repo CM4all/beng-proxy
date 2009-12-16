@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.11) unstable; urgency=low
 
   * {ajp,memcached}-client: fix disappearing event for duplex socket
+  * memcached-client: handle EAGAIN after send()
   * header-forward: don't forward Accept-Encoding if transformation is
     enabled
   * widget-http, inline-widget: check Content-Encoding before processing
