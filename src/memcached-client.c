@@ -409,9 +409,12 @@ memcached_consume_value(struct memcached_client *client)
     if (client->response.remaining > 0)
         return false;
 
+    assert(client->fd < 0);
+    assert(client->request.istream == NULL);
+
     client->response.read_state = READ_END;
     istream_deinit_eof(&client->response.value);
-    memcached_connection_close(client);
+    pool_unref(client->pool);
     return true;
 }
 
