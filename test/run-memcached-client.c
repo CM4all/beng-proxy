@@ -125,7 +125,7 @@ my_response_handler(enum memcached_response_status status,
  */
 
 int main(int argc, char **argv) {
-    int fd, ret;
+    int ret;
     struct addrinfo hints, *ai;
     struct event_base *event_base;
     pool_t root_pool, pool;
@@ -177,13 +177,13 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-    if (fd < 0) {
+    ctx.fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    if (ctx.fd < 0) {
         fprintf(stderr, "socket() failed: %s\n", strerror(errno));
         return 2;
     }
 
-    ret = connect(fd, ai->ai_addr, ai->ai_addrlen);
+    ret = connect(ctx.fd, ai->ai_addr, ai->ai_addrlen);
     if (ret < 0) {
         fprintf(stderr, "connect() failed: %s\n", strerror(errno));
         return 2;
@@ -191,8 +191,8 @@ int main(int argc, char **argv) {
 
     freeaddrinfo(ai);
 
-    socket_set_nonblock(fd, true);
-    socket_set_nodelay(fd, true);
+    socket_set_nonblock(ctx.fd, true);
+    socket_set_nodelay(ctx.fd, true);
 
     /* initialize */
 
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 
     /* run test */
 
-    memcached_client_invoke(pool, fd, &memcached_socket_lease, &ctx,
+    memcached_client_invoke(pool, ctx.fd, &memcached_socket_lease, &ctx,
                             opcode,
                             extras, extras_length,
                             key, key != NULL ? strlen(key) : 0,
