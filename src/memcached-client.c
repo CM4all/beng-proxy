@@ -593,7 +593,9 @@ memcached_client_request_abort(struct async_operation *ao)
 
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(client->response.read_state == READ_HEADER);
+    assert(client->response.read_state == READ_HEADER ||
+           client->response.read_state == READ_EXTRAS ||
+           client->response.read_state == READ_KEY);
 
     /* by setting the state to READ_END, we bar
        memcached_client_request_close() from invoking the "abort"
