@@ -93,6 +93,20 @@ memcached_client_release(struct memcached_client *client, bool reuse)
 }
 
 static void
+memcached_connection_abort_response_header(struct memcached_client *client)
+{
+    pool_ref(client->pool);
+
+    memcached_client_release(client, false);
+
+    client->request.handler(-1, NULL, 0, NULL, 0, NULL,
+                            client->request.handler_ctx);
+    client->response.read_state = READ_END;
+
+    pool_unref(client->pool);
+}
+
+static void
 memcached_connection_close(struct memcached_client *client)
 {
     if (!memcached_connection_valid(client))
@@ -219,7 +233,7 @@ memcached_consume_header(struct memcached_client *client)
     if (client->response.header.magic != MEMCACHED_MAGIC_RESPONSE ||
         client->response.value_remaining > G_MAXINT) {
         /* integer underflow */
-        memcached_connection_close(client);
+        memcached_connection_abort_response_header(client);
         return false;
     }
 
