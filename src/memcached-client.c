@@ -61,7 +61,12 @@ struct memcached_client {
         } key;
 
         struct istream value;
-        size_t value_remaining;
+
+        /**
+         * Total number of bytes remaining to read from the response,
+         * including extras and key.
+         */
+        size_t remaining;
     } response;
 };
 
@@ -73,7 +78,22 @@ static const struct timeval timeout = {
 static inline bool
 memcached_connection_valid(const struct memcached_client *client)
 {
-    return client->fd >= 0;
+    return client->response.input != NULL;
+}
+
+/**
+ * Release the socket held by this object.
+ */
+static void
+memcached_client_release_socket(struct memcached_client *client, bool reuse)
+{
+    assert(client != NULL);
+    assert(client->fd >= 0);
+
+    event2_set(&client->event, 0);
+    event2_commit(&client->event);
+    client->fd = -1;
+    lease_release(&client->lease_ref, reuse);
 }
 
 /**
@@ -85,10 +105,11 @@ memcached_client_release(struct memcached_client *client, bool reuse)
 {
     assert(client != NULL);
 
-    event2_set(&client->event, 0);
-    event2_commit(&client->event);
-    client->fd = -1;
-    lease_release(&client->lease_ref, reuse);
+    client->response.input = NULL;
+
+    if (client->fd >= 0)
+        memcached_client_release_socket(client, reuse);
+
     pool_unref(client->pool);
 }
 
@@ -138,8 +159,7 @@ memcached_connection_close(struct memcached_client *client)
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
 
-    if (client->fd >= 0)
-        memcached_client_release(client, false);
+    memcached_client_release(client, false);
 
     pool_unref(client->pool);
 }
@@ -168,7 +188,7 @@ istream_memcached_available(istream_t istream, G_GNUC_UNUSED bool partial)
 
     assert(client->response.read_state == READ_VALUE);
 
-    return client->response.value_remaining;
+    return client->response.remaining;
 }
 
 static void
@@ -226,13 +246,10 @@ memcached_consume_header(struct memcached_client *client)
                         sizeof(client->response.header));
     client->response.read_state = READ_EXTRAS;
 
-    client->response.value_remaining =
-        g_ntohl(client->response.header.body_length) -
-        g_ntohs(client->response.header.key_length) -
-        client->response.header.extras_length;
+    client->response.remaining = g_ntohl(client->response.header.body_length);
     if (client->response.header.magic != MEMCACHED_MAGIC_RESPONSE ||
-        client->response.value_remaining > G_MAXINT) {
-        /* integer underflow */
+        g_ntohs(client->response.header.key_length) +
+        client->response.header.extras_length > client->response.remaining) {
         memcached_connection_abort_response_header(client);
         return false;
     }
@@ -260,6 +277,7 @@ memcached_consume_extras(struct memcached_client *client)
 
         fifo_buffer_consume(client->response.input,
                             client->response.header.extras_length);
+        client->response.remaining -= client->response.header.extras_length;
     } else
         client->response.extras = NULL;
 
@@ -294,12 +312,14 @@ memcached_consume_key(struct memcached_client *client)
         memcpy(client->response.key.tail, data, length);
         client->response.key.tail += length;
         client->response.key.remaining -= length;
+        client->response.remaining -=
+            g_ntohs(client->response.header.key_length);
 
         if (client->response.key.remaining > 0)
             return false;
     }
 
-    if (client->response.value_remaining > 0) {
+    if (client->response.remaining > 0) {
         /* there's a value: pass it to the callback, continue
            reading */
         istream_t value;
@@ -326,6 +346,10 @@ memcached_consume_key(struct memcached_client *client)
         return valid;
     } else {
         /* no value: invoke the callback, quit */
+
+        memcached_client_release_socket(client,
+                                        fifo_buffer_empty(client->response.input));
+
         client->response.read_state = READ_END;
 
         client->request.handler(g_ntohs(client->response.header.status),
@@ -335,7 +359,7 @@ memcached_consume_key(struct memcached_client *client)
                                 g_ntohs(client->response.header.key_length),
                                 NULL, client->request.handler_ctx);
 
-        memcached_connection_close(client);
+        memcached_client_release(client, false);
         return false;
     }
 }
@@ -347,14 +371,18 @@ memcached_consume_value(struct memcached_client *client)
     const void *data;
 
     assert(client->response.read_state == READ_VALUE);
-    assert(client->response.value_remaining > 0);
+    assert(client->response.remaining > 0);
 
     data = fifo_buffer_read(client->response.input, &length);
     if (data == NULL)
         return false;
 
-    if (length > client->response.value_remaining)
-        length = client->response.value_remaining;
+    if (client->fd >= 0 && length >= client->response.remaining)
+        memcached_client_release_socket(client,
+                                        length == client->response.remaining);
+
+    if (length > client->response.remaining)
+        length = client->response.remaining;
 
     nbytes = istream_invoke_data(&client->response.value, data, length);
     if (nbytes == 0)
@@ -362,8 +390,8 @@ memcached_consume_value(struct memcached_client *client)
 
     fifo_buffer_consume(client->response.input, nbytes);
 
-    client->response.value_remaining -= nbytes;
-    if (client->response.value_remaining > 0)
+    client->response.remaining -= nbytes;
+    if (client->response.remaining > 0)
         return false;
 
     client->response.read_state = READ_END;
@@ -423,7 +451,7 @@ memcached_client_try_read(struct memcached_client *client)
 
     memcached_consume_input(client);
 
-    if (memcached_connection_valid(client))
+    if (client->fd >= 0)
         event2_setbit(&client->event, EV_READ,
                       !fifo_buffer_full(client->response.input));
 }
