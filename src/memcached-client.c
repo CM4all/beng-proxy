@@ -131,7 +131,7 @@ memcached_connection_close(struct memcached_client *client)
 }
 
 static bool
-memcached_consume_input(struct memcached_client *client);
+memcached_consume_value(struct memcached_client *client);
 
 static void
 memcached_client_try_read(struct memcached_client *client);
@@ -165,7 +165,7 @@ istream_memcached_read(istream_t istream)
     assert(client->response.read_state == READ_VALUE);
 
     if (!fifo_buffer_empty(client->response.input))
-        memcached_consume_input(client);
+        memcached_consume_value(client);
     else {
         pool_ref(client->pool);
         memcached_client_try_read(client);
