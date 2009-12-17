@@ -491,17 +491,18 @@ memcached_client_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
 }
 
 /*
- * request generator
+ * istream handler for the request
  *
  */
 
 static size_t
-memcached_write(struct memcached_client *client, const void *data, size_t length)
+memcached_request_stream_data(const void *data, size_t length, void *ctx)
 {
+    struct memcached_client *client = ctx;
     ssize_t nbytes;
 
-    assert(client != NULL);
     assert(client->fd >= 0);
+    assert(client->request.istream != NULL);
     assert(data != NULL);
     assert(length > 0);
 
@@ -520,22 +521,6 @@ memcached_write(struct memcached_client *client, const void *data, size_t length
 
     event2_or(&client->event, EV_WRITE);
     return (size_t)nbytes;
-}
-
-/*
- * istream handler for the request
- *
- */
-
-static size_t
-memcached_request_stream_data(const void *data, size_t length, void *ctx)
-{
-    struct memcached_client *client = ctx;
-
-    assert(client->fd >= 0);
-    assert(client->request.istream != NULL);
-
-    return memcached_write(client, data, length);
 }
 
 static void
