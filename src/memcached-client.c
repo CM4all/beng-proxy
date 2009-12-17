@@ -148,6 +148,9 @@ memcached_connection_close(struct memcached_client *client)
         client->request.handler(-1, NULL, 0, NULL, 0, NULL,
                                 client->request.handler_ctx);
         client->response.read_state = READ_END;
+
+        if (client->request.istream != NULL)
+            istream_free_handler(&client->request.istream);
         break;
 
     case READ_VALUE:
@@ -159,8 +162,7 @@ memcached_connection_close(struct memcached_client *client)
         break;
     }
 
-    if (client->request.istream != NULL)
-        istream_free_handler(&client->request.istream);
+    assert(client->request.istream == NULL);
 
     memcached_client_release(client, false);
 
@@ -190,6 +192,7 @@ istream_memcached_available(istream_t istream, G_GNUC_UNUSED bool partial)
     struct memcached_client *client = istream_to_memcached_client(istream);
 
     assert(client->response.read_state == READ_VALUE);
+    assert(client->request.istream == NULL);
 
     return client->response.remaining;
 }
@@ -200,6 +203,7 @@ istream_memcached_read(istream_t istream)
     struct memcached_client *client = istream_to_memcached_client(istream);
 
     assert(client->response.read_state == READ_VALUE);
+    assert(client->request.istream == NULL);
 
     if (!fifo_buffer_empty(client->response.input))
         memcached_consume_value(client);
@@ -216,6 +220,7 @@ istream_memcached_close(istream_t istream)
     struct memcached_client *client = istream_to_memcached_client(istream);
 
     assert(client->response.read_state == READ_VALUE);
+    assert(client->request.istream == NULL);
 
     istream_deinit_abort(&client->response.value);
     memcached_client_release(client, false);
@@ -320,6 +325,13 @@ memcached_consume_key(struct memcached_client *client)
 
         if (client->response.key.remaining > 0)
             return false;
+    }
+
+    if (client->request.istream != NULL) {
+        /* at this point, the request must have been sent */
+        daemon_log(2, "memcached server sends response too early\n");
+        memcached_connection_abort_response_header(client);
+        return false;
     }
 
     if (client->response.remaining > 0) {
@@ -503,6 +515,9 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
 
     assert(client->fd >= 0);
     assert(client->request.istream != NULL);
+    assert(client->response.read_state == READ_HEADER ||
+           client->response.read_state == READ_EXTRAS ||
+           client->response.read_state == READ_KEY);
     assert(data != NULL);
     assert(length > 0);
 
@@ -529,6 +544,9 @@ memcached_request_stream_eof(void *ctx)
     struct memcached_client *client = ctx;
 
     assert(client->request.istream != NULL);
+    assert(client->response.read_state == READ_HEADER ||
+           client->response.read_state == READ_EXTRAS ||
+           client->response.read_state == READ_KEY);
 
     client->request.istream = NULL;
 
@@ -541,6 +559,9 @@ memcached_request_stream_abort(void *ctx)
     struct memcached_client *client = ctx;
 
     assert(client->request.istream != NULL);
+    assert(client->response.read_state == READ_HEADER ||
+           client->response.read_state == READ_EXTRAS ||
+           client->response.read_state == READ_KEY);
 
     client->request.istream = NULL;
 
