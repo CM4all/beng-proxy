@@ -124,6 +124,9 @@ memcached_connection_abort_response_header(struct memcached_client *client)
                             client->request.handler_ctx);
     client->response.read_state = READ_END;
 
+    if (client->request.istream != NULL)
+        istream_free_handler(&client->request.istream);
+
     pool_unref(client->pool);
 }
 
