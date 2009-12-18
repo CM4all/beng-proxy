@@ -315,6 +315,8 @@ memcached_consume_key(struct memcached_client *client)
         client->response.remaining -=
             g_ntohs(client->response.header.key_length);
 
+        fifo_buffer_consume(client->response.input, length);
+
         if (client->response.key.remaining > 0)
             return false;
     }
