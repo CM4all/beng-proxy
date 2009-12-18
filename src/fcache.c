@@ -336,7 +336,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 {
     struct filter_cache_request *request = ctx;
     off_t available;
-    pool_t caller_pool;
+    pool_t caller_pool = request->caller_pool;
 
     available = body == NULL ? 0 : istream_available(body, true);
 
@@ -347,7 +347,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
-        pool_unref(request->caller_pool);
+        pool_unref(caller_pool);
         return;
     }
 
@@ -393,7 +393,6 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         evtimer_add(&request->timeout, &fcache_timeout);
     }
 
-    caller_pool = request->caller_pool;
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
     pool_unref(caller_pool);

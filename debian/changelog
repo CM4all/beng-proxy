@@ -9,6 +9,7 @@ cm4all-beng-proxy (0.7.11) unstable; urgency=low
   * file-handler: send "Vary: Accept-Encoding" for compressed response
   * header-forward: support duplicate headers
   * fcache: implemented a 60 seconds timeout
+  * fcache: copy pointer to local variable before callback
   * event2: refresh timeout after event has occurred
 
  --
