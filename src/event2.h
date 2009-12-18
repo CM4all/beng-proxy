@@ -10,6 +10,7 @@
 
 #include <inline/compiler.h>
 
+#include <stddef.h>
 #include <sys/types.h>
 #include <assert.h>
 #include <event.h>
@@ -108,6 +109,13 @@ event2_setbit(struct event2 *event, short mask, int condition)
 static inline void
 event2_occurred_persist(struct event2 *event, short mask)
 {
+    assert((event->always_mask & EV_PERSIST) != 0);
+
+    if (event->tv != NULL)
+        /* if there's a configured timeout, we must refresh it in
+           event_commit()  */
+        event->new_mask |= EV_TIMEOUT;
+
     event2_nand(event, mask);
 }
 

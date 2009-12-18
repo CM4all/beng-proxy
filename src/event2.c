@@ -8,6 +8,7 @@
 #include "event2.h"
 
 #include <stddef.h>
+#include <stdbool.h>
 
 void
 event2_init(struct event2 *event, int fd,
@@ -34,6 +35,10 @@ event2_init(struct event2 *event, int fd,
 void
 event2_commit(struct event2 *event)
 {
+    bool refresh_timeout = (event->new_mask & EV_TIMEOUT) != 0;
+
+    event->new_mask &= ~EV_TIMEOUT;
+
     if (event->new_mask != event->old_mask) {
         if (event->old_mask != 0)
             event_del(&event->event);
@@ -47,5 +52,7 @@ event2_commit(struct event2 *event)
         }
 
         event->old_mask = event->new_mask;
+    } else if (refresh_timeout && event->new_mask != 0) {
+        event_add(&event->event, event->tv);
     }
 }
