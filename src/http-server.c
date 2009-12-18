@@ -95,7 +95,7 @@ http_server_event_callback(int fd __attr_unused, short event, void *ctx)
     pool_ref(connection->pool);
 
     event2_lock(&connection->event);
-    event2_nand(&connection->event, event);
+    event2_occurred_persist(&connection->event, event);
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");

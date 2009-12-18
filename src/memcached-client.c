@@ -499,7 +499,7 @@ memcached_client_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
     pool_ref(client->pool);
 
     event2_lock(&client->event);
-    event2_nand(&client->event, event);
+    event2_occurred_persist(&client->event, event);
 
     if (memcached_connection_valid(client) && (event & EV_WRITE) != 0)
         istream_read(client->request.istream);

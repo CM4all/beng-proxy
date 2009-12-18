@@ -138,7 +138,7 @@ sock_event_callback(int fd, short event, void *ctx)
     ssize_t nbytes;
 
     event2_lock(&duplex->sock_event);
-    event2_nand(&duplex->sock_event, event);
+    event2_occurred_persist(&duplex->sock_event, event);
 
     if ((event & EV_READ) != 0) {
         nbytes = recv_to_buffer(fd, duplex->to_write, INT_MAX);

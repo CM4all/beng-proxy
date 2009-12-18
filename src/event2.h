@@ -102,4 +102,13 @@ event2_setbit(struct event2 *event, short mask, int condition)
         event2_nand(event, mask);
 }
 
+/**
+ * A persistent event has occurred.
+ */
+static inline void
+event2_occurred_persist(struct event2 *event, short mask)
+{
+    event2_nand(event, mask);
+}
+
 #endif
