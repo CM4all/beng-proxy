@@ -138,20 +138,12 @@ memcached_connection_close(struct memcached_client *client)
 
     pool_ref(client->pool);
 
-    event2_set(&client->event, 0);
-    event2_commit(&client->event);
-
     switch (client->response.read_state) {
     case READ_HEADER:
     case READ_EXTRAS:
     case READ_KEY:
-        client->request.handler(-1, NULL, 0, NULL, 0, NULL,
-                                client->request.handler_ctx);
-        client->response.read_state = READ_END;
-
-        if (client->request.istream != NULL)
-            istream_free_handler(&client->request.istream);
-        break;
+        memcached_connection_abort_response_header(client);
+        return;
 
     case READ_VALUE:
         istream_deinit_abort(&client->response.value);
