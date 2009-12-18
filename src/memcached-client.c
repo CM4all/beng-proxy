@@ -608,12 +608,7 @@ memcached_client_request_abort(struct async_operation *ao)
            client->response.read_state == READ_EXTRAS ||
            client->response.read_state == READ_KEY);
 
-    /* by setting the state to READ_END, we bar
-       memcached_client_request_close() from invoking the "abort"
-       callback */
-    client->response.read_state = READ_END;
-
-    memcached_connection_close(client);
+    memcached_connection_abort_response_header(client);
 }
 
 static const struct async_operation_class memcached_client_async_operation = {
