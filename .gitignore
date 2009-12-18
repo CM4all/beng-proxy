@@ -66,6 +66,8 @@ test/cleanup-memcached-choice
 test/t-istream-tee
 test/t-header-forward
 test/t-growing-buffer
+test/t-memcached-client
+test/fake-memcached-server
 
 *.aux
 *.log

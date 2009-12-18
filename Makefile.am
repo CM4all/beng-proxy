@@ -304,6 +304,8 @@ check_PROGRAMS = \
 	test/run-memcached-client \
 	test/dump-memcached-choice \
 	test/cleanup-memcached-choice \
+	test/fake-memcached-server \
+	test/t-memcached-client \
 	test/run-delegate \
 	test/run-parser-cdata
 
@@ -320,6 +322,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
+	test/t-memcached-client \
 	test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
@@ -823,6 +826,18 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
+
+test_fake_memcached_server_SOURCES = test/fake-memcached-server.c
+
+test_t_memcached_client_SOURCES = test/t-memcached-client.c \
+	src/memcached-client.c src/memcached-packet.c \
+	src/direct.c \
+	src/fifo-buffer.c src/buffered-io.c \
+	src/socket-util.c src/fd-util.c \
+	src/event2.c \
+	src/istream-memory.c src/istream-null.c src/istream-cat.c \
+	$(POOL_SRC)
+test_t_memcached_client_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_delegate_SOURCES = test/run-delegate.c \
 	src/delegate-stock.c src/delegate-client.c src/delegate-glue.c \
