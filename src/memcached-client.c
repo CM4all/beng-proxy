@@ -116,6 +116,11 @@ memcached_client_release(struct memcached_client *client, bool reuse)
 static void
 memcached_connection_abort_response_header(struct memcached_client *client)
 {
+    assert(client != NULL);
+    assert(client->response.read_state == READ_HEADER ||
+           client->response.read_state == READ_EXTRAS ||
+           client->response.read_state == READ_KEY);
+
     pool_ref(client->pool);
 
     memcached_client_release(client, false);
@@ -131,12 +136,27 @@ memcached_connection_abort_response_header(struct memcached_client *client)
 }
 
 static void
+memcached_connection_abort_response_value(struct memcached_client *client)
+{
+    assert(client != NULL);
+    assert(client->response.read_state == READ_VALUE);
+    assert(client->request.istream == NULL);
+
+    pool_ref(client->pool);
+
+    memcached_client_release(client, false);
+
+    client->response.read_state = READ_END;
+    istream_deinit_abort(&client->response.value);
+
+    pool_unref(client->pool);
+}
+
+static void
 memcached_connection_close(struct memcached_client *client)
 {
     if (!memcached_connection_valid(client))
         return;
-
-    pool_ref(client->pool);
 
     switch (client->response.read_state) {
     case READ_HEADER:
@@ -146,19 +166,13 @@ memcached_connection_close(struct memcached_client *client)
         return;
 
     case READ_VALUE:
-        istream_deinit_abort(&client->response.value);
-        client->response.read_state = READ_END;
+        memcached_connection_abort_response_value(client);
         break;
 
     case READ_END:
+        memcached_client_release(client, false);
         break;
     }
-
-    assert(client->request.istream == NULL);
-
-    memcached_client_release(client, false);
-
-    pool_unref(client->pool);
 }
 
 static bool
