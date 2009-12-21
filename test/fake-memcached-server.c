@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     static const char response_key[3] = "foo";
     static const char response_body1[1024];
     static const char response_body2[8192];
-    static const struct memcached_response_header response_header = {
+    const struct memcached_response_header response_header = {
         .magic = MEMCACHED_MAGIC_RESPONSE,
         .key_length = GUINT16_TO_BE(sizeof(response_key)),
         .extras_length = 0,
@@ -79,6 +79,7 @@ int main(int argc, char **argv)
         .body_length = GUINT32_TO_BE(sizeof(response_key) +
                                      sizeof(response_body1) +
                                      sizeof(response_body2)),
+        .message_id = 0,
     };
 
     (void)argc;
