@@ -63,6 +63,7 @@ static const char *const basic_response_headers[] = {
     "age",
     "etag",
     "cache-control",
+    "expires",
     "content-encoding",
     "content-language",
     "content-md5",
