@@ -73,6 +73,7 @@ cache_close(struct cache *cache)
         while ((pair = hashmap_next(cache->items)) != NULL) {
             struct cache_item *item = pair->value;
 
+            assert(item->lock == 0);
             assert(cache->size >= item->size);
             cache->size -= item->size;
 
