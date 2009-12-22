@@ -30,6 +30,12 @@ struct sink_header {
     unsigned char *buffer;
     size_t size, position;
 
+    /**
+     * How much data of the input is pending to be consumed?  Only
+     * valid while state==CALLBACK.
+     */
+    size_t pending;
+
     void (*callback)(void *header, size_t length,
                      istream_t tail, void *ctx);
     void *callback_ctx;
@@ -43,6 +49,9 @@ header_invoke_callback(struct sink_header *header, size_t consumed)
     assert(header->state == SIZE || header->state == HEADER);
 
     pool_ref(header->output.pool);
+
+    /* the base value has been set by sink_header_input_data() */
+    header->pending += consumed;
 
     header->state = CALLBACK;
     header->callback(header->buffer, header->size,
@@ -138,6 +147,8 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
         return istream_invoke_data(&header->output, data, length);
 
     if (header->state == SIZE) {
+        header->pending = 0; /* just in case the callback is invoked */
+
         consumed = header_consume_size(header, data, length);
         if (consumed == 0)
             return 0;
@@ -150,6 +161,8 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
     }
 
     if (header->state == HEADER) {
+        header->pending = consumed; /* just in case the callback is invoked */
+
         nbytes = header_consume_header(header, data, length);
         if (nbytes == 0)
             return 0;
@@ -256,8 +269,19 @@ static off_t
 sink_header_available(istream_t istream, bool partial)
 {
     struct sink_header *header = istream_to_header(istream);
+    off_t available = istream_available(header->input, partial);
 
-    return istream_available(header->input, partial);
+    if (available >= 0 && header->state == CALLBACK) {
+        if (available < (off_t)header->pending) {
+            assert(partial);
+
+            return -1;
+        }
+
+        available -= header->pending;
+    }
+
+    return available;
 }
 
 static void
