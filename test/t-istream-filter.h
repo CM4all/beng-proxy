@@ -1,5 +1,6 @@
 #include "direct.h"
 
+#include <glib.h>
 #include <event.h>
 
 #include <stdio.h>
@@ -48,7 +49,7 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 
     (void)data;
 
-    printf("data(%zu)\n", length);
+    //printf("data(%zu)\n", length);
     ctx->got_data = true;
 
     if (ctx->abort_istream != NULL && ctx->abort_after-- == 0) {
@@ -81,13 +82,14 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 }
 
 static ssize_t
-my_istream_direct(istream_direct_t type, int fd, size_t max_length, void *_ctx)
+my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
+                  size_t max_length, void *_ctx)
 {
     struct ctx *ctx = _ctx;
 
     (void)fd;
 
-    printf("direct(%u, %zu)\n", type, max_length);
+    //printf("direct(%u, %zu)\n", type, max_length);
     ctx->got_data = true;
 
     if (ctx->abort_istream != NULL) {
@@ -103,7 +105,7 @@ my_istream_eof(void *_ctx)
 {
     struct ctx *ctx = _ctx;
 
-    printf("eof\n");
+    //printf("eof\n");
     ctx->eof = true;
 }
 
@@ -116,7 +118,7 @@ my_istream_abort(void *_ctx)
     assert(!ctx->record);
 #endif
 
-    printf("abort\n");
+    //printf("abort\n");
     ctx->eof = true;
 }
 
