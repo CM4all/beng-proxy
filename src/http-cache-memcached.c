@@ -427,7 +427,8 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
                             growing_buffer_istream(gb), value, NULL);
 
     request->extras.set.flags = 0;
-    request->extras.set.expiration = g_htonl(300); /* XXX */
+    request->extras.set.expiration = info->expires > 0
+        ? g_htonl(info->expires) : g_htonl(3600);
 
     request->callback.put = callback;
     request->callback_ctx = callback_ctx;
