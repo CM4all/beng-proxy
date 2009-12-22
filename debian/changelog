@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.12) unstable; urgency=low
 
-  * 
+  * http-cache: unlock the cache item after successful revalidation
 
  --
 

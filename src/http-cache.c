@@ -261,6 +261,9 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
                              void *ctx)
 {
     struct http_cache_request *request = ctx;
+    struct http_cache *cache = request->cache;
+    struct http_cache_document *locked_document =
+        cache->cache ? request->document : NULL;
     off_t available;
     pool_t caller_pool = request->caller_pool;
 
@@ -270,6 +273,10 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         cache_log(5, "http_cache: not_modified %s\n", request->url);
         http_cache_serve(request);
         pool_unref(caller_pool);
+
+        if (locked_document != NULL)
+            http_cache_unlock(cache, locked_document);
+
         return;
     }
 
@@ -283,6 +290,10 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         http_cache_serve(request);
         pool_unref(caller_pool);
+
+        if (locked_document != NULL)
+            http_cache_unlock(cache, locked_document);
+
         return;
     }
 
