@@ -188,6 +188,7 @@ SRC = src/main.c \
 	src/delegate-request.c \
 	src/delegate-handler.c \
 	src/uri-edit.c \
+	src/uri-extract.c \
 	src/uri-relative.c \
 	src/uri-verify.c \
 	src/uri-parser.c \
@@ -657,7 +658,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/args.c src/uri-escape.c src/uri-verify.c \
 	src/format.c \
 	src/resource-address.c src/uri-address.c \
-	src/uri-relative.c src/uri-edit.c \
+	src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/resource-tag.c \
 	src/cookie-client.c \
 	src/header-parser.c src/header-forward.c src/header-writer.c \

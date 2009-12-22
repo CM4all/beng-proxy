@@ -12,6 +12,7 @@
 #include "uri-address.h"
 #include "global.h"
 #include "cookie-client.h"
+#include "uri-extract.h"
 
 static const char *
 extract_server_name(const struct strmap *headers)
@@ -22,22 +23,6 @@ extract_server_name(const struct strmap *headers)
 
     /* XXX remove port? */
     return p;
-}
-
-static const char *
-uri_host_and_port(pool_t pool, const char *uri)
-{
-    const char *slash;
-
-    if (memcmp(uri, "http://", 7) != 0)
-        return NULL;
-
-    uri += 7;
-    slash = strchr(uri, '/');
-    if (slash == NULL)
-        return uri;
-
-    return p_strndup(pool, uri, slash - uri);
 }
 
 static void

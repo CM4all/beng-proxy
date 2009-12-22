@@ -18,6 +18,7 @@
 #include "transformation.h"
 #include "global.h"
 #include "resource-tag.h"
+#include "uri-extract.h"
 
 #include <daemon/log.h>
 
@@ -55,36 +56,6 @@ session_get_if_stateful(const struct embed *embed)
     return embed->widget->class->stateful
         ? session_get(embed->env->session_id)
         : NULL;
-}
-
-static const char *
-uri_host_and_port(pool_t pool, const char *uri)
-{
-    const char *slash;
-
-    if (memcmp(uri, "http://", 7) != 0)
-        return NULL;
-
-    uri += 7;
-    slash = strchr(uri, '/');
-    if (slash == NULL)
-        return uri;
-
-    return p_strndup(pool, uri, slash - uri);
-}
-
-static const char *
-uri_path(const char *uri)
-{
-    const char *p = strchr(uri, ':');
-    if (p == NULL || p[1] != '/')
-        return uri;
-    if (p[2] != '/')
-        return p + 1;
-    p = strchr(p + 3, '/');
-    if (p == NULL)
-        return "";
-    return p;
 }
 
 static const char *
