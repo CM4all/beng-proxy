@@ -1,4 +1,4 @@
 demo/htdocs/*.html usr/share/cm4all/beng-proxy/demo/htdocs
-demo/widgets/demo_{date1,date2,date1_http,date2_http,post,search,hello,filter,vary} etc/cm4all/beng/widgets
+demo/widgets/demo_{date1,date2,date1_http,date2_http,time2,time2_http,post,search,hello,filter,vary} etc/cm4all/beng/widgets
 demo/{hello.html,filter.xml,filter.xsl} usr/share/cm4all/beng-proxy/demo
-demo/cgi-bin/{date1.py,date2.py,vary.py,xslt.sh,*.sed} usr/share/cm4all/beng-proxy/demo
+demo/cgi-bin/{date1.py,date2.py,time2.py,vary.py,xslt.sh,*.sed} usr/share/cm4all/beng-proxy/demo
