@@ -155,9 +155,6 @@ memcached_connection_abort_response_value(struct memcached_client *client)
 static void
 memcached_connection_close(struct memcached_client *client)
 {
-    if (!memcached_connection_valid(client))
-        return;
-
     switch (client->response.read_state) {
     case READ_HEADER:
     case READ_EXTRAS:
