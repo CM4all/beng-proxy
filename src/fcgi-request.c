@@ -94,6 +94,7 @@ fcgi_tcp_stock_callback(void *ctx, struct stock_item *item)
 void
 fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
              struct hstock *tcp_stock,
+             const char *action,
              const char *path,
              http_method_t method, const char *uri,
              const char *script_name, const char *path_info,
@@ -107,7 +108,10 @@ fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
     const char *socket_path;
     struct fcgi_request *request;
 
-    socket_path = fcgi_stock_get(fcgi_stock, path);
+    if (action == NULL)
+        action = path;
+
+    socket_path = fcgi_stock_get(fcgi_stock, action);
     if (socket_path == NULL) {
         http_response_handler_direct_abort(handler, handler_ctx);
         return;

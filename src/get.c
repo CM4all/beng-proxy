@@ -120,6 +120,7 @@ resource_get(struct http_cache *cache,
 
     case RESOURCE_ADDRESS_FASTCGI:
         fcgi_request(pool, fcgi_stock, tcp_stock,
+                     address->u.cgi.action,
                      address->u.cgi.path,
                      method, resource_address_cgi_uri(pool, address),
                      address->u.cgi.script_name,

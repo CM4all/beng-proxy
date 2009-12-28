@@ -30,6 +30,7 @@ fcgi_handler(struct request *request2)
         ++query_string;
 
     fcgi_request(request->pool, global_fcgi_stock, global_tcp_stock,
+                 tr->address.u.cgi.action,
                  tr->address.u.cgi.path,
                  forward.method, request->uri,
                  tr->address.u.cgi.script_name, tr->address.u.cgi.path_info,
