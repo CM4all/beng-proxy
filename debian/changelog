@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.13) unstable; urgency=low
 
-  * 
+  * fcgi-request: duplicate socket path
 
  --
 

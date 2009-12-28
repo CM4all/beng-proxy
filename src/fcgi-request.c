@@ -114,7 +114,7 @@ fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->tcp_stock = tcp_stock;
-    request->socket_path = socket_path;
+    request->socket_path = p_strdup(pool, socket_path);
     request->method = method;
     request->uri = uri;
     request->script_name = script_name;
