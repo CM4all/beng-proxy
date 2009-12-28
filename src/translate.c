@@ -529,7 +529,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_PATH_INFO:
         if (client->resource_address == NULL ||
-            client->resource_address->type != RESOURCE_ADDRESS_CGI) {
+            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
+             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI)) {
             /* don't emit this warning when the resource is a local
                path.  This combination might once be useful, but isn't
                currently used. */
@@ -741,7 +742,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_JAILCGI:
         if (client->resource_address != NULL &&
-            client->resource_address->type == RESOURCE_ADDRESS_CGI)
+            (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
+             client->resource_address->type == RESOURCE_ADDRESS_FASTCGI))
             client->resource_address->u.cgi.jail = true;
         else if (client->resource_address != NULL &&
                  client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
@@ -757,7 +759,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_INTERPRETER:
         if (client->resource_address == NULL ||
-            client->resource_address->type != RESOURCE_ADDRESS_CGI ||
+            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
+             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
             client->resource_address->u.cgi.interpreter != NULL) {
             daemon_log(2, "misplaced TRANSLATE_INTERPRETER packet\n");
             break;
@@ -768,7 +771,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_ACTION:
         if (client->resource_address == NULL ||
-            client->resource_address->type != RESOURCE_ADDRESS_CGI ||
+            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
+             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
             client->resource_address->u.cgi.action != NULL) {
             daemon_log(2, "misplaced TRANSLATE_ACTION packet\n");
             break;
@@ -779,7 +783,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_SCRIPT_NAME:
         if (client->resource_address == NULL ||
-            client->resource_address->type != RESOURCE_ADDRESS_CGI ||
+            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
+             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
             client->resource_address->u.cgi.script_name != NULL) {
             daemon_log(2, "misplaced TRANSLATE_SCRIPT_NAME packet\n");
             break;
@@ -790,7 +795,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_DOCUMENT_ROOT:
         if (client->resource_address != NULL &&
-            client->resource_address->type == RESOURCE_ADDRESS_CGI)
+            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
+             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI))
             client->resource_address->u.cgi.document_root = payload;
         else if (client->resource_address != NULL &&
                  client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
