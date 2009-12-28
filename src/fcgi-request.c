@@ -29,6 +29,7 @@ struct fcgi_request {
 
     http_method_t method;
     const char *uri;
+    const char *script_filename;
     const char *script_name;
     const char *path_info;
     const char *query_string;
@@ -75,6 +76,7 @@ fcgi_tcp_stock_callback(void *ctx, struct stock_item *item)
     fcgi_client_request(request->pool, tcp_stock_item_get(item),
                         &fcgi_socket_lease, request,
                         request->method, request->uri,
+                        request->script_filename,
                         request->script_name, request->path_info,
                         request->query_string,
                         request->document_root,
@@ -117,6 +119,7 @@ fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
     request->socket_path = p_strdup(pool, socket_path);
     request->method = method;
     request->uri = uri;
+    request->script_filename = path;
     request->script_name = script_name;
     request->path_info = path_info;
     request->query_string = query_string;

@@ -548,6 +548,7 @@ void
 fcgi_client_request(pool_t caller_pool, int fd,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
+                    const char *script_filename,
                     const char *script_name, const char *path_info,
                     const char *query_string,
                     const char *document_root,
@@ -598,6 +599,7 @@ fcgi_client_request(pool_t caller_pool, int fd,
     gb_append_params(client->request, "REQUEST_METHOD",
                      http_method_to_string(method));
     gb_append_params(client->request, "REQUEST_URI", uri);
+    gb_append_params(client->request, "SCRIPT_FILENAME", script_filename);
     gb_append_params(client->request, "SCRIPT_NAME", script_name);
     gb_append_params(client->request, "PATH_INFO", path_info);
     gb_append_params(client->request, "QUERY_STRING", query_string);

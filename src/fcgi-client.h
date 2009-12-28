@@ -19,6 +19,7 @@ void
 fcgi_client_request(pool_t pool, int fd,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
+                    const char *script_filename,
                     const char *script_name, const char *path_info,
                     const char *query_string,
                     const char *document_root,
