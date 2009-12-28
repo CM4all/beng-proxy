@@ -43,6 +43,9 @@ ARGF.each do |line|
         uri.sub!(/^(\/widgetserver\/\w+\/static\/).*/, '\1')
         uri.sub!(/^(\/login-service\/service\/(?:cred|i|sam)\/).*/, '\1')
 
+        # remove random number hack
+        uri.sub!(/\/\.(\d{4,})$/, '')
+
         # no static files
         next if uri =~ /\.(?:png|jpg|js|css|gif|conf|ico)(?:\?.*)?$/
     elsif line =~ /^stopwatch\[(\/[^\]]+)\]: fork=.* end=(\d+)ms/
