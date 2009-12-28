@@ -15,6 +15,7 @@ helpers_path = '/usr/bin'
 cgi_path = '/usr/lib/cgi-bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
+coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
 
@@ -118,6 +119,9 @@ class Translation(Protocol):
         cgi = cgi_re.search(path, 1)
         if cgi:
             response.packet(TRANSLATE_CGI, path)
+        elif path[-4:] == '.cls':
+            response.packet(TRANSLATE_FASTCGI, path)
+            response.packet(TRANSLATE_ACTION, coma_fastcgi)
         else:
             response.path(path)
             if delegate and jail:
@@ -263,6 +267,7 @@ if __name__ == '__main__':
         helpers_path = os.path.join(os.getcwd(), 'src')
         cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
         demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')
+        coma_fastcgi = os.path.join(os.getcwd(), '../../cgi-coma/src/cm4all-coma-fastcgi')
 
     if len(argv) >= 2:
         path = argv[1]
