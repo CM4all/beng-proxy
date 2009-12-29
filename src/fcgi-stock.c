@@ -76,14 +76,57 @@ fcgi_child_socket_path(pool_t pool, const char *executable_path __attr_unused)
                      (unsigned)random());
 }
 
+static int
+fcgi_create_socket(const struct fcgi_child *child)
+{
+    struct sockaddr_un sa;
+
+    size_t socket_path_length = strlen(child->socket_path);
+    if (socket_path_length >= sizeof(sa.sun_path)) {
+        daemon_log(2, "path too long: %s\n", child->socket_path);
+        return -1;
+    }
+
+    int ret = unlink(child->socket_path);
+    if (ret != 0 && errno != ENOENT) {
+        daemon_log(2, "failed to unlink %s: %s\n",
+                   child->socket_path, strerror(errno));
+        return -1;
+    }
+
+    int fd = socket(PF_UNIX, SOCK_STREAM, 0);
+    if (fd < 0) {
+        daemon_log(2, "failed to create unix socket %s: %s\n",
+                   child->socket_path, strerror(errno));
+        return -1;
+    }
+
+    sa.sun_family = AF_UNIX;
+    memcpy(sa.sun_path, child->socket_path, socket_path_length + 1);
+    ret = bind(fd, (struct sockaddr*)&sa, sizeof(sa));
+    if (ret < 0) {
+        daemon_log(2, "bind(%s) failed: %s\n",
+                   child->socket_path, strerror(errno));
+        close(fd);
+        return -1;
+    }
+
+    ret = listen(fd, 8);
+    if (ret < 0) {
+        daemon_log(2, "listen() failed: %s\n", strerror(errno));
+        close(fd);
+        return -1;
+    }
+
+    return fd;
+}
+
 const char *
 fcgi_stock_get(struct fcgi_stock *stock, const char *executable_path)
 {
     struct fcgi_child *child = hashmap_get(stock->children, executable_path);
     pool_t pool;
-    size_t socket_path_length;
-    int ret, fd;
-    struct sockaddr_un sa;
+    int fd;
 
     if (child != NULL)
         return child->socket_path;
@@ -94,46 +137,10 @@ fcgi_stock_get(struct fcgi_stock *stock, const char *executable_path)
     child->stock = stock;
     child->executable_path = p_strdup(pool, executable_path);
     child->socket_path = fcgi_child_socket_path(pool, executable_path);
-    socket_path_length = strlen(child->socket_path);
 
-    if (socket_path_length >= sizeof(sa.sun_path)) {
-        daemon_log(2, "path too long: %s\n", child->socket_path);
-        pool_unref(pool);
-        return NULL;
-    }
-
-    ret = unlink(child->socket_path);
-    if (ret != 0 && errno != ENOENT) {
-        daemon_log(2, "failed to unlink %s: %s\n",
-                   child->socket_path, strerror(errno));
-        pool_unref(pool);
-        return NULL;
-    }
-
-    fd = socket(PF_UNIX, SOCK_STREAM, 0);
+    fd = fcgi_create_socket(child);
     if (fd < 0) {
-        daemon_log(2, "failed to create unix socket %s: %s\n",
-                   child->socket_path, strerror(errno));
         pool_unref(pool);
-        return NULL;
-    }
-
-    sa.sun_family = AF_UNIX;
-    memcpy(sa.sun_path, child->socket_path, socket_path_length + 1);
-    ret = bind(fd, (struct sockaddr*)&sa, sizeof(sa));
-    if (ret < 0) {
-        daemon_log(2, "bind(%s) failed: %s\n",
-                   child->socket_path, strerror(errno));
-        pool_unref(pool);
-        close(fd);
-        return NULL;
-    }
-
-    ret = listen(fd, 8);
-    if (ret < 0) {
-        daemon_log(2, "listen() failed: %s\n", strerror(errno));
-        pool_unref(pool);
-        close(fd);
         return NULL;
     }
 
