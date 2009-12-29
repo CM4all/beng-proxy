@@ -121,6 +121,30 @@ fcgi_create_socket(const struct fcgi_child *child)
     return fd;
 }
 
+static pid_t
+fcgi_spawn_child(const char *executable_path, int fd)
+{
+    pid_t pid = fork();
+    if (pid < 0) {
+        daemon_log(2, "fork() failed: %s\n", strerror(errno));
+        return -1;
+    }
+
+    if (pid == 0) {
+        dup2(fd, 0);
+        close(fd);
+        close(1);
+        close(2);
+
+        execl(executable_path, executable_path, NULL);
+        daemon_log(1, "failed to execute %s: %s\n",
+                   executable_path, strerror(errno));
+        _exit(1);
+    }
+
+    return pid;
+}
+
 const char *
 fcgi_stock_get(struct fcgi_stock *stock, const char *executable_path)
 {
@@ -144,27 +168,12 @@ fcgi_stock_get(struct fcgi_stock *stock, const char *executable_path)
         return NULL;
     }
 
-    child->pid = fork();
+    child->pid = fcgi_spawn_child(executable_path, fd);
+    close(fd);
     if (child->pid < 0) {
-        daemon_log(2, "fork() failed: %s\n", strerror(errno));
         pool_unref(pool);
-        close(fd);
         return NULL;
     }
-
-    if (child->pid == 0) {
-        dup2(fd, 0);
-        close(fd);
-        close(1);
-        close(2);
-
-        execl(executable_path, executable_path, NULL);
-        daemon_log(1, "failed to execute %s: %s\n",
-                   executable_path, strerror(errno));
-        _exit(1);
-    }
-
-    close(fd);
 
     hashmap_add(stock->children, child->executable_path, child);
     child_register(child->pid, fcgi_child_callback, child);
