@@ -24,7 +24,7 @@ struct fcgi_child {
     struct fcgi_stock *stock;
     const char *executable_path;
 
-    const char *socket_path;
+    struct sockaddr_un address;
 
     pid_t pid;
 };
@@ -54,7 +54,7 @@ fcgi_stock_kill(struct fcgi_stock *stock)
     while ((pair = hashmap_next(stock->children)) != NULL) {
         struct fcgi_child *child = pair->value;
         kill(child->pid, SIGTERM);
-        unlink(child->socket_path);
+        unlink(child->address.sun_path);
         child_clear(child->pid);
         pool_unref(child->pool);
     }
@@ -69,44 +69,39 @@ fcgi_child_callback(int status __attr_unused, void *ctx)
     pool_unref(child->pool);
 }
 
-static const char *
-fcgi_child_socket_path(pool_t pool, const char *executable_path __attr_unused)
+static void
+fcgi_child_socket_path(struct sockaddr_un *address,
+                       const char *executable_path __attr_unused)
 {
-    return p_sprintf(pool, "/tmp/cm4all-beng-proxy-fcgi-%u.socket",
-                     (unsigned)random());
+    address->sun_family = AF_UNIX;
+
+    snprintf(address->sun_path, sizeof(address->sun_path),
+             "/tmp/cm4all-beng-proxy-fcgi-%u.socket",
+             (unsigned)random());
 }
 
 static int
 fcgi_create_socket(const struct fcgi_child *child)
 {
-    struct sockaddr_un sa;
-
-    size_t socket_path_length = strlen(child->socket_path);
-    if (socket_path_length >= sizeof(sa.sun_path)) {
-        daemon_log(2, "path too long: %s\n", child->socket_path);
-        return -1;
-    }
-
-    int ret = unlink(child->socket_path);
+    int ret = unlink(child->address.sun_path);
     if (ret != 0 && errno != ENOENT) {
         daemon_log(2, "failed to unlink %s: %s\n",
-                   child->socket_path, strerror(errno));
+                   child->address.sun_path, strerror(errno));
         return -1;
     }
 
     int fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0) {
         daemon_log(2, "failed to create unix socket %s: %s\n",
-                   child->socket_path, strerror(errno));
+                   child->address.sun_path, strerror(errno));
         return -1;
     }
 
-    sa.sun_family = AF_UNIX;
-    memcpy(sa.sun_path, child->socket_path, socket_path_length + 1);
-    ret = bind(fd, (struct sockaddr*)&sa, sizeof(sa));
+    ret = bind(fd, (const struct sockaddr*)&child->address,
+               sizeof(child->address));
     if (ret < 0) {
         daemon_log(2, "bind(%s) failed: %s\n",
-                   child->socket_path, strerror(errno));
+                   child->address.sun_path, strerror(errno));
         close(fd);
         return -1;
     }
@@ -153,14 +148,14 @@ fcgi_stock_get(struct fcgi_stock *stock, const char *executable_path)
     int fd;
 
     if (child != NULL)
-        return child->socket_path;
+        return child->address.sun_path;
 
     pool = pool_new_libc(stock->pool, "fcgi_child");
     child = p_malloc(pool, sizeof(*child));
     child->pool = pool;
     child->stock = stock;
     child->executable_path = p_strdup(pool, executable_path);
-    child->socket_path = fcgi_child_socket_path(pool, executable_path);
+    fcgi_child_socket_path(&child->address, executable_path);
 
     fd = fcgi_create_socket(child);
     if (fd < 0) {
@@ -178,5 +173,5 @@ fcgi_stock_get(struct fcgi_stock *stock, const char *executable_path)
     hashmap_add(stock->children, child->executable_path, child);
     child_register(child->pid, fcgi_child_callback, child);
 
-    return child->socket_path;
+    return child->address.sun_path;
 }
