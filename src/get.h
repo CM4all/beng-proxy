@@ -12,7 +12,6 @@
 #include "http.h"
 
 struct http_cache;
-struct fcgi_stock;
 struct hstock;
 struct resource_address;
 struct strmap;
@@ -33,7 +32,7 @@ struct async_operation_ref;
 void
 resource_get(struct http_cache *cache,
              struct hstock *tcp_stock,
-             struct fcgi_stock *fcgi_stock,
+             struct hstock *fcgi_stock,
              struct hstock *delegate_stock,
              pool_t pool,
              http_method_t method,

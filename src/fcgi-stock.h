@@ -7,17 +7,21 @@
 #ifndef __BENG_FCGI_STOCK_H
 #define __BENG_FCGI_STOCK_H
 
-#include "pool.h"
+#include "stock.h"
 
-struct fcgi_stock;
-
-struct fcgi_stock *
-fcgi_stock_new(pool_t pool);
+struct hstock *
+fcgi_stock_new(pool_t pool, unsigned limit);
 
 void
-fcgi_stock_kill(struct fcgi_stock *stock);
+fcgi_stock_get(struct hstock *hstock, pool_t pool,
+               const char *executable_path,
+               stock_callback_t callback, void *callback_ctx,
+               struct async_operation_ref *async_ref);
 
-const char *
-fcgi_stock_get(struct fcgi_stock *stock, const char *executable_path);
+/**
+ * Returns the socket descriptor of the specified stock item.
+ */
+int
+fcgi_stock_item_get(const struct stock_item *item);
 
 #endif

@@ -17,8 +17,7 @@ struct http_response_handler;
 struct async_operation_ref;
 
 void
-fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
-             struct hstock *tcp_stock,
+fcgi_request(pool_t pool, struct hstock *fcgi_stock,
              const char *action,
              const char *path,
              http_method_t method, const char *uri,

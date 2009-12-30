@@ -12,7 +12,6 @@
 
 struct filter_cache;
 struct hstock;
-struct fcgi_stock;
 struct resource_address;
 struct strmap;
 struct http_response_handler;
@@ -21,7 +20,7 @@ struct async_operation_ref;
 struct filter_cache *
 filter_cache_new(pool_t pool, size_t max_size,
                  struct hstock *tcp_stock,
-                 struct fcgi_stock *fcgi_stock);
+                 struct hstock *fcgi_stock);
 
 void
 filter_cache_close(struct filter_cache *cache);

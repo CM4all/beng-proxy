@@ -82,7 +82,7 @@ struct hstock;
 void
 resource_get(__attr_unused struct http_cache *cache,
              __attr_unused struct hstock *tcp_stock,
-             __attr_unused struct fcgi_stock *fcgi_stock,
+             __attr_unused struct hstock *fcgi_stock,
              __attr_unused struct hstock *delegate_stock,
              pool_t pool,
              http_method_t method,

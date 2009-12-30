@@ -23,8 +23,8 @@
 struct fcgi_request {
     pool_t pool;
 
-    struct hstock *tcp_stock;
-    const char *socket_path;
+    struct hstock *fcgi_stock;
+    const char *action;
     struct stock_item *stock_item;
 
     http_method_t method;
@@ -52,7 +52,7 @@ fcgi_socket_release(bool reuse, void *ctx)
 {
     struct fcgi_request *request = ctx;
 
-    hstock_put(request->tcp_stock, request->socket_path,
+    hstock_put(request->fcgi_stock, request->action,
                request->stock_item, !reuse);
 }
 
@@ -62,7 +62,7 @@ static const struct lease fcgi_socket_lease = {
 
 
 static void
-fcgi_tcp_stock_callback(void *ctx, struct stock_item *item)
+fcgi_stock_callback(void *ctx, struct stock_item *item)
 {
     struct fcgi_request *request = ctx;
 
@@ -73,7 +73,7 @@ fcgi_tcp_stock_callback(void *ctx, struct stock_item *item)
 
     request->stock_item = item;
 
-    fcgi_client_request(request->pool, tcp_stock_item_get(item),
+    fcgi_client_request(request->pool, fcgi_stock_item_get(item),
                         &fcgi_socket_lease, request,
                         request->method, request->uri,
                         request->script_filename,
@@ -92,8 +92,7 @@ fcgi_tcp_stock_callback(void *ctx, struct stock_item *item)
  */
 
 void
-fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
-             struct hstock *tcp_stock,
+fcgi_request(pool_t pool, struct hstock *fcgi_stock,
              const char *action,
              const char *path,
              http_method_t method, const char *uri,
@@ -105,22 +104,15 @@ fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
 {
-    const char *socket_path;
     struct fcgi_request *request;
 
     if (action == NULL)
         action = path;
 
-    socket_path = fcgi_stock_get(fcgi_stock, action);
-    if (socket_path == NULL) {
-        http_response_handler_direct_abort(handler, handler_ctx);
-        return;
-    }
-
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
-    request->tcp_stock = tcp_stock;
-    request->socket_path = p_strdup(pool, socket_path);
+    request->fcgi_stock = fcgi_stock;
+    request->action = action;
     request->method = method;
     request->uri = uri;
     request->script_filename = path;
@@ -135,8 +127,8 @@ fcgi_request(pool_t pool, struct fcgi_stock *fcgi_stock,
     http_response_handler_set(&request->handler, handler, handler_ctx);
     request->async_ref = async_ref;
 
-    hstock_get(tcp_stock, pool,
-               socket_path, NULL,
-               fcgi_tcp_stock_callback, request,
+    hstock_get(fcgi_stock, pool,
+               action, NULL,
+               fcgi_stock_callback, request,
                async_ref);
 }

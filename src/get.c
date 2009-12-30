@@ -52,7 +52,7 @@ extract_server_name(const struct strmap *headers)
 void
 resource_get(struct http_cache *cache,
              struct hstock *tcp_stock,
-             struct fcgi_stock *fcgi_stock,
+             struct hstock *fcgi_stock,
              struct hstock *delegate_stock,
              pool_t pool,
              http_method_t method,
@@ -119,7 +119,7 @@ resource_get(struct http_cache *cache,
         return;
 
     case RESOURCE_ADDRESS_FASTCGI:
-        fcgi_request(pool, fcgi_stock, tcp_stock,
+        fcgi_request(pool, fcgi_stock,
                      address->u.cgi.action,
                      address->u.cgi.path,
                      method, resource_address_cgi_uri(pool, address),

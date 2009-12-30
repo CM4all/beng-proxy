@@ -29,7 +29,7 @@ fcgi_handler(struct request *request2)
     else
         ++query_string;
 
-    fcgi_request(request->pool, global_fcgi_stock, global_tcp_stock,
+    fcgi_request(request->pool, global_fcgi_stock,
                  tr->address.u.cgi.action,
                  tr->address.u.cgi.path,
                  forward.method, request->uri,

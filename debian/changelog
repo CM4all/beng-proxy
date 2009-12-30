@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.7.13) unstable; urgency=low
   * fcgi-request: support ACTION
   * fcgi-client: provide SCRIPT_FILENAME
   * fcgi-client: append empty PARAMS packet
+  * fcgi-stock: manage one socket per child process
 
  --
 

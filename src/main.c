@@ -107,7 +107,7 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     }
 
     if (instance->fcgi_stock != NULL) {
-        fcgi_stock_kill(instance->fcgi_stock);
+        hstock_free(instance->fcgi_stock);
         instance->fcgi_stock = NULL;
     }
 
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
                                          instance.config.http_cache_size,
                                          instance.memcached_stock,
                                          instance.tcp_stock);
-    instance.fcgi_stock = fcgi_stock_new(instance.pool);
+    instance.fcgi_stock = fcgi_stock_new(instance.pool, 16);
     instance.delegate_stock = delegate_stock_new(instance.pool);
     instance.pipe_stock = pipe_stock_new(instance.pool);
     instance.filter_cache = filter_cache_new(instance.pool,

@@ -50,7 +50,7 @@ struct instance {
 
     struct filter_cache *filter_cache;
 
-    struct fcgi_stock *fcgi_stock;
+    struct hstock *fcgi_stock;
 
     struct hstock *delegate_stock;
 

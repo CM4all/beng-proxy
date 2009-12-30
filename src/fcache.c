@@ -48,7 +48,7 @@ struct filter_cache {
 
     struct hstock *tcp_stock;
 
-    struct fcgi_stock *fcgi_stock;
+    struct hstock *fcgi_stock;
 
     struct list_head requests;
 };
@@ -460,7 +460,7 @@ static const struct cache_class filter_cache_class = {
 struct filter_cache *
 filter_cache_new(pool_t pool, size_t max_size,
                  struct hstock *tcp_stock,
-                 struct fcgi_stock *fcgi_stock)
+                 struct hstock *fcgi_stock)
 {
     struct filter_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
