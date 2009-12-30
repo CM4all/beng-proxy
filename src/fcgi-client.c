@@ -70,6 +70,20 @@ static void
 fcgi_client_response_body_init(struct fcgi_client *client);
 
 /**
+ * Release the socket held by this object.
+ */
+static void
+fcgi_client_release_socket(struct fcgi_client *client, bool reuse)
+{
+    assert(client != NULL);
+    assert(client->fd >= 0);
+
+    event_del(&client->event);
+    client->fd = -1;
+    lease_release(&client->lease_ref, reuse);
+}
+
+/**
  * Release resources held by this object: the event object, the socket
  * lease, and the pool reference.
  */
@@ -78,9 +92,8 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
 {
     assert(client != NULL);
 
-    event_del(&client->event);
-    client->fd = -1;
-    lease_release(&client->lease_ref, reuse);
+    fcgi_client_release_socket(client, reuse);
+
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
