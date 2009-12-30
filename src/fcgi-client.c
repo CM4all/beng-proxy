@@ -92,7 +92,8 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
 {
     assert(client != NULL);
 
-    fcgi_client_release_socket(client, reuse);
+    if (client->fd >= 0)
+        fcgi_client_release_socket(client, reuse);
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -108,6 +109,8 @@ fcgi_client_abort_response_headers(struct fcgi_client *client)
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
+    fcgi_client_release_socket(client, false);
+
     http_response_handler_invoke_abort(&client->handler);
 
     fcgi_client_release(client, false);
@@ -121,6 +124,9 @@ static void
 fcgi_client_abort_response_body(struct fcgi_client *client)
 {
     assert(client->response.read_state == READ_BODY);
+
+    if (client->fd >= 0)
+        fcgi_client_release_socket(client, false);
 
     istream_deinit_abort(&client->response.body);
     fcgi_client_release(client, false);
@@ -293,11 +299,15 @@ fcgi_client_consume_input(struct fcgi_client *client)
             client->skip_length = ntohs(header->content_length) + header->padding_length;
             fifo_buffer_consume(client->input, sizeof(*header));
 
+            if (client->skip_length == 0)
+                fcgi_client_release_socket(client,
+                                           fifo_buffer_empty(client->input));
+
             istream_deinit_eof(&client->response.body);
             client->response.read_state = READ_END;
 
             if (client->skip_length == 0) {
-                fcgi_client_release(client, fifo_buffer_empty(client->input));
+                fcgi_client_release(client, false);
                 return false;
             }
 
