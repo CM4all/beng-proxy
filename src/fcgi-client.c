@@ -629,6 +629,10 @@ fcgi_client_request(pool_t caller_pool, int fd,
     gb_append_params(client->request, "DOCUMENT_ROOT", document_root);
     gb_append_params(client->request, "SERVER_SOFTWARE", "beng-proxy v" VERSION);
 
+    header.type = FCGI_PARAMS;
+    header.content_length = htons(0);
+    growing_buffer_write_buffer(client->request, &header, sizeof(header));
+
     header.type = FCGI_STDIN;
     header.content_length = htons(0);
     growing_buffer_write_buffer(client->request, &header, sizeof(header));
