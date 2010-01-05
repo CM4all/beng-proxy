@@ -327,7 +327,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
  *
  */
 
-static void
+static bool
 fcgi_client_try_read(struct fcgi_client *client)
 {
     ssize_t nbytes;
@@ -338,27 +338,29 @@ fcgi_client_try_read(struct fcgi_client *client)
     if (nbytes == 0) {
         daemon_log(1, "FastCGI server closed the connection\n");
         fcgi_client_abort_response(client);
-        return;
+        return false;
     }
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
             event_add(&client->event, NULL);
-            return;
+            return true;
         }
 
         daemon_log(1, "read error on FastCGI connection: %s\n", strerror(errno));
         fcgi_client_abort_response(client);
-        return;
+        return false;
     }
 
     if (fcgi_client_consume_input(client)) {
         assert(!fifo_buffer_full(client->input));
         event_add(&client->event, NULL);
     }
+
+    return true;
 }
 
-static void
+static bool
 fcgi_client_try_write(struct fcgi_client *client)
 {
     const void *p;
@@ -375,7 +377,7 @@ fcgi_client_try_write(struct fcgi_client *client)
         event_set(&client->event, client->fd, EV_READ,
                   fcgi_client_event, client);
         event_add(&client->event, NULL);
-        return;
+        return true;
     }
 
     nbytes = send(client->fd, p, length, MSG_DONTWAIT|MSG_NOSIGNAL);
@@ -384,13 +386,14 @@ fcgi_client_try_write(struct fcgi_client *client)
                    strerror(errno));
         http_response_handler_invoke_abort(&client->handler);
         fcgi_client_release(client, false);
-        return;
+        return false;
     }
 
     if (nbytes > 0)
         growing_buffer_consume(client->request, (size_t)nbytes);
 
     event_add(&client->event, NULL);
+    return true;
 }
 
 
@@ -404,10 +407,13 @@ fcgi_client_event(int fd __attr_unused, short event, void *ctx)
 {
     struct fcgi_client *client = ctx;
 
-    if ((event & EV_WRITE) != 0)
-        fcgi_client_try_write(client);
-    else
-        fcgi_client_try_read(client);
+    if ((event & EV_WRITE) != 0 &&
+        !fcgi_client_try_write(client))
+        event = 0;
+
+    if ((event & EV_READ) != 0 &&
+        !fcgi_client_try_read(client))
+        event = 0;
 
     pool_commit();
 }
