@@ -380,8 +380,14 @@ fcgi_client_try_write(struct fcgi_client *client)
         return false;
     }
 
-    if (nbytes > 0)
+    if (nbytes > 0) {
         growing_buffer_consume(client->request, (size_t)nbytes);
+
+        if (growing_buffer_empty(client->request)) {
+            event2_nand(&client->event, EV_WRITE);
+            return true;
+        }
+    }
 
     event2_or(&client->event, EV_WRITE);
     return true;
