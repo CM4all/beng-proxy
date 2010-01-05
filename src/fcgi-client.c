@@ -48,7 +48,6 @@ struct fcgi_client {
 
     struct {
         enum {
-            READ_NONE,
             READ_STATUS,
             READ_HEADERS,
             READ_BODY,
@@ -197,7 +196,6 @@ static size_t
 fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
 {
     switch (client->response.read_state) {
-    case READ_NONE:
     case READ_STATUS:
     case READ_END:
         assert(false);
@@ -369,12 +367,8 @@ fcgi_client_try_write(struct fcgi_client *client)
 
     p = growing_buffer_read(client->request, &length);
     if (p == NULL) {
-        client->response.read_state = READ_HEADERS;
-        client->response.headers = strmap_new(client->pool, 17);
-        client->content_length = 0;
-        client->skip_length = 0;
-
-        event2_set(&client->event, EV_READ);
+        event2_nand(&client->event, EV_WRITE);
+        event2_or(&client->event, EV_READ);
         return true;
     }
 
@@ -497,8 +491,7 @@ fcgi_client_request_abort(struct async_operation *ao)
     
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(client->response.read_state == READ_NONE ||
-           client->response.read_state == READ_STATUS ||
+    assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
     /* XXX close request body */
@@ -621,8 +614,11 @@ fcgi_client_request(pool_t caller_pool, int fd,
     async_ref_set(async_ref, &client->async);
 
     client->request = growing_buffer_new(pool, 1024);
-    client->response.read_state = READ_NONE;
+    client->response.read_state = READ_HEADERS;
+    client->response.headers = strmap_new(client->pool, 17);
     client->input = fifo_buffer_new(pool, 4096);
+    client->content_length = 0;
+    client->skip_length = 0;
 
     header.type = FCGI_BEGIN_REQUEST;
     header.content_length = htons(sizeof(begin_request));
@@ -650,5 +646,12 @@ fcgi_client_request(pool_t caller_pool, int fd,
     (void)headers; /* XXX */
     (void)body; /* XXX */
 
+    pool_ref(client->pool);
+    event2_lock(&client->event);
+    event2_set(&client->event, EV_READ);
+
     fcgi_client_try_write(client);
+
+    event2_unlock(&client->event);
+    pool_unref(client->pool);
 }

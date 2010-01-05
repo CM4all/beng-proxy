@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.7.13) unstable; urgency=low
   * fcgi-request: support ACTION
   * fcgi-client: provide SCRIPT_FILENAME
   * fcgi-client: append empty PARAMS packet
+  * fcgi-client: try to read response before request is finished
   * fcgi-stock: manage one socket per child process
 
  --
@@ -19,7 +20,7 @@ cm4all-beng-proxy (0.7.12) unstable; urgency=low
 
 cm4all-beng-proxy (0.7.11) unstable; urgency=low
 
-  * {ajp,memcached}-client: fix disappearing event for duplex socket
+  * {ajp,memcached}-client: fix dis\appearing event for duplex socket
   * memcached-client: handle EAGAIN after send()
   * memcached-client: release socket as early as possible
   * header-forward: don't forward Accept-Encoding if transformation is
