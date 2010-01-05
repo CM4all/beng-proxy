@@ -368,7 +368,6 @@ fcgi_client_try_write(struct fcgi_client *client)
     p = growing_buffer_read(client->request, &length);
     if (p == NULL) {
         event2_nand(&client->event, EV_WRITE);
-        event2_or(&client->event, EV_READ);
         return true;
     }
 
@@ -399,8 +398,8 @@ fcgi_client_event(int fd __attr_unused, short event, void *ctx)
 {
     struct fcgi_client *client = ctx;
 
-    event2_reset(&client->event);
     event2_lock(&client->event);
+    event2_occurred_persist(&client->event, event);
 
     if ((event & EV_WRITE) != 0 &&
         !fcgi_client_try_write(client))
@@ -607,6 +606,7 @@ fcgi_client_request(pool_t caller_pool, int fd,
     client->fd = fd;
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
     event2_init(&client->event, fd, fcgi_client_event, client, NULL);
+    event2_persist(&client->event);
 
     http_response_handler_set(&client->handler, handler, handler_ctx);
 
