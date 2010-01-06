@@ -294,6 +294,14 @@ fcgi_client_consume_input(struct fcgi_client *client)
             break;
 
         case FCGI_END_REQUEST:
+            if (client->response.read_state == READ_STATUS ||
+                client->response.read_state == READ_HEADERS) {
+                daemon_log(1, "premature end of headers "
+                           "from FastCGI application\n");
+                fcgi_client_abort_response(client);
+                return false;
+            }
+
             client->skip_length = ntohs(header->content_length) + header->padding_length;
             fifo_buffer_consume(client->input, sizeof(*header));
 
