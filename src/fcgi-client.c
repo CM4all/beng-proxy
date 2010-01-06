@@ -57,6 +57,12 @@ struct fcgi_client {
         struct strmap *headers;
 
         struct istream body;
+
+        /**
+         * Is the FastCGI application currently sending a STDERR
+         * packet?
+         */
+        bool stderr;
     } response;
 
     struct fifo_buffer *input;
@@ -162,6 +168,7 @@ fcgi_client_handle_line(struct fcgi_client *client,
         return false;
     } else {
         client->response.read_state = READ_BODY;
+        client->response.stderr = false;
         return true;
     }
 }
@@ -205,7 +212,10 @@ fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
         return fcgi_client_parse_headers(client, data, length);
 
     case READ_BODY:
-        return istream_invoke_data(&client->response.body, data, length);
+        if (client->response.stderr)
+            fwrite(data, 1, length, stderr);
+        else
+            return istream_invoke_data(&client->response.body, data, length);
     }
 
     /* unreachable */
@@ -290,6 +300,14 @@ fcgi_client_consume_input(struct fcgi_client *client)
         case FCGI_STDOUT:
             client->content_length = ntohs(header->content_length);
             client->skip_length = header->padding_length;
+            client->response.stderr = false;
+            fifo_buffer_consume(client->input, sizeof(*header));
+            break;
+
+        case FCGI_STDERR:
+            client->content_length = ntohs(header->content_length);
+            client->skip_length = header->padding_length;
+            client->response.stderr = true;
             fifo_buffer_consume(client->input, sizeof(*header));
             break;
 
