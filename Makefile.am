@@ -173,6 +173,7 @@ SRC = src/main.c \
 	src/pipe.c \
 	src/cgi.c \
 	src/fcgi-stock.c \
+	src/fcgi-serialize.c \
 	src/fcgi-client.c \
 	src/fcgi-request.c \
 	src/growing-buffer.c \

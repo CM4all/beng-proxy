@@ -6,6 +6,7 @@
 
 #include "fcgi-client.h"
 #include "fcgi-protocol.h"
+#include "fcgi-serialize.h"
 #include "growing-buffer.h"
 #include "http-response.h"
 #include "async.h"
@@ -536,67 +537,6 @@ static const struct async_operation_class fcgi_client_async_operation = {
 
 
 /*
- * growing_buffer utilities
- *
- */
-
-static size_t
-gb_append_length(struct growing_buffer *gb, size_t length)
-{
-    if (length < 0x80) {
-        uint8_t buffer = (uint8_t)length;
-        growing_buffer_write_buffer(gb, &buffer, sizeof(buffer));
-        return sizeof(buffer);
-    } else {
-        /* XXX 31 bit overflow? */
-        uint32_t buffer = htonl(length | 0x80000000);
-        growing_buffer_write_buffer(gb, &buffer, sizeof(buffer));
-        return sizeof(buffer);
-    }
-}
-
-static size_t
-gb_append_pair(struct growing_buffer *gb, const char *name,
-               const char *value)
-{
-    size_t size, name_length, value_length;
-
-    assert(name != NULL);
-
-    if (value == NULL)
-        value = "";
-
-    name_length = strlen(name);
-    value_length = strlen(value);
-    size = gb_append_length(gb, name_length) +
-        gb_append_length(gb, value_length);
-
-    growing_buffer_write_buffer(gb, name, name_length);
-    growing_buffer_write_buffer(gb, value, value_length);
-
-    return size + name_length + value_length;
-}
-
-static void
-gb_append_params(struct growing_buffer *gb, const char *name,
-               const char *value)
-{
-    struct fcgi_record_header *header;
-    size_t content_length;
-
-    header = growing_buffer_write(gb, sizeof(*header));
-    header->version = FCGI_VERSION_1;
-    header->type = FCGI_PARAMS;
-    header->request_id = macro_htons(1);
-    header->padding_length = 0;
-    header->reserved = 0;
-
-    content_length = gb_append_pair(gb, name, value);
-    header->content_length = htons(content_length);
-}
-
-
-/*
  * constructor
  *
  */
@@ -657,15 +597,16 @@ fcgi_client_request(pool_t caller_pool, int fd,
     growing_buffer_write_buffer(client->request, &header, sizeof(header));
     growing_buffer_write_buffer(client->request, &begin_request, sizeof(begin_request));
 
-    gb_append_params(client->request, "REQUEST_METHOD",
-                     http_method_to_string(method));
-    gb_append_params(client->request, "REQUEST_URI", uri);
-    gb_append_params(client->request, "SCRIPT_FILENAME", script_filename);
-    gb_append_params(client->request, "SCRIPT_NAME", script_name);
-    gb_append_params(client->request, "PATH_INFO", path_info);
-    gb_append_params(client->request, "QUERY_STRING", query_string);
-    gb_append_params(client->request, "DOCUMENT_ROOT", document_root);
-    gb_append_params(client->request, "SERVER_SOFTWARE", "beng-proxy v" VERSION);
+    fcgi_serialize_params(client->request, "REQUEST_METHOD",
+                          http_method_to_string(method));
+    fcgi_serialize_params(client->request, "REQUEST_URI", uri);
+    fcgi_serialize_params(client->request, "SCRIPT_FILENAME", script_filename);
+    fcgi_serialize_params(client->request, "SCRIPT_NAME", script_name);
+    fcgi_serialize_params(client->request, "PATH_INFO", path_info);
+    fcgi_serialize_params(client->request, "QUERY_STRING", query_string);
+    fcgi_serialize_params(client->request, "DOCUMENT_ROOT", document_root);
+    fcgi_serialize_params(client->request, "SERVER_SOFTWARE",
+                          "beng-proxy v" VERSION);
 
     header.type = FCGI_PARAMS;
     header.content_length = htons(0);
