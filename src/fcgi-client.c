@@ -652,12 +652,9 @@ fcgi_client_request(pool_t caller_pool, int fd,
     (void)headers; /* XXX */
     (void)body; /* XXX */
 
-    pool_ref(client->pool);
     event2_lock(&client->event);
     event2_set(&client->event, EV_READ);
 
-    fcgi_client_try_write(client);
-
-    event2_unlock(&client->event);
-    pool_unref(client->pool);
+    if (fcgi_client_try_write(client))
+        event2_unlock(&client->event);
 }
