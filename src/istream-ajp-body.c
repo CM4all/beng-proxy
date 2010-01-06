@@ -1,5 +1,5 @@
 /*
- * This istream filter adds HTTP chunking.
+ * This istream filter wraps data inside AJPv13 packets.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
