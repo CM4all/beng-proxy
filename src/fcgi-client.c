@@ -203,6 +203,11 @@ fcgi_client_parse_headers(struct fcgi_client *client,
 static size_t
 fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
 {
+    if (client->response.stderr) {
+        ssize_t nbytes = fwrite(data, 1, length, stderr);
+        return nbytes > 0 ? (size_t)nbytes : 0;
+    }
+
     switch (client->response.read_state) {
     case READ_STATUS:
     case READ_END:
@@ -213,10 +218,7 @@ fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
         return fcgi_client_parse_headers(client, data, length);
 
     case READ_BODY:
-        if (client->response.stderr)
-            fwrite(data, 1, length, stderr);
-        else
-            return istream_invoke_data(&client->response.body, data, length);
+        return istream_invoke_data(&client->response.body, data, length);
     }
 
     /* unreachable */
