@@ -51,8 +51,8 @@ fcgi_serialize_pair(struct growing_buffer *gb, const char *name,
 }
 
 void
-fcgi_serialize_params(struct growing_buffer *gb, const char *name,
-                      const char *value)
+fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id,
+                      const char *name, const char *value)
 {
     struct fcgi_record_header *header;
     size_t content_length;
@@ -60,7 +60,7 @@ fcgi_serialize_params(struct growing_buffer *gb, const char *name,
     header = growing_buffer_write(gb, sizeof(*header));
     header->version = FCGI_VERSION_1;
     header->type = FCGI_PARAMS;
-    header->request_id = GUINT16_TO_BE(1);
+    header->request_id = request_id;
     header->padding_length = 0;
     header->reserved = 0;
 

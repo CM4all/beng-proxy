@@ -209,20 +209,19 @@ static const struct istream istream_fcgi = {
  */
 
 istream_t
-istream_fcgi_new(pool_t pool, istream_t input, unsigned request_id)
+istream_fcgi_new(pool_t pool, istream_t input, uint16_t request_id)
 {
     struct istream_fcgi *fcgi = istream_new_macro(pool, fcgi);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
-    assert(request_id < 0x10000);
 
     fcgi->missing_from_current_record = 0;
     fcgi->header_sent = sizeof(fcgi->header);
     fcgi->header = (struct fcgi_record_header){
         .version = FCGI_VERSION_1,
         .type = FCGI_STDIN,
-        .request_id = htons(request_id),
+        .request_id = request_id,
         .padding_length = 0,
         .reserved = 0,
     };

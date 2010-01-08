@@ -17,6 +17,8 @@
 #include "header-parser.h"
 #include "event2.h"
 
+#include <glib.h>
+
 #include <daemon/log.h>
 
 #include <netinet/in.h>
@@ -617,9 +619,10 @@ fcgi_client_request(pool_t caller_pool, int fd,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
+    static unsigned next_request_id = 1;
     struct fcgi_record_header header = {
         .version = FCGI_VERSION_1,
-        .request_id = macro_htons(1),
+        .request_id = GUINT16_TO_BE(next_request_id++),
         .padding_length = 0,
         .reserved = 0,
     };
@@ -660,16 +663,21 @@ fcgi_client_request(pool_t caller_pool, int fd,
     growing_buffer_write_buffer(buffer, &header, sizeof(header));
     growing_buffer_write_buffer(buffer, &begin_request, sizeof(begin_request));
 
-    fcgi_serialize_params(buffer, "REQUEST_METHOD",
+    fcgi_serialize_params(buffer, header.request_id, "REQUEST_METHOD",
                           http_method_to_string(method));
-    fcgi_serialize_params(buffer, "REQUEST_URI", uri);
-    fcgi_serialize_params(buffer, "SCRIPT_FILENAME", script_filename);
-    fcgi_serialize_params(buffer, "SCRIPT_NAME", script_name);
-    fcgi_serialize_params(buffer, "PATH_INFO", path_info);
-    fcgi_serialize_params(buffer, "QUERY_STRING", query_string);
-    fcgi_serialize_params(buffer, "DOCUMENT_ROOT", document_root);
-    fcgi_serialize_params(buffer, "SERVER_SOFTWARE",
-                          "beng-proxy v" VERSION);
+    fcgi_serialize_params(buffer, header.request_id, "REQUEST_URI", uri);
+    fcgi_serialize_params(buffer, header.request_id,
+                          "SCRIPT_FILENAME", script_filename);
+    fcgi_serialize_params(buffer, header.request_id,
+                          "SCRIPT_NAME", script_name);
+    fcgi_serialize_params(buffer, header.request_id,
+                          "PATH_INFO", path_info);
+    fcgi_serialize_params(buffer, header.request_id,
+                          "QUERY_STRING", query_string);
+    fcgi_serialize_params(buffer, header.request_id,
+                          "DOCUMENT_ROOT", document_root);
+    fcgi_serialize_params(buffer, header.request_id,
+                          "SERVER_SOFTWARE", "beng-proxy v" VERSION);
 
     header.type = FCGI_PARAMS;
     header.content_length = htons(0);
@@ -683,7 +691,8 @@ fcgi_client_request(pool_t caller_pool, int fd,
         /* format the request body */
         request = istream_cat_new(pool,
                                   growing_buffer_istream(buffer),
-                                  istream_fcgi_new(pool, body, 1),
+                                  istream_fcgi_new(pool, body,
+                                                   header.request_id),
                                   NULL);
     else {
         /* no request body - append an empty STDIN packet */
