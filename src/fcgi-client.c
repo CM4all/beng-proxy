@@ -45,7 +45,7 @@ struct fcgi_client {
     struct http_response_handler_ref handler;
     struct async_operation async;
 
-    struct growing_buffer *request;
+    istream_t request;
 
     struct {
         enum {
@@ -115,6 +115,9 @@ fcgi_client_abort_response_headers(struct fcgi_client *client)
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
+    if (client->request != NULL)
+        istream_free_handler(&client->request);
+
     fcgi_client_release_socket(client, false);
 
     http_response_handler_invoke_abort(&client->handler);
@@ -133,6 +136,9 @@ fcgi_client_abort_response_body(struct fcgi_client *client)
 
     if (client->fd >= 0)
         fcgi_client_release_socket(client, false);
+
+    if (client->request != NULL)
+        istream_free_handler(&client->request);
 
     istream_deinit_abort(&client->response.body);
     fcgi_client_release(client, false);
@@ -326,8 +332,12 @@ fcgi_client_consume_input(struct fcgi_client *client)
             client->skip_length = ntohs(header->content_length) + header->padding_length;
             fifo_buffer_consume(client->input, sizeof(*header));
 
+            if (client->request != NULL)
+                istream_close_handler(client->request);
+
             if (client->skip_length == 0)
                 fcgi_client_release_socket(client,
+                                           client->request == NULL &&
                                            fifo_buffer_empty(client->input));
 
             istream_deinit_eof(&client->response.body);
@@ -387,39 +397,38 @@ fcgi_client_try_read(struct fcgi_client *client)
     return true;
 }
 
-static bool
-fcgi_client_try_write(struct fcgi_client *client)
+static ssize_t
+fcgi_client_send(struct fcgi_client *client, const void *data, size_t length)
 {
-    const void *p;
-    size_t length;
-    ssize_t nbytes;
-
-    p = growing_buffer_read(client->request, &length);
-    if (p == NULL) {
-        event2_nand(&client->event, EV_WRITE);
-        return true;
-    }
-
-    nbytes = send(client->fd, p, length, MSG_DONTWAIT|MSG_NOSIGNAL);
-    if (nbytes < 0) {
+    ssize_t nbytes = send(client->fd, data, length,
+                          MSG_DONTWAIT|MSG_NOSIGNAL);
+    if (nbytes >= 0)
+        return nbytes;
+    else if (errno == EAGAIN) {
+        event2_or(&client->event, EV_WRITE);
+        return 0;
+    } else {
         daemon_log(3, "write to FastCGI application failed: %s\n",
                    strerror(errno));
         http_response_handler_invoke_abort(&client->handler);
         fcgi_client_release(client, false);
-        return false;
+        return -1;
     }
+}
 
-    if (nbytes > 0) {
-        growing_buffer_consume(client->request, (size_t)nbytes);
-
-        if (growing_buffer_empty(client->request)) {
-            event2_nand(&client->event, EV_WRITE);
-            return true;
-        }
-    }
+static bool
+fcgi_client_try_write(struct fcgi_client *client)
+{
+    assert(client->request != NULL);
 
     event2_or(&client->event, EV_WRITE);
-    return true;
+
+    pool_ref(client->pool);
+    istream_read(client->request);
+    bool ret = client->fd >= 0;
+    pool_unref(client->pool);
+
+    return ret;
 }
 
 
@@ -449,6 +458,57 @@ fcgi_client_event(int fd __attr_unused, short event, void *ctx)
 
     pool_commit();
 }
+
+
+/*
+ * istream handler for the request
+ *
+ */
+
+static size_t
+fcgi_request_stream_data(const void *data, size_t length, void *ctx)
+{
+    struct fcgi_client *client = ctx;
+
+    assert(client->fd >= 0);
+    assert(client->request != NULL);
+
+    ssize_t nbytes = fcgi_client_send(client, data, length);
+    if (nbytes < 0)
+        return 0;
+
+    return nbytes;
+}
+
+static void
+fcgi_request_stream_eof(void *ctx)
+{
+    struct fcgi_client *client = ctx;
+
+    assert(client->request != NULL);
+
+    client->request = NULL;
+
+    event2_nand(&client->event, EV_WRITE);
+}
+
+static void
+fcgi_request_stream_abort(void *ctx)
+{
+    struct fcgi_client *client = ctx;
+
+    assert(client->request != NULL);
+
+    client->request = NULL;
+
+    fcgi_client_abort_response(client);
+}
+
+static const struct istream_handler fcgi_request_stream_handler = {
+    .data = fcgi_request_stream_data,
+    .eof = fcgi_request_stream_eof,
+    .abort = fcgi_request_stream_abort,
+};
 
 
 /*
@@ -528,7 +588,8 @@ fcgi_client_request_abort(struct async_operation *ao)
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
-    /* XXX close request body */
+    if (client->request != NULL)
+        istream_close_handler(client->request);
 
     fcgi_client_release(client, false);
 }
@@ -587,39 +648,55 @@ fcgi_client_request(pool_t caller_pool, int fd,
     async_init(&client->async, &fcgi_client_async_operation);
     async_ref_set(async_ref, &client->async);
 
-    client->request = growing_buffer_new(pool, 1024);
     client->response.read_state = READ_HEADERS;
     client->response.headers = strmap_new(client->pool, 17);
     client->input = fifo_buffer_new(pool, 4096);
     client->content_length = 0;
     client->skip_length = 0;
 
+    struct growing_buffer *buffer = growing_buffer_new(pool, 1024);
     header.type = FCGI_BEGIN_REQUEST;
     header.content_length = htons(sizeof(begin_request));
-    growing_buffer_write_buffer(client->request, &header, sizeof(header));
-    growing_buffer_write_buffer(client->request, &begin_request, sizeof(begin_request));
+    growing_buffer_write_buffer(buffer, &header, sizeof(header));
+    growing_buffer_write_buffer(buffer, &begin_request, sizeof(begin_request));
 
-    fcgi_serialize_params(client->request, "REQUEST_METHOD",
+    fcgi_serialize_params(buffer, "REQUEST_METHOD",
                           http_method_to_string(method));
-    fcgi_serialize_params(client->request, "REQUEST_URI", uri);
-    fcgi_serialize_params(client->request, "SCRIPT_FILENAME", script_filename);
-    fcgi_serialize_params(client->request, "SCRIPT_NAME", script_name);
-    fcgi_serialize_params(client->request, "PATH_INFO", path_info);
-    fcgi_serialize_params(client->request, "QUERY_STRING", query_string);
-    fcgi_serialize_params(client->request, "DOCUMENT_ROOT", document_root);
-    fcgi_serialize_params(client->request, "SERVER_SOFTWARE",
+    fcgi_serialize_params(buffer, "REQUEST_URI", uri);
+    fcgi_serialize_params(buffer, "SCRIPT_FILENAME", script_filename);
+    fcgi_serialize_params(buffer, "SCRIPT_NAME", script_name);
+    fcgi_serialize_params(buffer, "PATH_INFO", path_info);
+    fcgi_serialize_params(buffer, "QUERY_STRING", query_string);
+    fcgi_serialize_params(buffer, "DOCUMENT_ROOT", document_root);
+    fcgi_serialize_params(buffer, "SERVER_SOFTWARE",
                           "beng-proxy v" VERSION);
 
     header.type = FCGI_PARAMS;
     header.content_length = htons(0);
-    growing_buffer_write_buffer(client->request, &header, sizeof(header));
-
-    header.type = FCGI_STDIN;
-    header.content_length = htons(0);
-    growing_buffer_write_buffer(client->request, &header, sizeof(header));
+    growing_buffer_write_buffer(buffer, &header, sizeof(header));
 
     (void)headers; /* XXX */
-    (void)body; /* XXX */
+
+    istream_t request;
+
+    if (body != NULL)
+        /* format the request body */
+        request = istream_cat_new(pool,
+                                  growing_buffer_istream(buffer),
+                                  istream_fcgi_new(pool, body, 1),
+                                  NULL);
+    else {
+        /* no request body - append an empty STDIN packet */
+        header.type = FCGI_STDIN;
+        header.content_length = htons(0);
+        growing_buffer_write_buffer(buffer, &header, sizeof(header));
+
+        request = growing_buffer_istream(buffer);
+    }
+
+    istream_assign_handler(&client->request, request,
+                           &fcgi_request_stream_handler, client,
+                           0);
 
     event2_lock(&client->event);
     event2_set(&client->event, EV_READ);
