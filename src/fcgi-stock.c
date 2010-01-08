@@ -151,6 +151,8 @@ fcgi_connect_callback(int fd, int err, void *ctx)
 {
     struct fcgi_child *child = ctx;
 
+    unlink(child->address.sun_path);
+
     async_ref_clear(&child->connect_operation);
 
     if (err == 0) {
@@ -188,6 +190,8 @@ fcgi_create_abort(struct async_operation *ao)
 
     assert(child != NULL);
     assert(async_ref_defined(&child->connect_operation));
+
+    unlink(child->address.sun_path);
 
     if (child->pid >= 0) {
         kill(child->pid, SIGTERM);
