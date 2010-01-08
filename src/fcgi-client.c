@@ -674,11 +674,12 @@ fcgi_client_request(pool_t caller_pool, int fd,
                           "SERVER_SOFTWARE", "beng-proxy v" VERSION,
                           NULL);
 
+    if (headers != NULL)
+        fcgi_serialize_headers(buffer, header.request_id, headers);
+
     header.type = FCGI_PARAMS;
     header.content_length = htons(0);
     growing_buffer_write_buffer(buffer, &header, sizeof(header));
-
-    (void)headers; /* XXX */
 
     istream_t request;
 

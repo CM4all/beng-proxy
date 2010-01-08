@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.7.13) unstable; urgency=low
   * fcgi-client: append empty PARAMS packet
   * fcgi-client: try to read response before request is finished
   * fcgi-client: implement the STDERR packet
-  * fcgi-client: support request body
+  * fcgi-client: support request headers and body
   * fcgi-stock: manage one socket per child process
   * fcgi-stock: unlink socket path after connect
 

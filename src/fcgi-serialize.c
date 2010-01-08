@@ -7,6 +7,8 @@
 #include "fcgi-serialize.h"
 #include "fcgi-protocol.h"
 #include "growing-buffer.h"
+#include "strmap.h"
+#include "strutil.h"
 
 #include <glib.h>
 
@@ -74,6 +76,44 @@ fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...)
     }
 
     va_end(ap);
+
+    header->content_length = GUINT16_TO_BE(content_length);
+}
+
+void
+fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,
+                       struct strmap *headers)
+{
+    struct fcgi_record_header *header;
+    size_t content_length = 0;
+
+    header = growing_buffer_write(gb, sizeof(*header));
+    header->version = FCGI_VERSION_1;
+    header->type = FCGI_PARAMS;
+    header->request_id = request_id;
+    header->padding_length = 0;
+    header->reserved = 0;
+
+    char buffer[512] = "HTTP_";
+    const struct strmap_pair *pair;
+    strmap_rewind(headers);
+    while ((pair = strmap_next(headers)) != NULL) {
+        size_t i;
+
+        for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
+            if (char_is_minuscule_letter(pair->key[i]))
+                buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
+            else if (char_is_capital_letter(pair->key[i]) ||
+                     char_is_digit(pair->key[i]))
+                buffer[5 + i] = pair->key[i];
+            else
+                buffer[5 + i] = '_';
+        }
+
+        buffer[5 + i] = 0;
+
+        fcgi_serialize_pair(gb, buffer, pair->value);
+    }
 
     header->content_length = GUINT16_TO_BE(content_length);
 }
