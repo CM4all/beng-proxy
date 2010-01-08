@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 
 static size_t
 fcgi_serialize_length(struct growing_buffer *gb, size_t length)
@@ -51,11 +52,10 @@ fcgi_serialize_pair(struct growing_buffer *gb, const char *name,
 }
 
 void
-fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id,
-                      const char *name, const char *value)
+fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...)
 {
     struct fcgi_record_header *header;
-    size_t content_length;
+    size_t content_length = 0;
 
     header = growing_buffer_write(gb, sizeof(*header));
     header->version = FCGI_VERSION_1;
@@ -64,6 +64,16 @@ fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id,
     header->padding_length = 0;
     header->reserved = 0;
 
-    content_length = fcgi_serialize_pair(gb, name, value);
+    va_list ap;
+    va_start(ap, request_id);
+
+    const char *name, *value;
+    while ((name = va_arg(ap, const char *)) != NULL) {
+        value = va_arg(ap, const char *);
+        content_length += fcgi_serialize_pair(gb, name, value);
+    }
+
+    va_end(ap);
+
     header->content_length = GUINT16_TO_BE(content_length);
 }

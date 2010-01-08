@@ -15,7 +15,6 @@ struct growing_buffer;
  * @param request_id the FastCGI request id in network byte order
  */
 void
-fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id,
-                      const char *name, const char *value);
+fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...);
 
 #endif

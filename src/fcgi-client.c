@@ -663,21 +663,16 @@ fcgi_client_request(pool_t caller_pool, int fd,
     growing_buffer_write_buffer(buffer, &header, sizeof(header));
     growing_buffer_write_buffer(buffer, &begin_request, sizeof(begin_request));
 
-    fcgi_serialize_params(buffer, header.request_id, "REQUEST_METHOD",
-                          http_method_to_string(method));
-    fcgi_serialize_params(buffer, header.request_id, "REQUEST_URI", uri);
     fcgi_serialize_params(buffer, header.request_id,
-                          "SCRIPT_FILENAME", script_filename);
-    fcgi_serialize_params(buffer, header.request_id,
-                          "SCRIPT_NAME", script_name);
-    fcgi_serialize_params(buffer, header.request_id,
-                          "PATH_INFO", path_info);
-    fcgi_serialize_params(buffer, header.request_id,
-                          "QUERY_STRING", query_string);
-    fcgi_serialize_params(buffer, header.request_id,
-                          "DOCUMENT_ROOT", document_root);
-    fcgi_serialize_params(buffer, header.request_id,
-                          "SERVER_SOFTWARE", "beng-proxy v" VERSION);
+                          "REQUEST_METHOD", http_method_to_string(method),
+                          "REQUEST_URI", uri,
+                          "SCRIPT_FILENAME", script_filename,
+                          "SCRIPT_NAME", script_name,
+                          "PATH_INFO", path_info,
+                          "QUERY_STRING", query_string,
+                          "DOCUMENT_ROOT", document_root,
+                          "SERVER_SOFTWARE", "beng-proxy v" VERSION,
+                          NULL);
 
     header.type = FCGI_PARAMS;
     header.content_length = htons(0);
