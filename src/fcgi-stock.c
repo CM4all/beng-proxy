@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -105,8 +106,15 @@ fcgi_spawn_child(const char *executable_path, int fd)
     if (pid == 0) {
         dup2(fd, 0);
         close(fd);
-        close(1);
-        close(2);
+
+        fd = open("/dev/null", O_WRONLY);
+        if (fd >= 0) {
+            dup2(fd, 1);
+            dup2(fd, 2);
+        } else {
+            close(1);
+            close(2);
+        }
 
         execl(executable_path, executable_path, NULL);
         daemon_log(1, "failed to execute %s: %s\n",
