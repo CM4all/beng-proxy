@@ -112,7 +112,7 @@ fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,
 
         buffer[5 + i] = 0;
 
-        fcgi_serialize_pair(gb, buffer, pair->value);
+        content_length += fcgi_serialize_pair(gb, buffer, pair->value);
     }
 
     header->content_length = GUINT16_TO_BE(content_length);
