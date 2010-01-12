@@ -201,6 +201,10 @@ class Translation(Protocol):
             self._handle_local_file('/var/www' + uri[5:], response)
         elif raw_uri[:6] == '/coma/':
             self._handle_coma(response, raw_uri[6:], '/home/max/svn/mod_coma/t/src')
+        elif raw_uri[:16] == '/imageprocessor/':
+            self._handle_coma(response, raw_uri[16:],
+                              '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
+                              '/etc/cm4all/coma/apps/imageprocessor/coma.config')
         elif raw_uri == '/filter':
             # two filters chained
             response.packet(TRANSLATE_DOCUMENT_ROOT, demo_path)
