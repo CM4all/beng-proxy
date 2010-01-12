@@ -140,6 +140,19 @@ class Translation(Protocol):
                 response.content_type('text/plain; charset=utf-8')
                 response.gzipped(path + '.gz')
 
+    def _handle_coma(self, response, relative_uri, base_path, config_file=None):
+        i = relative_uri.find('/')
+        if i < 0: i = len(relative_uri)
+        relative_path, path_info = relative_uri[:i], relative_uri[i:]
+
+        path = os.path.join(base_path, relative_path)
+        response.packet(TRANSLATE_DOCUMENT_ROOT, base_path)
+        response.packet(TRANSLATE_FASTCGI, path)
+        response.packet(TRANSLATE_ACTION, coma_fastcgi)
+        response.packet(TRANSLATE_PATH_INFO, path_info)
+        if config_file is not None:
+            response.pair('COMA_CONFIG_FILE', config_file)
+
     def _handle_http(self, raw_uri, uri, response):
         if uri.find('/./') >= 0 or uri.find('/../') >= 0 or \
                uri[-2:] == '/.' or uri[-3:] == '/..' or \
@@ -186,6 +199,8 @@ class Translation(Protocol):
             response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
             response.packet(TRANSLATE_URI, '/foo/' + uri[6:])
             self._handle_local_file('/var/www' + uri[5:], response)
+        elif raw_uri[:6] == '/coma/':
+            self._handle_coma(response, raw_uri[6:], '/home/max/svn/mod_coma/t/src')
         elif raw_uri == '/filter':
             # two filters chained
             response.packet(TRANSLATE_DOCUMENT_ROOT, demo_path)
