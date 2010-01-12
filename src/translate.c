@@ -936,6 +936,27 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->u.cgi.args[client->resource_address->u.cgi.num_args++] = payload;
         break;
 
+    case TRANSLATE_PAIR:
+        if (client->resource_address != NULL &&
+            client->resource_address->type == RESOURCE_ADDRESS_FASTCGI) {
+            if (client->resource_address->u.cgi.num_args >=
+                G_N_ELEMENTS(client->resource_address->u.cgi.args)) {
+                daemon_log(2, "too many TRANSLATE_PAIR packets\n");
+                break;
+            }
+
+            if (payload == NULL || *payload == '=' ||
+                strchr(payload + 1, '=') == NULL) {
+                daemon_log(2, "malformed TRANSLATE_PAIR packet\n");
+                break;
+            }
+
+            client->resource_address->u.cgi.args[client->resource_address->u.cgi.num_args++] = payload;
+        } else
+            daemon_log(2, "misplaced TRANSLATE_PAIR packet\n");
+
+        break;
+
     case TRANSLATE_DISCARD_SESSION:
         client->response.discard_session = true;
         break;

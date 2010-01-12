@@ -36,6 +36,7 @@ fcgi_handler(struct request *request2)
                  tr->address.u.cgi.script_name, tr->address.u.cgi.path_info,
                  query_string, tr->address.u.cgi.document_root,
                  forward.headers, forward.body,
+                 tr->address.u.cgi.args, tr->address.u.cgi.num_args,
                  &response_handler, request2,
                  request2->async_ref);
 }

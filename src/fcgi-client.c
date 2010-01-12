@@ -615,6 +615,7 @@ fcgi_client_request(pool_t caller_pool, int fd,
                     const char *query_string,
                     const char *document_root,
                     struct strmap *headers, istream_t body,
+                    const char *const params[], unsigned num_params,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
@@ -676,6 +677,9 @@ fcgi_client_request(pool_t caller_pool, int fd,
 
     if (headers != NULL)
         fcgi_serialize_headers(buffer, header.request_id, headers);
+
+    if (num_params > 0)
+        fcgi_serialize_vparams(buffer, header.request_id, params, num_params);
 
     header.type = FCGI_PARAMS;
     header.content_length = htons(0);

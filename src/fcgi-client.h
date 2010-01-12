@@ -24,6 +24,7 @@ fcgi_client_request(pool_t pool, int fd,
                     const char *query_string,
                     const char *document_root,
                     struct strmap *headers, istream_t body,
+                    const char *const params[], unsigned num_params,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref);

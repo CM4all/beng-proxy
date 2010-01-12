@@ -37,6 +37,9 @@ struct fcgi_request {
     struct strmap *headers;
     istream_t body;
 
+    const char *const* params;
+    unsigned num_params;
+
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
 };
@@ -81,6 +84,7 @@ fcgi_stock_callback(void *ctx, struct stock_item *item)
                         request->query_string,
                         request->document_root,
                         request->headers, request->body,
+                        request->params, request->num_params,
                         request->handler.handler, request->handler.ctx,
                         request->async_ref);
 }
@@ -100,6 +104,7 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
              const char *query_string,
              const char *document_root,
              struct strmap *headers, istream_t body,
+             const char *const params[], unsigned num_params,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
@@ -124,6 +129,9 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
     request->body = body != NULL
         ? istream_hold_new(pool, body)
         : NULL;
+    request->params = params;
+    request->num_params = num_params;
+
     http_response_handler_set(&request->handler, handler, handler_ctx);
     request->async_ref = async_ref;
 

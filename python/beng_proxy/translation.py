@@ -53,6 +53,7 @@ TRANSLATE_REQUEST_HEADER_FORWARD = 48
 TRANSLATE_RESPONSE_HEADER_FORWARD = 49
 TRANSLATE_DEFLATED = 50
 TRANSLATE_GZIPPED = 51
+TRANSLATE_PAIR = 52
 
 HEADER_FORWARD_NO = 0
 HEADER_FORWARD_YES = 1
@@ -267,6 +268,13 @@ class Response:
         assert len(path) > 0
         assert path[0] == '/'
         self.packet(TRANSLATE_GZIPPED, path)
+
+    def pair(self, name, value):
+        assert isinstance(name, str)
+        assert isinstance(value, str)
+        assert len(name) > 0
+        assert name.find('=') < 0
+        self.packet(TRANSLATE_PAIR, name + '=' + value)
 
     def content_type(self, content_type):
         assert isinstance(content_type, str)

@@ -53,6 +53,31 @@ fcgi_serialize_pair(struct growing_buffer *gb, const char *name,
     return size + name_length + value_length;
 }
 
+static size_t
+fcgi_serialize_pair1(struct growing_buffer *gb, const char *name_and_value)
+{
+    assert(name_and_value != NULL);
+
+    size_t size, name_length, value_length;
+    const char *value = strchr(name_and_value, '=');
+    if (value != NULL) {
+        name_length = value - name_and_value;
+        ++value;
+        value_length = strlen(value);
+    } else {
+        value = "";
+        value_length = 0;
+    }
+
+    size = fcgi_serialize_length(gb, name_length) +
+        fcgi_serialize_length(gb, value_length);
+
+    growing_buffer_write_buffer(gb, name_and_value, name_length);
+    growing_buffer_write_buffer(gb, value, value_length);
+
+    return size + name_length + value_length;
+}
+
 void
 fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...)
 {
@@ -76,6 +101,28 @@ fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...)
     }
 
     va_end(ap);
+
+    header->content_length = GUINT16_TO_BE(content_length);
+}
+
+void
+fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
+                       const char *const params[], unsigned num_params)
+{
+    struct fcgi_record_header *header;
+    size_t content_length = 0;
+
+    assert(num_params > 0);
+
+    header = growing_buffer_write(gb, sizeof(*header));
+    header->version = FCGI_VERSION_1;
+    header->type = FCGI_PARAMS;
+    header->request_id = request_id;
+    header->padding_length = 0;
+    header->reserved = 0;
+
+    for (unsigned i = 0; i < num_params; ++i)
+        content_length += fcgi_serialize_pair1(gb, params[i]);
 
     header->content_length = GUINT16_TO_BE(content_length);
 }

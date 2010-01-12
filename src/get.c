@@ -128,6 +128,7 @@ resource_get(struct http_cache *cache,
                      address->u.cgi.query_string,
                      address->u.cgi.document_root,
                      headers, body,
+                     address->u.cgi.args, address->u.cgi.num_args,
                      handler, handler_ctx, async_ref);
         return;
 
