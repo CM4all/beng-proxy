@@ -10,6 +10,7 @@ cm4all-beng-proxy (0.7.13) unstable; urgency=low
   * fcgi-stock: manage one socket per child process
   * fcgi-stock: unlink socket path after connect
   * fcgi-stock: redirect fd 1,2 to /dev/null
+  * fcgi-stock: kill FastCGI processes after 5 minutes idle
   * translation: new packet PAIR for passing parameters to FastCGI
 
  --

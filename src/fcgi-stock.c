@@ -137,13 +137,15 @@ fcgi_child_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 
     assert(fd == child->fd);
 
-    char buffer;
-    ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
-    if (nbytes < 0)
-        daemon_log(2, "error on idle FastCGI connection: %s\n",
-                   strerror(errno));
-    else if (nbytes > 0)
-        daemon_log(2, "unexpected data from idle FastCGI connection\n");
+    if ((event & EV_TIMEOUT) == 0) {
+        char buffer;
+        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        if (nbytes < 0)
+            daemon_log(2, "error on idle FastCGI connection: %s\n",
+                       strerror(errno));
+        else if (nbytes > 0)
+            daemon_log(2, "unexpected data from idle FastCGI connection\n");
+    }
 
     stock_del(&child->base);
     pool_commit();
@@ -168,7 +170,7 @@ fcgi_connect_callback(int fd, int err, void *ctx)
 
         child->fd = fd;
 
-        event_set(&child->event, child->fd, EV_READ,
+        event_set(&child->event, child->fd, EV_READ|EV_TIMEOUT,
                   fcgi_child_event_callback, child);
 
         stock_item_available(&child->base);
@@ -281,7 +283,7 @@ fcgi_stock_release(void *ctx __attr_unused, struct stock_item *item)
 {
     struct fcgi_child *child = (struct fcgi_child *)item;
     struct timeval tv = {
-        .tv_sec = 60,
+        .tv_sec = 300,
         .tv_usec = 0,
     };
 
