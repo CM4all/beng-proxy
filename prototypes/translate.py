@@ -18,6 +18,7 @@ test_path = os.path.join(os.getcwd(), 'test')
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 
 cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
+coma_apps_re = re.compile(r'^/coma-apps/([-\w]+)/(\w+\.cls(?:/.*)?)$')
 
 class Translation(Protocol):
     def connectionMade(self):
@@ -201,6 +202,17 @@ class Translation(Protocol):
             self._handle_local_file('/var/www' + uri[5:], response)
         elif uri[:6] == '/coma/':
             self._handle_coma(response, uri[6:], '/home/max/svn/mod_coma/t/src')
+        elif uri[:11] == '/coma-apps/':
+            m = coma_apps_re.match(uri)
+            if m:
+                name, relative_uri = m.group(1), m.group(2)
+                base_path = os.path.join('/usr/share/cm4all/coma/apps', name, 'htdocs')
+                config_file = os.path.join('/etc/cm4all/coma/apps', name, 'coma.config')
+                if not os.access(config_file, os.R_OK):
+                    config_file = None
+                self._handle_coma(response, relative_uri, base_path, config_file)
+            else:
+                response.status(404)
         elif uri[:16] == '/imageprocessor/':
             self._handle_coma(response, uri[16:],
                               '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
