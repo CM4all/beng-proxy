@@ -199,13 +199,13 @@ class Translation(Protocol):
             response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
             response.packet(TRANSLATE_URI, '/foo/' + uri[6:])
             self._handle_local_file('/var/www' + uri[5:], response)
-        elif raw_uri[:6] == '/coma/':
-            self._handle_coma(response, raw_uri[6:], '/home/max/svn/mod_coma/t/src')
-        elif raw_uri[:16] == '/imageprocessor/':
-            self._handle_coma(response, raw_uri[16:],
+        elif uri[:6] == '/coma/':
+            self._handle_coma(response, uri[6:], '/home/max/svn/mod_coma/t/src')
+        elif uri[:16] == '/imageprocessor/':
+            self._handle_coma(response, uri[16:],
                               '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
                               '/etc/cm4all/coma/apps/imageprocessor/coma.config')
-        elif raw_uri == '/filter':
+        elif uri == '/filter':
             # two filters chained
             response.packet(TRANSLATE_DOCUMENT_ROOT, demo_path)
             response.path(os.path.join(demo_path, 'hello.txt'))
