@@ -13,7 +13,7 @@ cm4all-beng-proxy (0.7.13) unstable; urgency=low
   * fcgi-stock: kill FastCGI processes after 5 minutes idle
   * translation: new packet PAIR for passing parameters to FastCGI
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 14 Jan 2010 13:36:48 +0100
 
 cm4all-beng-proxy (0.7.12) unstable; urgency=low
 
