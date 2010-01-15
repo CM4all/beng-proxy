@@ -28,6 +28,8 @@ struct http_server_connection {
      */
     struct event timeout;
 
+    enum http_server_score score;
+
     /* handler */
     const struct http_server_connection_handler *handler;
     void *handler_ctx;

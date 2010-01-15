@@ -179,6 +179,8 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
     evtimer_set(&connection->timeout,
                 http_server_timeout_callback, connection);
 
+    connection->score = HTTP_SERVER_NEW;
+
     *connection_r = connection;
 
     http_server_try_read(connection);
@@ -264,4 +266,10 @@ http_server_connection_graceful(struct http_server_connection *connection)
         /* a request is currently being handled; disable keep_alive so
            the connection will be closed after this last request */
         connection->keep_alive = false;
+}
+
+enum http_server_score
+http_server_connection_score(const struct http_server_connection *connection)
+{
+    return connection->score;
 }

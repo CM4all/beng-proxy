@@ -68,9 +68,18 @@ http_server_response(const struct http_server_request *request,
     off_t content_length;
     istream_t status_stream, header_stream;
 
+    assert(connection->score != HTTP_SERVER_NEW);
     assert(connection->request.request == request);
 
     async_ref_poison(&connection->request.async_ref);
+
+
+    if (http_status_is_success(status)) {
+        if (connection->score == HTTP_SERVER_FIRST)
+            connection->score = HTTP_SERVER_SUCCESS;
+    } else {
+        connection->score = HTTP_SERVER_ERROR;
+    }
 
     if (connection->request.read_state == READ_BODY) {
         /* if we didn't send "100 Continue" yet, we should do it now;

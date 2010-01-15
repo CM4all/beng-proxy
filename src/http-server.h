@@ -17,6 +17,34 @@ struct async_operation_ref;
 
 struct http_server_connection;
 
+/**
+ * The score of a connection.  This is used under high load to
+ * estimate which connections should be dropped first, as a remedy for
+ * denial of service attacks.
+ */
+enum http_server_score {
+    /**
+     * Connection has been accepted, but client hasn't sent any data
+     * yet.
+     */
+    HTTP_SERVER_NEW,
+
+    /**
+     * Client is transmitting the very first request.
+     */
+    HTTP_SERVER_FIRST,
+
+    /**
+     * At least one request was completed, but none was successful.
+     */
+    HTTP_SERVER_ERROR,
+
+    /**
+     * At least one request was completed successfully.
+     */
+    HTTP_SERVER_SUCCESS,
+};
+
 struct http_server_request {
     pool_t pool;
     struct http_server_connection *connection;
@@ -60,6 +88,9 @@ http_server_connection_close(struct http_server_connection *connection);
 
 void
 http_server_connection_graceful(struct http_server_connection *connection);
+
+enum http_server_score
+http_server_connection_score(const struct http_server_connection *connection);
 
 static inline bool
 http_server_request_has_body(const struct http_server_request *request)

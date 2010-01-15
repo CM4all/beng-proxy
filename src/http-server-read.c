@@ -318,6 +318,9 @@ http_server_try_read_buffered(struct http_server_connection *connection)
         return;
     }
 
+    if (connection->score == HTTP_SERVER_NEW)
+        connection->score = HTTP_SERVER_FIRST;
+
     http_server_consume_input(connection);
 }
 
