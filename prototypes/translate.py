@@ -141,7 +141,8 @@ class Translation(Protocol):
                 response.content_type('text/plain; charset=utf-8')
                 response.gzipped(path + '.gz')
 
-    def _handle_coma(self, response, relative_uri, base_path, config_file=None):
+    def _handle_coma(self, response, base_uri, relative_uri, base_path,
+                     config_file=None):
         i = relative_uri.find('/')
         if i < 0: i = len(relative_uri)
         relative_path, path_info = relative_uri[:i], relative_uri[i:]
@@ -153,6 +154,9 @@ class Translation(Protocol):
         response.packet(TRANSLATE_PATH_INFO, path_info)
         if config_file is not None:
             response.pair('COMA_CONFIG_FILE', config_file)
+
+        if path_info != '' and path_info[0] == '/':
+            response.packet(TRANSLATE_BASE, base_uri + relative_path + '/')
 
     def _handle_http(self, raw_uri, uri, response):
         if uri.find('/./') >= 0 or uri.find('/../') >= 0 or \
@@ -201,7 +205,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_URI, '/foo/' + uri[6:])
             self._handle_local_file('/var/www' + uri[5:], response)
         elif uri[:6] == '/coma/':
-            self._handle_coma(response, uri[6:], '/home/max/svn/mod_coma/t/src')
+            self._handle_coma(response, uri[:6], uri[6:], '/home/max/svn/mod_coma/t/src')
         elif uri[:11] == '/coma-apps/':
             m = coma_apps_re.match(uri)
             if m:
@@ -210,7 +214,8 @@ class Translation(Protocol):
                 config_file = os.path.join('/etc/cm4all/coma/apps', name, 'coma.config')
                 if not os.access(config_file, os.R_OK):
                     config_file = None
-                self._handle_coma(response, relative_uri, base_path, config_file)
+                self._handle_coma(response, uri[:11] + name + '/', relative_uri,
+                                  base_path, config_file)
             else:
                 response.status(404)
         elif uri[:16] == '/imageprocessor/':

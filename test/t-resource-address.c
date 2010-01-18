@@ -26,6 +26,15 @@ int main(int argc, char **argv) {
             },
         },
     };
+    static const struct resource_address ra3 = {
+        .type = RESOURCE_ADDRESS_CGI,
+        .u = {
+            .cgi = {
+                .path = "/usr/lib/cgi-bin/foo.pl",
+                .path_info = "/bar/baz",
+            },
+        },
+    };
     struct resource_address *a, *b;
 
     (void)argc;
@@ -79,6 +88,42 @@ int main(int argc, char **argv) {
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_LOCAL);
     assert(strcmp(b->u.local.path, "/var/www/foo/index.html") == 0);
+
+    a = resource_address_save_base(pool, &ra3, "bar/baz");
+    assert(a != NULL);
+    assert(a->type == RESOURCE_ADDRESS_CGI);
+    assert(strcmp(a->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(a->u.cgi.path_info, "/") == 0);
+
+    b = resource_address_load_base(pool, a, "");
+    assert(b != NULL);
+    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(b->u.cgi.path_info, "/") == 0);
+
+    b = resource_address_load_base(pool, a, "xyz");
+    assert(b != NULL);
+    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(b->u.cgi.path_info, "/xyz") == 0);
+
+    a = resource_address_save_base(pool, &ra3, "baz");
+    assert(a != NULL);
+    assert(a->type == RESOURCE_ADDRESS_CGI);
+    assert(strcmp(a->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(a->u.cgi.path_info, "/bar/") == 0);
+
+    b = resource_address_load_base(pool, a, "bar/");
+    assert(b != NULL);
+    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(b->u.cgi.path_info, "/bar/bar/") == 0);
+
+    b = resource_address_load_base(pool, a, "bar/xyz");
+    assert(b != NULL);
+    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(b->u.cgi.path_info, "/bar/bar/xyz") == 0);
 
     pool_unref(pool);
     pool_commit();

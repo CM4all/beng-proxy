@@ -96,9 +96,20 @@ resource_address_save_base(pool_t pool, const struct resource_address *src,
     switch (src->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_PIPE:
+        return NULL;
+
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
-        return NULL;
+        if (src->u.cgi.path_info == NULL)
+            return NULL;
+
+        length = base_string_unescape(pool, src->u.cgi.path_info, suffix);
+        if (length == 0)
+            return NULL;
+
+        dest = resource_address_dup(pool, src);
+        dest->u.cgi.path_info = p_strndup(pool, dest->u.cgi.path_info, length);
+        return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
         length = base_string_unescape(pool, src->u.local.path, suffix);
@@ -141,10 +152,21 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
     switch (src->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
         assert(false);
         return NULL;
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+        if (src->u.cgi.path_info == NULL)
+            return NULL;
+
+        unescaped = p_strdup(pool, suffix);
+        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
+
+        dest = resource_address_dup(pool, src);
+        dest->u.cgi.path_info = p_strcat(pool, dest->u.cgi.path_info,
+                                         unescaped, NULL);
+        return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
         assert(src->u.local.path != NULL);
