@@ -10,6 +10,7 @@
 #include "handler.h"
 #include "address.h"
 #include "access-log.h"
+#include "drop.h"
 
 #include <daemon/log.h>
 
@@ -93,11 +94,14 @@ http_listener_callback(int fd,
     int ret;
 
     if (instance->num_connections >= instance->config.max_connections) {
-        /* XXX rather drop an existing connection? */
-        daemon_log(1, "too many connections (%u), dropping\n",
-                   instance->num_connections);
-        close(fd);
-        return;
+        unsigned num_dropped = drop_some_connections(instance);
+
+        if (num_dropped == 0) {
+            daemon_log(1, "too many connections (%u), dropping\n",
+                       instance->num_connections);
+            close(fd);
+            return;
+        }
     }
 
     /* determine the local socket address */

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.14) unstable; urgency=low
 
-  * 
+  * connection: drop connections when the limit is exceeded
 
  --
 
