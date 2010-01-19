@@ -47,6 +47,8 @@ struct fcgi_client {
     struct http_response_handler_ref handler;
     struct async_operation async;
 
+    uint16_t id;
+
     istream_t request;
 
     struct {
@@ -307,6 +309,11 @@ fcgi_client_consume_input(struct fcgi_client *client)
             return true;
 
         header = data;
+
+        if (header->request_id != client->id)
+            /* wrong request id; discard this packet */
+            continue;
+
         switch (header->type) {
         case FCGI_STDOUT:
             client->content_length = ntohs(header->content_length);
@@ -651,6 +658,8 @@ fcgi_client_request(pool_t caller_pool, int fd,
 
     async_init(&client->async, &fcgi_client_async_operation);
     async_ref_set(async_ref, &client->async);
+
+    client->id = header.request_id;
 
     client->response.read_state = READ_HEADERS;
     client->response.headers = strmap_new(client->pool, 17);
