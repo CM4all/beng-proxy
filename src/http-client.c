@@ -861,11 +861,19 @@ http_client_request_stream_abort(void *ctx)
 {
     struct http_client *client = ctx;
 
+    assert(client->response.read_state == READ_STATUS ||
+           client->response.read_state == READ_HEADERS ||
+           client->response.read_state == READ_BODY);
+
     stopwatch_event(client->stopwatch, "abort");
 
     client->request.istream = NULL;
 
-    http_client_abort_response(client);
+    if (client->response.read_state != READ_BODY)
+        http_client_abort_response_headers(client);
+    else if (client->response.body != NULL)
+        http_client_abort_response_body(client);
+    /* else: nothing to do */
 }
 
 static const struct istream_handler http_client_request_stream_handler = {
