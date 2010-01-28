@@ -70,7 +70,7 @@ istream_deinit_impl(struct istream *istream TRACE_ARGS_DECL)
 
 #define istream_deinit(istream) istream_deinit_impl(istream TRACE_ARGS)
 
-static __attr_always_inline void
+static inline void
 istream_deinit_eof_impl(struct istream *istream TRACE_ARGS_DECL)
 {
     istream_invoke_eof(istream);
@@ -79,7 +79,7 @@ istream_deinit_eof_impl(struct istream *istream TRACE_ARGS_DECL)
 
 #define istream_deinit_eof(istream) istream_deinit_eof_impl(istream TRACE_ARGS)
 
-static __attr_always_inline void
+static inline void
 istream_deinit_abort_impl(struct istream *istream TRACE_ARGS_DECL)
 {
     istream_invoke_abort(istream);
