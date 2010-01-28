@@ -157,6 +157,7 @@ static void
 http_client_abort_response_body(struct http_client *client)
 {
     assert(client->response.read_state == READ_BODY);
+    assert(client->response.body != NULL);
 
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
