@@ -20,7 +20,7 @@
 #include <event.h>
 
 static int
-connect_mirror(void)
+connect_server(const char *path)
 {
     int ret, sv[2];
     pid_t pid;
@@ -41,7 +41,7 @@ connect_mirror(void)
         dup2(sv[1], 0);
         close(sv[0]);
         close(sv[1]);
-        execl("./test/t-http-server-mirror", "t-http-server-mirror",
+        execl(path, path,
               "0", "0", NULL);
         perror("exec() failed");
         exit(EXIT_FAILURE);
@@ -52,6 +52,24 @@ connect_mirror(void)
     socket_set_nonblock(sv[0], 1);
 
     return sv[0];
+}
+
+static int
+connect_mirror(void)
+{
+    return connect_server("./test/t-http-server-mirror");
+}
+
+static int
+connect_null(void)
+{
+    return connect_server("./test/t-http-server-null");
+}
+
+static int
+connect_dummy(void)
+{
+    return connect_server("./test/t-http-server-dummy");
 }
 
 struct context {
@@ -70,6 +88,9 @@ struct context {
     istream_t body;
     off_t body_data, consumed_body_data;
     bool body_eof, body_abort;
+
+    istream_t request_body;
+    bool close_request_body_early, close_request_body_eof;
 };
 
 
@@ -126,6 +147,9 @@ my_istream_eof(void *ctx)
 
     c->body = NULL;
     c->body_eof = true;
+
+    if (c->close_request_body_eof)
+        istream_free(&c->request_body);
 }
 
 static void
@@ -157,6 +181,9 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
     struct context *c = ctx;
 
     c->status = status;
+
+    if (c->close_request_body_early)
+        istream_free(&c->request_body);
 
     if (c->response_body_byte) {
         assert(body != NULL);
@@ -480,6 +507,103 @@ test_head(pool_t pool, struct context *c)
     assert(!c->body_abort);
 }
 
+static void
+test_ignored_body(pool_t pool, struct context *c)
+{
+    c->fd = connect_null();
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
+                        istream_zero_new(pool),
+                        &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->fd < 0);
+    assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+}
+
+/**
+ * Close request body in the response handler (with response body).
+ */
+static void
+test_close_ignored_request_body(pool_t pool, struct context *c)
+{
+    c->fd = connect_null();
+    c->close_request_body_early = true;
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
+                        c->request_body = istream_zero_new(pool),
+                        &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->fd < 0);
+    assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+}
+
+/**
+ * Close request body in the response handler, method HEAD (no
+ * response body).
+ */
+static void
+test_head_close_ignored_request_body(pool_t pool, struct context *c)
+{
+    c->fd = connect_null();
+    c->close_request_body_early = true;
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_HEAD, "/foo", NULL,
+                        c->request_body = istream_zero_new(pool),
+                        &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->fd < 0);
+    assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+}
+
+/**
+ * Close request body in the response_eof handler.
+ */
+static void
+test_close_request_body_eor(pool_t pool, struct context *c)
+{
+    c->fd = connect_dummy();
+    c->close_request_body_eof = true;
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
+                        c->request_body = istream_zero_new(pool),
+                        &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->fd < 0);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(c->body_eof);
+    assert(!c->body_abort);
+}
+
 
 /*
  * main
@@ -510,6 +634,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
 
+    if (1==0) {
     run_test(pool, test_empty);
     run_test(pool, test_body);
     run_test(pool, test_close_response_body_early);
@@ -521,6 +646,11 @@ int main(int argc, char **argv) {
     run_test(pool, test_data_blocking2);
     run_test(pool, test_body_fail);
     run_test(pool, test_head);
+    run_test(pool, test_ignored_body);
+    run_test(pool, test_close_ignored_request_body);
+    run_test(pool, test_head_close_ignored_request_body);
+    }
+    run_test(pool, test_close_request_body_eor);
 
     pool_unref(pool);
     pool_commit();

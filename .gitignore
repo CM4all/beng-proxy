@@ -23,6 +23,8 @@ test/run-parser-cdata
 test/run-html-unescape
 test/run-html-escape
 test/t-http-server-mirror
+test/t-http-server-null
+test/t-http-server-dummy
 test/run-processor
 test/t-istream-processor
 test/t-istream-replace
