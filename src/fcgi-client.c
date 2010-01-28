@@ -628,9 +628,11 @@ fcgi_client_request(pool_t caller_pool, int fd,
                     struct async_operation_ref *async_ref)
 {
     static unsigned next_request_id = 1;
+    ++next_request_id;
+
     struct fcgi_record_header header = {
         .version = FCGI_VERSION_1,
-        .request_id = GUINT16_TO_BE(next_request_id++),
+        .request_id = GUINT16_TO_BE(next_request_id),
         .padding_length = 0,
         .reserved = 0,
     };
