@@ -6,6 +6,7 @@ cm4all-beng-proxy (0.7.14) unstable; urgency=low
   * http-client: check response body when request body is closed
   * html-escape: use the last ampersand before the semicolon
   * html-escape: support &apos;
+  * processor: unescape widget parameter values
 
  --
 

@@ -1086,7 +1086,9 @@ Registered widgets are not yet implemented.
 \end{verbatim*}
 
 \texttt{parameter} elements adds query string parameters.  These are
-added to the query string provided by the browser.
+added to the query string provided by the browser.  In the value, the
+standard XML entities \texttt{amp}, \texttt{quot}, \texttt{apos},
+\texttt{lt}, \texttt{gt} are recognized.
 
 There may be one \texttt{path-info} element whose value is appended to
 the widget URI, if none was sent by the browser.

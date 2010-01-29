@@ -17,6 +17,7 @@
 #include "strref-pool.h"
 #include "global.h"
 #include "expansible-buffer.h"
+#include "html-escape.h"
 
 #include <daemon/log.h>
 
@@ -917,14 +918,17 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         assert(processor->widget.widget != NULL);
 
-        /* XXX escape */
-
         if (expansible_buffer_is_empty(processor->widget.param.name))
             return;
 
         pool_mark(tpool, &mark);
 
         p = expansible_buffer_read(processor->widget.param.value, &length);
+        if (memchr(p, '&', length) != NULL) {
+            char *q = p_memdup(tpool, p, length);
+            length = html_unescape_inplace(q, length);
+            p = q;
+        }
 
         p = args_format_n(tpool, NULL,
                           expansible_buffer_read_string(processor->widget.param.name),

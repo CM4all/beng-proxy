@@ -442,6 +442,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/http-string.c \
 	src/strmap.c src/hashmap.c \
 	src/penv.c src/processor.c \
+	src/html-escape.c \
 	src/widget-request.c \
 	src/widget.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/parser.c src/widget-class.c \
@@ -788,6 +789,7 @@ test_t_html_escape_SOURCES = test/t-html-escape.c src/html-escape.c
 
 test_run_processor_SOURCES = test/t-processor.c \
 	src/processor.c src/penv.c src/parser.c \
+	src/html-escape.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c \
