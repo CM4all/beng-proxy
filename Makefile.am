@@ -281,6 +281,7 @@ check_PROGRAMS = \
 	test/t-stock \
 	test/t-resource-address \
 	test/t-uri-compress \
+	test/t-html-escape \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
@@ -319,6 +320,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-stock \
 	test/t-resource-address \
 	test/t-uri-compress \
+	test/t-html-escape \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
@@ -781,6 +783,8 @@ test_run_header_parser_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_html_unescape_SOURCES = test/run-html-unescape.c src/html-escape.c
 test_run_html_escape_SOURCES = test/run-html-escape.c src/html-escape.c
+
+test_t_html_escape_SOURCES = test/t-html-escape.c src/html-escape.c
 
 test_run_processor_SOURCES = test/t-processor.c \
 	src/processor.c src/penv.c src/parser.c \
