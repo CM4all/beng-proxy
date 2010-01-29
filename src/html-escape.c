@@ -88,13 +88,16 @@ html_unescape(struct strref *s)
         .dest_pos = 0,
     };
     const char *end = s->data + s->length;
-    const char *cursor = s->data, *p, *semicolon;
+    const char *cursor = s->data, *p, *q, *semicolon;
     struct strref entity;
 
-    while (cursor < end && u.dest_pos < sizeof(buffer)) {
-        p = memchr(cursor, '&', end - cursor);
-        if (p == NULL)
-            break;
+    q = memchr(cursor, '&', end - cursor);
+    if (q == NULL)
+        return 0;
+
+    while (q != NULL && u.dest_pos < sizeof(buffer)) {
+        p = q;
+        q = memchr(p + 1, '&', end - p - 1);
 
         entity.data = p + 1;
 
