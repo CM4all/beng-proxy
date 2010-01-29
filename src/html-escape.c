@@ -115,7 +115,8 @@ html_unescape(struct strref *s)
             replace(&u, p, semicolon + 1, "<", 1);
         else if (strref_cmp_literal(&entity, "gt") == 0)
             replace(&u, p, semicolon + 1, ">", 1);
-        /* XXX support more entities */
+        else if (strref_cmp_literal(&entity, "apos") == 0)
+            replace(&u, p, semicolon + 1, "'", 1);
 
         cursor = semicolon + 1;
     }
@@ -150,6 +151,10 @@ html_escape(struct strref *s)
 
         case '"':
             replace(&u, cursor, cursor + 1, "&quot;", 6);
+            break;
+
+        case '\'':
+            replace(&u, cursor, cursor + 1, "&apos;", 6);
             break;
         }
     }

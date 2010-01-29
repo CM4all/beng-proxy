@@ -38,10 +38,10 @@ main(int argc, char **argv)
     assert(used == 12);
     assert(strref_cmp_literal(&s, "&&\"") == 0);
 
-    strref_set_c(&s, "&gt&lt;");
+    strref_set_c(&s, "&gt&lt;&apos;");
     used = html_unescape(&s);
-    assert(used == 7);
-    assert(strref_cmp_literal(&s, "&gt<") == 0);
+    assert(used == 13);
+    assert(strref_cmp_literal(&s, "&gt<'") == 0);
 
     return 0;
 }
