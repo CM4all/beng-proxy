@@ -8,7 +8,7 @@ cm4all-beng-proxy (0.7.14) unstable; urgency=low
   * html-escape: support &apos;
   * processor: unescape widget parameter values
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 29 Jan 2010 17:49:43 +0100
 
 cm4all-beng-proxy (0.7.13) unstable; urgency=low
 
