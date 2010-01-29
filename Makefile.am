@@ -779,8 +779,8 @@ test_run_header_parser_SOURCES = test/run-header-parser.c \
 	$(POOL_SRC)
 test_run_header_parser_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
-test_run_html_unescape_SOURCES = test/t-html-unescape.c src/html-escape.c
-test_run_html_escape_SOURCES = test/t-html-escape.c src/html-escape.c
+test_run_html_unescape_SOURCES = test/run-html-unescape.c src/html-escape.c
+test_run_html_escape_SOURCES = test/run-html-escape.c src/html-escape.c
 
 test_run_processor_SOURCES = test/t-processor.c \
 	src/processor.c src/penv.c src/parser.c \
