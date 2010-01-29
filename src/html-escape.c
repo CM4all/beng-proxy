@@ -125,6 +125,61 @@ html_unescape(struct strref *s)
 }
 
 size_t
+html_unescape_inplace(char *p, size_t length)
+{
+    const char *end = p + length;
+    char *cursor = p, *ampersand, *next, *semicolon;
+    struct strref entity;
+
+    while (cursor < end) {
+        ampersand = memchr(cursor, '&', end - cursor);
+        if (ampersand == NULL)
+            break;
+
+        entity.data = ampersand + 1;
+
+        semicolon = memchr(entity.data, ';', end - entity.data);
+        if (semicolon == NULL)
+            break;
+
+        next = memchr(entity.data, '&', semicolon - entity.data);
+        if (next != NULL) {
+            /* try to handle nested entity gracecfully */
+            cursor = next;
+            continue;
+        }
+
+        entity.length = semicolon - entity.data;
+
+        cursor = ampersand;
+        if (strref_cmp_literal(&entity, "amp") == 0) {
+            *cursor++ = '&';
+            end -= 4;
+            memmove(cursor, cursor + 4, end - cursor);
+        } else if (strref_cmp_literal(&entity, "quot") == 0) {
+            *cursor++ = '"';
+            end -= 5;
+            memmove(cursor, cursor + 5, end - cursor);
+        } else if (strref_cmp_literal(&entity, "apos") == 0) {
+            *cursor++ = '\'';
+            end -= 5;
+            memmove(cursor, cursor + 5, end - cursor);
+        } else if (strref_cmp_literal(&entity, "lt") == 0) {
+            *cursor++ = '<';
+            end -= 3;
+            memmove(cursor, cursor + 3, end - cursor);
+        } else if (strref_cmp_literal(&entity, "gt") == 0) {
+            *cursor++ = '>';
+            end -= 3;
+            memmove(cursor, cursor + 3, end - cursor);
+        } else
+            cursor = semicolon + 1;
+    }
+
+    return end - p;
+}
+
+size_t
 html_escape(struct strref *s)
 {
     struct unescape u = {

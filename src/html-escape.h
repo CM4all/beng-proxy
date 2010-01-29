@@ -21,6 +21,16 @@ size_t
 html_unescape(struct strref *s);
 
 /**
+ * Resolve character entity references.
+ *
+ * @param p the string to be unescaped
+ * @param length the length of the input string
+ * @return the new length
+ */
+size_t
+html_unescape_inplace(char *p, size_t length);
+
+/**
  * Escape special characters as HTML entities.
  *
  * @param s the buffer to be escaped
