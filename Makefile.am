@@ -787,7 +787,7 @@ test_run_html_escape_SOURCES = test/run-html-escape.c src/html-escape.c
 
 test_t_html_escape_SOURCES = test/t-html-escape.c src/html-escape.c
 
-test_run_processor_SOURCES = test/t-processor.c \
+test_run_processor_SOURCES = test/run-processor.c \
 	src/processor.c src/penv.c src/parser.c \
 	src/html-escape.c \
 	src/istream-replace.c \
