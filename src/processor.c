@@ -147,6 +147,8 @@ processor_async_abort(struct async_operation *ao)
 {
     struct processor *processor = async_to_processor(ao);
 
+    pool_unref(processor->caller_pool);
+
     if (processor->parser != NULL)
         parser_close(processor->parser);
 }
