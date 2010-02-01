@@ -306,6 +306,7 @@ check_PROGRAMS = \
 	test/run-header-parser \
 	test/run-html-unescape test/run-html-escape \
 	test/run-processor \
+	test/t-processor \
 	test/run-ajp-client \
 	test/run-memcached-client \
 	test/dump-memcached-choice \
@@ -329,6 +330,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
+	test/t-processor \
 	test/t-memcached-client \
 	test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
@@ -814,6 +816,36 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/stopwatch.c \
 	$(POOL_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
+
+test_t_processor_SOURCES = test/t-processor.c \
+	src/processor.c src/penv.c src/parser.c \
+	src/html-escape.c \
+	src/istream-replace.c \
+	src/widget.c src/widget-ref.c \
+	src/uri-relative.c src/uri-edit.c \
+	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
+	src/strmap.c src/hashmap.c \
+	src/growing-buffer.c src/fifo-buffer.c \
+	src/tpool.c \
+	src/istream-string.c src/istream-subst.c src/istream-block.c \
+	src/istream-cat.c src/istream-memory.c src/istream-delayed.c \
+	src/istream-hold.c src/istream-dechunk.c src/istream-chunked.c \
+	src/header-writer.c src/args.c src/buffered-io.c \
+	src/tcp-stock.c src/stock.c src/hstock.c \
+	src/client-socket.c src/socket-util.c src/fd-util.c \
+	src/format.c src/header-parser.c src/http.c src/strutil.c \
+	src/widget-request.c \
+	src/istream-tee.c src/istream-null.c \
+	src/event2.c src/failure.c src/bulldog.c \
+	src/balancer.c src/uri-address.c src/cache.c \
+	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
+	src/widget-stream.c src/expansible-buffer.c \
+	src/istream-forward.c src/istream-catch.c \
+	src/stopwatch.c \
+	$(POOL_SRC)
+test_t_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
