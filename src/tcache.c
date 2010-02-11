@@ -205,6 +205,10 @@ tcache_store_response(pool_t pool, struct translate_response *dest,
                                request->uri, src->base);
     tcache_dup_response(pool, dest, src);
 
+    if (key == NULL)
+        /* the BASE value didn't match - clear it */
+        dest->base = NULL;
+
     if (dest->uri != NULL) {
         const char *suffix = base_suffix(request->uri, src->base);
 
