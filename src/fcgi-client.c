@@ -627,6 +627,16 @@ fcgi_client_request(pool_t caller_pool, int fd,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
+    off_t available = -1;
+    if (body != NULL) {
+        available = istream_available(body, false);
+        if (available == -1) {
+            daemon_log(1, "Unknown FastCGI request body length\n");
+            http_response_handler_direct_abort(handler, handler_ctx);
+            return;
+        }
+    }
+
     static unsigned next_request_id = 1;
     ++next_request_id;
 
@@ -685,6 +695,18 @@ fcgi_client_request(pool_t caller_pool, int fd,
                           "DOCUMENT_ROOT", document_root,
                           "SERVER_SOFTWARE", "beng-proxy v" VERSION,
                           NULL);
+
+    if (available >= 0) {
+        char value[64];
+        snprintf(value, sizeof(value),
+                 "%lu", (unsigned long)available);
+        fcgi_serialize_params(buffer, header.request_id,
+                              "HTTP_CONTENT_LENGTH", value,
+                              /* PHP wants the parameter without
+                                 "HTTP_" */
+                              "CONTENT_LENGTH", value,
+                              NULL);
+    }
 
     if (headers != NULL)
         fcgi_serialize_headers(buffer, header.request_id, headers);
