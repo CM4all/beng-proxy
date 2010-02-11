@@ -700,11 +700,18 @@ fcgi_client_request(pool_t caller_pool, int fd,
         char value[64];
         snprintf(value, sizeof(value),
                  "%lu", (unsigned long)available);
+
+        const char *content_type = strmap_get(headers, "content-type");
+
         fcgi_serialize_params(buffer, header.request_id,
                               "HTTP_CONTENT_LENGTH", value,
                               /* PHP wants the parameter without
                                  "HTTP_" */
                               "CONTENT_LENGTH", value,
+                              /* same for the "Content-Type" request
+                                 header */
+                              content_type != NULL ? "CONTENT_TYPE" : NULL,
+                              content_type,
                               NULL);
     }
 
