@@ -147,6 +147,7 @@ Package: cm4all-beng-proxy-translation-prototype
 Architecture: all
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, daemon,
  python-twisted-core, python-cm4all-beng-proxy (= ${source:Version})
+Suggests: php5-cgi
 Conflicts: cm4all-beng-proxy-translation-hosting,
  cm4all-utils (<= 1.11-1)
 Provides: cm4all-beng-proxy-translation

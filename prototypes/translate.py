@@ -17,7 +17,8 @@ demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 
-cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
+cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
+php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
 coma_apps_re = re.compile(r'^/coma-apps/([-\w]+)/(\w+\.cls(?:/.*)?)$')
 
 class Translation(Protocol):
@@ -120,7 +121,16 @@ class Translation(Protocol):
         cgi = cgi_re.search(path, 1)
         if cgi:
             response.packet(TRANSLATE_CGI, path)
-        elif path[-4:] == '.cls':
+            return
+
+        m = php_re.match(path)
+        if m:
+            response.packet(TRANSLATE_FASTCGI, m.group(1))
+            response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
+            response.packet(TRANSLATE_PATH_INFO, m.group(2))
+            return
+
+        if path[-4:] == '.cls':
             response.packet(TRANSLATE_FASTCGI, path)
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
         else:

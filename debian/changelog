@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.7.15) unstable; urgency=low
   * tcache: clear BASE on mismatch
   * fcgi-client: generate the Content-Length request header
   * fcgi-client: send the CONTENT_TYPE parameter
+  * prototypes/translate.py: use FastCGI to run PHP
 
  --
 
