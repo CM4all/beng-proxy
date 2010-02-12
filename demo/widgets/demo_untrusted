@@ -1,0 +1,3 @@
+host "rabbit.intern.cm-ag:8080"
+server "http://cfatest01.intern.cm-ag/widgets/post.py"
+process
