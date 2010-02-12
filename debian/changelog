@@ -1,3 +1,9 @@
+cm4all-beng-proxy (0.7.16) unstable; urgency=low
+
+  * 
+
+ --
+
 cm4all-beng-proxy (0.7.15) unstable; urgency=low
 
   * processor: unreference the caller pool in abort()
