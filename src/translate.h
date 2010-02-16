@@ -60,6 +60,8 @@ struct translate_response {
     const char *host;
     const char *uri;
 
+    const char *untrusted;
+
     bool stateful;
 
     bool discard_session;

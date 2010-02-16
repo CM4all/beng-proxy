@@ -130,7 +130,7 @@ response_invoke_processor(struct request *request2,
         strref_set_c(&request2->uri.base, request2->translate.response->uri);
 
     processor_env_init(request->pool, &request2->env,
-                       NULL,
+                       request2->translate.response->untrusted,
                        transformation->u.processor.domain,
                        request->local_host, request->remote_host,
                        uri,
