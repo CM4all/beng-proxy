@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.16) unstable; urgency=low
 
-  * 
+  * processor: separate trusted from untrusted widgets by host name
 
  --
 

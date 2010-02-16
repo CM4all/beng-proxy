@@ -75,7 +75,7 @@ create_test(pool_t pool, istream_t input)
 
     session = session_new();
     processor_env_init(pool, &env,
-                       NULL,
+                       NULL, NULL,
                        "localhost:8080",
                        "localhost:8080",
                        "/beng.html",

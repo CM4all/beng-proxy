@@ -120,7 +120,7 @@ test_proxy_abort(pool_t pool)
 
     struct processor_env env;
     processor_env_init(pool, &env,
-                       NULL,
+                       NULL, NULL,
                        "localhost:8080",
                        "localhost:8080",
                        "/beng.html",

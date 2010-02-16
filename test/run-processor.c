@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
     widget_init(&widget, pool, &root_widget_class);
 
     processor_env_init(pool, &env,
-                       NULL,
+                       NULL, NULL,
                        "localhost:8080",
                        "localhost:8080",
                        "/beng.html",

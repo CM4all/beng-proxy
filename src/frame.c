@@ -48,6 +48,13 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 {
     assert(widget->from_request.proxy);
 
+    if (!widget_check_host(widget, env->untrusted_host)) {
+        daemon_log(4, "untrusted host name mismatch\n");
+
+        http_response_handler_direct_abort(handler, handler_ctx);
+        return;
+    }
+
     if (widget->class->stateful) {
         struct session *session = session_get(env->session_id);
         if (session != NULL) {

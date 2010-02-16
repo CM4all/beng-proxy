@@ -28,6 +28,12 @@ struct async_operation_ref;
 struct processor_env {
     pool_t pool;
 
+    /**
+     * If non-NULL, then only untrusted widgets with this host are
+     * allowed; all trusted widgets are rejected.
+     */
+    const char *untrusted_host;
+
     const char *partition_domain;
 
     const char *local_host;
@@ -58,6 +64,7 @@ struct processor_env {
 void
 processor_env_init(pool_t pool,
                    struct processor_env *env,
+                   const char *untrusted_host,
                    const char *partition_domain,
                    const char *local_host,
                    const char *remote_host,
