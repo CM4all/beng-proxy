@@ -1292,6 +1292,29 @@ not (and can not) be processed by \emph{beng-proxy}.  You can also use
 from widget server directly instead of proxying through
 \emph{beng-proxy}.
 
+\subsection{Untrusted Widgets}
+
+Usually, widgets are embedded inside the one single HTML page.  The
+problem is that all scripts run with the same privileges, and each
+widget's scripts can access the whole page, each widget can invoke
+requests to any other widget.
+
+As a safeguard against potentially malicious widgets,
+\emph{beng-proxy} can run widgets in a separate domain.  The default
+security settings of browsers will disallow cross-domain script
+access.
+
+To make a widget class ``untrusted'', the translation server generates
+the \texttt{HOST} packet with a host name for that widget.  A host
+name may be shared by a group of widget classes.
+
+While translating a request, the translation server may send the
+\texttt{UNTRUSTED} packet, repeating the host name of the request.
+This makes the request itself ``untrusted'': trusted widgets are
+rejected, and only those untrusted widgets matching the specified host
+name are accepted.  If the packet is absend, all untrusted widgets are
+rejected.
+
 
 \section{The Beng JavaScript API}
 
