@@ -321,11 +321,18 @@ widget_external_uri(pool_t pool,
                     const char *frame, bool raw);
 
 /**
+ * Determines whether it is allowed to embed the widget in a page with
+ * the specified host name.
+ */
+bool
+widget_check_host(const struct widget *widget, const char *host);
+
+/**
  * Recursion detection: check if the widget or its parent chain
  * contains the specified class name.
  */
 bool
-widget_check_recursion(struct widget *widget);
+widget_check_recursion(const struct widget *widget);
 
 /**
  * Free important resources associated with the widget.  A widget

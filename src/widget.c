@@ -51,7 +51,17 @@ widget_get_child(struct widget *widget, const char *id)
 }
 
 bool
-widget_check_recursion(struct widget *widget)
+widget_check_host(const struct widget *widget, const char *host)
+{
+    assert(widget->class != NULL);
+
+    return host == NULL ||
+        (widget->class->host != NULL &&
+         strcmp(host, widget->class->host) == 0);
+}
+
+bool
+widget_check_recursion(const struct widget *widget)
 {
     unsigned depth = 0;
 
