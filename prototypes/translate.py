@@ -273,6 +273,10 @@ class Translation(Protocol):
         if session is not None:
             response.packet(TRANSLATE_SESSION, session)
 
+        if request.host == 'untrusted:8080':
+            response.packet(TRANSLATE_UNTRUSTED, request.host)
+        response.vary(TRANSLATE_HOST)
+
         if request.widget_type is not None:
             self._handle_widget_lookup(request.widget_type, response)
 
