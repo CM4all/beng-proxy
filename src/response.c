@@ -114,6 +114,15 @@ response_invoke_processor(struct request *request2,
         widget_ref_parse(request->pool,
                          strmap_get_checked(request2->args, "frame"));
 
+    if (request2->translate.response->untrusted != NULL &&
+        widget->from_request.proxy_ref == NULL) {
+        /* untrusted requests cannot show the template */
+        istream_close(body);
+        request_discard_body(request2);
+        http_server_send_message(request, HTTP_STATUS_FORBIDDEN, "Forbidden");
+        return;
+    }
+
     if (http_server_request_has_body(request) && !request2->body_consumed &&
         widget->from_request.focus_ref != NULL) {
         request_body = request->body;
