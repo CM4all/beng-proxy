@@ -350,3 +350,10 @@ fcgi_stock_item_get(const struct stock_item *item)
     return child->fd;
 }
 
+void
+fcgi_stock_put(struct hstock *hstock, struct stock_item *item, bool destroy)
+{
+    struct fcgi_child *child = (struct fcgi_child *)item;
+
+    hstock_put(hstock, child->executable_path, item, destroy);
+}

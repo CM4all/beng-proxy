@@ -55,8 +55,7 @@ fcgi_socket_release(bool reuse, void *ctx)
 {
     struct fcgi_request *request = ctx;
 
-    hstock_put(request->fcgi_stock, request->action,
-               request->stock_item, !reuse);
+    fcgi_stock_put(request->fcgi_stock, request->stock_item, !reuse);
 }
 
 static const struct lease fcgi_socket_lease = {

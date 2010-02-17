@@ -24,4 +24,10 @@ fcgi_stock_get(struct hstock *hstock, pool_t pool,
 int
 fcgi_stock_item_get(const struct stock_item *item);
 
+/**
+ * Wrapper for hstock_put().
+ */
+void
+fcgi_stock_put(struct hstock *hstock, struct stock_item *item, bool destroy);
+
 #endif
