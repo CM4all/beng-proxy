@@ -79,6 +79,21 @@ http_response_handler_direct_abort(const struct http_response_handler *handler,
     handler->abort(ctx);
 }
 
+/**
+ * Sends a plain-text message.
+ */
+static inline void
+http_response_handler_direct_message(const struct http_response_handler *handler,
+                                     void *ctx,
+                                     pool_t pool,
+                                     http_status_t status, const char *msg)
+{
+    struct strmap *headers = strmap_new(pool, 2);
+    strmap_add(headers, "content-type", "text/plain; charset=utf-8");
+    http_response_handler_direct_response(handler, ctx, status, headers,
+                                          istream_string_new(pool, msg));
+}
+
 static inline void
 http_response_handler_invoke_response(struct http_response_handler_ref *ref,
                                       http_status_t status,
