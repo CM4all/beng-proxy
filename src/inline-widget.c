@@ -182,6 +182,12 @@ inline_widget_set(struct inline_widget *iw)
 {
     struct widget *widget = iw->widget;
 
+    if (!widget_check_host(widget, iw->env->untrusted_host)) {
+        daemon_log(4, "untrusted host name mismatch\n");
+        istream_delayed_set_eof(iw->delayed);
+        return;
+    }
+
     if (widget->class->stateful) {
         struct session *session = session_get(iw->env->session_id);
         if (session != NULL) {

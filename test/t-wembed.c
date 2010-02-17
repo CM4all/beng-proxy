@@ -12,6 +12,13 @@
 #include <errno.h>
 #include <string.h>
 
+bool
+widget_check_host(const struct widget *widget __attr_unused,
+                  const char *host __attr_unused)
+{
+    return true;
+}
+
 struct session *
 session_get(session_id_t id __attr_unused)
 {
