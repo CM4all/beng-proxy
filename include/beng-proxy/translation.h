@@ -39,7 +39,10 @@ enum beng_translation_command {
     TRANSLATE_ACTION = 28,
     TRANSLATE_SCRIPT_NAME = 29,
     TRANSLATE_AJP = 30,
+
+    /** deprecated */
     TRANSLATE_DOMAIN = 31,
+
     TRANSLATE_STATEFUL = 32,
     TRANSLATE_FASTCGI = 33,
     TRANSLATE_VIEW = 34,

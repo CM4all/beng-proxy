@@ -28,7 +28,6 @@ transformation_dup(pool_t pool, const struct transformation *src)
     switch (dest->type) {
     case TRANSFORMATION_PROCESS:
         dest->u.processor.options = src->u.processor.options;
-        dest->u.processor.domain = p_strdup_checked(pool, src->u.processor.domain);
         break;
 
     case TRANSFORMATION_FILTER:

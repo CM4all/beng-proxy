@@ -20,8 +20,6 @@ struct transformation {
     union {
         struct {
             unsigned options;
-
-            const char *domain;
         } processor;
 
         struct resource_address filter;

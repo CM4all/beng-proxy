@@ -624,7 +624,6 @@ transform_uri_attribute(struct processor *processor,
 
     istream = rewrite_widget_uri(processor->pool, processor->env->pool,
                                  global_translate_cache,
-                                 processor->env->partition_domain,
                                  processor->env->external_uri,
                                  processor->env->args, widget,
                                  processor->env->session_id,
@@ -682,7 +681,8 @@ parse_uri_mode(const struct strref *s)
     else if (strref_cmp_literal(s, "partial") == 0)
         return URI_MODE_PARTIAL;
     else if (strref_cmp_literal(s, "partition") == 0)
-        return URI_MODE_PARTITION;
+        /* deprecated */
+        return URI_MODE_PARTIAL;
     else if (strref_cmp_literal(s, "proxy") == 0)
         return URI_MODE_PROXY;
     else

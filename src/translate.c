@@ -609,17 +609,10 @@ translate_handle_packet(struct translate_client *client,
         transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_PROCESS;
         transformation->u.processor.options = PROCESSOR_REWRITE_URL;
-        transformation->u.processor.domain = NULL;
         break;
 
     case TRANSLATE_DOMAIN:
-        if (client->transformation == NULL ||
-            client->transformation->type != TRANSFORMATION_PROCESS) {
-            daemon_log(2, "misplaced TRANSLATE_DOMAIN packet\n");
-            break;
-        }
-
-        client->transformation->u.processor.domain = payload;
+        daemon_log(2, "deprecated TRANSLATE_DOMAIN packet\n");
         break;
 
     case TRANSLATE_CONTAINER:

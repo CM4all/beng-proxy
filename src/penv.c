@@ -10,7 +10,6 @@
 void
 processor_env_init(pool_t pool, struct processor_env *env,
                    const char *untrusted_host,
-                   const char *partition_domain,
                    const char *local_host,
                    const char *remote_host,
                    const char *request_uri,
@@ -26,7 +25,6 @@ processor_env_init(pool_t pool, struct processor_env *env,
 
     env->pool = pool;
     env->untrusted_host = untrusted_host;
-    env->partition_domain = partition_domain;
     env->local_host = local_host;
     env->remote_host = remote_host;
     env->uri = request_uri;

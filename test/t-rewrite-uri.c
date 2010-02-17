@@ -141,7 +141,7 @@ assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
         strref_set_c(&value2, value);
 
     istream = rewrite_widget_uri(pool, widget_pool, (struct tcache *)0x1,
-                                 "cm4all.com", &external_uri,
+                                 &external_uri,
                                  NULL, widget, 1,
                                  value != NULL ? &value2 : NULL,
                                  mode, stateful);
@@ -205,8 +205,6 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                          "/index.html;focus=1&path=123");
     assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTIAL,
                          "/index.html;focus=1&path=123&frame=1");
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTITION,
-                         "http://__1__.cm4all.com/index.html;focus=1&path=123&frame=1");
     assert_rewrite_check(pool, &widget, "123", URI_MODE_PROXY,
                          "/index.html;focus=1&path=123&frame=1&raw=1");
 
@@ -223,11 +221,6 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     assert_rewrite_check(pool, &widget, "123?user=root&password=hansilein",
                          URI_MODE_PARTIAL,
                          "/index.html;focus=1&path=123&frame=1"
-                         "?user=root&password=hansilein");
-
-    assert_rewrite_check(pool, &widget, "123?user=root&password=hansilein",
-                         URI_MODE_PARTITION,
-                         "http://__1__.cm4all.com/index.html;focus=1&path=123&frame=1"
                          "?user=root&password=hansilein");
 
     assert_rewrite_check(pool, &widget, "123?user=root&password=hansilein",
@@ -357,8 +350,6 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
                          NULL);
     assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTIAL,
-                         NULL);
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTITION,
                          NULL);
     assert_rewrite_check(pool, &widget, "123", URI_MODE_PROXY,
                          NULL);
