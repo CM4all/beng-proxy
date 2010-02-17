@@ -50,8 +50,9 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     if (!widget_check_host(widget, env->untrusted_host)) {
         daemon_log(4, "untrusted host name mismatch\n");
-
-        http_response_handler_direct_abort(handler, handler_ctx);
+        http_response_handler_direct_message(handler, handler_ctx,
+                                             pool, HTTP_STATUS_FORBIDDEN,
+                                             "Forbidden");
         return;
     }
 
