@@ -792,8 +792,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_DOCUMENT_ROOT:
         if (client->resource_address != NULL &&
-            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
-             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI))
+            (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
+             client->resource_address->type == RESOURCE_ADDRESS_FASTCGI))
             client->resource_address->u.cgi.document_root = payload;
         else if (client->resource_address != NULL &&
                  client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
