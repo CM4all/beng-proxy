@@ -130,7 +130,10 @@ class Translation(Protocol):
         m = php_re.match(path)
         if m:
             response.packet(TRANSLATE_FASTCGI, m.group(1))
-            response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
+            if jail:
+                response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi5')
+            else:
+                response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
             response.packet(TRANSLATE_PATH_INFO, m.group(2))
             if jail:
                 response.packet(TRANSLATE_JAILCGI)
