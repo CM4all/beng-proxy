@@ -101,6 +101,7 @@ SRC = src/main.c \
 	src/connection.c \
 	src/drop.c \
 	src/direct.c \
+	src/jail.c \
 	src/translate.c \
 	src/transformation.c \
 	src/tstock.c \
