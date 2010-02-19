@@ -125,11 +125,13 @@ class Translation(Protocol):
         cgi = cgi_re.search(path, 1)
         if cgi:
             response.packet(TRANSLATE_CGI, path)
+            response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             return
 
         m = php_re.match(path)
         if m:
             response.packet(TRANSLATE_FASTCGI, m.group(1))
+            response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             if jail:
                 response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi5')
             else:
@@ -141,6 +143,7 @@ class Translation(Protocol):
 
         if path[-4:] == '.cls':
             response.packet(TRANSLATE_FASTCGI, path)
+            response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
             if jail:
                 response.packet(TRANSLATE_JAILCGI)
