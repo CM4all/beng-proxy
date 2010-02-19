@@ -16,8 +16,11 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
+/**
+ * @param jail run the FastCGI application with JailCGI?
+ */
 void
-fcgi_request(pool_t pool, struct hstock *fcgi_stock,
+fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
              const char *action,
              const char *path,
              http_method_t method, const char *uri,

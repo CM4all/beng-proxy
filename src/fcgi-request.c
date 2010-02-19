@@ -75,13 +75,19 @@ fcgi_stock_callback(void *ctx, struct stock_item *item)
 
     request->stock_item = item;
 
+    const char *script_filename =
+        fcgi_stock_translate_path(item, request->script_filename,
+                                  request->pool);
+    const char *document_root =
+        fcgi_stock_translate_path(item, request->document_root, request->pool);
+
     fcgi_client_request(request->pool, fcgi_stock_item_get(item),
                         &fcgi_socket_lease, request,
                         request->method, request->uri,
-                        request->script_filename,
+                        script_filename,
                         request->script_name, request->path_info,
                         request->query_string,
-                        request->document_root,
+                        document_root,
                         request->headers, request->body,
                         request->params, request->num_params,
                         request->handler.handler, request->handler.ctx,
@@ -95,7 +101,7 @@ fcgi_stock_callback(void *ctx, struct stock_item *item)
  */
 
 void
-fcgi_request(pool_t pool, struct hstock *fcgi_stock,
+fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
              const char *action,
              const char *path,
              http_method_t method, const char *uri,
@@ -109,6 +115,12 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
              struct async_operation_ref *async_ref)
 {
     struct fcgi_request *request;
+
+    if (jail && document_root == NULL) {
+        daemon_log(2, "No document root\n");
+        http_response_handler_direct_abort(handler, handler_ctx);
+        return;
+    }
 
     if (action == NULL)
         action = path;
@@ -135,7 +147,7 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
     request->async_ref = async_ref;
 
     fcgi_stock_get(fcgi_stock, pool,
-                   action, NULL,
+                   action, jail ? document_root : NULL,
                    fcgi_stock_callback, request,
                    async_ref);
 }
