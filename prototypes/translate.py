@@ -132,11 +132,15 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FASTCGI, m.group(1))
             response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
             response.packet(TRANSLATE_PATH_INFO, m.group(2))
+            if jail:
+                response.packet(TRANSLATE_JAILCGI)
             return
 
         if path[-4:] == '.cls':
             response.packet(TRANSLATE_FASTCGI, path)
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
+            if jail:
+                response.packet(TRANSLATE_JAILCGI)
         else:
             response.path(path)
             if delegate and jail:
@@ -210,6 +214,8 @@ class Translation(Protocol):
             self._handle_local_file('/var/www' + uri[9:], response, True)
         elif uri[:15] == '/jail-delegate/':
             self._handle_local_file('/home/www' + uri[14:], response, True, True)
+        elif uri[:6] == '/jail/':
+            self._handle_local_file('/home/www' + uri[5:], response, False, True)
         elif uri[:6] == '/demo/':
             self._handle_local_file(demo_path + uri[5:], response)
         elif uri[:6] == '/base/':
