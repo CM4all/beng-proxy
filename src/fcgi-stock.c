@@ -8,6 +8,7 @@
 #include "child.h"
 #include "async.h"
 #include "client-socket.h"
+#include "jail.h"
 
 #include <daemon/log.h>
 
@@ -22,11 +23,21 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <signal.h>
+#include <stdlib.h>
+
+struct fcgi_child_params {
+    const char *executable_path;
+
+    const char *jail_path;
+};
 
 struct fcgi_child {
     struct stock_item base;
 
-    const char *executable_path;
+    const char *key;
+
+    const char *jail_path;
+    struct jail_config jail_config;
 
     struct sockaddr_un address;
 
@@ -38,6 +49,15 @@ struct fcgi_child {
     struct async_operation create_operation;
     struct async_operation_ref connect_operation;
 };
+
+static const char *
+fcgi_stock_key(pool_t pool, const struct fcgi_child_params *params)
+{
+    return params->jail_path == NULL
+        ? params->executable_path
+        : p_strcat(pool, params->executable_path, "|",
+                   params->jail_path, NULL);
+}
 
 static void
 fcgi_child_callback(int status __attr_unused, void *ctx)
@@ -95,7 +115,7 @@ fcgi_create_socket(const struct fcgi_child *child)
 }
 
 static pid_t
-fcgi_spawn_child(const char *executable_path, int fd)
+fcgi_spawn_child(const char *executable_path, const char *jail_path, int fd)
 {
     pid_t pid = fork();
     if (pid < 0) {
@@ -114,6 +134,17 @@ fcgi_spawn_child(const char *executable_path, int fd)
         } else {
             close(1);
             close(2);
+        }
+
+        if (jail_path != NULL) {
+            setenv("DOCUMENT_ROOT", jail_path, true);
+            setenv("JAILCGI_ACTION", executable_path, true);
+            executable_path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
+
+            /* several fake variables to outsmart the jailcgi
+               wrapper */
+            setenv("GATEWAY_INTERFACE", "dummy", true);
+            setenv("JAILCGI_FILENAME", "/tmp/dummy", true);
         }
 
         execl(executable_path, executable_path, NULL);
@@ -176,7 +207,7 @@ fcgi_connect_callback(int fd, int err, void *ctx)
         stock_item_available(&child->base);
     } else {
         daemon_log(1, "failed to connect to FastCGI server '%s': %s\n",
-                   child->executable_path, strerror(err));
+                   child->key, strerror(err));
 
         stock_item_failed(&child->base);
     }
@@ -230,17 +261,31 @@ fcgi_stock_pool(void *ctx __attr_unused, pool_t parent,
 
 static void
 fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
-                  const char *executable_path, G_GNUC_UNUSED void *info,
+                  const char *key, void *info,
                   pool_t caller_pool,
                   struct async_operation_ref *async_ref)
 {
     pool_t pool = item->pool;
+    struct fcgi_child_params *params = info;
     struct fcgi_child *child = (struct fcgi_child *)item;
 
-    assert(executable_path != NULL);
+    assert(key != NULL);
+    assert(params != NULL);
+    assert(params->executable_path != NULL);
 
-    child->executable_path = p_strdup(pool, executable_path);
-    fcgi_child_socket_path(&child->address, executable_path);
+    child->key = p_strdup(pool, key);
+    fcgi_child_socket_path(&child->address, key);
+
+    if (params->jail_path != NULL) {
+        child->jail_path = p_strdup(pool, params->jail_path);
+        if (!jail_config_load(&child->jail_config,
+                              "/etc/cm4all/jailcgi/jail.conf", pool)) {
+            daemon_log(2, "Failed to load /etc/cm4all/jailcgi/jail.conf\n");
+            stock_item_failed(item);
+            return;
+        }
+    } else
+        child->jail_path = NULL;
 
     int fd = fcgi_create_socket(child);
     if (fd < 0) {
@@ -248,7 +293,8 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
         return;
     }
 
-    child->pid = fcgi_spawn_child(executable_path, fd);
+    child->pid = fcgi_spawn_child(params->executable_path,
+                                  params->jail_path, fd);
     close(fd);
     if (child->pid < 0) {
         stock_item_failed(item);
@@ -332,11 +378,15 @@ fcgi_stock_new(pool_t pool, unsigned limit)
 
 void
 fcgi_stock_get(struct hstock *hstock, pool_t pool,
-               const char *executable_path,
+               const char *executable_path, const char *jail_path,
                stock_callback_t callback, void *callback_ctx,
                struct async_operation_ref *async_ref)
 {
-    hstock_get(hstock, pool, executable_path, NULL,
+    struct fcgi_child_params *params = p_malloc(pool, sizeof(*params));
+    params->executable_path = executable_path;
+    params->jail_path = jail_path;
+
+    hstock_get(hstock, pool, fcgi_stock_key(pool, params), params,
                callback, callback_ctx, async_ref);
 }
 
@@ -350,10 +400,26 @@ fcgi_stock_item_get(const struct stock_item *item)
     return child->fd;
 }
 
+const char *
+fcgi_stock_translate_path(const struct stock_item *item,
+                          const char *path, pool_t pool)
+{
+    const struct fcgi_child *child = (const struct fcgi_child *)item;
+
+    if (child->jail_path == NULL)
+        /* no JailCGI - application's namespace is the same as ours,
+           no translation needed */
+        return path;
+
+    const char *jailed = jail_translate_path(&child->jail_config, path,
+                                             child->jail_path, pool);
+    return jailed != NULL ? jailed : path;
+}
+
 void
 fcgi_stock_put(struct hstock *hstock, struct stock_item *item, bool destroy)
 {
     struct fcgi_child *child = (struct fcgi_child *)item;
 
-    hstock_put(hstock, child->executable_path, item, destroy);
+    hstock_put(hstock, child->key, item, destroy);
 }

@@ -135,7 +135,7 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
     request->async_ref = async_ref;
 
     fcgi_stock_get(fcgi_stock, pool,
-                   action,
+                   action, NULL,
                    fcgi_stock_callback, request,
                    async_ref);
 }
