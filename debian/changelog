@@ -5,7 +5,7 @@ cm4all-beng-proxy (0.7.16) unstable; urgency=low
   * translate: fix DOCUMENT_ROOT handler for CGI/FASTCGI
   * fcgi-request: added JailCGI support
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 19 Feb 2010 14:29:29 +0100
 
 cm4all-beng-proxy (0.7.15) unstable; urgency=low
 
