@@ -16,7 +16,8 @@ static inline const char *
 uri_escape_dup(pool_t pool, const char *src, size_t src_length)
 {
     char *dest = p_malloc(pool, src_length * 3 + 1);
-    uri_escape(dest, src, src_length);
+    size_t dest_length = uri_escape(dest, src, src_length);
+    dest[dest_length] = 0;
     return dest;
 }
 
