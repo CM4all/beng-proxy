@@ -256,6 +256,17 @@ class Translation(Protocol):
             response.pipe(os.path.join(cgi_path, 'pipe.sed'))
             response.packet(TRANSLATE_FILTER)
             response.pipe(os.path.join(cgi_path, 'pipe2.sed'))
+        elif uri == '/redirect':
+            response.packet(TRANSLATE_REDIRECT, 'http://cfatest01.intern.cm-ag/')
+        elif uri == '/redirect/permanent':
+            response.status(301)
+            response.packet(TRANSLATE_REDIRECT, 'http://cfatest01.intern.cm-ag/')
+        elif uri == '/redirect/found':
+            response.status(302)
+            response.packet(TRANSLATE_REDIRECT, 'http://cfatest01.intern.cm-ag/')
+        elif uri == '/redirect/temporary':
+            response.status(307)
+            response.packet(TRANSLATE_REDIRECT, 'http://cfatest01.intern.cm-ag/')
         elif uri == '/bounce':
             response.packet(TRANSLATE_BOUNCE, 'http://cfatest01.intern.cm-ag/test?uri=')
         else:

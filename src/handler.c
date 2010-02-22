@@ -182,7 +182,10 @@ translate_callback(const struct translate_response *response,
         fcgi_handler(request);
     } else if (response->redirect != NULL) {
         request_discard_body(request);
-        http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
+
+        int status = response->status != 0
+            ? response->status : HTTP_STATUS_SEE_OTHER;
+        http_server_send_redirect(request->request, status,
                                   response->redirect, NULL);
     } else if (response->bounce != NULL) {
         request_discard_body(request);
