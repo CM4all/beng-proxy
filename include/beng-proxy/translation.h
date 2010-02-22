@@ -65,6 +65,7 @@ enum beng_translation_command {
     TRANSLATE_GZIPPED = 51,
     TRANSLATE_PAIR = 52,
     TRANSLATE_UNTRUSTED = 53,
+    TRANSLATE_BOUNCE = 54,
 };
 
 struct beng_translation_header {

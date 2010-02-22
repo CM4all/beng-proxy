@@ -256,6 +256,8 @@ class Translation(Protocol):
             response.pipe(os.path.join(cgi_path, 'pipe.sed'))
             response.packet(TRANSLATE_FILTER)
             response.pipe(os.path.join(cgi_path, 'pipe2.sed'))
+        elif uri == '/bounce':
+            response.packet(TRANSLATE_BOUNCE, 'http://cfatest01.intern.cm-ag/test?uri=')
         else:
             self._handle_local_file('/var/www' + uri, response)
 

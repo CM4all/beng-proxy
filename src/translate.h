@@ -55,6 +55,7 @@ struct translate_response {
     const char *site;
     const char *document_root;
     const char *redirect;
+    const char *bounce;
 
     const char *scheme;
     const char *host;

@@ -646,6 +646,13 @@ HTTP 3xx codes \\
 
 \hline
 
+\texttt{BOUNCE} & Redirects the browser with a \texttt{303 See Other}
+status to this URI, and appends the current absolute URI
+(form-encoded).  This is useful to redirect to another server, which
+will need to redirect back to the original URI. \\
+
+\hline
+
 \texttt{PATH\_INFO} & optional URI substring which was left after
 finding the file \\
 

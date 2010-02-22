@@ -598,6 +598,10 @@ translate_handle_packet(struct translate_client *client,
         client->response.redirect = payload;
         break;
 
+    case TRANSLATE_BOUNCE:
+        client->response.bounce = payload;
+        break;
+
     case TRANSLATE_FILTER:
         transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_FILTER;

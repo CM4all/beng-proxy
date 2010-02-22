@@ -20,10 +20,40 @@
 #include "http-server.h"
 #include "transformation.h"
 #include "expiry.h"
+#include "uri-escape.h"
 
 #include <daemon/log.h>
 
 #include <assert.h>
+
+static const char *
+bounce_uri(pool_t pool, const struct request *request,
+           const struct translate_response *response)
+{
+    const char *scheme = response->scheme != NULL
+        ? response->scheme : "http";
+    const char *host = response->host != NULL
+        ? response->host
+        : strmap_get(request->request->headers, "host");
+    if (host == NULL)
+        host = "localhost";
+
+    const char *uri_path = response->uri != NULL
+        ? p_strncat(pool, response->uri, strlen(response->uri),
+                    ";", strref_is_empty(&request->uri.args) ? (size_t)0 : 1,
+                    request->uri.args.data, request->uri.args.length,
+                    "?", strref_is_empty(&request->uri.query) ? (size_t)0 : 1,
+                    request->uri.query.data, request->uri.query.length,
+                    NULL)
+        : request->request->uri;
+
+    const char *current_uri = p_strcat(pool, scheme, "://", host, uri_path,
+                                       NULL);
+    const char *escaped_uri = uri_escape_dup(pool, current_uri,
+                                             strlen(current_uri));
+
+    return p_strcat(pool, response->bounce, escaped_uri, NULL);
+}
 
 static void
 translate_callback(const struct translate_response *response,
@@ -51,6 +81,7 @@ translate_callback(const struct translate_response *response,
     if (response->status == (http_status_t)-1 ||
         (response->status == (http_status_t)0 &&
          response->address.type == RESOURCE_ADDRESS_NONE &&
+         response->bounce == NULL &&
          response->redirect == NULL)) {
         request_discard_body(request);
         http_server_send_message(request->request,
@@ -153,6 +184,12 @@ translate_callback(const struct translate_response *response,
         request_discard_body(request);
         http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
                                   response->redirect, NULL);
+    } else if (response->bounce != NULL) {
+        request_discard_body(request);
+        http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
+                                  bounce_uri(request->request->pool, request,
+                                             response),
+                                  NULL);
     } else if (response->status != (http_status_t)0) {
         request_discard_body(request);
         http_server_response(request->request,
