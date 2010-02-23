@@ -245,6 +245,9 @@ fill_translate_request(struct translate_request *t,
                       NULL, NULL, NULL, NULL,
                       "translate")
         : NULL;
+    if (t->args != NULL && *t->args == 0)
+        t->args = NULL;
+
     t->query_string = strref_is_empty(&uri->query)
         ? NULL
         : strref_dup(request->pool, &uri->query);
