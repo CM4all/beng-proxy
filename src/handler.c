@@ -230,7 +230,8 @@ request_uri_parse(struct http_server_request *request,
 static void
 fill_translate_request(struct translate_request *t,
                        const struct http_server_request *request,
-                       const struct parsed_uri *uri)
+                       const struct parsed_uri *uri,
+                       struct strmap *args)
 {
     t->local_address = request->local_address;
     t->local_address_length = request->local_address_length;
@@ -239,6 +240,11 @@ fill_translate_request(struct translate_request *t,
     t->user_agent = strmap_get(request->headers, "user-agent");
     t->accept_language = strmap_get(request->headers, "accept-language");
     t->uri = strref_dup(request->pool, &uri->base);
+    t->args = args != NULL
+        ? args_format(request->pool, args,
+                      NULL, NULL, NULL, NULL,
+                      "translate")
+        : NULL;
     t->query_string = strref_is_empty(&uri->query)
         ? NULL
         : strref_dup(request->pool, &uri->query);
@@ -251,7 +257,7 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
     struct http_server_request *request = request2->request;
 
     fill_translate_request(&request2->translate.request, request2->request,
-                           &request2->uri);
+                           &request2->uri, request2->args);
     translate_cache(request->pool, tcache, &request2->translate.request,
                     translate_callback, request2,
                     request2->async_ref);

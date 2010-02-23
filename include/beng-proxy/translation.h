@@ -66,6 +66,7 @@ enum beng_translation_command {
     TRANSLATE_PAIR = 52,
     TRANSLATE_UNTRUSTED = 53,
     TRANSLATE_BOUNCE = 54,
+    TRANSLATE_ARGS = 55,
 };
 
 struct beng_translation_header {

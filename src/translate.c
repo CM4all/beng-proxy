@@ -216,6 +216,7 @@ marshal_request(pool_t pool, const struct translate_request *request)
         write_optional_packet(gb, TRANSLATE_LANGUAGE,
                               request->accept_language) &&
         write_optional_packet(gb, TRANSLATE_URI, request->uri) &&
+        write_optional_packet(gb, TRANSLATE_ARGS, request->args) &&
         write_optional_packet(gb, TRANSLATE_QUERY_STRING,
                               request->query_string) &&
         write_optional_packet(gb, TRANSLATE_WIDGET_TYPE,
@@ -485,6 +486,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_REMOTE_HOST:
     case TRANSLATE_WIDGET_TYPE:
     case TRANSLATE_USER_AGENT:
+    case TRANSLATE_ARGS:
     case TRANSLATE_QUERY_STRING:
     case TRANSLATE_LOCAL_ADDRESS:
     case TRANSLATE_LOCAL_ADDRESS_STRING:

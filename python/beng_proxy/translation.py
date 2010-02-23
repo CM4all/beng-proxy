@@ -56,6 +56,7 @@ TRANSLATE_GZIPPED = 51
 TRANSLATE_PAIR = 52
 TRANSLATE_UNTRUSTED = 53
 TRANSLATE_BOUNCE = 54
+TRANSLATE_ARGS = 55
 
 HEADER_FORWARD_NO = 0
 HEADER_FORWARD_YES = 1
@@ -153,6 +154,8 @@ class Request:
             self.host = packet.payload
         elif packet.command == TRANSLATE_URI:
             self.raw_uri = packet.payload
+        elif packet.command == TRANSLATE_ARGS:
+            self.__args = packet.payload
         elif packet.command == TRANSLATE_QUERY_STRING:
             self.query_string = packet.payload
         elif packet.command == TRANSLATE_WIDGET_TYPE:
