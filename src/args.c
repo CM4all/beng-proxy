@@ -73,7 +73,7 @@ args_format_n(pool_t pool, struct strmap *args,
 
     /* allocate memory, format it */
 
-    ret = p = p_malloc(pool, length);
+    ret = p = p_malloc(pool, length + 1);
 
     if (args != NULL) {
         strmap_rewind(args);

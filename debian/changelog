@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.18) unstable; urgency=low
 
-  * 
+  * args: reserve memory for the trailing null byte
 
  --
 
