@@ -55,7 +55,7 @@ widget_check_host(const struct widget *widget, const char *host)
 {
     assert(widget->class != NULL);
 
-    if (widget->class->host == NULL)
+    if (widget->class->untrusted_host == NULL)
         /* trusted widget is only allowed on a trusted host name
            (host==NULL) */
         return host == NULL;
@@ -66,7 +66,7 @@ widget_check_host(const struct widget *widget, const char *host)
 
     /* untrusted widget only allowed on matching untrusted host
        name */
-    return strcmp(host, widget->class->host) == 0;
+    return strcmp(host, widget->class->untrusted_host) == 0;
 }
 
 bool

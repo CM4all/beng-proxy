@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.17) unstable; urgency=low
 
   * translation: added the BOUNCE packet (variant of REDIRECT)
+  * translation: change widget packet HOST to UNTRUSTED
   * handler: use the specified status with REDIRECT
 
  --

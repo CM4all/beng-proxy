@@ -40,9 +40,9 @@ class Translation(Protocol):
             line = line.strip()
             if line == '' or line[0] == '#':
                 continue
-            m = re.match(r'^host\s+"(\S+)"$', line)
+            m = re.match(r'^(?:untrusted|host)\s+"(\S+)"$', line)
             if m:
-                response.packet(TRANSLATE_HOST, m.group(1))
+                response.packet(TRANSLATE_UNTRUSTED, m.group(1))
                 continue
             m = re.match(r'^server\s+"(\S+)"$', line)
             if m:

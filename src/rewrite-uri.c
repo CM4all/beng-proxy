@@ -99,8 +99,8 @@ do_rewrite_widget_uri(pool_t pool,
     if (uri == NULL)
         return NULL;
 
-    if (widget->class->host != NULL)
-        uri = uri_replace_hostname(pool, uri, widget->class->host);
+    if (widget->class->untrusted_host != NULL)
+        uri = uri_replace_hostname(pool, uri, widget->class->untrusted_host);
 
     return uri;
 }

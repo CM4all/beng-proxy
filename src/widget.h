@@ -36,7 +36,7 @@ struct widget_class {
      * allowed.  If not set, then this is a trusted widget.  Requests
      * from an untrusted widget to a trusted one are forbidden.
      */
-    const char *host;
+    const char *untrusted_host;
 
     /** transformations applied to the widget response */
     const struct transformation_view *views;
