@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.7.17) unstable; urgency=low
   * translation: change widget packet HOST to UNTRUSTED
   * translation: pass internal URI arguments to the translation server
   * handler: use the specified status with REDIRECT
+  * python: added method Request.absolute_uri()
 
  --
 

@@ -128,6 +128,7 @@ class Request:
     def __init__(self):
         self.host = None
         self.raw_uri = None
+        self.__args = None
         self.query_string = None
         self.widget_type = None
         self.session = None
@@ -176,6 +177,21 @@ class Request:
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print "Invalid command:", packet.command
         return False
+
+    def absolute_uri(self, scheme=None, host=None, uri=None):
+        if scheme is None: scheme = "http"
+        if host is None:
+            host = self.host
+            if host is None: host = "localhost"
+        if uri is None:
+            uri = self.raw_uri
+            if uri is None: uri = "/"
+        x = scheme + "://" + host + uri
+        if self.__args is not None:
+            x += ";" + self.__args
+        if self.query_string is not None:
+            x += "?" + self.query_string
+        return x
 
 def packet_header(command, length=0):
     assert length <= 0xffff
