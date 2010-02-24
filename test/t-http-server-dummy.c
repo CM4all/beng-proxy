@@ -19,7 +19,7 @@ my_request(struct http_server_request *request, void *ctx,
     http_server_response(request, HTTP_STATUS_OK, NULL,
                          istream_head_new(request->pool,
                                           istream_zero_new(request->pool),
-                                          4096));
+                                          256));
 }
 
 static void
