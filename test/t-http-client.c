@@ -634,7 +634,6 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
 
-    if (1==0) {
     run_test(pool, test_empty);
     run_test(pool, test_body);
     run_test(pool, test_close_response_body_early);
@@ -649,7 +648,6 @@ int main(int argc, char **argv) {
     run_test(pool, test_ignored_body);
     run_test(pool, test_close_ignored_request_body);
     run_test(pool, test_head_close_ignored_request_body);
-    }
     run_test(pool, test_close_request_body_eor);
 
     pool_unref(pool);
