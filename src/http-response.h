@@ -23,7 +23,23 @@ struct http_response_handler {
 struct http_response_handler_ref {
     const struct http_response_handler *handler;
     void *ctx;
+
+#ifndef NDEBUG
+    bool used;
+#endif
 };
+
+#ifndef NDEBUG
+
+static inline int
+http_response_handler_used(const struct http_response_handler_ref *ref)
+{
+    assert(ref != NULL);
+
+    return ref->used;
+}
+
+#endif
 
 static inline int
 http_response_handler_defined(const struct http_response_handler_ref *ref)
@@ -53,6 +69,10 @@ http_response_handler_set(struct http_response_handler_ref *ref,
 
     ref->handler = handler;
     ref->ctx = ctx;
+
+#ifndef NDEBUG
+    ref->used = false;
+#endif
 }
 
 static inline void
@@ -104,12 +124,13 @@ http_response_handler_invoke_response(struct http_response_handler_ref *ref,
     assert(ref != NULL);
     assert(ref->handler != NULL);
     assert(ref->handler->response != NULL);
+    assert(!http_response_handler_used(ref));
     assert(http_status_is_valid(status));
     assert(!http_status_is_empty(status) || body == NULL);
 
     handler = ref->handler;
 #ifndef NDEBUG
-    http_response_handler_clear(ref);
+    ref->used = true;
 #endif
 
     handler->response(status, headers, body, ref->ctx);
@@ -123,10 +144,11 @@ http_response_handler_invoke_abort(struct http_response_handler_ref *ref)
     assert(ref != NULL);
     assert(ref->handler != NULL);
     assert(ref->handler->abort != NULL);
+    assert(!http_response_handler_used(ref));
 
     handler = ref->handler;
 #ifndef NDEBUG
-    http_response_handler_clear(ref);
+    ref->used = true;
 #endif
 
     handler->abort(ref->ctx);

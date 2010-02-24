@@ -206,7 +206,7 @@ http_client_response_stream_available(istream_t istream, bool partial)
            http_body_socket_is_done(&client->response.body_reader,
                                     client->input));
     assert(client->response.read_state == READ_BODY);
-    assert(!http_response_handler_defined(&client->request.handler));
+    assert(http_response_handler_used(&client->request.handler));
 
     return http_body_available(&client->response.body_reader,
                                client->input, partial);
@@ -225,7 +225,7 @@ http_client_response_stream_read(istream_t istream)
                                     client->input));
     assert(client->response.read_state == READ_BODY);
     assert(client->response.body_reader.output.handler != NULL);
-    assert(!http_response_handler_defined(&client->request.handler));
+    assert(http_response_handler_used(&client->request.handler));
 
     bret = http_client_consume_body(client);
     if (!bret)
@@ -241,7 +241,7 @@ http_client_response_stream_close(istream_t istream)
     struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client->response.read_state == READ_BODY);
-    assert(!http_response_handler_defined(&client->request.handler));
+    assert(http_response_handler_used(&client->request.handler));
     assert(!http_body_eof(&client->response.body_reader));
 
     stopwatch_event(client->stopwatch, "close");
@@ -446,7 +446,7 @@ static void
 http_client_response_finished(struct http_client *client)
 {
     assert(client->response.read_state == READ_BODY);
-    assert(!http_response_handler_defined(&client->request.handler));
+    assert(http_response_handler_used(&client->request.handler));
 
     stopwatch_event(client->stopwatch, "end");
 
@@ -525,7 +525,7 @@ static void
 http_client_response_stream_eof(struct http_client *client)
 {
     assert(client->response.read_state == READ_BODY);
-    assert(!http_response_handler_defined(&client->request.handler));
+    assert(http_response_handler_used(&client->request.handler));
     assert(http_body_eof(&client->response.body_reader));
 
     istream_deinit_eof(&client->response.body_reader.output);
