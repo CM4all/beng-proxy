@@ -87,7 +87,7 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
 
     if (event & EV_TIMEOUT) {
         close(fd);
-        client_socket->callback(-1, EINTR, client_socket->callback_ctx);
+        client_socket->callback(-1, ETIMEDOUT, client_socket->callback_ctx);
         pool_unref(client_socket->pool);
         pool_commit();
         return;
