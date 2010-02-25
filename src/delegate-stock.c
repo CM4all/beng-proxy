@@ -191,10 +191,8 @@ delegate_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
 {
     struct delegate_process *process = (struct delegate_process *)item;
 
-    if (process->fd >= 0) {
-        event_del(&process->event);
-        close(process->fd);
-    }
+    event_del(&process->event);
+    close(process->fd);
 }
 
 static const struct stock_class delegate_stock_class = {
