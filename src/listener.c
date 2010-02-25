@@ -142,6 +142,9 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
     listener->callback = callback;
     listener->callback_ctx = ctx;
 
+    event_set(&listener->event, listener->fd,
+              EV_READ|EV_PERSIST, listener_event_callback, listener);
+
     listener_event_add(listener);
 
     return listener;
@@ -205,8 +208,6 @@ listener_free(struct listener **listener_r)
 void
 listener_event_add(struct listener *listener)
 {
-    event_set(&listener->event, listener->fd,
-              EV_READ|EV_PERSIST, listener_event_callback, listener);
     event_add(&listener->event, NULL);
 }
 
