@@ -171,15 +171,6 @@ static const struct istream_handler fork_input_handler = {
  * event for fork.output_fd
  */
 
-static size_t
-fork_flush_buffer(struct fork *f)
-{
-    if (f->buffer == NULL)
-        return 0;
-
-    return istream_buffer_consume(&f->output, f->buffer);
-}
-
 static void
 fork_read_from_output(struct fork *f)
 {
@@ -195,8 +186,7 @@ fork_read_from_output(struct fork *f)
         if (nbytes == -2) {
             /* XXX should not happen */
         } else if (nbytes > 0) {
-            size_t rest = fork_flush_buffer(f);
-            if (rest == 0 && f->buffer != NULL)
+            if (istream_buffer_send(&f->output, f->buffer) > 0)
                 event2_set(&f->output_event, EV_READ);
         } else if (nbytes == 0) {
             fork_close(f);
@@ -280,13 +270,10 @@ static void
 istream_fork_read(istream_t istream)
 {
     struct fork *f = istream_to_fork(istream);
-    size_t rest;
 
-    rest = fork_flush_buffer(f);
-    if (rest == 0) {
-        event2_set(&f->output_event, 0);
+    if (f->buffer == NULL || fifo_buffer_empty(f->buffer) ||
+        istream_buffer_send(&f->output, f->buffer) > 0)
         fork_read_from_output(f);
-    }
 }
 
 static void
