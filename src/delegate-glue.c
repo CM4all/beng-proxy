@@ -25,6 +25,7 @@ struct delegate_glue {
 
     delegate_callback_t callback;
     void *callback_ctx;
+    struct async_operation_ref *async_ref;
 };
 
 static void
@@ -58,7 +59,7 @@ delegate_stock_callback(void *_ctx, struct stock_item *item)
         delegate_open(delegate_stock_item_get(item),
                       &delegate_socket_lease, glue,
                       glue->pool, glue->path,
-                      delegate_callback, glue);
+                      delegate_callback, glue, glue->async_ref);
     else
         glue->callback(-EINVAL, glue->callback_ctx);
 }
@@ -77,6 +78,7 @@ delegate_stock_open(struct hstock *stock, pool_t pool,
     glue->stock = stock;
     glue->callback = callback;
     glue->callback_ctx = ctx;
+    glue->async_ref = async_ref;
 
     delegate_stock_get(stock, pool, helper, document_root, jail,
                        delegate_stock_callback, glue, async_ref);

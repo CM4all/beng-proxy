@@ -7,6 +7,7 @@
 
 #include "delegate-client.h"
 #include "delegate-protocol.h"
+#include "async.h"
 #include "lease.h"
 #include "fd-util.h"
 
@@ -36,6 +37,8 @@ struct delegate_client {
     size_t payload_rest;
     delegate_callback_t callback;
     void *callback_ctx;
+
+    struct async_operation operation;
 };
 
 /*
@@ -65,6 +68,8 @@ delegate_read_event_callback(int fd __attr_unused, short event __attr_unused,
 static void
 delegate_try_read(struct delegate_client *d)
 {
+    async_poison(&d->operation);
+
     struct iovec iov;
     int fd;
     char ccmsg[CMSG_SPACE(sizeof(fd))];
@@ -195,10 +200,43 @@ delegate_try_write(struct delegate_client *d)
     event_add(&d->event, NULL);
 }
 
+
+/*
+ * async operation
+ *
+ */
+
+static struct delegate_client *
+async_to_delegate_client(struct async_operation *ao)
+{
+    return (struct delegate_client*)(((char*)ao) - offsetof(struct delegate_client, operation));
+}
+
+static void
+delegate_connection_abort(struct async_operation *ao)
+{
+    struct delegate_client *d = async_to_delegate_client(ao);
+
+    event_del(&d->event);
+    lease_release(&d->lease_ref, false);
+    pool_unref(d->pool);
+}
+
+static const struct async_operation_class delegate_operation = {
+    .abort = delegate_connection_abort,
+};
+
+
+/*
+ * constructor
+ *
+ */
+
 void
 delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               pool_t pool, const char *path,
-              delegate_callback_t callback, void *ctx)
+              delegate_callback_t callback, void *ctx,
+              struct async_operation_ref *async_ref)
 {
     struct delegate_client *d;
     ssize_t nbytes;
@@ -237,6 +275,9 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     d->payload_rest = strlen(path);
     d->callback = callback;
     d->callback_ctx = ctx;
+
+    async_init(&d->operation, &delegate_operation);
+    async_ref_set(async_ref, &d->operation);
 
     event_set(&d->event, d->fd, EV_WRITE,
               delegate_write_event_callback, d);
