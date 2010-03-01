@@ -39,6 +39,15 @@ struct allocation_info {
     unsigned line;
 #endif
 };
+
+struct attachment {
+    struct list_head siblings;
+
+    const void *value;
+
+    const char *name;
+};
+
 #define LINEAR_PREFIX sizeof(struct allocation_info)
 #else
 #define LINEAR_PREFIX 0
@@ -105,6 +114,7 @@ struct pool {
 
 #ifndef NDEBUG
     struct list_head allocations;
+    struct list_head attachments;
 #endif
 #ifdef DUMP_POOL_SIZE
     size_t size;
@@ -273,6 +283,7 @@ pool_new(pool_t parent, const char *name)
 
 #ifndef NDEBUG
     list_init(&pool->allocations);
+    list_init(&pool->attachments);
 #endif
 #ifdef DUMP_POOL_SIZE
     pool->size = 0;
@@ -354,6 +365,29 @@ pool_dump_allocations(pool_t pool);
 #endif
 
 static void
+pool_check_attachments(pool_t pool)
+{
+#ifdef NDEBUG
+    (void)pool
+#else
+    if (list_empty(&pool->attachments))
+        return;
+
+    daemon_log(1, "pool '%s' has attachments left:\n", pool->name);
+
+    do {
+        struct attachment *attachment =
+            (struct attachment *)pool->attachments.next;
+        list_remove(&attachment->siblings);
+        daemon_log(1, "\tname='%s' value=%p\n",
+                   attachment->name, attachment->value);
+    } while (!list_empty(&pool->attachments));
+
+    abort();
+#endif
+}
+
+static void
 pool_destroy(pool_t pool, pool_t reparent_to)
 {
     assert(pool->ref == 0);
@@ -368,6 +402,8 @@ pool_destroy(pool_t pool, pool_t reparent_to)
 #ifdef DUMP_POOL_ALLOC_ALL
     pool_dump_allocations(pool);
 #endif
+
+    pool_check_attachments(pool);
 
 #ifndef NDEBUG
     while (!list_empty(&pool->notify)) {
@@ -553,6 +589,8 @@ pool_notify(pool_t pool, struct pool_notify *notify)
 void
 pool_trash(pool_t pool)
 {
+    pool_check_attachments(pool);
+
     if (pool->trashed)
         return;
 
@@ -861,3 +899,74 @@ p_calloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL)
     clear_memory(p, size);
     return p;
 }
+
+#ifndef NDEBUG
+
+void
+pool_attach(pool_t pool, const void *p, const char *name)
+{
+    assert(pool != NULL);
+    assert(p != NULL);
+    assert(name != NULL);
+
+    struct attachment *attachment = p_malloc(pool, sizeof(*attachment));
+    attachment->value = p;
+    attachment->name = name;
+
+    list_add(&attachment->siblings, &pool->attachments);
+}
+
+static struct attachment *
+find_attachment(pool_t pool, const void *p)
+{
+    for (struct attachment *attachment = (struct attachment *)pool->attachments.next;
+         &attachment->siblings != &pool->attachments;
+         attachment = (struct attachment *)attachment->siblings.next)
+        if (attachment->value == p)
+            return attachment;
+
+    return NULL;
+}
+
+void
+pool_attach_checked(pool_t pool, const void *p, const char *name)
+{
+    assert(pool != NULL);
+    assert(p != NULL);
+    assert(name != NULL);
+
+    if (find_attachment(pool, p) != NULL)
+        return;
+
+    pool_attach(pool, p, name);
+}
+
+void
+pool_detach(pool_t pool, const void *p)
+{
+    struct attachment *attachment = find_attachment(pool, p);
+    assert(attachment != NULL);
+
+    list_remove(&attachment->siblings);
+}
+
+void
+pool_detach_checked(pool_t pool, const void *p)
+{
+    struct attachment *attachment = find_attachment(pool, p);
+    if (attachment == NULL)
+        return;
+
+    list_remove(&attachment->siblings);
+}
+
+const char *
+pool_attachment_name(pool_t pool, const void *p)
+{
+    struct attachment *attachment = find_attachment(pool, p);
+    return attachment != NULL
+        ? attachment->name
+        : NULL;
+}
+
+#endif

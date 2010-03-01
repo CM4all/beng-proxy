@@ -90,6 +90,34 @@ pool_commit(void)
 {
 }
 
+static inline void
+pool_attach(__attr_unused pool_t pool, __attr_unused const void *p,
+            __attr_unused const char *name)
+{
+}
+
+static inline void
+pool_attach_checked(__attr_unused pool_t pool, __attr_unused const void *p,
+                    __attr_unused const char *name)
+{
+}
+
+static inline void
+pool_detach(__attr_unused pool_t pool, __attr_unused const void *p)
+{
+}
+
+static inline void
+pool_detach_checked(__attr_unused pool_t pool, __attr_unused const void *p)
+{
+}
+
+static inline const char *
+pool_attachment_name(__attr_unused pool_t pool, __attr_unused const void *p)
+{
+    return NULL;
+}
+
 #else
 
 void
@@ -100,6 +128,30 @@ pool_commit(void);
 
 bool
 pool_contains(pool_t pool, const void *ptr, size_t size);
+
+/**
+ * Attach an opaque object to the pool.  It must be detached before
+ * the pool is destroyed.  This is used in debugging mode to track
+ * whether all external objects have been destroyed.
+ */
+void
+pool_attach(pool_t pool, const void *p, const char *name);
+
+/**
+ * Same as pool_attach(), but checks if the object is already
+ * registered.
+ */
+void
+pool_attach_checked(pool_t pool, const void *p, const char *name);
+
+void
+pool_detach(pool_t pool, const void *p);
+
+void
+pool_detach_checked(pool_t pool, const void *p);
+
+const char *
+pool_attachment_name(pool_t pool, const void *p);
 
 #endif
 
