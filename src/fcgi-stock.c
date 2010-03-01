@@ -9,11 +9,11 @@
 #include "async.h"
 #include "client-socket.h"
 #include "jail.h"
+#include "pevent.h"
 
 #include <daemon/log.h>
 
 #include <glib.h>
-#include <event.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -168,6 +168,8 @@ fcgi_child_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 
     assert(fd == child->fd);
 
+    p_event_consumed(&child->event, child->base.pool);
+
     if ((event & EV_TIMEOUT) == 0) {
         char buffer;
         ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
@@ -320,7 +322,7 @@ fcgi_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
 {
     struct fcgi_child *child = (struct fcgi_child *)item;
 
-    event_del(&child->event);
+    p_event_del(&child->event, child->base.pool);
     return true;
 }
 
@@ -333,7 +335,7 @@ fcgi_stock_release(void *ctx __attr_unused, struct stock_item *item)
         .tv_usec = 0,
     };
 
-    event_add(&child->event, &tv);
+    p_event_add(&child->event, &tv, child->base.pool, "fcgi_child_event");
 }
 
 static void
@@ -350,7 +352,7 @@ fcgi_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
     if (async_ref_defined(&child->connect_operation))
         async_abort(&child->connect_operation);
     else if (child->fd >= 0) {
-        event_del(&child->event);
+        p_event_del(&child->event, child->base.pool);
         close(child->fd);
     }
 }

@@ -9,6 +9,7 @@
 #include "async.h"
 #include "failure.h"
 #include "fd-util.h"
+#include "pevent.h"
 
 #include <daemon/log.h>
 
@@ -17,7 +18,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/un.h>
-#include <event.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 
@@ -52,6 +52,8 @@ delegate_stock_event(int fd, short event, void *ctx)
     struct delegate_process *process = ctx;
 
     assert(fd == process->fd);
+
+    p_event_consumed(&process->event, process->stock_item.pool);
 
     if ((event & EV_TIMEOUT) == 0) {
         char buffer;
@@ -169,7 +171,7 @@ delegate_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
     struct delegate_process *process =
         (struct delegate_process *)item;
 
-    event_del(&process->event);
+    p_event_del(&process->event, process->stock_item.pool);
     return true;
 }
 
@@ -183,7 +185,8 @@ delegate_stock_release(void *ctx __attr_unused, struct stock_item *item)
         .tv_usec = 0,
     };
 
-    event_add(&process->event, &tv);
+    p_event_add(&process->event, &tv,
+                process->stock_item.pool, "delegate_process");
 }
 
 static void
@@ -191,7 +194,7 @@ delegate_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
 {
     struct delegate_process *process = (struct delegate_process *)item;
 
-    event_del(&process->event);
+    p_event_del(&process->event, process->stock_item.pool);
     close(process->fd);
 }
 

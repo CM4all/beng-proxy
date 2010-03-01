@@ -15,6 +15,7 @@
 #include "strutil.h"
 #include "stopwatch.h"
 #include "beng-proxy/translation.h"
+#include "pevent.h"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -104,7 +105,7 @@ translate_client_release(struct translate_client *client, bool reuse)
 
     stopwatch_dump(client->stopwatch);
 
-    event_del(&client->event);
+    p_event_del(&client->event, client->pool);
     lease_release(&client->lease_ref, reuse);
     pool_unref(client->pool);
 }
@@ -990,7 +991,7 @@ translate_try_read(struct translate_client *client, int fd)
                 .tv_usec = 0,
             };
 
-            event_add(&client->event, &tv);
+            p_event_add(&client->event, &tv, client->pool, "translate_event");
             return;
         }
 
@@ -1025,6 +1026,8 @@ static void
 translate_read_event_callback(int fd, short event, void *ctx)
 {
     struct translate_client *client = ctx;
+
+    p_event_consumed(&client->event, client->pool);
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "read timeout on translation server\n");
@@ -1074,13 +1077,15 @@ translate_try_write(struct translate_client *client, int fd)
         return;
     }
 
-    event_add(&client->event, &tv);
+    p_event_add(&client->event, &tv, client->pool, "translate_event");
 }
 
 static void
 translate_write_event_callback(int fd, short event, void *ctx)
 {
     struct translate_client *client = ctx;
+
+    p_event_consumed(&client->event, client->pool);
 
     if (event == EV_TIMEOUT) {
         daemon_log(1, "write timeout on translation server\n");

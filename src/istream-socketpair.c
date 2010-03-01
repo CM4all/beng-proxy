@@ -13,10 +13,10 @@
 #include "socket-util.h"
 #include "fifo-buffer.h"
 #include "buffered-io.h"
+#include "pevent.h"
 
 #include <daemon/log.h>
 
-#include <event.h>
 #include <assert.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -45,8 +45,8 @@ socketpair_close(struct istream_socketpair *sp)
         istream_free_handler(&sp->input);
 
     if (sp->fd >= 0) {
-        event_del(&sp->recv_event);
-        event_del(&sp->send_event);
+        p_event_del(&sp->recv_event, sp->output.pool);
+        p_event_del(&sp->send_event, sp->output.pool);
 
         close(sp->fd);
         sp->fd = -1;
@@ -73,12 +73,14 @@ socketpair_input_data(const void *data, size_t length, void *ctx)
 
     nbytes = send(sp->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (likely(nbytes >= 0)) {
-        event_add(&sp->send_event, NULL);
+        p_event_add(&sp->send_event, NULL,
+                    sp->output.pool, "socketpair_send_event");
         return (size_t)nbytes;
     }
 
     if (likely(errno == EAGAIN)) {
-        event_add(&sp->send_event, NULL);
+        p_event_add(&sp->send_event, NULL,
+                    sp->output.pool, "socketpair_send_event");
         return 0;
     }
 
@@ -95,7 +97,7 @@ socketpair_input_eof(void *ctx)
     assert(sp->input != NULL);
     assert(sp->fd >= 0);
 
-    event_del(&sp->send_event);
+    p_event_del(&sp->send_event, sp->output.pool);
     shutdown(sp->fd, SHUT_WR);
     sp->input = NULL;
 }
@@ -174,8 +176,8 @@ socketpair_read(struct istream_socketpair *sp)
     }
 
     if (nbytes == 0) {
-        event_del(&sp->recv_event);
-        event_del(&sp->send_event);
+        p_event_del(&sp->recv_event, sp->output.pool);
+        p_event_del(&sp->send_event, sp->output.pool);
 
         close(sp->fd);
         sp->fd = -1;
@@ -187,7 +189,8 @@ socketpair_read(struct istream_socketpair *sp)
     }
 
     if (istream_buffer_send(&sp->output, sp->buffer) > 0)
-        event_add(&sp->recv_event, NULL);
+        p_event_add(&sp->recv_event, NULL,
+                    sp->output.pool, "socketpair_recv_event");
 }
 
 
@@ -261,10 +264,12 @@ istream_socketpair_new(pool_t pool, istream_t input, int *fd_r)
     sp->buffer = fifo_buffer_new(pool, 4096);
 
     event_set(&sp->recv_event, sp->fd, EV_READ, socketpair_recv_callback, sp);
-    event_add(&sp->recv_event, NULL);
+    p_event_add(&sp->recv_event, NULL,
+                sp->output.pool, "socketpair_recv_event");
 
     event_set(&sp->send_event, sp->fd, EV_WRITE, socketpair_send_callback, sp);
-    event_add(&sp->send_event, NULL);
+    p_event_add(&sp->send_event, NULL,
+                sp->output.pool, "socketpair_send_event");
 
     return istream_struct_cast(&sp->output);
 }

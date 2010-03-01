@@ -9,6 +9,7 @@
 #include "async.h"
 #include "fd-util.h"
 #include "stopwatch.h"
+#include "pevent.h"
 
 #include <inline/poison.h>
 #include <socket/util.h>
@@ -58,7 +59,7 @@ client_socket_abort(struct async_operation *ao)
     assert(client_socket != NULL);
     assert(client_socket->fd >= 0);
 
-    event_del(&client_socket->event);
+    p_event_del(&client_socket->event, client_socket->pool);
     close(client_socket->fd);
     pool_unref(client_socket->pool);
 }
@@ -82,6 +83,8 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
     socklen_t s_err_size = sizeof(s_err);
 
     assert(client_socket->fd == fd);
+
+    p_event_consumed(&client_socket->event, client_socket->pool);
 
     async_poison(&client_socket->operation);
 
@@ -202,7 +205,8 @@ client_socket_new(pool_t pool,
         event_set(&client_socket->event, client_socket->fd,
                   EV_WRITE|EV_TIMEOUT, client_socket_event_callback,
                   client_socket);
-        event_add(&client_socket->event, &tv);
+        p_event_add(&client_socket->event, &tv,
+                    client_socket->pool, "client_socket_event");
     } else {
         int save_errno = errno;
         close(fd);

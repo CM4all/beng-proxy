@@ -10,14 +10,13 @@
 #include "async.h"
 #include "lease.h"
 #include "fd-util.h"
+#include "pevent.h"
 
 #ifdef __linux
 #include <fcntl.h>
 #endif
 
 #include <daemon/log.h>
-
-#include <event.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -58,6 +57,8 @@ delegate_read_event_callback(int fd __attr_unused, short event __attr_unused,
                               void *ctx)
 {
     struct delegate_client *d = ctx;
+
+    p_event_consumed(&d->event, d->pool);
 
     assert(d->fd == fd);
     assert(d->payload_rest == 0);
@@ -197,7 +198,7 @@ delegate_try_write(struct delegate_client *d)
         event_set(&d->event, d->fd, EV_READ,
                   delegate_read_event_callback, d);
 
-    event_add(&d->event, NULL);
+    p_event_add(&d->event, NULL, d->pool, "delegate_client_event");
 }
 
 
@@ -217,7 +218,7 @@ delegate_connection_abort(struct async_operation *ao)
 {
     struct delegate_client *d = async_to_delegate_client(ao);
 
-    event_del(&d->event);
+    p_event_del(&d->event, d->pool);
     lease_release(&d->lease_ref, false);
     pool_unref(d->pool);
 }

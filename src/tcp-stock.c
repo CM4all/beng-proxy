@@ -11,6 +11,7 @@
 #include "uri-address.h"
 #include "balancer.h"
 #include "failure.h"
+#include "pevent.h"
 
 #include <daemon/log.h>
 
@@ -20,7 +21,6 @@
 #include <unistd.h>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <event.h>
 
 struct tcp_stock_connection {
     struct stock_item stock_item;
@@ -78,6 +78,8 @@ tcp_stock_event(int fd, short event, void *ctx)
     struct tcp_stock_connection *connection = ctx;
 
     assert(fd == connection->fd);
+
+    p_event_consumed(&connection->event, connection->stock_item.pool);
 
     if ((event & EV_TIMEOUT) == 0) {
         char buffer;
@@ -212,7 +214,7 @@ tcp_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
 
-    event_del(&connection->event);
+    p_event_del(&connection->event, item->pool);
     return true;
 }
 
@@ -226,7 +228,7 @@ tcp_stock_release(void *ctx __attr_unused, struct stock_item *item)
         .tv_usec = 0,
     };
 
-    event_add(&connection->event, &tv);
+    p_event_add(&connection->event, &tv, item->pool, "tcp_stock_event");
 }
 
 static void
@@ -238,7 +240,7 @@ tcp_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
     if (async_ref_defined(&connection->client_socket))
         async_abort(&connection->client_socket);
     else if (connection->fd >= 0) {
-        event_del(&connection->event);
+        p_event_del(&connection->event, item->pool);
         close(connection->fd);
     }
 }

@@ -3,6 +3,7 @@ cm4all-beng-proxy (0.7.19) unstable; urgency=low
   * client-socket: translate EV_TIMEOUT to ETIMEDOUT
   * fork: refill the input buffer as soon as possible
   * delegate-client: implement an abortable event
+  * pool: added assertions for libevent leaks
 
  --
 

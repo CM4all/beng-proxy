@@ -10,14 +10,13 @@
 #include "buffered-io.h"
 #include "fd-util.h"
 #include "direct.h"
+#include "pevent.h"
 
 #ifdef __linux
 #include <fcntl.h>
 #endif
 
 #include <daemon/log.h>
-
-#include <event.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -51,12 +50,12 @@ fork_close(struct fork *f)
     if (f->input != NULL) {
         assert(f->input_fd >= 0);
 
-        event_del(&f->input_event);
+        p_event_del(&f->input_event, f->output.pool);
         close(f->input_fd);
         istream_close_handler(f->input);
     }
 
-    event_del(&f->output_event);
+    p_event_del(&f->output_event, f->output.pool);
 
     close(f->output_fd);
     f->output_fd = -1;
@@ -85,13 +84,14 @@ fork_input_data(const void *data, size_t length, void *ctx)
     nbytes = write(f->input_fd, data, length);
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            event_add(&f->input_event, NULL);
+            p_event_add(&f->input_event, NULL,
+                        f->output.pool, "fork_input_event");
             return 0;
         }
 
         daemon_log(1, "write() to subprocess failed: %s\n",
                    strerror(errno));
-        event_del(&f->input_event);
+        p_event_del(&f->input_event, f->output.pool);
         close(f->input_fd);
         f->input_fd = -1;
         istream_free_handler(&f->input);
@@ -115,7 +115,8 @@ fork_input_direct(istream_direct_t type,
     if (nbytes < 0) {
         if (errno == EAGAIN) {
             if (!fd_ready_for_writing(f->input_fd)) {
-                event_add(&f->input_event, NULL);
+                p_event_add(&f->input_event, NULL,
+                            f->output.pool, "fork_input_event");
                 return -2;
             }
 
@@ -137,7 +138,7 @@ fork_input_eof(void *ctx)
 
     assert(f->input_fd >= 0);
 
-    event_del(&f->input_event);
+    p_event_del(&f->input_event, f->output.pool);
     close(f->input_fd);
     f->input_fd = -1;
 
@@ -151,7 +152,7 @@ fork_input_abort(void *ctx)
 
     assert(f->input_fd >= 0);
 
-    event_del(&f->input_event);
+    p_event_del(&f->input_event, f->output.pool);
     f->input = NULL;
 
     fork_close(f);
@@ -188,12 +189,14 @@ fork_read_from_output(struct fork *f)
             /* XXX should not happen */
         } else if (nbytes > 0) {
             if (istream_buffer_send(&f->output, f->buffer) > 0)
-                event_add(&f->output_event, NULL);
+                p_event_add(&f->output_event, NULL,
+                            f->output.pool, "fork_output_event");
         } else if (nbytes == 0) {
             fork_close(f);
             istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
-            event_add(&f->output_event, NULL);
+            p_event_add(&f->output_event, NULL,
+                        f->output.pool, "fork_output_event");
 
             if (f->input != NULL)
                 /* the CGI may be waiting for more data from stdin */
@@ -211,12 +214,14 @@ fork_read_from_output(struct fork *f)
             /* -2 means the callback wasn't able to consume any data right
                now */
         } else if (nbytes > 0) {
-            event_add(&f->output_event, NULL);
+            p_event_add(&f->output_event, NULL,
+                        f->output.pool, "fork_output_event");
         } else if (nbytes == 0) {
             fork_close(f);
             istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
-            event_add(&f->output_event, NULL);
+            p_event_add(&f->output_event, NULL,
+                        f->output.pool, "fork_output_event");
 
             if (f->input != NULL)
                 /* the CGI may be waiting for more data from stdin */
@@ -239,6 +244,8 @@ fork_input_event_callback(int fd __attr_unused, short event __attr_unused,
     assert(f->input_fd == fd);
     assert(f->input != NULL);
 
+    p_event_consumed(&f->input_event, f->output.pool);
+
     istream_read(f->input);
 }
 
@@ -249,6 +256,8 @@ fork_output_event_callback(int fd __attr_unused, short event __attr_unused,
     struct fork *f = ctx;
 
     assert(f->output_fd == fd);
+
+    p_event_consumed(&f->output_event, f->output.pool);
 
     fork_read_from_output(f);
 }
@@ -382,7 +391,8 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
 
             event_set(&f->input_event, f->input_fd, EV_WRITE,
                       fork_input_event_callback, f);
-            event_add(&f->input_event, NULL);
+            p_event_add(&f->input_event, NULL,
+                        f->output.pool, "fork_input_event");
 
             istream_assign_handler(&f->input, input,
                                    &fork_input_handler, f,
