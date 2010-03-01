@@ -104,8 +104,7 @@ translate_client_release(struct translate_client *client, bool reuse)
 
     stopwatch_dump(client->stopwatch);
 
-    if (client->event.ev_events != 0)
-        event_del(&client->event);
+    event_del(&client->event);
     lease_release(&client->lease_ref, reuse);
     pool_unref(client->pool);
 }
