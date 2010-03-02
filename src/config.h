@@ -53,6 +53,11 @@ struct config {
     unsigned translate_cache_size;
 
     unsigned tcp_stock_limit;
+
+    /**
+     * Use the splice() system call?
+     */
+    bool enable_splice;
 };
 
 void

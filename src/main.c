@@ -225,6 +225,7 @@ int main(int argc, char **argv)
             .filter_cache_size = 128 * 1024 * 1024,
             .translate_cache_size = 131072,
             .tcp_stock_limit = 256,
+            .enable_splice = true,
         },
     };
 
@@ -232,8 +233,6 @@ int main(int argc, char **argv)
     if (geteuid() != 0)
         debug_mode = true;
 #endif
-
-    direct_global_init();
 
     instance.pool = pool_new_libc(NULL, "global");
     tpool_init(instance.pool);
@@ -250,6 +249,9 @@ int main(int argc, char **argv)
     }
 
     /* initialize */
+
+    if (instance.config.enable_splice)
+        direct_global_init();
 
     instance.event_base = event_init();
 
@@ -365,5 +367,6 @@ int main(int argc, char **argv)
 
     daemonize_cleanup();
 
-    direct_global_deinit();
+    if (instance.config.enable_splice)
+        direct_global_deinit();
 }

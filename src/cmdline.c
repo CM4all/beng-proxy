@@ -120,6 +120,7 @@ handle_set2(struct config *config, const char *argv0,
     static const char filter_cache_size[] = "filter_cache_size";
     static const char translate_cache_size[] = "translate_cache_size";
     static const char stopwatch[] = "stopwatch";
+    static const char enable_splice[] = "enable_splice";
     char *endptr;
     long l;
 
@@ -168,6 +169,12 @@ handle_set2(struct config *config, const char *argv0,
             stopwatch_enable();
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for stopwatch");
+    } else if (name_length == sizeof(enable_splice) - 1 &&
+               memcmp(name, enable_splice, sizeof(enable_splice) - 1) == 0) {
+        if (strcmp(value, "no") == 0)
+            config->enable_splice = false;
+        else if (strcmp(value, "yes") != 0)
+            arg_error(argv0, "Invalid value for enable_splice");
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }
