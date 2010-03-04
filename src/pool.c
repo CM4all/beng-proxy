@@ -368,7 +368,7 @@ static void
 pool_check_attachments(pool_t pool)
 {
 #ifdef NDEBUG
-    (void)pool
+    (void)pool;
 #else
     if (list_empty(&pool->attachments))
         return;
