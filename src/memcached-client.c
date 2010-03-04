@@ -175,8 +175,8 @@ memcached_connection_close(struct memcached_client *client)
 static bool
 memcached_consume_value(struct memcached_client *client);
 
-static void
-memcached_client_try_read(struct memcached_client *client);
+static bool
+memcached_client_fill_buffer(struct memcached_client *client);
 
 /*
  * response value istream
@@ -208,13 +208,9 @@ istream_memcached_read(istream_t istream)
     assert(client->response.read_state == READ_VALUE);
     assert(client->request.istream == NULL);
 
-    if (!fifo_buffer_empty(client->response.input))
+    if (!fifo_buffer_empty(client->response.input) ||
+        memcached_client_fill_buffer(client))
         memcached_consume_value(client);
-    else {
-        pool_ref(client->pool);
-        memcached_client_try_read(client);
-        pool_unref(client->pool);
-    }
 }
 
 static void
@@ -464,34 +460,49 @@ memcached_consume_input(struct memcached_client *client)
     return memcached_consume_value(client);
 }
 
-static void
-memcached_client_try_read(struct memcached_client *client)
+/**
+ * Read more data from the socket into the input buffer.
+ *
+ * @return true if at least one byte has been read, false if no data
+ * is available or if an error has occurred
+ */
+static bool
+memcached_client_fill_buffer(struct memcached_client *client)
 {
-    ssize_t nbytes;
+    assert(client->fd >= 0);
+    assert(client->response.input != NULL);
+    assert(!fifo_buffer_full(client->response.input));
 
-    assert(memcached_connection_valid(client));
-
-    nbytes = recv_to_buffer(client->fd, client->response.input,
-                            G_MAXINT);
+    ssize_t nbytes = recv_to_buffer(client->fd, client->response.input,
+                                    G_MAXINT);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
         daemon_log(1, "memcached server closed the connection\n");
         memcached_connection_close(client);
-        return;
+        return false;
     }
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
             event2_or(&client->event, EV_READ);
-            return;
+            return false;
         }
 
         daemon_log(1, "read error on memcached connection: %s\n",
                    strerror(errno));
         memcached_connection_close(client);
-        return;
+        return false;
     }
+
+    return true;
+}
+
+static void
+memcached_client_try_read(struct memcached_client *client)
+{
+    if (!memcached_client_fill_buffer(client))
+        return;
 
     memcached_consume_input(client);
 
