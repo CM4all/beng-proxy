@@ -240,6 +240,10 @@ static const struct istream memcached_response_value = {
  *
  */
 
+/**
+ * @return true if the response header is finished, false if more data
+ * is needed or if an error has occurred
+ */
 static bool
 memcached_consume_header(struct memcached_client *client)
 {
@@ -261,6 +265,7 @@ memcached_consume_header(struct memcached_client *client)
     if (client->response.header.magic != MEMCACHED_MAGIC_RESPONSE ||
         g_ntohs(client->response.header.key_length) +
         client->response.header.extras_length > client->response.remaining) {
+        /* protocol error: abort the connection */
         memcached_connection_abort_response_header(client);
         return false;
     }
@@ -268,6 +273,10 @@ memcached_consume_header(struct memcached_client *client)
     return true;
 }
 
+/**
+ * @return true if the extras response value is finished, false if
+ * more data is needed
+ */
 static bool
 memcached_consume_extras(struct memcached_client *client)
 {
@@ -305,6 +314,10 @@ memcached_consume_extras(struct memcached_client *client)
     return true;
 }
 
+/**
+ * @return true if the response key is finished, false if more data is
+ * needed or if an error has occurred
+ */
 static bool
 memcached_consume_key(struct memcached_client *client)
 {
@@ -384,6 +397,10 @@ memcached_consume_key(struct memcached_client *client)
     }
 }
 
+/**
+ * @return true if the response value is finished, false if more data
+ * is needed or if an error has occurred
+ */
 static bool
 memcached_consume_value(struct memcached_client *client)
 {
@@ -423,6 +440,10 @@ memcached_consume_value(struct memcached_client *client)
     return true;
 }
 
+/**
+ * @return true if the response is finished, false if more data is
+ * needed or if an error has occurred
+ */
 static bool
 memcached_consume_input(struct memcached_client *client)
 {

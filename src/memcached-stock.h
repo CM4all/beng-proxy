@@ -20,6 +20,11 @@ memcached_stock_new(pool_t pool, struct hstock *tcp_stock,
 void
 memcached_stock_free(struct memcached_stock *stock);
 
+/**
+ * Invoke a call to the memcached server, on a socket to be obtained
+ * from the #memcached_stock.  See memcached_client_invoke() for a
+ * description of the other arguments.
+ */
 void
 memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
                        enum memcached_opcode opcode,
