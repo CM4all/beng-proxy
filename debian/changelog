@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.20) unstable; urgency=low
 
-  * 
+  * python: removed unused function write_packet()
 
  --
 
