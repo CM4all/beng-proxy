@@ -1,3 +1,9 @@
+cm4all-beng-proxy (0.7.20) unstable; urgency=low
+
+  * 
+
+ --
+
 cm4all-beng-proxy (0.7.19) unstable; urgency=low
 
   * client-socket: translate EV_TIMEOUT to ETIMEDOUT
