@@ -62,6 +62,8 @@ translate_callback(const struct translate_response *response,
     struct request *request = ctx;
     struct session *session;
 
+    request->connection->site_name = response->site;
+
     if (response->discard_session)
         request_discard_session(request);
 
@@ -361,6 +363,7 @@ handle_http_request(struct client_connection *connection,
     assert(request != NULL);
 
     request2 = p_malloc(request->pool, sizeof(*request2));
+    request2->connection = connection;
     request2->request = request;
 
     ret = request_uri_parse(request, &request2->uri);

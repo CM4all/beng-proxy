@@ -16,6 +16,8 @@
 #include "transformation.h"
 
 struct request {
+    struct client_connection *connection;
+
     struct http_server_request *request;
     struct parsed_uri uri;
 

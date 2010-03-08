@@ -21,6 +21,14 @@ struct client_connection {
     pool_t pool;
     const struct config *config;
     struct http_server_connection *http;
+
+    /**
+     * The name of the site being accessed by the current HTTP
+     * request.  This points to memory allocated by the request pool;
+     * it is a hack to allow the "log" callback to see this
+     * information.
+     */
+    const char *site_name;
 };
 
 void

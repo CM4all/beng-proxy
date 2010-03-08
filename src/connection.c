@@ -38,15 +38,19 @@ my_http_server_connection_request(struct http_server_request *request,
 {
     struct client_connection *connection = ctx;
 
+    connection->site_name = NULL;
+
     handle_http_request(connection, request, async_ref);
 }
 
 static void
 my_http_server_connection_log(struct http_server_request *request,
                               http_status_t status, off_t length,
-                              void *ctx __attr_unused)
+                              void *ctx)
 {
-    access_log(request, status, length);
+    struct client_connection *connection = ctx;
+
+    access_log(request, connection->site_name, status, length);
 }
 
 static void
