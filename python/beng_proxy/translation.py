@@ -1,4 +1,9 @@
+#
+# A low-level implementation of the beng-proxy translation server
+# protocol.
+#
 # Author: Max Kellermann <mk@cm4all.com>
+#
 
 import struct
 import urllib
@@ -86,13 +91,23 @@ def _parse_port(address):
         return None
 
 class PacketReader:
+    """A class which can read a packet incrementally.  Whenever you
+    receive a chunk of data from the socket, call the method
+    consume().  As soon as the attribute 'finished' becomes true, the
+    attributes 'command' and 'payload' are available."""
+
     def __init__(self):
         self._header = ''
         self.complete = False
 
     def consume(self, data):
+        """Consumes a chunk of data.  Returns the unused tail of the
+        buffer.  This must not be called when the 'complete' attribute
+        is already true."""
+
         assert not self.complete
         assert isinstance(data, str)
+
         # read header
         if len(self._header) < 4:
             # append to header
@@ -125,6 +140,10 @@ class PacketReader:
         return data
 
 class Request:
+    """An OO wrapper for a translation request.  This object is empty
+    when created, and is completed incrementally by calling
+    packetReceived() until it returns true."""
+
     def __init__(self):
         self.host = None
         self.raw_uri = None
@@ -149,6 +168,9 @@ class Request:
             raise AttributeError(name)
 
     def packetReceived(self, packet):
+        """Feed a packet into this object.  Returns true when the
+        request is finished."""
+
         if packet.command == TRANSLATE_END:
             return True
         elif packet.command == TRANSLATE_HOST:
@@ -179,6 +201,9 @@ class Request:
         return False
 
     def absolute_uri(self, scheme=None, host=None, uri=None):
+        """Returns the absolute URI of this request.  You may override
+        some of the attributes."""
+
         if scheme is None: scheme = "http"
         if host is None:
             host = self.host
@@ -194,37 +219,53 @@ class Request:
         return x
 
 def packet_header(command, length=0):
+    """Generate the header of a translation packet."""
+
     assert length <= 0xffff
     return struct.pack('HH', length, command)
 
 class Response:
+    """Generator for a translation response.  The BEGIN and END
+    packets are generated automatically.  When you are done with the
+    response, call finish().  This method returns the full response
+    (all serialized packets) as a string."""
+
     def __init__(self):
         self._data = packet_header(TRANSLATE_BEGIN)
 
     def finish(self):
+        """Finish the response, and return it as a string."""
         self._data += packet_header(TRANSLATE_END)
         return self._data
 
     def packet(self, command, payload = ''):
+        """Append a packet."""
         assert isinstance(payload, str)
         self._data += packet_header(command, len(payload))
         self._data += payload
 
     def status(self, status):
+        """Append a STATUS packet."""
         assert status >= 200 and status < 600
         self.packet(TRANSLATE_STATUS, struct.pack('H', status))
 
     def view(self, name):
+        """Append a VIEW packet."""
         assert isinstance(name, str)
         assert len(name) > 0
         self.packet(TRANSLATE_VIEW, name)
 
     def process(self, container=False):
+        """Append a PROCESS packet, and also a CONTAINER packet if the
+        'container' argument is true."""
         self.packet(TRANSLATE_PROCESS)
         if container:
             self.packet(TRANSLATE_CONTAINER)
 
     def proxy(self, uri, addresses=None):
+        """Generate a PROXY packet.  If you do not specify an address
+        list, this function looks up the URI's host name with the
+        local resolver (which may throw socket.gaierror)."""
         assert uri[0] != '/' or len(addresses) == 0
         assert addresses is None or hasattr(addresses, '__iter__')
 
@@ -243,6 +284,10 @@ class Response:
             self.packet(TRANSLATE_ADDRESS_STRING, address)
 
     def ajp(self, uri, addresses):
+        """Generate an AJP packet.  If you do not specify an address
+        list, this function looks up the URI's host name with the
+        local resolver (which may throw socket.gaierror)."""
+
         assert isinstance(addresses, str) or hasattr(address, '__iter__')
 
         if isinstance(addresses, str):
@@ -257,16 +302,25 @@ class Response:
             self.packet(TRANSLATE_ADDRESS_STRING, address)
 
     def vary(self, *args):
+        """Send a VARY packet.  All arguments are packet ids which are
+        put into the VARY packet payload."""
+
         assert len(args) > 0
         payload = ''.join(map(lambda x: struct.pack('H', x), args))
         self.packet(TRANSLATE_VARY, payload)
 
     def invalidate(self, *args):
+        """Send a INVALIDATE packet.  All arguments are packet ids
+        which are put into the INVALIDATE packet payload."""
+
         assert len(args) > 0
         payload = ''.join(map(lambda x: struct.pack('H', x), args))
         self.packet(TRANSLATE_INVALIDATE, payload)
 
     def pipe(self, path, *args):
+        """Send a PIPE packet.  You may pass additional arguments
+        which are sent as APPEND packets."""
+
         assert isinstance(path, str)
         assert len(path) > 0
         self.packet(TRANSLATE_PIPE, path)
