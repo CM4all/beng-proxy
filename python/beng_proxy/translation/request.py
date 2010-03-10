@@ -85,7 +85,8 @@ class Request:
             print "Invalid command:", packet.command
         return False
 
-    def absolute_uri(self, scheme=None, host=None, uri=None):
+    def absolute_uri(self, scheme=None, host=None, uri=None, query_string=None,
+                     param=None):
         """Returns the absolute URI of this request.  You may override
         some of the attributes."""
 
@@ -99,6 +100,16 @@ class Request:
         x = scheme + "://" + host + uri
         if self.__args is not None:
             x += ";" + self.__args
-        if self.query_string is not None:
-            x += "?" + self.query_string
+
+        if param is not None:
+            if self.__args is not None:
+                x += "&"
+            else:
+                x += ";"
+            x += "translate=" + urllib.quote(param)
+
+        if query_string is None:
+            query_string = self.query_string
+        if query_string is not None:
+            x += "?" + query_string
         return x
