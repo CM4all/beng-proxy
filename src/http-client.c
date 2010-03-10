@@ -11,7 +11,7 @@
 #include "buffered-io.h"
 #include "header-parser.h"
 #include "header-writer.h"
-#include "event2.h"
+#include "pevent.h"
 #include "http-body.h"
 #include "istream-internal.h"
 #include "async.h"
@@ -42,11 +42,12 @@ struct http_client {
     int fd;
     enum istream_direct fd_type;
     struct lease_ref lease_ref;
-    struct event2 event;
     struct fifo_buffer *input;
 
     /* request */
     struct {
+        struct event event;
+
         istream_t istream;
         char content_length_buffer[32];
 
@@ -56,6 +57,8 @@ struct http_client {
 
     /* response */
     struct {
+        struct event event;
+
         enum {
             READ_STATUS,
             READ_HEADERS,
@@ -87,6 +90,11 @@ struct http_client {
 #endif
 };
 
+static const struct timeval http_client_timeout = {
+    .tv_sec = 30,
+    .tv_usec = 0,
+};
+
 static inline bool
 http_client_valid(struct http_client *client)
 {
@@ -99,6 +107,26 @@ http_client_consume_body(struct http_client *client);
 static void
 http_client_try_read(struct http_client *client);
 
+static void
+http_client_schedule_read(struct http_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_add(&client->response.event,
+                client->request.istream != NULL
+                ? NULL : &http_client_timeout,
+                client->pool, "http_client_response");
+}
+
+static void
+http_client_schedule_write(struct http_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_add(&client->request.event, &http_client_timeout,
+                client->pool, "http_client_request");
+}
+
 /**
  * Release the socket held by this object.
  */
@@ -107,8 +135,9 @@ http_client_release_socket(struct http_client *client, bool reuse)
 {
     assert(client->fd >= 0);
 
-    event2_set(&client->event, 0);
-    event2_commit(&client->event);
+    p_event_del(&client->request.event, client->pool);
+    p_event_del(&client->response.event, client->pool);
+
     client->fd = -1;
     lease_release(&client->lease_ref, reuse);
 }
@@ -508,7 +537,7 @@ http_client_parse_headers(struct http_client *client)
     if (end == NULL)
         /* not enough data to finish this line, let libevent handle
            this */
-        event2_or(&client->event, EV_READ);
+        http_client_schedule_read(client);
 
     if (next == NULL)
         /* not a single line was processed - skip the following
@@ -551,7 +580,7 @@ http_client_consume_body(struct http_client *client)
            the connection has been closed, so we're just removing this
            event now; it will be added again at the end of this
            function */
-        event2_nand(&client->event, EV_READ);
+        p_event_del(&client->response.event, client->pool);
 
     nbytes = http_body_consume_body(&client->response.body_reader, client->input);
     if (nbytes == 0)
@@ -563,7 +592,7 @@ http_client_consume_body(struct http_client *client)
     }
 
     if (client->fd >= 0)
-        event2_or(&client->event, EV_READ);
+        http_client_schedule_read(client);
     return true;
 }
 
@@ -596,12 +625,17 @@ http_client_consume_headers(struct http_client *client)
            need in the input buffer */
         http_client_release_socket(client, client->keep_alive);
 
+    pool_ref(client->pool);
+
     http_response_handler_invoke_response(&client->request.handler,
                                           client->response.status,
                                           client->response.headers,
                                           client->response.body);
 
-    if (!http_client_valid(client))
+    bool valid = http_client_valid(client);
+    pool_unref(client->pool);
+
+    if (!valid)
         return false;
 
     if (client->response.body == NULL) {
@@ -630,7 +664,7 @@ http_client_try_response_direct(struct http_client *client)
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            event2_or(&client->event, EV_READ);
+            http_client_schedule_read(client);
             return;
         }
 
@@ -646,7 +680,7 @@ http_client_try_response_direct(struct http_client *client)
     if (http_body_eof(&client->response.body_reader))
         http_client_response_stream_eof(client);
     else
-        event2_or(&client->event, EV_READ);
+        http_client_schedule_read(client);
 }
 
 static void
@@ -684,7 +718,7 @@ http_client_try_read_buffered(struct http_client *client)
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            event2_or(&client->event, EV_READ);
+            http_client_schedule_read(client);
             return;
         }
 
@@ -731,34 +765,44 @@ http_client_try_read(struct http_client *client)
 }
 
 static void
-http_client_event_callback(int fd __attr_unused, short event, void *ctx)
+http_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct http_client *client = ctx;
 
     assert(client->fd >= 0);
 
+    p_event_consumed(&client->request.event, client->pool);
+
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "http_client: timeout\n");
+        daemon_log(4, "http_client: send timeout\n");
         stopwatch_event(client->stopwatch, "timeout");
         http_client_abort_response(client);
         return;
     }
 
-    pool_ref(client->pool);
-    event2_lock(&client->event);
-    event2_occurred_persist(&client->event, event);
+    istream_read(client->request.istream);
 
-    if ((event & EV_WRITE) != 0)
-        istream_read(client->request.istream);
+    pool_commit();
+}
 
-    if (client->fd >= 0 && (event & EV_READ) != 0)
-        http_client_try_read(client);
+static void
+http_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
+{
+    struct http_client *client = ctx;
 
-    if (client->fd >= 0 && !fifo_buffer_full(client->input))
-        event2_or(&client->event, EV_READ);
+    assert(client->fd >= 0);
 
-    event2_unlock(&client->event);
-    pool_unref(client->pool);
+    p_event_consumed(&client->response.event, client->pool);
+
+    if (unlikely(event & EV_TIMEOUT)) {
+        daemon_log(4, "http_client: receive timeout\n");
+        stopwatch_event(client->stopwatch, "timeout");
+        http_client_abort_response(client);
+        return;
+    }
+
+    http_client_try_read(client);
+
     pool_commit();
 }
 
@@ -778,12 +822,12 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (likely(nbytes >= 0)) {
-        event2_or(&client->event, EV_WRITE);
+        http_client_schedule_write(client);
         return (size_t)nbytes;
     }
 
     if (likely(errno == EAGAIN)) {
-        event2_or(&client->event, EV_WRITE);
+        http_client_schedule_write(client);
         return 0;
     }
 
@@ -828,7 +872,7 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
     nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(client->fd)) {
-            event2_or(&client->event, EV_WRITE);
+            http_client_schedule_write(client);
             return -2;
         }
 
@@ -839,7 +883,7 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
     }
 
     if (likely(nbytes > 0))
-        event2_or(&client->event, EV_WRITE);
+        http_client_schedule_write(client);
 
     return nbytes;
 }
@@ -854,7 +898,8 @@ http_client_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    event2_set(&client->event, EV_READ);
+    p_event_del(&client->request.event, client->pool);
+    http_client_schedule_read(client);
 }
 
 static void
@@ -941,10 +986,6 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     struct http_client *client;
     const char *p;
     istream_t request_line_stream, header_stream;
-    static const struct timeval tv = {
-        .tv_sec = 30,
-        .tv_usec = 0,
-    };
 
     assert(fd >= 0);
     assert(http_method_is_valid(method));
@@ -969,10 +1010,10 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     client->response.read_state = READ_STATUS;
     client->response.no_body = method == HTTP_METHOD_HEAD;
 
-    event2_init(&client->event, client->fd,
-                http_client_event_callback, client,
-                &tv);
-    event2_persist(&client->event);
+    event_set(&client->request.event, client->fd, EV_WRITE|EV_TIMEOUT,
+              http_client_send_event_callback, client);
+    event_set(&client->response.event, client->fd, EV_READ|EV_TIMEOUT,
+              http_client_recv_event_callback, client);
 
     client->input = fifo_buffer_new(client->pool, 4096);
 
@@ -1024,12 +1065,7 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                         &http_client_request_stream_handler, client,
                         istream_direct_mask_to(fd_type));
 
-    pool_ref(pool);
-    event2_lock(&client->event);
-    event2_set(&client->event, EV_READ);
+    http_client_schedule_read(client);
 
     istream_read(client->request.istream);
-
-    event2_unlock(&client->event);
-    pool_unref(pool);
 }
