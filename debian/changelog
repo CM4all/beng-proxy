@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.7.20) unstable; urgency=low
   * python: removed unused function write_packet()
   * python: split the module beng_proxy.translation
   * python: allow overriding query string and param in absolute_uri()
+  * python: moved absolute_uri() to a separate library
 
  --
 

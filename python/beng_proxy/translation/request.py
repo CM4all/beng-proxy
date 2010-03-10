@@ -6,6 +6,7 @@
 
 import urllib
 from beng_proxy.translation.protocol import *
+import beng_proxy.translation.uri
 
 def _parse_port(address):
     if address[0] == '[':
@@ -27,12 +28,14 @@ def _parse_port(address):
 class Request:
     """An OO wrapper for a translation request.  This object is empty
     when created, and is completed incrementally by calling
-    packetReceived() until it returns true."""
+    packetReceived() until it returns true.
+
+    Never ever access the 'args' property."""
 
     def __init__(self):
         self.host = None
         self.raw_uri = None
-        self.__args = None
+        self.args = None
         self.query_string = None
         self.widget_type = None
         self.session = None
@@ -63,7 +66,7 @@ class Request:
         elif packet.command == TRANSLATE_URI:
             self.raw_uri = packet.payload
         elif packet.command == TRANSLATE_ARGS:
-            self.__args = packet.payload
+            self.args = packet.payload
         elif packet.command == TRANSLATE_QUERY_STRING:
             self.query_string = packet.payload
         elif packet.command == TRANSLATE_WIDGET_TYPE:
@@ -89,27 +92,7 @@ class Request:
                      param=None):
         """Returns the absolute URI of this request.  You may override
         some of the attributes."""
-
-        if scheme is None: scheme = "http"
-        if host is None:
-            host = self.host
-            if host is None: host = "localhost"
-        if uri is None:
-            uri = self.raw_uri
-            if uri is None: uri = "/"
-        x = scheme + "://" + host + uri
-        if self.__args is not None:
-            x += ";" + self.__args
-
-        if param is not None:
-            if self.__args is not None:
-                x += "&"
-            else:
-                x += ";"
-            x += "translate=" + urllib.quote(param)
-
-        if query_string is None:
-            query_string = self.query_string
-        if query_string is not None:
-            x += "?" + query_string
-        return x
+        return beng_proxy.translation.uri.absolute_uri(self, scheme=scheme,
+                                                       host=host, uri=uri,
+                                                       query_string=query_string,
+                                                       param=param)
