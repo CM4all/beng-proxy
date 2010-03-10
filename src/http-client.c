@@ -562,7 +562,8 @@ http_client_consume_body(struct http_client *client)
         return false;
     }
 
-    event2_or(&client->event, EV_READ);
+    if (client->fd >= 0)
+        event2_or(&client->event, EV_READ);
     return true;
 }
 
