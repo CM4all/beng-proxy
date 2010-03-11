@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.21) unstable; urgency=low
 
   * ajp-client: handle EAGAIN from send()
+  * python: install the missing sources
 
  --
 
