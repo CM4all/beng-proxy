@@ -187,34 +187,6 @@ static const struct istream ajp_response_body = {
 
 
 /*
- * request generator
- *
- */
-
-static size_t
-ajp_write(struct ajp_client *client, const void *data, size_t length)
-{
-    ssize_t nbytes;
-
-    assert(client != NULL);
-    assert(client->fd >= 0);
-    assert(data != NULL);
-    assert(length > 0);
-
-    nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
-    if (nbytes < 0) {
-        daemon_log(1, "write error on AJP client connection: %s\n",
-                   strerror(errno));
-        ajp_connection_close(client);
-        return 0;
-    }
-
-    event2_or(&client->event, EV_WRITE);
-    return (size_t)nbytes;
-}
-
-
-/*
  * response parser
  *
  */
@@ -564,11 +536,24 @@ static size_t
 ajp_request_stream_data(const void *data, size_t length, void *ctx)
 {
     struct ajp_client *client = ctx;
+    ssize_t nbytes;
 
+    assert(client != NULL);
     assert(client->fd >= 0);
     assert(client->request.istream != NULL);
+    assert(data != NULL);
+    assert(length > 0);
 
-    return ajp_write(client, data, length);
+    nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    if (nbytes < 0) {
+        daemon_log(1, "write error on AJP client connection: %s\n",
+                   strerror(errno));
+        ajp_connection_close(client);
+        return 0;
+    }
+
+    event2_or(&client->event, EV_WRITE);
+    return (size_t)nbytes;
 }
 
 static void
