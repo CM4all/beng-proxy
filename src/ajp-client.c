@@ -10,7 +10,7 @@
 #include "async.h"
 #include "fifo-buffer.h"
 #include "growing-buffer.h"
-#include "event2.h"
+#include "pevent.h"
 #include "format.h"
 #include "buffered-io.h"
 #include "istream-internal.h"
@@ -37,10 +37,11 @@ struct ajp_client {
     /* I/O */
     int fd;
     struct lease_ref lease_ref;
-    struct event2 event;
 
     /* request */
     struct {
+        struct event event;
+
         istream_t istream;
 
         /** an istream_ajp_body */
@@ -52,6 +53,8 @@ struct ajp_client {
 
     /* response */
     struct {
+        struct event event;
+
         enum {
             READ_BEGIN,
             READ_BODY,
@@ -74,6 +77,11 @@ struct ajp_client {
     } response;
 };
 
+static const struct timeval ajp_client_timeout = {
+    .tv_sec = 30,
+    .tv_usec = 0,
+};
+
 static const struct ajp_header empty_body_chunk = {
     .a = 0x12, .b = 0x34,
 };
@@ -90,6 +98,25 @@ ajp_consume_input(struct ajp_client *client);
 static void
 ajp_try_read(struct ajp_client *client);
 
+static void
+ajp_client_schedule_read(struct ajp_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_add(&client->response.event,
+                client->request.istream != NULL
+                ? NULL : &ajp_client_timeout,
+                client->pool, "ajp_client_response");
+}
+
+static void
+ajp_client_schedule_write(struct ajp_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_add(&client->request.event, &ajp_client_timeout,
+                client->pool, "ajp_client_request");
+}
 
 /**
  * Release resources held by this object: the event object, the socket
@@ -101,8 +128,9 @@ ajp_client_release(struct ajp_client *client, bool reuse)
     assert(client != NULL);
     assert(client->fd >= 0);
 
-    event2_set(&client->event, 0);
-    event2_commit(&client->event);
+    p_event_del(&client->request.event, client->pool);
+    p_event_del(&client->response.event, client->pool);
+
     client->fd = -1;
 
     if (client->request.istream != NULL)
@@ -299,7 +327,7 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
 
         istream_ajp_body_request(client->request.ajp_body,
                                  ntohs(chunk->length));
-        event2_or(&client->event, EV_WRITE);
+        ajp_client_schedule_write(client);
         return true;
 
     case AJP_CODE_CPONG_REPLY:
@@ -477,7 +505,7 @@ ajp_try_read(struct ajp_client *client)
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            event2_or(&client->event, EV_READ);
+            ajp_client_schedule_read(client);
             return;
         }
 
@@ -486,18 +514,23 @@ ajp_try_read(struct ajp_client *client)
         return;
     }
 
+    pool_ref(client->pool);
+
     ajp_consume_input(client);
 
     if (ajp_connection_valid(client) &&
         !fifo_buffer_full(client->response.input))
-        event2_setbit(&client->event, EV_READ,
-                      !fifo_buffer_full(client->response.input));
+        ajp_client_schedule_read(client);
+
+    pool_unref(client->pool);
 }
 
 static void
-ajp_event_callback(int fd __attr_unused, short event, void *ctx)
+ajp_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct ajp_client *client = ctx;
+
+    p_event_consumed(&client->request.event, client->pool);
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");
@@ -505,24 +538,29 @@ ajp_event_callback(int fd __attr_unused, short event, void *ctx)
         return;
     }
 
-    pool_ref(client->pool);
+    socket_set_cork(client->fd, true);
+    istream_read(client->request.istream);
+    if (client->fd >= 0)
+        socket_set_cork(client->fd, false);
 
-    event2_lock(&client->event);
-    event2_occurred_persist(&client->event, event);
+    pool_commit();
+}
 
-    if (ajp_connection_valid(client) && (event & EV_WRITE) != 0) {
-        socket_set_cork(client->fd, true);
-        istream_read(client->request.istream);
-        if (client->fd >= 0)
-            socket_set_cork(client->fd, false);
+static void
+ajp_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
+{
+    struct ajp_client *client = ctx;
+
+    p_event_consumed(&client->response.event, client->pool);
+
+    if (unlikely(event & EV_TIMEOUT)) {
+        daemon_log(4, "timeout\n");
+        ajp_connection_close(client);
+        return;
     }
 
-    if (ajp_connection_valid(client) && (event & EV_READ) != 0)
-        ajp_try_read(client);
+    ajp_try_read(client);
 
-    event2_unlock(&client->event);
-
-    pool_unref(client->pool);
     pool_commit();
 }
 
@@ -546,12 +584,12 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
 
     nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (likely(nbytes >= 0)) {
-        event2_or(&client->event, EV_WRITE);
+        ajp_client_schedule_write(client);
         return (size_t)nbytes;
     }
 
     if (likely(errno == EAGAIN)) {
-        event2_or(&client->event, EV_WRITE);
+        ajp_client_schedule_write(client);
         return 0;
     }
 
@@ -570,7 +608,8 @@ ajp_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    event2_nand(&client->event, EV_WRITE);
+    p_event_del(&client->request.event, client->pool);
+    ajp_client_schedule_read(client);
 }
 
 static void
@@ -673,8 +712,11 @@ ajp_client_request(pool_t pool, int fd,
     client->pool = pool;
     client->fd = fd;
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
-    event2_init(&client->event, fd, ajp_event_callback, client, NULL);
-    event2_persist(&client->event);
+
+    event_set(&client->request.event, fd, EV_WRITE|EV_TIMEOUT,
+              ajp_client_send_event_callback, client);
+    event_set(&client->response.event, fd, EV_READ|EV_TIMEOUT,
+              ajp_client_recv_event_callback, client);
 
     gb = growing_buffer_new(pool, 256);
 
@@ -781,17 +823,14 @@ ajp_client_request(pool_t pool, int fd,
     client->response.input = fifo_buffer_new(client->pool, 8192);
     client->response.headers = NULL;
 
-    pool_ref(client->pool);
+    ajp_client_schedule_read(client);
 
-    event2_lock(&client->event);
-    event2_set(&client->event, EV_READ);
+    pool_ref(client->pool);
 
     socket_set_cork(client->fd, true);
     istream_read(client->request.istream);
     if (client->fd >= 0)
         socket_set_cork(client->fd, false);
-
-    event2_unlock(&client->event);
 
     pool_unref(client->pool);
 }
