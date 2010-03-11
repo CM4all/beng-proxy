@@ -545,15 +545,20 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
     assert(length > 0);
 
     nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
-    if (nbytes < 0) {
-        daemon_log(1, "write error on AJP client connection: %s\n",
-                   strerror(errno));
-        ajp_connection_close(client);
+    if (likely(nbytes >= 0)) {
+        event2_or(&client->event, EV_WRITE);
+        return (size_t)nbytes;
+    }
+
+    if (likely(errno == EAGAIN)) {
+        event2_or(&client->event, EV_WRITE);
         return 0;
     }
 
-    event2_or(&client->event, EV_WRITE);
-    return (size_t)nbytes;
+    daemon_log(1, "write error on AJP client connection: %s\n",
+               strerror(errno));
+    ajp_connection_close(client);
+    return 0;
 }
 
 static void
