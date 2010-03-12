@@ -2,7 +2,7 @@ cm4all-beng-proxy (0.7.22) unstable; urgency=low
 
   * python: re-add function write_packet()
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 12 Mar 2010 12:27:21 +0100
 
 cm4all-beng-proxy (0.7.21) unstable; urgency=low
 
