@@ -5,7 +5,7 @@
 #
 
 from protocol import *
-from serialize import PacketReader, packet_header
+from serialize import PacketReader, packet_header, write_packet
 from request import Request
 from response import Response
 

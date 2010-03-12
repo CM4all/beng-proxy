@@ -60,3 +60,8 @@ def packet_header(command, length=0):
 
     assert length <= 0xffff
     return struct.pack('HH', length, command)
+
+def write_packet(f, command, payload = ''):
+    assert isinstance(payload, str)
+    f.write(packet_header(command, len(payload)))
+    f.write(payload)
