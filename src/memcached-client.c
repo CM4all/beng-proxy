@@ -8,7 +8,7 @@
 #include "memcached-packet.h"
 #include "lease.h"
 #include "async.h"
-#include "event2.h"
+#include "pevent.h"
 #include "istream-internal.h"
 #include "buffered-io.h"
 
@@ -26,10 +26,11 @@ struct memcached_client {
     /* I/O */
     int fd;
     struct lease_ref lease_ref;
-    struct event2 event;
 
     /* request */
     struct {
+        struct event event;
+
         memcached_response_handler_t handler;
         void *handler_ctx;
 
@@ -40,6 +41,8 @@ struct memcached_client {
 
     /* response */
     struct {
+        struct event event;
+
         enum {
             READ_HEADER,
             READ_EXTRAS,
@@ -70,7 +73,7 @@ struct memcached_client {
     } response;
 };
 
-static const struct timeval timeout = {
+static const struct timeval memcached_client_timeout = {
     .tv_sec = 5,
     .tv_usec = 0,
 };
@@ -79,6 +82,26 @@ static inline bool
 memcached_connection_valid(const struct memcached_client *client)
 {
     return client->response.input != NULL;
+}
+
+static void
+memcached_client_schedule_read(struct memcached_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_add(&client->response.event,
+                client->request.istream != NULL
+                ? NULL : &memcached_client_timeout,
+                client->pool, "memcached_client_response");
+}
+
+static void
+memcached_client_schedule_write(struct memcached_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_add(&client->request.event, &memcached_client_timeout,
+                client->pool, "memcached_client_request");
 }
 
 /**
@@ -90,8 +113,8 @@ memcached_client_release_socket(struct memcached_client *client, bool reuse)
     assert(client != NULL);
     assert(client->fd >= 0);
 
-    event2_set(&client->event, 0);
-    event2_commit(&client->event);
+    p_event_del(&client->request.event, client->pool);
+    p_event_del(&client->response.event, client->pool);
     client->fd = -1;
     lease_release(&client->lease_ref, reuse);
 }
@@ -485,7 +508,7 @@ memcached_client_fill_buffer(struct memcached_client *client)
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            event2_or(&client->event, EV_READ);
+            memcached_client_schedule_read(client);
             return false;
         }
 
@@ -504,41 +527,61 @@ memcached_client_try_read(struct memcached_client *client)
     if (!memcached_client_fill_buffer(client))
         return;
 
+    pool_ref(client->pool);
+
     memcached_consume_input(client);
 
-    if (client->fd >= 0)
-        event2_setbit(&client->event, EV_READ,
-                      !fifo_buffer_full(client->response.input));
+    if (client->fd >= 0 && !fifo_buffer_full(client->response.input))
+        memcached_client_schedule_read(client);
+
+    pool_unref(client->pool);
 }
 
 /**
- * The libevent callback for the socket.
+ * The libevent callback for sending the request to the socket.
  */
 static void
-memcached_client_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
+memcached_client_send_event_callback(G_GNUC_UNUSED int fd, short event,
+                                     void *ctx)
 {
     struct memcached_client *client = ctx;
 
+    assert(client->fd >= 0);
+
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "timeout\n");
+        daemon_log(4, "memcached_client: send timeout\n");
         memcached_connection_close(client);
         return;
     }
 
-    pool_ref(client->pool);
+    p_event_consumed(&client->request.event, client->pool);
 
-    event2_lock(&client->event);
-    event2_occurred_persist(&client->event, event);
+    istream_read(client->request.istream);
 
-    if (memcached_connection_valid(client) && (event & EV_WRITE) != 0)
-        istream_read(client->request.istream);
+    pool_commit();
+}
 
-    if (memcached_connection_valid(client) && (event & EV_READ) != 0)
-        memcached_client_try_read(client);
+/**
+ * The libevent callback for receiving the response from the socket.
+ */
+static void
+memcached_client_recv_event_callback(G_GNUC_UNUSED int fd, short event,
+                                     void *ctx)
+{
+    struct memcached_client *client = ctx;
 
-    event2_unlock(&client->event);
+    assert(client->fd >= 0);
 
-    pool_unref(client->pool);
+    if (unlikely(event & EV_TIMEOUT)) {
+        daemon_log(4, "memcached_client: receive timeout\n");
+        memcached_connection_close(client);
+        return;
+    }
+
+    p_event_consumed(&client->response.event, client->pool);
+
+    memcached_client_try_read(client);
+
     pool_commit();
 }
 
@@ -564,7 +607,7 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
     nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            event2_or(&client->event, EV_WRITE);
+            memcached_client_schedule_write(client);
             return 0;
         }
 
@@ -574,7 +617,7 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    event2_or(&client->event, EV_WRITE);
+    memcached_client_schedule_write(client);
     return (size_t)nbytes;
 }
 
@@ -590,7 +633,8 @@ memcached_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    event2_nand(&client->event, EV_WRITE);
+    p_event_del(&client->request.event, client->pool);
+    memcached_client_schedule_read(client);
 }
 
 static void
@@ -682,9 +726,11 @@ memcached_client_invoke(pool_t pool, int fd,
     client->pool = pool;
     client->fd = fd;
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
-    event2_init(&client->event, fd,
-                memcached_client_event_callback, client, &timeout);
-    event2_persist(&client->event);
+
+    event_set(&client->request.event, client->fd, EV_WRITE|EV_TIMEOUT,
+              memcached_client_send_event_callback, client);
+    event_set(&client->response.event, client->fd, EV_READ|EV_TIMEOUT,
+              memcached_client_recv_event_callback, client);
 
     istream_assign_handler(&client->request.istream, request,
                            &memcached_request_stream_handler, client,
@@ -699,14 +745,5 @@ memcached_client_invoke(pool_t pool, int fd,
     client->response.read_state = READ_HEADER;
     client->response.input = fifo_buffer_new(client->pool, 8192);
 
-    pool_ref(client->pool);
-
-    event2_lock(&client->event);
-    event2_set(&client->event, EV_READ);
-
     istream_read(client->request.istream);
-
-    event2_unlock(&client->event);
-
-    pool_unref(client->pool);
 }
