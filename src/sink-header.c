@@ -294,6 +294,7 @@ sink_header_read(istream_t istream)
            handler, it would be illegal to call header->input again */
         return;
 
+    istream_handler_set_direct(header->input, header->output.handler_direct);
     istream_read(header->input);
 }
 
