@@ -97,6 +97,8 @@ memcached_stock_callback(void *ctx, struct stock_item *item)
     request->item = item;
 
     memcached_client_invoke(request->pool, tcp_stock_item_get(item),
+                            tcp_stock_item_get_domain(item) == AF_LOCAL
+                            ? ISTREAM_SOCKET : ISTREAM_TCP,
                             &memcached_socket_lease, request,
                             request->opcode,
                             request->extras, request->extras_length,

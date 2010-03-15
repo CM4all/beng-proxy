@@ -25,6 +25,7 @@ struct memcached_client {
 
     /* I/O */
     int fd;
+    enum istream_direct fd_type;
     struct lease_ref lease_ref;
 
     /* request */
@@ -198,6 +199,9 @@ memcached_connection_close(struct memcached_client *client)
 static bool
 memcached_consume_value(struct memcached_client *client);
 
+static void
+memcached_client_try_read_direct(struct memcached_client *client);
+
 static bool
 memcached_client_fill_buffer(struct memcached_client *client);
 
@@ -231,8 +235,12 @@ istream_memcached_read(istream_t istream)
     assert(client->response.read_state == READ_VALUE);
     assert(client->request.istream == NULL);
 
-    if (!fifo_buffer_empty(client->response.input) ||
-        memcached_client_fill_buffer(client))
+    if (!fifo_buffer_empty(client->response.input))
+        memcached_consume_value(client);
+    else if (client->response.read_state == READ_VALUE &&
+             (client->response.value.handler_direct & client->fd_type) != 0)
+        memcached_client_try_read_direct(client);
+    else if (memcached_client_fill_buffer(client))
         memcached_consume_value(client);
 }
 
@@ -522,7 +530,7 @@ memcached_client_fill_buffer(struct memcached_client *client)
 }
 
 static void
-memcached_client_try_read(struct memcached_client *client)
+memcached_client_try_read_buffered(struct memcached_client *client)
 {
     if (!memcached_client_fill_buffer(client))
         return;
@@ -535,6 +543,72 @@ memcached_client_try_read(struct memcached_client *client)
         memcached_client_schedule_read(client);
 
     pool_unref(client->pool);
+}
+
+static void
+memcached_client_try_read_direct(struct memcached_client *client)
+{
+    assert(client->response.read_state == READ_VALUE);
+    assert(client->response.remaining > 0);
+
+    if (!fifo_buffer_empty(client->response.input)) {
+        pool_ref(client->pool);
+
+        memcached_consume_input(client);
+
+        bool closed = client->fd < 0;
+        pool_unref(client->pool);
+        if (closed)
+            return;
+
+        assert(client->response.remaining > 0);
+    }
+
+    ssize_t nbytes = istream_invoke_direct(&client->response.value,
+                                           client->fd_type, client->fd,
+                                           client->response.remaining);
+    if (likely(nbytes > 0)) {
+        client->response.remaining -= nbytes;
+
+        if (client->response.remaining == 0) {
+            istream_deinit_eof(&client->response.value);
+            pool_unref(client->pool);
+        }
+    } else if (unlikely(nbytes == 0)) {
+        daemon_log(1, "memcached server closed the connection\n");
+        memcached_connection_close(client);
+    } else if (nbytes == -2 || nbytes == -3) {
+        /* either the destination fd blocks (-2) or the stream (and
+           the whole connection) has been closed during the direct()
+           callback (-3); no further checks */
+    } else if (errno == EAGAIN) {
+        memcached_client_schedule_read(client);
+    } else {
+        daemon_log(1, "read error on memcached connection: %s\n",
+                   strerror(errno));
+        memcached_connection_close(client);
+    }
+}
+
+static void
+memcached_client_try_direct(struct memcached_client *client)
+{
+    assert(client->response.read_state == READ_VALUE);
+    assert(client->response.remaining > 0);
+
+    if (!fifo_buffer_empty(client->response.input)) {
+        pool_ref(client->pool);
+
+        memcached_consume_value(client);
+        if (client->fd < 0 || client->response.remaining == 0) {
+            pool_unref(client->pool);
+            return;
+        }
+
+        pool_unref(client->pool);
+    }
+
+    memcached_client_try_read_direct(client);
 }
 
 /**
@@ -580,7 +654,11 @@ memcached_client_recv_event_callback(G_GNUC_UNUSED int fd, short event,
 
     p_event_consumed(&client->response.event, client->pool);
 
-    memcached_client_try_read(client);
+    if (client->response.read_state == READ_VALUE &&
+        (client->response.value.handler_direct & client->fd_type) != 0)
+        memcached_client_try_direct(client);
+    else
+        memcached_client_try_read_buffered(client);
 
     pool_commit();
 }
@@ -694,7 +772,7 @@ static const struct async_operation_class memcached_client_async_operation = {
  */
 
 void
-memcached_client_invoke(pool_t pool, int fd,
+memcached_client_invoke(pool_t pool, int fd, enum istream_direct fd_type,
                         const struct lease *lease, void *lease_ctx,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
@@ -725,6 +803,7 @@ memcached_client_invoke(pool_t pool, int fd,
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
     client->fd = fd;
+    client->fd_type = fd_type;
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
 
     event_set(&client->request.event, client->fd, EV_WRITE|EV_TIMEOUT,

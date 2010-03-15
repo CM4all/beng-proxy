@@ -275,7 +275,7 @@ test_basic(pool_t pool, struct context *c)
 {
     c->fd = connect_fake_server();
 
-    memcached_client_invoke(pool, c->fd, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -302,7 +302,7 @@ test_close_early(pool_t pool, struct context *c)
     c->fd = connect_fake_server();
     c->close_value_early = true;
 
-    memcached_client_invoke(pool, c->fd, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -330,7 +330,7 @@ test_close_late(pool_t pool, struct context *c)
     c->fd = connect_fake_server();
     c->close_value_late = true;
 
-    memcached_client_invoke(pool, c->fd, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -358,7 +358,7 @@ test_close_data(pool_t pool, struct context *c)
     c->fd = connect_fake_server();
     c->close_value_data = true;
 
-    memcached_client_invoke(pool, c->fd, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -386,7 +386,7 @@ test_abort(pool_t pool, struct context *c)
     c->fd = connect_fake_server();
     c->close_value_data = true;
 
-    memcached_client_invoke(pool, c->fd, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -415,7 +415,7 @@ test_request_value(pool_t pool, struct context *c)
 
     value = request_value_new(c->pool, false, false);
 
-    memcached_client_invoke(pool, c->fd, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -445,7 +445,7 @@ test_request_value_close(pool_t pool, struct context *c)
 
     value = request_value_new(c->pool, true, false);
 
-    memcached_client_invoke(pool, c->fd, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,
@@ -471,7 +471,7 @@ test_request_value_abort(pool_t pool, struct context *c)
 
     value = request_value_new(c->pool, false, true);
 
-    memcached_client_invoke(pool, c->fd, &my_lease, c,
+    memcached_client_invoke(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                             MEMCACHED_OPCODE_SET,
                             NULL, 0,
                             "foo", 3,

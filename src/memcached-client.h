@@ -38,7 +38,7 @@ typedef void (*memcached_response_handler_t)(enum memcached_response_status stat
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-memcached_client_invoke(pool_t pool, int fd,
+memcached_client_invoke(pool_t pool, int fd, enum istream_direct fd_type,
                         const struct lease *lease, void *lease_ctx,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
