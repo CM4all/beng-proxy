@@ -49,7 +49,9 @@ struct fcgi_client {
 
     uint16_t id;
 
-    istream_t request;
+    struct {
+        istream_t istream;
+    } request;
 
     struct {
         enum {
@@ -119,8 +121,8 @@ fcgi_client_abort_response_headers(struct fcgi_client *client)
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
-    if (client->request != NULL)
-        istream_free_handler(&client->request);
+    if (client->request.istream != NULL)
+        istream_free_handler(&client->request.istream);
 
     fcgi_client_release_socket(client, false);
 
@@ -141,8 +143,8 @@ fcgi_client_abort_response_body(struct fcgi_client *client)
     if (client->fd >= 0)
         fcgi_client_release_socket(client, false);
 
-    if (client->request != NULL)
-        istream_free_handler(&client->request);
+    if (client->request.istream != NULL)
+        istream_free_handler(&client->request.istream);
 
     istream_deinit_abort(&client->response.body);
     fcgi_client_release(client, false);
@@ -341,12 +343,12 @@ fcgi_client_consume_input(struct fcgi_client *client)
             client->skip_length = ntohs(header->content_length) + header->padding_length;
             fifo_buffer_consume(client->input, sizeof(*header));
 
-            if (client->request != NULL)
-                istream_close_handler(client->request);
+            if (client->request.istream != NULL)
+                istream_close_handler(client->request.istream);
 
             if (client->skip_length == 0)
                 fcgi_client_release_socket(client,
-                                           client->request == NULL &&
+                                           client->request.istream == NULL &&
                                            fifo_buffer_empty(client->input));
 
             istream_deinit_eof(&client->response.body);
@@ -428,12 +430,12 @@ fcgi_client_send(struct fcgi_client *client, const void *data, size_t length)
 static bool
 fcgi_client_try_write(struct fcgi_client *client)
 {
-    assert(client->request != NULL);
+    assert(client->request.istream != NULL);
 
     event2_or(&client->event, EV_WRITE);
 
     pool_ref(client->pool);
-    istream_read(client->request);
+    istream_read(client->request.istream);
     bool ret = client->fd >= 0;
     pool_unref(client->pool);
 
@@ -480,7 +482,7 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
     struct fcgi_client *client = ctx;
 
     assert(client->fd >= 0);
-    assert(client->request != NULL);
+    assert(client->request.istream != NULL);
 
     ssize_t nbytes = fcgi_client_send(client, data, length);
     if (nbytes < 0)
@@ -494,9 +496,9 @@ fcgi_request_stream_eof(void *ctx)
 {
     struct fcgi_client *client = ctx;
 
-    assert(client->request != NULL);
+    assert(client->request.istream != NULL);
 
-    client->request = NULL;
+    client->request.istream = NULL;
 
     event2_nand(&client->event, EV_WRITE);
 }
@@ -506,9 +508,9 @@ fcgi_request_stream_abort(void *ctx)
 {
     struct fcgi_client *client = ctx;
 
-    assert(client->request != NULL);
+    assert(client->request.istream != NULL);
 
-    client->request = NULL;
+    client->request.istream = NULL;
 
     fcgi_client_abort_response(client);
 }
@@ -597,8 +599,8 @@ fcgi_client_request_abort(struct async_operation *ao)
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
-    if (client->request != NULL)
-        istream_close_handler(client->request);
+    if (client->request.istream != NULL)
+        istream_close_handler(client->request.istream);
 
     fcgi_client_release(client, false);
 }
@@ -743,7 +745,7 @@ fcgi_client_request(pool_t caller_pool, int fd,
         request = growing_buffer_istream(buffer);
     }
 
-    istream_assign_handler(&client->request, request,
+    istream_assign_handler(&client->request.istream, request,
                            &fcgi_request_stream_handler, client,
                            0);
 
