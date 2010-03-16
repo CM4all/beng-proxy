@@ -10,6 +10,6 @@ from request import Request
 from response import Response
 
 import protocol
-__all__ = ['PacketReader', 'packet_header',
+__all__ = ['PacketReader', 'packet_header', 'write_packet',
            'Request', 'Response'] + \
           filter(lambda x: x[:10] == 'TRANSLATE_' or x[:7] == 'HEADER_', protocol.__dict__)
