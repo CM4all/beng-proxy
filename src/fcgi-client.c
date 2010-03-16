@@ -421,8 +421,7 @@ fcgi_client_send(struct fcgi_client *client, const void *data, size_t length)
     } else {
         daemon_log(3, "write to FastCGI application failed: %s\n",
                    strerror(errno));
-        http_response_handler_invoke_abort(&client->handler);
-        fcgi_client_release(client, false);
+        fcgi_client_abort_response(client);
         return -1;
     }
 }
