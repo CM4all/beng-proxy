@@ -180,7 +180,7 @@ fork_read_from_output(struct fork *f)
 
     assert(f->buffer == NULL || fifo_buffer_empty(f->buffer));
 
-    if ((f->output.handler_direct & ISTREAM_PIPE) == 0) {
+    if (!istream_check_direct(&f->output, ISTREAM_PIPE)) {
         if (f->buffer == NULL)
             f->buffer = fifo_buffer_new(f->output.pool, 1024);
 

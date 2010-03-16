@@ -160,7 +160,7 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 
     assert(p->output.handler != NULL);
     assert(p->output.handler->direct != NULL);
-    assert((p->output.handler_direct & ISTREAM_PIPE) != 0);
+    assert(istream_check_direct(&p->output, ISTREAM_PIPE));
 
     if (p->piped > 0) {
         nbytes = pipe_consume(p);
@@ -173,7 +173,7 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
             return -2;
     }
 
-    if ((p->output.handler_direct & type) != 0)
+    if (istream_check_direct(&p->output, type))
         /* already supported by handler (maybe already a pipe) - no
            need for wrapping it into a pipe */
         return istream_invoke_direct(&p->output, type, fd, max_length);

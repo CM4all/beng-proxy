@@ -750,7 +750,7 @@ http_client_try_read(struct http_client *client)
     assert(client->fd >= 0);
 
     if (client->response.read_state == READ_BODY &&
-        (client->response.body_reader.output.handler_direct & client->fd_type) != 0) {
+        istream_check_direct(&client->response.body_reader.output, client->fd_type)) {
         if (!fifo_buffer_empty(client->input)) {
             /* there is still data in the body, which we have to
                consume before we do direct splice() */

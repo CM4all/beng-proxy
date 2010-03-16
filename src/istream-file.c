@@ -203,10 +203,10 @@ istream_file_try_direct(struct file *file)
 static void
 file_try_read(struct file *file)
 {
-    if ((file->stream.handler_direct & ISTREAM_FILE) == 0)
-        istream_file_try_data(file);
-    else
+    if (istream_check_direct(&file->stream, ISTREAM_FILE))
         istream_file_try_direct(file);
+    else
+        istream_file_try_data(file);
 }
 
 static void

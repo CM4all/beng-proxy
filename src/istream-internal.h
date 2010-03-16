@@ -12,4 +12,14 @@
 #include "istream-new.h"
 #include "istream-forward.h"
 
+/**
+ * Checks if the istream handler supporst the specified file
+ * descriptor type.
+ */
+static inline bool
+istream_check_direct(const struct istream *istream, enum istream_direct type)
+{
+    return (istream->handler_direct & type) != 0;
+}
+
 #endif

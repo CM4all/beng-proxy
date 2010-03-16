@@ -74,7 +74,7 @@ http_body_try_direct(struct http_body_reader *body, int fd,
     ssize_t nbytes;
 
     assert(fd >= 0);
-    assert(body->output.handler_direct & fd_type);
+    assert(istream_check_direct(&body->output, fd_type));
     assert(body->output.handler->direct != NULL);
 
     nbytes = istream_invoke_direct(&body->output,

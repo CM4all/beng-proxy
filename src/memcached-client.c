@@ -238,7 +238,7 @@ istream_memcached_read(istream_t istream)
     if (!fifo_buffer_empty(client->response.input))
         memcached_consume_value(client);
     else if (client->response.read_state == READ_VALUE &&
-             (client->response.value.handler_direct & client->fd_type) != 0)
+             istream_check_direct(&client->response.value, client->fd_type))
         memcached_client_try_read_direct(client);
     else if (memcached_client_fill_buffer(client))
         memcached_consume_value(client);
@@ -655,7 +655,7 @@ memcached_client_recv_event_callback(G_GNUC_UNUSED int fd, short event,
     p_event_consumed(&client->response.event, client->pool);
 
     if (client->response.read_state == READ_VALUE &&
-        (client->response.value.handler_direct & client->fd_type) != 0)
+        istream_check_direct(&client->response.value, client->fd_type))
         memcached_client_try_direct(client);
     else
         memcached_client_try_read_buffered(client);
