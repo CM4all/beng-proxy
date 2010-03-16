@@ -15,7 +15,7 @@
 #include "lease.h"
 #include "strutil.h"
 #include "header-parser.h"
-#include "event2.h"
+#include "pevent.h"
 
 #include <glib.h>
 
@@ -42,7 +42,6 @@ struct fcgi_client {
 
     int fd;
     struct lease_ref lease_ref;
-    struct event2 event;
 
     struct http_response_handler_ref handler;
     struct async_operation async;
@@ -50,10 +49,14 @@ struct fcgi_client {
     uint16_t id;
 
     struct {
+        struct event event;
+
         istream_t istream;
     } request;
 
     struct {
+        struct event event;
+
         enum {
             READ_STATUS,
             READ_HEADERS,
@@ -76,8 +79,33 @@ struct fcgi_client {
     size_t content_length, skip_length;
 };
 
+static const struct timeval fcgi_client_timeout = {
+    .tv_sec = 120,
+    .tv_usec = 0,
+};
+
 static void
 fcgi_client_response_body_init(struct fcgi_client *client);
+
+static void
+fcgi_client_schedule_read(struct fcgi_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_add(&client->response.event,
+                client->request.istream != NULL
+                ? NULL : &fcgi_client_timeout,
+                client->pool, "fcgi_client_response");
+}
+
+static void
+fcgi_client_schedule_write(struct fcgi_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_add(&client->request.event, &fcgi_client_timeout,
+                client->pool, "fcgi_client_request");
+}
 
 /**
  * Release the socket held by this object.
@@ -88,8 +116,8 @@ fcgi_client_release_socket(struct fcgi_client *client, bool reuse)
     assert(client != NULL);
     assert(client->fd >= 0);
 
-    event2_set(&client->event, 0);
-    event2_commit(&client->event);
+    p_event_del(&client->request.event, client->pool);
+    p_event_del(&client->response.event, client->pool);
 
     client->fd = -1;
     lease_release(&client->lease_ref, reuse);
@@ -391,7 +419,7 @@ fcgi_client_try_read(struct fcgi_client *client)
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            event2_or(&client->event, EV_READ);
+            fcgi_client_schedule_read(client);
             return true;
         }
 
@@ -402,7 +430,7 @@ fcgi_client_try_read(struct fcgi_client *client)
 
     if (fcgi_client_consume_input(client)) {
         assert(!fifo_buffer_full(client->input));
-        event2_or(&client->event, EV_READ);
+        fcgi_client_schedule_read(client);
     }
 
     return true;
@@ -416,7 +444,7 @@ fcgi_client_send(struct fcgi_client *client, const void *data, size_t length)
     if (nbytes >= 0)
         return nbytes;
     else if (errno == EAGAIN) {
-        event2_or(&client->event, EV_WRITE);
+        fcgi_client_schedule_write(client);
         return 0;
     } else {
         daemon_log(3, "write to FastCGI application failed: %s\n",
@@ -426,21 +454,6 @@ fcgi_client_send(struct fcgi_client *client, const void *data, size_t length)
     }
 }
 
-static bool
-fcgi_client_try_write(struct fcgi_client *client)
-{
-    assert(client->request.istream != NULL);
-
-    event2_or(&client->event, EV_WRITE);
-
-    pool_ref(client->pool);
-    istream_read(client->request.istream);
-    bool ret = client->fd >= 0;
-    pool_unref(client->pool);
-
-    return ret;
-}
-
 
 /*
  * libevent callback
@@ -448,23 +461,42 @@ fcgi_client_try_write(struct fcgi_client *client)
  */
 
 static void
-fcgi_client_event(int fd __attr_unused, short event, void *ctx)
+fcgi_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct fcgi_client *client = ctx;
 
-    event2_lock(&client->event);
-    event2_occurred_persist(&client->event, event);
+    assert(client->fd >= 0);
 
-    if ((event & EV_WRITE) != 0 &&
-        !fcgi_client_try_write(client))
-        event = 0;
+    p_event_consumed(&client->request.event, client->pool);
 
-    if ((event & EV_READ) != 0 &&
-        !fcgi_client_try_read(client))
-        event = 0;
+    if (unlikely(event & EV_TIMEOUT)) {
+        daemon_log(4, "fcgi_client: send timeout\n");
+        http_response_handler_invoke_abort(&client->handler);
+        fcgi_client_release(client, false);
+        return;
+    }
 
-    if (event != 0)
-        event2_unlock(&client->event);
+    istream_read(client->request.istream);
+
+    pool_commit();
+}
+
+static void
+fcgi_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
+{
+    struct fcgi_client *client = ctx;
+
+    assert(client->fd >= 0);
+
+    p_event_consumed(&client->response.event, client->pool);
+
+    if (unlikely(event & EV_TIMEOUT)) {
+        daemon_log(4, "fcgi_client: send timeout\n");
+        fcgi_client_abort_response(client);
+        return;
+    }
+
+    fcgi_client_try_read(client);
 
     pool_commit();
 }
@@ -499,7 +531,8 @@ fcgi_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    event2_nand(&client->event, EV_WRITE);
+    p_event_del(&client->request.event, client->pool);
+    fcgi_client_schedule_read(client);
 }
 
 static void
@@ -664,8 +697,11 @@ fcgi_client_request(pool_t caller_pool, int fd,
 
     client->fd = fd;
     lease_ref_set(&client->lease_ref, lease, lease_ctx);
-    event2_init(&client->event, fd, fcgi_client_event, client, NULL);
-    event2_persist(&client->event);
+
+    event_set(&client->request.event, client->fd, EV_WRITE|EV_TIMEOUT,
+              fcgi_client_send_event_callback, client);
+    event_set(&client->response.event, client->fd, EV_READ|EV_TIMEOUT,
+              fcgi_client_recv_event_callback, client);
 
     http_response_handler_set(&client->handler, handler, handler_ctx);
 
@@ -748,9 +784,6 @@ fcgi_client_request(pool_t caller_pool, int fd,
                            &fcgi_request_stream_handler, client,
                            0);
 
-    event2_lock(&client->event);
-    event2_set(&client->event, EV_READ);
-
-    if (fcgi_client_try_write(client))
-        event2_unlock(&client->event);
+    fcgi_client_schedule_read(client);
+    istream_read(client->request.istream);
 }
