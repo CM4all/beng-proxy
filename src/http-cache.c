@@ -816,7 +816,7 @@ http_cache_memcached_use(struct http_cache *cache,
     request->method = method;
     request->uwa = uwa;
     request->url = uwa->uri;
-    request->headers = headers;
+    request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     request->info = info;
