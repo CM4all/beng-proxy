@@ -757,6 +757,15 @@ http_client_try_read(struct http_client *client)
             bret = http_client_consume_body(client);
             if (!bret || !fifo_buffer_empty(client->input))
                 return;
+
+            /* at this point, the handler might have changed, and the
+               new handler might not support "direct" transfer - check
+               again */
+            if (!istream_check_direct(&client->response.body_reader.output,
+                                      client->fd_type)) {
+                http_client_schedule_read(client);
+                return;
+            }
         }
 
         http_client_try_response_direct(client);

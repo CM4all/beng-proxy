@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.7.23) unstable; urgency=low
   * memcached-client: support splice (response)
   * fcgi-client: recover correctly after send error
   * http-cache: duplicate headers
+  * {http,memcached}-client: check "direct" mode after buffer flush
   * python: auto-export function write_packet()
 
  --

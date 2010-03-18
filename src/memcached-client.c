@@ -594,6 +594,14 @@ memcached_client_try_direct(struct memcached_client *client)
             return;
 
         pool_unref(client->pool);
+
+        /* at this point, the handler might have changed, and the new
+           handler might not support "direct" transfer - check
+           again */
+        if (!istream_check_direct(&client->response.value, client->fd_type)) {
+            memcached_client_schedule_read(client);
+            return;
+        }
     }
 
     memcached_client_try_read_direct(client);
