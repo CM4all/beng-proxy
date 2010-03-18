@@ -24,6 +24,9 @@ fcgi_stock_get(struct hstock *hstock, pool_t pool,
 int
 fcgi_stock_item_get(const struct stock_item *item);
 
+int
+fcgi_stock_item_get_domain(const struct stock_item *item);
+
 /**
  * Translates a path into the application's namespace.
  */

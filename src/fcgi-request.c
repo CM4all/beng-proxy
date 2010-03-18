@@ -82,6 +82,8 @@ fcgi_stock_callback(void *ctx, struct stock_item *item)
         fcgi_stock_translate_path(item, request->document_root, request->pool);
 
     fcgi_client_request(request->pool, fcgi_stock_item_get(item),
+                        fcgi_stock_item_get_domain(item) == AF_LOCAL
+                        ? ISTREAM_SOCKET : ISTREAM_TCP,
                         &fcgi_socket_lease, request,
                         request->method, request->uri,
                         script_filename,

@@ -393,6 +393,14 @@ fcgi_stock_get(struct hstock *hstock, pool_t pool,
 }
 
 int
+fcgi_stock_item_get_domain(const struct stock_item *item)
+{
+    (void)item;
+
+    return AF_UNIX;
+}
+
+int
 fcgi_stock_item_get(const struct stock_item *item)
 {
     const struct fcgi_child *child = (const struct fcgi_child *)item;

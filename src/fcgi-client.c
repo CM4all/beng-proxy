@@ -16,6 +16,8 @@
 #include "strutil.h"
 #include "header-parser.h"
 #include "pevent.h"
+#include "direct.h"
+#include "fd-util.h"
 
 #include <glib.h>
 
@@ -522,6 +524,34 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
     return nbytes;
 }
 
+static ssize_t
+fcgi_request_stream_direct(istream_direct_t type, int fd,
+                           size_t max_length, void *ctx)
+{
+    struct fcgi_client *client = ctx;
+    ssize_t nbytes;
+
+    assert(client->fd >= 0);
+
+    nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
+    if (unlikely(nbytes < 0 && errno == EAGAIN)) {
+        if (!fd_ready_for_writing(client->fd)) {
+            fcgi_client_schedule_write(client);
+            return -2;
+        }
+
+        /* try again, just in case client->fd has become ready between
+           the first istream_direct_to_socket() call and
+           fd_ready_for_writing() */
+        nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
+    }
+
+    if (likely(nbytes > 0))
+        fcgi_client_schedule_write(client);
+
+    return nbytes;
+}
+
 static void
 fcgi_request_stream_eof(void *ctx)
 {
@@ -549,6 +579,7 @@ fcgi_request_stream_abort(void *ctx)
 
 static const struct istream_handler fcgi_request_stream_handler = {
     .data = fcgi_request_stream_data,
+    .direct = fcgi_request_stream_direct,
     .eof = fcgi_request_stream_eof,
     .abort = fcgi_request_stream_abort,
 };
@@ -648,7 +679,7 @@ static const struct async_operation_class fcgi_client_async_operation = {
  */
 
 void
-fcgi_client_request(pool_t caller_pool, int fd,
+fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const char *script_filename,
@@ -775,7 +806,7 @@ fcgi_client_request(pool_t caller_pool, int fd,
 
     istream_assign_handler(&client->request.istream, request,
                            &fcgi_request_stream_handler, client,
-                           0);
+                           istream_direct_mask_to(fd_type));
 
     fcgi_client_schedule_read(client);
     istream_read(client->request.istream);
