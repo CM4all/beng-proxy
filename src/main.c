@@ -225,6 +225,7 @@ int main(int argc, char **argv)
             .filter_cache_size = 128 * 1024 * 1024,
             .translate_cache_size = 131072,
             .tcp_stock_limit = 256,
+            .fcgi_stock_limit = 16,
             .enable_splice = true,
         },
     };
@@ -297,7 +298,8 @@ int main(int argc, char **argv)
                                          instance.config.http_cache_size,
                                          instance.memcached_stock,
                                          instance.tcp_stock);
-    instance.fcgi_stock = fcgi_stock_new(instance.pool, 16);
+    instance.fcgi_stock = fcgi_stock_new(instance.pool,
+                                         instance.config.fcgi_stock_limit);
     instance.delegate_stock = delegate_stock_new(instance.pool);
     instance.pipe_stock = pipe_stock_new(instance.pool);
     instance.filter_cache = filter_cache_new(instance.pool,

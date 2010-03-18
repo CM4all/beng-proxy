@@ -54,6 +54,8 @@ struct config {
 
     unsigned tcp_stock_limit;
 
+    unsigned fcgi_stock_limit;
+
     /**
      * Use the splice() system call?
      */
