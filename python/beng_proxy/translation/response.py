@@ -27,17 +27,18 @@ class Response:
         assert isinstance(payload, str)
         self._data += packet_header(command, len(payload))
         self._data += payload
+        return self
 
     def status(self, status):
         """Append a STATUS packet."""
         assert status >= 200 and status < 600
-        self.packet(TRANSLATE_STATUS, struct.pack('H', status))
+        return self.packet(TRANSLATE_STATUS, struct.pack('H', status))
 
     def view(self, name):
         """Append a VIEW packet."""
         assert isinstance(name, str)
         assert len(name) > 0
-        self.packet(TRANSLATE_VIEW, name)
+        return self.packet(TRANSLATE_VIEW, name)
 
     def process(self, container=False):
         """Append a PROCESS packet, and also a CONTAINER packet if the
@@ -45,6 +46,7 @@ class Response:
         self.packet(TRANSLATE_PROCESS)
         if container:
             self.packet(TRANSLATE_CONTAINER)
+        return self
 
     def proxy(self, uri, addresses=None):
         """Generate a PROXY packet.  If you do not specify an address
@@ -66,6 +68,7 @@ class Response:
         self.packet(TRANSLATE_PROXY, uri)
         for address in addresses:
             self.packet(TRANSLATE_ADDRESS_STRING, address)
+        return self
 
     def ajp(self, uri, addresses):
         """Generate an AJP packet.  If you do not specify an address
@@ -84,6 +87,7 @@ class Response:
         self.packet(TRANSLATE_AJP, uri)
         for address in addresses:
             self.packet(TRANSLATE_ADDRESS_STRING, address)
+        return self
 
     def vary(self, *args):
         """Send a VARY packet.  All arguments are packet ids which are
@@ -91,7 +95,7 @@ class Response:
 
         assert len(args) > 0
         payload = ''.join(map(lambda x: struct.pack('H', x), args))
-        self.packet(TRANSLATE_VARY, payload)
+        return self.packet(TRANSLATE_VARY, payload)
 
     def invalidate(self, *args):
         """Send a INVALIDATE packet.  All arguments are packet ids
@@ -99,7 +103,7 @@ class Response:
 
         assert len(args) > 0
         payload = ''.join(map(lambda x: struct.pack('H', x), args))
-        self.packet(TRANSLATE_INVALIDATE, payload)
+        return self.packet(TRANSLATE_INVALIDATE, payload)
 
     def pipe(self, path, *args):
         """Send a PIPE packet.  You may pass additional arguments
@@ -110,38 +114,40 @@ class Response:
         self.packet(TRANSLATE_PIPE, path)
         for arg in args:
             self.packet(TRANSLATE_APPEND, arg)
+        return self
 
     def path(self, path):
         assert isinstance(path, str)
         assert len(path) > 0
         assert path[0] == '/'
-        self.packet(TRANSLATE_PATH, path)
+        return self.packet(TRANSLATE_PATH, path)
 
     def gzipped(self, path):
         assert isinstance(path, str)
         assert len(path) > 0
         assert path[0] == '/'
-        self.packet(TRANSLATE_GZIPPED, path)
+        return self.packet(TRANSLATE_GZIPPED, path)
 
     def pair(self, name, value):
         assert isinstance(name, str)
         assert isinstance(value, str)
         assert len(name) > 0
         assert name.find('=') < 0
-        self.packet(TRANSLATE_PAIR, name + '=' + value)
+        return self.packet(TRANSLATE_PAIR, name + '=' + value)
 
     def content_type(self, content_type):
         assert isinstance(content_type, str)
         assert content_type.find('/') > 0
-        self.packet(TRANSLATE_CONTENT_TYPE, content_type)
+        return self.packet(TRANSLATE_CONTENT_TYPE, content_type)
 
     def delegate(self, helper):
         assert isinstance(helper, str)
-        self.packet(TRANSLATE_DELEGATE, helper)
+        return self.packet(TRANSLATE_DELEGATE, helper)
 
     def delegated_path(self, helper, path):
         self.path(path)
         self.delegate(helper)
+        return self
 
     def header_forward(self, command, *args):
         payload = ''
@@ -152,12 +158,12 @@ class Response:
             assert isinstance(x[1], int)
 
             payload += struct.pack('hBx', *x)
-        self.packet(command, payload)
+        return self.packet(command, payload)
 
     def request_header_forward(self, *args):
-        self.header_forward(TRANSLATE_REQUEST_HEADER_FORWARD,
-                            *args)
+        return self.header_forward(TRANSLATE_REQUEST_HEADER_FORWARD,
+                                   *args)
 
     def response_header_forward(self, *args):
-        self.header_forward(TRANSLATE_RESPONSE_HEADER_FORWARD,
-                            *args)
+        return self.header_forward(TRANSLATE_RESPONSE_HEADER_FORWARD,
+                                   *args)
