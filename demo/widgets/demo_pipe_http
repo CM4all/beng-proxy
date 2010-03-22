@@ -1,0 +1,3 @@
+server "http://cfatest01.intern.cm-ag/widgets/hello.sh"
+filter
+pipe "/usr/share/cm4all/beng-proxy/demo/pipe.sed"
