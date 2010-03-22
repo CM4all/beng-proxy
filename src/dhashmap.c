@@ -55,6 +55,25 @@ dhashmap_new(struct dpool *pool, unsigned capacity)
     return map;
 }
 
+void
+dhashmap_free(struct dhashmap *map)
+{
+    /* this function does not delete keys, because these were
+       allocated by the caller */
+
+    for (unsigned i = 0; i < map->capacity; ++i) {
+        struct slot *slot = map->slots[i].next;
+
+        while (slot != NULL) {
+            struct slot *next = slot->next;
+            d_free(map->pool, slot);
+            slot = next;
+        }
+    }
+
+    d_free(map->pool, map);
+}
+
 static inline void *
 dhashmap_overwrite(struct slot *slot, const char *key, void *value)
 {

@@ -20,6 +20,9 @@ struct dhashmap_pair {
 struct dhashmap *__attr_malloc
 dhashmap_new(struct dpool *pool, unsigned capacity);
 
+void
+dhashmap_free(struct dhashmap *map);
+
 void *
 dhashmap_put(struct dhashmap *map, const char *key, void *value);
 
