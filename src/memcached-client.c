@@ -540,7 +540,7 @@ memcached_client_try_read_buffered(struct memcached_client *client)
     if (!memcached_client_fill_buffer(client))
         return;
 
-    if (memcached_consume_input(client))
+    if (memcached_consume_input(client) && client->fd >= 0)
         memcached_client_schedule_read(client);
 }
 
