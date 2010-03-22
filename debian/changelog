@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.24) unstable; urgency=low
 
-  * 
+  * memcached-client: release socket after splice
 
  --
 

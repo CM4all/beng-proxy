@@ -564,6 +564,7 @@ memcached_client_try_read_direct(struct memcached_client *client)
         client->response.remaining -= nbytes;
 
         if (client->response.remaining == 0) {
+            memcached_client_release_socket(client, true);
             istream_deinit_eof(&client->response.value);
             pool_unref(client->pool);
         }
