@@ -878,3 +878,57 @@ widget_session_get_child(struct widget_session *parent,
     return hashmap_r_get_widget_session(parent->session, &parent->children,
                                         id, create);
 }
+
+static void
+widget_session_free(struct dpool *pool, struct widget_session *ws)
+{
+    d_free(pool, ws->id);
+
+    if (ws->path_info != NULL)
+        d_free(pool, ws->path_info);
+
+    if (ws->query_string != NULL)
+        d_free(pool, ws->query_string);
+
+    d_free(pool, ws);
+}
+
+static void
+widget_session_clear_map(struct dpool *pool, struct dhashmap *map)
+{
+    assert(pool != NULL);
+    assert(map != NULL);
+
+    while (true) {
+        dhashmap_rewind(map);
+        const struct dhashmap_pair *pair = dhashmap_next(map);
+        if (pair == NULL)
+            break;
+
+        struct widget_session *ws = pair->value;
+        dhashmap_remove(map, ws->id);
+
+        widget_session_delete(pool, ws);
+    }
+}
+
+void
+widget_session_delete(struct dpool *pool, struct widget_session *ws)
+{
+    assert(pool != NULL);
+    assert(ws != NULL);
+
+    if (ws->children != NULL)
+        widget_session_clear_map(pool, ws->children);
+
+    widget_session_free(pool, ws);
+}
+
+void
+session_delete_widgets(struct session *session)
+{
+    assert(session != NULL);
+
+    if (session->widgets != NULL)
+        widget_session_clear_map(session->pool, session->widgets);
+}

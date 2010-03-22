@@ -243,4 +243,10 @@ struct widget_session *
 widget_session_get_child(struct widget_session *parent, const char *id,
                          bool create);
 
+void
+widget_session_delete(struct dpool *pool, struct widget_session *ws);
+
+void
+session_delete_widgets(struct session *session);
+
 #endif
