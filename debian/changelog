@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.7.25) unstable; urgency=low
   * fork: close file descriptor on input error
   * pool: don't check attachments in pool_trash()
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 25 Mar 2010 13:28:01 +0100
 
 cm4all-beng-proxy (0.7.24) unstable; urgency=low
 
