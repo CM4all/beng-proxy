@@ -21,6 +21,7 @@
 #include "global.h"
 #include "resource-tag.h"
 #include "hostname.h"
+#include "dhashmap.h"
 
 #include <daemon/log.h>
 
@@ -44,6 +45,43 @@ request_absolute_uri(const struct http_server_request *request,
                     host,
                     uri,
                     NULL);
+}
+
+/**
+ * Drop a widget and all its descendants from the session.
+ *
+ * @param session a locked session object
+ * @param ref the top window to drop; NULL drops all widgets
+ */
+static void
+session_drop_widgets(struct session *session, const char *uri,
+                     const struct widget_ref *ref)
+{
+    struct dhashmap *map = session->widgets;
+    const char *id = uri;
+    struct widget_session *ws;
+
+    while (true) {
+        if (map == NULL)
+            /* no such widget session (no children at all here) */
+            return;
+
+        ws = dhashmap_get(map, id);
+        if (ws == NULL)
+            /* no such widget session */
+            return;
+
+        if (ref == NULL)
+            /* found the widget session */
+            break;
+
+        map = ws->children;
+        id = ref->id;
+        ref = ref->next;
+    }
+
+    dhashmap_remove(map, id);
+    widget_session_delete(session->pool, ws);
 }
 
 
@@ -136,6 +174,13 @@ response_invoke_processor(struct request *request2,
     /* make sure we have a session */
     struct session *session = request_make_session(request2);
     if (session != NULL) {
+        if (widget->from_request.focus_ref == NULL)
+            /* drop the widget session and all descendants if there is
+               no focus */
+            session_drop_widgets(session,
+                                 strref_dup(request->pool, &request2->uri.base),
+                                 widget->from_request.proxy_ref);
+
         session_put(session);
     }
 
