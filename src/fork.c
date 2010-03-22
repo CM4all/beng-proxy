@@ -153,6 +153,7 @@ fork_input_abort(void *ctx)
     assert(f->input_fd >= 0);
 
     p_event_del(&f->input_event, f->output.pool);
+    close(f->input_fd);
     f->input = NULL;
 
     fork_close(f);
