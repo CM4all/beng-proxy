@@ -73,7 +73,6 @@ response_invoke_processor(struct request *request2,
 {
     struct http_server_request *request = request2->request;
     istream_t request_body;
-    struct session *session;
     struct widget *widget;
     const char *uri;
 
@@ -94,11 +93,6 @@ response_invoke_processor(struct request *request2,
                                  "Invalid template content type");
         return;
     }
-
-    /* make sure we have a session */
-    session = request_make_session(request2);
-    if (session != NULL)
-        session_put(session);
 
     widget = p_malloc(request->pool, sizeof(*widget));
     widget_init(widget, request->pool, &root_widget_class);
@@ -137,6 +131,12 @@ response_invoke_processor(struct request *request2,
 
     if (request2->translate.response->uri != NULL)
         strref_set_c(&request2->uri.base, request2->translate.response->uri);
+
+    /* make sure we have a session */
+    struct session *session = request_make_session(request2);
+    if (session != NULL) {
+        session_put(session);
+    }
 
     processor_env_init(request->pool, &request2->env,
                        request2->translate.response->untrusted,
