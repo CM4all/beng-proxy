@@ -93,7 +93,6 @@ fork_input_data(const void *data, size_t length, void *ctx)
                    strerror(errno));
         p_event_del(&f->input_event, f->output.pool);
         close(f->input_fd);
-        f->input_fd = -1;
         istream_free_handler(&f->input);
         return 0;
     }
@@ -136,11 +135,11 @@ fork_input_eof(void *ctx)
 {
     struct fork *f = ctx;
 
+    assert(f->input != NULL);
     assert(f->input_fd >= 0);
 
     p_event_del(&f->input_event, f->output.pool);
     close(f->input_fd);
-    f->input_fd = -1;
 
     f->input = NULL;
 }
@@ -150,6 +149,7 @@ fork_input_abort(void *ctx)
 {
     struct fork *f = ctx;
 
+    assert(f->input != NULL);
     assert(f->input_fd >= 0);
 
     p_event_del(&f->input_event, f->output.pool);
