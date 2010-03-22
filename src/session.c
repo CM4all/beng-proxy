@@ -600,16 +600,12 @@ widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
     while ((pair = dhashmap_next(src)) != NULL) {
         const struct widget_session *src_ws = pair->value;
         struct widget_session *dest_ws;
-        const char *key = d_strdup(pool, pair->key);
-
-        if (key == NULL)
-            return NULL;
 
         dest_ws = widget_session_dup(pool, src_ws, session);
         if (dest_ws == NULL)
             return NULL;
 
-        dhashmap_put(dest, key, dest_ws);
+        dhashmap_put(dest, dest_ws->id, dest_ws);
         dest_ws->parent = parent;
         dest_ws->session = session;
     }
