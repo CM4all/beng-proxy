@@ -1071,6 +1071,7 @@ translate_try_write(struct translate_client *client, int fd)
 
         packet_reader_init(&client->reader);
 
+        p_event_del(&client->event, client->pool);
         event_set(&client->event, fd, EV_READ|EV_TIMEOUT,
                   translate_read_event_callback, client);
         translate_try_read(client, fd);
