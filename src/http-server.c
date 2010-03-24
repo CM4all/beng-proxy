@@ -198,8 +198,8 @@ http_server_request_close(struct http_server_connection *connection)
     assert(connection->request.request != NULL);
 
     pool = connection->request.request->pool;
-    pool_unref(pool);
     pool_trash(pool);
+    pool_unref(pool);
     connection->request.request = NULL;
 
     if ((connection->request.read_state == READ_BODY ||

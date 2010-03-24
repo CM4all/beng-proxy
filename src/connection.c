@@ -69,8 +69,8 @@ my_http_server_connection_free(void *ctx)
     --connection->instance->num_connections;
 
     pool = connection->pool;
-    pool_unref(pool);
     pool_trash(pool);
+    pool_unref(pool);
 }
 
 static const struct http_server_connection_handler my_http_server_connection_handler = {
