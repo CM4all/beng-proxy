@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.7.25) unstable; urgency=low
 
   * memcached-client: don't poll if socket is closed
   * fork: close file descriptor on input error
+  * pool: don't check attachments in pool_trash()
 
  --
 

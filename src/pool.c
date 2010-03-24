@@ -589,8 +589,6 @@ pool_notify(pool_t pool, struct pool_notify *notify)
 void
 pool_trash(pool_t pool)
 {
-    pool_check_attachments(pool);
-
     if (pool->trashed)
         return;
 
