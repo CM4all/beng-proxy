@@ -385,6 +385,9 @@ memcached_consume_key(struct memcached_client *client)
         istream_t value;
         bool valid;
 
+        if (fifo_buffer_empty(client->response.input))
+            memcached_client_schedule_read(client);
+
         client->response.read_state = READ_VALUE;
 
         istream_init(&client->response.value, &memcached_response_value,
