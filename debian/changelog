@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.7.26) unstable; urgency=low
   * memcached-client: schedule read event before callback
   * istream-tee: continue with second output if first is closed
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Sun, 28 Mar 2010 18:08:11 +0200
 
 cm4all-beng-proxy (0.7.25) unstable; urgency=low
 
