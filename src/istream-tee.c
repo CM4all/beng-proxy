@@ -31,8 +31,17 @@ tee_feed(struct istream_tee *tee, const void *data, size_t length)
 
     if (tee->outputs[0].enabled) {
         nbytes1 = istream_invoke_data(&tee->outputs[0].istream, data, length);
-        if (nbytes1 == 0)
-            return 0;
+        if (nbytes1 == 0) {
+            if (tee->outputs[0].enabled || !tee->outputs[1].enabled)
+                /* first output is blocking, or both closed: give
+                   up */
+                return 0;
+
+            /* the first output has been closed inside the data()
+               callback, but the second is still alive: continue with
+               the second output */
+            nbytes1 = length;
+        }
     } else
         nbytes1 = length;
 
