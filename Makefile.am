@@ -466,6 +466,7 @@ test_t_sink_header_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_tee_SOURCES = test/t-istream-tee.c \
 	src/sink-gstring.c \
+	src/sink-close.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_tee_LDADD = $(T_ISTREAM_FILTER_LIB)
 

@@ -9,6 +9,9 @@ void
 sink_null_new(istream_t istream);
 
 void
+sink_close_new(istream_t istream);
+
+void
 sink_buffer_new(pool_t pool, istream_t input,
                 void (*callback)(void *data, size_t length, void *ctx),
                 void *ctx,

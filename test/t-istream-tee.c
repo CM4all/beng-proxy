@@ -1,6 +1,7 @@
 #include "istream.h"
 #include "async.h"
 #include "sink-gstring.h"
+#include "sink-impl.h"
 
 #include <event.h>
 #include <string.h>
@@ -106,6 +107,35 @@ test_block1(pool_t pool)
     g_string_free(ctx.value, true);
 }
 
+static void
+test_close_data(pool_t pool)
+{
+    struct ctx ctx = {
+        .value = NULL,
+        .eof = false,
+        .aborted = false,
+    };
+    istream_t tee, second;
+    struct async_operation_ref async_ref;
+
+    tee = istream_tee_new(pool, istream_string_new(pool, "foo"), false);
+
+    sink_close_new(tee);
+    second = istream_tee_second(tee);
+
+    sink_gstring_new(pool, second, buffer_callback, &ctx, &async_ref);
+    assert(ctx.value == NULL);
+
+    istream_read(second);
+
+    /* at this point, sink_close has closed itself, and istream_tee
+       should have passed the data to the sink_gstring */
+
+    assert(ctx.value != NULL);
+    assert(strcmp(ctx.value->str, "foo") == 0);
+    g_string_free(ctx.value, true);
+}
+
 
 /*
  * main
@@ -127,6 +157,7 @@ int main(int argc, char **argv) {
     /* run test suite */
 
     test_block1(root_pool);
+    test_close_data(root_pool);
 
     /* cleanup */
 
