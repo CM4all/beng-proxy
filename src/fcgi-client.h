@@ -15,6 +15,28 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
+/**
+ * Sends a HTTP request on a socket to an FastCGI server, and passes
+ * the response to the handler.
+ *
+ * @param pool the memory pool
+ * @param fd a socket to the HTTP server
+ * @param fd_type the exact socket type
+ * @param lease the lease for the socket
+ * @param lease_ctx a context pointer for the lease
+ * @param method the HTTP request method
+ * @param uri the request URI path
+ * @param script_filename the absolue path name of the script
+ * @param script_name the URI part of the script
+ * @param path_info the URI part following the script name
+ * @param query_string the query string (without the question mark)
+ * @param document_root the absolute path of the document root
+ * @param headers the serialized request headers (optional)
+ * @param body the request body (optional)
+ * @param handler a callback function which receives the response
+ * @param ctx a context pointer for the callback function
+ * @param async_ref a handle which may be used to abort the operation
+ */
 void
 fcgi_client_request(pool_t pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
