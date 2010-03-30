@@ -49,6 +49,8 @@ static const struct timeval cleanup_interval = {
     .tv_usec = 0,
 };
 
+static GRand *session_rand;
+
 /** the one and only session manager instance, allocated from shared
     memory */
 static struct session_manager *session_manager;
@@ -160,10 +162,7 @@ session_manager_new(void)
 bool
 session_manager_init(void)
 {
-    struct timeval tv;
-
-    gettimeofday(&tv, NULL);
-    srandom(tv.tv_sec ^ tv.tv_usec);
+    session_rand = g_rand_new();
 
     if (session_manager == NULL) {
         session_manager = session_manager_new();
@@ -197,6 +196,8 @@ session_manager_destroy(struct session_manager *sm)
 
     rwlock_wunlock(&sm->lock);
     rwlock_destroy(&sm->lock);
+
+    g_rand_free(session_rand);
 }
 
 void
@@ -374,9 +375,10 @@ session_generate_id(session_id_t *id_r)
 {
 #ifdef SESSION_ID_WORDS
     for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
-        id_r->data[i] = random();
+        id_r->data[i] = g_rand_int(session_rand);
 #else
-    *id_r = (session_id_t)random() | (session_id_t)random() << 32;
+    *id_r = (session_id_t)g_rand_int(session_rand)
+        | (session_id_t)g_rand_int(session_rand) << 32;
 #endif
 }
 
