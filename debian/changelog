@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.27) unstable; urgency=low
 
   * session: use GLib's PRNG to generate session ids
+  * session: seed the PRNG with /dev/random
 
  --
 

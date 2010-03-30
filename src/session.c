@@ -14,6 +14,7 @@
 #include "rwlock.h"
 #include "refcount.h"
 #include "expiry.h"
+#include "random.h"
 
 #include <daemon/log.h>
 
@@ -163,6 +164,7 @@ bool
 session_manager_init(void)
 {
     session_rand = g_rand_new();
+    obtain_entropy(session_rand);
 
     if (session_manager == NULL) {
         session_manager = session_manager_new();

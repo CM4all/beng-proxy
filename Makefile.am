@@ -95,6 +95,7 @@ SRC = src/main.c \
 	src/shm.c \
 	src/dpool.c \
 	src/dstring.c \
+	src/random.c \
 	src/session.c \
 	src/cookie-client.c \
 	src/cookie-server.c \
