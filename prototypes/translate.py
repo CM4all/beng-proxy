@@ -16,6 +16,8 @@ cgi_path = '/usr/lib/cgi-bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
+ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
+ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
 
 cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
@@ -248,6 +250,13 @@ class Translation(Protocol):
             self._handle_coma(response, uri[16:],
                               '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
                               '/etc/cm4all/coma/apps/imageprocessor/coma.config')
+        elif uri[:15] == '/ticket/create/':
+            response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
+                                                            'cm4all-ticket-create'))
+            response.packet(TRANSLATE_DOCUMENT_ROOT, '/var/www')
+            response.packet(TRANSLATE_PATH_INFO, uri[14:])
+            response.packet(TRANSLATE_BASE, '/ticket/create/')
+            response.pair('TICKET_VAR', ticket_database_uri)
         elif uri == '/filter':
             # two filters chained
             response.packet(TRANSLATE_DOCUMENT_ROOT, demo_path)
@@ -347,6 +356,7 @@ if __name__ == '__main__':
         cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
         demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')
         coma_fastcgi = os.path.join(os.getcwd(), '../../cgi-coma/src/cm4all-coma-fastcgi')
+        ticket_fastcgi_dir = os.path.join(os.getcwd(), '../mod_ticket/src')
 
     if len(argv) >= 2:
         path = argv[1]
