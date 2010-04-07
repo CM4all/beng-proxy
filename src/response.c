@@ -110,7 +110,8 @@ response_invoke_processor(struct request *request2,
 
     if (request2->translate.response->untrusted != NULL &&
         widget->from_request.proxy_ref == NULL) {
-        /* untrusted requests cannot show the template */
+        daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
+                   request2->translate.response->untrusted);
         istream_close(body);
         request_discard_body(request2);
         http_server_send_message(request, HTTP_STATUS_FORBIDDEN, "Forbidden");
