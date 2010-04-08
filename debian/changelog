@@ -5,7 +5,7 @@ cm4all-beng-proxy (0.7.27) unstable; urgency=low
   * response: log UNTRUSTED violation attempts
   * response: drop widget sessions when there is no focus
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 09 Apr 2010 12:04:18 +0200
 
 cm4all-beng-proxy (0.7.26) unstable; urgency=low
 
