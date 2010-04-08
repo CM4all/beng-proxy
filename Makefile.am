@@ -365,6 +365,7 @@ test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/growing-buffer.c \
 	src/cookie-client.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
+	src/random.c src/socket-util.c src/fd-util.c \
 	src/session.c src/format.c \
 	src/tpool.c $(POOL_SRC)
 test_t_header_forward_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
@@ -442,6 +443,7 @@ test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/uri-relative.c src/uri-parser.c src/uri-escape.c src/uri-edit.c \
 	src/uri-verify.c \
+	src/random.c \
 	src/session.c src/cookie-client.c \
 	src/http-string.c \
 	src/strmap.c src/hashmap.c \
@@ -666,6 +668,7 @@ test_t_dpool_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/dpool.c src/dstring.c src/dhashmap.c \
 	src/format.c \
+	src/random.c src/socket-util.c src/fd-util.c \
 	src/session.c
 test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
@@ -716,6 +719,7 @@ test_t_wembed_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
 	src/widget-session.c src/session.c \
+	src/random.c src/socket-util.c src/fd-util.c \
 	src/args.c src/uri-escape.c src/uri-verify.c \
 	src/format.c \
 	src/resource-address.c src/uri-address.c \
