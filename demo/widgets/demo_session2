@@ -1,0 +1,4 @@
+server "http://cfatest01.intern.cm-ag/widgets/session2.sh/"
+process
+container
+stateful
