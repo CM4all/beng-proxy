@@ -252,7 +252,14 @@ class Translation(Protocol):
                               '/etc/cm4all/coma/apps/imageprocessor/coma.config')
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
-                                                            'cm4all-ticket-create'))
+                                                            'create'))
+            response.packet(TRANSLATE_DOCUMENT_ROOT, '/var/www')
+            response.packet(TRANSLATE_PATH_INFO, uri[14:])
+            response.packet(TRANSLATE_BASE, '/ticket/create/')
+            response.pair('TICKET_VAR', ticket_database_uri)
+        elif uri[:15] == '/ticket/upload/':
+            response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
+                                                            'upload'))
             response.packet(TRANSLATE_DOCUMENT_ROOT, '/var/www')
             response.packet(TRANSLATE_PATH_INFO, uri[14:])
             response.packet(TRANSLATE_BASE, '/ticket/create/')
