@@ -652,6 +652,15 @@ preceding \texttt{PIPE} \\
 
 \hline
 
+\texttt{UID} & Follows \texttt{PIPE}, \texttt{CGI} or
+\texttt{FASTCGI}, and sets the user id for the spawned process.  This
+is a \texttt{uid\_t}, optionally followed by one or more
+\texttt{gid\_t}.  If unset, then \texttt{beng-proxy} will run the sub
+process as \texttt{nobody:nogroup}.  Future versions may refuse to
+spawn processes without this packet. \\
+
+\hline
+
 \texttt{REDIRECT} & another alternative to \texttt{PATH}: redirect the
 HTTP client to this URL; \texttt{STATUS} must be set to one of the
 HTTP 3xx codes \\
