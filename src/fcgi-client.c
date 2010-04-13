@@ -27,6 +27,7 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <event.h>
 
 #if __BYTE_ORDER == __BIG_ENDIAN
@@ -60,7 +61,6 @@ struct fcgi_client {
         struct event event;
 
         enum {
-            READ_STATUS,
             READ_HEADERS,
             READ_BODY,
             READ_END
@@ -148,8 +148,7 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
 static void
 fcgi_client_abort_response_headers(struct fcgi_client *client)
 {
-    assert(client->response.read_state == READ_STATUS ||
-           client->response.read_state == READ_HEADERS);
+    assert(client->response.read_state == READ_HEADERS);
 
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
@@ -187,8 +186,7 @@ fcgi_client_abort_response_body(struct fcgi_client *client)
 static void
 fcgi_client_abort_response(struct fcgi_client *client)
 {
-    assert(client->response.read_state == READ_STATUS ||
-           client->response.read_state == READ_HEADERS ||
+    assert(client->response.read_state == READ_HEADERS ||
            client->response.read_state == READ_BODY);
 
     if (client->response.read_state != READ_BODY)
@@ -251,7 +249,6 @@ fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
     }
 
     switch (client->response.read_state) {
-    case READ_STATUS:
     case READ_END:
         assert(false);
         break;
@@ -300,9 +297,19 @@ fcgi_client_consume_input(struct fcgi_client *client)
             if (at_headers && client->response.read_state == READ_BODY) {
                 /* the read_state has been switched from HEADERS to
                    BODY: we have to deliver the response now */
+
+                http_status_t status = HTTP_STATUS_OK;
+
+                const char *p = strmap_remove(client->response.headers,
+                                              "status");
+                if (p != NULL) {
+                    int i = atoi(p);
+                    if (http_status_is_valid(i))
+                        status = (http_status_t)i;
+                }
+
                 fcgi_client_response_body_init(client);
-                http_response_handler_invoke_response(&client->handler,
-                                                      HTTP_STATUS_OK,
+                http_response_handler_invoke_response(&client->handler, status,
                                                       client->response.headers,
                                                       istream_struct_cast(&client->response.body));
                 return false;
@@ -362,8 +369,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
             break;
 
         case FCGI_END_REQUEST:
-            if (client->response.read_state == READ_STATUS ||
-                client->response.read_state == READ_HEADERS) {
+            if (client->response.read_state == READ_HEADERS) {
                 daemon_log(1, "premature end of headers "
                            "from FastCGI application\n");
                 fcgi_client_abort_response(client);
@@ -659,8 +665,7 @@ fcgi_client_request_abort(struct async_operation *ao)
     
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(client->response.read_state == READ_STATUS ||
-           client->response.read_state == READ_HEADERS);
+    assert(client->response.read_state == READ_HEADERS);
 
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
