@@ -1,4 +1,7 @@
-AUTOMAKE_OPTIONS = foreign 1.10 no-dist subdir-objects
+AUTOMAKE_OPTIONS = foreign 1.10 dist-bzip2 subdir-objects
+
+EXTRA_DIST = \
+	doc/beng.tex
 
 #
 # Compiler/linker flags
@@ -83,6 +86,164 @@ ISTREAM_SRC = \
 	src/sink-buffer.c \
 	src/sink-header.c \
 	$(POOL_SRC)
+
+HDR = \
+	include/beng-proxy/headers.h \
+	include/beng-proxy/translation.h \
+	src/abort-flag.h \
+	src/abort-unref.h \
+	src/access-log.h \
+	src/address.h \
+	src/ajp-client.h \
+	src/ajp-headers.h \
+	src/ajp-protocol.h \
+	src/ajp-read.h \
+	src/ajp-request.h \
+	src/ajp-serialize.h \
+	src/ajp-util.h \
+	src/args.h \
+	src/async.h \
+	src/background.h \
+	src/balancer.h \
+	src/bot.h \
+	src/buffered-io.h \
+	src/bulldog.h \
+	src/cache.h \
+	src/cgi.h \
+	src/child.h \
+	src/client-socket.h \
+	src/config.h \
+	src/connection.h \
+	src/cookie-client.h \
+	src/cookie-server.h \
+	src/date.h \
+	src/dchunk.h \
+	src/defer.h \
+	src/delegate-client.h \
+	src/delegate-glue.h \
+	src/delegate-protocol.h \
+	src/delegate-request.h \
+	src/delegate-stock.h \
+	src/dhashmap.h \
+	src/direct.h \
+	src/dpool.h \
+	src/drop.h \
+	src/duplex.h \
+	src/embed.h \
+	src/event2.h \
+	src/expansible-buffer.h \
+	src/expiry.h \
+	src/failure.h \
+	src/fcache.h \
+	src/fcgi-client.h \
+	src/fcgi-protocol.h \
+	src/fcgi-request.h \
+	src/fcgi-serialize.h \
+	src/fcgi-stock.h \
+	src/fd-util.h \
+	src/fifo-buffer.h \
+	src/file-handler.h \
+	src/fork.h \
+	src/format.h \
+	src/gb-io.h \
+	src/get.h \
+	src/global.h \
+	src/gmtime.h \
+	src/growing-buffer.h \
+	src/handler.h \
+	src/hashmap.h \
+	src/header-forward.h \
+	src/header-parser.h \
+	src/header-writer.h \
+	src/hostname.h \
+	src/html-chars.h \
+	src/html-escape.h \
+	src/http-body.h \
+	src/http-cache-choice.h \
+	src/http-cache-internal.h \
+	src/http-cache.h \
+	src/http-client.h \
+	src/http-error.h \
+	src/http-request.h \
+	src/http-response.h \
+	src/http-server-internal.h \
+	src/http-server.h \
+	src/http-string.h \
+	src/http-util.h \
+	src/http.h \
+	src/instance.h \
+	src/istream-buffer.h \
+	src/istream-forward.h \
+	src/istream-impl.h \
+	src/istream-internal.h \
+	src/istream-invoke.h \
+	src/istream-new.h \
+	src/istream.h \
+	src/jail.h \
+	src/lease.h \
+	src/listener.h \
+	src/lock.h \
+	src/memcached-client.h \
+	src/memcached-packet.h \
+	src/memcached-protocol.h \
+	src/memcached-stock.h \
+	src/parser.h \
+	src/pevent.h \
+	src/pipe-stock.h \
+	src/pipe.h \
+	src/pool.h \
+	src/processor.h \
+	src/proxy-widget.h \
+	src/random.h \
+	src/refcount.h \
+	src/request-forward.h \
+	src/request.h \
+	src/resource-address.h \
+	src/resource-tag.h \
+	src/rewrite-uri.h \
+	src/rwlock.h \
+	src/serialize.h \
+	src/session.h \
+	src/shm.h \
+	src/sink-gstring.h \
+	src/sink-impl.h \
+	src/socket-util.h \
+	src/static-file.h \
+	src/static-headers.h \
+	src/stock.h \
+	src/stopwatch.h \
+	src/strmap.h \
+	src/strref-dpool.h \
+	src/strref-pool.h \
+	src/strref.h \
+	src/strref2.h \
+	src/strutil.h \
+	src/tcache.h \
+	src/tcp-stock.h \
+	src/tpool.h \
+	src/trace.h \
+	src/transformation.h \
+	src/translate.h \
+	src/tstock.h \
+	src/udp.h \
+	src/uri-address.h \
+	src/uri-edit.h \
+	src/uri-escape.h \
+	src/uri-extract.h \
+	src/uri-parser.h \
+	src/uri-relative.h \
+	src/uri-resolver.h \
+	src/uri-string.h \
+	src/uri-verify.h \
+	src/uset.h \
+	src/widget-http.h \
+	src/widget-registry.h \
+	src/widget-resolver.h \
+	src/widget-stream.h \
+	src/widget.h \
+	src/worker.h \
+	test/libcore-gmtime.h \
+	test/t-istream-filter.h
 
 SRC = src/main.c \
 	src/cmdline.c \
@@ -224,7 +385,8 @@ SRC = src/main.c \
 	src/pipe-stock.c \
 	src/abort-unref.c \
 	src/abort-flag.c \
-	src/tpool.c
+	src/tpool.c \
+	$(HDR)
 
 if ENABLE_STOPWATCH
 SRC += src/stopwatch.c src/istream-stopwatch.c
@@ -344,12 +506,12 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-istream-tee \
 	test/t-growing-buffer \
 	test/t-cgi test/t-widget-stream \
-	test/t-http-server.py test/t-http-server \
+	$(srcdir)/test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
 	test/t-processor \
 	test/t-memcached-client \
-	test/t-cookie-client.py test/t-cookie-client \
+	$(srcdir)/test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
 	test/t-rewrite-uri \

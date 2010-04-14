@@ -96,3 +96,5 @@ aclocal.m4
 .dirstamp
 *.pc
 perf.data
+
+cm4all-beng-proxy-*
