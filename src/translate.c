@@ -520,7 +520,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload == NULL) {
             daemon_log(2, "malformed TRANSLATE_PATH packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_LOCAL;
@@ -588,7 +589,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload == NULL) {
             daemon_log(2, "malformed TRANSLATE_PROXY packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_HTTP;
@@ -638,7 +640,8 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_SCHEME:
         if (strncmp(payload, "http", 4) != 0) {
             daemon_log(2, "malformed TRANSLATE_SCHEME packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->response.scheme = payload;
@@ -649,9 +652,10 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_URI:
-        if (*payload != '/') {
+        if (payload == NULL || *payload != '/') {
             daemon_log(2, "malformed TRANSLATE_URI packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->response.uri = payload;
@@ -683,7 +687,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload == NULL) {
             daemon_log(2, "malformed TRANSLATE_PIPE packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_PIPE;
@@ -700,7 +705,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload == NULL) {
             daemon_log(2, "malformed TRANSLATE_CGI packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_CGI;
@@ -718,7 +724,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload == NULL) {
             daemon_log(2, "malformed TRANSLATE_FASTCGI packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
@@ -735,7 +742,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload == NULL) {
             daemon_log(2, "malformed TRANSLATE_AJP packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_AJP;
@@ -818,7 +826,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload_length < 2) {
             daemon_log(2, "malformed TRANSLATE_ADDRESS packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         uri_address_add(client->resource_address->u.http,
@@ -835,7 +844,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload_length < 7) {
             daemon_log(2, "malformed TRANSLATE_ADDRESS_STRING packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         {
@@ -844,7 +854,8 @@ translate_handle_packet(struct translate_client *client,
             ret = parse_address_string(client->resource_address->u.http, payload);
             if (!ret) {
                 daemon_log(2, "malformed TRANSLATE_ADDRESS_STRING packet\n");
-                break;
+                translate_client_abort(client);
+                return false;
             }
         }
 
@@ -857,7 +868,8 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_MAX_AGE:
         if (payload_length != 4) {
             daemon_log(2, "malformed TRANSLATE_MAX_AGE packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         switch (client->previous_command) {
@@ -880,7 +892,8 @@ translate_handle_packet(struct translate_client *client,
         if (payload_length == 0 ||
             payload_length % sizeof(client->response.vary[0]) != 0) {
             daemon_log(2, "malformed TRANSLATE_VARY packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->response.vary = (const uint16_t *)payload;
@@ -891,7 +904,8 @@ translate_handle_packet(struct translate_client *client,
         if (payload_length == 0 ||
             payload_length % sizeof(client->response.invalidate[0]) != 0) {
             daemon_log(2, "malformed TRANSLATE_INVALIDATE packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->response.invalidate = (const uint16_t *)payload;
@@ -912,7 +926,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload == NULL) {
             daemon_log(2, "malformed TRANSLATE_DELEGATE packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->resource_address->u.local.delegate = payload;
@@ -933,7 +948,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (payload == NULL) {
             daemon_log(2, "malformed TRANSLATE_PIPE packet\n");
-            break;
+            translate_client_abort(client);
+            return false;
         }
 
         client->resource_address->u.cgi.args[client->resource_address->u.cgi.num_args++] = payload;
@@ -945,13 +961,15 @@ translate_handle_packet(struct translate_client *client,
             if (client->resource_address->u.cgi.num_args >=
                 G_N_ELEMENTS(client->resource_address->u.cgi.args)) {
                 daemon_log(2, "too many TRANSLATE_PAIR packets\n");
-                break;
+                translate_client_abort(client);
+                return false;
             }
 
             if (payload == NULL || *payload == '=' ||
                 strchr(payload + 1, '=') == NULL) {
                 daemon_log(2, "malformed TRANSLATE_PAIR packet\n");
-                break;
+                translate_client_abort(client);
+                return false;
             }
 
             client->resource_address->u.cgi.args[client->resource_address->u.cgi.num_args++] = payload;
