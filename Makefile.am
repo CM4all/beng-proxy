@@ -263,6 +263,21 @@ src_cm4all_beng_proxy_delegate_helper_SOURCES = src/delegate-helper.c
 lib_LIBRARIES = src/libcm4all-istream.a
 src_libcm4all_istream_a_SOURCES = $(ISTREAM_SRC)
 
+pkginclude_HEADERS = \
+	src/istream-buffer.h \
+	src/istream-forward.h \
+	src/istream-impl.h \
+	src/istream-internal.h \
+	src/istream-invoke.h \
+	src/istream-new.h \
+	src/istream.h \
+	include/beng-proxy/headers.h \
+	include/beng-proxy/translation.h
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libcm4all-beng-proxy.pc libcm4all-istream.pc
+
+
 #
 # Test suite
 #
@@ -972,6 +987,32 @@ sparse-check:
 	sparse $(SPARSE_FLAGS) $(src_cm4all_beng_proxy_SOURCES)
 
 .PHONY: sparse-check
+
+
+#
+# JavaScript
+#
+
+jsdir = $(pkgdatadir)/js
+js_DATA = js/beng-proxy.js
+
+
+#
+# Python
+#
+
+pythondir = $(pkgdatadir)/python/beng_proxy
+python_DATA = python/beng_proxy/__init__.py
+
+pythontdir = $(pkgdatadir)/python/beng_proxy/translation
+pythont_DATA = \
+	python/beng_proxy/translation/protocol.py \
+	python/beng_proxy/translation/request.py \
+	python/beng_proxy/translation/response.py \
+	python/beng_proxy/translation/serialize.py \
+	python/beng_proxy/translation/uri.py \
+	python/beng_proxy/translation/__init__.py
+
 
 #
 # Running beng-proxy
