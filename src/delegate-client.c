@@ -151,7 +151,8 @@ delegate_try_read(struct delegate_client *d)
 
     lease_release(&d->lease_ref, true);
 
-    fd = *(int*)CMSG_DATA(cmsg);
+    const int *fd_p = (const int *)CMSG_DATA(cmsg);
+    fd = *fd_p;
     fd_set_cloexec(fd);
     d->callback(fd, d->callback_ctx);
     pool_unref(d->pool);

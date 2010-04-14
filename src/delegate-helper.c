@@ -100,7 +100,9 @@ int main(int argc __attr_unused, char **argv __attr_unused)
             cmsg->cmsg_level = SOL_SOCKET;
             cmsg->cmsg_type = SCM_RIGHTS;
             cmsg->cmsg_len = msg.msg_controllen;
-            *(int*)CMSG_DATA(cmsg) = fd;
+
+            int *fd_p = (int *)CMSG_DATA(cmsg);
+            *fd_p = fd;
 
             ret = sendmsg(0, &msg, 0);
             if (ret < 0) {
