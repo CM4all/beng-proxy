@@ -86,7 +86,8 @@ header_consume_size(struct sink_header *header,
     if (header->position < sizeof(header->size_buffer))
         return length;
 
-    header->size = g_ntohl(*(const uint32_t *)header->size_buffer);
+    const uint32_t *size_p = (const uint32_t *)header->size_buffer;
+    header->size = g_ntohl(*size_p);
     if (header->size > 0x100000) {
         /* header too large */
         istream_close_handler(header->input);
