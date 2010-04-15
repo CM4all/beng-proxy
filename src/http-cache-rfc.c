@@ -59,6 +59,12 @@ http_cache_request_evaluate(pool_t pool,
         /* RFC 2616 13.11 "Write-Through Mandatory" */
         return NULL;
 
+    if (strlen(uri) > 8192)
+        /* don't cache a huge request URI; probably it contains lots
+           and lots of unique parameters, and that's not worth the
+           cache space anyway */
+        return NULL;
+
     if (headers != NULL) {
         p = strmap_get(headers, "range");
         if (p != NULL)
