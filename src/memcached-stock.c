@@ -120,6 +120,9 @@ memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
 {
     struct memcached_stock_request *request = p_malloc(pool, sizeof(*request));
 
+    assert(extras_length <= MEMCACHED_EXTRAS_MAX);
+    assert(key_length <= MEMCACHED_KEY_MAX);
+
     request->pool = pool;
     request->stock = stock;
     request->opcode = opcode;

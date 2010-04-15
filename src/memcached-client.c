@@ -784,8 +784,8 @@ memcached_client_invoke(pool_t pool, int fd, enum istream_direct fd_type,
     struct memcached_client *client;
     istream_t request;
 
-    assert(extras_length <= 0xff);
-    assert(key_length < 0x1000);
+    assert(extras_length <= MEMCACHED_EXTRAS_MAX);
+    assert(key_length <= MEMCACHED_KEY_MAX);
 
     request = memcached_request_packet(pool, opcode, extras, extras_length,
                                        key, key_length, value,
