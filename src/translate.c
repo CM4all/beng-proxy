@@ -991,9 +991,6 @@ translate_handle_packet(struct translate_client *client,
         parse_header_forward(&client->response.response_header_forward,
                              payload, payload_length);
         break;
-
-    case TRANSLATE_UID:
-        break;
     }
 
     return true;
