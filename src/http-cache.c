@@ -512,6 +512,11 @@ http_cache_flush(struct http_cache *cache)
     }
 }
 
+/**
+ * A resource was not found in the cache.
+ *
+ * Caller pool is referenced synchronously and freed asynchronously.
+ */
 static void
 http_cache_miss(struct http_cache *cache, pool_t caller_pool,
                 struct http_cache_info *info,
@@ -561,6 +566,11 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     pool_unref(pool);
 }
 
+/**
+ * Send the cached document to the caller (heap version).
+ *
+ * Caller pool is left unchanged.
+ */
 static void
 http_cache_heap_serve(struct cache *cache,
                       struct http_cache_document *document,
@@ -582,6 +592,11 @@ http_cache_heap_serve(struct cache *cache,
                                           document->headers, response_body);
 }
 
+/**
+ * Send the cached document to the caller (memcached version).
+ *
+ * Caller pool is left unchanged.
+ */
 static void
 http_cache_memcached_serve(struct http_cache_request *request)
 {
@@ -593,6 +608,11 @@ http_cache_memcached_serve(struct http_cache_request *request)
                                           request->document_body);
 }
 
+/**
+ * Send the cached document to the caller.
+ *
+ * Caller pool is left unchanged.
+ */
 static void
 http_cache_serve(struct http_cache_request *request)
 {
@@ -604,6 +624,11 @@ http_cache_serve(struct http_cache_request *request)
         http_cache_memcached_serve(request);
 }
 
+/**
+ * Revalidate a cache entry.
+ *
+ * Caller pool is freed asynchronously.
+ */
 static void
 http_cache_test(struct http_cache_request *request,
                 http_method_t method,
@@ -632,6 +657,11 @@ http_cache_test(struct http_cache_request *request,
                  &request->async_ref);
 }
 
+/**
+ * Revalidate a cache entry (heap version).
+ *
+ * Caller pool is referenced synchronously and freed asynchronously.
+ */
 static void
 http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
                      struct http_cache_info *info,
@@ -676,6 +706,13 @@ http_cache_may_serve(struct http_cache_info *info,
          document->info.expires >= time(NULL));
 }
 
+/**
+ * The requested document was found in the cache.  It is either served
+ * or revalidated.
+ *
+ * Caller pool is referenced synchronously and freed asynchronously
+ * (as needed).
+ */
 static void
 http_cache_found(struct http_cache *cache,
                  struct http_cache_info *info,
@@ -697,6 +734,12 @@ http_cache_found(struct http_cache *cache,
                              handler, handler_ctx, async_ref);
 }
 
+/**
+ * Query the heap cache.
+ *
+ * Caller pool is referenced synchronously and freed asynchronously
+ * (as needed).
+ */
 static void
 http_cache_heap_use(struct http_cache *cache,
                     pool_t pool,
@@ -721,6 +764,11 @@ http_cache_heap_use(struct http_cache *cache,
                          handler, handler_ctx, async_ref);
 }
 
+/**
+ * Forward the HTTP request to the real server.
+ *
+ * Caller pool is freed asynchronously.
+ */
 static void
 http_cache_memcached_forward(struct http_cache_request *request,
                              const struct http_response_handler *handler,
@@ -739,6 +787,11 @@ http_cache_memcached_forward(struct http_cache_request *request,
                  handler, handler_ctx, &request->async_ref);
 }
 
+/**
+ * A resource was not found in the cache.
+ *
+ * Caller pool is freed (asynchronously).
+ */
 static void
 http_cache_memcached_miss(struct http_cache_request *request)
 {
@@ -760,6 +813,11 @@ http_cache_memcached_miss(struct http_cache_request *request)
                                  &http_cache_response_handler, request);
 }
 
+/**
+ * The memcached-client callback.
+ *
+ * Caller pool is freed (asynchronously).
+ */
 static void
 http_cache_memcached_get_callback(struct http_cache_document *document,
                                   istream_t body, void *ctx)
@@ -790,6 +848,11 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
     }
 }
 
+/**
+ * Query the resource from the memached server.
+ *
+ * Caller pool is referenced synchronously and freed asynchronously.
+ */
 static void
 http_cache_memcached_use(struct http_cache *cache,
                          pool_t caller_pool,
