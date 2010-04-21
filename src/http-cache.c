@@ -104,22 +104,6 @@ struct http_cache_request {
     struct async_operation_ref async_ref;
 };
 
-static struct http_cache_request *
-http_cache_request_dup(pool_t pool, const struct http_cache_request *src)
-{
-    struct http_cache_request *dest = p_malloc(pool, sizeof(*dest));
-
-    dest->pool = pool;
-    dest->caller_pool = src->caller_pool;
-    dest->cache = src->cache;
-    dest->url = p_strdup(pool, src->url);
-    dest->headers = src->headers == NULL
-        ? NULL : strmap_dup(pool, src->headers);
-    dest->handler = src->handler;
-    dest->info = http_cache_info_dup(pool, src->info);
-    return dest;
-}
-
 static void
 http_cache_memcached_put_callback(void *ctx)
 {
@@ -225,8 +209,6 @@ http_cache_response_body_eof(void *ctx)
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
     http_cache_put(request);
-
-    pool_unref(request->pool);
 }
 
 static void
@@ -240,7 +222,6 @@ http_cache_response_body_abort(void *ctx)
     request->response.input = NULL;
 
     list_remove(&request->siblings);
-    pool_unref(request->pool);
 }
 
 static const struct istream_handler http_cache_response_body_handler = {
@@ -317,14 +298,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         request->response.output = NULL;
         http_cache_put(request);
     } else {
-        pool_t pool;
         size_t buffer_size;
-
-        /* move all this stuff to a new pool, so istream_tee's second
-           head can continue to fill the cache even if our caller gave
-           up on it */
-        pool = pool_new_linear(request->cache->pool, "http_cache_tee", 1024);
-        request = http_cache_request_dup(pool, request);
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
