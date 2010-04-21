@@ -41,6 +41,10 @@ struct http_cache_request {
 
     pool_t pool, caller_pool;
 
+#ifndef NDEBUG
+    struct pool_notify caller_pool_notify;
+#endif
+
     /**
      * The cache object which got this request.
      */
@@ -252,7 +256,8 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         cache_log(5, "http_cache: not_modified %s\n", request->url);
         http_cache_serve(request);
-        pool_unref(request->caller_pool);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
 
         if (locked_document != NULL)
             http_cache_unlock(cache, locked_document);
@@ -269,7 +274,8 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
             istream_close(body);
 
         http_cache_serve(request);
-        pool_unref(request->caller_pool);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
 
         if (locked_document != NULL)
             http_cache_unlock(cache, locked_document);
@@ -289,7 +295,8 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
-        pool_unref(request->caller_pool);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
         return;
     }
 
@@ -337,7 +344,8 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
-    pool_unref(request->caller_pool);
+    pool_unref_denotify(request->caller_pool,
+                        &request->caller_pool_notify);
 
     if (body != NULL) {
         if (request->response.input != NULL)
@@ -360,7 +368,8 @@ http_cache_response_abort(void *ctx)
         http_cache_unlock(request->cache, request->document);
 
     http_response_handler_invoke_abort(&request->handler);
-    pool_unref(request->caller_pool);
+    pool_unref_denotify(request->caller_pool,
+                        &request->caller_pool_notify);
 }
 
 static const struct http_response_handler http_cache_response_handler = {
@@ -388,7 +397,8 @@ http_cache_abort(struct async_operation *ao)
     if (request->document != NULL && request->cache->cache != NULL)
         http_cache_unlock(request->cache, request->document);
 
-    pool_unref(request->caller_pool);
+    pool_unref_denotify(request->caller_pool,
+                        &request->caller_pool_notify);
 
     async_abort(&request->async_ref);
 }
@@ -534,7 +544,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     async_init(&request->operation, &http_cache_async_operation);
     async_ref_set(async_ref, &request->operation);
 
-    pool_ref(caller_pool);
+    pool_ref_notify(caller_pool, &request->caller_pool_notify);
     http_request(pool, cache->tcp_stock,
                  method, uwa,
                  headers == NULL ? NULL : headers_dup(pool, headers), NULL,
@@ -669,7 +679,7 @@ http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
     async_init(&request->operation, &http_cache_async_operation);
     async_ref_set(async_ref, &request->operation);
 
-    pool_ref(caller_pool);
+    pool_ref_notify(caller_pool, &request->caller_pool_notify);
     http_cache_test(request, method, uwa, headers);
     pool_unref(pool);
 }
@@ -778,7 +788,8 @@ http_cache_memcached_miss(struct http_cache_request *request)
         http_response_handler_invoke_response(&request->handler,
                                               HTTP_STATUS_GATEWAY_TIMEOUT,
                                               NULL, NULL);
-        pool_unref(request->caller_pool);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
         return;
     }
 
@@ -815,7 +826,8 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
                                               document->status,
                                               document->headers,
                                               body);
-        pool_unref(request->caller_pool);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
         pool_unref(request->pool);
     } else {
         request->document = document;
@@ -866,7 +878,7 @@ http_cache_memcached_use(struct http_cache *cache,
     async_init(&request->operation, &http_cache_async_operation);
     async_ref_set(async_ref, &request->operation);
 
-    pool_ref(caller_pool);
+    pool_ref_notify(caller_pool, &request->caller_pool_notify);
     http_cache_memcached_get(pool, cache->memcached_stock,
                              request->cache->pool,
                              &cache->background,

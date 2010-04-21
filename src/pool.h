@@ -74,8 +74,31 @@ pool_denotify(struct pool_notify *notify)
 }
 #endif
 
-#ifdef NDEBUG
+#ifndef NDEBUG
+
+void
+pool_ref_notify_impl(pool_t pool, struct pool_notify *notify TRACE_ARGS_DECL);
+
+void
+pool_unref_denotify_impl(pool_t pool, struct pool_notify *notify
+                         TRACE_ARGS_DECL);
+
+/**
+ * Do a "checked" pool reference.
+ */
+#define pool_ref_notify(pool, notify) \
+    pool_ref_notify_impl(pool, notify TRACE_ARGS)
+
+/**
+ * Do a "checked" pool unreference.  If the pool has been destroyed,
+ * an assertion will fail.  Double frees are also caught.
+ */
+#define pool_unref_denotify(pool, notify) \
+    pool_unref_denotify_impl(pool, notify TRACE_ARGS)
+
 #else
+#define pool_ref_notify(pool, notify) pool_ref(pool)
+#define pool_unref_denotify(pool, notify) pool_unref(pool)
 #endif
 
 #ifdef NDEBUG
