@@ -246,14 +246,13 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     struct http_cache_document *locked_document =
         cache->cache ? request->document : NULL;
     off_t available;
-    pool_t caller_pool = request->caller_pool;
 
     if (request->document != NULL && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == NULL);
 
         cache_log(5, "http_cache: not_modified %s\n", request->url);
         http_cache_serve(request);
-        pool_unref(caller_pool);
+        pool_unref(request->caller_pool);
 
         if (locked_document != NULL)
             http_cache_unlock(cache, locked_document);
@@ -270,7 +269,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
             istream_close(body);
 
         http_cache_serve(request);
-        pool_unref(caller_pool);
+        pool_unref(request->caller_pool);
 
         if (locked_document != NULL)
             http_cache_unlock(cache, locked_document);
@@ -290,7 +289,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
-        pool_unref(caller_pool);
+        pool_unref(request->caller_pool);
         return;
     }
 
@@ -338,7 +337,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
-    pool_unref(caller_pool);
+    pool_unref(request->caller_pool);
 
     if (body != NULL) {
         if (request->response.input != NULL)
@@ -354,7 +353,6 @@ static void
 http_cache_response_abort(void *ctx)
 {
     struct http_cache_request *request = ctx;
-    pool_t caller_pool = request->caller_pool;
 
     cache_log(4, "http_cache: response_abort %s\n", request->url);
 
@@ -362,7 +360,7 @@ http_cache_response_abort(void *ctx)
         http_cache_unlock(request->cache, request->document);
 
     http_response_handler_invoke_abort(&request->handler);
-    pool_unref(caller_pool);
+    pool_unref(request->caller_pool);
 }
 
 static const struct http_response_handler http_cache_response_handler = {
@@ -386,17 +384,13 @@ static void
 http_cache_abort(struct async_operation *ao)
 {
     struct http_cache_request *request = async_to_request(ao);
-    pool_t caller_pool = request->caller_pool;
 
     if (request->document != NULL && request->cache->cache != NULL)
         http_cache_unlock(request->cache, request->document);
 
-    async_abort(&request->async_ref);
+    pool_unref(request->caller_pool);
 
-    /* the async_abort() call may have destroyed request->pool, so
-       we're using a local variable instead of dereferencing
-       request->caller_pool */
-    pool_unref(caller_pool);
+    async_abort(&request->async_ref);
 }
 
 static const struct async_operation_class http_cache_async_operation = {
@@ -813,15 +807,16 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
     }
 
     if (http_cache_may_serve(request->info, document)) {
-        pool_t caller_pool = request->caller_pool;
-
         cache_log(4, "http_cache: serve %s\n", request->url);
+
+        pool_ref(request->pool);
 
         http_response_handler_invoke_response(&request->handler,
                                               document->status,
                                               document->headers,
                                               body);
-        pool_unref(caller_pool);
+        pool_unref(request->caller_pool);
+        pool_unref(request->pool);
     } else {
         request->document = document;
         request->document_body = istream_hold_new(request->pool, body);
