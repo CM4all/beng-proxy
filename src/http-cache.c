@@ -300,6 +300,12 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     } else {
         size_t buffer_size;
 
+        /* request->info was allocated from the caller pool; duplicate
+           it to keep it alive even after the caller pool is
+           destroyed */
+        request->url = p_strdup(request->pool, request->url);
+        request->info = http_cache_info_dup(request->pool, request->info);
+
         /* tee the body: one goes to our client, and one goes into the
            cache */
         body = istream_tee_new(request->pool, body, false);
