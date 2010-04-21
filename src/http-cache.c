@@ -694,7 +694,7 @@ http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
 
     pool_ref(caller_pool);
     http_cache_test(request, method, uwa, headers);
-    pool_unref(request->pool);
+    pool_unref(pool);
 }
 
 static bool
