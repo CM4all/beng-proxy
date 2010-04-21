@@ -324,6 +324,9 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         list_add(&request->siblings, &request->cache->requests);
 
+        /* we need this pool reference because the http-client will
+           release our pool when our response handler closes the "tee"
+           body stream within the callback */
         pool_ref(request->pool);
     }
 
