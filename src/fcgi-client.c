@@ -321,9 +321,14 @@ fcgi_client_consume_input(struct fcgi_client *client)
                     client->response.read_state = READ_DISCARD;
                 }
 
+                pool_t caller_pool = client->caller_pool;
+                pool_ref(caller_pool);
+
                 http_response_handler_invoke_response(&client->handler, status,
                                                       client->response.headers,
                                                       body);
+
+                pool_unref(caller_pool);
 
                 if (body == NULL)
                     /* XXX when there is no response body, we cannot

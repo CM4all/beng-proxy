@@ -20,7 +20,8 @@ struct async_operation_ref;
  * Sends a HTTP request on a socket, and passes the response to the
  * handler.
  *
- * @param pool the memory pool
+ * @param pool the memory pool; this client holds a reference until
+ * the response callback has returned and the response body is closed
  * @param fd a socket to the HTTP server
  * @param fd_type the exact socket type
  * @param lease the lease for the socket

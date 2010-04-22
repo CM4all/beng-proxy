@@ -626,6 +626,7 @@ http_client_consume_headers(struct http_client *client)
         http_client_release_socket(client, client->keep_alive);
 
     pool_ref(client->pool);
+    pool_ref(client->caller_pool);
 
     http_response_handler_invoke_response(&client->request.handler,
                                           client->response.status,
@@ -633,6 +634,7 @@ http_client_consume_headers(struct http_client *client)
                                           client->response.body);
 
     bool valid = http_client_valid(client);
+    pool_unref(client->caller_pool);
     pool_unref(client->pool);
 
     if (!valid)
