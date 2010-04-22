@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.7.29) unstable; urgency=low
   * http-cache: added missing pool_unref() in memcached_miss()
   * pool: added checked pool references
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 22 Apr 2010 15:45:48 +0200
 
 cm4all-beng-proxy (0.7.28) unstable; urgency=low
 
