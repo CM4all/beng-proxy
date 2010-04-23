@@ -63,6 +63,7 @@ struct fcgi_client {
         enum {
             READ_HEADERS,
             READ_BODY,
+            READ_DISCARD,
             READ_END
         } read_state;
 
@@ -258,6 +259,9 @@ fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
 
     case READ_BODY:
         return istream_invoke_data(&client->response.body, data, length);
+
+    case READ_DISCARD:
+        return length;
     }
 
     /* unreachable */
@@ -308,10 +312,27 @@ fcgi_client_consume_input(struct fcgi_client *client)
                         status = (http_status_t)i;
                 }
 
-                fcgi_client_response_body_init(client);
+                istream_t body;
+                if (!http_status_is_empty(status)) {
+                    fcgi_client_response_body_init(client);
+                    body = istream_struct_cast(&client->response.body);
+                } else {
+                    body = NULL;
+                    client->response.read_state = READ_DISCARD;
+                }
+
                 http_response_handler_invoke_response(&client->handler, status,
                                                       client->response.headers,
-                                                      istream_struct_cast(&client->response.body));
+                                                      body);
+
+                if (body == NULL)
+                    /* XXX when there is no response body, we cannot
+                       finish reading the response here - we would
+                       have to do that in background.  This is
+                       complicated to implement, and until that is
+                       done, we just bail out */
+                    fcgi_client_release(client, false);
+
                 return false;
             }
 
