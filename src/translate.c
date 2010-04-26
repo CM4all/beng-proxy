@@ -490,6 +490,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_QUERY_STRING:
     case TRANSLATE_LOCAL_ADDRESS:
     case TRANSLATE_LOCAL_ADDRESS_STRING:
+    case TRANSLATE_AUTHORIZATION:
         daemon_log(2, "misplaced translate request packet\n");
         break;
 
@@ -990,6 +991,10 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_RESPONSE_HEADER_FORWARD:
         parse_header_forward(&client->response.response_header_forward,
                              payload, payload_length);
+        break;
+
+    case TRANSLATE_WWW_AUTHENTICATE:
+    case TRANSLATE_AUTHENTICATION_INFO:
         break;
     }
 

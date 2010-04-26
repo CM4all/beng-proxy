@@ -67,6 +67,21 @@ enum beng_translation_command {
     TRANSLATE_UNTRUSTED = 53,
     TRANSLATE_BOUNCE = 54,
     TRANSLATE_ARGS = 55,
+
+    /**
+     * The value of the "WWW-Authenticate" HTTP response header.
+     */
+    TRANSLATE_WWW_AUTHENTICATE = 56,
+
+    /**
+     * The value of the "Authentication-Info" HTTP response header.
+     */
+    TRANSLATE_AUTHENTICATION_INFO = 57,
+
+    /**
+     * The value of the "Authorization" HTTP request header.
+     */
+    TRANSLATE_AUTHORIZATION = 58,
 };
 
 struct beng_translation_header {
