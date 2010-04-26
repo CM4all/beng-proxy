@@ -37,6 +37,12 @@ struct request {
     } translate;
 
     /**
+     * The product token (RFC 2616 3.8) being forwarded; NULL if
+     * beng-proxy shall generate one.
+     */
+    const char *product_token;
+
+    /**
      * An identifier for the source stream of the current
      * transformation.  This is used by the filter cache to address
      * resources.

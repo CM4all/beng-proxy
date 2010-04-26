@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.32) unstable; urgency=low
 
-  * 
+  * response: generate the "Server" response header
 
  --
 

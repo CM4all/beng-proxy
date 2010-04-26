@@ -230,6 +230,24 @@ response_invoke_processor(struct request *request2,
 }
 
 
+/**
+ * Generate additional response headers as needed.
+ */
+static struct growing_buffer *
+more_response_headers(const struct request *request2,
+                      struct growing_buffer *headers)
+{
+    if (headers == NULL)
+        headers = growing_buffer_new(request2->request->pool, 256);
+
+    /* RFC 2616 3.8: Product Tokens */
+    header_write(headers, "server", request2->product_token != NULL
+                 ? request2->product_token
+                 : "beng-proxy/" VERSION);
+
+    return headers;
+}
+
 /*
  * dispatch
  *
@@ -242,6 +260,8 @@ response_dispatch_direct(struct request *request2,
 {
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
+
+    headers = more_response_headers(request2, headers);
 
     request_discard_body(request2);
 
@@ -424,6 +444,9 @@ response_response(http_status_t status, struct strmap *headers,
     headers = forward_response_headers(request->pool, headers,
                                        request->local_host,
                                        &request2->translate.response->response_header_forward);
+
+    request2->product_token = strmap_remove(headers, "server");
+
     response_headers = headers != NULL
         ? headers_dup(request->pool, headers)
         : NULL;

@@ -197,9 +197,6 @@ file_headers(struct growing_buffer *headers,
 {
     char buffer[64];
 
-    /* RFC 2616 3.8: Product Tokens */
-    header_write(headers, "server", "beng-proxy/" VERSION);
-
     if (!processor_first) {
 #ifndef NO_XATTR
         ssize_t nbytes;

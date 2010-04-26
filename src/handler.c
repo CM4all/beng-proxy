@@ -377,6 +377,7 @@ handle_http_request(struct client_connection *connection,
     request2 = p_malloc(request->pool, sizeof(*request2));
     request2->connection = connection;
     request2->request = request;
+    request2->product_token = NULL;
 
     ret = request_uri_parse(request, &request2->uri);
     if (!ret)
