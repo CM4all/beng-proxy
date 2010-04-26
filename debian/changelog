@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.31) unstable; urgency=low
 
-  * 
+  * support HTTP authentication (RFC 2617)
 
  --
 

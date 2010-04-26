@@ -80,6 +80,17 @@ translate_callback(const struct translate_response *response,
         request->stateless = true;
     }
 
+    if (response->www_authenticate != NULL) {
+        pool_t pool = request->request->pool;
+        struct growing_buffer *headers = growing_buffer_new(pool, 256);
+        header_write(headers, "www-authenticate", response->www_authenticate);
+
+        http_server_response(request->request,
+                             HTTP_STATUS_UNAUTHORIZED, headers,
+                             istream_string_new(pool, "Unauthorized"));
+        return;
+    }
+
     if (response->status == (http_status_t)-1 ||
         (response->status == (http_status_t)0 &&
          response->address.type == RESOURCE_ADDRESS_NONE &&
