@@ -26,13 +26,11 @@ method_not_allowed(struct request *request2, const char *allow)
 
     assert(allow != NULL);
 
-    header_write(headers, "content-type", "text/plain");
     header_write(headers, "allow", allow);
 
     request_discard_body(request2);
-    http_server_response(request, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
-                         istream_string_new(request->pool,
-                                            "This method is not allowed."));
+    response_dispatch_message2(request2, HTTP_STATUS_METHOD_NOT_ALLOWED,
+                               headers, "This method is not allowed.");
 }
 
 static void

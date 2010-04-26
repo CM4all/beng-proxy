@@ -85,9 +85,8 @@ translate_callback(const struct translate_response *response,
         struct growing_buffer *headers = growing_buffer_new(pool, 256);
         header_write(headers, "www-authenticate", response->www_authenticate);
 
-        http_server_response(request->request,
-                             HTTP_STATUS_UNAUTHORIZED, headers,
-                             istream_string_new(pool, "Unauthorized"));
+        response_dispatch_message2(request, HTTP_STATUS_UNAUTHORIZED, headers,
+                                   "Unauthorized");
         return;
     }
 
@@ -206,9 +205,7 @@ translate_callback(const struct translate_response *response,
                                    NULL);
     } else if (response->status != (http_status_t)0) {
         request_discard_body(request);
-        http_server_response(request->request,
-                             response->status,
-                             NULL, NULL);
+        response_dispatch(request, response->status, NULL, NULL);
     } else {
         daemon_log(2, "empty response from translation server\n");
 

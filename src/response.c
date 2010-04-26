@@ -382,15 +382,29 @@ response_dispatch(struct request *request2,
 }
 
 void
-response_dispatch_message(struct request *request2, http_status_t status,
-                          const char *msg)
+response_dispatch_message2(struct request *request2, http_status_t status,
+                           struct growing_buffer *headers, const char *msg)
 {
     pool_t pool = request2->request->pool;
-    struct growing_buffer *headers = growing_buffer_new(pool, 256);
+
+    assert(request2 != NULL);
+    assert(http_status_is_valid(status));
+    assert(msg != NULL);
+
+    if (headers == NULL)
+        headers = growing_buffer_new(pool, 256);
+
     header_write(headers, "content-type", "text/plain");
 
     response_dispatch(request2, status, headers,
                       istream_string_new(pool, msg));
+}
+
+void
+response_dispatch_message(struct request *request2, http_status_t status,
+                          const char *msg)
+{
+    response_dispatch_message2(request2, status, NULL, msg);
 }
 
 void
@@ -408,8 +422,7 @@ response_dispatch_redirect(struct request *request2, http_status_t status,
     struct growing_buffer *headers = growing_buffer_new(pool, 256);
     header_write(headers, "location", location);
 
-    response_dispatch(request2, status, headers,
-                      istream_string_new(pool, msg));
+    response_dispatch_message2(request2, status, headers, msg);
 }
 
 

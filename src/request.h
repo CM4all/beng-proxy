@@ -129,6 +129,10 @@ response_dispatch_message(struct request *request2, http_status_t status,
                           const char *msg);
 
 void
+response_dispatch_message2(struct request *request2, http_status_t status,
+                           struct growing_buffer *headers, const char *msg);
+
+void
 response_dispatch_redirect(struct request *request2, http_status_t status,
                            const char *location, const char *msg);
 
