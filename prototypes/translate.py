@@ -184,7 +184,16 @@ class Translation(Protocol):
         if path_info != '' and path_info[0] == '/':
             response.packet(TRANSLATE_BASE, base_uri + relative_path + '/')
 
-    def _handle_http(self, raw_uri, uri, response):
+    def _authenticate(self, authorization):
+        if authorization is None: return False
+        m = re.match(r'^Basic\s+(\S+)$', authorization)
+        if m is None: return False
+        x = m.group(1).decode('base64').split(':', 1)
+        if len(x) != 2: return False
+        username, password = x
+        return username == 'hansi' and password == 'hansilein'
+
+    def _handle_http(self, raw_uri, uri, authorization, response):
         if uri.find('/./') >= 0 or uri.find('/../') >= 0 or \
                uri[-2:] == '/.' or uri[-3:] == '/..' or \
                uri.find('//') >= 0 or uri.find('\0') >= 0:
@@ -285,6 +294,11 @@ class Translation(Protocol):
             response.packet(TRANSLATE_REDIRECT, 'http://cfatest01.intern.cm-ag/')
         elif uri == '/bounce':
             response.packet(TRANSLATE_BOUNCE, 'http://cfatest01.intern.cm-ag/test?uri=')
+        elif uri[:6] == '/auth/':
+            if self._authenticate(authorization):
+                self._handle_local_file('/var/www' + uri[5:], response)
+            else:
+                response.packet(TRANSLATE_WWW_AUTHENTICATE, 'Basic realm="Demo"')
         else:
             self._handle_local_file('/var/www' + uri, response)
 
@@ -322,7 +336,7 @@ class Translation(Protocol):
             self._handle_widget_lookup(request.widget_type, response)
 
         if request.uri is not None:
-            self._handle_http(request.raw_uri, request.uri, response)
+            self._handle_http(request.raw_uri, request.uri, request.authorization, response)
 
         self.transport.write(response.finish())
 

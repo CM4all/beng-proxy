@@ -997,7 +997,6 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_WWW_AUTHENTICATE:
         client->response.www_authenticate = payload;
-        client->response.status = HTTP_STATUS_UNAUTHORIZED;
         break;
 
     case TRANSLATE_AUTHENTICATION_INFO:
