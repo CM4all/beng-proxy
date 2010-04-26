@@ -97,9 +97,8 @@ translate_callback(const struct translate_response *response,
          response->bounce == NULL &&
          response->redirect == NULL)) {
         request_discard_body(request);
-        http_server_send_message(request->request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Internal server error");
+        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                  "Internal server error");
         return;
     }
 
@@ -198,14 +197,13 @@ translate_callback(const struct translate_response *response,
 
         int status = response->status != 0
             ? response->status : HTTP_STATUS_SEE_OTHER;
-        http_server_send_redirect(request->request, status,
-                                  response->redirect, NULL);
+        response_dispatch_redirect(request, status, response->redirect, NULL);
     } else if (response->bounce != NULL) {
         request_discard_body(request);
-        http_server_send_redirect(request->request, HTTP_STATUS_SEE_OTHER,
-                                  bounce_uri(request->request->pool, request,
-                                             response),
-                                  NULL);
+        response_dispatch_redirect(request, HTTP_STATUS_SEE_OTHER,
+                                   bounce_uri(request->request->pool, request,
+                                              response),
+                                   NULL);
     } else if (response->status != (http_status_t)0) {
         request_discard_body(request);
         http_server_response(request->request,
@@ -215,16 +213,15 @@ translate_callback(const struct translate_response *response,
         daemon_log(2, "empty response from translation server\n");
 
         request_discard_body(request);
-        http_server_send_message(request->request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Internal server error");
+        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                  "Internal server error");
     }
 }
 
 static bool
-request_uri_parse(struct http_server_request *request,
-                  struct parsed_uri *dest)
+request_uri_parse(struct request *request2, struct parsed_uri *dest)
 {
+    const struct http_server_request *request = request2->request;
     bool ret;
 
     ret = uri_parse(dest, request->uri);
@@ -232,9 +229,8 @@ request_uri_parse(struct http_server_request *request,
         if (request->body != NULL)
             istream_close(request->body);
 
-        http_server_send_message(request,
-                                 HTTP_STATUS_BAD_REQUEST,
-                                 "Malformed URI");
+        response_dispatch_message(request2, HTTP_STATUS_BAD_REQUEST,
+                                  "Malformed URI");
     }
 
     return ret;
@@ -379,7 +375,7 @@ handle_http_request(struct client_connection *connection,
     request2->request = request;
     request2->product_token = NULL;
 
-    ret = request_uri_parse(request, &request2->uri);
+    ret = request_uri_parse(request2, &request2->uri);
     if (!ret)
         return;
 

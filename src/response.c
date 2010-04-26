@@ -119,16 +119,16 @@ response_invoke_processor(struct request *request2,
 
     if (body == NULL) {
         request_discard_body(request2);
-        http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
-                                 "Empty template cannot be processed");
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+                                  "Empty template cannot be processed");
         return;
     }
 
     if (!processable(response_headers)) {
         istream_close(body);
         request_discard_body(request2);
-        http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
-                                 "Invalid template content type");
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+                                  "Invalid template content type");
         return;
     }
 
@@ -152,7 +152,8 @@ response_invoke_processor(struct request *request2,
                    request2->translate.response->untrusted);
         istream_close(body);
         request_discard_body(request2);
-        http_server_send_message(request, HTTP_STATUS_FORBIDDEN, "Forbidden");
+        response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
+                                  "Forbidden");
         return;
     }
 
@@ -380,6 +381,37 @@ response_dispatch(struct request *request2,
         response_dispatch_direct(request2, status, headers, body);
 }
 
+void
+response_dispatch_message(struct request *request2, http_status_t status,
+                          const char *msg)
+{
+    pool_t pool = request2->request->pool;
+    struct growing_buffer *headers = growing_buffer_new(pool, 256);
+    header_write(headers, "content-type", "text/plain");
+
+    response_dispatch(request2, status, headers,
+                      istream_string_new(pool, msg));
+}
+
+void
+response_dispatch_redirect(struct request *request2, http_status_t status,
+                           const char *location, const char *msg)
+{
+    pool_t pool = request2->request->pool;
+
+    assert(status >= 300 && status < 400);
+    assert(location != NULL);
+
+    if (msg == NULL)
+        msg = "redirection";
+
+    struct growing_buffer *headers = growing_buffer_new(pool, 256);
+    header_write(headers, "location", location);
+
+    response_dispatch(request2, status, headers,
+                      istream_string_new(pool, msg));
+}
+
 
 /*
  * debug
@@ -463,14 +495,10 @@ response_abort(void *ctx)
 
     assert(!request->response_sent);
 
-#ifndef NDEBUG
-    request->response_sent = true;
-#endif
-
     request_discard_body(request);
-    http_server_send_message(request->request,
-                             HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                             "Internal server error");
+    response_dispatch_message(request,
+                              HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                              "Internal server error");
 }
 
 const struct http_response_handler response_handler = {

@@ -404,14 +404,13 @@ file_callback(struct request *request2)
     if (body == NULL) {
         if (errno == ENOENT) {
             request_discard_body(request2);
-            http_server_send_message(request,
-                                     HTTP_STATUS_NOT_FOUND,
-                                     "The requested file does not exist.");
+            response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+                                      "The requested file does not exist.");
         } else {
             request_discard_body(request2);
-            http_server_send_message(request,
-                                     HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                     "Internal server error");
+            response_dispatch_message(request2,
+                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                      "Internal server error");
         }
         return;
     }
@@ -421,9 +420,8 @@ file_callback(struct request *request2)
     if (!S_ISREG(st.st_mode)) {
         istream_close(body);
         request_discard_body(request2);
-        http_server_send_message(request,
-                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                 "Not a regular file");
+        response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                  "Not a regular file");
         return;
     }
 

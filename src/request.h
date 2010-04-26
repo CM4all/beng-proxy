@@ -124,6 +124,14 @@ response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
                   istream_t body);
 
+void
+response_dispatch_message(struct request *request2, http_status_t status,
+                          const char *msg);
+
+void
+response_dispatch_redirect(struct request *request2, http_status_t status,
+                           const char *location, const char *msg);
+
 extern const struct http_response_handler response_handler;
 
 #endif

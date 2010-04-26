@@ -52,10 +52,9 @@ static void
 widget_proxy_abort(void *ctx)
 {
     struct request *request2 = ctx;
-    struct http_server_request *request = request2->request;
 
-    http_server_send_message(request, HTTP_STATUS_BAD_GATEWAY,
-                             "Upstream server failed");
+    response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+                              "Upstream server failed");
 }
 
 struct http_response_handler widget_proxy_handler = {
