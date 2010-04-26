@@ -41,7 +41,11 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     {}
 #endif
 
-    http_server_response(request, status, headers2, body);
+    /* disable the following transformations, because they are meant
+       for the template, not for this widget */
+    request2->translate.transformation = NULL;
+
+    response_dispatch(request2, status, headers2, body);
 }
 
 static void
