@@ -215,6 +215,8 @@ marshal_request(pool_t pool, const struct translate_request *request)
         write_optional_packet(gb, TRANSLATE_USER_AGENT, request->user_agent) &&
         write_optional_packet(gb, TRANSLATE_LANGUAGE,
                               request->accept_language) &&
+        write_optional_packet(gb, TRANSLATE_AUTHORIZATION,
+                              request->authorization) &&
         write_optional_packet(gb, TRANSLATE_URI, request->uri) &&
         write_optional_packet(gb, TRANSLATE_ARGS, request->args) &&
         write_optional_packet(gb, TRANSLATE_QUERY_STRING,
@@ -994,7 +996,12 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_WWW_AUTHENTICATE:
+        client->response.www_authenticate = payload;
+        client->response.status = HTTP_STATUS_UNAUTHORIZED;
+        break;
+
     case TRANSLATE_AUTHENTICATION_INFO:
+        client->response.authentication_info = payload;
         break;
     }
 

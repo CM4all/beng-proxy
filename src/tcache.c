@@ -73,6 +73,7 @@ static bool
 tcache_request_evaluate(const struct translate_request *request)
 {
     return (request->uri != NULL || request->widget_type != NULL) &&
+        request->authorization == NULL &&
         request->param == NULL;
 }
 
@@ -81,6 +82,8 @@ static bool
 tcache_response_evaluate(const struct translate_response *response)
 {
     return response != NULL && response->max_age != 0 &&
+        response->www_authenticate == NULL &&
+        response->authentication_info == NULL &&
         response->status == 0;
 }
 
@@ -141,6 +144,9 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->user = NULL;
 
     dest->language = NULL;
+    dest->www_authenticate = p_strdup_checked(pool, src->www_authenticate);
+    dest->authentication_info = p_strdup_checked(pool,
+                                                 src->authentication_info);
 
     dest->views = src->views != NULL
         ? transformation_dup_view_chain(pool, src->views)

@@ -241,6 +241,7 @@ fill_translate_request(struct translate_request *t,
     t->host = strmap_get(request->headers, "host");
     t->user_agent = strmap_get(request->headers, "user-agent");
     t->accept_language = strmap_get(request->headers, "accept-language");
+    t->authorization = strmap_get(request->headers, "authorization");
     t->uri = strref_dup(request->pool, &uri->base);
     t->args = args != NULL
         ? args_format(request->pool, args,

@@ -28,6 +28,7 @@ widget_registry_lookup(pool_t pool,
     request->host = NULL;
     request->user_agent = NULL;
     request->accept_language = NULL;
+    request->authorization = NULL;
     request->uri = NULL;
     request->args = NULL;
     request->query_string = NULL;

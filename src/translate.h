@@ -26,6 +26,12 @@ struct translate_request {
     const char *host;
     const char *user_agent;
     const char *accept_language;
+
+    /**
+     * The value of the "Authorization" HTTP request header.
+     */
+    const char *authorization;
+
     const char *uri;
     const char *args;
     const char *query_string;
@@ -74,6 +80,16 @@ struct translate_response {
     unsigned user_max_age;
 
     const char *language;
+
+    /**
+     * The value of the "WWW-Authenticate" HTTP response header.
+     */
+    const char *www_authenticate;
+
+    /**
+     * The value of the "Authentication-Info" HTTP response header.
+     */
+    const char *authentication_info;
 
     struct transformation_view *views;
 
