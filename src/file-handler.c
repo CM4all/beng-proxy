@@ -101,9 +101,9 @@ method_not_allowed(struct request *request2, const char *allow)
     header_write(headers, "allow", allow);
 
     request_discard_body(request2);
-    http_server_response(request, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
-                         istream_string_new(request->pool,
-                                            "This method is not allowed."));
+    response_dispatch(request2, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
+                      istream_string_new(request->pool,
+                                         "This method is not allowed."));
 }
 
 bool
@@ -133,9 +133,7 @@ file_evaluate_request(struct request *request2, const struct stat *st,
         time_t t = http_date_parse(p);
         if (t != (time_t)-1 && st->st_mtime <= t) {
             request_discard_body(request2);
-            http_server_response(request,
-                                 HTTP_STATUS_NOT_MODIFIED,
-                                 NULL, NULL);
+            response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED, NULL, NULL);
             return false;
         }
     }
@@ -145,9 +143,8 @@ file_evaluate_request(struct request *request2, const struct stat *st,
         time_t t = http_date_parse(p);
         if (t != (time_t)-1 && st->st_mtime > t) {
             request_discard_body(request2);
-            http_server_response(request,
-                                 HTTP_STATUS_PRECONDITION_FAILED,
-                                 NULL, NULL);
+            response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                              NULL, NULL);
             return false;
         }
     }
@@ -158,9 +155,8 @@ file_evaluate_request(struct request *request2, const struct stat *st,
 
         if (!http_list_contains(p, buffer)) {
             request_discard_body(request2);
-            http_server_response(request,
-                                 HTTP_STATUS_PRECONDITION_FAILED,
-                                 NULL, NULL);
+            response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                              NULL, NULL);
             return false;
         }
     }
@@ -168,9 +164,8 @@ file_evaluate_request(struct request *request2, const struct stat *st,
     p = strmap_get(request->headers, "if-none-match");
     if (p != NULL && strcmp(p, "*") == 0) {
         request_discard_body(request2);
-        http_server_response(request,
-                             HTTP_STATUS_PRECONDITION_FAILED,
-                             NULL, NULL);
+        response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                          NULL, NULL);
         return false;
     }
 
@@ -179,9 +174,8 @@ file_evaluate_request(struct request *request2, const struct stat *st,
 
         if (http_list_contains(p, buffer)) {
             request_discard_body(request2);
-            http_server_response(request,
-                                 HTTP_STATUS_PRECONDITION_FAILED,
-                                 NULL, NULL);
+            response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                              NULL, NULL);
             return false;
         }
     }
