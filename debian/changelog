@@ -2,7 +2,7 @@ cm4all-beng-proxy (0.7.31) unstable; urgency=low
 
   * support HTTP authentication (RFC 2617)
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Apr 2010 17:26:42 +0200
 
 cm4all-beng-proxy (0.7.30) unstable; urgency=low
 
