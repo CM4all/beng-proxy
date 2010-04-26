@@ -45,6 +45,7 @@ class Request:
         self.remote_host = None
         self.user_agent = None
         self.accept_language = None
+        self.authorization = None
 
     def __getattr__(self, name):
         if name == 'uri':
@@ -84,6 +85,8 @@ class Request:
             self.user_agent = packet.payload
         elif packet.command == TRANSLATE_LANGUAGE:
             self.accept_language = packet.payload
+        elif packet.command == TRANSLATE_AUTHORIZATION:
+            self.authorization = packet.payload
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print "Invalid command:", packet.command
         return False
