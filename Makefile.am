@@ -525,7 +525,7 @@ test_t_cache_SOURCES = test/t-cache.c src/cache.c src/hashmap.c $(POOL_SRC)
 test_t_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
-	src/hashmap.c \
+	src/hashmap.c src/strmap.c \
 	src/resource-address.c src/uri-address.c \
 	src/uri-relative.c src/uri-edit.c src/uri-verify.c src/uri-escape.c \
 	src/format.c \
@@ -870,7 +870,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	$(POOL_SRC) \
 	src/uri-address.c src/transformation.c \
 	src/tcache.c src/cache.c \
-	src/hashmap.c src/abort-unref.c \
+	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/resource-address.c \
 	src/uri-relative.c src/uri-verify.c src/uri-escape.c \
 	src/format.c
@@ -929,7 +929,8 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
 	src/tcp-stock.c src/client-socket.c \
 	src/fd-util.c src/socket-util.c \
-	src/stock.c src/hstock.c src/hashmap.c \
+	src/stock.c src/hstock.c src/hashmap.c src/strmap.c \
+	src/strutil.c \
 	src/abort-unref.c \
 	src/uri-address.c \
 	src/http.c \
