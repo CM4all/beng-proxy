@@ -866,11 +866,9 @@ headers forwarded to the client. \\
 \hline
 
 \texttt{WWW\_AUTHENTICATE} & the \texttt{WWW-Authenticate} response
-header sent to the client (see RFC 2617).  Currently, this ignores the
-rest of the translation response and sends a ``401 Unauthorized''
-response with a boilerplate text - and is never cached.  This exact
-behavior is subject to change in the future, and it will be allowed to
-use custom error documents and the response will be cacheable. \\
+header sent to the client (see RFC 2617).  Currently, this is never
+cached.  This exact behavior is subject to change in the future, and
+will be cacheable. \\
 
 \hline
 

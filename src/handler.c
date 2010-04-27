@@ -80,19 +80,10 @@ translate_callback(const struct translate_response *response,
         request->stateless = true;
     }
 
-    if (response->www_authenticate != NULL) {
-        pool_t pool = request->request->pool;
-        struct growing_buffer *headers = growing_buffer_new(pool, 256);
-        header_write(headers, "www-authenticate", response->www_authenticate);
-
-        response_dispatch_message2(request, HTTP_STATUS_UNAUTHORIZED, headers,
-                                   "Unauthorized");
-        return;
-    }
-
     if (response->status == (http_status_t)-1 ||
         (response->status == (http_status_t)0 &&
          response->address.type == RESOURCE_ADDRESS_NONE &&
+         response->www_authenticate == NULL &&
          response->bounce == NULL &&
          response->redirect == NULL)) {
         request_discard_body(request);
@@ -206,6 +197,10 @@ translate_callback(const struct translate_response *response,
     } else if (response->status != (http_status_t)0) {
         request_discard_body(request);
         response_dispatch(request, response->status, NULL, NULL);
+    } else if (response->www_authenticate != NULL) {
+        request_discard_body(request);
+        response_dispatch_message(request, HTTP_STATUS_UNAUTHORIZED,
+                                  "Unauthorized");
     } else {
         daemon_log(2, "empty response from translation server\n");
 

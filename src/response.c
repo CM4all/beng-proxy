@@ -248,6 +248,9 @@ more_response_headers(const struct request *request2,
 
     const struct translate_response *tr = request2->translate.response;
 
+    if (tr->www_authenticate != NULL)
+        header_write(headers, "www-authenticate", tr->www_authenticate);
+
     if (tr->authentication_info != NULL)
         header_write(headers, "authentication-info", tr->authentication_info);
 
@@ -266,6 +269,11 @@ response_dispatch_direct(struct request *request2,
 {
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
+
+    if (http_status_is_success(status) &&
+        request2->translate.response->www_authenticate != NULL)
+        /* default to "401 Unauthorized" */
+        status = HTTP_STATUS_UNAUTHORIZED;
 
     headers = more_response_headers(request2, headers);
 
