@@ -254,6 +254,14 @@ more_response_headers(const struct request *request2,
     if (tr->authentication_info != NULL)
         header_write(headers, "authentication-info", tr->authentication_info);
 
+    if (tr->headers != NULL) {
+        strmap_rewind(tr->headers);
+
+        const struct strmap_pair *pair;
+        while ((pair = strmap_next(tr->headers)) != NULL)
+            header_write(headers, pair->key, pair->value);
+    }
+
     return headers;
 }
 
