@@ -246,9 +246,10 @@ more_response_headers(const struct request *request2,
                  ? request2->product_token
                  : "beng-proxy/" VERSION);
 
-    if (request2->translate.response->authentication_info != NULL)
-        header_write(headers, "authentication-info",
-                     request2->translate.response->authentication_info);
+    const struct translate_response *tr = request2->translate.response;
+
+    if (tr->authentication_info != NULL)
+        header_write(headers, "authentication-info", tr->authentication_info);
 
     return headers;
 }
