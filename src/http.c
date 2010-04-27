@@ -57,6 +57,23 @@ const char *http_status_to_string_data[6][20] = {
     },
 };
 
+static inline bool
+http_header_name_char_valid(char ch)
+{
+    return (signed char)ch > 0x20 && ch != ':';
+}
+
+bool
+http_header_name_valid(const char *name)
+{
+    do {
+        if (!http_header_name_char_valid(*name))
+            return false;
+    } while (*++name != 0);
+
+    return true;
+}
+
 bool
 http_header_is_hop_by_hop(const char *name)
 {

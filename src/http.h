@@ -112,6 +112,13 @@ http_status_is_empty(http_status_t status)
 }
 
 /**
+ * Determines if the specified name consists only of valid characters
+ * (RFC 822 3.2).
+ */
+bool
+http_header_name_valid(const char *name);
+
+/**
  * Determines if the specified name is a hop-by-hop header.  In
  * addition to the list in RFC 2616 13.5.1, "Content-Length" is also a
  * hop-by-hop header according to this function.
