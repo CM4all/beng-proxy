@@ -167,3 +167,6 @@ class Response:
     def response_header_forward(self, *args):
         return self.header_forward(TRANSLATE_RESPONSE_HEADER_FORWARD,
                                    *args)
+
+    def header(self, name, value):
+        return self.packet(TRANSLATE_HEADER, name + ':' + value)

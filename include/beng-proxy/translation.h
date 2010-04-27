@@ -82,6 +82,11 @@ enum beng_translation_command {
      * The value of the "Authorization" HTTP request header.
      */
     TRANSLATE_AUTHORIZATION = 58,
+
+    /**
+     * A custom HTTP response header sent to the client.
+     */
+    TRANSLATE_HEADER = 59,
 };
 
 struct beng_translation_header {

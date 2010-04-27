@@ -876,6 +876,15 @@ will be cacheable. \\
 response header sent to the client (see RFC 2617). \\
 
 \hline
+
+\texttt{HEADER} & A custom HTTP response header sent to the client.
+Name and value are separated by a colon (without any whitespace).
+This will not override existing headers.  It is not allowed to set
+hop-by-hop headers (RFC 2616 13.5.1) this way.  This packet shall only
+be a last resort, when there is no other way to set a required
+response header. \\
+
+\hline
 \end{longtable}
 
 If the translation server does not provide the \texttt{CONTENT\_TYPE}

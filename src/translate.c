@@ -1002,6 +1002,9 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_AUTHENTICATION_INFO:
         client->response.authentication_info = payload;
         break;
+
+    case TRANSLATE_HEADER:
+        break;
     }
 
     return true;
