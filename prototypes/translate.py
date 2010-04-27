@@ -299,6 +299,9 @@ class Translation(Protocol):
                 self._handle_local_file('/var/www' + uri[5:], response)
             else:
                 response.packet(TRANSLATE_WWW_AUTHENTICATE, 'Basic realm="Demo"')
+        elif uri[:8] == '/header/':
+            response.header('X-Foo', 'Bar')
+            self._handle_local_file('/var/www' + uri[7:], response)
         else:
             self._handle_local_file('/var/www' + uri, response)
 
