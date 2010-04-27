@@ -13,6 +13,7 @@
 #include "uri-address.h"
 #include "gb-io.h"
 #include "strutil.h"
+#include "strmap.h"
 #include "stopwatch.h"
 #include "beng-proxy/translation.h"
 #include "pevent.h"
@@ -416,6 +417,36 @@ parse_header_forward(struct header_forward_settings *settings,
         ++packet;
         payload_length -= sizeof(*packet);
     }
+
+    return true;
+}
+
+static bool
+parse_header(pool_t pool, struct translate_response *response,
+             const char *payload, size_t payload_length)
+{
+    const char *value = memchr(payload, ':', payload_length);
+    if (value == NULL || value == payload) {
+        daemon_log(2, "malformed HEADER packet\n");
+        return false;
+    }
+
+    char *name = p_strndup(pool, payload, value - payload);
+    ++value;
+
+    str_to_lower(name);
+
+    if (!http_header_name_valid(name)) {
+        daemon_log(2, "malformed name in HEADER packet\n");
+        return false;
+    } else if (http_header_is_hop_by_hop(name)) {
+        daemon_log(2, "ignoring hop-by-hop HEADER packet\n");
+        return true;
+    }
+
+    if (response->headers == NULL)
+        response->headers = strmap_new(pool, 17);
+    strmap_add(response->headers, name, value);
 
     return true;
 }
@@ -1004,6 +1035,12 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_HEADER:
+        if (!parse_header(client->pool, &client->response,
+                          payload, payload_length)) {
+            translate_client_abort(client);
+            return false;
+        }
+
         break;
     }
 

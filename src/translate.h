@@ -91,6 +91,8 @@ struct translate_response {
      */
     const char *authentication_info;
 
+    struct strmap *headers;
+
     struct transformation_view *views;
 
     const uint16_t *vary;

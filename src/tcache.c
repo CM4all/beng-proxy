@@ -9,6 +9,7 @@
 #include "transformation.h"
 #include "cache.h"
 #include "stock.h"
+#include "strmap.h"
 #include "uri-address.h"
 #include "beng-proxy/translation.h"
 
@@ -147,6 +148,10 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->www_authenticate = p_strdup_checked(pool, src->www_authenticate);
     dest->authentication_info = p_strdup_checked(pool,
                                                  src->authentication_info);
+
+    dest->headers = src->headers != NULL
+        ? strmap_dup(pool, src->headers)
+        : NULL;
 
     dest->views = src->views != NULL
         ? transformation_dup_view_chain(pool, src->views)
