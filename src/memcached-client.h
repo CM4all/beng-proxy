@@ -12,7 +12,7 @@
 
 enum {
     MEMCACHED_EXTRAS_MAX = 0xff,
-    MEMCACHED_KEY_MAX = 0xfff,
+    MEMCACHED_KEY_MAX = 0x7fff,
 };
 
 struct lease;
