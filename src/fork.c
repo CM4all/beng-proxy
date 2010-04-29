@@ -179,8 +179,6 @@ fork_read_from_output(struct fork *f)
 {
     ssize_t nbytes;
 
-    assert(f->buffer == NULL || fifo_buffer_empty(f->buffer));
-
     if (!istream_check_direct(&f->output, ISTREAM_PIPE)) {
         if (f->buffer == NULL)
             f->buffer = fifo_buffer_new(f->output.pool, 1024);
@@ -209,6 +207,12 @@ fork_read_from_output(struct fork *f)
             istream_deinit_abort(&f->output);
         }
     } else {
+        if (f->buffer != NULL &&
+            istream_buffer_consume(&f->output, f->buffer) > 0)
+            /* there's data left in the buffer, which must be consumed
+               before we can switch to "direct" transfer */
+            return;
+
         nbytes = istream_invoke_direct(&f->output, ISTREAM_PIPE,
                                        f->output_fd, INT_MAX);
         if (nbytes == -2 || nbytes == -3) {
