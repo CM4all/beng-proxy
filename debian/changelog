@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.7.27.1) unstable; urgency=low
   * http-cache: don't cache resources with very long URIs
   * memcached-client: increase the maximum key size to 32 kB
   * fork: properly handle partially filled output buffer
+  * fork: re-add event after some input data has been read
 
  --
 

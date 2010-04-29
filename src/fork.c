@@ -82,7 +82,10 @@ fork_input_data(const void *data, size_t length, void *ctx)
     assert(f->input_fd >= 0);
 
     nbytes = write(f->input_fd, data, length);
-    if (nbytes < 0) {
+    if (nbytes > 0)
+        p_event_add(&f->input_event, NULL,
+                    f->output.pool, "fork_input_event");
+    else if (nbytes < 0) {
         if (errno == EAGAIN) {
             p_event_add(&f->input_event, NULL,
                         f->output.pool, "fork_input_event");
@@ -111,7 +114,10 @@ fork_input_direct(istream_direct_t type,
     assert(f->input_fd >= 0);
 
     nbytes = istream_direct_to_pipe(type, fd, f->input_fd, max_length);
-    if (nbytes < 0) {
+    if (nbytes > 0)
+        p_event_add(&f->input_event, NULL,
+                    f->output.pool, "fork_input_event");
+    else if (nbytes < 0) {
         if (errno == EAGAIN) {
             if (!fd_ready_for_writing(f->input_fd)) {
                 p_event_add(&f->input_event, NULL,
