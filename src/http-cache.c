@@ -748,6 +748,7 @@ http_cache_memcached_miss(struct http_cache_request *request)
         http_response_handler_invoke_response(&request->handler,
                                               HTTP_STATUS_GATEWAY_TIMEOUT,
                                               NULL, NULL);
+        pool_unref(request->caller_pool);
         return;
     }
 

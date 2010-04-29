@@ -1,5 +1,6 @@
 cm4all-beng-proxy (0.7.27.1) unstable; urgency=low
 
+  * http-cache: added missing pool_unref() in memcached_miss()
   * http-cache: don't cache resources with very long URIs
   * memcached-client: increase the maximum key size to 32 kB
 
