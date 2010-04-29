@@ -10,6 +10,11 @@
 #include "istream.h"
 #include "memcached-protocol.h"
 
+enum {
+    MEMCACHED_EXTRAS_MAX = 0xff,
+    MEMCACHED_KEY_MAX = 0xfff,
+};
+
 struct lease;
 struct http_response_handler;
 struct strmap;
