@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.7.27.1) unstable; urgency=low
   * fork: properly handle partially filled output buffer
   * fork: re-add event after some input data has been read
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 29 Apr 2010 15:30:21 +0200
 
 cm4all-beng-proxy (0.7.27) unstable; urgency=low
 
