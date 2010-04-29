@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.27.1) unstable; urgency=low
 
-  * 
+  * http-cache: don't cache resources with very long URIs
 
  --
 
