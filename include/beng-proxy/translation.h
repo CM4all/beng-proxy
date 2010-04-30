@@ -87,6 +87,8 @@ enum beng_translation_command {
      * A custom HTTP response header sent to the client.
      */
     TRANSLATE_HEADER = 59,
+
+    TRANSLATE_UNTRUSTED_PREFIX = 60,
 };
 
 struct beng_translation_header {

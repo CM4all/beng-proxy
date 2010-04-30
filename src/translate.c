@@ -676,6 +676,9 @@ translate_handle_packet(struct translate_client *client,
         client->response.untrusted = payload;
         break;
 
+    case TRANSLATE_UNTRUSTED_PREFIX:
+        break;
+
     case TRANSLATE_SCHEME:
         if (strncmp(payload, "http", 4) != 0) {
             daemon_log(2, "malformed TRANSLATE_SCHEME packet\n");

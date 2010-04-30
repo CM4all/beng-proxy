@@ -988,6 +988,15 @@ same context as another widget. \\
 
 \hline
 
+\texttt{UNTRUSTED\_PREFIX} & same as \texttt{UNTRUSTED}, but is a
+prefix for the request host name.  This widget can only be used when
+the request's \texttt{UNTRUSTED} packet begins with this prefix.
+Example: \texttt{UNTRUSTED\_PREFIX="foo"} matches a request with
+\texttt{UNTRUSTED="foo.example.com"}, but not
+\texttt{UNTRUSTED="foobar.example.com"}. \\
+
+\hline
+
 \texttt{STATEFUL} & remember the state of this widget, i.e. path info
 and query string \\
 
