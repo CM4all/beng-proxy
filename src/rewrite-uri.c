@@ -61,6 +61,7 @@ uri_replace_hostname(pool_t pool, const char *uri, const char *hostname)
 static const char *
 do_rewrite_widget_uri(pool_t pool,
                       const struct parsed_uri *external_uri,
+                      const char *untrusted_host,
                       struct strmap *args, struct widget *widget,
                       const struct strref *value,
                       enum uri_mode mode, bool stateful)
@@ -99,7 +100,9 @@ do_rewrite_widget_uri(pool_t pool,
     if (uri == NULL)
         return NULL;
 
-    if (widget->class->untrusted_host != NULL)
+    if (widget->class->untrusted_host != NULL &&
+        (untrusted_host == NULL ||
+         strcmp(widget->class->untrusted_host, untrusted_host) != 0))
         uri = uri_replace_hostname(pool, uri, widget->class->untrusted_host);
 
     return uri;
@@ -114,6 +117,7 @@ do_rewrite_widget_uri(pool_t pool,
 struct rewrite_widget_uri {
     pool_t pool;
     const struct parsed_uri *external_uri;
+    const char *untrusted_host;
     struct strmap *args;
     struct widget *widget;
     session_id_t session_id;
@@ -148,7 +152,7 @@ class_lookup_callback(void *ctx)
         }
 
         uri = do_rewrite_widget_uri(rwu->pool,
-                                    rwu->external_uri,
+                                    rwu->external_uri, rwu->untrusted_host,
                                     rwu->args, rwu->widget,
                                     rwu->value, rwu->mode, rwu->stateful);
         if (uri != NULL) {
@@ -180,6 +184,7 @@ istream_t
 rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct tcache *translate_cache,
                    const struct parsed_uri *external_uri,
+                   const char *untrusted_host,
                    struct strmap *args, struct widget *widget,
                    session_id_t session_id,
                    const struct strref *value,
@@ -188,7 +193,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
     const char *uri;
 
     if (widget->class != NULL) {
-        uri = do_rewrite_widget_uri(pool, external_uri,
+        uri = do_rewrite_widget_uri(pool, external_uri, untrusted_host,
                                     args, widget, value, mode, stateful);
         if (uri == NULL)
             return NULL;
@@ -199,6 +204,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
 
         rwu->pool = pool;
         rwu->external_uri = external_uri;
+        rwu->untrusted_host = untrusted_host;
         rwu->args = args;
         rwu->widget = widget;
         rwu->session_id = session_id;

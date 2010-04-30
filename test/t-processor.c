@@ -62,6 +62,7 @@ istream_t
 rewrite_widget_uri(__attr_unused pool_t pool, __attr_unused pool_t widget_pool,
                    __attr_unused struct tcache *translate_cache,
                    __attr_unused const struct parsed_uri *external_uri,
+                   __attr_unused const char *untrusted_host,
                    __attr_unused struct strmap *args,
                    __attr_unused struct widget *widget,
                    __attr_unused session_id_t session_id,
