@@ -38,6 +38,14 @@ struct widget_class {
      */
     const char *untrusted_host;
 
+    /**
+     * The (beng-proxy) hostname prefix on which requests to this
+     * widget are allowed.  If not set, then this is a trusted widget.
+     * Requests from an untrusted widget to a trusted one are
+     * forbidden.
+     */
+    const char *untrusted_prefix;
+
     /** transformations applied to the widget response */
     const struct transformation_view *views;
 

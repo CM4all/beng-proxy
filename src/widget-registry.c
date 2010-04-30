@@ -60,6 +60,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
 
     class = p_malloc(lookup->pool, sizeof(*class));
     class->untrusted_host = response->untrusted;
+    class->untrusted_prefix = response->untrusted_prefix;
     if (class->untrusted_host == NULL)
         /* compatibility with v0.7.16 */
         class->untrusted_host = response->host;
