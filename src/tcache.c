@@ -135,6 +135,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->host = p_strdup_checked(pool, src->host);
     dest->uri = p_strdup_checked(pool, src->uri);
     dest->untrusted = p_strdup_checked(pool, src->untrusted);
+    dest->untrusted_prefix = p_strdup_checked(pool, src->untrusted_prefix);
     dest->stateful = src->stateful;
     dest->discard_session = src->discard_session;
     dest->session = NULL;
