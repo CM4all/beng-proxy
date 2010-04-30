@@ -631,7 +631,8 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/widget-session.c src/parser.c src/widget-class.c \
 	src/widget-stream.c \
 	src/tpool.c src/rewrite-uri.c src/widget-resolver.c \
-	src/uri-address.c src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
+	src/uri-address.c src/uri-extract.c \
+	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
 	src/resource-address.c src/global.c src/transformation.c \
 	src/expansible-buffer.c \
 	src/http.c \
@@ -859,7 +860,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/strmap.c src/hashmap.c \
 	src/resource-address.c src/uri-address.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
-	src/uri-verify.c \
+	src/uri-verify.c src/uri-extract.c \
 	src/format.c
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -979,7 +980,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/html-escape.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-ref.c \
-	src/uri-relative.c src/uri-edit.c \
+	src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \

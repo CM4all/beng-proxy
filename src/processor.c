@@ -624,6 +624,7 @@ transform_uri_attribute(struct processor *processor,
 
     istream = rewrite_widget_uri(processor->pool, processor->env->pool,
                                  global_translate_cache,
+                                 processor->env->absolute_uri,
                                  processor->env->external_uri,
                                  processor->env->untrusted_host,
                                  processor->env->args, widget,

@@ -9,6 +9,7 @@
 #include "widget-resolver.h"
 #include "strref-pool.h"
 #include "uri-parser.h"
+#include "uri-extract.h"
 
 /*
  * The "real" rewriting code
@@ -59,7 +60,41 @@ uri_replace_hostname(pool_t pool, const char *uri, const char *hostname)
 }
 
 static const char *
+uri_add_prefix(pool_t pool, const char *uri, const char *absolute_uri,
+               const char *untrusted_host, const char *untrusted_prefix)
+{
+    assert(untrusted_prefix != NULL);
+
+    if (untrusted_host != NULL)
+        /* this request comes from an untrusted host - either we're
+           already in the correct prefix (no-op), or this is a
+           different untrusted domain (not supported) */
+        return uri;
+
+    if (*uri == '/') {
+        if (absolute_uri == NULL)
+            /* unknown old host name, we cannot do anything useful */
+            return uri;
+
+        const char *host = uri_host_and_port(pool, absolute_uri);
+        if (host == NULL)
+            return uri;
+
+        return p_strcat(pool, "http://", untrusted_prefix, ".", host,
+                        uri, NULL);
+    }
+
+    const char *host = uri_host_and_port(pool, uri);
+    if (host == NULL)
+        return uri;
+
+    return uri_replace_hostname(pool, uri,
+                                p_strcat(pool, untrusted_prefix, ".", host, NULL));
+}
+
+static const char *
 do_rewrite_widget_uri(pool_t pool,
+                      const char *absolute_uri,
                       const struct parsed_uri *external_uri,
                       const char *untrusted_host,
                       struct strmap *args, struct widget *widget,
@@ -104,6 +139,9 @@ do_rewrite_widget_uri(pool_t pool,
         (untrusted_host == NULL ||
          strcmp(widget->class->untrusted_host, untrusted_host) != 0))
         uri = uri_replace_hostname(pool, uri, widget->class->untrusted_host);
+    else if (widget->class->untrusted_prefix != NULL)
+        uri = uri_add_prefix(pool, uri, absolute_uri, untrusted_host,
+                             widget->class->untrusted_prefix);
 
     return uri;
 }
@@ -116,6 +154,7 @@ do_rewrite_widget_uri(pool_t pool,
 
 struct rewrite_widget_uri {
     pool_t pool;
+    const char *absolute_uri;
     const struct parsed_uri *external_uri;
     const char *untrusted_host;
     struct strmap *args;
@@ -152,6 +191,7 @@ class_lookup_callback(void *ctx)
         }
 
         uri = do_rewrite_widget_uri(rwu->pool,
+                                    rwu->absolute_uri,
                                     rwu->external_uri, rwu->untrusted_host,
                                     rwu->args, rwu->widget,
                                     rwu->value, rwu->mode, rwu->stateful);
@@ -183,6 +223,7 @@ class_lookup_callback(void *ctx)
 istream_t
 rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct tcache *translate_cache,
+                   const char *absolute_uri,
                    const struct parsed_uri *external_uri,
                    const char *untrusted_host,
                    struct strmap *args, struct widget *widget,
@@ -193,7 +234,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
     const char *uri;
 
     if (widget->class != NULL) {
-        uri = do_rewrite_widget_uri(pool, external_uri, untrusted_host,
+        uri = do_rewrite_widget_uri(pool, absolute_uri, external_uri, untrusted_host,
                                     args, widget, value, mode, stateful);
         if (uri == NULL)
             return NULL;
@@ -204,6 +245,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
 
         rwu->pool = pool;
         rwu->external_uri = external_uri;
+        rwu->absolute_uri = absolute_uri;
         rwu->untrusted_host = untrusted_host;
         rwu->args = args;
         rwu->widget = widget;
