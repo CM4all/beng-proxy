@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.33) unstable; urgency=low
 
   * merged release 0.7.27.1
+  * fcache: don't continue storing in background
 
  --
 
