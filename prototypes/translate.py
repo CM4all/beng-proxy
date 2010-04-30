@@ -46,6 +46,10 @@ class Translation(Protocol):
             if m:
                 response.packet(TRANSLATE_UNTRUSTED, m.group(1))
                 continue
+            m = re.match(r'^untrusted_prefix\s+"(\S+)"$', line)
+            if m:
+                response.packet(TRANSLATE_UNTRUSTED_PREFIX, m.group(1))
+                continue
             m = re.match(r'^server\s+"(\S+)"$', line)
             if m:
                 uri = m.group(1)
@@ -331,7 +335,7 @@ class Translation(Protocol):
         if session is not None:
             response.packet(TRANSLATE_SESSION, session)
 
-        if request.host == 'untrusted:8080':
+        if request.host is not None and 'untrusted' in request.host:
             response.packet(TRANSLATE_UNTRUSTED, request.host)
         response.vary(TRANSLATE_HOST)
 

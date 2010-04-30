@@ -1,0 +1,3 @@
+untrusted_prefix "foo.untrusted"
+server "http://cfatest01.intern.cm-ag/widgets/post.py"
+process
