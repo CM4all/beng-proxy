@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.34) unstable; urgency=low
 
-  * 
+  * translate: check the UNTRUSTED packet
 
  --
 

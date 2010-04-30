@@ -668,6 +668,11 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_UNTRUSTED:
+        if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
+            daemon_log(2, "malformed TRANSLATE_UNTRUSTED packet\n");
+            break;
+        }
+
         client->response.untrusted = payload;
         break;
 
