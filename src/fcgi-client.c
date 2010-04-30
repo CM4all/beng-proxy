@@ -470,24 +470,6 @@ fcgi_client_try_read(struct fcgi_client *client)
     return true;
 }
 
-static ssize_t
-fcgi_client_send(struct fcgi_client *client, const void *data, size_t length)
-{
-    ssize_t nbytes = send(client->fd, data, length,
-                          MSG_DONTWAIT|MSG_NOSIGNAL);
-    if (nbytes >= 0)
-        return nbytes;
-    else if (errno == EAGAIN) {
-        fcgi_client_schedule_write(client);
-        return 0;
-    } else {
-        daemon_log(3, "write to FastCGI application failed: %s\n",
-                   strerror(errno));
-        fcgi_client_abort_response(client);
-        return -1;
-    }
-}
-
 
 /*
  * libevent callback
@@ -549,11 +531,21 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
     assert(client->fd >= 0);
     assert(client->request.istream != NULL);
 
-    ssize_t nbytes = fcgi_client_send(client, data, length);
-    if (nbytes < 0)
-        return 0;
+    ssize_t nbytes = send(client->fd, data, length,
+                          MSG_DONTWAIT|MSG_NOSIGNAL);
+    if (nbytes < 0) {
+        if (errno == EAGAIN) {
+            fcgi_client_schedule_write(client);
+            return 0;
+        }
 
-    return nbytes;
+        daemon_log(3, "write to FastCGI application failed: %s\n",
+                   strerror(errno));
+        fcgi_client_abort_response(client);
+        return 0;
+    }
+
+    return (size_t)nbytes;
 }
 
 static ssize_t
