@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.33) unstable; urgency=low
 
-  * 
+  * merged release 0.7.27.1
 
  --
 
@@ -41,6 +41,16 @@ cm4all-beng-proxy (0.7.28) unstable; urgency=low
   * memcached-client: increase the maximum key size to 32 kB
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 15 Apr 2010 15:06:51 +0200
+
+cm4all-beng-proxy (0.7.27.1) unstable; urgency=low
+
+  * http-cache: added missing pool_unref() in memcached_miss()
+  * http-cache: don't cache resources with very long URIs
+  * memcached-client: increase the maximum key size to 32 kB
+  * fork: properly handle partially filled output buffer
+  * fork: re-add event after some input data has been read
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 29 Apr 2010 15:30:21 +0200
 
 cm4all-beng-proxy (0.7.27) unstable; urgency=low
 

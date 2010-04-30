@@ -80,7 +80,7 @@ class Translation(Protocol):
             if m:
                 path = m.group(1)
                 response.path(path)
-                if path[-5:] == '.html':
+                if path[-5:] == '.html' or path[-4:] == '.xml':
                     response.content_type('text/html; charset=utf-8')
                 continue
             m = re.match(r'^script_name\s+"(\S+)"$', line)
