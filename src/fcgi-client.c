@@ -533,7 +533,9 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
 
     ssize_t nbytes = send(client->fd, data, length,
                           MSG_DONTWAIT|MSG_NOSIGNAL);
-    if (nbytes < 0) {
+    if (nbytes > 0)
+        fcgi_client_schedule_write(client);
+    else if (nbytes < 0) {
         if (errno == EAGAIN) {
             fcgi_client_schedule_write(client);
             return 0;
