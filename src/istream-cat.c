@@ -205,6 +205,26 @@ istream_cat_read(istream_t istream)
     pool_unref(cat->output.pool);
 }
 
+static int
+istream_cat_as_fd(istream_t istream)
+{
+    struct istream_cat *cat = istream_to_cat(istream);
+
+    /* we can safely forward the as_fd() call to our input if it's the
+       last one */
+
+    if (cat->current != cat->num - 1)
+        /* not on last input */
+        return -1;
+
+    struct input *i = cat_current(cat);
+    int fd = istream_as_fd(i->istream);
+    if (fd >= 0)
+        istream_deinit(&cat->output);
+
+    return fd;
+}
+
 static void
 istream_cat_close(istream_t istream)
 {
@@ -216,6 +236,7 @@ istream_cat_close(istream_t istream)
 static const struct istream istream_cat = {
     .available = istream_cat_available,
     .read = istream_cat_read,
+    .as_fd = istream_cat_as_fd,
     .close = istream_cat_close,
 };
 
