@@ -338,8 +338,15 @@ pid_t
 beng_fork(pool_t pool, istream_t input, istream_t *output_r,
           child_callback_t callback, void *ctx)
 {
-    int ret, stdin_pipe[2], stdout_pipe[2];
+    int ret, stdin_pipe[2], stdin_fd, stdout_pipe[2];
     pid_t pid;
+
+    if (input != NULL) {
+        stdin_fd = istream_as_fd(input);
+        if (stdin_fd >= 0)
+            input = NULL;
+    } else
+        stdin_fd = -1;
 
     if (input != NULL) {
         ret = pipe(stdin_pipe);
@@ -362,7 +369,8 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         if (input != NULL) {
             close(stdin_pipe[0]);
             close(stdin_pipe[1]);
-        }
+        } else if (stdin_fd >= 0)
+            close(stdin_fd);
 
         return -1;
     }
@@ -374,7 +382,8 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         if (input != NULL) {
             close(stdin_pipe[0]);
             close(stdin_pipe[1]);
-        }
+        } else if (stdin_fd >= 0)
+            close(stdin_fd);
 
         close(stdout_pipe[0]);
         close(stdout_pipe[1]);
@@ -388,7 +397,8 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         if (input != NULL) {
             close(stdin_pipe[0]);
             close(stdin_pipe[1]);
-        }
+        } else if (stdin_fd >= 0)
+            close(stdin_fd);
 
         close(stdout_pipe[0]);
         close(stdout_pipe[1]);
@@ -397,6 +407,9 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
             dup2(stdin_pipe[0], STDIN_FILENO);
             close(stdin_pipe[0]);
             close(stdin_pipe[1]);
+        } else if (stdin_fd >= 0) {
+            dup2(stdin_fd, STDIN_FILENO);
+            close(stdin_fd);
         }
 
         dup2(stdout_pipe[1], STDOUT_FILENO);
@@ -420,7 +433,8 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
             istream_assign_handler(&f->input, input,
                                    &fork_input_handler, f,
                                    ISTREAM_TO_PIPE);
-        }
+        } else if (stdin_fd >= 0)
+            close(stdin_fd);
 
         close(stdout_pipe[1]);
         fd_set_cloexec(stdout_pipe[0]);
