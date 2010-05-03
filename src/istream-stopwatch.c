@@ -75,6 +75,21 @@ istream_stopwatch_read(istream_t istream)
     istream_read(stopwatch->input);
 }
 
+static int
+istream_stopwatch_as_fd(istream_t istream)
+{
+    struct istream_stopwatch *stopwatch = istream_to_stopwatch(istream);
+
+    int fd = istream_as_fd(stopwatch->input);
+    if (fd >= 0) {
+        stopwatch_event(stopwatch->stopwatch, "as_fd");
+        stopwatch_dump(stopwatch->stopwatch);
+        istream_deinit(&stopwatch->output);
+    }
+
+    return fd;
+}
+
 static void
 istream_stopwatch_close(istream_t istream)
 {
@@ -88,6 +103,7 @@ istream_stopwatch_close(istream_t istream)
 
 static const struct istream istream_stopwatch = {
     .read = istream_stopwatch_read,
+    .as_fd = istream_stopwatch_as_fd,
     .close = istream_stopwatch_close,
 };
 
