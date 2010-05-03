@@ -61,6 +61,21 @@ istream_delayed_read(istream_t istream)
         istream_read(delayed->input);
 }
 
+static int
+istream_delayed_as_fd(istream_t istream)
+{
+    struct istream_delayed *delayed = istream_to_delayed(istream);
+
+    if (delayed->input == NULL)
+        return -1;
+
+    int fd = istream_as_fd(delayed->input);
+    if (fd >= 0)
+        istream_deinit(&delayed->output);
+
+    return fd;
+}
+
 static void
 istream_delayed_close(istream_t istream)
 {
@@ -77,6 +92,7 @@ istream_delayed_close(istream_t istream)
 static const struct istream istream_delayed = {
     .available = istream_delayed_available,
     .read = istream_delayed_read,
+    .as_fd = istream_delayed_as_fd,
     .close = istream_delayed_close,
 };
 
