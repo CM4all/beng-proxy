@@ -358,16 +358,24 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
     ret = pipe(stdout_pipe);
     if (ret < 0) {
         daemon_log(1, "pipe() failed: %s\n", strerror(errno));
-        close(stdin_pipe[0]);
-        close(stdin_pipe[1]);
+
+        if (input != NULL) {
+            close(stdin_pipe[0]);
+            close(stdin_pipe[1]);
+        }
+
         return -1;
     }
 
     ret = socket_set_nonblock(stdout_pipe[0], 1);
     if (ret < 0) {
         daemon_log(1, "fcntl(O_NONBLOCK) failed: %s\n", strerror(errno));
-        close(stdin_pipe[0]);
-        close(stdin_pipe[1]);
+
+        if (input != NULL) {
+            close(stdin_pipe[0]);
+            close(stdin_pipe[1]);
+        }
+
         close(stdout_pipe[0]);
         close(stdout_pipe[1]);
         return -1;
@@ -376,8 +384,12 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
-        close(stdin_pipe[0]);
-        close(stdin_pipe[1]);
+
+        if (input != NULL) {
+            close(stdin_pipe[0]);
+            close(stdin_pipe[1]);
+        }
+
         close(stdout_pipe[0]);
         close(stdout_pipe[1]);
     } else if (pid == 0) {
