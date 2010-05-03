@@ -302,6 +302,18 @@ istream_file_read(istream_t istream)
     file_try_read(file);
 }
 
+static int
+istream_file_as_fd(istream_t istream)
+{
+    struct file *file = istream_to_file(istream);
+    int fd = file->fd;
+
+    evtimer_del(&file->event);
+    istream_deinit(&file->stream);
+
+    return fd;
+}
+
 static void
 istream_file_close(istream_t istream)
 {
@@ -314,6 +326,7 @@ static const struct istream istream_file = {
     .available = istream_file_available,
     .skip = istream_file_skip,
     .read = istream_file_read,
+    .as_fd = istream_file_as_fd,
     .close = istream_file_close,
 };
 
