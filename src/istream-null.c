@@ -6,6 +6,8 @@
 
 #include "istream-internal.h"
 
+#include <unistd.h>
+
 struct istream_null {
     struct istream stream;
 };
@@ -37,6 +39,20 @@ istream_null_read(istream_t istream)
     istream_deinit_eof(&null->stream);
 }
 
+static int
+istream_null_as_fd(istream_t istream)
+{
+    struct istream_null *null = istream_to_null(istream);
+
+    /* fd0 is always linked with /dev/null */
+    int fd = dup(0);
+    if (fd < 0)
+        return -1;
+
+    istream_deinit(&null->stream);
+    return fd;
+}
+
 static void
 istream_null_close(istream_t istream)
 {
@@ -49,6 +65,7 @@ static const struct istream istream_null = {
     .available = istream_null_available,
     .skip = istream_null_skip,
     .read = istream_null_read,
+    .as_fd = istream_null_as_fd,
     .close = istream_null_close,
 };
 
