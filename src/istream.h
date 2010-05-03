@@ -135,6 +135,14 @@ struct istream {
     void (*read)(istream_t istream);
 
     /**
+     * Close the istream object, and return the remaining data as a
+     * file descriptor.  This fd can be read until end-of-stream.
+     * Returns -1 if this is not possible (the istream object is still
+     * usable).
+     */
+    int (*as_fd)(istream_t istream);
+
+    /**
      * Close the stream and free resources.  This must not be called
      * after the handler's eof() / abort() callbacks were invoked.
      */
@@ -272,6 +280,37 @@ istream_read(istream_t _istream)
         return;
 
     istream->reading = false;
+#endif
+}
+
+static inline int
+istream_as_fd(istream_t _istream)
+{
+    struct istream *istream = _istream_opaque_cast(_istream);
+#ifndef NDEBUG
+    struct pool_notify notify;
+
+    assert(!istream->closing);
+    assert(!istream->eof);
+    assert(!istream->reading);
+    assert(!istream->in_data);
+
+    if (istream->as_fd == NULL)
+        return -1;
+
+    pool_notify(istream->pool, &notify);
+    istream->reading = true;
+#endif
+
+    int fd = istream->as_fd(_istream);
+
+#ifndef NDEBUG
+    assert(!pool_denotify(&notify) || fd >= 0);
+
+    if (fd < 0)
+        istream->reading = false;
+
+    return fd;
 #endif
 }
 

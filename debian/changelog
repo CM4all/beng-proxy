@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8) unstable; urgency=low
 
-  * 
+  * istream: added method as_fd() to convert istream to file descriptor
 
  --
 
