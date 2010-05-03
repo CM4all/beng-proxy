@@ -294,6 +294,24 @@ istream_pipe_read(istream_t istream)
     istream_read(p->input);
 }
 
+static int
+istream_pipe_as_fd(istream_t istream)
+{
+    struct istream_pipe *p = istream_to_pipe(istream);
+
+    if (p->piped > 0)
+        /* need to flush the pipe buffer first */
+        return -1;
+
+    int fd = istream_as_fd(p->input);
+    if (fd >= 0) {
+        pipe_close(p);
+        istream_deinit(&p->output);
+    }
+
+    return fd;
+}
+
 static void
 istream_pipe_close(istream_t istream)
 {
@@ -305,6 +323,7 @@ istream_pipe_close(istream_t istream)
 static const struct istream istream_pipe = {
     .available = istream_pipe_available,
     .read = istream_pipe_read,
+    .as_fd = istream_pipe_as_fd,
     .close = istream_pipe_close,
 };
 
