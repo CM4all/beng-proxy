@@ -132,6 +132,18 @@ istream_hold_read(istream_t istream)
     }
 }
 
+static int
+istream_hold_as_fd(istream_t istream)
+{
+    struct istream_hold *hold = istream_to_hold(istream);
+
+    int fd = istream_as_fd(hold->input);
+    if (fd >= 0)
+        istream_deinit(&hold->output);
+
+    return fd;
+}
+
 static void
 istream_hold_close(istream_t istream)
 {
@@ -154,6 +166,7 @@ istream_hold_close(istream_t istream)
 static const struct istream istream_hold = {
     .available = istream_hold_available,
     .read = istream_hold_read,
+    .as_fd = istream_hold_as_fd,
     .close = istream_hold_close,
 };
 
