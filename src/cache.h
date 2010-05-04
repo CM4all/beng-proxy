@@ -105,6 +105,16 @@ cache_put_match(struct cache *cache, const char *key,
 void
 cache_remove(struct cache *cache, const char *key);
 
+/**
+ * Removes all matching cache items.
+ *
+ * @return the number of items which were removed
+ */
+void
+cache_remove_match(struct cache *cache, const char *key,
+                   bool (*match)(const struct cache_item *, void *),
+                   void *ctx);
+
 void
 cache_remove_item(struct cache *cache, const char *key,
                   struct cache_item *item);
