@@ -1241,9 +1241,7 @@ translate(pool_t pool, int fd,
 
     gb = marshal_request(pool, request);
     if (gb == NULL) {
-        struct lease_ref lease_ref;
-        lease_ref_set(&lease_ref, lease, lease_ctx);
-        lease_release(&lease_ref, true);
+        lease_direct_release(lease, lease_ctx, true);
 
         callback(&error, ctx);
         pool_unref(pool);
