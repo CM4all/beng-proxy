@@ -496,3 +496,55 @@ http_cache_memcached_remove_uri(struct memcached_stock *stock,
 
     pool_unref(pool);
 }
+
+struct match_data {
+    struct background_job job;
+
+    struct strmap *headers;
+};
+
+static bool
+mcd_delete_filter_callback(const struct http_cache_document *document,
+                           void *ctx)
+{
+    struct match_data *data = ctx;
+
+    if (document != NULL) {
+        /* discard documents matching the Vary specification */
+        return !http_cache_document_fits(document, data->headers);
+    } else {
+        background_manager_remove(&data->job);
+        return false;
+    }
+}
+
+void
+http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
+                                      pool_t background_pool,
+                                      struct background_manager *background,
+                                      const char *uri, struct strmap *headers)
+{
+    pool_t pool = pool_new_linear(background_pool,
+                                  "http_cache_memcached_remove_uri", 8192);
+
+    /* delete the main document */
+    struct background_job *job = p_malloc(pool, sizeof(*job));
+    const char *key = http_cache_choice_vary_key(pool, uri, NULL);
+    memcached_stock_invoke(pool, stock,
+                           MEMCACHED_OPCODE_DELETE,
+                           NULL, 0,
+                           key, strlen(key),
+                           NULL,
+                           mcd_background_callback, job,
+                           background_job_add(background, job));
+
+    /* now delete all matching Vary documents */
+    struct match_data *data = p_malloc(pool, sizeof(*data));
+    data->headers = strmap_dup(pool, headers);
+
+    http_cache_choice_filter(pool, stock, uri,
+                             mcd_delete_filter_callback, data,
+                             background_job_add(background, &data->job));
+
+    pool_unref(pool);
+}

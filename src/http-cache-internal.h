@@ -189,4 +189,10 @@ http_cache_memcached_remove_uri(struct memcached_stock *stock,
                                 struct background_manager *background,
                                 const char *uri);
 
+void
+http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
+                                      pool_t background_pool,
+                                      struct background_manager *background,
+                                      const char *uri, struct strmap *headers);
+
 #endif
