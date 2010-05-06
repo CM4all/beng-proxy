@@ -91,6 +91,12 @@ http_cache_choice_vary_key(pool_t pool, const char *uri, struct strmap *vary)
     return p_strcat(pool, uri, " ", hash, NULL);
 }
 
+static const char *
+http_cache_choice_key(pool_t pool, const char *uri)
+{
+    return p_strcat(pool, uri, " choice", NULL);
+}
+
 static void
 http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
 {
@@ -193,7 +199,7 @@ http_cache_choice_get(pool_t pool, struct memcached_stock *stock,
     choice->pool = pool;
     choice->stock = stock;
     choice->uri = uri;
-    choice->key = p_strcat(pool, uri, " choice", NULL);
+    choice->key = http_cache_choice_key(pool, uri);
     choice->request_headers = request_headers;
     choice->callback.get = callback;
     choice->callback_ctx = callback_ctx;
@@ -294,7 +300,7 @@ http_cache_choice_commit(struct http_cache_choice *choice,
 {
     istream_t value;
 
-    choice->key = p_strcat(choice->pool, choice->uri, " choice", NULL);
+    choice->key = http_cache_choice_key(choice->pool, choice->uri);
     choice->stock = stock;
     choice->callback.commit = callback;
     choice->callback_ctx = callback_ctx;
@@ -446,7 +452,7 @@ http_cache_choice_cleanup(pool_t pool, struct memcached_stock *stock,
     choice->pool = pool;
     choice->stock = stock;
     choice->uri = uri;
-    choice->key = p_strcat(pool, uri, " choice", NULL);
+    choice->key = http_cache_choice_key(pool, uri);
     choice->callback.commit = callback;
     choice->callback_ctx = callback_ctx;
     choice->async_ref = async_ref;
@@ -488,7 +494,7 @@ http_cache_choice_delete(pool_t pool, struct memcached_stock *stock,
     choice->pool = pool;
     choice->stock = stock;
     choice->uri = uri;
-    choice->key = p_strcat(pool, uri, " choice", NULL);
+    choice->key = http_cache_choice_key(pool, uri);
     choice->callback.commit = callback;
     choice->callback_ctx = callback_ctx;
     choice->async_ref = async_ref;
