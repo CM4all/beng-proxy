@@ -39,7 +39,7 @@ struct http_cache_choice {
     union {
         http_cache_choice_get_t get;
         http_cache_choice_commit_t commit;
-        http_cache_choice_cleanup_t cleanup;
+        http_cache_choice_filter_t filter;
         http_cache_choice_delete_t delete;
     } callback;
 
@@ -319,7 +319,7 @@ http_cache_choice_commit(struct http_cache_choice *choice,
 }
 
 static void
-http_cache_choice_cleanup_set_callback(G_GNUC_UNUSED enum memcached_response_status status,
+http_cache_choice_filter_set_callback(G_GNUC_UNUSED enum memcached_response_status status,
                                        G_GNUC_UNUSED const void *extras,
                                        G_GNUC_UNUSED size_t extras_length,
                                        G_GNUC_UNUSED const void *key,
@@ -331,25 +331,20 @@ http_cache_choice_cleanup_set_callback(G_GNUC_UNUSED enum memcached_response_sta
     if (value != NULL)
         istream_close(value);
 
-    choice->callback.cleanup(choice->callback_ctx);
+    choice->callback.filter(NULL, choice->callback_ctx);
 }
 
-
 static void
-http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
-                                          void *ctx)
+http_cache_choice_filter_buffer_callback(void *data0, size_t length,
+                                         void *ctx)
 {
     struct http_cache_choice *choice = ctx;
     struct strref data;
     const char *current;
     char *dest;
-    time_t now = time(NULL);
     struct pool_mark mark;
     uint32_t magic;
     struct http_cache_document document;
-    struct uset uset;
-    unsigned hash;
-    bool duplicate;
 
     if (data0 == NULL) {
         choice->callback.get(NULL, true, choice->callback_ctx);
@@ -358,7 +353,6 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
 
     strref_set(&data, data0, length);
     dest = data0;
-    uset_init(&uset);
 
     while (!strref_is_empty(&data)) {
         current = data.data;
@@ -371,24 +365,24 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
 
         pool_mark(tpool, &mark);
         document.vary = deserialize_strmap(&data, tpool);
-        hash = mcd_vary_hash(document.vary);
-        pool_rewind(tpool, &mark);
 
-        if (strref_is_null(&data))
+        if (strref_is_null(&data)) {
             /* deserialization failure */
+            pool_rewind(tpool, &mark);
             break;
+        }
 
-        duplicate = uset_contains_or_add(&uset, hash);
-        if ((document.info.expires == -1 || document.info.expires >= now) &&
-            !duplicate) {
+        if (choice->callback.filter(&document, choice->callback_ctx)) {
             memmove(dest, current, strref_end(&data) - current);
             dest += data.data - current;
         }
+
+        pool_rewind(tpool, &mark);
     }
 
     if (dest - length == data0)
         /* no change */
-        choice->callback.cleanup(choice->callback_ctx);
+        choice->callback.filter(NULL, choice->callback_ctx);
     else if (dest == data0)
         /* no entries left */
         /* XXX use CAS */
@@ -397,7 +391,7 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
                                NULL, 0,
                                choice->key, strlen(choice->key),
                                NULL,
-                               http_cache_choice_cleanup_set_callback, choice,
+                               http_cache_choice_filter_set_callback, choice,
                                choice->async_ref);
     else {
         /* send new contents */
@@ -412,18 +406,18 @@ http_cache_choice_cleanup_buffer_callback(void *data0, size_t length,
                                choice->key, strlen(choice->key),
                                istream_memory_new(choice->pool, data0,
                                                   dest - (char *)data0),
-                               http_cache_choice_cleanup_set_callback, choice,
+                               http_cache_choice_filter_set_callback, choice,
                                choice->async_ref);
     }
 }
 
 static void
-http_cache_choice_cleanup_get_callback(enum memcached_response_status status,
-                                       G_GNUC_UNUSED const void *extras,
-                                       G_GNUC_UNUSED size_t extras_length,
-                                       G_GNUC_UNUSED const void *key,
-                                       G_GNUC_UNUSED size_t key_length,
-                                       istream_t value, void *ctx)
+http_cache_choice_filter_get_callback(enum memcached_response_status status,
+                                      G_GNUC_UNUSED const void *extras,
+                                      G_GNUC_UNUSED size_t extras_length,
+                                      G_GNUC_UNUSED const void *key,
+                                      G_GNUC_UNUSED size_t key_length,
+                                      istream_t value, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
@@ -431,13 +425,65 @@ http_cache_choice_cleanup_get_callback(enum memcached_response_status status,
         if (value != NULL)
             istream_close(value);
 
-        choice->callback.cleanup(choice->callback_ctx);
+        choice->callback.filter(NULL, choice->callback_ctx);
         return;
     }
 
     sink_buffer_new(choice->pool, value,
-                    http_cache_choice_cleanup_buffer_callback, choice,
+                    http_cache_choice_filter_buffer_callback, choice,
                     choice->async_ref);
+}
+
+void
+http_cache_choice_filter(pool_t pool, struct memcached_stock *stock,
+                         const char *uri,
+                         http_cache_choice_filter_t callback,
+                         void *callback_ctx,
+                         struct async_operation_ref *async_ref)
+{
+    struct http_cache_choice *choice = p_malloc(pool, sizeof(*choice));
+
+    choice->pool = pool;
+    choice->stock = stock;
+    choice->uri = uri;
+    choice->key = http_cache_choice_key(pool, uri);
+    choice->callback.filter = callback;
+    choice->callback_ctx = callback_ctx;
+    choice->async_ref = async_ref;
+
+    memcached_stock_invoke(pool, stock,
+                           MEMCACHED_OPCODE_GET,
+                           NULL, 0,
+                           choice->key, strlen(choice->key),
+                           NULL,
+                           http_cache_choice_filter_get_callback, choice,
+                           async_ref);
+}
+
+struct cleanup_data {
+    time_t now;
+    struct uset uset;
+
+    http_cache_choice_cleanup_t callback;
+    void *callback_ctx;
+};
+
+static bool
+http_cache_choice_cleanup_filter_callback(const struct http_cache_document *document,
+                                          void *ctx)
+{
+    struct cleanup_data *data = ctx;
+
+    if (document != NULL) {
+        unsigned hash = mcd_vary_hash(document->vary);
+        bool duplicate = uset_contains_or_add(&data->uset, hash);
+        return (document->info.expires == -1 ||
+                document->info.expires >= data->now) &&
+            !duplicate;
+    } else {
+        data->callback(data->callback_ctx);
+        return false;
+    }
 }
 
 void
@@ -447,23 +493,16 @@ http_cache_choice_cleanup(pool_t pool, struct memcached_stock *stock,
                           void *callback_ctx,
                           struct async_operation_ref *async_ref)
 {
-    struct http_cache_choice *choice = p_malloc(pool, sizeof(*choice));
+    struct cleanup_data *data = p_malloc(pool, sizeof(*data));
 
-    choice->pool = pool;
-    choice->stock = stock;
-    choice->uri = uri;
-    choice->key = http_cache_choice_key(pool, uri);
-    choice->callback.cleanup = callback;
-    choice->callback_ctx = callback_ctx;
-    choice->async_ref = async_ref;
+    data->now = time(NULL);
+    uset_init(&data->uset);
+    data->callback = callback;
+    data->callback_ctx = callback_ctx;
 
-    memcached_stock_invoke(pool, stock,
-                           MEMCACHED_OPCODE_GET,
-                           NULL, 0,
-                           choice->key, strlen(choice->key),
-                           NULL,
-                           http_cache_choice_cleanup_get_callback, choice,
-                           async_ref);
+    http_cache_choice_filter(pool, stock, uri,
+                             http_cache_choice_cleanup_filter_callback, data,
+                             async_ref);
 }
 
 static void

@@ -11,12 +11,15 @@
 
 struct http_cache_choice;
 struct http_cache_info;
+struct http_cache_document;
 struct strmap;
 struct memcached_stock;
 struct async_operation_ref;
 
 typedef void (*http_cache_choice_get_t)(const char *key, bool unclean, void *ctx);
 typedef void (*http_cache_choice_commit_t)(void *ctx);
+typedef bool (*http_cache_choice_filter_t)(const struct http_cache_document *document,
+                                           void *ctx);
 typedef void (*http_cache_choice_cleanup_t)(void *ctx);
 typedef void (*http_cache_choice_delete_t)(void *ctx);
 
@@ -39,6 +42,18 @@ void
 http_cache_choice_commit(struct http_cache_choice *choice,
                          struct memcached_stock *stock,
                          http_cache_choice_commit_t callback,
+                         void *callback_ctx,
+                         struct async_operation_ref *async_ref);
+
+/**
+ * Filter the choice record, keep only items accepted by the filter
+ * function.  After the last document, the filter function is called
+ * with document=NULL.
+ */
+void
+http_cache_choice_filter(pool_t pool, struct memcached_stock *stock,
+                         const char *uri,
+                         http_cache_choice_filter_t callback,
                          void *callback_ctx,
                          struct async_operation_ref *async_ref);
 
