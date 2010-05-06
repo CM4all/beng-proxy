@@ -133,7 +133,8 @@ http_cache_heap_remove(struct cache *cache, const char *url,
                        struct http_cache_document *document);
 
 void
-http_cache_heap_remove_url(struct cache *cache, const char *url);
+http_cache_heap_remove_url(struct cache *cache, const char *url,
+                           struct strmap *headers);
 
 void
 http_cache_heap_flush(struct cache *cache);

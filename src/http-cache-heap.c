@@ -104,9 +104,11 @@ http_cache_heap_remove(struct cache *cache, const char *url,
 }
 
 void
-http_cache_heap_remove_url(struct cache *cache, const char *url)
+http_cache_heap_remove_url(struct cache *cache, const char *url,
+                           struct strmap *headers)
 {
-    cache_remove(cache, url);
+    cache_remove_match(cache, url,
+                       http_cache_item_match, headers);
 }
 
 void

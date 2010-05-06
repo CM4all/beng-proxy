@@ -153,14 +153,15 @@ http_cache_remove(struct http_cache *cache, const char *url,
 }
 
 static void
-http_cache_remove_url(struct http_cache *cache, const char *url)
+http_cache_remove_url(struct http_cache *cache, const char *url,
+                      struct strmap *headers)
 {
     if (cache->cache != NULL)
-        http_cache_heap_remove_url(cache->cache, url);
+        http_cache_heap_remove_url(cache->cache, url, headers);
     else if (cache->memcached_stock != NULL)
-        http_cache_memcached_remove_uri(cache->memcached_stock,
-                                        cache->pool, &cache->background,
-                                        url);
+        http_cache_memcached_remove_uri_match(cache->memcached_stock,
+                                              cache->pool, &cache->background,
+                                              url, headers);
 }
 
 static void
@@ -916,7 +917,7 @@ http_cache_request(struct http_cache *cache,
         struct growing_buffer *headers2;
 
         if (http_cache_request_invalidate(method))
-            http_cache_remove_url(cache, uwa->uri);
+            http_cache_remove_url(cache, uwa->uri, headers);
 
         cache_log(4, "http_cache: ignore %s\n", uwa->uri);
 
