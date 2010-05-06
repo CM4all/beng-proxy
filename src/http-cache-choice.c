@@ -39,7 +39,7 @@ struct http_cache_choice {
     union {
         http_cache_choice_get_t get;
         http_cache_choice_commit_t commit;
-        http_cache_choice_commit_t cleanup;
+        http_cache_choice_cleanup_t cleanup;
         http_cache_choice_delete_t delete;
     } callback;
 
@@ -443,7 +443,7 @@ http_cache_choice_cleanup_get_callback(enum memcached_response_status status,
 void
 http_cache_choice_cleanup(pool_t pool, struct memcached_stock *stock,
                           const char *uri,
-                          http_cache_choice_commit_t callback,
+                          http_cache_choice_cleanup_t callback,
                           void *callback_ctx,
                           struct async_operation_ref *async_ref)
 {
@@ -453,7 +453,7 @@ http_cache_choice_cleanup(pool_t pool, struct memcached_stock *stock,
     choice->stock = stock;
     choice->uri = uri;
     choice->key = http_cache_choice_key(pool, uri);
-    choice->callback.commit = callback;
+    choice->callback.cleanup = callback;
     choice->callback_ctx = callback_ctx;
     choice->async_ref = async_ref;
 
@@ -495,7 +495,7 @@ http_cache_choice_delete(pool_t pool, struct memcached_stock *stock,
     choice->stock = stock;
     choice->uri = uri;
     choice->key = http_cache_choice_key(pool, uri);
-    choice->callback.commit = callback;
+    choice->callback.delete = callback;
     choice->callback_ctx = callback_ctx;
     choice->async_ref = async_ref;
 
