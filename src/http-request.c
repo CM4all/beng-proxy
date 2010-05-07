@@ -14,6 +14,7 @@
 #include "uri-address.h"
 #include "growing-buffer.h"
 #include "lease.h"
+#include "abort-close.h"
 
 #include <inline/compiler.h>
 
@@ -118,12 +119,14 @@ http_request(pool_t pool,
     if (hr->headers == NULL)
         hr->headers = growing_buffer_new(pool, 512);
 
-    hr->body = body != NULL
-        ? istream_hold_new(pool, body)
-        : NULL;
-
     http_response_handler_set(&hr->handler, handler, handler_ctx);
     hr->async_ref = async_ref;
+
+    if (body != NULL) {
+        hr->body = istream_hold_new(pool, body);
+        async_ref = async_close_on_abort(pool, hr->body, async_ref);
+    } else
+        hr->body = NULL;
 
     if (memcmp(uwa->uri, "http://", 7) == 0) {
         /* HTTP over TCP */

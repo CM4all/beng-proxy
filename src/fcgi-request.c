@@ -12,6 +12,7 @@
 #include "lease.h"
 #include "tcp-stock.h"
 #include "stock.h"
+#include "abort-close.h"
 
 #include <daemon/log.h>
 
@@ -139,14 +140,17 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
     request->query_string = query_string;
     request->document_root = document_root;
     request->headers = headers;
-    request->body = body != NULL
-        ? istream_hold_new(pool, body)
-        : NULL;
     request->params = params;
     request->num_params = num_params;
 
     http_response_handler_set(&request->handler, handler, handler_ctx);
     request->async_ref = async_ref;
+
+    if (body != NULL) {
+        request->body = istream_hold_new(pool, body);
+        async_ref = async_close_on_abort(pool, request->body, async_ref);
+    } else
+        request->body = NULL;
 
     fcgi_stock_get(fcgi_stock, pool,
                    action, jail ? document_root : NULL,

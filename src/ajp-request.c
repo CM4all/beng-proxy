@@ -14,6 +14,7 @@
 #include "strmap.h"
 #include "lease.h"
 #include "tcp-stock.h"
+#include "abort-close.h"
 
 #include <inline/compiler.h>
 
@@ -134,12 +135,14 @@ ajp_stock_request(pool_t pool,
     if (hr->headers == NULL)
         hr->headers = strmap_new(pool, 16);
 
-    hr->body = body != NULL
-        ? istream_hold_new(pool, body)
-        : NULL;
-
     http_response_handler_set(&hr->handler, handler, handler_ctx);
     hr->async_ref = async_ref;
+
+    if (body != NULL) {
+        hr->body = istream_hold_new(pool, body);
+        async_ref = async_close_on_abort(pool, hr->body, async_ref);
+    } else
+        hr->body = NULL;
 
     hstock_get(tcp_stock, pool,
                uwa->uri, uwa,
