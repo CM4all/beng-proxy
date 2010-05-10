@@ -58,6 +58,8 @@ wrl_abort(struct async_operation *ao)
     assert(resolver->widget->resolver == resolver);
 
     list_remove(&listener->siblings);
+    pool_unref(listener->pool);
+
     if (list_empty(&resolver->listeners)) {
         /* the last listener has been aborted: abort the widget
            registry */
@@ -65,8 +67,6 @@ wrl_abort(struct async_operation *ao)
         async_abort(&resolver->async_ref);
         pool_unref(resolver->pool);
     }
-
-    pool_unref(listener->pool);
 }
 
 static const struct async_operation_class listener_async_operation = {
