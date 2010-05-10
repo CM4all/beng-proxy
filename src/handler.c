@@ -218,6 +218,17 @@ request_uri_parse(struct request *request2, struct parsed_uri *dest)
 
     ret = uri_parse(dest, request->uri);
     if (!ret) {
+        /* response_dispatch() assumes that we have a translation
+           response, and will dereference it - at this point, the
+           translation server hasn't been queried yet, so we just
+           insert an empty response here */
+        static const struct translate_response tr_error = {
+            .status = -1,
+        };
+
+        request2->translate.response = &tr_error;
+        request2->translate.transformation = NULL;
+
         response_dispatch_message(request2, HTTP_STATUS_BAD_REQUEST,
                                   "Malformed URI");
     }
@@ -364,13 +375,6 @@ handle_http_request(struct client_connection *connection,
     request2->request = request;
     request2->product_token = NULL;
 
-    ret = request_uri_parse(request2, &request2->uri);
-    if (!ret)
-        return;
-
-    assert(!strref_is_empty(&request2->uri.base));
-    assert(request2->uri.base.data[0] == '/');
-
     request2->args = NULL;
     request2->cookies = NULL;
     session_id_clear(&request2->session_id);
@@ -380,11 +384,18 @@ handle_http_request(struct client_connection *connection,
 #endif
     request2->body_consumed = false;
 
+    request2->async_ref = async_ref;
+
 #ifndef NDEBUG
     request2->response_sent = false;
 #endif
 
-    request2->async_ref = async_ref;
+    ret = request_uri_parse(request2, &request2->uri);
+    if (!ret)
+        return;
+
+    assert(!strref_is_empty(&request2->uri.base));
+    assert(request2->uri.base.data[0] == '/');
 
     request_args_parse(request2);
     request_determine_session(request2);
