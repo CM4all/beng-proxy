@@ -218,9 +218,6 @@ request_uri_parse(struct request *request2, struct parsed_uri *dest)
 
     ret = uri_parse(dest, request->uri);
     if (!ret) {
-        if (request->body != NULL)
-            istream_close(request->body);
-
         response_dispatch_message(request2, HTTP_STATUS_BAD_REQUEST,
                                   "Malformed URI");
     }
