@@ -118,7 +118,6 @@ response_invoke_processor(struct request *request2,
     assert(body == NULL || !istream_has_handler(body));
 
     if (body == NULL) {
-        request_discard_body(request2);
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Empty template cannot be processed");
         return;
@@ -126,7 +125,6 @@ response_invoke_processor(struct request *request2,
 
     if (!processable(response_headers)) {
         istream_close(body);
-        request_discard_body(request2);
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
@@ -151,7 +149,6 @@ response_invoke_processor(struct request *request2,
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2->translate.response->untrusted);
         istream_close(body);
-        request_discard_body(request2);
         response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;
@@ -537,7 +534,6 @@ response_abort(void *ctx)
 
     assert(!request->response_sent);
 
-    request_discard_body(request);
     response_dispatch_message(request,
                               HTTP_STATUS_INTERNAL_SERVER_ERROR,
                               "Internal server error");

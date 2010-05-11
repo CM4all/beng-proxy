@@ -28,7 +28,6 @@ method_not_allowed(struct request *request2, const char *allow)
 
     header_write(headers, "allow", allow);
 
-    request_discard_body(request2);
     response_dispatch_message2(request2, HTTP_STATUS_METHOD_NOT_ALLOWED,
                                headers, "This method is not allowed.");
 }
@@ -60,7 +59,6 @@ delegate_handler_callback(int fd, void *ctx)
     if (ret < 0) {
         close(fd);
 
-        request_discard_body(request2);
         response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
@@ -69,7 +67,6 @@ delegate_handler_callback(int fd, void *ctx)
     if (!S_ISREG(st.st_mode)) {
         close(fd);
 
-        request_discard_body(request2);
         response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                   "Not a regular file");
         return;

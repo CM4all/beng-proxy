@@ -86,7 +86,6 @@ translate_callback(const struct translate_response *response,
          response->www_authenticate == NULL &&
          response->bounce == NULL &&
          response->redirect == NULL)) {
-        request_discard_body(request);
         response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
@@ -183,28 +182,22 @@ translate_callback(const struct translate_response *response,
     } else if (response->address.type == RESOURCE_ADDRESS_FASTCGI) {
         fcgi_handler(request);
     } else if (response->redirect != NULL) {
-        request_discard_body(request);
-
         int status = response->status != 0
             ? response->status : HTTP_STATUS_SEE_OTHER;
         response_dispatch_redirect(request, status, response->redirect, NULL);
     } else if (response->bounce != NULL) {
-        request_discard_body(request);
         response_dispatch_redirect(request, HTTP_STATUS_SEE_OTHER,
                                    bounce_uri(request->request->pool, request,
                                               response),
                                    NULL);
     } else if (response->status != (http_status_t)0) {
-        request_discard_body(request);
         response_dispatch(request, response->status, NULL, NULL);
     } else if (response->www_authenticate != NULL) {
-        request_discard_body(request);
         response_dispatch_message(request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
     } else {
         daemon_log(2, "empty response from translation server\n");
 
-        request_discard_body(request);
         response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
     }
