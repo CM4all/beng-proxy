@@ -309,9 +309,9 @@ istream_as_fd(istream_t _istream)
 
     if (fd < 0)
         istream->reading = false;
+#endif
 
     return fd;
-#endif
 }
 
 static inline void
