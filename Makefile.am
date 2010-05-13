@@ -861,6 +861,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/resource-address.c src/uri-address.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
 	src/uri-verify.c src/uri-extract.c \
+	src/html-escape.c src/istream-html-escape.c \
 	src/format.c
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \

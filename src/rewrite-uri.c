@@ -10,6 +10,8 @@
 #include "strref-pool.h"
 #include "uri-parser.h"
 #include "uri-extract.h"
+#include "tpool.h"
+#include "html-escape.h"
 
 /*
  * The "real" rewriting code
@@ -179,6 +181,7 @@ class_lookup_callback(void *ctx)
     struct rewrite_widget_uri *rwu = ctx;
     istream_t istream;
 
+    bool escape = false;
     if (rwu->widget->class != NULL) {
         const char *uri;
 
@@ -190,21 +193,38 @@ class_lookup_callback(void *ctx)
             }
         }
 
+        struct pool_mark mark;
+        struct strref unescaped;
+        if (rwu->value != NULL && strref_chr(rwu->value, '&') != NULL) {
+            pool_mark(tpool, &mark);
+            char *unescaped2 = strref_set_dup(tpool, &unescaped, rwu->value);
+            unescaped.length = html_unescape_inplace(unescaped2, unescaped.length);
+            rwu->value = &unescaped;
+        }
+
         uri = do_rewrite_widget_uri(rwu->pool,
                                     rwu->absolute_uri,
                                     rwu->external_uri, rwu->untrusted_host,
                                     rwu->args, rwu->widget,
                                     rwu->value, rwu->mode, rwu->stateful);
+
+        if (rwu->value == &unescaped)
+            pool_rewind(tpool, &mark);
+
         if (uri != NULL) {
             strref_set_c(&rwu->s, uri);
             rwu->value = &rwu->s;
+            escape = true;
         }
     }
 
-    if (rwu->value != NULL)
+    if (rwu->value != NULL) {
         istream = istream_memory_new(rwu->pool,
                                      rwu->value->data, rwu->value->length);
-    else
+
+        if (escape)
+            istream = istream_html_escape_new(rwu->pool, istream);
+    } else
         istream = istream_null_new(rwu->pool);
 
     istream_delayed_set(rwu->delayed,
@@ -234,12 +254,27 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
     const char *uri;
 
     if (widget->class != NULL) {
+        struct pool_mark mark;
+        struct strref unescaped;
+        if (value != NULL && strref_chr(value, '&') != NULL) {
+            pool_mark(tpool, &mark);
+            char *unescaped2 = strref_set_dup(tpool, &unescaped, value);
+            unescaped.length = html_unescape_inplace(unescaped2, unescaped.length);
+            value = &unescaped;
+        }
+
         uri = do_rewrite_widget_uri(pool, absolute_uri, external_uri, untrusted_host,
                                     args, widget, value, mode, stateful);
+        if (value == &unescaped)
+            pool_rewind(tpool, &mark);
+
         if (uri == NULL)
             return NULL;
 
-        return istream_string_new(pool, uri);
+        istream_t istream = istream_string_new(pool, uri);
+        istream = istream_html_escape_new(pool, istream);
+
+        return istream;
     } else {
         struct rewrite_widget_uri *rwu = p_malloc(pool, sizeof(*rwu));
 

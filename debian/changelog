@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.8) unstable; urgency=low
   * fork: support passing stdin istream fd to child process
   * http-cache: discard only matching entries on POST
   * istream-html-escape: escape single and double quote
+  * rewrite-uri: escape the result with XML entities
 
  --
 
