@@ -28,8 +28,20 @@ html_escape_next_special(const char *data, const char *end,
             *entity_r = "&lt;";
             return data;
 
+        case '>':
+            *entity_r = "&gt;";
+            return data;
+
         case '&':
             *entity_r = "&amp;";
+            return data;
+
+        case '"':
+            *entity_r = "&quot;";
+            return data;
+
+        case '\'':
+            *entity_r = "&apos;";
             return data;
         }
 
