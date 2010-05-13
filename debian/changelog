@@ -8,6 +8,20 @@ cm4all-beng-proxy (0.8) unstable; urgency=low
 
  --
 
+cm4all-beng-proxy (0.7.36) unstable; urgency=low
+
+  * http-client: fixed NULL pointer dereference
+  * handler, response: removed duplicate request body destruction calls
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 11 May 2010 17:16:36 +0200
+
+cm4all-beng-proxy (0.7.35) unstable; urgency=low
+
+  * {http,fcgi,ajp}-request: close the request body on abort
+  * handler: set fake translation response on malformed URI
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 10 May 2010 11:22:23 +0200
+
 cm4all-beng-proxy (0.7.34) unstable; urgency=low
 
   * translate: check the UNTRUSTED packet

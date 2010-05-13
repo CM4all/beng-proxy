@@ -90,6 +90,7 @@ ISTREAM_SRC = \
 HDR = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
+	src/abort-close.h \
 	src/abort-flag.h \
 	src/abort-unref.h \
 	src/access-log.h \
@@ -383,6 +384,7 @@ SRC = src/main.c \
 	src/stock.c \
 	src/hstock.c \
 	src/pipe-stock.c \
+	src/abort-close.c \
 	src/abort-unref.c \
 	src/abort-flag.c \
 	src/tpool.c \

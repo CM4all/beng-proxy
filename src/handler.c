@@ -86,7 +86,6 @@ translate_callback(const struct translate_response *response,
          response->www_authenticate == NULL &&
          response->bounce == NULL &&
          response->redirect == NULL)) {
-        request_discard_body(request);
         response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
@@ -183,28 +182,22 @@ translate_callback(const struct translate_response *response,
     } else if (response->address.type == RESOURCE_ADDRESS_FASTCGI) {
         fcgi_handler(request);
     } else if (response->redirect != NULL) {
-        request_discard_body(request);
-
         int status = response->status != 0
             ? response->status : HTTP_STATUS_SEE_OTHER;
         response_dispatch_redirect(request, status, response->redirect, NULL);
     } else if (response->bounce != NULL) {
-        request_discard_body(request);
         response_dispatch_redirect(request, HTTP_STATUS_SEE_OTHER,
                                    bounce_uri(request->request->pool, request,
                                               response),
                                    NULL);
     } else if (response->status != (http_status_t)0) {
-        request_discard_body(request);
         response_dispatch(request, response->status, NULL, NULL);
     } else if (response->www_authenticate != NULL) {
-        request_discard_body(request);
         response_dispatch_message(request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
     } else {
         daemon_log(2, "empty response from translation server\n");
 
-        request_discard_body(request);
         response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
     }
@@ -218,8 +211,16 @@ request_uri_parse(struct request *request2, struct parsed_uri *dest)
 
     ret = uri_parse(dest, request->uri);
     if (!ret) {
-        if (request->body != NULL)
-            istream_close(request->body);
+        /* response_dispatch() assumes that we have a translation
+           response, and will dereference it - at this point, the
+           translation server hasn't been queried yet, so we just
+           insert an empty response here */
+        static const struct translate_response tr_error = {
+            .status = -1,
+        };
+
+        request2->translate.response = &tr_error;
+        request2->translate.transformation = NULL;
 
         response_dispatch_message(request2, HTTP_STATUS_BAD_REQUEST,
                                   "Malformed URI");
@@ -367,13 +368,6 @@ handle_http_request(struct client_connection *connection,
     request2->request = request;
     request2->product_token = NULL;
 
-    ret = request_uri_parse(request2, &request2->uri);
-    if (!ret)
-        return;
-
-    assert(!strref_is_empty(&request2->uri.base));
-    assert(request2->uri.base.data[0] == '/');
-
     request2->args = NULL;
     request2->cookies = NULL;
     session_id_clear(&request2->session_id);
@@ -383,11 +377,18 @@ handle_http_request(struct client_connection *connection,
 #endif
     request2->body_consumed = false;
 
+    request2->async_ref = async_ref;
+
 #ifndef NDEBUG
     request2->response_sent = false;
 #endif
 
-    request2->async_ref = async_ref;
+    ret = request_uri_parse(request2, &request2->uri);
+    if (!ret)
+        return;
+
+    assert(!strref_is_empty(&request2->uri.base));
+    assert(request2->uri.base.data[0] == '/');
 
     request_args_parse(request2);
     request_determine_session(request2);

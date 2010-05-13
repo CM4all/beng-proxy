@@ -34,6 +34,10 @@ struct widget_resolver {
 
     struct list_head listeners;
 
+#ifndef NDEBUG
+    unsigned num_listeners;
+#endif
+
     struct async_operation_ref async_ref;
 };
 
@@ -56,8 +60,16 @@ wrl_abort(struct async_operation *ao)
     struct widget_resolver *resolver = listener->resolver;
 
     assert(resolver->widget->resolver == resolver);
+    assert(!list_empty(&resolver->listeners));
+
+    assert(resolver->num_listeners > 0);
+#ifndef NDEBUG
+    --resolver->num_listeners;
+#endif
 
     list_remove(&listener->siblings);
+    pool_unref(listener->pool);
+
     if (list_empty(&resolver->listeners)) {
         /* the last listener has been aborted: abort the widget
            registry */
@@ -65,8 +77,6 @@ wrl_abort(struct async_operation *ao)
         async_abort(&resolver->async_ref);
         pool_unref(resolver->pool);
     }
-
-    pool_unref(listener->pool);
 }
 
 static const struct async_operation_class listener_async_operation = {
@@ -96,10 +106,18 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
         struct widget_resolver_listener *listener =
             (struct widget_resolver_listener *)resolver->listeners.next;
 
+        assert(resolver->num_listeners > 0);
+#ifndef NDEBUG
+        --resolver->num_listeners;
+#endif
+
         list_remove(&listener->siblings);
+
         listener->callback(listener->callback_ctx);
         pool_unref(listener->pool);
     } while (!list_empty(&resolver->listeners));
+
+    assert(resolver->num_listeners == 0);
 
     pool_unref(resolver->pool);
 }
@@ -120,6 +138,10 @@ widget_resolver_alloc(pool_t pool, struct widget *widget)
     resolver->pool = pool;
     resolver->widget = widget;
     list_init(&resolver->listeners);
+
+#ifndef NDEBUG
+    resolver->num_listeners = 0;
+#endif
 
     widget->resolver = resolver;
 
@@ -167,6 +189,10 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
     listener->callback_ctx = ctx;
 
     list_add(&listener->siblings, &resolver->listeners);
+
+#ifndef NDEBUG
+    ++resolver->num_listeners;
+#endif
 
     /* finally send request to the widget registry */
 

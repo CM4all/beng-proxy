@@ -100,7 +100,6 @@ method_not_allowed(struct request *request2, const char *allow)
     header_write(headers, "content-type", "text/plain");
     header_write(headers, "allow", allow);
 
-    request_discard_body(request2);
     response_dispatch(request2, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
                       istream_string_new(request->pool,
                                          "This method is not allowed."));
@@ -132,7 +131,6 @@ file_evaluate_request(struct request *request2, const struct stat *st,
     if (p != NULL) {
         time_t t = http_date_parse(p);
         if (t != (time_t)-1 && st->st_mtime <= t) {
-            request_discard_body(request2);
             response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED, NULL, NULL);
             return false;
         }
@@ -142,7 +140,6 @@ file_evaluate_request(struct request *request2, const struct stat *st,
     if (p != NULL) {
         time_t t = http_date_parse(p);
         if (t != (time_t)-1 && st->st_mtime > t) {
-            request_discard_body(request2);
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                               NULL, NULL);
             return false;
@@ -154,7 +151,6 @@ file_evaluate_request(struct request *request2, const struct stat *st,
         make_etag(buffer, st);
 
         if (!http_list_contains(p, buffer)) {
-            request_discard_body(request2);
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                               NULL, NULL);
             return false;
@@ -163,7 +159,6 @@ file_evaluate_request(struct request *request2, const struct stat *st,
 
     p = strmap_get(request->headers, "if-none-match");
     if (p != NULL && strcmp(p, "*") == 0) {
-        request_discard_body(request2);
         response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                           NULL, NULL);
         return false;
@@ -173,7 +168,6 @@ file_evaluate_request(struct request *request2, const struct stat *st,
         make_etag(buffer, st);
 
         if (http_list_contains(p, buffer)) {
-            request_discard_body(request2);
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                               NULL, NULL);
             return false;
@@ -403,11 +397,9 @@ file_callback(struct request *request2)
     body = istream_file_stat_new(request->pool, path, &st);
     if (body == NULL) {
         if (errno == ENOENT) {
-            request_discard_body(request2);
             response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                       "The requested file does not exist.");
         } else {
-            request_discard_body(request2);
             response_dispatch_message(request2,
                                       HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                       "Internal server error");
@@ -419,7 +411,6 @@ file_callback(struct request *request2)
 
     if (!S_ISREG(st.st_mode)) {
         istream_close(body);
-        request_discard_body(request2);
         response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Not a regular file");
         return;

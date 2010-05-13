@@ -479,7 +479,7 @@ http_client_response_finished(struct http_client *client)
 
     stopwatch_event(client->stopwatch, "end");
 
-    if (!fifo_buffer_empty(client->input)) {
+    if (client->input != NULL && !fifo_buffer_empty(client->input)) {
         daemon_log(2, "excess data after HTTP response\n");
         client->keep_alive = false;
     }

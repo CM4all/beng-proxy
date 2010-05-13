@@ -118,7 +118,6 @@ response_invoke_processor(struct request *request2,
     assert(body == NULL || !istream_has_handler(body));
 
     if (body == NULL) {
-        request_discard_body(request2);
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Empty template cannot be processed");
         return;
@@ -126,7 +125,6 @@ response_invoke_processor(struct request *request2,
 
     if (!processable(response_headers)) {
         istream_close(body);
-        request_discard_body(request2);
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
@@ -151,7 +149,6 @@ response_invoke_processor(struct request *request2,
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2->translate.response->untrusted);
         istream_close(body);
-        request_discard_body(request2);
         response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;
@@ -230,6 +227,27 @@ response_invoke_processor(struct request *request2,
     */
 }
 
+/**
+ * Append response headers set by the translation server.
+ */
+static void
+translation_response_headers(struct growing_buffer *headers,
+                             const struct translate_response *tr)
+{
+    if (tr->www_authenticate != NULL)
+        header_write(headers, "www-authenticate", tr->www_authenticate);
+
+    if (tr->authentication_info != NULL)
+        header_write(headers, "authentication-info", tr->authentication_info);
+
+    if (tr->headers != NULL) {
+        strmap_rewind(tr->headers);
+
+        const struct strmap_pair *pair;
+        while ((pair = strmap_next(tr->headers)) != NULL)
+            header_write(headers, pair->key, pair->value);
+    }
+}
 
 /**
  * Generate additional response headers as needed.
@@ -247,20 +265,7 @@ more_response_headers(const struct request *request2,
                  : "beng-proxy/" VERSION);
 
     const struct translate_response *tr = request2->translate.response;
-
-    if (tr->www_authenticate != NULL)
-        header_write(headers, "www-authenticate", tr->www_authenticate);
-
-    if (tr->authentication_info != NULL)
-        header_write(headers, "authentication-info", tr->authentication_info);
-
-    if (tr->headers != NULL) {
-        strmap_rewind(tr->headers);
-
-        const struct strmap_pair *pair;
-        while ((pair = strmap_next(tr->headers)) != NULL)
-            header_write(headers, pair->key, pair->value);
-    }
+    translation_response_headers(headers, tr);
 
     return headers;
 }
@@ -529,7 +534,6 @@ response_abort(void *ctx)
 
     assert(!request->response_sent);
 
-    request_discard_body(request);
     response_dispatch_message(request,
                               HTTP_STATUS_INTERNAL_SERVER_ERROR,
                               "Internal server error");
