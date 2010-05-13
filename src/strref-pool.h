@@ -12,7 +12,7 @@
 
 #include <inline/poison.h>
 
-static __attr_always_inline void
+static __attr_always_inline char *
 strref_set_dup(pool_t pool, struct strref *dest, const struct strref *src)
 {
     assert(dest != NULL);
@@ -21,9 +21,12 @@ strref_set_dup(pool_t pool, struct strref *dest, const struct strref *src)
 
     if (src->length == 0) {
         dest->length = 0;
+        return NULL;
     } else {
         dest->length = src->length;
-        dest->data = p_memdup(pool, src->data, src->length);
+        char *p = p_memdup(pool, src->data, src->length);
+        dest->data = p;
+        return p;
     }
 }
 
