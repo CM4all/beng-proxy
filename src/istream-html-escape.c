@@ -18,6 +18,26 @@ struct istream_html_escape {
     size_t entity_left;
 };
 
+static const char *
+html_escape_next_special(const char *data, const char *end,
+                         const char **entity_r)
+{
+    while (data < end) {
+        switch (*data) {
+        case '<':
+            *entity_r = "&lt;";
+            return data;
+
+        case '&':
+            *entity_r = "&amp;";
+            return data;
+        }
+
+        ++data;
+    }
+
+    return NULL;
+}
 
 static bool
 html_escape_send_entity(struct istream_html_escape *html_escape)
@@ -54,7 +74,7 @@ static size_t
 html_escape_input_data(const void *data0, size_t length, void *ctx)
 {
     struct istream_html_escape *html_escape = ctx;
-    const char *data = data0, *lt, *amp, *control, *entity;
+    const char *data = data0, *entity;
     size_t total, nbytes;
 
     if (html_escape->entity_left > 0 && !html_escape_send_entity(html_escape))
@@ -66,16 +86,8 @@ html_escape_input_data(const void *data0, size_t length, void *ctx)
 
     do {
         /* find the next control character */
-        lt = memchr(data, '<', length);
-        amp = memchr(data, '&', length);
-
-        if (lt != NULL && (amp == NULL || amp > lt)) {
-            control = lt;
-            entity = "&lt;";
-        } else if (amp != NULL && (lt == NULL || lt > amp)) {
-            control = amp;
-            entity = "&amp;";
-        } else {
+        const char *control = html_escape_next_special(data, data + length, &entity);
+        if (control == NULL) {
             /* none found - just forward the data block to our sink */
             nbytes = istream_invoke_data(&html_escape->output, data, length);
             if (nbytes == 0 && html_escape->input == NULL)
