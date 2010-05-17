@@ -50,6 +50,15 @@ delegate_free(struct delegate *d)
 */
 
 static void
+delegate_release_socket(struct delegate_client *d, bool reuse)
+{
+    assert(d != NULL);
+    assert(d->fd >= 0);
+
+    lease_release(&d->lease_ref, reuse);
+}
+
+static void
 delegate_try_read(struct delegate_client *d);
 
 static void
@@ -93,7 +102,7 @@ delegate_try_read(struct delegate_client *d)
     if (nbytes < 0) {
         fd = -errno;
 
-        lease_release(&d->lease_ref, false);
+        delegate_release_socket(d, false);
 
         daemon_log(1, "recvmsg() failed: %s\n", strerror(errno));
         d->callback(fd, d->callback_ctx);
@@ -102,7 +111,7 @@ delegate_try_read(struct delegate_client *d)
     }
 
     if ((size_t)nbytes != sizeof(header)) {
-        lease_release(&d->lease_ref, false);
+        delegate_release_socket(d, false);
 
         daemon_log(1, "short recvmsg()\n");
         d->callback(-EWOULDBLOCK, d->callback_ctx);
@@ -111,7 +120,7 @@ delegate_try_read(struct delegate_client *d)
     }
 
     if (header.length != 0) {
-        lease_release(&d->lease_ref, false);
+        delegate_release_socket(d, false);
 
         daemon_log(1, "Invalid message length\n");
         d->callback(-EINVAL, d->callback_ctx);
@@ -122,7 +131,7 @@ delegate_try_read(struct delegate_client *d)
     if (header.command != 0) {
         /* i/o error */
 
-        lease_release(&d->lease_ref, true);
+        delegate_release_socket(d, true);
 
         d->callback(-header.command, d->callback_ctx);
         pool_unref(d->pool);
@@ -131,7 +140,7 @@ delegate_try_read(struct delegate_client *d)
 
     cmsg = CMSG_FIRSTHDR(&msg);
     if (cmsg == NULL) {
-        lease_release(&d->lease_ref, false);
+        delegate_release_socket(d, false);
 
         daemon_log(1, "No fd passed\n");
         d->callback(-EINVAL, d->callback_ctx);
@@ -140,7 +149,7 @@ delegate_try_read(struct delegate_client *d)
     }
 
     if (!cmsg->cmsg_type == SCM_RIGHTS) {
-        lease_release(&d->lease_ref, false);
+        delegate_release_socket(d, false);
 
         daemon_log(1, "got control message of unknown type %d\n",
                    cmsg->cmsg_type);
@@ -149,7 +158,7 @@ delegate_try_read(struct delegate_client *d)
         return;
     }
 
-    lease_release(&d->lease_ref, true);
+    delegate_release_socket(d, true);
 
     const int *fd_p = (const int *)CMSG_DATA(cmsg);
     fd = *fd_p;
@@ -182,7 +191,7 @@ delegate_try_write(struct delegate_client *d)
     if (nbytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
         int fd = -errno;
 
-        lease_release(&d->lease_ref, false);
+        delegate_release_socket(d, false);
 
         daemon_log(1, "failed to send to delegate: %s\n", strerror(errno));
         d->callback(fd, d->callback_ctx);
@@ -220,7 +229,7 @@ delegate_connection_abort(struct async_operation *ao)
     struct delegate_client *d = async_to_delegate_client(ao);
 
     p_event_del(&d->event, d->pool);
-    lease_release(&d->lease_ref, false);
+    delegate_release_socket(d, false);
     pool_unref(d->pool);
 }
 
@@ -256,7 +265,7 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     if (nbytes < 0) {
         fd = -errno;
 
-        lease_release(&d->lease_ref, false);
+        delegate_release_socket(d, false);
 
         daemon_log(1, "failed to send to delegate: %s\n", strerror(errno));
         callback(fd, ctx);
@@ -264,7 +273,7 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     }
 
     if ((size_t)nbytes != sizeof(header)) {
-        lease_release(&d->lease_ref, false);
+        delegate_release_socket(d, false);
 
         daemon_log(1, "short send to delegate\n");
         callback(-EWOULDBLOCK, ctx);
