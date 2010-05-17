@@ -8,7 +8,7 @@
 #include "delegate-client.h"
 #include "delegate-protocol.h"
 #include "async.h"
-#include "lease.h"
+#include "please.h"
 #include "fd-util.h"
 #include "pevent.h"
 
@@ -55,7 +55,7 @@ delegate_release_socket(struct delegate_client *d, bool reuse)
     assert(d != NULL);
     assert(d->fd >= 0);
 
-    lease_release(&d->lease_ref, reuse);
+    p_lease_release(&d->lease_ref, reuse, d->pool);
 }
 
 static void
@@ -254,7 +254,8 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     struct delegate_header header;
 
     d = p_malloc(pool, sizeof(*d));
-    lease_ref_set(&d->lease_ref, lease, lease_ctx);
+    p_lease_ref_set(&d->lease_ref, lease, lease_ctx,
+                    pool, "delegate_client_lease");
     d->fd = fd;
     d->pool = pool;
 

@@ -18,7 +18,7 @@
 #include "ajp-serialize.h"
 #include "serialize.h"
 #include "strref.h"
-#include "lease.h"
+#include "please.h"
 #include "uri-verify.h"
 
 #include <daemon/log.h>
@@ -136,7 +136,7 @@ ajp_client_release(struct ajp_client *client, bool reuse)
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
 
-    lease_release(&client->lease_ref, reuse);
+    p_lease_release(&client->lease_ref, reuse, client->pool);
     pool_unref(client->pool);
 }
 
@@ -711,7 +711,8 @@ ajp_client_request(pool_t pool, int fd,
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
     client->fd = fd;
-    lease_ref_set(&client->lease_ref, lease, lease_ctx);
+    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
+                    pool, "ajp_client_lease");
 
     event_set(&client->request.event, fd, EV_WRITE|EV_TIMEOUT,
               ajp_client_send_event_callback, client);

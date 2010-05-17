@@ -16,7 +16,7 @@
 #include "istream-internal.h"
 #include "async.h"
 #include "growing-buffer.h"
-#include "lease.h"
+#include "please.h"
 #include "uri-verify.h"
 #include "direct.h"
 #include "fd-util.h"
@@ -139,7 +139,7 @@ http_client_release_socket(struct http_client *client, bool reuse)
     p_event_del(&client->response.event, client->pool);
 
     client->fd = -1;
-    lease_release(&client->lease_ref, reuse);
+    p_lease_release(&client->lease_ref, reuse, client->pool);
 }
 
 /**
@@ -1016,7 +1016,8 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     client->pool = pool;
     client->fd = fd;
     client->fd_type = fd_type;
-    lease_ref_set(&client->lease_ref, lease, lease_ctx);
+    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
+                    pool, "http_client_lease");
 
     client->response.read_state = READ_STATUS;
     client->response.no_body = method == HTTP_METHOD_HEAD;
