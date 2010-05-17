@@ -502,6 +502,10 @@ http_cache_memcached_remove_uri(struct memcached_stock *stock,
 struct match_data {
     struct background_job job;
 
+    struct memcached_stock *stock;
+    pool_t background_pool;
+    struct background_manager *background;
+    const char *uri;
     struct strmap *headers;
 };
 
@@ -513,7 +517,13 @@ mcd_delete_filter_callback(const struct http_cache_document *document,
 
     if (document != NULL) {
         /* discard documents matching the Vary specification */
-        return !http_cache_document_fits(document, data->headers);
+        if (http_cache_document_fits(document, data->headers)) {
+            mcd_background_delete(data->stock, data->background_pool,
+                                  data->background, data->uri,
+                                  document->vary);
+            return false;
+        } else
+            return true;
     } else {
         background_manager_remove(&data->job);
         return false;
@@ -534,6 +544,10 @@ http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
 
     /* now delete all matching Vary documents */
     struct match_data *data = p_malloc(pool, sizeof(*data));
+    data->stock = stock;
+    data->background_pool = background_pool;
+    data->background = background;
+    data->uri = p_strdup(pool, uri);
     data->headers = strmap_dup(pool, headers);
 
     http_cache_choice_filter(pool, stock, uri,

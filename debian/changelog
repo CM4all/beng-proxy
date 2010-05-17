@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.1) unstable; urgency=low
 
-  * 
+  * http-cache-memcached: delete entity records on POST
 
  --
 
