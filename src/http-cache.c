@@ -111,9 +111,8 @@ struct http_cache_request {
 static void
 http_cache_memcached_put_callback(void *ctx)
 {
-    struct http_cache_request *request = ctx;
-
-    list_remove(&request->siblings);
+    struct background_job *job = ctx;
+    background_manager_remove(job);
 }
 
 static void
@@ -129,7 +128,7 @@ http_cache_put(struct http_cache_request *request)
                             request->info, request->headers, request->response.status,
                             request->response.headers, request->response.output);
     else if (request->cache->memcached_stock != NULL) {
-        list_add(&request->siblings, &request->cache->requests);
+        struct background_job *job = p_malloc(request->pool, sizeof(*job));
 
         http_cache_memcached_put(request->pool, request->cache->memcached_stock,
                                  request->cache->pool,
@@ -139,8 +138,9 @@ http_cache_put(struct http_cache_request *request)
                                  request->headers,
                                  request->response.status, request->response.headers,
                                  growing_buffer_istream(request->response.output),
-                                 http_cache_memcached_put_callback, request,
-                                 &request->async_ref);
+                                 http_cache_memcached_put_callback, job,
+                                 background_job_add(&request->cache->background,
+                                                    job));
     }
 }
 
