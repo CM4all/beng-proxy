@@ -346,6 +346,10 @@ serve_document_root_file(struct request *request2,
     tr->host = NULL;
     tr->uri = NULL;
 
+    tr->www_authenticate = NULL;
+    tr->authentication_info = NULL;
+    tr->headers = NULL;
+
     request2->resource_tag = tr->address.u.local.path;
     request2->processor_focus = process &&
         strmap_get_checked(request2->args, "focus") != NULL;
