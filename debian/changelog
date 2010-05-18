@@ -14,6 +14,13 @@ cm4all-beng-proxy (0.8) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 13 May 2010 12:34:46 +0200
 
+cm4all-beng-proxy (0.7.37) unstable; urgency=low
+
+  * *-client: implement a socket leak detector
+  * handler: initialize response header without translation server
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 18 May 2010 12:05:11 +0200
+
 cm4all-beng-proxy (0.7.36) unstable; urgency=low
 
   * http-client: fixed NULL pointer dereference

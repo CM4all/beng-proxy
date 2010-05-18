@@ -12,7 +12,7 @@
 #include "async.h"
 #include "buffered-io.h"
 #include "istream-internal.h"
-#include "lease.h"
+#include "please.h"
 #include "strutil.h"
 #include "header-parser.h"
 #include "pevent.h"
@@ -123,7 +123,7 @@ fcgi_client_release_socket(struct fcgi_client *client, bool reuse)
     p_event_del(&client->response.event, client->pool);
 
     client->fd = -1;
-    lease_release(&client->lease_ref, reuse);
+    p_lease_release(&client->lease_ref, reuse, client->pool);
 }
 
 /**
@@ -742,7 +742,8 @@ fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     client->caller_pool = caller_pool;
 
     client->fd = fd;
-    lease_ref_set(&client->lease_ref, lease, lease_ctx);
+    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
+                    pool, "fcgi_client_lease");
 
     event_set(&client->request.event, client->fd, EV_WRITE|EV_TIMEOUT,
               fcgi_client_send_event_callback, client);

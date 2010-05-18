@@ -6,7 +6,7 @@
 
 #include "memcached-client.h"
 #include "memcached-packet.h"
-#include "lease.h"
+#include "please.h"
 #include "async.h"
 #include "pevent.h"
 #include "istream-internal.h"
@@ -117,7 +117,7 @@ memcached_client_release_socket(struct memcached_client *client, bool reuse)
     p_event_del(&client->request.event, client->pool);
     p_event_del(&client->response.event, client->pool);
     client->fd = -1;
-    lease_release(&client->lease_ref, reuse);
+    p_lease_release(&client->lease_ref, reuse, client->pool);
 }
 
 /**
@@ -801,7 +801,8 @@ memcached_client_invoke(pool_t pool, int fd, enum istream_direct fd_type,
     client->pool = pool;
     client->fd = fd;
     client->fd_type = fd_type;
-    lease_ref_set(&client->lease_ref, lease, lease_ctx);
+    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
+                    pool, "memcached_client_lease");
 
     event_set(&client->request.event, client->fd, EV_WRITE|EV_TIMEOUT,
               memcached_client_send_event_callback, client);

@@ -6,7 +6,7 @@
 
 #include "translate.h"
 #include "transformation.h"
-#include "lease.h"
+#include "please.h"
 #include "growing-buffer.h"
 #include "processor.h"
 #include "async.h"
@@ -107,7 +107,7 @@ translate_client_release(struct translate_client *client, bool reuse)
     stopwatch_dump(client->stopwatch);
 
     p_event_del(&client->event, client->pool);
-    lease_release(&client->lease_ref, reuse);
+    p_lease_release(&client->lease_ref, reuse, client->pool);
     pool_unref(client->pool);
 }
 
@@ -1254,7 +1254,8 @@ translate(pool_t pool, int fd,
                                          request->uri != NULL ? request->uri
                                          : request->widget_type);
     client->fd = fd;
-    lease_ref_set(&client->lease_ref, lease, lease_ctx);
+    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
+                    pool, "translate_lease");
 
     event_set(&client->event, fd, EV_WRITE|EV_TIMEOUT,
               translate_write_event_callback, client);
