@@ -1,0 +1,2 @@
+handle SIGPIPE noprint nostop
+run

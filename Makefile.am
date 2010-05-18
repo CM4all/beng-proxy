@@ -1187,9 +1187,7 @@ pythont_DATA = \
 DEBUG_ARGS = -vvvvvD
 
 debug: src/cm4all-beng-proxy
-	rm -f /tmp/cm4all-beng-proxy.gdb
-	echo -en "handle SIGPIPE noprint nostop\nrun\n" >/tmp/cm4all-beng-proxy.gdb
-	LD_LIBRARY_PATH=/usr/lib/debug:$(LD_LIBRARY_PATH) gdb -x /tmp/cm4all-beng-proxy.gdb --args $< $(DEBUG_ARGS)
+	LD_LIBRARY_PATH=/usr/lib/debug:$(LD_LIBRARY_PATH) gdb -x gdbrun --args $< $(DEBUG_ARGS)
 
 VALGRIND_FLAGS = --leak-check=yes --show-reachable=yes
 VALGRIND_FLAGS += --track-fds=yes
