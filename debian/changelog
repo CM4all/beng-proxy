@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.38) unstable; urgency=low
 
-  * 
+  * http-server: send HTTP/1.1 declaration with "100 Continue"
 
  --
 
