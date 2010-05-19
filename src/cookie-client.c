@@ -174,7 +174,7 @@ path_matches(const char *path, const char *match)
 
 static void
 cookie_list_delete_match(struct dpool *dpool, struct list_head *head,
-                         const char *domain,
+                         const char *domain, const char *path,
                          const struct strref *name)
 {
     struct cookie *cookie, *next;
@@ -186,6 +186,9 @@ cookie_list_delete_match(struct dpool *dpool, struct list_head *head,
         next = (struct cookie *)cookie->siblings.next;
 
         if (domain_matches(domain, cookie->domain) &&
+            (cookie->path == NULL
+             ? path == NULL
+             : path_matches(cookie->path, path)) &&
             strref_cmp2(&cookie->name, name) == 0) {
             list_remove(&cookie->siblings);
             cookie_free(dpool, cookie);
@@ -256,7 +259,7 @@ parse_next_cookie(struct dpool *pool, struct strref *input)
 
 static bool
 apply_next_cookie(struct cookie_jar *jar, struct strref *input,
-                  const char *domain)
+                  const char *domain, const char *path)
 {
     assert(domain != NULL);
 
@@ -272,8 +275,16 @@ apply_next_cookie(struct cookie_jar *jar, struct strref *input,
         return false;
     }
 
+    if (path != NULL && cookie->path != NULL &&
+        !path_matches(path, cookie->path)) {
+        /* discard if path mismatch */
+        cookie_free(jar->pool, cookie);
+        return false;
+    }
+
     /* delete the old cookie */
     cookie_list_delete_match(jar->pool, &jar->cookies, cookie->domain,
+                             cookie->path,
                              &cookie->name);
 
     /* add the new one */
@@ -289,7 +300,7 @@ apply_next_cookie(struct cookie_jar *jar, struct strref *input,
 
 void
 cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
-                       const char *domain)
+                       const char *domain, const char *path)
 {
     struct strref input;
     struct pool_mark mark;
@@ -299,7 +310,7 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
     pool_mark(tpool, &mark);
 
     while (1) {
-        if (!apply_next_cookie(jar, &input, domain))
+        if (!apply_next_cookie(jar, &input, domain, path))
             break;
 
         if (strref_is_empty(&input)) {

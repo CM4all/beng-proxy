@@ -42,7 +42,8 @@ proxy_collect_cookies(struct request *request2, const struct strmap *headers,
         return;
 
     do {
-        cookie_jar_set_cookie2(session->cookies, cookies, host_and_port);
+        cookie_jar_set_cookie2(session->cookies, cookies, host_and_port,
+                               uri_path(uri));
 
         cookies = strmap_get_next(headers, key, cookies);
     } while (cookies != NULL);

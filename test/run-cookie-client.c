@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     jar = cookie_jar_new(dpool);
 
     for (i = 1; i < argc; ++i)
-        cookie_jar_set_cookie2(jar, argv[i], "foo.bar");
+        cookie_jar_set_cookie2(jar, argv[i], "foo.bar", NULL);
 
     headers = strmap_new(pool, 4);
     cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);

@@ -299,7 +299,7 @@ widget_collect_cookies(struct cookie_jar *jar, const struct strmap *headers,
     }
 
     do {
-        cookie_jar_set_cookie2(jar, cookies, host_and_port);
+        cookie_jar_set_cookie2(jar, cookies, host_and_port, NULL);
 
         cookies = strmap_get_next(headers, key, cookies);
     } while (cookies != NULL);
