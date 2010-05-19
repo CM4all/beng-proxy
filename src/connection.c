@@ -51,6 +51,7 @@ my_http_server_connection_log(struct http_server_request *request,
     struct client_connection *connection = ctx;
 
     access_log(request, connection->site_name, status, length);
+    connection->site_name = NULL;
 }
 
 static void
@@ -122,6 +123,7 @@ http_listener_callback(int fd,
     connection->instance = instance;
     connection->pool = pool;
     connection->config = &instance->config;
+    connection->site_name = NULL;
 
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;
