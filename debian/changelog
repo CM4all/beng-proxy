@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.7.38) unstable; urgency=low
   * connection: initialize "site_name", fixes crash bug
   * translation: added packet SECURE_COOKIE
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 20 May 2010 15:40:34 +0200
 
 cm4all-beng-proxy (0.7.37) unstable; urgency=low
 
