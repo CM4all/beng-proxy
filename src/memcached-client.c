@@ -573,7 +573,7 @@ memcached_client_try_read_direct(struct memcached_client *client)
         }
     } else if (unlikely(nbytes == 0)) {
         daemon_log(1, "memcached server closed the connection\n");
-        memcached_connection_close(client);
+        memcached_connection_abort_response_value(client);
     } else if (nbytes == -2 || nbytes == -3) {
         /* either the destination fd blocks (-2) or the stream (and
            the whole connection) has been closed during the direct()
@@ -583,7 +583,7 @@ memcached_client_try_read_direct(struct memcached_client *client)
     } else {
         daemon_log(1, "read error on memcached connection: %s\n",
                    strerror(errno));
-        memcached_connection_close(client);
+        memcached_connection_abort_response_value(client);
     }
 }
 
