@@ -6,6 +6,7 @@
 
 import re
 import os.path
+from twisted.python import log
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, Factory
 from beng_proxy.translation import *
@@ -25,7 +26,7 @@ coma_apps_re = re.compile(r'^/coma-apps/([-\w]+)/(\w+\.cls(?:/.*)?)$')
 
 class Translation(Protocol):
     def connectionMade(self):
-        print "Connected from", self.transport.client
+        log.msg("Connected from %s" % str(self.transport.client))
         self._request = None
         self._packet = None
 
@@ -63,7 +64,7 @@ class Translation(Protocol):
                 args = []
                 line = re.sub(r'\s+"([^"]*)"', lambda m: args.append(m.group(1)), line)
                 if not re.match(r'^\s*$', line):
-                    print "Syntax error in %s: %s" % (path, line)
+                    log.msg("Syntax error in %s: %s" % (path, line))
                     response.status(500)
                     break
 
@@ -123,7 +124,7 @@ class Translation(Protocol):
             elif line == 'filter':
                 response.packet(TRANSLATE_FILTER)
             else:
-                print "Syntax error in %s: %s" % (path, line)
+                log.msg("Syntax error in %s: %s" % (path, line))
                 response.status(500)
                 break
 
@@ -320,8 +321,8 @@ class Translation(Protocol):
         if request.widget_type is not None:
             return self._handle_widget_lookup(request.widget_type)
 
-        if request.session is not None: print "- session =", request.session
-        if request.param is not None: print "- param =", request.param
+        if request.session is not None: log.msg("- session = %s" % request.session)
+        if request.param is not None: log.msg("- param = %s" % request.param)
 
         if request.param is not None:
             # log in or log out; "real" authentification is missing
@@ -360,7 +361,7 @@ class Translation(Protocol):
                 self._request = None
                 self.transport.write(response.finish())
         else:
-            print "Invalid command without request:", packet.command
+            log.msg("Invalid command without request: %u" % packet.command)
 
     def dataReceived(self, data):
         while len(data) > 0:
@@ -373,7 +374,7 @@ class Translation(Protocol):
                 self._packet = None
 
     def connectionLost(self, reason):
-        print "Disconnected from", self.transport.client
+        log.msg("Disconnected from %s" % str(self.transport.client))
 
 factory = Factory()
 factory.protocol = Translation
@@ -395,5 +396,18 @@ if __name__ == '__main__':
         path = argv[1]
     else:
         path = '/tmp/beng-proxy-translate'
+
+    observer = log.PythonLoggingObserver()
+    observer.start()
+
+    import sys, logging
+    logger = logging.getLogger(None)
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s - %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
     reactor.listenUNIX(path, factory)
     reactor.run()

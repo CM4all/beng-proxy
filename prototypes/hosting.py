@@ -6,6 +6,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 
 import re
+from twisted.python import log
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, Factory
 from beng_proxy.translation import *
@@ -14,7 +15,7 @@ cgi_re = re.compile('\.(?:sh|rb|py|pl|cgi|php\d?)$')
 
 class Translation(Protocol):
     def connectionMade(self):
-        print "Connected from", self.transport.client
+        log.msg("Connected from %s" % str(self.transport.client))
         self._request = None
         self._packet = None
 
@@ -80,7 +81,7 @@ class Translation(Protocol):
                 self._handle_request(self._request)
                 self._request = None
         else:
-            print "Invalid command without request:", packet.command
+            log.msg("Invalid command without request: %u" % packet.command)
 
     def dataReceived(self, data):
         while len(data) > 0:
@@ -93,7 +94,7 @@ class Translation(Protocol):
                 self._packet = None
 
     def connectionLost(self, reason):
-        print "Disconnected from", self.transport.client
+        log.msg("Disconnected from %s" % str(self.transport.client))
 
 factory = Factory()
 factory.protocol = Translation
@@ -104,5 +105,18 @@ if __name__ == '__main__':
         path = argv[1]
     else:
         path = '/tmp/beng-proxy-translate'
+
+    observer = log.PythonLoggingObserver()
+    observer.start()
+
+    import sys, logging
+    logger = logging.getLogger(None)
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s - %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
     reactor.listenUNIX(path, factory)
     reactor.run()
