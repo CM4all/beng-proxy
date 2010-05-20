@@ -1066,6 +1066,9 @@ translate_handle_packet(struct translate_client *client,
         }
 
         break;
+
+    case TRANSLATE_SECURE_COOKIE:
+        break;
     }
 
     return true;

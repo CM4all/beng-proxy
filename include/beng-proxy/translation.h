@@ -89,6 +89,11 @@ enum beng_translation_command {
     TRANSLATE_HEADER = 59,
 
     TRANSLATE_UNTRUSTED_PREFIX = 60,
+
+    /**
+     * Set the "secure" flag on the session cookie.
+     */
+    TRANSLATE_SECURE_COOKIE = 61,
 };
 
 struct beng_translation_header {
