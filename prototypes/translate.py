@@ -10,6 +10,7 @@ from twisted.python import log
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, Factory
 from beng_proxy.translation import *
+from beng_proxy.translation.widget import WidgetRegistry
 
 widgets_path = '/etc/cm4all/beng/widgets'
 helpers_path = '/usr/bin'
@@ -29,106 +30,14 @@ class Translation(Protocol):
         log.msg("Connected from %s" % str(self.transport.client))
         self._request = None
         self._packet = None
+        self.widget_registry = WidgetRegistry(widgets_path)
 
     def _handle_widget_lookup(self, widget_type):
-        response = Response()
-
-        # checks on the name should be here.
-        path = os.path.join(widgets_path, widget_type)
         try:
-            f = open(path)
-        except IOError:
-            response.status(404)
-            return response
-
-        for line in f.readlines():
-            line = line.strip()
-            if line == '' or line[0] == '#':
-                continue
-            m = re.match(r'^(?:untrusted|host)\s+"(\S+)"$', line)
-            if m:
-                response.packet(TRANSLATE_UNTRUSTED, m.group(1))
-                continue
-            m = re.match(r'^untrusted_prefix\s+"(\S+)"$', line)
-            if m:
-                response.packet(TRANSLATE_UNTRUSTED_PREFIX, m.group(1))
-                continue
-            m = re.match(r'^server\s+"(\S+)"$', line)
-            if m:
-                uri = m.group(1)
-                response.proxy(uri)
-                continue
-            m = re.match(r'^pipe\s+"(\S+)"', line)
-            if m:
-                line = line[4:]
-                args = []
-                line = re.sub(r'\s+"([^"]*)"', lambda m: args.append(m.group(1)), line)
-                if not re.match(r'^\s*$', line):
-                    log.msg("Syntax error in %s: %s" % (path, line))
-                    response.status(500)
-                    break
-
-                response.pipe(*args)
-                continue
-            m = re.match(r'^cgi\s+"(\S+)"$', line)
-            if m:
-                response.packet(TRANSLATE_CGI, m.group(1))
-                continue
-            m = re.match(r'^fastcgi\s+"(\S+)"$', line)
-            if m:
-                response.packet(TRANSLATE_FASTCGI, m.group(1))
-                continue
-            m = re.match(r'^ajp\s+"(\S+)"\s+"(\S+)"$', line)
-            if m:
-                host, uri = m.group(1), m.group(2)
-                response.ajp(uri, host)
-                continue
-            m = re.match(r'^path\s+"(\S+)"$', line)
-            if m:
-                path = m.group(1)
-                response.path(path)
-                if path[-5:] == '.html' or path[-4:] == '.xml':
-                    response.content_type('text/html; charset=utf-8')
-                continue
-            m = re.match(r'^script_name\s+"(\S+)"$', line)
-            if m:
-                response.packet(TRANSLATE_SCRIPT_NAME, m.group(1))
-                continue
-            m = re.match(r'^document_root\s+"(\S+)"$', line)
-            if m:
-                response.packet(TRANSLATE_DOCUMENT_ROOT, m.group(1))
-                continue
-            m = re.match(r'^action\s+"(\S+)"$', line)
-            if m:
-                response.packet(TRANSLATE_ACTION, m.group(1))
-                continue
-            m = re.match(r'^interpreter\s+"(\S+)"$', line)
-            if m:
-                response.packet(TRANSLATE_INTERPRETER, m.group(1))
-                continue
-            m = re.match(r'^content_type\s+"([^\"]+)"$', line)
-            if m:
-                response.content_type(m.group(1))
-                continue
-            m = re.match(r'^view\s+"([-_\w]+)"$', line)
-            if m:
-                response.view(m.group(1))
-                continue
-
-            if line == 'process':
-                response.process()
-            elif line == 'container':
-                response.packet(TRANSLATE_CONTAINER)
-            elif line == 'stateful':
-                response.packet(TRANSLATE_STATEFUL)
-            elif line == 'filter':
-                response.packet(TRANSLATE_FILTER)
-            else:
-                log.msg("Syntax error in %s: %s" % (path, line))
-                response.status(500)
-                break
-
-        return response
+            return self.widget_registry.lookup(widget_type)
+        except:
+            log.err()
+            return Response().status(500)
 
     def _handle_local_file(self, path, response, delegate=False, jail=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
