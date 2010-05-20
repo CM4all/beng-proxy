@@ -29,14 +29,16 @@ class Translation(Protocol):
         self._request = None
         self._packet = None
 
-    def _handle_widget_lookup(self, widget_type, response):
+    def _handle_widget_lookup(self, widget_type):
+        response = Response()
+
         # checks on the name should be here.
         path = os.path.join(widgets_path, widget_type)
         try:
             f = open(path)
         except IOError:
             response.status(404)
-            return
+            return response
 
         for line in f.readlines():
             line = line.strip()
@@ -124,6 +126,8 @@ class Translation(Protocol):
                 print "Syntax error in %s: %s" % (path, line)
                 response.status(500)
                 break
+
+        return response
 
     def _handle_local_file(self, path, response, delegate=False, jail=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
@@ -313,6 +317,9 @@ class Translation(Protocol):
         # .... PROXY 'http://cfatest01.intern.cm-ag/filter.py'
 
     def _handle_request(self, request):
+        if request.widget_type is not None:
+            return self._handle_widget_lookup(request.widget_type)
+
         if request.session is not None: print "- session =", request.session
         if request.param is not None: print "- param =", request.param
 
@@ -339,21 +346,19 @@ class Translation(Protocol):
             response.packet(TRANSLATE_UNTRUSTED, request.host)
         response.vary(TRANSLATE_HOST)
 
-        if request.widget_type is not None:
-            self._handle_widget_lookup(request.widget_type, response)
-
         if request.uri is not None:
             self._handle_http(request.raw_uri, request.uri, request.authorization, response)
 
-        self.transport.write(response.finish())
+        return response
 
     def _handle_packet(self, packet):
         if packet.command == TRANSLATE_BEGIN:
             self._request = Request()
         elif self._request is not None:
             if self._request.packetReceived(packet):
-                self._handle_request(self._request)
+                response = self._handle_request(self._request)
                 self._request = None
+                self.transport.write(response.finish())
         else:
             print "Invalid command without request:", packet.command
 
