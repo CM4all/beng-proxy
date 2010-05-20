@@ -91,6 +91,10 @@ memcached_stock_callback(void *ctx, struct stock_item *item)
 
     if (item == NULL) {
         request->handler(-1, NULL, 0, NULL, 0, NULL, request->handler_ctx);
+
+        if (request->value != NULL)
+            istream_close(request->value);
+
         return;
     }
 
