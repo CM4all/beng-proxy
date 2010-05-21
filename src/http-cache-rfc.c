@@ -160,7 +160,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     time_t date, now, offset;
     const char *p;
 
-    if (status != HTTP_STATUS_OK || body_available == 0)
+    if (status != HTTP_STATUS_OK)
         return false;
 
     if (body_available != (off_t)-1 && body_available > cacheable_size_limit)
