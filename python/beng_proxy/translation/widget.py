@@ -4,9 +4,10 @@
 
 import re
 import os.path
+import sys
 from twisted.internet import reactor, defer
 from beng_proxy.translation.protocol import *
-from beng_proxy.translation.response import Response
+from beng_proxy.translation.dresponse import DeferredResponse
 
 class MalformedLineError(Exception):
     def __init__(self, path, line):
@@ -17,7 +18,8 @@ class MalformedLineError(Exception):
 class _Lookup:
     def __init__(self, f):
         self._f = f
-        self._response = Response()
+        self._response = DeferredResponse()
+        self.d = defer.Deferred()
 
     def _handle_line(self, line):
         response = self._response
@@ -33,8 +35,7 @@ class _Lookup:
         m = re.match(r'^server\s+"(\S+)"$', line)
         if m:
             uri = m.group(1)
-            response.proxy(uri)
-            return
+            return response.proxy(uri)
         m = re.match(r'^pipe\s+"(\S+)"', line)
         if m:
             line = line[4:]
@@ -56,8 +57,7 @@ class _Lookup:
         m = re.match(r'^ajp\s+"(\S+)"\s+"(\S+)"$', line)
         if m:
             host, uri = m.group(1), m.group(2)
-            response.ajp(uri, host)
-            return
+            return response.ajp(uri, host)
         m = re.match(r'^path\s+"(\S+)"$', line)
         if m:
             path = m.group(1)
@@ -106,8 +106,16 @@ class _Lookup:
             line = line.strip()
             if line == '' or line[0] == '#':
                 continue
-            self._handle_line(line)
-        return self._response
+            try:
+                d = self._handle_line(line)
+                if d is not None:
+                    d.addCallbacks(lambda result: self.do(), self.d.errback)
+                    break
+            except:
+                self.d.errback(sys.exc_info()[0])
+                break
+
+        return self.d
 
 def _lookup(f):
     l = _Lookup(f)
