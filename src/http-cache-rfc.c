@@ -152,6 +152,12 @@ parse_translate_time(const char *p, time_t offset)
     return t;
 }
 
+static bool
+http_status_cacheable(http_status_t status)
+{
+    return status == HTTP_STATUS_OK;
+}
+
 bool
 http_cache_response_evaluate(struct http_cache_info *info,
                              http_status_t status, const struct strmap *headers,
@@ -160,7 +166,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     time_t date, now, offset;
     const char *p;
 
-    if (status != HTTP_STATUS_OK)
+    if (!http_status_cacheable(status))
         return false;
 
     if (body_available != (off_t)-1 && body_available > cacheable_size_limit)
