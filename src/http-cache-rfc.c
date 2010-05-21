@@ -152,10 +152,18 @@ parse_translate_time(const char *p, time_t offset)
     return t;
 }
 
+/**
+ * RFC 2616 13.4
+ */
 static bool
 http_status_cacheable(http_status_t status)
 {
-    return status == HTTP_STATUS_OK;
+    return status == HTTP_STATUS_OK ||
+        status == HTTP_STATUS_NON_AUTHORITATIVE_INFORMATION ||
+        status == HTTP_STATUS_PARTIAL_CONTENT ||
+        status == HTTP_STATUS_MULTIPLE_CHOICES ||
+        status == HTTP_STATUS_MOVED_PERMANENTLY ||
+        status == HTTP_STATUS_GONE;
 }
 
 bool
