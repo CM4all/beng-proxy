@@ -7,7 +7,7 @@
 import re
 import os.path
 from twisted.python import log
-from twisted.internet import reactor
+from twisted.internet import reactor, defer
 from twisted.internet.protocol import Protocol, Factory
 from beng_proxy.translation import *
 from beng_proxy.translation.widget import WidgetRegistry
@@ -261,12 +261,24 @@ class Translation(Protocol):
 
         return response
 
+    def _success(self, result):
+        self.transport.write(result.finish())
+        self._request = None
+
+    def _fail(self, fail):
+        log.err(fail)
+        self.transport.write(Response().status(500).finish())
+        self._request = None
+
     def _handle_packet(self, packet):
         if packet.command == TRANSLATE_BEGIN:
             self._request = Request()
         elif self._request is not None:
             if self._request.packetReceived(packet):
                 response = self._handle_request(self._request)
+                if isinstance(response, defer.Deferred):
+                    response.addCallbacks(self._success, self._fail)
+                    return
                 self._request = None
                 self.transport.write(response.finish())
         else:
