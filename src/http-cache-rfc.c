@@ -70,6 +70,13 @@ http_cache_request_evaluate(pool_t pool,
         if (p != NULL)
             return NULL;
 
+        /* RFC 2616 14.8: "When a shared cache receives a request
+           containing an Authorization field, it MUST NOT return the
+           corresponding response as a reply to any other request
+           [...] */
+        if (strmap_get(headers, "authorization") != NULL)
+            return NULL;
+
         p = strmap_get(headers, "cache-control");
         if (p != NULL) {
             struct strref cc, tmp, *s;
