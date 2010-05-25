@@ -304,6 +304,9 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
+    request->response.status = status;
+    request->response.headers = strmap_dup(request->pool, headers);
+
     if (body == NULL) {
         request->response.output = NULL;
         http_cache_put(request);
@@ -320,8 +323,6 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
            cache */
         body = istream_tee_new(request->pool, body, false);
 
-        request->response.status = status;
-        request->response.headers = strmap_dup(request->pool, headers);
         request->response.length = 0;
 
         istream_assign_handler(&request->response.input,
