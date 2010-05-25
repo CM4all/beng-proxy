@@ -307,6 +307,7 @@ static const struct istream istream_gb = {
 istream_t
 growing_buffer_istream(struct growing_buffer *gb)
 {
+    assert(gb != NULL);
     assert(gb->size > 0);
 
     gb->size = 0; /* "read mode" marker for assertions */
