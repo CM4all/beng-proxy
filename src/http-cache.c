@@ -131,6 +131,10 @@ http_cache_put(struct http_cache_request *request)
     else if (request->cache->memcached_stock != NULL) {
         list_add(&request->siblings, &request->cache->requests);
 
+        istream_t value = request->response.output != NULL
+            ? growing_buffer_istream(request->response.output)
+            : NULL;
+
         http_cache_memcached_put(request->pool, request->cache->memcached_stock,
                                  request->cache->pool,
                                  &request->cache->background,
@@ -138,7 +142,7 @@ http_cache_put(struct http_cache_request *request)
                                  request->info,
                                  request->headers,
                                  request->response.status, request->response.headers,
-                                 growing_buffer_istream(request->response.output),
+                                 value,
                                  http_cache_memcached_put_callback, request,
                                  &request->async_ref);
     }
