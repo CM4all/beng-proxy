@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.7.40) unstable; urgency=low
   * http-cache: fixed NULL pointer dereference when storing empty response
     body in memcached
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 25 May 2010 15:04:44 +0200
 
 cm4all-beng-proxy (0.7.39) unstable; urgency=low
 
