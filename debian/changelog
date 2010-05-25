@@ -1,3 +1,9 @@
+cm4all-beng-proxy (0.7.40) unstable; urgency=low
+
+  * 
+
+ --
+
 cm4all-beng-proxy (0.7.39) unstable; urgency=low
 
   * memcached-stock: close value on connect failure
