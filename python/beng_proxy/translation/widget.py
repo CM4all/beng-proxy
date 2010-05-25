@@ -110,16 +110,17 @@ class _Lookup:
                 d = self._handle_line(line)
                 if d is not None:
                     d.addCallbacks(lambda result: self.do(), self.d.errback)
-                    break
+                    return
             except:
                 self.d.errback(sys.exc_info()[0])
-                break
+                return
 
-        return self.d
+        self.d.callback(self._response)
 
 def _lookup(f):
     l = _Lookup(f)
-    return l.do()
+    l.do()
+    return l.d
 
 class WidgetRegistry:
     def __init__(self, path):
