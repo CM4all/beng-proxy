@@ -305,7 +305,9 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     }
 
     request->response.status = status;
-    request->response.headers = strmap_dup(request->pool, headers);
+    request->response.headers = headers != NULL
+        ? strmap_dup(request->pool, headers)
+        : NULL;
 
     if (body == NULL) {
         request->response.output = NULL;

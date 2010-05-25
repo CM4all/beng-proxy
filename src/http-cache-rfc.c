@@ -181,7 +181,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     time_t date, now, offset;
     const char *p;
 
-    if (!http_status_cacheable(status))
+    if (!http_status_cacheable(status) || headers == NULL)
         return false;
 
     if (body_available != (off_t)-1 && body_available > cacheable_size_limit)
