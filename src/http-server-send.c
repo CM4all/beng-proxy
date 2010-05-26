@@ -27,7 +27,7 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
     connection->request.expect_100_continue = false;
 
     connection->response.istream = istream_string_new(connection->request.request->pool,
-                                                      "100 Continue\r\n\r\n");
+                                                      "HTTP/1.1 100 Continue\r\n\r\n");
     istream_handler_set(connection->response.istream,
                         &http_server_response_stream_handler, connection,
                         istream_direct_mask_to(connection->fd_type));

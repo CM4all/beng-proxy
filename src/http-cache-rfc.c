@@ -70,6 +70,13 @@ http_cache_request_evaluate(pool_t pool,
         if (p != NULL)
             return NULL;
 
+        /* RFC 2616 14.8: "When a shared cache receives a request
+           containing an Authorization field, it MUST NOT return the
+           corresponding response as a reply to any other request
+           [...] */
+        if (strmap_get(headers, "authorization") != NULL)
+            return NULL;
+
         p = strmap_get(headers, "cache-control");
         if (p != NULL) {
             struct strref cc, tmp, *s;
@@ -152,6 +159,20 @@ parse_translate_time(const char *p, time_t offset)
     return t;
 }
 
+/**
+ * RFC 2616 13.4
+ */
+static bool
+http_status_cacheable(http_status_t status)
+{
+    return status == HTTP_STATUS_OK ||
+        status == HTTP_STATUS_NON_AUTHORITATIVE_INFORMATION ||
+        status == HTTP_STATUS_PARTIAL_CONTENT ||
+        status == HTTP_STATUS_MULTIPLE_CHOICES ||
+        status == HTTP_STATUS_MOVED_PERMANENTLY ||
+        status == HTTP_STATUS_GONE;
+}
+
 bool
 http_cache_response_evaluate(struct http_cache_info *info,
                              http_status_t status, const struct strmap *headers,
@@ -160,7 +181,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     time_t date, now, offset;
     const char *p;
 
-    if (status != HTTP_STATUS_OK || body_available == 0)
+    if (!http_status_cacheable(status) || headers == NULL)
         return false;
 
     if (body_available != (off_t)-1 && body_available > cacheable_size_limit)

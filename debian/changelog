@@ -3,6 +3,7 @@ cm4all-beng-proxy (0.8.2) unstable; urgency=low
   * cookie-client: verify the cookie path
   * python: use Twisted's logging library
   * python: added a widget registry class
+  * merged release 0.7.41
 
  --
 
@@ -21,6 +22,37 @@ cm4all-beng-proxy (0.8) unstable; urgency=low
   * rewrite-uri: escape the result with XML entities
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 13 May 2010 12:34:46 +0200
+
+cm4all-beng-proxy (0.7.41) unstable; urgency=low
+
+  * http-cache: initialize response status and headers on empty body
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 25 May 2010 16:27:25 +0200
+
+cm4all-beng-proxy (0.7.40) unstable; urgency=low
+
+  * http-cache: fixed NULL pointer dereference when storing empty response
+    body in memcached
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 25 May 2010 15:04:44 +0200
+
+cm4all-beng-proxy (0.7.39) unstable; urgency=low
+
+  * memcached-stock: close value on connect failure
+  * http: implement remaining status codes
+  * http-cache: allow caching empty response body
+  * http-cache: cache status codes 203, 206, 300, 301, 410
+  * http-cache: don't cache authorized resources
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 21 May 2010 17:37:29 +0200
+
+cm4all-beng-proxy (0.7.38) unstable; urgency=low
+
+  * http-server: send HTTP/1.1 declaration with "100 Continue"
+  * connection: initialize "site_name", fixes crash bug
+  * translation: added packet SECURE_COOKIE
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 20 May 2010 15:40:34 +0200
 
 cm4all-beng-proxy (0.7.37) unstable; urgency=low
 

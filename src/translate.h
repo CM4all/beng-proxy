@@ -75,6 +75,8 @@ struct translate_response {
 
     bool discard_session;
 
+    bool secure_cookie;
+
     const char *session;
 
     const char *user;

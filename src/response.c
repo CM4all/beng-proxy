@@ -301,6 +301,8 @@ response_dispatch_direct(struct request *request2,
                               session_id_format(request2->session_id,
                                                 &request2->session_id_string),
                               "; Discard; HttpOnly; Path=/; Version=1",
+                              request2->translate.response->secure_cookie
+                              ? "; Secure" : NULL,
                               NULL));
 
         session = request_make_session(request2);

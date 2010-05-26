@@ -23,5 +23,7 @@ http_cache_document_init(struct http_cache_document *document, pool_t pool,
         : NULL;
 
     document->status = status;
-    document->headers = strmap_dup(pool, response_headers);
+    document->headers = response_headers != NULL
+        ? strmap_dup(pool, response_headers)
+        : NULL;
 }
