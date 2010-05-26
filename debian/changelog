@@ -5,7 +5,7 @@ cm4all-beng-proxy (0.8.2) unstable; urgency=low
   * python: added a widget registry class
   * merged release 0.7.41
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 26 May 2010 13:08:16 +0200
 
 cm4all-beng-proxy (0.8.1) unstable; urgency=low
 
