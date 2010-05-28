@@ -101,6 +101,13 @@ http_client_valid(const struct http_client *client)
     return client->input != NULL;
 }
 
+static inline bool
+http_client_check_direct(const struct http_client *client)
+{
+    return istream_check_direct(&client->response.body_reader.output,
+                                client->fd_type);
+}
+
 static bool
 http_client_consume_body(struct http_client *client);
 
@@ -752,7 +759,7 @@ http_client_try_read(struct http_client *client)
     assert(client->fd >= 0);
 
     if (client->response.read_state == READ_BODY &&
-        istream_check_direct(&client->response.body_reader.output, client->fd_type)) {
+        http_client_check_direct(client)) {
         if (!fifo_buffer_empty(client->input)) {
             /* there is still data in the body, which we have to
                consume before we do direct splice() */
@@ -763,8 +770,7 @@ http_client_try_read(struct http_client *client)
             /* at this point, the handler might have changed, and the
                new handler might not support "direct" transfer - check
                again */
-            if (!istream_check_direct(&client->response.body_reader.output,
-                                      client->fd_type)) {
+            if (!http_client_check_direct(client)) {
                 http_client_schedule_read(client);
                 return;
             }
