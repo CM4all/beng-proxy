@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.42) unstable; urgency=low
 
-  * 
+  * fork: check "direct" flag again after buffer flush
 
  --
 
