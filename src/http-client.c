@@ -104,6 +104,9 @@ http_client_valid(const struct http_client *client)
 static inline bool
 http_client_check_direct(const struct http_client *client)
 {
+    assert(client->fd >= 0);
+    assert(client->response.read_state == READ_BODY);
+
     return istream_check_direct(&client->response.body_reader.output,
                                 client->fd_type);
 }
@@ -662,6 +665,7 @@ http_client_try_response_direct(struct http_client *client)
 
     assert(client->fd >= 0);
     assert(client->response.read_state == READ_BODY);
+    assert(http_client_check_direct(client));
 
     nbytes = http_body_try_direct(&client->response.body_reader,
                                   client->fd, client->fd_type);
