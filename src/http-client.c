@@ -96,7 +96,7 @@ static const struct timeval http_client_timeout = {
 };
 
 static inline bool
-http_client_valid(struct http_client *client)
+http_client_valid(const struct http_client *client)
 {
     return client->input != NULL;
 }
