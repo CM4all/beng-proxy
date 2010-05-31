@@ -603,6 +603,11 @@ pool_ref_notify_impl(pool_t pool, struct pool_notify *notify TRACE_ARGS_DECL)
 {
     pool_notify(pool, notify);
     pool_ref_impl(pool TRACE_ARGS_FWD);
+
+#ifdef TRACE
+    notify->file = NULL;
+    notify->line = -1;
+#endif
 }
 
 void
@@ -610,9 +615,18 @@ pool_unref_denotify_impl(pool_t pool, struct pool_notify *notify
                          TRACE_ARGS_DECL)
 {
     assert(!notify->destroyed);
+#ifdef TRACE
+    assert(notify->file == NULL);
+    assert(notify->line == -1);
+#endif
 
     pool_denotify(notify);
     pool_unref_impl(pool TRACE_ARGS_FWD);
+
+#ifdef TRACE
+    notify->file = file;
+    notify->line = line;
+#endif
 }
 
 void

@@ -59,6 +59,11 @@ pool_unref_impl(pool_t pool TRACE_ARGS_DECL);
 struct pool_notify {
     struct list_head siblings;
     bool destroyed;
+
+#ifdef TRACE
+    const char *file;
+    int line;
+#endif
 };
 
 void
