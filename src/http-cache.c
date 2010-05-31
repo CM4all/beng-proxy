@@ -771,8 +771,6 @@ http_cache_memcached_forward(struct http_cache_request *request,
 {
     struct growing_buffer *headers2;
 
-    cache_log(4, "http_cache: miss %s\n", request->url);
-
     headers2 = request->headers == NULL
         ? NULL : headers_dup(request->pool, request->headers);
 
