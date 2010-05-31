@@ -86,7 +86,7 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
 
     p_event_consumed(&client_socket->event, client_socket->pool);
 
-    async_poison(&client_socket->operation);
+    async_operation_finished(&client_socket->operation);
 
     if (event & EV_TIMEOUT) {
         close(fd);

@@ -78,7 +78,7 @@ delegate_read_event_callback(int fd __attr_unused, short event __attr_unused,
 static void
 delegate_try_read(struct delegate_client *d)
 {
-    async_poison(&d->operation);
+    async_operation_finished(&d->operation);
 
     struct iovec iov;
     int fd;

@@ -71,7 +71,7 @@ cgi_return_response(struct cgi *cgi)
     const char *p;
     http_status_t status = HTTP_STATUS_OK;
 
-    async_poison(&cgi->async);
+    async_operation_finished(&cgi->async);
 
     headers = cgi->headers;
     cgi->headers = NULL;
