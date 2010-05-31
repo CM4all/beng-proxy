@@ -151,6 +151,8 @@ fcgi_client_abort_response_headers(struct fcgi_client *client)
 {
     assert(client->response.read_state == READ_HEADERS);
 
+    async_operation_finished(&client->async);
+
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
 
@@ -301,6 +303,8 @@ fcgi_client_consume_input(struct fcgi_client *client)
             if (at_headers && client->response.read_state == READ_BODY) {
                 /* the read_state has been switched from HEADERS to
                    BODY: we have to deliver the response now */
+
+                async_operation_finished(&client->async);
 
                 http_status_t status = HTTP_STATUS_OK;
 
@@ -487,6 +491,7 @@ fcgi_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "fcgi_client: send timeout\n");
+        async_operation_finished(&client->async);
         http_response_handler_invoke_abort(&client->handler);
         fcgi_client_release(client, false);
         return;

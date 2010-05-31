@@ -154,6 +154,8 @@ memcached_connection_abort_response_header(struct memcached_client *client)
            client->response.read_state == READ_EXTRAS ||
            client->response.read_state == READ_KEY);
 
+    async_operation_finished(&client->request.async);
+
     pool_ref(client->pool);
 
     memcached_client_release(client, false);
@@ -387,6 +389,8 @@ memcached_consume_key(struct memcached_client *client)
         memcached_connection_abort_response_header(client);
         return false;
     }
+
+    async_operation_finished(&client->request.async);
 
     if (client->response.remaining > 0) {
         /* there's a value: pass it to the callback, continue

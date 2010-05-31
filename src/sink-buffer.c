@@ -77,6 +77,7 @@ sink_buffer_input_eof(void *ctx)
 
     assert(buffer->position == buffer->size);
 
+    async_operation_finished(&buffer->async_operation);
     buffer->callback(buffer->data, buffer->size, buffer->callback_ctx);
 
 }
@@ -86,6 +87,7 @@ sink_buffer_input_abort(void *ctx)
 {
     struct sink_buffer *buffer = ctx;
 
+    async_operation_finished(&buffer->async_operation);
     buffer->callback(NULL, 0, buffer->callback_ctx);
 }
 

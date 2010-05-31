@@ -111,6 +111,7 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
     struct tcp_stock_connection *connection = ctx;
 
     async_ref_clear(&connection->client_socket);
+    async_operation_finished(&connection->create_operation);
 
     if (err == 0) {
         assert(fd >= 0);
@@ -182,6 +183,8 @@ tcp_stock_create(void *ctx, struct stock_item *item,
                           &connection->client_socket);
     } else if (uri[0] != '/') {
         daemon_log(1, "address missing for '%s'\n", uri);
+
+        async_operation_finished(&connection->create_operation);
         stock_item_failed(item);
     } else {
         /* HTTP over Unix socket */
@@ -192,6 +195,8 @@ tcp_stock_create(void *ctx, struct stock_item *item,
 
         if (path_length >= sizeof(sun.sun_path)) {
             daemon_log(1, "client_socket_new() failed: unix socket path is too long\n");
+
+            async_operation_finished(&connection->create_operation);
             stock_item_failed(item);
             return;
         }

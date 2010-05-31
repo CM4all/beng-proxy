@@ -113,6 +113,7 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
 
         list_remove(&listener->siblings);
 
+        async_operation_finished(&listener->operation);
         listener->callback(listener->callback_ctx);
         pool_unref(listener->pool);
     } while (!list_empty(&resolver->listeners));

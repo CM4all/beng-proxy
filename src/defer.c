@@ -33,6 +33,8 @@ defer_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 {
     struct defer *d = ctx;
 
+    async_operation_finished(&d->operation);
+
     d->callback(d->callback_ctx);
 
     pool_unref(d->pool);

@@ -32,6 +32,8 @@ sink_gstring_input_eof(void *ctx)
 {
     struct sink_gstring *sg = ctx;
 
+    async_operation_finished(&sg->async_operation);
+
     sg->callback(sg->value, sg->callback_ctx);
 }
 
@@ -39,6 +41,8 @@ static void
 sink_gstring_input_abort(void *ctx)
 {
     struct sink_gstring *sg = ctx;
+
+    async_operation_finished(&sg->async_operation);
 
     g_string_free(sg->value, true);
     sg->callback(NULL, sg->callback_ctx);
