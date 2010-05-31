@@ -115,7 +115,6 @@ sink_buffer_abort(struct async_operation *ao)
 
     pool_ref(buffer->pool);
     istream_close_handler(buffer->input);
-    buffer->callback(NULL, 0, buffer->callback_ctx);
     pool_unref(buffer->pool);
 }
 

@@ -71,7 +71,6 @@ sink_gstring_async_abort(struct async_operation *ao)
 
     pool_ref(sg->pool);
     istream_close_handler(sg->input);
-    sg->callback(NULL, sg->callback_ctx);
     pool_unref(sg->pool);
 }
 
