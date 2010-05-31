@@ -768,7 +768,10 @@ memcached_client_request_abort(struct async_operation *ao)
            client->response.read_state == READ_EXTRAS ||
            client->response.read_state == READ_KEY);
 
-    memcached_connection_abort_response_header(client);
+    if (client->request.istream != NULL)
+        istream_free_handler(&client->request.istream);
+
+    memcached_client_release(client, false);
 }
 
 static const struct async_operation_class memcached_client_async_operation = {
