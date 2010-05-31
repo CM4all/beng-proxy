@@ -46,21 +46,13 @@ struct async_operation {
 #ifndef NDEBUG
     bool finished;
 
-    int aborted;
+    bool aborted;
 #endif
 };
 
 struct async_operation_ref {
     struct async_operation *operation;
 };
-
-static inline void
-async_poison(struct async_operation *ao __attr_unused)
-{
-#ifndef NDEBUG
-    ao->aborted = -1;
-#endif
-}
 
 static inline void
 async_init(struct async_operation *ao,
@@ -70,7 +62,7 @@ async_init(struct async_operation *ao,
 
 #ifndef NDEBUG
     ao->finished = false;
-    ao->aborted = 0;
+    ao->aborted = false;
 #endif
 }
 
@@ -136,7 +128,7 @@ async_operation_abort(struct async_operation *ao)
     assert(!ao->aborted);
 
 #ifndef NDEBUG
-    ao->aborted = 1;
+    ao->aborted = true;
 #endif
 
     ao->class.abort(ao);
