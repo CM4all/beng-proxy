@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.8.3) unstable; urgency=low
   * file-handler: implement If-Range (RFC 2616 14.27)
   * merged release 0.7.42
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 01 Jun 2010 16:17:13 +0200
 
 cm4all-beng-proxy (0.8.2) unstable; urgency=low
 
