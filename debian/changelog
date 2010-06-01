@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.3) unstable; urgency=low
 
-  * 
+  * file-handler: implement If-Range (RFC 2616 14.27)
 
  --
 

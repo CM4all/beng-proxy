@@ -105,6 +105,24 @@ method_not_allowed(struct request *request2, const char *allow)
                                          "This method is not allowed."));
 }
 
+/**
+ * Verifies the If-Range request header (RFC 2616 14.27).
+ */
+static bool
+check_if_range(const char *if_range, const struct stat *st)
+{
+    if (if_range == NULL)
+        return true;
+
+    time_t t = http_date_parse(if_range);
+    if (t != (time_t)-1)
+        return st->st_mtime == t;
+
+    char etag[64];
+    make_etag(etag, st);
+    return strcmp(if_range, etag) == 0;
+}
+
 bool
 file_evaluate_request(struct request *request2, const struct stat *st,
                       struct file_request *file_request)
@@ -121,7 +139,8 @@ file_evaluate_request(struct request *request2, const struct stat *st,
         !request_transformation_enabled(request2)) {
         p = strmap_get(request->headers, "range");
 
-        if (p != NULL)
+        if (p != NULL &&
+            check_if_range(strmap_get(request->headers, "if-range"), st))
             file_request->range =
                 parse_range_header(p, &file_request->skip,
                                    &file_request->size);
