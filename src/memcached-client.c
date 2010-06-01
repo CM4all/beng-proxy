@@ -85,6 +85,15 @@ memcached_connection_valid(const struct memcached_client *client)
     return client->response.input != NULL;
 }
 
+static inline bool
+memcached_client_check_direct(const struct memcached_client *client)
+{
+    assert(client->fd >= 0);
+    assert(client->response.read_state == READ_VALUE);
+
+    return istream_check_direct(&client->response.value, client->fd_type);
+}
+
 static void
 memcached_client_schedule_read(struct memcached_client *client)
 {
@@ -144,6 +153,8 @@ memcached_connection_abort_response_header(struct memcached_client *client)
     assert(client->response.read_state == READ_HEADER ||
            client->response.read_state == READ_EXTRAS ||
            client->response.read_state == READ_KEY);
+
+    async_operation_finished(&client->request.async);
 
     pool_ref(client->pool);
 
@@ -238,7 +249,7 @@ istream_memcached_read(istream_t istream)
     if (!fifo_buffer_empty(client->response.input))
         memcached_consume_value(client);
     else if (client->response.read_state == READ_VALUE &&
-             istream_check_direct(&client->response.value, client->fd_type))
+             memcached_client_check_direct(client))
         memcached_client_try_read_direct(client);
     else if (memcached_client_fill_buffer(client))
         memcached_consume_value(client);
@@ -378,6 +389,8 @@ memcached_consume_key(struct memcached_client *client)
         memcached_connection_abort_response_header(client);
         return false;
     }
+
+    async_operation_finished(&client->request.async);
 
     if (client->response.remaining > 0) {
         /* there's a value: pass it to the callback, continue
@@ -602,7 +615,7 @@ memcached_client_try_direct(struct memcached_client *client)
         /* at this point, the handler might have changed, and the new
            handler might not support "direct" transfer - check
            again */
-        if (!istream_check_direct(&client->response.value, client->fd_type)) {
+        if (!memcached_client_check_direct(client)) {
             memcached_client_schedule_read(client);
             return;
         }
@@ -655,7 +668,7 @@ memcached_client_recv_event_callback(G_GNUC_UNUSED int fd, short event,
     p_event_consumed(&client->response.event, client->pool);
 
     if (client->response.read_state == READ_VALUE &&
-        istream_check_direct(&client->response.value, client->fd_type))
+        memcached_client_check_direct(client))
         memcached_client_try_direct(client);
     else
         memcached_client_try_read_buffered(client);
@@ -759,7 +772,10 @@ memcached_client_request_abort(struct async_operation *ao)
            client->response.read_state == READ_EXTRAS ||
            client->response.read_state == READ_KEY);
 
-    memcached_connection_abort_response_header(client);
+    if (client->request.istream != NULL)
+        istream_free_handler(&client->request.istream);
+
+    memcached_client_release(client, false);
 }
 
 static const struct async_operation_class memcached_client_async_operation = {

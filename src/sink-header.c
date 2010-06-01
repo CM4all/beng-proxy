@@ -48,6 +48,8 @@ header_invoke_callback(struct sink_header *header, size_t consumed)
 {
     assert(header->state == SIZE || header->state == HEADER);
 
+    async_operation_finished(&header->async_operation);
+
     pool_ref(header->output.pool);
 
     /* the base value has been set by sink_header_input_data() */
@@ -90,6 +92,7 @@ header_consume_size(struct sink_header *header,
     header->size = g_ntohl(*size_p);
     if (header->size > 0x100000) {
         /* header too large */
+        async_operation_finished(&header->async_operation);
         istream_close_handler(header->input);
         header->callback(NULL, 0, NULL, header->callback_ctx);
         istream_deinit(&header->output);
@@ -211,6 +214,7 @@ sink_header_input_eof(void *ctx)
     switch (header->state) {
     case SIZE:
     case HEADER:
+        async_operation_finished(&header->async_operation);
         header->callback(NULL, 0, NULL, header->callback_ctx);
         istream_deinit(&header->output);
         break;
@@ -233,6 +237,7 @@ sink_header_input_abort(void *ctx)
     switch (header->state) {
     case SIZE:
     case HEADER:
+        async_operation_finished(&header->async_operation);
         header->callback(NULL, 0, NULL, header->callback_ctx);
         istream_deinit(&header->output);
         break;

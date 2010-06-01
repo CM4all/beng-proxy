@@ -288,6 +288,8 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
+    async_operation_finished(&request->operation);
+
     if (request->document != NULL)
         http_cache_remove(request->cache, request->url, request->document);
 
@@ -375,6 +377,7 @@ http_cache_response_abort(void *ctx)
     if (request->document != NULL && request->cache->cache != NULL)
         http_cache_unlock(request->cache, request->document);
 
+    async_operation_finished(&request->operation);
     http_response_handler_invoke_abort(&request->handler);
     pool_unref_denotify(request->caller_pool,
                         &request->caller_pool_notify);
@@ -597,6 +600,7 @@ http_cache_memcached_serve(struct http_cache_request *request)
 {
     cache_log(4, "http_cache: serve %s\n", request->url);
 
+    async_operation_finished(&request->operation);
     http_response_handler_invoke_response(&request->handler,
                                           request->document->status,
                                           request->document->headers,
@@ -791,6 +795,7 @@ http_cache_memcached_miss(struct http_cache_request *request)
     struct http_cache_info *info = request->info;
 
     if (info->only_if_cached) {
+        async_operation_finished(&request->operation);
         http_response_handler_invoke_response(&request->handler,
                                               HTTP_STATUS_GATEWAY_TIMEOUT,
                                               NULL, NULL);
@@ -828,6 +833,7 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
 
         pool_ref(request->pool);
 
+        async_operation_finished(&request->operation);
         http_response_handler_invoke_response(&request->handler,
                                               document->status,
                                               document->headers,

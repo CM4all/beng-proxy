@@ -78,8 +78,12 @@ struct linear_pool_area {
 #ifdef DEBUG_POOL_REF
 struct pool_ref {
     struct list_head list_head;
+
+#ifdef TRACE
     const char *file;
     unsigned line;
+#endif
+
     unsigned count;
 };
 #endif
@@ -482,8 +486,7 @@ pool_destroy(pool_t pool, pool_t reparent_to)
 
 #ifdef DEBUG_POOL_REF
 static void
-pool_increment_ref(pool_t pool, struct list_head *list,
-                   const char *file, unsigned line)
+pool_increment_ref(pool_t pool, struct list_head *list TRACE_ARGS_DECL)
 {
     struct pool_ref *ref;
 
@@ -495,15 +498,21 @@ pool_increment_ref(pool_t pool, struct list_head *list,
         assert(ref->list_head.next->prev == &ref->list_head);
         assert(ref->list_head.prev->next == &ref->list_head);
 
+#ifdef TRACE
         if (ref->line == line && strcmp(ref->file, file) == 0) {
             ++ref->count;
             return;
         }
+#endif
     }
 
     ref = xmalloc(sizeof(*ref));
+
+#ifdef TRACE
     ref->file = file;
     ref->line = line;
+#endif
+
     ref->count = 1;
     list_add(&ref->list_head, list);
 }
@@ -513,9 +522,11 @@ pool_increment_ref(pool_t pool, struct list_head *list,
 static void
 pool_dump_refs(pool_t pool)
 {
-    const struct pool_ref *ref;
     daemon_log(0, "pool '%s'[%p](%u) REF:\n", pool->name,
                (const void*)pool, pool->ref);
+
+#ifdef TRACE
+    const struct pool_ref *ref;
     for (ref = (const struct pool_ref *)pool->refs.next;
          &ref->list_head != &pool->refs;
          ref = (const struct pool_ref *)ref->list_head.next) {
@@ -527,6 +538,7 @@ pool_dump_refs(pool_t pool)
          ref = (const struct pool_ref *)ref->list_head.next) {
         daemon_log(0, "\t%s:%u %u\n", ref->file, ref->line, ref->count);
     }
+#endif
 }
 #endif
 
@@ -541,7 +553,7 @@ pool_ref_impl(pool_t pool TRACE_ARGS_DECL)
 #endif
 
 #ifdef DEBUG_POOL_REF
-    pool_increment_ref(pool, &pool->refs, file, line);
+    pool_increment_ref(pool, &pool->refs TRACE_ARGS_FWD);
 #endif
 }
 
@@ -556,7 +568,7 @@ pool_unref_impl(pool_t pool TRACE_ARGS_DECL)
 #endif
 
 #ifdef DEBUG_POOL_REF
-    pool_increment_ref(pool, &pool->unrefs, file, line);
+    pool_increment_ref(pool, &pool->unrefs TRACE_ARGS_FWD);
 #endif
 
     if (unlikely(pool->ref == 0)) {
@@ -591,6 +603,11 @@ pool_ref_notify_impl(pool_t pool, struct pool_notify *notify TRACE_ARGS_DECL)
 {
     pool_notify(pool, notify);
     pool_ref_impl(pool TRACE_ARGS_FWD);
+
+#ifdef TRACE
+    notify->file = NULL;
+    notify->line = -1;
+#endif
 }
 
 void
@@ -598,9 +615,18 @@ pool_unref_denotify_impl(pool_t pool, struct pool_notify *notify
                          TRACE_ARGS_DECL)
 {
     assert(!notify->destroyed);
+#ifdef TRACE
+    assert(notify->file == NULL);
+    assert(notify->line == -1);
+#endif
 
     pool_denotify(notify);
     pool_unref_impl(pool TRACE_ARGS_FWD);
+
+#ifdef TRACE
+    notify->file = file;
+    notify->line = line;
+#endif
 }
 
 void

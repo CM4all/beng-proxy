@@ -1004,6 +1004,7 @@ processor_parser_eof(void *ctx, off_t length __attr_unused)
         istream_replace_finish(processor->replace);
 
     if (processor->container->from_request.proxy_ref != NULL) {
+        async_operation_finished(&processor->async);
         http_response_handler_invoke_message(&processor->response_handler, processor->pool,
                                              HTTP_STATUS_NOT_FOUND,
                                              "Widget not found");
@@ -1021,6 +1022,7 @@ processor_parser_abort(void *ctx)
     processor->parser = NULL;
 
     if (processor->container->from_request.proxy_ref != NULL) {
+        async_operation_finished(&processor->async);
         http_response_handler_invoke_abort(&processor->response_handler);
         pool_unref(processor->caller_pool);
     }

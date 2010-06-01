@@ -116,6 +116,7 @@ translate_client_abort(struct translate_client *client)
 {
     stopwatch_event(client->stopwatch, "error");
 
+    async_operation_finished(&client->async);
     client->callback(&error, client->callback_ctx);
     translate_client_release(client, false);
 }
@@ -478,6 +479,7 @@ translate_handle_packet(struct translate_client *client,
     switch ((enum beng_translation_command)command) {
     case TRANSLATE_END:
         stopwatch_event(client->stopwatch, "end");
+        async_operation_finished(&client->async);
         client->callback(&client->response, client->callback_ctx);
         translate_client_release(client, true);
         return false;

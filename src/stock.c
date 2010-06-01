@@ -161,6 +161,7 @@ stock_retry_waiting(struct stock *stock)
         if (list_empty(&stock->waiting))
             return;
 
+        async_operation_finished(&waiting->operation);
         list_remove(&waiting->siblings);
 
         if (stock_get_idle(stock, waiting->callback, waiting->callback_ctx))
@@ -181,6 +182,7 @@ stock_retry_waiting(struct stock *stock)
         if (list_empty(&stock->waiting))
             return;
 
+        async_operation_finished(&waiting->operation);
         list_remove(&waiting->siblings);
         stock_get_create(stock, waiting->pool, waiting->info,
                          waiting->callback, waiting->callback_ctx,

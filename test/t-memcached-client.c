@@ -62,7 +62,7 @@ struct context {
     bool close_value_early, close_value_late, close_value_data;
     struct async_operation_ref async_ref;
     int fd;
-    bool released, reuse;
+    bool released, reuse, got_response;
     enum memcached_response_status status;
 
     istream_t delayed;
@@ -253,6 +253,9 @@ on_memcached_response(enum memcached_response_status status,
 {
     struct context *c = ctx;
 
+    assert(!c->got_response);
+
+    c->got_response = true;
     c->status = status;
 
     if (c->close_value_early)
@@ -398,6 +401,7 @@ test_abort(pool_t pool, struct context *c)
 
     async_abort(&c->async_ref);
 
+    assert(!c->got_response);
     assert(c->released);
     assert(!c->reuse);
     assert(c->fd < 0);

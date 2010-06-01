@@ -148,6 +148,7 @@ ajp_connection_close(struct ajp_client *client)
 
         switch (client->response.read_state) {
         case READ_BEGIN:
+            async_operation_finished(&client->request.async);
             http_response_handler_invoke_abort(&client->request.handler);
             client->response.read_state = READ_END;
             break;
@@ -268,6 +269,8 @@ ajp_consume_send_headers(struct ajp_client *client,
         client->response.chunk_length = 0;
         client->response.junk_length = 0;
     }
+
+    async_operation_finished(&client->request.async);
 
     client->response.in_handler = true;
     http_response_handler_invoke_response(&client->request.handler, status,

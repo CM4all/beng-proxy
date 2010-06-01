@@ -175,6 +175,11 @@ static const struct istream_handler fork_input_handler = {
     .abort = fork_input_abort,
 };
 
+static bool
+fork_check_direct(const struct fork *f)
+{
+    return istream_check_direct(&f->output, ISTREAM_PIPE);
+}
 
 /*
  * event for fork.output_fd
@@ -185,7 +190,7 @@ fork_read_from_output(struct fork *f)
 {
     ssize_t nbytes;
 
-    if (!istream_check_direct(&f->output, ISTREAM_PIPE)) {
+    if (!fork_check_direct(f)) {
         if (f->buffer == NULL)
             f->buffer = fifo_buffer_new(f->output.pool, 1024);
 
@@ -218,6 +223,15 @@ fork_read_from_output(struct fork *f)
             /* there's data left in the buffer, which must be consumed
                before we can switch to "direct" transfer */
             return;
+
+        /* at this point, the handler might have changed inside
+           istream_buffer_consume(), and the new handler might not
+           support "direct" transfer - check again */
+        if (!fork_check_direct(f)) {
+            p_event_add(&f->output_event, NULL,
+                        f->output.pool, "fork_output_event");
+            return;
+        }
 
         nbytes = istream_invoke_direct(&f->output, ISTREAM_PIPE,
                                        f->output_fd, INT_MAX);
