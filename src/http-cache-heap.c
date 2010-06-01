@@ -80,13 +80,16 @@ http_cache_heap_put(struct cache *cache, pool_t pool, const char *url,
         expires = info->expires;
 
     cache_item_init(&item->item, expires,
-                    http_cache_item_base_size + growing_buffer_size(body));
+                    http_cache_item_base_size +
+                    (body != NULL ? growing_buffer_size(body) : 0));
 
     item->pool = pool;
 
     http_cache_document_init(&item->document, pool, info,
                              request_headers, status, response_headers);
-    item->data = growing_buffer_dup(body, pool, &item->size);
+    item->data = body != NULL
+        ? growing_buffer_dup(body, pool, &item->size)
+        : NULL;
 
     cache_put_match(cache, p_strdup(pool, url),
                     &item->item,
