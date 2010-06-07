@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 struct http_client {
     pool_t pool, caller_pool;
@@ -274,6 +275,36 @@ http_client_response_stream_read(istream_t istream)
         http_client_try_read(client);
 }
 
+static int
+http_client_response_stream_as_fd(istream_t istream)
+{
+    struct http_client *client = response_stream_to_http_client(istream);
+
+    assert(client != NULL);
+    assert(client->input != NULL);
+    assert(client->fd >= 0 ||
+           http_body_socket_is_done(&client->response.body_reader,
+                                    client->input));
+    assert(client->response.read_state == READ_BODY);
+    assert(http_response_handler_used(&client->request.handler));
+
+    if (client->fd < 0 || client->input == NULL ||
+        !fifo_buffer_empty(client->input) || client->keep_alive ||
+        /* must not be chunked */
+        http_body_istream(&client->response.body_reader) != client->response.body)
+        return -1;
+
+    int fd = dup(client->fd);
+    if (fd < 0)
+        return -1;
+
+    fd_set_cloexec(fd);
+
+    istream_deinit(&client->response.body_reader.output);
+    http_client_release(client, false);
+    return fd;
+}
+
 static void
 http_client_response_stream_close(istream_t istream)
 {
@@ -290,6 +321,7 @@ http_client_response_stream_close(istream_t istream)
 static const struct istream http_client_response_stream = {
     .available = http_client_response_stream_available,
     .read = http_client_response_stream_read,
+    .as_fd = http_client_response_stream_as_fd,
     .close = http_client_response_stream_close,
 };
 
