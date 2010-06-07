@@ -3,9 +3,9 @@ cm4all-beng-proxy (0.8.4) unstable; urgency=low
   * python: added missing "Response" import
   * python: resume parsing after deferred call
   * http-client: implement istream method as_fd()
-  * merged release 0.7.42
+  * merged release 0.7.44
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 07 Jun 2010 17:01:16 +0200
 
 cm4all-beng-proxy (0.8.3) unstable; urgency=low
 
