@@ -245,8 +245,15 @@ http_server_parse_headers(struct http_server_connection *connection)
         start = next;
     }
 
-    if (next == NULL)
+    if (next == NULL) {
+        if (fifo_buffer_full(connection->input)) {
+            /* the line is too large for our input buffer */
+            daemon_log(2, "http_server: request header too long\n");
+            http_server_connection_close(connection);
+        }
+
         return false;
+    }
 
     fifo_buffer_consume(connection->input, next - buffer);
     return true;
