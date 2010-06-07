@@ -103,7 +103,9 @@ class _Lookup:
             raise MalformedLineError(path, line)
 
     def do(self):
-        for line in self._f.readlines():
+        while True:
+            line = self._f.readline()
+            if len(line) == 0: break
             line = line.strip()
             if line == '' or line[0] == '#':
                 continue
