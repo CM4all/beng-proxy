@@ -121,6 +121,8 @@ static void
 http_client_schedule_read(struct http_client *client)
 {
     assert(client->fd >= 0);
+    assert(client->input != NULL);
+    assert(!fifo_buffer_full(client->input));
 
     p_event_add(&client->response.event,
                 client->request.istream != NULL
