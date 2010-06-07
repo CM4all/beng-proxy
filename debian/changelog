@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.4) unstable; urgency=low
 
-  * 
+  * python: added missing "Response" import
 
  --
 
