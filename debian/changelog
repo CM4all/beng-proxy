@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.7.44) unstable; urgency=low
   * http-client: check response header length
   * http-server: check request header length
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 07 Jun 2010 16:51:57 +0200
 
 cm4all-beng-proxy (0.7.43) unstable; urgency=low
 
