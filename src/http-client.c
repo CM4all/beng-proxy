@@ -546,10 +546,19 @@ http_client_parse_headers(struct http_client *client)
         start = next;
     }
 
-    if (end == NULL)
+    if (end == NULL) {
         /* not enough data to finish this line, let libevent handle
            this */
+
+        if (next == NULL && fifo_buffer_full(client->input)) {
+            /* the line is too large for our input buffer */
+            daemon_log(2, "http_client: response header too long\n");
+            http_client_abort_response_headers(client);
+            return false;
+        }
+
         http_client_schedule_read(client);
+    }
 
     if (next == NULL)
         /* not a single line was processed - skip the following
@@ -922,7 +931,9 @@ http_client_request_stream_eof(void *ctx)
     client->request.istream = NULL;
 
     p_event_del(&client->request.event, client->pool);
-    http_client_schedule_read(client);
+
+    if (!fifo_buffer_full(client->input))
+        http_client_schedule_read(client);
 }
 
 static void
