@@ -21,18 +21,36 @@ struct istream_tee {
      * reading for the other output.
      */
     bool reading, in_data;
+
+    /**
+     * The number of bytes to skip for output 0.  The first output has
+     * already consumed this many bytes, but the second output
+     * blocked.
+     */
+    size_t skip;
 };
 
 static size_t
-tee_feed0(struct istream_tee *tee, const void *data, size_t length)
+tee_feed0(struct istream_tee *tee, const char *data, size_t length)
 {
     if (!tee->outputs[0].enabled)
         return length;
 
+    if (length <= tee->skip)
+        /* all of this has already been sent to the first input, but
+           the second one didn't accept it yet */
+        return length;
+
+    /* skip the part which was already sent */
+    data += tee->skip;
+    length -= tee->skip;
+
     size_t nbytes = istream_invoke_data(&tee->outputs[0].istream,
                                         data, length);
-    if (nbytes > 0)
-        return nbytes;
+    if (nbytes > 0) {
+        tee->skip += nbytes;
+        return tee->skip;
+    }
 
     if (tee->outputs[0].enabled || !tee->outputs[1].enabled)
         /* first output is blocking, or both closed: give up */
@@ -51,12 +69,6 @@ tee_feed1(struct istream_tee *tee, const void *data, size_t length)
         return length;
 
     size_t nbytes = istream_invoke_data(&tee->outputs[1].istream, data, length);
-
-    /* XXX it is currently asserted that the second handler will
-       always consume all data; later, buffering should probably be
-       added */
-    assert(nbytes == length || (nbytes == 0 && !tee->outputs[1].enabled));
-
     if (nbytes == 0 && !tee->outputs[1].enabled &&
         tee->outputs[0].enabled)
         /* during the data callback, outputs[1] has been closed,
@@ -75,6 +87,11 @@ tee_feed(struct istream_tee *tee, const void *data, size_t length)
         return 0;
 
     size_t nbytes1 = tee_feed1(tee, data, nbytes0);
+    if (nbytes1 > 0 && tee->outputs[0].enabled) {
+        assert(nbytes1 <= tee->skip);
+        tee->skip -= nbytes1;
+    }
+
     return nbytes1;
 }
 
@@ -324,6 +341,7 @@ istream_tee_new(pool_t pool, istream_t input, bool fragile)
     tee->fragile = fragile;
     tee->reading = false;
     tee->in_data = false;
+    tee->skip = 0;
 
     return istream_struct_cast(&tee->outputs[0].istream);
 }

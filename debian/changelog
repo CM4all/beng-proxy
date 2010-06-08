@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.5) unstable; urgency=low
 
-  * 
+  * istream-tee: allow second output to block
 
  --
 
