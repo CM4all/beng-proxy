@@ -27,11 +27,11 @@ struct istream_tee {
 static size_t
 tee_feed(struct istream_tee *tee, const void *data, size_t length)
 {
-    size_t nbytes1, nbytes2;
+    size_t nbytes0, nbytes1;
 
     if (tee->outputs[0].enabled) {
-        nbytes1 = istream_invoke_data(&tee->outputs[0].istream, data, length);
-        if (nbytes1 == 0) {
+        nbytes0 = istream_invoke_data(&tee->outputs[0].istream, data, length);
+        if (nbytes0 == 0) {
             if (tee->outputs[0].enabled || !tee->outputs[1].enabled)
                 /* first output is blocking, or both closed: give
                    up */
@@ -40,29 +40,29 @@ tee_feed(struct istream_tee *tee, const void *data, size_t length)
             /* the first output has been closed inside the data()
                callback, but the second is still alive: continue with
                the second output */
-            nbytes1 = length;
+            nbytes0 = length;
         }
     } else
-        nbytes1 = length;
+        nbytes0 = length;
 
     if (tee->outputs[1].enabled) {
-        nbytes2 = istream_invoke_data(&tee->outputs[1].istream, data, nbytes1);
+        nbytes1 = istream_invoke_data(&tee->outputs[1].istream, data, nbytes0);
 
         /* XXX it is currently asserted that the second handler will
            always consume all data; later, buffering should probably be
            added */
-        assert(nbytes2 == nbytes1 || (nbytes2 == 0 && !tee->outputs[1].enabled));
+        assert(nbytes1 == nbytes0 || (nbytes1 == 0 && !tee->outputs[1].enabled));
 
-        if (nbytes2 == 0 && !tee->outputs[1].enabled &&
+        if (nbytes1 == 0 && !tee->outputs[1].enabled &&
             tee->outputs[0].enabled)
             /* during the data callback, outputs[1] has been closed,
                but outputs[0] continues; instead of returning 0 here,
                use outputs[0]'s result */
-            nbytes2 = nbytes1;
+            nbytes1 = nbytes0;
     } else
-        nbytes2 = nbytes1;
+        nbytes1 = nbytes0;
 
-    return nbytes2;
+    return nbytes1;
 }
 
 
