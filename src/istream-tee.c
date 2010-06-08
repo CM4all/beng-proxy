@@ -147,20 +147,20 @@ static const struct istream_handler tee_input_handler = {
 
 
 /*
- * istream implementation 1
+ * istream implementation 0
  *
  */
 
 static inline struct istream_tee *
-istream_to_tee1(istream_t istream)
+istream_to_tee0(istream_t istream)
 {
     return (struct istream_tee *)(((char*)istream) - offsetof(struct istream_tee, outputs[0].istream));
 }
 
 static off_t
-istream_tee_available1(istream_t istream, bool partial)
+istream_tee_available0(istream_t istream, bool partial)
 {
-    struct istream_tee *tee = istream_to_tee1(istream);
+    struct istream_tee *tee = istream_to_tee0(istream);
 
     assert(tee->outputs[0].enabled);
 
@@ -168,9 +168,9 @@ istream_tee_available1(istream_t istream, bool partial)
 }
 
 static void
-istream_tee_read1(istream_t istream)
+istream_tee_read0(istream_t istream)
 {
-    struct istream_tee *tee = istream_to_tee1(istream);
+    struct istream_tee *tee = istream_to_tee0(istream);
 
     assert(tee->outputs[0].enabled);
     assert(!tee->reading);
@@ -185,9 +185,9 @@ istream_tee_read1(istream_t istream)
 }
 
 static void
-istream_tee_close1(istream_t istream)
+istream_tee_close0(istream_t istream)
 {
-    struct istream_tee *tee = istream_to_tee1(istream);
+    struct istream_tee *tee = istream_to_tee0(istream);
 
     assert(tee->outputs[0].enabled);
 
@@ -209,10 +209,10 @@ istream_tee_close1(istream_t istream)
     istream_deinit(&tee->outputs[0].istream);
 }
 
-static const struct istream istream_tee1 = {
-    .available = istream_tee_available1,
-    .read = istream_tee_read1,
-    .close = istream_tee_close1,
+static const struct istream istream_tee0 = {
+    .available = istream_tee_available0,
+    .read = istream_tee_read0,
+    .close = istream_tee_close0,
 };
 
 
@@ -222,15 +222,15 @@ static const struct istream istream_tee1 = {
  */
 
 static inline struct istream_tee *
-istream_to_tee2(istream_t istream)
+istream_to_tee1(istream_t istream)
 {
     return (struct istream_tee *)(((char*)istream) - offsetof(struct istream_tee, outputs[1].istream));
 }
 
 static off_t
-istream_tee_available2(istream_t istream, bool partial)
+istream_tee_available1(istream_t istream, bool partial)
 {
-    struct istream_tee *tee = istream_to_tee2(istream);
+    struct istream_tee *tee = istream_to_tee1(istream);
 
     assert(tee->outputs[1].enabled);
 
@@ -238,9 +238,9 @@ istream_tee_available2(istream_t istream, bool partial)
 }
 
 static void
-istream_tee_read2(istream_t istream)
+istream_tee_read1(istream_t istream)
 {
-    struct istream_tee *tee = istream_to_tee2(istream);
+    struct istream_tee *tee = istream_to_tee1(istream);
 
     assert(!tee->reading);
 
@@ -254,9 +254,9 @@ istream_tee_read2(istream_t istream)
 }
 
 static void
-istream_tee_close2(istream_t istream)
+istream_tee_close1(istream_t istream)
 {
-    struct istream_tee *tee = istream_to_tee2(istream);
+    struct istream_tee *tee = istream_to_tee1(istream);
 
     assert(tee->outputs[1].enabled);
 
@@ -278,10 +278,10 @@ istream_tee_close2(istream_t istream)
     istream_deinit(&tee->outputs[1].istream);
 }
 
-static const struct istream istream_tee2 = {
-    .available = istream_tee_available2,
-    .read = istream_tee_read2,
-    .close = istream_tee_close2,
+static const struct istream istream_tee1 = {
+    .available = istream_tee_available1,
+    .read = istream_tee_read1,
+    .close = istream_tee_close1,
 };
 
 
@@ -294,12 +294,12 @@ istream_t
 istream_tee_new(pool_t pool, istream_t input, bool fragile)
 {
     struct istream_tee *tee = (struct istream_tee *)
-        istream_new(pool, &istream_tee1, sizeof(*tee));
+        istream_new(pool, &istream_tee0, sizeof(*tee));
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
-    istream_init(&tee->outputs[1].istream, &istream_tee2, tee->outputs[0].istream.pool);
+    istream_init(&tee->outputs[1].istream, &istream_tee1, tee->outputs[0].istream.pool);
 
     tee->outputs[0].enabled = true;
     tee->outputs[1].enabled = true;
@@ -318,7 +318,7 @@ istream_tee_new(pool_t pool, istream_t input, bool fragile)
 istream_t
 istream_tee_second(istream_t istream)
 {
-    struct istream_tee *tee = istream_to_tee1(istream);
+    struct istream_tee *tee = istream_to_tee0(istream);
 
     return istream_struct_cast(&tee->outputs[1].istream);
 }
