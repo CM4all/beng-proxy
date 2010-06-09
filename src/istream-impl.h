@@ -127,9 +127,14 @@ istream_head_new(pool_t pool, istream_t input, size_t size);
  * Create two new streams fed from one input.
  *
  * @param input the istream which is duplicated
+ * @param first_weak if true, closes the whole object if only the
+ * first output remains
+ * @param second_weak if true, closes the whole object if only the
+ * second output remains
  */
 istream_t
-istream_tee_new(pool_t pool, istream_t input, bool fragile);
+istream_tee_new(pool_t pool, istream_t input,
+                bool first_weak, bool second_weak);
 
 istream_t
 istream_tee_second(istream_t istream);

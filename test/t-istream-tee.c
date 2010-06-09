@@ -77,7 +77,7 @@ test_block1(pool_t pool)
     struct async_operation_ref async_ref;
 
     delayed = istream_delayed_new(pool);
-    tee = istream_tee_new(pool, delayed, false);
+    tee = istream_tee_new(pool, delayed, false, false);
     second = istream_tee_second(tee);
 
     istream_handler_set(tee, &block_istream_handler, &ctx, 0);
@@ -118,7 +118,7 @@ test_close_data(pool_t pool)
     istream_t tee, second;
     struct async_operation_ref async_ref;
 
-    tee = istream_tee_new(pool, istream_string_new(pool, "foo"), false);
+    tee = istream_tee_new(pool, istream_string_new(pool, "foo"), false, false);
 
     sink_close_new(tee);
     second = istream_tee_second(tee);

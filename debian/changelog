@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.45) unstable; urgency=low
 
-  * 
+  * istream-tee: separate "weak" values for the two outputs
 
  --
 
