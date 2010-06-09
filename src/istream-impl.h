@@ -123,6 +123,11 @@ istream_trace_new(pool_t pool, istream_t input);
 istream_t
 istream_head_new(pool_t pool, istream_t input, size_t size);
 
+/**
+ * Create two new streams fed from one input.
+ *
+ * @param input the istream which is duplicated
+ */
 istream_t
 istream_tee_new(pool_t pool, istream_t input, bool fragile);
 
