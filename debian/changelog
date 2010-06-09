@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.45) unstable; urgency=low
 
   * istream-tee: separate "weak" values for the two outputs
+  * fcache: don't close output when caching has been canceled
 
  --
 

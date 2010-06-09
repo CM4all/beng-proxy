@@ -366,7 +366,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
-        body = istream_tee_new(request->pool, body, true, true);
+        body = istream_tee_new(request->pool, body, false, true);
 
         request->response.status = status;
         request->response.headers = strmap_dup(request->pool, headers);
