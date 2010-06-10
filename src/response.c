@@ -383,6 +383,14 @@ response_apply_transformation(struct request *request2,
     }
 }
 
+static bool
+filter_enabled(const struct translate_response *tr,
+               http_status_t status)
+{
+    return http_status_is_success(status) ||
+        (http_status_is_client_error(status) && tr->filter_4xx);
+}
+
 void
 response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
@@ -396,7 +404,8 @@ response_dispatch(struct request *request2,
 
     /* if HTTP status code is not successful: don't apply
        transformation on the error document */
-    if (transformation != NULL && http_status_is_success(status)) {
+    if (transformation != NULL &&
+        filter_enabled(request2->translate.response, status)) {
         struct strmap *headers2;
 
         request2->translate.transformation = transformation->next;
