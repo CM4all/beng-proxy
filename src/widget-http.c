@@ -262,9 +262,11 @@ widget_response_transform(struct embed *embed, http_status_t status,
 }
 
 static bool
-widget_transformation_enabled(http_status_t status)
+widget_transformation_enabled(const struct widget *widget,
+                              http_status_t status)
 {
-    return http_status_is_success(status);
+    return http_status_is_success(status) ||
+        (http_status_is_client_error(status) && widget->class->filter_4xx);
 }
 
 /**
@@ -280,7 +282,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
     const struct transformation *transformation = embed->transformation;
 
     if (transformation != NULL &&
-        widget_transformation_enabled(status)) {
+        widget_transformation_enabled(embed->widget, status)) {
         /* transform this response */
 
         embed->transformation = transformation->next;

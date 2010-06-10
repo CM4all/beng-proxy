@@ -65,6 +65,7 @@ lookup_callback(const struct translate_response *response, void *ctx)
         /* compatibility with v0.7.16 */
         class->untrusted_host = response->host;
     class->stateful = response->stateful;
+    class->filter_4xx = response->filter_4xx;
     resource_address_copy(lookup->pool, &class->address, &response->address);
     class->views = response->views != NULL
         ? transformation_dup_view_chain(lookup->pool, response->views)

@@ -54,6 +54,11 @@ struct widget_class {
     bool stateful;
 
     /**
+     * Filter client error messages?
+     */
+    bool filter_4xx;
+
+    /**
      * Which request headers are forwarded?
      */
     struct header_forward_settings request_header_forward;
