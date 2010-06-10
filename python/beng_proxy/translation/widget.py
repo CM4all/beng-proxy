@@ -99,6 +99,8 @@ class _Lookup:
             response.packet(TRANSLATE_STATEFUL)
         elif line == 'filter':
             response.packet(TRANSLATE_FILTER)
+        elif line == 'filter_4xx':
+            response.packet(TRANSLATE_FILTER_4XX)
         else:
             raise MalformedLineError(path, line)
 
