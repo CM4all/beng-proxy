@@ -649,6 +649,9 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address = &transformation->u.filter;
         break;
 
+    case TRANSLATE_FILTER_4XX:
+        break;
+
     case TRANSLATE_PROCESS:
         transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_PROCESS;

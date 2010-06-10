@@ -94,6 +94,13 @@ enum beng_translation_command {
      * Set the "secure" flag on the session cookie.
      */
     TRANSLATE_SECURE_COOKIE = 61,
+
+    /**
+     * Enable filtering of client errors (status 4xx).  Without this
+     * flag, only successful responses (2xx) are filtered.  Only
+     * useful when at least one FILTER was specified.
+     */
+    TRANSLATE_FILTER_4XX = 62,
 };
 
 struct beng_translation_header {
