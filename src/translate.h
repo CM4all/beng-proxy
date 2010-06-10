@@ -77,6 +77,8 @@ struct translate_response {
 
     bool secure_cookie;
 
+    bool filter_4xx;
+
     const char *session;
 
     const char *user;

@@ -650,6 +650,7 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_FILTER_4XX:
+        client->response.filter_4xx = true;
         break;
 
     case TRANSLATE_PROCESS:

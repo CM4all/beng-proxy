@@ -139,6 +139,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->stateful = src->stateful;
     dest->discard_session = src->discard_session;
     dest->secure_cookie = src->secure_cookie;
+    dest->filter_4xx = src->filter_4xx;
     dest->session = NULL;
 
     /* The "user" attribute must not be present in cached responses,
