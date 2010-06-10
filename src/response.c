@@ -144,6 +144,11 @@ response_invoke_processor(struct request *request2,
         widget_ref_parse(request->pool,
                          strmap_get_checked(request2->args, "frame"));
 
+    if (widget->from_request.proxy_ref != NULL)
+        /* disable all following transformations, because we're doing
+           a direct proxy request to a widget */
+        request2->translate.transformation = NULL;
+
     if (request2->translate.response->untrusted != NULL &&
         widget->from_request.proxy_ref == NULL) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",

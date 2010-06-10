@@ -180,6 +180,11 @@ widget_response_process(struct embed *embed, http_status_t status,
                         struct strmap *headers, istream_t body,
                         unsigned options)
 {
+    if (embed->widget->from_request.proxy_ref != NULL)
+        /* disable all following transformations, because we're doing
+           a direct proxy request to a child widget */
+        embed->transformation = NULL;
+
     if (body == NULL) {
         daemon_log(2, "widget '%s' didn't send a response body\n",
                    widget_path(embed->widget));
