@@ -256,6 +256,12 @@ widget_response_transform(struct embed *embed, http_status_t status,
     }
 }
 
+static bool
+widget_transformation_enabled(http_status_t status)
+{
+    return http_status_is_success(status);
+}
+
 /**
  * A response was received from the widget server; apply
  * transformations (if enabled) and return it to our handler.  This
@@ -268,7 +274,8 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
 {
     const struct transformation *transformation = embed->transformation;
 
-    if (transformation != NULL) {
+    if (transformation != NULL &&
+        widget_transformation_enabled(status)) {
         /* transform this response */
 
         embed->transformation = transformation->next;
