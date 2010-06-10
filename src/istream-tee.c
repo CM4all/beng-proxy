@@ -11,10 +11,17 @@
 struct istream_tee {
     struct {
         struct istream istream;
+
+        /**
+         * A weak output is one which is closed automatically when all
+         * "strong" outputs have been closed - it will not keep up the
+         * istream_tee object alone.
+         */
+        bool weak;
+
         bool enabled;
     } outputs[2];
     istream_t input;
-    bool fragile;
 
     /**
      * These flags control whether istream_tee_close[12]() may restart
@@ -226,7 +233,7 @@ istream_tee_close0(istream_t istream)
     if (tee->input != NULL) {
         if (!tee->outputs[1].enabled)
             istream_free_handler(&tee->input);
-        else if (tee->fragile)
+        else if (tee->outputs[1].weak)
             istream_close(tee->input);
     }
 
@@ -295,7 +302,7 @@ istream_tee_close1(istream_t istream)
     if (tee->input != NULL) {
         if (!tee->outputs[0].enabled)
             istream_free_handler(&tee->input);
-        else if (tee->fragile)
+        else if (tee->outputs[0].weak)
             istream_close(tee->input);
     }
 
@@ -321,7 +328,8 @@ static const struct istream istream_tee1 = {
  */
 
 istream_t
-istream_tee_new(pool_t pool, istream_t input, bool fragile)
+istream_tee_new(pool_t pool, istream_t input,
+                bool first_weak, bool second_weak)
 {
     struct istream_tee *tee = (struct istream_tee *)
         istream_new(pool, &istream_tee0, sizeof(*tee));
@@ -331,14 +339,15 @@ istream_tee_new(pool_t pool, istream_t input, bool fragile)
 
     istream_init(&tee->outputs[1].istream, &istream_tee1, tee->outputs[0].istream.pool);
 
+    tee->outputs[0].weak = first_weak;
     tee->outputs[0].enabled = true;
+    tee->outputs[1].weak = second_weak;
     tee->outputs[1].enabled = true;
 
     istream_assign_handler(&tee->input, input,
                            &tee_input_handler, tee,
                            0);
 
-    tee->fragile = fragile;
     tee->reading = false;
     tee->in_data = false;
     tee->skip = 0;

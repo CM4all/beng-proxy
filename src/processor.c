@@ -256,7 +256,7 @@ processor_new(pool_t caller_pool, http_status_t status,
     processor->widget.params = expansible_buffer_new(pool, 1024);
 
     if (widget->from_request.proxy_ref == NULL) {
-        istream = istream_tee_new(pool, istream, true);
+        istream = istream_tee_new(pool, istream, true, true);
         processor->replace = istream_replace_new(pool, istream_tee_second(istream));
     } else {
         processor->replace = NULL;
