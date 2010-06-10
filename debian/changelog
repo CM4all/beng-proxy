@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.8.5) unstable; urgency=low
   * translation: added packet FILTER_4XX to filter client errors
   * merged release 0.7.45
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 10 Jun 2010 16:13:14 +0200
 
 cm4all-beng-proxy (0.8.4) unstable; urgency=low
 
