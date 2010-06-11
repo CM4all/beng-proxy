@@ -39,8 +39,10 @@ class Translation(Protocol):
             log.err()
             return Response().status(500)
 
-    def _handle_local_file(self, path, response, delegate=False, jail=False):
+    def _handle_local_file(self, path, response, delegate=False, jail=False, error_document=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
+        if error_document:
+            response.packet(TRANSLATE_ERROR_DOCUMENT)
 
         cgi = cgi_re.search(path, 1)
         if cgi:
@@ -221,7 +223,8 @@ class Translation(Protocol):
             response.header('X-Foo', 'Bar')
             self._handle_local_file('/var/www' + uri[7:], response)
         else:
-            self._handle_local_file('/var/www' + uri, response)
+            self._handle_local_file('/var/www' + uri, response,
+                                    error_document=True)
 
         #response.packet(TRANSLATE_FILTER)
         # .... PROXY 'http://cfatest01.intern.cm-ag/filter.py'
@@ -229,6 +232,10 @@ class Translation(Protocol):
     def _handle_request(self, request):
         if request.widget_type is not None:
             return self._handle_widget_lookup(request.widget_type)
+
+        if request.error_document:
+            log.msg("error %s %u" % (request.uri, request.status))
+            return Response().path('/var/www/%u.html' % request.status).content_type('text/html')
 
         if request.session is not None: log.msg("- session = %s" % request.session)
         if request.param is not None: log.msg("- param = %s" % request.param)
