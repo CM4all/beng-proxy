@@ -572,6 +572,19 @@ sent by the client (see RFC 2617) \\
 
 \hline
 
+\texttt{ERROR\_DOCUMENT} & a resource has failed, and the translation
+server is asked to provide the location of the error document.  This
+is followed by the packets \texttt{URI} and \texttt{STATUS}.  The
+translation response contains the location of another resource.  If
+the translation response is empty, or if the error document itself
+fails, then \emph{beng-proxy} generates a the default error page.  The
+\texttt{ERROR\_DOCUMENT} translation request is only sent when the
+resource's translation response contained an empty
+\texttt{ERROR\_DOCUMENT} packet, indicating that the translation
+server is willing to provide a custom error document. \\
+
+\hline
+
 \end{longtable}
 
 \subsubsection{Response}
@@ -893,6 +906,11 @@ This will not override existing headers.  It is not allowed to set
 hop-by-hop headers (RFC 2616 13.5.1) this way.  This packet shall only
 be a last resort, when there is no other way to set a required
 response header. \\
+
+\hline
+
+\texttt{ERROR\_DOCUMENT} & Indicates that the translation server is
+willing to provide a custom error document. \\
 
 \hline
 \end{longtable}

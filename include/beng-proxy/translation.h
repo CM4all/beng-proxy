@@ -101,6 +101,15 @@ enum beng_translation_command {
      * useful when at least one FILTER was specified.
      */
     TRANSLATE_FILTER_4XX = 62,
+
+    /**
+     * Support for custom error documents.  In the response, this is a
+     * flag which enables custom error documents (i.e. if the HTTP
+     * response is not successful, the translation server is asked to
+     * provide a custom error document).  In a request, it queries the
+     * location of the error document.
+     */
+    TRANSLATE_ERROR_DOCUMENT = 63,
 };
 
 struct beng_translation_header {

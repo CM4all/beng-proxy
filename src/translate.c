@@ -1076,6 +1076,9 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_SECURE_COOKIE:
         client->response.secure_cookie = true;
         break;
+
+    case TRANSLATE_ERROR_DOCUMENT:
+        break;
     }
 
     return true;
