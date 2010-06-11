@@ -69,10 +69,19 @@ struct tcache_request {
 #endif
 
 static const char *
-tcache_request_key(const struct translate_request *request)
+tcache_uri_key(pool_t pool, const char *uri, http_status_t status)
+{
+    return status != 0
+        ? p_sprintf(pool, "ERR%u_%s", status, uri)
+        : uri;
+
+}
+
+static const char *
+tcache_request_key(pool_t pool, const struct translate_request *request)
 {
     return request->uri != NULL
-        ? request->uri
+        ? tcache_uri_key(pool, request->uri, request->error_document_status)
         : request->widget_type;
 }
 
@@ -147,6 +156,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->discard_session = src->discard_session;
     dest->secure_cookie = src->secure_cookie;
     dest->filter_4xx = src->filter_4xx;
+    dest->error_document = src->error_document;
     dest->session = NULL;
 
     /* The "user" attribute must not be present in cached responses,
@@ -242,6 +252,9 @@ tcache_store_response(pool_t pool, struct translate_response *dest,
                 : NULL;
         }
     }
+
+    if (key != NULL)
+        key = tcache_uri_key(pool, key, request->error_document_status);
 
     return key;
 }
@@ -667,7 +680,7 @@ translate_cache(pool_t pool, struct tcache *tcache,
                 struct async_operation_ref *async_ref)
 {
     if (tcache_request_evaluate(request)) {
-        const char *key = tcache_request_key(request);
+        const char *key = tcache_request_key(pool, request);
         struct tcache_item *item = tcache_lookup(pool, tcache, request, key);
 
         if (item != NULL)

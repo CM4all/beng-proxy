@@ -35,6 +35,7 @@ widget_registry_lookup(pool_t pool,
     request->widget_type = widget_type;
     request->session = NULL;
     request->param = NULL;
+    request->error_document_status = 0;
 
     translate_cache(pool, tcache, request,
                     callback, ctx, async_ref);

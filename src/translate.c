@@ -207,6 +207,11 @@ marshal_request(pool_t pool, const struct translate_request *request)
     gb = growing_buffer_new(pool, 512);
 
     success = write_packet(gb, TRANSLATE_BEGIN, NULL) &&
+        (request->error_document_status == 0 ||
+         (write_packet(gb, TRANSLATE_ERROR_DOCUMENT, "") &&
+          write_packet_n(gb, TRANSLATE_STATUS,
+                         &request->error_document_status,
+                         sizeof(request->error_document_status)))) &&
         write_optional_sockaddr(gb, TRANSLATE_LOCAL_ADDRESS,
                                 TRANSLATE_LOCAL_ADDRESS_STRING,
                                 request->local_address,
@@ -1078,6 +1083,7 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_ERROR_DOCUMENT:
+        client->response.error_document = true;
         break;
     }
 

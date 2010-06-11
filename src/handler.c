@@ -255,6 +255,7 @@ fill_translate_request(struct translate_request *t,
         ? NULL
         : strref_dup(request->pool, &uri->query);
     t->widget_type = NULL;
+    t->error_document_status = 0;
 }
 
 static void

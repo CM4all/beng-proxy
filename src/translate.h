@@ -38,6 +38,8 @@ struct translate_request {
     const char *widget_type;
     const char *session;
     const char *param;
+
+    http_status_t error_document_status;
 };
 
 struct translate_response {
@@ -78,6 +80,8 @@ struct translate_response {
     bool secure_cookie;
 
     bool filter_4xx;
+
+    bool error_document;
 
     const char *session;
 
