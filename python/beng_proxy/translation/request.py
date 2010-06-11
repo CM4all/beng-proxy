@@ -46,6 +46,8 @@ class Request:
         self.user_agent = None
         self.accept_language = None
         self.authorization = None
+        self.status = None
+        self.error_document = False
 
     def __getattr__(self, name):
         if name == 'uri':
@@ -87,6 +89,11 @@ class Request:
             self.accept_language = packet.payload
         elif packet.command == TRANSLATE_AUTHORIZATION:
             self.authorization = packet.payload
+        elif packet.command == TRANSLATE_STATUS:
+            if len(payload) == 2:
+                self.status = struct.unpack('H', payload)[0]
+        elif packet.command == TRANSLATE_ERROR_DOCUMENT:
+            self.error_document = True
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print "Invalid command:", packet.command
         return False
