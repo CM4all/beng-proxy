@@ -68,6 +68,13 @@ struct tcache_request {
 #define cache_log(...) do {} while (0)
 #endif
 
+static const char *
+tcache_request_key(const struct translate_request *request)
+{
+    return request->uri != NULL
+        ? request->uri
+        : request->widget_type;
+}
 
 /* check whether the request could produce a cacheable response */
 static bool
@@ -660,8 +667,7 @@ translate_cache(pool_t pool, struct tcache *tcache,
                 struct async_operation_ref *async_ref)
 {
     if (tcache_request_evaluate(request)) {
-        const char *key = request->uri == NULL
-            ? request->widget_type : request->uri;
+        const char *key = tcache_request_key(request);
         struct tcache_item *item = tcache_lookup(pool, tcache, request, key);
 
         if (item != NULL)
