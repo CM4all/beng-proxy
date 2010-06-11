@@ -196,7 +196,7 @@ base_string(const char *p, const char *suffix)
  * Returns NULL if the cache key should not be modified (i.e. if there
  * is no matching BASE packet).
  */
-static char *
+static const char *
 tcache_store_address(pool_t pool, struct resource_address *dest,
                      const struct resource_address *src,
                      const char *uri, const char *base)
@@ -217,12 +217,12 @@ tcache_store_address(pool_t pool, struct resource_address *dest,
     return NULL;
 }
 
-static char *
+static const char *
 tcache_store_response(pool_t pool, struct translate_response *dest,
                       const struct translate_response *src,
                       const struct translate_request *request)
 {
-    char *key;
+    const char *key;
 
     key = tcache_store_address(pool, &dest->address, &src->address,
                                request->uri, src->base);
