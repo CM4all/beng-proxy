@@ -4,6 +4,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
+import struct
 import urllib
 from beng_proxy.translation.protocol import *
 import beng_proxy.translation.uri
