@@ -90,8 +90,8 @@ class Request:
         elif packet.command == TRANSLATE_AUTHORIZATION:
             self.authorization = packet.payload
         elif packet.command == TRANSLATE_STATUS:
-            if len(payload) == 2:
-                self.status = struct.unpack('H', payload)[0]
+            if len(packet.payload) == 2:
+                self.status = struct.unpack('H', packet.payload)[0]
         elif packet.command == TRANSLATE_ERROR_DOCUMENT:
             self.error_document = True
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
