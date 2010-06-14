@@ -281,7 +281,7 @@ serve_document_root_file(struct request *request2,
 
     uri = &request2->uri;
 
-    request2->translate.response = tr = p_malloc(request->pool,
+    request2->translate.response = tr = p_calloc(request->pool,
                                                  sizeof(*request2->translate.response));
 
     if (uri->base.data[uri->base.length - 1] == '/') {
@@ -311,7 +311,6 @@ serve_document_root_file(struct request *request2,
 
     request2->translate.transformation = tr->views->transformation;
 
-    tr->status = 0;
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
     tr->address.u.local.path = p_strncat(request->pool,
                                          config->document_root,
@@ -320,9 +319,6 @@ serve_document_root_file(struct request *request2,
                                          uri->base.length,
                                          index_file, (size_t)10,
                                          NULL);
-    tr->address.u.local.delegate = NULL;
-    tr->address.u.local.content_type = NULL;
-    tr->address.u.local.document_root = NULL;
 
     tr->request_header_forward = (struct header_forward_settings){
         .modes = {
@@ -341,14 +337,6 @@ serve_document_root_file(struct request *request2,
             [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
         },
     };
-
-    tr->scheme = NULL;
-    tr->host = NULL;
-    tr->uri = NULL;
-
-    tr->www_authenticate = NULL;
-    tr->authentication_info = NULL;
-    tr->headers = NULL;
 
     request2->resource_tag = tr->address.u.local.path;
     request2->processor_focus = process &&
