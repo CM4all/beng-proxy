@@ -171,6 +171,13 @@ write_optional_packet(struct growing_buffer *gb, uint16_t command,
 }
 
 static bool
+write_short(struct growing_buffer *gb,
+            uint16_t command, uint16_t payload)
+{
+    return write_packet_n(gb, command, &payload, sizeof(payload));
+}
+
+static bool
 write_sockaddr(struct growing_buffer *gb,
                uint16_t command, uint16_t command_string,
                const struct sockaddr *address, size_t address_length)
@@ -209,9 +216,8 @@ marshal_request(pool_t pool, const struct translate_request *request)
     success = write_packet(gb, TRANSLATE_BEGIN, NULL) &&
         (request->error_document_status == 0 ||
          (write_packet(gb, TRANSLATE_ERROR_DOCUMENT, "") &&
-          write_packet_n(gb, TRANSLATE_STATUS,
-                         &request->error_document_status,
-                         sizeof(request->error_document_status)))) &&
+          write_short(gb, TRANSLATE_STATUS,
+                      request->error_document_status))) &&
         write_optional_sockaddr(gb, TRANSLATE_LOCAL_ADDRESS,
                                 TRANSLATE_LOCAL_ADDRESS_STRING,
                                 request->local_address,
