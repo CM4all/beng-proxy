@@ -120,6 +120,18 @@ http_status_is_client_error(http_status_t status)
 }
 
 static inline bool
+http_status_is_server_error(http_status_t status)
+{
+    return status >= 500 && status < 600;
+}
+
+static inline bool
+http_status_is_error(http_status_t status)
+{
+    return status >= 400 && status < 600;
+}
+
+static inline bool
 http_status_is_empty(http_status_t status)
 {
     return status == HTTP_STATUS_NO_CONTENT ||
