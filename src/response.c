@@ -22,6 +22,7 @@
 #include "resource-tag.h"
 #include "hostname.h"
 #include "dhashmap.h"
+#include "errdoc.h"
 
 #include <daemon/log.h>
 
@@ -398,14 +399,20 @@ response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
                   istream_t body)
 {
-    const struct transformation *transformation
-        = request2->translate.transformation;
-
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
 
+    if (http_status_is_error(status) && !request2->transformed &&
+        request2->translate.response->error_document) {
+        request2->transformed = true;
+        errdoc_dispatch_response(request2, status, headers, body);
+        return;
+    }
+
     /* if HTTP status code is not successful: don't apply
        transformation on the error document */
+    const struct transformation *transformation
+        = request2->translate.transformation;
     if (transformation != NULL &&
         filter_enabled(request2->translate.response, status)) {
         struct strmap *headers2;

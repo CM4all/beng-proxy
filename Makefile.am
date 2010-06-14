@@ -277,6 +277,7 @@ SRC = src/main.c \
 	src/cgi-handler.c \
 	src/fcgi-handler.c \
 	src/proxy-handler.c \
+	src/errdoc.c \
 	src/ajp-protocol.c \
 	src/ajp-serialize.c \
 	src/ajp-headers.c \
