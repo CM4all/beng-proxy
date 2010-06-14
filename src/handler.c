@@ -381,6 +381,7 @@ handle_http_request(struct client_connection *connection,
     request2->dump_widget_tree = NULL;
 #endif
     request2->body_consumed = false;
+    request2->transformed = false;
 
     request2->async_ref = async_ref;
 

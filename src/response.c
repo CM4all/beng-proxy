@@ -367,6 +367,8 @@ response_apply_transformation(struct request *request2,
 {
     assert(transformation != NULL);
 
+    request2->transformed = true;
+
     switch (transformation->type) {
     case TRANSFORMATION_FILTER:
         response_apply_filter(request2, status, headers, body,

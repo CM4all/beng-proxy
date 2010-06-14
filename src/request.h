@@ -62,6 +62,12 @@ struct request {
      */
     bool processor_focus;
 
+    /**
+     * Was the response already transformed?  The error document only
+     * applies to the original, untransformed response.
+     */
+    bool transformed;
+
 #ifndef NDEBUG
     bool response_sent;
 #endif
