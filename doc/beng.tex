@@ -463,23 +463,13 @@ points to:
 \item static translation
 \end{itemize}
 
-The latter is only for debugging.
-
-\subsection{Static translation}
-
-The URI path is appended to the document root (\texttt{/var/www} by
-default).
-
-\subsubsection{Directory index}
-
-For security (by obscurity) reasons, \emph{beng-proxy} has no code for
-generating directory listings.  If the request has a trailing slash,
+The latter is only for debugging.  The URI path is appended to the
+document root (\texttt{/var/www} by default).  For security (by
+obscurity) reasons, \emph{beng-proxy} has no code for generating
+directory listings.  If the request has a trailing slash,
 \emph{beng-proxy} looks for a file named \texttt{index} or
 \texttt{index.html} and serves it.  Without the trailing slash,
 \emph{beng-proxy} refuses to handle the request.
-
-
-\subsection{Translation server}
 
 The translation server should be the default on production servers.
 It is a daemon on the same physical machine which does all the
@@ -495,7 +485,7 @@ and waits for the server's response.
 The client can send any number of requests over the socket until one
 side closes the connection.
 
-\subsubsection{Example conversation}
+\subsection{Example conversation}
 
 \begin{itemize}
 \item client sends \texttt{BEGIN}
@@ -510,7 +500,7 @@ side closes the connection.
 \item server sends \texttt{END}
 \end{itemize}
 
-\subsubsection{Command packets}
+\subsection{Command packets}
 
 The protocol is binary and uses host byte order.  A command packet may
 look like this in pseudo C:
@@ -529,7 +519,7 @@ payload size is 65535 bytes.
 Most parameters are ASCII strings; in this case, the payload contains
 just the raw string, without terminating zero.
 
-\subsubsection{Request}
+\subsection{Request}
 
 \begin{longtable}{|l|p{10cm}|}
 \hline
@@ -587,7 +577,7 @@ server is willing to provide a custom error document. \\
 
 \end{longtable}
 
-\subsubsection{Response}
+\subsection{Response}
 
 \begin{longtable}{|l|p{8cm}|}
 
@@ -923,7 +913,7 @@ To send a standard error page, the translation server sends a response
 containing only the \texttt{STATUS} parameter with the desired HTTP
 status.
 
-\subsubsection{Proxying requests}
+\subsection{Proxying requests}
 
 When proxying HTTP requests with the a \texttt{PROXY} packet,
 \emph{beng-proxy} forwards the request to the specified location,
@@ -935,7 +925,7 @@ because the focused widget is going to receive the request body.
 If the filter URL starts with a slash, \emph{beng-proxy} assumes it is
 the absolute path to a Unix socket.
 
-\subsubsection{Filters}
+\subsection{Filters}
 \label{filter}
 
 The translation server can tell \emph{beng-proxy} to apply a filter to
@@ -961,7 +951,7 @@ resources which have an \emph{ETag} response header, because
 \emph{beng-proxy} uses the \emph{ETag} internally to address cache
 items.
 
-\subsubsection{Sessions}
+\subsection{Sessions}
 \label{sessions}
 
 \emph{beng-proxy} lets the translation server manage a ``session''
@@ -971,7 +961,7 @@ request, \emph{beng-proxy} sends its contents unless it is empty (in
 which case it omits this parameter).  With every response, the
 translation server may provide a new value (which may be empty).
 
-\subsubsection{Widget registry}
+\subsection{Widget registry}
 \label{registry}
 
 The translation server provides access to the widget database, where
