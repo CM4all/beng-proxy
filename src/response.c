@@ -188,6 +188,14 @@ response_invoke_processor(struct request *request2,
         session_put(session);
     }
 
+    http_method_t method = request->method;
+    if (method == HTTP_METHOD_HEAD &&
+        request2->translate.transformation != NULL)
+        /* the following transformation may need the processed
+           document to generate its headers, so we should not pass
+           HEAD to the processor */
+        method = HTTP_METHOD_GET;
+
     processor_env_init(request->pool, &request2->env,
                        request2->translate.response->untrusted,
                        request->local_host, request->remote_host,
@@ -199,7 +207,7 @@ response_invoke_processor(struct request *request2,
                        &request2->uri,
                        request2->args,
                        request2->session_id,
-                       request->method, request->headers,
+                       method, request->headers,
                        request_body);
 
 #ifdef DUMP_WIDGET_TREE

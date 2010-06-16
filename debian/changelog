@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.8.6) unstable; urgency=low
 
   * translation: added support for custom error documents
+  * response: convert HEAD to GET if filter follows
   * python: depend on python-twisted-core
 
  --
