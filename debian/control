@@ -134,7 +134,7 @@ Package: python-cm4all-beng-proxy
 Architecture: all
 Section: non-free/python
 Provides: ${python:Provides}
-Depends: ${python:Depends}
+Depends: ${python:Depends}, python-twisted-core
 Recommends: cm4all-beng-proxy
 XB-Python-Version: ${python:Versions}
 Description: Python bindings for beng-proxy
