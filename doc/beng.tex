@@ -564,14 +564,8 @@ sent by the client (see RFC 2617) \\
 
 \texttt{ERROR\_DOCUMENT} & a resource has failed, and the translation
 server is asked to provide the location of the error document.  This
-is followed by the packets \texttt{URI} and \texttt{STATUS}.  The
-translation response contains the location of another resource.  If
-the translation response is empty, or if the error document itself
-fails, then \emph{beng-proxy} generates a the default error page.  The
-\texttt{ERROR\_DOCUMENT} translation request is only sent when the
-resource's translation response contained an empty
-\texttt{ERROR\_DOCUMENT} packet, indicating that the translation
-server is willing to provide a custom error document. \\
+is followed by the packets \texttt{URI} and \texttt{STATUS}.  See
+\ref{errdoc} for a detailed description. \\
 
 \hline
 
@@ -960,6 +954,25 @@ the translation server to manage its contents.  With every translation
 request, \emph{beng-proxy} sends its contents unless it is empty (in
 which case it omits this parameter).  With every response, the
 translation server may provide a new value (which may be empty).
+
+\subsection{Error documents}
+\label{errdoc}
+
+Errors from remote servers are forwarded to the client.  If no error
+document is available, \emph{beng-proxy} generates a simple one.
+
+The translation server indicates that it is willing to override the
+error document by sending an empty \texttt{ERROR\_DOCUMENT} packet in
+the translation response.  As soon as an error occurs (response status
+400..599), \emph{beng-proxy} sends another translation request,
+consisting of \texttt{ERROR\_DOCUMENT}, \texttt{URI} and
+\texttt{STATUS}.
+
+The translation server responds with a pointer to another resource
+which shall be used as the error document.  If the translation
+response is empty, or if the error document itself fails,
+\emph{beng-proxy} forwards the original error document (or generates
+one).  The error document cannot be filtered or processed.
 
 \subsection{Widget registry}
 \label{registry}
