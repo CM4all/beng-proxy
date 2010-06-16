@@ -242,13 +242,23 @@ processor_new(pool_t caller_pool, http_status_t status,
               void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
-    pool_t pool = pool_new_linear(caller_pool, "processor", 32768);
-    struct processor *processor;
-
     assert(!http_status_is_empty(status));
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
+
+    if (widget->from_request.proxy_ref == NULL &&
+        env->method == HTTP_METHOD_HEAD) {
+        istream_close(istream);
+
+        headers = processor_header_forward(caller_pool, headers);
+        http_response_handler_direct_response(handler, handler_ctx,
+                                              status, headers, NULL);
+        return;
+    }
+
+    pool_t pool = pool_new_linear(caller_pool, "processor", 32768);
+    struct processor *processor;
 
     if (widget->from_request.proxy_ref == NULL) {
         istream = istream_subst_new(pool, istream);
