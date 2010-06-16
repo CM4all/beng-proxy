@@ -213,6 +213,25 @@ headers_copy2(struct strmap *in, struct strmap *out,
     }
 }
 
+static struct strmap *
+processor_header_forward(pool_t pool, struct strmap *headers)
+{
+    if (headers == NULL)
+        return NULL;
+
+    static const char *const copy_headers[] = {
+        "content-language",
+        "content-type",
+        "content-disposition",
+        "location",
+        NULL,
+    };
+
+    struct strmap *headers2 = strmap_new(pool, 8);
+    headers_copy2(headers, headers2, copy_headers);
+    return headers2;
+}
+
 void
 processor_new(pool_t caller_pool, http_status_t status,
               struct strmap *headers, istream_t istream,
@@ -266,29 +285,14 @@ processor_new(pool_t caller_pool, http_status_t status,
     pool_unref(pool);
 
     if (widget->from_request.proxy_ref == NULL) {
-        struct strmap *headers2;
-
         if (processor_option_rewrite_url(processor)) {
             processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
             processor->default_uri_rewrite.mode = URI_MODE_DIRECT;
         }
 
-        if (headers != NULL) {
-            static const char *const copy_headers[] = {
-                "content-language",
-                "content-type",
-                "content-disposition",
-                "location",
-                NULL,
-            };
-
-            headers2 = strmap_new(pool, 8);
-            headers_copy2(headers, headers2, copy_headers);
-        } else
-            headers2 = NULL;
-
+        headers = processor_header_forward(pool, headers);
         http_response_handler_direct_response(handler, handler_ctx,
-                                              status, headers2,
+                                              status, headers,
                                               processor->replace);
     } else {
         http_response_handler_set(&processor->response_handler,
