@@ -18,6 +18,9 @@ const char *http_method_to_string_data[HTTP_METHOD_INVALID] = {
 };
 
 const char *http_status_to_string_data[6][20] = {
+    [1] = {
+        [HTTP_STATUS_CONTINUE - 100] = "100 Continue",
+    },
     [2] = {
         [HTTP_STATUS_OK - 200] = "200 OK",
         [HTTP_STATUS_CREATED - 200] = "201 Created",

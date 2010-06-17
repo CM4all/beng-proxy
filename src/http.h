@@ -22,6 +22,7 @@ typedef enum {
 } http_method_t;
 
 typedef enum {
+    HTTP_STATUS_CONTINUE = 100,
     HTTP_STATUS_OK = 200,
     HTTP_STATUS_CREATED = 201,
     HTTP_STATUS_ACCEPTED = 202,
@@ -134,7 +135,8 @@ http_status_is_error(http_status_t status)
 static inline bool
 http_status_is_empty(http_status_t status)
 {
-    return status == HTTP_STATUS_NO_CONTENT ||
+    return status == HTTP_STATUS_CONTINUE ||
+        status == HTTP_STATUS_NO_CONTENT ||
         status == HTTP_STATUS_RESET_CONTENT ||
         status == HTTP_STATUS_NOT_MODIFIED;
 }
