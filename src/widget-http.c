@@ -206,6 +206,26 @@ widget_response_process(struct embed *embed, http_status_t status,
                   embed->async_ref);
 }
 
+static void
+widget_response_apply_filter(struct embed *embed, http_status_t status,
+                             struct strmap *headers, istream_t body,
+                             const struct resource_address *filter)
+{
+    const char *source_tag;
+    source_tag = resource_tag_append_etag(embed->pool,
+                                          embed->resource_tag, headers);
+    embed->resource_tag = source_tag != NULL
+        ? p_strcat(embed->pool, source_tag, "|",
+                   resource_address_id(filter, embed->pool),
+                   NULL)
+        : NULL;
+
+    filter_cache_request(global_filter_cache, embed->pool, filter,
+                         source_tag, status, headers, body,
+                         &widget_response_handler, embed,
+                         embed->async_ref);
+}
+
 /**
  * Apply a transformation to the widget response and hand it back to
  * widget_response_handler.
@@ -215,7 +235,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
                           struct strmap *headers, istream_t body,
                           const struct transformation *transformation)
 {
-    const char *p, *source_tag;
+    const char *p;
 
     assert(transformation != NULL);
     assert(embed->transformation == transformation->next);
@@ -243,20 +263,8 @@ widget_response_transform(struct embed *embed, http_status_t status,
         break;
 
     case TRANSFORMATION_FILTER:
-        source_tag = resource_tag_append_etag(embed->pool,
-                                             embed->resource_tag, headers);
-        embed->resource_tag = source_tag != NULL
-            ? p_strcat(embed->pool, source_tag, "|",
-                       resource_address_id(&transformation->u.filter,
-                                           embed->pool),
-                       NULL)
-            : NULL;
-
-        filter_cache_request(global_filter_cache, embed->pool,
-                             &transformation->u.filter,
-                             source_tag, status, headers, body,
-                             &widget_response_handler, embed,
-                             embed->async_ref);
+        widget_response_apply_filter(embed, status, headers, body,
+                                     &transformation->u.filter);
         break;
     }
 }
