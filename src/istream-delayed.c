@@ -57,8 +57,11 @@ istream_delayed_read(istream_t istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
-    if (delayed->input != NULL)
+    if (delayed->input != NULL) {
+        istream_handler_set_direct(delayed->input,
+                                   delayed->output.handler_direct);
         istream_read(delayed->input);
+    }
 }
 
 static int
