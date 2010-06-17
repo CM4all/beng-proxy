@@ -96,6 +96,21 @@ istream_t
 istream_hold_new(pool_t pool, istream_t input);
 
 istream_t
+istream_optional_new(pool_t pool, istream_t input);
+
+/**
+ * Allows the istream to resume, but does not trigger reading.
+ */
+void
+istream_optional_resume(istream_t istream);
+
+/**
+ * Discard the stream contents.
+ */
+void
+istream_optional_discard(istream_t istream);
+
+istream_t
 istream_html_escape_new(pool_t pool, istream_t input);
 
 istream_t

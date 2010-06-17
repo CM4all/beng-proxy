@@ -66,6 +66,7 @@ ISTREAM_SRC = \
 	src/istream-pipe.c \
 	src/istream-delayed.c \
 	src/istream-hold.c \
+	src/istream-optional.c \
 	src/istream-deflate.c \
 	src/istream-subst.c \
 	src/istream-byte.c \
