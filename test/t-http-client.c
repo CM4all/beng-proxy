@@ -483,7 +483,7 @@ test_body_fail(pool_t pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->aborted);
+    assert(c->aborted || c->body_abort);
 }
 
 static void

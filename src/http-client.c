@@ -49,6 +49,12 @@ struct http_client {
     struct {
         struct event event;
 
+        /**
+         * An "istream_optional" which blocks sending the request body
+         * until the server has confirmed "100 Continue".
+         */
+        istream_t body;
+
         istream_t istream;
         char content_length_buffer[32];
 
@@ -672,6 +678,37 @@ http_client_consume_headers(struct http_client *client)
        the handler */
     assert(client->response.read_state == READ_BODY);
 
+    if (client->response.status == HTTP_STATUS_CONTINUE) {
+        assert(client->response.body == NULL);
+
+        if (client->request.body == NULL) {
+            daemon_log(2, "http_client: unexpected status 100\n");
+#ifndef NDEBUG
+            /* assertion workaround */
+            client->response.read_state = READ_STATUS;
+#endif
+            http_client_abort_response_body(client);
+            return false;
+        }
+
+        /* reset read_state, we're now expecting the real response */
+        client->response.read_state = READ_STATUS;
+
+        istream_optional_resume(client->request.body);
+        client->request.body = NULL;
+
+        http_client_schedule_read(client);
+        http_client_schedule_write(client);
+
+        /* try again */
+        return http_client_consume_headers(client);
+    } else if (client->request.body != NULL) {
+        /* the server begins sending a response - he's not interested
+           in the request body, discard it now */
+        istream_optional_discard(client->request.body);
+        client->request.body = NULL;
+    }
+
     if (client->response.body == NULL ||
         http_body_socket_is_done(&client->response.body_reader, client->input))
         /* we don't need the socket anymore, we've got everything we
@@ -1115,7 +1152,12 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
             header_write(headers, "content-length",
                          client->request.content_length_buffer);
         }
-    }
+
+        header_write(headers, "expect", "100-continue");
+
+        body = client->request.body = istream_optional_new(pool, body);
+    } else
+        client->request.body = NULL;
 
     growing_buffer_write_buffer(headers, "\r\n", 2);
 
