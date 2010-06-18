@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.46) unstable; urgency=low
 
-  * 
+  * handler: initialize all translate_response attributes
 
  --
 
