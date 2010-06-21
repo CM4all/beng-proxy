@@ -133,4 +133,12 @@ direct_global_deinit(void) {}
 
 #endif
 
+/**
+ * Determine the minimum number of bytes available on the file
+ * descriptor.  Returns -1 if that could not be determined
+ * (unsupported fd type or error).
+ */
+ssize_t
+direct_available(int fd, istream_direct_t fd_type, size_t max_length);
+
 #endif
