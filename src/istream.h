@@ -18,6 +18,9 @@ enum istream_direct {
     ISTREAM_PIPE = 02,
     ISTREAM_SOCKET = 04,
     ISTREAM_TCP = 010,
+
+    /** a character device, such as /dev/zero or /dev/null */
+    ISTREAM_CHARDEV = 020,
 };
 
 enum {

@@ -24,6 +24,7 @@ enum {
 };
 
 extern unsigned ISTREAM_TO_PIPE;
+extern unsigned ISTREAM_TO_CHARDEV;
 
 void
 direct_global_init(void);
@@ -38,6 +39,7 @@ enum {
     ISTREAM_TO_PIPE = 0,
     ISTREAM_TO_SOCKET = ISTREAM_FILE,
     ISTREAM_TO_TCP = ISTREAM_FILE,
+    ISTREAM_TO_CHARDEV = 0,
 }
 
 #endif /* !SPLICE */
@@ -96,6 +98,9 @@ istream_direct_mask_to(enum istream_direct type)
 
     case ISTREAM_TCP:
         return ISTREAM_TO_TCP;
+
+    case ISTREAM_CHARDEV:
+        return ISTREAM_TO_CHARDEV;
     }
 
     return 0;

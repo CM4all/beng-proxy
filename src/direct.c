@@ -15,6 +15,7 @@
 #ifdef SPLICE
 
 unsigned ISTREAM_TO_PIPE = ISTREAM_FILE;
+unsigned ISTREAM_TO_CHARDEV = 0;
 
 /**
  * Checks whether the kernel supports splice() between the two
@@ -47,6 +48,24 @@ direct_global_init(void)
 
     close(b[0]);
     close(b[1]);
+
+    /* check splice(pipe, chardev) */
+
+    fd = open("/dev/null", O_WRONLY);
+    if (fd >= 0) {
+        if (splice_supported(a[0], fd))
+            ISTREAM_TO_CHARDEV |= ISTREAM_PIPE;
+        close(fd);
+    }
+
+    /* check splice(chardev, pipe) */
+
+    fd = open("/dev/zero", O_RDONLY);
+    if (fd >= 0) {
+        if (splice_supported(fd, a[1]))
+            ISTREAM_TO_PIPE |= ISTREAM_CHARDEV;
+        close(fd);
+    }
 
     /* check splice(AF_LOCAL, pipe) */
     /* (unsupported in Linux 2.6.31) */
