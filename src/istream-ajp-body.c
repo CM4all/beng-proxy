@@ -6,6 +6,7 @@
 
 #include "istream-internal.h"
 #include "ajp-protocol.h"
+#include "direct.h"
 
 #include <assert.h>
 #include <netinet/in.h>
@@ -135,8 +136,48 @@ ajp_body_input_data(const void *data, size_t length, void *ctx)
     return nbytes;
 }
 
+static ssize_t
+ajp_body_input_direct(istream_direct_t type, int fd, size_t max_length,
+                      void *ctx)
+{
+    struct istream_ajp_body *ab = ctx;
+
+    if (ab->packet_remaining == 0) {
+        if (ab->requested == 0)
+            return -2;
+
+        /* start a new packet, size determined by
+           direct_available() */
+        ssize_t available = direct_available(fd, type, max_length);
+        if (available <= 0)
+            return available;
+
+        ajp_body_start_packet(ab, available);
+    }
+
+    pool_ref(ab->output.pool);
+
+    if (!ajp_body_write_header(ab)) {
+        ssize_t ret = ab->input != NULL ? -2 : -3;
+        pool_unref(ab->output.pool);
+        return ret;
+    }
+
+    pool_unref(ab->output.pool);
+
+    if (max_length > ab->packet_remaining)
+        max_length = ab->packet_remaining;
+
+    ssize_t nbytes = istream_invoke_direct(&ab->output, type, fd, max_length);
+    if (nbytes > 0)
+        ab->packet_remaining -= nbytes;
+
+    return nbytes;
+}
+
 static const struct istream_handler ajp_body_input_handler = {
     .data = ajp_body_input_data,
+    .direct = ajp_body_input_direct,
     .eof = istream_forward_eof,
     .abort = istream_forward_abort,
 };
@@ -179,6 +220,7 @@ istream_ajp_body_read(istream_t istream)
             ajp_body_start_packet(ab, available);
     }
 
+    istream_handler_set_direct(ab->input, ab->output.handler_direct);
     istream_read(ab->input);
 }
 
