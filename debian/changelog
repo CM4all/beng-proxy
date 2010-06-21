@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.7.46) unstable; urgency=low
   * istream-pipe: return gracefully when handler blocks
   * ajp-client: hold pool reference to reset TCP_CORK
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 21 Jun 2010 17:53:21 +0200
 
 cm4all-beng-proxy (0.7.45) unstable; urgency=low
 
