@@ -960,7 +960,6 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
     return 0;
 }
 
-#ifdef __linux
 static ssize_t
 http_client_request_stream_direct(istream_direct_t type, int fd,
                                   size_t max_length, void *ctx)
@@ -988,7 +987,6 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
 
     return nbytes;
 }
-#endif
 
 static void
 http_client_request_stream_eof(void *ctx)
@@ -1027,9 +1025,7 @@ http_client_request_stream_abort(void *ctx)
 
 static const struct istream_handler http_client_request_stream_handler = {
     .data = http_client_request_stream_data,
-#ifdef __linux
     .direct = http_client_request_stream_direct,
-#endif
     .eof = http_client_request_stream_eof,
     .abort = http_client_request_stream_abort,
 };
