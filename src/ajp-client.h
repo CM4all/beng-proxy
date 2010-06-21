@@ -20,6 +20,7 @@ struct strmap;
  *
  * @param pool the memory pool
  * @param fd a socket to the HTTP server
+ * @param fd_type the exact socket type
  * @param lease the lease for the socket
  * @param lease_ctx a context pointer for the lease
  * @param protocol the name of the original protocol, e.g. "http"
@@ -37,7 +38,7 @@ struct strmap;
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-ajp_client_request(pool_t pool, int fd,
+ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
                    const struct lease *lease, void *lease_ctx,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,

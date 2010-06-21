@@ -4,6 +4,7 @@
 #include "async.h"
 #include "socket-util.h"
 #include "lease.h"
+#include "direct.h"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -155,6 +156,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    direct_global_init();
+
     /* connect socket */
 
     memset(&hints, 0, sizeof(hints));
@@ -213,7 +216,7 @@ int main(int argc, char **argv) {
 
     /* run test */
 
-    ajp_client_request(pool, fd, &ajp_socket_lease, &ctx,
+    ajp_client_request(pool, fd, ISTREAM_TCP, &ajp_socket_lease, &ctx,
                        "http", "127.0.0.1", "localhost",
                        "localhost", 80, false,
                        method, argv[2], NULL, request_body,
@@ -236,6 +239,7 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     event_base_free(event_base);
+    direct_global_deinit();
 
     return ctx.body_eof ? 0 : 2;
 }

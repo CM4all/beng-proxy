@@ -1056,6 +1056,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/istream-forward.c \
 	src/istream-ajp-body.c \
 	src/event2.c \
+	src/direct.c \
 	$(POOL_SRC)
 test_run_ajp_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)

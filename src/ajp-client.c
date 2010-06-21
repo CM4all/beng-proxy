@@ -20,6 +20,8 @@
 #include "strref.h"
 #include "please.h"
 #include "uri-verify.h"
+#include "direct.h"
+#include "fd-util.h"
 
 #include <daemon/log.h>
 #include <socket/util.h>
@@ -605,6 +607,36 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
     return 0;
 }
 
+static ssize_t
+ajp_request_stream_direct(istream_direct_t type, int fd, size_t max_length,
+                          void *ctx)
+{
+    struct ajp_client *client = ctx;
+    ssize_t nbytes;
+
+    assert(client != NULL);
+    assert(client->fd >= 0);
+    assert(client->request.istream != NULL);
+
+    nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
+    if (unlikely(nbytes < 0 && errno == EAGAIN)) {
+        if (!fd_ready_for_writing(client->fd)) {
+            ajp_client_schedule_write(client);
+            return -2;
+        }
+
+        /* try again, just in case connection->fd has become ready
+           between the first istream_direct_to_socket() call and
+           fd_ready_for_writing() */
+        nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
+    }
+
+    if (likely(nbytes > 0))
+        ajp_client_schedule_write(client);
+
+    return nbytes;
+}
+
 static void
 ajp_request_stream_eof(void *ctx)
 {
@@ -632,6 +664,7 @@ ajp_request_stream_abort(void *ctx)
 
 static const struct istream_handler ajp_request_stream_handler = {
     .data = ajp_request_stream_data,
+    .direct = ajp_request_stream_direct,
     .eof = ajp_request_stream_eof,
     .abort = ajp_request_stream_abort,
 };
@@ -677,7 +710,7 @@ static const struct async_operation_class ajp_client_request_async_operation = {
  */
 
 void
-ajp_client_request(pool_t pool, int fd,
+ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
                    const struct lease *lease, void *lease_ctx,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,
@@ -815,7 +848,7 @@ ajp_client_request(pool_t pool, int fd,
 
     istream_assign_handler(&client->request.istream, request,
                            &ajp_request_stream_handler, client,
-                           0);
+                           istream_direct_mask_to(fd_type));
 
     http_response_handler_set(&client->request.handler, handler, handler_ctx);
 
