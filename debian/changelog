@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.7.46) unstable; urgency=low
   * http-client: consume buffer before header length check
   * istream-pipe: clear "direct" flags in constructor
   * istream-pipe: return gracefully when handler blocks
+  * ajp-client: hold pool reference to reset TCP_CORK
 
  --
 
