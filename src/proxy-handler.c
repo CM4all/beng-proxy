@@ -93,6 +93,12 @@ proxy_handler(struct request *request2)
                     uri_host_and_port(request->pool, tr->address.u.http->uri),
                     uri_path(tr->address.u.http->uri));
 
+#ifdef SPLICE
+    if (forward.body != NULL)
+        forward.body = istream_pipe_new(request->pool, forward.body,
+                                        global_pipe_stock);
+#endif
+
     http_cache_request(global_http_cache, request->pool,
                        forward.method, tr->address.u.http,
                        forward.headers, forward.body,
