@@ -104,6 +104,12 @@ ajp_handler(struct request *request2)
                     uri_host_and_port(request->pool, tr->address.u.http->uri),
                     tr->address.u.http->uri);
 
+#ifdef SPLICE
+    if (forward.body != NULL)
+        forward.body = istream_pipe_new(request->pool, forward.body,
+                                        global_pipe_stock);
+#endif
+
     /* do it */
 
     ajp_stock_request(request->pool, global_tcp_stock,
