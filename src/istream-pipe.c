@@ -330,7 +330,7 @@ istream_pipe_new(pool_t pool, istream_t input, struct stock *pipe_stock)
 
     istream_assign_handler(&p->input, input,
                            &pipe_input_handler, p,
-                           ISTREAM_TO_PIPE);
+                           0);
 
     return istream_struct_cast(&p->output);
 }
