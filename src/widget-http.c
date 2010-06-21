@@ -220,6 +220,11 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
                    NULL)
         : NULL;
 
+#ifdef SPLICE
+    if (body != NULL)
+        body = istream_pipe_new(embed->pool, body, global_pipe_stock);
+#endif
+
     filter_cache_request(global_filter_cache, embed->pool, filter,
                          source_tag, status, headers, body,
                          &widget_response_handler, embed,

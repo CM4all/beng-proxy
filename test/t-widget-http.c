@@ -74,6 +74,15 @@ filter_cache_request(__attr_unused struct filter_cache *cache,
     http_response_handler_direct_abort(handler, handler_ctx);
 }
 
+struct stock *global_pipe_stock;
+
+istream_t
+istream_pipe_new(__attr_unused pool_t pool, istream_t input,
+                 __attr_unused struct stock *pipe_stock)
+{
+    return input;
+}
+
 struct http_cache;
 struct tcp_stock;
 struct fcgi_stock;
