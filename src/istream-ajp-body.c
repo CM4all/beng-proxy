@@ -172,6 +172,13 @@ istream_ajp_body_read(istream_t istream)
     if (ab->packet_remaining > 0 && !ajp_body_write_header(ab))
         return;
 
+    if (ab->packet_remaining == 0 && ab->requested > 0) {
+        /* start a new packet, as large as possible */
+        off_t available = istream_available(ab->input, true);
+        if (available > 0)
+            ajp_body_start_packet(ab, available);
+    }
+
     istream_read(ab->input);
 }
 
