@@ -362,6 +362,11 @@ response_apply_filter(struct request *request2,
                    NULL)
         : NULL;
 
+#ifdef SPLICE
+    if (body != NULL)
+        body = istream_pipe_new(request->pool, body, global_pipe_stock);
+#endif
+
     filter_cache_request(global_filter_cache, request->pool, filter,
                          source_tag, status, headers2, body,
                          &response_handler, request2,

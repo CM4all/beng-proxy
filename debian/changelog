@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.8.7) unstable; urgency=low
 
   * istream-delayed: update the "direct" bit mask
   * http-client: send "Expect: 100-continue"
+  * response: apply istream_pipe to filter input
 
  --
 
