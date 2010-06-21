@@ -541,11 +541,14 @@ ajp_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
         return;
     }
 
+    pool_ref(client->pool);
+
     socket_set_cork(client->fd, true);
     istream_read(client->request.istream);
     if (client->fd >= 0)
         socket_set_cork(client->fd, false);
 
+    pool_unref(client->pool);
     pool_commit();
 }
 

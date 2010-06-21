@@ -69,8 +69,9 @@ pipe_consume(struct istream_pipe *p)
     assert(p->piped > 0);
 
     nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
-    if (unlikely(nbytes == -3))
-        return -3;
+    if (unlikely(nbytes == -2 || nbytes == -3))
+        /* handler blocks (-2) or pipe was closed (-3) */
+        return nbytes;
 
     if (unlikely(nbytes < 0 && errno != EAGAIN)) {
         int save_errno = errno;
@@ -349,7 +350,7 @@ istream_pipe_new(pool_t pool, istream_t input, struct stock *pipe_stock)
 
     istream_assign_handler(&p->input, input,
                            &pipe_input_handler, p,
-                           ISTREAM_TO_PIPE);
+                           0);
 
     return istream_struct_cast(&p->output);
 }

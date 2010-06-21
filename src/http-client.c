@@ -584,6 +584,10 @@ http_client_parse_headers(struct http_client *client)
         start = next;
     }
 
+    /* remove the parsed part of the buffer */
+    if (next != NULL)
+        fifo_buffer_consume(client->input, next - buffer);
+
     if (end == NULL) {
         /* not enough data to finish this line, let libevent handle
            this */
@@ -598,15 +602,7 @@ http_client_parse_headers(struct http_client *client)
         http_client_schedule_read(client);
     }
 
-    if (next == NULL)
-        /* not a single line was processed - skip the following
-           checks */
-        return false;
-
-    /* remove the parsed part of the buffer */
-    fifo_buffer_consume(client->input, next - buffer);
-
-    return true;
+    return next != NULL;
 }
 
 static void
