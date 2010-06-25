@@ -10,6 +10,22 @@
 
 #include <stdint.h>
 
+enum delegate_request_command {
+    /**
+     * Open a regular file, and return the file descriptor in a
+     * #DELEGATE_FD packet.
+     */
+    DELEGATE_OPEN,
+};
+
+enum delegate_response_command {
+    /**
+     * A file was successfully opened, and the file descriptor is in
+     * the ancillary message.
+     */
+    DELEGATE_FD,
+};
+
 struct delegate_header {
     uint16_t length;
     uint16_t command;

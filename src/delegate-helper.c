@@ -45,7 +45,7 @@ delegate_send(const void *data, size_t length)
 }
 
 static bool
-delegate_send_header(unsigned command)
+delegate_send_header(enum delegate_response_command command)
 {
     const struct delegate_header header = {
         .length = 0,
@@ -56,7 +56,7 @@ delegate_send_header(unsigned command)
 }
 
 static bool
-delegate_send_fd(unsigned command, int fd)
+delegate_send_fd(enum delegate_response_command command, int fd)
 {
     struct delegate_header header = {
         .length = 0,
@@ -99,7 +99,7 @@ delegate_handle_open(const char *payload)
 {
     int fd = open(payload, O_RDONLY|O_CLOEXEC|O_NOCTTY);
     if (fd >= 0) {
-        bool success = delegate_send_fd(0, fd);
+        bool success = delegate_send_fd(DELEGATE_FD, fd);
         close(fd);
         return success;
     } else {
@@ -110,12 +110,18 @@ delegate_handle_open(const char *payload)
 }
 
 static bool
-delegate_handle(unsigned command, const char *payload, size_t length)
+delegate_handle(enum delegate_request_command command,
+                const char *payload, size_t length)
 {
-    (void)command;
     (void)length;
 
-    return delegate_handle_open(payload);
+    switch (command) {
+    case DELEGATE_OPEN:
+        return delegate_handle_open(payload);
+    }
+
+    fprintf(stderr, "unknown command: %d\n", command);
+    return false;
 }
 
 int main(int argc __attr_unused, char **argv __attr_unused)

@@ -102,7 +102,8 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
 }
 
 static void
-delegate_handle_errno(struct delegate_client *d, int command,
+delegate_handle_errno(struct delegate_client *d,
+                      enum delegate_response_command command,
                       size_t length)
 {
     if (length != 0) {
@@ -122,17 +123,16 @@ delegate_handle_errno(struct delegate_client *d, int command,
 
 static void
 delegate_handle_msghdr(struct delegate_client *d, const struct msghdr *msg,
-                       unsigned command, size_t length)
+                       enum delegate_response_command command, size_t length)
 {
     switch (command) {
-    case 0:
+    case DELEGATE_FD:
         delegate_handle_fd(d, msg, length);
-        break;
+        return;
 
     default:
         /* i/o error */
         delegate_handle_errno(d, command, length);
-        break;
     }
 }
 
@@ -277,7 +277,6 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
 {
     struct delegate_client *d;
     ssize_t nbytes;
-    struct delegate_header header;
 
     d = p_malloc(pool, sizeof(*d));
     p_lease_ref_set(&d->lease_ref, lease, lease_ctx,
@@ -285,8 +284,10 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     d->fd = fd;
     d->pool = pool;
 
-    header.length = strlen(path);
-    header.command = 0;
+    struct delegate_header header = {
+        .length = strlen(path),
+        .command = DELEGATE_OPEN,
+    };
 
     nbytes = send(d->fd, &header, sizeof(header), MSG_DONTWAIT);
     if (nbytes < 0) {
