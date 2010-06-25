@@ -103,10 +103,11 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
 
 static void
 delegate_handle_errno(struct delegate_client *d,
-                      enum delegate_response_command command,
                       size_t length)
 {
-    if (length != 0) {
+    int e;
+
+    if (length != sizeof(e)) {
         delegate_release_socket(d, false);
 
         daemon_log(1, "Invalid message length\n");
@@ -115,9 +116,16 @@ delegate_handle_errno(struct delegate_client *d,
         return;
     }
 
-    delegate_release_socket(d, true);
+    ssize_t nbytes = recv(d->fd, &e, sizeof(e), 0);
+    if (nbytes == sizeof(e)) {
+        delegate_release_socket(d, true);
+    } else {
+        delegate_release_socket(d, false);
+        daemon_log(1, "Failed to receive errno\n");
+        e = EINVAL;
+    }
 
-    d->callback(-command, d->callback_ctx);
+    d->callback(-e, d->callback_ctx);
     pool_unref(d->pool);
 }
 
@@ -130,10 +138,16 @@ delegate_handle_msghdr(struct delegate_client *d, const struct msghdr *msg,
         delegate_handle_fd(d, msg, length);
         return;
 
-    default:
+    case DELEGATE_ERRNO:
         /* i/o error */
-        delegate_handle_errno(d, command, length);
+        delegate_handle_errno(d, length);
+        return;
     }
+
+    delegate_release_socket(d, false);
+    daemon_log(1, "Invalid delegate response\n");
+    d->callback(-EINVAL, d->callback_ctx);
+    pool_unref(d->pool);
 }
 
 static void

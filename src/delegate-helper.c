@@ -45,14 +45,17 @@ delegate_send(const void *data, size_t length)
 }
 
 static bool
-delegate_send_header(enum delegate_response_command command)
+delegate_send_int(enum delegate_response_command command, int value)
 {
-    const struct delegate_header header = {
-        .length = 0,
-        .command = command,
+    const struct delegate_packet_int packet = {
+        .header = {
+            .length = sizeof(packet) - sizeof(packet.header),
+            .command = command,
+        },
+        .value = value,
     };
 
-    return delegate_send(&header, sizeof(header));
+    return delegate_send(&packet, sizeof(packet));
 }
 
 static bool
@@ -105,7 +108,7 @@ delegate_handle_open(const char *payload)
     } else {
         /* error: send error code to client */
 
-        return delegate_send_header(errno);
+        return delegate_send_int(DELEGATE_ERRNO, errno);
     }
 }
 

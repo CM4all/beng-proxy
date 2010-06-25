@@ -24,11 +24,22 @@ enum delegate_response_command {
      * the ancillary message.
      */
     DELEGATE_FD,
+
+    /**
+     * The operation has failed.  The payload contains the "errno"
+     * value as an "int".
+     */
+    DELEGATE_ERRNO,
 };
 
 struct delegate_header {
     uint16_t length;
     uint16_t command;
+};
+
+struct delegate_packet_int {
+    struct delegate_header header;
+    int value;
 };
 
 #endif
