@@ -59,6 +59,84 @@ delegate_release_socket(struct delegate_client *d, bool reuse)
 }
 
 static void
+delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
+                   size_t length)
+{
+    if (length != 0) {
+        delegate_release_socket(d, false);
+
+        daemon_log(1, "Invalid message length\n");
+        d->callback(-EINVAL, d->callback_ctx);
+        pool_unref(d->pool);
+        return;
+    }
+
+    struct cmsghdr *cmsg = CMSG_FIRSTHDR(msg);
+    if (cmsg == NULL) {
+        delegate_release_socket(d, false);
+
+        daemon_log(1, "No fd passed\n");
+        d->callback(-EINVAL, d->callback_ctx);
+        pool_unref(d->pool);
+        return;
+    }
+
+    if (!cmsg->cmsg_type == SCM_RIGHTS) {
+        delegate_release_socket(d, false);
+
+        daemon_log(1, "got control message of unknown type %d\n",
+                   cmsg->cmsg_type);
+        d->callback(-EINVAL, d->callback_ctx);
+        pool_unref(d->pool);
+        return;
+    }
+
+    delegate_release_socket(d, true);
+
+    const int *fd_p = (const int *)CMSG_DATA(cmsg);
+
+    int fd = *fd_p;
+    fd_set_cloexec(fd);
+    d->callback(fd, d->callback_ctx);
+    pool_unref(d->pool);
+}
+
+static void
+delegate_handle_errno(struct delegate_client *d, int command,
+                      size_t length)
+{
+    if (length != 0) {
+        delegate_release_socket(d, false);
+
+        daemon_log(1, "Invalid message length\n");
+        d->callback(-EINVAL, d->callback_ctx);
+        pool_unref(d->pool);
+        return;
+    }
+
+    delegate_release_socket(d, true);
+
+    d->callback(-command, d->callback_ctx);
+    pool_unref(d->pool);
+}
+
+static void
+delegate_handle_msghdr(struct delegate_client *d, const struct msghdr *msg,
+                       unsigned command, size_t length)
+{
+    switch (command) {
+    case 0:
+        delegate_handle_fd(d, msg, length);
+        break;
+
+    default:
+        /* i/o error */
+        delegate_handle_errno(d, command, length);
+        break;
+    }
+}
+
+static void
 delegate_try_read(struct delegate_client *d)
 {
     async_operation_finished(&d->operation);
@@ -66,7 +144,6 @@ delegate_try_read(struct delegate_client *d)
     struct iovec iov;
     int fd;
     char ccmsg[CMSG_SPACE(sizeof(fd))];
-    struct cmsghdr *cmsg;
     struct msghdr msg = {
         .msg_name = NULL,
         .msg_namelen = 0,
@@ -102,52 +179,7 @@ delegate_try_read(struct delegate_client *d)
         return;
     }
 
-    if (header.length != 0) {
-        delegate_release_socket(d, false);
-
-        daemon_log(1, "Invalid message length\n");
-        d->callback(-EINVAL, d->callback_ctx);
-        pool_unref(d->pool);
-        return;
-    }
-
-    if (header.command != 0) {
-        /* i/o error */
-
-        delegate_release_socket(d, true);
-
-        d->callback(-header.command, d->callback_ctx);
-        pool_unref(d->pool);
-        return;
-    }
-
-    cmsg = CMSG_FIRSTHDR(&msg);
-    if (cmsg == NULL) {
-        delegate_release_socket(d, false);
-
-        daemon_log(1, "No fd passed\n");
-        d->callback(-EINVAL, d->callback_ctx);
-        pool_unref(d->pool);
-        return;
-    }
-
-    if (!cmsg->cmsg_type == SCM_RIGHTS) {
-        delegate_release_socket(d, false);
-
-        daemon_log(1, "got control message of unknown type %d\n",
-                   cmsg->cmsg_type);
-        d->callback(-EINVAL, d->callback_ctx);
-        pool_unref(d->pool);
-        return;
-    }
-
-    delegate_release_socket(d, true);
-
-    const int *fd_p = (const int *)CMSG_DATA(cmsg);
-    fd = *fd_p;
-    fd_set_cloexec(fd);
-    d->callback(fd, d->callback_ctx);
-    pool_unref(d->pool);
+    delegate_handle_msghdr(d, &msg, header.command, header.length);
 }
 
 static void
