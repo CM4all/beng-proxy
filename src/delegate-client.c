@@ -59,23 +59,6 @@ delegate_release_socket(struct delegate_client *d, bool reuse)
 }
 
 static void
-delegate_try_read(struct delegate_client *d);
-
-static void
-delegate_read_event_callback(int fd __attr_unused, short event __attr_unused,
-                              void *ctx)
-{
-    struct delegate_client *d = ctx;
-
-    p_event_consumed(&d->event, d->pool);
-
-    assert(d->fd == fd);
-    assert(d->payload_rest == 0);
-
-    delegate_try_read(d);
-}
-
-static void
 delegate_try_read(struct delegate_client *d)
 {
     async_operation_finished(&d->operation);
@@ -168,18 +151,17 @@ delegate_try_read(struct delegate_client *d)
 }
 
 static void
-delegate_try_write(struct delegate_client *d);
-
-static void
-delegate_write_event_callback(int fd __attr_unused, short event __attr_unused,
+delegate_read_event_callback(int fd __attr_unused, short event __attr_unused,
                               void *ctx)
 {
     struct delegate_client *d = ctx;
 
-    assert(d->fd == fd);
-    assert(d->payload_rest > 0);
+    p_event_consumed(&d->event, d->pool);
 
-    delegate_try_write(d);
+    assert(d->fd == fd);
+    assert(d->payload_rest == 0);
+
+    delegate_try_read(d);
 }
 
 static void
@@ -209,6 +191,18 @@ delegate_try_write(struct delegate_client *d)
                   delegate_read_event_callback, d);
 
     p_event_add(&d->event, NULL, d->pool, "delegate_client_event");
+}
+
+static void
+delegate_write_event_callback(int fd __attr_unused, short event __attr_unused,
+                              void *ctx)
+{
+    struct delegate_client *d = ctx;
+
+    assert(d->fd == fd);
+    assert(d->payload_rest > 0);
+
+    delegate_try_write(d);
 }
 
 
