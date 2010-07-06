@@ -199,6 +199,12 @@ class Translation(Protocol):
             response.packet(TRANSLATE_PATH_INFO, uri[14:])
             response.packet(TRANSLATE_BASE, '/ticket/upload/')
             response.pair('TICKET_VAR', ticket_database_uri)
+        elif uri[:16] == '/ticket/control/':
+            response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
+                                                            'control'))
+            response.packet(TRANSLATE_PATH_INFO, uri[15:])
+            response.packet(TRANSLATE_BASE, '/ticket/control/')
+            response.pair('TICKET_VAR', ticket_database_uri)
         elif uri == '/filter':
             # two filters chained
             response.packet(TRANSLATE_DOCUMENT_ROOT, demo_path)
