@@ -186,6 +186,12 @@ class Translation(Protocol):
             response.packet(TRANSLATE_PATH_INFO, uri[14:])
             response.packet(TRANSLATE_BASE, '/ticket/create/')
             response.pair('TICKET_VAR', ticket_database_uri)
+        elif uri[:16] == '/ticket/create2/':
+            response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
+                                                            'create'))
+            response.packet(TRANSLATE_BASE, '/ticket/create2/')
+            response.pair('TICKET_VAR', ticket_database_uri)
+            response.pair('TICKET_URI', 'ftp://' + uri[16:])
         elif uri[:15] == '/ticket/upload/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'upload'))
