@@ -191,7 +191,7 @@ class Translation(Protocol):
                                                             'upload'))
             response.packet(TRANSLATE_DOCUMENT_ROOT, '/var/www')
             response.packet(TRANSLATE_PATH_INFO, uri[14:])
-            response.packet(TRANSLATE_BASE, '/ticket/create/')
+            response.packet(TRANSLATE_BASE, '/ticket/upload/')
             response.pair('TICKET_VAR', ticket_database_uri)
         elif uri == '/filter':
             # two filters chained
