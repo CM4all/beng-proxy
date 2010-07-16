@@ -231,6 +231,7 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
     };
 #endif
     struct addrinfo hints;
+    const char *user_name = NULL;
 
     while (1) {
 #ifdef __GLIBC__
@@ -277,9 +278,7 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
             if (debug_mode)
                 arg_error(argv[0], "cannot specify a user in debug mode");
 
-            daemon_user_by_name(&daemon_config.user, optarg, NULL);
-            if (!daemon_user_defined(&daemon_config.user))
-                arg_error(argv[0], "refusing to run as root");
+            user_name = optarg;
             break;
 
         case 'U':
@@ -367,6 +366,10 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 
     /* check completeness */
 
-    if (!debug_mode && !daemon_user_defined(&daemon_config.user))
+    if (user_name != NULL) {
+        daemon_user_by_name(&daemon_config.user, user_name, NULL);
+        if (!daemon_user_defined(&daemon_config.user))
+            arg_error(argv[0], "refusing to run as root");
+    } else if (!debug_mode)
         arg_error(argv[0], "no user name specified (-u)");
 }
