@@ -49,6 +49,10 @@ static void usage(void) {
 #endif
          " -u name        switch to another user id\n"
 #ifdef __GLIBC__
+         " --group name\n"
+#endif
+         " -g name        switch to another group id\n"
+#ifdef __GLIBC__
          " --logger-user name\n"
 #endif
          " -U name        execute the logger program with this user id\n"
@@ -218,6 +222,7 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
         {"logger", 1, NULL, 'l'},
         {"pidfile", 1, NULL, 'P'},
         {"user", 1, NULL, 'u'},
+        {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
         {"port", 1, NULL, 'p'},
         {"listen", 1, NULL, 'L'},
@@ -231,16 +236,16 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
     };
 #endif
     struct addrinfo hints;
-    const char *user_name = NULL;
+    const char *user_name = NULL, *group_name = NULL;
 
     while (1) {
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:M:B:s:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:g:U:p:L:w:r:t:M:B:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:U:p:L:w:r:t:M:B:s:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:g:U:p:L:w:r:t:M:B:s:");
 #endif
         if (ret == -1)
             break;
@@ -279,6 +284,13 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
                 arg_error(argv[0], "cannot specify a user in debug mode");
 
             user_name = optarg;
+            break;
+
+        case 'g':
+            if (debug_mode)
+                arg_error(argv[0], "cannot specify a group in debug mode");
+
+            group_name = optarg;
             break;
 
         case 'U':
@@ -367,9 +379,11 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
     /* check completeness */
 
     if (user_name != NULL) {
-        daemon_user_by_name(&daemon_config.user, user_name, NULL);
+        daemon_user_by_name(&daemon_config.user, user_name, group_name);
         if (!daemon_user_defined(&daemon_config.user))
             arg_error(argv[0], "refusing to run as root");
-    } else if (!debug_mode)
+    } else if (group_name != NULL)
+        arg_error(argv[0], "cannot set --group without --user");
+    else if (!debug_mode)
         arg_error(argv[0], "no user name specified (-u)");
 }
