@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.8.8) unstable; urgency=low
 
   * prototypes/translate.py: added new ticket-fastcgi programs
+  * http-cache: implement FastCGI caching
 
  --
 

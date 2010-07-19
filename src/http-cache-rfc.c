@@ -59,8 +59,13 @@ resource_address_has_query_string(const struct resource_address *address)
         return strchr(address->u.http->uri, '?') != NULL;
 
     case RESOURCE_ADDRESS_PIPE:
+        return false;
+
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+        return address->u.cgi.query_string == NULL ||
+            *address->u.cgi.query_string == 0;
+
     case RESOURCE_ADDRESS_AJP:
         return false;
     }
@@ -124,6 +129,8 @@ http_cache_request_evaluate(pool_t pool,
     if (info == NULL)
         info = http_cache_info_new(pool);
 
+    info->is_remote = address->type == RESOURCE_ADDRESS_HTTP ||
+        address->type == RESOURCE_ADDRESS_AJP;
     info->has_query_string = resource_address_has_query_string(address);
 
     return info;
@@ -198,7 +205,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
                              http_status_t status, const struct strmap *headers,
                              off_t body_available)
 {
-    time_t date, now, offset;
+    time_t now, offset;
     const char *p;
 
     if (!http_status_cacheable(status) || headers == NULL)
@@ -239,17 +246,23 @@ http_cache_response_evaluate(struct http_cache_info *info,
         }
     }
 
-    p = strmap_get(headers, "date");
-    if (p == NULL)
-        /* we cannot determine wether to cache a resource if the
-           server does not provide its system time */
-        return false;
-    date = http_date_parse(p);
-    if (date == (time_t)-1)
-        return false;
-
     now = time(NULL);
-    offset = now - date;
+
+    if (info->is_remote) {
+        p = strmap_get(headers, "date");
+        if (p == NULL)
+            /* we cannot determine wether to cache a resource if the
+               server does not provide its system time */
+            return false;
+
+        time_t date = http_date_parse(p);
+        if (date == (time_t)-1)
+            return false;
+
+        offset = now - date;
+    } else
+        offset = 0;
+
 
     if (info->expires == (time_t)-1) {
         /* RFC 2616 14.9.3: "If a response includes both an Expires

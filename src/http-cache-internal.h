@@ -16,6 +16,12 @@ struct background_manager;
 static const off_t cacheable_size_limit = 256 * 1024;
 
 struct http_cache_info {
+    /**
+     * Is the request served by a remote server?  If yes, then we
+     * require the "Date" header to be present.
+     */
+    bool is_remote;
+
     bool only_if_cached;
 
     /** does the request URI have a query string?  This information is

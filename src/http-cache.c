@@ -16,6 +16,8 @@
 #include "async.h"
 #include "background.h"
 
+#include <glib.h>
+
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
@@ -112,7 +114,64 @@ struct http_cache_request {
 };
 
 static const char *
-http_cache_key(const struct resource_address *address)
+http_cache_cgi_key(pool_t pool, const struct resource_address *address)
+{
+    assert(address != NULL);
+    assert(address->type == RESOURCE_ADDRESS_CGI ||
+           address->type == RESOURCE_ADDRESS_FASTCGI);
+
+    GString *buffer = g_string_sized_new(2048);
+    if (address->u.cgi.jail)
+        g_string_append(buffer, "jail:");
+
+    if (address->u.cgi.document_root != NULL) {
+        g_string_append_c(buffer, '[');
+        g_string_append(buffer, address->u.cgi.document_root);
+        g_string_append_c(buffer, ']');
+    }
+
+    if (address->u.cgi.interpreter != NULL) {
+        g_string_append_c(buffer, '#');
+        g_string_append(buffer, address->u.cgi.interpreter);
+        g_string_append_c(buffer, ' ');
+    }
+
+    if (address->u.cgi.action != NULL) {
+        g_string_append_c(buffer, '!');
+        g_string_append(buffer, address->u.cgi.action);
+        g_string_append_c(buffer, ' ');
+    }
+
+    g_string_append(buffer, address->u.cgi.path);
+    g_string_append_c(buffer, ' ');
+
+    if (address->u.cgi.script_name != NULL) {
+        g_string_append(buffer, "script_name=");
+        g_string_append(buffer, address->u.cgi.script_name);
+    }
+
+    for (unsigned i = 0; i < address->u.cgi.num_args; ++i) {
+        g_string_append(buffer, address->u.cgi.args[i]);
+        g_string_append_c(buffer, ' ');
+    }
+
+    if (address->u.cgi.path_info != NULL) {
+        g_string_append(buffer, "path_info=");
+        g_string_append(buffer, address->u.cgi.path_info);
+    }
+
+    if (address->u.cgi.query_string != NULL) {
+        g_string_append(buffer, "query_string=");
+        g_string_append(buffer, address->u.cgi.query_string);
+    }
+
+    const char *key = p_strndup(pool, buffer->str, buffer->len);
+    g_string_free(buffer, true);
+    return key;
+}
+
+static const char *
+http_cache_key(pool_t pool, const struct resource_address *address)
 {
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:
@@ -123,8 +182,12 @@ http_cache_key(const struct resource_address *address)
         return address->u.http->uri;
 
     case RESOURCE_ADDRESS_PIPE:
+        return NULL;
+
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+        return http_cache_cgi_key(pool, address);
+
     case RESOURCE_ADDRESS_AJP:
         return NULL;
     }
@@ -569,7 +632,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     request->pool = pool;
     request->caller_pool = caller_pool;
     request->cache = cache;
-    request->key = http_cache_key(address);
+    request->key = http_cache_key(pool, address);
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
@@ -706,7 +769,7 @@ http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
     request->pool = pool;
     request->caller_pool = caller_pool;
     request->cache = cache;
-    request->key = http_cache_key(address);
+    request->key = http_cache_key(pool, address);
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
@@ -752,7 +815,8 @@ http_cache_found(struct http_cache *cache,
 {
     if (http_cache_may_serve(info, document))
         http_cache_heap_serve(cache->cache, document, pool,
-                              http_cache_key(address), handler, handler_ctx);
+                              http_cache_key(pool, address),
+                              handler, handler_ctx);
     else
         http_cache_heap_test(cache, pool, info, document,
                              method, address, headers,
@@ -777,7 +841,8 @@ http_cache_heap_use(struct http_cache *cache,
                     struct async_operation_ref *async_ref)
 {
     struct http_cache_document *document
-        = http_cache_heap_get(cache->cache, http_cache_key(address), headers);
+        = http_cache_heap_get(cache->cache, http_cache_key(pool, address),
+                              headers);
 
     if (document == NULL)
         http_cache_miss(cache, pool, info,
@@ -902,7 +967,7 @@ http_cache_memcached_use(struct http_cache *cache,
     request->cache = cache;
     request->method = method;
     request->address = address;
-    request->key = http_cache_key(address);
+    request->key = http_cache_key(pool, address);
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
@@ -931,7 +996,7 @@ http_cache_request(struct http_cache *cache,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    const char *key = http_cache_key(address);
+    const char *key = http_cache_key(pool, address);
     if (/* this address type cannot be cached; skip the rest of this
            library */
         key == NULL ||
