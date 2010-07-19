@@ -298,6 +298,7 @@ SRC = src/main.c \
 	src/penv.c \
 	src/parser.c \
 	src/rewrite-uri.c \
+	src/resource-loader.c \
 	src/get.c \
 	src/static-headers.c \
 	src/static-file.c \
