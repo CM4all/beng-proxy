@@ -55,6 +55,8 @@ struct instance {
     struct hstock *delegate_stock;
 
     struct stock *pipe_stock;
+
+    struct resource_loader *resource_loader;
 };
 
 struct client_connection;
