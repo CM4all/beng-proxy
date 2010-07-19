@@ -1,6 +1,6 @@
 #include "http-cache.h"
 #include "http-cache-internal.h"
-#include "http-request.h"
+#include "resource-loader.h"
 #include "resource-address.h"
 #include "growing-buffer.h"
 #include "header-parser.h"
@@ -175,17 +175,16 @@ parse_response_headers(pool_t pool, const struct request *request)
 }
 
 void
-http_request(pool_t pool,
-             __attr_unused struct hstock *tcp_stock,
-             http_method_t method,
-             __attr_unused struct uri_with_address *uwa,
-             struct growing_buffer *headers, istream_t body,
-             const struct http_response_handler *handler,
-             void *handler_ctx,
-             __attr_unused struct async_operation_ref *async_ref)
+resource_loader_request(__attr_unused struct resource_loader *rl, pool_t pool,
+                        http_method_t method,
+                        __attr_unused const struct resource_address *address,
+                        __attr_unused http_status_t status, struct strmap *headers,
+                        istream_t body,
+                        const struct http_response_handler *handler,
+                        void *handler_ctx,
+                        __attr_unused struct async_operation_ref *async_ref)
 {
     const struct request *request = &requests[current_request];
-    struct strmap *headers2 = strmap_new(pool, 64);
     struct strmap *expected_rh;
     struct strmap *response_headers;
     istream_t response_body;
@@ -196,10 +195,7 @@ http_request(pool_t pool,
 
     got_request = true;
 
-    if (headers != NULL)
-        header_parse_buffer(pool, headers2, headers);
-
-    validated = strmap_get(headers2, "if-modified-since") != NULL;
+    validated = strmap_get_checked(headers, "if-modified-since") != NULL;
 
     expected_rh = parse_request_headers(pool, request);
     if (expected_rh != NULL) {
@@ -209,7 +205,7 @@ http_request(pool_t pool,
 
         strmap_rewind(expected_rh);
         while ((pair = strmap_next(expected_rh)) != NULL) {
-            const char *value = strmap_get(headers2, pair->key);
+            const char *value = strmap_get_checked(headers, pair->key);
             assert(value != NULL);
             assert(strcmp(value, pair->value) == 0);
         }
@@ -320,6 +316,12 @@ run_cache_test(pool_t root_pool, unsigned num, bool cached)
         .pool = pool,
         .uri = request->uri,
     };
+    const struct resource_address address = {
+        .type = RESOURCE_ADDRESS_HTTP,
+        .u = {
+            .http = &uwa,
+        },
+    };
     struct strmap *headers;
     istream_t body;
     struct async_operation_ref async_ref;
@@ -340,7 +342,7 @@ run_cache_test(pool_t root_pool, unsigned num, bool cached)
     got_request = cached;
     got_response = false;
 
-    http_cache_request(cache, pool, request->method, &uwa,
+    http_cache_request(cache, pool, request->method, &address,
                        headers, body,
                        &my_http_response_handler, pool,
                        &async_ref);

@@ -11,7 +11,9 @@
 #include "strmap.h"
 #include "date.h"
 #include "tpool.h"
+#include "resource-address.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 static struct strref *
@@ -45,10 +47,34 @@ http_cache_info_new(pool_t pool)
     return info;
 }
 
+static bool
+resource_address_has_query_string(const struct resource_address *address)
+{
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+        return false;
+
+    case RESOURCE_ADDRESS_HTTP:
+        return strchr(address->u.http->uri, '?') != NULL;
+
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_AJP:
+        return false;
+    }
+
+    /* unreachable */
+    assert(false);
+    return false;
+}
+
 /* check whether the request could produce a cacheable response */
 struct http_cache_info *
 http_cache_request_evaluate(pool_t pool,
-                            http_method_t method, const char *uri,
+                            http_method_t method,
+                            const struct resource_address *address,
                             const struct strmap *headers,
                             istream_t body)
 {
@@ -57,12 +83,6 @@ http_cache_request_evaluate(pool_t pool,
 
     if (method != HTTP_METHOD_GET || body != NULL)
         /* RFC 2616 13.11 "Write-Through Mandatory" */
-        return NULL;
-
-    if (strlen(uri) > 8192)
-        /* don't cache a huge request URI; probably it contains lots
-           and lots of unique parameters, and that's not worth the
-           cache space anyway */
         return NULL;
 
     if (headers != NULL) {
@@ -104,7 +124,7 @@ http_cache_request_evaluate(pool_t pool,
     if (info == NULL)
         info = http_cache_info_new(pool);
 
-    info->has_query_string = strchr(uri, '?') != NULL;
+    info->has_query_string = resource_address_has_query_string(address);
 
     return info;
 }

@@ -100,7 +100,7 @@ proxy_handler(struct request *request2)
 #endif
 
     http_cache_request(global_http_cache, request->pool,
-                       forward.method, tr->address.u.http,
+                       forward.method, &tr->address,
                        forward.headers, forward.body,
                        &proxy_response_handler, request2,
                        request2->async_ref);

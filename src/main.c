@@ -294,11 +294,6 @@ int main(int argc, char **argv)
         instance.translate_cache = translate_cache_new(instance.pool, translate_stock,
                                                        instance.config.translate_cache_size);
     }
-
-    instance.http_cache = http_cache_new(instance.pool,
-                                         instance.config.http_cache_size,
-                                         instance.memcached_stock,
-                                         instance.tcp_stock);
     instance.fcgi_stock = fcgi_stock_new(instance.pool,
                                          instance.config.fcgi_stock_limit);
     instance.delegate_stock = delegate_stock_new(instance.pool);
@@ -306,6 +301,12 @@ int main(int argc, char **argv)
                                                    instance.tcp_stock,
                                                    instance.fcgi_stock,
                                                    instance.delegate_stock);
+
+    instance.http_cache = http_cache_new(instance.pool,
+                                         instance.config.http_cache_size,
+                                         instance.memcached_stock,
+                                         instance.resource_loader);
+
     instance.pipe_stock = pipe_stock_new(instance.pool);
     instance.filter_cache = filter_cache_new(instance.pool,
                                              instance.config.filter_cache_size,

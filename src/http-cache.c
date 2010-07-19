@@ -5,11 +5,10 @@
  */
 
 #include "http-cache-internal.h"
-#include "http-request.h"
-#include "header-writer.h"
+#include "resource-loader.h"
 #include "strmap.h"
 #include "http-response.h"
-#include "uri-address.h"
+#include "resource-address.h"
 #include "strref2.h"
 #include "growing-buffer.h"
 #include "tpool.h"
@@ -25,7 +24,7 @@ struct http_cache {
     pool_t pool;
     struct cache *cache;
     struct memcached_stock *memcached_stock;
-    struct hstock *tcp_stock;
+    struct resource_loader *resource_loader;
 
     struct list_head requests;
 
@@ -50,7 +49,7 @@ struct http_cache_request {
      */
     struct http_cache *cache;
     http_method_t method;
-    struct uri_with_address *uwa;
+    const struct resource_address *address;
 
     /**
      * The cache key used to address the associated cache document.
@@ -111,6 +110,29 @@ struct http_cache_request {
     struct async_operation operation;
     struct async_operation_ref async_ref;
 };
+
+static const char *
+http_cache_key(const struct resource_address *address)
+{
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+        return NULL;
+
+    case RESOURCE_ADDRESS_HTTP:
+        return address->u.http->uri;
+
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_AJP:
+        return NULL;
+    }
+
+    /* unreachable */
+    assert(false);
+    return NULL;
+}
 
 static void
 http_cache_memcached_put_callback(void *ctx)
@@ -431,7 +453,7 @@ static const struct async_operation_class http_cache_async_operation = {
 struct http_cache *
 http_cache_new(pool_t pool, size_t max_size,
                struct memcached_stock *memcached_stock,
-               struct hstock *tcp_stock)
+               struct resource_loader *resource_loader)
 {
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
@@ -439,7 +461,7 @@ http_cache_new(pool_t pool, size_t max_size,
         ? http_cache_heap_new(pool, max_size)
         : NULL;
     cache->memcached_stock = memcached_stock;
-    cache->tcp_stock = tcp_stock;
+    cache->resource_loader = resource_loader;
 
     list_init(&cache->requests);
     background_manager_init(&cache->background);
@@ -523,7 +545,7 @@ static void
 http_cache_miss(struct http_cache *cache, pool_t caller_pool,
                 struct http_cache_info *info,
                 http_method_t method,
-                struct uri_with_address *uwa,
+                const struct resource_address *address,
                 struct strmap *headers,
                 const struct http_response_handler *handler,
                 void *handler_ctx,
@@ -547,7 +569,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     request->pool = pool;
     request->caller_pool = caller_pool;
     request->cache = cache;
-    request->key = uwa->uri;
+    request->key = http_cache_key(address);
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
@@ -560,11 +582,11 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     async_ref_set(async_ref, &request->operation);
 
     pool_ref_notify(caller_pool, &request->caller_pool_notify);
-    http_request(pool, cache->tcp_stock,
-                 method, uwa,
-                 headers == NULL ? NULL : headers_dup(pool, headers), NULL,
-                 &http_cache_response_handler, request,
-                 &request->async_ref);
+    resource_loader_request(cache->resource_loader, pool,
+                            method, address,
+                            HTTP_STATUS_OK, headers, NULL,
+                            &http_cache_response_handler, request,
+                            &request->async_ref);
     pool_unref(pool);
 }
 
@@ -635,7 +657,7 @@ http_cache_serve(struct http_cache_request *request)
 static void
 http_cache_test(struct http_cache_request *request,
                 http_method_t method,
-                struct uri_with_address *uwa,
+                const struct resource_address *address,
                 struct strmap *headers)
 {
     struct http_cache *cache = request->cache;
@@ -653,11 +675,11 @@ http_cache_test(struct http_cache_request *request,
     if (document->info.etag != NULL)
         strmap_set(headers, "if-none-match", document->info.etag);
 
-    http_request(request->pool, cache->tcp_stock,
-                 method, uwa,
-                 headers_dup(request->pool, headers), NULL,
-                 &http_cache_response_handler, request,
-                 &request->async_ref);
+    resource_loader_request(cache->resource_loader, request->pool,
+                            method, address,
+                            HTTP_STATUS_OK, headers, NULL,
+                            &http_cache_response_handler, request,
+                            &request->async_ref);
 }
 
 /**
@@ -670,7 +692,7 @@ http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
                      struct http_cache_info *info,
                      struct http_cache_document *document,
                      http_method_t method,
-                     struct uri_with_address *uwa,
+                     const struct resource_address *address,
                      struct strmap *headers,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
@@ -684,7 +706,7 @@ http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
     request->pool = pool;
     request->caller_pool = caller_pool;
     request->cache = cache;
-    request->key = uwa->uri;
+    request->key = http_cache_key(address);
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
@@ -696,7 +718,7 @@ http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
     async_ref_set(async_ref, &request->operation);
 
     pool_ref_notify(caller_pool, &request->caller_pool_notify);
-    http_cache_test(request, method, uwa, headers);
+    http_cache_test(request, method, address, headers);
     pool_unref(pool);
 }
 
@@ -722,7 +744,7 @@ http_cache_found(struct http_cache *cache,
                  struct http_cache_document *document,
                  pool_t pool,
                  http_method_t method,
-                 struct uri_with_address *uwa,
+                 const struct resource_address *address,
                  struct strmap *headers,
                  const struct http_response_handler *handler,
                  void *handler_ctx,
@@ -730,10 +752,10 @@ http_cache_found(struct http_cache *cache,
 {
     if (http_cache_may_serve(info, document))
         http_cache_heap_serve(cache->cache, document, pool,
-                              uwa->uri, handler, handler_ctx);
+                              http_cache_key(address), handler, handler_ctx);
     else
         http_cache_heap_test(cache, pool, info, document,
-                             method, uwa, headers,
+                             method, address, headers,
                              handler, handler_ctx, async_ref);
 }
 
@@ -747,7 +769,7 @@ static void
 http_cache_heap_use(struct http_cache *cache,
                     pool_t pool,
                     http_method_t method,
-                    struct uri_with_address *uwa,
+                    const struct resource_address *address,
                     struct strmap *headers,
                     struct http_cache_info *info,
                     const struct http_response_handler *handler,
@@ -755,15 +777,15 @@ http_cache_heap_use(struct http_cache *cache,
                     struct async_operation_ref *async_ref)
 {
     struct http_cache_document *document
-        = http_cache_heap_get(cache->cache, uwa->uri, headers);
+        = http_cache_heap_get(cache->cache, http_cache_key(address), headers);
 
     if (document == NULL)
         http_cache_miss(cache, pool, info,
-                        method, uwa, headers,
+                        method, address, headers,
                         handler, handler_ctx, async_ref);
     else
         http_cache_found(cache, info, document, pool,
-                         method, uwa, headers,
+                         method, address, headers,
                          handler, handler_ctx, async_ref);
 }
 
@@ -777,15 +799,10 @@ http_cache_memcached_forward(struct http_cache_request *request,
                              const struct http_response_handler *handler,
                              void *handler_ctx)
 {
-    struct growing_buffer *headers2;
-
-    headers2 = request->headers == NULL
-        ? NULL : headers_dup(request->pool, request->headers);
-
-    http_request(request->pool, request->cache->tcp_stock,
-                 request->method, request->uwa,
-                 headers2, NULL,
-                 handler, handler_ctx, &request->async_ref);
+    resource_loader_request(request->cache->resource_loader, request->pool,
+                            request->method, request->address,
+                            HTTP_STATUS_OK, request->headers, NULL,
+                            handler, handler_ctx, &request->async_ref);
 }
 
 /**
@@ -849,7 +866,7 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
         request->document = document;
         request->document_body = istream_hold_new(request->pool, body);
 
-        http_cache_test(request, request->method, request->uwa,
+        http_cache_test(request, request->method, request->address,
                         request->headers);
     }
 }
@@ -863,7 +880,7 @@ static void
 http_cache_memcached_use(struct http_cache *cache,
                          pool_t caller_pool,
                          http_method_t method,
-                         struct uri_with_address *uwa,
+                         const struct resource_address *address,
                          struct strmap *headers,
                          struct http_cache_info *info,
                          const struct http_response_handler *handler,
@@ -884,8 +901,8 @@ http_cache_memcached_use(struct http_cache *cache,
     request->caller_pool = caller_pool;
     request->cache = cache;
     request->method = method;
-    request->uwa = uwa;
-    request->key = uwa->uri;
+    request->address = address;
+    request->key = http_cache_key(address);
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
@@ -908,42 +925,52 @@ void
 http_cache_request(struct http_cache *cache,
                    pool_t pool,
                    http_method_t method,
-                   struct uri_with_address *uwa,
+                   const struct resource_address *address,
                    struct strmap *headers, istream_t body,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
+    const char *key = http_cache_key(address);
+    if (/* this address type cannot be cached; skip the rest of this
+           library */
+        key == NULL ||
+        /* don't cache a huge request URI; probably it contains lots
+           and lots of unique parameters, and that's not worth the
+           cache space anyway */
+        strlen(key) > 8192) {
+        resource_loader_request(cache->resource_loader, pool,
+                                method, address,
+                                HTTP_STATUS_OK, headers, body,
+                                handler, handler_ctx,
+                                async_ref);
+        return;
+    }
+
     struct http_cache_info *info;
 
     info = cache->cache != NULL || cache->memcached_stock != NULL
-        ? http_cache_request_evaluate(pool, method, uwa->uri, headers, body)
+        ? http_cache_request_evaluate(pool, method, address, headers, body)
         : NULL;
     if (info != NULL) {
         assert(body == NULL);
 
         if (cache->cache != NULL)
-            http_cache_heap_use(cache, pool, method, uwa, headers, info,
+            http_cache_heap_use(cache, pool, method, address, headers, info,
                                 handler, handler_ctx, async_ref);
         else if (cache->memcached_stock != NULL)
-            http_cache_memcached_use(cache, pool, method, uwa, headers,
+            http_cache_memcached_use(cache, pool, method, address, headers,
                                      info, handler, handler_ctx, async_ref);
     } else {
-        const char *key = uwa->uri;
-        struct growing_buffer *headers2;
-
         if (http_cache_request_invalidate(method))
             http_cache_remove_url(cache, key, headers);
 
         cache_log(4, "http_cache: ignore %s\n", key);
 
-        headers2 = headers == NULL
-            ? NULL : headers_dup(pool, headers);
-
-        http_request(pool, cache->tcp_stock,
-                     method, uwa,
-                     headers2, body,
-                     handler, handler_ctx,
-                     async_ref);
+        resource_loader_request(cache->resource_loader, pool,
+                                method, address,
+                                HTTP_STATUS_OK, headers, body,
+                                handler, handler_ctx,
+                                async_ref);
     }
 }

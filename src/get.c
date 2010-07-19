@@ -41,7 +41,7 @@ resource_get(struct http_cache *cache,
 
     if (cache != NULL && address->type == RESOURCE_ADDRESS_HTTP) {
         http_cache_request(cache, pool,
-                           method, address->u.http,
+                           method, address,
                            headers, body,
                            handler, handler_ctx, async_ref);
     } else {

@@ -61,7 +61,8 @@ http_cache_info_dup(pool_t pool, const struct http_cache_info *src);
 
 struct http_cache_info *
 http_cache_request_evaluate(pool_t pool,
-                            http_method_t method, const char *uri,
+                            http_method_t method,
+                            const struct resource_address *address,
                             const struct strmap *headers,
                             istream_t body);
 
