@@ -309,8 +309,7 @@ int main(int argc, char **argv)
     instance.pipe_stock = pipe_stock_new(instance.pool);
     instance.filter_cache = filter_cache_new(instance.pool,
                                              instance.config.filter_cache_size,
-                                             instance.tcp_stock,
-                                             instance.fcgi_stock);
+                                             instance.resource_loader);
 
     failure_init(instance.pool);
     bulldog_init(instance.config.bulldog_path);

@@ -18,6 +18,7 @@
 #include "http-util.h"
 #include "get.h"
 #include "resource-address.h"
+#include "resource-loader.h"
 
 #include <string.h>
 #include <time.h>
@@ -46,9 +47,7 @@ struct filter_cache {
     pool_t pool;
     struct cache *cache;
 
-    struct hstock *tcp_stock;
-
-    struct hstock *fcgi_stock;
+    struct resource_loader *resource_loader;
 
     struct list_head requests;
 };
@@ -459,14 +458,12 @@ static const struct cache_class filter_cache_class = {
 
 struct filter_cache *
 filter_cache_new(pool_t pool, size_t max_size,
-                 struct hstock *tcp_stock,
-                 struct hstock *fcgi_stock)
+                 struct resource_loader *resource_loader)
 {
     struct filter_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
     cache->cache = cache_new(pool, &filter_cache_class, 65521, max_size);
-    cache->tcp_stock = tcp_stock;
-    cache->fcgi_stock = fcgi_stock;
+    cache->resource_loader = resource_loader;
     list_init(&cache->requests);
     return cache;
 }
@@ -533,11 +530,10 @@ filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
     cache_log(4, "filter_cache: miss %s\n", info->key);
 
     pool_ref(caller_pool);
-    resource_get(NULL, cache->tcp_stock, cache->fcgi_stock, NULL,
-                 pool, HTTP_METHOD_POST, address,
-                 status, headers, body,
-                 &filter_cache_response_handler, request,
-                 async_unref_on_abort(caller_pool, async_ref));
+    resource_loader_request(cache->resource_loader, pool,
+                            HTTP_METHOD_POST, address, status, headers, body,
+                            &filter_cache_response_handler, request,
+                            async_unref_on_abort(caller_pool, async_ref));
     pool_unref(pool);
 }
 
@@ -608,9 +604,9 @@ filter_cache_request(struct filter_cache *cache,
             filter_cache_found(cache, item, pool, body,
                                handler, handler_ctx);
     } else {
-        resource_get(NULL, cache->tcp_stock, cache->fcgi_stock, NULL,
-                     pool, HTTP_METHOD_POST, address,
-                     status, headers, body,
-                     handler, handler_ctx, async_ref);
+        resource_loader_request(cache->resource_loader, pool,
+                                HTTP_METHOD_POST, address,
+                                status, headers, body,
+                                handler, handler_ctx, async_ref);
     }
 }
