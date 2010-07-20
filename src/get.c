@@ -39,7 +39,7 @@ resource_get(struct http_cache *cache,
     assert(pool != NULL);
     assert(address != NULL);
 
-    if (cache != NULL && address->type == RESOURCE_ADDRESS_HTTP) {
+    if (cache != NULL) {
         http_cache_request(cache, pool,
                            method, address,
                            headers, body,
