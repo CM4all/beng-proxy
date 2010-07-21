@@ -1,0 +1,2 @@
+fastcgi "/usr/share/cm4all/beng-proxy/demo/coma.cls"
+action "/usr/bin/cm4all-coma-fastcgi"
