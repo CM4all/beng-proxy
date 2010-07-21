@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.8.8) unstable; urgency=low
   * http-cache: implement FastCGI caching
   * merged release 0.7.47
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 21 Jul 2010 13:00:43 +0200
 
 cm4all-beng-proxy (0.8.7) unstable; urgency=low
 
