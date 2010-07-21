@@ -824,7 +824,8 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/istream-tee.c src/istream-hold.c \
 	src/date.c src/gmtime.c \
 	src/istream-null.c src/istream-unlock.c src/istream-forward.c
-test_t_http_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
+test_t_http_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(GLIB_LIBS)
 
 test_t_cookie_client_SOURCES = test/t-cookie-client.c \
 	$(POOL_SRC) src/tpool.c \
