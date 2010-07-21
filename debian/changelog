@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.8.8) unstable; urgency=low
 
   * prototypes/translate.py: added new ticket-fastcgi programs
   * http-cache: implement FastCGI caching
+  * merged release 0.7.47
 
  --
 
@@ -76,6 +77,12 @@ cm4all-beng-proxy (0.8) unstable; urgency=low
   * rewrite-uri: escape the result with XML entities
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 13 May 2010 12:34:46 +0200
+
+cm4all-beng-proxy (0.7.47) unstable; urgency=low
+
+  * cmdline: add option "--group"
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 16 Jul 2010 18:39:53 +0200
 
 cm4all-beng-proxy (0.7.46) unstable; urgency=low
 
