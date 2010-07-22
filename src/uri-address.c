@@ -5,6 +5,7 @@
  */
 
 #include "uri-address.h"
+#include "uri-edit.h"
 
 #include <socket/address.h>
 
@@ -37,6 +38,26 @@ uri_address_dup(pool_t pool, const struct uri_with_address *uwa)
 
     p->pool = pool;
     p->uri = p_strdup(pool, uwa->uri);
+    list_init(&p->addresses);
+
+    for (ua = (const struct uri_address *)uwa->addresses.next;
+         ua != (const struct uri_address *)&uwa->addresses;
+         ua = (const struct uri_address *)ua->siblings.next)
+        uri_address_add(p, &ua->address, ua->length);
+
+    return p;
+}
+
+struct uri_with_address *
+uri_address_insert_query_string(pool_t pool,
+                                const struct uri_with_address *uwa,
+                                const char *query_string)
+{
+    struct uri_with_address *p = p_malloc(pool, sizeof(*uwa));
+    const struct uri_address *ua;
+
+    p->pool = pool;
+    p->uri = uri_insert_query_string(pool, uwa->uri, query_string);
     list_init(&p->addresses);
 
     for (ua = (const struct uri_address *)uwa->addresses.next;

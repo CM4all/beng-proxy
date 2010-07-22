@@ -557,7 +557,7 @@ test_t_stock_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/resource-address.c \
 	src/uri-address.c src/uri-relative.c src/uri-verify.c \
-	src/uri-escape.c \
+	src/uri-escape.c src/uri-edit.c \
 	src/format.c \
 	$(POOL_SRC)
 test_t_resource_address_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
@@ -879,7 +879,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/tcache.c src/cache.c \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/resource-address.c \
-	src/uri-relative.c src/uri-verify.c src/uri-escape.c \
+	src/uri-relative.c src/uri-verify.c src/uri-escape.c src/uri-edit.c \
 	src/format.c
 test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -939,7 +939,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/stock.c src/hstock.c src/hashmap.c src/strmap.c \
 	src/strutil.c \
 	src/abort-unref.c \
-	src/uri-address.c \
+	src/uri-address.c src/uri-edit.c \
 	src/http.c \
 	src/stopwatch.c \
 	$(POOL_SRC)
@@ -1089,7 +1089,7 @@ test_dump_memcached_choice_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
-	src/uri-address.c src/uri-resolver.c \
+	src/uri-address.c src/uri-resolver.c src/uri-edit.c \
 	src/failure.c src/bulldog.c src/balancer.c src/tcp-stock.c \
 	src/cache.c \
 	src/client-socket.c src/socket-util.c src/fd-util.c \
