@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.9) unstable; urgency=low
 
-  * 
+  * (f?)cgi-handler: forward query string only if focused
 
  --
 

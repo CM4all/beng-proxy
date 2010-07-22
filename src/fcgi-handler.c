@@ -23,11 +23,11 @@ fcgi_handler(struct request *request2)
                     &tr->request_header_forward,
                     NULL, NULL);
 
-    query_string = strchr(request->uri, '?');
-    if (query_string == NULL)
-        query_string = "";
-    else
+    if (!request2->processor_focus &&
+        (query_string = strchr(request->uri, '?')) != NULL)
         ++query_string;
+    else
+        query_string = "";
 
     fcgi_request(request->pool, global_fcgi_stock, tr->address.u.cgi.jail,
                  tr->address.u.cgi.action,

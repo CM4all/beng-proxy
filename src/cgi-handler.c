@@ -22,11 +22,11 @@ cgi_handler(struct request *request2)
                     &tr->request_header_forward,
                     NULL, NULL);
 
-    query_string = strchr(request->uri, '?');
-    if (query_string == NULL)
-        query_string = "";
-    else
+    if (!request2->processor_focus &&
+        (query_string = strchr(request->uri, '?')) != NULL)
         ++query_string;
+    else
+        query_string = "";
 
     cgi_new(request->pool, tr->address.u.cgi.jail,
             tr->address.u.cgi.interpreter, tr->address.u.cgi.action,
