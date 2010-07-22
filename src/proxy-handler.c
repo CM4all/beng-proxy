@@ -1,5 +1,5 @@
 /*
- * Serve HTTP requests from another HTTP server.
+ * Serve HTTP requests from another HTTP/AJP server.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
@@ -58,7 +58,8 @@ proxy_response(http_status_t status, struct strmap *headers,
     struct request *request2 = ctx;
     const struct translate_response *tr = request2->translate.response;
 
-    assert(tr->address.type == RESOURCE_ADDRESS_HTTP);
+    assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
+           tr->address.type == RESOURCE_ADDRESS_AJP);
 
     proxy_collect_cookies(request2, headers, tr->address.u.http->uri);
 
@@ -86,7 +87,8 @@ proxy_handler(struct request *request2)
     const struct translate_response *tr = request2->translate.response;
     struct forward_request forward;
 
-    assert(tr->address.type == RESOURCE_ADDRESS_HTTP);
+    assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
+           tr->address.type == RESOURCE_ADDRESS_AJP);
 
     request_forward(&forward, request2,
                     &tr->request_header_forward,

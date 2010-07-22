@@ -282,7 +282,6 @@ SRC = src/main.c \
 	src/ajp-protocol.c \
 	src/ajp-serialize.c \
 	src/ajp-headers.c \
-	src/ajp-handler.c \
 	src/widget.c \
 	src/widget-class.c \
 	src/widget-ref.c \

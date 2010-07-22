@@ -25,9 +25,6 @@ void
 proxy_handler(struct request *request);
 
 void
-ajp_handler(struct request *request);
-
-void
 handle_http_request(struct client_connection *connection,
                     struct http_server_request *request,
                     struct async_operation_ref *async_ref);

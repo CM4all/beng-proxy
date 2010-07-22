@@ -175,10 +175,9 @@ translate_callback(const struct translate_response *response,
             file_callback(request);
     } else if (response->address.type == RESOURCE_ADDRESS_CGI) {
         cgi_handler(request);
-    } else if (response->address.type == RESOURCE_ADDRESS_HTTP) {
+    } else if (response->address.type == RESOURCE_ADDRESS_HTTP ||
+               response->address.type == RESOURCE_ADDRESS_AJP) {
         proxy_handler(request);
-    } else if (response->address.type == RESOURCE_ADDRESS_AJP) {
-        ajp_handler(request);
     } else if (response->address.type == RESOURCE_ADDRESS_FASTCGI) {
         fcgi_handler(request);
     } else if (response->redirect != NULL) {
