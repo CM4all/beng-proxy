@@ -95,6 +95,13 @@ proxy_handler(struct request *request2)
                     uri_host_and_port(request->pool, tr->address.u.http->uri),
                     uri_path(tr->address.u.http->uri));
 
+    const struct resource_address *address = &tr->address;
+    if (!request2->processor_focus)
+        /* forward query string */
+        address = resource_address_insert_query_string_from(request->pool,
+                                                            address,
+                                                            request->uri);
+
 #ifdef SPLICE
     if (forward.body != NULL)
         forward.body = istream_pipe_new(request->pool, forward.body,
@@ -102,7 +109,7 @@ proxy_handler(struct request *request2)
 #endif
 
     http_cache_request(global_http_cache, request->pool,
-                       forward.method, &tr->address,
+                       forward.method, address,
                        forward.headers, forward.body,
                        &proxy_response_handler, request2,
                        request2->async_ref);
