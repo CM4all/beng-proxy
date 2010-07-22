@@ -66,6 +66,61 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
     }
 }
 
+const struct resource_address *
+resource_address_insert_query_string_from(pool_t pool,
+                                          const struct resource_address *src,
+                                          const char *uri)
+{
+    const char *query_string;
+    struct resource_address *dest;
+
+    switch (src->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
+        /* no query string support */
+        return src;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        assert(src->u.http != NULL);
+
+        query_string = strchr(uri, '?');
+        if (query_string == NULL || *++query_string == 0)
+            /* no query string in URI */
+            return src;
+
+        dest = p_malloc(pool, sizeof(*dest));
+        dest->type = src->type;
+        dest->u.http = uri_address_insert_query_string(pool, src->u.http,
+                                                       query_string + 1);
+        return dest;
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+        assert(src->u.cgi.path != NULL);
+
+        query_string = strchr(uri, '?');
+        if (query_string == NULL || *++query_string == 0)
+            /* no query string in URI */
+            return src;
+
+        dest = p_malloc(pool, sizeof(*dest));
+        resource_address_copy(pool, dest, src);
+
+        if (dest->u.cgi.query_string != NULL)
+            dest->u.cgi.query_string = p_strcat(pool, query_string, "&",
+                                                dest->u.cgi.query_string, NULL);
+        else
+            dest->u.cgi.query_string = p_strdup(pool, query_string);
+        return dest;
+    }
+
+    /* unreachable */
+    assert(false);
+    return src;
+}
+
 static size_t
 base_string(const char *p, const char *suffix)
 {

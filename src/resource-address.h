@@ -96,6 +96,17 @@ resource_address_dup(pool_t pool, const struct resource_address *src)
 }
 
 /**
+ * Duplicate this #resource_address object, and inserts the query
+ * string from the specified URI.  If this resource address does not
+ * support a query string, or if the URI does not have one, the
+ * original #resource_address pointer is returned.
+ */
+const struct resource_address *
+resource_address_insert_query_string_from(pool_t pool,
+                                          const struct resource_address *src,
+                                          const char *uri);
+
+/**
  * Duplicate a resource address, but return the base address.
  *
  * @param src the original resource address
