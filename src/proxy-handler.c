@@ -59,9 +59,13 @@ proxy_response(http_status_t status, struct strmap *headers,
     const struct translate_response *tr = request2->translate.response;
 
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
-           tr->address.type == RESOURCE_ADDRESS_AJP);
+           tr->address.type == RESOURCE_ADDRESS_AJP ||
+           tr->address.type == RESOURCE_ADDRESS_CGI ||
+           tr->address.type == RESOURCE_ADDRESS_FASTCGI);
 
-    proxy_collect_cookies(request2, headers, tr->address.u.http->uri);
+    if (tr->address.type == RESOURCE_ADDRESS_HTTP ||
+        tr->address.type == RESOURCE_ADDRESS_AJP)
+        proxy_collect_cookies(request2, headers, tr->address.u.http->uri);
 
     http_response_handler_direct_response(&response_handler, request2,
                                           status, headers, body);
@@ -88,12 +92,21 @@ proxy_handler(struct request *request2)
     struct forward_request forward;
 
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
-           tr->address.type == RESOURCE_ADDRESS_AJP);
+           tr->address.type == RESOURCE_ADDRESS_AJP ||
+           tr->address.type == RESOURCE_ADDRESS_CGI ||
+           tr->address.type == RESOURCE_ADDRESS_FASTCGI);
+
+    const char *host_and_port = NULL, *uri_p = NULL;
+    if (tr->address.type == RESOURCE_ADDRESS_HTTP ||
+        tr->address.type == RESOURCE_ADDRESS_AJP) {
+        host_and_port = uri_host_and_port(request->pool,
+                                          tr->address.u.http->uri);
+        uri_p = uri_path(tr->address.u.http->uri);
+    }
 
     request_forward(&forward, request2,
                     &tr->request_header_forward,
-                    uri_host_and_port(request->pool, tr->address.u.http->uri),
-                    uri_path(tr->address.u.http->uri));
+                    host_and_port, uri_p);
 
     const struct resource_address *address = &tr->address;
     if (!request2->processor_focus)
