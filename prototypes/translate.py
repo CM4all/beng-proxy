@@ -20,6 +20,7 @@ test_path = os.path.join(os.getcwd(), 'test')
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
+xslt_fastcgi = '/usr/lib/cm4all/filters/cgi-bin/xslt'
 
 cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
@@ -239,6 +240,10 @@ class Translation(Protocol):
         elif uri[:8] == '/header/':
             response.header('X-Foo', 'Bar')
             self._handle_local_file('/var/www' + uri[7:], response)
+        elif uri == '/xslt':
+            response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
+            response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
+            response.pair('DOCUMENT_PATH', os.path.join(demo_path, '../filter.xml'))
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
@@ -336,6 +341,7 @@ if __name__ == '__main__':
         demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')
         coma_fastcgi = os.path.join(os.getcwd(), '../../cgi-coma/src/cm4all-coma-fastcgi')
         ticket_fastcgi_dir = os.path.join(os.getcwd(), '../mod_ticket/src')
+        xslt_fastcgi = os.path.join(os.getcwd(), '../filters/src/xslt')
 
     if len(argv) >= 2:
         path = argv[1]
