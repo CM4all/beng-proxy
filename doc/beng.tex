@@ -431,13 +431,17 @@ The translation server can change the header forwarding policy, see
 Similar to HTTP proxying, \emph{beng-proxy} can act as a HTTP-to-AJP
 bridge.
 
-The AJP client also supports connection pooling and load balancing.
+The AJP client also supports caching, connection pooling and load
+balancing.
 
 \subsection{CGI and FastCGI}
 \label{cgi}
 
 Local CGI programs may be used to generate dynamic resources.
 \emph{beng-proxy} supports running these with JailCGI.
+
+CGI/FastCGI resources are cached in the same manner as remote HTTP
+resources.
 
 \subsection{Pipe filters}
 \label{pipe}
