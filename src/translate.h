@@ -38,6 +38,7 @@ struct translate_request {
     const char *widget_type;
     const char *session;
     const char *param;
+    const char *check;
 
     http_status_t error_document_status;
 };
@@ -83,7 +84,10 @@ struct translate_response {
 
     bool error_document;
 
+    bool previous;
+
     const char *session;
+    const char *check;
 
     const char *user;
     unsigned user_max_age;

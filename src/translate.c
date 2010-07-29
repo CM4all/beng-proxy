@@ -237,6 +237,7 @@ marshal_request(pool_t pool, const struct translate_request *request)
         write_optional_packet(gb, TRANSLATE_WIDGET_TYPE,
                               request->widget_type) &&
         write_optional_packet(gb, TRANSLATE_SESSION, request->session) &&
+        write_optional_packet(gb, TRANSLATE_CHECK, request->session) &&
         write_optional_packet(gb, TRANSLATE_PARAM, request->param) &&
         write_packet(gb, TRANSLATE_END, NULL);
     if (!success)
@@ -1093,7 +1094,11 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_CHECK:
+        client->response.check = payload;
+        break;
+
     case TRANSLATE_PREVIOUS:
+        client->response.previous = true;
         break;
     }
 
