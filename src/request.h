@@ -34,6 +34,19 @@ struct request {
         struct translate_request request;
         const struct translate_response *response;
         const struct transformation *transformation;
+
+        /**
+         * A pointer to the "previous" translate response, non-NULL
+         * only if beng-proxy sends a second translate request with a
+         * CHECK packet.
+         */
+        const struct translate_response *previous;
+
+        /**
+         * Number of CHECK packets followed so far.  This variable is
+         * used for loop detection.
+         */
+        unsigned checks;
     } translate;
 
     /**

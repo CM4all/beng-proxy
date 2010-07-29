@@ -205,6 +205,40 @@ translate_callback(const struct translate_response *response,
 {
     struct request *request = ctx;
 
+    if (!strref_is_null(&response->check)) {
+        /* repeat request with CHECK set */
+
+        if (++request->translate.checks > 4) {
+            daemon_log(2, "got too many consecutive CHECK packets\n");
+            response_dispatch_message(request,
+                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                      "Internal server error");
+            return;
+        }
+
+        request->translate.previous = response;
+        request->translate.request.check = response->check;
+
+        translate_cache(request->request->pool,
+                        request->connection->instance->translate_cache,
+                        &request->translate.request,
+                        translate_callback, request,
+                        request->async_ref);
+        return;
+    }
+
+    if (response->previous) {
+        if (request->translate.previous == NULL) {
+            daemon_log(2, "no previous translation response\n");
+            response_dispatch_message(request,
+                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                      "Internal server error");
+            return;
+        }
+
+        response = request->translate.previous;
+    }
+
     handle_translated_request(request, response);
 }
 
@@ -267,8 +301,10 @@ fill_translate_request(struct translate_request *t,
 static void
 ask_translation_server(struct request *request2, struct tcache *tcache)
 {
-    struct http_server_request *request = request2->request;
+    request2->translate.previous = NULL;
+    request2->translate.checks = 0;
 
+    struct http_server_request *request = request2->request;
     fill_translate_request(&request2->translate.request, request2->request,
                            &request2->uri, request2->args);
     translate_cache(request->pool, tcache, &request2->translate.request,
