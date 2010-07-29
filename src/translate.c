@@ -1091,6 +1091,10 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_ERROR_DOCUMENT:
         client->response.error_document = true;
         break;
+
+    case TRANSLATE_CHECK:
+    case TRANSLATE_PREVIOUS:
+        break;
     }
 
     return true;

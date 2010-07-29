@@ -570,6 +570,20 @@ is followed by the packets \texttt{URI} and \texttt{STATUS}.  See
 
 \hline
 
+\texttt{CHECK} & causes beng-proxy to submit the same translation
+request again, with this packet appended (its payload is opaque to
+\emph{beng-proxy}).  The current response is remembered, to be used
+when the second response contains the \texttt{PREVIOUS} packet.  This
+can be used to implement authentication (see \ref{authentication}). \\
+
+\hline
+
+\texttt{PREVIOUS} & Tells beng-proxy to use the resource address of
+the previous translation response.  Only allowed if the request
+contains a \texttt{CHECK} packet. \\
+
+\hline
+
 \end{longtable}
 
 \subsection{Response}
@@ -1096,6 +1110,7 @@ required.  In many situations, there are more elegant solutions, like
 storing the current state of a widget in its current URI (path info).
 
 \subsection{Authentification}
+\label{authentification}
 
 There is currently no support for HTTP based authentification.
 
@@ -1106,7 +1121,50 @@ user variable is passed to widget servers in the proprietary
 \texttt{X-CM4all-BENG-User} request header.  The user is logged out
 when the translation sends an empty \texttt{USER} packet.
 
-% XXX further explanation, samples
+\subsubsection{The \texttt{CHECK} packet}
+
+On a protected resource, the translation server may send the
+\texttt{CHECK} packet together with the normal response.  Now
+\texttt{beng-proxy} queries the translation server again, sending the
+same request and a copy of the \texttt{CHECK} packet.  The translation
+server may now verify the current session, redirect to a login page,
+or anything else needed to authenticate the user.  The response to
+this second translation request may be a resource address as usual, or
+the \texttt{PREVIOUS} packet, which indicates that the first
+translation shall be used.
+
+While the first response is usually cached for a long time, the second
+one may specify a short texttt{MAX\_AGE} value.  This means the latter
+is sent more often, but since it refers to the former, it is very
+small.
+
+Example 1, unauthenticated user logs in:
+
+\begin{enumerate}
+\item \emph{beng-proxy}: \texttt{URI=/protected/foo.html}
+\item translation server: \texttt{PATH=/var/www/protected/foo.html
+  SESSION=1234 CHECK=xyz}
+\item \emph{beng-proxy}: \texttt{URI=/protected/foo.html SESSION=1234
+  CHECK=xyz}
+\item translation server: \texttt{MAX\_AGE=0 STATUS=403
+  CGI=/usr/lib/cgi-bin/login.pl}
+\item user enters his credentials, login.pl marks the session
+  ``authenticated'', redirects back to the original URI
+\item \emph{beng-proxy}: \texttt{URI=/protected/foo.html SESSION=1234
+  CHECK=xyz} (from the cached translation response)
+\item translation server: \texttt{MAX\_AGE=300 VARY=SESSION PREVIOUS}
+\end{enumerate}
+
+Example 2, authenticated user:
+
+\begin{enumerate}
+\item \emph{beng-proxy}: \texttt{URI=/protected/foo.html SESSION=2345}
+\item translation server: \texttt{PATH=/var/www/protected/foo.html
+  CHECK=xyz}
+\item \emph{beng-proxy}: \texttt{URI=/protected/foo.html SESSION=2345
+  CHECK=xyz}
+\item translation server: \texttt{MAX\_AGE=300 VARY=SESSION PREVIOUS}
+\end{enumerate}
 
 
 \subsection{Payment}
