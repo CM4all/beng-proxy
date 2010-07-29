@@ -56,10 +56,9 @@ bounce_uri(pool_t pool, const struct request *request,
 }
 
 static void
-translate_callback(const struct translate_response *response,
-                   void *ctx)
+handle_translated_request(struct request *request,
+                          const struct translate_response *response)
 {
-    struct request *request = ctx;
     struct session *session;
 
     request->connection->site_name = response->site;
@@ -198,6 +197,15 @@ translate_callback(const struct translate_response *response,
         response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
     }
+}
+
+static void
+translate_callback(const struct translate_response *response,
+                   void *ctx)
+{
+    struct request *request = ctx;
+
+    handle_translated_request(request, response);
 }
 
 static bool
