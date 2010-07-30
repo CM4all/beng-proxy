@@ -11,6 +11,7 @@
 #include "http.h"
 #include "resource-address.h"
 #include "header-forward.h"
+#include "strref.h"
 
 #include <stdint.h>
 
@@ -38,7 +39,13 @@ struct translate_request {
     const char *widget_type;
     const char *session;
     const char *param;
-    const char *check;
+
+    /**
+     * The payload of the CHECK packet.  If
+     * strref_is_null(&esponse.check), then no CHECK packet will be
+     * sent.
+     */
+    struct strref check;
 
     http_status_t error_document_status;
 };
@@ -87,7 +94,13 @@ struct translate_response {
     bool previous;
 
     const char *session;
-    const char *check;
+
+    /**
+     * The payload of the CHECK packet.  If
+     * strref_is_null(&esponse.check), then no CHECK packet was
+     * received.
+     */
+    struct strref check;
 
     const char *user;
     unsigned user_max_age;

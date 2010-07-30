@@ -157,6 +157,13 @@ write_packet(struct growing_buffer *gb, uint16_t command,
                           payload != NULL ? strlen(payload) : 0);
 }
 
+static bool
+write_strref(struct growing_buffer *gb, uint16_t command,
+             const struct strref *payload)
+{
+    return write_packet_n(gb, command, payload->data, payload->length);
+}
+
 /**
  * Forward the command to write_packet() only if #payload is not NULL.
  */
@@ -168,6 +175,18 @@ write_optional_packet(struct growing_buffer *gb, uint16_t command,
         return true;
 
     return write_packet(gb, command, payload);
+}
+
+/**
+ * Forward the command to write_packet() only if #payload is not NULL,
+ * and strref_is_null(#payload) is false.
+ */
+static bool
+write_optional_strref(struct growing_buffer *gb, uint16_t command,
+                      const struct strref *payload)
+{
+    return payload == NULL || strref_is_null(payload) ||
+        write_strref(gb, command, payload);
 }
 
 static bool
@@ -237,7 +256,7 @@ marshal_request(pool_t pool, const struct translate_request *request)
         write_optional_packet(gb, TRANSLATE_WIDGET_TYPE,
                               request->widget_type) &&
         write_optional_packet(gb, TRANSLATE_SESSION, request->session) &&
-        write_optional_packet(gb, TRANSLATE_CHECK, request->session) &&
+        write_optional_strref(gb, TRANSLATE_CHECK, &request->check) &&
         write_optional_packet(gb, TRANSLATE_PARAM, request->param) &&
         write_packet(gb, TRANSLATE_END, NULL);
     if (!success)
@@ -1094,7 +1113,10 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_CHECK:
-        client->response.check = payload;
+        if (payload != NULL)
+            strref_set(&client->response.check, payload, payload_length);
+        else
+            strref_set(&client->response.check, "", 0);
         break;
 
     case TRANSLATE_PREVIOUS:

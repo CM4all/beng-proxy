@@ -11,6 +11,7 @@
 #include "stock.h"
 #include "strmap.h"
 #include "uri-address.h"
+#include "strref-pool.h"
 #include "beng-proxy/translation.h"
 
 #include <time.h>
@@ -70,14 +71,17 @@ struct tcache_request {
 
 static const char *
 tcache_uri_key(pool_t pool, const char *uri, http_status_t status,
-               const char *check)
+               const struct strref *check)
 {
     const char *key = status != 0
         ? p_sprintf(pool, "ERR%u_%s", status, uri)
         : uri;
 
-    if (check != NULL)
-        key = p_strcat(pool, key, "|CHECK=", check, NULL);
+    if (check != NULL && !strref_is_null(check))
+        key = p_strncat(pool, key, strlen(key),
+                        "|CHECK=", (size_t)7,
+                        check->data, (size_t)check->length,
+                        NULL);
 
     return key;
 
@@ -88,7 +92,7 @@ tcache_request_key(pool_t pool, const struct translate_request *request)
 {
     return request->uri != NULL
         ? tcache_uri_key(pool, request->uri, request->error_document_status,
-                         request->check)
+                         &request->check)
         : request->widget_type;
 }
 
@@ -165,7 +169,11 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->filter_4xx = src->filter_4xx;
     dest->error_document = src->error_document;
     dest->session = NULL;
-    dest->check = p_strdup_checked(pool, src->check);
+
+    if (strref_is_null(&src->check))
+        strref_null(&dest->check);
+    else
+        strref_set_dup(pool, &dest->check, &src->check);
 
     /* The "user" attribute must not be present in cached responses,
        because they belong to only that one session.  For the same
@@ -263,7 +271,7 @@ tcache_store_response(pool_t pool, struct translate_response *dest,
 
     if (key != NULL)
         key = tcache_uri_key(pool, key, request->error_document_status,
-                             request->check);
+                             &request->check);
 
     return key;
 }
