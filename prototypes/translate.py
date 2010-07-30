@@ -114,7 +114,7 @@ class Translation(Protocol):
         username, password = x
         return username == 'hansi' and password == 'hansilein'
 
-    def _handle_http(self, raw_uri, uri, authorization, response):
+    def _handle_http(self, raw_uri, uri, authorization, check, response):
         if uri.find('/./') >= 0 or uri.find('/../') >= 0 or \
                uri[-2:] == '/.' or uri[-3:] == '/..' or \
                uri.find('//') >= 0 or uri.find('\0') >= 0:
@@ -244,6 +244,16 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
             response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
             response.pair('DOCUMENT_PATH', os.path.join(demo_path, '../filter.xml'))
+        elif uri == '/check':
+            if check is None:
+                response.packet(TRANSLATE_CHECK, 'ok')
+                self._handle_local_file(os.path.join(demo_path, 'hello.txt'), response)
+            elif check == 'ok':
+                response.max_age(20)
+                response.packet(TRANSLATE_PREVIOUS)
+            else:
+                # invalid request
+                response.status(400)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
@@ -286,7 +296,8 @@ class Translation(Protocol):
         response.vary(TRANSLATE_HOST)
 
         if request.uri is not None:
-            self._handle_http(request.raw_uri, request.uri, request.authorization, response)
+            self._handle_http(request.raw_uri, request.uri, request.authorization,
+                              request.check, response)
 
         return response
 
