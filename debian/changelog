@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.8.9) unstable; urgency=low
   * proxy-handler: forward query string if focused
   * cgi, fastcgi-handler: enable the resource cache
   * translation: add packets CHECK and PREVIOUS for authentication
+  * python: add Response.max_age()
 
  --
 
