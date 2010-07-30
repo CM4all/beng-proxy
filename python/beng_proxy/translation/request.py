@@ -40,6 +40,7 @@ class Request:
         self.query_string = None
         self.widget_type = None
         self.session = None
+        self.check = None
         self.param = None
         self.local_address = None
         self.local_port = None
@@ -77,6 +78,8 @@ class Request:
             self.widget_type = packet.payload
         elif packet.command == TRANSLATE_SESSION:
             self.session = packet.payload
+        elif packet.command == TRANSLATE_CHECK:
+            self.check = packet.payload
         elif packet.command == TRANSLATE_PARAM:
             self.param = packet.payload
         elif packet.command == TRANSLATE_LOCAL_ADDRESS_STRING:
