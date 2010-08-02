@@ -2,7 +2,7 @@ cm4all-beng-proxy (0.8.10) unstable; urgency=low
 
   * tcache: copy response.previous
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 02 Aug 2010 18:03:43 +0200
 
 cm4all-beng-proxy (0.8.9) unstable; urgency=low
 
