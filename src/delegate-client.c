@@ -81,7 +81,7 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
         return;
     }
 
-    if (!cmsg->cmsg_type == SCM_RIGHTS) {
+    if (cmsg->cmsg_type != SCM_RIGHTS) {
         delegate_release_socket(d, false);
 
         daemon_log(1, "got control message of unknown type %d\n",

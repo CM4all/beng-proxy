@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.11) unstable; urgency=low
 
-  * 
+  * delegate-client: fix SCM_RIGHTS check
 
  --
 
