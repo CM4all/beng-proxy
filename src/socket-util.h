@@ -12,7 +12,4 @@
 int
 socket_set_nonblock(int fd, bool value);
 
-int
-socket_unix_connect(const char *path);
-
 #endif
