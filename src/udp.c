@@ -74,7 +74,7 @@ udp_new(pool_t pool, const char *host_and_port, int default_port,
     udp = p_malloc(pool, sizeof(*udp));
     udp->fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype,
                                       ai->ai_protocol);
-    if (udp->fd >= 0) {
+    if (udp->fd < 0) {
         daemon_log(1, "Failed to create socket: %s\n",
                    strerror(errno));
         freeaddrinfo(ai);
