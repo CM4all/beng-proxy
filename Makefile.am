@@ -173,6 +173,8 @@ HDR = \
 	src/http-string.h \
 	src/http-util.h \
 	src/http.h \
+	src/control-server.h \
+	src/control-server.c \
 	src/instance.h \
 	src/istream-buffer.h \
 	src/istream-forward.h \

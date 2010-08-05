@@ -18,4 +18,9 @@ struct beng_control_header {
     uint16_t command;
 };
 
+/**
+ * This magic number precedes every UDP packet.
+ */
+static const uint32_t beng_control_magic = 0x63046101;
+
 #endif
