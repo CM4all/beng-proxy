@@ -1068,6 +1068,15 @@ A command consists of a header containing length and command (network
 byte order), and an optional payload.  The payload is padded with null
 bytes to the next 4 byte border.
 
+\subsection{Configuring}
+
+The command line option \texttt{--control-listen} allows you to
+specify an address to listen on, specify \texttt{*} to listen on all
+interfaces.  The default port is 5478.
+
+To enable IP multicast, set the multicast group address with
+\texttt{--multicast-group}.
+
 \subsection{Commands}
 
 \begin{longtable}{|l|p{8cm}|}

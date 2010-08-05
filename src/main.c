@@ -27,6 +27,7 @@
 #include "listener.h"
 #include "pipe-stock.h"
 #include "resource-loader.h"
+#include "control-handler.h"
 
 #include <daemon/daemonize.h>
 
@@ -277,6 +278,9 @@ int main(int argc, char **argv)
     for (unsigned i = 0; i < instance.config.num_listen; ++i)
         add_listener(&instance, instance.config.listen[i]);
 
+    if (!global_control_handler_init(instance.pool, &instance))
+        exit(2);
+
     instance.balancer = balancer_new(instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.pool, instance.balancer,
                                        instance.config.tcp_stock_limit);
@@ -358,6 +362,8 @@ int main(int argc, char **argv)
 
     bulldog_deinit();
     failure_deinit();
+
+    global_control_handler_deinit();
 
     free_all_listeners(&instance);
 

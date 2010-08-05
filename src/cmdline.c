@@ -65,6 +65,14 @@ static void usage(void) {
 #endif
          " -L IP:PORT     listen on this IP address\n"
 #ifdef __GLIBC__
+         " --control-listen IP:PORT\n"
+#endif
+         " -c IP:PORT     listen on this UDP port for control commands\n"
+#ifdef __GLIBC__
+         " --multicast-group IP\n"
+#endif
+         " -m IP          join this multicast group\n"
+#ifdef __GLIBC__
          " --workers COUNT\n"
 #endif
          " -w COUNT       set the number of worker processes; 0=don't fork\n"
@@ -226,6 +234,8 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
         {"logger-user", 1, NULL, 'U'},
         {"port", 1, NULL, 'p'},
         {"listen", 1, NULL, 'L'},
+        {"control-listen", 1, NULL, 'c'},
+        {"multicast-group", 1, NULL, 'm'},
         {"workers", 1, NULL, 'w'},
         {"document-root", 1, NULL, 'r'},
         {"translation-socket", 1, NULL, 't'},
@@ -242,10 +252,10 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:g:U:p:L:w:r:t:M:B:s:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:u:g:U:p:L:c:m:w:r:t:M:B:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:g:U:p:L:w:r:t:M:B:s:");
+        ret = getopt(argc, argv, "hVvqDP:l:u:g:U:p:L:c:m:w:r:t:M:B:s:");
 #endif
         if (ret == -1)
             break;
@@ -326,6 +336,14 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
             if (ret != 0)
                 arg_error(argv[0], "failed to resolve %s", optarg);
             ++config->num_listen;
+            break;
+
+        case 'c':
+            config->control_listen = optarg;
+            break;
+
+        case 'm':
+            config->multicast_group = optarg;
             break;
 
         case 'w':

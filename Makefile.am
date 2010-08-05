@@ -175,6 +175,8 @@ HDR = \
 	src/http.h \
 	src/control-server.h \
 	src/control-server.c \
+	src/control-handler.h \
+	src/control-handler.c \
 	src/instance.h \
 	src/istream-buffer.h \
 	src/istream-forward.h \
