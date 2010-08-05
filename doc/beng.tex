@@ -1060,7 +1060,9 @@ UDP is, by design, a lossy protocol.  One must always consider that
 not all nodes may have received a given packet.
 
 The protocol does not implement authentication.  The commands are
-designed in a way that they do not affect security.
+designed in a way that they do not affect security.  However, it may
+pose a weakness against DoS attacks, if an attacker manages to inject
+packets into the internal network.
 
 A command consists of a header containing length and command (network
 byte order), and an optional payload.  The payload is padded with null
