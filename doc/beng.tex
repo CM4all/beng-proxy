@@ -1050,6 +1050,33 @@ and query string \\
 \end{longtable}
 
 
+\section{Remote Control Protocol}
+
+\emph{beng-proxy} can listen for multicast packets on a UDP port.
+These packets contain one or more commands.  This is useful to notify
+a whole cluster of \emph{beng-proxy} servers of an event.
+
+UDP is, by design, a lossy protocol.  One must always consider that
+not all nodes may have received a given packet.
+
+The protocol does not implement authentication.  The commands are
+designed in a way that they do not affect security.
+
+A command consists of a header containing length and command (network
+byte order), and an optional payload.  The payload is padded with null
+bytes to the next 4 byte border.
+
+\subsection{Commands}
+
+\begin{longtable}{|l|p{8cm}|}
+\hline
+
+NOP & ignored \\
+
+\hline
+\end{longtable}
+
+
 \section{Widget protocol}
 
 A widget server is simply an HTTP server.  Its content type must be
