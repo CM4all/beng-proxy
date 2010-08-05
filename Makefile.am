@@ -499,6 +499,7 @@ check_PROGRAMS = \
 	test/fake-memcached-server \
 	test/t-memcached-client \
 	test/run-delegate \
+	test/dump-udp test/dump-control test/send-control \
 	test/run-parser-cdata
 
 TESTS = test/t-hashmap test/t-cache test/t-tcache \
@@ -1136,6 +1137,26 @@ test_run_delegate_SOURCES = test/run-delegate.c \
 	src/fd_util.c \
 	$(POOL_SRC)
 test_run_delegate_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
+
+test_dump_udp_SOURCES = test/dump-udp.c \
+	src/udp.c \
+	src/fd_util.c \
+	$(POOL_SRC)
+test_dump_udp_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBEVENT_LIBS)
+
+test_dump_control_SOURCES = test/dump-control.c \
+	src/udp.c \
+	src/fd_util.c \
+	src/control-server.c \
+	$(POOL_SRC)
+test_dump_control_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBEVENT_LIBS)
+
+test_send_control_SOURCES = test/send-control.c
+test_send_control_LDADD = $(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_parser_cdata_SOURCES = test/t-parser-cdata.c \
 	src/parser.c src/istream-file.c \
