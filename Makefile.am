@@ -232,6 +232,7 @@ HDR = \
 	src/translate.h \
 	src/tstock.h \
 	src/udp-listener.h \
+	src/udp-distribute.h \
 	src/uri-address.h \
 	src/uri-edit.h \
 	src/uri-escape.h \
@@ -317,6 +318,7 @@ SRC = src/main.c \
 	src/listener.c \
 	src/client-socket.c \
 	src/udp-listener.c \
+	src/udp-distribute.c \
 	src/buffered-io.c \
 	src/header-parser.c \
 	src/header-writer.c \
