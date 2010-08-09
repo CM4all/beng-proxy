@@ -14,6 +14,7 @@
 
 #include <assert.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 
@@ -22,6 +23,12 @@ struct pipe_stock_item {
 
     int fds[2];
 };
+
+static inline bool
+valid_fd(int fd)
+{
+    return fcntl(fd, F_GETFL) >= 0;
+}
 
 /*
  * stock class
@@ -58,22 +65,34 @@ pipe_stock_create(void *ctx __attr_unused, struct stock_item *_item,
 }
 
 static bool
-pipe_stock_borrow(G_GNUC_UNUSED void *ctx,
-                  G_GNUC_UNUSED struct stock_item *item)
+pipe_stock_borrow(G_GNUC_UNUSED void *ctx, struct stock_item *_item)
 {
+    struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
+    (void)item;
+
+    assert(valid_fd(item->fds[0]));
+    assert(valid_fd(item->fds[1]));
+
     return true;
 }
 
 static void
-pipe_stock_release(G_GNUC_UNUSED void *ctx,
-                   G_GNUC_UNUSED struct stock_item *item)
+pipe_stock_release(G_GNUC_UNUSED void *ctx, struct stock_item *_item)
 {
+    struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
+    (void)item;
+
+    assert(valid_fd(item->fds[0]));
+    assert(valid_fd(item->fds[1]));
 }
 
 static void
 pipe_stock_destroy(G_GNUC_UNUSED void *ctx, struct stock_item *_item)
 {
     struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
+
+    assert(valid_fd(item->fds[0]));
+    assert(valid_fd(item->fds[1]));
 
     close(item->fds[0]);
     close(item->fds[1]);

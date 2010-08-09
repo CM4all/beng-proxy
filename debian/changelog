@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.48) unstable; urgency=low
 
-  * 
+  * pipe-stock: add assertions on file descriptors
 
  --
 
