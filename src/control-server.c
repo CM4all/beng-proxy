@@ -19,14 +19,10 @@ struct control_server {
     void *handler_ctx;
 };
 
-static void
-control_server_udp_callback(const void *data, size_t length,
-                            G_GNUC_UNUSED const struct sockaddr *addr,
-                            G_GNUC_UNUSED size_t addrlen,
-                            void *ctx)
+void
+control_server_decode(const void *data, size_t length,
+                      const struct control_handler *handler, void *handler_ctx)
 {
-    struct control_server *cs = ctx;
-
     /* verify the magic number */
 
     const uint32_t *magic = data;
@@ -69,12 +65,23 @@ control_server_udp_callback(const void *data, size_t length,
 
         /* this command is ok, pass it to the callback */
 
-        cs->handler->packet(command, payload_length > 0 ? payload : NULL,
-                            payload_length, cs->handler_ctx);
+        handler->packet(command, payload_length > 0 ? payload : NULL,
+                        payload_length, handler_ctx);
 
         data = payload + payload_length;
         length -= payload_length;
     }
+}
+
+static void
+control_server_udp_callback(const void *data, size_t length,
+                            G_GNUC_UNUSED const struct sockaddr *addr,
+                            G_GNUC_UNUSED size_t addrlen,
+                            void *ctx)
+{
+    struct control_server *cs = ctx;
+
+    control_server_decode(data, length, cs->handler, cs->handler_ctx);
 }
 
 struct control_server *

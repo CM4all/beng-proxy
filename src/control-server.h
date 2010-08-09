@@ -30,4 +30,8 @@ control_server_new(pool_t pool, const char *host_and_port, int default_port,
 void
 control_server_free(struct control_server *cs);
 
+void
+control_server_decode(const void *data, size_t length,
+                      const struct control_handler *handler, void *handler_ctx);
+
 #endif
