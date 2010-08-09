@@ -112,6 +112,18 @@ udp_listener_free(struct udp_listener *udp)
     close(udp->fd);
 }
 
+void
+udp_listener_set_fd(struct udp_listener *udp, int fd)
+{
+    assert(udp != NULL);
+    assert(udp->fd >= 0);
+    assert(fd >= 0);
+    assert(udp->fd != fd);
+
+    close(udp->fd);
+    udp->fd = fd;
+}
+
 bool
 udp_listener_join4(struct udp_listener *udp, const struct in_addr *group)
 {

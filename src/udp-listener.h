@@ -27,6 +27,13 @@ void
 udp_listener_free(struct udp_listener *udp);
 
 /**
+ * Replaces the socket.  The old one is closed, and the new one is now
+ * owned by this object.
+ */
+void
+udp_listener_set_fd(struct udp_listener *udp, int fd);
+
+/**
  * Joins the specified multicast group.
  *
  * @return true on success
