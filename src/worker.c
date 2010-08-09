@@ -12,6 +12,7 @@
 #include "session.h"
 #include "child.h"
 #include "listener.h"
+#include "control-handler.h"
 
 #include <daemon/log.h>
 
@@ -115,11 +116,27 @@ worker_new(struct instance *instance)
     deinit_signals(instance);
     children_event_del();
 
+    int distribute_socket = -1;
+    if (instance->config.control_listen != NULL) {
+        distribute_socket = global_control_handler_add_fd();
+        if (distribute_socket < 0) {
+            daemon_log(1, "udp_distribute_add() failed: %s\n",
+                       strerror(errno));
+            return -1;
+        }
+    }
+
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
+
+        if (distribute_socket >= 0)
+            close(distribute_socket);
     } else if (pid == 0) {
         event_reinit(instance->event_base);
+
+        if (distribute_socket >= 0)
+            global_control_handler_set_fd(distribute_socket);
 
         instance->config.num_workers = 0;
 
@@ -142,6 +159,9 @@ worker_new(struct instance *instance)
         all_listeners_event_add(instance);
     } else {
         struct worker *worker;
+
+        if (distribute_socket >= 0)
+            close(distribute_socket);
 
         event_reinit(instance->event_base);
 

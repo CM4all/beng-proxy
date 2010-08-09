@@ -7,6 +7,7 @@
 #include "control-handler.h"
 #include "control-server.h"
 #include "udp-listener.h"
+#include "udp-distribute.h"
 #include "instance.h"
 
 #include <daemon/log.h>
@@ -33,6 +34,8 @@ static const struct control_handler global_control_handler = {
     .packet = global_control_packet,
 };
 
+static struct udp_distribute *global_udp_distribute;
+
 static void
 global_control_udp_callback(const void *data, size_t length,
                             G_GNUC_UNUSED const struct sockaddr *addr,
@@ -41,6 +44,10 @@ global_control_udp_callback(const void *data, size_t length,
 {
     struct instance *instance = ctx;
 
+    /* forward the packet to all worker processes */
+    udp_distribute_packet(global_udp_distribute, data, length);
+
+    /* handle the packet in this process */
     control_server_decode(data, length, &global_control_handler, instance);
 }
 
@@ -69,12 +76,36 @@ global_control_handler_init(pool_t pool, struct instance *instance)
         }
     }
 
+    global_udp_distribute = udp_distribute_new(pool);
+
     return true;
 }
 
 void
 global_control_handler_deinit(void)
 {
+    if (global_udp_distribute != NULL)
+        udp_distribute_free(global_udp_distribute);
+
     if (global_udp_listener != NULL)
         udp_listener_free(global_udp_listener);
+}
+
+int
+global_control_handler_add_fd(void)
+{
+    assert(global_udp_listener != NULL);
+    assert(global_udp_distribute != NULL);
+
+    return udp_distribute_add(global_udp_distribute);
+}
+
+void
+global_control_handler_set_fd(int fd)
+{
+    assert(global_udp_listener != NULL);
+    assert(global_udp_distribute != NULL);
+
+    udp_distribute_clear(global_udp_distribute);
+    udp_listener_set_fd(global_udp_listener, fd);
 }
