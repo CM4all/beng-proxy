@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "udp.h"
+#include "udp-listener.h"
 #include "fd_util.h"
 
 #include <daemon/log.h>
@@ -20,7 +20,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-struct udp {
+struct udp_listener {
     int fd;
     struct event event;
 
@@ -29,9 +29,9 @@ struct udp {
 };
 
 static void
-udp_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
+udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 {
-    struct udp *udp = ctx;
+    struct udp_listener *udp = ctx;
     struct sockaddr_storage sa;
     socklen_t sa_len;
     char buffer[4096];
@@ -50,11 +50,11 @@ udp_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
                   udp->callback_ctx);
 }
 
-struct udp *
-udp_new(pool_t pool, const char *host_and_port, int default_port,
-        udp_callback_t callback, void *ctx)
+struct udp_listener *
+udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
+                      udp_callback_t callback, void *ctx)
 {
-    struct udp *udp;
+    struct udp_listener *udp;
     int ret;
     struct addrinfo hints, *ai;
 
@@ -93,8 +93,8 @@ udp_new(pool_t pool, const char *host_and_port, int default_port,
     freeaddrinfo(ai);
 
     event_set(&udp->event, udp->fd,
-              EV_READ|EV_PERSIST, udp_event_callback, udp);
-    udp_event_add(udp);
+              EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
+    udp_listener_event_add(udp);
 
     udp->callback = callback;
     udp->callback_ctx = ctx;
@@ -103,17 +103,17 @@ udp_new(pool_t pool, const char *host_and_port, int default_port,
 }
 
 void
-udp_free(struct udp *udp)
+udp_listener_free(struct udp_listener *udp)
 {
     assert(udp != NULL);
     assert(udp->fd >= 0);
 
-    udp_event_del(udp);
+    udp_listener_event_del(udp);
     close(udp->fd);
 }
 
 bool
-udp_join4(struct udp *udp, const struct in_addr *group)
+udp_listener_join4(struct udp_listener *udp, const struct in_addr *group)
 {
     struct ip_mreq r;
     int ret;
@@ -131,13 +131,13 @@ udp_join4(struct udp *udp, const struct in_addr *group)
 }
 
 void
-udp_event_add(struct udp *udp)
+udp_listener_event_add(struct udp_listener *udp)
 {
     event_add(&udp->event, NULL);
 }
 
 void
-udp_event_del(struct udp *udp)
+udp_listener_event_del(struct udp_listener *udp)
 {
     event_del(&udp->event);
 }

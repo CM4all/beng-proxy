@@ -5,7 +5,7 @@
  */
 
 #include "control-server.h"
-#include "udp.h"
+#include "udp-listener.h"
 
 #include <daemon/log.h>
 
@@ -13,7 +13,7 @@
 #include <assert.h>
 
 struct control_server {
-    struct udp *udp;
+    struct udp_listener *udp;
 
     const struct control_handler *handler;
     void *handler_ctx;
@@ -88,13 +88,13 @@ control_server_new(pool_t pool, const char *host_and_port, int default_port,
     assert(handler->packet != NULL);
 
     struct control_server *cs = p_malloc(pool, sizeof(*cs));
-    cs->udp = udp_new(pool, host_and_port, default_port,
-                      control_server_udp_callback, cs);
+    cs->udp = udp_listener_port_new(pool, host_and_port, default_port,
+                                    control_server_udp_callback, cs);
     if (cs->udp == NULL)
         return NULL;
 
-    if (group != NULL && !udp_join4(cs->udp, group)) {
-        udp_free(cs->udp);
+    if (group != NULL && !udp_listener_join4(cs->udp, group)) {
+        udp_listener_free(cs->udp);
         return NULL;
     }
 
@@ -107,5 +107,5 @@ control_server_new(pool_t pool, const char *host_and_port, int default_port,
 void
 control_server_free(struct control_server *cs)
 {
-    udp_free(cs->udp);
+    udp_listener_free(cs->udp);
 }

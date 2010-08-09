@@ -231,7 +231,7 @@ HDR = \
 	src/transformation.h \
 	src/translate.h \
 	src/tstock.h \
-	src/udp.h \
+	src/udp-listener.h \
 	src/uri-address.h \
 	src/uri-edit.h \
 	src/uri-escape.h \
@@ -316,7 +316,7 @@ SRC = src/main.c \
 	src/resource-tag.c \
 	src/listener.c \
 	src/client-socket.c \
-	src/udp.c \
+	src/udp-listener.c \
 	src/buffered-io.c \
 	src/header-parser.c \
 	src/header-writer.c \
@@ -1141,7 +1141,7 @@ test_run_delegate_SOURCES = test/run-delegate.c \
 test_run_delegate_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
 test_dump_udp_SOURCES = test/dump-udp.c \
-	src/udp.c \
+	src/udp-listener.c \
 	src/fd_util.c \
 	$(POOL_SRC)
 test_dump_udp_LDADD = $(AM_LDADD) \
@@ -1149,7 +1149,7 @@ test_dump_udp_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS)
 
 test_dump_control_SOURCES = test/dump-control.c \
-	src/udp.c \
+	src/udp-listener.c \
 	src/fd_util.c \
 	src/control-server.c \
 	$(POOL_SRC)

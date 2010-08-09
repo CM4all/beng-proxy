@@ -1,4 +1,4 @@
-#include "udp.h"
+#include "udp-listener.h"
 
 #include <daemon/log.h>
 
@@ -36,7 +36,8 @@ int main(int argc, char **argv) {
 
     pool_t pool = pool_new_libc(NULL, "root");
 
-    struct udp *udp = udp_new(pool, listen_host, 1234,
+    struct udp_listener *udp =
+        udp_listener_port_new(pool, listen_host, 1234,
                               dump_udp_callback, NULL);
     if (udp == NULL)
         return 2;
@@ -45,7 +46,7 @@ int main(int argc, char **argv) {
         struct in_addr addr = {
             .s_addr = inet_addr(mcast_group),
         };
-        if (!udp_join4(udp, &addr))
+        if (!udp_listener_join4(udp, &addr))
             return 2;
     }
 
