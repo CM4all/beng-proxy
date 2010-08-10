@@ -204,7 +204,8 @@ hashmap_remove_match(struct hashmap *map, const char *key,
     struct slot *slot, *prev;
 
     prev = &map->slots[hash % map->capacity];
-    assert(prev->pair.key != NULL);
+    if (prev->pair.key == NULL)
+        return;
 
     for (slot = prev->next; slot != NULL; slot = prev->next) {
         assert(slot->pair.key != NULL);
