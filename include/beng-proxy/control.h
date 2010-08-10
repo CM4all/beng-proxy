@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 enum beng_control_command {
-    BENG_CONTROL_NOP,
+    CONTROL_NOP = 0,
 };
 
 struct beng_control_header {
@@ -21,6 +21,6 @@ struct beng_control_header {
 /**
  * This magic number precedes every UDP packet.
  */
-static const uint32_t beng_control_magic = 0x63046101;
+static const uint32_t control_magic = 0x63046101;
 
 #endif

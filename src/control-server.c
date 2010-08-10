@@ -27,8 +27,7 @@ control_server_decode(const void *data, size_t length,
 
     const uint32_t *magic = data;
 
-    if (length < sizeof(*magic) ||
-        GUINT32_FROM_BE(*magic) != beng_control_magic) {
+    if (length < sizeof(*magic) || GUINT32_FROM_BE(*magic) != control_magic) {
         daemon_log(2, "wrong magic\n");
         return;
     }

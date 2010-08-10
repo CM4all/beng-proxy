@@ -30,7 +30,7 @@ global_control_packet(enum beng_control_command command,
                command, payload_length);
 
     switch (command) {
-    case BENG_CONTROL_NOP:
+    case CONTROL_NOP:
         /* duh! */
         break;
     }

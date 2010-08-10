@@ -46,10 +46,10 @@ int main(int argc, char **argv) {
         uint32_t magic;
         struct beng_control_header header;
     } packet = {
-        .magic = GUINT32_TO_BE(beng_control_magic),
+        .magic = GUINT32_TO_BE(control_magic),
         .header = {
             .length = htons(0),
-            .command = htons(BENG_CONTROL_NOP),
+            .command = htons(CONTROL_NOP),
         },
     };
 
