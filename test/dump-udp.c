@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>
 
 static void
 dump_udp_callback(G_GNUC_UNUSED const void *data, size_t length,
