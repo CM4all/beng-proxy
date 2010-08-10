@@ -41,10 +41,4 @@ udp_listener_set_fd(struct udp_listener *udp, int fd);
 bool
 udp_listener_join4(struct udp_listener *udp, const struct in_addr *group);
 
-void
-udp_listener_event_add(struct udp_listener *udp);
-
-void
-udp_listener_event_del(struct udp_listener *udp);
-
 #endif

@@ -94,7 +94,7 @@ udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
 
     event_set(&udp->event, udp->fd,
               EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
-    udp_listener_event_add(udp);
+    event_add(&udp->event, NULL);
 
     udp->callback = callback;
     udp->callback_ctx = ctx;
@@ -108,7 +108,7 @@ udp_listener_free(struct udp_listener *udp)
     assert(udp != NULL);
     assert(udp->fd >= 0);
 
-    udp_listener_event_del(udp);
+    event_del(&udp->event);
     close(udp->fd);
 }
 
@@ -140,16 +140,4 @@ udp_listener_join4(struct udp_listener *udp, const struct in_addr *group)
     }
 
     return true;
-}
-
-void
-udp_listener_event_add(struct udp_listener *udp)
-{
-    event_add(&udp->event, NULL);
-}
-
-void
-udp_listener_event_del(struct udp_listener *udp)
-{
-    event_del(&udp->event);
 }
