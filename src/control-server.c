@@ -68,6 +68,8 @@ control_server_decode(const void *data, size_t length,
         handler->packet(command, payload_length > 0 ? payload : NULL,
                         payload_length, handler_ctx);
 
+        payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
+
         data = payload + payload_length;
         length -= payload_length;
     }
