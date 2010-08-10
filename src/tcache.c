@@ -16,6 +16,7 @@
 
 #include <time.h>
 #include <string.h>
+#include <stdlib.h>
 
 struct tcache_item {
     struct cache_item item;
@@ -365,6 +366,29 @@ tcache_string_match(const char *a, const char *b, bool strict)
 }
 
 /**
+ * @param strict in strict mode, NULL values are a mismatch
+ */
+static bool
+tcache_uri_match(const char *a, const char *b, bool strict)
+{
+    if (a == NULL || b == NULL)
+        return !strict && a == b;
+
+    if (memcmp(a, "ERR", 3) == 0) {
+        char *endptr;
+        strtol(a + 3, &endptr, 10);
+        if (*endptr == '_')
+            a = endptr + 1;
+    }
+
+    const char *check = strstr(a, "|CHECK=");
+    if (check != NULL)
+        return memcmp(a, b, check - a) == 0 && b[check - a] == 0;
+    else
+        return strcmp(a, b) == 0;
+}
+
+/**
  * @param strict in strict mode, unknown commands and NULL values are
  * a mismatch
  */
@@ -376,8 +400,8 @@ tcache_vary_match(const struct tcache_item *item,
 {
     switch (command) {
     case TRANSLATE_URI:
-        return tcache_string_match(item->item.key,
-                                   request->uri, strict);
+        return tcache_uri_match(item->item.key,
+                                request->uri, strict);
 
     case TRANSLATE_SESSION:
         return tcache_string_match(item->request.session,
