@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.12) unstable; urgency=low
 
-  * 
+  * debian/control: add missing ${shlibs:Depends}
 
  --
 
