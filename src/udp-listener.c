@@ -120,8 +120,14 @@ udp_listener_set_fd(struct udp_listener *udp, int fd)
     assert(fd >= 0);
     assert(udp->fd != fd);
 
+    event_del(&udp->event);
+
     close(udp->fd);
     udp->fd = fd;
+
+    event_set(&udp->event, udp->fd,
+              EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
+    event_add(&udp->event, NULL);
 }
 
 bool
