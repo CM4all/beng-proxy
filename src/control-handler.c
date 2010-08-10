@@ -10,6 +10,7 @@
 
 #include <daemon/log.h>
 
+#include <assert.h>
 #include <arpa/inet.h>
 
 static void
@@ -35,6 +36,9 @@ static struct control_server *global_control_server;
 bool
 global_control_handler_init(pool_t pool, struct instance *instance)
 {
+    if (instance->config.control_listen == NULL)
+        return true;
+
     struct in_addr group;
     if (instance->config.multicast_group != NULL)
         group.s_addr = inet_addr(instance->config.multicast_group);
@@ -50,5 +54,6 @@ global_control_handler_init(pool_t pool, struct instance *instance)
 void
 global_control_handler_deinit(void)
 {
-    control_server_free(global_control_server);
+    if (global_control_server != NULL)
+        control_server_free(global_control_server);
 }
