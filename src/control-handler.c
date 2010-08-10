@@ -9,12 +9,137 @@
 #include "udp-listener.h"
 #include "udp-distribute.h"
 #include "instance.h"
+#include "tcache.h"
+#include "tpool.h"
+#include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
 
 #include <glib.h>
 #include <assert.h>
 #include <arpa/inet.h>
+
+static bool
+apply_translation_packet(struct translate_request *request,
+                         enum beng_translation_command command,
+                         const char *payload)
+{
+    switch (command) {
+    case TRANSLATE_URI:
+        request->uri = payload;
+        break;
+
+    case TRANSLATE_SESSION:
+        request->session = payload;
+        break;
+
+        /* XXX
+    case TRANSLATE_LOCAL_ADDRESS:
+        request->local_address = payload;
+        break;
+        */
+
+    case TRANSLATE_REMOTE_HOST:
+        request->remote_host = payload;
+        break;
+
+    case TRANSLATE_HOST:
+        request->host = payload;
+        break;
+
+    case TRANSLATE_LANGUAGE:
+        request->accept_language = payload;
+        break;
+
+    case TRANSLATE_USER_AGENT:
+        request->user_agent = payload;
+        break;
+
+    case TRANSLATE_QUERY_STRING:
+        request->query_string = payload;
+        break;
+
+    default:
+        /* unsupported */
+        return false;
+    }
+
+    return true;
+}
+
+static unsigned
+decode_translation_packets(pool_t pool, struct translate_request *request,
+                           uint16_t *cmds, unsigned max_cmds,
+                           const void *data, size_t length)
+{
+    unsigned num_cmds = 0;
+
+    if (length % 4 != 0)
+        /* must be padded */
+        return 0;
+
+    while (length > 0) {
+        const struct beng_translation_header *header = data;
+        if (length < sizeof(*header))
+            return 0;
+
+        size_t payload_length = GUINT16_FROM_BE(header->length);
+        enum beng_translation_command command =
+            GUINT16_FROM_BE(header->command);
+
+        data = header + 1;
+        length -= sizeof(*header);
+
+        if (length < payload_length)
+            return 0;
+
+        char *payload = payload_length > 0
+            ? p_strndup(pool, data, payload_length)
+            : NULL;
+        if (!apply_translation_packet(request, command, payload))
+            return 0;
+
+        if (num_cmds >= max_cmds)
+            return 0;
+
+        cmds[num_cmds++] = (uint16_t)command;
+
+        payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
+
+        data = (const char *)data + payload_length;
+        length -= payload_length;
+    }
+
+    return num_cmds;
+}
+
+static void
+control_tcache_invalidate(struct instance *instance,
+                          const void *payload, size_t payload_length)
+{
+    (void)instance;
+
+    struct pool_mark mark;
+    pool_mark(tpool, &mark);
+
+    struct translate_request request;
+    memset(&request, 0, sizeof(request));
+
+    uint16_t cmds[32];
+    unsigned num_cmds =
+        decode_translation_packets(tpool, &request, cmds, G_N_ELEMENTS(cmds),
+                                   payload, payload_length);
+    if (num_cmds == 0) {
+        pool_rewind(tpool, &mark);
+        daemon_log(2, "malformed TCACHE_INVALIDATE control packet\n");
+        return;
+    }
+
+    translate_cache_invalidate(instance->translate_cache, &request,
+                               cmds, num_cmds);
+
+    pool_rewind(tpool, &mark);
+}
 
 static void
 global_control_packet(enum beng_control_command command,
@@ -32,6 +157,10 @@ global_control_packet(enum beng_control_command command,
     switch (command) {
     case CONTROL_NOP:
         /* duh! */
+        break;
+
+    case CONTROL_TCACHE_INVALIDATE:
+        control_tcache_invalidate(instance, payload, payload_length);
         break;
     }
 }

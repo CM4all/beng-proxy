@@ -1082,7 +1082,15 @@ To enable IP multicast, set the multicast group address with
 \begin{longtable}{|l|p{8cm}|}
 \hline
 
-NOP & ignored \\
+\texttt{NOP} & ignored \\
+
+\texttt{TCACHE\_INVALIDATE} & Invalidates translation cache entries.
+This packet follows the same semantics as the \texttt{INVALIDATE}
+translation response packet, but instead of passing just a list of
+command numbers referring to a real translation request, you need to
+send the values as well.  The payload of this packet consists of one
+or more concatenated translation packets in network byte order, padded
+with zeroes to multiples of 4 bytes.  \\
 
 \hline
 \end{longtable}

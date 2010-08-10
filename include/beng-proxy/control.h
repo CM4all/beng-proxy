@@ -11,6 +11,11 @@
 
 enum beng_control_command {
     CONTROL_NOP = 0,
+
+    /**
+     * Drop items from the translation cache.
+     */
+    CONTROL_TCACHE_INVALIDATE = 1,
 };
 
 struct beng_control_header {
