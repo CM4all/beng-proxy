@@ -11,7 +11,7 @@ from beng_proxy.translation.protocol import *
 
 attributes = {
     'URI': TRANSLATE_URI,
-    'SESSION': TRANSLATE_URI,
+    'SESSION': TRANSLATE_SESSION,
     #'LOCAL_ADDRESS': XXX
     'REMOTE_HOST': TRANSLATE_REMOTE_HOST,
     'HOST': TRANSLATE_HOST,
