@@ -1,2 +1,3 @@
 python/beng_proxy/*.py usr/lib/python2.4/site-packages/beng_proxy
 python/beng_proxy/translation/*.py usr/lib/python2.4/site-packages/beng_proxy/translation
+python/beng_proxy/control/*.py usr/lib/python2.4/site-packages/beng_proxy/control
