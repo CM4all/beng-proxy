@@ -166,7 +166,8 @@ hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
     assert(key != NULL);
 
     prev = &map->slots[hash % map->capacity];
-    assert(prev->pair.key != NULL);
+    if (prev->pair.key == NULL)
+        return false;
 
     if (prev->pair.value == value) {
         if (prev->next == NULL) {
