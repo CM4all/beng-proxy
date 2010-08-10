@@ -29,4 +29,9 @@ translate_cache(pool_t pool, struct tcache *tcache,
                 void *ctx,
                 struct async_operation_ref *async_ref);
 
+void
+translate_cache_invalidate(struct tcache *tcache,
+                           const struct translate_request *request,
+                           const uint16_t *vary, unsigned num_vary);
+
 #endif
