@@ -28,6 +28,12 @@ global_control_packet(enum beng_control_command command,
 
     daemon_log(5, "control command=%d payload_length=%zu\n",
                command, payload_length);
+
+    switch (command) {
+    case BENG_CONTROL_NOP:
+        /* duh! */
+        break;
+    }
 }
 
 static const struct control_handler global_control_handler = {
