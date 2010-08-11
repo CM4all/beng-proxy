@@ -1,5 +1,6 @@
 cm4all-beng-proxy (0.8.12) unstable; urgency=low
 
+  * http-cache-memcached: copy resource address
   * debian/control: add missing ${shlibs:Depends}
 
  --

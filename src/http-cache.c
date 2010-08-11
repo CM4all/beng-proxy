@@ -966,8 +966,8 @@ http_cache_memcached_use(struct http_cache *cache,
     request->caller_pool = caller_pool;
     request->cache = cache;
     request->method = method;
-    request->address = address;
-    request->key = http_cache_key(pool, address);
+    request->address = resource_address_dup(pool, address);
+    request->key = http_cache_key(pool, request->address);
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
