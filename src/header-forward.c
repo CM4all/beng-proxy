@@ -93,18 +93,21 @@ static const char *const exclude_response_headers[] = {
 };
 
 static void
+header_copy(const struct strmap *in, struct strmap *out, const char *key)
+{
+    const char *value = strmap_get(in, key);
+    while (value != NULL) {
+        strmap_add(out, key, value);
+        value = strmap_get_next(in, key, value);
+    }
+}
+
+static void
 headers_copy2(const struct strmap *in, struct strmap *out,
               const char *const* keys)
 {
-    const char *value;
-
-    for (; *keys != NULL; ++keys) {
-        value = strmap_get(in, *keys);
-        while (value != NULL) {
-            strmap_add(out, *keys, value);
-            value = strmap_get_next(in, *keys, value);
-        }
-    }
+    for (; *keys != NULL; ++keys)
+        header_copy(in, out, *keys);
 }
 
 static void
