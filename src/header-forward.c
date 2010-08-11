@@ -56,6 +56,7 @@ static const char *const exclude_request_headers[] = {
     "user-agent",
     "via",
     "x-forwarded-for",
+    "host",
     NULL,
 };
 
@@ -212,6 +213,7 @@ forward_other_headers(struct strmap *dest, struct strmap *src)
 struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
+                        bool exclude_host,
                         bool with_body, bool forward_charset,
                         bool forward_encoding,
                         const struct header_forward_settings *settings,
@@ -244,8 +246,12 @@ forward_request_headers(pool_t pool, struct strmap *src,
         forward_basic_headers(dest, src, with_body);
 
     if (src != NULL &&
-        settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
+        settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES) {
         forward_other_headers(dest, src);
+
+        if (!exclude_host && false)
+            header_copy(src, dest, "host");
+    }
 
     p = forward_charset
         ? strmap_get_checked(src, "accept-charset")

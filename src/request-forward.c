@@ -12,7 +12,8 @@
 void
 request_forward(struct forward_request *dest, struct request *request2,
                 const struct header_forward_settings *header_forward,
-                const char *host_and_port, const char *uri)
+                const char *host_and_port, const char *uri,
+                bool exclude_host)
 {
     struct http_server_request *request = request2->request;
     struct session *session;
@@ -41,6 +42,7 @@ request_forward(struct forward_request *dest, struct request *request2,
     dest->headers = forward_request_headers(request->pool, request->headers,
                                             request->local_host,
                                             request->remote_host,
+                                            exclude_host,
                                             dest->body != NULL,
                                             !request_processor_enabled(request2),
                                             !request_transformation_enabled(request2),

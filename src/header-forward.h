@@ -17,9 +17,15 @@ struct header_forward_settings {
 
 struct session;
 
+/**
+ * @param exclude_host suppress the "Host" header?  The "Host" request
+ * header must not be forwarded to another HTTP server, because we
+ * need to generate a new one
+ */
 struct strmap *
 forward_request_headers(pool_t pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
+                        bool exclude_host,
                         bool with_body, bool forward_charset,
                         bool forward_encoding,
                         const struct header_forward_settings *settings,

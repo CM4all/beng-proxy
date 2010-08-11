@@ -90,7 +90,7 @@ proxy_handler(struct request *request2)
     request_forward(&forward, request2,
                     &tr->request_header_forward,
                     uri_host_and_port(request->pool, tr->address.u.http->uri),
-                    uri_path(tr->address.u.http->uri));
+                    uri_path(tr->address.u.http->uri), false);
 
     http_cache_request(global_http_cache, request->pool,
                        forward.method, tr->address.u.http,

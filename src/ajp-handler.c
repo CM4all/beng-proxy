@@ -101,7 +101,7 @@ ajp_handler(struct request *request2)
     request_forward(&forward, request2,
                     &tr->request_header_forward,
                     uri_host_and_port(request->pool, tr->address.u.http->uri),
-                    tr->address.u.http->uri);
+                    tr->address.u.http->uri, false);
 
     /* do it */
 
