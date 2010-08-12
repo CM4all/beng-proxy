@@ -26,6 +26,27 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     assert(uri_compress(pool, "..") == NULL);
     assert(strcmp(uri_compress(pool, "/1/2/.."), "/1/") == 0);
 
+    assert(strcmp(uri_absolute(pool, "http://localhost/", "foo", 3),
+                  "http://localhost/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "http://localhost/bar", "foo", 3),
+                  "http://localhost/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "http://localhost/bar/", "foo", 3),
+                  "http://localhost/bar/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "http://localhost/bar/", "/foo", 4),
+                  "http://localhost/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "http://localhost/bar/",
+                               "http://localhost/bar/foo", 24),
+                  "http://localhost/bar/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "http://localhost/bar/",
+                               "http://localhost/foo", 24),
+                  "http://localhost/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "http://localhost", "foo", 3),
+                  "http://localhost/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/", "foo", 3), "/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/bar", "foo", 3), "/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/bar/", "foo", 3), "/bar/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/bar/", "/foo", 4), "/foo") == 0);
+
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();

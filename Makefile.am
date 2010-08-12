@@ -469,7 +469,7 @@ check_PROGRAMS = \
 	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
-	test/t-uri-compress \
+	test/t-uri-relative \
 	test/t-html-escape \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
@@ -510,7 +510,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
-	test/t-uri-compress \
+	test/t-uri-relative \
 	test/t-html-escape \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
@@ -570,10 +570,10 @@ test_t_resource_address_SOURCES = test/t-resource-address.c \
 	$(POOL_SRC)
 test_t_resource_address_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_uri_compress_SOURCES = test/t-uri-compress.c \
+test_t_uri_relative_SOURCES = test/t-uri-relative.c \
 	src/uri-relative.c \
 	$(POOL_SRC)
-test_t_uri_compress_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
+test_t_uri_relative_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_expansible_buffer_SOURCES = test/t-expansible-buffer.c \
 	src/expansible-buffer.c \
@@ -827,12 +827,16 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/http-cache.c src/http-cache-rfc.c \
 	src/http-cache-info.c src/http-cache-document.c \
 	src/http-cache-heap.c \
+	src/resource-address.c src/uri-address.c \
+	src/uri-edit.c src/uri-relative.c src/uri-escape.c src/uri-verify.c \
+	src/format.c \
 	src/abort-unref.c src/cache.c \
 	src/header-writer.c src/http-util.c \
 	src/istream-tee.c src/istream-hold.c \
 	src/date.c src/gmtime.c \
 	src/istream-null.c src/istream-unlock.c src/istream-forward.c
 test_t_http_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
 
 test_t_cookie_client_SOURCES = test/t-cookie-client.c \

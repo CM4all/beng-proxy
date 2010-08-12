@@ -69,7 +69,7 @@ widget_uri(struct widget *widget)
 }
 
 static struct strmap *
-widget_request_headers(struct embed *embed, bool with_body)
+widget_request_headers(struct embed *embed, bool exclude_host, bool with_body)
 {
     struct strmap *headers;
     struct session *session;
@@ -78,7 +78,8 @@ widget_request_headers(struct embed *embed, bool with_body)
 
     headers = forward_request_headers(embed->pool, embed->env->request_headers,
                                       embed->env->local_host,
-                                      embed->env->remote_host, with_body,
+                                      embed->env->remote_host,
+                                      exclude_host, with_body,
                                       false, false,
                                       &embed->widget->class->request_header_forward,
                                       session,
@@ -147,7 +148,9 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (body != NULL)
         istream_close(body);
 
-    headers = widget_request_headers(embed, false);
+    headers = widget_request_headers(embed,
+                                     address->type == RESOURCE_ADDRESS_HTTP,
+                                     false);
 
     resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
                  global_delegate_stock,
@@ -427,7 +430,9 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->transformation = embed->widget->from_request.raw
         ? NULL : view->transformation;
 
-    headers = widget_request_headers(embed, widget->from_request.body != NULL);
+    headers = widget_request_headers(embed,
+                                     widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,
+                                     widget->from_request.body != NULL);
 
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
     embed->async_ref = async_ref;

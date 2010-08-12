@@ -106,7 +106,8 @@ proxy_handler(struct request *request2)
 
     request_forward(&forward, request2,
                     &tr->request_header_forward,
-                    host_and_port, uri_p);
+                    host_and_port, uri_p,
+                    tr->address.type == RESOURCE_ADDRESS_HTTP);
 
     const struct resource_address *address = &tr->address;
     if (!request2->processor_focus)

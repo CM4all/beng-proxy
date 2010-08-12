@@ -13,6 +13,10 @@ const char *
 uri_insert_query_string(pool_t pool, const char *uri,
                         const char *query_string)
 {
+    assert(pool != NULL);
+    assert(uri != NULL);
+    assert(query_string != NULL);
+
     const char *qmark = strchr(uri, '?');
 
     if (qmark != NULL) {
@@ -30,6 +34,7 @@ const char *
 uri_append_query_string_n(pool_t pool, const char *uri,
                           const char *query_string, size_t length)
 {
+    assert(pool != NULL);
     assert(uri != NULL);
     assert(query_string != NULL);
     assert(length > 0);
@@ -44,6 +49,9 @@ static size_t
 query_string_begins_with(const char *query_string, const char *needle,
                          size_t needle_length)
 {
+    assert(query_string != NULL);
+    assert(needle != NULL);
+
     if (memcmp(query_string, needle, needle_length) != 0)
         return 0;
 
@@ -60,6 +68,10 @@ const char *
 uri_delete_query_string(pool_t pool, const char *uri,
                         const char *needle, size_t needle_length)
 {
+    assert(pool != NULL);
+    assert(uri != NULL);
+    assert(needle != NULL);
+
     const char *p;
     size_t delete_length;
 
