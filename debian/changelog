@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.8.12) unstable; urgency=low
   * debian/control: add missing ${shlibs:Depends}
   * merged release 0.7.50
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 12 Aug 2010 20:17:52 +0200
 
 cm4all-beng-proxy (0.8.11) unstable; urgency=low
 
