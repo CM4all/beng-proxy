@@ -140,23 +140,25 @@ uri_absolute(pool_t pool, const char *base, const char *uri, size_t length)
         return base;
 
     if (uri_has_protocol(uri, length))
-        return NULL;
+        return p_strndup(pool, uri, length);
 
     if (uri[0] == '/') {
         const char *base_path;
 
         if (base[0] == '/')
-            return NULL;
+            return p_strndup(pool, uri, length);
 
         base_path = uri_path(base);
         if (base_path == NULL)
-            return NULL;
+            return p_strncat(pool, base, strlen(base), "/", 1,
+                             uri, length, NULL);
 
         base_length = base_path - base;
     } else {
         const char *base_end = uri_after_last_slash(base);
         if (base_end == NULL)
-            return NULL;
+            return p_strncat(pool, base, strlen(base), "/", 1,
+                             uri, length, NULL);
 
         base_length = base_end - base;
     }
