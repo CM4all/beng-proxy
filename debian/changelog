@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.7.50) unstable; urgency=low
   * uri-relative: don't fail on absolute URIs
   * http-cache-heap: don't use uninitialized item size
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 12 Aug 2010 20:03:49 +0200
 
 cm4all-beng-proxy (0.7.49) unstable; urgency=low
 
