@@ -461,7 +461,7 @@ check_PROGRAMS = \
 	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
-	test/t-uri-compress \
+	test/t-uri-relative \
 	test/t-html-escape \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
@@ -501,7 +501,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
-	test/t-uri-compress \
+	test/t-uri-relative \
 	test/t-html-escape \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
@@ -560,10 +560,10 @@ test_t_resource_address_SOURCES = test/t-resource-address.c \
 	$(POOL_SRC)
 test_t_resource_address_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_uri_compress_SOURCES = test/t-uri-compress.c \
+test_t_uri_relative_SOURCES = test/t-uri-relative.c \
 	src/uri-relative.c \
 	$(POOL_SRC)
-test_t_uri_compress_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
+test_t_uri_relative_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_expansible_buffer_SOURCES = test/t-expansible-buffer.c \
 	src/expansible-buffer.c \
