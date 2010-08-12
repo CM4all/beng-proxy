@@ -117,7 +117,11 @@ uri_path(const char *uri)
 static const char *
 uri_after_last_slash(const char *uri)
 {
-    uri = strrchr(uri, '/');
+    const char *path = uri_path(uri);
+    if (path == NULL)
+        return NULL;
+
+    uri = strrchr(path, '/');
     if (uri != NULL)
         ++uri;
     return uri;

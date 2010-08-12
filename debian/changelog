@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.7.50) unstable; urgency=low
 
   * header-forward: don't forward the "Host" header to HTTP servers
   * resource-address: use uri_relative() for CGI
+  * uri-relative: don't lose host name in uri_absolute()
 
  --
 
