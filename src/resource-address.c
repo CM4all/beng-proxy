@@ -275,9 +275,11 @@ resource_address_relative(const struct resource_address *base,
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
-        /* XXX */
-        strref_set_c(buffer, address->u.cgi.path_info);
-        return buffer;
+        strref_set_c(&base_uri, base->u.cgi.path_info != NULL
+                     ? base->u.cgi.path_info : "");
+        strref_set_c(buffer, address->u.cgi.path_info != NULL
+                     ? address->u.cgi.path_info : "");
+        return uri_relative(&base_uri, buffer);
     }
 
     assert(false);
