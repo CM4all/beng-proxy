@@ -142,7 +142,7 @@ http_cache_heap_istream(pool_t pool, struct cache *cache,
     struct http_cache_item *item = document_to_item(document);
     istream_t istream;
 
-    if (item->size == 0)
+    if (item->data == NULL)
         /* don't lock the item */
         return istream_null_new(pool);
 
