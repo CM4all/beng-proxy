@@ -691,6 +691,18 @@ parse_uri_mode(const struct strref *s)
         return URI_MODE_DIRECT;
 }
 
+static bool
+link_attr_finished(struct processor *processor, const struct parser_attr *attr)
+{
+    if (strref_cmp_literal(&attr->name, "c:base") == 0) {
+        processor->uri_rewrite.base = parse_uri_base(&attr->value);
+        processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
+        return true;
+    }
+
+    return false;
+}
+
 static void
 processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
@@ -702,11 +714,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         (processor->tag == TAG_A || processor->tag == TAG_FORM ||
          processor->tag == TAG_IMG || processor->tag == TAG_SCRIPT ||
          processor->tag == TAG_PARAM || processor->tag == TAG_REWRITE_URI) &&
-        strref_cmp_literal(&attr->name, "c:base") == 0) {
-        processor->uri_rewrite.base = parse_uri_base(&attr->value);
-        processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
+        link_attr_finished(processor, attr))
         return;
-    }
 
     if (!processor_option_quiet(processor) &&
         processor->tag != TAG_NONE &&
