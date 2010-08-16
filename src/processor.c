@@ -700,6 +700,12 @@ link_attr_finished(struct processor *processor, const struct parser_attr *attr)
         return true;
     }
 
+    if (strref_cmp_literal(&attr->name, "c:mode") == 0) {
+        processor->uri_rewrite.mode = parse_uri_mode(&attr->value);
+        processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
+        return true;
+    }
+
     return false;
 }
 
@@ -716,14 +722,6 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
          processor->tag == TAG_PARAM || processor->tag == TAG_REWRITE_URI) &&
         link_attr_finished(processor, attr))
         return;
-
-    if (!processor_option_quiet(processor) &&
-        processor->tag != TAG_NONE &&
-        strref_cmp_literal(&attr->name, "c:mode") == 0) {
-        processor->uri_rewrite.mode = parse_uri_mode(&attr->value);
-        processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
-        return;
-    }
 
     switch (processor->tag) {
     case TAG_NONE:

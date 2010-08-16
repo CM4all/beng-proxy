@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.7.51) unstable; urgency=low
 
   * http-client: clear response body pointer before forwarding EOF event
+  * processor: fix assertion failure for c:mode in c:widget
 
  --
 
