@@ -470,6 +470,7 @@ check_PROGRAMS = \
 	test/t-cgi test/t-widget-stream \
 	test/t-http-server-mirror test/t-http-server-null \
 	test/t-http-server-dummy \
+	test/t-http-server-fixed \
 	test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
@@ -776,6 +777,30 @@ test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
 	src/http.c src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
 test_t_http_server_dummy_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
+
+test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
+	src/http-server.c src/http-server-send.c src/http-server-request.c \
+	src/http-server-read.c src/http-server-response.c \
+	src/address.c \
+	src/fifo-buffer.c \
+	src/duplex.c \
+	$(POOL_SRC) \
+	src/buffered-io.c \
+	src/strmap.c src/hashmap.c \
+	src/header-writer.c \
+	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
+	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
+	src/istream-cat.c src/istream-null.c \
+	src/sink-null.c \
+	src/pipe-stock.c src/stock.c \
+	src/direct.c \
+	src/http-body.c src/date.c \
+	src/fd-util.c src/socket-util.c \
+	src/growing-buffer.c \
+	src/http.c src/header-parser.c src/format.c \
+	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
+test_t_http_server_fixed_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_client_SOURCES = test/t-http-client.c \

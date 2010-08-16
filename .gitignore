@@ -26,6 +26,7 @@ test/t-html-escape
 test/t-http-server-mirror
 test/t-http-server-null
 test/t-http-server-dummy
+test/t-http-server-fixed
 test/run-processor
 test/t-istream-processor
 test/t-istream-replace
