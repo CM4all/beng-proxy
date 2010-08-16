@@ -574,6 +574,14 @@ http_client_response_stream_eof(struct http_client *client)
     assert(http_response_handler_used(&client->request.handler));
     assert(http_body_eof(&client->response.body_reader));
 
+    /* this pointer must be cleared before forwarding the EOF event to
+       our response body handler.  If we forget that, the handler
+       might close the request body, leading to an assertion failure
+       because http_client_request_stream_abort() calls
+       http_client_abort_response_body(), not knowing that the
+       response body is already finished  */
+    client->response.body = NULL;
+
     istream_deinit_eof(&client->response.body_reader.output);
 
     http_client_response_finished(client);
