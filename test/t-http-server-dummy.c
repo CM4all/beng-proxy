@@ -16,10 +16,12 @@ my_request(struct http_server_request *request, void *ctx,
     if (request->body != NULL)
         sink_null_new(request->body);
 
-    http_server_response(request, HTTP_STATUS_OK, NULL,
-                         istream_head_new(request->pool,
-                                          istream_zero_new(request->pool),
-                                          256));
+    istream_t body = istream_head_new(request->pool,
+                                      istream_zero_new(request->pool),
+                                      256);
+    body = istream_byte_new(request->pool, body);
+
+    http_server_response(request, HTTP_STATUS_OK, NULL, body);
 }
 
 static void

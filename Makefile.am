@@ -778,7 +778,7 @@ test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
 	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
 	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
-	src/istream-head.c src/istream-zero.c \
+	src/istream-head.c src/istream-zero.c src/istream-byte.c \
 	src/sink-null.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \

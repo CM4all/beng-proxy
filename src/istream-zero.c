@@ -6,6 +6,8 @@
 
 #include "istream-internal.h"
 
+#include <limits.h>
+
 struct istream_zero {
     struct istream stream;
 };
@@ -14,6 +16,14 @@ static inline struct istream_zero *
 istream_to_zero(istream_t istream)
 {
     return (struct istream_zero *)(((char*)istream) - offsetof(struct istream_zero, stream));
+}
+
+static off_t
+istream_zero_available(__attr_unused istream_t istream, bool partial)
+{
+    return partial
+        ? INT_MAX
+        : -1;
 }
 
 static off_t
@@ -40,6 +50,7 @@ istream_zero_close(istream_t istream)
 }
 
 static const struct istream istream_zero = {
+    .available = istream_zero_available,
     .skip = istream_zero_skip,
     .read = istream_zero_read,
     .close = istream_zero_close,

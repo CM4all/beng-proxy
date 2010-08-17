@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.8.13) unstable; urgency=low
 
   * processor: delete "xmlns:c" attributes from link elements
+  * istream-{head,zero}: implement method available()
   * merged release 0.7.51
 
  --

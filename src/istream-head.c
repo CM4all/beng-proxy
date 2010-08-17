@@ -100,6 +100,18 @@ istream_to_head(istream_t istream)
     return (struct istream_head *)(((char*)istream) - offsetof(struct istream_head, output));
 }
 
+static off_t
+istream_head_available(__attr_unused istream_t istream, bool partial)
+{
+    struct istream_head *head = istream_to_head(istream);
+    off_t available = istream_available(head->input, partial);
+
+    if (available > (off_t)head->rest)
+        available = head->rest;
+
+    return available;
+}
+
 static void
 istream_head_read(istream_t istream)
 {
@@ -125,6 +137,7 @@ istream_head_close(istream_t istream)
 }
 
 static const struct istream istream_head = {
+    .available = istream_head_available,
     .read = istream_head_read,
     .close = istream_head_close,
 };
