@@ -73,6 +73,12 @@ connect_dummy(void)
     return connect_server("./test/t-http-server-dummy");
 }
 
+static int
+connect_fixed(void)
+{
+    return connect_server("./test/t-http-server-fixed");
+}
+
 struct context {
     pool_t pool;
 
@@ -605,6 +611,31 @@ test_close_request_body_eor(pool_t pool, struct context *c)
     assert(!c->body_abort);
 }
 
+/**
+ * Close request body in the response_eof handler.
+ */
+static void
+test_close_request_body_eor2(pool_t pool, struct context *c)
+{
+    c->fd = connect_fixed();
+    c->close_request_body_eof = true;
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
+                        c->request_body = istream_zero_new(pool),
+                        &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->fd < 0);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(c->body_eof);
+    assert(!c->body_abort);
+}
+
 
 /*
  * main
@@ -650,6 +681,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_ignored_request_body);
     run_test(pool, test_head_close_ignored_request_body);
     run_test(pool, test_close_request_body_eor);
+    run_test(pool, test_close_request_body_eor2);
 
     pool_unref(pool);
     pool_commit();
