@@ -1,0 +1,237 @@
+/*
+ * Web Application Socket protocol, output data channel library.
+ *
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#include "was-output.h"
+#include "pevent.h"
+#include "direct.h"
+#include "fd-util.h"
+
+#include <daemon/log.h>
+#include <was/protocol.h>
+
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+
+struct was_output {
+    pool_t pool;
+
+    int fd;
+    struct event event;
+
+    const struct was_output_handler *handler;
+    void *handler_ctx;
+
+    istream_t input;
+
+    uint64_t sent;
+
+    bool known_length;
+};
+
+static const struct timeval was_output_timeout = {
+    .tv_sec = 120,
+    .tv_usec = 0,
+};
+
+static void
+was_output_schedule_write(struct was_output *output)
+{
+    p_event_add(&output->event, &was_output_timeout,
+                output->pool, "was_output");
+}
+
+static void
+was_output_abort(struct was_output *output)
+{
+    p_event_del(&output->event, output->pool);
+
+    if (output->input != NULL)
+        istream_free_handler(&output->input);
+
+    output->handler->abort(output->sent, output->handler_ctx);
+}
+
+
+/*
+ * libevent callback
+ *
+ */
+
+static void
+was_output_event_callback(int fd __attr_unused, short event, void *ctx)
+{
+    struct was_output *output = ctx;
+
+    assert(output->fd >= 0);
+    assert(output->input != NULL);
+
+    p_event_consumed(&output->event, output->pool);
+
+    if (unlikely(event & EV_TIMEOUT)) {
+        daemon_log(4, "was-data: send timeout\n");
+        was_output_abort(output);
+        return;
+    }
+
+    if (!output->known_length) {
+        off_t available = istream_available(output->input, false);
+        if (available != -1) {
+            output->known_length = true;
+            if (!output->handler->length(output->sent + available,
+                                         output->handler_ctx))
+                return;
+        }
+    }
+
+    istream_read(output->input);
+
+    pool_commit();
+}
+
+
+/*
+ * istream handler for the request
+ *
+ */
+
+static size_t
+was_output_stream_data(const void *p, size_t length, void *ctx)
+{
+    struct was_output *output = ctx;
+
+    assert(output->fd >= 0);
+    assert(output->input != NULL);
+
+    ssize_t nbytes = write(output->fd, p, length);
+    if (likely(nbytes > 0)) {
+        output->sent += nbytes;
+        was_output_schedule_write(output);
+    } else if (nbytes < 0) {
+        if (errno == EAGAIN) {
+            was_output_schedule_write(output);
+            return 0;
+        }
+
+        daemon_log(3, "was-data: data write failed: %s\n", strerror(errno));
+        was_output_abort(output);
+        return 0;
+    }
+
+    return (size_t)nbytes;
+}
+
+static ssize_t
+was_output_stream_direct(istream_direct_t type, int fd,
+                         size_t max_length, void *ctx)
+{
+    struct was_output *output = ctx;
+    ssize_t nbytes;
+
+    assert(output->fd >= 0);
+
+    nbytes = istream_direct_to_pipe(type, fd, output->fd, max_length);
+    if (likely(nbytes > 0)) {
+        output->sent += nbytes;
+        was_output_schedule_write(output);
+    } else if (nbytes < 0 && errno == EAGAIN) {
+        if (!fd_ready_for_writing(output->fd)) {
+            was_output_schedule_write(output);
+            return -2;
+        }
+
+        /* try again, just in case output->fd has become ready between
+           the first istream_direct_to_pipe() call and
+           fd_ready_for_writing() */
+        nbytes = istream_direct_to_pipe(type, fd, output->fd, max_length);
+    }
+
+    return nbytes;
+}
+
+static void
+was_output_stream_eof(void *ctx)
+{
+    struct was_output *output = ctx;
+
+    assert(output->input != NULL);
+
+    output->input = NULL;
+    p_event_del(&output->event, output->pool);
+
+    if (!output->known_length &&
+        !output->handler->length(output->sent, output->handler_ctx))
+        return;
+
+    output->handler->eof(output->handler_ctx);
+}
+
+static void
+was_output_stream_abort(void *ctx)
+{
+    struct was_output *output = ctx;
+
+    assert(output->input != NULL);
+
+    output->input = NULL;
+
+    was_output_abort(output);
+}
+
+static const struct istream_handler was_output_stream_handler = {
+    .data = was_output_stream_data,
+    .direct = was_output_stream_direct,
+    .eof = was_output_stream_eof,
+    .abort = was_output_stream_abort,
+};
+
+
+/*
+ * constructor
+ *
+ */
+
+struct was_output *
+was_output_new(pool_t pool, int fd, istream_t input,
+               const struct was_output_handler *handler, void *handler_ctx)
+{
+    assert(fd >= 0);
+    assert(input != NULL);
+    assert(handler != NULL);
+    assert(handler->eof != NULL);
+    assert(handler->abort != NULL);
+
+    struct was_output *output = p_malloc(pool, sizeof(*output));
+    output->pool = pool;
+    output->fd = fd;
+    event_set(&output->event, output->fd, EV_WRITE|EV_TIMEOUT,
+              was_output_event_callback, output);
+
+    output->handler = handler;
+    output->handler_ctx = handler_ctx;
+
+    istream_assign_handler(&output->input, input,
+                           &was_output_stream_handler, output,
+                           ISTREAM_TO_PIPE);
+
+    output->sent = 0;
+    output->known_length = false;
+
+    was_output_schedule_write(output);
+
+    return output;
+}
+
+void
+was_output_free(struct was_output *output)
+{
+    assert(output != NULL);
+
+    if (output->input != NULL)
+        istream_free_handler(&output->input);
+
+    p_event_del(&output->event, output->pool);
+}

@@ -32,6 +32,9 @@ PKG_CHECK_MODULES([LIBCM4ALL_INLINE], [libcm4all-inline >= 0.1.1],,
 PKG_CHECK_MODULES([LIBCM4ALL_SOCKET], [libcm4all-socket],,
 	[AC_MSG_ERROR([libcm4all-socket not found])])
 
+PKG_CHECK_MODULES([LIBWAS], [libcm4all-was-simple],,
+	[AC_MSG_ERROR([libwas not found])])
+
 dnl
 dnl CFLAGS
 dnl

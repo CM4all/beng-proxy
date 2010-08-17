@@ -21,6 +21,7 @@ AM_CPPFLAGS += \
 	$(LIBCM4ALL_DAEMON_CFLAGS) \
 	$(LIBCM4ALL_INLINE_CFLAGS) \
 	$(LIBCM4ALL_SOCKET_CFLAGS) \
+	$(LIBWAS_CFLAGS) \
 	$(GLIB_CFLAGS) \
 	$(LIBEVENT_CFLAGS) \
 	$(LIBATTR_CFLAGS) \
@@ -142,6 +143,11 @@ HDR = \
 	src/fcgi-request.h \
 	src/fcgi-serialize.h \
 	src/fcgi-stock.h \
+	src/was-control.h \
+	src/was-output.h \
+	src/was-input.h \
+	src/was-client.h \
+	src/was-stock.h \
 	src/fd-util.h \
 	src/fifo-buffer.h \
 	src/file-handler.h \
@@ -349,6 +355,12 @@ SRC = src/main.c \
 	src/fcgi-serialize.c \
 	src/fcgi-client.c \
 	src/fcgi-request.c \
+	src/was-control.c \
+	src/was-output.c \
+	src/was-input.c \
+	src/was-client.c \
+	src/was-launch.c \
+	src/was-stock.c \
 	src/growing-buffer.c \
 	src/expansible-buffer.c \
 	src/gb-io.c \
@@ -465,6 +477,8 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 	test/t-istream-processor
 
 check_PROGRAMS = \
+	test/run-was \
+	test/was-mirror \
 	test/t-hashmap test/t-cache test/t-tcache \
 	test/t-header-forward \
 	test/t-stock \
@@ -529,6 +543,33 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-wembed test/t-widget-http
+
+test_run_was_SOURCES = test/run-was.c \
+	src/was-launch.c src/was-client.c src/was-control.c src/was-input.c src/was-output.c \
+	src/http.c \
+	src/strmap.c src/hashmap.c \
+	src/fifo-buffer.c src/buffered-io.c \
+	src/direct.c \
+	src/fd_util.c src/fd-util.c \
+	src/istream-file.c \
+	$(POOL_SRC)
+test_run_was_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
+
+test_was_mirror_SOURCES = test/was-mirror.c \
+	src/was-server.c src/was-control.c src/was-input.c src/was-output.c \
+	src/fifo-buffer.c \
+	$(POOL_SRC) \
+	src/buffered-io.c \
+	src/strmap.c src/hashmap.c \
+	src/istream-forward.c src/istream-string.c src/istream-memory.c \
+	src/istream-cat.c src/istream-null.c \
+	src/direct.c \
+	src/fd_util.c src/fd-util.c src/socket-util.c \
+	src/http.c
+test_was_mirror_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_hashmap_SOURCES = test/t-hashmap.c src/hashmap.c $(POOL_SRC)
 test_t_hashmap_LDADD = $(LIBCM4ALL_DAEMON_LIBS)

@@ -76,6 +76,8 @@ test/t-processor
 test/dump-udp
 test/dump-control
 test/send-control
+test/was-mirror
+test/run-was
 
 *.aux
 *.log
