@@ -72,6 +72,15 @@ http_method_is_valid(http_method_t method)
     return method > HTTP_METHOD_NULL && method < HTTP_METHOD_INVALID;
 }
 
+static inline bool
+http_method_is_empty(http_method_t method)
+{
+    /* RFC 2616 4.3: "All responses to the HEAD request method MUST
+       NOT include a message-body, even though the presence of entity
+       header fields might lead one to believe they do." */
+    return method == HTTP_METHOD_HEAD;
+}
+
 static inline const char *
 http_method_to_string(http_method_t method)
 {

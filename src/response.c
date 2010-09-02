@@ -189,7 +189,7 @@ response_invoke_processor(struct request *request2,
     }
 
     http_method_t method = request->method;
-    if (method == HTTP_METHOD_HEAD &&
+    if (http_method_is_empty(method) &&
         request2->translate.transformation != NULL)
         /* the following transformation may need the processed
            document to generate its headers, so we should not pass

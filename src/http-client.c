@@ -1111,7 +1111,7 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                     pool, "http_client_lease");
 
     client->response.read_state = READ_STATUS;
-    client->response.no_body = method == HTTP_METHOD_HEAD;
+    client->response.no_body = http_method_is_empty(method);
 
     event_set(&client->request.event, client->fd, EV_WRITE|EV_TIMEOUT,
               http_client_send_event_callback, client);

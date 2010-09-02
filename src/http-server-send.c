@@ -128,11 +128,7 @@ http_server_response(const struct http_server_request *request,
                      connection->response.content_length_buffer);
     }
 
-    if (request->method == HTTP_METHOD_HEAD && body != NULL)
-        /* RFC 2616 4.3: "All responses to the HEAD request method
-           MUST NOT include a message-body, even though the presence
-           of entity header fields might lead one to believe they
-           do." */
+    if (http_method_is_empty(request->method) && body != NULL)
         istream_free(&body);
 
     if (!connection->keep_alive && !connection->request.http_1_0)

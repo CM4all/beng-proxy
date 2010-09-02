@@ -248,7 +248,7 @@ processor_new(pool_t caller_pool, http_status_t status,
     assert(widget != NULL);
 
     if (widget->from_request.proxy_ref == NULL &&
-        env->method == HTTP_METHOD_HEAD) {
+        http_method_is_empty(env->method)) {
         istream_close(istream);
 
         headers = processor_header_forward(caller_pool, headers);
