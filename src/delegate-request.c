@@ -58,7 +58,8 @@ delegate_get_callback(int fd, void *ctx)
     headers = strmap_new(get->pool, 13);
     static_response_headers(get->pool, headers, fd, &st, get->content_type);
 
-    body = istream_file_fd_new(get->pool, get->path, fd, st.st_size);
+    body = istream_file_fd_new(get->pool, get->path,
+                               fd, ISTREAM_FILE, st.st_size);
     http_response_handler_invoke_response(&get->handler, HTTP_STATUS_OK,
                                           headers, body);
 }

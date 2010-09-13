@@ -41,6 +41,8 @@ struct file {
     struct istream stream;
     int fd;
 
+    enum istream_direct fd_type;
+
     /**
      * A timer to retry reading after EAGAIN.
      */
@@ -163,7 +165,7 @@ istream_file_try_direct(struct file *file)
         return;
     }
 
-    nbytes = istream_invoke_direct(&file->stream, ISTREAM_FILE, file->fd,
+    nbytes = istream_invoke_direct(&file->stream, file->fd_type, file->fd,
                                    istream_file_max_read(file));
     if (nbytes == -3)
         /* this stream was closed during the direct() callback */
@@ -203,7 +205,7 @@ istream_file_try_direct(struct file *file)
 static void
 file_try_read(struct file *file)
 {
-    if (istream_check_direct(&file->stream, ISTREAM_FILE))
+    if (istream_check_direct(&file->stream, file->fd_type))
         istream_file_try_direct(file);
     else
         istream_file_try_data(file);
@@ -337,7 +339,8 @@ static const struct istream istream_file = {
  */
 
 istream_t
-istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length)
+istream_file_fd_new(pool_t pool, const char *path,
+                    int fd, enum istream_direct fd_type, off_t length)
 {
     struct file *file;
 
@@ -346,6 +349,7 @@ istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length)
 
     file = (struct file*)istream_new(pool, &istream_file, sizeof(*file));
     file->fd = fd;
+    file->fd_type = fd_type;
     file->rest = length;
     file->buffer = NULL;
     file->path = path;
@@ -380,7 +384,7 @@ istream_file_stat_new(pool_t pool, const char *path, struct stat *st)
         return NULL;
     }
 
-    return istream_file_fd_new(pool, path, fd, st->st_size);
+    return istream_file_fd_new(pool, path, fd, ISTREAM_FILE, st->st_size);
 }
 
 istream_t
@@ -397,7 +401,7 @@ istream_file_new(pool_t pool, const char *path, off_t length)
         return NULL;
     }
 
-    return istream_file_fd_new(pool, path, fd, length);
+    return istream_file_fd_new(pool, path, fd, ISTREAM_FILE, length);
 }
 
 int

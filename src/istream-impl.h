@@ -43,7 +43,8 @@ istream_t __attr_malloc
 istream_string_new(pool_t pool, const char *s);
 
 istream_t
-istream_file_fd_new(pool_t pool, const char *path, int fd, off_t length);
+istream_file_fd_new(pool_t pool, const char *path,
+                    int fd, enum istream_direct fd_type, off_t length);
 
 /**
  * Opens a file and stats it.

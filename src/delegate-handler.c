@@ -86,7 +86,7 @@ delegate_handler_callback(int fd, void *ctx)
     file_dispatch(request2, &st, &file_request,
                   istream_file_fd_new(request->pool,
                                       tr->address.u.local.path,
-                                      fd, file_request.size));
+                                      fd, ISTREAM_FILE, file_request.size));
 }
 
 void
