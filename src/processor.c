@@ -89,7 +89,7 @@ struct processor {
          */
         struct {
             off_t start, end;
-        } delete[2];
+        } delete[4];
     } postponed_rewrite;
 
     struct {
@@ -724,8 +724,7 @@ link_attr_finished(struct processor *processor, const struct parser_attr *attr)
 
     if (strref_cmp_literal(&attr->name, "xmlns:c") == 0) {
         /* delete "xmlns:c" attributes */
-        istream_replace_add(processor->replace,
-                            attr->name_start, attr->end, NULL);
+        processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
         return true;
     }
 
