@@ -21,6 +21,8 @@
 
 #include <daemon/log.h>
 
+#include <glib.h>
+
 #include <assert.h>
 #include <string.h>
 
@@ -346,7 +348,7 @@ processor_uri_rewrite_delete(struct processor *processor,
 
     while (processor->postponed_rewrite.delete[i].start > 0) {
         ++i;
-        if (i >= 2)
+        if (i >= G_N_ELEMENTS(processor->postponed_rewrite.delete))
             /* no more room in the array */
             return;
     }
@@ -380,8 +382,8 @@ processor_uri_rewrite_attribute(struct processor *processor,
     expansible_buffer_set_strref(processor->postponed_rewrite.value,
                                  &attr->value);
 
-    processor->postponed_rewrite.delete[0].start = 0;
-    processor->postponed_rewrite.delete[1].start = 0;
+    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete); ++i)
+        processor->postponed_rewrite.delete[i].start = 0;
     processor->postponed_rewrite.pending = true;
 }
 
@@ -408,7 +410,7 @@ processor_uri_rewrite_commit(struct processor *processor)
     /* now delete all c:base/c:mode attributes which followed the
        URI */
 
-    for (unsigned i = 0; i < 2; ++i)
+    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete); ++i)
         if (processor->postponed_rewrite.delete[i].start > 0)
             istream_replace_add(processor->replace,
                                 processor->postponed_rewrite.delete[i].start,
