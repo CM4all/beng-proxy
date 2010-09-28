@@ -2,7 +2,7 @@ cm4all-beng-proxy (0.8.15) unstable; urgency=low
 
   * resource-address: don't skip question mark twice
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 28 Sep 2010 12:20:33 +0200
 
 cm4all-beng-proxy (0.8.14) unstable; urgency=low
 
