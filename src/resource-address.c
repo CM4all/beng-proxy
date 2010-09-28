@@ -93,7 +93,7 @@ resource_address_insert_query_string_from(pool_t pool,
         dest = p_malloc(pool, sizeof(*dest));
         dest->type = src->type;
         dest->u.http = uri_address_insert_query_string(pool, src->u.http,
-                                                       query_string + 1);
+                                                       query_string);
         return dest;
 
     case RESOURCE_ADDRESS_CGI:
