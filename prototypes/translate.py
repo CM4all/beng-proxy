@@ -187,6 +187,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_PATH_INFO, uri[14:])
             response.packet(TRANSLATE_BASE, '/ticket/create/')
             response.pair('TICKET_VAR', ticket_database_uri)
+            response.pair('TICKET_MAX_SIZE', str(4*1024*1024))
         elif uri[:16] == '/ticket/create2/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))
