@@ -311,7 +311,8 @@ was_server_control_packet(enum was_command cmd, const void *payload,
 
         break;
 
-    case WAS_COMMAND_ABORT:
+    case WAS_COMMAND_STOP:
+    case WAS_COMMAND_PREMATURE:
         // XXX
         was_server_abort(server);
         return false;
