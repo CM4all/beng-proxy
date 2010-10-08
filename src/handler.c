@@ -175,6 +175,7 @@ handle_translated_request(struct request *request,
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP ||
                response->address.type == RESOURCE_ADDRESS_AJP ||
                response->address.type == RESOURCE_ADDRESS_CGI ||
+               response->address.type == RESOURCE_ADDRESS_WAS ||
                response->address.type == RESOURCE_ADDRESS_FASTCGI) {
         proxy_handler(request);
     } else if (response->redirect != NULL) {

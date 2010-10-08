@@ -600,6 +600,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_PATH_INFO:
         if (client->resource_address == NULL ||
             (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
+             client->resource_address->type != RESOURCE_ADDRESS_WAS &&
              client->resource_address->type != RESOURCE_ADDRESS_FASTCGI)) {
             /* don't emit this warning when the resource is a local
                path.  This combination might once be useful, but isn't
@@ -849,6 +850,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_JAILCGI:
         if (client->resource_address != NULL &&
             (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
+             client->resource_address->type == RESOURCE_ADDRESS_WAS ||
              client->resource_address->type == RESOURCE_ADDRESS_FASTCGI))
             client->resource_address->u.cgi.jail = true;
         else if (client->resource_address != NULL &&
@@ -890,6 +892,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_SCRIPT_NAME:
         if (client->resource_address == NULL ||
             (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
+             client->resource_address->type != RESOURCE_ADDRESS_WAS &&
              client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
             client->resource_address->u.cgi.script_name != NULL) {
             daemon_log(2, "misplaced TRANSLATE_SCRIPT_NAME packet\n");
@@ -902,6 +905,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_DOCUMENT_ROOT:
         if (client->resource_address != NULL &&
             (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
+             client->resource_address->type == RESOURCE_ADDRESS_WAS ||
              client->resource_address->type == RESOURCE_ADDRESS_FASTCGI))
             client->resource_address->u.cgi.document_root = payload;
         else if (client->resource_address != NULL &&
@@ -1052,7 +1056,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_PAIR:
         if (client->resource_address != NULL &&
-            client->resource_address->type == RESOURCE_ADDRESS_FASTCGI) {
+            (client->resource_address->type == RESOURCE_ADDRESS_FASTCGI ||
+             client->resource_address->type == RESOURCE_ADDRESS_WAS)) {
             if (client->resource_address->u.cgi.num_args >=
                 G_N_ELEMENTS(client->resource_address->u.cgi.args)) {
                 daemon_log(2, "too many TRANSLATE_PAIR packets\n");
@@ -1124,6 +1129,21 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_WAS:
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_NONE) {
+            daemon_log(2, "misplaced TRANSLATE_WAS packet\n");
+            break;
+        }
+
+        if (payload == NULL) {
+            daemon_log(2, "malformed TRANSLATE_WAS packet\n");
+            translate_client_abort(client);
+            return false;
+        }
+
+        client->resource_address->type = RESOURCE_ADDRESS_WAS;
+        memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
+        client->resource_address->u.cgi.path = payload;
         break;
     }
 

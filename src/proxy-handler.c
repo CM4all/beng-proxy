@@ -61,6 +61,7 @@ proxy_response(http_status_t status, struct strmap *headers,
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
            tr->address.type == RESOURCE_ADDRESS_CGI ||
+           tr->address.type == RESOURCE_ADDRESS_WAS ||
            tr->address.type == RESOURCE_ADDRESS_FASTCGI);
 
     if (tr->address.type == RESOURCE_ADDRESS_HTTP ||
@@ -94,6 +95,7 @@ proxy_handler(struct request *request2)
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
            tr->address.type == RESOURCE_ADDRESS_CGI ||
+           tr->address.type == RESOURCE_ADDRESS_WAS ||
            tr->address.type == RESOURCE_ADDRESS_FASTCGI);
 
     const char *host_and_port = NULL, *uri_p = NULL;
