@@ -97,35 +97,6 @@ widget_determine_address(const struct widget *widget, bool stateful)
         return address;
 
     case RESOURCE_ADDRESS_CGI:
-        if ((!stateful ||
-             strref_is_empty(&widget->from_request.query_string)) &&
-            *path_info == 0 &&
-            widget->query_string == NULL)
-            break;
-
-        address = resource_address_dup(pool, &widget->class->address);
-
-        if (*path_info != 0)
-            address->u.cgi.path_info = path_info;
-
-        if (!stateful)
-            address->u.cgi.query_string = widget->query_string;
-        else if (strref_is_empty(&widget->from_request.query_string))
-            address->u.cgi.query_string = widget->query_string;
-        else if (widget->query_string == NULL)
-            address->u.cgi.query_string =
-                strref_dup(pool, &widget->from_request.query_string);
-        else
-            address->u.cgi.query_string =
-                p_strncat(pool,
-                          widget->from_request.query_string.data,
-                          widget->from_request.query_string.length,
-                          "&", (size_t)1,
-                          widget->query_string, strlen(widget->query_string),
-                          NULL);
-
-        return address;
-
     case RESOURCE_ADDRESS_FASTCGI:
         if ((!stateful ||
              strref_is_empty(&widget->from_request.query_string)) &&
