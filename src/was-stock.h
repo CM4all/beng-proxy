@@ -26,6 +26,13 @@ const struct was_process *
 was_stock_item_get(const struct stock_item *item);
 
 /**
+ * Translates a path into the application's namespace.
+ */
+const char *
+was_stock_translate_path(const struct stock_item *item,
+                         const char *path, pool_t pool);
+
+/**
  * Wrapper for hstock_put().
  */
 void

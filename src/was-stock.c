@@ -229,6 +229,22 @@ was_stock_item_get(const struct stock_item *item)
     return &child->process;
 }
 
+const char *
+was_stock_translate_path(const struct stock_item *item,
+                          const char *path, pool_t pool)
+{
+    const struct was_child *child = (const struct was_child *)item;
+
+    if (child->jail_path == NULL)
+        /* no JailCGI - application's namespace is the same as ours,
+           no translation needed */
+        return path;
+
+    const char *jailed = jail_translate_path(&child->jail_config, path,
+                                             child->jail_path, pool);
+    return jailed != NULL ? jailed : path;
+}
+
 void
 was_stock_put(struct hstock *hstock, struct stock_item *item, bool destroy)
 {
