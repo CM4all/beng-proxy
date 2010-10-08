@@ -43,7 +43,8 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
-        assert(src->u.cgi.path != NULL);
+    case RESOURCE_ADDRESS_WAS:
+       assert(src->u.cgi.path != NULL);
 
         dest->u.cgi.path = p_strdup(pool, src->u.cgi.path);
 
@@ -98,6 +99,7 @@ resource_address_insert_query_string_from(pool_t pool,
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         assert(src->u.cgi.path != NULL);
 
         query_string = strchr(uri, '?');
@@ -155,6 +157,7 @@ resource_address_save_base(pool_t pool, const struct resource_address *src,
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         if (src->u.cgi.path_info == NULL)
             return NULL;
 
@@ -212,6 +215,7 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         if (src->u.cgi.path_info == NULL)
             return NULL;
 
@@ -285,6 +289,7 @@ resource_address_apply(pool_t pool, const struct resource_address *src,
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         if (relative_length == 0)
             return src;
 
@@ -330,6 +335,7 @@ resource_address_relative(const struct resource_address *base,
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         strref_set_c(&base_uri, base->u.cgi.path_info != NULL
                      ? base->u.cgi.path_info : "");
         strref_set_c(buffer, address->u.cgi.path_info != NULL
@@ -368,6 +374,7 @@ resource_address_id(const struct resource_address *address, pool_t pool)
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         return append_args(pool, address, p_strdup(pool, address->u.cgi.path));
     }
 

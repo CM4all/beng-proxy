@@ -25,6 +25,7 @@ void
 resource_get(struct http_cache *cache,
              struct hstock *tcp_stock,
              struct hstock *fcgi_stock,
+             struct hstock *was_stock,
              struct hstock *delegate_stock,
              pool_t pool,
              http_method_t method,
@@ -46,7 +47,8 @@ resource_get(struct http_cache *cache,
                            handler, handler_ctx, async_ref);
     } else {
         struct resource_loader *rl =
-            resource_loader_new(pool, tcp_stock, fcgi_stock, delegate_stock);
+            resource_loader_new(pool, tcp_stock, fcgi_stock, was_stock,
+                                delegate_stock);
         resource_loader_request(rl, pool,
                                 method, address, status, headers, body,
                                 handler, handler_ctx, async_ref);

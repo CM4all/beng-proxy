@@ -76,7 +76,8 @@ errdoc_translate_callback(const struct translate_response *response, void *ctx)
         struct instance *instance = request2->connection->instance;
 
         resource_get(instance->http_cache, instance->tcp_stock,
-                     instance->fcgi_stock, instance->delegate_stock,
+                     instance->fcgi_stock, instance->was_stock,
+                     instance->delegate_stock,
                      pool, HTTP_METHOD_GET,
                      &response->address, HTTP_STATUS_OK, NULL, NULL,
                      &errdoc_response_handler, er,

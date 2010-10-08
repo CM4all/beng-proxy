@@ -38,6 +38,10 @@ print_resource_address(const struct resource_address *address)
         printf("fastcgi=%s\n", address->u.cgi.path);
         break;
 
+    case RESOURCE_ADDRESS_WAS:
+        printf("was=%s\n", address->u.cgi.path);
+        break;
+
     case RESOURCE_ADDRESS_AJP:
         printf("ajp=%s\n", address->u.http->uri);
         break;

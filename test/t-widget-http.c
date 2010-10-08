@@ -36,6 +36,7 @@ struct request {
 int global_filter_cache;
 int global_delegate_stock;
 int global_fcgi_stock;
+int global_was_stock;
 int global_http_cache;
 int global_tcp_stock;
 const struct widget_class root_widget_class;
@@ -92,6 +93,7 @@ void
 resource_get(__attr_unused struct http_cache *cache,
              __attr_unused struct hstock *tcp_stock,
              __attr_unused struct hstock *fcgi_stock,
+             __attr_unused struct hstock *was_stock,
              __attr_unused struct hstock *delegate_stock,
              pool_t pool,
              http_method_t method,

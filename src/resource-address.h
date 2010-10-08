@@ -22,6 +22,7 @@ enum resource_address_type {
     RESOURCE_ADDRESS_PIPE,
     RESOURCE_ADDRESS_CGI,
     RESOURCE_ADDRESS_FASTCGI,
+    RESOURCE_ADDRESS_WAS,
     RESOURCE_ADDRESS_AJP
 };
 
@@ -67,6 +68,7 @@ resource_address_cgi_uri(pool_t pool, const struct resource_address *address)
     const char *p;
 
     assert(address->type == RESOURCE_ADDRESS_CGI ||
+           address->type == RESOURCE_ADDRESS_WAS ||
            address->type == RESOURCE_ADDRESS_FASTCGI);
 
     p = address->u.cgi.script_name;

@@ -309,6 +309,7 @@ int main(int argc, char **argv)
     instance.resource_loader = resource_loader_new(instance.pool,
                                                    instance.tcp_stock,
                                                    instance.fcgi_stock,
+                                                   instance.was_stock,
                                                    instance.delegate_stock);
 
     instance.http_cache = http_cache_new(instance.pool,

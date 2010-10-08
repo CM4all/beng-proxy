@@ -118,6 +118,7 @@ http_cache_cgi_key(pool_t pool, const struct resource_address *address)
 {
     assert(address != NULL);
     assert(address->type == RESOURCE_ADDRESS_CGI ||
+           address->type == RESOURCE_ADDRESS_WAS ||
            address->type == RESOURCE_ADDRESS_FASTCGI);
 
     GString *buffer = g_string_sized_new(2048);
@@ -186,6 +187,7 @@ http_cache_key(pool_t pool, const struct resource_address *address)
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         return http_cache_cgi_key(pool, address);
 
     case RESOURCE_ADDRESS_AJP:

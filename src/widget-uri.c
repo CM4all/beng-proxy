@@ -98,6 +98,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         if ((!stateful ||
              strref_is_empty(&widget->from_request.query_string)) &&
             *path_info == 0 &&

@@ -19,7 +19,8 @@ struct async_operation_ref;
 
 struct resource_loader *
 resource_loader_new(pool_t pool, struct hstock *tcp_stock,
-                    struct hstock *fcgi_stock, struct hstock *delegate_stock);
+                    struct hstock *fcgi_stock, struct hstock *was_stock,
+                    struct hstock *delegate_stock);
 
 /**
  * Requests a resource.  This is a glue function which integrates all

@@ -13,6 +13,7 @@
 #include "static-file.h"
 #include "cgi.h"
 #include "fcgi-request.h"
+#include "was-glue.h"
 #include "ajp-request.h"
 #include "header-writer.h"
 #include "pipe.h"
@@ -23,12 +24,14 @@
 struct resource_loader {
     struct hstock *tcp_stock;
     struct hstock *fcgi_stock;
+    struct hstock *was_stock;
     struct hstock *delegate_stock;
 };
 
 struct resource_loader *
 resource_loader_new(pool_t pool, struct hstock *tcp_stock,
-                    struct hstock *fcgi_stock, struct hstock *delegate_stock)
+                    struct hstock *fcgi_stock, struct hstock *was_stock,
+                    struct hstock *delegate_stock)
 {
     assert(tcp_stock != NULL);
     assert(fcgi_stock != NULL);
@@ -37,6 +40,7 @@ resource_loader_new(pool_t pool, struct hstock *tcp_stock,
 
     rl->tcp_stock = tcp_stock;
     rl->fcgi_stock = fcgi_stock;
+    rl->was_stock = was_stock;
     rl->delegate_stock = delegate_stock;
 
     return rl;
@@ -148,6 +152,20 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
                      headers, body,
                      address->u.cgi.args, address->u.cgi.num_args,
                      handler, handler_ctx, async_ref);
+        return;
+
+    case RESOURCE_ADDRESS_WAS:
+        was_request(pool, rl->was_stock, address->u.cgi.jail,
+                    address->u.cgi.action,
+                    address->u.cgi.path,
+                    method, resource_address_cgi_uri(pool, address),
+                    address->u.cgi.script_name,
+                    address->u.cgi.path_info,
+                    address->u.cgi.query_string,
+                    address->u.cgi.document_root,
+                    headers, body,
+                    address->u.cgi.args, address->u.cgi.num_args,
+                    handler, handler_ctx, async_ref);
         return;
 
     case RESOURCE_ADDRESS_HTTP:
