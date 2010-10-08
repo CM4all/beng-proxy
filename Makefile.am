@@ -361,6 +361,7 @@ SRC = src/main.c \
 	src/was-client.c \
 	src/was-launch.c \
 	src/was-stock.c \
+	src/was-glue.c \
 	src/growing-buffer.c \
 	src/expansible-buffer.c \
 	src/gb-io.c \
