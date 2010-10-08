@@ -127,6 +127,11 @@ enum beng_translation_command {
      * translation response.
      */
     TRANSLATE_PREVIOUS = 65,
+
+    /**
+     * Launch a WAS application to handle the request.
+     */
+    TRANSLATE_WAS = 66,
 };
 
 struct beng_translation_header {

@@ -1122,6 +1122,9 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_PREVIOUS:
         client->response.previous = true;
         break;
+
+    case TRANSLATE_WAS:
+        break;
     }
 
     return true;
