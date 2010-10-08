@@ -192,6 +192,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         struct strmap *headers;
         const uint64_t *length_p;
         const char *p;
+        http_method_t method;
 
     case WAS_COMMAND_NOP:
         break;
@@ -209,6 +210,26 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         server->request.headers = strmap_new(server->request.pool, 41);
         server->request.body = NULL;
         server->response.body = NULL;
+        break;
+
+    case WAS_COMMAND_METHOD:
+        if (payload_length != sizeof(method))
+            return false;
+
+        method = *(const http_method_t *)payload;
+        if (server->request.method != HTTP_METHOD_GET &&
+            method != server->request.method) {
+            /* sending that packet twice is illegal */
+            was_server_abort(server);
+            return false;
+        }
+
+        if (!http_method_is_valid(method)) {
+            was_server_abort(server);
+            return false;
+        }
+
+        server->request.method = method;
         break;
 
     case WAS_COMMAND_URI:
