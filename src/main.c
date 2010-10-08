@@ -17,6 +17,7 @@
 #include "tcache.h"
 #include "http-cache.h"
 #include "fcgi-stock.h"
+#include "was-stock.h"
 #include "delegate-stock.h"
 #include "fcache.h"
 #include "child.h"
@@ -300,6 +301,10 @@ int main(int argc, char **argv)
     }
     instance.fcgi_stock = fcgi_stock_new(instance.pool,
                                          instance.config.fcgi_stock_limit);
+
+    instance.was_stock = was_stock_new(instance.pool,
+                                       instance.config.was_stock_limit);
+
     instance.delegate_stock = delegate_stock_new(instance.pool);
     instance.resource_loader = resource_loader_new(instance.pool,
                                                    instance.tcp_stock,
@@ -324,6 +329,7 @@ int main(int argc, char **argv)
     global_memcached_stock = instance.memcached_stock;
     global_http_cache = instance.http_cache;
     global_fcgi_stock = instance.fcgi_stock;
+    global_was_stock = instance.was_stock;
     global_delegate_stock = instance.delegate_stock;
     global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;

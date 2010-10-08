@@ -16,6 +16,8 @@ struct http_cache *global_http_cache;
 
 struct hstock *global_fcgi_stock;
 
+struct hstock *global_was_stock;
+
 struct filter_cache *global_filter_cache;
 
 struct hstock *global_delegate_stock;

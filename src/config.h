@@ -58,6 +58,8 @@ struct config {
 
     unsigned fcgi_stock_limit;
 
+    unsigned was_stock_limit;
+
     /**
      * Use the splice() system call?
      */

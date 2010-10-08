@@ -52,6 +52,8 @@ struct instance {
 
     struct hstock *fcgi_stock;
 
+    struct hstock *was_stock;
+
     struct hstock *delegate_stock;
 
     struct stock *pipe_stock;

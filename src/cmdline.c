@@ -129,6 +129,7 @@ handle_set2(struct config *config, const char *argv0,
     static const char max_connections[] = "max_connections";
     static const char tcp_stock_limit[] = "tcp_stock_limit";
     static const char fcgi_stock_limit[] = "fastcgi_stock_limit";
+    static const char was_stock_limit[] = "was_stock_limit";
     static const char http_cache_size[] = "http_cache_size";
     static const char filter_cache_size[] = "filter_cache_size";
     static const char translate_cache_size[] = "translate_cache_size";
@@ -160,6 +161,14 @@ handle_set2(struct config *config, const char *argv0,
             arg_error(argv0, "Invalid value for fastcgi_stock_limit");
 
         config->fcgi_stock_limit = l;
+    } else if (name_length == sizeof(was_stock_limit) - 1 &&
+               memcmp(name, was_stock_limit,
+                      sizeof(was_stock_limit) - 1) == 0) {
+        l = strtol(value, &endptr, 10);
+        if (*endptr != 0 || l < 0)
+            arg_error(argv0, "Invalid value for was_stock_limit");
+
+        config->was_stock_limit = l;
     } else if (name_length == sizeof(http_cache_size) - 1 &&
                memcmp(name, http_cache_size,
                       sizeof(http_cache_size) - 1) == 0) {
