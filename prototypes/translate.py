@@ -18,6 +18,7 @@ cgi_path = '/usr/lib/cgi-bin'
 demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
+coma_was = '/usr/lib/cm4all/was/bin/coma-was'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
 xslt_fastcgi = '/usr/lib/cm4all/filters/cgi-bin/xslt'
@@ -89,15 +90,19 @@ class Translation(Protocol):
                 response.gzipped(path + '.gz')
 
     def _handle_coma(self, response, base_uri, relative_uri, base_path,
-                     config_file=None):
+                     config_file=None, was=False):
         i = relative_uri.find('/')
         if i < 0: i = len(relative_uri)
         relative_path, path_info = relative_uri[:i], relative_uri[i:]
 
         path = os.path.join(base_path, relative_path)
         response.packet(TRANSLATE_DOCUMENT_ROOT, base_path)
-        response.packet(TRANSLATE_FASTCGI, path)
-        response.packet(TRANSLATE_ACTION, coma_fastcgi)
+        if was:
+            response.packet(TRANSLATE_WAS, coma_was)
+            response.pair('COMA_CLASS', path)
+        else:
+            response.packet(TRANSLATE_FASTCGI, path)
+            response.packet(TRANSLATE_ACTION, coma_fastcgi)
         response.packet(TRANSLATE_PATH_INFO, path_info)
         if config_file is not None:
             response.pair('COMA_CONFIG_FILE', config_file)
@@ -164,6 +169,8 @@ class Translation(Protocol):
             self._handle_local_file('/var/www' + uri[5:], response)
         elif uri[:6] == '/coma/':
             self._handle_coma(response, uri[:6], uri[6:], '/home/max/svn/mod_coma/t/src')
+        elif uri[:10] == '/coma-was/':
+            self._handle_coma(response, uri[:10], uri[10:], '/home/max/svn/mod_coma/t/src', was=True)
         elif uri[:11] == '/coma-apps/':
             m = coma_apps_re.match(uri)
             if m:
@@ -352,6 +359,7 @@ if __name__ == '__main__':
         cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
         demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')
         coma_fastcgi = os.path.join(os.getcwd(), '../../cgi-coma/src/cm4all-coma-fastcgi')
+        coma_was = os.path.join(os.getcwd(), '../cgi-coma/src/coma-was')
         ticket_fastcgi_dir = os.path.join(os.getcwd(), '../mod_ticket/src')
         xslt_fastcgi = os.path.join(os.getcwd(), '../filters/src/xslt')
 
