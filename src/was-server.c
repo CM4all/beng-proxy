@@ -5,7 +5,6 @@
  */
 
 #include "was-server.h"
-#include "was-protocol.h"
 #include "was-control.h"
 #include "was-output.h"
 #include "was-input.h"
@@ -18,6 +17,7 @@
 #include "buffered-io.h"
 #include "fd-util.h"
 
+#include <was/protocol.h>
 #include <daemon/log.h>
 
 #include <errno.h>
