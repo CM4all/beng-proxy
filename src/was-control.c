@@ -358,6 +358,24 @@ was_control_send_string(struct was_control *control, enum was_command cmd,
 }
 
 bool
+was_control_send_array(struct was_control *control, enum was_command cmd,
+                       const char *const values[], unsigned num_values)
+{
+    assert(control != NULL);
+    assert(values != NULL || num_values == 0);
+
+    for (unsigned i = 0; i < num_values; ++i) {
+        const char *value = values[i];
+        assert(value != NULL);
+
+        if (!was_control_send_string(control, cmd, value))
+            return false;
+    }
+
+    return true;
+}
+
+bool
 was_control_send_strmap(struct was_control *control, enum was_command cmd,
                         struct strmap *map)
 {

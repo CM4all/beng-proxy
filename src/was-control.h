@@ -59,6 +59,10 @@ was_control_send_uint64(struct was_control *control, enum was_command cmd,
 }
 
 bool
+was_control_send_array(struct was_control *control, enum was_command cmd,
+                       const char *const values[], unsigned num_values);
+
+bool
 was_control_send_strmap(struct was_control *control, enum was_command cmd,
                         struct strmap *map);
 
