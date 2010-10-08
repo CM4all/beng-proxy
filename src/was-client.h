@@ -45,7 +45,7 @@ was_client_request(pool_t pool, int control_fd, int input_fd, int output_fd,
                    const char *script_name, const char *path_info,
                    const char *query_string,
                    struct strmap *headers, istream_t body,
-                   struct strmap *params,
+                   const char *const params[], unsigned num_params,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref);

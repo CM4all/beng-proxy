@@ -422,7 +422,7 @@ was_client_request(pool_t caller_pool, int control_fd,
                    const char *script_name, const char *path_info,
                    const char *query_string,
                    struct strmap *headers, istream_t body,
-                   struct strmap *params,
+                   const char *const params[], unsigned num_params,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
@@ -477,9 +477,8 @@ was_client_request(pool_t caller_pool, int control_fd,
         (headers != NULL &&
          !was_control_send_strmap(client->control, WAS_COMMAND_HEADER,
                                   headers)) ||
-        (params != NULL &&
-         !was_control_send_strmap(client->control, WAS_COMMAND_PARAMETER,
-                                  params)) ||
+        !was_control_send_array(client->control, WAS_COMMAND_PARAMETER,
+                                params, num_params) ||
         !was_control_send_empty(client->control, client->request.body != NULL
                                 ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA)) {
         was_client_abort_response_headers(client);

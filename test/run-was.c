@@ -137,11 +137,11 @@ request_body(pool_t pool)
 int main(int argc, char **argv) {
     daemon_log_config.verbose = 5;
 
-    gchar **parameter_array = NULL;
+    gchar **parameters = NULL;
     const GOptionEntry option_entries[] = {
         { .long_name = "parameter", .short_name = 'p',
           .arg = G_OPTION_ARG_STRING_ARRAY,
-          .arg_data = &parameter_array,
+          .arg_data = &parameters,
           .description = "Pass a parameter to the application",
         },
         { .long_name = NULL }
@@ -169,23 +169,10 @@ int main(int argc, char **argv) {
 
     pool_t pool = pool_new_libc(NULL, "root");
 
-    struct strmap *parameters = NULL;
-    if (parameter_array != NULL) {
-        parameters = strmap_new(pool, 61);
-        for (char **pp = parameter_array; *pp != NULL; ++pp) {
-            char *p = *parameter_array, *q = strchr(p, '=');
-            if (q == NULL || q == p) {
-                g_printerr("Cannot parse parameter: %s\n", p);
-                return EXIT_FAILURE;
-            }
-
-            *q++ = 0;
-            strmap_add(parameters, p_strdup(pool, p), p_strdup(pool, q));
-            g_free(p);
-        }
-
-        g_free(parameter_array);
-    }
+    unsigned num_parameters = 0;
+    if (parameters != NULL)
+        while (parameters[num_parameters] != NULL)
+            ++num_parameters;
 
     was_client_request(pool, context.process.control_fd,
                        context.process.input_fd, context.process.output_fd,
@@ -193,7 +180,7 @@ int main(int argc, char **argv) {
                        HTTP_METHOD_GET, "/",
                        NULL, NULL, NULL,
                        NULL, request_body(pool),
-                       parameters,
+                       (const char *const*)parameters, num_parameters,
                        &my_response_handler, &context,
                        &context.async_ref);
     pool_unref(pool);
