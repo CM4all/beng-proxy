@@ -103,6 +103,7 @@ class Translation(Protocol):
         else:
             response.packet(TRANSLATE_FASTCGI, path)
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
+        response.packet(TRANSLATE_SCRIPT_NAME, base_uri + relative_path)
         response.packet(TRANSLATE_PATH_INFO, path_info)
         if config_file is not None:
             response.pair('COMA_CONFIG_FILE', config_file)
