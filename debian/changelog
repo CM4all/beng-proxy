@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.7.52) unstable; urgency=low
   * fcgi-client: fix send timeout handler
   * fork: finish the buffer after pipe was drained
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 13 Oct 2010 16:39:26 +0200
 
 cm4all-beng-proxy (0.7.51) unstable; urgency=low
 
