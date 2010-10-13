@@ -1,8 +1,9 @@
 cm4all-beng-proxy (0.8.16) unstable; urgency=low
 
   * merged release 0.7.52
+  * was-client: support for the WAS protocol
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 13 Oct 2010 16:45:18 +0200
 
 cm4all-beng-proxy (0.8.15) unstable; urgency=low
 
