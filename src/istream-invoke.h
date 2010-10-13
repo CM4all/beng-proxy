@@ -125,6 +125,7 @@ istream_invoke_eof(struct istream *istream)
 {
     assert(istream != NULL);
     assert(!istream->eof);
+    assert(istream->data_available == 0);
     assert(istream->available_partial == 0);
     assert(!istream->available_full_set || istream->available_full == 0);
 

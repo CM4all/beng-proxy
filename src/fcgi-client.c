@@ -491,9 +491,7 @@ fcgi_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "fcgi_client: send timeout\n");
-        async_operation_finished(&client->async);
-        http_response_handler_invoke_abort(&client->handler);
-        fcgi_client_release(client, false);
+        fcgi_client_abort_response(client);
         return;
     }
 
