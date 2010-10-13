@@ -188,13 +188,11 @@ fork_check_direct(const struct fork *f)
 static void
 fork_read_from_output(struct fork *f)
 {
-    ssize_t nbytes;
-
     if (!fork_check_direct(f)) {
         if (f->buffer == NULL)
             f->buffer = fifo_buffer_new(f->output.pool, 1024);
 
-        nbytes = read_to_buffer(f->output_fd, f->buffer, INT_MAX);
+        ssize_t nbytes = read_to_buffer(f->output_fd, f->buffer, INT_MAX);
         if (nbytes == -2) {
             /* XXX should not happen */
         } else if (nbytes > 0) {
@@ -233,8 +231,8 @@ fork_read_from_output(struct fork *f)
             return;
         }
 
-        nbytes = istream_invoke_direct(&f->output, ISTREAM_PIPE,
-                                       f->output_fd, INT_MAX);
+        ssize_t nbytes = istream_invoke_direct(&f->output, ISTREAM_PIPE,
+                                               f->output_fd, INT_MAX);
         if (nbytes == -2 || nbytes == -3) {
             /* -2 means the callback wasn't able to consume any data right
                now */
