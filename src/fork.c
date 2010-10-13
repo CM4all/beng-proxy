@@ -59,13 +59,35 @@ fork_close(struct fork *f)
 
     close(f->output_fd);
     f->output_fd = -1;
-    f->buffer = NULL;
 
     if (f->pid >= 0) {
         kill(f->pid, SIGTERM);
         child_clear(f->pid);
         /* XXX SIGKILL? */
     }
+}
+
+/**
+ * Send data from the buffer.  Invokes the "eof" callback when the
+ * buffer becomes empty and the pipe has been closed already.
+ *
+ * @return true if the caller shall read more data from the pipe
+ */
+static bool
+fork_buffer_send(struct fork *f)
+{
+    assert(f->buffer != NULL);
+
+    if (istream_buffer_send(&f->output, f->buffer) == 0)
+        return false;
+
+    if (f->output_fd < 0) {
+        if (fifo_buffer_empty(f->buffer))
+            istream_deinit_eof(&f->output);
+        return false;
+    }
+
+    return true;
 }
 
 /*
@@ -188,6 +210,8 @@ fork_check_direct(const struct fork *f)
 static void
 fork_read_from_output(struct fork *f)
 {
+    assert(f->output_fd >= 0);
+
     if (!fork_check_direct(f)) {
         if (f->buffer == NULL)
             f->buffer = fifo_buffer_new(f->output.pool, 1024);
@@ -201,7 +225,9 @@ fork_read_from_output(struct fork *f)
                             f->output.pool, "fork_output_event");
         } else if (nbytes == 0) {
             fork_close(f);
-            istream_deinit_eof(&f->output);
+
+            if (fifo_buffer_empty(f->buffer))
+                istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
             p_event_add(&f->output_event, NULL,
                         f->output.pool, "fork_output_event");
@@ -303,7 +329,7 @@ istream_fork_read(istream_t istream)
     struct fork *f = istream_to_fork(istream);
 
     if (f->buffer == NULL || fifo_buffer_empty(f->buffer) ||
-        istream_buffer_send(&f->output, f->buffer) > 0)
+        fork_buffer_send(f))
         fork_read_from_output(f);
 }
 
@@ -312,7 +338,9 @@ istream_fork_close(istream_t istream)
 {
     struct fork *f = istream_to_fork(istream);
 
-    fork_close(f);
+    if (f->output_fd >= 0)
+        fork_close(f);
+
     istream_deinit_abort(&f->output);
 }
 
