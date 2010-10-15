@@ -25,7 +25,7 @@ widget_set_id(struct widget *widget, pool_t pool, const struct strref *id)
     if (p != NULL)
         widget->lazy.path = *p == 0
             ? widget->id
-            : p_strcat(pool, p, "/", widget->id, NULL);
+            : p_strcat(pool, p, WIDGET_REF_SEPARATOR_S, widget->id, NULL);
 
     p = widget_prefix(widget->parent);
     if (p != NULL)

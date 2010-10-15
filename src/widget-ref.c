@@ -20,7 +20,7 @@ widget_ref_parse(pool_t pool, const char *_p)
 
     p = p_strdup(pool, _p);
 
-    while ((slash = strchr(p, '/')) != NULL) {
+    while ((slash = strchr(p, WIDGET_REF_SEPARATOR)) != NULL) {
         if (slash == p) {
             ++p;
             continue;

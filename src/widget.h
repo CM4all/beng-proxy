@@ -168,6 +168,9 @@ struct widget_ref {
     const char *id;
 };
 
+#define WIDGET_REF_SEPARATOR '/'
+#define WIDGET_REF_SEPARATOR_S "/"
+
 
 extern const struct widget_class root_widget_class;
 
