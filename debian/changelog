@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.17) unstable; urgency=low
 
-  * 
+  * widget: use colon as widget path separator
 
  --
 
