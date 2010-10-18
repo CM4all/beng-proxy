@@ -74,6 +74,7 @@ was_client_abort_response_headers(struct was_client *client)
 
     p_lease_release(&client->lease_ref, false, client->pool);
 
+    async_operation_finished(&client->async);
     http_response_handler_invoke_abort(&client->handler);
 }
 
@@ -194,6 +195,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         if (client->response.body != NULL)
             was_input_free_p(&client->response.body);
 
+        async_operation_finished(&client->async);
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               headers, NULL);
@@ -219,6 +221,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
         istream_t body = was_input_enable(client->response.body);
 
+        async_operation_finished(&client->async);
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               headers, body);
