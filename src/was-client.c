@@ -192,14 +192,24 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         headers = client->response.headers;
         client->response.headers = NULL;
 
-        if (client->response.body != NULL)
+        if (client->response.body != NULL) {
+            pool_ref(client->pool);
             was_input_free_p(&client->response.body);
 
+            if (client->control == NULL) {
+                /* aborted; don't invoke response handler */
+                pool_unref(client->pool);
+                return false;
+            }
+
+            pool_unref(client->pool);
+        }
+
         async_operation_finished(&client->async);
+
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               headers, NULL);
-        /* XXX check if client has been closed */
         was_client_abort_response_body(client);
         return false;
 
@@ -222,10 +232,18 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         istream_t body = was_input_enable(client->response.body);
 
         async_operation_finished(&client->async);
+
+        pool_ref(client->pool);
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               headers, body);
-        /* XXX check if client has been closed */
+        if (client->control == NULL) {
+            /* closed, must return false */
+            pool_unref(client->pool);
+            return false;
+        }
+
+        pool_unref(client->pool);
         break;
 
     case WAS_COMMAND_LENGTH:
