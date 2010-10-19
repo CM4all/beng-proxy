@@ -271,6 +271,20 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_STOP:
+        if (client->response.headers != NULL) {
+            daemon_log(2, "was-client: STOP before DATA\n");
+            was_client_abort_response_headers(client);
+            return false;
+        }
+
+        if (client->request.body != NULL) {
+            uint64_t sent = was_output_free_p(&client->request.body);
+            return was_control_send_uint64(client->control,
+                                           WAS_COMMAND_PREMATURE, sent);
+        }
+
+        break;
+
     case WAS_COMMAND_PREMATURE:
         // XXX
         was_client_abort(client);
