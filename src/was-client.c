@@ -342,10 +342,6 @@ was_client_output_abort(uint64_t length, void *ctx)
 
     client->request.body = NULL;
 
-    /* XXX
-    if (client->control != NULL)
-        was_control_send_uint64(client->control, WAS_COMMAND_ABORT, length);
-    */
     (void)length;
 
     was_client_abort(client);
@@ -505,8 +501,4 @@ was_client_request(pool_t caller_pool, int control_fd,
         was_client_abort_response_headers(client);
         return;
     }
-
-    // XXX headers, params etc.
-    (void)headers;
-    (void)params;
 }

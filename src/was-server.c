@@ -126,10 +126,6 @@ was_server_output_abort(uint64_t length, void *ctx)
 
     server->response.body = NULL;
 
-    /* XXX
-    if (server->control != NULL)
-        was_control_send_uint64(server->control, WAS_COMMAND_ABORT, length);
-    */
     (void)length;
 
     was_server_abort(server);
