@@ -21,22 +21,22 @@ struct was_output_handler {
     bool (*length)(uint64_t length, void *ctx);
 
     void (*eof)(void *ctx);
-    void (*abort)(uint64_t length, void *ctx);
+    void (*abort)(void *ctx);
 };
 
 struct was_output *
 was_output_new(pool_t pool, int fd, istream_t input,
                const struct was_output_handler *handler, void *handler_ctx);
 
-void
+uint64_t
 was_output_free(struct was_output *data);
 
-static inline void
+static inline uint64_t
 was_output_free_p(struct was_output **output_p)
 {
     struct was_output *output = *output_p;
     *output_p = NULL;
-    was_output_free(output);
+    return was_output_free(output);
 }
 
 #endif

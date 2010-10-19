@@ -52,7 +52,7 @@ was_output_abort(struct was_output *output)
     if (output->input != NULL)
         istream_free_handler(&output->input);
 
-    output->handler->abort(output->sent, output->handler_ctx);
+    output->handler->abort(output->handler_ctx);
 }
 
 
@@ -225,7 +225,7 @@ was_output_new(pool_t pool, int fd, istream_t input,
     return output;
 }
 
-void
+uint64_t
 was_output_free(struct was_output *output)
 {
     assert(output != NULL);
@@ -234,4 +234,6 @@ was_output_free(struct was_output *output)
         istream_free_handler(&output->input);
 
     p_event_del(&output->event, output->pool);
+
+    return output->sent;
 }

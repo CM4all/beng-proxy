@@ -118,16 +118,13 @@ was_server_output_eof(void *ctx)
 }
 
 static void
-was_server_output_abort(uint64_t length, void *ctx)
+was_server_output_abort(void *ctx)
 {
     struct was_server *server = ctx;
 
     assert(server->response.body != NULL);
 
     server->response.body = NULL;
-
-    (void)length;
-
     was_server_abort(server);
 }
 

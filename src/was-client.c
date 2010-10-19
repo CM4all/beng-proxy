@@ -334,16 +334,13 @@ was_client_output_eof(void *ctx)
 }
 
 static void
-was_client_output_abort(uint64_t length, void *ctx)
+was_client_output_abort(void *ctx)
 {
     struct was_client *client = ctx;
 
     assert(client->request.body != NULL);
 
     client->request.body = NULL;
-
-    (void)length;
-
     was_client_abort(client);
 }
 
