@@ -6,6 +6,7 @@
 
 #include "was-launch.h"
 #include "fd_util.h"
+#include "socket-util.h"
 
 #include <daemon/log.h>
 #include <inline/compiler.h>
@@ -86,6 +87,9 @@ was_launch(struct was_process *process,
     close(control_fds[1]);
     close(input_fds[1]);
     close(output_fds[0]);
+
+    socket_set_nonblock(input_fds[0], true);
+    socket_set_nonblock(output_fds[1], true);
 
     process->pid = pid;
     process->control_fd = control_fds[0];

@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.8.17) unstable; urgency=low
 
   * widget: use colon as widget path separator
   * was-client: check for abort during response handler
+  * was-launch: enable non-blocking mode on input and output
 
  --
 

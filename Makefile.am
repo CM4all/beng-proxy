@@ -551,7 +551,7 @@ test_run_was_SOURCES = test/run-was.c \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/buffered-io.c \
 	src/direct.c \
-	src/fd_util.c src/fd-util.c \
+	src/fd_util.c src/fd-util.c src/socket-util.c \
 	src/istream-file.c \
 	$(POOL_SRC)
 test_run_was_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
