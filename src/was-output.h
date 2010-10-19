@@ -20,6 +20,16 @@ struct was_output_handler {
      */
     bool (*length)(uint64_t length, void *ctx);
 
+    /**
+     * The stream ended prematurely, but the was_output object is
+     * still ok.
+     *
+     * @param the number of bytes aready sent
+     * @param true on success, false if the was_output object has been
+     * deleted
+     */
+    bool (*premature)(uint64_t length, void *ctx);
+
     void (*eof)(void *ctx);
     void (*abort)(void *ctx);
 };

@@ -178,7 +178,7 @@ was_output_stream_abort(void *ctx)
 
     output->input = NULL;
 
-    was_output_abort(output);
+    output->handler->premature(output->sent, output->handler_ctx);
 }
 
 static const struct istream_handler was_output_stream_handler = {
@@ -201,6 +201,8 @@ was_output_new(pool_t pool, int fd, istream_t input,
     assert(fd >= 0);
     assert(input != NULL);
     assert(handler != NULL);
+    assert(handler->length != NULL);
+    assert(handler->premature != NULL);
     assert(handler->eof != NULL);
     assert(handler->abort != NULL);
 

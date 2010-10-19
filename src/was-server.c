@@ -107,6 +107,22 @@ was_server_output_length(uint64_t length, void *ctx)
                                    WAS_COMMAND_LENGTH, length);
 }
 
+static bool
+was_server_output_premature(uint64_t length, void *ctx)
+{
+    struct was_server *server = ctx;
+
+    assert(server->control != NULL);
+    assert(server->response.body != NULL);
+
+    server->response.body = NULL;
+
+    /* XXX send PREMATURE, recover */
+    (void)length;
+    was_server_abort(server);
+    return false;
+}
+
 static void
 was_server_output_eof(void *ctx)
 {
@@ -130,6 +146,7 @@ was_server_output_abort(void *ctx)
 
 static const struct was_output_handler was_server_output_handler = {
     .length = was_server_output_length,
+    .premature = was_server_output_premature,
     .eof = was_server_output_eof,
     .abort = was_server_output_abort,
 };

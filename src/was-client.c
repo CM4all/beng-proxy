@@ -337,6 +337,22 @@ was_client_output_length(uint64_t length, void *ctx)
                                    WAS_COMMAND_LENGTH, length);
 }
 
+static bool
+was_client_output_premature(uint64_t length, void *ctx)
+{
+    struct was_client *client = ctx;
+
+    assert(client->control != NULL);
+    assert(client->request.body != NULL);
+
+    client->request.body = NULL;
+
+    /* XXX send PREMATURE, recover */
+    (void)length;
+    was_client_abort(client);
+    return false;
+}
+
 static void
 was_client_output_eof(void *ctx)
 {
@@ -360,6 +376,7 @@ was_client_output_abort(void *ctx)
 
 static const struct was_output_handler was_client_output_handler = {
     .length = was_client_output_length,
+    .premature = was_client_output_premature,
     .eof = was_client_output_eof,
     .abort = was_client_output_abort,
 };
