@@ -188,6 +188,10 @@ class Translation(Protocol):
             self._handle_coma(response, uri[:16], uri[16:],
                               '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
                               '/etc/cm4all/coma/apps/imageprocessor/coma.config')
+        elif uri[:20] == '/imageprocessor-was/':
+            self._handle_coma(response, uri[:20], uri[20:],
+                              '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
+                              '/etc/cm4all/coma/apps/imageprocessor/coma.config', was=True)
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))
