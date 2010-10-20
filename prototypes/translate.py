@@ -185,7 +185,7 @@ class Translation(Protocol):
             else:
                 response.status(404)
         elif uri[:16] == '/imageprocessor/':
-            self._handle_coma(response, uri[16:],
+            self._handle_coma(response, uri[:16], uri[16:],
                               '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
                               '/etc/cm4all/coma/apps/imageprocessor/coma.config')
         elif uri[:15] == '/ticket/create/':
