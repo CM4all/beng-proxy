@@ -74,7 +74,6 @@ was_client_abort_response_headers(struct was_client *client)
 
     p_lease_release(&client->lease_ref, false, client->pool);
 
-    async_operation_finished(&client->async);
     http_response_handler_invoke_abort(&client->handler);
 }
 
