@@ -75,6 +75,8 @@ was_client_abort_response_headers(struct was_client *client)
     p_lease_release(&client->lease_ref, false, client->pool);
 
     http_response_handler_invoke_abort(&client->handler);
+    pool_unref(client->caller_pool);
+    pool_unref(client->pool);
 }
 
 /**
@@ -94,6 +96,8 @@ was_client_abort_response_body(struct was_client *client)
     was_control_free(client->control);
 
     p_lease_release(&client->lease_ref, false, client->pool);
+    pool_unref(client->caller_pool);
+    pool_unref(client->pool);
 }
 
 /**
@@ -437,6 +441,8 @@ was_client_request_abort(struct async_operation *ao)
        delivered to our callback */
     assert(client->response.headers != NULL);
 
+    pool_unref(client->caller_pool);
+
     if (client->request.body != NULL)
         was_output_free_p(&client->request.body);
 
@@ -446,6 +452,7 @@ was_client_request_abort(struct async_operation *ao)
     was_control_free(client->control);
 
     p_lease_release(&client->lease_ref, false, client->pool);
+    pool_unref(client->pool);
 }
 
 static const struct async_operation_class was_client_async_operation = {
