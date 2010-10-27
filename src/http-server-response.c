@@ -131,7 +131,11 @@ http_server_response_stream_eof(void *ctx)
         /* handle pipelined request (if any), or set up events for
            next request */
 
+        pool_ref(connection->pool); /* XXX remove this reference in the 0.8 branch */
+
         http_server_consume_input(connection);
+
+        pool_unref(connection->pool); /* XXX remove this reference in the 0.8 branch */
     } else {
         /* keepalive disabled and response is finished: we must close
            the connection */
