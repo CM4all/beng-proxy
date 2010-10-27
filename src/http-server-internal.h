@@ -119,7 +119,15 @@ http_server_consume_input(struct http_server_connection *connection);
 void
 http_server_try_read(struct http_server_connection *connection);
 
-void
+/**
+ * Send data from the input buffer to the request body istream
+ * handler.
+ *
+ * @return true if something has been consumed (might also return true
+ * when the input buffer is empty), false if nothing has been read or
+ * the connection has been closed (= do not continue)
+ */
+bool
 http_server_consume_body(struct http_server_connection *connection);
 
 extern const struct istream http_server_request_stream;

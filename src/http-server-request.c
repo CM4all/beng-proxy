@@ -9,7 +9,7 @@
 #include "http-server-internal.h"
 #include "istream-internal.h"
 
-void
+bool
 http_server_consume_body(struct http_server_connection *connection)
 {
     size_t nbytes;
@@ -19,21 +19,22 @@ http_server_consume_body(struct http_server_connection *connection)
 
     if (!istream_has_handler(http_body_istream(&connection->request.body_reader)))
         /* the handler is not yet connected */
-        return;
+        return false;
 
     nbytes = http_body_consume_body(&connection->request.body_reader, connection->input);
     if (nbytes == 0)
-        return;
+        return false;
 
     if (connection->request.read_state == READ_BODY &&
         http_body_eof(&connection->request.body_reader)) {
         connection->request.read_state = READ_END;
         istream_deinit_eof(&connection->request.body_reader.output);
         if (!http_server_connection_valid(connection))
-            return;
+            return false;
     }
 
     event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
+    return true;
 }
 
 static inline struct http_server_connection *
@@ -67,9 +68,8 @@ http_server_request_stream_read(istream_t istream)
 
     pool_ref(connection->pool);
 
-    http_server_consume_body(connection);
-
-    if (connection->request.read_state == READ_BODY)
+    if (http_server_consume_body(connection) &&
+        connection->request.read_state == READ_BODY)
         http_server_try_read(connection);
 
     pool_unref(connection->pool);

@@ -284,7 +284,8 @@ http_server_consume_input(struct http_server_connection *connection)
              connection->request.read_state == READ_END))
             http_server_submit_request(connection);
     } else if (connection->request.read_state == READ_BODY) {
-        http_server_consume_body(connection);
+        if (!http_server_consume_body(connection))
+            return;
     }
 
     if (http_server_connection_valid(connection) &&
