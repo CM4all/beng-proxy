@@ -25,6 +25,8 @@ http_server_consume_body(struct http_server_connection *connection)
     if (nbytes == 0)
         return false;
 
+    assert(!fifo_buffer_full(connection->input));
+
     if (connection->request.read_state == READ_BODY &&
         http_body_eof(&connection->request.body_reader)) {
         connection->request.read_state = READ_END;
@@ -33,7 +35,6 @@ http_server_consume_body(struct http_server_connection *connection)
             return false;
     }
 
-    event2_setbit(&connection->event, EV_READ, !fifo_buffer_full(connection->input));
     return true;
 }
 
