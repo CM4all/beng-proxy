@@ -107,7 +107,10 @@ http_server_request_new(struct http_server_connection *connection);
 void
 http_server_try_write(struct http_server_connection *connection);
 
-void
+/**
+ * @return false if the connection has been closed
+ */
+bool
 http_server_maybe_send_100_continue(struct http_server_connection *connection);
 
 void

@@ -13,14 +13,14 @@
 
 #include <string.h>
 
-void
+bool
 http_server_maybe_send_100_continue(struct http_server_connection *connection)
 {
     assert(connection->fd >= 0);
     assert(connection->request.read_state == READ_BODY);
 
     if (!connection->request.expect_100_continue)
-        return;
+        return true;
 
     assert(connection->response.istream == NULL);
 
@@ -34,7 +34,12 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
 
     connection->response.writing_100_continue = true;
 
+    pool_ref(connection->pool);
     http_server_try_write(connection);
+
+    bool ret = http_server_connection_valid(connection);
+    pool_unref(connection->pool);
+    return ret;
 }
 
 static size_t
@@ -81,14 +86,12 @@ http_server_response(const struct http_server_request *request,
         connection->score = HTTP_SERVER_ERROR;
     }
 
-    if (connection->request.read_state == READ_BODY) {
+    if (connection->request.read_state == READ_BODY &&
         /* if we didn't send "100 Continue" yet, we should do it now;
            we don't know if the request body will be used, but at
            least it hasn't been closed yet */
-        http_server_maybe_send_100_continue(connection);
-        if (!http_server_connection_valid(connection))
-            return;
-    }
+        !http_server_maybe_send_100_continue(connection))
+        return;
 
     connection->response.status = status;
     status_stream

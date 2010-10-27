@@ -300,11 +300,9 @@ http_server_try_read_buffered(struct http_server_connection *connection)
 {
     ssize_t nbytes;
 
-    if (connection->request.read_state == READ_BODY) {
-        http_server_maybe_send_100_continue(connection);
-        if (!http_server_connection_valid(connection))
-            return;
-    }
+    if (connection->request.read_state == READ_BODY &&
+        !http_server_maybe_send_100_continue(connection))
+        return;
 
     nbytes = recv_to_buffer(connection->fd, connection->input, INT_MAX);
 
@@ -339,8 +337,7 @@ http_server_try_request_direct(struct http_server_connection *connection)
     assert(connection->fd >= 0);
     assert(connection->request.read_state == READ_BODY);
 
-    http_server_maybe_send_100_continue(connection);
-    if (!http_server_connection_valid(connection))
+    if (!http_server_maybe_send_100_continue(connection))
         return;
 
     nbytes = http_body_try_direct(&connection->request.body_reader,
