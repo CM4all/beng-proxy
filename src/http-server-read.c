@@ -21,7 +21,10 @@
 #include <errno.h>
 #include <sys/socket.h>
 
-static void
+/**
+ * @return false if the connection has been closed
+ */
+static bool
 http_server_parse_request_line(struct http_server_connection *connection,
                                const char *line, size_t length)
 {
@@ -38,7 +41,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
 
     if (unlikely(length < 5)) {
         http_server_connection_close(connection);
-        return;
+        return false;
     }
 
     eol = line + length;
@@ -85,7 +88,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
         /* invalid request method */
 
         http_server_connection_close(connection);
-        return;
+        return false;
     }
 
     space = memchr(line, ' ', eol - line);
@@ -97,7 +100,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
 
         send(connection->fd, msg, sizeof(msg) - 1, MSG_DONTWAIT|MSG_NOSIGNAL);
         http_server_connection_close(connection);
-        return;
+        return false;
     }
 
     connection->request.request = http_server_request_new(connection);
@@ -110,9 +113,14 @@ http_server_parse_request_line(struct http_server_connection *connection,
     /* install the header timeout event when we start reading the
        headers */
     evtimer_add(&connection->timeout, &tv);
+
+    return true;
 }
 
-static void
+/**
+ * @return false if the connection has been closed
+ */
+static bool
 http_server_headers_finished(struct http_server_connection *connection)
 {
     struct http_server_request *request = connection->request.request;
@@ -147,7 +155,7 @@ http_server_headers_finished(struct http_server_connection *connection)
             request->body = NULL;
             connection->request.read_state = READ_END;
 
-            return;
+            return true;
         } else {
             char *endptr;
 
@@ -155,7 +163,7 @@ http_server_headers_finished(struct http_server_connection *connection)
             if (unlikely(*endptr != 0 || content_length < 0)) {
                 daemon_log(2, "invalid Content-Length header in HTTP request\n");
                 http_server_connection_close(connection);
-                return;
+                return false;
             }
 
             if (content_length == 0) {
@@ -164,7 +172,7 @@ http_server_headers_finished(struct http_server_connection *connection)
                 request->body = istream_null_new(request->pool);
                 connection->request.read_state = READ_END;
 
-                return;
+                return true;
             }
         }
 
@@ -187,9 +195,13 @@ http_server_headers_finished(struct http_server_connection *connection)
                                    content_length, chunked);
 
     connection->request.read_state = READ_BODY;
+    return true;
 }
 
-static void
+/**
+ * @return false if the connection has been closed
+ */
+static bool
 http_server_handle_line(struct http_server_connection *connection,
                         const char *line, size_t length)
 {
@@ -199,7 +211,7 @@ http_server_handle_line(struct http_server_connection *connection,
     if (unlikely(connection->request.read_state == READ_START)) {
         assert(connection->request.request == NULL);
 
-        http_server_parse_request_line(connection, line, length);
+        return http_server_parse_request_line(connection, line, length);
     } else if (likely(length > 0)) {
         assert(connection->request.read_state == READ_HEADERS);
         assert(connection->request.request != NULL);
@@ -207,14 +219,18 @@ http_server_handle_line(struct http_server_connection *connection,
         header_parse_line(connection->request.request->pool,
                           connection->request.request->headers,
                           line, length);
+        return true;
     } else {
         assert(connection->request.read_state == READ_HEADERS);
         assert(connection->request.request != NULL);
 
-        http_server_headers_finished(connection);
+        return http_server_headers_finished(connection);
     }
 }
 
+/**
+ * @return false if the connection has been closed
+ */
 static bool
 http_server_parse_headers(struct http_server_connection *connection)
 {
@@ -226,7 +242,7 @@ http_server_parse_headers(struct http_server_connection *connection)
 
     buffer = fifo_buffer_read(connection->input, &length);
     if (buffer == NULL)
-        return false;
+        return true;
 
     assert(length > 0);
     buffer_end = buffer + length;
@@ -238,7 +254,9 @@ http_server_parse_headers(struct http_server_connection *connection)
         while (end >= start && char_is_whitespace(*end))
             --end;
 
-        http_server_handle_line(connection, start, end - start + 1);
+        if (!http_server_handle_line(connection, start, end - start + 1))
+            return false;
+
         if (connection->request.read_state != READ_HEADERS)
             break;
 
@@ -250,50 +268,65 @@ http_server_parse_headers(struct http_server_connection *connection)
             /* the line is too large for our input buffer */
             daemon_log(2, "http_server: request header too long\n");
             http_server_connection_close(connection);
+            return false;
         }
 
-        return false;
+        return true;
     }
 
     fifo_buffer_consume(connection->input, next - buffer);
     return true;
 }
 
-static void
+/**
+ * @return false if the connection has been closed
+ */
+static bool
 http_server_submit_request(struct http_server_connection *connection)
 {
-    if (connection->request.expect_failed) {
+    pool_ref(connection->pool);
+
+    if (connection->request.expect_failed)
         http_server_send_message(connection->request.request,
                                  HTTP_STATUS_EXPECTATION_FAILED,
                                  "Unrecognized expectation");
-        return;
-    }
+    else
+        connection->handler->request(connection->request.request,
+                                     connection->handler_ctx,
+                                     &connection->request.async_ref);
 
-    connection->handler->request(connection->request.request,
-                                 connection->handler_ctx,
-                                 &connection->request.async_ref);
+    bool ret = http_server_connection_valid(connection);
+    pool_unref(connection->pool);
+
+    return ret;
 }
 
-void
+bool
 http_server_consume_input(struct http_server_connection *connection)
 {
     if (connection->request.read_state == READ_START ||
         connection->request.read_state == READ_HEADERS) {
-        if (http_server_parse_headers(connection) &&
-            (connection->request.read_state == READ_BODY ||
-             connection->request.read_state == READ_END))
-            http_server_submit_request(connection);
+        if (!http_server_parse_headers(connection))
+            return false;
+
+        if ((connection->request.read_state == READ_BODY ||
+             connection->request.read_state == READ_END) &&
+            !http_server_submit_request(connection))
+            return false;
     } else if (connection->request.read_state == READ_BODY) {
         if (!http_server_consume_body(connection))
-            return;
+            return false;
     }
 
-    if (http_server_connection_valid(connection) &&
-        (connection->request.read_state == READ_START ||
+    assert(http_server_connection_valid(connection));
+
+    if ((connection->request.read_state == READ_START ||
          connection->request.read_state == READ_HEADERS ||
          connection->request.read_state == READ_BODY) &&
         !fifo_buffer_full(connection->input))
         event2_or(&connection->event, EV_READ);
+
+    return true;
 }
 
 static void

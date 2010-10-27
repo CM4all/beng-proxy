@@ -113,7 +113,11 @@ http_server_try_write(struct http_server_connection *connection);
 bool
 http_server_maybe_send_100_continue(struct http_server_connection *connection);
 
-void
+/**
+ * @return true if something has been consumed; false if nothing has
+ * been read or the connection has been closed (= do not continue)
+ */
+bool
 http_server_consume_input(struct http_server_connection *connection);
 
 void
