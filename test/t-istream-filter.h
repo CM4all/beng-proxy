@@ -142,7 +142,7 @@ istream_read_event(istream_t istream)
     return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
 }
 
-static void
+static inline void
 istream_read_expect(struct ctx *ctx, istream_t istream)
 {
     int ret;
@@ -358,6 +358,8 @@ test_abort_with_handler(pool_t pool)
     assert(ctx.eof);
 }
 
+#ifndef NO_ABORT_ISTREAM
+
 /** abort in handler */
 static void
 test_abort_in_handler(pool_t pool)
@@ -421,6 +423,8 @@ test_abort_in_handler_half(pool_t pool)
     cleanup();
     pool_commit();
 }
+
+#endif
 
 /** abort after 1 byte of output */
 static void
@@ -504,9 +508,11 @@ int main(int argc, char **argv) {
     test_fail_1byte(root_pool);
     test_abort_without_handler(root_pool);
     test_abort_with_handler(root_pool);
+#ifndef NO_ABORT_ISTREAM
     test_abort_in_handler(root_pool);
     if (enable_blocking)
         test_abort_in_handler_half(root_pool);
+#endif
     test_abort_1byte(root_pool);
     test_later(root_pool);
 

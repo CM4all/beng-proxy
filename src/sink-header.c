@@ -181,7 +181,7 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
 
     assert(consumed > 0);
 
-    if (header->state == DATA) {
+    if (header->state == DATA && length > 0) {
         pool_ref(header->output.pool);
 
         nbytes = istream_invoke_data(&header->output, data, length);

@@ -1,5 +1,6 @@
 cm4all-beng-proxy (0.8.17) unstable; urgency=low
 
+  * merged release 0.7.53
   * widget: use colon as widget path separator
   * was-client: check for abort during response handler
   * was-client: implement STOP
@@ -151,6 +152,13 @@ cm4all-beng-proxy (0.8) unstable; urgency=low
   * rewrite-uri: escape the result with XML entities
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 13 May 2010 12:34:46 +0200
+
+cm4all-beng-proxy (0.7.53) unstable; urgency=low
+
+  * http-server: don't crash on malformed pipelined request
+  * sink-header: fix assertion failure on empty trailer
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 28 Oct 2010 18:39:01 +0200
 
 cm4all-beng-proxy (0.7.52) unstable; urgency=low
 
