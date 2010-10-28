@@ -88,6 +88,27 @@ http_server_try_write(struct http_server_connection *connection)
 }
 
 static void
+http_server_event_callback2(struct http_server_connection *connection,
+                            short event)
+{
+    if (unlikely(event & EV_TIMEOUT)) {
+        daemon_log(4, "timeout\n");
+        http_server_connection_close(connection);
+        return;
+    }
+
+    if ((event & EV_WRITE) != 0) {
+        http_server_try_write(connection);
+
+        if (!http_server_connection_valid(connection))
+            return;
+    }
+
+    if ((event & EV_READ) != 0)
+        http_server_try_read(connection);
+}
+
+static void
 http_server_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct http_server_connection *connection = ctx;
@@ -97,16 +118,7 @@ http_server_event_callback(int fd __attr_unused, short event, void *ctx)
     event2_lock(&connection->event);
     event2_occurred_persist(&connection->event, event);
 
-    if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "timeout\n");
-        http_server_connection_close(connection);
-    }
-
-    if (http_server_connection_valid(connection) && (event & EV_WRITE) != 0)
-        http_server_try_write(connection);
-
-    if (http_server_connection_valid(connection) && (event & EV_READ) != 0)
-        http_server_try_read(connection);
+    http_server_event_callback2(connection, event);
 
     event2_unlock(&connection->event);
 
