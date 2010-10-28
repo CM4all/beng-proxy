@@ -454,6 +454,7 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 	test/t-istream-iconv test/t-istream-replace test/t-istream-replace2 \
 	test/t-istream-html-escape test/t-istream-fcgi \
 	test/t-sink-header \
+	test/t-sink-header-empty \
 	test/t-istream-processor
 
 check_PROGRAMS = \
@@ -647,6 +648,10 @@ test_t_istream_processor_LDADD = $(AM_LDADD) \
 test_t_sink_header_SOURCES = test/t-sink-header.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_sink_header_LDADD = $(T_ISTREAM_FILTER_LIB)
+
+test_t_sink_header_empty_SOURCES = test/t-sink-header-empty.c \
+	$(T_ISTREAM_FILTER_SRC)
+test_t_sink_header_empty_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_tee_SOURCES = test/t-istream-tee.c \
 	src/sink-gstring.c \
