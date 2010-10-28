@@ -34,12 +34,7 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
 
     connection->response.writing_100_continue = true;
 
-    pool_ref(connection->pool);
-    http_server_try_write(connection);
-
-    bool ret = http_server_connection_valid(connection);
-    pool_unref(connection->pool);
-    return ret;
+    return http_server_try_write(connection);
 }
 
 static size_t
@@ -168,9 +163,7 @@ http_server_response(const struct http_server_request *request,
 
     connection->response.writing_100_continue = false;
 
-    pool_ref(connection->pool);
     http_server_try_write(connection);
-    pool_unref(connection->pool);
 }
 
 void

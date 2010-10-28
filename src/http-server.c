@@ -69,7 +69,7 @@ http_server_uncork(struct http_server_connection *connection)
 }
 
 
-void
+bool
 http_server_try_write(struct http_server_connection *connection)
 {
     assert(connection != NULL);
@@ -82,9 +82,20 @@ http_server_try_write(struct http_server_connection *connection)
     http_server_cork(connection);
     event2_lock(&connection->event);
     event2_nand(&connection->event, EV_WRITE);
+
+    pool_ref(connection->pool);
     istream_read(connection->response.istream);
+
+    if (!http_server_connection_valid(connection)) {
+        pool_unref(connection->pool);
+        return false;
+    }
+
+    pool_unref(connection->pool);
+
     event2_unlock(&connection->event);
     http_server_uncork(connection);
+    return true;
 }
 
 static void
@@ -97,12 +108,9 @@ http_server_event_callback2(struct http_server_connection *connection,
         return;
     }
 
-    if ((event & EV_WRITE) != 0) {
-        http_server_try_write(connection);
-
-        if (!http_server_connection_valid(connection))
-            return;
-    }
+    if ((event & EV_WRITE) != 0 &&
+        !http_server_try_write(connection))
+        return;
 
     if ((event & EV_READ) != 0)
         http_server_try_read(connection);
