@@ -98,22 +98,35 @@ http_server_try_write(struct http_server_connection *connection)
     return true;
 }
 
-static void
+/**
+ * @return false if the connection has been closed
+ */
+static bool
 http_server_event_callback2(struct http_server_connection *connection,
                             short event)
 {
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");
         http_server_connection_close(connection);
-        return;
+        return false;
     }
 
     if ((event & EV_WRITE) != 0 &&
         !http_server_try_write(connection))
-        return;
+        return false;
 
-    if ((event & EV_READ) != 0)
+    if ((event & EV_READ) != 0) {
+        pool_ref(connection->pool);
         http_server_try_read(connection);
+        if (!http_server_connection_valid(connection)) {
+            pool_unref(connection->pool);
+            return false;
+        }
+
+        pool_unref(connection->pool);
+    }
+
+    return true;
 }
 
 static void
@@ -121,16 +134,12 @@ http_server_event_callback(int fd __attr_unused, short event, void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
-    pool_ref(connection->pool);
-
     event2_lock(&connection->event);
     event2_occurred_persist(&connection->event, event);
 
-    http_server_event_callback2(connection, event);
+    if (http_server_event_callback2(connection, event))
+        event2_unlock(&connection->event);
 
-    event2_unlock(&connection->event);
-
-    pool_unref(connection->pool);
     pool_commit();
 }
 
