@@ -114,6 +114,11 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
         instance->fcgi_stock = NULL;
     }
 
+    if (instance->was_stock != NULL) {
+        hstock_free(instance->was_stock);
+        instance->was_stock = NULL;
+    }
+
     if (instance->memcached_stock != NULL)
         memcached_stock_free(instance->memcached_stock);
 
@@ -128,6 +133,8 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 
     if (instance->pipe_stock != NULL)
         stock_free(instance->pipe_stock);
+
+    global_control_handler_deinit();
 
     pool_commit();
 }
@@ -369,8 +376,6 @@ int main(int argc, char **argv)
 
     bulldog_deinit();
     failure_deinit();
-
-    global_control_handler_deinit();
 
     free_all_listeners(&instance);
 
