@@ -509,10 +509,12 @@ was_client_request(pool_t caller_pool, int control_fd,
         ? was_input_new(pool, input_fd, &was_client_input_handler, client)
         : NULL;
 
+    uint32_t method32 = (uint32_t)method;
+
     if (!was_control_send_empty(client->control, WAS_COMMAND_REQUEST) ||
         (method != HTTP_METHOD_GET &&
          !was_control_send(client->control, WAS_COMMAND_METHOD,
-                           &method, sizeof(method))) ||
+                           &method32, sizeof(method32))) ||
         !was_control_send_string(client->control, WAS_COMMAND_URI, uri))
         return;
 

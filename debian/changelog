@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.18) unstable; urgency=low
 
-  * 
+  * was-client: explicitly send 32 bit METHOD payload
 
  --
 
