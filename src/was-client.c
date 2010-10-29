@@ -167,7 +167,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        const int *status_r = payload;
+        const uint32_t *status_r = payload;
         if (payload_length != sizeof(*status_r) ||
             !http_status_is_valid((http_status_t)*status_r)) {
             daemon_log(2, "was-client: malformed STATUS\n");
