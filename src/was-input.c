@@ -32,6 +32,13 @@ struct was_input {
     uint64_t received, guaranteed, length;
 
     bool closed, timeout, known_length;
+
+    /**
+     * Was this stream aborted prematurely?  In this case, the stream
+     * is discarding the rest, and then calls the handler method
+     * premature().  Only defined if known_length is true.
+     */
+    bool premature;
 };
 
 static const struct timeval was_input_timeout = {
@@ -72,9 +79,15 @@ was_input_eof(struct was_input *input)
 
     p_event_del(&input->event, input->output.pool);
 
-    istream_deinit_eof(&input->output);
+    if (input->premature) {
+        istream_deinit_abort(&input->output);
 
-    input->handler->eof(input->handler_ctx);
+        input->handler->premature(input->handler_ctx);
+    } else {
+        istream_deinit_eof(&input->output);
+
+        input->handler->eof(input->handler_ctx);
+    }
 }
 
 static bool
@@ -301,6 +314,7 @@ was_input_new(pool_t pool, int fd,
     assert(fd >= 0);
     assert(handler != NULL);
     assert(handler->eof != NULL);
+    assert(handler->premature != NULL);
     assert(handler->abort != NULL);
 
     struct was_input *input = p_malloc(pool, sizeof(*input));
@@ -351,6 +365,24 @@ was_input_set_length(struct was_input *input, uint64_t length)
         return false;
     }
 
+    input->length = length;
+    input->known_length = true;
+    input->premature = false;
+
+    if (was_input_check_eof(input))
+        return false;
+
+    return true;
+}
+
+bool
+was_input_premature(struct was_input *input, uint64_t length)
+{
+    if (input->known_length && length > input->length) {
+        was_input_abort(input);
+        return false;
+    }
+
     if (input->guaranteed > length || input->received > length) {
         was_input_abort(input);
         return false;
@@ -358,6 +390,7 @@ was_input_set_length(struct was_input *input, uint64_t length)
 
     input->guaranteed = input->length = length;
     input->known_length = true;
+    input->premature = true;
 
     if (was_input_check_eof(input))
         return false;
