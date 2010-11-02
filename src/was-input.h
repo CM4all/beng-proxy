@@ -12,11 +12,6 @@
 #include <stdint.h>
 
 struct was_input_handler {
-    /**
-     * Announce the input length.
-     */
-    void (*input_length)(uint64_t length, void *ctx);
-
     void (*eof)(void *ctx);
     void (*abort)(void *ctx);
 };
