@@ -289,13 +289,26 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_PREMATURE:
-        // XXX
-        was_client_abort(client);
+        if (client->response.headers != NULL) {
+            daemon_log(2, "was-client: PREMATURE before DATA\n");
+            was_client_abort_response_headers(client);
+            return false;
+        }
+
+        length_p = payload;
+        if (payload_length != sizeof(*length_p)) {
+            was_client_abort_response_body(client);
+            return false;
+        }
+
+        if (client->response.body == NULL)
+            break;
+
+        if (!was_input_premature(client->response.body, *length_p))
+            return false;
+
         return false;
     }
-
-    (void)payload;
-    (void)payload_length;
 
     return true;
 }
