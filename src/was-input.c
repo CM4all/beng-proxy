@@ -300,6 +300,8 @@ was_input_new(pool_t pool, int fd,
 {
     assert(fd >= 0);
     assert(handler != NULL);
+    assert(handler->eof != NULL);
+    assert(handler->abort != NULL);
 
     struct was_input *input = p_malloc(pool, sizeof(*input));
     istream_init(&input->output, &was_input_stream, pool);
