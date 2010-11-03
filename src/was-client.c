@@ -430,6 +430,7 @@ was_client_input_abort(void *ctx)
 
 static const struct was_input_handler was_client_input_handler = {
     .eof = was_client_input_eof,
+    .premature = was_client_input_abort, // XXX implement
     .abort = was_client_input_abort,
 };
 
