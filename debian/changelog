@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.9) unstable; urgency=low
 
   * was-client: explicitly send 32 bit METHOD payload
   * was-client: explicitly parse STATUS as 32 bit integer
+  * python: support WAS widgets
 
  --
 

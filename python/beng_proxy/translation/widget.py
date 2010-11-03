@@ -55,6 +55,10 @@ class _Lookup:
         if m:
             response.packet(TRANSLATE_FASTCGI, m.group(1))
             return
+        m = re.match(r'^was\s+"(\S+)"$', line)
+        if m:
+            response.packet(TRANSLATE_WAS, m.group(1))
+            return
         m = re.match(r'^ajp\s+"(\S+)"\s+"(\S+)"$', line)
         if m:
             host, uri = m.group(1), m.group(2)
