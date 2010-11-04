@@ -297,10 +297,12 @@ istream_as_fd(istream_t _istream)
     assert(!istream->eof);
     assert(!istream->reading);
     assert(!istream->in_data);
+#endif
 
     if (istream->as_fd == NULL)
         return -1;
 
+#ifndef NDEBUG
     pool_notify(istream->pool, &notify);
     istream->reading = true;
 #endif
