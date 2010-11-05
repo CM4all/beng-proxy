@@ -11,6 +11,8 @@
 #include "date.h"
 #include "growing-buffer.h"
 
+#include <socket/util.h>
+
 #include <string.h>
 
 bool
@@ -163,7 +165,9 @@ http_server_response(const struct http_server_request *request,
 
     connection->response.writing_100_continue = false;
 
-    http_server_try_write(connection);
+    socket_set_cork(connection->fd, true);
+    if (http_server_try_write(connection))
+        socket_set_cork(connection->fd, false);
 }
 
 void

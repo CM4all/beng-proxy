@@ -12,7 +12,6 @@
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
-#include <socket/util.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -40,35 +39,6 @@ http_server_request_new(struct http_server_connection *connection)
     return request;
 }
 
-static inline void
-http_server_cork(struct http_server_connection *connection)
-{
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
-
-#ifdef __linux
-    if (!connection->cork) {
-        connection->cork = true;
-        socket_set_cork(connection->fd, connection->cork);
-    }
-#endif
-}
-
-static inline void
-http_server_uncork(struct http_server_connection *connection)
-{
-    assert(connection != NULL);
-
-#ifdef __linux
-    if (connection->cork) {
-        assert(connection->fd >= 0);
-        connection->cork = false;
-        socket_set_cork(connection->fd, connection->cork);
-    }
-#endif
-}
-
-
 bool
 http_server_try_write(struct http_server_connection *connection)
 {
@@ -79,7 +49,6 @@ http_server_try_write(struct http_server_connection *connection)
     assert(connection->request.request != NULL);
     assert(connection->response.istream != NULL);
 
-    http_server_cork(connection);
     event2_lock(&connection->event);
     event2_nand(&connection->event, EV_WRITE);
 
@@ -94,7 +63,6 @@ http_server_try_write(struct http_server_connection *connection)
     pool_unref(connection->pool);
 
     event2_unlock(&connection->event);
-    http_server_uncork(connection);
     return true;
 }
 
@@ -191,9 +159,6 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
     connection->response.istream = NULL;
-#ifdef __linux
-    connection->cork = false;
-#endif
 
     connection->input = fifo_buffer_new(pool, 4096);
 
@@ -261,10 +226,6 @@ http_server_connection_close(struct http_server_connection *connection)
 
         evtimer_del(&connection->timeout);
     }
-
-#ifdef __linux
-    connection->cork = false;
-#endif
 
     pool_ref(connection->pool);
 

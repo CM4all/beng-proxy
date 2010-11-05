@@ -90,9 +90,6 @@ struct http_server_connection {
 
     /* connection settings */
     bool keep_alive;
-#ifdef __linux
-    bool cork;
-#endif
 };
 
 static inline int
