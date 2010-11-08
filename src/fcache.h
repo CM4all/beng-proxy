@@ -8,7 +8,8 @@
 #define BENG_FILTER_CACHE_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/status.h>
 
 struct resource_loader;
 struct resource_address;

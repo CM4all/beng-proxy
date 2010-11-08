@@ -7,8 +7,9 @@
 #ifndef BENG_PROXY_ERRDOC_H
 #define BENG_PROXY_ERRDOC_H
 
-#include "http.h"
 #include "istream.h"
+
+#include <http/status.h>
 
 struct request;
 struct growing_buffer;

@@ -8,7 +8,8 @@
 #define __BENG_HTTP_CACHE_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/method.h>
 
 struct memcached_stock;
 struct http_cache;

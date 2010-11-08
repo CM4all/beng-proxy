@@ -7,8 +7,9 @@
 #ifndef __BENG_ACCESS_LOG_H
 #define __BENG_ACCESS_LOG_H
 
-#include "http.h"
 #include "istream.h"
+
+#include <http/status.h>
 
 struct http_server_request;
 

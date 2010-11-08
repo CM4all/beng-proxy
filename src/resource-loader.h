@@ -9,7 +9,9 @@
 #define BENG_PROXY_RESOURCE_LOADER_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/method.h>
+#include <http/status.h>
 
 struct hstock;
 struct resource_address;

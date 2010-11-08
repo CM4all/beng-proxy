@@ -8,7 +8,8 @@
 #define __BENG_AJP_REQUEST_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/method.h>
 
 struct hstock;
 struct uri_with_address;

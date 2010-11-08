@@ -8,8 +8,10 @@
 #define __BENG_HTTP_SERVER_H
 
 #include "pool.h"
-#include "http.h"
 #include "istream.h"
+
+#include <http/method.h>
+#include <http/status.h>
 
 struct sockaddr;
 struct growing_buffer;

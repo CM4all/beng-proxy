@@ -20,6 +20,7 @@ AM_CFLAGS +=
 AM_CPPFLAGS += \
 	$(LIBCM4ALL_DAEMON_CFLAGS) \
 	$(LIBCM4ALL_INLINE_CFLAGS) \
+	$(LIBCM4ALL_HTTP_CFLAGS) \
 	$(LIBCM4ALL_SOCKET_CFLAGS) \
 	$(LIBWAS_CFLAGS) \
 	$(GLIB_CFLAGS) \
@@ -178,7 +179,6 @@ HDR = \
 	src/http-server.h \
 	src/http-string.h \
 	src/http-util.h \
-	src/http.h \
 	src/control-server.h \
 	src/control-server.c \
 	src/control-handler.h \
@@ -329,7 +329,6 @@ SRC = src/main.c \
 	src/header-parser.c \
 	src/header-writer.c \
 	src/header-forward.c \
-	src/http.c \
 	src/http-string.c \
 	src/http-body.c \
 	src/http-server.c \
@@ -427,6 +426,7 @@ src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBEVENT_LIBS) \
 	$(LIBATTR_LIBS) \
 	$(LIBZ_LIBS)
@@ -548,7 +548,6 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 
 test_run_was_SOURCES = test/run-was.c \
 	src/was-launch.c src/was-client.c src/was-control.c src/was-input.c src/was-output.c \
-	src/http.c \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/buffered-io.c \
 	src/direct.c \
@@ -557,6 +556,7 @@ test_run_was_SOURCES = test/run-was.c \
 	$(POOL_SRC)
 test_run_was_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(GLIB_LIBS)
 
 test_was_mirror_SOURCES = test/was-mirror.c \
@@ -568,9 +568,9 @@ test_was_mirror_SOURCES = test/was-mirror.c \
 	src/istream-forward.c src/istream-string.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
 	src/direct.c \
-	src/fd_util.c src/fd-util.c src/socket-util.c \
-	src/http.c
+	src/fd_util.c src/fd-util.c src/socket-util.c
 test_was_mirror_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_hashmap_SOURCES = test/t-hashmap.c src/hashmap.c $(POOL_SRC)
@@ -592,7 +592,7 @@ test_t_tcache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 
 test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/header-forward.c src/header-writer.c \
-	src/http.c src/http-string.c \
+	src/http-string.c \
 	src/hashmap.c src/strmap.c \
 	src/growing-buffer.c \
 	src/cookie-client.c \
@@ -601,7 +601,9 @@ test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/fd_util.c \
 	src/session.c src/format.c \
 	src/tpool.c $(POOL_SRC)
-test_t_header_forward_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
+test_t_header_forward_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS)
 
 test_t_stock_SOURCES = test/t-stock.c src/stock.c $(POOL_SRC)
 test_t_stock_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
@@ -692,10 +694,10 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
 	src/resource-address.c src/global.c src/transformation.c \
 	src/expansible-buffer.c \
-	src/http.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_processor_LDADD = $(AM_LDADD) \
 	$(T_ISTREAM_FILTER_LIB) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_sink_header_SOURCES = test/t-sink-header.c \
@@ -720,7 +722,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/cgi.c src/fork.c \
 	$(POOL_SRC) src/tpool.c \
 	src/fifo-buffer.c src/buffered-io.c src/growing-buffer.c \
-	src/http.c src/header-parser.c \
+	src/header-parser.c \
 	src/strmap.c src/hashmap.c \
 	src/event2.c \
 	src/fd_util.c src/socket-util.c src/fd-util.c \
@@ -729,15 +731,17 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/stopwatch.c \
 	src/istream-file.c src/abort-flag.c src/direct.c
 test_t_cgi_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_widget_stream_SOURCES = test/t-widget-stream.c \
 	$(POOL_SRC) \
 	src/istream-forward.c src/istream-null.c src/istream-memory.c \
 	src/istream-string.c src/istream-delayed.c \
-	src/http.c \
 	src/widget-stream.c
-test_t_widget_stream_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS)
+test_t_widget_stream_LDADD = $(LIBEVENT_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_http_server_SOURCES = test/t-http-server.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
@@ -756,13 +760,14 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/http-body.c src/date.c \
 	src/fd_util.c src/fd-util.c src/socket-util.c \
 	src/growing-buffer.c \
-	src/http.c src/header-parser.c src/format.c \
+	src/header-parser.c src/format.c \
 	src/strutil.c \
 	src/gmtime.c \
 	src/tpool.c \
 	src/istream-socketpair.c src/istream-block.c src/istream-catch.c \
 	src/sink-null.c src/event2.c
 test_t_http_server_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
@@ -783,9 +788,10 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/http-body.c src/date.c \
 	src/fd_util.c src/fd-util.c src/socket-util.c \
 	src/growing-buffer.c \
-	src/http.c src/header-parser.c src/format.c \
+	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
 test_t_http_server_mirror_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_null_SOURCES = test/t-http-server-null.c \
@@ -807,9 +813,10 @@ test_t_http_server_null_SOURCES = test/t-http-server-null.c \
 	src/http-body.c src/date.c \
 	src/fd_util.c src/fd-util.c src/socket-util.c \
 	src/growing-buffer.c \
-	src/http.c src/header-parser.c src/format.c \
+	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
 test_t_http_server_null_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
@@ -832,9 +839,10 @@ test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
 	src/http-body.c src/date.c \
 	src/fd_util.c src/fd-util.c src/socket-util.c \
 	src/growing-buffer.c \
-	src/http.c src/header-parser.c src/format.c \
+	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
 test_t_http_server_dummy_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
@@ -856,9 +864,10 @@ test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
 	src/http-body.c src/date.c \
 	src/fd_util.c src/fd-util.c src/socket-util.c \
 	src/growing-buffer.c \
-	src/http.c src/header-parser.c src/format.c \
+	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
 test_t_http_server_fixed_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_client_SOURCES = test/t-http-client.c \
@@ -875,13 +884,14 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/istream-byte.c \
 	src/direct.c \
 	src/http-body.c src/header-parser.c \
-	src/format.c src/http.c src/strutil.c \
+	src/format.c src/strutil.c \
 	src/buffered-io.c src/fd_util.c src/fd-util.c src/socket-util.c \
 	src/uri-verify.c \
 	src/stopwatch.c \
 	src/tpool.c src/event2.c
 test_t_http_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_util_SOURCES = test/t-http-util.c \
@@ -892,7 +902,7 @@ test_t_http_util_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 test_t_http_cache_SOURCES = test/t-http-cache.c \
 	$(POOL_SRC) src/tpool.c \
 	src/strmap.c src/hashmap.c \
-	src/fifo-buffer.c src/http.c src/header-parser.c \
+	src/fifo-buffer.c src/header-parser.c \
 	src/growing-buffer.c \
 	src/strutil.c \
 	src/istream-memory.c src/istream-string.c \
@@ -909,16 +919,19 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/istream-null.c src/istream-unlock.c src/istream-forward.c
 test_t_http_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(GLIB_LIBS)
 
 test_t_cookie_client_SOURCES = test/t-cookie-client.c \
 	$(POOL_SRC) src/tpool.c \
 	src/cookie-client.c \
-	src/http.c src/http-string.c \
+	src/http-string.c \
 	src/header-writer.c src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c
-test_t_cookie_client_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
+test_t_cookie_client_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_cookie_server_SOURCES = test/t-cookie-server.c \
 	$(POOL_SRC) \
@@ -1005,10 +1018,10 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/istream-null.c \
 	src/transformation.c \
 	src/dpool.c src/dstring.c src/dhashmap.c src/shm.c \
-	src/http.c \
 	$(POOL_SRC) src/tpool.c
 test_t_widget_http_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_benchmark_gmtime_SOURCES = test/benchmark-gmtime.c \
@@ -1026,11 +1039,11 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/strutil.c \
 	src/abort-unref.c \
 	src/uri-address.c src/uri-edit.c \
-	src/http.c \
 	src/stopwatch.c \
 	$(POOL_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_subst_SOURCES = test/run-subst.c \
@@ -1043,11 +1056,12 @@ test_run_subst_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 test_run_cookie_client_SOURCES = test/run-cookie-client.c \
 	src/cookie-client.c src/http-string.c \
 	src/header-writer.c src/growing-buffer.c \
-	src/http.c \
 	src/tpool.c src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c \
 	$(POOL_SRC)
-test_run_cookie_client_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
+test_run_cookie_client_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_cookie_server_SOURCES = test/run-cookie-server.c \
 	src/cookie-server.c src/http-string.c \
@@ -1083,7 +1097,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/header-writer.c src/args.c src/buffered-io.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
-	src/format.c src/header-parser.c src/http.c src/strutil.c \
+	src/format.c src/header-parser.c src/strutil.c \
 	src/widget-request.c \
 	src/istream-tee.c src/istream-null.c \
 	src/event2.c src/failure.c src/bulldog.c \
@@ -1095,6 +1109,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	$(POOL_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_processor_SOURCES = test/t-processor.c \
@@ -1113,7 +1128,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/header-writer.c src/args.c src/buffered-io.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
-	src/format.c src/header-parser.c src/http.c src/strutil.c \
+	src/format.c src/header-parser.c src/strutil.c \
 	src/widget-request.c \
 	src/istream-tee.c src/istream-null.c \
 	src/event2.c src/failure.c src/bulldog.c \
@@ -1125,6 +1140,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	$(POOL_SRC)
 test_t_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_ajp_client_SOURCES = test/run-ajp-client.c \
@@ -1136,7 +1152,6 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/growing-buffer.c src/fd-util.c src/fd_util.c \
 	src/strmap.c src/hashmap.c \
 	src/strutil.c \
-	src/http.c \
 	src/istream-file.c \
 	src/istream-cat.c \
 	src/istream-memory.c \
@@ -1146,6 +1161,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/direct.c \
 	$(POOL_SRC)
 test_run_ajp_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_memcached_client_SOURCES = test/run-memcached-client.c \

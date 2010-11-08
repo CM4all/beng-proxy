@@ -9,7 +9,8 @@
 
 #include "strmap.h"
 #include "istream.h"
-#include "http.h"
+
+#include <http/status.h>
 
 #include <assert.h>
 #include <stddef.h>

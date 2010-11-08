@@ -7,8 +7,9 @@
 #ifndef __BENG_AJP_CLIENT_H
 #define __BENG_AJP_CLIENT_H
 
-#include "http.h"
 #include "istream.h"
+
+#include <http/method.h>
 
 struct lease;
 struct http_response_handler;

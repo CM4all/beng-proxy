@@ -3,6 +3,8 @@
 
 #include "http-cache.h"
 
+#include <http/status.h>
+
 #ifdef CACHE_LOG
 #include <daemon/log.h>
 #define cache_log(...) daemon_log(__VA_ARGS__)

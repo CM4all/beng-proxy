@@ -21,6 +21,7 @@
 #include <daemon/log.h>
 #include <socket/address.h>
 #include <socket/resolver.h>
+#include <http/header.h>
 
 #include <glib.h>
 

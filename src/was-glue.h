@@ -8,7 +8,8 @@
 #define BENG_PROXY_WAS_GLUE_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/method.h>
 
 struct was_stock;
 struct hstock;

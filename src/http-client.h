@@ -8,8 +8,9 @@
 #define __BENG_HTTP_CLIENT_H
 
 #include "pool.h"
-#include "http.h"
 #include "istream.h"
+
+#include <http/method.h>
 
 struct lease;
 struct growing_buffer;

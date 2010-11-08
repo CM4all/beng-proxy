@@ -8,10 +8,11 @@
 #define __BENG_TRANSLATE_H
 
 #include "pool.h"
-#include "http.h"
 #include "resource-address.h"
 #include "header-forward.h"
 #include "strref.h"
+
+#include <http/status.h>
 
 #include <stdint.h>
 

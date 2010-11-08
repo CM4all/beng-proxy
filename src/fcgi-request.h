@@ -8,7 +8,8 @@
 #define __BENG_FCGI_REQUEST_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/method.h>
 
 struct fcgi_stock;
 struct hstock;

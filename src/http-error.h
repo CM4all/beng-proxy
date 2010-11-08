@@ -8,7 +8,6 @@
 #define BENG_PROXY_HTTP_ERROR_H
 
 #include "pool.h"
-#include "http.h"
 
 struct http_response_handler_ref;
 

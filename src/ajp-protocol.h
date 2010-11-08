@@ -7,9 +7,8 @@
 #ifndef __BENG_AJP_PROTOCOL_H
 #define __BENG_AJP_PROTOCOL_H
 
-#include "http.h"
-
 #include <inline/compiler.h>
+#include <http/method.h>
 
 #include <stdint.h>
 

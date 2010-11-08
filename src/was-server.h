@@ -8,7 +8,9 @@
 #define BENG_PROXY_WAS_SERVER_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/method.h>
+#include <http/status.h>
 
 struct lease;
 struct strmap;

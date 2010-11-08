@@ -7,7 +7,8 @@
 #include "header-writer.h"
 #include "strmap.h"
 #include "growing-buffer.h"
-#include "http.h"
+
+#include <http/header.h>
 
 #include <string.h>
 

@@ -9,7 +9,9 @@
 #define __BENG_GET_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/method.h>
+#include <http/status.h>
 
 struct http_cache;
 struct hstock;

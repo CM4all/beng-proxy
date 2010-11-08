@@ -8,7 +8,8 @@
 #define __BENG_CGI_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/method.h>
 
 struct strmap;
 struct http_response_handler;

@@ -10,11 +10,12 @@
 #include "session.h"
 #include "cookie-client.h"
 #include "growing-buffer.h"
-#include "http.h"
 
 #ifndef NDEBUG
 #include <daemon/log.h>
 #endif
+
+#include <http/header.h>
 
 #include <string.h>
 

@@ -8,9 +8,11 @@
 #define __BENG_PROCESSOR_H
 
 #include "istream.h"
-#include "http.h"
 #include "http-response.h"
 #include "session.h"
+
+#include <http/method.h>
+#include <http/status.h>
 
 /** options for processor_new() */
 enum processor_options {

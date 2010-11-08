@@ -9,12 +9,12 @@
 
 #include "pool.h"
 #include "strref.h"
-#include "http.h"
 #include "istream.h"
 #include "resource-address.h"
 #include "header-forward.h"
 
 #include <inline/list.h>
+#include <http/method.h>
 
 #include <assert.h>
 #include <stdbool.h>

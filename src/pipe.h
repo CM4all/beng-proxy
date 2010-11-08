@@ -8,7 +8,8 @@
 #define BENG_PIPE_H
 
 #include "istream.h"
-#include "http.h"
+
+#include <http/status.h>
 
 struct strmap;
 struct http_response_handler;

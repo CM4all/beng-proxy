@@ -6,10 +6,11 @@
 
 #include "static-file.h"
 #include "static-headers.h"
-#include "http.h"
 #include "http-response.h"
 #include "http-error.h"
 #include "strmap.h"
+
+#include <http/status.h>
 
 #include <assert.h>
 #include <sys/stat.h>
