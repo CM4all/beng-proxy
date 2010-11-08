@@ -409,6 +409,7 @@ SRC = src/main.c \
 	src/abort-flag.c \
 	src/tpool.c \
 	src/log-client.c src/log-client.h \
+	src/log-launch.c src/log-launch.h \
 	$(HDR)
 
 if ENABLE_STOPWATCH
