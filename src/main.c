@@ -29,6 +29,7 @@
 #include "pipe-stock.h"
 #include "resource-loader.h"
 #include "control-handler.h"
+#include "log-glue.h"
 
 #include <daemon/daemonize.h>
 
@@ -342,6 +343,9 @@ int main(int argc, char **argv)
     global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;
 
+    if (!log_global_init(instance.config.access_logger))
+        return 2;
+
     /* daemonize */
 
 #ifndef PROFILE
@@ -373,6 +377,8 @@ int main(int argc, char **argv)
     event_dispatch();
 
     /* cleanup */
+
+    log_global_deinit();
 
     bulldog_deinit();
     failure_deinit();

@@ -39,6 +39,10 @@ static void usage(void) {
          " --logger program\n"
 #endif
          " -l program     specifies an error logger program (executed by /bin/sh)\n"
+#ifdef __GLIBC__
+         " --access-logger program\n"
+#endif
+         " -A program     specifies an access logger program (executed by /bin/sh)\n"
          " -D             don't detach (daemonize)\n"
 #ifdef __GLIBC__
          " --pidfile file\n"
@@ -237,6 +241,7 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
         {"verbose", 0, NULL, 'v'},
         {"quiet", 0, NULL, 'q'},
         {"logger", 1, NULL, 'l'},
+        {"access-logger", 1, NULL, 'A'},
         {"pidfile", 1, NULL, 'P'},
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
@@ -261,10 +266,10 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:u:g:U:p:L:c:m:w:r:t:M:B:s:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:A:u:g:U:p:L:c:m:w:r:t:M:B:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:u:g:U:p:L:c:m:w:r:t:M:B:s:");
+        ret = getopt(argc, argv, "hVvqDP:l:A:u:g:U:p:L:c:m:w:r:t:M:B:s:");
 #endif
         if (ret == -1)
             break;
@@ -296,6 +301,10 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 
         case 'l':
             daemon_config.logger = optarg;
+            break;
+
+        case 'A':
+            config->access_logger = optarg;
             break;
 
         case 'u':

@@ -36,6 +36,8 @@ struct config {
 
     const char *translation_socket;
 
+    const char *access_logger;
+
     struct uri_with_address *memcached_server;
 
     /**
