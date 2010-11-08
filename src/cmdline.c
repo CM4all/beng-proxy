@@ -38,7 +38,7 @@ static void usage(void) {
 #ifdef __GLIBC__
          " --logger program\n"
 #endif
-         " -l program     specifies a logger program (executed by /bin/sh)\n"
+         " -l program     specifies an error logger program (executed by /bin/sh)\n"
          " -D             don't detach (daemonize)\n"
 #ifdef __GLIBC__
          " --pidfile file\n"
@@ -55,7 +55,7 @@ static void usage(void) {
 #ifdef __GLIBC__
          " --logger-user name\n"
 #endif
-         " -U name        execute the logger program with this user id\n"
+         " -U name        execute the error logger program with this user id\n"
 #ifdef __GLIBC__
          " --port PORT\n"
 #endif
