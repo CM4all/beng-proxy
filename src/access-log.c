@@ -18,7 +18,7 @@ access_log(struct http_server_request *request, const char *site,
            http_status_t status, off_t content_length)
 {
     if (log_global_enabled()) {
-        log_http_request(time(NULL) * 1000, request->method, request->uri,
+        log_http_request(time(NULL) * 1000000, request->method, request->uri,
                          site, NULL, NULL, status, content_length);
         return;
     }
