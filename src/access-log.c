@@ -19,7 +19,8 @@ access_log(struct http_server_request *request, const char *site,
 {
     if (log_global_enabled()) {
         log_http_request(time(NULL) * 1000000, request->method, request->uri,
-                         site, NULL, NULL, status, content_length);
+                         request->remote_host, site, NULL, NULL,
+                         status, content_length);
         return;
     }
 

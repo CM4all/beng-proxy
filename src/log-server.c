@@ -117,6 +117,10 @@ log_server_apply_attributes(struct log_datagram *datagram, const void *p,
             datagram->valid_timestamp = true;
             break;
 
+        case LOG_REMOTE_HOST:
+            p = read_string(&datagram->remote_host, p, end);
+            break;
+
         case LOG_SITE:
             p = read_string(&datagram->site, p, end);
             break;

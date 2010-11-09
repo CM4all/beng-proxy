@@ -47,7 +47,8 @@ log_global_enabled(void)
 
 bool
 log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
-                 const char *site, const char *referer, const char *user_agent,
+                 const char *remote_host, const char *site,
+                 const char *referer, const char *user_agent,
                  http_status_t status, uint64_t length)
 {
     assert(http_method_is_valid(method));
@@ -59,6 +60,9 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
 
     log_client_begin(global_log_client);
     log_client_append_u64(global_log_client, LOG_TIMESTAMP, timestamp);
+    if (remote_host != NULL)
+        log_client_append_string(global_log_client, LOG_REMOTE_HOST,
+                                 remote_host);
     if (site != NULL)
         log_client_append_string(global_log_client, LOG_SITE, site);
     log_client_append_u8(global_log_client, LOG_HTTP_METHOD, method);

@@ -18,6 +18,11 @@ enum beng_log_attribute {
     LOG_TIMESTAMP,
 
     /**
+     * The address of the remote host as a string.
+     */
+    LOG_REMOTE_HOST,
+
+    /**
      * The name of the site which was accessed.
      */
     LOG_SITE,

@@ -1,5 +1,6 @@
 /*
- * A client for the logging protocol.
+ * An example server for the logging protocol.  It prints the messages
+ * to stdout.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
@@ -17,11 +18,13 @@ dump_http(const struct log_datagram *d)
         ? http_method_to_string(d->http_method)
         : "?";
 
+    const char *remote_host = d->remote_host;
+    if (remote_host == NULL)
+        remote_host = "-";
+
     const char *site = d->site;
     if (site == NULL)
         site = "-";
-
-    const char *remote_host = "-"; // XXX
 
     char stamp_buffer[32];
     const char *stamp = "-";

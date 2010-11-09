@@ -16,7 +16,7 @@
 struct log_datagram {
     uint64_t timestamp;
 
-    const char *site;
+    const char *remote_host, *site;
 
     http_method_t http_method;
 
