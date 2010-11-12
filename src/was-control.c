@@ -131,9 +131,16 @@ was_control_consume_input(struct was_control *control)
 
         const void *payload = header + 1;
 
+#ifndef NDEBUG
+        struct pool_notify notify;
+        pool_notify(control->pool, &notify);
+#endif
+
         if (!control->handler->packet(header->command, payload, header->length,
                                       control->handler_ctx))
             return false;
+
+        assert(!pool_denotify(&notify));
 
         fifo_buffer_consume(control->input.buffer,
                             sizeof(*header) + header->length);
