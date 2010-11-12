@@ -69,8 +69,10 @@ was_client_abort_response_headers(struct was_client *client)
     if (client->response.body != NULL)
         was_input_free_p(&client->response.body);
 
-    if (client->control != NULL)
+    if (client->control != NULL) {
         was_control_free(client->control);
+        client->control = NULL;
+    }
 
     p_lease_release(&client->lease_ref, false, client->pool);
 
@@ -94,6 +96,7 @@ was_client_abort_response_body(struct was_client *client)
         was_input_free_p(&client->response.body);
 
     was_control_free(client->control);
+    client->control = NULL;
 
     p_lease_release(&client->lease_ref, false, client->pool);
     pool_unref(client->caller_pool);
