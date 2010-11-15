@@ -237,6 +237,7 @@ int main(int argc, char **argv)
             .translate_cache_size = 131072,
             .tcp_stock_limit = 256,
             .fcgi_stock_limit = 16,
+            .was_stock_limit = 16,
             .enable_splice = true,
         },
     };
