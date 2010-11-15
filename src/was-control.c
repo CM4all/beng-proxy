@@ -136,14 +136,14 @@ was_control_consume_input(struct was_control *control)
         pool_notify(control->pool, &notify);
 #endif
 
+        fifo_buffer_consume(control->input.buffer,
+                            sizeof(*header) + header->length);
+
         if (!control->handler->packet(header->command, payload, header->length,
                                       control->handler_ctx))
             return false;
 
         assert(!pool_denotify(&notify));
-
-        fifo_buffer_consume(control->input.buffer,
-                            sizeof(*header) + header->length);
     }
 }
 
