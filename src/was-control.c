@@ -37,6 +37,7 @@ struct was_control {
     struct {
         struct event event;
         struct fifo_buffer *buffer;
+        unsigned bulk;
     } output;
 };
 
@@ -296,6 +297,7 @@ was_control_new(pool_t pool, int fd,
     event_set(&control->output.event, control->fd, EV_WRITE|EV_TIMEOUT,
               was_control_output_event_callback, control);
     control->output.buffer = fifo_buffer_new(pool, 8192);
+    control->output.bulk = 0;
 
     was_control_schedule_read(control);
 
@@ -338,7 +340,7 @@ was_control_finish(struct was_control *control, size_t payload_length)
 
     fifo_buffer_append(control->output.buffer,
                        sizeof(struct was_header) + payload_length);
-    return was_control_try_write(control);
+    return control->output.bulk > 0 || was_control_try_write(control);
 }
 
 bool
@@ -409,6 +411,21 @@ was_control_send_strmap(struct was_control *control, enum was_command cmd,
     }
 
     return true;
+}
+
+void
+was_control_bulk_on(struct was_control *control)
+{
+    ++control->output.bulk;
+}
+
+bool
+was_control_bulk_off(struct was_control *control)
+{
+    assert(control->output.bulk > 0);
+
+    --control->output.bulk;
+    return control->output.bulk > 0 || was_control_try_write(control);
 }
 
 void

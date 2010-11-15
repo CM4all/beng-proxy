@@ -66,6 +66,18 @@ bool
 was_control_send_strmap(struct was_control *control, enum was_command cmd,
                         struct strmap *map);
 
+/**
+ * Enables bulk mode.
+ */
+void
+was_control_bulk_on(struct was_control *control);
+
+/**
+ * Disables bulk mode and flushes the output buffer.
+ */
+bool
+was_control_bulk_off(struct was_control *control);
+
 void
 was_control_done(struct was_control *control);
 

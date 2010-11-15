@@ -542,6 +542,8 @@ was_client_request(pool_t caller_pool, int control_fd,
 
     uint32_t method32 = (uint32_t)method;
 
+    was_control_bulk_on(client->control);
+
     if (!was_control_send_empty(client->control, WAS_COMMAND_REQUEST) ||
         (method != HTTP_METHOD_GET &&
          !was_control_send(client->control, WAS_COMMAND_METHOD,
@@ -568,4 +570,6 @@ was_client_request(pool_t caller_pool, int control_fd,
         was_client_abort_response_headers(client);
         return;
     }
+
+    was_control_bulk_off(client->control);
 }
