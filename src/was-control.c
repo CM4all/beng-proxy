@@ -427,3 +427,10 @@ was_control_done(struct was_control *control)
     if (fifo_buffer_empty(control->output.buffer))
         was_control_eof(control);
 }
+
+bool
+was_control_is_empty(struct was_control *control)
+{
+    return fifo_buffer_empty(control->input.buffer) &&
+        fifo_buffer_empty(control->output.buffer);
+}

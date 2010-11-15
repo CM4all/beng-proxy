@@ -321,6 +321,9 @@ was_client_control_eof(void *ctx)
 {
     struct was_client *client = ctx;
 
+    assert(client->request.body == NULL);
+    assert(client->response.body == NULL);
+
     client->control = NULL;
 }
 
@@ -415,7 +418,18 @@ was_client_input_eof(void *ctx)
 
     client->response.body = NULL;
 
-    was_client_abort_response_body(client);
+    if (client->request.body != NULL ||
+        !was_control_is_empty(client->control)) {
+        was_client_abort_response_body(client);
+        return;
+    }
+
+    was_control_free(client->control);
+    client->control = NULL;
+
+    p_lease_release(&client->lease_ref, true, client->pool);
+    pool_unref(client->caller_pool);
+    pool_unref(client->pool);
 }
 
 static void

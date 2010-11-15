@@ -69,4 +69,7 @@ was_control_send_strmap(struct was_control *control, enum was_command cmd,
 void
 was_control_done(struct was_control *control);
 
+bool
+was_control_is_empty(struct was_control *control);
+
 #endif
