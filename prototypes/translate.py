@@ -363,10 +363,18 @@ if __name__ == '__main__':
         helpers_path = os.path.join(os.getcwd(), 'src')
         cgi_path = os.path.join(os.getcwd(), 'demo/cgi-bin')
         demo_path = os.path.join(os.getcwd(), 'demo', 'htdocs')
-        coma_fastcgi = os.path.join(os.getcwd(), '../../cgi-coma/src/cm4all-coma-fastcgi')
-        coma_was = os.path.join(os.getcwd(), '../cgi-coma/src/coma-was')
-        ticket_fastcgi_dir = os.path.join(os.getcwd(), '../mod_ticket/src')
-        xslt_fastcgi = os.path.join(os.getcwd(), '../filters/src/xslt')
+
+        src_dir = os.path.join(os.getenv('HOME'), 'git')
+        if not os.path.isdir(os.path.join(src_dir, 'cgi-coma')):
+            if os.path.isdir('../cgi-coma'):
+                src_dir = os.path.join(os.getcwd(), '..')
+            elif os.path.isdir('../../cgi-coma'):
+                src_dir = os.path.join(os.getcwd(), '../..')
+
+        coma_fastcgi = os.path.join(src_dir, 'cgi-coma/src/cm4all-coma-fastcgi')
+        coma_was = os.path.join(src_dir, 'cgi-coma/src/coma-was')
+        ticket_fastcgi_dir = os.path.join(src_dir, 'mod_ticket/src')
+        xslt_fastcgi = os.path.join(src_dir, 'filters/src/xslt')
 
     if len(argv) >= 2:
         path = argv[1]
