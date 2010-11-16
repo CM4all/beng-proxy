@@ -25,6 +25,14 @@ struct was_control_handler {
     bool (*packet)(enum was_command cmd, const void *payload,
                    size_t payload_length, void *ctx);
 
+    /**
+     * Called after a group of control packets have been handled, and
+     * the input buffer is drained.
+     *
+     * @return false if the #was_control object has been destructed
+     */
+    bool (*drained)(void *ctx);
+
     void (*eof)(void *ctx);
     void (*abort)(void *ctx);
 };

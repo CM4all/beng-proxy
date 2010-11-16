@@ -99,6 +99,13 @@ was_control_abort(struct was_control *control)
     control->handler->abort(control->handler_ctx);
 }
 
+static bool
+was_control_drained(struct was_control *control)
+{
+    return control->handler->drained == NULL ||
+        control->handler->drained(control->handler_ctx);
+}
+
 /**
  * Consume data from the input buffer.  Returns false if this object
  * has been destructed.
@@ -114,7 +121,7 @@ was_control_consume_input(struct was_control *control)
         data = fifo_buffer_read(control->input.buffer, &length);
         if (data == NULL || length < sizeof(*header))
             /* not enough data yet */
-            return true;
+            return was_control_drained(control);
 
         header = data;
         if (length < sizeof(*header) + header->length) {
@@ -127,7 +134,7 @@ was_control_consume_input(struct was_control *control)
                 return false;
             }
 
-            return true;
+            return was_control_drained(control);
         }
 
         const void *payload = header + 1;
