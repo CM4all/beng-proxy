@@ -141,7 +141,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
     case WAS_COMMAND_PATH_INFO:
     case WAS_COMMAND_QUERY_STRING:
     case WAS_COMMAND_PARAMETER:
-        was_client_abort_response_body(client);
+        was_client_abort(client);
         return false;
 
     case WAS_COMMAND_HEADER:
