@@ -7,6 +7,7 @@ cm4all-beng-proxy (0.9) unstable; urgency=low
   * was-client: reuse child process if state is clean on EOF
   * was-client: abort properly after receiving illegal packet
   * was-client: allow "request STOP" before response completed
+  * was-client: postpone the response handler invocation
   * was-control: send packets in bulk
   * python: support WAS widgets
   * http-server: enable "cork" mode only for beginning of response

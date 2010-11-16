@@ -50,6 +50,13 @@ struct was_client {
         struct strmap *headers;
 
         struct was_input *body;
+
+        /**
+         * If set, then the invocation of the response handler is
+         * postponed, until the remaining control packets have been
+         * evaluated.
+         */
+        bool pending;
     } response;
 };
 
@@ -59,7 +66,7 @@ struct was_client {
 static bool
 was_client_receiving_metadata(const struct was_client *client)
 {
-    return client->response.headers != NULL;
+    return client->response.headers != NULL && !client->response.pending;
 }
 
 /**
@@ -124,6 +131,24 @@ was_client_abort_response_body(struct was_client *client)
 }
 
 /**
+ * Abort a pending response (BODY has been received, but the response
+ * handler has not yet been invoked).
+ */
+static void
+was_client_abort_pending(struct was_client *client)
+{
+    assert(!was_client_receiving_metadata(client) &&
+           !was_client_response_submitted(client));
+
+    async_operation_finished(&client->async);
+
+    was_client_clear(client);
+
+    pool_unref(client->caller_pool);
+    pool_unref(client->pool);
+}
+
+/**
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
@@ -131,8 +156,10 @@ was_client_abort(struct was_client *client)
 {
     if (was_client_receiving_metadata(client))
         was_client_abort_response_headers(client);
-    else
+    else if (was_client_response_submitted(client))
         was_client_abort_response_body(client);
+    else
+        was_client_abort_pending(client);
 }
 
 
@@ -252,24 +279,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        headers = client->response.headers;
-        client->response.headers = NULL;
-
-        istream_t body = was_input_enable(client->response.body);
-
-        async_operation_finished(&client->async);
-
-        pool_ref(client->pool);
-        http_response_handler_invoke_response(&client->handler,
-                                              client->response.status,
-                                              headers, body);
-        if (client->control == NULL) {
-            /* closed, must return false */
-            pool_unref(client->pool);
-            return false;
-        }
-
-        pool_unref(client->pool);
+        client->response.pending = true;
         break;
 
     case WAS_COMMAND_LENGTH:
@@ -330,6 +340,39 @@ was_client_control_packet(enum was_command cmd, const void *payload,
     return true;
 }
 
+static bool
+was_client_control_drained(void *ctx)
+{
+    struct was_client *client = ctx;
+
+    if (!client->response.pending)
+        return true;
+
+    assert(!was_client_response_submitted(client));
+
+    client->response.pending = false;
+
+    struct strmap *headers = client->response.headers;
+    client->response.headers = NULL;
+
+    istream_t body = was_input_enable(client->response.body);
+
+    async_operation_finished(&client->async);
+
+    pool_ref(client->pool);
+    http_response_handler_invoke_response(&client->handler,
+                                          client->response.status,
+                                          headers, body);
+    if (client->control == NULL) {
+        /* closed, must return false */
+        pool_unref(client->pool);
+        return false;
+    }
+
+    pool_unref(client->pool);
+    return true;
+}
+
 static void
 was_client_control_eof(void *ctx)
 {
@@ -353,6 +396,7 @@ was_client_control_abort(void *ctx)
 
 static const struct was_control_handler was_client_control_handler = {
     .packet = was_client_control_packet,
+    .drained = was_client_control_drained,
     .eof = was_client_control_eof,
     .abort = was_client_control_abort,
 };
@@ -546,6 +590,7 @@ was_client_request(pool_t caller_pool, int control_fd,
     client->response.body = !http_method_is_empty(method)
         ? was_input_new(pool, input_fd, &was_client_input_handler, client)
         : NULL;
+    client->response.pending = false;
 
     uint32_t method32 = (uint32_t)method;
 
