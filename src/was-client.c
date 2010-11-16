@@ -54,12 +54,30 @@ struct was_client {
 };
 
 /**
+ * Are we currently receiving response metadata (such as headers)?
+ */
+static bool
+was_client_receiving_metadata(const struct was_client *client)
+{
+    return client->response.headers != NULL;
+}
+
+/**
+ * Has the response been submitted to the response handler?
+ */
+static bool
+was_client_response_submitted(const struct was_client *client)
+{
+    return client->response.headers == NULL;
+}
+
+/**
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
 was_client_abort_response_headers(struct was_client *client)
 {
-    assert(client->response.headers != NULL);
+    assert(was_client_receiving_metadata(client));
 
     async_operation_finished(&client->async);
 
@@ -87,7 +105,7 @@ was_client_abort_response_headers(struct was_client *client)
 static void
 was_client_abort_response_body(struct was_client *client)
 {
-    assert(client->response.headers == NULL);
+    assert(was_client_response_submitted(client));
 
     if (client->request.body != NULL)
         was_output_free_p(&client->request.body);
@@ -109,7 +127,7 @@ was_client_abort_response_body(struct was_client *client)
 static void
 was_client_abort(struct was_client *client)
 {
-    if (client->response.headers != NULL)
+    if (was_client_receiving_metadata(client))
         was_client_abort_response_headers(client);
     else
         was_client_abort_response_body(client);
@@ -145,7 +163,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         return false;
 
     case WAS_COMMAND_HEADER:
-        if (client->response.headers == NULL) {
+        if (!was_client_receiving_metadata(client)) {
             daemon_log(2, "was-client: response header was too late\n");
             was_client_abort_response_body(client);
             return false;
@@ -164,7 +182,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_STATUS:
-        if (client->response.headers == NULL) {
+        if (!was_client_receiving_metadata(client)) {
             daemon_log(2, "was-client: STATUS after body start\n");
             was_client_abort_response_body(client);
             return false;
@@ -189,7 +207,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_NO_DATA:
-        if (client->response.headers == NULL) {
+        if (!was_client_receiving_metadata(client)) {
             daemon_log(2, "was-client: NO_DATA after body start\n");
             was_client_abort_response_body(client);
             return false;
@@ -220,7 +238,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         return false;
 
     case WAS_COMMAND_DATA:
-        if (client->response.headers == NULL) {
+        if (!was_client_receiving_metadata(client)) {
             daemon_log(2, "was-client: DATA after body start\n");
             was_client_abort_response_body(client);
             return false;
@@ -253,7 +271,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_LENGTH:
-        if (client->response.headers != NULL) {
+        if (was_client_receiving_metadata(client)) {
             daemon_log(2, "was-client: LENGTH before DATA\n");
             was_client_abort_response_headers(client);
             return false;
@@ -286,7 +304,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_PREMATURE:
-        if (client->response.headers != NULL) {
+        if (was_client_receiving_metadata(client)) {
             daemon_log(2, "was-client: PREMATURE before DATA\n");
             was_client_abort_response_headers(client);
             return false;
@@ -407,7 +425,7 @@ was_client_input_eof(void *ctx)
 {
     struct was_client *client = ctx;
 
-    assert(client->response.headers == NULL);
+    assert(was_client_response_submitted(client));
     assert(client->response.body != NULL);
 
     client->response.body = NULL;
@@ -431,7 +449,7 @@ was_client_input_abort(void *ctx)
 {
     struct was_client *client = ctx;
 
-    assert(client->response.headers == NULL);
+    assert(was_client_response_submitted(client));
     assert(client->response.body != NULL);
 
     client->response.body = NULL;
@@ -464,7 +482,7 @@ was_client_request_abort(struct async_operation *ao)
 
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(client->response.headers != NULL);
+    assert(!was_client_response_submitted(client));
 
     pool_unref(client->caller_pool);
 
