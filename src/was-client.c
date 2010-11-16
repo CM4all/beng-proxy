@@ -72,15 +72,12 @@ was_client_response_submitted(const struct was_client *client)
 }
 
 /**
- * Abort receiving the response status/headers from the WAS server.
+ * Destroys the objects was_control, was_input, was_output and
+ * releases the socket lease.
  */
 static void
-was_client_abort_response_headers(struct was_client *client)
+was_client_clear(struct was_client *client)
 {
-    assert(was_client_receiving_metadata(client));
-
-    async_operation_finished(&client->async);
-
     if (client->request.body != NULL)
         was_output_free_p(&client->request.body);
 
@@ -93,6 +90,19 @@ was_client_abort_response_headers(struct was_client *client)
     }
 
     p_lease_release(&client->lease_ref, false, client->pool);
+}
+
+/**
+ * Abort receiving the response status/headers from the WAS server.
+ */
+static void
+was_client_abort_response_headers(struct was_client *client)
+{
+    assert(was_client_receiving_metadata(client));
+
+    async_operation_finished(&client->async);
+
+    was_client_clear(client);
 
     http_response_handler_invoke_abort(&client->handler);
     pool_unref(client->caller_pool);
@@ -107,18 +117,8 @@ was_client_abort_response_body(struct was_client *client)
 {
     assert(was_client_response_submitted(client));
 
-    if (client->request.body != NULL)
-        was_output_free_p(&client->request.body);
+    was_client_clear(client);
 
-    if (client->response.body != NULL)
-        was_input_free_p(&client->response.body);
-
-    if (client->control != NULL) {
-        was_control_free(client->control);
-        client->control = NULL;
-    }
-
-    p_lease_release(&client->lease_ref, false, client->pool);
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
@@ -488,15 +488,8 @@ was_client_request_abort(struct async_operation *ao)
 
     pool_unref(client->caller_pool);
 
-    if (client->request.body != NULL)
-        was_output_free_p(&client->request.body);
+    was_client_clear(client);
 
-    if (client->response.body != NULL)
-        was_input_free_p(&client->response.body);
-
-    was_control_free(client->control);
-
-    p_lease_release(&client->lease_ref, false, client->pool);
     pool_unref(client->pool);
 }
 
