@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.54) unstable; urgency=low
 
-  * 
+  * parser: fix crash on malformed SCRIPT element
 
  --
 
