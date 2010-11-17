@@ -613,6 +613,21 @@ pool_denotify(struct pool_notify *notify)
 }
 
 void
+pool_notify_move(pool_t pool, struct pool_notify *src,
+                 struct pool_notify *dest)
+{
+    assert(src->pool == pool);
+
+#ifdef TRACE
+    dest->file = src->file;
+    dest->line = src->line;
+#endif
+
+    assert(!pool_denotify(src));
+    pool_notify(pool, dest);
+}
+
+void
 pool_ref_notify_impl(pool_t pool, struct pool_notify *notify TRACE_ARGS_DECL)
 {
     pool_notify(pool, notify);

@@ -75,6 +75,14 @@ pool_notify(pool_t pool, struct pool_notify *notify);
 bool
 pool_denotify(struct pool_notify *notify);
 
+/**
+ * Hands over control from an existing #pool_notify to a new one.  The
+ * old one is unregistered.
+ */
+void
+pool_notify_move(pool_t pool, struct pool_notify *src,
+                 struct pool_notify *dest);
+
 #endif
 
 #ifndef NDEBUG
