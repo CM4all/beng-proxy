@@ -1,5 +1,6 @@
 cm4all-beng-proxy (0.7.54) unstable; urgency=low
 
+  * http-server: fix crash on deferred chunked request body
   * parser: fix crash on malformed SCRIPT element
 
  --
