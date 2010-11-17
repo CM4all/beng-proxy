@@ -258,7 +258,11 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     expansible_buffer_reset(parser->attr_value);
                     break;
                 } else {
+                    /* ignore this syntax error and just close the
+                       element tag */
+
                     parser->tag.end = parser->position + (off_t)(buffer - start);
+                    parser->state = PARSER_INSIDE;
                     parser->handler->tag_finished(&parser->tag,
                                                   parser->handler_ctx);
 
@@ -395,7 +399,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 } else {
                     /* ignore this syntax error and just close the
                        element tag */
+
                     parser->tag.end = parser->position + (off_t)(buffer - start);
+                    parser->state = PARSER_INSIDE;
                     parser->handler->tag_finished(&parser->tag,
                                                   parser->handler_ctx);
                     poison_undefined(&parser->tag, sizeof(parser->tag));
