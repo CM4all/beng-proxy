@@ -10,6 +10,7 @@ cm4all-beng-proxy (0.9) unstable; urgency=low
   * was-control: send packets in bulk
   * python: support WAS widgets
   * http-server: enable "cork" mode only for beginning of response
+  * http-cache: don't access freed memory in pool_unref_denotify()
   * http: use libcm4all-http
   * new datagram based binary protocol for access logging
   * main: default WAS stock limit is 16
