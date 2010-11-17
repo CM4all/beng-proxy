@@ -69,14 +69,9 @@ struct pool_notify {
 void
 pool_notify(pool_t pool, struct pool_notify *notify);
 
-static inline bool
-pool_denotify(struct pool_notify *notify)
-{
-    if (notify->destroyed)
-        return true;
-    list_remove(&notify->siblings);
-    return false;
-}
+bool
+pool_denotify(struct pool_notify *notify);
+
 #endif
 
 #ifndef NDEBUG

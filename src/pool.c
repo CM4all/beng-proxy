@@ -598,6 +598,15 @@ pool_notify(pool_t pool, struct pool_notify *notify)
     notify->destroyed = 0;
 }
 
+bool
+pool_denotify(struct pool_notify *notify)
+{
+    if (notify->destroyed)
+        return true;
+    list_remove(&notify->siblings);
+    return false;
+}
+
 void
 pool_ref_notify_impl(pool_t pool, struct pool_notify *notify TRACE_ARGS_DECL)
 {
