@@ -16,8 +16,12 @@ http_server_consume_body(struct http_server_connection *connection)
 
     assert(connection != NULL);
     assert(connection->request.read_state == READ_BODY);
+    assert(connection->request.request->body != NULL);
 
-    if (!istream_has_handler(http_body_istream(&connection->request.body_reader)))
+    /* checking request.request->body and not request.body_reader,
+       because the dechunker might be attached to the
+       http_body_reader */
+    if (!istream_has_handler(connection->request.request->body))
         /* the handler is not yet connected */
         return false;
 
@@ -66,6 +70,8 @@ http_server_request_stream_read(istream_t istream)
     assert(connection->fd >= 0);
     assert(connection->request.read_state == READ_BODY);
     assert(istream_has_handler(http_body_istream(&connection->request.body_reader)));
+    assert(connection->request.request->body != NULL);
+    assert(istream_has_handler(connection->request.request->body));
 
     pool_ref(connection->pool);
 
