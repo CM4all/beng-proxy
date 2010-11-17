@@ -595,12 +595,17 @@ void
 pool_notify(pool_t pool, struct pool_notify *notify)
 {
     list_add(&notify->siblings, &pool->notify);
+    notify->pool = pool;
+    notify->registered = true;
     notify->destroyed = 0;
 }
 
 bool
 pool_denotify(struct pool_notify *notify)
 {
+    assert(notify->registered);
+    notify->registered = false;
+
     if (notify->destroyed)
         return true;
     list_remove(&notify->siblings);
@@ -623,6 +628,7 @@ void
 pool_unref_denotify_impl(pool_t pool, struct pool_notify *notify
                          TRACE_ARGS_DECL)
 {
+    assert(notify->pool == pool);
     assert(!notify->destroyed);
 #ifdef TRACE
     assert(notify->file == NULL);
