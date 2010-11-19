@@ -22,6 +22,7 @@ coma_was = '/usr/lib/cm4all/was/bin/coma-was'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
 xslt_fastcgi = '/usr/lib/cm4all/filters/cgi-bin/xslt'
+xmlstrip = '/usr/lib/cm4all/filters/cgi-bin/xmlstrip'
 
 cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
@@ -257,6 +258,14 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
             response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
             response.pair('DOCUMENT_PATH', os.path.join(demo_path, '../filter.xml'))
+        elif uri == '/xmlstrip':
+            response.path(os.path.join(demo_path, 'xmlstrip2.html'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_WAS, xmlstrip)
+        elif uri == '/sed':
+            response.path(os.path.join(demo_path, 'xmlstrip2.html'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_PIPE, os.path.join(cgi_path, 'xmlstrip.sed'))
         elif uri == '/check':
             if check is None:
                 response.packet(TRANSLATE_CHECK, 'ok')
@@ -375,6 +384,7 @@ if __name__ == '__main__':
         coma_was = os.path.join(src_dir, 'cgi-coma/src/coma-was')
         ticket_fastcgi_dir = os.path.join(src_dir, 'mod_ticket/src')
         xslt_fastcgi = os.path.join(src_dir, 'filters/src/xslt')
+        xmlstrip = os.path.join(src_dir, 'filters/src/xmlstrip')
 
     if len(argv) >= 2:
         path = argv[1]
