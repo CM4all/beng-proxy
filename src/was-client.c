@@ -359,17 +359,20 @@ was_client_control_drained(void *ctx)
 
     async_operation_finished(&client->async);
 
-    pool_ref(client->pool);
+#ifndef NDEBUG
+    struct pool_notify notify;
+#endif
+    pool_ref_notify(client->pool, &notify);
     http_response_handler_invoke_response(&client->handler,
                                           client->response.status,
                                           headers, body);
     if (client->control == NULL) {
         /* closed, must return false */
-        pool_unref(client->pool);
+        pool_unref_denotify(client->pool, &notify);
         return false;
     }
 
-    pool_unref(client->pool);
+    pool_unref_denotify(client->pool, &notify);
     return true;
 }
 
