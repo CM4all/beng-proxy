@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.1) unstable; urgency=low
 
-  * 
+  * new programs "log-forward", "log-exec" for network logging
 
  --
 

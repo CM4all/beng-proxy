@@ -6,6 +6,8 @@ src/cm4all-beng-proxy
 src/cm4all-beng-proxy-delegate-helper
 src/cm4all-beng-proxy-delegate-jail
 src/log-cat
+src/log-forward
+src/log-exec
 
 test/benchmark-gmtime
 test/format-http-date

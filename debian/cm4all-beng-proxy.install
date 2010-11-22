@@ -1,2 +1,2 @@
 build/debug/src/cm4all-beng-proxy usr/sbin
-build/debug/src/log-cat usr/lib/cm4all/beng-proxy/bin
+build/debug/src/log-{cat,forward} usr/lib/cm4all/beng-proxy/bin
