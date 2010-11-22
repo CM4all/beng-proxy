@@ -201,7 +201,8 @@ file handle limit is adequate.  The default init script sets it to
 descriptor leaks).
 
 Keep in mind that \emph{beng-proxy} may open more than one file
-descriptor per connection.
+descriptor per connection.  For example, a connection to a WAS
+application needs 3 file descriptors.
 
 \subsection{Connection Limits}
 
