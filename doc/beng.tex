@@ -1110,6 +1110,48 @@ with zeroes to multiples of 4 bytes.  \\
 \end{longtable}
 
 
+\section{Logging Protocol}
+
+By default, accesses to HTTP resources are logged into the standard
+log file (command-line option \texttt{--logger}).  The logging
+protocol offers a more flexible alternative: a child process is
+launched, connected to \texttt{beng-proxy} with a datagram socket.
+Each datagram describes an event to be logged.
+
+\subsection{Configuring}
+
+The command line option \texttt{--access-logger} receives the command
+which launches the child process.  The command is executed with the
+shell (\texttt{/bin/sh -c}).
+
+\subsection{Launching}
+
+On startup, the logging process has a datagram socket on file
+descriptor 0.  On this socket, it receives packets describing the
+event.  File descriptor 2 is connected with the local error log, and
+can be used to print fatal error messages.
+
+\subsection{Datagram Format}
+
+Each event is serialized into exactly one datagram.  That puts a limit
+on the size of an event, and therefore, this protocol is designed to
+be small but still easy enough to parse.
+
+A datagram begins with the number 0x63046102 (32 bit), and is followed
+by one or more attributes.  The first byte of each attribute is the
+attribute id (see \texttt{enum beng\_log\_attribute} in
+\texttt{beng-proxy/log.h}).  What follows is specific to the attibute
+id.
+
+General rules:
+
+\begin{itemize}
+\item there is no padding
+\item all numbers are in network byte order (big endian)
+\item strings are terminated by a null byte
+\end{itemize}
+
+
 \section{Widget protocol}
 
 A widget server is simply an HTTP server.  Its content type must be
