@@ -423,6 +423,7 @@ endif
 
 bin_PROGRAMS = src/cm4all-beng-proxy \
 	src/log-cat \
+	src/log-split \
 	src/log-forward \
 	src/log-exec \
 	src/cm4all-beng-proxy-delegate-helper
@@ -449,6 +450,13 @@ src_log_cat_SOURCES = \
 	src/log-server.c \
 	src/log-cat.c
 src_log_cat_LDADD = \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(GLIB_LIBS)
+
+src_log_split_SOURCES = \
+	src/log-server.c \
+	src/log-split.c
+src_log_split_LDADD = \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(GLIB_LIBS)
 
