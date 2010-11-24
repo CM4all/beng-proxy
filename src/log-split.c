@@ -68,6 +68,10 @@ generate_path(const char *template, const struct log_datagram *d)
             return buffer;
         }
 
+        if (dest + (escape - template) + 1 >= buffer + sizeof(buffer))
+            /* too long */
+            return NULL;
+
         memcpy(dest, template, escape - template);
         dest += escape - template;
         template = escape + 1;
@@ -86,6 +90,10 @@ generate_path(const char *template, const struct log_datagram *d)
             return NULL;
 
         size_t length = strlen(value);
+        if (dest + length >= buffer + sizeof(buffer))
+            /* too long */
+            return NULL;
+
         memcpy(dest, value, length);
         dest += length;
 
