@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <errno.h>
 
 struct log_server {
     int fd;
@@ -193,20 +194,24 @@ log_server_apply_datagram(struct log_datagram *datagram, const void *p,
 const struct log_datagram *
 log_server_receive(struct log_server *server)
 {
-    ssize_t nbytes = recv(server->fd, server->buffer,
-                          sizeof(server->buffer) - 1, 0);
-    if (nbytes <= 0)
-        return NULL;
+    while (true) {
+        ssize_t nbytes = recv(server->fd, server->buffer,
+                              sizeof(server->buffer) - 1, 0);
+        if (nbytes <= 0) {
+            if (nbytes < 0 && errno == EAGAIN)
+                continue;
+            return NULL;
+        }
 
-    /* force null termination so we can use string functions inside
-       the buffer */
-    server->buffer[nbytes] = 0;
+        /* force null termination so we can use string functions inside
+           the buffer */
+        server->buffer[nbytes] = 0;
 
-    memset(&server->datagram, 0, sizeof(server->datagram));
+        memset(&server->datagram, 0, sizeof(server->datagram));
 
-    return log_server_apply_datagram(&server->datagram, server->buffer,
-                                     server->buffer + nbytes)
-        ? &server->datagram
-        : NULL;
+        if (log_server_apply_datagram(&server->datagram, server->buffer,
+                                      server->buffer + nbytes))
+            return &server->datagram;
+    }
 }
 
