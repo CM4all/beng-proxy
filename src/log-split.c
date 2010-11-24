@@ -126,9 +126,12 @@ dump_http(int fd, const struct log_datagram *d)
         length = length_buffer;
     }
 
-    dprintf(fd, "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s\n",
-            site, remote_host, stamp, method, d->http_uri,
-            d->http_status, length);
+    static char buffer[8192];
+    snprintf(buffer, sizeof(buffer),
+             "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s\n",
+             site, remote_host, stamp, method, d->http_uri,
+             d->http_status, length);
+    write(fd, buffer, strlen(buffer));
 }
 
 static void
