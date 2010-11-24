@@ -162,6 +162,7 @@ int main(int argc, char **argv)
 
             dump(fd, d);
             close(fd);
+            break;
         }
     }
 
