@@ -1118,12 +1118,6 @@ protocol offers a more flexible alternative: a child process is
 launched, connected to \texttt{beng-proxy} with a datagram socket.
 Each datagram describes an event to be logged.
 
-\subsection{Configuring}
-
-The command line option \texttt{--access-logger} receives the command
-which launches the child process.  The command is executed with the
-shell (\texttt{/bin/sh -c}).
-
 \subsection{Launching}
 
 On startup, the logging process has a datagram socket on file
@@ -1150,6 +1144,12 @@ General rules:
 \item all numbers are in network byte order (big endian)
 \item strings are terminated by a null byte
 \end{itemize}
+
+\subsection{Configuring}
+
+The command line option \texttt{--access-logger} receives the command
+which launches the child process.  The command is executed with the
+shell (\texttt{/bin/sh -c}).
 
 
 \section{Widget protocol}
