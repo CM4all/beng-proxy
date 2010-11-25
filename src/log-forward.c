@@ -35,24 +35,27 @@ open_udp(const char *host, int default_port)
         return -1;
     }
 
-    int fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype,
-                                     ai->ai_protocol);
-    if (fd < 0) {
-        fprintf(stderr, "socket() failed: %s\n", strerror(errno));
-        freeaddrinfo(ai);
-        return -1;
-    }
+    for (const struct addrinfo *i = ai; i != NULL; i = i->ai_next) {
+        int fd = socket_cloexec_nonblock(i->ai_family, i->ai_socktype,
+                                         i->ai_protocol);
+        if (fd < 0) {
+            fprintf(stderr, "socket() failed: %s\n", strerror(errno));
+            continue;
+        }
 
-    ret = connect(fd, ai->ai_addr, ai->ai_addrlen);
-    if (ret < 0) {
-        fprintf(stderr, "connect() failed: %s\n", strerror(errno));
-        close(fd);
+        ret = connect(fd, i->ai_addr, i->ai_addrlen);
+        if (ret < 0) {
+            fprintf(stderr, "connect() failed: %s\n", strerror(errno));
+            close(fd);
+            continue;
+        }
+
         freeaddrinfo(ai);
-        return -1;
+        return fd;
     }
 
     freeaddrinfo(ai);
-    return fd;
+    return -1;
 }
 
 struct destination {
