@@ -10,6 +10,8 @@
 
 #include <socket/resolver.h>
 
+#include <glib.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,24 +55,46 @@ open_udp(const char *host, int default_port)
     return fd;
 }
 
+struct destination {
+    int fd;
+    bool failed;
+};
+
 int main(int argc, char **argv)
 {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: log-forward HOST\n");
+    if (argc < 2) {
+        fprintf(stderr, "Usage: log-forward HOST ...\n");
         return EXIT_FAILURE;
     }
 
-    int fd = open_udp(argv[1], 5479);
-    if (fd < 0)
+    static struct destination destinations[256];
+    unsigned num_destinations = argc - 1;
+
+    if (num_destinations > G_N_ELEMENTS(destinations)) {
+        fprintf(stderr, "Too many hosts\n");
         return EXIT_FAILURE;
+    }
+
+    for (unsigned i = 0; i < num_destinations; ++i) {
+        destinations[i].fd = open_udp(argv[1 + i], 5479);
+        if (destinations[i].fd < 0)
+            return EXIT_FAILURE;
+    }
 
     static char buffer[16384];
     ssize_t nbytes;
     while ((nbytes = recv(0, buffer, sizeof(buffer), 0)) > 0) {
-        nbytes = send(fd, buffer, nbytes, 0);
-        if (nbytes < 0) {
-            fprintf(stderr, "send() failed: %s\n", strerror(errno));
-            return EXIT_FAILURE;
+        size_t length = (size_t)nbytes;
+        for (unsigned i = 0; i < num_destinations; ++i) {
+            nbytes = send(destinations[i].fd, buffer, length, MSG_DONTWAIT);
+            if (nbytes == (ssize_t)length)
+                destinations[i].failed = false;
+            else if (nbytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK &&
+                     !destinations[i].failed) {
+                fprintf(stderr, "send() to host %u failed: %s\n",
+                        i, strerror(errno));
+                destinations[i].failed = true;
+            }
         }
     }
 
