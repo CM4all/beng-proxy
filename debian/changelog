@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.7.55) unstable; urgency=low
 
-  * 
+  * pool: reparent pools in optimized build
 
  --
 
