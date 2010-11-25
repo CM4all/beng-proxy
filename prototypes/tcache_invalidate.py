@@ -41,5 +41,5 @@ for arg in sys.argv[2:]:
 
     vary[attributes[s[0]]] = s[1]
 
-client = Client(host)
+client = Client(host, broadcast=True)
 client.send_tcache_invalidate(vary)

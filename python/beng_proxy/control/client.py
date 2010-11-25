@@ -9,11 +9,13 @@ import struct
 from beng_proxy.control.protocol import *
 
 class Client:
-    def __init__(self, host, port=5478):
+    def __init__(self, host, port=5478, broadcast=False):
         assert isinstance(host, str)
         assert isinstance(port, int)
 
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        if broadcast:
+            self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self._socket.connect((host, port))
 
     def send(self, command, payload=None):
