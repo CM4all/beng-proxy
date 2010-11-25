@@ -91,7 +91,7 @@ class Response:
 
     def max_age(self, seconds):
         assert isinstance(seconds, int)
-        self.packet(TRANSLATE_MAX_AGE, struct.pack('I', seconds))
+        return self.packet(TRANSLATE_MAX_AGE, struct.pack('I', seconds))
 
     def vary(self, *args):
         """Send a VARY packet.  All arguments are packet ids which are
