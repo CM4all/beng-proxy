@@ -101,6 +101,19 @@ generate_path(const char *template, const struct log_datagram *d)
     }
 }
 
+static int
+open_log_file(const char *path)
+{
+    int fd = open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOCTTY, 0666);
+    if (fd < 0) {
+        fprintf(stderr, "Failed to open %s: %s\n",
+                path, strerror(errno));
+        return -1;
+    }
+
+    return fd;
+}
+
 static void
 dump_http(int fd, const struct log_datagram *d)
 {
@@ -164,12 +177,9 @@ int main(int argc, char **argv)
             if (path == NULL)
                 continue;
 
-            int fd = open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOCTTY, 0666);
-            if (fd < 0) {
-                fprintf(stderr, "Failed to open %s: %s\n",
-                        path, strerror(errno));
+            int fd = open_log_file(path);
+            if (fd < 0)
                 break;
-            }
 
             dump(fd, d);
             close(fd);
