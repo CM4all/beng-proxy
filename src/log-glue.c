@@ -8,6 +8,7 @@
 #include "log-launch.h"
 #include "log-client.h"
 
+#include <glib.h>
 #include <assert.h>
 
 static struct log_client *global_log_client;
@@ -49,7 +50,8 @@ bool
 log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
                  const char *remote_host, const char *site,
                  const char *referer, const char *user_agent,
-                 http_status_t status, uint64_t length)
+                 http_status_t status, uint64_t length,
+                 uint64_t traffic_received, uint64_t traffic_sent)
 {
     assert(http_method_is_valid(method));
     assert(uri != NULL);
@@ -74,6 +76,16 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
                                  user_agent);
     log_client_append_u16(global_log_client, LOG_HTTP_STATUS, status);
     log_client_append_u64(global_log_client, LOG_LENGTH, length);
+
+    struct {
+        uint64_t received, sent;
+    } traffic = {
+        .received = GUINT64_TO_BE(traffic_received),
+        .sent = GUINT64_TO_BE(traffic_sent),
+    };
+
+    log_client_append_attribute(global_log_client, LOG_TRAFFIC,
+                                &traffic, sizeof(traffic));
 
     return log_client_commit(global_log_client);
 }

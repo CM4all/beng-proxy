@@ -15,12 +15,14 @@
 
 void
 access_log(struct http_server_request *request, const char *site,
-           http_status_t status, off_t content_length)
+           http_status_t status, off_t content_length,
+           uint64_t bytes_received, uint64_t bytes_sent)
 {
     if (log_global_enabled()) {
         log_http_request(time(NULL) * 1000000, request->method, request->uri,
                          request->remote_host, site, NULL, NULL,
-                         status, content_length);
+                         status, content_length,
+                         bytes_received, bytes_sent);
         return;
     }
 

@@ -75,6 +75,8 @@ struct http_server_connection {
         struct http_body_reader body_reader;
 
         struct async_operation_ref async_ref;
+
+        uint64_t bytes_received;
     } request;
 
     /** the response; this struct is only valid if
@@ -86,6 +88,8 @@ struct http_server_connection {
         char content_length_buffer[32];
         istream_t istream;
         off_t length;
+
+        uint64_t bytes_sent;
     } response;
 
     /* connection settings */

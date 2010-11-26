@@ -71,6 +71,7 @@ struct http_server_connection_handler {
                     struct async_operation_ref *async_ref);
     void (*log)(struct http_server_request *request,
                 http_status_t status, off_t length,
+                uint64_t bytes_received, uint64_t bytes_sent,
                 void *ctx);
     void (*free)(void *ctx);
 };

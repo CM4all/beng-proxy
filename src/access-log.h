@@ -11,6 +11,8 @@
 
 #include <http/status.h>
 
+#include <stdint.h>
+
 struct http_server_request;
 
 #ifndef NO_ACCESS_LOG
@@ -22,7 +24,9 @@ struct http_server_request;
 static inline void
 access_log(struct http_server_request *request __attr_unused,
            const char *site __attr_unused,
-           http_status_t status __attr_unused, off_t length __attr_unused)
+           http_status_t status __attr_unused, off_t length __attr_unused,
+           uint64_t bytes_received __attr_unused,
+           uint64_t bytes_sent __attr_unused)
 {
 }
 
@@ -30,7 +34,8 @@ access_log(struct http_server_request *request __attr_unused,
 
 void
 access_log(struct http_server_request *request, const char *site,
-           http_status_t status, off_t length);
+           http_status_t status, off_t length,
+           uint64_t bytes_received, uint64_t bytes_sent);
 
 #endif
 

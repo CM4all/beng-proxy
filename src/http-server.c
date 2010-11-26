@@ -158,7 +158,9 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
     connection->remote_host = remote_host;
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
+    connection->request.bytes_received = 0;
     connection->response.istream = NULL;
+    connection->response.bytes_sent = 0;
 
     connection->input = fifo_buffer_new(pool, 4096);
 

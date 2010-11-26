@@ -46,11 +46,13 @@ my_http_server_connection_request(struct http_server_request *request,
 static void
 my_http_server_connection_log(struct http_server_request *request,
                               http_status_t status, off_t length,
+                              uint64_t bytes_received, uint64_t bytes_sent,
                               void *ctx)
 {
     struct client_connection *connection = ctx;
 
-    access_log(request, connection->site_name, status, length);
+    access_log(request, connection->site_name, status, length,
+               bytes_received, bytes_sent);
     connection->site_name = NULL;
 }
 

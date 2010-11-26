@@ -339,6 +339,8 @@ http_server_try_read_buffered(struct http_server_connection *connection)
         return;
 
     nbytes = recv_to_buffer(connection->fd, connection->input, INT_MAX);
+    if (nbytes > 0)
+        connection->request.bytes_received += nbytes;
 
     if (unlikely(nbytes < 0 && nbytes != -2)) {
         if (errno == EAGAIN) {
@@ -395,6 +397,8 @@ http_server_try_request_direct(struct http_server_connection *connection)
 
     if (nbytes == 0)
         return;
+
+    connection->request.bytes_received += nbytes;
 
     if (http_body_eof(&connection->request.body_reader)) {
         connection->request.read_state = READ_END;
