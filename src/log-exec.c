@@ -54,12 +54,12 @@ open_udp(const char *host, int default_port)
 
 int main(int argc, char **argv)
 {
-    if (argc < 2) {
-        fprintf(stderr, "Usage: log-exec PROGRAM ...\n");
+    if (argc < 3) {
+        fprintf(stderr, "Usage: log-exec IP PROGRAM ...\n");
         return EXIT_FAILURE;
     }
 
-    int fd = open_udp(NULL, 5479);
+    int fd = open_udp(argv[1], 5479);
     if (fd < 0)
         return EXIT_FAILURE;
 
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
         close(fd);
     }
 
-    execv(argv[1], &argv[1]);
+    execv(argv[2], &argv[2]);
 
     static char buffer[16384];
     ssize_t nbytes;
