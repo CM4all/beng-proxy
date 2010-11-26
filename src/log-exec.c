@@ -70,15 +70,7 @@ int main(int argc, char **argv)
 
     execv(argv[2], &argv[2]);
 
-    static char buffer[16384];
-    ssize_t nbytes;
-    while ((nbytes = recv(0, buffer, sizeof(buffer), 0)) > 0) {
-        nbytes = send(fd, buffer, nbytes, 0);
-        if (nbytes < 0) {
-            fprintf(stderr, "send() failed: %s\n", strerror(errno));
-            return EXIT_FAILURE;
-        }
-    }
-
-    return 0;
+    fprintf(stderr, "Failed to execute %s: %s\n",
+            argv[2], strerror(errno));
+    return EXIT_FAILURE;
 }
