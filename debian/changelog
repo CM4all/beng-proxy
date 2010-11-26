@@ -3,6 +3,7 @@ cm4all-beng-proxy (0.9.1) unstable; urgency=low
   * http-server: count the number of raw bytes sent and received
   * new programs "log-forward", "log-exec" for network logging
   * new program "log-split" for creating per-site log files
+  * new program "log-traffic" for creating per-site traffic logs
   * move logging servers to new package cm4all-beng-proxy-logging
   * python/control.client: add parameter "broadcast"
 

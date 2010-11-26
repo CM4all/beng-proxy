@@ -423,6 +423,7 @@ endif
 
 bin_PROGRAMS = src/cm4all-beng-proxy \
 	src/cm4all-beng-proxy-log-cat \
+	src/cm4all-beng-proxy-log-traffic \
 	src/cm4all-beng-proxy-log-split \
 	src/cm4all-beng-proxy-log-forward \
 	src/cm4all-beng-proxy-log-exec \
@@ -450,6 +451,13 @@ src_cm4all_beng_proxy_log_cat_SOURCES = \
 	src/log-server.c \
 	src/log-cat.c
 src_cm4all_beng_proxy_log_cat_LDADD = \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(GLIB_LIBS)
+
+src_cm4all_beng_proxy_log_traffic_SOURCES = \
+	src/log-server.c \
+	src/log-traffic.c
+src_cm4all_beng_proxy_log_traffic_LDADD = \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(GLIB_LIBS)
 
