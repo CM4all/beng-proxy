@@ -42,6 +42,12 @@ struct ajp_request {
     struct async_operation_ref *async_ref;
 };
 
+static GQuark
+ajp_request_quark(void)
+{
+    return g_quark_from_static_string("ajp_request");
+}
+
 
 /*
  * socket lease
@@ -72,7 +78,10 @@ ajp_request_stock_callback(void *ctx, struct stock_item *item)
     struct ajp_request *hr = ctx;
 
     if (item == NULL) {
-        http_response_handler_invoke_abort(&hr->handler);
+        GError *error =
+            g_error_new_literal(ajp_request_quark(), 0,
+                                "connection failed");
+        http_response_handler_invoke_abort(&hr->handler, error);
 
         if (hr->body != NULL)
             istream_close(hr->body);

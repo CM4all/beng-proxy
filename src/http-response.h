@@ -12,13 +12,15 @@
 
 #include <http/status.h>
 
+#include <glib.h>
+
 #include <assert.h>
 #include <stddef.h>
 
 struct http_response_handler {
     void (*response)(http_status_t status, struct strmap *headers,
                      istream_t body, void *ctx);
-    void (*abort)(void *ctx);
+    void (*abort)(GError *error, void *ctx);
 };
 
 struct http_response_handler_ref {
@@ -92,12 +94,14 @@ http_response_handler_direct_response(const struct http_response_handler *handle
 
 static inline void
 http_response_handler_direct_abort(const struct http_response_handler *handler,
-                                   void *ctx)
+                                   void *ctx,
+                                   GError *error)
 {
     assert(handler != NULL);
     assert(handler->abort != NULL);
+    assert(error != NULL);
 
-    handler->abort(ctx);
+    handler->abort(error, ctx);
 }
 
 /**
@@ -138,13 +142,15 @@ http_response_handler_invoke_response(struct http_response_handler_ref *ref,
 }
 
 static inline void
-http_response_handler_invoke_abort(struct http_response_handler_ref *ref)
+http_response_handler_invoke_abort(struct http_response_handler_ref *ref,
+                                   GError *error)
 {
     const struct http_response_handler *handler;
 
     assert(ref != NULL);
     assert(ref->handler != NULL);
     assert(ref->handler->abort != NULL);
+    assert(error != NULL);
     assert(!http_response_handler_used(ref));
 
     handler = ref->handler;
@@ -152,7 +158,7 @@ http_response_handler_invoke_abort(struct http_response_handler_ref *ref)
     ref->used = true;
 #endif
 
-    handler->abort(ref->ctx);
+    handler->abort(error, ref->ctx);
 }
 
 /**

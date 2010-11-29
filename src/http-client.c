@@ -103,6 +103,12 @@ static const struct timeval http_client_timeout = {
     .tv_usec = 0,
 };
 
+static inline GQuark
+http_client_quark(void)
+{
+    return g_quark_from_static_string("http_client");
+}
+
 static inline bool
 http_client_valid(const struct http_client *client)
 {
@@ -186,7 +192,7 @@ http_client_release(struct http_client *client, bool reuse)
  * Abort receiving the response status/headers from the HTTP server.
  */
 static void
-http_client_abort_response_headers(struct http_client *client)
+http_client_abort_response_headers(struct http_client *client, GError *error)
 {
     assert(client->fd >= 0);
     assert(client->response.read_state == READ_STATUS ||
@@ -195,7 +201,7 @@ http_client_abort_response_headers(struct http_client *client)
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
 
-    http_response_handler_invoke_abort(&client->request.handler);
+    http_response_handler_invoke_abort(&client->request.handler, error);
     http_client_release(client, false);
 }
 
@@ -220,16 +226,20 @@ http_client_abort_response_body(struct http_client *client)
  * server.
  */
 static void
-http_client_abort_response(struct http_client *client)
+http_client_abort_response(struct http_client *client, GError *error)
 {
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS ||
            client->response.read_state == READ_BODY);
 
     if (client->response.read_state != READ_BODY)
-        http_client_abort_response_headers(client);
-    else
+        http_client_abort_response_headers(client, error);
+    else {
+        daemon_log(2, "http-client: %s\n", error->message);
+        g_error_free(error);
+
         http_client_abort_response_body(client);
+    }
 }
 
 
@@ -381,9 +391,12 @@ http_client_parse_status_line(struct http_client *client,
 
     if (length < 10 || memcmp(line, "HTTP/", 5) != 0 ||
         (space = memchr(line + 6, ' ', length - 6)) == NULL) {
-        daemon_log(2, "http_client: malformed HTTP status line\n");
         stopwatch_event(client->stopwatch, "malformed");
-        http_client_abort_response_headers(client);
+
+        GError *error =
+            g_error_new_literal(http_client_quark(), 0,
+                                "malformed HTTP status line");
+        http_client_abort_response_headers(client, error);
         return false;
     }
 
@@ -395,18 +408,24 @@ http_client_parse_status_line(struct http_client *client,
 
     if (unlikely(length < 3 || !char_is_digit(line[0]) ||
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
-        daemon_log(2, "http_client: no HTTP status found\n");
         stopwatch_event(client->stopwatch, "malformed");
-        http_client_abort_response_headers(client);
+
+        GError *error =
+            g_error_new_literal(http_client_quark(), 0,
+                                "no HTTP status found");
+        http_client_abort_response_headers(client, error);
         return false;
     }
 
     client->response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
     if (unlikely(!http_status_is_valid(client->response.status))) {
-        daemon_log(2, "http_client: invalid HTTP status %d\n",
-                   client->response.status);
         stopwatch_event(client->stopwatch, "malformed");
-        http_client_abort_response_headers(client);
+
+        GError *error =
+            g_error_new(http_client_quark(), 0,
+                        "invalid HTTP status %d",
+                        client->response.status);
+        http_client_abort_response_headers(client, error);
         return false;
     }
 
@@ -456,18 +475,24 @@ http_client_headers_finished(struct http_client *client)
 
         if (unlikely(content_length_string == NULL)) {
             if (client->keep_alive) {
-                daemon_log(2, "http_client: no Content-Length header response\n");
                 stopwatch_event(client->stopwatch, "malformed");
-                http_client_abort_response_headers(client);
+
+                GError *error =
+                    g_error_new_literal(http_client_quark(), 0,
+                                        "no Content-Length header response");
+                http_client_abort_response_headers(client, error);
                 return false;
             }
             content_length = (off_t)-1;
         } else {
             content_length = strtoul(content_length_string, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
-                daemon_log(2, "http_client: invalid Content-Length header in response\n");
                 stopwatch_event(client->stopwatch, "malformed");
-                http_client_abort_response_headers(client);
+
+                GError *error =
+                    g_error_new_literal(http_client_quark(), 0,
+                                        "invalid Content-Length header in response");
+                http_client_abort_response_headers(client, error);
                 return false;
             }
 
@@ -593,8 +618,10 @@ http_client_parse_headers(struct http_client *client)
 
         if (next == NULL && fifo_buffer_full(client->input)) {
             /* the line is too large for our input buffer */
-            daemon_log(2, "http_client: response header too long\n");
-            http_client_abort_response_headers(client);
+            GError *error =
+                g_error_new_literal(http_client_quark(), 0,
+                                    "response header too long");
+            http_client_abort_response_headers(client, error);
             return false;
         }
 
@@ -803,10 +830,13 @@ http_client_try_read_buffered(struct http_client *client)
                 /* finished: close the HTTP client */
                 http_client_release(client, false);
         } else {
-            daemon_log(2, "http_client: server closed connection "
-                       "during response headers\n");
             stopwatch_event(client->stopwatch, "error");
-            http_client_abort_response_headers(client);
+
+            GError *error =
+                g_error_new_literal(http_client_quark(), 0,
+                                    "server closed connection "
+                                    "during response headers");
+            http_client_abort_response_headers(client, error);
         }
 
         return;
@@ -818,9 +848,11 @@ http_client_try_read_buffered(struct http_client *client)
             return;
         }
 
-        daemon_log(1, "http_client: read error (%s)\n", strerror(errno));
         stopwatch_event(client->stopwatch, "error");
-        http_client_abort_response(client);
+
+        GError *error = g_error_new(http_client_quark(), 0,
+                                    "read error (%s)", strerror(errno));
+        http_client_abort_response(client, error);
         return;
     }
 
@@ -878,9 +910,11 @@ http_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
     p_event_consumed(&client->request.event, client->pool);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "http_client: send timeout\n");
         stopwatch_event(client->stopwatch, "timeout");
-        http_client_abort_response(client);
+
+        GError *error = g_error_new_literal(http_client_quark(), 0,
+                                            "send timeout");
+        http_client_abort_response(client, error);
         return;
     }
 
@@ -899,9 +933,11 @@ http_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
     p_event_consumed(&client->response.event, client->pool);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "http_client: receive timeout\n");
         stopwatch_event(client->stopwatch, "timeout");
-        http_client_abort_response(client);
+
+        GError *error = g_error_new_literal(http_client_quark(), 0,
+                                            "receive timeout");
+        http_client_abort_response(client, error);
         return;
     }
 
@@ -935,7 +971,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    daemon_log(1, "http_client: write error (%s)\n", strerror(errno));
+    int _errno = errno;
 
     if (errno == EPIPE || errno == ECONNRESET) {
         /* the server has closed the connection, probably because he's
@@ -959,7 +995,10 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
     }
 
     stopwatch_event(client->stopwatch, "error");
-    http_client_abort_response(client);
+
+    GError *error = g_error_new(http_client_quark(), 0,
+                                "write error (%s)", strerror(_errno));
+    http_client_abort_response(client, error);
     return 0;
 }
 
@@ -1019,9 +1058,11 @@ http_client_request_stream_abort(void *ctx)
 
     client->request.istream = NULL;
 
-    if (client->response.read_state != READ_BODY)
-        http_client_abort_response_headers(client);
-    else if (client->response.body != NULL)
+    if (client->response.read_state != READ_BODY) {
+        GError *error = g_error_new_literal(http_client_quark(), 0,
+                                            "request body failed");
+        http_client_abort_response_headers(client, error);
+    } else if (client->response.body != NULL)
         http_client_abort_response_body(client);
     /* else: nothing to do */
 }
@@ -1095,8 +1136,9 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     assert(handler->response != NULL);
 
     if (!uri_verify_quick(uri)) {
-        daemon_log(4, "http-client: malformed request URI '%s'\n", uri);
-        http_response_handler_direct_abort(handler, ctx);
+        GError *error = g_error_new(http_client_quark(), 0,
+                                    "malformed request URI '%s'", uri);
+        http_response_handler_direct_abort(handler, ctx, error);
         return;
     }
 

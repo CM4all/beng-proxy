@@ -87,6 +87,12 @@ static const struct timeval fcgi_client_timeout = {
     .tv_usec = 0,
 };
 
+static GQuark
+fcgi_quark(void)
+{
+    return g_quark_from_static_string("fastcgi");
+}
+
 static void
 fcgi_client_response_body_init(struct fcgi_client *client);
 
@@ -147,7 +153,7 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
  * server.
  */
 static void
-fcgi_client_abort_response_headers(struct fcgi_client *client)
+fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 {
     assert(client->response.read_state == READ_HEADERS);
 
@@ -158,7 +164,7 @@ fcgi_client_abort_response_headers(struct fcgi_client *client)
 
     fcgi_client_release_socket(client, false);
 
-    http_response_handler_invoke_abort(&client->handler);
+    http_response_handler_invoke_abort(&client->handler, error);
 
     fcgi_client_release(client, false);
 }
@@ -187,15 +193,19 @@ fcgi_client_abort_response_body(struct fcgi_client *client)
  * server.
  */
 static void
-fcgi_client_abort_response(struct fcgi_client *client)
+fcgi_client_abort_response(struct fcgi_client *client, GError *error)
 {
     assert(client->response.read_state == READ_HEADERS ||
            client->response.read_state == READ_BODY);
 
     if (client->response.read_state != READ_BODY)
-        fcgi_client_abort_response_headers(client);
-    else
+        fcgi_client_abort_response_headers(client, error);
+    else {
+        daemon_log(2, "%s\n", error->message);
+        g_error_free(error);
+
         fcgi_client_abort_response_body(client);
+    }
 }
 
 static bool
@@ -400,9 +410,11 @@ fcgi_client_consume_input(struct fcgi_client *client)
 
         case FCGI_END_REQUEST:
             if (client->response.read_state == READ_HEADERS) {
-                daemon_log(1, "premature end of headers "
-                           "from FastCGI application\n");
-                fcgi_client_abort_response(client);
+                GError *error =
+                    g_error_new_literal(fcgi_quark(), 0,
+                                        "premature end of headers "
+                                        "from FastCGI application");
+                fcgi_client_abort_response(client, error);
                 return false;
             }
 
@@ -450,8 +462,10 @@ fcgi_client_try_read(struct fcgi_client *client)
     assert(nbytes != -2);
 
     if (nbytes == 0) {
-        daemon_log(1, "FastCGI server closed the connection\n");
-        fcgi_client_abort_response(client);
+        GError *error =
+            g_error_new_literal(fcgi_quark(), 0,
+                                "FastCGI server closed the connection");
+        fcgi_client_abort_response(client, error);
         return false;
     }
 
@@ -461,8 +475,11 @@ fcgi_client_try_read(struct fcgi_client *client)
             return true;
         }
 
-        daemon_log(1, "read error on FastCGI connection: %s\n", strerror(errno));
-        fcgi_client_abort_response(client);
+        GError *error =
+            g_error_new(fcgi_quark(), errno,
+                        "read error on FastCGI connection: %s",
+                        strerror(errno));
+        fcgi_client_abort_response(client, error);
         return false;
     }
 
@@ -490,8 +507,9 @@ fcgi_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
     p_event_consumed(&client->request.event, client->pool);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "fcgi_client: send timeout\n");
-        fcgi_client_abort_response(client);
+        GError *error = g_error_new_literal(fcgi_quark(), 0,
+                                            "send timeout");
+        fcgi_client_abort_response(client, error);
         return;
     }
 
@@ -510,8 +528,9 @@ fcgi_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
     p_event_consumed(&client->response.event, client->pool);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "fcgi_client: send timeout\n");
-        fcgi_client_abort_response(client);
+        GError *error = g_error_new_literal(fcgi_quark(), 0,
+                                            "receive timeout");
+        fcgi_client_abort_response(client, error);
         return;
     }
 
@@ -544,9 +563,10 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
             return 0;
         }
 
-        daemon_log(3, "write to FastCGI application failed: %s\n",
-                   strerror(errno));
-        fcgi_client_abort_response(client);
+        GError *error = g_error_new(fcgi_quark(), errno,
+                                    "write to FastCGI application failed: %s",
+                                    strerror(errno));
+        fcgi_client_abort_response(client, error);
         return 0;
     }
 
@@ -603,7 +623,10 @@ fcgi_request_stream_abort(void *ctx)
 
     client->request.istream = NULL;
 
-    fcgi_client_abort_response(client);
+    GError *error =
+        g_error_new_literal(fcgi_quark(), 0,
+                            "FastCGI response stream aborted");
+    fcgi_client_abort_response(client, error);
 }
 
 static const struct istream_handler fcgi_request_stream_handler = {

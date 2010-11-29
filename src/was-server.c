@@ -364,9 +364,12 @@ was_server_control_eof(void *ctx)
 }
 
 static void
-was_server_control_abort(void *ctx)
+was_server_control_abort(GError *error, void *ctx)
 {
     struct was_server *server = ctx;
+
+    daemon_log(2, "%s\n", error->message);
+    g_error_free(error);
 
     was_server_abort(server);
 }

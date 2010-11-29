@@ -566,11 +566,14 @@ response_response(http_status_t status, struct strmap *headers,
 }
 
 static void
-response_abort(void *ctx)
+response_abort(GError *error, void *ctx)
 {
     struct request *request = ctx;
 
     assert(!request->response_sent);
+
+    daemon_log(2, "error on %s: %s\n", request->request->uri, error->message);
+    g_error_free(error);
 
     response_dispatch_message(request,
                               HTTP_STATUS_INTERNAL_SERVER_ERROR,

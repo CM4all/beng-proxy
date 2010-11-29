@@ -112,6 +112,11 @@ struct processor {
     struct async_operation_ref *async_ref;
 };
 
+static inline GQuark
+parser_quark(void)
+{
+    return g_quark_from_static_string("parser");
+}
 
 static inline bool
 processor_option_quiet(const struct processor *processor)
@@ -1052,7 +1057,9 @@ processor_parser_abort(void *ctx)
 
     if (processor->container->from_request.proxy_ref != NULL) {
         async_operation_finished(&processor->async);
-        http_response_handler_invoke_abort(&processor->response_handler);
+        http_response_handler_invoke_abort(&processor->response_handler,
+                                           g_error_new_literal(parser_quark(), 0,
+                                                               "I/O error in parser"));
         pool_unref(processor->caller_pool);
     }
 }

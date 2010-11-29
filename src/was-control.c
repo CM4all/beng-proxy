@@ -5,6 +5,7 @@
  */
 
 #include "was-control.h"
+#include "was-quark.h"
 #include "fifo-buffer.h"
 #include "buffered-io.h"
 #include "pevent.h"
@@ -92,11 +93,13 @@ was_control_eof(struct was_control *control)
 }
 
 static void
-was_control_abort(struct was_control *control)
+was_control_abort(struct was_control *control, GError *error)
 {
+    assert(error != NULL);
+
     was_control_release_socket(control);
 
-    control->handler->abort(control->handler_ctx);
+    control->handler->abort(control->handler_ctx, error);
 }
 
 static bool
@@ -128,9 +131,10 @@ was_control_consume_input(struct was_control *control)
             /* not enough data yet */
 
             if (fifo_buffer_full(control->input.buffer)) {
-                daemon_log(2, "was-control: header too long (%u)\n",
-                           header->length);
-                was_control_abort(control);
+                GError *error = g_error_new(was_quark(), 0,
+                                            "control header too long (%u)",
+                                            header->length);
+                was_control_abort(control, error);
                 return false;
             }
 
@@ -169,8 +173,10 @@ was_control_try_read(struct was_control *control)
     assert(nbytes != -2);
 
     if (nbytes == 0) {
-        daemon_log(1, "was-control: server closed the connection\n");
-        was_control_abort(control);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "server closed the control connection");
+        was_control_abort(control, error);
         return;
     }
 
@@ -180,8 +186,10 @@ was_control_try_read(struct was_control *control)
             return;
         }
 
-        daemon_log(1, "was-control: receive error: %s\n", strerror(errno));
-        was_control_abort(control);
+        GError *error =
+            g_error_new(was_quark(), 0,
+                        "control receive error: %s", strerror(errno));
+        was_control_abort(control, error);
         return;
     }
 
@@ -203,8 +211,10 @@ was_control_try_write(struct was_control *control)
             return true;
         }
 
-        daemon_log(1, "was-control: send error: %s\n", strerror(errno));
-        was_control_abort(control);
+        GError *error =
+            g_error_new(was_quark(), 0,
+                        "control send error: %s", strerror(errno));
+        was_control_abort(control, error);
         return false;
     }
 
@@ -235,14 +245,18 @@ was_control_input_event_callback(int fd __attr_unused, short event, void *ctx)
     p_event_consumed(&control->input.event, control->pool);
 
     if (control->done) {
-        daemon_log(2, "was-control: received too much data\n");
-        was_control_abort(control);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "received too much control data");
+        was_control_abort(control, error);
         return;
     }
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "was-control: recv timeout\n");
-        was_control_abort(control);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "control receive timeout");
+        was_control_abort(control, error);
         return;
     }
 
@@ -262,8 +276,10 @@ was_control_output_event_callback(int fd __attr_unused, short event, void *ctx)
     p_event_consumed(&control->output.event, control->pool);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "was-control: send timeout\n");
-        was_control_abort(control);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "control send timeout");
+        was_control_abort(control, error);
         return;
     }
 
@@ -329,8 +345,10 @@ was_control_start(struct was_control *control, enum was_command cmd,
     struct was_header *header = fifo_buffer_write(control->output.buffer,
                                                   &max_length);
     if (header == NULL || max_length < sizeof(*header) + payload_length) {
-        daemon_log(2, "was-control: output is too large\n");
-        was_control_abort(control);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "control output is too large");
+        was_control_abort(control, error);
         return NULL;
     }
 
@@ -443,8 +461,10 @@ was_control_done(struct was_control *control)
     control->done = true;
 
     if (!fifo_buffer_empty(control->input.buffer)) {
-        daemon_log(2, "was-control: received too much data\n");
-        was_control_abort(control);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "received too much control data");
+        was_control_abort(control, error);
         return;
     }
 

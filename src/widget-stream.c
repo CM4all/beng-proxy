@@ -8,6 +8,7 @@
 #include "http-response.h"
 
 #include <inline/compiler.h>
+#include <daemon/log.h>
 
 /*
  * HTTP response handler
@@ -33,11 +34,14 @@ ws_response(__attr_unused http_status_t status,
 }
 
 static void
-ws_abort(void *ctx)
+ws_abort(GError *error, void *ctx)
 {
     struct widget_stream *ws = ctx;
 
     assert(ws->delayed != NULL);
+
+    daemon_log(2, "error from widget: %s\n", error->message);
+    g_error_free(error);
 
     /* clear the delayed async_ref object: we didn't provide an
        istream to the delayed object, and if we close it right now, it

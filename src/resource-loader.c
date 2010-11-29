@@ -28,6 +28,12 @@ struct resource_loader {
     struct hstock *delegate_stock;
 };
 
+static inline GQuark
+resource_loader_quark(void)
+{
+    return g_quark_from_static_string("resource_loader");
+}
+
 struct resource_loader *
 resource_loader_new(pool_t pool, struct hstock *tcp_stock,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
@@ -100,7 +106,9 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
 
         if (address->u.local.delegate != NULL) {
             if (rl->delegate_stock == NULL) {
-                http_response_handler_direct_abort(handler, handler_ctx);
+                GError *error = g_error_new_literal(resource_loader_quark(), 0,
+                                                    "No delegate stock");
+                http_response_handler_direct_abort(handler, handler_ctx, error);
                 return;
             }
 
@@ -193,5 +201,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
     if (body != NULL)
         istream_close(body);
 
-    http_response_handler_direct_abort(handler, handler_ctx);
+    GError *error = g_error_new_literal(resource_loader_quark(), 0,
+                                        "Could not locate resource");
+    http_response_handler_direct_abort(handler, handler_ctx, error);
 }

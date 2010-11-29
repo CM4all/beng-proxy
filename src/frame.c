@@ -24,13 +24,23 @@ struct frame_class_looup {
     struct async_operation_ref *async_ref;
 };
 
+static inline GQuark
+widget_quark(void)
+{
+    return g_quark_from_static_string("widget");
+}
+
 static void
 frame_class_lookup_callback(void *ctx)
 {
     struct frame_class_looup *fcl = ctx;
 
     if (fcl->widget->class == NULL) {
-        http_response_handler_invoke_abort(&fcl->handler);
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "lookup of widget class '%s' for '%s' failed",
+                        fcl->widget->class_name, widget_path(fcl->widget));
+        http_response_handler_invoke_abort(&fcl->handler, error);
         return;
     }
 
@@ -79,12 +89,14 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
                                    widget_get_view_name(widget))) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
-        daemon_log(4, "frame within non-container requested\n");
 
         if (env->request_body != NULL)
             istream_free(&env->request_body);
 
-        http_response_handler_direct_abort(handler, handler_ctx);
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "frame within non-container requested");
+        http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 

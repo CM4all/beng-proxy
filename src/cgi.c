@@ -48,6 +48,11 @@ struct cgi {
     struct http_response_handler_ref handler;
 };
 
+static GQuark
+cgi_quark(void)
+{
+    return g_quark_from_static_string("cgi");
+}
 
 static bool
 cgi_handle_line(struct cgi *cgi, const char *line, size_t length)
@@ -229,13 +234,15 @@ cgi_input_eof(void *ctx)
     cgi->input = NULL;
 
     if (cgi->headers != NULL) {
-        daemon_log(1, "premature end of headers from CGI script\n");
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
 
-        http_response_handler_invoke_abort(&cgi->handler);
+        GError *error =
+            g_error_new_literal(cgi_quark(), 0,
+                                "premature end of headers from CGI script");
+        http_response_handler_invoke_abort(&cgi->handler, error);
         pool_unref(cgi->output.pool);
     } else if (cgi->buffer == NULL || fifo_buffer_empty(cgi->buffer)) {
         stopwatch_event(cgi->stopwatch, "end");
@@ -260,7 +267,10 @@ cgi_input_abort(void *ctx)
            handler */
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
 
-        http_response_handler_invoke_abort(&cgi->handler);
+        GError *error =
+            g_error_new_literal(cgi_quark(), 0,
+                                "CGI response stream aborted");
+        http_response_handler_invoke_abort(&cgi->handler, error);
         pool_unref(cgi->output.pool);
     } else
         /* response has been sent: abort only the output stream */
@@ -536,9 +546,6 @@ cgi_new(pool_t pool, bool jail,
     pid = beng_fork(pool, body, &input,
                     cgi_child_callback, NULL, &error);
     if (pid < 0) {
-        daemon_log(2, "%s\n", error->message);
-        g_error_free(error);
-
         if (body != NULL) {
             /* beng_fork() left the request body open - free this
                resource, because our caller always assume that we have
@@ -548,13 +555,15 @@ cgi_new(pool_t pool, bool jail,
 
             istream_close(body);
 
-            if (abort_flag.aborted)
+            if (abort_flag.aborted) {
                 /* the operation was aborted - don't call the
                    http_response_handler */
+                g_error_free(error);
                 return;
+            }
         }
 
-        http_response_handler_direct_abort(handler, handler_ctx);
+        http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 

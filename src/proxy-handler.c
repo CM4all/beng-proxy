@@ -73,11 +73,11 @@ proxy_response(http_status_t status, struct strmap *headers,
 }
 
 static void
-proxy_abort(void *ctx)
+proxy_abort(GError *error, void *ctx)
 {
     struct request *request2 = ctx;
 
-    http_response_handler_direct_abort(&response_handler, request2);
+    http_response_handler_direct_abort(&response_handler, request2, error);
 }
 
 static const struct http_response_handler proxy_response_handler = {

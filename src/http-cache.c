@@ -483,11 +483,11 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 }
 
 static void 
-http_cache_response_abort(void *ctx)
+http_cache_response_abort(GError *error, void *ctx)
 {
     struct http_cache_request *request = ctx;
 
-    cache_log(4, "http_cache: response_abort %s\n", request->key);
+    g_prefix_error(&error, "http_cache %s: ", request->key);
 
     if (request->document != NULL && request->cache->cache != NULL)
         http_cache_unlock(request->cache, request->document);
@@ -499,7 +499,7 @@ http_cache_response_abort(void *ctx)
 #endif
 
     async_operation_finished(&request->operation);
-    http_response_handler_invoke_abort(&request->handler);
+    http_response_handler_invoke_abort(&request->handler, error);
 
     pool_unref_denotify(caller_pool, &notify);
 }

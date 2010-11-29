@@ -11,6 +11,8 @@
 
 #include <was/protocol.h>
 
+#include <glib.h>
+
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -34,7 +36,7 @@ struct was_control_handler {
     bool (*drained)(void *ctx);
 
     void (*eof)(void *ctx);
-    void (*abort)(void *ctx);
+    void (*abort)(GError *error, void *ctx);
 };
 
 struct was_control *

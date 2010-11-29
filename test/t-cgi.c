@@ -120,9 +120,12 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
 }
 
 static void
-my_response_abort(void *ctx)
+my_response_abort(GError *error, void *ctx)
 {
     struct context *c = ctx;
+
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
 
     c->aborted = true;
 

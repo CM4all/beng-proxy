@@ -50,7 +50,9 @@ embed_frame_widget(__attr_unused pool_t pool,
                    void *handler_ctx,
                    __attr_unused struct async_operation_ref *async_ref)
 {
-    http_response_handler_direct_abort(handler, handler_ctx);
+    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
+                                        "Test");
+    http_response_handler_direct_abort(handler, handler_ctx, error);
 }
 
 struct widget_session *

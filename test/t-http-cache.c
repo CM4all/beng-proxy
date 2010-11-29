@@ -297,8 +297,11 @@ my_http_response(http_status_t status, struct strmap *headers,
 }
 
 static void __attr_noreturn
-my_http_abort(__attr_unused void *ctx)
+my_http_abort(GError *error, __attr_unused void *ctx)
 {
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
+
     assert(false);
 }
 

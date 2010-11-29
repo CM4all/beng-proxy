@@ -47,7 +47,9 @@ embed_frame_widget(__attr_unused pool_t pool,
                    void *handler_ctx,
                    __attr_unused struct async_operation_ref *async_ref)
 {
-    http_response_handler_direct_abort(handler, handler_ctx);
+    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
+                                        "Test");
+    http_response_handler_direct_abort(handler, handler_ctx, error);
 }
 
 struct widget_session *
@@ -88,8 +90,10 @@ my_response(G_GNUC_UNUSED http_status_t status,
 }
 
 static void
-my_response_abort(G_GNUC_UNUSED void *ctx)
+my_response_abort(GError *error, G_GNUC_UNUSED void *ctx)
 {
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
 }
 
 static const struct http_response_handler my_response_handler = {

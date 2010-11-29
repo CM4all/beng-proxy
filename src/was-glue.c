@@ -5,6 +5,7 @@
  */
 
 #include "was-glue.h"
+#include "was-quark.h"
 #include "was-stock.h"
 #include "was-client.h"
 #include "http-response.h"
@@ -68,7 +69,9 @@ was_stock_callback(void *ctx, struct stock_item *item)
     struct was_request *request = ctx;
 
     if (item == NULL) {
-        http_response_handler_invoke_abort(&request->handler);
+        GError *error = g_error_new_literal(was_quark(), 0,
+                                            "connection failed");
+        http_response_handler_invoke_abort(&request->handler, error);
         return;
     }
 
@@ -111,8 +114,9 @@ was_request(pool_t pool, struct hstock *was_stock, bool jail,
     struct was_request *request;
 
     if (jail && document_root == NULL) {
-        daemon_log(2, "No document root\n");
-        http_response_handler_direct_abort(handler, handler_ctx);
+        GError *error = g_error_new_literal(was_quark(), 0,
+                                            "no document root");
+        http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 

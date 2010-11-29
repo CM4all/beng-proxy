@@ -20,8 +20,6 @@
 #include "resource-tag.h"
 #include "uri-extract.h"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <string.h>
 
@@ -49,6 +47,12 @@ struct embed {
     struct http_response_handler_ref handler_ref;
     struct async_operation_ref *async_ref;
 };
+
+static inline GQuark
+widget_quark(void)
+{
+    return g_quark_from_static_string("widget");
+}
 
 static struct session *
 session_get_if_stateful(const struct embed *embed)
@@ -189,17 +193,22 @@ widget_response_process(struct embed *embed, http_status_t status,
         embed->transformation = NULL;
 
     if (body == NULL) {
-        daemon_log(2, "widget '%s' didn't send a response body\n",
-                   widget_path(embed->widget));
-        http_response_handler_invoke_abort(&embed->handler_ref);
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "widget '%s' didn't send a response body",
+                        widget_path(embed->widget));
+        http_response_handler_invoke_abort(&embed->handler_ref, error);
         return;
     }
 
     if (!processable(headers)) {
-        daemon_log(2, "widget '%s' sent non-HTML response\n",
-                   widget_path(embed->widget));
         istream_close(body);
-        http_response_handler_invoke_abort(&embed->handler_ref);
+
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "widget '%s' sent non-HTML response",
+                        widget_path(embed->widget));
+        http_response_handler_invoke_abort(&embed->handler_ref, error);
         return;
     }
 
@@ -250,14 +259,16 @@ widget_response_transform(struct embed *embed, http_status_t status,
 
     p = strmap_get_checked(headers, "content-encoding");
     if (p != NULL && strcmp(p, "identity") != 0) {
-        daemon_log(2, "widget '%s' sent non-identity response, "
-                   "cannot transform\n",
-                   widget_path(embed->widget));
-
         if (body != NULL)
             istream_close(body);
 
-        http_response_handler_invoke_abort(&embed->handler_ref);
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "widget '%s' sent non-identity response, "
+                        "cannot transform",
+                        widget_path(embed->widget));
+
+        http_response_handler_invoke_abort(&embed->handler_ref, error);
         return;
     }
 
@@ -375,11 +386,11 @@ widget_response_response(http_status_t status, struct strmap *headers,
 }
 
 static void
-widget_response_abort(void *ctx)
+widget_response_abort(GError *error, void *ctx)
 {
     struct embed *embed = ctx;
 
-    http_response_handler_invoke_abort(&embed->handler_ref);
+    http_response_handler_invoke_abort(&embed->handler_ref, error);
 }
 
 static const struct http_response_handler widget_response_handler = {
@@ -411,9 +422,11 @@ widget_http_request(pool_t pool, struct widget *widget,
     view = transformation_view_lookup(widget->class->views,
                                       widget_get_view_name(widget));
     if (view == NULL) {
-        daemon_log(3, "unknown view name for class '%s': '%s'\n",
-                   widget->class_name, widget_get_view_name(widget));
-        http_response_handler_direct_abort(handler, handler_ctx);
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "unknown view name for class '%s': '%s'",
+                        widget->class_name, widget_get_view_name(widget));
+        http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 

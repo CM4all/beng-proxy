@@ -611,7 +611,8 @@ test_was_mirror_SOURCES = test/was-mirror.c \
 	src/fd_util.c src/fd-util.c src/socket-util.c
 test_was_mirror_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
 
 test_t_hashmap_SOURCES = test/t-hashmap.c src/hashmap.c $(POOL_SRC)
 test_t_hashmap_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
@@ -780,6 +781,7 @@ test_t_widget_stream_SOURCES = test/t-widget-stream.c \
 	src/istream-string.c src/istream-delayed.c \
 	src/widget-stream.c
 test_t_widget_stream_LDADD = $(LIBEVENT_LIBS) \
+	$(GLIB_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
@@ -930,6 +932,7 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/stopwatch.c \
 	src/tpool.c src/event2.c
 test_t_http_client_LDADD = $(AM_LDADD) \
+	$(GLIB_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
@@ -1036,7 +1039,9 @@ test_t_wembed_SOURCES = test/t-wembed.c \
 	src/http-util.c src/strutil.c \
 	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
 	src/format.c src/global.c
-test_t_wembed_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
+test_t_wembed_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(GLIB_LIBS)
 
 test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
@@ -1201,6 +1206,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/direct.c \
 	$(POOL_SRC)
 test_run_ajp_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(GLIB_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 

@@ -159,9 +159,13 @@ inline_widget_response(http_status_t status,
 }
 
 static void
-inline_widget_abort(void *ctx)
+inline_widget_abort(GError *error, void *ctx)
 {
     struct inline_widget *iw = ctx;
+
+    daemon_log(1, "Could not insert widget %s: %s\n",
+               widget_path(iw->widget), error->message);
+    g_error_free(error);
 
     inline_widget_close(iw);
 }

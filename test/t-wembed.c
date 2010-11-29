@@ -43,7 +43,9 @@ widget_http_request(pool_t pool __attr_unused, struct widget *widget __attr_unus
                     void *handler_ctx,
                     struct async_operation_ref *async_ref __attr_unused)
 {
-    http_response_handler_direct_abort(handler, handler_ctx);
+    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
+                                        "Test");
+    http_response_handler_direct_abort(handler, handler_ctx, error);
 }
 
 struct test_operation {

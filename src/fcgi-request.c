@@ -45,6 +45,12 @@ struct fcgi_request {
     struct async_operation_ref *async_ref;
 };
 
+static GQuark
+fcgi_request_quark(void)
+{
+    return g_quark_from_static_string("fcgi_request");
+}
+
 
 /*
  * socket lease
@@ -70,7 +76,10 @@ fcgi_stock_callback(void *ctx, struct stock_item *item)
     struct fcgi_request *request = ctx;
 
     if (item == NULL) {
-        http_response_handler_invoke_abort(&request->handler);
+        GError *error =
+            g_error_new_literal(fcgi_request_quark(), 0,
+                                "FastCGI startup failed");
+        http_response_handler_invoke_abort(&request->handler, error);
         return;
     }
 
@@ -120,8 +129,10 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
     struct fcgi_request *request;
 
     if (jail && document_root == NULL) {
-        daemon_log(2, "No document root\n");
-        http_response_handler_direct_abort(handler, handler_ctx);
+        GError *error =
+            g_error_new_literal(fcgi_request_quark(), 0,
+                                "No document root");
+        http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 

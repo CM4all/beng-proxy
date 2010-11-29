@@ -55,7 +55,9 @@ processor_new(__attr_unused pool_t pool, __attr_unused http_status_t status,
               void *handler_ctx,
               __attr_unused struct async_operation_ref *async_ref)
 {
-    http_response_handler_direct_abort(handler, handler_ctx);
+    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
+                                        "Test");
+    http_response_handler_direct_abort(handler, handler_ctx, error);
 }
 
 struct filter_cache;
@@ -72,7 +74,9 @@ filter_cache_request(__attr_unused struct filter_cache *cache,
                      void *handler_ctx,
                      __attr_unused struct async_operation_ref *async_ref)
 {
-    http_response_handler_direct_abort(handler, handler_ctx);
+    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
+                                        "Test");
+    http_response_handler_direct_abort(handler, handler_ctx, error);
 }
 
 struct stock *global_pipe_stock;
@@ -173,8 +177,11 @@ my_http_response(http_status_t status, __attr_unused struct strmap *headers,
 }
 
 static void __attr_noreturn
-my_http_abort(__attr_unused void *ctx)
+my_http_abort(GError *error, __attr_unused void *ctx)
 {
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
+
     assert(false);
 }
 

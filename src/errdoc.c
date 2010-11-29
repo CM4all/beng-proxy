@@ -12,6 +12,8 @@
 #include "tcache.h"
 #include "get.h"
 
+#include <daemon/log.h>
+
 struct error_response {
     struct request *request2;
 
@@ -51,9 +53,13 @@ errdoc_response_response(http_status_t status, struct strmap *headers,
 }
 
 static void
-errdoc_response_abort(void *ctx)
+errdoc_response_abort(GError *error, void *ctx)
 {
     struct error_response *er = ctx;
+
+    daemon_log(2, "error on error document of %s: %s\n",
+               er->request2->request->uri, error->message);
+    g_error_free(error);
 
     errdoc_resubmit(er);
 }

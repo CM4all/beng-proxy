@@ -12,6 +12,8 @@
 #include "http-util.h"
 #include "global.h"
 
+#include <daemon/log.h>
+
 static void
 widget_proxy_response(http_status_t status, struct strmap *headers,
                       istream_t body, void *ctx)
@@ -49,9 +51,12 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 }
 
 static void
-widget_proxy_abort(void *ctx)
+widget_proxy_abort(GError *error, void *ctx)
 {
     struct request *request2 = ctx;
+
+    daemon_log(2, "error from widget: %s\n", error->message);
+    g_error_free(error);
 
     response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                               "Upstream server failed");

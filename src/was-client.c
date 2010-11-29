@@ -5,6 +5,7 @@
  */
 
 #include "was-client.h"
+#include "was-quark.h"
 #include "was-control.h"
 #include "was-output.h"
 #include "was-input.h"
@@ -103,7 +104,7 @@ was_client_clear(struct was_client *client)
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
-was_client_abort_response_headers(struct was_client *client)
+was_client_abort_response_headers(struct was_client *client, GError *error)
 {
     assert(was_client_receiving_metadata(client));
 
@@ -111,7 +112,7 @@ was_client_abort_response_headers(struct was_client *client)
 
     was_client_clear(client);
 
-    http_response_handler_invoke_abort(&client->handler);
+    http_response_handler_invoke_abort(&client->handler, error);
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
@@ -152,14 +153,21 @@ was_client_abort_pending(struct was_client *client)
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
-was_client_abort(struct was_client *client)
+was_client_abort(struct was_client *client, GError *error)
 {
     if (was_client_receiving_metadata(client))
-        was_client_abort_response_headers(client);
-    else if (was_client_response_submitted(client))
+        was_client_abort_response_headers(client, error);
+    else if (was_client_response_submitted(client)) {
+        daemon_log(2, "http-client: %s\n", error->message);
+        g_error_free(error);
+
         was_client_abort_response_body(client);
-    else
+    } else {
+        daemon_log(2, "http-client: %s\n", error->message);
+        g_error_free(error);
+
         was_client_abort_pending(client);
+    }
 }
 
 
@@ -172,6 +180,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
                           size_t payload_length, void *ctx)
 {
     struct was_client *client = ctx;
+    GError *error;
 
     switch (cmd) {
         struct strmap *headers;
@@ -188,7 +197,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
     case WAS_COMMAND_PATH_INFO:
     case WAS_COMMAND_QUERY_STRING:
     case WAS_COMMAND_PARAMETER:
-        was_client_abort(client);
+        error = g_error_new(was_quark(), 0,
+                            "Unexpected WAS packet %d", cmd);
+        was_client_abort(client, error);
         return false;
 
     case WAS_COMMAND_HEADER:
@@ -200,7 +211,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
         p = memchr(payload, '=', payload_length);
         if (p == NULL || p == payload) {
-            was_client_abort_response_headers(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "Malformed WAS HEADER packet");
+            was_client_abort_response_headers(client, error);
             return false;
         }
 
@@ -274,8 +287,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         }
 
         if (client->response.body == NULL) {
-            daemon_log(2, "was-client: no response body allowed\n");
-            was_client_abort_response_headers(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "no response body allowed");
+            was_client_abort_response_headers(client, error);
             return false;
         }
 
@@ -284,8 +298,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_LENGTH:
         if (was_client_receiving_metadata(client)) {
-            daemon_log(2, "was-client: LENGTH before DATA\n");
-            was_client_abort_response_headers(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "LENGTH before DATA");
+            was_client_abort_response_headers(client, error);
             return false;
         }
 
@@ -317,8 +332,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_PREMATURE:
         if (was_client_receiving_metadata(client)) {
-            daemon_log(2, "was-client: PREMATURE before DATA\n");
-            was_client_abort_response_headers(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "PREMATURE before DATA");
+            was_client_abort_response_headers(client, error);
             return false;
         }
 
@@ -388,13 +404,13 @@ was_client_control_eof(void *ctx)
 }
 
 static void
-was_client_control_abort(void *ctx)
+was_client_control_abort(GError *error, void *ctx)
 {
     struct was_client *client = ctx;
 
     client->control = NULL;
 
-    was_client_abort(client);
+    was_client_abort(client, error);
 }
 
 static const struct was_control_handler was_client_control_handler = {
@@ -432,7 +448,10 @@ was_client_output_premature(uint64_t length, void *ctx)
 
     /* XXX send PREMATURE, recover */
     (void)length;
-    was_client_abort(client);
+
+    GError *error = g_error_new_literal(was_quark(), 0,
+                                        "WAS output was closed prematurely");
+    was_client_abort(client, error);
     return false;
 }
 
@@ -454,7 +473,10 @@ was_client_output_abort(void *ctx)
     assert(client->request.body != NULL);
 
     client->request.body = NULL;
-    was_client_abort(client);
+
+    GError *error = g_error_new_literal(was_quark(), 0,
+                                        "WAS output has failed");
+    was_client_abort(client, error);
 }
 
 static const struct was_output_handler was_client_output_handler = {
@@ -622,7 +644,9 @@ was_client_request(pool_t caller_pool, int control_fd,
                                 params, num_params) ||
         !was_control_send_empty(client->control, client->request.body != NULL
                                 ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA)) {
-        was_client_abort_response_headers(client);
+        GError *error = g_error_new_literal(was_quark(), 0,
+                                            "Failed to send WAS request");
+        was_client_abort_response_headers(client, error);
         return;
     }
 

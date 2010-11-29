@@ -407,13 +407,13 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 }
 
 static void
-filter_cache_response_abort(void *ctx)
+filter_cache_response_abort(GError *error, void *ctx)
 {
     struct filter_cache_request *request = ctx;
 
-    cache_log(4, "filter_cache: response_abort %s\n", request->info->key);
+    g_prefix_error(&error, "http_cache %s: ", request->info->key);
 
-    http_response_handler_invoke_abort(&request->handler);
+    http_response_handler_invoke_abort(&request->handler, error);
     pool_unref(request->caller_pool);
 }
 

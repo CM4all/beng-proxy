@@ -36,6 +36,12 @@ struct http_request {
     struct async_operation_ref *async_ref;
 };
 
+static GQuark
+http_request_quark(void)
+{
+    return g_quark_from_static_string("http_request");
+}
+
 
 /*
  * socket lease
@@ -66,7 +72,9 @@ http_request_stock_callback(void *ctx, struct stock_item *item)
     struct http_request *hr = ctx;
 
     if (item == NULL) {
-        http_response_handler_invoke_abort(&hr->handler);
+        GError *error = g_error_new_literal(http_request_quark(), 0,
+                                            "connection failed");
+        http_response_handler_invoke_abort(&hr->handler, error);
 
         if (hr->body != NULL)
             istream_close(hr->body);
@@ -135,7 +143,10 @@ http_request(pool_t pool,
         p = uwa->uri + 7;
         slash = strchr(p, '/');
         if (slash == p) {
-            http_response_handler_invoke_abort(&hr->handler);
+            GError *error =
+                g_error_new_literal(http_request_quark(), 0,
+                                    "malformed HTTP URI");
+            http_response_handler_invoke_abort(&hr->handler, error);
             return;
         }
 
@@ -161,7 +172,11 @@ http_request(pool_t pool,
         else
             host_and_port = p_strndup(hr->pool, p, qmark - p);
     } else {
-        http_response_handler_invoke_abort(&hr->handler);
+        GError *error =
+            g_error_new_literal(http_request_quark(), 0,
+                                "malformed URI");
+
+        http_response_handler_invoke_abort(&hr->handler, error);
         return;
     }
 
