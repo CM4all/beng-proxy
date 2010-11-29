@@ -1223,8 +1223,11 @@ bound to it:
 
 \begin{verbatim}
 daemon -o /var/log/access.log \
-    cm4all-beng-proxy-log-exec cm4all-beng-proxy-log-cat
+    cm4all-beng-proxy-log-exec '*' cm4all-beng-proxy-log-cat
 \end{verbatim}
+
+The first parameter is the IP address to bind to; ``*'' means listen
+on all interfaces.
 
 These two programs are useful in conjunction, to store logs on a
 central server.
