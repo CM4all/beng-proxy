@@ -101,10 +101,56 @@ generate_path(const char *template, const struct log_datagram *d)
     }
 }
 
+static bool
+make_parent_directory_recursive(char *path)
+{
+    char *slash = strrchr(path, '/');
+    if (slash == NULL || slash == path)
+        return true;
+
+    *slash = 0;
+    int ret = mkdir(path, 0777);
+    if (ret >= 0) {
+        /* success */
+        *slash = '/';
+        return true;
+    } else if (errno == ENOENT) {
+        if (!make_parent_directory_recursive(path))
+            return false;
+
+        /* try again */
+        ret = mkdir(path, 0777);
+        *slash = '/';
+        return ret >= 0;
+    } else {
+        fprintf(stderr, "Failed to create directory %s: %s\n",
+                path, strerror(errno));
+
+        return false;
+    }
+}
+
+static bool
+make_parent_directory(const char *path)
+{
+    char buffer[strlen(path)];
+    strcpy(buffer, path);
+
+    return make_parent_directory_recursive(buffer);
+}
+
 static int
 open_log_file(const char *path)
 {
     int fd = open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOCTTY, 0666);
+    if (fd < 0 && errno == ENOENT) {
+        if (!make_parent_directory(path))
+            return -1;
+
+        /* try again */
+        fd = open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOCTTY, 0666);
+    }
+
     if (fd < 0) {
         fprintf(stderr, "Failed to open %s: %s\n",
                 path, strerror(errno));
