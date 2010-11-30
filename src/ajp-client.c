@@ -144,6 +144,27 @@ ajp_client_release(struct ajp_client *client, bool reuse)
 }
 
 static void
+ajp_client_abort_headers(struct ajp_client *client)
+{
+    assert(client != NULL);
+    assert(client->fd >= 0);
+    assert(client->response.read_state == READ_BEGIN);
+
+    pool_ref(client->pool);
+
+    async_operation_finished(&client->request.async);
+    http_response_handler_invoke_abort(&client->request.handler);
+    client->response.read_state = READ_END;
+
+    /* check fd>=0 just in case the response handler has closed the
+       request body */
+    if (client->fd >= 0)
+        ajp_client_release(client, false);
+
+    pool_unref(client->pool);
+}
+
+static void
 ajp_connection_close(struct ajp_client *client)
 {
     if (client->fd >= 0) {
@@ -254,13 +275,13 @@ ajp_consume_send_headers(struct ajp_client *client,
 
     if (strref_is_null(&packet)) {
         daemon_log(1, "malformed SEND_HEADERS packet from AJP server\n");
-        ajp_connection_close(client);
+        ajp_client_abort_headers(client);
         return false;
     }
 
     if (!http_status_is_valid(status)) {
         daemon_log(1, "invalid status %u from AJP server\n", status);
-        ajp_connection_close(client);
+        ajp_client_abort_headers(client);
         return false;
     }
 
