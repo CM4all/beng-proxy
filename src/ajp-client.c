@@ -129,6 +129,7 @@ ajp_client_release(struct ajp_client *client, bool reuse)
 {
     assert(client != NULL);
     assert(client->fd >= 0);
+    assert(client->response.read_state == READ_END);
 
     p_event_del(&client->request.event, client->pool);
     p_event_del(&client->response.event, client->pool);
@@ -205,6 +206,8 @@ istream_ajp_close(istream_t istream)
     struct ajp_client *client = istream_to_ajp(istream);
 
     assert(client->response.read_state == READ_BODY);
+
+    client->response.read_state = READ_END;
 
     ajp_client_release(client, false);
     istream_deinit_abort(&client->response.body);
