@@ -694,12 +694,8 @@ ajp_client_request_abort(struct async_operation *ao)
        delivered to our callback */
     assert(client->response.read_state == READ_BEGIN);
 
-    /* by setting the state to READ_END, we bar
-       ajp_client_request_close() from invoking the "abort"
-       callback */
     client->response.read_state = READ_END;
-
-    ajp_connection_close(client);
+    ajp_client_release(client, false);
 }
 
 static const struct async_operation_class ajp_client_request_async_operation = {
