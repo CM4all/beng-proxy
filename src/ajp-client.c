@@ -184,29 +184,22 @@ ajp_client_abort_response_body(struct ajp_client *client)
 static void
 ajp_connection_close(struct ajp_client *client)
 {
-    if (client->fd >= 0) {
-        pool_ref(client->pool);
+    assert(client != NULL);
+    assert(client->fd >= 0);
+    assert(client->response.read_state != READ_END);
 
-        switch (client->response.read_state) {
-        case READ_BEGIN:
-            async_operation_finished(&client->request.async);
-            http_response_handler_invoke_abort(&client->request.handler);
-            client->response.read_state = READ_END;
-            break;
+    switch (client->response.read_state) {
+    case READ_BEGIN:
+        ajp_client_abort_headers(client);
+        break;
 
-        case READ_BODY:
-            istream_deinit_abort(&client->response.body);
-            client->response.read_state = READ_END;
-            break;
+    case READ_BODY:
+        ajp_client_abort_response_body(client);
+        break;
 
-        case READ_END:
-            assert(false);
-            break;
-        }
-
-        ajp_client_release(client, false);
-
-        pool_unref(client->pool);
+    case READ_END:
+        assert(false);
+        break;
     }
 }
 
