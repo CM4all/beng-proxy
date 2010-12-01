@@ -152,14 +152,11 @@ ajp_client_abort_headers(struct ajp_client *client)
 
     pool_ref(client->pool);
 
+    client->response.read_state = READ_END;
     async_operation_finished(&client->request.async);
     http_response_handler_invoke_abort(&client->request.handler);
-    client->response.read_state = READ_END;
 
-    /* check fd>=0 just in case the response handler has closed the
-       request body */
-    if (client->fd >= 0)
-        ajp_client_release(client, false);
+    ajp_client_release(client, false);
 
     pool_unref(client->pool);
 }
@@ -176,13 +173,10 @@ ajp_client_abort_response_body(struct ajp_client *client)
 
     pool_ref(client->pool);
 
-    istream_deinit_abort(&client->response.body);
     client->response.read_state = READ_END;
+    istream_deinit_abort(&client->response.body);
 
-    /* check fd>=0 just in case the response handler has closed the
-       request body */
-    if (client->fd >= 0)
-        ajp_client_release(client, false);
+    ajp_client_release(client, false);
 
     pool_unref(client->pool);
 }
@@ -206,11 +200,11 @@ ajp_connection_close(struct ajp_client *client)
             break;
 
         case READ_END:
+            assert(false);
             break;
         }
 
-        if (client->fd >= 0)
-            ajp_client_release(client, false);
+        ajp_client_release(client, false);
 
         pool_unref(client->pool);
     }
@@ -706,7 +700,8 @@ ajp_request_stream_abort(void *ctx)
 
     client->request.istream = NULL;
 
-    ajp_connection_close(client);
+    if (client->response.read_state != READ_END)
+        ajp_connection_close(client);
 }
 
 static const struct istream_handler ajp_request_stream_handler = {
