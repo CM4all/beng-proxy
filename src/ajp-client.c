@@ -164,6 +164,29 @@ ajp_client_abort_headers(struct ajp_client *client)
     pool_unref(client->pool);
 }
 
+/**
+ * Abort the response body.
+ */
+static void
+ajp_client_abort_response_body(struct ajp_client *client)
+{
+    assert(client != NULL);
+    assert(client->fd >= 0);
+    assert(client->response.read_state == READ_BODY);
+
+    pool_ref(client->pool);
+
+    istream_deinit_abort(&client->response.body);
+    client->response.read_state = READ_END;
+
+    /* check fd>=0 just in case the response handler has closed the
+       request body */
+    if (client->fd >= 0)
+        ajp_client_release(client, false);
+
+    pool_unref(client->pool);
+}
+
 static void
 ajp_connection_close(struct ajp_client *client)
 {
@@ -258,7 +281,7 @@ ajp_consume_send_headers(struct ajp_client *client,
 
     if (client->response.read_state != READ_BEGIN) {
         daemon_log(1, "unexpected SEND_HEADERS packet from AJP server\n");
-        ajp_connection_close(client);
+        ajp_client_abort_response_body(client);
         return false;
     }
 
