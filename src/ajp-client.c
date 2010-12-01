@@ -709,8 +709,12 @@ ajp_request_stream_abort(void *ctx)
 
     client->request.istream = NULL;
 
-    if (client->response.read_state != READ_END)
-        ajp_connection_close(client);
+    if (client->response.read_state == READ_END)
+        /* this is a recursive call, this object is currently being
+           destructed further up the stack */
+        return;
+
+    ajp_client_release(client, false);
 }
 
 static const struct istream_handler ajp_request_stream_handler = {
