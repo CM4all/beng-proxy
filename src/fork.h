@@ -10,6 +10,14 @@
 #include "istream.h"
 #include "child.h"
 
+#include <glib.h>
+
+static inline GQuark
+fork_quark(void)
+{
+    return g_quark_from_static_string("fork");
+}
+
 /**
  * Wrapper for the fork() system call.  Forks a sub process, returns
  * its standard output stream as an istream, and optionally sends the
@@ -22,6 +30,7 @@
  */
 pid_t
 beng_fork(pool_t pool, istream_t input, istream_t *output_r,
-          child_callback_t callback, void *ctx);
+          child_callback_t callback, void *ctx,
+          GError **error_r);
 
 #endif

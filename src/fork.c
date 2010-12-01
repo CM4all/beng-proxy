@@ -377,7 +377,8 @@ fork_child_callback(int status, void *ctx)
 
 pid_t
 beng_fork(pool_t pool, istream_t input, istream_t *output_r,
-          child_callback_t callback, void *ctx)
+          child_callback_t callback, void *ctx,
+          GError **error_r)
 {
     int ret, stdin_pipe[2], stdin_fd, stdout_pipe[2];
     pid_t pid;
@@ -391,12 +392,16 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
 
     if (input != NULL) {
         ret = pipe_cloexec(stdin_pipe);
-        if (ret < 0)
+        if (ret < 0) {
+            g_set_error(error_r, fork_quark(), errno,
+                        "pipe_cloexec() failed: %s", strerror(errno));
             return -1;
+        }
 
         ret = socket_set_nonblock(stdin_pipe[1], 1);
         if (ret < 0) {
-            daemon_log(1, "fcntl(O_NONBLOCK) failed: %s\n", strerror(errno));
+            g_set_error(error_r, fork_quark(), errno,
+                        "fcntl(O_NONBLOCK) failed: %s", strerror(errno));
             close(stdin_pipe[0]);
             close(stdin_pipe[1]);
             return -1;
@@ -405,7 +410,8 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
 
     ret = pipe_cloexec(stdout_pipe);
     if (ret < 0) {
-        daemon_log(1, "pipe() failed: %s\n", strerror(errno));
+        g_set_error(error_r, fork_quark(), errno,
+                    "pipe() failed: %s", strerror(errno));
 
         if (input != NULL) {
             close(stdin_pipe[0]);
@@ -418,7 +424,8 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
 
     ret = socket_set_nonblock(stdout_pipe[0], 1);
     if (ret < 0) {
-        daemon_log(1, "fcntl(O_NONBLOCK) failed: %s\n", strerror(errno));
+        g_set_error(error_r, fork_quark(), errno,
+                    "fcntl(O_NONBLOCK) failed: %s", strerror(errno));
 
         if (input != NULL) {
             close(stdin_pipe[0]);
@@ -433,7 +440,8 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
 
     pid = fork();
     if (pid < 0) {
-        daemon_log(1, "fork() failed: %s\n", strerror(errno));
+        g_set_error(error_r, fork_quark(), errno,
+                    "fork() failed: %s", strerror(errno));
 
         if (input != NULL) {
             close(stdin_pipe[0]);

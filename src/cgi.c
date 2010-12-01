@@ -532,9 +532,13 @@ cgi_new(pool_t pool, bool jail,
 
     stopwatch = stopwatch_new(pool, path);
 
+    GError *error = NULL;
     pid = beng_fork(pool, body, &input,
-                    cgi_child_callback, NULL);
+                    cgi_child_callback, NULL, &error);
     if (pid < 0) {
+        daemon_log(2, "%s\n", error->message);
+        g_error_free(error);
+
         if (body != NULL) {
             /* beng_fork() left the request body open - free this
                resource, because our caller always assume that we have
