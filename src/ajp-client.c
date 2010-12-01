@@ -256,6 +256,9 @@ static const struct istream ajp_response_body = {
  *
  */
 
+/**
+ * @return false if the #ajp_client has been closed
+ */
 static bool
 ajp_consume_send_headers(struct ajp_client *client,
                          const char *data, size_t length)
@@ -316,6 +319,9 @@ ajp_consume_send_headers(struct ajp_client *client,
     return client->fd >= 0;
 }
 
+/**
+ * @return false if the #ajp_client has been closed
+ */
 static bool
 ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
                    const char *data, size_t length)
@@ -379,6 +385,11 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
     return false;
 }
 
+/**
+ * Consume response body chunk data.
+ *
+ * @return true if the chunk has been consumed completely
+ */
 static bool
 ajp_consume_body_chunk(struct ajp_client *client)
 {
@@ -404,6 +415,11 @@ ajp_consume_body_chunk(struct ajp_client *client)
     return client->response.chunk_length == 0;
 }
 
+/**
+ * Discard junk data after a response body chunk.
+ *
+ * @return true if the junk has been consumed completely
+ */
 static bool
 ajp_consume_body_junk(struct ajp_client *client)
 {
