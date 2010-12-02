@@ -122,6 +122,13 @@ class Translation(Protocol):
         return username == 'hansi' and password == 'hansilein'
 
     def _handle_http(self, raw_uri, uri, authorization, check, response):
+        if uri[:6] == '/site/':
+            x = uri[6:]
+            i = x.find('/')
+            if i >= 0:
+                response.packet(TRANSLATE_SITE, x[:i])
+                raw_uri = uri = x[i:]
+
         if uri.find('/./') >= 0 or uri.find('/../') >= 0 or \
                uri[-2:] == '/.' or uri[-3:] == '/..' or \
                uri.find('//') >= 0 or uri.find('\0') >= 0:
