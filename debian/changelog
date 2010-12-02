@@ -8,7 +8,7 @@ cm4all-beng-proxy (0.9.1) unstable; urgency=low
   * move logging servers to new package cm4all-beng-proxy-logging
   * python/control.client: add parameter "broadcast"
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 02 Dec 2010 12:07:16 +0100
 
 cm4all-beng-proxy (0.9) unstable; urgency=low
 
