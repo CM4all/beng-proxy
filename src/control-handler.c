@@ -70,7 +70,8 @@ apply_translation_packet(struct translate_request *request,
 static unsigned
 decode_translation_packets(pool_t pool, struct translate_request *request,
                            uint16_t *cmds, unsigned max_cmds,
-                           const void *data, size_t length)
+                           const void *data, size_t length,
+                           const char **site_r)
 {
     unsigned num_cmds = 0;
 
@@ -96,13 +97,15 @@ decode_translation_packets(pool_t pool, struct translate_request *request,
         char *payload = payload_length > 0
             ? p_strndup(pool, data, payload_length)
             : NULL;
-        if (!apply_translation_packet(request, command, payload))
-            return 0;
+        if (command == TRANSLATE_SITE)
+            *site_r = payload;
+        else if (apply_translation_packet(request, command, payload)) {
+            if (num_cmds >= max_cmds)
+                return 0;
 
-        if (num_cmds >= max_cmds)
+            cmds[num_cmds++] = (uint16_t)command;
+        } else
             return 0;
-
-        cmds[num_cmds++] = (uint16_t)command;
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
 
@@ -125,11 +128,12 @@ control_tcache_invalidate(struct instance *instance,
     struct translate_request request;
     memset(&request, 0, sizeof(request));
 
+    const char *site;
     uint16_t cmds[32];
     unsigned num_cmds =
         decode_translation_packets(tpool, &request, cmds, G_N_ELEMENTS(cmds),
-                                   payload, payload_length);
-    if (num_cmds == 0) {
+                                   payload, payload_length, &site);
+    if (num_cmds == 0 && site == NULL) {
         pool_rewind(tpool, &mark);
         daemon_log(2, "malformed TCACHE_INVALIDATE control packet\n");
         return;
@@ -137,7 +141,7 @@ control_tcache_invalidate(struct instance *instance,
 
     translate_cache_invalidate(instance->translate_cache, &request,
                                cmds, num_cmds,
-                               NULL);
+                               site);
 
     pool_rewind(tpool, &mark);
 }
