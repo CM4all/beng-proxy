@@ -515,6 +515,8 @@ struct tcache_invalidate_data {
 
     const uint16_t *vary;
     unsigned num_vary;
+
+    const char *site;
  };
 
 static bool
@@ -524,6 +526,10 @@ tcache_invalidate_match(const struct cache_item *_item, void *ctx)
     const struct tcache_invalidate_data *data = ctx;
     const uint16_t *invalidate = data->vary;
     unsigned num_invalidate = data->num_vary;
+
+    if (data->site != NULL &&
+        (item->response.site == NULL || strcmp(data->site, item->response.site) != 0))
+        return false;
 
     for (unsigned i = 0; i < num_invalidate; ++i)
         if (!tcache_vary_match(item, data->request,
@@ -537,12 +543,14 @@ tcache_invalidate_match(const struct cache_item *_item, void *ctx)
 void
 translate_cache_invalidate(struct tcache *tcache,
                            const struct translate_request *request,
-                           const uint16_t *vary, unsigned num_vary)
+                           const uint16_t *vary, unsigned num_vary,
+                           const char *site)
 {
     struct tcache_invalidate_data data = {
         .request = request,
         .vary = vary,
         .num_vary = num_vary,
+        .site = site,
     };
 
     unsigned removed = cache_remove_all_match(tcache->cache,
@@ -564,7 +572,8 @@ tcache_callback(const struct translate_response *response, void *ctx)
     if (response != NULL && response->num_invalidate > 0)
         translate_cache_invalidate(tcr->tcache, tcr->request,
                                    response->invalidate,
-                                   response->num_invalidate);
+                                   response->num_invalidate,
+                                   NULL);
 
     if (tcache_response_evaluate(response)) {
         pool_t pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 512);

@@ -136,7 +136,8 @@ control_tcache_invalidate(struct instance *instance,
     }
 
     translate_cache_invalidate(instance->translate_cache, &request,
-                               cmds, num_cmds);
+                               cmds, num_cmds,
+                               NULL);
 
     pool_rewind(tpool, &mark);
 }

@@ -47,6 +47,7 @@ translate_cache(pool_t pool, struct tcache *tcache,
 void
 translate_cache_invalidate(struct tcache *tcache,
                            const struct translate_request *request,
-                           const uint16_t *vary, unsigned num_vary);
+                           const uint16_t *vary, unsigned num_vary,
+                           const char *site);
 
 #endif
