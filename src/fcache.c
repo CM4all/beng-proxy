@@ -106,6 +106,33 @@ filter_cache_info_new(pool_t pool)
     return info;
 }
 
+/**
+ * Release resources held by this request.
+ */
+static void
+filter_cache_request_release(struct filter_cache_request *request)
+{
+    assert(request != NULL);
+    assert(request->response.input == NULL);
+
+    evtimer_del(&request->timeout);
+
+    list_remove(&request->siblings);
+    pool_unref(request->pool);
+}
+
+/**
+ * Abort the request.
+ */
+static void
+filter_cache_request_abort(struct filter_cache_request *request)
+{
+    assert(request != NULL);
+    assert(request->response.input != NULL);
+
+    istream_close(request->response.input);
+}
+
 /* check whether the request could produce a cacheable response */
 static struct filter_cache_info *
 filter_cache_request_evaluate(pool_t pool,
@@ -261,7 +288,7 @@ fcache_timeout_callback(int fd __attr_unused, short event __attr_unused,
     /* reading the response has taken too long already; don't store
        this resource */
     cache_log(4, "filter_cache: timeout %s\n", request->info->key);
-    istream_close(request->response.input);
+    filter_cache_request_abort(request);
 }
 
 /*
@@ -276,7 +303,7 @@ filter_cache_response_body_data(const void *data, size_t length, void *ctx)
 
     request->response.length += length;
     if (request->response.length > (size_t)cacheable_size_limit) {
-        istream_close(request->response.input);
+        filter_cache_request_abort(request);
         return 0;
     }
 
@@ -291,14 +318,11 @@ filter_cache_response_body_eof(void *ctx)
 
     request->response.input = NULL;
 
-    evtimer_del(&request->timeout);
-
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
     filter_cache_put(request);
 
-    list_remove(&request->siblings);
-    pool_unref(request->pool);
+    filter_cache_request_release(request);
 }
 
 static void
@@ -310,10 +334,7 @@ filter_cache_response_body_abort(void *ctx)
 
     request->response.input = NULL;
 
-    evtimer_del(&request->timeout);
-
-    list_remove(&request->siblings);
-    pool_unref(request->pool);
+    filter_cache_request_release(request);
 }
 
 static const struct istream_handler filter_cache_response_body_handler = {
@@ -481,7 +502,7 @@ filter_cache_request_close(struct filter_cache_request *request)
     assert(request->response.input != NULL);
     assert(request->response.output != NULL);
 
-    istream_close(request->response.input);
+    filter_cache_request_abort(request);
 }
 
 void
