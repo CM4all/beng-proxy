@@ -900,7 +900,7 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
         available = istream_available(body, false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
-            istream_close(body);
+            istream_close_unused(body);
 
             GError *error =
                 g_error_new_literal(ajp_client_quark(), 0,

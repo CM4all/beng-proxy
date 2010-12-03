@@ -373,7 +373,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
                   request->document->info.etag, request->key);
 
         if (body != NULL)
-            istream_close(body);
+            istream_close_unused(body);
 
         pool_t caller_pool = request->caller_pool;
 #ifndef NDEBUG

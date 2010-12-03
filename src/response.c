@@ -125,7 +125,7 @@ response_invoke_processor(struct request *request2,
     }
 
     if (!processable(response_headers)) {
-        istream_close(body);
+        istream_close_unused(body);
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
@@ -154,7 +154,7 @@ response_invoke_processor(struct request *request2,
         widget->from_request.proxy_ref == NULL) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2->translate.response->untrusted);
-        istream_close(body);
+        istream_close_unused(body);
         response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;

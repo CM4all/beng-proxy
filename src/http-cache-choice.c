@@ -176,7 +176,7 @@ http_cache_choice_get_callback(enum memcached_response_status status,
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
         if (value != NULL)
-            istream_close(value);
+            istream_close_unused(value);
 
         choice->callback.get(NULL, false, choice->callback_ctx);
         return;
@@ -246,7 +246,7 @@ http_cache_choice_add_callback(G_GNUC_UNUSED enum memcached_response_status stat
     struct http_cache_choice *choice = ctx;
 
     if (value != NULL)
-        istream_close(value);
+        istream_close_unused(value);
 
     choice->callback.commit(choice->callback_ctx);
 }
@@ -262,7 +262,7 @@ http_cache_choice_prepend_callback(enum memcached_response_status status,
     struct http_cache_choice *choice = ctx;
 
     if (value != NULL)
-        istream_close(value);
+        istream_close_unused(value);
 
     switch (status) {
     case MEMCACHED_STATUS_ITEM_NOT_STORED:
@@ -329,7 +329,7 @@ http_cache_choice_filter_set_callback(G_GNUC_UNUSED enum memcached_response_stat
     struct http_cache_choice *choice = ctx;
 
     if (value != NULL)
-        istream_close(value);
+        istream_close_unused(value);
 
     choice->callback.filter(NULL, choice->callback_ctx);
 }
@@ -423,7 +423,7 @@ http_cache_choice_filter_get_callback(enum memcached_response_status status,
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
         if (value != NULL)
-            istream_close(value);
+            istream_close_unused(value);
 
         choice->callback.filter(NULL, choice->callback_ctx);
         return;
@@ -516,7 +516,7 @@ http_cache_choice_delete_callback(G_GNUC_UNUSED enum memcached_response_status s
     struct http_cache_choice *choice = ctx;
 
     if (value != NULL)
-        istream_close(value);
+        istream_close_unused(value);
 
     choice->callback.delete(choice->callback_ctx);
 }

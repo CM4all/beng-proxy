@@ -39,14 +39,14 @@ errdoc_response_response(http_status_t status, struct strmap *headers,
     if (http_status_is_success(status)) {
         if (er->body != NULL)
             /* close the original (error) response body */
-            istream_close(er->body);
+            istream_close_unused(er->body);
 
         http_response_handler_direct_response(&response_handler, er->request2,
                                               er->status, headers, body);
     } else {
         if (body != NULL)
             /* discard the error document response */
-            istream_close(body);
+            istream_close_unused(body);
 
         errdoc_resubmit(er);
     }

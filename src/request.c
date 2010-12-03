@@ -33,7 +33,7 @@ void
 request_discard_body(struct request *request)
 {
     if (request->request->body != NULL && !request->body_consumed)
-        istream_close(request->request->body);
+        istream_close_unused(request->request->body);
 }
 
 void

@@ -413,6 +413,17 @@ istream_free_handler(istream_t *istream_r)
     istream_free(istream_r);
 }
 
+/**
+ * Close an istream_t which was never used, i.e. it does not have a
+ * handler yet.
+ */
+static inline void
+istream_close_unused(istream_t istream)
+{
+    assert(!istream_has_handler(istream));
+    istream_close(istream);
+}
+
 
 #include "istream-impl.h"
 

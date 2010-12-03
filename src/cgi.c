@@ -553,7 +553,7 @@ cgi_new(pool_t pool, bool jail,
             struct abort_flag abort_flag;
             abort_flag_set(&abort_flag, async_ref);
 
-            istream_close(body);
+            istream_close_unused(body);
 
             if (abort_flag.aborted) {
                 /* the operation was aborted - don't call the

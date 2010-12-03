@@ -59,7 +59,7 @@ widget_response_format(pool_t pool, const struct widget *widget,
     if (p != NULL && strcmp(p, "identity") != 0) {
         daemon_log(2, "widget '%s' sent non-identity response, cannot embed\n",
                    widget_path(widget));
-        istream_close(body);
+        istream_close_unused(body);
         return NULL;
     }
 
@@ -70,7 +70,7 @@ widget_response_format(pool_t pool, const struct widget *widget,
          strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
         daemon_log(2, "widget '%s' sent non-text response\n",
                    widget_path(widget));
-        istream_close(body);
+        istream_close_unused(body);
         return NULL;
     }
 
@@ -85,7 +85,7 @@ widget_response_format(pool_t pool, const struct widget *widget,
         if (ic == NULL) {
             daemon_log(2, "widget '%s' sent unknown charset '%s'\n",
                        widget_path(widget), charset2);
-            istream_close(body);
+            istream_close_unused(body);
             return NULL;
         }
 
@@ -135,7 +135,7 @@ inline_widget_response(http_status_t status,
            non-successful - don't embed this widget into the
            template */
         if (body != NULL)
-            istream_close(body);
+            istream_close_unused(body);
         inline_widget_close(iw);
         return;
     }

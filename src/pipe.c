@@ -110,7 +110,7 @@ pipe_filter(pool_t pool, const char *path,
     pid = beng_fork(pool, body, &response,
                     pipe_child_callback, NULL, &error);
     if (pid < 0) {
-        istream_close(body);
+        istream_close_unused(body);
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }

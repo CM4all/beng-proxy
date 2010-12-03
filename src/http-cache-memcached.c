@@ -125,7 +125,7 @@ http_cache_memcached_flush_callback(enum memcached_response_status status,
     struct http_cache_memcached_request *request = ctx;
 
     if (value != NULL)
-        istream_close(value);
+        istream_close_unused(value);
 
     request->callback.flush(status == MEMCACHED_STATUS_NO_ERROR,
                             request->callback_ctx);
@@ -253,7 +253,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
             if (request->in_choice)
                 break;
 
-            istream_close(tail);
+            istream_close_unused(tail);
 
             http_cache_choice_get(request->pool, request->stock,
                                   request->uri, request->request_headers,
@@ -266,7 +266,7 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
         return;
     }
 
-    istream_close(tail);
+    istream_close_unused(tail);
     request->callback.get(NULL, 0, request->callback_ctx);
 }
 
@@ -282,7 +282,7 @@ http_cache_memcached_get_callback(enum memcached_response_status status,
 
     if (status == MEMCACHED_STATUS_KEY_NOT_FOUND && !request->in_choice) {
         if (value != NULL)
-            istream_close(value);
+            istream_close_unused(value);
 
         http_cache_choice_get(request->pool, request->stock,
                               request->uri, request->request_headers,
@@ -293,7 +293,7 @@ http_cache_memcached_get_callback(enum memcached_response_status status,
 
     if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
         if (value != NULL)
-            istream_close(value);
+            istream_close_unused(value);
 
         request->callback.get(NULL, 0, request->callback_ctx);
         return;
@@ -356,7 +356,7 @@ http_cache_memcached_put_callback(enum memcached_response_status status,
     struct http_cache_memcached_request *request = ctx;
 
     if (value != NULL)
-        istream_close(value);
+        istream_close_unused(value);
 
     if (status != MEMCACHED_STATUS_NO_ERROR || /* error */
         request->choice == NULL) { /* or no choice entry needed */
@@ -455,7 +455,7 @@ mcd_background_callback(G_GNUC_UNUSED enum memcached_response_status status,
     struct background_job *job = ctx;
 
     if (value != NULL)
-        istream_close(value);
+        istream_close_unused(value);
 
     background_manager_remove(job);
 }

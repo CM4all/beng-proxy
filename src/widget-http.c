@@ -150,7 +150,7 @@ widget_response_redirect(struct embed *embed, const char *location,
         return false;
 
     if (body != NULL)
-        istream_close(body);
+        istream_close_unused(body);
 
     headers = widget_request_headers(embed,
                                      address->type == RESOURCE_ADDRESS_HTTP,
@@ -202,7 +202,7 @@ widget_response_process(struct embed *embed, http_status_t status,
     }
 
     if (!processable(headers)) {
-        istream_close(body);
+        istream_close_unused(body);
 
         GError *error =
             g_error_new(widget_quark(), 0,
@@ -260,7 +260,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
     p = strmap_get_checked(headers, "content-encoding");
     if (p != NULL && strcmp(p, "identity") != 0) {
         if (body != NULL)
-            istream_close(body);
+            istream_close_unused(body);
 
         GError *error =
             g_error_new(widget_quark(), 0,

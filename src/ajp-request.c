@@ -84,7 +84,7 @@ ajp_request_stock_callback(void *ctx, struct stock_item *item)
         http_response_handler_invoke_abort(&hr->handler, error);
 
         if (hr->body != NULL)
-            istream_close(hr->body);
+            istream_close_unused(hr->body);
     } else {
         hr->stock_item = item;
 

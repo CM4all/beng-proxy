@@ -256,7 +256,7 @@ processor_new(pool_t caller_pool, http_status_t status,
 
     if (widget->from_request.proxy_ref == NULL &&
         http_method_is_empty(env->method)) {
-        istream_close(istream);
+        istream_close_unused(istream);
 
         headers = processor_header_forward(caller_pool, headers);
         http_response_handler_direct_response(handler, handler_ctx,

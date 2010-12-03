@@ -569,7 +569,7 @@ filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
     istream_t response_body;
 
     if (body != NULL)
-        istream_close(body);
+        istream_close_unused(body);
 
     cache_log(4, "filter_cache: serve %s\n", item->info.key);
 

@@ -358,7 +358,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
         return false;
 
     if (!S_ISREG(st2.st_mode)) {
-        istream_close(compressed_body);
+        istream_close_unused(compressed_body);
         return false;
     }
 
@@ -374,7 +374,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
 
     /* close original file */
 
-    istream_close(body);
+    istream_close_unused(body);
 
     /* finished, dispatch this response */
 
@@ -429,7 +429,7 @@ file_callback(struct request *request2)
     /* check file type */
 
     if (!S_ISREG(st.st_mode)) {
-        istream_close(body);
+        istream_close_unused(body);
         response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Not a regular file");
         return;
@@ -440,7 +440,7 @@ file_callback(struct request *request2)
     /* request options */
 
     if (!file_evaluate_request(request2, &st, &file_request)) {
-        istream_close(body);
+        istream_close_unused(body);
         return;
     }
 
