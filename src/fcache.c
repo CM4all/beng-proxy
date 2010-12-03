@@ -130,7 +130,8 @@ filter_cache_request_abort(struct filter_cache_request *request)
     assert(request != NULL);
     assert(request->response.input != NULL);
 
-    istream_close(request->response.input);
+    istream_free_handler(&request->response.input);
+    filter_cache_request_release(request);
 }
 
 /* check whether the request could produce a cacheable response */
