@@ -98,11 +98,11 @@ istream_later_close(istream_t istream)
 
     evtimer_del(&later->event);
 
-    if (later->input == NULL)
-        /* this can only happen during the eof callback delay */
-        istream_deinit_abort(&later->output);
-    else
-        istream_close(later->input);
+    /* input can only be NULL during the eof callback delay */
+    if (later->input != NULL)
+        istream_close_handler(later->input);
+
+    istream_deinit_abort(&later->output);
 }
 
 static const struct istream istream_later = {
