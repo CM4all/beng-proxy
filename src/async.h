@@ -52,6 +52,13 @@ struct async_operation {
 
 struct async_operation_ref {
     struct async_operation *operation;
+
+#ifndef NDEBUG
+    /**
+     * A copy of the "operation" pointer, for post-mortem debugging.
+     */
+    struct async_operation *copy;
+#endif
 };
 
 static inline void
@@ -118,6 +125,10 @@ async_ref_set(struct async_operation_ref *ref,
     assert(!ao->aborted);
 
     ref->operation = ao;
+
+#ifndef NDEBUG
+    ref->copy = ao;
+#endif
 }
 
 static inline void
@@ -141,6 +152,7 @@ async_abort(struct async_operation_ref *ref)
 
     assert(ref != NULL);
     assert(ref->operation != NULL);
+    assert(ref->operation == ref->copy);
 
     ao = ref->operation;
 #ifndef NDEBUG
