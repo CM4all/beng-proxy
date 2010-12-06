@@ -56,60 +56,6 @@ struct http_cache_memcached_request {
 };
 
 /*
- * istream handler
- *
- */
-
-/*
-static size_t
-mcd_value_data(const void *data, size_t length, void *ctx)
-{
-    struct http_cache_request *request = ctx;
-
-    request->response.length += length;
-    if (request->response.length > (size_t)cacheable_size_limit) {
-        istream_close(request->response.input);
-        return 0;
-    }
-
-    growing_buffer_write_buffer(request->response.output, data, length);
-    return length;
-}
-
-static void
-mcd_value_eof(void *ctx)
-{
-    struct http_cache_request *request = ctx;
-
-    request->response.input = NULL;
-
-    if (request->cache->cache != NULL)
-        list_remove(&request->siblings);
-
-    pool_unref(request->pool);
-}
-
-static void
-mcd_value_abort(void *ctx)
-{
-    struct http_cache_request *request = ctx;
-
-    cache_log(4, "http_cache: body_abort %s\n", request->url);
-
-    request->response.input = NULL;
-
-    list_remove(&request->siblings);
-    pool_unref(request->pool);
-}
-
-static const struct istream_handler mcd_value_handler = {
-    .data = mcd_value_data,
-    .eof = mcd_value_eof,
-    .abort = mcd_value_abort,
-};
-*/
-
-/*
  * Public functions and memcached-client callbacks
  *
  */
