@@ -25,6 +25,10 @@ struct widget_resolver_listener {
     widget_resolver_callback_t callback;
 
     void *callback_ctx;
+
+#ifndef NDEBUG
+    bool listed, finished, aborted;
+#endif
 };
 
 struct widget_resolver {
@@ -39,6 +43,10 @@ struct widget_resolver {
 #endif
 
     struct async_operation_ref async_ref;
+
+#ifndef NDEBUG
+    bool finished, aborted;
+#endif
 };
 
 
@@ -59,12 +67,19 @@ wrl_abort(struct async_operation *ao)
     struct widget_resolver_listener *listener = async_to_wrl(ao);
     struct widget_resolver *resolver = listener->resolver;
 
+    assert(listener->listed);
+    assert(!listener->finished);
+    assert(!listener->aborted);
     assert(resolver->widget->resolver == resolver);
     assert(!list_empty(&resolver->listeners));
+    assert(!resolver->finished);
+    assert(!resolver->aborted);
 
     assert(resolver->num_listeners > 0);
 #ifndef NDEBUG
     --resolver->num_listeners;
+    listener->listed = false;
+    listener->aborted = true;
 #endif
 
     list_remove(&listener->siblings);
@@ -74,6 +89,10 @@ wrl_abort(struct async_operation *ao)
         /* the last listener has been aborted: abort the widget
            registry */
         assert(resolver->num_listeners == 0);
+
+#ifndef NDEBUG
+        resolver->aborted = true;
+#endif
 
         resolver->widget->resolver = NULL;
         async_abort(&resolver->async_ref);
@@ -101,6 +120,12 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
     assert(resolver != NULL);
     assert(resolver->widget == widget);
     assert(!list_empty(&resolver->listeners));
+    assert(!resolver->finished);
+    assert(!resolver->aborted);
+
+#ifndef NDEBUG
+    resolver->finished = true;
+#endif
 
     widget->class = class;
 
@@ -108,9 +133,15 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
         struct widget_resolver_listener *listener =
             (struct widget_resolver_listener *)resolver->listeners.next;
 
+        assert(listener->listed);
+        assert(!listener->finished);
+        assert(!listener->aborted);
+
         assert(resolver->num_listeners > 0);
 #ifndef NDEBUG
         --resolver->num_listeners;
+        listener->listed = false;
+        listener->finished = true;
 #endif
 
         list_remove(&listener->siblings);
@@ -144,6 +175,8 @@ widget_resolver_alloc(pool_t pool, struct widget *widget)
 
 #ifndef NDEBUG
     resolver->num_listeners = 0;
+    resolver->finished = false;
+    resolver->aborted = false;
 #endif
 
     widget->resolver = resolver;
@@ -190,6 +223,12 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
 
     listener->callback = callback;
     listener->callback_ctx = ctx;
+
+#ifndef NDEBUG
+    listener->listed = true;
+    listener->finished = false;
+    listener->aborted = false;
+#endif
 
     list_add(&listener->siblings, &resolver->listeners);
 
