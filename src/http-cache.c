@@ -275,6 +275,14 @@ http_cache_unlock(struct http_cache *cache,
 static void
 http_cache_serve(struct http_cache_request *request);
 
+static void
+http_cache_request_abort(struct http_cache_request *request)
+{
+    assert(request->response.input != NULL);
+
+    istream_close(request->response.input);
+}
+
 
 /*
  * istream handler
@@ -289,7 +297,7 @@ http_cache_response_body_data(const void *data, size_t length, void *ctx)
     request->response.length += length;
     if (request->response.length > (size_t)cacheable_size_limit) {
         cache_log(4, "http_cache: too large %s\n", request->key);
-        istream_close(request->response.input);
+        http_cache_request_abort(request);
         return 0;
     }
 
@@ -578,7 +586,7 @@ http_cache_request_close(struct http_cache_request *request)
     assert(request->response.output != NULL);
 
     if (request->response.input != NULL)
-        istream_close(request->response.input);
+        http_cache_request_abort(request);
     else
         async_abort(&request->async_ref);
 }
