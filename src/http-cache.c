@@ -280,7 +280,9 @@ http_cache_request_abort(struct http_cache_request *request)
 {
     assert(request->response.input != NULL);
 
-    istream_close(request->response.input);
+    list_remove(&request->siblings);
+
+    istream_free_handler(&request->response.input);
 }
 
 
