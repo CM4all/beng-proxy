@@ -156,11 +156,11 @@ istream_hold_close(istream_t istream)
            istream */
         istream_close_handler(hold->input);
         istream_deinit(&hold->output);
-    } else
-        /* the input object is still there; istream_close(hold->input)
-           will implicitly call istream_invoke_free(&hold->output)
-           through hold_input_free() */
-        istream_close(hold->input);
+    } else {
+        /* the input object is still there */
+        istream_close_handler(hold->input);
+        istream_deinit_abort(&hold->output);
+    }
 }
 
 static const struct istream istream_hold = {
