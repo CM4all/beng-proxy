@@ -404,7 +404,9 @@ replace_input_data(const void *data, size_t length, void *ctx)
 
     if (replace->source_length >= 8 * 1024 * 1024) {
         daemon_log(2, "file too large for processor\n");
-        istream_close(replace->input);
+        istream_free_handler(&replace->input);
+        replace_destroy(replace);
+        istream_deinit_abort(&replace->output);
         return 0;
     }
 
