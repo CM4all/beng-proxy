@@ -13,7 +13,7 @@ struct async_operation_ref;
 
 /**
  * @param istream the istream to be closed on abort; it should be
- * allocated from the specified pool
+ * allocated from the specified pool, and must not have a handler
  */
 struct async_operation_ref *
 async_close_on_abort(pool_t pool, istream_t istream,

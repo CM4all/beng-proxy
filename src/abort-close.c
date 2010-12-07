@@ -30,7 +30,7 @@ coa_abort(struct async_operation *ao)
     struct close_on_abort *coa = async_to_coa(ao);
 
     async_abort(&coa->ref);
-    istream_close(coa->istream);
+    istream_close_unused(coa->istream);
 }
 
 static const struct async_operation_class coa_operation = {
@@ -50,6 +50,7 @@ async_close_on_abort(pool_t pool, istream_t istream,
     struct close_on_abort *coa = p_malloc(pool, sizeof(*coa));
 
     assert(istream != NULL);
+    assert(!istream_has_handler(istream));
     assert(async_ref != NULL);
 
     coa->istream = istream;
