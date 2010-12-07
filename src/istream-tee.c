@@ -233,8 +233,18 @@ istream_tee_close0(istream_t istream)
     if (tee->input != NULL) {
         if (!tee->outputs[1].enabled)
             istream_free_handler(&tee->input);
-        else if (tee->outputs[1].weak)
-            istream_close(tee->input);
+        else if (tee->outputs[1].weak) {
+            pool_ref(tee->outputs[0].istream.pool);
+
+            istream_free_handler(&tee->input);
+
+            if (tee->outputs[1].enabled) {
+                tee->outputs[1].enabled = false;
+                istream_deinit_abort(&tee->outputs[1].istream);
+            }
+
+            pool_unref(tee->outputs[0].istream.pool);
+        }
     }
 
     istream_invoke_abort(&tee->outputs[0].istream);
@@ -302,8 +312,18 @@ istream_tee_close1(istream_t istream)
     if (tee->input != NULL) {
         if (!tee->outputs[0].enabled)
             istream_free_handler(&tee->input);
-        else if (tee->outputs[0].weak)
-            istream_close(tee->input);
+        else if (tee->outputs[0].weak) {
+            pool_ref(tee->outputs[0].istream.pool);
+
+            istream_free_handler(&tee->input);
+
+            if (tee->outputs[0].enabled) {
+                tee->outputs[0].enabled = false;
+                istream_deinit_abort(&tee->outputs[0].istream);
+            }
+
+            pool_unref(tee->outputs[0].istream.pool);
+        }
     }
 
     istream_invoke_abort(&tee->outputs[1].istream);
