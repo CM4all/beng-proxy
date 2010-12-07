@@ -102,7 +102,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
     case RESOURCE_ADDRESS_LOCAL:
         if (body != NULL)
             /* static files cannot receive a request body, close it */
-            istream_close(body);
+            istream_close_unused(body);
 
         if (address->u.local.delegate != NULL) {
             if (rl->delegate_stock == NULL) {
@@ -199,7 +199,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
     /* the resource could not be located, abort the request */
 
     if (body != NULL)
-        istream_close(body);
+        istream_close_unused(body);
 
     GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                         "Could not locate resource");
