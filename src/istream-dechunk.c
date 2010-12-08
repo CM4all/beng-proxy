@@ -32,7 +32,7 @@ struct istream_dechunk {
 
 
 static void
-dechunk_close(struct istream_dechunk *dechunk)
+dechunk_abort(struct istream_dechunk *dechunk)
 {
     assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
@@ -98,7 +98,7 @@ dechunk_feed(struct istream_dechunk *dechunk, const void *data0, size_t length)
                 continue;
             } else {
                 daemon_log(2, "chunk length expected\n");
-                dechunk_close(dechunk);
+                dechunk_abort(dechunk);
                 return 0;
             }
 
@@ -149,7 +149,7 @@ dechunk_feed(struct istream_dechunk *dechunk, const void *data0, size_t length)
                 dechunk->state = NONE;
             } else if (data[position] != '\r') {
                 daemon_log(2, "newline expected\n");
-                dechunk_close(dechunk);
+                dechunk_abort(dechunk);
                 return 0;
             }
             ++position;
@@ -279,7 +279,7 @@ istream_dechunk_close(istream_t istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 
-    dechunk_close(dechunk);
+    dechunk_abort(dechunk);
 }
 
 static const struct istream istream_dechunk = {
