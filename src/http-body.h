@@ -19,6 +19,9 @@ struct http_body_reader {
     /**
      * The remaining number of bytes.  If that is unknown
      * (i.e. chunked or ended by closing the socket), the value is -1.
+     *
+     * When the body is chunked, and the EOF chunk has been seen, the
+     * value is -2.
      */
     off_t rest;
 
@@ -36,23 +39,7 @@ http_body_istream(struct http_body_reader *body)
 static inline bool
 http_body_eof(struct http_body_reader *body)
 {
-#ifndef NDEBUG
-    if (!body->chunked && body->rest == -1)
-        /* this is a workaround for the partially incorrect
-           assert(!http_body_eof) in
-           http_client_response_stream_close(): if the response is
-           _not_ chunked, and the handler has been cleared right
-           before http_client_response_stream_close() is called, the
-           assertion fails, because this function thinks EOF has been
-           reached; the debug-only variable body->chunked works around
-           that flaw */
-        return false;
-#endif
-
-    return body->rest == 0 ||
-        (/* the dechunker clears our handler when it is finished */
-         body->rest == -1 &&
-         !istream_has_handler(istream_struct_cast(&body->output)));
+    return body->rest == 0 || body->rest == -2;
 }
 
 off_t

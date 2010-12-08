@@ -66,11 +66,15 @@ istream_pipe_new(pool_t pool, istream_t input, struct stock *pipe_stock);
 istream_t
 istream_chunked_new(pool_t pool, istream_t input);
 
+/**
+ * @param eof_callback a callback function which is called when the
+ * last chunk is being consumed; note that this occurs inside the
+ * data() callback, so the istream doesn't know yet how much is
+ * consumed
+ */
 istream_t
-istream_dechunk_new(pool_t pool, istream_t input);
-
-bool
-istream_dechunk_eof(istream_t istream);
+istream_dechunk_new(pool_t pool, istream_t input,
+                    void (*eof_callback)(void *ctx), void *callback_ctx);
 
 /**
  * @param request_id the FastCGI request id in network byte order

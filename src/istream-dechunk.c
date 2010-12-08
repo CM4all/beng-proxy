@@ -28,6 +28,9 @@ struct istream_dechunk {
     } state;
     size_t size;
     bool had_input, had_output;
+
+    void (*eof_callback)(void *ctx);
+    void *callback_ctx;
 };
 
 
@@ -39,11 +42,8 @@ dechunk_abort(struct istream_dechunk *dechunk)
 
     dechunk->state = CLOSED;
 
-    /* let our input kick off the abort() callback chain; we cannot
-       clear its handler here, because it would then think that we
-       have detected EOF.  The http client code depends on this
-       behaviour. */
-    istream_close(dechunk->input);
+    istream_free_handler(&dechunk->input);
+    istream_deinit_abort(&dechunk->output);
 }
 
 /**
@@ -58,6 +58,11 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     assert(dechunk->size == 0);
 
     dechunk->state = EOF_DETECTED;
+
+    dechunk->eof_callback(dechunk->callback_ctx);
+
+    assert(dechunk->input != NULL);
+    assert(dechunk->state == EOF_DETECTED);
 
     pool_ref(dechunk->output.pool);
     istream_deinit_eof(&dechunk->output);
@@ -290,6 +295,8 @@ istream_dechunk_close(istream_t istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 
+    assert(dechunk->state != EOF_DETECTED);
+
     dechunk_abort(dechunk);
 }
 
@@ -306,26 +313,22 @@ static const struct istream istream_dechunk = {
  */
 
 istream_t
-istream_dechunk_new(pool_t pool, istream_t input)
+istream_dechunk_new(pool_t pool, istream_t input,
+                    void (*eof_callback)(void *ctx), void *callback_ctx)
 {
     struct istream_dechunk *dechunk = istream_new_macro(pool, dechunk);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
+    assert(eof_callback != NULL);
 
     dechunk->state = NONE;
+    dechunk->eof_callback = eof_callback;
+    dechunk->callback_ctx = callback_ctx;
 
     istream_assign_handler(&dechunk->input, input,
                            &dechunk_input_handler, dechunk,
                            0);
 
     return istream_struct_cast(&dechunk->output);
-}
-
-bool
-istream_dechunk_eof(istream_t istream)
-{
-    struct istream_dechunk *dechunk = istream_to_dechunk(istream);
-
-    return dechunk->state == EOF_DETECTED;
 }
