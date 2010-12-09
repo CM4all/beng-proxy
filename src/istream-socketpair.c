@@ -38,6 +38,19 @@ struct istream_socketpair {
 
 
 static void
+socketpair_release_socket(struct istream_socketpair *sp)
+{
+    assert(sp != NULL);
+    assert(sp->fd >= 0);
+
+    p_event_del(&sp->recv_event, sp->output.pool);
+    p_event_del(&sp->send_event, sp->output.pool);
+
+    close(sp->fd);
+    sp->fd = -1;
+}
+
+static void
 socketpair_close(struct istream_socketpair *sp)
 {
     pool_ref(sp->output.pool);
@@ -46,11 +59,7 @@ socketpair_close(struct istream_socketpair *sp)
         istream_free_handler(&sp->input);
 
     if (sp->fd >= 0) {
-        p_event_del(&sp->recv_event, sp->output.pool);
-        p_event_del(&sp->send_event, sp->output.pool);
-
-        close(sp->fd);
-        sp->fd = -1;
+        socketpair_release_socket(sp);
 
         istream_deinit_abort(&sp->output);
     }
@@ -177,11 +186,7 @@ socketpair_read(struct istream_socketpair *sp)
     }
 
     if (nbytes == 0) {
-        p_event_del(&sp->recv_event, sp->output.pool);
-        p_event_del(&sp->send_event, sp->output.pool);
-
-        close(sp->fd);
-        sp->fd = -1;
+        socketpair_release_socket(sp);
 
         istream_deinit_eof(&sp->output);
 
