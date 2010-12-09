@@ -91,7 +91,7 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
            widget if it is not a container */
 
         if (env->request_body != NULL)
-            istream_free(&env->request_body);
+            istream_free_unused(&env->request_body);
 
         GError *error =
             g_error_new(widget_quark(), 0,
@@ -116,7 +116,7 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
 
         daemon_log(4, "discarding non-framed request body\n");
 
-        istream_free(&env->request_body);
+        istream_free_unused(&env->request_body);
     }
 
     widget_http_request(pool, widget, env,

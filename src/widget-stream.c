@@ -49,7 +49,7 @@ ws_abort(GError *error, void *ctx)
        async_ref */
     async_ref_clear(widget_stream_async_ref(ws));
 
-    istream_free(&ws->delayed);
+    istream_free_unused(&ws->delayed);
 }
 
 const struct http_response_handler widget_stream_response_handler = {

@@ -129,7 +129,7 @@ http_server_response(const struct http_server_request *request,
     }
 
     if (http_method_is_empty(request->method) && body != NULL)
-        istream_free(&body);
+        istream_free_unused(&body);
 
     if (!connection->keep_alive && !connection->request.http_1_0)
         header_write(headers, "connection", "close");

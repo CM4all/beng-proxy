@@ -914,7 +914,7 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
         serialize_ajp_string(gb, buffer);
 
         if (available == 0)
-            istream_free(&body);
+            istream_free_unused(&body);
         else
             requested = 1024;
     }

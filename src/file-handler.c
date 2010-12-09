@@ -323,7 +323,7 @@ file_dispatch(struct request *request2, const struct stat *st,
                      p_sprintf(request->pool, "bytes */%lu",
                                (unsigned long)st->st_size));
 
-        istream_free(&body);
+        istream_free_unused(&body);
         break;
     }
 
