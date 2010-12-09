@@ -31,13 +31,7 @@ struct inline_widget {
 static void
 inline_widget_close(struct inline_widget *iw)
 {
-    /* clear the delayed async_ref object: we didn't provide an
-       istream to the delayed object, and if we close it right now, it
-       will trigger the async_abort(), unless we clear its
-       async_ref */
-    async_ref_clear(istream_delayed_async_ref(iw->delayed));
-
-    istream_free(&iw->delayed);
+    istream_delayed_set_abort(iw->delayed);
 }
 
 /**
