@@ -31,17 +31,6 @@ deflate_close(struct istream_deflate *defl)
     }
 }
 
-static void
-deflate_abort(struct istream_deflate *defl)
-{
-    deflate_close(defl);
-
-    if (defl->input != NULL)
-        istream_free_handler(&defl->input);
-
-    istream_deinit_abort(&defl->output);
-}
-
 static voidpf z_alloc
 (voidpf opaque, uInt items, uInt size)
 {
@@ -358,7 +347,12 @@ istream_deflate_close(istream_t istream)
 {
     struct istream_deflate *defl = istream_to_deflate(istream);
 
-    deflate_abort(defl);
+    deflate_close(defl);
+
+    if (defl->input != NULL)
+        istream_free_handler(&defl->input);
+
+    istream_deinit_abort(&defl->output);
 }
 
 static const struct istream istream_deflate = {
