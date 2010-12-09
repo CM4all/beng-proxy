@@ -47,15 +47,19 @@ cat_is_eof(const struct istream_cat *cat)
 }
 
 static void
-cat_close(struct istream_cat *cat)
+cat_close_inputs(struct istream_cat *cat)
 {
-    struct input *input;
-
     while (!cat_is_eof(cat)) {
-        input = cat_shift(cat);
+        struct input *input = cat_shift(cat);
         if (input->istream != NULL)
             istream_close_handler(input->istream);
     }
+}
+
+static void
+cat_close(struct istream_cat *cat)
+{
+    cat_close_inputs(cat);
     
     istream_deinit_abort(&cat->output);
 }
