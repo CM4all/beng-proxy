@@ -46,7 +46,10 @@ dechunk_abort(struct istream_dechunk *dechunk)
     istream_close(dechunk->input);
 }
 
-
+/**
+ * @return false if the istream_dechunk has been aborted indirectly
+ * (by a callback)
+ */
 static bool
 dechunk_eof_detected(struct istream_dechunk *dechunk)
 {
@@ -60,13 +63,23 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
     istream_deinit_eof(&dechunk->output);
 
     if (dechunk->state == CLOSED) {
+        assert(dechunk->input == NULL);
+
         pool_unref(dechunk->output.pool);
-        return true;
+        return false;
     } else {
+        /* we must deinitialize the "input" after emitting "eof",
+           because we must give the callback a chance to call
+           dechunk_input_abort() on us; if we'd clear the handler too
+           early, we wouldn't receive that event, and
+           dechunk_input_data() couldn't change its return value to
+           0 */
+        assert(dechunk->input != NULL);
+
         istream_handler_clear(dechunk->input);
         dechunk->input = NULL;
         pool_unref(dechunk->output.pool);
-        return false;
+        return true;
     }
 }
 
@@ -155,7 +168,7 @@ dechunk_feed(struct istream_dechunk *dechunk, const void *data0, size_t length)
 
         case TRAILER:
             if (data[position] == '\n') {
-                return dechunk_eof_detected(dechunk) ? 0 : position + 1;
+                return dechunk_eof_detected(dechunk) ? position + 1 : 0;
             } else if (data[position] == '\r') {
                 ++position;
             } else {
