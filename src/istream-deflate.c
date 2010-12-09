@@ -350,7 +350,7 @@ istream_deflate_close(istream_t istream)
     deflate_close(defl);
 
     if (defl->input != NULL)
-        istream_free_handler(&defl->input);
+        istream_close_handler(defl->input);
 
     istream_deinit_abort(&defl->output);
 }
