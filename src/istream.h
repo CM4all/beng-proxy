@@ -402,6 +402,9 @@ istream_handler_clear(istream_t _istream)
 static inline void
 istream_close_handler(istream_t istream)
 {
+    assert(istream != NULL);
+    assert(istream_has_handler(istream));
+
     istream_handler_clear(istream);
     istream_close(istream);
 }
@@ -409,6 +412,10 @@ istream_close_handler(istream_t istream)
 static inline void
 istream_free_handler(istream_t *istream_r)
 {
+    assert(istream_r != NULL);
+    assert(*istream_r != NULL);
+    assert(istream_has_handler(*istream_r));
+
     istream_handler_clear(*istream_r);
     istream_free(istream_r);
 }
