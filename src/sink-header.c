@@ -310,7 +310,7 @@ sink_header_close(istream_t istream)
     struct sink_header *header = istream_to_header(istream);
 
     istream_free_handler(&header->input);
-    istream_deinit_abort(&header->output);
+    istream_deinit(&header->output);
 }
 
 static const struct istream istream_sink = {

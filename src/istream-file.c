@@ -321,7 +321,9 @@ istream_file_close(istream_t istream)
 {
     struct file *file = istream_to_file(istream);
 
-    file_abort(file);
+    file_close(file);
+
+    istream_deinit(&file->stream);
 }
 
 static const struct istream istream_file = {

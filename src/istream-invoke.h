@@ -24,6 +24,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
     assert(length > 0);
     assert(!istream->in_data);
     assert(!istream->eof);
+    assert(!istream->closing);
     assert(length >= istream->data_available);
     assert(!istream->available_full_set ||
            (off_t)length <= istream->available_full);
@@ -81,6 +82,7 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
     assert(max_length > 0);
     assert(!istream->in_data);
     assert(!istream->eof);
+    assert(!istream->closing);
 
 #ifndef NDEBUG
     handler = istream->handler;
@@ -125,6 +127,7 @@ istream_invoke_eof(struct istream *istream)
 {
     assert(istream != NULL);
     assert(!istream->eof);
+    assert(!istream->closing);
     assert(istream->data_available == 0);
     assert(istream->available_partial == 0);
     assert(!istream->available_full_set || istream->available_full == 0);
@@ -142,6 +145,7 @@ istream_invoke_abort(struct istream *istream)
 {
     assert(istream != NULL);
     assert(!istream->eof);
+    assert(!istream->closing);
 
 #ifndef NDEBUG
     istream->eof = false;

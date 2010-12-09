@@ -553,7 +553,7 @@ istream_replace_close(istream_t istream)
     if (replace->input != NULL)
         istream_free_handler(&replace->input);
 
-    istream_deinit_abort(&replace->output);
+    istream_deinit(&replace->output);
 }
 
 static const struct istream istream_replace = {

@@ -294,8 +294,6 @@ istream_gb_close(istream_t istream)
     assert(gb->tail == NULL);
 
     gb->current = NULL;
-
-    istream_invoke_abort(&gb->stream);
 }
 
 static const struct istream istream_gb = {

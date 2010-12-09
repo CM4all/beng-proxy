@@ -150,16 +150,11 @@ istream_hold_close(istream_t istream)
     struct istream_hold *hold = istream_to_hold(istream);
 
     if (hold->input_eof || hold->input_aborted)
-        istream_deinit_abort(&hold->output);
-    else if (hold->output.handler == NULL) {
-        /* there is no handler yet - immediately deinitialize this
-           istream */
-        istream_close_handler(hold->input);
         istream_deinit(&hold->output);
-    } else {
+    else {
         /* the input object is still there */
         istream_close_handler(hold->input);
-        istream_deinit_abort(&hold->output);
+        istream_deinit(&hold->output);
     }
 }
 

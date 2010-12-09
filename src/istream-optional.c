@@ -103,7 +103,7 @@ istream_optional_close(istream_t istream)
     struct istream_optional *optional = istream_to_optional(istream);
 
     istream_close_handler(optional->input);
-    istream_deinit_abort(&optional->output);
+    istream_deinit(&optional->output);
 }
 
 static const struct istream istream_optional = {

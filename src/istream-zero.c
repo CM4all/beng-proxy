@@ -46,7 +46,7 @@ istream_zero_close(istream_t istream)
 {
     struct istream_zero *zero = istream_to_zero(istream);
 
-    istream_deinit_abort(&zero->stream);
+    istream_deinit(&zero->stream);
 }
 
 static const struct istream istream_zero = {

@@ -267,7 +267,7 @@ istream_chunked_close(istream_t istream)
     if (chunked->input != NULL)
         istream_free_handler(&chunked->input);
 
-    istream_deinit_abort(&chunked->output);
+    istream_deinit(&chunked->output);
 }
 
 static const struct istream istream_chunked = {

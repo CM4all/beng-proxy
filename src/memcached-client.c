@@ -263,7 +263,7 @@ istream_memcached_close(istream_t istream)
     assert(client->response.read_state == READ_VALUE);
     assert(client->request.istream == NULL);
 
-    istream_deinit_abort(&client->response.value);
+    istream_deinit(&client->response.value);
     memcached_client_release(client, false);
 }
 

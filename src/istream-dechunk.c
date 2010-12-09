@@ -297,7 +297,10 @@ istream_dechunk_close(istream_t istream)
 
     assert(dechunk->state != EOF_DETECTED);
 
-    dechunk_abort(dechunk);
+    dechunk->state = CLOSED;
+
+    istream_free_handler(&dechunk->input);
+    istream_deinit(&dechunk->output);
 }
 
 static const struct istream istream_dechunk = {

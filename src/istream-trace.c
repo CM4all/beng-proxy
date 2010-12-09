@@ -146,7 +146,7 @@ istream_trace_close(istream_t istream)
     fprintf(stderr, "%p close()\n", (const void*)trace);
 
     istream_close_handler(trace->input);
-    istream_deinit_abort(&trace->output);
+    istream_deinit(&trace->output);
 }
 
 static const struct istream istream_trace = {

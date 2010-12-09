@@ -158,7 +158,7 @@ istream_request_value_close(istream_t istream)
 {
     struct request_value *v = istream_to_value(istream);
 
-    istream_deinit_abort(&v->base);
+    istream_deinit(&v->base);
 }
 
 static const struct istream istream_request_value = {

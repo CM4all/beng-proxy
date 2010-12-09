@@ -100,7 +100,7 @@ istream_inject_close(istream_t istream)
     assert(inject->input != NULL);
 
     istream_close_handler(inject->input);
-    istream_deinit_abort(&inject->output);
+    istream_deinit(&inject->output);
 }
 
 static const struct istream istream_inject = {

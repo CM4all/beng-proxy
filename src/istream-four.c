@@ -80,7 +80,7 @@ istream_four_close(istream_t istream)
     assert(four->input != NULL);
 
     istream_close_handler(four->input);
-    istream_deinit_abort(&four->output);
+    istream_deinit(&four->output);
 }
 
 static const struct istream istream_four = {

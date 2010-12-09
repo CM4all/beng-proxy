@@ -86,7 +86,7 @@ istream_unlock_close(istream_t istream)
 
     istream_close_handler(unlock->input);
     cache_item_unlock(unlock->cache, unlock->item);
-    istream_deinit_abort(&unlock->output);
+    istream_deinit(&unlock->output);
 }
 
 static const struct istream istream_unlock = {

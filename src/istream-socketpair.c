@@ -156,7 +156,14 @@ istream_socketpair_close(istream_t istream)
 {
     struct istream_socketpair *sp = istream_to_socketpair(istream);
 
-    socketpair_close(sp);
+    if (sp->input != NULL)
+        istream_free_handler(&sp->input);
+
+    if (sp->fd >= 0) {
+        socketpair_release_socket(sp);
+
+        istream_deinit(&sp->output);
+    }
 }
 
 static const struct istream istream_socketpair = {

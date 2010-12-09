@@ -332,7 +332,12 @@ http_client_response_stream_close(istream_t istream)
     assert(!http_body_eof(&client->response.body_reader));
 
     stopwatch_event(client->stopwatch, "close");
-    http_client_abort_response_body(client);
+
+    if (client->request.istream != NULL)
+        istream_close_handler(client->request.istream);
+
+    istream_deinit(&client->response.body_reader.output);
+    http_client_release(client, false);
 }
 
 static const struct istream http_client_response_stream = {

@@ -29,7 +29,7 @@ istream_block_close(istream_t istream)
 {
     struct istream_block *block = istream_to_block(istream);
 
-    istream_deinit_abort(&block->stream);
+    istream_deinit(&block->stream);
 }
 
 static const struct istream istream_block = {

@@ -379,7 +379,7 @@ istream_cgi_close(istream_t istream)
     if (cgi->input != NULL)
         istream_free_handler(&cgi->input);
 
-    istream_deinit_abort(&cgi->output);
+    istream_deinit(&cgi->output);
 }
 
 static const struct istream istream_cgi = {

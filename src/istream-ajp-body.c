@@ -230,7 +230,7 @@ istream_ajp_body_close(istream_t istream)
     struct istream_ajp_body *ab = istream_to_ab(istream);
 
     istream_free_handler(&ab->input);
-    istream_deinit_abort(&ab->output);
+    istream_deinit(&ab->output);
 }
 
 static const struct istream istream_ajp_body = {

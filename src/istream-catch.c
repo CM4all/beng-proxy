@@ -158,7 +158,7 @@ istream_catch_close(istream_t istream)
     if (catch->input != NULL)
         istream_free_handler(&catch->input);
 
-    istream_deinit_abort(&catch->output);
+    istream_deinit(&catch->output);
 }
 
 static const struct istream istream_catch = {

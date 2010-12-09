@@ -89,7 +89,7 @@ istream_delayed_close(istream_t istream)
     else if (async_ref_defined(&delayed->async))
         async_abort(&delayed->async);
 
-    istream_deinit_abort(&delayed->output);
+    istream_deinit(&delayed->output);
 }
 
 static const struct istream istream_delayed = {

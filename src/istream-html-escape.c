@@ -184,7 +184,7 @@ istream_html_escape_close(istream_t istream)
     if (html_escape->input != NULL)
         istream_free_handler(&html_escape->input);
 
-    istream_deinit_abort(&html_escape->output);
+    istream_deinit(&html_escape->output);
 }
 
 static const struct istream istream_html_escape = {

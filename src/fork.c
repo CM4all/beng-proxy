@@ -342,7 +342,7 @@ istream_fork_close(istream_t istream)
     if (f->output_fd >= 0)
         fork_close(f);
 
-    istream_deinit_abort(&f->output);
+    istream_deinit(&f->output);
 }
 
 static const struct istream istream_fork = {

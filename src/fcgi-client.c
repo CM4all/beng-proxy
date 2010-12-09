@@ -184,7 +184,7 @@ fcgi_client_abort_response_body(struct fcgi_client *client)
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
 
-    istream_deinit_abort(&client->response.body);
+    istream_deinit(&client->response.body);
     fcgi_client_release(client, false);
 }
 

@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.9.2) unstable; urgency=low
 
   * http-response: better context for error messages
+  * istream: method close() does not invoke handler->abort()
 
  --
 

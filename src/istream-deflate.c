@@ -350,7 +350,7 @@ istream_deflate_close(istream_t istream)
     if (defl->input != NULL)
         istream_close_handler(defl->input);
 
-    istream_deinit_abort(&defl->output);
+    istream_deinit(&defl->output);
 }
 
 static const struct istream istream_deflate = {

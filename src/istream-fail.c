@@ -29,7 +29,7 @@ istream_fail_close(istream_t istream)
 {
     struct istream_fail *fail = istream_to_fail(istream);
 
-    istream_deinit_abort(&fail->stream);
+    istream_deinit(&fail->stream);
 }
 
 static const struct istream istream_fail = {

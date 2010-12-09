@@ -53,7 +53,7 @@ istream_memory_close(istream_t istream)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 
-    istream_deinit_abort(&memory->stream);
+    istream_deinit(&memory->stream);
 }
 
 static const struct istream istream_memory = {

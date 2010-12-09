@@ -56,14 +56,6 @@ cat_close_inputs(struct istream_cat *cat)
     }
 }
 
-static void
-cat_close(struct istream_cat *cat)
-{
-    cat_close_inputs(cat);
-    
-    istream_deinit_abort(&cat->output);
-}
-
 
 /*
  * istream handler
@@ -131,7 +123,9 @@ cat_input_abort(void *ctx)
     assert(input->istream != NULL);
     input->istream = NULL;
 
-    cat_close(cat);
+    cat_close_inputs(cat);
+
+    istream_deinit_abort(&cat->output);
 }
 
 static const struct istream_handler cat_input_handler = {
@@ -234,7 +228,8 @@ istream_cat_close(istream_t istream)
 {
     struct istream_cat *cat = istream_to_cat(istream);
 
-    cat_close(cat);
+    cat_close_inputs(cat);
+    istream_deinit(&cat->output);
 }
 
 static const struct istream istream_cat = {

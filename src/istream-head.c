@@ -133,7 +133,7 @@ istream_head_close(istream_t istream)
     struct istream_head *head = istream_to_head(istream);
 
     istream_close_handler(head->input);
-    istream_deinit_abort(&head->output);
+    istream_deinit(&head->output);
 }
 
 static const struct istream istream_head = {

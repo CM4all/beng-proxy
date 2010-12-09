@@ -58,7 +58,7 @@ istream_null_close(istream_t istream)
 {
     struct istream_null *null = istream_to_null(istream);
 
-    istream_deinit_abort(&null->stream);
+    istream_deinit(&null->stream);
 }
 
 static const struct istream istream_null = {

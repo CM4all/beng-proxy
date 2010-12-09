@@ -194,7 +194,7 @@ istream_fcgi_close(istream_t istream)
     if (fcgi->input != NULL)
         istream_close_handler(fcgi->input);
 
-    istream_deinit_abort(&fcgi->output);
+    istream_deinit(&fcgi->output);
 }
 
 static const struct istream istream_fcgi = {

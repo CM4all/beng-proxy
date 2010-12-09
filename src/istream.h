@@ -69,8 +69,10 @@ struct istream_handler {
     void (*eof)(void *ctx);
 
     /**
-     * The istream has ended unexpectedly, e.g. an I/O error, or a
-     * client called istream_close().
+     * The istream has ended unexpectedly, e.g. an I/O error.
+     *
+     * The method close() will not result in a call to this callback,
+     * since the caller is assumed to be the istream handler.
      *
      * @param ctx the istream_handler context pointer
      */

@@ -102,7 +102,7 @@ istream_later_close(istream_t istream)
     if (later->input != NULL)
         istream_close_handler(later->input);
 
-    istream_deinit_abort(&later->output);
+    istream_deinit(&later->output);
 }
 
 static const struct istream istream_later = {

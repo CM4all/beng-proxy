@@ -98,7 +98,7 @@ istream_stopwatch_close(istream_t istream)
     assert(stopwatch->input != NULL);
 
     istream_close_handler(stopwatch->input);
-    istream_deinit_abort(&stopwatch->output);
+    istream_deinit(&stopwatch->output);
 }
 
 static const struct istream istream_stopwatch = {

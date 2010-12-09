@@ -292,7 +292,15 @@ was_input_istream_close(istream_t istream)
 {
     struct was_input *input = response_stream_to_data(istream);
 
-    was_input_abort(input);
+    p_event_del(&input->event, input->output.pool);
+
+    /* protect against recursive was_input_free() call within the
+       istream handler */
+    input->closed = true;
+
+    istream_deinit(&input->output);
+
+    input->handler->abort(input->handler_ctx);
 }
 
 static const struct istream was_input_stream = {

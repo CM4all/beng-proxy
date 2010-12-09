@@ -668,7 +668,7 @@ istream_subst_close(istream_t istream)
     if (subst->input != NULL)
         istream_free_handler(&subst->input);
 
-    istream_deinit_abort(&subst->output);
+    istream_deinit(&subst->output);
 }
 
 static const struct istream istream_subst = {

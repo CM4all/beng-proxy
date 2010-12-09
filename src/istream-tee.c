@@ -247,8 +247,6 @@ istream_tee_close0(istream_t istream)
         }
     }
 
-    istream_invoke_abort(&tee->outputs[0].istream);
-
     if (tee->input != NULL && tee->outputs[1].enabled &&
         !tee->in_data && !tee->reading)
         istream_read(tee->input);
@@ -325,8 +323,6 @@ istream_tee_close1(istream_t istream)
             pool_unref(tee->outputs[0].istream.pool);
         }
     }
-
-    istream_invoke_abort(&tee->outputs[1].istream);
 
     if (tee->input != NULL && tee->outputs[0].enabled &&
         !tee->in_data && !tee->reading)

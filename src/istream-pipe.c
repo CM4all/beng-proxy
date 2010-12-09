@@ -315,7 +315,12 @@ istream_pipe_close(istream_t istream)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
 
-    pipe_abort(p);
+    pipe_close(p);
+
+    if (p->input != NULL)
+        istream_close_handler(p->input);
+
+    istream_deinit(&p->output);
 }
 
 static const struct istream istream_pipe = {

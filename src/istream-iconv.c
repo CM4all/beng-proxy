@@ -206,7 +206,7 @@ istream_iconv_close(istream_t istream)
     if (ic->input != NULL)
         istream_close_handler(ic->input);
     iconv_close(ic->iconv);
-    istream_deinit_abort(&ic->output);
+    istream_deinit(&ic->output);
 }
 
 static const struct istream istream_iconv = {
