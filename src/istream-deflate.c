@@ -304,8 +304,6 @@ deflate_input_abort(void *ctx)
 {
     struct istream_deflate *defl = ctx;
 
-    defl->input = NULL;
-
     deflate_close(defl);
 
     istream_deinit_abort(&defl->output);
