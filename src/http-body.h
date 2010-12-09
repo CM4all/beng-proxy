@@ -15,6 +15,11 @@ struct fifo_buffer;
 
 struct http_body_reader {
     struct istream output;
+
+    /**
+     * The remaining number of bytes.  If that is unknown
+     * (i.e. chunked or ended by closing the socket), the value is -1.
+     */
     off_t rest;
 
 #ifndef NDEBUG
