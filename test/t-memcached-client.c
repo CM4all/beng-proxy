@@ -70,7 +70,7 @@ struct context {
 
     istream_t value;
     off_t value_data, consumed_value_data;
-    bool value_eof, value_abort;
+    bool value_eof, value_abort, value_closed;
 
     struct istream request_value;
 };
@@ -201,7 +201,8 @@ my_istream_data(G_GNUC_UNUSED const void *data, size_t length, void *ctx)
     c->value_data += length;
 
     if (c->close_value_data) {
-        istream_close(c->value);
+        c->value_closed = true;
+        istream_free_handler(&c->value);
         return 0;
     }
 
@@ -260,12 +261,14 @@ on_memcached_response(enum memcached_response_status status,
     c->status = status;
 
     if (c->close_value_early)
-        istream_close(value);
+        istream_close_unused(value);
     else if (value != NULL)
         istream_assign_handler(&c->value, value, &my_istream_handler, c, 0);
 
-    if (c->close_value_late)
-        istream_close(c->value);
+    if (c->close_value_late) {
+        c->value_closed = true;
+        istream_free_handler(&c->value);
+    }
 }
 
 
@@ -352,7 +355,8 @@ test_close_late(pool_t pool, struct context *c)
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
     assert(c->value == NULL);
     assert(!c->value_eof);
-    assert(c->value_abort);
+    assert(!c->value_abort);
+    assert(c->value_closed);
     assert(c->value_data == 0);
 }
 
@@ -380,7 +384,8 @@ test_close_data(pool_t pool, struct context *c)
     assert(c->status == MEMCACHED_STATUS_NO_ERROR);
     assert(c->value == NULL);
     assert(!c->value_eof);
-    assert(c->value_abort);
+    assert(!c->value_abort);
+    assert(c->value_closed);
     assert(c->value_data > 0);
 }
 

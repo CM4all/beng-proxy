@@ -62,7 +62,8 @@ my_istream_data(const void *data, size_t length, void *ctx)
 
     nbytes = write(1, data, length);
     if (nbytes <= 0) {
-        istream_close(c->body);
+        c->error = true;
+        istream_free_handler(&c->body);
         return 0;
     }
 

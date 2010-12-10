@@ -118,7 +118,7 @@ resource_get(__attr_unused struct http_cache *cache,
     got_request = true;
 
     if (body != NULL)
-        istream_close(body);
+        istream_close_unused(body);
 
     switch (test_id) {
     case 0:
@@ -171,7 +171,7 @@ my_http_response(http_status_t status, __attr_unused struct strmap *headers,
     assert(status == 200);
     assert(body != NULL);
 
-    istream_close(body);
+    istream_close_unused(body);
 
     got_response = true;
 }

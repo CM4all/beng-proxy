@@ -135,7 +135,7 @@ my_response_handler(enum memcached_response_status status,
     if (status != MEMCACHED_STATUS_NO_ERROR || value == NULL) {
         fprintf(stderr, "status=%d\n", status);
         if (value != NULL)
-            istream_close(value);
+            istream_close_unused(value);
         return;
     }
 

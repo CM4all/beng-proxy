@@ -30,8 +30,7 @@ sink_header_callback(void *header, size_t length,
         assert(length == 0);
         assert(header == NULL);
 
-        async_ref_clear(istream_delayed_async_ref(delayed));
-        istream_close(delayed);
+        istream_delayed_set_abort(delayed);
     }
 }
 

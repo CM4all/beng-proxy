@@ -94,7 +94,7 @@ struct context {
 
     istream_t body;
     off_t body_data, consumed_body_data;
-    bool body_eof, body_abort;
+    bool body_eof, body_abort, body_closed;
 
     istream_t request_body;
     bool close_request_body_early, close_request_body_eof;
@@ -134,7 +134,8 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
     c->body_data += length;
 
     if (c->close_response_body_data) {
-        istream_close(c->body);
+        c->body_closed = true;
+        istream_free_handler(&c->body);
         return 0;
     }
 
@@ -156,7 +157,7 @@ my_istream_eof(void *ctx)
     c->body_eof = true;
 
     if (c->close_request_body_eof)
-        istream_free(&c->request_body);
+        istream_delayed_set_abort(c->request_body);
 }
 
 static void
@@ -190,7 +191,7 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
     c->status = status;
 
     if (c->close_request_body_early)
-        istream_free(&c->request_body);
+        istream_delayed_set_abort(c->request_body);
 
     if (c->response_body_byte) {
         assert(body != NULL);
@@ -198,12 +199,14 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
     }
 
     if (c->close_response_body_early)
-        istream_close(body);
+        istream_close_unused(body);
     else if (body != NULL)
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
 
-    if (c->close_response_body_late)
-        istream_close(c->body);
+    if (c->close_response_body_late) {
+        c->body_closed = true;
+        istream_free_handler(&c->body);
+    }
 
     if (c->delayed != NULL) {
         istream_delayed_set(c->delayed, istream_fail_new(c->pool));
@@ -318,7 +321,7 @@ test_close_response_body_late(pool_t pool, struct context *c)
     assert(c->body == NULL);
     assert(c->body_data == 0);
     assert(!c->body_eof);
-    assert(c->body_abort);
+    assert(c->body_abort || c->body_closed);
 }
 
 static void
@@ -345,20 +348,21 @@ test_close_response_body_data(pool_t pool, struct context *c)
     assert(c->body == NULL);
     assert(c->body_data == 6);
     assert(!c->body_eof);
-    assert(c->body_abort);
+    assert(!c->body_abort);
+    assert(c->body_closed);
 }
 
 static void
 test_close_request_body_early(pool_t pool, struct context *c)
 {
-    istream_t request_body = istream_block_new(pool);
+    istream_t request_body = istream_delayed_new(pool);
 
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
                         request_body,
                         &my_response_handler, c, &c->async_ref);
-    istream_close(request_body);
+    istream_delayed_set_abort(request_body);
 
     pool_unref(pool);
     pool_commit();
@@ -425,12 +429,11 @@ test_data_blocking(pool_t pool, struct context *c)
     assert(!c->body_eof);
     assert(!c->body_abort);
 
-    istream_close(c->body);
+    istream_close_handler(c->body);
 
     assert(c->released);
-    assert(c->body == NULL);
     assert(!c->body_eof);
-    assert(c->body_abort);
+    assert(!c->body_abort);
 }
 
 /**
@@ -548,7 +551,7 @@ test_close_ignored_request_body(pool_t pool, struct context *c)
     c->close_request_body_early = true;
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        c->request_body = istream_zero_new(pool),
+                        c->request_body = istream_delayed_new(pool),
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -574,7 +577,7 @@ test_head_close_ignored_request_body(pool_t pool, struct context *c)
     c->close_request_body_early = true;
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_HEAD, "/foo", NULL,
-                        c->request_body = istream_zero_new(pool),
+                        c->request_body = istream_delayed_new(pool),
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -599,7 +602,7 @@ test_close_request_body_eor(pool_t pool, struct context *c)
     c->close_request_body_eof = true;
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        c->request_body = istream_zero_new(pool),
+                        c->request_body = istream_delayed_new(pool),
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -624,7 +627,7 @@ test_close_request_body_eor2(pool_t pool, struct context *c)
     c->close_request_body_eof = true;
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        c->request_body = istream_zero_new(pool),
+                        c->request_body = istream_delayed_new(pool),
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();

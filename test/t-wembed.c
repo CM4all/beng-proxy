@@ -105,7 +105,7 @@ test_abort_resolver(pool_t pool)
     istream = embed_inline_widget(pool, &env, &widget);
     pool_unref(pool);
 
-    istream_close(istream);
+    istream_close_unused(istream);
 }
 
 int main(int argc, char **argv) {

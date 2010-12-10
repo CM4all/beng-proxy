@@ -21,7 +21,7 @@ struct context {
     enum memcached_response_status status;
 
     istream_t value;
-    bool value_eof, value_abort;
+    bool value_eof, value_abort, value_closed;
 };
 
 
@@ -63,7 +63,8 @@ my_istream_data(const void *data, size_t length, void *ctx)
 
     nbytes = write(1, data, length);
     if (nbytes <= 0) {
-        istream_close(c->value);
+        c->value_closed = true;
+        istream_free_handler(&c->value);
         return 0;
     }
 

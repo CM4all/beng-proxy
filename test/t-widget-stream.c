@@ -24,7 +24,7 @@ struct context {
 
     istream_t body;
     off_t body_data;
-    bool eof, abort, async_abort;
+    bool eof, abort, closed, async_abort;
 };
 
 
@@ -43,7 +43,8 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
     c->body_data += length;
 
     if (c->close) {
-        istream_close(c->body);
+        c->closed = true;
+        istream_free_handler(&c->body);
         return 0;
     }
 
@@ -123,6 +124,7 @@ test_normal(pool_t pool, struct context *c)
     assert(c->body_data == 3);
     assert(c->eof);
     assert(!c->abort);
+    assert(!c->closed);
 }
 
 static void
@@ -139,7 +141,8 @@ test_close(pool_t pool, struct context *c)
     assert(c->body == NULL);
     assert(c->body_data == 3);
     assert(!c->eof);
-    assert(c->abort);
+    assert(!c->abort);
+    assert(c->closed);
 }
 
 

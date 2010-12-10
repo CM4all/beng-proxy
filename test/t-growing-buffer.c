@@ -7,7 +7,7 @@
 
 struct ctx {
     pool_t pool;
-    bool got_data, eof, abort;
+    bool got_data, eof, abort, closed;
     istream_t abort_istream;
 };
 
@@ -26,7 +26,9 @@ my_istream_data(const void *data, size_t length, void *_ctx)
     ctx->got_data = true;
 
     if (ctx->abort_istream != NULL) {
-        istream_free(&ctx->abort_istream);
+        ctx->closed = true;
+        istream_free_handler(&ctx->abort_istream);
+        pool_unref(ctx->pool);
         return 0;
     }
 
@@ -160,7 +162,7 @@ test_abort_without_handler(pool_t pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     istream = create_test(pool);
-    istream_close(istream);
+    istream_close_unused(istream);
 
     pool_trash(pool);
     pool_unref(pool);
@@ -182,9 +184,10 @@ test_abort_with_handler(pool_t pool)
     istream = create_test(ctx.pool);
     istream_handler_set(istream, &my_istream_handler, &ctx, 0);
 
-    istream_close(istream);
+    istream_free_handler(&istream);
+    pool_unref(ctx.pool);
 
-    assert(ctx.abort);
+    assert(!ctx.abort);
 
     pool_commit();
 }
@@ -202,13 +205,14 @@ test_abort_in_handler(pool_t pool)
     ctx.abort_istream = create_test(ctx.pool);
     istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);
 
-    while (!ctx.eof && !ctx.abort) {
+    while (!ctx.eof && !ctx.abort && !ctx.closed) {
         istream_read_expect(&ctx, ctx.abort_istream);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
     assert(ctx.abort_istream == NULL);
-    assert(ctx.abort);
+    assert(!ctx.abort);
+    assert(ctx.closed);
 
     pool_commit();
 }

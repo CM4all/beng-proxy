@@ -27,7 +27,7 @@ struct context {
 
     istream_t body;
     off_t body_data;
-    bool body_eof, body_abort;
+    bool body_eof, body_abort, body_closed;
 };
 
 
@@ -44,7 +44,9 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
     c->body_data += length;
 
     if (c->close_response_body_data) {
-        istream_close(c->body);
+        c->body_closed = true;
+        istream_free_handler(&c->body);
+        children_shutdown();
         return 0;
     }
 
@@ -102,13 +104,16 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
     c->status = status;
 
     if (c->close_response_body_early) {
-        istream_close(body);
+        istream_close_unused(body);
         children_shutdown();
     } else if (body != NULL)
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
 
-    if (c->close_response_body_late)
-        istream_close(c->body);
+    if (c->close_response_body_late) {
+        c->body_closed = true;
+        istream_free_handler(&c->body);
+        children_shutdown();
+    }
 
     if (c->body_read) {
         assert(body != NULL);
@@ -234,7 +239,7 @@ test_close_late(pool_t pool, struct context *c)
     assert(c->status == HTTP_STATUS_OK);
     assert(c->body == NULL);
     assert(!c->body_eof);
-    assert(c->body_abort);
+    assert(c->body_abort || c->body_closed);
 }
 
 static void
@@ -264,7 +269,8 @@ test_close_data(pool_t pool, struct context *c)
 
     assert(c->status == HTTP_STATUS_OK);
     assert(!c->body_eof);
-    assert(c->body_abort);
+    assert(!c->body_abort);
+    assert(c->body_closed);
 }
 
 static void

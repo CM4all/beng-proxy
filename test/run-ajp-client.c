@@ -28,7 +28,7 @@ struct context {
     http_status_t status;
 
     istream_t body;
-    bool body_eof, body_abort;
+    bool body_eof, body_abort, body_closed;
 };
 
 
@@ -70,7 +70,8 @@ my_istream_data(const void *data, size_t length, void *ctx)
 
     nbytes = write(1, data, length);
     if (nbytes <= 0) {
-        istream_close(c->body);
+        c->body_closed = true;
+        istream_free_handler(&c->body);
         return 0;
     }
 

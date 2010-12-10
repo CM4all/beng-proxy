@@ -212,7 +212,7 @@ resource_loader_request(__attr_unused struct resource_loader *rl, pool_t pool,
     }
 
     if (body != NULL)
-        istream_close(body);
+        istream_close_unused(body);
 
     if (request->response_headers != NULL) {
         struct growing_buffer *gb = growing_buffer_new(pool, 512);

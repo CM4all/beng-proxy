@@ -53,7 +53,8 @@ my_istream_data(const void *data, size_t length, void *_ctx)
     ctx->got_data = true;
 
     if (ctx->abort_istream != NULL && ctx->abort_after-- == 0) {
-        istream_free(&ctx->abort_istream);
+        istream_inject_fault(ctx->abort_istream);
+        ctx->abort_istream = NULL;
         return 0;
     }
 
@@ -93,7 +94,8 @@ my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
     ctx->got_data = true;
 
     if (ctx->abort_istream != NULL) {
-        istream_free(&ctx->abort_istream);
+        istream_inject_fault(ctx->abort_istream);
+        ctx->abort_istream = NULL;
         return 0;
     }
 
@@ -322,40 +324,10 @@ test_abort_without_handler(pool_t pool)
     pool_unref(pool);
     pool_commit();
 
-    istream_close(istream);
+    istream_close_unused(istream);
 
     cleanup();
     pool_commit();
-}
-
-/** abort with handler */
-static void
-test_abort_with_handler(pool_t pool)
-{
-    struct ctx ctx = {
-        .abort_istream = NULL,
-        .block_after = -1,
-        .eof = false,
-        .half = false,
-#ifdef EXPECTED_RESULT
-        .record = false,
-#endif
-    };
-    istream_t istream;
-
-    pool = pool_new_linear(pool, "test", 8192);
-
-    istream = create_test(pool, create_input(pool));
-    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
-    pool_unref(pool);
-    pool_commit();
-
-    istream_close(istream);
-
-    cleanup();
-    pool_commit();
-
-    assert(ctx.eof);
 }
 
 #ifndef NO_ABORT_ISTREAM
@@ -376,13 +348,14 @@ test_abort_in_handler(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    ctx.abort_istream = create_test(pool, create_input(pool));
-    istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);
+    ctx.abort_istream = istream_inject_new(pool, create_input(pool));
+    istream_t istream = create_test(pool, ctx.abort_istream);
+    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
     pool_unref(pool);
     pool_commit();
 
     while (!ctx.eof) {
-        istream_read_expect(&ctx, ctx.abort_istream);
+        istream_read_expect(&ctx, istream);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -408,13 +381,14 @@ test_abort_in_handler_half(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    ctx.abort_istream = create_test(pool, istream_four_new(pool, create_input(pool)));
-    istream_handler_set(ctx.abort_istream, &my_istream_handler, &ctx, 0);
+    ctx.abort_istream = istream_inject_new(pool, istream_four_new(pool, create_input(pool)));
+    istream_t istream = create_test(pool, istream_byte_new(pool, ctx.abort_istream));
+    istream_handler_set(istream, &my_istream_handler, &ctx, 0);
     pool_unref(pool);
     pool_commit();
 
     while (!ctx.eof) {
-        istream_read_expect(&ctx, ctx.abort_istream);
+        istream_read_expect(&ctx, istream);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
@@ -471,7 +445,7 @@ test_big_hold(pool_t pool)
 
     istream_read(istream);
 
-    istream_close(hold);
+    istream_close_unused(hold);
 
     pool_unref(pool);
 }
@@ -507,7 +481,6 @@ int main(int argc, char **argv) {
     test_fail(root_pool);
     test_fail_1byte(root_pool);
     test_abort_without_handler(root_pool);
-    test_abort_with_handler(root_pool);
 #ifndef NO_ABORT_ISTREAM
     test_abort_in_handler(root_pool);
     if (enable_blocking)
