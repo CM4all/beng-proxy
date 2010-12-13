@@ -76,6 +76,7 @@ ISTREAM_SRC = \
 	src/istream-iconv.c \
 	src/istream-trace.c \
 	src/istream-fail.c \
+	src/istream-inject.c \
 	src/istream-catch.c \
 	src/istream-html-escape.c \
 	src/istream-later.c \

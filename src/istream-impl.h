@@ -31,6 +31,12 @@ istream_t
 istream_fail_new(pool_t pool);
 
 istream_t
+istream_inject_new(pool_t pool, istream_t input);
+
+void
+istream_inject_fault(istream_t i_fault);
+
+istream_t
 istream_catch_new(pool_t pool, istream_t input);
 
 istream_t
