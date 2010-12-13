@@ -46,9 +46,11 @@ my_istream_eof(void *_ctx)
 }
 
 static void
-my_istream_abort(void *_ctx)
+my_istream_abort(GError *error, void *_ctx)
 {
     struct ctx *ctx = _ctx;
+
+    g_error_free(error);
 
     ctx->abort = true;
 

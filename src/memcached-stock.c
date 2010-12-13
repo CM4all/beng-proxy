@@ -91,7 +91,10 @@ memcached_stock_callback(void *ctx, struct stock_item *item)
     struct memcached_stock_request *request = ctx;
 
     if (item == NULL) {
-        request->handler->error(request->handler_ctx);
+        GError *error =
+            g_error_new_literal(memcached_client_quark(), 0,
+                                "memcached stock request failed");
+        request->handler->error(error, request->handler_ctx);
 
         if (request->value != NULL)
             istream_close_unused(request->value);

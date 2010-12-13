@@ -49,7 +49,7 @@ struct parser_handler {
     void (*attr_finished)(const struct parser_attr *attr, void *ctx);
     size_t (*cdata)(const char *p, size_t length, bool escaped, void *ctx);
     void (*eof)(void *ctx, off_t length);
-    void (*abort)(void *ctx);
+    void (*abort)(GError *error, void *ctx);
 };
 
 struct parser;

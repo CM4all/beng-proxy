@@ -35,12 +35,12 @@ unlock_input_eof(void *ctx)
 }
 
 static void
-unlock_input_abort(void *ctx)
+unlock_input_abort(GError *error, void *ctx)
 {
     struct istream_unlock *unlock = ctx;
 
     cache_item_unlock(unlock->cache, unlock->item);
-    istream_deinit_abort(&unlock->output);
+    istream_deinit_abort(&unlock->output, error);
 }
 
 static const struct istream_handler unlock_input_handler = {

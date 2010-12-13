@@ -171,7 +171,7 @@ ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
  * Abort the response body.
  */
 static void
-ajp_client_abort_response_body(struct ajp_client *client)
+ajp_client_abort_response_body(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
     assert(client->fd >= 0);
@@ -180,7 +180,7 @@ ajp_client_abort_response_body(struct ajp_client *client)
     pool_ref(client->pool);
 
     client->response.read_state = READ_END;
-    istream_deinit_abort(&client->response.body);
+    istream_deinit_abort(&client->response.body, error);
 
     ajp_client_release(client, false);
 
@@ -200,10 +200,7 @@ ajp_client_abort_response(struct ajp_client *client, GError *error)
         break;
 
     case READ_BODY:
-        daemon_log(2, "%s\n", error->message);
-        g_error_free(error);
-
-        ajp_client_abort_response_body(client);
+        ajp_client_abort_response_body(client, error);
         break;
 
     case READ_END:
@@ -279,8 +276,10 @@ ajp_consume_send_headers(struct ajp_client *client,
     struct strmap *headers;
 
     if (client->response.read_state != READ_BEGIN) {
-        daemon_log(1, "unexpected SEND_HEADERS packet from AJP server\n");
-        ajp_client_abort_response_body(client);
+        GError *error =
+            g_error_new(ajp_client_quark(), 0,
+                        "unexpected SEND_HEADERS packet from AJP server");
+        ajp_client_abort_response_body(client, error);
         return false;
     }
 
@@ -736,7 +735,7 @@ ajp_request_stream_eof(void *ctx)
 }
 
 static void
-ajp_request_stream_abort(void *ctx)
+ajp_request_stream_abort(GError *error, void *ctx)
 {
     struct ajp_client *client = ctx;
 
@@ -749,9 +748,7 @@ ajp_request_stream_abort(void *ctx)
            destructed further up the stack */
         return;
 
-    GError *error =
-        g_error_new_literal(ajp_client_quark(), 0,
-                            "FastCGI request stream aborted");
+    g_prefix_error(&error, "AJP request stream failed: ");
     ajp_client_abort_response(client, error);
 }
 

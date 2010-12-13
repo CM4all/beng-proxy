@@ -1047,7 +1047,7 @@ processor_parser_eof(void *ctx, off_t length __attr_unused)
 }
 
 static void
-processor_parser_abort(void *ctx)
+processor_parser_abort(GError *error, void *ctx)
 {
     struct processor *processor = ctx;
 
@@ -1057,11 +1057,10 @@ processor_parser_abort(void *ctx)
 
     if (processor->container->from_request.proxy_ref != NULL) {
         async_operation_finished(&processor->async);
-        http_response_handler_invoke_abort(&processor->response_handler,
-                                           g_error_new_literal(parser_quark(), 0,
-                                                               "I/O error in parser"));
+        http_response_handler_invoke_abort(&processor->response_handler, error);
         pool_unref(processor->caller_pool);
-    }
+    } else
+        g_error_free(error);
 }
 
 static const struct parser_handler processor_parser_handler = {

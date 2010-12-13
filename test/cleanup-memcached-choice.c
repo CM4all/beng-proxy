@@ -38,8 +38,12 @@ struct context {
 };
 
 static void
-cleanup_callback(G_GNUC_UNUSED void *ctx)
+cleanup_callback(GError *error, G_GNUC_UNUSED void *ctx)
 {
+    if (error != NULL) {
+        g_printerr("%s\n", error->message);
+        g_error_free(error);
+    }
 }
 
 /*

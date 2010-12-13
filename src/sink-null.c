@@ -18,10 +18,16 @@ sink_null_eof(__attr_unused void *_ctx)
 {
 }
 
+static void
+sink_null_abort(GError *error, __attr_unused void *_ctx)
+{
+    g_error_free(error);
+}
+
 static const struct istream_handler sink_null_handler = {
     .data = sink_null_data,
     .eof = sink_null_eof,
-    .abort = sink_null_eof,
+    .abort = sink_null_abort,
 };
 
 void

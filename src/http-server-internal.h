@@ -96,6 +96,12 @@ struct http_server_connection {
     bool keep_alive;
 };
 
+static inline GQuark
+http_server_quark(void)
+{
+    return g_quark_from_static_string("http_server");
+}
+
 static inline int
 http_server_connection_valid(struct http_server_connection *connection)
 {

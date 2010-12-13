@@ -42,6 +42,12 @@ struct sink_header {
     struct async_operation async_operation;
 };
 
+static GQuark
+sink_header_quark(void)
+{
+    return g_quark_from_static_string("sink_header");
+}
+
 static size_t
 header_invoke_callback(struct sink_header *header, size_t consumed)
 {
@@ -93,7 +99,11 @@ header_consume_size(struct sink_header *header,
         /* header too large */
         async_operation_finished(&header->async_operation);
         istream_close_handler(header->input);
-        header->handler->error(header->handler_ctx);
+
+        GError *error =
+            g_error_new_literal(sink_header_quark(), 0,
+                                "header is too large");
+        header->handler->error(error, header->handler_ctx);
         istream_deinit(&header->output);
         return 0;
     }
@@ -214,7 +224,11 @@ sink_header_input_eof(void *ctx)
     case SIZE:
     case HEADER:
         async_operation_finished(&header->async_operation);
-        header->handler->error(header->handler_ctx);
+
+        GError *error =
+            g_error_new_literal(sink_header_quark(), 0,
+                                "premature end of file");
+        header->handler->error(error, header->handler_ctx);
         istream_deinit(&header->output);
         break;
 
@@ -229,7 +243,7 @@ sink_header_input_eof(void *ctx)
 }
 
 static void
-sink_header_input_abort(void *ctx)
+sink_header_input_abort(GError *error, void *ctx)
 {
     struct sink_header *header = ctx;
 
@@ -237,7 +251,7 @@ sink_header_input_abort(void *ctx)
     case SIZE:
     case HEADER:
         async_operation_finished(&header->async_operation);
-        header->handler->error(header->handler_ctx);
+        header->handler->error(error, header->handler_ctx);
         istream_deinit(&header->output);
         break;
 
@@ -246,7 +260,7 @@ sink_header_input_abort(void *ctx)
         break;
 
     case DATA:
-        istream_deinit_abort(&header->output);
+        istream_deinit_abort(&header->output, error);
         break;
     }
 }

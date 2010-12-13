@@ -611,14 +611,14 @@ parser_input_eof(void *ctx)
 }
 
 static void
-parser_input_abort(void *ctx)
+parser_input_abort(GError *error, void *ctx)
 {
     struct parser *parser = ctx;
 
     assert(parser->input != NULL);
 
     parser->input = NULL;
-    parser->handler->abort(parser->handler_ctx);
+    parser->handler->abort(error, parser->handler_ctx);
     pool_unref(parser->pool);
 }
 

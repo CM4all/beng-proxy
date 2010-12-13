@@ -5,6 +5,7 @@
  */
 
 #include "was-input.h"
+#include "was-quark.h"
 #include "pevent.h"
 #include "direct.h"
 #include "istream-internal.h"
@@ -58,7 +59,7 @@ was_input_schedule_read(struct was_input *input)
 }
 
 static void
-was_input_abort(struct was_input *input)
+was_input_abort(struct was_input *input, GError *error)
 {
     p_event_del(&input->event, input->output.pool);
 
@@ -66,7 +67,7 @@ was_input_abort(struct was_input *input)
        istream handler */
     input->closed = true;
 
-    istream_deinit_abort(&input->output);
+    istream_deinit_abort(&input->output, error);
 
     input->handler->abort(input->handler_ctx);
 }
@@ -80,7 +81,10 @@ was_input_eof(struct was_input *input)
     p_event_del(&input->event, input->output.pool);
 
     if (input->premature) {
-        istream_deinit_abort(&input->output);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "premature end of WAS response");
+        istream_deinit_abort(&input->output, error);
 
         input->handler->premature(input->handler_ctx);
     } else {
@@ -150,8 +154,10 @@ was_input_try_buffered(struct was_input *input)
     assert(nbytes != -2);
 
     if (nbytes == 0) {
-        daemon_log(1, "was-input: server closed the data connection\n");
-        was_input_abort(input);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "server closed the data connection");
+        was_input_abort(input, error);
         return false;
     }
 
@@ -161,9 +167,11 @@ was_input_try_buffered(struct was_input *input)
             return true;
         }
 
-        daemon_log(1, "was-input: read error on data connection: %s\n",
-                   strerror(errno));
-        was_input_abort(input);
+        GError *error =
+            g_error_new(was_quark(), 0,
+                        "read error on data connection: %s",
+                        strerror(errno));
+        was_input_abort(input, error);
         return false;
     }
 
@@ -200,8 +208,11 @@ was_input_try_direct(struct was_input *input)
             return false;
         }
 
-        daemon_log(1, "was-input: read error (%s)\n", strerror(errno));
-        was_input_abort(input);
+        GError *error =
+            g_error_new(was_quark(), 0,
+                        "read error on data connection: %s",
+                        strerror(errno));
+        was_input_abort(input, error);
         return false;
     }
 
@@ -241,8 +252,10 @@ was_input_event_callback(int fd __attr_unused, short event, void *ctx)
     p_event_consumed(&input->event, input->output.pool);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "was-input: data send timeout\n");
-        was_input_abort(input);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "data receive timeout");
+        was_input_abort(input, error);
         return;
     }
 
@@ -347,12 +360,16 @@ was_input_new(pool_t pool, int fd,
 }
 
 void
-was_input_free(struct was_input *input)
+was_input_free(struct was_input *input, GError *error)
 {
+    assert(error != NULL || input->closed);
+
     p_event_del(&input->event, input->output.pool);
 
     if (!input->closed)
-        istream_deinit_abort(&input->output);
+        istream_deinit_abort(&input->output, error);
+    else if (error != NULL)
+        g_error_free(error);
 }
 
 void
@@ -378,7 +395,10 @@ was_input_set_length(struct was_input *input, uint64_t length)
         if (length == input->length)
             return true;
 
-        was_input_abort(input);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "wrong input length announced");
+        was_input_abort(input, error);
         return false;
     }
 
@@ -396,12 +416,18 @@ bool
 was_input_premature(struct was_input *input, uint64_t length)
 {
     if (input->known_length && length > input->length) {
-        was_input_abort(input);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "announced premature length is too large");
+        was_input_abort(input, error);
         return false;
     }
 
     if (input->guaranteed > length || input->received > length) {
-        was_input_abort(input);
+        GError *error =
+            g_error_new_literal(was_quark(), 0,
+                                "announced premature length is too small");
+        was_input_abort(input, error);
         return false;
     }
 

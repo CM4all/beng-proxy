@@ -20,6 +20,12 @@
 #include <signal.h>
 #include <event.h>
 
+static inline GQuark
+test_quark(void)
+{
+    return g_quark_from_static_string("test");
+}
+
 static int
 connect_server(const char *path)
 {
@@ -156,14 +162,19 @@ my_istream_eof(void *ctx)
     c->body = NULL;
     c->body_eof = true;
 
-    if (c->close_request_body_eof)
-        istream_delayed_set_abort(c->request_body);
+    if (c->close_request_body_eof) {
+        GError *error = g_error_new_literal(test_quark(), 0,
+                                            "close_request_body_eof");
+        istream_delayed_set_abort(c->request_body, error);
+    }
 }
 
 static void
-my_istream_abort(void *ctx)
+my_istream_abort(GError *error, void *ctx)
 {
     struct context *c = ctx;
+
+    g_error_free(error);
 
     c->body = NULL;
     c->body_abort = true;
@@ -190,8 +201,11 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
 
     c->status = status;
 
-    if (c->close_request_body_early)
-        istream_delayed_set_abort(c->request_body);
+    if (c->close_request_body_early) {
+        GError *error = g_error_new_literal(test_quark(), 0,
+                                            "close_request_body_early");
+        istream_delayed_set_abort(c->request_body, error);
+    }
 
     if (c->response_body_byte) {
         assert(body != NULL);
@@ -209,7 +223,9 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
     }
 
     if (c->delayed != NULL) {
-        istream_delayed_set(c->delayed, istream_fail_new(c->pool));
+        GError *error = g_error_new_literal(test_quark(), 0,
+                                            "delayed_fail");
+        istream_delayed_set(c->delayed, istream_fail_new(c->pool, error));
         istream_read(c->delayed);
     }
 }
@@ -362,7 +378,10 @@ test_close_request_body_early(pool_t pool, struct context *c)
                         HTTP_METHOD_GET, "/foo", NULL,
                         request_body,
                         &my_response_handler, c, &c->async_ref);
-    istream_delayed_set_abort(request_body);
+
+    GError *error = g_error_new_literal(test_quark(), 0,
+                                        "fail_request_body_early");
+    istream_delayed_set_abort(request_body, error);
 
     pool_unref(pool);
     pool_commit();
@@ -486,9 +505,13 @@ static void
 test_body_fail(pool_t pool, struct context *c)
 {
     c->fd = connect_mirror();
+
+    GError *error = g_error_new_literal(test_quark(), 0,
+                                        "body_fail");
+
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        istream_fail_new(pool),
+                        istream_fail_new(pool, error),
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();

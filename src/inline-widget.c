@@ -27,11 +27,16 @@ struct inline_widget {
     istream_t delayed;
 };
 
+static GQuark
+widget_quark(void)
+{
+    return g_quark_from_static_string("widget");
+}
 
 static void
-inline_widget_close(struct inline_widget *iw)
+inline_widget_close(struct inline_widget *iw, GError *error)
 {
-    istream_delayed_set_abort(iw->delayed);
+    istream_delayed_set_abort(iw->delayed, error);
 }
 
 /**
@@ -41,7 +46,8 @@ inline_widget_close(struct inline_widget *iw)
  */
 static istream_t
 widget_response_format(pool_t pool, const struct widget *widget,
-                       struct strmap **headers_r, istream_t body)
+                       struct strmap **headers_r, istream_t body,
+                       GError **error_r)
 {
     struct strmap *headers = *headers_r;
     const char *p, *content_type;
@@ -51,8 +57,9 @@ widget_response_format(pool_t pool, const struct widget *widget,
 
     p = strmap_get_checked(headers, "content-encoding");
     if (p != NULL && strcmp(p, "identity") != 0) {
-        daemon_log(2, "widget '%s' sent non-identity response, cannot embed\n",
-                   widget_path(widget));
+        g_set_error(error_r, widget_quark(), 0,
+                    "widget '%s' sent non-identity response, cannot embed",
+                    widget_path(widget));
         istream_close_unused(body);
         return NULL;
     }
@@ -62,8 +69,9 @@ widget_response_format(pool_t pool, const struct widget *widget,
     if (content_type == NULL ||
         (strncmp(content_type, "text/", 5) != 0 &&
          strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
-        daemon_log(2, "widget '%s' sent non-text response\n",
-                   widget_path(widget));
+        g_set_error(error_r, widget_quark(), 0,
+                    "widget '%s' sent non-text response",
+                    widget_path(widget));
         istream_close_unused(body);
         return NULL;
     }
@@ -77,8 +85,9 @@ widget_response_format(pool_t pool, const struct widget *widget,
         const char *charset2 = strref_dup(pool, charset);
         istream_t ic = istream_iconv_new(pool, body, "utf-8", charset2);
         if (ic == NULL) {
-            daemon_log(2, "widget '%s' sent unknown charset '%s'\n",
-                       widget_path(widget), charset2);
+            g_set_error(error_r, widget_quark(), 0,
+                        "widget '%s' sent unknown charset '%s'",
+                        widget_path(widget), charset2);
             istream_close_unused(body);
             return NULL;
         }
@@ -130,17 +139,23 @@ inline_widget_response(http_status_t status,
            template */
         if (body != NULL)
             istream_close_unused(body);
-        inline_widget_close(iw);
+
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "response status %d from widget '%s'",
+                        status, widget_path(iw->widget));
+        inline_widget_close(iw, error);
         return;
     }
 
     if (body != NULL) {
         /* check if the content-type is correct for embedding into
            a template, and convert if possible */
+        GError *error = NULL;
         body = widget_response_format(iw->pool, iw->widget,
-                                      &headers, body);
+                                      &headers, body, &error);
         if (body == NULL) {
-            inline_widget_close(iw);
+            inline_widget_close(iw, error);
             return;
         }
     } else
@@ -157,11 +172,7 @@ inline_widget_abort(GError *error, void *ctx)
 {
     struct inline_widget *iw = ctx;
 
-    daemon_log(1, "Could not insert widget %s: %s\n",
-               widget_path(iw->widget), error->message);
-    g_error_free(error);
-
-    inline_widget_close(iw);
+    inline_widget_close(iw, error);
 }
 
 const struct http_response_handler inline_widget_response_handler = {
@@ -181,8 +192,10 @@ inline_widget_set(struct inline_widget *iw)
     struct widget *widget = iw->widget;
 
     if (!widget_check_host(widget, iw->env->untrusted_host)) {
-        daemon_log(4, "untrusted host name mismatch\n");
-        istream_delayed_set_eof(iw->delayed);
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "untrusted host name mismatch");
+        istream_delayed_set_abort(iw->delayed, error);
         return;
     }
 
@@ -213,7 +226,11 @@ class_lookup_callback(void *_ctx)
     if (iw->widget->class != NULL) {
         inline_widget_set(iw);
     } else {
-        inline_widget_close(iw);
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "failed to look up widget class '%s'",
+                        iw->widget->class_name);
+        inline_widget_close(iw, error);
     }
 }
 

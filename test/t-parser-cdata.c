@@ -55,11 +55,12 @@ parser_eof(void *ctx, off_t length)
 }
 
 static __attr_noreturn void
-parser_abort(void *ctx)
+parser_abort(GError *error, void *ctx)
 {
     (void)ctx;
 
-    fprintf(stderr, "ABORT\n");
+    fprintf(stderr, "ABORT: %s\n", error->message);
+    g_error_free(error);
     exit(2);
 }
 

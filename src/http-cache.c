@@ -200,9 +200,15 @@ http_cache_key(pool_t pool, const struct resource_address *address)
 }
 
 static void
-http_cache_memcached_put_callback(void *ctx)
+http_cache_memcached_put_callback(GError *error, void *ctx)
 {
     struct background_job *job = ctx;
+
+    if (error != NULL) {
+        cache_log(2, "http-cache: put failed: %s\n", error->message);
+        g_error_free(error);
+    }
+
     background_manager_remove(job);
 }
 
@@ -322,12 +328,15 @@ http_cache_response_body_eof(void *ctx)
 }
 
 static void
-http_cache_response_body_abort(void *ctx)
+http_cache_response_body_abort(GError *error, void *ctx)
 {
     struct http_cache_request *request = ctx;
 
-    if (request->response.length <= (size_t)cacheable_size_limit)
-        cache_log(4, "http_cache: body_abort %s\n", request->key);
+    if (request->response.length <= (size_t)cacheable_size_limit) {
+        cache_log(4, "http_cache: body_abort %s: %s\n",
+                  request->key, error->message);
+        g_error_free(error);
+    }
 
     request->response.input = NULL;
 
@@ -611,7 +620,7 @@ http_cache_close(struct http_cache *cache)
 }
 
 static void
-http_cache_flush_callback(bool success, void *ctx)
+http_cache_flush_callback(bool success, GError *error, void *ctx)
 {
     struct http_cache_flush *flush = ctx;
 
@@ -619,7 +628,11 @@ http_cache_flush_callback(bool success, void *ctx)
 
     if (success)
         cache_log(5, "http_cache_memcached: flushed\n");
-    else
+    else if (error != NULL) {
+        cache_log(5, "http_cache_memcached: flush has failed: %s\n",
+                  error->message);
+        g_error_free(error);
+    } else
         cache_log(5, "http_cache_memcached: flush has failed\n");
 }
 
@@ -953,11 +966,16 @@ http_cache_memcached_miss(struct http_cache_request *request)
  */
 static void
 http_cache_memcached_get_callback(struct http_cache_document *document,
-                                  istream_t body, void *ctx)
+                                  istream_t body, GError *error, void *ctx)
 {
     struct http_cache_request *request = ctx;
 
     if (document == NULL) {
+        if (error != NULL) {
+            cache_log(2, "http_cache: get failed: %s\n", error->message);
+            g_error_free(error);
+        }
+
         http_cache_memcached_miss(request);
         return;
     }

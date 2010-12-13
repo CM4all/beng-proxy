@@ -39,9 +39,21 @@ inject_input_direct(istream_direct_t type, int fd, size_t max_length,
 }
 
 static void
-inject_input_end(void *ctx)
+inject_input_eof(void *ctx)
 {
     struct istream_inject *inject = ctx;
+
+    assert(inject->input != NULL);
+
+    inject->input = NULL;
+}
+
+static void
+inject_input_abort(GError *error, void *ctx)
+{
+    struct istream_inject *inject = ctx;
+
+    g_error_free(error);
 
     assert(inject->input != NULL);
 
@@ -51,8 +63,8 @@ inject_input_end(void *ctx)
 static const struct istream_handler inject_input_handler = {
     .data = inject_input_data,
     .direct = inject_input_direct,
-    .eof = inject_input_end,
-    .abort = inject_input_end,
+    .eof = inject_input_eof,
+    .abort = inject_input_abort,
 };
 
 
@@ -131,12 +143,12 @@ istream_inject_new(pool_t pool, istream_t input)
 }
 
 void
-istream_inject_fault(istream_t i_inject)
+istream_inject_fault(istream_t i_inject, GError *error)
 {
     struct istream_inject *inject = (struct istream_inject *)i_inject;
 
     if (inject->input != NULL)
         istream_close_handler(inject->input);
 
-    istream_deinit_abort(&inject->output);
+    istream_deinit_abort(&inject->output, error);
 }

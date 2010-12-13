@@ -53,7 +53,6 @@ struct istream_subst {
     size_t a_match, b_sent;
 };
 
-
 /*
  * helper functions
  *
@@ -575,14 +574,14 @@ subst_input_eof(void *ctx)
 }
 
 static void
-subst_input_abort(void *ctx)
+subst_input_abort(GError *error, void *ctx)
 {
     struct istream_subst *subst = ctx;
 
     subst->state = STATE_CLOSED;
 
     subst->input = NULL;
-    istream_deinit_abort(&subst->output);
+    istream_deinit_abort(&subst->output, error);
 }
 
 static const struct istream_handler subst_input_handler = {

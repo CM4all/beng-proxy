@@ -5,6 +5,7 @@
  */
 
 #include "was-server.h"
+#include "was-quark.h"
 #include "was-control.h"
 #include "was-output.h"
 #include "was-input.h"
@@ -61,11 +62,32 @@ struct was_server {
 };
 
 static void
-was_server_release(struct was_server *server)
+was_server_release(struct was_server *server, GError *error)
 {
     if (server->request.pool != NULL) {
         if (server->request.body != NULL)
-            was_input_free_p(&server->request.body);
+            was_input_free_p(&server->request.body, error);
+        else
+            g_error_free(error);
+
+        if (server->request.headers == NULL && server->response.body != NULL)
+            was_output_free_p(&server->response.body);
+
+        pool_unref(server->request.pool);
+    } else
+        g_error_free(error);
+
+    close(server->control_fd);
+    close(server->input_fd);
+    close(server->output_fd);
+}
+
+static void
+was_server_release_unused(struct was_server *server)
+{
+    if (server->request.pool != NULL) {
+        if (server->request.body != NULL)
+            was_input_free_unused_p(&server->request.body);
 
         if (server->request.headers == NULL && server->response.body != NULL)
             was_output_free_p(&server->response.body);
@@ -82,14 +104,23 @@ was_server_release(struct was_server *server)
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
-was_server_abort(struct was_server *server)
+was_server_abort(struct was_server *server, GError *error)
 {
-    was_server_release(server);
+    was_server_release(server, error);
 
     server->handler->free(server->handler_ctx);
 }
 
+/**
+ * Abort receiving the response status/headers from the WAS server.
+ */
+static void
+was_server_abort_unused(struct was_server *server)
+{
+    was_server_release_unused(server);
 
+    server->handler->free(server->handler_ctx);
+}
 
 /*
  * Output handler
@@ -108,7 +139,7 @@ was_server_output_length(uint64_t length, void *ctx)
 }
 
 static bool
-was_server_output_premature(uint64_t length, void *ctx)
+was_server_output_premature(uint64_t length, GError *error, void *ctx)
 {
     struct was_server *server = ctx;
 
@@ -119,7 +150,7 @@ was_server_output_premature(uint64_t length, void *ctx)
 
     /* XXX send PREMATURE, recover */
     (void)length;
-    was_server_abort(server);
+    was_server_abort(server, error);
     return false;
 }
 
@@ -134,14 +165,14 @@ was_server_output_eof(void *ctx)
 }
 
 static void
-was_server_output_abort(void *ctx)
+was_server_output_abort(GError *error, void *ctx)
 {
     struct was_server *server = ctx;
 
     assert(server->response.body != NULL);
 
     server->response.body = NULL;
-    was_server_abort(server);
+    was_server_abort(server, error);
 }
 
 static const struct was_output_handler was_server_output_handler = {
@@ -179,7 +210,7 @@ was_server_input_abort(void *ctx)
 
     server->request.body = NULL;
 
-    was_server_abort(server);
+    was_server_abort_unused(server);
 }
 
 static const struct was_input_handler was_server_input_handler = {
@@ -197,6 +228,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
                           size_t payload_length, void *ctx)
 {
     struct was_server *server = ctx;
+    GError *error;
 
     switch (cmd) {
         struct strmap *headers;
@@ -209,7 +241,9 @@ was_server_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_REQUEST:
         if (server->request.pool != NULL) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "misplaced REQUEST packet");
+            was_server_abort(server, error);
             return false;
         }
 
@@ -223,19 +257,27 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_METHOD:
-        if (payload_length != sizeof(method))
+        if (payload_length != sizeof(method)) {
+            error = g_error_new_literal(was_quark(), 0,
+                                        "malformed METHOD packet");
+            was_server_abort(server, error);
             return false;
+        }
 
         method = *(const http_method_t *)payload;
         if (server->request.method != HTTP_METHOD_GET &&
             method != server->request.method) {
             /* sending that packet twice is illegal */
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "misplaced METHOD packet");
+            was_server_abort(server, error);
             return false;
         }
 
         if (!http_method_is_valid(method)) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "invalid METHOD packet");
+            was_server_abort(server, error);
             return false;
         }
 
@@ -244,7 +286,9 @@ was_server_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_URI:
         if (server->request.pool == NULL || server->request.uri != NULL) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "misplaced URI packet");
+            was_server_abort(server, error);
             return false;
         }
 
@@ -260,13 +304,17 @@ was_server_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_HEADER:
         if (server->request.pool == NULL || server->request.headers == NULL) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "misplaced HEADER packet");
+            was_server_abort(server, error);
             return false;
         }
 
         p = memchr(payload, '=', payload_length);
         if (p == NULL) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "malformed HEADER packet");
+            was_server_abort(server, error);
             return false;
         }
 
@@ -279,13 +327,17 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_STATUS:
-        was_server_abort(server);
+        error = g_error_new_literal(was_quark(), 0,
+                                    "misplaced STATUS packet");
+        was_server_abort(server, error);
         return false;
 
     case WAS_COMMAND_NO_DATA:
         if (server->request.pool == NULL || server->request.uri == NULL ||
             server->request.headers == NULL) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "misplaced NO_DATA packet");
+            was_server_abort(server, error);
             return false;
         }
 
@@ -303,7 +355,9 @@ was_server_control_packet(enum was_command cmd, const void *payload,
     case WAS_COMMAND_DATA:
         if (server->request.pool == NULL || server->request.uri == NULL ||
             server->request.headers == NULL) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "misplaced DATA packet");
+            was_server_abort(server, error);
             return false;
         }
 
@@ -324,19 +378,25 @@ was_server_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_LENGTH:
         if (server->request.pool == NULL || server->request.headers != NULL) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "misplaced LENGTH packet");
+            was_server_abort(server, error);
             return false;
         }
 
         length_p = payload;
         if (server->response.body == NULL ||
             payload_length != sizeof(*length_p)) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "malformed LENGTH packet");
+            was_server_abort(server, error);
             return false;
         }
 
         if (!was_input_set_length(server->request.body, *length_p)) {
-            was_server_abort(server);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "invalid LENGTH packet");
+            was_server_abort(server, error);
             return false;
         }
 
@@ -345,7 +405,9 @@ was_server_control_packet(enum was_command cmd, const void *payload,
     case WAS_COMMAND_STOP:
     case WAS_COMMAND_PREMATURE:
         // XXX
-        was_server_abort(server);
+        error = g_error_new(was_quark(), 0,
+                            "unexpected packet: %d", cmd);
+        was_server_abort(server, error);
         return false;
     }
 
@@ -368,10 +430,7 @@ was_server_control_abort(GError *error, void *ctx)
 {
     struct was_server *server = ctx;
 
-    daemon_log(2, "%s\n", error->message);
-    g_error_free(error);
-
-    was_server_abort(server);
+    was_server_abort(server, error);
 }
 
 static const struct was_control_handler was_server_control_handler = {
@@ -418,7 +477,9 @@ was_server_new(pool_t pool, int control_fd, int input_fd, int output_fd,
 void
 was_server_free(struct was_server *server)
 {
-    was_server_release(server);
+    GError *error = g_error_new_literal(was_quark(), 0,
+                                        "shutting down WAS connection");
+    was_server_release(server, error);
 }
 
 void

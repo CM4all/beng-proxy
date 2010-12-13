@@ -21,6 +21,12 @@
 #include <signal.h>
 #include <event.h>
 
+static inline GQuark
+test_quark(void)
+{
+    return g_quark_from_static_string("test");
+}
+
 static int
 connect_fake_server(void)
 {
@@ -133,9 +139,10 @@ istream_request_value_read(istream_t istream)
 {
     struct request_value *v = istream_to_value(istream);
 
-    if (v->read_close)
-        istream_deinit_abort(&v->base);
-    else if (v->read_abort)
+    if (v->read_close) {
+        GError *error = g_error_new_literal(test_quark(), 0, "read_close");
+        istream_deinit_abort(&v->base, error);
+    } else if (v->read_abort)
         async_abort(&v->async_ref);
     else if (v->sent >= sizeof(request_value))
         istream_deinit_eof(&v->base);
@@ -225,9 +232,11 @@ my_istream_eof(void *ctx)
 }
 
 static void
-my_istream_abort(void *ctx)
+my_istream_abort(GError *error, void *ctx)
 {
     struct context *c = ctx;
+
+    g_error_free(error);
 
     c->value = NULL;
     c->value_abort = true;
@@ -272,11 +281,13 @@ my_mcd_response(enum memcached_response_status status,
 }
 
 static void
-my_mcd_error(G_GNUC_UNUSED void *ctx)
+my_mcd_error(GError *error, G_GNUC_UNUSED void *ctx)
 {
     struct context *c = ctx;
 
     assert(!c->got_response);
+
+    g_error_free(error);
 
     c->got_response = true;
     c->status = -1;

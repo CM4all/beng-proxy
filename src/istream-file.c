@@ -65,11 +65,11 @@ file_close(struct file *file)
 }
 
 static void
-file_abort(struct file *file)
+file_abort(struct file *file, GError *error)
 {
     file_close(file);
 
-    istream_deinit_abort(&file->stream);
+    istream_deinit_abort(&file->stream, error);
 }
 
 /**
@@ -127,15 +127,18 @@ istream_file_try_data(struct file *file)
             if (rest == 0)
                 istream_file_eof_detected(file);
         } else {
-            daemon_log(1, "premature end of file in '%s'\n",
-                       file->path);
-            file_abort(file);
+            GError *error =
+                g_error_new(g_file_error_quark(), 0,
+                            "premature end of file in '%s'", file->path);
+            file_abort(file, error);
         }
         return;
     } else if (nbytes == -1) {
-        daemon_log(1, "failed to read from '%s': %s\n",
-                   file->path, strerror(errno));
-        file_abort(file);
+        GError *error =
+            g_error_new(g_file_error_quark(), errno,
+                        "failed to read from '%s': %s",
+                        file->path, strerror(errno));
+        file_abort(file, error);
         return;
     } else if (nbytes > 0 && file->rest != (off_t)-1) {
         file->rest -= (off_t)nbytes;
@@ -184,9 +187,10 @@ istream_file_try_direct(struct file *file)
         if (file->rest == (off_t)-1) {
             istream_file_eof_detected(file);
         } else {
-            daemon_log(1, "premature end of file in '%s'\n",
-                       file->path);
-            file_abort(file);
+            GError *error =
+                g_error_new(g_file_error_quark(), 0,
+                            "premature end of file in '%s'", file->path);
+            file_abort(file, error);
         }
     } else if (errno == EAGAIN) {
         /* this should only happen for splice(SPLICE_F_NONBLOCK) from
@@ -196,9 +200,11 @@ istream_file_try_direct(struct file *file)
         evtimer_add(&file->event, &file_retry_timeout);
     } else {
         /* XXX */
-        daemon_log(1, "failed to read from '%s': %s\n",
-                   file->path, strerror(errno));
-        file_abort(file);
+        GError *error =
+            g_error_new(g_file_error_quark(), errno,
+                        "failed to read from '%s': %s",
+                        file->path, strerror(errno));
+        file_abort(file, error);
     }
 }
 

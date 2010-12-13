@@ -50,14 +50,14 @@ pipe_close(struct istream_pipe *p)
 }
 
 static void
-pipe_abort(struct istream_pipe *p)
+pipe_abort(struct istream_pipe *p, GError *error)
 {
     pipe_close(p);
 
     if (p->input != NULL)
         istream_close_handler(p->input);
 
-    istream_deinit_abort(&p->output);
+    istream_deinit_abort(&p->output, error);
 }
 
 static ssize_t
@@ -74,9 +74,10 @@ pipe_consume(struct istream_pipe *p)
         return nbytes;
 
     if (unlikely(nbytes < 0 && errno != EAGAIN)) {
-        int save_errno = errno;
-        pipe_abort(p);
-        errno = save_errno;
+        GError *error =
+            g_error_new(g_file_error_quark(), errno,
+                        "read from pipe failed: %s", strerror(errno));
+        pipe_abort(p, error);
         return -3;
     }
 
@@ -218,14 +219,14 @@ pipe_input_eof(void *ctx)
 }
 
 static void
-pipe_input_abort(void *ctx)
+pipe_input_abort(GError *error, void *ctx)
 {
     struct istream_pipe *p = ctx;
 
     pipe_close(p);
 
     p->input = NULL;
-    istream_deinit_abort(&p->output);
+    istream_deinit_abort(&p->output, error);
 }
 
 static const struct istream_handler pipe_input_handler = {

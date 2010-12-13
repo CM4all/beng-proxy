@@ -29,10 +29,20 @@ sink_close_eof(__attr_unused void *_ctx)
     abort();
 }
 
+__attr_noreturn
+static void
+sink_close_abort(__attr_unused GError *error, __attr_unused void *_ctx)
+{
+    /* should not be reachable, because we expect the istream to call
+       the data() callback at least once */
+
+    abort();
+}
+
 static const struct istream_handler sink_close_handler = {
     .data = sink_close_data,
     .eof = sink_close_eof,
-    .abort = sink_close_eof,
+    .abort = sink_close_abort,
 };
 
 void

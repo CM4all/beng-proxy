@@ -88,9 +88,12 @@ catch_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 }
 
 static void
-catch_input_abort(void *ctx)
+catch_input_abort(GError *error, void *ctx)
 {
     struct istream_catch *catch = ctx;
+
+    // XXX log this error?
+    g_error_free(error);
 
     catch->input = NULL;
 

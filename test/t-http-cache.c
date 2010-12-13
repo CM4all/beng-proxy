@@ -252,7 +252,7 @@ my_response_body_eof(__attr_unused void *ctx)
 }
 
 static void __attr_noreturn
-my_response_body_abort(__attr_unused void *ctx)
+my_response_body_abort(__attr_unused GError *error, __attr_unused void *ctx)
 {
     assert(false);
 }

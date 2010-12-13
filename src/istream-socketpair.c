@@ -51,7 +51,7 @@ socketpair_release_socket(struct istream_socketpair *sp)
 }
 
 static void
-socketpair_close(struct istream_socketpair *sp)
+socketpair_close(struct istream_socketpair *sp, GError *error)
 {
     pool_ref(sp->output.pool);
 
@@ -61,8 +61,9 @@ socketpair_close(struct istream_socketpair *sp)
     if (sp->fd >= 0) {
         socketpair_release_socket(sp);
 
-        istream_deinit_abort(&sp->output);
-    }
+        istream_deinit_abort(&sp->output, error);
+    } else
+        g_error_free(error);
 
     pool_unref(sp->output.pool);
 }
@@ -94,8 +95,10 @@ socketpair_input_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    daemon_log(1, "write error on socket pair: %s\n", strerror(errno));
-    socketpair_close(sp);
+    GError *error =
+        g_error_new(g_file_error_quark(), errno,
+                    "write error on socket pair: %s", strerror(errno));
+    socketpair_close(sp, error);
     return 0;
 }
 
@@ -113,13 +116,13 @@ socketpair_input_eof(void *ctx)
 }
 
 static void
-socketpair_input_abort(void *ctx)
+socketpair_input_abort(GError *error, void *ctx)
 {
     struct istream_socketpair *sp = ctx;
 
     assert(sp->input != NULL);
 
-    socketpair_close(sp);
+    socketpair_close(sp, error);
 }
 
 static const struct istream_handler socketpair_input_handler = {
@@ -187,17 +190,26 @@ socketpair_read(struct istream_socketpair *sp)
         return;
 
     if (nbytes < 0) {
-        daemon_log(1, "read from socketpair failed: %s\n", strerror(errno));
-        socketpair_close(sp);
+        GError *error =
+            g_error_new(g_file_error_quark(), errno,
+                        "read error on socket pair: %s", strerror(errno));
+        socketpair_close(sp, error);
         return;
     }
 
     if (nbytes == 0) {
-        socketpair_release_socket(sp);
+        pool_ref(sp->output.pool);
 
-        istream_deinit_eof(&sp->output);
+        if (sp->input != NULL)
+            istream_free_handler(&sp->input);
 
-        socketpair_close(sp);
+        if (sp->fd >= 0) {
+            socketpair_release_socket(sp);
+            istream_deinit_eof(&sp->output);
+        }
+
+        pool_unref(sp->output.pool);
+
         return;
     }
 

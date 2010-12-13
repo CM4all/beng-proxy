@@ -22,6 +22,11 @@ struct sink_buffer {
     struct async_operation async_operation;
 };
 
+static GQuark
+sink_buffer_quark(void)
+{
+    return g_quark_from_static_string("sink_buffer");
+}
 
 /*
  * istream handler
@@ -74,12 +79,12 @@ sink_buffer_input_eof(void *ctx)
 }
 
 static void
-sink_buffer_input_abort(void *ctx)
+sink_buffer_input_abort(GError *error, void *ctx)
 {
     struct sink_buffer *buffer = ctx;
 
     async_operation_finished(&buffer->async_operation);
-    buffer->handler->error(buffer->handler_ctx);
+    buffer->handler->error(error, buffer->handler_ctx);
 }
 
 static const struct istream_handler sink_buffer_input_handler = {
@@ -139,7 +144,13 @@ sink_buffer_new(pool_t pool, istream_t input,
     available = istream_available(input, false);
     if (available == -1 || available >= 0x10000000) {
         istream_close_unused(input);
-        handler->error(ctx);
+
+        GError *error =
+            g_error_new_literal(sink_buffer_quark(), 0,
+                                available < 0
+                                ? "unknown stream length"
+                                : "stream is too large");
+        handler->error(error, ctx);
         return;
     }
 

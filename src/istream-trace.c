@@ -83,14 +83,14 @@ trace_input_eof(void *ctx)
 }
 
 static void
-trace_input_abort(void *ctx)
+trace_input_abort(GError *error, void *ctx)
 {
     struct istream_trace *trace = ctx;
 
-    fprintf(stderr, "%p abort()\n", (const void*)trace);
+    fprintf(stderr, "%p abort('%s')\n", (const void*)trace, error->message);
 
     trace->input = NULL;
-    istream_deinit_abort(&trace->output);
+    istream_deinit_abort(&trace->output, error);
 }
 
 static const struct istream_handler trace_input_handler = {

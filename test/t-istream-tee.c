@@ -36,9 +36,11 @@ my_istream_eof(void *_ctx)
 }
 
 static void
-my_istream_abort(void *_ctx)
+my_istream_abort(GError *error, void *_ctx)
 {
     struct ctx *ctx = _ctx;
+
+    g_error_free(error);
 
     ctx->aborted = true;
 }
@@ -56,11 +58,12 @@ static const struct istream_handler block_istream_handler = {
  */
 
 static void
-buffer_callback(GString *value, void *_ctx)
+buffer_callback(GString *value, GError *error, void *_ctx)
 {
     struct ctx *ctx = _ctx;
 
     assert(value != NULL);
+    assert(error == NULL);
 
     ctx->value = value;
 }

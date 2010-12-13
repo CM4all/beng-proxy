@@ -157,15 +157,15 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
             break;
     }
 
-    choice->callback.get(uri, unclean, choice->callback_ctx);
+    choice->callback.get(uri, unclean, NULL, choice->callback_ctx);
 }
 
 static void
-http_cache_choice_buffer_error(void *ctx)
+http_cache_choice_buffer_error(GError *error, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
-    choice->callback.get(NULL, true, choice->callback_ctx);
+    choice->callback.get(NULL, true, error, choice->callback_ctx);
 }
 
 static const struct sink_buffer_handler http_cache_choice_buffer_handler = {
@@ -187,7 +187,7 @@ http_cache_choice_get_response(enum memcached_response_status status,
         if (value != NULL)
             istream_close_unused(value);
 
-        choice->callback.get(NULL, false, choice->callback_ctx);
+        choice->callback.get(NULL, false, NULL, choice->callback_ctx);
         return;
     }
 
@@ -197,11 +197,11 @@ http_cache_choice_get_response(enum memcached_response_status status,
 }
 
 static void
-http_cache_choice_get_error(void *ctx)
+http_cache_choice_get_error(GError *error, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
-    choice->callback.get(NULL, false, choice->callback_ctx);
+    choice->callback.get(NULL, false, error, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_get_handler = {
@@ -270,15 +270,15 @@ http_cache_choice_add_response(G_GNUC_UNUSED enum memcached_response_status stat
     if (value != NULL)
         istream_close_unused(value);
 
-    choice->callback.commit(choice->callback_ctx);
+    choice->callback.commit(NULL, choice->callback_ctx);
 }
 
 static void
-http_cache_choice_add_error(void *ctx)
+http_cache_choice_add_error(GError *error, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
-    choice->callback.commit(choice->callback_ctx);
+    choice->callback.commit(error, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_add_handler = {
@@ -321,17 +321,17 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
 
     case MEMCACHED_STATUS_NO_ERROR:
     default:
-        choice->callback.commit(choice->callback_ctx);
+        choice->callback.commit(NULL, choice->callback_ctx);
         break;
     }
 }
 
 static void
-http_cache_choice_prepend_error(void *ctx)
+http_cache_choice_prepend_error(GError *error, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
-    choice->callback.commit(choice->callback_ctx);
+    choice->callback.commit(error, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_prepend_handler = {
@@ -379,15 +379,15 @@ http_cache_choice_filter_set_response(G_GNUC_UNUSED enum memcached_response_stat
     if (value != NULL)
         istream_close_unused(value);
 
-    choice->callback.filter(NULL, choice->callback_ctx);
+    choice->callback.filter(NULL, NULL, choice->callback_ctx);
 }
 
 static void
-http_cache_choice_filter_set_error(void *ctx)
+http_cache_choice_filter_set_error(GError *error, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
-    choice->callback.filter(NULL, choice->callback_ctx);
+    choice->callback.filter(NULL, error, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_filter_set_handler = {
@@ -427,7 +427,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
             break;
         }
 
-        if (choice->callback.filter(&document, choice->callback_ctx)) {
+        if (choice->callback.filter(&document, NULL, choice->callback_ctx)) {
             memmove(dest, current, strref_end(&data) - current);
             dest += data.data - current;
         }
@@ -437,7 +437,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 
     if (dest - length == data0)
         /* no change */
-        choice->callback.filter(NULL, choice->callback_ctx);
+        choice->callback.filter(NULL, NULL, choice->callback_ctx);
     else if (dest == data0)
         /* no entries left */
         /* XXX use CAS */
@@ -467,11 +467,11 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 }
 
 static void
-http_cache_choice_filter_buffer_error(void *ctx)
+http_cache_choice_filter_buffer_error(GError *error, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
-    choice->callback.get(NULL, true, choice->callback_ctx);
+    choice->callback.get(NULL, true, error, choice->callback_ctx);
 }
 
 static const struct sink_buffer_handler http_cache_choice_filter_buffer_handler = {
@@ -493,7 +493,7 @@ http_cache_choice_filter_get_response(enum memcached_response_status status,
         if (value != NULL)
             istream_close_unused(value);
 
-        choice->callback.filter(NULL, choice->callback_ctx);
+        choice->callback.filter(NULL, NULL, choice->callback_ctx);
         return;
     }
 
@@ -503,11 +503,11 @@ http_cache_choice_filter_get_response(enum memcached_response_status status,
 }
 
 static void
-http_cache_choice_filter_get_error(void *ctx)
+http_cache_choice_filter_get_error(GError *error, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
-    choice->callback.filter(NULL, choice->callback_ctx);
+    choice->callback.filter(NULL, error, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_filter_get_handler = {
@@ -551,7 +551,7 @@ struct cleanup_data {
 
 static bool
 http_cache_choice_cleanup_filter_callback(const struct http_cache_document *document,
-                                          void *ctx)
+                                          GError *error, void *ctx)
 {
     struct cleanup_data *data = ctx;
 
@@ -562,7 +562,7 @@ http_cache_choice_cleanup_filter_callback(const struct http_cache_document *docu
                 document->info.expires >= data->now) &&
             !duplicate;
     } else {
-        data->callback(data->callback_ctx);
+        data->callback(error, data->callback_ctx);
         return false;
     }
 }
@@ -599,15 +599,15 @@ http_cache_choice_delete_response(G_GNUC_UNUSED enum memcached_response_status s
     if (value != NULL)
         istream_close_unused(value);
 
-    choice->callback.delete(choice->callback_ctx);
+    choice->callback.delete(NULL, choice->callback_ctx);
 }
 
 static void
-http_cache_choice_delete_error(void *ctx)
+http_cache_choice_delete_error(GError *error, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
-    choice->callback.delete(choice->callback_ctx);
+    choice->callback.delete(error, choice->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_choice_delete_handler = {

@@ -9,7 +9,15 @@
 
 #include "pool.h"
 
+#include <glib.h>
+
 struct http_response_handler_ref;
+
+static inline GQuark
+http_quark(void)
+{
+    return g_quark_from_static_string("http");
+}
 
 /**
  * Sends a response according to the specified errno value.

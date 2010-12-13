@@ -115,7 +115,7 @@ cat_input_eof(void *ctx)
 }
 
 static void
-cat_input_abort(void *ctx)
+cat_input_abort(GError *error, void *ctx)
 {
     struct input *input = ctx;
     struct istream_cat *cat = input->cat;
@@ -125,7 +125,7 @@ cat_input_abort(void *ctx)
 
     cat_close_inputs(cat);
 
-    istream_deinit_abort(&cat->output);
+    istream_deinit_abort(&cat->output, error);
 }
 
 static const struct istream_handler cat_input_handler = {

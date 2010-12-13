@@ -10,12 +10,6 @@
 #include <errno.h>
 #include <string.h>
 
-static GQuark
-http_quark(void)
-{
-    return g_quark_from_static_string("http");
-}
-
 void
 http_response_handler_invoke_errno(struct http_response_handler_ref *handler,
                                    pool_t pool, int error)

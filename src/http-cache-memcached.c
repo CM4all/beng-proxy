@@ -75,15 +75,15 @@ http_cache_memcached_flush_response(enum memcached_response_status status,
         istream_close_unused(value);
 
     request->callback.flush(status == MEMCACHED_STATUS_NO_ERROR,
-                            request->callback_ctx);
+                            NULL, request->callback_ctx);
 }
 
 static void
-http_cache_memcached_flush_error(void *ctx)
+http_cache_memcached_flush_error(GError *error, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
-    request->callback.flush(false, request->callback_ctx);
+    request->callback.flush(false, error, request->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_flush_handler = {
@@ -148,11 +148,11 @@ http_cache_memcached_get_response(enum memcached_response_status status,
                                   istream_t value, void *ctx);
 
 static void
-http_cache_memcached_get_error(void *ctx)
+http_cache_memcached_get_error(GError *error, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
-    request->callback.get(NULL, 0, request->callback_ctx);
+    request->callback.get(NULL, 0, error, request->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_get_handler = {
@@ -161,15 +161,21 @@ static const struct memcached_client_handler http_cache_memcached_get_handler = 
 };
 
 static void
-background_callback(void *ctx)
+background_callback(GError *error, void *ctx)
 {
     struct background_job *job = ctx;
+
+    if (error != NULL) {
+        cache_log(2, "http-cache: memcached failed: %s\n", error->message);
+        g_error_free(error);
+    }
 
     background_manager_remove(job);
 }
 
 static void
-mcd_choice_get_callback(const char *key, bool unclean, void *ctx)
+mcd_choice_get_callback(const char *key, bool unclean,
+                        GError *error, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
@@ -188,7 +194,12 @@ mcd_choice_get_callback(const char *key, bool unclean, void *ctx)
     }
 
     if (key == NULL) {
-        request->callback.get(NULL, 0, request->callback_ctx);
+        if (error != NULL) {
+            cache_log(2, "http-cache: GET from memcached failed: %s\n", error->message);
+            g_error_free(error);
+        }
+
+        request->callback.get(NULL, 0, NULL, request->callback_ctx);
         return;
     }
 
@@ -230,20 +241,20 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
             return;
         }
 
-        request->callback.get(document, tail, request->callback_ctx);
+        request->callback.get(document, tail, NULL, request->callback_ctx);
         return;
     }
 
     istream_close_unused(tail);
-    request->callback.get(NULL, 0, request->callback_ctx);
+    request->callback.get(NULL, 0, NULL, request->callback_ctx);
 }
 
 static void
-http_cache_memcached_header_error(void *ctx)
+http_cache_memcached_header_error(GError *error, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
-    request->callback.get(NULL, 0, request->callback_ctx);
+    request->callback.get(NULL, 0, error, request->callback_ctx);
 }
 
 static const struct sink_header_handler http_cache_memcached_header_handler = {
@@ -276,7 +287,7 @@ http_cache_memcached_get_response(enum memcached_response_status status,
         if (value != NULL)
             istream_close_unused(value);
 
-        request->callback.get(NULL, 0, request->callback_ctx);
+        request->callback.get(NULL, 0, NULL, request->callback_ctx);
         return;
     }
 
@@ -319,11 +330,11 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
 }
 
 static void
-mcd_choice_commit_callback(void *ctx)
+mcd_choice_commit_callback(GError *error, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
-    request->callback.put(request->callback_ctx);
+    request->callback.put(error, request->callback_ctx);
 }
 
 static void
@@ -341,7 +352,7 @@ http_cache_memcached_put_response(enum memcached_response_status status,
 
     if (status != MEMCACHED_STATUS_NO_ERROR || /* error */
         request->choice == NULL) { /* or no choice entry needed */
-        request->callback.put(request->callback_ctx);
+        request->callback.put(NULL, request->callback_ctx);
         return;
     }
 
@@ -351,11 +362,11 @@ http_cache_memcached_put_response(enum memcached_response_status status,
 }
 
 static void
-http_cache_memcached_put_error(void *ctx)
+http_cache_memcached_put_error(GError *error, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
-    request->callback.put(request->callback_ctx);
+    request->callback.put(error, request->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_put_handler = {
@@ -455,9 +466,14 @@ mcd_background_response(G_GNUC_UNUSED enum memcached_response_status status,
 }
 
 static void
-mcd_background_error(void *ctx)
+mcd_background_error(GError *error, void *ctx)
 {
     struct background_job *job = ctx;
+
+    if (error != NULL) {
+        cache_log(2, "http-cache: put failed: %s\n", error->message);
+        g_error_free(error);
+    }
 
     background_manager_remove(job);
 }
@@ -518,7 +534,7 @@ struct match_data {
 
 static bool
 mcd_delete_filter_callback(const struct http_cache_document *document,
-                           void *ctx)
+                           GError *error, void *ctx)
 {
     struct match_data *data = ctx;
 
@@ -532,6 +548,11 @@ mcd_delete_filter_callback(const struct http_cache_document *document,
         } else
             return true;
     } else {
+        if (error != NULL) {
+            cache_log(2, "http-cache: memcached failed: %s\n", error->message);
+            g_error_free(error);
+        }
+
         background_manager_remove(&data->job);
         return false;
     }

@@ -5,6 +5,7 @@
  */
 
 #include "was-output.h"
+#include "was-quark.h"
 #include "pevent.h"
 #include "direct.h"
 #include "fd-util.h"
@@ -45,14 +46,14 @@ was_output_schedule_write(struct was_output *output)
 }
 
 static void
-was_output_abort(struct was_output *output)
+was_output_abort(struct was_output *output, GError *error)
 {
     p_event_del(&output->event, output->pool);
 
     if (output->input != NULL)
         istream_free_handler(&output->input);
 
-    output->handler->abort(output->handler_ctx);
+    output->handler->abort(output->handler_ctx, error);
 }
 
 
@@ -72,8 +73,8 @@ was_output_event_callback(int fd __attr_unused, short event, void *ctx)
     p_event_consumed(&output->event, output->pool);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "was-data: send timeout\n");
-        was_output_abort(output);
+        GError *error = g_error_new_literal(was_quark(), 0, "send timeout");
+        was_output_abort(output, error);
         return;
     }
 
@@ -116,8 +117,9 @@ was_output_stream_data(const void *p, size_t length, void *ctx)
             return 0;
         }
 
-        daemon_log(3, "was-data: data write failed: %s\n", strerror(errno));
-        was_output_abort(output);
+        GError *error = g_error_new(was_quark(), errno,
+                                    "data write failed: %s", strerror(errno));
+        was_output_abort(output, error);
         return 0;
     }
 
@@ -170,7 +172,7 @@ was_output_stream_eof(void *ctx)
 }
 
 static void
-was_output_stream_abort(void *ctx)
+was_output_stream_abort(GError *error, void *ctx)
 {
     struct was_output *output = ctx;
 
@@ -178,7 +180,7 @@ was_output_stream_abort(void *ctx)
 
     output->input = NULL;
 
-    output->handler->premature(output->sent, output->handler_ctx);
+    output->handler->premature(output->sent, error, output->handler_ctx);
 }
 
 static const struct istream_handler was_output_stream_handler = {

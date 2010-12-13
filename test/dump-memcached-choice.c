@@ -112,9 +112,10 @@ my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
 }
 
 static void
-my_sink_error(G_GNUC_UNUSED void *ctx)
+my_sink_error(GError *error, G_GNUC_UNUSED void *ctx)
 {
-    fprintf(stderr, "sink_buffer has failed\n");
+    fprintf(stderr, "sink_buffer has failed: %s\n", error->message);
+    g_error_free(error);
 }
 
 static const struct sink_buffer_handler my_sink_handler = {
@@ -151,9 +152,10 @@ my_mcd_response(enum memcached_response_status status,
 }
 
 static void
-my_mcd_error(G_GNUC_UNUSED void *ctx)
+my_mcd_error(GError *error, G_GNUC_UNUSED void *ctx)
 {
-    fprintf(stderr, "error\n");
+    fprintf(stderr, "%s\n", error->message);
+    g_error_free(error);
 }
 
 static const struct memcached_client_handler my_mcd_handler = {

@@ -327,11 +327,13 @@ filter_cache_response_body_eof(void *ctx)
 }
 
 static void
-filter_cache_response_body_abort(void *ctx)
+filter_cache_response_body_abort(GError *error, void *ctx)
 {
     struct filter_cache_request *request = ctx;
 
-    cache_log(4, "filter_cache: body_abort %s\n", request->info->key);
+    cache_log(4, "filter_cache: body_abort %s: %s\n",
+              request->info->key, error->message);
+    g_error_free(error);
 
     request->response.input = NULL;
 

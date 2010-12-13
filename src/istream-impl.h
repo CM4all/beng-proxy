@@ -28,13 +28,13 @@ istream_t
 istream_block_new(pool_t pool);
 
 istream_t
-istream_fail_new(pool_t pool);
+istream_fail_new(pool_t pool, GError *error);
 
 istream_t
 istream_inject_new(pool_t pool, istream_t input);
 
 void
-istream_inject_fault(istream_t i_fault);
+istream_inject_fault(istream_t i_fault, GError *error);
 
 istream_t
 istream_catch_new(pool_t pool, istream_t input);
@@ -107,7 +107,7 @@ istream_delayed_set_eof(istream_t istream_delayed);
  * Injects a failure, to be called instead of istream_delayed_set().
  */
 void
-istream_delayed_set_abort(istream_t istream_delayed);
+istream_delayed_set_abort(istream_t istream_delayed, GError *error);
 
 istream_t
 istream_hold_new(pool_t pool, istream_t input);

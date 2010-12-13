@@ -209,7 +209,7 @@ http_client_abort_response_headers(struct http_client *client, GError *error)
  * Abort receiving the response status/headers from the HTTP server.
  */
 static void
-http_client_abort_response_body(struct http_client *client)
+http_client_abort_response_body(struct http_client *client, GError *error)
 {
     assert(client->response.read_state == READ_BODY);
     assert(client->response.body != NULL);
@@ -217,7 +217,7 @@ http_client_abort_response_body(struct http_client *client)
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
 
-    istream_deinit_abort(&client->response.body_reader.output);
+    istream_deinit_abort(&client->response.body_reader.output, error);
     http_client_release(client, false);
 }
 
@@ -234,12 +234,8 @@ http_client_abort_response(struct http_client *client, GError *error)
 
     if (client->response.read_state != READ_BODY)
         http_client_abort_response_headers(client, error);
-    else {
-        daemon_log(2, "http-client: %s\n", error->message);
-        g_error_free(error);
-
-        http_client_abort_response_body(client);
-    }
+    else
+        http_client_abort_response_body(client, error);
 }
 
 
@@ -717,12 +713,13 @@ http_client_consume_headers(struct http_client *client)
         assert(client->response.body == NULL);
 
         if (client->request.body == NULL) {
-            daemon_log(2, "http_client: unexpected status 100\n");
+            GError *error = g_error_new_literal(http_client_quark(), 0,
+                                                "unexpected status 100");
 #ifndef NDEBUG
             /* assertion workaround */
             client->response.read_state = READ_STATUS;
 #endif
-            http_client_abort_response_body(client);
+            http_client_abort_response_body(client, error);
             return false;
         }
 
@@ -796,9 +793,12 @@ http_client_try_response_direct(struct http_client *client)
             return;
         }
 
-        daemon_log(1, "http_client: read error (%s)\n", strerror(errno));
+        GError *error = g_error_new(http_client_quark(), errno,
+                                    "read error: %s", strerror(errno));
+
         stopwatch_event(client->stopwatch, "error");
-        http_client_abort_response_body(client);
+
+        http_client_abort_response_body(client, error);
         return;
     }
 
@@ -1051,7 +1051,7 @@ http_client_request_stream_eof(void *ctx)
 }
 
 static void
-http_client_request_stream_abort(void *ctx)
+http_client_request_stream_abort(GError *error, void *ctx)
 {
     struct http_client *client = ctx;
 
@@ -1063,13 +1063,12 @@ http_client_request_stream_abort(void *ctx)
 
     client->request.istream = NULL;
 
-    if (client->response.read_state != READ_BODY) {
-        GError *error = g_error_new_literal(http_client_quark(), 0,
-                                            "request body failed");
+    if (client->response.read_state != READ_BODY)
         http_client_abort_response_headers(client, error);
-    } else if (client->response.body != NULL)
-        http_client_abort_response_body(client);
-    /* else: nothing to do */
+    else if (client->response.body != NULL)
+        http_client_abort_response_body(client, error);
+    else
+        g_error_free(error);
 }
 
 static const struct istream_handler http_client_request_stream_handler = {

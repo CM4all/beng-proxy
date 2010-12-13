@@ -9,6 +9,8 @@
 
 #include "pool.h"
 
+#include <glib.h>
+
 struct http_cache_choice;
 struct http_cache_info;
 struct http_cache_document;
@@ -16,12 +18,13 @@ struct strmap;
 struct memcached_stock;
 struct async_operation_ref;
 
-typedef void (*http_cache_choice_get_t)(const char *key, bool unclean, void *ctx);
-typedef void (*http_cache_choice_commit_t)(void *ctx);
+typedef void (*http_cache_choice_get_t)(const char *key, bool unclean,
+                                        GError *error, void *ctx);
+typedef void (*http_cache_choice_commit_t)(GError *error, void *ctx);
 typedef bool (*http_cache_choice_filter_t)(const struct http_cache_document *document,
-                                           void *ctx);
-typedef void (*http_cache_choice_cleanup_t)(void *ctx);
-typedef void (*http_cache_choice_delete_t)(void *ctx);
+                                           GError *error, void *ctx);
+typedef void (*http_cache_choice_cleanup_t)(GError *error, void *ctx);
+typedef void (*http_cache_choice_delete_t)(GError *error, void *ctx);
 
 const char *
 http_cache_choice_vary_key(pool_t pool, const char *uri, struct strmap *vary);

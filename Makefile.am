@@ -809,7 +809,8 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/tpool.c \
 	src/istream-socketpair.c src/istream-block.c src/istream-catch.c \
 	src/sink-null.c src/event2.c
-test_t_http_server_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+test_t_http_server_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
@@ -833,7 +834,8 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
-test_t_http_server_mirror_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+test_t_http_server_mirror_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
@@ -858,7 +860,8 @@ test_t_http_server_null_SOURCES = test/t-http-server-null.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
-test_t_http_server_null_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+test_t_http_server_null_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
@@ -884,7 +887,8 @@ test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
-test_t_http_server_dummy_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+test_t_http_server_dummy_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
@@ -909,7 +913,8 @@ test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
-test_t_http_server_fixed_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+test_t_http_server_fixed_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
@@ -1219,7 +1224,8 @@ test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/istream-string.c \
 	src/event2.c \
 	$(POOL_SRC)
-test_run_memcached_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
@@ -1234,7 +1240,8 @@ test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/strmap.c src/hashmap.c \
 	src/tpool.c \
 	$(POOL_SRC)
-test_dump_memcached_choice_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \

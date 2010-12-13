@@ -147,7 +147,8 @@ memcached_client_release(struct memcached_client *client, bool reuse)
 }
 
 static void
-memcached_connection_abort_response_header(struct memcached_client *client)
+memcached_connection_abort_response_header(struct memcached_client *client,
+                                           GError *error)
 {
     assert(client != NULL);
     assert(client->response.read_state == READ_HEADER ||
@@ -160,7 +161,7 @@ memcached_connection_abort_response_header(struct memcached_client *client)
 
     memcached_client_release(client, false);
 
-    client->request.handler->error(client->request.handler_ctx);
+    client->request.handler->error(error, client->request.handler_ctx);
     client->response.read_state = READ_END;
 
     if (client->request.istream != NULL)
@@ -170,7 +171,8 @@ memcached_connection_abort_response_header(struct memcached_client *client)
 }
 
 static void
-memcached_connection_abort_response_value(struct memcached_client *client)
+memcached_connection_abort_response_value(struct memcached_client *client,
+                                          GError *error)
 {
     assert(client != NULL);
     assert(client->response.read_state == READ_VALUE);
@@ -181,23 +183,24 @@ memcached_connection_abort_response_value(struct memcached_client *client)
     memcached_client_release(client, false);
 
     client->response.read_state = READ_END;
-    istream_deinit_abort(&client->response.value);
+    istream_deinit_abort(&client->response.value, error);
 
     pool_unref(client->pool);
 }
 
 static void
-memcached_connection_abort_response(struct memcached_client *client)
+memcached_connection_abort_response(struct memcached_client *client,
+                                    GError *error)
 {
     switch (client->response.read_state) {
     case READ_HEADER:
     case READ_EXTRAS:
     case READ_KEY:
-        memcached_connection_abort_response_header(client);
+        memcached_connection_abort_response_header(client, error);
         return;
 
     case READ_VALUE:
-        memcached_connection_abort_response_value(client);
+        memcached_connection_abort_response_value(client, error);
         break;
 
     case READ_END:
@@ -303,7 +306,10 @@ memcached_consume_header(struct memcached_client *client)
         g_ntohs(client->response.header.key_length) +
         client->response.header.extras_length > client->response.remaining) {
         /* protocol error: abort the connection */
-        memcached_connection_abort_response_header(client);
+        GError *error =
+            g_error_new_literal(memcached_client_quark(), 0,
+                                "memcached protocol error");
+        memcached_connection_abort_response_header(client, error);
         return false;
     }
 
@@ -384,8 +390,10 @@ memcached_consume_key(struct memcached_client *client)
 
     if (client->request.istream != NULL) {
         /* at this point, the request must have been sent */
-        daemon_log(2, "memcached server sends response too early\n");
-        memcached_connection_abort_response_header(client);
+        GError *error =
+            g_error_new_literal(memcached_client_quark(), 0,
+                                "memcached server sends response too early");
+        memcached_connection_abort_response_header(client, error);
         return false;
     }
 
@@ -529,8 +537,10 @@ memcached_client_fill_buffer(struct memcached_client *client)
     assert(nbytes != -2);
 
     if (nbytes == 0) {
-        daemon_log(1, "memcached server closed the connection\n");
-        memcached_connection_abort_response(client);
+        GError *error =
+            g_error_new_literal(memcached_client_quark(), 0,
+                                "memcached server closed the connection");
+        memcached_connection_abort_response(client, error);
         return false;
     }
 
@@ -540,9 +550,11 @@ memcached_client_fill_buffer(struct memcached_client *client)
             return false;
         }
 
-        daemon_log(1, "read error on memcached connection: %s\n",
-                   strerror(errno));
-        memcached_connection_abort_response(client);
+        GError *error =
+            g_error_new(memcached_client_quark(), 0,
+                        "read error on memcached connection: %s",
+                        strerror(errno));
+        memcached_connection_abort_response(client, error);
         return false;
     }
 
@@ -584,8 +596,10 @@ memcached_client_try_read_direct(struct memcached_client *client)
             pool_unref(client->pool);
         }
     } else if (unlikely(nbytes == 0)) {
-        daemon_log(1, "memcached server closed the connection\n");
-        memcached_connection_abort_response_value(client);
+        GError *error =
+            g_error_new_literal(memcached_client_quark(), 0,
+                                "memcached server closed the connection");
+        memcached_connection_abort_response_value(client, error);
     } else if (nbytes == -2 || nbytes == -3) {
         /* either the destination fd blocks (-2) or the stream (and
            the whole connection) has been closed during the direct()
@@ -593,9 +607,11 @@ memcached_client_try_read_direct(struct memcached_client *client)
     } else if (errno == EAGAIN) {
         memcached_client_schedule_read(client);
     } else {
-        daemon_log(1, "read error on memcached connection: %s\n",
-                   strerror(errno));
-        memcached_connection_abort_response_value(client);
+        GError *error =
+            g_error_new(memcached_client_quark(), 0,
+                        "read error on memcached connection: %s",
+                        strerror(errno));
+        memcached_connection_abort_response_value(client, error);
     }
 }
 
@@ -635,8 +651,9 @@ memcached_client_send_event_callback(G_GNUC_UNUSED int fd, short event,
     assert(client->fd >= 0);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "memcached_client: send timeout\n");
-        memcached_connection_abort_response(client);
+        GError *error =
+            g_error_new_literal(memcached_client_quark(), 0, "send timeout");
+        memcached_connection_abort_response(client, error);
         return;
     }
 
@@ -659,8 +676,9 @@ memcached_client_recv_event_callback(G_GNUC_UNUSED int fd, short event,
     assert(client->fd >= 0);
 
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "memcached_client: receive timeout\n");
-        memcached_connection_abort_response(client);
+        GError *error =
+            g_error_new_literal(memcached_client_quark(), 0, "receive timeout");
+        memcached_connection_abort_response(client, error);
         return;
     }
 
@@ -701,9 +719,11 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
             return 0;
         }
 
-        daemon_log(1, "write error on memcached connection: %s\n",
-                   strerror(errno));
-        memcached_connection_abort_response(client);
+        GError *error =
+            g_error_new(memcached_client_quark(), 0,
+                        "write error on memcached connection: %s",
+                        strerror(errno));
+        memcached_connection_abort_response(client, error);
         return 0;
     }
 
@@ -728,7 +748,7 @@ memcached_request_stream_eof(void *ctx)
 }
 
 static void
-memcached_request_stream_abort(void *ctx)
+memcached_request_stream_abort(GError *error, void *ctx)
 {
     struct memcached_client *client = ctx;
 
@@ -739,7 +759,7 @@ memcached_request_stream_abort(void *ctx)
 
     client->request.istream = NULL;
 
-    memcached_connection_abort_response(client);
+    memcached_connection_abort_response(client, error);
 }
 
 static const struct istream_handler memcached_request_stream_handler = {
@@ -808,7 +828,11 @@ memcached_client_invoke(pool_t pool, int fd, enum istream_direct fd_type,
                                        0x1234 /* XXX? */);
     if (request == NULL) {
         lease_direct_release(lease, lease_ctx, true);
-        handler->error(handler_ctx);
+
+        GError *error =
+            g_error_new_literal(memcached_client_quark(), 0,
+                                "failed to generate memcached request packet");
+        handler->error(error, handler_ctx);
         return;
     }
 

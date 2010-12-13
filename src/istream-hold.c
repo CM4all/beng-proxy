@@ -18,7 +18,9 @@
 struct istream_hold {
     struct istream output;
     istream_t input;
-    bool input_eof, input_aborted;
+    bool input_eof;
+
+    GError *input_error;
 };
 
 
@@ -55,7 +57,7 @@ hold_input_eof(void *ctx)
     struct istream_hold *hold = ctx;
 
     assert(!hold->input_eof);
-    assert(!hold->input_aborted);
+    assert(hold->input_error == NULL);
 
     if (hold->output.handler == NULL) {
         /* queue the eof() call */
@@ -67,20 +69,20 @@ hold_input_eof(void *ctx)
 }
 
 static void
-hold_input_abort(void *ctx)
+hold_input_abort(GError *error, void *ctx)
 {
     struct istream_hold *hold = ctx;
 
     assert(!hold->input_eof);
-    assert(!hold->input_aborted);
+    assert(hold->input_error == NULL);
 
     if (hold->output.handler == NULL) {
         /* queue the abort() call */
-        hold->input_aborted = true;
+        hold->input_error = error;
         return;
     }
 
-    istream_deinit_abort(&hold->output);
+    istream_deinit_abort(&hold->output, error);
 }
 
 static const struct istream_handler hold_input_handler = {
@@ -109,7 +111,7 @@ istream_hold_available(istream_t istream, bool partial)
 
     if (unlikely(hold->input_eof))
         return 0;
-    else if (unlikely(hold->input_aborted))
+    else if (unlikely(hold->input_error != NULL))
         return (off_t)-1;
 
     return istream_available(hold->input, partial);
@@ -124,8 +126,8 @@ istream_hold_read(istream_t istream)
 
     if (unlikely(hold->input_eof))
         istream_deinit_eof(&hold->output);
-    else if (unlikely(hold->input_aborted))
-        istream_deinit_abort(&hold->output);
+    else if (unlikely(hold->input_error != NULL))
+        istream_deinit_abort(&hold->output, hold->input_error);
     else {
         istream_handler_set_direct(hold->input, hold->output.handler_direct);
         istream_read(hold->input);
@@ -149,9 +151,13 @@ istream_hold_close(istream_t istream)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 
-    if (hold->input_eof || hold->input_aborted)
+    if (hold->input_eof)
         istream_deinit(&hold->output);
-    else {
+    else if (hold->input_error != NULL) {
+        /* the handler is not interested in the error */
+        g_error_free(hold->input_error);
+        istream_deinit(&hold->output);
+    } else {
         /* the input object is still there */
         istream_close_handler(hold->input);
         istream_deinit(&hold->output);
@@ -177,7 +183,7 @@ istream_hold_new(pool_t pool, istream_t input)
     struct istream_hold *hold = istream_new_macro(pool, hold);
 
     hold->input_eof = false;
-    hold->input_aborted = false;
+    hold->input_error = NULL;
 
     istream_assign_handler(&hold->input, input,
                            &hold_input_handler, hold,

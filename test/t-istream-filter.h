@@ -16,6 +16,12 @@ enum {
 #endif
 };
 
+static inline GQuark
+test_quark(void)
+{
+    return g_quark_from_static_string("test");
+}
+
 #ifndef FILTER_CLEANUP
 static void
 cleanup(void)
@@ -53,7 +59,8 @@ my_istream_data(const void *data, size_t length, void *_ctx)
     ctx->got_data = true;
 
     if (ctx->abort_istream != NULL && ctx->abort_after-- == 0) {
-        istream_inject_fault(ctx->abort_istream);
+        GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
+        istream_inject_fault(ctx->abort_istream, error);
         ctx->abort_istream = NULL;
         return 0;
     }
@@ -94,7 +101,8 @@ my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
     ctx->got_data = true;
 
     if (ctx->abort_istream != NULL) {
-        istream_inject_fault(ctx->abort_istream);
+        GError *error = g_error_new_literal(test_quark(), 0, "abort_istream");
+        istream_inject_fault(ctx->abort_istream, error);
         ctx->abort_istream = NULL;
         return 0;
     }
@@ -112,9 +120,12 @@ my_istream_eof(void *_ctx)
 }
 
 static void
-my_istream_abort(void *_ctx)
+my_istream_abort(GError *error, void *_ctx)
 {
     struct ctx *ctx = _ctx;
+
+    //g_printerr("%s\n", error->message);
+    g_error_free(error);
 
 #ifdef EXPECTED_RESULT
     assert(!ctx->record);
@@ -292,7 +303,8 @@ test_fail(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    istream = create_test(pool, istream_fail_new(pool));
+    GError *error = g_error_new_literal(test_quark(), 0, "test_fail");
+    istream = create_test(pool, istream_fail_new(pool, error));
     run_istream(pool, istream, false);
 }
 
@@ -304,10 +316,11 @@ test_fail_1byte(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
+    GError *error = g_error_new_literal(test_quark(), 0, "test_fail");
     istream = create_test(pool,
                           istream_cat_new(pool,
                                           istream_head_new(pool, create_input(pool), 1),
-                                          istream_fail_new(pool),
+                                          istream_fail_new(pool, error),
                                           NULL));
     run_istream(pool, istream, false);
 }

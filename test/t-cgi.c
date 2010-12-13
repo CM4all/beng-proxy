@@ -70,9 +70,11 @@ my_istream_eof(void *ctx)
 }
 
 static void
-my_istream_abort(void *ctx)
+my_istream_abort(GError *error, void *ctx)
 {
     struct context *c = ctx;
+
+    g_error_free(error);
 
     c->body = NULL;
     c->body_abort = true;

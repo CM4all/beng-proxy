@@ -18,6 +18,11 @@ struct istream_iconv {
     struct fifo_buffer *buffer;
 };
 
+static GQuark
+iconv_quark(void)
+{
+    return g_quark_from_static_string("iconv");
+}
 
 static inline size_t
 deconst_iconv(iconv_t cd,
@@ -79,7 +84,10 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
                        caller that we consumed it */
                     istream_close_handler(ic->input);
                     iconv_close(ic->iconv);
-                    istream_deinit_abort(&ic->output);
+
+                    GError *error = g_error_new_literal(iconv_quark(), 0,
+                                                        "incomplete sequence");
+                    istream_deinit_abort(&ic->output, error);
                     return 0;
                 }
 
@@ -150,7 +158,7 @@ iconv_input_eof(void *ctx)
 }
 
 static void
-iconv_input_abort(void *ctx)
+iconv_input_abort(GError *error, void *ctx)
 {
     struct istream_iconv *ic = ctx;
 
@@ -159,7 +167,7 @@ iconv_input_abort(void *ctx)
     ic->buffer = NULL;
 
     iconv_close(ic->iconv);
-    istream_deinit_abort(&ic->output);
+    istream_deinit_abort(&ic->output, error);
 }
 
 static const struct istream_handler iconv_input_handler = {

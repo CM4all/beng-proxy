@@ -174,7 +174,7 @@ fork_input_eof(void *ctx)
 }
 
 static void
-fork_input_abort(void *ctx)
+fork_input_abort(GError *error, void *ctx)
 {
     struct fork *f = ctx;
 
@@ -186,7 +186,7 @@ fork_input_abort(void *ctx)
     f->input = NULL;
 
     fork_close(f);
-    istream_deinit_abort(&f->output);
+    istream_deinit_abort(&f->output, error);
 }
 
 static const struct istream_handler fork_input_handler = {
@@ -237,10 +237,11 @@ fork_read_from_output(struct fork *f)
                 /* the CGI may be waiting for more data from stdin */
                 istream_read(f->input);
         } else {
-            daemon_log(1, "failed to read from sub process: %s\n",
-                       strerror(errno));
+            GError *error = g_error_new(g_file_error_quark(), errno,
+                                        "failed to read from sub process: %s",
+                                        strerror(errno));
             fork_close(f);
-            istream_deinit_abort(&f->output);
+            istream_deinit_abort(&f->output, error);
         }
     } else {
         if (f->buffer != NULL &&
@@ -277,10 +278,11 @@ fork_read_from_output(struct fork *f)
                 /* the CGI may be waiting for more data from stdin */
                 istream_read(f->input);
         } else {
-            daemon_log(1, "failed to read from sub process: %s\n",
-                       strerror(errno));
+            GError *error = g_error_new(g_file_error_quark(), errno,
+                                        "failed to read from sub process: %s",
+                                        strerror(errno));
             fork_close(f);
-            istream_deinit_abort(&f->output);
+            istream_deinit_abort(&f->output, error);
         }
     }
 }

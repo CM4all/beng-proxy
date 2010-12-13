@@ -37,6 +37,12 @@ struct istream_tee {
     size_t skip;
 };
 
+static GQuark
+tee_quark(void)
+{
+    return g_quark_from_static_string("tee");
+}
+
 static size_t
 tee_feed0(struct istream_tee *tee, const char *data, size_t length)
 {
@@ -152,7 +158,7 @@ tee_input_eof(void *ctx)
 }
 
 static void
-tee_input_abort(void *ctx)
+tee_input_abort(GError *error, void *ctx)
 {
     struct istream_tee *tee = ctx;
 
@@ -164,13 +170,15 @@ tee_input_abort(void *ctx)
 
     if (tee->outputs[0].enabled) {
         tee->outputs[0].enabled = false;
-        istream_deinit_abort(&tee->outputs[0].istream);
+        istream_deinit_abort(&tee->outputs[0].istream, g_error_copy(error));
     }
 
     if (tee->outputs[1].enabled) {
         tee->outputs[1].enabled = false;
-        istream_deinit_abort(&tee->outputs[1].istream);
+        istream_deinit_abort(&tee->outputs[1].istream, g_error_copy(error));
     }
+
+    g_error_free(error);
 
     pool_unref(tee->outputs[0].istream.pool);
 }
@@ -240,7 +248,11 @@ istream_tee_close0(istream_t istream)
 
             if (tee->outputs[1].enabled) {
                 tee->outputs[1].enabled = false;
-                istream_deinit_abort(&tee->outputs[1].istream);
+
+                GError *error =
+                    g_error_new_literal(tee_quark(), 0,
+                                        "closing the weak second output");
+                istream_deinit_abort(&tee->outputs[1].istream, error);
             }
 
             pool_unref(tee->outputs[0].istream.pool);
@@ -317,7 +329,11 @@ istream_tee_close1(istream_t istream)
 
             if (tee->outputs[0].enabled) {
                 tee->outputs[0].enabled = false;
-                istream_deinit_abort(&tee->outputs[0].istream);
+
+                GError *error =
+                    g_error_new_literal(tee_quark(), 0,
+                                        "closing the weak first output");
+                istream_deinit_abort(&tee->outputs[0].istream, error);
             }
 
             pool_unref(tee->outputs[0].istream.pool);

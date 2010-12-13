@@ -253,7 +253,7 @@ cgi_input_eof(void *ctx)
 }
 
 static void
-cgi_input_abort(void *ctx)
+cgi_input_abort(GError *error, void *ctx)
 {
     struct cgi *cgi = ctx;
 
@@ -267,14 +267,12 @@ cgi_input_abort(void *ctx)
            handler */
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
 
-        GError *error =
-            g_error_new_literal(cgi_quark(), 0,
-                                "CGI response stream aborted");
+        g_prefix_error(&error, "CGI request body failed: ");
         http_response_handler_invoke_abort(&cgi->handler, error);
         pool_unref(cgi->output.pool);
     } else
         /* response has been sent: abort only the output stream */
-        istream_deinit_abort(&cgi->output);
+        istream_deinit_abort(&cgi->output, error);
 }
 
 static const struct istream_handler cgi_input_handler = {

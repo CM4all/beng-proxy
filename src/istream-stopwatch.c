@@ -35,14 +35,14 @@ stopwatch_input_eof(void *ctx)
 }
 
 static void
-stopwatch_input_abort(void *ctx)
+stopwatch_input_abort(GError *error, void *ctx)
 {
     struct istream_stopwatch *stopwatch = ctx;
 
     stopwatch_event(stopwatch->stopwatch, "abort");
     stopwatch_dump(stopwatch->stopwatch);
 
-    istream_deinit_abort(&stopwatch->output);
+    istream_deinit_abort(&stopwatch->output, error);
 }
 
 static const struct istream_handler stopwatch_input_handler = {

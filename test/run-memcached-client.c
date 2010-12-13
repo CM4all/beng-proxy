@@ -81,9 +81,11 @@ my_istream_eof(void *ctx)
 }
 
 static void
-my_istream_abort(void *ctx)
+my_istream_abort(GError *error, void *ctx)
 {
     struct context *c = ctx;
+
+    g_error_free(error);
 
     c->value = NULL;
     c->value_abort = true;
@@ -121,9 +123,11 @@ my_mcd_response(enum memcached_response_status status,
 }
 
 static void
-my_mcd_error(void *ctx)
+my_mcd_error(GError *error, void *ctx)
 {
     struct context *c = ctx;
+
+    g_error_free(error);
 
     c->status = -1;
     c->value_eof = true;

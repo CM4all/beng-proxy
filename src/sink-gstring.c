@@ -7,7 +7,7 @@ struct sink_gstring {
 
     GString *value;
 
-    void (*callback)(GString *value, void *ctx);
+    void (*callback)(GString *value, GError *error, void *ctx);
     void *callback_ctx;
 
     struct async_operation async_operation;
@@ -34,18 +34,18 @@ sink_gstring_input_eof(void *ctx)
 
     async_operation_finished(&sg->async_operation);
 
-    sg->callback(sg->value, sg->callback_ctx);
+    sg->callback(sg->value, NULL, sg->callback_ctx);
 }
 
 static void
-sink_gstring_input_abort(void *ctx)
+sink_gstring_input_abort(GError *error, void *ctx)
 {
     struct sink_gstring *sg = ctx;
 
     async_operation_finished(&sg->async_operation);
 
     g_string_free(sg->value, true);
-    sg->callback(NULL, sg->callback_ctx);
+    sg->callback(NULL, error, sg->callback_ctx);
 }
 
 static const struct istream_handler sink_gstring_input_handler = {
@@ -90,7 +90,7 @@ static const struct async_operation_class sink_gstring_operation = {
 
 void
 sink_gstring_new(pool_t pool, istream_t input,
-                 void (*callback)(GString *value, void *ctx),
+                 void (*callback)(GString *value, GError *error, void *ctx),
                  void *ctx, struct async_operation_ref *async_ref)
 {
     struct sink_gstring *sg = p_malloc(pool, sizeof(*sg));

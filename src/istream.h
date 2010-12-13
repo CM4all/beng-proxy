@@ -9,6 +9,8 @@
 
 #include "pool.h"
 
+#include <glib.h>
+
 #include <assert.h>
 #include <stdbool.h>
 #include <sys/types.h>
@@ -74,9 +76,11 @@ struct istream_handler {
      * The method close() will not result in a call to this callback,
      * since the caller is assumed to be the istream handler.
      *
+     * @param error a GError describing the error condition, must be
+     * freed by the callee
      * @param ctx the istream_handler context pointer
      */
-    void (*abort)(void *ctx);
+    void (*abort)(GError *error, void *ctx);
 };
 
 /** an input stream */

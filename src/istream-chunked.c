@@ -199,7 +199,7 @@ chunked_input_eof(void *ctx)
 }
 
 static void
-chunked_input_abort(void *ctx)
+chunked_input_abort(GError *error, void *ctx)
 {
     struct istream_chunked *chunked = ctx;
 
@@ -207,7 +207,7 @@ chunked_input_abort(void *ctx)
 
     chunked->input = NULL;
 
-    istream_deinit_abort(&chunked->output);
+    istream_deinit_abort(&chunked->output, error);
 }
 
 static const struct istream_handler chunked_input_handler = {

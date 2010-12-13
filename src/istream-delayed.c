@@ -153,7 +153,7 @@ istream_delayed_set_eof(istream_t i_delayed)
 }
 
 void
-istream_delayed_set_abort(istream_t i_delayed)
+istream_delayed_set_abort(istream_t i_delayed, GError *error)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 
@@ -162,5 +162,5 @@ istream_delayed_set_abort(istream_t i_delayed)
 
     async_ref_poison(&delayed->async);
 
-    istream_deinit_abort(&delayed->output);
+    istream_deinit_abort(&delayed->output, error);
 }

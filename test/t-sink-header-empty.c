@@ -27,12 +27,12 @@ my_sink_header_done(void *header, size_t length, istream_t tail, void *ctx)
 }
 
 static void
-my_sink_header_error(void *ctx)
+my_sink_header_error(GError *error, void *ctx)
 {
     istream_t delayed = ctx;
 
     async_ref_clear(istream_delayed_async_ref(delayed));
-    istream_delayed_set_abort(delayed);
+    istream_delayed_set_abort(delayed, error);
 }
 
 static const struct sink_header_handler my_sink_header_handler = {

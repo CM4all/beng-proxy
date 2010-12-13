@@ -207,7 +207,10 @@ http_server_request_close(struct http_server_connection *connection)
 
     if (connection->request.read_state == READ_BODY) {
         connection->request.read_state = READ_START;
-        istream_deinit_abort(&connection->request.body_reader.output);
+        GError *error =
+            g_error_new_literal(http_server_quark(), 0,
+                                "connection closed");
+        istream_deinit_abort(&connection->request.body_reader.output, error);
     } else
         connection->request.read_state = READ_START;
 

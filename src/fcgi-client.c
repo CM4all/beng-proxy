@@ -615,7 +615,7 @@ fcgi_request_stream_eof(void *ctx)
 }
 
 static void
-fcgi_request_stream_abort(void *ctx)
+fcgi_request_stream_abort(GError *error, void *ctx)
 {
     struct fcgi_client *client = ctx;
 
@@ -623,9 +623,7 @@ fcgi_request_stream_abort(void *ctx)
 
     client->request.istream = NULL;
 
-    GError *error =
-        g_error_new_literal(fcgi_quark(), 0,
-                            "FastCGI request stream aborted");
+    g_prefix_error(&error, "FastCGI request stream failed: ");
     fcgi_client_abort_response(client, error);
 }
 

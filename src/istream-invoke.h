@@ -141,18 +141,21 @@ istream_invoke_eof(struct istream *istream)
 }
 
 static inline void
-istream_invoke_abort(struct istream *istream)
+istream_invoke_abort(struct istream *istream, GError *error)
 {
     assert(istream != NULL);
     assert(!istream->eof);
     assert(!istream->closing);
+    assert(error != NULL);
 
 #ifndef NDEBUG
     istream->eof = false;
 #endif
 
     if (istream->handler != NULL)
-        istream->handler->abort(istream->handler_ctx);
+        istream->handler->abort(error, istream->handler_ctx);
+    else
+        g_error_free(error);
 }
 
 #endif

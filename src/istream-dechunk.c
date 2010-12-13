@@ -7,8 +7,6 @@
 #include "istream-internal.h"
 #include "fifo-buffer.h"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <string.h>
 
@@ -33,9 +31,14 @@ struct istream_dechunk {
     void *callback_ctx;
 };
 
+static GQuark
+dechunk_quark(void)
+{
+    return g_quark_from_static_string("dechunk");
+}
 
 static void
-dechunk_abort(struct istream_dechunk *dechunk)
+dechunk_abort(struct istream_dechunk *dechunk, GError *error)
 {
     assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
     assert(dechunk->input != NULL);
@@ -43,7 +46,7 @@ dechunk_abort(struct istream_dechunk *dechunk)
     dechunk->state = CLOSED;
 
     istream_free_handler(&dechunk->input);
-    istream_deinit_abort(&dechunk->output);
+    istream_deinit_abort(&dechunk->output, error);
 }
 
 /**
@@ -113,8 +116,10 @@ dechunk_feed(struct istream_dechunk *dechunk, const void *data0, size_t length)
                 ++position;
                 continue;
             } else {
-                daemon_log(2, "chunk length expected\n");
-                dechunk_abort(dechunk);
+                GError *error =
+                    g_error_new_literal(dechunk_quark(), 0,
+                                        "chunk length expected");
+                dechunk_abort(dechunk, error);
                 return 0;
             }
 
@@ -164,8 +169,10 @@ dechunk_feed(struct istream_dechunk *dechunk, const void *data0, size_t length)
             if (data[position] == '\n') {
                 dechunk->state = NONE;
             } else if (data[position] != '\r') {
-                daemon_log(2, "newline expected\n");
-                dechunk_abort(dechunk);
+                GError *error =
+                    g_error_new_literal(dechunk_quark(), 0,
+                                        "newline expected");
+                dechunk_abort(dechunk, error);
                 return 0;
             }
             ++position;
@@ -222,23 +229,27 @@ dechunk_input_eof(void *ctx)
 
     assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
-    daemon_log(2, "premature EOF in dechunker\n");
-
     dechunk->state = CLOSED;
 
     dechunk->input = NULL;
-    istream_deinit_abort(&dechunk->output);
+
+    GError *error =
+        g_error_new_literal(dechunk_quark(), 0,
+                            "premature EOF in dechunker");
+    istream_deinit_abort(&dechunk->output, error);
 }
 
 static void
-dechunk_input_abort(void *ctx)
+dechunk_input_abort(GError *error, void *ctx)
 {
     struct istream_dechunk *dechunk = ctx;
 
     dechunk->input = NULL;
 
     if (dechunk->state != EOF_DETECTED)
-        istream_deinit_abort(&dechunk->output);
+        istream_deinit_abort(&dechunk->output, error);
+    else
+        g_error_free(error);
 
     dechunk->state = CLOSED;
 }

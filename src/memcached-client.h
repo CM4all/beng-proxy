@@ -25,8 +25,14 @@ struct memcached_client_handler {
                      const void *key, size_t key_length,
                      istream_t value, void *ctx);
 
-    void (*error)(void *ctx);
+    void (*error)(GError *error, void *ctx);
 };
+
+static inline GQuark
+memcached_client_quark(void)
+{
+    return g_quark_from_static_string("memcached_client");
+}
 
 /**
  * Invoke a call to the memcached server.  The result will be

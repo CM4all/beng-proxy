@@ -120,7 +120,10 @@ http_server_response_stream_eof(void *ctx)
         connection->keep_alive = false;
         connection->request.read_state = READ_END;
 
-        istream_deinit_abort(&connection->request.body_reader.output);
+        GError *error =
+            g_error_new_literal(http_server_quark(), 0,
+                                "request body discarded");
+        istream_deinit_abort(&connection->request.body_reader.output, error);
         if (!http_server_connection_valid(connection))
             return;
     }
@@ -146,11 +149,14 @@ http_server_response_stream_eof(void *ctx)
 }
 
 static void
-http_server_response_stream_abort(void *ctx)
+http_server_response_stream_abort(GError *error, void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
     assert(connection->response.istream != NULL);
+
+    daemon_log(1, "error on HTTP response stream: %s", error->message);
+    g_error_free(error);
 
     connection->response.istream = NULL;
 

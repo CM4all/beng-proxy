@@ -300,13 +300,13 @@ deflate_input_eof(void *ctx)
 }
 
 static void
-deflate_input_abort(void *ctx)
+deflate_input_abort(GError *error, void *ctx)
 {
     struct istream_deflate *defl = ctx;
 
     deflate_close(defl);
 
-    istream_deinit_abort(&defl->output);
+    istream_deinit_abort(&defl->output, error);
 }
 
 static const struct istream_handler deflate_input_handler = {

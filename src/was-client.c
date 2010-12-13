@@ -84,13 +84,15 @@ was_client_response_submitted(const struct was_client *client)
  * releases the socket lease.
  */
 static void
-was_client_clear(struct was_client *client)
+was_client_clear(struct was_client *client, GError *error)
 {
     if (client->request.body != NULL)
         was_output_free_p(&client->request.body);
 
     if (client->response.body != NULL)
-        was_input_free_p(&client->response.body);
+        was_input_free_p(&client->response.body, error);
+    else
+        g_error_free(error);
 
     if (client->control != NULL) {
         was_control_free(client->control);
@@ -131,7 +133,7 @@ was_client_abort_response_headers(struct was_client *client, GError *error)
 
     async_operation_finished(&client->async);
 
-    was_client_clear(client);
+    was_client_clear(client, error);
 
     http_response_handler_invoke_abort(&client->handler, error);
     pool_unref(client->caller_pool);
@@ -142,11 +144,11 @@ was_client_abort_response_headers(struct was_client *client, GError *error)
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
-was_client_abort_response_body(struct was_client *client)
+was_client_abort_response_body(struct was_client *client, GError *error)
 {
     assert(was_client_response_submitted(client));
 
-    was_client_clear(client);
+    was_client_clear(client, error);
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -171,14 +173,14 @@ was_client_abort_response_empty(struct was_client *client)
  * handler has not yet been invoked).
  */
 static void
-was_client_abort_pending(struct was_client *client)
+was_client_abort_pending(struct was_client *client, GError *error)
 {
     assert(!was_client_receiving_metadata(client) &&
            !was_client_response_submitted(client));
 
     async_operation_finished(&client->async);
 
-    was_client_clear(client);
+    was_client_clear(client, error);
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -192,17 +194,10 @@ was_client_abort(struct was_client *client, GError *error)
 {
     if (was_client_receiving_metadata(client))
         was_client_abort_response_headers(client, error);
-    else if (was_client_response_submitted(client)) {
-        daemon_log(2, "http-client: %s\n", error->message);
-        g_error_free(error);
-
-        was_client_abort_response_body(client);
-    } else {
-        daemon_log(2, "http-client: %s\n", error->message);
-        g_error_free(error);
-
-        was_client_abort_pending(client);
-    }
+    else if (was_client_response_submitted(client))
+        was_client_abort_response_body(client, error);
+    else
+        was_client_abort_pending(client, error);
 }
 
 
@@ -239,8 +234,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_HEADER:
         if (!was_client_receiving_metadata(client)) {
-            daemon_log(2, "was-client: response header was too late\n");
-            was_client_abort_response_body(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "response header was too late");
+            was_client_abort_response_body(client, error);
             return false;
         }
 
@@ -260,16 +256,18 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_STATUS:
         if (!was_client_receiving_metadata(client)) {
-            daemon_log(2, "was-client: STATUS after body start\n");
-            was_client_abort_response_body(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                "STATUS after body start");
+            was_client_abort_response_body(client, error);
             return false;
         }
 
         const uint32_t *status_r = payload;
         if (payload_length != sizeof(*status_r) ||
             !http_status_is_valid((http_status_t)*status_r)) {
-            daemon_log(2, "was-client: malformed STATUS\n");
-            was_client_abort_response_body(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "malformed STATUS");
+            was_client_abort_response_body(client, error);
             return false;
         }
 
@@ -285,8 +283,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_NO_DATA:
         if (!was_client_receiving_metadata(client)) {
-            daemon_log(2, "was-client: NO_DATA after body start\n");
-            was_client_abort_response_body(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "NO_DATA after body start");
+            was_client_abort_response_body(client, error);
             return false;
         }
 
@@ -316,8 +315,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
     case WAS_COMMAND_DATA:
         if (!was_client_receiving_metadata(client)) {
-            daemon_log(2, "was-client: DATA after body start\n");
-            was_client_abort_response_body(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "DATA after body start");
+            was_client_abort_response_body(client, error);
             return false;
         }
 
@@ -340,14 +340,17 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         }
 
         if (client->response.body == NULL) {
-            daemon_log(2, "was-client: LENGTH after NO_DATA\n");
-            was_client_abort_response_body(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "LENGTH after NO_DATA");
+            was_client_abort_response_body(client, error);
             return false;
         }
 
         length_p = payload;
         if (payload_length != sizeof(*length_p)) {
-            was_client_abort_response_body(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "malformed LENGTH packet");
+            was_client_abort_response_body(client, error);
             return false;
         }
 
@@ -375,7 +378,9 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
         length_p = payload;
         if (payload_length != sizeof(*length_p)) {
-            was_client_abort_response_body(client);
+            error = g_error_new_literal(was_quark(), 0,
+                                        "malformed PREMATURE packet");
+            was_client_abort_response_body(client, error);
             return false;
         }
 
@@ -472,7 +477,7 @@ was_client_output_length(uint64_t length, void *ctx)
 }
 
 static bool
-was_client_output_premature(uint64_t length, void *ctx)
+was_client_output_premature(uint64_t length, GError *error, void *ctx)
 {
     struct was_client *client = ctx;
 
@@ -484,8 +489,6 @@ was_client_output_premature(uint64_t length, void *ctx)
     /* XXX send PREMATURE, recover */
     (void)length;
 
-    GError *error = g_error_new_literal(was_quark(), 0,
-                                        "WAS output was closed prematurely");
     was_client_abort(client, error);
     return false;
 }
@@ -501,7 +504,7 @@ was_client_output_eof(void *ctx)
 }
 
 static void
-was_client_output_abort(void *ctx)
+was_client_output_abort(GError *error, void *ctx)
 {
     struct was_client *client = ctx;
 
@@ -509,8 +512,6 @@ was_client_output_abort(void *ctx)
 
     client->request.body = NULL;
 
-    GError *error = g_error_new_literal(was_quark(), 0,
-                                        "WAS output has failed");
     was_client_abort(client, error);
 }
 
@@ -538,7 +539,7 @@ was_client_input_eof(void *ctx)
 
     if (client->request.body != NULL ||
         !was_control_is_empty(client->control)) {
-        was_client_abort_response_body(client);
+        was_client_abort_response_empty(client);
         return;
     }
 
@@ -560,7 +561,7 @@ was_client_input_abort(void *ctx)
 
     client->response.body = NULL;
 
-    was_client_abort_response_body(client);
+    was_client_abort_response_empty(client);
 }
 
 static const struct was_input_handler was_client_input_handler = {
@@ -592,7 +593,7 @@ was_client_request_abort(struct async_operation *ao)
 
     pool_unref(client->caller_pool);
 
-    was_client_clear(client);
+    was_client_clear_unused(client);
 
     pool_unref(client->pool);
 }

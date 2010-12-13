@@ -7,7 +7,7 @@ struct async_operation_ref;
 
 struct sink_buffer_handler {
     void (*done)(void *data, size_t length, void *ctx);
-    void (*error)(void *ctx);
+    void (*error)(GError *error, void *ctx);
 };
 
 void

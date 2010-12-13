@@ -29,10 +29,10 @@ istream_forward_eof(void *ctx)
 }
 
 void
-istream_forward_abort(void *ctx)
+istream_forward_abort(GError *error, void *ctx)
 {
     struct istream *istream = ctx;
-    istream_deinit_abort(istream);
+    istream_deinit_abort(istream, error);
 }
 
 const struct istream_handler istream_forward_handler = {

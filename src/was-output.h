@@ -9,6 +9,7 @@
 
 #include "istream.h"
 
+#include <glib.h>
 #include <stdint.h>
 
 struct was_output_handler {
@@ -28,10 +29,10 @@ struct was_output_handler {
      * @param true on success, false if the was_output object has been
      * deleted
      */
-    bool (*premature)(uint64_t length, void *ctx);
+    bool (*premature)(uint64_t length, GError *error, void *ctx);
 
     void (*eof)(void *ctx);
-    void (*abort)(void *ctx);
+    void (*abort)(GError *error, void *ctx);
 };
 
 struct was_output *

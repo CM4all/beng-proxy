@@ -36,6 +36,12 @@ struct istream_replace {
 #endif
 };
 
+static GQuark
+replace_quark(void)
+{
+    return g_quark_from_static_string("replace");
+}
+
 /**
  * Return true if the replace object is at the specified position.
  * This is ignored (returns true) if this replace object is in "quiet"
@@ -162,7 +168,7 @@ replace_substitution_eof(void *ctx)
 }
 
 static void
-replace_substitution_abort(void *ctx)
+replace_substitution_abort(GError *error, void *ctx)
 {
     struct substitution *s = ctx;
     struct istream_replace *replace = s->replace;
@@ -174,7 +180,7 @@ replace_substitution_abort(void *ctx)
     if (replace->input != NULL)
         istream_free_handler(&replace->input);
 
-    istream_deinit_abort(&replace->output);
+    istream_deinit_abort(&replace->output, error);
 }
 
 static const struct istream_handler replace_substitution_handler = {
@@ -403,10 +409,13 @@ replace_input_data(const void *data, size_t length, void *ctx)
     replace->had_input = true;
 
     if (replace->source_length >= 8 * 1024 * 1024) {
-        daemon_log(2, "file too large for processor\n");
         istream_free_handler(&replace->input);
         replace_destroy(replace);
-        istream_deinit_abort(&replace->output);
+
+        GError *error =
+            g_error_new_literal(replace_quark(), 0,
+                                "file too large for processor");
+        istream_deinit_abort(&replace->output, error);
         return 0;
     }
 
@@ -438,13 +447,13 @@ replace_input_eof(void *ctx)
 }
 
 static void
-replace_input_abort(void *ctx)
+replace_input_abort(GError *error, void *ctx)
 {
     struct istream_replace *replace = ctx;
 
     replace_destroy(replace);
     replace->input = NULL;
-    istream_deinit_abort(&replace->output);
+    istream_deinit_abort(&replace->output, error);
 }
 
 static const struct istream_handler replace_input_handler = {

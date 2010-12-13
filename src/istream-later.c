@@ -54,14 +54,14 @@ later_input_eof(void *ctx)
 }
 
 static void
-later_input_abort(void *ctx)
+later_input_abort(GError *error, void *ctx)
 {
     struct istream_later *later = ctx;
 
     evtimer_del(&later->event);
 
     later->input = NULL;
-    istream_deinit_abort(&later->output);
+    istream_deinit_abort(&later->output, error);
 }
 
 static const struct istream_handler later_input_handler = {

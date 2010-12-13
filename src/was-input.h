@@ -27,15 +27,18 @@ struct was_input *
 was_input_new(pool_t pool, int fd,
               const struct was_input_handler *handler, void *handler_ctx);
 
+/**
+ * @param error the error reported to the istream handler
+ */
 void
-was_input_free(struct was_input *input);
+was_input_free(struct was_input *input, GError *error);
 
 static inline void
-was_input_free_p(struct was_input **input_p)
+was_input_free_p(struct was_input **input_p, GError *error)
 {
     struct was_input *input = *input_p;
     *input_p = NULL;
-    was_input_free(input);
+    was_input_free(input, error);
 }
 
 /**

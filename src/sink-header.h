@@ -15,7 +15,7 @@ struct async_operation_ref;
 
 struct sink_header_handler {
     void (*done)(void *header, size_t length, istream_t tail, void *ctx);
-    void (*error)(void *ctx);
+    void (*error)(GError *error, void *ctx);
 };
 
 void
