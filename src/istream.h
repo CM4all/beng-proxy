@@ -395,6 +395,7 @@ istream_handler_clear(istream_t _istream)
     struct istream *istream = _istream_opaque_cast(_istream);
 
     assert(!istream->eof);
+    assert(istream->handler != NULL);
 
     istream->handler = NULL;
 }
