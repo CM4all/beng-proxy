@@ -98,7 +98,7 @@ http_cache_choice_key(pool_t pool, const char *uri)
 }
 
 static void
-http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
+http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
     struct strref data;
@@ -110,11 +110,6 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
     bool unclean = false;
     struct uset uset;
     unsigned hash;
-
-    if (data0 == NULL) {
-        choice->callback.get(NULL, true, choice->callback_ctx);
-        return;
-    }
 
     strref_set(&data, data0, length);
     uset_init(&uset);
@@ -165,6 +160,19 @@ http_cache_choice_buffer_callback(void *data0, size_t length, void *ctx)
 }
 
 static void
+http_cache_choice_buffer_error(void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    choice->callback.get(NULL, true, choice->callback_ctx);
+}
+
+static const struct sink_buffer_handler http_cache_choice_buffer_handler = {
+    .done = http_cache_choice_buffer_done,
+    .error = http_cache_choice_buffer_error,
+};
+
+static void
 http_cache_choice_get_callback(enum memcached_response_status status,
                                G_GNUC_UNUSED const void *extras,
                                G_GNUC_UNUSED size_t extras_length,
@@ -183,7 +191,7 @@ http_cache_choice_get_callback(enum memcached_response_status status,
     }
 
     sink_buffer_new(choice->pool, value,
-                    http_cache_choice_buffer_callback, choice,
+                    &http_cache_choice_buffer_handler, choice,
                     choice->async_ref);
 }
 
@@ -335,8 +343,7 @@ http_cache_choice_filter_set_callback(G_GNUC_UNUSED enum memcached_response_stat
 }
 
 static void
-http_cache_choice_filter_buffer_callback(void *data0, size_t length,
-                                         void *ctx)
+http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
     struct strref data;
@@ -345,11 +352,6 @@ http_cache_choice_filter_buffer_callback(void *data0, size_t length,
     struct pool_mark mark;
     uint32_t magic;
     struct http_cache_document document;
-
-    if (data0 == NULL) {
-        choice->callback.get(NULL, true, choice->callback_ctx);
-        return;
-    }
 
     strref_set(&data, data0, length);
     dest = data0;
@@ -412,6 +414,19 @@ http_cache_choice_filter_buffer_callback(void *data0, size_t length,
 }
 
 static void
+http_cache_choice_filter_buffer_error(void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    choice->callback.get(NULL, true, choice->callback_ctx);
+}
+
+static const struct sink_buffer_handler http_cache_choice_filter_buffer_handler = {
+    .done = http_cache_choice_filter_buffer_done,
+    .error = http_cache_choice_filter_buffer_error,
+};
+
+static void
 http_cache_choice_filter_get_callback(enum memcached_response_status status,
                                       G_GNUC_UNUSED const void *extras,
                                       G_GNUC_UNUSED size_t extras_length,
@@ -430,7 +445,7 @@ http_cache_choice_filter_get_callback(enum memcached_response_status status,
     }
 
     sink_buffer_new(choice->pool, value,
-                    http_cache_choice_filter_buffer_callback, choice,
+                    &http_cache_choice_filter_buffer_handler, choice,
                     choice->async_ref);
 }
 

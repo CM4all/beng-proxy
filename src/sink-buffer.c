@@ -16,8 +16,8 @@ struct sink_buffer {
     unsigned char *data;
     size_t size, position;
 
-    void (*callback)(void *data, size_t length, void *ctx);
-    void *callback_ctx;
+    const struct sink_buffer_handler *handler;
+    void *handler_ctx;
 
     struct async_operation async_operation;
 };
@@ -70,8 +70,7 @@ sink_buffer_input_eof(void *ctx)
     assert(buffer->position == buffer->size);
 
     async_operation_finished(&buffer->async_operation);
-    buffer->callback(buffer->data, buffer->size, buffer->callback_ctx);
-
+    buffer->handler->done(buffer->data, buffer->size, buffer->handler_ctx);
 }
 
 static void
@@ -80,7 +79,7 @@ sink_buffer_input_abort(void *ctx)
     struct sink_buffer *buffer = ctx;
 
     async_operation_finished(&buffer->async_operation);
-    buffer->callback(NULL, 0, buffer->callback_ctx);
+    buffer->handler->error(buffer->handler_ctx);
 }
 
 static const struct istream_handler sink_buffer_input_handler = {
@@ -124,8 +123,7 @@ static const struct async_operation_class sink_buffer_operation = {
 
 void
 sink_buffer_new(pool_t pool, istream_t input,
-                void (*callback)(void *data, size_t length, void *ctx),
-                void *ctx,
+                const struct sink_buffer_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref)
 {
     off_t available;
@@ -134,18 +132,20 @@ sink_buffer_new(pool_t pool, istream_t input,
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
-    assert(callback != NULL);
+    assert(handler != NULL);
+    assert(handler->done != NULL);
+    assert(handler->error != NULL);
 
     available = istream_available(input, false);
     if (available == -1 || available >= 0x10000000) {
         istream_close_unused(input);
-        callback(NULL, 0, ctx);
+        handler->error(ctx);
         return;
     }
 
     if (available == 0) {
         istream_close_unused(input);
-        callback(empty_buffer, 0, ctx);
+        handler->done(empty_buffer, 0, ctx);
         return;
     }
 
@@ -159,8 +159,8 @@ sink_buffer_new(pool_t pool, istream_t input,
     buffer->size = (size_t)available;
     buffer->position = 0;
     buffer->data = p_malloc(pool, buffer->size);
-    buffer->callback = callback;
-    buffer->callback_ctx = ctx;
+    buffer->handler = handler;
+    buffer->handler_ctx = ctx;
 
     async_init(&buffer->async_operation, &sink_buffer_operation);
     async_ref_set(async_ref, &buffer->async_operation);

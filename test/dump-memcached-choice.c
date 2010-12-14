@@ -77,17 +77,12 @@ static const struct lease memcached_socket_lease = {
  */
 
 static void
-my_sink_callback(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
+my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
 {
     struct strref data;
     struct pool_mark mark;
     struct http_cache_document document;
     uint32_t magic;
-
-    if (data0 == NULL) {
-        fprintf(stderr, "sink_buffer has failed\n");
-        return;
-    }
 
     strref_set(&data, data0, length);
 
@@ -116,6 +111,17 @@ my_sink_callback(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
     }
 }
 
+static void
+my_sink_error(G_GNUC_UNUSED void *ctx)
+{
+    fprintf(stderr, "sink_buffer has failed\n");
+}
+
+static const struct sink_buffer_handler my_sink_handler = {
+    .done = my_sink_done,
+    .error = my_sink_error,
+};
+
 
 /*
  * memcached_response_handler_t
@@ -140,7 +146,7 @@ my_response_handler(enum memcached_response_status status,
     }
 
     sink_buffer_new(c->pool, value,
-                    my_sink_callback, c,
+                    &my_sink_handler, c,
                     &c->async_ref);
 }
 
