@@ -7,7 +7,7 @@
 #include "strmap.h"
 #include "tpool.h"
 #include "serialize.h"
-#include "sink-impl.h"
+#include "sink-buffer.h"
 
 #include <socket/resolver.h>
 #include <socket/util.h>

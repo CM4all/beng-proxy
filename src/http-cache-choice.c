@@ -13,7 +13,7 @@
 #include "strref.h"
 #include "serialize.h"
 #include "growing-buffer.h"
-#include "sink-impl.h"
+#include "sink-buffer.h"
 #include "uset.h"
 
 #include <glib.h>

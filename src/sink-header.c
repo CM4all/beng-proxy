@@ -6,7 +6,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "sink-impl.h"
+#include "sink-header.h"
 #include "istream-internal.h"
 #include "async.h"
 

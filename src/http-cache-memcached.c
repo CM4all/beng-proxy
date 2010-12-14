@@ -9,7 +9,7 @@
 #include "memcached-stock.h"
 #include "growing-buffer.h"
 #include "serialize.h"
-#include "sink-impl.h"
+#include "sink-header.h"
 #include "strref.h"
 #include "strmap.h"
 #include "tpool.h"

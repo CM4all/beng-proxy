@@ -1,4 +1,4 @@
-#include "sink-impl.h"
+#include "sink-header.h"
 #include "async.h"
 
 #include <string.h>

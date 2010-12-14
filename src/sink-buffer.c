@@ -1,12 +1,4 @@
-/*
- * This istream filter reads a 32 bit header size from the stream,
- * reads it into a buffer and invokes a callback with the tail of the
- * stream.
- *
- * author: Max Kellermann <mk@cm4all.com>
- */
-
-#include "sink-impl.h"
+#include "sink-buffer.h"
 #include "istream-internal.h"
 #include "async.h"
 
