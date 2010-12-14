@@ -13,11 +13,14 @@
 
 struct async_operation_ref;
 
+struct sink_header_handler {
+    void (*done)(void *header, size_t length, istream_t tail, void *ctx);
+    void (*error)(void *ctx);
+};
+
 void
 sink_header_new(pool_t pool, istream_t input,
-                void (*callback)(void *header, size_t length,
-                                 istream_t tail, void *ctx),
-                void *ctx,
+                const struct sink_header_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref);
 
 #endif

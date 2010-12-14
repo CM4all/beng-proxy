@@ -36,9 +36,8 @@ struct sink_header {
      */
     size_t pending;
 
-    void (*callback)(void *header, size_t length,
-                     istream_t tail, void *ctx);
-    void *callback_ctx;
+    const struct sink_header_handler *handler;
+    void *handler_ctx;
 
     struct async_operation async_operation;
 };
@@ -56,9 +55,9 @@ header_invoke_callback(struct sink_header *header, size_t consumed)
     header->pending += consumed;
 
     header->state = CALLBACK;
-    header->callback(header->buffer, header->size,
-                     istream_struct_cast(&header->output),
-                     header->callback_ctx);
+    header->handler->done(header->buffer, header->size,
+                          istream_struct_cast(&header->output),
+                          header->handler_ctx);
 
     if (header->input != NULL) {
         header->state = DATA;
@@ -94,7 +93,7 @@ header_consume_size(struct sink_header *header,
         /* header too large */
         async_operation_finished(&header->async_operation);
         istream_close_handler(header->input);
-        header->callback(NULL, 0, NULL, header->callback_ctx);
+        header->handler->error(header->handler_ctx);
         istream_deinit(&header->output);
         return 0;
     }
@@ -215,7 +214,7 @@ sink_header_input_eof(void *ctx)
     case SIZE:
     case HEADER:
         async_operation_finished(&header->async_operation);
-        header->callback(NULL, 0, NULL, header->callback_ctx);
+        header->handler->error(header->handler_ctx);
         istream_deinit(&header->output);
         break;
 
@@ -238,7 +237,7 @@ sink_header_input_abort(void *ctx)
     case SIZE:
     case HEADER:
         async_operation_finished(&header->async_operation);
-        header->callback(NULL, 0, NULL, header->callback_ctx);
+        header->handler->error(header->handler_ctx);
         istream_deinit(&header->output);
         break;
 
@@ -352,9 +351,7 @@ static const struct async_operation_class sink_header_operation = {
 
 void
 sink_header_new(pool_t pool, istream_t input,
-                void (*callback)(void *header, size_t length,
-                                 istream_t tail, void *ctx),
-                void *ctx,
+                const struct sink_header_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref)
 {
     struct sink_header *header = (struct sink_header *)
@@ -362,7 +359,9 @@ sink_header_new(pool_t pool, istream_t input,
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
-    assert(callback != NULL);
+    assert(handler != NULL);
+    assert(handler->done != NULL);
+    assert(handler->error != NULL);
 
     istream_assign_handler(&header->input, input,
                            &sink_header_input_handler, header,
@@ -370,8 +369,8 @@ sink_header_new(pool_t pool, istream_t input,
 
     header->state = SIZE;
     header->position = 0;
-    header->callback = callback;
-    header->callback_ctx = ctx;
+    header->handler = handler;
+    header->handler_ctx = ctx;
 
     async_init(&header->async_operation, &sink_header_operation);
     async_ref_set(async_ref, &header->async_operation);

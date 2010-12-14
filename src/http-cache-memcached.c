@@ -175,18 +175,13 @@ mcd_choice_get_callback(const char *key, bool unclean, void *ctx)
 }
 
 static void
-http_cache_memcached_header_callback(void *header_ptr, size_t length,
-                                     istream_t tail, void *ctx)
+http_cache_memcached_header_done(void *header_ptr, size_t length,
+                                 istream_t tail, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
     struct strref header;
     enum http_cache_memcached_type type;
     struct http_cache_document *document;
-
-    if (tail == NULL) {
-        request->callback.get(NULL, 0, request->callback_ctx);
-        return;
-    }
 
     strref_set(&header, header_ptr, length);
 
@@ -215,6 +210,19 @@ http_cache_memcached_header_callback(void *header_ptr, size_t length,
     istream_close_unused(tail);
     request->callback.get(NULL, 0, request->callback_ctx);
 }
+
+static void
+http_cache_memcached_header_error(void *ctx)
+{
+    struct http_cache_memcached_request *request = ctx;
+
+    request->callback.get(NULL, 0, request->callback_ctx);
+}
+
+static const struct sink_header_handler http_cache_memcached_header_handler = {
+    .done = http_cache_memcached_header_done,
+    .error = http_cache_memcached_header_error,
+};
 
 static void
 http_cache_memcached_get_callback(enum memcached_response_status status,
@@ -246,7 +254,7 @@ http_cache_memcached_get_callback(enum memcached_response_status status,
     }
 
     sink_header_new(request->pool, value,
-                    http_cache_memcached_header_callback, request,
+                    &http_cache_memcached_header_handler, request,
                     request->async_ref);
 }
 
