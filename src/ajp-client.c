@@ -749,7 +749,10 @@ ajp_request_stream_abort(void *ctx)
            destructed further up the stack */
         return;
 
-    ajp_client_release(client, false);
+    GError *error =
+        g_error_new_literal(ajp_client_quark(), 0,
+                            "FastCGI request stream aborted");
+    ajp_client_abort_response(client, error);
 }
 
 static const struct istream_handler ajp_request_stream_handler = {
