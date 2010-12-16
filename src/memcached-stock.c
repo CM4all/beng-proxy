@@ -5,6 +5,7 @@
  */
 
 #include "memcached-stock.h"
+#include "memcached-client.h"
 #include "stock.h"
 #include "tcp-stock.h"
 #include "uri-address.h"
@@ -54,7 +55,7 @@ struct memcached_stock_request {
 
     istream_t value;
 
-    memcached_response_handler_t handler;
+    const struct memcached_client_handler *handler;
     void *handler_ctx;
 
     struct async_operation_ref *async_ref;
@@ -90,7 +91,7 @@ memcached_stock_callback(void *ctx, struct stock_item *item)
     struct memcached_stock_request *request = ctx;
 
     if (item == NULL) {
-        request->handler(-1, NULL, 0, NULL, 0, NULL, request->handler_ctx);
+        request->handler->error(request->handler_ctx);
 
         if (request->value != NULL)
             istream_close_unused(request->value);
@@ -118,7 +119,7 @@ memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
                        istream_t value,
-                       memcached_response_handler_t handler,
+                       const struct memcached_client_handler *handler,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref)
 {

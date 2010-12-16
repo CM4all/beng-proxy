@@ -7,6 +7,7 @@
 #include "http-cache-internal.h"
 #include "http-cache-choice.h"
 #include "memcached-stock.h"
+#include "memcached-client.h"
 #include "growing-buffer.h"
 #include "serialize.h"
 #include "sink-header.h"
@@ -61,7 +62,7 @@ struct http_cache_memcached_request {
  */
 
 static void
-http_cache_memcached_flush_callback(enum memcached_response_status status,
+http_cache_memcached_flush_response(enum memcached_response_status status,
                                     G_GNUC_UNUSED const void *extras,
                                     G_GNUC_UNUSED size_t extras_length,
                                     G_GNUC_UNUSED const void *key,
@@ -76,6 +77,19 @@ http_cache_memcached_flush_callback(enum memcached_response_status status,
     request->callback.flush(status == MEMCACHED_STATUS_NO_ERROR,
                             request->callback_ctx);
 }
+
+static void
+http_cache_memcached_flush_error(void *ctx)
+{
+    struct http_cache_memcached_request *request = ctx;
+
+    request->callback.flush(false, request->callback_ctx);
+}
+
+static const struct memcached_client_handler http_cache_memcached_flush_handler = {
+    .response = http_cache_memcached_flush_response,
+    .error = http_cache_memcached_flush_error,
+};
 
 void
 http_cache_memcached_flush(pool_t pool, struct memcached_stock *stock,
@@ -93,7 +107,7 @@ http_cache_memcached_flush(pool_t pool, struct memcached_stock *stock,
                            NULL, 0,
                            NULL, 0,
                            NULL,
-                           http_cache_memcached_flush_callback, request,
+                           &http_cache_memcached_flush_handler, request,
                            async_ref);
 }
 
@@ -128,10 +142,23 @@ mcd_deserialize_document(pool_t pool, struct strref *header,
 }
 
 static void
-http_cache_memcached_get_callback(enum memcached_response_status status,
+http_cache_memcached_get_response(enum memcached_response_status status,
                                   const void *extras, size_t extras_length,
                                   const void *key, size_t key_length,
                                   istream_t value, void *ctx);
+
+static void
+http_cache_memcached_get_error(void *ctx)
+{
+    struct http_cache_memcached_request *request = ctx;
+
+    request->callback.get(NULL, 0, request->callback_ctx);
+}
+
+static const struct memcached_client_handler http_cache_memcached_get_handler = {
+    .response = http_cache_memcached_get_response,
+    .error = http_cache_memcached_get_error,
+};
 
 static void
 background_callback(void *ctx)
@@ -170,7 +197,7 @@ mcd_choice_get_callback(const char *key, bool unclean, void *ctx)
                            NULL, 0,
                            key, strlen(key),
                            NULL,
-                           http_cache_memcached_get_callback, request,
+                           &http_cache_memcached_get_handler, request,
                            request->async_ref);
 }
 
@@ -225,7 +252,7 @@ static const struct sink_header_handler http_cache_memcached_header_handler = {
 };
 
 static void
-http_cache_memcached_get_callback(enum memcached_response_status status,
+http_cache_memcached_get_response(enum memcached_response_status status,
                                   G_GNUC_UNUSED const void *extras,
                                   G_GNUC_UNUSED size_t extras_length,
                                   G_GNUC_UNUSED const void *key,
@@ -287,7 +314,7 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
                            NULL, 0,
                            key, strlen(key),
                            NULL,
-                           http_cache_memcached_get_callback, request,
+                           &http_cache_memcached_get_handler, request,
                            async_ref);
 }
 
@@ -300,7 +327,7 @@ mcd_choice_commit_callback(void *ctx)
 }
 
 static void
-http_cache_memcached_put_callback(enum memcached_response_status status,
+http_cache_memcached_put_response(enum memcached_response_status status,
                                   G_GNUC_UNUSED const void *extras,
                                   G_GNUC_UNUSED size_t extras_length,
                                   G_GNUC_UNUSED const void *key,
@@ -322,6 +349,19 @@ http_cache_memcached_put_callback(enum memcached_response_status status,
                              mcd_choice_commit_callback, request,
                              request->async_ref);
 }
+
+static void
+http_cache_memcached_put_error(void *ctx)
+{
+    struct http_cache_memcached_request *request = ctx;
+
+    request->callback.put(request->callback_ctx);
+}
+
+static const struct memcached_client_handler http_cache_memcached_put_handler = {
+    .response = http_cache_memcached_put_response,
+    .error = http_cache_memcached_put_error,
+};
 
 void
 http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
@@ -394,12 +434,12 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
                            &request->extras.set, sizeof(request->extras.set),
                            key, strlen(key),
                            value,
-                           http_cache_memcached_put_callback, request,
+                           &http_cache_memcached_put_handler, request,
                            async_ref);
 }
 
 static void
-mcd_background_callback(G_GNUC_UNUSED enum memcached_response_status status,
+mcd_background_response(G_GNUC_UNUSED enum memcached_response_status status,
                         G_GNUC_UNUSED const void *extras,
                         G_GNUC_UNUSED size_t extras_length,
                         G_GNUC_UNUSED const void *key,
@@ -413,6 +453,19 @@ mcd_background_callback(G_GNUC_UNUSED enum memcached_response_status status,
 
     background_manager_remove(job);
 }
+
+static void
+mcd_background_error(void *ctx)
+{
+    struct background_job *job = ctx;
+
+    background_manager_remove(job);
+}
+
+static const struct memcached_client_handler mcd_background_handler = {
+    .response = mcd_background_response,
+    .error = mcd_background_error,
+};
 
 static void
 mcd_background_delete(struct memcached_stock *stock,
@@ -430,7 +483,7 @@ mcd_background_delete(struct memcached_stock *stock,
                            NULL, 0,
                            key, strlen(key),
                            NULL,
-                           mcd_background_callback, job,
+                           &mcd_background_handler, job,
                            background_job_add(background, job));
     pool_unref(pool);
 }

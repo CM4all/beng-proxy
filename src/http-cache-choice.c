@@ -7,6 +7,7 @@
 #include "http-cache-choice.h"
 #include "http-cache-internal.h"
 #include "memcached-stock.h"
+#include "memcached-client.h"
 #include "tpool.h"
 #include "format.h"
 #include "strmap.h"
@@ -173,7 +174,7 @@ static const struct sink_buffer_handler http_cache_choice_buffer_handler = {
 };
 
 static void
-http_cache_choice_get_callback(enum memcached_response_status status,
+http_cache_choice_get_response(enum memcached_response_status status,
                                G_GNUC_UNUSED const void *extras,
                                G_GNUC_UNUSED size_t extras_length,
                                G_GNUC_UNUSED const void *key,
@@ -194,6 +195,19 @@ http_cache_choice_get_callback(enum memcached_response_status status,
                     &http_cache_choice_buffer_handler, choice,
                     choice->async_ref);
 }
+
+static void
+http_cache_choice_get_error(void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    choice->callback.get(NULL, false, choice->callback_ctx);
+}
+
+static const struct memcached_client_handler http_cache_choice_get_handler = {
+    .response = http_cache_choice_get_response,
+    .error = http_cache_choice_get_error,
+};
 
 void
 http_cache_choice_get(pool_t pool, struct memcached_stock *stock,
@@ -218,7 +232,7 @@ http_cache_choice_get(pool_t pool, struct memcached_stock *stock,
                            NULL, 0,
                            choice->key, strlen(choice->key),
                            NULL,
-                           http_cache_choice_get_callback, choice,
+                           &http_cache_choice_get_handler, choice,
                            async_ref);
 }
 
@@ -244,7 +258,7 @@ http_cache_choice_prepare(pool_t pool, const char *uri,
 }
 
 static void
-http_cache_choice_add_callback(G_GNUC_UNUSED enum memcached_response_status status,
+http_cache_choice_add_response(G_GNUC_UNUSED enum memcached_response_status status,
                                G_GNUC_UNUSED const void *extras,
                                G_GNUC_UNUSED size_t extras_length,
                                G_GNUC_UNUSED const void *key,
@@ -260,7 +274,20 @@ http_cache_choice_add_callback(G_GNUC_UNUSED enum memcached_response_status stat
 }
 
 static void
-http_cache_choice_prepend_callback(enum memcached_response_status status,
+http_cache_choice_add_error(void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    choice->callback.commit(choice->callback_ctx);
+}
+
+static const struct memcached_client_handler http_cache_choice_add_handler = {
+    .response = http_cache_choice_add_response,
+    .error = http_cache_choice_add_error,
+};
+
+static void
+http_cache_choice_prepend_response(enum memcached_response_status status,
                                    G_GNUC_UNUSED const void *extras,
                                    G_GNUC_UNUSED size_t extras_length,
                                    G_GNUC_UNUSED const void *key,
@@ -288,7 +315,7 @@ http_cache_choice_prepend_callback(enum memcached_response_status status,
                                &choice->extras, sizeof(choice->extras),
                                choice->key, strlen(choice->key),
                                value,
-                               http_cache_choice_add_callback, choice,
+                               &http_cache_choice_add_handler, choice,
                                choice->async_ref);
         break;
 
@@ -298,6 +325,19 @@ http_cache_choice_prepend_callback(enum memcached_response_status status,
         break;
     }
 }
+
+static void
+http_cache_choice_prepend_error(void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    choice->callback.commit(choice->callback_ctx);
+}
+
+static const struct memcached_client_handler http_cache_choice_prepend_handler = {
+    .response = http_cache_choice_prepend_response,
+    .error = http_cache_choice_prepend_error,
+};
 
 void
 http_cache_choice_commit(struct http_cache_choice *choice,
@@ -322,12 +362,12 @@ http_cache_choice_commit(struct http_cache_choice *choice,
                            MEMCACHED_OPCODE_PREPEND,
                            NULL, 0,
                            choice->key, strlen(choice->key), value,
-                           http_cache_choice_prepend_callback, choice,
+                           &http_cache_choice_prepend_handler, choice,
                            async_ref);
 }
 
 static void
-http_cache_choice_filter_set_callback(G_GNUC_UNUSED enum memcached_response_status status,
+http_cache_choice_filter_set_response(G_GNUC_UNUSED enum memcached_response_status status,
                                        G_GNUC_UNUSED const void *extras,
                                        G_GNUC_UNUSED size_t extras_length,
                                        G_GNUC_UNUSED const void *key,
@@ -341,6 +381,19 @@ http_cache_choice_filter_set_callback(G_GNUC_UNUSED enum memcached_response_stat
 
     choice->callback.filter(NULL, choice->callback_ctx);
 }
+
+static void
+http_cache_choice_filter_set_error(void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    choice->callback.filter(NULL, choice->callback_ctx);
+}
+
+static const struct memcached_client_handler http_cache_choice_filter_set_handler = {
+    .response = http_cache_choice_filter_set_response,
+    .error = http_cache_choice_filter_set_error,
+};
 
 static void
 http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
@@ -393,7 +446,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
                                NULL, 0,
                                choice->key, strlen(choice->key),
                                NULL,
-                               http_cache_choice_filter_set_callback, choice,
+                               &http_cache_choice_filter_set_handler, choice,
                                choice->async_ref);
     else {
         /* send new contents */
@@ -408,7 +461,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
                                choice->key, strlen(choice->key),
                                istream_memory_new(choice->pool, data0,
                                                   dest - (char *)data0),
-                               http_cache_choice_filter_set_callback, choice,
+                               &http_cache_choice_filter_set_handler, choice,
                                choice->async_ref);
     }
 }
@@ -427,7 +480,7 @@ static const struct sink_buffer_handler http_cache_choice_filter_buffer_handler 
 };
 
 static void
-http_cache_choice_filter_get_callback(enum memcached_response_status status,
+http_cache_choice_filter_get_response(enum memcached_response_status status,
                                       G_GNUC_UNUSED const void *extras,
                                       G_GNUC_UNUSED size_t extras_length,
                                       G_GNUC_UNUSED const void *key,
@@ -448,6 +501,19 @@ http_cache_choice_filter_get_callback(enum memcached_response_status status,
                     &http_cache_choice_filter_buffer_handler, choice,
                     choice->async_ref);
 }
+
+static void
+http_cache_choice_filter_get_error(void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    choice->callback.filter(NULL, choice->callback_ctx);
+}
+
+static const struct memcached_client_handler http_cache_choice_filter_get_handler = {
+    .response = http_cache_choice_filter_get_response,
+    .error = http_cache_choice_filter_get_error,
+};
 
 void
 http_cache_choice_filter(pool_t pool, struct memcached_stock *stock,
@@ -471,7 +537,7 @@ http_cache_choice_filter(pool_t pool, struct memcached_stock *stock,
                            NULL, 0,
                            choice->key, strlen(choice->key),
                            NULL,
-                           http_cache_choice_filter_get_callback, choice,
+                           &http_cache_choice_filter_get_handler, choice,
                            async_ref);
 }
 
@@ -521,7 +587,7 @@ http_cache_choice_cleanup(pool_t pool, struct memcached_stock *stock,
 }
 
 static void
-http_cache_choice_delete_callback(G_GNUC_UNUSED enum memcached_response_status status,
+http_cache_choice_delete_response(G_GNUC_UNUSED enum memcached_response_status status,
                                   G_GNUC_UNUSED const void *extras,
                                   G_GNUC_UNUSED size_t extras_length,
                                   G_GNUC_UNUSED const void *key,
@@ -535,6 +601,19 @@ http_cache_choice_delete_callback(G_GNUC_UNUSED enum memcached_response_status s
 
     choice->callback.delete(choice->callback_ctx);
 }
+
+static void
+http_cache_choice_delete_error(void *ctx)
+{
+    struct http_cache_choice *choice = ctx;
+
+    choice->callback.delete(choice->callback_ctx);
+}
+
+static const struct memcached_client_handler http_cache_choice_delete_handler = {
+    .response = http_cache_choice_delete_response,
+    .error = http_cache_choice_delete_error,
+};
 
 void
 http_cache_choice_delete(pool_t pool, struct memcached_stock *stock,
@@ -558,6 +637,6 @@ http_cache_choice_delete(pool_t pool, struct memcached_stock *stock,
                            NULL, 0,
                            choice->key, strlen(choice->key),
                            NULL,
-                           http_cache_choice_delete_callback, choice,
+                           &http_cache_choice_delete_handler, choice,
                            async_ref);
 }

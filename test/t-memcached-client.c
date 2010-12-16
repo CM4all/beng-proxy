@@ -246,12 +246,12 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static void
-on_memcached_response(enum memcached_response_status status,
-                      G_GNUC_UNUSED const void *extras,
-                      G_GNUC_UNUSED size_t extras_length,
-                      G_GNUC_UNUSED const void *key,
-                      G_GNUC_UNUSED size_t key_length,
-                      istream_t value, void *ctx)
+my_mcd_response(enum memcached_response_status status,
+                G_GNUC_UNUSED const void *extras,
+                G_GNUC_UNUSED size_t extras_length,
+                G_GNUC_UNUSED const void *key,
+                G_GNUC_UNUSED size_t key_length,
+                istream_t value, void *ctx)
 {
     struct context *c = ctx;
 
@@ -271,6 +271,22 @@ on_memcached_response(enum memcached_response_status status,
     }
 }
 
+static void
+my_mcd_error(G_GNUC_UNUSED void *ctx)
+{
+    struct context *c = ctx;
+
+    assert(!c->got_response);
+
+    c->got_response = true;
+    c->status = -1;
+}
+
+static const struct memcached_client_handler my_mcd_handler = {
+    .response = my_mcd_response,
+    .error = my_mcd_error,
+};
+
 
 /*
  * tests
@@ -287,7 +303,7 @@ test_basic(pool_t pool, struct context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            on_memcached_response, c,
+                            &my_mcd_handler, c,
                             &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -314,7 +330,7 @@ test_close_early(pool_t pool, struct context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            on_memcached_response, c,
+                            &my_mcd_handler, c,
                             &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -342,7 +358,7 @@ test_close_late(pool_t pool, struct context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            on_memcached_response, c,
+                            &my_mcd_handler, c,
                             &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -371,7 +387,7 @@ test_close_data(pool_t pool, struct context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            on_memcached_response, c,
+                            &my_mcd_handler, c,
                             &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -400,7 +416,7 @@ test_abort(pool_t pool, struct context *c)
                             NULL, 0,
                             "foo", 3,
                             NULL,
-                            on_memcached_response, c,
+                            &my_mcd_handler, c,
                             &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -430,7 +446,7 @@ test_request_value(pool_t pool, struct context *c)
                             NULL, 0,
                             "foo", 3,
                             value,
-                            on_memcached_response, c,
+                            &my_mcd_handler, c,
                             request_value_async_ref(value));
     pool_unref(pool);
     pool_commit();
@@ -460,7 +476,7 @@ test_request_value_close(pool_t pool, struct context *c)
                             NULL, 0,
                             "foo", 3,
                             value,
-                            on_memcached_response, c,
+                            &my_mcd_handler, c,
                             request_value_async_ref(value));
     pool_unref(pool);
     pool_commit();
@@ -486,7 +502,7 @@ test_request_value_abort(pool_t pool, struct context *c)
                             NULL, 0,
                             "foo", 3,
                             value,
-                            on_memcached_response, c,
+                            &my_mcd_handler, c,
                             request_value_async_ref(value));
     pool_unref(pool);
     pool_commit();

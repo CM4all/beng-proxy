@@ -32,7 +32,7 @@ struct memcached_client {
     struct {
         struct event event;
 
-        memcached_response_handler_t handler;
+        const struct memcached_client_handler *handler;
         void *handler_ctx;
 
         struct async_operation async;
@@ -160,8 +160,7 @@ memcached_connection_abort_response_header(struct memcached_client *client)
 
     memcached_client_release(client, false);
 
-    client->request.handler(-1, NULL, 0, NULL, 0, NULL,
-                            client->request.handler_ctx);
+    client->request.handler->error(client->request.handler_ctx);
     client->response.read_state = READ_END;
 
     if (client->request.istream != NULL)
@@ -408,12 +407,12 @@ memcached_consume_key(struct memcached_client *client)
         value = istream_struct_cast(&client->response.value);
 
         pool_ref(client->pool);
-        client->request.handler(g_ntohs(client->response.header.status),
-                                client->response.extras,
-                                client->response.header.extras_length,
-                                client->response.key.buffer,
-                                g_ntohs(client->response.header.key_length),
-                                value, client->request.handler_ctx);
+        client->request.handler->response(g_ntohs(client->response.header.status),
+                                          client->response.extras,
+                                          client->response.header.extras_length,
+                                          client->response.key.buffer,
+                                          g_ntohs(client->response.header.key_length),
+                                          value, client->request.handler_ctx);
 
         /* check if the callback has closed the value istream */
         valid = memcached_connection_valid(client);
@@ -428,12 +427,12 @@ memcached_consume_key(struct memcached_client *client)
 
         client->response.read_state = READ_END;
 
-        client->request.handler(g_ntohs(client->response.header.status),
-                                client->response.extras,
-                                client->response.header.extras_length,
-                                client->response.key.buffer,
-                                g_ntohs(client->response.header.key_length),
-                                NULL, client->request.handler_ctx);
+        client->request.handler->response(g_ntohs(client->response.header.status),
+                                          client->response.extras,
+                                          client->response.header.extras_length,
+                                          client->response.key.buffer,
+                                          g_ntohs(client->response.header.key_length),
+                                          NULL, client->request.handler_ctx);
 
         memcached_client_release(client, false);
         return false;
@@ -794,7 +793,8 @@ memcached_client_invoke(pool_t pool, int fd, enum istream_direct fd_type,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
                         istream_t value,
-                        memcached_response_handler_t handler, void *handler_ctx,
+                        const struct memcached_client_handler *handler,
+                        void *handler_ctx,
                         struct async_operation_ref *async_ref)
 {
     struct memcached_client *client;
@@ -808,7 +808,7 @@ memcached_client_invoke(pool_t pool, int fd, enum istream_direct fd_type,
                                        0x1234 /* XXX? */);
     if (request == NULL) {
         lease_direct_release(lease, lease_ctx, true);
-        handler(-1, NULL, 0, NULL, 0, NULL, handler_ctx);
+        handler->error(handler_ctx);
         return;
     }
 

@@ -19,10 +19,14 @@ struct lease;
 struct http_response_handler;
 struct strmap;
 
-typedef void (*memcached_response_handler_t)(enum memcached_response_status status,
-                                             const void *extras, size_t extras_length,
-                                             const void *key, size_t key_length,
-                                             istream_t value, void *ctx);
+struct memcached_client_handler {
+    void (*response)(enum memcached_response_status status,
+                     const void *extras, size_t extras_length,
+                     const void *key, size_t key_length,
+                     istream_t value, void *ctx);
+
+    void (*error)(void *ctx);
+};
 
 /**
  * Invoke a call to the memcached server.  The result will be
@@ -49,7 +53,8 @@ memcached_client_invoke(pool_t pool, int fd, enum istream_direct fd_type,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
                         istream_t value,
-                        memcached_response_handler_t handler, void *handler_ctx,
+                        const struct memcached_client_handler *handler,
+                        void *handler_ctx,
                         struct async_operation_ref *async_ref);
 
 #endif

@@ -7,8 +7,10 @@
 #ifndef MEMCACHED_STOCK_H
 #define MEMCACHED_STOCK_H
 
-#include "memcached-client.h"
+#include "istream.h"
+#include "memcached-protocol.h"
 
+struct memcached_client_handler;
 struct memcached_stock;
 struct hstock;
 struct uri_with_address;
@@ -31,7 +33,7 @@ memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
                        istream_t value,
-                       memcached_response_handler_t handler,
+                       const struct memcached_client_handler *handler,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref);
 

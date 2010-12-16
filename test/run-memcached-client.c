@@ -101,12 +101,12 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static void
-my_response_handler(enum memcached_response_status status,
-                    G_GNUC_UNUSED const void *extras,
-                    G_GNUC_UNUSED size_t extras_length,
-                    G_GNUC_UNUSED const void *key,
-                    G_GNUC_UNUSED size_t key_length,
-                    istream_t value, void *ctx)
+my_mcd_response(enum memcached_response_status status,
+                G_GNUC_UNUSED const void *extras,
+                G_GNUC_UNUSED size_t extras_length,
+                G_GNUC_UNUSED const void *key,
+                G_GNUC_UNUSED size_t key_length,
+                istream_t value, void *ctx)
 {
     struct context *c = ctx;
 
@@ -119,6 +119,20 @@ my_response_handler(enum memcached_response_status status,
     else
         c->value_eof = true;
 }
+
+static void
+my_mcd_error(void *ctx)
+{
+    struct context *c = ctx;
+
+    c->status = -1;
+    c->value_eof = true;
+}
+
+static const struct memcached_client_handler my_mcd_handler = {
+    .response = my_mcd_response,
+    .error = my_mcd_error,
+};
 
 /*
  * main
@@ -212,7 +226,7 @@ int main(int argc, char **argv) {
                             extras, extras_length,
                             key, key != NULL ? strlen(key) : 0,
                             value != NULL ? istream_string_new(pool, value) : NULL,
-                            &my_response_handler, &ctx,
+                            &my_mcd_handler, &ctx,
                             &async_ref);
 
     event_dispatch();
