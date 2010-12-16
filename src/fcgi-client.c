@@ -625,7 +625,7 @@ fcgi_request_stream_abort(void *ctx)
 
     GError *error =
         g_error_new_literal(fcgi_quark(), 0,
-                            "FastCGI response stream aborted");
+                            "FastCGI request stream aborted");
     fcgi_client_abort_response(client, error);
 }
 
