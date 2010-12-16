@@ -150,7 +150,7 @@ ajp_client_release(struct ajp_client *client, bool reuse)
 }
 
 static void
-ajp_client_abort_headers(struct ajp_client *client, GError *error)
+ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
     assert(client->fd >= 0);
@@ -188,7 +188,7 @@ ajp_client_abort_response_body(struct ajp_client *client)
 }
 
 static void
-ajp_connection_close(struct ajp_client *client, GError *error)
+ajp_client_abort_response(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
     assert(client->fd >= 0);
@@ -196,7 +196,7 @@ ajp_connection_close(struct ajp_client *client, GError *error)
 
     switch (client->response.read_state) {
     case READ_BEGIN:
-        ajp_client_abort_headers(client, error);
+        ajp_client_abort_response_headers(client, error);
         break;
 
     case READ_BODY:
@@ -299,7 +299,7 @@ ajp_consume_send_headers(struct ajp_client *client,
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "malformed SEND_HEADERS packet from AJP server");
-        ajp_client_abort_headers(client, error);
+        ajp_client_abort_response_headers(client, error);
         return false;
     }
 
@@ -307,7 +307,7 @@ ajp_consume_send_headers(struct ajp_client *client,
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "invalid status %u from AJP server", status);
-        ajp_client_abort_headers(client, error);
+        ajp_client_abort_response_headers(client, error);
         return false;
     }
 
@@ -348,7 +348,7 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
     case AJP_CODE_CPING:
         error = g_error_new_literal(ajp_client_quark(), 0,
                                     "unexpected request packet from AJP server");
-        ajp_connection_close(client, error);
+        ajp_client_abort_response(client, error);
         return false;
 
     case AJP_CODE_SEND_BODY_CHUNK:
@@ -374,7 +374,7 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
         if (length < sizeof(*chunk) - 1) {
             error = g_error_new_literal(ajp_client_quark(), 0,
                                         "malformed AJP GET_BODY_CHUNK packet");
-            ajp_connection_close(client, error);
+            ajp_client_abort_response(client, error);
             return false;
         }
 
@@ -398,7 +398,7 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
 
     error = g_error_new_literal(ajp_client_quark(), 0,
                                 "unknown packet from AJP server");
-    ajp_connection_close(client, error);
+    ajp_client_abort_response(client, error);
     return false;
 }
 
@@ -496,7 +496,7 @@ ajp_consume_input(struct ajp_client *client)
             GError *error =
                 g_error_new_literal(ajp_client_quark(), 0,
                                     "malformed AJP response packet");
-            ajp_connection_close(client, error);
+            ajp_client_abort_response(client, error);
             return;
         }
 
@@ -514,7 +514,7 @@ ajp_consume_input(struct ajp_client *client)
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "unexpected SEND_BODY_CHUNK packet from AJP server");
-                ajp_connection_close(client, error);
+                ajp_client_abort_response(client, error);
                 return;
             }
 
@@ -527,7 +527,7 @@ ajp_consume_input(struct ajp_client *client)
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "malformed AJP SEND_BODY_CHUNK packet");
-                ajp_connection_close(client, error);
+                ajp_client_abort_response(client, error);
                 return;
             }
 
@@ -552,7 +552,7 @@ ajp_consume_input(struct ajp_client *client)
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "too large packet from AJP server");
-                ajp_connection_close(client, error);
+                ajp_client_abort_response(client, error);
             }
 
             return;
@@ -581,7 +581,7 @@ ajp_try_read(struct ajp_client *client)
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "AJP server closed the connection");
-        ajp_connection_close(client, error);
+        ajp_client_abort_response(client, error);
         return;
     }
 
@@ -594,7 +594,7 @@ ajp_try_read(struct ajp_client *client)
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "read error on AJP connection: %s", strerror(errno));
-        ajp_connection_close(client, error);
+        ajp_client_abort_response(client, error);
         return;
     }
 
@@ -620,7 +620,7 @@ ajp_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "timeout");
-        ajp_connection_close(client, error);
+        ajp_client_abort_response(client, error);
         return;
     }
 
@@ -646,7 +646,7 @@ ajp_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "timeout");
-        ajp_connection_close(client, error);
+        ajp_client_abort_response(client, error);
         return;
     }
 
@@ -688,7 +688,7 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
         g_error_new(ajp_client_quark(), 0,
                     "write error on AJP client connection: %s",
                     strerror(errno));
-    ajp_connection_close(client, error);
+    ajp_client_abort_response(client, error);
     return 0;
 }
 
