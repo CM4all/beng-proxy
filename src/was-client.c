@@ -101,6 +101,27 @@ was_client_clear(struct was_client *client)
 }
 
 /**
+ * Like was_client_clear(), but assumes the response body has not been
+ * enabled.
+ */
+static void
+was_client_clear_unused(struct was_client *client)
+{
+    if (client->request.body != NULL)
+        was_output_free_p(&client->request.body);
+
+    if (client->response.body != NULL)
+        was_input_free_unused_p(&client->response.body);
+
+    if (client->control != NULL) {
+        was_control_free(client->control);
+        client->control = NULL;
+    }
+
+    p_lease_release(&client->lease_ref, false, client->pool);
+}
+
+/**
  * Abort receiving the response status/headers from the WAS server.
  */
 static void
@@ -126,6 +147,20 @@ was_client_abort_response_body(struct was_client *client)
     assert(was_client_response_submitted(client));
 
     was_client_clear(client);
+
+    pool_unref(client->caller_pool);
+    pool_unref(client->pool);
+}
+
+/**
+ * Abort after
+ */
+static void
+was_client_abort_response_empty(struct was_client *client)
+{
+    assert(was_client_response_submitted(client));
+
+    was_client_clear_unused(client);
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -244,7 +279,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             client->response.body != NULL)
             /* no response body possible with this status; release the
                object */
-            was_input_free_p(&client->response.body);
+            was_input_free_unused_p(&client->response.body);
 
         break;
 
@@ -260,7 +295,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
         if (client->response.body != NULL) {
             pool_ref(client->pool);
-            was_input_free_p(&client->response.body);
+            was_input_free_unused_p(&client->response.body);
 
             if (client->control == NULL) {
                 /* aborted; don't invoke response handler */
@@ -276,7 +311,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               headers, NULL);
-        was_client_abort_response_body(client);
+        was_client_abort_response_empty(client);
         return false;
 
     case WAS_COMMAND_DATA:

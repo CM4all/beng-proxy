@@ -355,6 +355,15 @@ was_input_free(struct was_input *input)
         istream_deinit_abort(&input->output);
 }
 
+void
+was_input_free_unused(struct was_input *input)
+{
+    assert(input->output.handler == NULL);
+    assert(!input->closed);
+
+    istream_deinit(&input->output);
+}
+
 istream_t
 was_input_enable(struct was_input *input)
 {

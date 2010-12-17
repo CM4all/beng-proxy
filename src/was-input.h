@@ -38,6 +38,21 @@ was_input_free_p(struct was_input **input_p)
     was_input_free(input);
 }
 
+/**
+ * Like was_input_free(), but assumes that was_input_enable() has not
+ * been called yet (no istream handler).
+ */
+void
+was_input_free_unused(struct was_input *input);
+
+static inline void
+was_input_free_unused_p(struct was_input **input_p)
+{
+    struct was_input *input = *input_p;
+    *input_p = NULL;
+    was_input_free_unused(input);
+}
+
 istream_t
 was_input_enable(struct was_input *input);
 
