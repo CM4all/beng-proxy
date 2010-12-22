@@ -648,7 +648,7 @@ test_t_header_forward_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS)
 
 test_t_stock_SOURCES = test/t-stock.c src/stock.c $(POOL_SRC)
-test_t_stock_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
+test_t_stock_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/resource-address.c \
@@ -1030,7 +1030,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/format.c
 test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
-	$(LIBEVENT_LIBS)
+	$(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_wembed_SOURCES = test/t-wembed.c \
 	src/inline-widget.c \

@@ -10,6 +10,8 @@
 #include "stock.h"
 #include "lease.h"
 
+#include <daemon/log.h>
+
 #include <errno.h>
 
 struct async_operation_ref;
@@ -62,9 +64,12 @@ delegate_stock_ready(struct stock_item *item, void *_ctx)
 }
 
 static void
-delegate_stock_error(void *ctx)
+delegate_stock_error(GError *error, void *ctx)
 {
     struct delegate_glue *glue = ctx;
+
+    daemon_log(2, "Delegate error: %s\n", error->message);
+    g_error_free(error);
 
     glue->callback(-EINVAL, glue->callback_ctx);
 }

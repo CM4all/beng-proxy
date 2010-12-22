@@ -5,6 +5,7 @@
  */
 
 #include "fcgi-client.h"
+#include "fcgi-quark.h"
 #include "fcgi-protocol.h"
 #include "fcgi-serialize.h"
 #include "growing-buffer.h"
@@ -86,12 +87,6 @@ static const struct timeval fcgi_client_timeout = {
     .tv_sec = 120,
     .tv_usec = 0,
 };
-
-static GQuark
-fcgi_quark(void)
-{
-    return g_quark_from_static_string("fastcgi");
-}
 
 static void
 fcgi_client_response_body_init(struct fcgi_client *client);

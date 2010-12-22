@@ -5,6 +5,7 @@
  */
 
 #include "fcgi-stock.h"
+#include "fcgi-quark.h"
 #include "child.h"
 #include "async.h"
 #include "client-socket.h"
@@ -79,34 +80,38 @@ fcgi_child_socket_path(struct sockaddr_un *address,
 }
 
 static int
-fcgi_create_socket(const struct fcgi_child *child)
+fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
 {
     int ret = unlink(child->address.sun_path);
     if (ret != 0 && errno != ENOENT) {
-        daemon_log(2, "failed to unlink %s: %s\n",
-                   child->address.sun_path, strerror(errno));
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "failed to unlink %s: %s",
+                    child->address.sun_path, strerror(errno));
         return -1;
     }
 
     int fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0) {
-        daemon_log(2, "failed to create unix socket %s: %s\n",
-                   child->address.sun_path, strerror(errno));
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "failed to create unix socket %s: %s",
+                    child->address.sun_path, strerror(errno));
         return -1;
     }
 
     ret = bind(fd, (const struct sockaddr*)&child->address,
                sizeof(child->address));
     if (ret < 0) {
-        daemon_log(2, "bind(%s) failed: %s\n",
-                   child->address.sun_path, strerror(errno));
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "bind(%s) failed: %s",
+                    child->address.sun_path, strerror(errno));
         close(fd);
         return -1;
     }
 
     ret = listen(fd, 8);
     if (ret < 0) {
-        daemon_log(2, "listen() failed: %s\n", strerror(errno));
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "listen() failed: %s", strerror(errno));
         close(fd);
         return -1;
     }
@@ -115,11 +120,13 @@ fcgi_create_socket(const struct fcgi_child *child)
 }
 
 static pid_t
-fcgi_spawn_child(const char *executable_path, const char *jail_path, int fd)
+fcgi_spawn_child(const char *executable_path, const char *jail_path, int fd,
+                 GError **error_r)
 {
     pid_t pid = fork();
     if (pid < 0) {
-        daemon_log(2, "fork() failed: %s\n", strerror(errno));
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "fork() failed: %s", strerror(errno));
         return -1;
     }
 
@@ -208,10 +215,12 @@ fcgi_connect_callback(int fd, int err, void *ctx)
 
         stock_item_available(&child->base);
     } else {
-        daemon_log(1, "failed to connect to FastCGI server '%s': %s\n",
-                   child->key, strerror(err));
+        GError *error =
+            g_error_new(g_file_error_quark(), err,
+                        "failed to connect to FastCGI server '%s': %s",
+                        child->key, strerror(err));
 
-        stock_item_failed(&child->base);
+        stock_item_failed(&child->base, error);
     }
 }
 
@@ -282,24 +291,26 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
         child->jail_path = p_strdup(pool, params->jail_path);
         if (!jail_config_load(&child->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {
-            daemon_log(2, "Failed to load /etc/cm4all/jailcgi/jail.conf\n");
-            stock_item_failed(item);
+            GError *error = g_error_new(fcgi_quark(), 0,
+                                        "Failed to load /etc/cm4all/jailcgi/jail.conf");
+            stock_item_failed(item, error);
             return;
         }
     } else
         child->jail_path = NULL;
 
-    int fd = fcgi_create_socket(child);
+    GError *error = NULL;
+    int fd = fcgi_create_socket(child, &error);
     if (fd < 0) {
-        stock_item_failed(item);
+        stock_item_failed(item, error);
         return;
     }
 
     child->pid = fcgi_spawn_child(params->executable_path,
-                                  params->jail_path, fd);
+                                  params->jail_path, fd, &error);
     close(fd);
     if (child->pid < 0) {
-        stock_item_failed(item);
+        stock_item_failed(item, error);
         return;
     }
 

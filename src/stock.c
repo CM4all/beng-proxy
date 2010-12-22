@@ -440,6 +440,7 @@ struct now_data {
     bool created;
 #endif
     struct stock_item *item;
+    GError *error;
 };
 
 static void
@@ -455,7 +456,7 @@ stock_now_ready(struct stock_item *item, void *ctx)
 }
 
 static void
-stock_now_error(void *ctx)
+stock_now_error(GError *error, void *ctx)
 {
     struct now_data *data = ctx;
 
@@ -464,6 +465,7 @@ stock_now_error(void *ctx)
 #endif
 
     data->item = NULL;
+    data->error = error;
 }
 
 static const struct stock_handler stock_now_handler = {
@@ -472,7 +474,7 @@ static const struct stock_handler stock_now_handler = {
 };
 
 struct stock_item *
-stock_get_now(struct stock *stock, pool_t pool, void *info)
+stock_get_now(struct stock *stock, pool_t pool, void *info, GError **error_r)
 {
     struct now_data data = {
 #ifndef NDEBUG
@@ -486,6 +488,9 @@ stock_get_now(struct stock *stock, pool_t pool, void *info)
 
     stock_get(stock, pool, info, &stock_now_handler, &data, &async_ref);
     assert(data.created);
+
+    if (data.item == NULL)
+        g_propagate_error(error_r, data.error);
 
     return data.item;
 }
@@ -507,14 +512,15 @@ stock_item_available(struct stock_item *item)
 }
 
 void
-stock_item_failed(struct stock_item *item)
+stock_item_failed(struct stock_item *item, GError *error)
 {
     struct stock *stock = item->stock;
 
+    assert(error != NULL);
     assert(stock->num_create > 0);
     --stock->num_create;
 
-    item->handler->error(item->handler_ctx);
+    item->handler->error(error, item->handler_ctx);
     stock_item_free(stock, item);
 
     stock_retry_waiting(stock);

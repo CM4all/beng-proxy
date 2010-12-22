@@ -9,6 +9,8 @@
 #include "tcp-stock.h"
 #include "lease.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 
 struct tstock {
@@ -31,7 +33,7 @@ struct tstock_request {
     struct async_operation_ref *async_ref;
 };
 
-static const struct translate_response error = {
+static const struct translate_response error_response = {
     .status = -1,
 };
 
@@ -73,11 +75,15 @@ tstock_stock_ready(struct stock_item *item, void *ctx)
 }
 
 static void
-tstock_stock_error(void *ctx)
+tstock_stock_error(GError *error, void *ctx)
 {
     struct tstock_request *r = ctx;
 
-    r->callback(&error, r->callback_ctx);
+    daemon_log(2, "Failed to connect to translation server: %s\n",
+               error->message);
+    g_error_free(error);
+
+    r->callback(&error_response, r->callback_ctx);
 }
 
 static const struct stock_handler tstock_stock_handler = {

@@ -17,6 +17,12 @@ struct my_stock_item {
     void *info;
 };
 
+static inline GQuark
+test_quark(void)
+{
+    return g_quark_from_static_string("test");
+}
+
 /*
  * stock class
  *
@@ -41,7 +47,9 @@ my_stock_create(void *ctx __attr_unused, struct stock_item *_item,
 
     if (next_fail) {
         ++num_fail;
-        stock_item_failed(&item->base);
+
+        GError *error = g_error_new_literal(test_quark(), 0, "next_fail");
+        stock_item_failed(&item->base, error);
     } else {
         ++num_create;
         stock_item_available(&item->base);
@@ -89,8 +97,11 @@ my_stock_ready(struct stock_item *item, G_GNUC_UNUSED void *ctx)
 }
 
 static void
-my_stock_error(G_GNUC_UNUSED void *ctx)
+my_stock_error(GError *error, G_GNUC_UNUSED void *ctx)
 {
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
+
     got_item = true;
     last_item = NULL;
 }

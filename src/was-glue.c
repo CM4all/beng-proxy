@@ -90,12 +90,10 @@ was_stock_ready(struct stock_item *item, void *ctx)
 }
 
 static void
-was_stock_error(void *ctx)
+was_stock_error(GError *error, void *ctx)
 {
     struct was_request *request = ctx;
 
-    GError *error = g_error_new_literal(was_quark(), 0,
-                                        "connection failed");
     http_response_handler_invoke_abort(&request->handler, error);
 }
 

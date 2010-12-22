@@ -104,12 +104,10 @@ fcgi_stock_ready(struct stock_item *item, void *ctx)
 }
 
 static void
-fcgi_stock_error(void *ctx)
+fcgi_stock_error(GError *error, void *ctx)
 {
     struct fcgi_request *request = ctx;
 
-    GError *error = g_error_new_literal(fcgi_request_quark(), 0,
-                                        "FastCGI startup failed");
     http_response_handler_invoke_abort(&request->handler, error);
 }
 

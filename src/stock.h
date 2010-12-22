@@ -17,6 +17,7 @@
 
 #include <inline/list.h>
 
+#include <glib.h>
 #include <stdbool.h>
 
 struct async_operation_ref;
@@ -24,7 +25,7 @@ struct stock_item;
 
 struct stock_handler {
     void (*ready)(struct stock_item *item, void *ctx);
-    void (*error)(void *ctx);
+    void (*error)(GError *error, void *ctx);
 };
 
 struct stock_item {
@@ -83,13 +84,13 @@ stock_get(struct stock *stock, pool_t pool, void *info,
  * immediately.
  */
 struct stock_item *
-stock_get_now(struct stock *stock, pool_t pool, void *info);
+stock_get_now(struct stock *stock, pool_t pool, void *info, GError **error_r);
 
 void
 stock_item_available(struct stock_item *item);
 
 void
-stock_item_failed(struct stock_item *item);
+stock_item_failed(struct stock_item *item, GError *error);
 
 void
 stock_item_aborted(struct stock_item *item);

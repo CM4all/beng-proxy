@@ -84,12 +84,10 @@ http_request_stock_ready(struct stock_item *item, void *ctx)
 }
 
 static void
-http_request_stock_error(void *ctx)
+http_request_stock_error(GError *error, void *ctx)
 {
     struct http_request *hr = ctx;
 
-    GError *error = g_error_new_literal(http_request_quark(), 0,
-                                        "connection failed");
     http_response_handler_invoke_abort(&hr->handler, error);
 
     if (hr->body != NULL)

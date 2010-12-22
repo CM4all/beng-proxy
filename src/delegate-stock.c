@@ -111,17 +111,20 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
 
     ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds);
     if (ret < 0) {
-        daemon_log(1, "socketpair() failed: %s\n", strerror(errno));
-        stock_item_failed(item);
+        GError *error = g_error_new(g_file_error_quark(), errno,
+                                    "socketpair() failed: %s",
+                                    strerror(errno));
+        stock_item_failed(item, error);
         return;
     }
 
     pid = fork();
     if (pid < 0) {
-        daemon_log(1, "fork() failed: %s\n", strerror(errno));
+        GError *error = g_error_new(g_file_error_quark(), errno,
+                                    "fork failed: %s", strerror(errno));
         close(fds[0]);
         close(fds[1]);
-        stock_item_failed(item);
+        stock_item_failed(item, error);
         return;
     } else if (pid == 0) {
         /* in the child */

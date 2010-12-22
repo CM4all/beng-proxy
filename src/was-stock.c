@@ -5,6 +5,7 @@
  */
 
 #include "was-stock.h"
+#include "was-quark.h"
 #include "was-launch.h"
 #include "child.h"
 #include "async.h"
@@ -124,16 +125,18 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
         child->jail_path = p_strdup(pool, params->jail_path);
         if (!jail_config_load(&child->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {
-            daemon_log(2, "Failed to load /etc/cm4all/jailcgi/jail.conf\n");
-            stock_item_failed(item);
+            GError *error = g_error_new(was_quark(), 0,
+                                        "Failed to load /etc/cm4all/jailcgi/jail.conf");
+            stock_item_failed(item, error);
             return;
         }
     } else
         child->jail_path = NULL;
 
+    GError *error = NULL;
     if (!was_launch(&child->process, params->executable_path,
-                    params->jail_path)) {
-        stock_item_failed(item);
+                    params->jail_path, &error)) {
+        stock_item_failed(item, error);
         return;
     }
 

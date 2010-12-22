@@ -38,6 +38,12 @@ struct tcp_stock_connection {
     struct event event;
 };
 
+static GQuark
+tcp_stock_quark(void)
+{
+    return g_quark_from_static_string("tcp_stock");
+}
+
 
 /*
  * async operation
@@ -126,13 +132,14 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
 
         stock_item_available(&connection->stock_item);
     } else {
-        daemon_log(1, "failed to connect to '%s': %s\n",
-                   connection->uri, strerror(err));
+        GError *error = g_error_new(g_file_error_quark(), err,
+                                    "failed to connect to '%s': %s",
+                                    connection->uri, strerror(err));
 
         if (connection->addr != NULL)
             failure_add(connection->addr, connection->addrlen);
 
-        stock_item_failed(&connection->stock_item);
+        stock_item_failed(&connection->stock_item, error);
     }
 }
 
@@ -182,10 +189,11 @@ tcp_stock_create(void *ctx, struct stock_item *item,
                           tcp_stock_socket_callback, connection,
                           &connection->client_socket);
     } else if (uri[0] != '/') {
-        daemon_log(1, "address missing for '%s'\n", uri);
+        GError *error = g_error_new(tcp_stock_quark(), 0,
+                                    "address missing for '%s'", uri);
 
         async_operation_finished(&connection->create_operation);
-        stock_item_failed(item);
+        stock_item_failed(item, error);
     } else {
         /* HTTP over Unix socket */
         size_t path_length;
@@ -194,10 +202,11 @@ tcp_stock_create(void *ctx, struct stock_item *item,
         path_length = strlen(uri);
 
         if (path_length >= sizeof(sun.sun_path)) {
-            daemon_log(1, "client_socket_new() failed: unix socket path is too long\n");
+            GError *error = g_error_new(tcp_stock_quark(), 0,
+                                        "unix socket path is too long");
 
             async_operation_finished(&connection->create_operation);
-            stock_item_failed(item);
+            stock_item_failed(item, error);
             return;
         }
 

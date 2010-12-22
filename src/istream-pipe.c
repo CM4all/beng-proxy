@@ -135,9 +135,13 @@ pipe_create(struct istream_pipe *p)
     if (p->stock != NULL) {
         assert(p->stock_item == NULL);
 
-        p->stock_item = stock_get_now(p->stock, p->output.pool, NULL);
-        if (p->stock_item == NULL)
+        GError *error = NULL;
+        p->stock_item = stock_get_now(p->stock, p->output.pool, NULL, &error);
+        if (p->stock_item == NULL) {
+            daemon_log(1, "%s\n", error->message);
+            g_error_free(error);
             return false;
+        }
 
         pipe_stock_item_get(p->stock_item, p->fds);
     } else {

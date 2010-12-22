@@ -53,8 +53,9 @@ pipe_stock_create(void *ctx __attr_unused, struct stock_item *_item,
 
     ret = pipe_cloexec_nonblock(item->fds);
     if (ret < 0) {
-        daemon_log(1, "pipe() failed: %s\n", strerror(errno));
-        stock_item_failed(&item->base);
+        GError *error = g_error_new(g_file_error_quark(), errno,
+                                    "pipe() failed: %s", strerror(errno));
+        stock_item_failed(&item->base, error);
         return;
     }
 

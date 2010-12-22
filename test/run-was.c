@@ -171,8 +171,11 @@ int main(int argc, char **argv) {
     struct event_base *event_base = event_init();
 
     static struct context context;
-    if (!was_launch(&context.process, argv[1], NULL))
+    if (!was_launch(&context.process, argv[1], NULL, &error)) {
+        g_printerr("%s\n", error->message);
+        g_error_free(error);
         return 2;
+    }
 
     pool_t pool = pool_new_libc(NULL, "root");
 

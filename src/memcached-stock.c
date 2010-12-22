@@ -105,12 +105,10 @@ memcached_stock_ready(struct stock_item *item, void *ctx)
 }
 
 static void
-memcached_stock_error(void *ctx)
+memcached_stock_error(GError *error, void *ctx)
 {
     struct memcached_stock_request *request = ctx;
 
-    GError *error = g_error_new_literal(memcached_client_quark(), 0,
-                                        "memcached stock request failed");
     request->handler->error(error, request->handler_ctx);
 
     if (request->value != NULL)

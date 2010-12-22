@@ -47,20 +47,28 @@ was_run(const char *executable_path, const char *jail_path,
 
 bool
 was_launch(struct was_process *process,
-           const char *executable_path, const char *jail_path)
+           const char *executable_path, const char *jail_path,
+           GError **error_r)
 {
     int control_fds[2], input_fds[2], output_fds[2];
 
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, control_fds) < 0)
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, control_fds) < 0) {
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "failed to create socket pair: %s", strerror(errno));
         return false;
+    }
 
     if (pipe_cloexec(input_fds) < 0) {
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "failed to create first pipe: %s", strerror(errno));
         close(control_fds[0]);
         close(control_fds[1]);
         return false;
     }
 
     if (pipe_cloexec(output_fds) < 0) {
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "failed to create second pipe: %s", strerror(errno));
         close(control_fds[0]);
         close(control_fds[1]);
         close(input_fds[0]);
@@ -70,7 +78,8 @@ was_launch(struct was_process *process,
 
     pid_t pid = fork();
     if (pid < 0) {
-        daemon_log(2, "fork() failed: %s\n", strerror(errno));
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "fork failed: %s", strerror(errno));
         close(control_fds[0]);
         close(control_fds[1]);
         close(input_fds[0]);
