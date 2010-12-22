@@ -49,20 +49,31 @@ delegate_callback(int fd, void *_ctx)
 }
 
 static void
-delegate_stock_callback(void *_ctx, struct stock_item *item)
+delegate_stock_ready(struct stock_item *item, void *_ctx)
 {
     struct delegate_glue *glue = _ctx;
 
     glue->item = item;
 
-    if (item != NULL)
-        delegate_open(delegate_stock_item_get(item),
-                      &delegate_socket_lease, glue,
-                      glue->pool, glue->path,
-                      delegate_callback, glue, glue->async_ref);
-    else
-        glue->callback(-EINVAL, glue->callback_ctx);
+    delegate_open(delegate_stock_item_get(item),
+                  &delegate_socket_lease, glue,
+                  glue->pool, glue->path,
+                  delegate_callback, glue, glue->async_ref);
 }
+
+static void
+delegate_stock_error(void *ctx)
+{
+    struct delegate_glue *glue = ctx;
+
+    glue->callback(-EINVAL, glue->callback_ctx);
+}
+
+static const struct stock_handler delegate_stock_handler = {
+    .ready = delegate_stock_ready,
+    .error = delegate_stock_error,
+};
+
 
 void
 delegate_stock_open(struct hstock *stock, pool_t pool,
@@ -81,5 +92,5 @@ delegate_stock_open(struct hstock *stock, pool_t pool,
     glue->async_ref = async_ref;
 
     delegate_stock_get(stock, pool, helper, document_root, jail,
-                       delegate_stock_callback, glue, async_ref);
+                       &delegate_stock_handler, glue, async_ref);
 }

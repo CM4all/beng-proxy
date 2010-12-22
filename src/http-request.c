@@ -67,30 +67,39 @@ static const struct lease http_socket_lease = {
  */
 
 static void
-http_request_stock_callback(void *ctx, struct stock_item *item)
+http_request_stock_ready(struct stock_item *item, void *ctx)
 {
     struct http_request *hr = ctx;
 
-    if (item == NULL) {
-        GError *error = g_error_new_literal(http_request_quark(), 0,
-                                            "connection failed");
-        http_response_handler_invoke_abort(&hr->handler, error);
+    hr->stock_item = item;
 
-        if (hr->body != NULL)
-            istream_close_unused(hr->body);
-    } else {
-        hr->stock_item = item;
-
-        http_client_request(hr->pool,
-                            tcp_stock_item_get(item),
-                            tcp_stock_item_get_domain(item) == AF_LOCAL
-                            ? ISTREAM_SOCKET : ISTREAM_TCP,
-                            &http_socket_lease, hr,
-                            hr->method, hr->uri, hr->headers, hr->body,
-                            hr->handler.handler, hr->handler.ctx,
-                            hr->async_ref);
-    }
+    http_client_request(hr->pool,
+                        tcp_stock_item_get(item),
+                        tcp_stock_item_get_domain(item) == AF_LOCAL
+                        ? ISTREAM_SOCKET : ISTREAM_TCP,
+                        &http_socket_lease, hr,
+                        hr->method, hr->uri, hr->headers, hr->body,
+                        hr->handler.handler, hr->handler.ctx,
+                        hr->async_ref);
 }
+
+static void
+http_request_stock_error(void *ctx)
+{
+    struct http_request *hr = ctx;
+
+    GError *error = g_error_new_literal(http_request_quark(), 0,
+                                        "connection failed");
+    http_response_handler_invoke_abort(&hr->handler, error);
+
+    if (hr->body != NULL)
+        istream_close_unused(hr->body);
+}
+
+static const struct stock_handler http_request_stock_handler = {
+    .ready = http_request_stock_ready,
+    .error = http_request_stock_error,
+};
 
 
 /*
@@ -185,6 +194,6 @@ http_request(pool_t pool,
     hr->host_and_port = host_and_port;
     hstock_get(tcp_stock, pool,
                host_and_port, uwa,
-               http_request_stock_callback, hr,
+               &http_request_stock_handler, hr,
                async_ref);
 }

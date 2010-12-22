@@ -80,13 +80,25 @@ static const struct stock_class my_stock_class = {
 };
 
 static void
-my_stock_callback(G_GNUC_UNUSED void *ctx, struct stock_item *item)
+my_stock_ready(struct stock_item *item, G_GNUC_UNUSED void *ctx)
 {
     assert(!got_item);
 
     got_item = true;
     last_item = item;
 }
+
+static void
+my_stock_error(G_GNUC_UNUSED void *ctx)
+{
+    got_item = true;
+    last_item = NULL;
+}
+
+static const struct stock_handler my_stock_handler = {
+    .ready = my_stock_ready,
+    .error = my_stock_error,
+};
 
 int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 {
@@ -103,7 +115,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     /* create first item */
 
-    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
     assert(got_item);
     assert(last_item != NULL);
     assert(num_create == 1 && num_fail == 0);
@@ -120,7 +132,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     got_item = false;
     last_item = NULL;
-    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
     assert(got_item);
     assert(last_item == item);
     assert(num_create == 1 && num_fail == 0);
@@ -130,7 +142,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     got_item = false;
     last_item = NULL;
-    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
     assert(got_item);
     assert(last_item != NULL);
     assert(last_item != item);
@@ -143,7 +155,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     next_fail = true;
     got_item = false;
     last_item = NULL;
-    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
     assert(got_item);
     assert(last_item == NULL);
     assert(num_create == 2 && num_fail == 1);
@@ -154,7 +166,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     next_fail = false;
     got_item = false;
     last_item = NULL;
-    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
     assert(got_item);
     assert(last_item != NULL);
     assert(num_create == 3 && num_fail == 1);
@@ -165,14 +177,14 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     got_item = false;
     last_item = NULL;
-    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
 
     /* fifth item waiting */
 
-    stock_get(stock, pool, NULL, my_stock_callback, NULL, &async_ref);
+    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);

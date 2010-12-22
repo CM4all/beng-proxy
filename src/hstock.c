@@ -115,7 +115,7 @@ hstock_free(struct hstock *hstock)
 void
 hstock_get(struct hstock *hstock, pool_t pool,
            const char *uri, void *info,
-           stock_callback_t callback, void *callback_ctx,
+           const struct stock_handler *handler, void *handler_ctx,
            struct async_operation_ref *async_ref)
 {
     struct stock *stock;
@@ -130,7 +130,7 @@ hstock_get(struct hstock *hstock, pool_t pool,
         hashmap_set(hstock->stocks, p_strdup(hstock->pool, uri), stock);
     }
 
-    stock_get(stock, pool, info, callback, callback_ctx, async_ref);
+    stock_get(stock, pool, info, handler, handler_ctx, async_ref);
 }
 
 void

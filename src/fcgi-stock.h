@@ -15,7 +15,7 @@ fcgi_stock_new(pool_t pool, unsigned limit);
 void
 fcgi_stock_get(struct hstock *hstock, pool_t pool,
                const char *executable_path, const char *jail_path,
-               stock_callback_t callback, void *callback_ctx,
+               const struct stock_handler *handler, void *handler_ctx,
                struct async_operation_ref *async_ref);
 
 /**

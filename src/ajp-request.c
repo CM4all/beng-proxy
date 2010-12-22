@@ -73,34 +73,42 @@ static const struct lease ajp_socket_lease = {
  */
 
 static void
-ajp_request_stock_callback(void *ctx, struct stock_item *item)
+ajp_request_stock_ready(struct stock_item *item, void *ctx)
 {
     struct ajp_request *hr = ctx;
 
-    if (item == NULL) {
-        GError *error =
-            g_error_new_literal(ajp_request_quark(), 0,
-                                "connection failed");
-        http_response_handler_invoke_abort(&hr->handler, error);
+    hr->stock_item = item;
 
-        if (hr->body != NULL)
-            istream_close_unused(hr->body);
-    } else {
-        hr->stock_item = item;
-
-        ajp_client_request(hr->pool,
-                           tcp_stock_item_get(item),
-                           tcp_stock_item_get_domain(item) == AF_LOCAL
-                           ? ISTREAM_SOCKET : ISTREAM_TCP,
-                           &ajp_socket_lease, hr,
-                           hr->protocol, hr->remote_addr,
-                           hr->remote_host, hr->server_name,
-                           hr->server_port, hr->is_ssl,
-                           hr->method, hr->uri, hr->headers, hr->body,
-                           hr->handler.handler, hr->handler.ctx,
-                           hr->async_ref);
-    }
+    ajp_client_request(hr->pool,
+                       tcp_stock_item_get(item),
+                       tcp_stock_item_get_domain(item) == AF_LOCAL
+                       ? ISTREAM_SOCKET : ISTREAM_TCP,
+                       &ajp_socket_lease, hr,
+                       hr->protocol, hr->remote_addr,
+                       hr->remote_host, hr->server_name,
+                       hr->server_port, hr->is_ssl,
+                       hr->method, hr->uri, hr->headers, hr->body,
+                       hr->handler.handler, hr->handler.ctx,
+                       hr->async_ref);
 }
+
+static void
+ajp_request_stock_error(void *ctx)
+{
+    struct ajp_request *hr = ctx;
+
+    GError *error = g_error_new_literal(ajp_request_quark(), 0,
+                                        "connection failed");
+    http_response_handler_invoke_abort(&hr->handler, error);
+
+    if (hr->body != NULL)
+        istream_close_unused(hr->body);
+}
+
+static const struct stock_handler ajp_request_stock_handler = {
+    .ready = ajp_request_stock_ready,
+    .error = ajp_request_stock_error,
+};
 
 
 /*
@@ -157,6 +165,6 @@ ajp_stock_request(pool_t pool,
 
     hstock_get(tcp_stock, pool,
                uwa->uri, uwa,
-               ajp_request_stock_callback, hr,
+               &ajp_request_stock_handler, hr,
                async_ref);
 }

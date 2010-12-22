@@ -210,7 +210,7 @@ was_stock_new(pool_t pool, unsigned limit)
 void
 was_stock_get(struct hstock *hstock, pool_t pool,
                const char *executable_path, const char *jail_path,
-               stock_callback_t callback, void *callback_ctx,
+              const struct stock_handler *handler, void *handler_ctx,
                struct async_operation_ref *async_ref)
 {
     struct was_child_params *params = p_malloc(pool, sizeof(*params));
@@ -218,7 +218,7 @@ was_stock_get(struct hstock *hstock, pool_t pool,
     params->jail_path = jail_path;
 
     hstock_get(hstock, pool, was_stock_key(pool, params), params,
-               callback, callback_ctx, async_ref);
+               handler, handler_ctx, async_ref);
 }
 
 const struct was_process *

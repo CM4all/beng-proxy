@@ -22,7 +22,10 @@
 struct async_operation_ref;
 struct stock_item;
 
-typedef void (*stock_callback_t)(void *ctx, struct stock_item *item);
+struct stock_handler {
+    void (*ready)(struct stock_item *item, void *ctx);
+    void (*error)(void *ctx);
+};
 
 struct stock_item {
     struct list_head list_head;
@@ -33,8 +36,8 @@ struct stock_item {
     bool is_idle;
 #endif
 
-    stock_callback_t callback;
-    void *callback_ctx;
+    const struct stock_handler *handler;
+    void *handler_ctx;
 };
 
 struct stock_class {
@@ -71,7 +74,7 @@ stock_is_empty(const struct stock *stock);
 
 void
 stock_get(struct stock *stock, pool_t pool, void *info,
-          stock_callback_t callback, void *callback_ctx,
+          const struct stock_handler *handler, void *handler_ctx,
           struct async_operation_ref *async_ref);
 
 /**
@@ -112,7 +115,7 @@ hstock_free(struct hstock *hstock);
 void
 hstock_get(struct hstock *hstock, pool_t pool,
            const char *uri, void *info,
-           stock_callback_t callback, void *callback_ctx,
+           const struct stock_handler *handler, void *handler_ctx,
            struct async_operation_ref *async_ref);
 
 void

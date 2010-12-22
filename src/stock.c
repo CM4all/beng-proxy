@@ -55,8 +55,10 @@ struct stock_waiting {
 
     pool_t pool;
     void *info;
-    stock_callback_t callback;
-    void *callback_ctx;
+
+    const struct stock_handler *handler;
+    void *handler_ctx;
+
     struct async_operation_ref *async_ref;
 };
 
@@ -134,11 +136,11 @@ static const struct async_operation_class stock_wait_operation = {
 
 static bool
 stock_get_idle(struct stock *stock,
-               stock_callback_t callback, void *callback_ctx);
+               const struct stock_handler *handler, void *handler_ctx);
 
 static void
 stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
-                 stock_callback_t callback, void *callback_ctx,
+                 const struct stock_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref);
 
 /**
@@ -164,7 +166,7 @@ stock_retry_waiting(struct stock *stock)
         async_operation_finished(&waiting->operation);
         list_remove(&waiting->siblings);
 
-        if (stock_get_idle(stock, waiting->callback, waiting->callback_ctx))
+        if (stock_get_idle(stock, waiting->handler, waiting->handler_ctx))
             pool_unref(waiting->pool);
         else
             /* didn't work (probably because borrowing the item has
@@ -185,7 +187,7 @@ stock_retry_waiting(struct stock *stock)
         async_operation_finished(&waiting->operation);
         list_remove(&waiting->siblings);
         stock_get_create(stock, waiting->pool, waiting->info,
-                         waiting->callback, waiting->callback_ctx,
+                         waiting->handler, waiting->handler_ctx,
                          waiting->async_ref);
         pool_unref(waiting->pool);
     }
@@ -340,7 +342,7 @@ stock_is_empty(const struct stock *stock)
 
 static bool
 stock_get_idle(struct stock *stock,
-               stock_callback_t callback, void *callback_ctx)
+               const struct stock_handler *handler, void *handler_ctx)
 {
     while (stock->num_idle > 0) {
         struct stock_item *item = (struct stock_item *)stock->idle.next;
@@ -362,7 +364,7 @@ stock_get_idle(struct stock *stock,
 #endif
             ++stock->num_busy;
 
-            callback(callback_ctx, item);
+            handler->ready(item, handler_ctx);
             return true;
         }
 
@@ -374,7 +376,7 @@ stock_get_idle(struct stock *stock,
 
 static void
 stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
-                 stock_callback_t callback, void *callback_ctx,
+                 const struct stock_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
     pool_t pool;
@@ -388,8 +390,8 @@ stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
 #ifndef NDEBUG
     item->is_idle = false;
 #endif
-    item->callback = callback;
-    item->callback_ctx = callback_ctx;
+    item->handler = handler;
+    item->handler_ctx = handler_ctx;
 
     ++stock->num_create;
 
@@ -399,14 +401,14 @@ stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
 
 void
 stock_get(struct stock *stock, pool_t caller_pool, void *info,
-          stock_callback_t callback, void *callback_ctx,
+          const struct stock_handler *handler, void *handler_ctx,
           struct async_operation_ref *async_ref)
 {
     assert(stock != NULL);
 
     stock->may_clear = false;
 
-    if (stock_get_idle(stock, callback, callback_ctx))
+    if (stock_get_idle(stock, handler, handler_ctx))
         return;
 
     if (stock->limit > 0 &&
@@ -418,8 +420,8 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
         pool_ref(caller_pool);
         waiting->pool = caller_pool;
         waiting->info = info;
-        waiting->callback = callback;
-        waiting->callback_ctx = callback_ctx;
+        waiting->handler = handler;
+        waiting->handler_ctx = handler_ctx;
         waiting->async_ref = async_ref;
 
         async_init(&waiting->operation, &stock_wait_operation);
@@ -430,7 +432,7 @@ stock_get(struct stock *stock, pool_t caller_pool, void *info,
     }
 
     stock_get_create(stock, caller_pool, info,
-                     callback, callback_ctx, async_ref);
+                     handler, handler_ctx, async_ref);
 }
 
 struct now_data {
@@ -441,7 +443,7 @@ struct now_data {
 };
 
 static void
-stock_now_callback(void *ctx, struct stock_item *item)
+stock_now_ready(struct stock_item *item, void *ctx)
 {
     struct now_data *data = ctx;
 
@@ -451,6 +453,23 @@ stock_now_callback(void *ctx, struct stock_item *item)
 
     data->item = item;
 }
+
+static void
+stock_now_error(void *ctx)
+{
+    struct now_data *data = ctx;
+
+#ifndef NDEBUG
+    data->created = true;
+#endif
+
+    data->item = NULL;
+}
+
+static const struct stock_handler stock_now_handler = {
+    .ready = stock_now_ready,
+    .error = stock_now_error,
+};
 
 struct stock_item *
 stock_get_now(struct stock *stock, pool_t pool, void *info)
@@ -465,7 +484,7 @@ stock_get_now(struct stock *stock, pool_t pool, void *info)
     /* cannot call this on a limited stock */
     assert(stock->limit == 0);
 
-    stock_get(stock, pool, info, stock_now_callback, &data, &async_ref);
+    stock_get(stock, pool, info, &stock_now_handler, &data, &async_ref);
     assert(data.created);
 
     return data.item;
@@ -484,7 +503,7 @@ stock_item_available(struct stock_item *item)
 #endif
     ++stock->num_busy;
 
-    item->callback(item->callback_ctx, item);
+    item->handler->ready(item, item->handler_ctx);
 }
 
 void
@@ -495,7 +514,7 @@ stock_item_failed(struct stock_item *item)
     assert(stock->num_create > 0);
     --stock->num_create;
 
-    item->callback(item->callback_ctx, NULL);
+    item->handler->error(item->handler_ctx);
     stock_item_free(stock, item);
 
     stock_retry_waiting(stock);

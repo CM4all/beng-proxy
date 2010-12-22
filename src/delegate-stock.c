@@ -221,7 +221,7 @@ void
 delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
                    const char *helper, const char *document_root,
                    bool jail,
-                   stock_callback_t callback, void *callback_ctx,
+                   const struct stock_handler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
     const char *uri;
@@ -240,7 +240,7 @@ delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
     }
 
     hstock_get(delegate_stock, pool, uri, info,
-               callback, callback_ctx, async_ref);
+               handler, handler_ctx, async_ref);
 }
 
 void

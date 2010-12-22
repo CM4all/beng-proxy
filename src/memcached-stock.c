@@ -86,21 +86,9 @@ static const struct lease memcached_socket_lease = {
  */
 
 static void
-memcached_stock_callback(void *ctx, struct stock_item *item)
+memcached_stock_ready(struct stock_item *item, void *ctx)
 {
     struct memcached_stock_request *request = ctx;
-
-    if (item == NULL) {
-        GError *error =
-            g_error_new_literal(memcached_client_quark(), 0,
-                                "memcached stock request failed");
-        request->handler->error(error, request->handler_ctx);
-
-        if (request->value != NULL)
-            istream_close_unused(request->value);
-
-        return;
-    }
 
     request->item = item;
 
@@ -115,6 +103,24 @@ memcached_stock_callback(void *ctx, struct stock_item *item)
                             request->handler, request->handler_ctx,
                             request->async_ref);
 }
+
+static void
+memcached_stock_error(void *ctx)
+{
+    struct memcached_stock_request *request = ctx;
+
+    GError *error = g_error_new_literal(memcached_client_quark(), 0,
+                                        "memcached stock request failed");
+    request->handler->error(error, request->handler_ctx);
+
+    if (request->value != NULL)
+        istream_close_unused(request->value);
+}
+
+static const struct stock_handler memcached_stock_handler = {
+    .ready = memcached_stock_ready,
+    .error = memcached_stock_error,
+};
 
 void
 memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
@@ -145,6 +151,6 @@ memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
 
     hstock_get(stock->tcp_stock, pool,
                stock->address->uri, stock->address,
-               memcached_stock_callback, request,
+               &memcached_stock_handler, request,
                async_ref);
 }

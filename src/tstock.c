@@ -61,14 +61,9 @@ static const struct lease tstock_socket_lease = {
  */
 
 static void
-tstock_stock_callback(void *ctx, struct stock_item *item)
+tstock_stock_ready(struct stock_item *item, void *ctx)
 {
     struct tstock_request *r = ctx;
-
-    if (item == NULL) {
-        r->callback(&error, r->callback_ctx);
-        return;
-    }
 
     r->item = item;
     translate(r->pool, tcp_stock_item_get(item),
@@ -76,6 +71,19 @@ tstock_stock_callback(void *ctx, struct stock_item *item)
               r->request, r->callback, r->callback_ctx,
               r->async_ref);
 }
+
+static void
+tstock_stock_error(void *ctx)
+{
+    struct tstock_request *r = ctx;
+
+    r->callback(&error, r->callback_ctx);
+}
+
+static const struct stock_handler tstock_stock_handler = {
+    .ready = tstock_stock_ready,
+    .error = tstock_stock_error,
+};
 
 
 /*
@@ -113,6 +121,6 @@ tstock_translate(struct tstock *stock, pool_t pool,
     r->async_ref = async_ref;
 
     hstock_get(stock->tcp_stock, pool, stock->socket_path, NULL,
-               tstock_stock_callback, r,
+               &tstock_stock_handler, r,
                async_ref);
 }

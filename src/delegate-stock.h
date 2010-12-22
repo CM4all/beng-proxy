@@ -16,7 +16,7 @@ void
 delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
                    const char *path, const char *document_root,
                    bool jail,
-                   stock_callback_t callback, void *callback_ctx,
+                   const struct stock_handler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref);
 
 void

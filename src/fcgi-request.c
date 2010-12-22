@@ -70,18 +70,15 @@ static const struct lease fcgi_socket_lease = {
 };
 
 
+/*
+ * stock callback
+ *
+ */
+
 static void
-fcgi_stock_callback(void *ctx, struct stock_item *item)
+fcgi_stock_ready(struct stock_item *item, void *ctx)
 {
     struct fcgi_request *request = ctx;
-
-    if (item == NULL) {
-        GError *error =
-            g_error_new_literal(fcgi_request_quark(), 0,
-                                "FastCGI startup failed");
-        http_response_handler_invoke_abort(&request->handler, error);
-        return;
-    }
 
     request->stock_item = item;
 
@@ -105,6 +102,21 @@ fcgi_stock_callback(void *ctx, struct stock_item *item)
                         request->handler.handler, request->handler.ctx,
                         request->async_ref);
 }
+
+static void
+fcgi_stock_error(void *ctx)
+{
+    struct fcgi_request *request = ctx;
+
+    GError *error = g_error_new_literal(fcgi_request_quark(), 0,
+                                        "FastCGI startup failed");
+    http_response_handler_invoke_abort(&request->handler, error);
+}
+
+static const struct stock_handler fcgi_stock_handler = {
+    .ready = fcgi_stock_ready,
+    .error = fcgi_stock_error,
+};
 
 
 /*
@@ -165,6 +177,6 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
 
     fcgi_stock_get(fcgi_stock, pool,
                    action, jail ? document_root : NULL,
-                   fcgi_stock_callback, request,
+                   &fcgi_stock_handler, request,
                    async_ref);
 }

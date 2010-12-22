@@ -63,17 +63,15 @@ static const struct lease was_socket_lease = {
 };
 
 
+/*
+ * stock callback
+ *
+ */
+
 static void
-was_stock_callback(void *ctx, struct stock_item *item)
+was_stock_ready(struct stock_item *item, void *ctx)
 {
     struct was_request *request = ctx;
-
-    if (item == NULL) {
-        GError *error = g_error_new_literal(was_quark(), 0,
-                                            "connection failed");
-        http_response_handler_invoke_abort(&request->handler, error);
-        return;
-    }
 
     request->stock_item = item;
 
@@ -90,6 +88,21 @@ was_stock_callback(void *ctx, struct stock_item *item)
                        request->handler.handler, request->handler.ctx,
                        request->async_ref);
 }
+
+static void
+was_stock_error(void *ctx)
+{
+    struct was_request *request = ctx;
+
+    GError *error = g_error_new_literal(was_quark(), 0,
+                                        "connection failed");
+    http_response_handler_invoke_abort(&request->handler, error);
+}
+
+static const struct stock_handler was_stock_handler = {
+    .ready = was_stock_ready,
+    .error = was_stock_error,
+};
 
 
 /*
@@ -147,6 +160,6 @@ was_request(pool_t pool, struct hstock *was_stock, bool jail,
 
     was_stock_get(was_stock, pool,
                   action, jail ? document_root : NULL,
-                  was_stock_callback, request,
+                  &was_stock_handler, request,
                   async_ref);
 }
