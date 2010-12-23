@@ -6,6 +6,7 @@
 
 #include "tcache.h"
 #include "tstock.h"
+#include "translate.h"
 #include "transformation.h"
 #include "cache.h"
 #include "stock.h"
@@ -59,8 +60,8 @@ struct tcache_request {
 
     const char *key;
 
-    translate_callback_t callback;
-    void *ctx;
+    const struct translate_handler *handler;
+    void *handler_ctx;
 };
 
 #ifdef CACHE_LOG
@@ -565,7 +566,7 @@ translate_cache_invalidate(struct tcache *tcache,
  */
 
 static void
-tcache_callback(const struct translate_response *response, void *ctx)
+tcache_handler_response(const struct translate_response *response, void *ctx)
 {
     struct tcache_request *tcr = ctx;
 
@@ -631,12 +632,27 @@ tcache_callback(const struct translate_response *response, void *ctx)
         cache_log(4, "translate_cache: nocache %s\n", tcr->key);
     }
 
-    tcr->callback(response, tcr->ctx);
+    tcr->handler->response(response, tcr->handler_ctx);
 }
 
 static void
+tcache_handler_error(GError *error, void *ctx)
+{
+    struct tcache_request *tcr = ctx;
+
+    cache_log(4, "translate_cache: error %s\n", tcr->key);
+
+    tcr->handler->error(error, tcr->handler_ctx);
+}
+
+static const struct translate_handler tcache_handler = {
+    .response = tcache_handler_response,
+    .error = tcache_handler_error,
+};
+
+static void
 tcache_hit(pool_t pool, const char *key, const struct tcache_item *item,
-           translate_callback_t callback, void *ctx)
+           const struct translate_handler *handler, void *ctx)
 {
     struct translate_response *response =
         p_malloc(pool, sizeof(*response));
@@ -644,13 +660,13 @@ tcache_hit(pool_t pool, const char *key, const struct tcache_item *item,
     cache_log(4, "translate_cache: hit %s\n", key);
 
     tcache_load_response(pool, response, &item->response, key);
-    callback(response, ctx);
+    handler->response(response, ctx);
 }
 
 static void
 tcache_miss(pool_t pool, struct tcache *tcache,
             const struct translate_request *request, const char *key,
-            translate_callback_t callback, void *ctx,
+            const struct translate_handler *handler, void *ctx,
             struct async_operation_ref *async_ref)
 {
     struct tcache_request *tcr = p_malloc(pool, sizeof(*tcr));
@@ -662,11 +678,11 @@ tcache_miss(pool_t pool, struct tcache *tcache,
     tcr->request = request;
     tcr->find_base = false;
     tcr->key = key;
-    tcr->callback = callback;
-    tcr->ctx = ctx;
+    tcr->handler = handler;
+    tcr->handler_ctx = ctx;
 
     tstock_translate(tcache->stock, pool,
-                     request, tcache_callback, tcr, async_ref);
+                     request, &tcache_handler, tcr, async_ref);
 }
 
 
@@ -737,8 +753,7 @@ translate_cache_flush(struct tcache *tcache)
 void
 translate_cache(pool_t pool, struct tcache *tcache,
                 const struct translate_request *request,
-                translate_callback_t callback,
-                void *ctx,
+                const struct translate_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref)
 {
     if (tcache_request_evaluate(request)) {
@@ -746,14 +761,14 @@ translate_cache(pool_t pool, struct tcache *tcache,
         struct tcache_item *item = tcache_lookup(pool, tcache, request, key);
 
         if (item != NULL)
-            tcache_hit(pool, key, item, callback, ctx);
+            tcache_hit(pool, key, item, handler, ctx);
         else
-            tcache_miss(pool, tcache, request, key, callback, ctx, async_ref);
+            tcache_miss(pool, tcache, request, key, handler, ctx, async_ref);
     } else {
         cache_log(4, "translate_cache: ignore %s\n",
                   request->uri == NULL ? request->widget_type : request->uri);
 
         tstock_translate(tcache->stock, pool,
-                         request, callback, ctx, async_ref);
+                         request, handler, ctx, async_ref);
     }
 }

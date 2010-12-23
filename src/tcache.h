@@ -7,10 +7,15 @@
 #ifndef __BENG_TCACHE_H
 #define __BENG_TCACHE_H
 
-#include "translate.h"
+#include "pool.h"
+
+#include <stdint.h>
 
 struct tcache;
 struct tstock;
+struct translate_handler;
+struct translate_request;
+struct async_operation_ref;
 
 struct tcache *
 translate_cache_new(pool_t pool, struct tstock *stock,
@@ -33,8 +38,7 @@ translate_cache_flush(struct tcache *tcache);
 void
 translate_cache(pool_t pool, struct tcache *tcache,
                 const struct translate_request *request,
-                translate_callback_t callback,
-                void *ctx,
+                const struct translate_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref);
 
 /**

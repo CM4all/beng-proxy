@@ -630,7 +630,7 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	$(POOL_SRC)
 test_t_tcache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
-	$(LIBEVENT_LIBS) -lrt
+	$(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
 
 test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/header-forward.c src/header-writer.c \

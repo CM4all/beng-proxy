@@ -1,5 +1,6 @@
 #include "tcache.h"
 #include "tstock.h"
+#include "translate.h"
 #include "async.h"
 #include "beng-proxy/translation.h"
 
@@ -120,15 +121,15 @@ const struct translate_response *next_response, *expected_response;
 void
 tstock_translate(__attr_unused struct tstock *stock, __attr_unused pool_t pool,
                  __attr_unused const struct translate_request *request,
-                 translate_callback_t callback, void *ctx,
+                 const struct translate_handler *handler, void *ctx,
                  __attr_unused struct async_operation_ref *async_ref)
 {
-    callback(next_response, ctx);
+    handler->response(next_response, ctx);
 }
 
 static void
-my_callback(const struct translate_response *response,
-            __attr_unused void *ctx)
+my_translate_response(const struct translate_response *response,
+                      __attr_unused void *ctx)
 {
     if (response == NULL) {
         assert(expected_response == NULL);
@@ -140,6 +141,19 @@ my_callback(const struct translate_response *response,
                       expected_response->address.u.local.path) == 0);
     }
 }
+
+static void
+my_translate_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    assert(expected_response == NULL);
+
+    g_error_free(error);
+}
+
+static const struct translate_handler my_translate_handler = {
+    .response = my_translate_response,
+    .error = my_translate_error,
+};
 
 int main(int argc __attr_unused, char **argv __attr_unused) {
     struct tstock *const translate_stock = (void *)0x1;
@@ -184,53 +198,68 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     /* test */
 
     next_response = expected_response = &response1;
-    translate_cache(pool, cache, &request1, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = NULL;
-    translate_cache(pool, cache, &request1, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = expected_response = &response2;
-    translate_cache(pool, cache, &request2, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = NULL;
     expected_response = &response3;
-    translate_cache(pool, cache, &request3, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request3,
+                    &my_translate_handler, NULL, &async_ref);
 
     expected_response = &response4;
-    translate_cache(pool, cache, &request4, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request4,
+                    &my_translate_handler, NULL, &async_ref);
 
     expected_response = NULL;
-    translate_cache(pool, cache, &request5, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request5,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = expected_response = &response5a;
-    translate_cache(pool, cache, &request6, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request6,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = expected_response = &response5b;
-    translate_cache(pool, cache, &request7, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request7,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = NULL;
     expected_response = &response5a;
-    translate_cache(pool, cache, &request6, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request6,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = NULL;
     expected_response = &response5b;
-    translate_cache(pool, cache, &request7, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request7,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = expected_response = &response5c;
-    translate_cache(pool, cache, &request8, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request8,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = NULL;
     expected_response = &response5a;
-    translate_cache(pool, cache, &request6, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request6,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = expected_response = &response5c;
-    translate_cache(pool, cache, &request7, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request7,
+                    &my_translate_handler, NULL, &async_ref);
 
     next_response = expected_response = &response5c;
-    translate_cache(pool, cache, &request8, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request8,
+                    &my_translate_handler, NULL, &async_ref);
 
     expected_response = &response5c;
-    translate_cache(pool, cache, &request7, my_callback, NULL, &async_ref);
+    translate_cache(pool, cache, &request7,
+                    &my_translate_handler, NULL, &async_ref);
 
     /* cleanup */
 

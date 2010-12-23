@@ -5,6 +5,7 @@
  */
 
 #include "tstock.h"
+#include "translate.h"
 #include "stock.h"
 #include "tcp-stock.h"
 #include "lease.h"
@@ -27,14 +28,10 @@ struct tstock_request {
 
     const struct translate_request *request;
 
-    translate_callback_t callback;
-    void *callback_ctx;
+    const struct translate_handler *handler;
+    void *handler_ctx;
 
     struct async_operation_ref *async_ref;
-};
-
-static const struct translate_response error_response = {
-    .status = -1,
 };
 
 
@@ -70,7 +67,7 @@ tstock_stock_ready(struct stock_item *item, void *ctx)
     r->item = item;
     translate(r->pool, tcp_stock_item_get(item),
               &tstock_socket_lease, r,
-              r->request, r->callback, r->callback_ctx,
+              r->request, r->handler, r->handler_ctx,
               r->async_ref);
 }
 
@@ -79,11 +76,7 @@ tstock_stock_error(GError *error, void *ctx)
 {
     struct tstock_request *r = ctx;
 
-    daemon_log(2, "Failed to connect to translation server: %s\n",
-               error->message);
-    g_error_free(error);
-
-    r->callback(&error_response, r->callback_ctx);
+    r->handler->error(error, r->handler_ctx);
 }
 
 static const struct stock_handler tstock_stock_handler = {
@@ -114,7 +107,7 @@ tstock_new(pool_t pool, struct hstock *tcp_stock, const char *socket_path)
 void
 tstock_translate(struct tstock *stock, pool_t pool,
                  const struct translate_request *request,
-                 translate_callback_t callback, void *ctx,
+                 const struct translate_handler *handler, void *ctx,
                  struct async_operation_ref *async_ref)
 {
     struct tstock_request *r = p_malloc(pool, sizeof(*r));
@@ -122,8 +115,8 @@ tstock_translate(struct tstock *stock, pool_t pool,
     r->pool = pool;
     r->stock = stock;
     r->request = request;
-    r->callback = callback;
-    r->callback_ctx = ctx;
+    r->handler = handler;
+    r->handler_ctx = ctx;
     r->async_ref = async_ref;
 
     hstock_get(stock->tcp_stock, pool, stock->socket_path, NULL,

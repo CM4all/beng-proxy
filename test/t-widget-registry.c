@@ -4,6 +4,7 @@
 #include "uri-address.h"
 #include "tcache.h"
 #include "tstock.h"
+#include "translate.h"
 #include "widget.h"
 #include "transformation.h"
 
@@ -51,8 +52,7 @@ static const struct async_operation_class my_operation = {
 void
 tstock_translate(__attr_unused struct tstock *stock, pool_t pool,
                  const struct translate_request *request,
-                 translate_callback_t callback,
-                 void *ctx,
+                 const struct translate_handler *handler, void *ctx,
                  struct async_operation_ref *async_ref)
 {
     assert(request->remote_host == NULL);
@@ -68,7 +68,7 @@ tstock_translate(__attr_unused struct tstock *stock, pool_t pool,
         response->address.type = RESOURCE_ADDRESS_HTTP;
         response->address.u.http = uri_address_new(pool, "http://foo/");
         response->views = p_calloc(pool, sizeof(*response->views));
-        callback(response, ctx);
+        handler->response(response, ctx);
     } else if (strcmp(request->widget_type, "block") == 0) {
         struct async_operation *ao = p_malloc(pool, sizeof(*ao));
 

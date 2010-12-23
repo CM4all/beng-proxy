@@ -32,7 +32,7 @@ errdoc_resubmit(const struct error_response *er)
 
 static void
 errdoc_response_response(http_status_t status, struct strmap *headers,
-                         istream_t body, void *ctx)
+                          istream_t body, void *ctx)
 {
     struct error_response *er = ctx;
 
@@ -70,7 +70,7 @@ const struct http_response_handler errdoc_response_handler = {
 };
 
 static void
-errdoc_translate_callback(const struct translate_response *response, void *ctx)
+errdoc_translate_response(const struct translate_response *response, void *ctx)
 {
     struct error_response *er = ctx;
 
@@ -91,6 +91,22 @@ errdoc_translate_callback(const struct translate_response *response, void *ctx)
     } else
         errdoc_resubmit(er);
 }
+
+static void
+errdoc_translate_error(GError *error, void *ctx)
+{
+    struct error_response *er = ctx;
+
+    daemon_log(2, "error document translation error: %s\n", error->message);
+    g_error_free(error);
+
+    errdoc_resubmit(er);
+}
+
+static const struct translate_handler errdoc_translate_handler = {
+    .response = errdoc_translate_response,
+    .error = errdoc_translate_error,
+};
 
 static void
 fill_translate_request(struct translate_request *t,
@@ -122,6 +138,6 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
                            &request2->translate.request, status);
     translate_cache(pool, instance->translate_cache,
                     &er->translate_request,
-                    errdoc_translate_callback, er,
+                    &errdoc_translate_handler, er,
                     request2->async_ref);
 }

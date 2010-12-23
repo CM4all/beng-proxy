@@ -9,15 +9,17 @@
 #include "processor.h"
 #include "widget.h"
 #include "tcache.h"
+#include "translate.h"
 #include "uri-address.h"
 #include "transformation.h"
+
+#include <daemon/log.h>
 
 static void
 widget_registry_lookup(pool_t pool,
                        struct tcache *tcache,
                        const char *widget_type,
-                       translate_callback_t callback,
-                       void *ctx,
+                       const struct translate_handler *handler, void *ctx,
                        struct async_operation_ref *async_ref)
 {
     struct translate_request *request = p_malloc(pool, sizeof(*request)); 
@@ -39,7 +41,7 @@ widget_registry_lookup(pool_t pool,
     request->error_document_status = 0;
 
     translate_cache(pool, tcache, request,
-                    callback, ctx, async_ref);
+                    handler, ctx, async_ref);
 }
 
 struct widget_class_lookup {
@@ -50,7 +52,7 @@ struct widget_class_lookup {
 };
 
 static void 
-lookup_callback(const struct translate_response *response, void *ctx)
+widget_translate_response(const struct translate_response *response, void *ctx)
 {
     struct widget_class_lookup *lookup = ctx;
     struct widget_class *class;
@@ -79,6 +81,21 @@ lookup_callback(const struct translate_response *response, void *ctx)
     lookup->callback(class, lookup->callback_ctx);
 }
 
+static void
+widget_translate_error(GError *error, void *ctx)
+{
+    struct widget_class_lookup *lookup = ctx;
+
+    daemon_log(2, "widget registry error: %s\n", error->message);
+    g_error_free(error);
+
+    lookup->callback(NULL, lookup->callback_ctx);
+}
+
+static const struct translate_handler widget_translate_handler = {
+    .response = widget_translate_response,
+    .error = widget_translate_error,
+};
 
 void
 widget_class_lookup(pool_t pool, pool_t widget_pool,
@@ -97,6 +114,6 @@ widget_class_lookup(pool_t pool, pool_t widget_pool,
     lookup->callback_ctx = ctx;
 
     widget_registry_lookup(pool, tcache, widget_type,
-                           lookup_callback, lookup,
+                           &widget_translate_handler, lookup,
                            async_ref);
 }

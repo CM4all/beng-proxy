@@ -1,4 +1,5 @@
 #include "tstock.h"
+#include "translate.h"
 #include "transformation.h"
 #include "balancer.h"
 #include "tcp-stock.h"
@@ -49,8 +50,8 @@ print_resource_address(const struct resource_address *address)
 }
 
 static void
-translate_callback(const struct translate_response *response,
-                   void *ctx)
+my_translate_response(const struct translate_response *response,
+                      void *ctx)
 {
     const struct transformation_view *view;
 
@@ -90,6 +91,18 @@ translate_callback(const struct translate_response *response,
         printf("user=%s\n", response->user);
 }
 
+static void
+my_translate_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    fprintf(stderr, "%s\n", error->message);
+    g_error_free(error);
+}
+
+static const struct translate_handler my_translate_handler = {
+    .response = my_translate_response,
+    .error = my_translate_error,
+};
+
 int main(int argc, char **argv) {
     struct translate_request request = {
         .host = "example.com",
@@ -111,7 +124,7 @@ int main(int argc, char **argv) {
     translate_stock = tstock_new(pool, tcp_stock, "/tmp/beng-proxy-translate");
 
     tstock_translate(translate_stock, pool,
-                     &request, translate_callback, NULL, &async_ref);
+                     &request, &my_translate_handler, NULL, &async_ref);
 
     event_dispatch();
 }

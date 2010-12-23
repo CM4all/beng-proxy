@@ -14,6 +14,8 @@
 
 #include <http/status.h>
 
+#include <glib.h>
+
 #include <stdint.h>
 
 struct sockaddr;
@@ -129,15 +131,16 @@ struct translate_response {
     unsigned num_invalidate;
 };
 
-typedef void (*translate_callback_t)(const struct translate_response *response,
-                                     void *ctx);
+struct translate_handler {
+    void (*response)(const struct translate_response *response, void *ctx);
+    void (*error)(GError *error, void *ctx);
+};
 
 void
 translate(pool_t pool, int fd,
           const struct lease *lease, void *lease_ctx,
           const struct translate_request *request,
-          translate_callback_t callback,
-          void *ctx,
+          const struct translate_handler *handler, void *ctx,
           struct async_operation_ref *async_ref);
 
 #endif

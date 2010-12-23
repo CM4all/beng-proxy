@@ -200,9 +200,11 @@ handle_translated_request(struct request *request,
     }
 }
 
+static const struct translate_handler handler_translate_handler;
+
 static void
-translate_callback(const struct translate_response *response,
-                   void *ctx)
+handler_translate_response(const struct translate_response *response,
+                           void *ctx)
 {
     struct request *request = ctx;
 
@@ -223,7 +225,7 @@ translate_callback(const struct translate_response *response,
         translate_cache(request->request->pool,
                         request->connection->instance->translate_cache,
                         &request->translate.request,
-                        translate_callback, request,
+                        &handler_translate_handler, request,
                         request->async_ref);
         return;
     }
@@ -242,6 +244,32 @@ translate_callback(const struct translate_response *response,
 
     handle_translated_request(request, response);
 }
+
+static void
+handler_translate_error(GError *error, void *ctx)
+{
+    struct request *request = ctx;
+
+    daemon_log(2, "translation error on '%s': %s\n",
+               request->request->uri, error->message);
+    g_error_free(error);
+
+    static const struct translate_response error_response = {
+        .status = -1,
+    };
+
+    /* a lot of code in response.c dereferences the
+       #translate_response pointer, so we need a valid pointer here */
+    request->translate.response = &error_response;
+
+    response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                              "Internal server error");
+}
+
+static const struct translate_handler handler_translate_handler = {
+    .response = handler_translate_response,
+    .error = handler_translate_error,
+};
 
 static bool
 request_uri_parse(struct request *request2, struct parsed_uri *dest)
@@ -309,7 +337,7 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
     fill_translate_request(&request2->translate.request, request2->request,
                            &request2->uri, request2->args);
     translate_cache(request->pool, tcache, &request2->translate.request,
-                    translate_callback, request2,
+                    &handler_translate_handler, request2,
                     request2->async_ref);
 }
 
