@@ -79,6 +79,8 @@ jail_try_translate_path(const char *path,
     if (path[global_prefix_length] == '/')
         return p_strcat(pool, jailed_prefix, path + global_prefix_length,
                         NULL);
+    else if (path[global_prefix_length] == 0)
+        return jailed_prefix;
     else
         return NULL;
 }
