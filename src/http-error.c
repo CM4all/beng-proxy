@@ -15,6 +15,7 @@ http_response_handler_invoke_errno(struct http_response_handler_ref *handler,
 {
     switch (error) {
     case ENOENT:
+    case ENOTDIR:
         http_response_handler_invoke_message(handler, pool,
                                              HTTP_STATUS_NOT_FOUND,
                                              "The requested file does not exist.");
