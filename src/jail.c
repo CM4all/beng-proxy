@@ -69,13 +69,20 @@ jail_try_translate_path(const char *path,
                         const char *global_prefix, const char *jailed_prefix,
                         pool_t pool)
 {
-    size_t global_prefix_length = strlen(global_prefix);
+    if (jailed_prefix == NULL)
+        return NULL;
 
-    return jailed_prefix != NULL &&
-        strncmp(path, global_prefix, global_prefix_length) == 0 &&
-        path[global_prefix_length] == '/'
-        ? p_strcat(pool, jailed_prefix, path + global_prefix_length, NULL)
-        : NULL;
+    size_t global_prefix_length = strlen(global_prefix);
+    if (memcmp(path, global_prefix, global_prefix_length) != 0)
+        return NULL;
+
+    if (path[global_prefix_length] == '/')
+        return p_strcat(pool, jailed_prefix, path + global_prefix_length,
+                        NULL);
+    else if (path[global_prefix_length] == 0)
+        return jailed_prefix;
+    else
+        return NULL;
 }
 
 const char *

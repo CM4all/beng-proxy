@@ -73,8 +73,9 @@ http_server_response(const struct http_server_request *request,
     assert(connection->score != HTTP_SERVER_NEW);
     assert(connection->request.request == request);
 
-    async_ref_poison(&connection->request.async_ref);
-
+    /* clear the reference, because http_server_request_close() needs
+       this to check if the response has been sent already */
+    async_ref_clear(&connection->request.async_ref);
 
     if (http_status_is_success(status)) {
         if (connection->score == HTTP_SERVER_FIRST)

@@ -1371,7 +1371,7 @@ debug: src/cm4all-beng-proxy
 	LD_LIBRARY_PATH=/usr/lib/debug:$(LD_LIBRARY_PATH) gdb -x gdbrun --args $< $(DEBUG_ARGS)
 
 VALGRIND_FLAGS = --leak-check=yes --show-reachable=yes
-VALGRIND_FLAGS += --track-fds=yes
+VALGRIND_FLAGS += --track-fds=yes --track-origins=yes
 
 valgrind: AM_CPPFLAGS += -DPOOL_LIBC_ONLY
 valgrind: export G_SLICE=always-malloc

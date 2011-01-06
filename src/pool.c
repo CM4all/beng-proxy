@@ -4,6 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#define POOL_LIBC_ONLY
 #include "pool.h"
 
 #include <inline/poison.h>
@@ -397,8 +398,6 @@ pool_destroy(pool_t pool, pool_t reparent_to)
     assert(pool->ref == 0);
     assert(pool->parent == NULL);
 
-    (void)reparent_to;
-
 #ifdef DUMP_POOL_SIZE
     daemon_log(4, "pool '%s' size=%zu\n", pool->name, pool->size);
 #endif
@@ -418,6 +417,7 @@ pool_destroy(pool_t pool, pool_t reparent_to)
 
     if (pool->trashed)
         list_remove(&pool->siblings);
+#endif
 
     while (!list_empty(&pool->children)) {
         pool_t child = (pool_t)pool->children.next;
@@ -429,8 +429,12 @@ pool_destroy(pool_t pool, pool_t reparent_to)
                collected by pool_commit() */
             assert(pool->major || pool->trashed);
 
+#ifndef NDEBUG
             list_add(&child->siblings, &trash);
             child->trashed = true;
+#else
+            child->parent = NULL;
+#endif
         } else {
             /* reparent all children of the destroyed pool to its
                parent, so they can live on - this reparenting never
@@ -441,7 +445,6 @@ pool_destroy(pool_t pool, pool_t reparent_to)
             pool_add_child(reparent_to, child);
         }
     }
-#endif
 
 #ifdef DEBUG_POOL_REF
     while (!list_empty(&pool->refs)) {

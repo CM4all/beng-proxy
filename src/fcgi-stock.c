@@ -143,6 +143,8 @@ fcgi_spawn_child(const char *executable_path, const char *jail_path, int fd,
             close(2);
         }
 
+        clearenv();
+
         if (jail_path != NULL) {
             setenv("DOCUMENT_ROOT", jail_path, true);
             setenv("JAILCGI_ACTION", executable_path, true);
