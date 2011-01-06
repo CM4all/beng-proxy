@@ -176,17 +176,23 @@ istream_deflate_force_read(struct istream_deflate *defl)
 
     defl->had_output = false;
 
+    pool_ref(defl->output.pool);
+
     while (1) {
         defl->had_input = false;
         istream_read(defl->input);
-        if (defl->input == NULL || defl->had_output)
+        if (defl->input == NULL || defl->had_output) {
+            pool_unref(defl->output.pool);
             return;
+        }
 
         if (!defl->had_input)
             break;
 
         had_input = true;
     }
+
+    pool_unref(defl->output.pool);
 
     if (had_input)
         deflate_try_flush(defl);
