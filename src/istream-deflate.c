@@ -95,21 +95,15 @@ deflate_try_write(struct istream_deflate *defl)
     data = fifo_buffer_read(defl->buffer, &length);
     assert(data != NULL);
 
-    pool_ref(defl->output.pool);
     nbytes = istream_invoke_data(&defl->output, data, length);
-    if (pool_unref(defl->output.pool) == 0)
+    if (nbytes == 0)
         return 0;
 
-    if (!defl->z_initialized)
-        return 0;
+    fifo_buffer_consume(defl->buffer, nbytes);
 
-    if (nbytes > 0) {
-        fifo_buffer_consume(defl->buffer, nbytes);
-
-        if (nbytes == length && defl->input == NULL && defl->z_stream_end) {
-            deflate_close(defl);
-            istream_deinit_eof(&defl->output);
-        }
+    if (nbytes == length && defl->input == NULL && defl->z_stream_end) {
+        deflate_close(defl);
+        istream_deinit_eof(&defl->output);
     }
 
     return nbytes;
