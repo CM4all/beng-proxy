@@ -72,7 +72,7 @@ deflate_initialize_z(struct istream_deflate *defl)
     err = deflateInit(&defl->z, Z_DEFAULT_COMPRESSION);
     if (err != Z_OK) {
         daemon_log(2, "deflateInit(Z_FINISH) failed: %d\n", err);
-        deflate_close(defl);
+        deflate_abort(defl);
         return err;
     }
 
@@ -155,7 +155,7 @@ deflate_try_flush(struct istream_deflate *defl)
     err = deflate(&defl->z, Z_SYNC_FLUSH);
     if (err != Z_OK) {
         daemon_log(2, "deflate(Z_SYNC_FLUSH) failed: %d\n", err);
-        deflate_close(defl);
+        deflate_abort(defl);
         return;
     }
 
@@ -222,7 +222,7 @@ deflate_try_finish(struct istream_deflate *defl)
         defl->z_stream_end = true;
     else if (err != Z_OK) {
         daemon_log(2, "deflate(Z_FINISH) failed: %d\n", err);
-        deflate_close(defl);
+        deflate_abort(defl);
         return;
     }
 
@@ -276,7 +276,7 @@ deflate_input_data(const void *data, size_t length, void *ctx)
         err = deflate(&defl->z, Z_NO_FLUSH);
         if (err != Z_OK) {
             daemon_log(2, "deflate() failed: %d\n", err);
-            deflate_close(defl);
+            deflate_abort(defl);
             return 0;
         }
 
