@@ -104,6 +104,7 @@ deflate_try_write(struct istream_deflate *defl)
     if (nbytes == length && defl->input == NULL && defl->z_stream_end) {
         deflate_close(defl);
         istream_deinit_eof(&defl->output);
+        return 0;
     }
 
     return nbytes;
