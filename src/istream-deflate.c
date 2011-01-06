@@ -72,7 +72,7 @@ deflate_initialize_z(struct istream_deflate *defl)
     err = deflateInit(&defl->z, Z_DEFAULT_COMPRESSION);
     if (err != Z_OK) {
         daemon_log(2, "deflateInit(Z_FINISH) failed: %d\n", err);
-        deflate_close(defl);
+        deflate_abort(defl);
         return err;
     }
 
@@ -80,36 +80,42 @@ deflate_initialize_z(struct istream_deflate *defl)
     return Z_OK;
 }
 
+/**
+ * Submit data from the buffer to our istream handler.
+ *
+ * @return the number of bytes which were handled, or 0 if the stream
+ * was closed
+ */
 static size_t
 deflate_try_write(struct istream_deflate *defl)
 {
     const void *data;
     size_t length, nbytes;
 
-    assert(!fifo_buffer_empty(defl->buffer));
-
     data = fifo_buffer_read(defl->buffer, &length);
+    assert(data != NULL);
 
-    pool_ref(defl->output.pool);
     nbytes = istream_invoke_data(&defl->output, data, length);
-    if (pool_unref(defl->output.pool) == 0)
+    if (nbytes == 0)
         return 0;
 
-    if (!defl->z_initialized)
+    fifo_buffer_consume(defl->buffer, nbytes);
+
+    if (nbytes == length && defl->input == NULL && defl->z_stream_end) {
+        deflate_close(defl);
+        istream_deinit_eof(&defl->output);
         return 0;
-
-    if (nbytes > 0) {
-        fifo_buffer_consume(defl->buffer, nbytes);
-
-        if (nbytes == length && defl->input == NULL && defl->z_stream_end) {
-            deflate_close(defl);
-            istream_deinit_eof(&defl->output);
-        }
     }
 
     return nbytes;
 }
 
+/**
+ * Starts to write to the buffer.
+ *
+ * @return a pointer to the writable buffer, or NULL if there is no
+ * room (our istream handler blocks) or if the stream was closed
+ */
 static void *
 deflate_buffer_write(struct istream_deflate *defl, size_t *max_length_r)
 {
@@ -149,7 +155,7 @@ deflate_try_flush(struct istream_deflate *defl)
     err = deflate(&defl->z, Z_SYNC_FLUSH);
     if (err != Z_OK) {
         daemon_log(2, "deflate(Z_SYNC_FLUSH) failed: %d\n", err);
-        deflate_close(defl);
+        deflate_abort(defl);
         return;
     }
 
@@ -159,6 +165,10 @@ deflate_try_flush(struct istream_deflate *defl)
         deflate_try_write(defl);
 }
 
+/**
+ * Read from our input until we have submitted some bytes to our
+ * istream handler.
+ */
 static void
 istream_deflate_force_read(struct istream_deflate *defl)
 {
@@ -166,17 +176,23 @@ istream_deflate_force_read(struct istream_deflate *defl)
 
     defl->had_output = false;
 
+    pool_ref(defl->output.pool);
+
     while (1) {
         defl->had_input = false;
         istream_read(defl->input);
-        if (defl->input == NULL || defl->had_output)
+        if (defl->input == NULL || defl->had_output) {
+            pool_unref(defl->output.pool);
             return;
+        }
 
         if (!defl->had_input)
             break;
 
         had_input = true;
     }
+
+    pool_unref(defl->output.pool);
 
     if (had_input)
         deflate_try_flush(defl);
@@ -206,7 +222,7 @@ deflate_try_finish(struct istream_deflate *defl)
         defl->z_stream_end = true;
     else if (err != Z_OK) {
         daemon_log(2, "deflate(Z_FINISH) failed: %d\n", err);
-        deflate_close(defl);
+        deflate_abort(defl);
         return;
     }
 
@@ -260,7 +276,7 @@ deflate_input_data(const void *data, size_t length, void *ctx)
         err = deflate(&defl->z, Z_NO_FLUSH);
         if (err != Z_OK) {
             daemon_log(2, "deflate() failed: %d\n", err);
-            deflate_close(defl);
+            deflate_abort(defl);
             return 0;
         }
 
@@ -305,9 +321,7 @@ deflate_input_eof(void *ctx)
     if (err != Z_OK)
         return;
 
-    pool_ref(defl->output.pool);
     deflate_try_finish(defl);
-    pool_unref(defl->output.pool);
 }
 
 static void
@@ -315,6 +329,7 @@ deflate_input_abort(void *ctx)
 {
     struct istream_deflate *defl = ctx;
 
+    assert(defl->input != NULL);
     defl->input = NULL;
 
     deflate_close(defl);
