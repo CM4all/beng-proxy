@@ -315,9 +315,7 @@ deflate_input_eof(void *ctx)
     if (err != Z_OK)
         return;
 
-    pool_ref(defl->output.pool);
     deflate_try_finish(defl);
-    pool_unref(defl->output.pool);
 }
 
 static void
