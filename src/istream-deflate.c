@@ -86,9 +86,8 @@ deflate_try_write(struct istream_deflate *defl)
     const void *data;
     size_t length, nbytes;
 
-    assert(!fifo_buffer_empty(defl->buffer));
-
     data = fifo_buffer_read(defl->buffer, &length);
+    assert(data != NULL);
 
     pool_ref(defl->output.pool);
     nbytes = istream_invoke_data(&defl->output, data, length);
@@ -315,6 +314,7 @@ deflate_input_abort(void *ctx)
 {
     struct istream_deflate *defl = ctx;
 
+    assert(defl->input != NULL);
     defl->input = NULL;
 
     deflate_close(defl);
