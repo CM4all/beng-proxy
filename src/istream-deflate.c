@@ -80,6 +80,12 @@ deflate_initialize_z(struct istream_deflate *defl)
     return Z_OK;
 }
 
+/**
+ * Submit data from the buffer to our istream handler.
+ *
+ * @return the number of bytes which were handled, or 0 if the stream
+ * was closed
+ */
 static size_t
 deflate_try_write(struct istream_deflate *defl)
 {
@@ -109,6 +115,12 @@ deflate_try_write(struct istream_deflate *defl)
     return nbytes;
 }
 
+/**
+ * Starts to write to the buffer.
+ *
+ * @return a pointer to the writable buffer, or NULL if there is no
+ * room (our istream handler blocks) or if the stream was closed
+ */
 static void *
 deflate_buffer_write(struct istream_deflate *defl, size_t *max_length_r)
 {
@@ -158,6 +170,10 @@ deflate_try_flush(struct istream_deflate *defl)
         deflate_try_write(defl);
 }
 
+/**
+ * Read from our input until we have submitted some bytes to our
+ * istream handler.
+ */
 static void
 istream_deflate_force_read(struct istream_deflate *defl)
 {
