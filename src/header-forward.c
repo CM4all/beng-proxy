@@ -242,15 +242,16 @@ forward_request_headers(pool_t pool, struct strmap *src,
 
     dest = strmap_new(pool, 32);
 
-    if (src != NULL)
+    if (src != NULL) {
         forward_basic_headers(dest, src, with_body);
+
+        if (!exclude_host)
+            header_copy(src, dest, "host");
+    }
 
     if (src != NULL &&
         settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES) {
         forward_other_headers(dest, src);
-
-        if (!exclude_host && false)
-            header_copy(src, dest, "host");
     }
 
     p = forward_charset
