@@ -7,7 +7,7 @@ cm4all-beng-proxy (0.8.21) unstable; urgency=low
   * http-server: fix assertion failure on write error
   * fcgi-stock: clear all environment variables
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 06 Jan 2011 16:04:20 +0100
 
 cm4all-beng-proxy (0.8.20) unstable; urgency=low
 
