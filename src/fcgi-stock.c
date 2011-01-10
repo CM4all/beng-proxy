@@ -145,18 +145,13 @@ fcgi_spawn_child(const char *executable_path, const char *jail_path, int fd,
 
         clearenv();
 
-        if (jail_path != NULL) {
-            setenv("DOCUMENT_ROOT", jail_path, true);
-            setenv("JAILCGI_ACTION", executable_path, true);
-            executable_path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
+        if (jail_path != NULL)
+            execl("/usr/lib/cm4all/jailcgi/bin/wrapper", "wrapper",
+                  "-d", jail_path,
+                  executable_path, NULL);
+        else
+            execl(executable_path, executable_path, NULL);
 
-            /* several fake variables to outsmart the jailcgi
-               wrapper */
-            setenv("GATEWAY_INTERFACE", "dummy", true);
-            setenv("JAILCGI_FILENAME", "/tmp/dummy", true);
-        }
-
-        execl(executable_path, executable_path, NULL);
         daemon_log(1, "failed to execute %s: %s\n",
                    executable_path, strerror(errno));
         _exit(1);

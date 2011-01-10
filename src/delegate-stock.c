@@ -135,20 +135,13 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
 
         clearenv();
 
-        if (document_root != NULL)
-            setenv("DOCUMENT_ROOT", document_root, true);
+        if (jail)
+            execl("/usr/lib/cm4all/jailcgi/bin/wrapper", "wrapper",
+                  "-d", document_root,
+                  helper, NULL);
+        else
+            execl(helper, helper, NULL);
 
-        if (jail) {
-            /* jailcgi-wrapper expects to be run as CGI...  faking
-               this here until JailCGI has a dedicated program for
-               this */
-            setenv("GATEWAY_INTERFACE", "CGI", true);
-
-            setenv("JAILCGI_FILENAME", helper, true);
-            helper = "/usr/lib/cm4all/jailcgi/bin/wrapper";
-        }
-
-        execl(helper, helper, NULL);
         _exit(1);
     }
 
