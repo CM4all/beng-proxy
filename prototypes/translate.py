@@ -42,7 +42,7 @@ class Translation(Protocol):
             log.err()
             return Response().status(500)
 
-    def _handle_local_file(self, path, response, delegate=False, jail=False, error_document=False):
+    def _handle_local_file(self, path, response, delegate=False, jail=False, fastcgi=True, error_document=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
         if error_document:
             response.packet(TRANSLATE_ERROR_DOCUMENT)
@@ -55,7 +55,10 @@ class Translation(Protocol):
 
         m = php_re.match(path)
         if m:
-            response.packet(TRANSLATE_FASTCGI, m.group(1))
+            if fastcgi:
+                response.packet(TRANSLATE_FASTCGI, m.group(1))
+            else:
+                response.packet(TRANSLATE_CGI, m.group(1))
             response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             if jail:
                 response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi5')
@@ -168,6 +171,9 @@ class Translation(Protocol):
             self._handle_local_file('/home/www' + uri[14:], response, True, True)
         elif uri[:6] == '/jail/':
             self._handle_local_file('/home/www' + uri[5:], response, False, True)
+        elif uri[:11] == '/jail-slow/':
+            # execute PHP as CGI, not FastCGI
+            self._handle_local_file('/home/www' + uri[10:], response, jail=True, fastcgi=False)
         elif uri[:6] == '/demo/':
             self._handle_local_file(demo_path + uri[5:], response)
         elif uri[:6] == '/base/':
