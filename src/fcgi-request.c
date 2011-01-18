@@ -130,6 +130,9 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
              const char *script_name, const char *path_info,
              const char *query_string,
              const char *document_root,
+             const char *account_id, const char *site_id,
+             const char *user_name, const char *host_name,
+             const char *home_directory,
              struct strmap *headers, istream_t body,
              const char *const params[], unsigned num_params,
              const struct http_response_handler *handler,
@@ -175,6 +178,8 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
 
     fcgi_stock_get(fcgi_stock, pool,
                    action, jail ? document_root : NULL,
+                   account_id, site_id, user_name, host_name,
+                   home_directory,
                    &fcgi_stock_handler, request,
                    async_ref);
 }

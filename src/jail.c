@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 static char *
 next_word(char *p)
@@ -99,11 +100,37 @@ jail_translate_path(const struct jail_config *config, const char *path,
 }
 
 void
-jail_wrapper_insert(struct exec *e, const char *document_root)
+jail_wrapper_insert(struct exec *e, const char *document_root,
+                    const char *account_id, const char *site_id,
+                    const char *user_name, const char *host_name,
+                    const char *home_directory)
 {
     assert(document_root != NULL);
 
     exec_append(e, "/usr/lib/cm4all/jailcgi/bin/wrapper");
     exec_append(e, "-d");
     exec_append(e, document_root);
+
+    if (account_id != NULL) {
+        exec_append(e, "--account");
+        exec_append(e, account_id);
+    }
+
+    if (site_id != NULL) {
+        exec_append(e, "--site");
+        exec_append(e, site_id);
+    }
+
+    if (user_name != NULL) {
+        exec_append(e, "--name");
+        exec_append(e, user_name);
+    }
+
+    if (host_name != NULL)
+        setenv("JAILCGI_SERVERNAME", host_name, true);
+
+    if (home_directory != NULL) {
+        exec_append(e, "--home");
+        exec_append(e, home_directory);
+    }
 }

@@ -34,7 +34,8 @@ was_run(const char *executable_path, const char *jail_path,
     exec_init(&e);
 
     if (jail_path != NULL)
-        jail_wrapper_insert(&e, jail_path);
+        jail_wrapper_insert(&e, jail_path,
+                            NULL, NULL, NULL, NULL, NULL);
 
     exec_append(&e, executable_path);
     exec_do(&e);

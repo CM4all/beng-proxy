@@ -12,9 +12,17 @@
 struct hstock *
 fcgi_stock_new(pool_t pool, unsigned limit);
 
+/**
+ * @param account_id the customer account id (JailCGI)
+ * @param site_id the customer site id (JailCGI)
+ * @param host_name the UTS host name (JailCGI)
+ */
 void
 fcgi_stock_get(struct hstock *hstock, pool_t pool,
                const char *executable_path, const char *jail_path,
+               const char *account_id, const char *site_id,
+               const char *user_name, const char *host_name,
+               const char *home_directory,
                const struct stock_handler *handler, void *handler_ctx,
                struct async_operation_ref *async_ref);
 

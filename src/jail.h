@@ -38,6 +38,9 @@ jail_translate_path(const struct jail_config *config, const char *path,
                     const char *document_root, pool_t pool);
 
 void
-jail_wrapper_insert(struct exec *e, const char *document_root);
+jail_wrapper_insert(struct exec *e, const char *document_root,
+                    const char *account_id, const char *site_id,
+                    const char *user_name, const char *host_name,
+                    const char *home_directory);
 
 #endif

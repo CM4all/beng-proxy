@@ -31,6 +31,11 @@ struct fcgi_child_params {
     const char *executable_path;
 
     const char *jail_path;
+    const char *account_id;
+    const char *site_id;
+    const char *user_name;
+    const char *host_name;
+    const char *home_directory;
 };
 
 struct fcgi_child {
@@ -39,6 +44,12 @@ struct fcgi_child {
     const char *key;
 
     const char *jail_path;
+    const char *account_id;
+    const char *site_id;
+    const char *user_name;
+    const char *host_name;
+    const char *home_directory;
+
     struct jail_config jail_config;
 
     struct sockaddr_un address;
@@ -122,7 +133,11 @@ fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
 
 __attr_noreturn
 static void
-fcgi_run(const char *executable_path, const char *jail_path, int fd)
+fcgi_run(const char *executable_path, const char *jail_path,
+         const char *account_id, const char *site_id,
+         const char *user_name, const char *host_name,
+         const char *home_directory,
+         int fd)
 {
     dup2(fd, 0);
     close(fd);
@@ -142,7 +157,9 @@ fcgi_run(const char *executable_path, const char *jail_path, int fd)
     exec_init(&e);
 
     if (jail_path != NULL)
-        jail_wrapper_insert(&e, jail_path);
+        jail_wrapper_insert(&e, jail_path,
+                            account_id, site_id, user_name, host_name,
+                            home_directory);
 
     exec_append(&e, executable_path);
     exec_do(&e);
@@ -153,7 +170,11 @@ fcgi_run(const char *executable_path, const char *jail_path, int fd)
 }
 
 static pid_t
-fcgi_spawn_child(const char *executable_path, const char *jail_path, int fd,
+fcgi_spawn_child(const char *executable_path, const char *jail_path,
+                 const char *account_id, const char *site_id,
+                 const char *user_name, const char *host_name,
+                 const char *home_directory,
+                 int fd,
                  GError **error_r)
 {
     pid_t pid = fork();
@@ -164,7 +185,10 @@ fcgi_spawn_child(const char *executable_path, const char *jail_path, int fd,
     }
 
     if (pid == 0)
-        fcgi_run(executable_path, jail_path, fd);
+        fcgi_run(executable_path, jail_path,
+                 account_id, site_id, user_name, host_name,
+                 home_directory,
+                 fd);
 
     return pid;
 }
@@ -302,6 +326,12 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
             stock_item_failed(item, error);
             return;
         }
+
+        child->account_id = p_strdup_checked(pool, params->account_id);
+        child->site_id = p_strdup_checked(pool, params->site_id);
+        child->user_name = p_strdup_checked(pool, params->user_name);
+        child->host_name = p_strdup_checked(pool, params->host_name);
+        child->home_directory = p_strdup_checked(pool, params->home_directory);
     } else
         child->jail_path = NULL;
 
@@ -313,7 +343,11 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     }
 
     child->pid = fcgi_spawn_child(params->executable_path,
-                                  params->jail_path, fd, &error);
+                                  params->jail_path,
+                                  params->account_id, params->site_id,
+                                  params->user_name, params->host_name,
+                                  params->home_directory,
+                                  fd, &error);
     close(fd);
     if (child->pid < 0) {
         stock_item_failed(item, error);
@@ -398,12 +432,20 @@ fcgi_stock_new(pool_t pool, unsigned limit)
 void
 fcgi_stock_get(struct hstock *hstock, pool_t pool,
                const char *executable_path, const char *jail_path,
+               const char *account_id, const char *site_id,
+               const char *user_name, const char *host_name,
+               const char *home_directory,
                const struct stock_handler *handler, void *handler_ctx,
                struct async_operation_ref *async_ref)
 {
     struct fcgi_child_params *params = p_malloc(pool, sizeof(*params));
     params->executable_path = executable_path;
     params->jail_path = jail_path;
+    params->account_id = account_id;
+    params->site_id = site_id;
+    params->user_name = user_name;
+    params->host_name = host_name;
+    params->home_directory = home_directory;
 
     hstock_get(hstock, pool, fcgi_stock_key(pool, params), params,
                handler, handler_ctx, async_ref);

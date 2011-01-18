@@ -141,7 +141,8 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
         exec_init(&e);
 
         if (jail)
-            jail_wrapper_insert(&e, document_root);
+            jail_wrapper_insert(&e, document_root,
+                                NULL, NULL, NULL, NULL, NULL);
 
         exec_append(&e, helper);
         exec_do(&e);
