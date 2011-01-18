@@ -119,6 +119,36 @@ fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
     return fd;
 }
 
+__attr_noreturn
+static void
+fcgi_run(const char *executable_path, const char *jail_path, int fd)
+{
+    dup2(fd, 0);
+    close(fd);
+
+    fd = open("/dev/null", O_WRONLY);
+    if (fd >= 0) {
+        dup2(fd, 1);
+        dup2(fd, 2);
+    } else {
+        close(1);
+        close(2);
+    }
+
+    clearenv();
+
+    if (jail_path != NULL)
+        execl("/usr/lib/cm4all/jailcgi/bin/wrapper", "wrapper",
+              "-d", jail_path,
+              executable_path, NULL);
+    else
+        execl(executable_path, executable_path, NULL);
+
+    daemon_log(1, "failed to execute %s: %s\n",
+               executable_path, strerror(errno));
+    _exit(1);
+}
+
 static pid_t
 fcgi_spawn_child(const char *executable_path, const char *jail_path, int fd,
                  GError **error_r)
@@ -130,32 +160,8 @@ fcgi_spawn_child(const char *executable_path, const char *jail_path, int fd,
         return -1;
     }
 
-    if (pid == 0) {
-        dup2(fd, 0);
-        close(fd);
-
-        fd = open("/dev/null", O_WRONLY);
-        if (fd >= 0) {
-            dup2(fd, 1);
-            dup2(fd, 2);
-        } else {
-            close(1);
-            close(2);
-        }
-
-        clearenv();
-
-        if (jail_path != NULL)
-            execl("/usr/lib/cm4all/jailcgi/bin/wrapper", "wrapper",
-                  "-d", jail_path,
-                  executable_path, NULL);
-        else
-            execl(executable_path, executable_path, NULL);
-
-        daemon_log(1, "failed to execute %s: %s\n",
-                   executable_path, strerror(errno));
-        _exit(1);
-    }
+    if (pid == 0)
+        fcgi_run(executable_path, jail_path, fd);
 
     return pid;
 }
