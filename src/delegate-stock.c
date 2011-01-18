@@ -10,6 +10,7 @@
 #include "failure.h"
 #include "fd_util.h"
 #include "pevent.h"
+#include "exec.h"
 
 #include <daemon/log.h>
 
@@ -135,12 +136,17 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
 
         clearenv();
 
-        if (jail)
-            execl("/usr/lib/cm4all/jailcgi/bin/wrapper", "wrapper",
-                  "-d", document_root,
-                  helper, NULL);
-        else
-            execl(helper, helper, NULL);
+        struct exec e;
+        exec_init(&e);
+
+        if (jail) {
+            exec_append(&e, "/usr/lib/cm4all/jailcgi/bin/wrapper");
+            exec_append(&e, "-d");
+            exec_append(&e, document_root);
+        }
+
+        exec_append(&e, helper);
+        exec_do(&e);
 
         _exit(1);
     }

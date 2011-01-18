@@ -7,6 +7,7 @@
 #include "was-launch.h"
 #include "fd_util.h"
 #include "socket-util.h"
+#include "exec.h"
 
 #include <daemon/log.h>
 #include <inline/compiler.h>
@@ -28,12 +29,17 @@ was_run(const char *executable_path, const char *jail_path,
     /* fd2 is retained */
     dup2(control_fd, 3);
 
-    if (jail_path != NULL)
-        execl("/usr/lib/cm4all/jailcgi/bin/wrapper", "wrapper",
-              "-d", jail_path,
-              executable_path, NULL);
-    else
-        execl(executable_path, executable_path, NULL);
+    struct exec e;
+    exec_init(&e);
+
+    if (jail_path != NULL) {
+        exec_append(&e, "/usr/lib/cm4all/jailcgi/bin/wrapper");
+        exec_append(&e, "-d");
+        exec_append(&e, jail_path);
+    }
+
+    exec_append(&e, executable_path);
+    exec_do(&e);
 
     fprintf(stderr, "failed to execute %s: %s\n",
             executable_path, strerror(errno));

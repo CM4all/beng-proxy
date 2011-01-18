@@ -11,6 +11,7 @@
 #include "client-socket.h"
 #include "jail.h"
 #include "pevent.h"
+#include "exec.h"
 
 #include <daemon/log.h>
 
@@ -137,12 +138,17 @@ fcgi_run(const char *executable_path, const char *jail_path, int fd)
 
     clearenv();
 
-    if (jail_path != NULL)
-        execl("/usr/lib/cm4all/jailcgi/bin/wrapper", "wrapper",
-              "-d", jail_path,
-              executable_path, NULL);
-    else
-        execl(executable_path, executable_path, NULL);
+    struct exec e;
+    exec_init(&e);
+
+    if (jail_path != NULL) {
+        exec_append(&e, "/usr/lib/cm4all/jailcgi/bin/wrapper");
+        exec_append(&e, "-d");
+        exec_append(&e, jail_path);
+    }
+
+    exec_append(&e, executable_path);
+    exec_do(&e);
 
     daemon_log(1, "failed to execute %s: %s\n",
                executable_path, strerror(errno));
