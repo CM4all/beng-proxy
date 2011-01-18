@@ -6,6 +6,14 @@
 #include <stdlib.h>
 #include <event.h>
 
+static GError *
+catch_callback(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    fprintf(stderr, "%s\n", error->message);
+    g_error_free(error);
+    return NULL;
+}
+
 static void
 catch_close_request(struct http_server_request *request, void *ctx,
                     struct async_operation_ref *async_ref __attr_unused)
@@ -13,7 +21,8 @@ catch_close_request(struct http_server_request *request, void *ctx,
     (void)ctx;
 
     http_server_response(request, HTTP_STATUS_OK, NULL,
-                         istream_catch_new(request->pool, request->body));
+                         istream_catch_new(request->pool, request->body,
+                                           catch_callback, NULL));
     http_server_connection_close(request->connection);
 }
 

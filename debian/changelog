@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.3) unstable; urgency=low
 
-  * 
+  * istream-catch: log errors
 
  --
 

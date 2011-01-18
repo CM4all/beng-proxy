@@ -7,12 +7,17 @@
 
 #include "istream-internal.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 
 struct istream_catch {
     struct istream output;
     istream_t input;
     off_t available;
+
+    GError *(*callback)(GError *error, void *ctx);
+    void *callback_ctx;
 };
 
 static const char space[] = 
@@ -92,8 +97,15 @@ catch_input_abort(GError *error, void *ctx)
 {
     struct istream_catch *catch = ctx;
 
-    // XXX log this error?
-    g_error_free(error);
+    error = catch->callback(error, catch->callback_ctx);
+    if (error != NULL) {
+        /* forward error to our handler */
+        istream_deinit_abort(&catch->output, error);
+        return;
+    }
+
+    /* the error has been handled by the callback, and he has disposed
+       it */
 
     catch->input = NULL;
 
@@ -177,17 +189,21 @@ static const struct istream istream_catch = {
  */
 
 istream_t
-istream_catch_new(pool_t pool, istream_t input)
+istream_catch_new(pool_t pool, istream_t input,
+                  GError *(*callback)(GError *error, void *ctx), void *ctx)
 {
     struct istream_catch *catch = istream_new_macro(pool, catch);
 
     assert(input != NULL);
     assert(!istream_has_handler(input));
+    assert(callback != NULL);
 
     istream_assign_handler(&catch->input, input,
                            &catch_input_handler, catch,
                            0);
     catch->available = 0;
+    catch->callback = callback;
+    catch->callback_ctx = ctx;
 
     return istream_struct_cast(&catch->output);
 }

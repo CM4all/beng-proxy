@@ -835,6 +835,17 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     }
 }
 
+static GError *
+widget_catch_callback(GError *error, void *ctx)
+{
+    struct widget *widget = ctx;
+
+    daemon_log(3, "error from widget '%s': %s\n",
+               widget_path(widget), error->message);
+    g_error_free(error);
+    return NULL;
+}
+
 static istream_t
 embed_widget(struct processor *processor, struct processor_env *env,
              struct widget *widget)
@@ -874,7 +885,8 @@ embed_widget(struct processor *processor, struct processor_env *env,
 
         istream = embed_inline_widget(processor->pool, env, widget);
         if (istream != NULL)
-            istream = istream_catch_new(processor->pool, istream);
+            istream = istream_catch_new(processor->pool, istream,
+                                        widget_catch_callback, widget);
 
         return istream;
     }

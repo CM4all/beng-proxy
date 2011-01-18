@@ -37,7 +37,8 @@ void
 istream_inject_fault(istream_t i_fault, GError *error);
 
 istream_t
-istream_catch_new(pool_t pool, istream_t input);
+istream_catch_new(pool_t pool, istream_t input,
+                  GError *(*callback)(GError *error, void *ctx), void *ctx);
 
 istream_t
 istream_later_new(pool_t pool, istream_t input);
