@@ -56,6 +56,7 @@ struct resource_address {
             const char *interpreter;
             const char *action;
 
+            const char *uri;
             const char *script_name, *path_info, *query_string;
             const char *document_root;
         } cgi;
@@ -70,6 +71,9 @@ resource_address_cgi_uri(pool_t pool, const struct resource_address *address)
     assert(address->type == RESOURCE_ADDRESS_CGI ||
            address->type == RESOURCE_ADDRESS_WAS ||
            address->type == RESOURCE_ADDRESS_FASTCGI);
+
+    if (address->u.cgi.uri != NULL)
+        return address->u.cgi.uri;
 
     p = address->u.cgi.script_name;
     if (p == NULL)

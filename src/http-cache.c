@@ -146,7 +146,10 @@ http_cache_cgi_key(pool_t pool, const struct resource_address *address)
     g_string_append(buffer, address->u.cgi.path);
     g_string_append_c(buffer, ' ');
 
-    if (address->u.cgi.script_name != NULL) {
+    if (address->u.cgi.uri != NULL) {
+        g_string_append(buffer, "uri=");
+        g_string_append(buffer, address->u.cgi.uri);
+    } else if (address->u.cgi.script_name != NULL) {
         g_string_append(buffer, "script_name=");
         g_string_append(buffer, address->u.cgi.script_name);
     }
@@ -156,7 +159,7 @@ http_cache_cgi_key(pool_t pool, const struct resource_address *address)
         g_string_append_c(buffer, ' ');
     }
 
-    if (address->u.cgi.path_info != NULL) {
+    if (address->u.cgi.uri == NULL && address->u.cgi.path_info != NULL) {
         g_string_append(buffer, "path_info=");
         g_string_append(buffer, address->u.cgi.path_info);
     }

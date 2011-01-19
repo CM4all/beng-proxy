@@ -118,6 +118,18 @@ proxy_handler(struct request *request2)
                                                             address,
                                                             request->uri);
 
+    if ((address->type == RESOURCE_ADDRESS_CGI ||
+         address->type == RESOURCE_ADDRESS_WAS ||
+         address->type == RESOURCE_ADDRESS_FASTCGI) &&
+        address->u.cgi.uri == NULL) {
+        /* pass the "real" request URI to the CGI */
+        struct resource_address *copy = resource_address_dup(request->pool,
+                                                             address);
+        copy->u.cgi.uri = tr->uri != NULL
+            ? tr->uri : request->uri;
+        address = copy;
+    }
+
 #ifdef SPLICE
     if (forward.body != NULL)
         forward.body = istream_pipe_new(request->pool, forward.body,
