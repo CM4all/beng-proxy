@@ -121,12 +121,19 @@ proxy_handler(struct request *request2)
     if ((address->type == RESOURCE_ADDRESS_CGI ||
          address->type == RESOURCE_ADDRESS_WAS ||
          address->type == RESOURCE_ADDRESS_FASTCGI) &&
-        address->u.cgi.uri == NULL) {
-        /* pass the "real" request URI to the CGI */
+        (address->u.cgi.uri == NULL ||
+         (address->u.cgi.site_id == NULL && tr->site != NULL))) {
         struct resource_address *copy = resource_address_dup(request->pool,
                                                              address);
-        copy->u.cgi.uri = tr->uri != NULL
-            ? tr->uri : request->uri;
+
+        /* pass the "real" request URI to the CGI */
+        if (copy->u.cgi.uri == NULL)
+            copy->u.cgi.uri = tr->uri != NULL
+                ? tr->uri : request->uri;
+
+        if (copy->u.cgi.site_id == NULL)
+            copy->u.cgi.site_id = tr->site;
+
         address = copy;
     }
 

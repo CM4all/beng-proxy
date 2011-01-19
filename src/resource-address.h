@@ -53,6 +53,12 @@ struct resource_address {
             unsigned num_args;
 
             bool jail;
+            const char *account_id;
+            const char *site_id;
+            const char *user_name;
+            const char *host_name;
+            const char *home_directory;
+
             const char *interpreter;
             const char *action;
 

@@ -669,7 +669,12 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_SITE:
-        client->response.site = payload;
+        if (client->resource_address == NULL)
+            client->response.site = payload;
+        else if (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
+                 client->resource_address->type == RESOURCE_ADDRESS_WAS ||
+                 client->resource_address->type == RESOURCE_ADDRESS_FASTCGI)
+            client->resource_address->u.cgi.site_id = payload;
         break;
 
     case TRANSLATE_CONTENT_TYPE:

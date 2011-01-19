@@ -53,6 +53,16 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         dest->u.cgi.num_args = src->u.cgi.num_args;
 
         dest->u.cgi.jail = src->u.cgi.jail;
+        dest->u.cgi.account_id =
+            p_strdup_checked(pool, src->u.cgi.account_id);
+        dest->u.cgi.site_id =
+            p_strdup_checked(pool, src->u.cgi.site_id);
+        dest->u.cgi.user_name =
+            p_strdup_checked(pool, src->u.cgi.user_name);
+        dest->u.cgi.host_name =
+            p_strdup_checked(pool, src->u.cgi.host_name);
+        dest->u.cgi.home_directory =
+            p_strdup_checked(pool, src->u.cgi.home_directory);
         dest->u.cgi.interpreter =
             p_strdup_checked(pool, src->u.cgi.interpreter);
         dest->u.cgi.action = p_strdup_checked(pool, src->u.cgi.action);
