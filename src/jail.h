@@ -11,6 +11,8 @@
 
 #include <stdbool.h>
 
+struct exec;
+
 struct jail_config {
     const char *root_dir;
     const char *jailed_home;
@@ -34,5 +36,8 @@ jail_config_load(struct jail_config *config, const char *path, pool_t pool);
 const char *
 jail_translate_path(const struct jail_config *config, const char *path,
                     const char *document_root, pool_t pool);
+
+void
+jail_wrapper_insert(struct exec *e, const char *document_root);
 
 #endif

@@ -6,6 +6,7 @@
 
 #include "jail.h"
 #include "strutil.h"
+#include "exec.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -95,4 +96,14 @@ jail_translate_path(const struct jail_config *config, const char *path,
     if (translated == NULL)
         translated = jail_try_translate_path(path, config->root_dir, "", pool);
     return translated;
+}
+
+void
+jail_wrapper_insert(struct exec *e, const char *document_root)
+{
+    assert(document_root != NULL);
+
+    exec_append(e, "/usr/lib/cm4all/jailcgi/bin/wrapper");
+    exec_append(e, "-d");
+    exec_append(e, document_root);
 }

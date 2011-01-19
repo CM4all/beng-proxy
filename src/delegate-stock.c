@@ -11,6 +11,7 @@
 #include "fd_util.h"
 #include "pevent.h"
 #include "exec.h"
+#include "jail.h"
 
 #include <daemon/log.h>
 
@@ -139,11 +140,8 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
         struct exec e;
         exec_init(&e);
 
-        if (jail) {
-            exec_append(&e, "/usr/lib/cm4all/jailcgi/bin/wrapper");
-            exec_append(&e, "-d");
-            exec_append(&e, document_root);
-        }
+        if (jail)
+            jail_wrapper_insert(&e, document_root);
 
         exec_append(&e, helper);
         exec_do(&e);

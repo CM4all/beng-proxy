@@ -141,11 +141,8 @@ fcgi_run(const char *executable_path, const char *jail_path, int fd)
     struct exec e;
     exec_init(&e);
 
-    if (jail_path != NULL) {
-        exec_append(&e, "/usr/lib/cm4all/jailcgi/bin/wrapper");
-        exec_append(&e, "-d");
-        exec_append(&e, jail_path);
-    }
+    if (jail_path != NULL)
+        jail_wrapper_insert(&e, jail_path);
 
     exec_append(&e, executable_path);
     exec_do(&e);
