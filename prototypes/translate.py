@@ -174,6 +174,13 @@ class Translation(Protocol):
         elif uri[:11] == '/jail-slow/':
             # execute PHP as CGI, not FastCGI
             self._handle_local_file('/home/www' + uri[10:], response, jail=True, fastcgi=False)
+        elif uri[:11] == '/jail-home/':
+            # execute PHP with DOCUMENT_ROOT below HOME
+            response.packet(TRANSLATE_DOCUMENT_ROOT, '/var/www/htdocs')
+            response.packet(TRANSLATE_FASTCGI, '/var/www/htdocs' + uri[10:])
+            response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi5')
+            response.packet(TRANSLATE_JAILCGI)
+            response.packet(TRANSLATE_HOME, '/var/www')
         elif uri[:6] == '/demo/':
             self._handle_local_file(demo_path + uri[5:], response)
         elif uri[:6] == '/base/':
