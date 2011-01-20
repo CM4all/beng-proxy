@@ -121,9 +121,7 @@ proxy_handler(struct request *request2)
     if ((address->type == RESOURCE_ADDRESS_CGI ||
          address->type == RESOURCE_ADDRESS_WAS ||
          address->type == RESOURCE_ADDRESS_FASTCGI) &&
-        (address->u.cgi.uri == NULL ||
-         (address->u.cgi.document_root == NULL && tr->document_root != NULL) ||
-         (address->u.cgi.jail.site_id == NULL && tr->site != NULL))) {
+        address->u.cgi.uri == NULL) {
         struct resource_address *copy = resource_address_dup(request->pool,
                                                              address);
 
@@ -131,12 +129,6 @@ proxy_handler(struct request *request2)
         if (copy->u.cgi.uri == NULL)
             copy->u.cgi.uri = tr->uri != NULL
                 ? tr->uri : request->uri;
-
-        if (copy->u.cgi.document_root == NULL)
-            copy->u.cgi.document_root = tr->document_root;
-
-        if (copy->u.cgi.jail.site_id == NULL)
-            copy->u.cgi.jail.site_id = tr->site;
 
         address = copy;
     }

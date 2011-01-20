@@ -507,6 +507,24 @@ parse_header(pool_t pool, struct translate_response *response,
 }
 
 /**
+ * Final fixups for the response before it is passed to the handler.
+ */
+static void
+translate_response_finish(struct translate_response *response)
+{
+    if (response->address.type == RESOURCE_ADDRESS_CGI ||
+        response->address.type == RESOURCE_ADDRESS_WAS ||
+        response->address.type == RESOURCE_ADDRESS_FASTCGI) {
+        if (response->address.u.cgi.document_root == NULL)
+            response->address.u.cgi.document_root = response->document_root;
+
+        if (response->address.u.cgi.jail.enabled &&
+            response->address.u.cgi.jail.site_id == NULL)
+            response->address.u.cgi.jail.site_id = response->site;
+    }
+}
+
+/**
  * Returns false if the client has been closed.
  */
 static bool
@@ -539,6 +557,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_END:
         stopwatch_event(client->stopwatch, "end");
+        translate_response_finish(&client->response);
         async_operation_finished(&client->async);
         client->handler->response(&client->response, client->handler_ctx);
         translate_client_release(client, true);
