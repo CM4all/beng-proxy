@@ -480,8 +480,12 @@ fcgi_stock_translate_path(const struct stock_item *item,
            no translation needed */
         return path;
 
+    const char *home_directory = child->home_directory != NULL
+        ? child->home_directory
+        : child->jail_path;
+
     const char *jailed = jail_translate_path(&child->jail_config, path,
-                                             child->jail_path, pool);
+                                             home_directory, pool);
     return jailed != NULL ? jailed : path;
 }
 
