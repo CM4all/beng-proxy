@@ -13,6 +13,7 @@
 #include "tcp-stock.h"
 #include "stock.h"
 #include "abort-close.h"
+#include "jail.h"
 
 #include <daemon/log.h>
 
@@ -123,16 +124,14 @@ static const struct stock_handler fcgi_stock_handler = {
  */
 
 void
-fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
+fcgi_request(pool_t pool, struct hstock *fcgi_stock,
+             const struct jail_params *jail,
              const char *action,
              const char *path,
              http_method_t method, const char *uri,
              const char *script_name, const char *path_info,
              const char *query_string,
              const char *document_root,
-             const char *account_id, const char *site_id,
-             const char *user_name, const char *host_name,
-             const char *home_directory,
              struct strmap *headers, istream_t body,
              const char *const params[], unsigned num_params,
              const struct http_response_handler *handler,
@@ -141,7 +140,7 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
 {
     struct fcgi_request *request;
 
-    if (jail && document_root == NULL) {
+    if (jail != NULL && jail->enabled && document_root == NULL) {
         GError *error =
             g_error_new_literal(fcgi_request_quark(), 0,
                                 "No document root");
@@ -176,10 +175,8 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock, bool jail,
     } else
         request->body = NULL;
 
-    fcgi_stock_get(fcgi_stock, pool,
-                   action, jail ? document_root : NULL,
-                   account_id, site_id, user_name, host_name,
-                   home_directory,
+    fcgi_stock_get(fcgi_stock, pool, jail,
+                   action, document_root,
                    &fcgi_stock_handler, request,
                    async_ref);
 }

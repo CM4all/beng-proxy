@@ -87,6 +87,19 @@ jail_try_translate_path(const char *path,
         return NULL;
 }
 
+void
+jail_params_copy(pool_t pool, struct jail_params *dest,
+                 const struct jail_params *src)
+{
+    dest->enabled = src->enabled;
+
+    dest->account_id = p_strdup_checked(pool, src->account_id);
+    dest->site_id = p_strdup_checked(pool, src->site_id);
+    dest->user_name = p_strdup_checked(pool, src->user_name);
+    dest->host_name = p_strdup_checked(pool, src->host_name);
+    dest->home_directory = p_strdup_checked(pool, src->home_directory);
+}
+
 const char *
 jail_translate_path(const struct jail_config *config, const char *path,
                     const char *document_root, pool_t pool)
@@ -100,37 +113,39 @@ jail_translate_path(const struct jail_config *config, const char *path,
 }
 
 void
-jail_wrapper_insert(struct exec *e, const char *document_root,
-                    const char *account_id, const char *site_id,
-                    const char *user_name, const char *host_name,
-                    const char *home_directory)
+jail_wrapper_insert(struct exec *e, const struct jail_params *params,
+                    const char *document_root)
 {
-    assert(document_root != NULL);
+    if (params == NULL || !params->enabled)
+        return;
 
     exec_append(e, "/usr/lib/cm4all/jailcgi/bin/wrapper");
-    exec_append(e, "-d");
-    exec_append(e, document_root);
 
-    if (account_id != NULL) {
+    if (document_root != NULL) {
+        exec_append(e, "-d");
+        exec_append(e, document_root);
+    }
+
+    if (params->account_id != NULL) {
         exec_append(e, "--account");
-        exec_append(e, account_id);
+        exec_append(e, params->account_id);
     }
 
-    if (site_id != NULL) {
+    if (params->site_id != NULL) {
         exec_append(e, "--site");
-        exec_append(e, site_id);
+        exec_append(e, params->site_id);
     }
 
-    if (user_name != NULL) {
+    if (params->user_name != NULL) {
         exec_append(e, "--name");
-        exec_append(e, user_name);
+        exec_append(e, params->user_name);
     }
 
-    if (host_name != NULL)
-        setenv("JAILCGI_SERVERNAME", host_name, true);
+    if (params->host_name != NULL)
+        setenv("JAILCGI_SERVERNAME", params->host_name, true);
 
-    if (home_directory != NULL) {
+    if (params->home_directory != NULL) {
         exec_append(e, "--home");
-        exec_append(e, home_directory);
+        exec_append(e, params->home_directory);
     }
 }

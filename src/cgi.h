@@ -14,9 +14,10 @@
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
+struct jail_params;
 
 void
-cgi_new(pool_t pool, bool jail,
+cgi_new(pool_t pool, const struct jail_params *jail,
         const char *interpreter, const char *action,
         const char *path,
         http_method_t method, const char *uri,

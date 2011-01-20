@@ -28,7 +28,7 @@ struct delegate_info {
 
     const char *document_root;
 
-    bool jail;
+    const struct jail_params *jail;
 };
 
 struct delegate_process {
@@ -98,7 +98,7 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     int ret, fds[2];
     pid_t pid;
     const char *helper, *document_root;
-    bool jail;
+    const struct jail_params *jail;
 
     if (_info != NULL) {
         struct delegate_info *info = _info;
@@ -108,7 +108,7 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     } else {
         helper = uri;
         document_root = NULL;
-        jail = false;
+        jail = NULL;
     }
 
     ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds);
@@ -139,11 +139,7 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
 
         struct exec e;
         exec_init(&e);
-
-        if (jail)
-            jail_wrapper_insert(&e, document_root,
-                                NULL, NULL, NULL, NULL, NULL);
-
+        jail_wrapper_insert(&e, jail, document_root);
         exec_append(&e, helper);
         exec_do(&e);
 
@@ -221,7 +217,7 @@ delegate_stock_new(pool_t pool)
 void
 delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
                    const char *helper, const char *document_root,
-                   bool jail,
+                   const struct jail_params *jail,
                    const struct stock_handler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
@@ -230,7 +226,7 @@ delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
 
     if (document_root != NULL) {
         uri = p_strcat(pool, helper, "|", document_root,
-                       jail ? "|jail" : NULL, NULL);
+                       jail != NULL && jail->enabled ? "|jail" : NULL, NULL);
         info = p_malloc(pool, sizeof(*info));
         info->helper = helper;
         info->document_root = document_root;

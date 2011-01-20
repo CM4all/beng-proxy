@@ -22,7 +22,8 @@
 
 __attr_noreturn
 static void
-was_run(const char *executable_path, const char *jail_path,
+was_run(const char *executable_path,
+        const struct jail_params *jail, const char *document_root,
         int control_fd, int input_fd, int output_fd)
 {
     dup2(input_fd, 0);
@@ -32,11 +33,7 @@ was_run(const char *executable_path, const char *jail_path,
 
     struct exec e;
     exec_init(&e);
-
-    if (jail_path != NULL)
-        jail_wrapper_insert(&e, jail_path,
-                            NULL, NULL, NULL, NULL, NULL);
-
+    jail_wrapper_insert(&e, jail, document_root);
     exec_append(&e, executable_path);
     exec_do(&e);
 
@@ -47,7 +44,8 @@ was_run(const char *executable_path, const char *jail_path,
 
 bool
 was_launch(struct was_process *process,
-           const char *executable_path, const char *jail_path,
+           const char *executable_path,
+           const struct jail_params *jail, const char *document_root,
            GError **error_r)
 {
     int control_fds[2], input_fds[2], output_fds[2];
@@ -90,7 +88,7 @@ was_launch(struct was_process *process,
     }
 
     if (pid == 0)
-        was_run(executable_path, jail_path,
+        was_run(executable_path, jail, document_root,
                 control_fds[1], output_fds[0], input_fds[1]);
 
     close(control_fds[1]);

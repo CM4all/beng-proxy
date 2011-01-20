@@ -15,7 +15,8 @@ was_stock_new(pool_t pool, unsigned limit);
 
 void
 was_stock_get(struct hstock *hstock, pool_t pool,
-              const char *executable_path, const char *jail_path,
+              const struct jail_params *jail,
+              const char *executable_path, const char *document_root,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 

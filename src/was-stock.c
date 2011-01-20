@@ -30,7 +30,8 @@
 struct was_child_params {
     const char *executable_path;
 
-    const char *jail_path;
+    const struct jail_params *jail;
+    const char *document_root;
 };
 
 struct was_child {
@@ -38,7 +39,9 @@ struct was_child {
 
     const char *key;
 
-    const char *jail_path;
+    struct jail_params jail_params;
+    const char *document_root;
+
     struct jail_config jail_config;
 
     struct was_process process;
@@ -48,10 +51,10 @@ struct was_child {
 static const char *
 was_stock_key(pool_t pool, const struct was_child_params *params)
 {
-    return params->jail_path == NULL
+    return params->jail == NULL || !params->jail->enabled
         ? params->executable_path
         : p_strcat(pool, params->executable_path, "|",
-                   params->jail_path, NULL);
+                   params->document_root, NULL);
 }
 
 static void
@@ -121,8 +124,10 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
 
     child->key = p_strdup(pool, key);
 
-    if (params->jail_path != NULL) {
-        child->jail_path = p_strdup(pool, params->jail_path);
+    if (params->jail != NULL && params->jail->enabled) {
+        jail_params_copy(pool, &child->jail_params, params->jail);
+        child->document_root = p_strdup_checked(pool, params->document_root);
+
         if (!jail_config_load(&child->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {
             GError *error = g_error_new(was_quark(), 0,
@@ -131,11 +136,12 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
             return;
         }
     } else
-        child->jail_path = NULL;
+        child->jail_params.enabled = false;
 
     GError *error = NULL;
     if (!was_launch(&child->process, params->executable_path,
-                    params->jail_path, &error)) {
+                    params->jail, params->document_root,
+                    &error)) {
         stock_item_failed(item, error);
         return;
     }
@@ -212,13 +218,15 @@ was_stock_new(pool_t pool, unsigned limit)
 
 void
 was_stock_get(struct hstock *hstock, pool_t pool,
-               const char *executable_path, const char *jail_path,
+              const struct jail_params *jail,
+              const char *executable_path, const char *document_root,
               const struct stock_handler *handler, void *handler_ctx,
-               struct async_operation_ref *async_ref)
+              struct async_operation_ref *async_ref)
 {
     struct was_child_params *params = p_malloc(pool, sizeof(*params));
     params->executable_path = executable_path;
-    params->jail_path = jail_path;
+    params->jail = jail;
+    params->document_root = document_root;
 
     hstock_get(hstock, pool, was_stock_key(pool, params), params,
                handler, handler_ctx, async_ref);
@@ -238,13 +246,21 @@ was_stock_translate_path(const struct stock_item *item,
 {
     const struct was_child *child = (const struct was_child *)item;
 
-    if (child->jail_path == NULL)
+    if (!child->jail_params.enabled)
         /* no JailCGI - application's namespace is the same as ours,
            no translation needed */
         return path;
 
+    const char *home_directory;
+    if (child->jail_params.home_directory != NULL)
+        home_directory = child->jail_params.home_directory;
+    else if (child->document_root != NULL)
+        home_directory = child->document_root;
+    else
+        return path;
+
     const char *jailed = jail_translate_path(&child->jail_config, path,
-                                             child->jail_path, pool);
+                                             home_directory, pool);
     return jailed != NULL ? jailed : path;
 }
 

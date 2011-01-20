@@ -10,6 +10,7 @@
 
 #include "pool.h"
 #include "uri-address.h"
+#include "jail.h"
 
 #include <assert.h>
 
@@ -41,7 +42,7 @@ struct resource_address {
             /**
              * Should the delegate be jailed?
              */
-            bool jail;
+            struct jail_params jail;
         } local;
 
         struct uri_with_address *http;
@@ -52,12 +53,7 @@ struct resource_address {
             const char *args[32];
             unsigned num_args;
 
-            bool jail;
-            const char *account_id;
-            const char *site_id;
-            const char *user_name;
-            const char *host_name;
-            const char *home_directory;
+            struct jail_params jail;
 
             const char *interpreter;
             const char *action;

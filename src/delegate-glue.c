@@ -82,7 +82,8 @@ static const struct stock_handler delegate_stock_handler = {
 
 void
 delegate_stock_open(struct hstock *stock, pool_t pool,
-                    const char *helper, const char *document_root, bool jail,
+                    const char *helper, const char *document_root,
+                    const struct jail_params *jail,
                     const char *path,
                     delegate_callback_t callback, void *ctx,
                     struct async_operation_ref *async_ref)

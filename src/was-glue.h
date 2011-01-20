@@ -16,12 +16,14 @@ struct hstock;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
+struct jail_params;
 
 /**
  * @param jail run the WAS application with JailCGI?
  */
 void
-was_request(pool_t pool, struct hstock *was_stock, bool jail,
+was_request(pool_t pool, struct hstock *was_stock,
+            const struct jail_params *jail,
             const char *action,
             const char *path,
             http_method_t method, const char *uri,

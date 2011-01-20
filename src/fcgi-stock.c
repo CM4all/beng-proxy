@@ -30,12 +30,8 @@
 struct fcgi_child_params {
     const char *executable_path;
 
-    const char *jail_path;
-    const char *account_id;
-    const char *site_id;
-    const char *user_name;
-    const char *host_name;
-    const char *home_directory;
+    const struct jail_params *jail;
+    const char *document_root;
 };
 
 struct fcgi_child {
@@ -43,12 +39,8 @@ struct fcgi_child {
 
     const char *key;
 
-    const char *jail_path;
-    const char *account_id;
-    const char *site_id;
-    const char *user_name;
-    const char *host_name;
-    const char *home_directory;
+    struct jail_params jail_params;
+    const char *document_root;
 
     struct jail_config jail_config;
 
@@ -66,10 +58,10 @@ struct fcgi_child {
 static const char *
 fcgi_stock_key(pool_t pool, const struct fcgi_child_params *params)
 {
-    return params->jail_path == NULL
+    return params->jail == NULL || !params->jail->enabled
         ? params->executable_path
         : p_strcat(pool, params->executable_path, "|",
-                   params->jail_path, NULL);
+                   params->document_root, NULL);
 }
 
 static void
@@ -133,10 +125,8 @@ fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
 
 __attr_noreturn
 static void
-fcgi_run(const char *executable_path, const char *jail_path,
-         const char *account_id, const char *site_id,
-         const char *user_name, const char *host_name,
-         const char *home_directory,
+fcgi_run(const struct jail_params *jail, const char *document_root,
+         const char *executable_path,
          int fd)
 {
     dup2(fd, 0);
@@ -155,12 +145,7 @@ fcgi_run(const char *executable_path, const char *jail_path,
 
     struct exec e;
     exec_init(&e);
-
-    if (jail_path != NULL)
-        jail_wrapper_insert(&e, jail_path,
-                            account_id, site_id, user_name, host_name,
-                            home_directory);
-
+    jail_wrapper_insert(&e, jail, document_root);
     exec_append(&e, executable_path);
     exec_do(&e);
 
@@ -170,10 +155,8 @@ fcgi_run(const char *executable_path, const char *jail_path,
 }
 
 static pid_t
-fcgi_spawn_child(const char *executable_path, const char *jail_path,
-                 const char *account_id, const char *site_id,
-                 const char *user_name, const char *host_name,
-                 const char *home_directory,
+fcgi_spawn_child(const struct jail_params *jail, const char *document_root,
+                 const char *executable_path,
                  int fd,
                  GError **error_r)
 {
@@ -185,9 +168,8 @@ fcgi_spawn_child(const char *executable_path, const char *jail_path,
     }
 
     if (pid == 0)
-        fcgi_run(executable_path, jail_path,
-                 account_id, site_id, user_name, host_name,
-                 home_directory,
+        fcgi_run(jail, document_root,
+                 executable_path,
                  fd);
 
     return pid;
@@ -317,8 +299,10 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     child->key = p_strdup(pool, key);
     fcgi_child_socket_path(&child->address, key);
 
-    if (params->jail_path != NULL) {
-        child->jail_path = p_strdup(pool, params->jail_path);
+    if (params->jail != NULL && params->jail->enabled) {
+        jail_params_copy(pool, &child->jail_params, params->jail);
+        child->document_root = p_strdup_checked(pool, params->document_root);
+
         if (!jail_config_load(&child->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {
             GError *error = g_error_new(fcgi_quark(), 0,
@@ -326,14 +310,8 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
             stock_item_failed(item, error);
             return;
         }
-
-        child->account_id = p_strdup_checked(pool, params->account_id);
-        child->site_id = p_strdup_checked(pool, params->site_id);
-        child->user_name = p_strdup_checked(pool, params->user_name);
-        child->host_name = p_strdup_checked(pool, params->host_name);
-        child->home_directory = p_strdup_checked(pool, params->home_directory);
     } else
-        child->jail_path = NULL;
+        child->jail_params.enabled = false;
 
     GError *error = NULL;
     int fd = fcgi_create_socket(child, &error);
@@ -342,11 +320,8 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
         return;
     }
 
-    child->pid = fcgi_spawn_child(params->executable_path,
-                                  params->jail_path,
-                                  params->account_id, params->site_id,
-                                  params->user_name, params->host_name,
-                                  params->home_directory,
+    child->pid = fcgi_spawn_child(params->jail, params->document_root,
+                                  params->executable_path,
                                   fd, &error);
     close(fd);
     if (child->pid < 0) {
@@ -431,21 +406,15 @@ fcgi_stock_new(pool_t pool, unsigned limit)
 
 void
 fcgi_stock_get(struct hstock *hstock, pool_t pool,
-               const char *executable_path, const char *jail_path,
-               const char *account_id, const char *site_id,
-               const char *user_name, const char *host_name,
-               const char *home_directory,
+               const struct jail_params *jail,
+               const char *executable_path, const char *document_root,
                const struct stock_handler *handler, void *handler_ctx,
                struct async_operation_ref *async_ref)
 {
     struct fcgi_child_params *params = p_malloc(pool, sizeof(*params));
     params->executable_path = executable_path;
-    params->jail_path = jail_path;
-    params->account_id = account_id;
-    params->site_id = site_id;
-    params->user_name = user_name;
-    params->host_name = host_name;
-    params->home_directory = home_directory;
+    params->jail = jail;
+    params->document_root = document_root;
 
     hstock_get(hstock, pool, fcgi_stock_key(pool, params), params,
                handler, handler_ctx, async_ref);
@@ -475,14 +444,18 @@ fcgi_stock_translate_path(const struct stock_item *item,
 {
     const struct fcgi_child *child = (const struct fcgi_child *)item;
 
-    if (child->jail_path == NULL)
+    if (!child->jail_params.enabled)
         /* no JailCGI - application's namespace is the same as ours,
            no translation needed */
         return path;
 
-    const char *home_directory = child->home_directory != NULL
-        ? child->home_directory
-        : child->jail_path;
+    const char *home_directory;
+    if (child->jail_params.home_directory != NULL)
+        home_directory = child->jail_params.home_directory;
+    else if (child->document_root != NULL)
+        home_directory = child->document_root;
+    else
+        return path;
 
     const char *jailed = jail_translate_path(&child->jail_config, path,
                                              home_directory, pool);

@@ -14,6 +14,7 @@
 #include "tcp-stock.h"
 #include "stock.h"
 #include "abort-close.h"
+#include "jail.h"
 
 #include <daemon/log.h>
 
@@ -109,7 +110,8 @@ static const struct stock_handler was_stock_handler = {
  */
 
 void
-was_request(pool_t pool, struct hstock *was_stock, bool jail,
+was_request(pool_t pool, struct hstock *was_stock,
+            const struct jail_params *jail,
             const char *action,
             const char *path,
             http_method_t method, const char *uri,
@@ -124,7 +126,7 @@ was_request(pool_t pool, struct hstock *was_stock, bool jail,
 {
     struct was_request *request;
 
-    if (jail && document_root == NULL) {
+    if (jail != NULL && jail->enabled && document_root == NULL) {
         GError *error = g_error_new_literal(was_quark(), 0,
                                             "no document root");
         http_response_handler_direct_abort(handler, handler_ctx, error);
@@ -157,7 +159,8 @@ was_request(pool_t pool, struct hstock *was_stock, bool jail,
         request->body = NULL;
 
     was_stock_get(was_stock, pool,
-                  action, jail ? document_root : NULL,
+                  jail,
+                  action, document_root,
                   &was_stock_handler, request,
                   async_ref);
 }

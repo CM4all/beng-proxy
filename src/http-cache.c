@@ -122,7 +122,7 @@ http_cache_cgi_key(pool_t pool, const struct resource_address *address)
            address->type == RESOURCE_ADDRESS_FASTCGI);
 
     GString *buffer = g_string_sized_new(2048);
-    if (address->u.cgi.jail)
+    if (address->u.cgi.jail.enabled)
         g_string_append(buffer, "jail:");
 
     if (address->u.cgi.document_root != NULL) {

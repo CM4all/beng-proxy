@@ -115,7 +115,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
             delegate_stock_request(rl->delegate_stock, pool,
                                    address->u.local.delegate,
                                    address->u.local.document_root,
-                                   address->u.local.jail,
+                                   &address->u.local.jail,
                                    address->u.local.path,
                                    address->u.local.content_type,
                                    handler, handler_ctx,
@@ -136,7 +136,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
         return;
 
     case RESOURCE_ADDRESS_CGI:
-        cgi_new(pool, address->u.cgi.jail,
+        cgi_new(pool, &address->u.cgi.jail,
                 address->u.cgi.interpreter, address->u.cgi.action,
                 address->u.cgi.path,
                 method, resource_address_cgi_uri(pool, address),
@@ -149,7 +149,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
         return;
 
     case RESOURCE_ADDRESS_FASTCGI:
-        fcgi_request(pool, rl->fcgi_stock, address->u.cgi.jail,
+        fcgi_request(pool, rl->fcgi_stock, &address->u.cgi.jail,
                      address->u.cgi.action,
                      address->u.cgi.path,
                      method, resource_address_cgi_uri(pool, address),
@@ -157,18 +157,13 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
                      address->u.cgi.path_info,
                      address->u.cgi.query_string,
                      address->u.cgi.document_root,
-                     address->u.cgi.account_id,
-                     address->u.cgi.site_id,
-                     address->u.cgi.user_name,
-                     address->u.cgi.host_name,
-                     address->u.cgi.home_directory,
                      headers, body,
                      address->u.cgi.args, address->u.cgi.num_args,
                      handler, handler_ctx, async_ref);
         return;
 
     case RESOURCE_ADDRESS_WAS:
-        was_request(pool, rl->was_stock, address->u.cgi.jail,
+        was_request(pool, rl->was_stock, &address->u.cgi.jail,
                     address->u.cgi.action,
                     address->u.cgi.path,
                     method, resource_address_cgi_uri(pool, address),

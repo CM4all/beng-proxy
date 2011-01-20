@@ -14,6 +14,7 @@
 #include "strutil.h"
 #include "abort-flag.h"
 #include "stopwatch.h"
+#include "jail.h"
 
 #include <daemon/log.h>
 
@@ -420,7 +421,8 @@ static const struct async_operation_class cgi_async_operation = {
  */
 
 static void __attr_noreturn
-cgi_run(bool jail, const char *interpreter, const char *action,
+cgi_run(const struct jail_params *jail,
+        const char *interpreter, const char *action,
         const char *path,
         http_method_t method, const char *uri,
         const char *script_name, const char *path_info,
@@ -463,7 +465,7 @@ cgi_run(bool jail, const char *interpreter, const char *action,
     setenv("DOCUMENT_ROOT", document_root, 1);
     setenv("SERVER_SOFTWARE", "beng-proxy v" VERSION, 1);
 
-    if (jail) {
+    if (jail != NULL && jail->enabled) {
         setenv("JAILCGI_FILENAME", path, 1);
         path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
 
@@ -521,7 +523,7 @@ cgi_child_callback(int status, void *ctx __attr_unused)
 }
 
 void
-cgi_new(pool_t pool, bool jail,
+cgi_new(pool_t pool, const struct jail_params *jail,
         const char *interpreter, const char *action,
         const char *path,
         http_method_t method, const char *uri,

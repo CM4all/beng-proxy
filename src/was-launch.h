@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
+struct jail_params;
+
 struct was_process {
     pid_t pid;
     int control_fd, input_fd, output_fd;
@@ -18,7 +20,8 @@ struct was_process {
 
 bool
 was_launch(struct was_process *process,
-           const char *executable_path, const char *jail_path,
+           const char *executable_path,
+           const struct jail_params *jail, const char *document_root,
            GError **error_r);
 
 #endif
