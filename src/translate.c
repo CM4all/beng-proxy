@@ -906,6 +906,20 @@ translate_handle_packet(struct translate_client *client,
 
         break;
 
+    case TRANSLATE_HOME:
+        if (client->resource_address == NULL ||
+            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
+             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
+            !client->resource_address->u.cgi.jail ||
+            client->resource_address->u.cgi.home_directory != NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_HOME packet");
+            return false;
+        }
+
+        client->resource_address->u.cgi.home_directory = payload;
+        break;
+
     case TRANSLATE_INTERPRETER:
         if (client->resource_address == NULL ||
             (client->resource_address->type != RESOURCE_ADDRESS_CGI &&

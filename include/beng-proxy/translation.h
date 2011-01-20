@@ -132,6 +132,12 @@ enum beng_translation_command {
      * Launch a WAS application to handle the request.
      */
     TRANSLATE_WAS = 66,
+
+    /**
+     * The absolute location of the home directory of the site owner
+     * (hosting account).
+     */
+    TRANSLATE_HOME = 67,
 };
 
 struct beng_translation_header {
