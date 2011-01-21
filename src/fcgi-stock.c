@@ -411,6 +411,14 @@ fcgi_stock_get(struct hstock *hstock, pool_t pool,
                const struct stock_handler *handler, void *handler_ctx,
                struct async_operation_ref *async_ref)
 {
+    if (jail != NULL && jail->enabled && jail->home_directory == NULL) {
+        GError *error =
+            g_error_new_literal(fcgi_quark(), 0,
+                                "No home directory for jailed FastCGI");
+        handler->error(error, handler_ctx);
+        return;
+    }
+
     struct fcgi_child_params *params = p_malloc(pool, sizeof(*params));
     params->executable_path = executable_path;
     params->jail = jail;
@@ -444,8 +452,7 @@ fcgi_stock_translate_path(const struct stock_item *item,
 {
     const struct fcgi_child *child = (const struct fcgi_child *)item;
 
-    if (!child->jail_params.enabled ||
-        child->jail_params.home_directory == NULL)
+    if (!child->jail_params.enabled)
         /* no JailCGI - application's namespace is the same as ours,
            no translation needed */
         return path;
