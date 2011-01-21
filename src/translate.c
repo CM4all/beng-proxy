@@ -515,6 +515,9 @@ translate_response_finish(struct translate_response *response)
     if (response->address.type == RESOURCE_ADDRESS_CGI ||
         response->address.type == RESOURCE_ADDRESS_WAS ||
         response->address.type == RESOURCE_ADDRESS_FASTCGI) {
+        if (response->address.u.cgi.uri == NULL)
+            response->address.u.cgi.uri = response->uri;
+
         if (response->address.u.cgi.document_root == NULL)
             response->address.u.cgi.document_root = response->document_root;
 

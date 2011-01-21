@@ -126,9 +126,7 @@ proxy_handler(struct request *request2)
                                                              address);
 
         /* pass the "real" request URI to the CGI */
-        if (copy->u.cgi.uri == NULL)
-            copy->u.cgi.uri = tr->uri != NULL
-                ? tr->uri : request->uri;
+        copy->u.cgi.uri = request->uri;
 
         address = copy;
     }
