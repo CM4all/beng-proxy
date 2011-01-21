@@ -506,6 +506,21 @@ parse_header(pool_t pool, struct translate_response *response,
     return true;
 }
 
+static void
+translate_jail_finish(struct jail_params *jail,
+                      const struct translate_response *response)
+{
+    if (!jail->enabled)
+        return;
+
+    if (jail->home_directory == NULL)
+        jail->home_directory =
+            response->address.u.cgi.document_root;
+
+    if (jail->site_id == NULL)
+        jail->site_id = response->site;
+}
+
 /**
  * Final fixups for the response before it is passed to the handler.
  */
@@ -521,14 +536,7 @@ translate_response_finish(struct translate_response *response)
         if (response->address.u.cgi.document_root == NULL)
             response->address.u.cgi.document_root = response->document_root;
 
-        if (response->address.u.cgi.jail.enabled) {
-            if (response->address.u.cgi.jail.home_directory == NULL)
-                response->address.u.cgi.jail.home_directory =
-                    response->address.u.cgi.document_root;
-
-            if (response->address.u.cgi.jail.site_id == NULL)
-                response->address.u.cgi.jail.site_id = response->site;
-        }
+        translate_jail_finish(&response->address.u.cgi.jail, response);
     }
 }
 
