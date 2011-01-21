@@ -589,6 +589,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 
 test_run_was_SOURCES = test/run-was.c \
 	src/was-launch.c src/was-client.c src/was-control.c src/was-input.c src/was-output.c \
+	src/jail.c \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/buffered-io.c \
 	src/direct.c \
@@ -624,6 +625,7 @@ test_t_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/hashmap.c src/strmap.c \
 	src/resource-address.c src/uri-address.c \
+	src/jail.c \
 	src/uri-relative.c src/uri-edit.c src/uri-verify.c src/uri-escape.c \
 	src/format.c \
 	src/transformation.c \
@@ -652,6 +654,7 @@ test_t_stock_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/resource-address.c \
+	src/jail.c \
 	src/uri-address.c src/uri-relative.c src/uri-verify.c \
 	src/uri-escape.c src/uri-edit.c \
 	src/format.c \
@@ -735,6 +738,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/uri-address.c src/uri-extract.c \
 	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
 	src/resource-address.c src/global.c src/transformation.c \
+	src/jail.c \
 	src/expansible-buffer.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_processor_LDADD = $(AM_LDADD) \
@@ -959,6 +963,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/http-cache-info.c src/http-cache-document.c \
 	src/http-cache-heap.c \
 	src/resource-address.c src/uri-address.c \
+	src/jail.c \
 	src/uri-edit.c src/uri-relative.c src/uri-escape.c src/uri-verify.c \
 	src/format.c \
 	src/abort-unref.c src/cache.c \
@@ -1011,6 +1016,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/args.c \
 	src/strmap.c src/hashmap.c \
 	src/resource-address.c src/uri-address.c \
+	src/jail.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
 	src/uri-verify.c src/uri-extract.c \
 	src/html-escape.c src/istream-html-escape.c \
@@ -1026,6 +1032,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/tcache.c src/cache.c \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/resource-address.c \
+	src/jail.c \
 	src/uri-relative.c src/uri-verify.c src/uri-escape.c src/uri-edit.c \
 	src/format.c
 test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
@@ -1057,6 +1064,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/args.c src/uri-escape.c src/uri-verify.c \
 	src/format.c \
 	src/resource-address.c src/uri-address.c \
+	src/jail.c \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/resource-tag.c \
 	src/cookie-client.c \
@@ -1284,6 +1292,7 @@ test_run_delegate_SOURCES = test/run-delegate.c \
 	src/delegate-stock.c src/delegate-client.c src/delegate-glue.c \
 	src/hashmap.c src/hstock.c src/stock.c \
 	src/defer.c \
+	src/jail.c \
 	src/fd_util.c \
 	$(POOL_SRC)
 test_run_delegate_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
