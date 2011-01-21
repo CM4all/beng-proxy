@@ -539,6 +539,10 @@ translate_response_finish(struct translate_response *response)
         translate_jail_finish(&response->address.u.cgi.jail, response,
                               response->address.u.cgi.document_root);
     } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
+        if (response->address.u.local.jail.enabled &&
+            response->address.u.local.document_root == NULL)
+            response->address.u.local.document_root = response->document_root;
+
         translate_jail_finish(&response->address.u.local.jail, response,
                               response->address.u.local.document_root);
     }
