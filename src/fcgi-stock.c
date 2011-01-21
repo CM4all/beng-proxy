@@ -31,7 +31,6 @@ struct fcgi_child_params {
     const char *executable_path;
 
     const struct jail_params *jail;
-    const char *document_root;
 };
 
 struct fcgi_child {
@@ -40,7 +39,6 @@ struct fcgi_child {
     const char *key;
 
     struct jail_params jail_params;
-    const char *document_root;
 
     struct jail_config jail_config;
 
@@ -61,7 +59,7 @@ fcgi_stock_key(pool_t pool, const struct fcgi_child_params *params)
     return params->jail == NULL || !params->jail->enabled
         ? params->executable_path
         : p_strcat(pool, params->executable_path, "|",
-                   params->document_root, NULL);
+                   params->jail->home_directory, NULL);
 }
 
 static void
@@ -125,7 +123,7 @@ fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
 
 __attr_noreturn
 static void
-fcgi_run(const struct jail_params *jail, const char *document_root,
+fcgi_run(const struct jail_params *jail,
          const char *executable_path,
          int fd)
 {
@@ -145,7 +143,7 @@ fcgi_run(const struct jail_params *jail, const char *document_root,
 
     struct exec e;
     exec_init(&e);
-    jail_wrapper_insert(&e, jail, document_root);
+    jail_wrapper_insert(&e, jail, NULL);
     exec_append(&e, executable_path);
     exec_do(&e);
 
@@ -155,7 +153,7 @@ fcgi_run(const struct jail_params *jail, const char *document_root,
 }
 
 static pid_t
-fcgi_spawn_child(const struct jail_params *jail, const char *document_root,
+fcgi_spawn_child(const struct jail_params *jail,
                  const char *executable_path,
                  int fd,
                  GError **error_r)
@@ -168,7 +166,7 @@ fcgi_spawn_child(const struct jail_params *jail, const char *document_root,
     }
 
     if (pid == 0)
-        fcgi_run(jail, document_root,
+        fcgi_run(jail,
                  executable_path,
                  fd);
 
@@ -301,7 +299,6 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
 
     if (params->jail != NULL && params->jail->enabled) {
         jail_params_copy(pool, &child->jail_params, params->jail);
-        child->document_root = p_strdup_checked(pool, params->document_root);
 
         if (!jail_config_load(&child->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {
@@ -320,7 +317,7 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
         return;
     }
 
-    child->pid = fcgi_spawn_child(params->jail, params->document_root,
+    child->pid = fcgi_spawn_child(params->jail,
                                   params->executable_path,
                                   fd, &error);
     close(fd);
@@ -407,7 +404,7 @@ fcgi_stock_new(pool_t pool, unsigned limit)
 void
 fcgi_stock_get(struct hstock *hstock, pool_t pool,
                const struct jail_params *jail,
-               const char *executable_path, const char *document_root,
+               const char *executable_path,
                const struct stock_handler *handler, void *handler_ctx,
                struct async_operation_ref *async_ref)
 {
@@ -422,7 +419,6 @@ fcgi_stock_get(struct hstock *hstock, pool_t pool,
     struct fcgi_child_params *params = p_malloc(pool, sizeof(*params));
     params->executable_path = executable_path;
     params->jail = jail;
-    params->document_root = document_root;
 
     hstock_get(hstock, pool, fcgi_stock_key(pool, params), params,
                handler, handler_ctx, async_ref);

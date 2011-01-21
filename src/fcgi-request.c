@@ -180,7 +180,7 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
         request->body = NULL;
 
     fcgi_stock_get(fcgi_stock, pool, jail,
-                   action, document_root,
+                   action,
                    &fcgi_stock_handler, request,
                    async_ref);
 }
