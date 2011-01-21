@@ -18,6 +18,7 @@
 #include "header-writer.h"
 #include "pipe.h"
 #include "delegate-request.h"
+#include "strutil.h"
 
 #include <string.h>
 
@@ -53,21 +54,20 @@ resource_loader_new(pool_t pool, struct hstock *tcp_stock,
 }
 
 static const char *
-extract_remote_host(const struct strmap *headers)
+extract_remote_host(pool_t pool, const struct strmap *headers)
 {
-    const char *p = strmap_get_checked(headers, "via");
+    const char *p = strmap_get_checked(headers, "x-forwarded-for");
     if (p == NULL)
         return "";
 
-    p = strrchr(p, ',');
-    if (p == NULL)
-        return "";
+    const char *end = strchr(p, ',');
+    if (end == NULL)
+        end = p + strlen(p);
 
-    p = strchr(p + 1, ' ');
-    if (p == NULL)
-        return "";
+    while (end > p && char_is_whitespace(end[-1]))
+        --end;
 
-    return p + 1;
+    return p_strndup(pool, p, end - p);
 }
 
 static const char *
@@ -185,8 +185,8 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
 
     case RESOURCE_ADDRESS_AJP:
         ajp_stock_request(pool, rl->tcp_stock,
-                          "http", extract_remote_host(headers),
-                          extract_remote_host(headers),
+                          "http", extract_remote_host(pool, headers),
+                          extract_remote_host(pool, headers),
                           extract_server_name(headers),
                           80, /* XXX */
                           false,
