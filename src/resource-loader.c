@@ -136,7 +136,6 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
 
             delegate_stock_request(rl->delegate_stock, pool,
                                    address->u.local.delegate,
-                                   address->u.local.document_root,
                                    &address->u.local.jail,
                                    address->u.local.path,
                                    address->u.local.content_type,

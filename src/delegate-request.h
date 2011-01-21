@@ -17,7 +17,7 @@ struct jail_params;
 
 void
 delegate_stock_request(struct hstock *stock, pool_t pool,
-                       const char *helper, const char *document_root,
+                       const char *helper,
                        const struct jail_params *jail,
                        const char *path, const char *content_type,
                        const struct http_response_handler *handler, void *ctx,

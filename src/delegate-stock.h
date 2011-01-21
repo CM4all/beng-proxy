@@ -16,7 +16,7 @@ delegate_stock_new(pool_t pool);
 
 void
 delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
-                   const char *path, const char *document_root,
+                   const char *path,
                    const struct jail_params *jail,
                    const struct stock_handler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref);

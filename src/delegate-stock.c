@@ -26,8 +26,6 @@
 struct delegate_info {
     const char *helper;
 
-    const char *document_root;
-
     const struct jail_params *jail;
 };
 
@@ -42,6 +40,11 @@ struct delegate_process {
     struct event event;
 };
 
+static GQuark
+delegate_stock_quark(void)
+{
+    return g_quark_from_static_string("delegate");
+}
 
 /*
  * libevent callback
@@ -97,17 +100,15 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
     struct delegate_process *process = (struct delegate_process *)item;
     int ret, fds[2];
     pid_t pid;
-    const char *helper, *document_root;
+    const char *helper;
     const struct jail_params *jail;
 
     if (_info != NULL) {
         struct delegate_info *info = _info;
         helper = info->helper;
-        document_root = info->document_root;
         jail = info->jail;
     } else {
         helper = uri;
-        document_root = NULL;
         jail = NULL;
     }
 
@@ -139,7 +140,7 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
 
         struct exec e;
         exec_init(&e);
-        jail_wrapper_insert(&e, jail, document_root);
+        jail_wrapper_insert(&e, jail, NULL);
         exec_append(&e, helper);
         exec_do(&e);
 
@@ -216,7 +217,7 @@ delegate_stock_new(pool_t pool)
 
 void
 delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
-                   const char *helper, const char *document_root,
+                   const char *helper,
                    const struct jail_params *jail,
                    const struct stock_handler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref)
@@ -224,12 +225,18 @@ delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
     const char *uri;
     struct delegate_info *info;
 
-    if (document_root != NULL) {
-        uri = p_strcat(pool, helper, "|", document_root,
-                       jail != NULL && jail->enabled ? "|jail" : NULL, NULL);
+    if (jail != NULL && jail->enabled) {
+        if (jail->home_directory == NULL) {
+            GError *error =
+                g_error_new_literal(delegate_stock_quark(), 0,
+                                    "No home directory for jailed delegate");
+            handler->error(error, handler_ctx);
+            return;
+        }
+
+        uri = p_strcat(pool, helper, "|", jail->home_directory, "|jail", NULL);
         info = p_malloc(pool, sizeof(*info));
         info->helper = helper;
-        info->document_root = document_root;
         info->jail = jail;
     } else {
         uri = helper;

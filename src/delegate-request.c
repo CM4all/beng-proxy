@@ -66,7 +66,7 @@ delegate_get_callback(int fd, void *ctx)
 
 void
 delegate_stock_request(struct hstock *stock, pool_t pool,
-                       const char *helper, const char *document_root,
+                       const char *helper,
                        const struct jail_params *jail,
                        const char *path, const char *content_type,
                        const struct http_response_handler *handler, void *ctx,
@@ -80,7 +80,7 @@ delegate_stock_request(struct hstock *stock, pool_t pool,
     http_response_handler_set(&get->handler, handler, ctx);
 
     delegate_stock_open(stock, pool,
-                        helper, document_root, jail, path,
+                        helper, jail, path,
                         delegate_get_callback, get,
                         async_ref);
 }
