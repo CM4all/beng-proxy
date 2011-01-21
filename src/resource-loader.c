@@ -71,6 +71,28 @@ extract_remote_host(pool_t pool, const struct strmap *headers)
 }
 
 static const char *
+extract_remote_ip(pool_t pool, const struct strmap *headers)
+{
+    const char *p = extract_remote_host(pool, headers);
+    if (p == NULL)
+        return p;
+
+    if (*p == 0)
+        return NULL;
+
+    if (*p == '[') {
+        const char *q = strchr(p + 1, ']');
+        return p_strndup(pool, p + 1, q - p - 1);
+    }
+
+    const char *colon = strrchr(p, ':');
+    if (colon == NULL || colon == p)
+        return p;
+
+    return p_strndup(pool, p, colon - p);
+}
+
+static const char *
 extract_server_name(const struct strmap *headers)
 {
     const char *p = strmap_get_checked(headers, "host");
@@ -144,7 +166,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
                 address->u.cgi.path_info,
                 address->u.cgi.query_string,
                 address->u.cgi.document_root,
-                extract_remote_host(pool, headers),
+                extract_remote_ip(pool, headers),
                 headers, body,
                 handler, handler_ctx, async_ref);
         return;
@@ -158,7 +180,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
                      address->u.cgi.path_info,
                      address->u.cgi.query_string,
                      address->u.cgi.document_root,
-                     extract_remote_host(pool, headers),
+                     extract_remote_ip(pool, headers),
                      headers, body,
                      address->u.cgi.args, address->u.cgi.num_args,
                      handler, handler_ctx, async_ref);
