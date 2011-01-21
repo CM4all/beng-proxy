@@ -428,6 +428,7 @@ cgi_run(const struct jail_params *jail,
         const char *script_name, const char *path_info,
         const char *query_string,
         const char *document_root,
+        const char *remote_addr,
         struct strmap *headers)
 {
     const struct strmap_pair *pair;
@@ -464,6 +465,9 @@ cgi_run(const struct jail_params *jail,
     setenv("QUERY_STRING", query_string, 1);
     setenv("DOCUMENT_ROOT", document_root, 1);
     setenv("SERVER_SOFTWARE", "beng-proxy v" VERSION, 1);
+
+    if (remote_addr != NULL)
+        setenv("REMOTE_ADDR", remote_addr, 1);
 
     if (jail != NULL && jail->enabled) {
         setenv("JAILCGI_FILENAME", path, 1);
@@ -533,6 +537,7 @@ cgi_new(pool_t pool, const struct jail_params *jail,
         const char *script_name, const char *path_info,
         const char *query_string,
         const char *document_root,
+        const char *remote_addr,
         struct strmap *headers, istream_t body,
         const struct http_response_handler *handler,
         void *handler_ctx,
@@ -573,6 +578,7 @@ cgi_new(pool_t pool, const struct jail_params *jail,
     if (pid == 0)
         cgi_run(jail, interpreter, action, path, method, uri,
                 script_name, path_info, query_string, document_root,
+                remote_addr,
                 headers);
 
     stopwatch_event(stopwatch, "fork");

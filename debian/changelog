@@ -6,6 +6,7 @@ cm4all-beng-proxy (0.9.3) unstable; urgency=low
   * fcgi-stock: pass site id to child process
   * translation: new packet "HOME" for JailCGI
   * resource-loader: get remote host from "X-Forwarded-For"
+  * cgi, fcgi-client: pass client IP address to application
 
  --
 

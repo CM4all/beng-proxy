@@ -36,6 +36,7 @@ struct fcgi_request {
     const char *path_info;
     const char *query_string;
     const char *document_root;
+    const char *remote_addr;
     struct strmap *headers;
     istream_t body;
 
@@ -98,6 +99,7 @@ fcgi_stock_ready(struct stock_item *item, void *ctx)
                         request->script_name, request->path_info,
                         request->query_string,
                         document_root,
+                        request->remote_addr,
                         request->headers, request->body,
                         request->params, request->num_params,
                         request->handler.handler, request->handler.ctx,
@@ -132,6 +134,7 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
              const char *script_name, const char *path_info,
              const char *query_string,
              const char *document_root,
+             const char *remote_addr,
              struct strmap *headers, istream_t body,
              const char *const params[], unsigned num_params,
              const struct http_response_handler *handler,
@@ -162,6 +165,7 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
     request->path_info = path_info;
     request->query_string = query_string;
     request->document_root = document_root;
+    request->remote_addr = remote_addr;
     request->headers = headers;
     request->params = params;
     request->num_params = num_params;

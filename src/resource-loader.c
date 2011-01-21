@@ -144,6 +144,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
                 address->u.cgi.path_info,
                 address->u.cgi.query_string,
                 address->u.cgi.document_root,
+                extract_remote_host(pool, headers),
                 headers, body,
                 handler, handler_ctx, async_ref);
         return;
@@ -157,6 +158,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
                      address->u.cgi.path_info,
                      address->u.cgi.query_string,
                      address->u.cgi.document_root,
+                     extract_remote_host(pool, headers),
                      headers, body,
                      address->u.cgi.args, address->u.cgi.num_args,
                      handler, handler_ctx, async_ref);

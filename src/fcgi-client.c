@@ -730,6 +730,7 @@ fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                     const char *script_name, const char *path_info,
                     const char *query_string,
                     const char *document_root,
+                    const char *remote_addr,
                     struct strmap *headers, istream_t body,
                     const char *const params[], unsigned num_params,
                     const struct http_response_handler *handler,
@@ -798,6 +799,11 @@ fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                           "DOCUMENT_ROOT", document_root,
                           "SERVER_SOFTWARE", "beng-proxy v" VERSION,
                           NULL);
+
+    if (remote_addr != NULL)
+        fcgi_serialize_params(buffer, header.request_id,
+                              "REMOTE_ADDR", remote_addr,
+                              NULL);
 
     off_t available = body != NULL
         ? istream_available(body, false)
