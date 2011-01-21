@@ -31,7 +31,6 @@ struct was_child_params {
     const char *executable_path;
 
     const struct jail_params *jail;
-    const char *document_root;
 };
 
 struct was_child {
@@ -53,7 +52,7 @@ was_stock_key(pool_t pool, const struct was_child_params *params)
     return params->jail == NULL || !params->jail->enabled
         ? params->executable_path
         : p_strcat(pool, params->executable_path, "|",
-                   params->document_root, NULL);
+                   params->jail->home_directory, NULL);
 }
 
 static void
@@ -138,7 +137,7 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
 
     GError *error = NULL;
     if (!was_launch(&child->process, params->executable_path,
-                    params->jail, params->document_root,
+                    params->jail,
                     &error)) {
         stock_item_failed(item, error);
         return;
@@ -217,7 +216,7 @@ was_stock_new(pool_t pool, unsigned limit)
 void
 was_stock_get(struct hstock *hstock, pool_t pool,
               const struct jail_params *jail,
-              const char *executable_path, const char *document_root,
+              const char *executable_path,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
@@ -232,7 +231,6 @@ was_stock_get(struct hstock *hstock, pool_t pool,
     struct was_child_params *params = p_malloc(pool, sizeof(*params));
     params->executable_path = executable_path;
     params->jail = jail;
-    params->document_root = document_root;
 
     hstock_get(hstock, pool, was_stock_key(pool, params), params,
                handler, handler_ctx, async_ref);

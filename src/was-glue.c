@@ -117,7 +117,6 @@ was_request(pool_t pool, struct hstock *was_stock,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            const char *document_root,
             struct strmap *headers, istream_t body,
             const char *const parameters[], unsigned num_parameters,
             const struct http_response_handler *handler,
@@ -160,7 +159,7 @@ was_request(pool_t pool, struct hstock *was_stock,
 
     was_stock_get(was_stock, pool,
                   jail,
-                  action, document_root,
+                  action,
                   &was_stock_handler, request,
                   async_ref);
 }
