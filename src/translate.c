@@ -506,26 +506,36 @@ parse_header(pool_t pool, struct translate_response *response,
     return true;
 }
 
-static void
+static bool
 translate_jail_finish(struct jail_params *jail,
                       const struct translate_response *response,
-                      const char *document_root)
+                      const char *document_root,
+                      GError **error_r)
 {
     if (!jail->enabled)
-        return;
+        return true;
 
     if (jail->home_directory == NULL)
         jail->home_directory = document_root;
 
+    if (jail->home_directory == NULL) {
+        g_set_error(error_r, translate_quark(), 0,
+                    "No home directory for JAIL");
+        return false;
+    }
+
     if (jail->site_id == NULL)
         jail->site_id = response->site;
+
+    return true;
 }
 
 /**
  * Final fixups for the response before it is passed to the handler.
  */
-static void
-translate_response_finish(struct translate_response *response)
+static bool
+translate_response_finish(struct translate_response *response,
+                          GError **error_r)
 {
     if (response->address.type == RESOURCE_ADDRESS_CGI ||
         response->address.type == RESOURCE_ADDRESS_WAS ||
@@ -536,16 +546,20 @@ translate_response_finish(struct translate_response *response)
         if (response->address.u.cgi.document_root == NULL)
             response->address.u.cgi.document_root = response->document_root;
 
-        translate_jail_finish(&response->address.u.cgi.jail, response,
-                              response->address.u.cgi.document_root);
+        return translate_jail_finish(&response->address.u.cgi.jail, response,
+                                     response->address.u.cgi.document_root,
+                                     error_r);
     } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
         if (response->address.u.local.jail.enabled &&
             response->address.u.local.document_root == NULL)
             response->address.u.local.document_root = response->document_root;
 
-        translate_jail_finish(&response->address.u.local.jail, response,
-                              response->address.u.local.document_root);
+        return translate_jail_finish(&response->address.u.local.jail, response,
+                                     response->address.u.local.document_root,
+                                     error_r);
     }
+
+    return true;
 }
 
 /**
@@ -581,7 +595,12 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_END:
         stopwatch_event(client->stopwatch, "end");
-        translate_response_finish(&client->response);
+
+        if (!translate_response_finish(&client->response, &error)) {
+            translate_client_abort(client, error);
+            return false;
+        }
+
         async_operation_finished(&client->async);
         client->handler->response(&client->response, client->handler_ctx);
         translate_client_release(client, true);
@@ -946,8 +965,7 @@ translate_handle_packet(struct translate_client *client,
             client->resource_address->u.cgi.jail.enabled = true;
         else if (client->resource_address != NULL &&
                  client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
-                 client->resource_address->u.local.delegate != NULL &&
-                 client->resource_address->u.local.document_root != NULL)
+                 client->resource_address->u.local.delegate != NULL)
             client->resource_address->u.local.jail.enabled = true;
         else {
             translate_client_error(client,
