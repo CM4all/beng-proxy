@@ -537,6 +537,8 @@ translate_response_finish(struct translate_response *response)
             response->address.u.cgi.document_root = response->document_root;
 
         translate_jail_finish(&response->address.u.cgi.jail, response);
+    } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
+        translate_jail_finish(&response->address.u.local.jail, response);
     }
 }
 
