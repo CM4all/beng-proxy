@@ -444,21 +444,15 @@ fcgi_stock_translate_path(const struct stock_item *item,
 {
     const struct fcgi_child *child = (const struct fcgi_child *)item;
 
-    if (!child->jail_params.enabled)
+    if (!child->jail_params.enabled ||
+        child->jail_params.home_directory == NULL)
         /* no JailCGI - application's namespace is the same as ours,
            no translation needed */
         return path;
 
-    const char *home_directory;
-    if (child->jail_params.home_directory != NULL)
-        home_directory = child->jail_params.home_directory;
-    else if (child->document_root != NULL)
-        home_directory = child->document_root;
-    else
-        return path;
-
     const char *jailed = jail_translate_path(&child->jail_config, path,
-                                             home_directory, pool);
+                                             child->jail_params.home_directory,
+                                             pool);
     return jailed != NULL ? jailed : path;
 }
 

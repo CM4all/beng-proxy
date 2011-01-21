@@ -140,7 +140,7 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
 {
     struct fcgi_request *request;
 
-    if (jail != NULL && jail->enabled && document_root == NULL) {
+    if (jail != NULL && jail->enabled && jail->home_directory == NULL) {
         GError *error =
             g_error_new_literal(fcgi_request_quark(), 0,
                                 "No document root");

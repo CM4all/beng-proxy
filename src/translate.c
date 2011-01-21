@@ -518,9 +518,14 @@ translate_response_finish(struct translate_response *response)
         if (response->address.u.cgi.document_root == NULL)
             response->address.u.cgi.document_root = response->document_root;
 
-        if (response->address.u.cgi.jail.enabled &&
-            response->address.u.cgi.jail.site_id == NULL)
-            response->address.u.cgi.jail.site_id = response->site;
+        if (response->address.u.cgi.jail.enabled) {
+            if (response->address.u.cgi.jail.home_directory == NULL)
+                response->address.u.cgi.jail.home_directory =
+                    response->address.u.cgi.document_root;
+
+            if (response->address.u.cgi.jail.site_id == NULL)
+                response->address.u.cgi.jail.site_id = response->site;
+        }
     }
 }
 

@@ -126,7 +126,7 @@ was_request(pool_t pool, struct hstock *was_stock,
 {
     struct was_request *request;
 
-    if (jail != NULL && jail->enabled && document_root == NULL) {
+    if (jail != NULL && jail->enabled && jail->home_directory == NULL) {
         GError *error = g_error_new_literal(was_quark(), 0,
                                             "no document root");
         http_response_handler_direct_abort(handler, handler_ctx, error);

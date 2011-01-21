@@ -40,7 +40,6 @@ struct was_child {
     const char *key;
 
     struct jail_params jail_params;
-    const char *document_root;
 
     struct jail_config jail_config;
 
@@ -126,7 +125,6 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
 
     if (params->jail != NULL && params->jail->enabled) {
         jail_params_copy(pool, &child->jail_params, params->jail);
-        child->document_root = p_strdup_checked(pool, params->document_root);
 
         if (!jail_config_load(&child->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {
@@ -246,21 +244,15 @@ was_stock_translate_path(const struct stock_item *item,
 {
     const struct was_child *child = (const struct was_child *)item;
 
-    if (!child->jail_params.enabled)
+    if (!child->jail_params.enabled ||
+        child->jail_params.home_directory == NULL)
         /* no JailCGI - application's namespace is the same as ours,
            no translation needed */
         return path;
 
-    const char *home_directory;
-    if (child->jail_params.home_directory != NULL)
-        home_directory = child->jail_params.home_directory;
-    else if (child->document_root != NULL)
-        home_directory = child->document_root;
-    else
-        return path;
-
     const char *jailed = jail_translate_path(&child->jail_config, path,
-                                             home_directory, pool);
+                                             child->jail_params.home_directory,
+                                             pool);
     return jailed != NULL ? jailed : path;
 }
 
