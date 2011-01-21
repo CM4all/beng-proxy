@@ -50,7 +50,6 @@ class Translation(Protocol):
         cgi = cgi_re.search(path, 1)
         if cgi:
             response.packet(TRANSLATE_CGI, path)
-            response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             return
 
         m = php_re.match(path)
@@ -59,7 +58,6 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_FASTCGI, m.group(1))
             else:
                 response.packet(TRANSLATE_CGI, m.group(1))
-            response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             if jail:
                 response.packet(TRANSLATE_ACTION, '/usr/bin/php-cgi5')
             else:
@@ -71,7 +69,6 @@ class Translation(Protocol):
 
         if path[-4:] == '.cls':
             response.packet(TRANSLATE_FASTCGI, path)
-            response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
             if jail:
                 response.packet(TRANSLATE_JAILCGI)
@@ -79,9 +76,6 @@ class Translation(Protocol):
             response.path(path)
             if delegate and jail:
                 response.delegate('/usr/bin/cm4all-beng-proxy-delegate-helper')
-                # need another DOCUMENT_ROOT reference, for the
-                # following JAILCGI packet
-                response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
                 response.packet(TRANSLATE_JAILCGI)
             elif delegate:
                 response.delegate(os.path.join(helpers_path,
