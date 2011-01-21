@@ -508,14 +508,14 @@ parse_header(pool_t pool, struct translate_response *response,
 
 static void
 translate_jail_finish(struct jail_params *jail,
-                      const struct translate_response *response)
+                      const struct translate_response *response,
+                      const char *document_root)
 {
     if (!jail->enabled)
         return;
 
     if (jail->home_directory == NULL)
-        jail->home_directory =
-            response->address.u.cgi.document_root;
+        jail->home_directory = document_root;
 
     if (jail->site_id == NULL)
         jail->site_id = response->site;
@@ -536,9 +536,11 @@ translate_response_finish(struct translate_response *response)
         if (response->address.u.cgi.document_root == NULL)
             response->address.u.cgi.document_root = response->document_root;
 
-        translate_jail_finish(&response->address.u.cgi.jail, response);
+        translate_jail_finish(&response->address.u.cgi.jail, response,
+                              response->address.u.cgi.document_root);
     } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
-        translate_jail_finish(&response->address.u.local.jail, response);
+        translate_jail_finish(&response->address.u.local.jail, response,
+                              response->address.u.local.document_root);
     }
 }
 
