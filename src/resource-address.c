@@ -31,7 +31,8 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         dest->u.local.delegate = p_strdup_checked(pool, src->u.local.delegate);
         dest->u.local.document_root =
             p_strdup_checked(pool, src->u.local.document_root);
-        dest->u.local.jail = src->u.local.jail;
+
+        jail_params_copy(pool, &dest->u.cgi.jail, &src->u.cgi.jail);
         break;
 
     case RESOURCE_ADDRESS_HTTP:
