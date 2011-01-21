@@ -469,6 +469,9 @@ cgi_run(const struct jail_params *jail,
         setenv("JAILCGI_FILENAME", path, 1);
         path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
 
+        if (jail->home_directory != NULL)
+            setenv("JETSERV_HOME", jail->home_directory, 1);
+
         if (interpreter != NULL)
             setenv("JAILCGI_INTERPRETER", interpreter, 1);
 
