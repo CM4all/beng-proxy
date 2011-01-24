@@ -197,7 +197,7 @@ test_cookie_client(pool_t pool)
     static struct uri_with_address address = {
         .uri = "http://foo/bar/",
     };
-    static const struct transformation_view view;
+    static const struct widget_view view;
     static const struct widget_class cls = {
         .address = {
             .type = RESOURCE_ADDRESS_HTTP,

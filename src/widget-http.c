@@ -412,7 +412,6 @@ widget_http_request(pool_t pool, struct widget *widget,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    const struct transformation_view *view;
     struct embed *embed;
     struct strmap *headers;
     const struct resource_address *address;
@@ -420,8 +419,8 @@ widget_http_request(pool_t pool, struct widget *widget,
     assert(widget != NULL);
     assert(widget->class != NULL);
 
-    view = transformation_view_lookup(widget->class->views,
-                                      widget_get_view_name(widget));
+    const struct widget_view *view =
+        widget_view_lookup(widget->class->views, widget_get_view_name(widget));
     if (view == NULL) {
         GError *error =
             g_error_new(widget_quark(), 0,

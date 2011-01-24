@@ -6,6 +6,7 @@
 
 #include "translate.h"
 #include "transformation.h"
+#include "widget-class.h"
 #include "please.h"
 #include "growing-buffer.h"
 #include "processor.h"
@@ -78,7 +79,7 @@ struct translate_client {
     struct resource_address *resource_address;
 
     /** pointer to the tail of the transformation view linked list */
-    struct transformation_view **transformation_view_tail;
+    struct widget_view **widget_view_tail;
 
     /** the current transformation */
     struct transformation *transformation;
@@ -419,7 +420,7 @@ valid_view_name(const char *name)
 static void
 add_view(struct translate_client *client, const char *name)
 {
-    struct transformation_view *view;
+    struct widget_view *view;
 
     if (!valid_view_name(name)) {
         GError *error = g_error_new_literal(translate_quark(), 0,
@@ -433,8 +434,8 @@ add_view(struct translate_client *client, const char *name)
     view->name = name;
     view->transformation = NULL;
 
-    *client->transformation_view_tail = view;
-    client->transformation_view_tail = &view->next;
+    *client->widget_view_tail = view;
+    client->widget_view_tail = &view->next;
     client->transformation_tail = &view->transformation;
     client->transformation = NULL;
 }
@@ -634,7 +635,7 @@ translate_handle_packet(struct translate_client *client,
         client->response.max_age = -1;
         client->response.user_max_age = -1;
         client->response.views = p_calloc(client->pool, sizeof(*client->response.views));
-        client->transformation_view_tail = &client->response.views->next;
+        client->widget_view_tail = &client->response.views->next;
         client->transformation = NULL;
         client->transformation_tail = &client->response.views->transformation;
         break;

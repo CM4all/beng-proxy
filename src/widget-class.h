@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_WIDGET_CLASS_H
 #define BENG_PROXY_WIDGET_CLASS_H
 
+#include "widget-view.h"
 #include "resource-address.h"
 #include "header-forward.h"
 
@@ -16,6 +17,11 @@
 struct widget_class {
     /** the base URI of this widget, as specified in the template */
     struct resource_address address;
+
+    /**
+     * A linked list of view descriptions.
+     */
+    const struct widget_view *views;
 
     /**
      * The (beng-proxy) hostname on which requests to this widget are
@@ -31,9 +37,6 @@ struct widget_class {
      * forbidden.
      */
     const char *untrusted_prefix;
-
-    /** transformations applied to the widget response */
-    const struct transformation_view *views;
 
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */

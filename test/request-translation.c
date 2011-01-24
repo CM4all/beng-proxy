@@ -1,5 +1,6 @@
 #include "tstock.h"
 #include "translate.h"
+#include "widget-view.h"
 #include "transformation.h"
 #include "balancer.h"
 #include "tcp-stock.h"
@@ -53,7 +54,7 @@ static void
 my_translate_response(const struct translate_response *response,
                       void *ctx)
 {
-    const struct transformation_view *view;
+    const struct widget_view *view;
 
     (void)ctx;
 

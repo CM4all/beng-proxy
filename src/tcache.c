@@ -7,7 +7,7 @@
 #include "tcache.h"
 #include "tstock.h"
 #include "translate.h"
-#include "transformation.h"
+#include "widget-class.h"
 #include "cache.h"
 #include "stock.h"
 #include "strmap.h"
@@ -193,7 +193,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
         : NULL;
 
     dest->views = src->views != NULL
-        ? transformation_dup_view_chain(pool, src->views)
+        ? widget_view_dup_chain(pool, src->views)
         : NULL;
 
     dest->num_vary = src->num_vary;

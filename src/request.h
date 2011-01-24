@@ -14,6 +14,7 @@
 #include "async.h"
 #include "session.h"
 #include "transformation.h"
+#include "widget-class.h"
 
 struct request {
     struct client_connection *connection;

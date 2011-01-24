@@ -294,6 +294,7 @@ SRC = src/main.c \
 	src/ajp-headers.c \
 	src/widget.c \
 	src/widget-class.c \
+	src/widget-view.c \
 	src/widget-ref.c \
 	src/widget-session.c \
 	src/widget-uri.c \
@@ -625,6 +626,7 @@ test_t_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/hashmap.c src/strmap.c \
 	src/resource-address.c src/uri-address.c \
+	src/widget-view.c \
 	src/jail.c \
 	src/uri-relative.c src/uri-edit.c src/uri-verify.c src/uri-escape.c \
 	src/format.c \
@@ -733,6 +735,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/widget-request.c \
 	src/widget.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/parser.c src/widget-class.c \
+	src/widget-view.c \
 	src/widget-stream.c \
 	src/tpool.c src/rewrite-uri.c src/widget-resolver.c \
 	src/uri-address.c src/uri-extract.c \
@@ -1030,6 +1033,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	$(POOL_SRC) \
 	src/uri-address.c src/transformation.c \
 	src/tcache.c src/cache.c \
+	src/widget-view.c \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/resource-address.c \
 	src/jail.c \
@@ -1059,6 +1063,7 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
 	src/widget-session.c src/session.c \
+	src/widget-view.c \
 	src/random.c src/socket-util.c src/fd-util.c \
 	src/fd_util.c \
 	src/args.c src/uri-escape.c src/uri-verify.c \

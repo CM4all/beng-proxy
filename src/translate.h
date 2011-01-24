@@ -122,7 +122,7 @@ struct translate_response {
 
     struct strmap *headers;
 
-    struct transformation_view *views;
+    struct widget_view *views;
 
     const uint16_t *vary;
     unsigned num_vary;

@@ -365,7 +365,7 @@ serve_document_root_file(struct request *request2,
 
     if (process) {
         struct transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
-        struct transformation_view *view = p_malloc(request->pool, sizeof(*view));
+        struct widget_view *view = p_malloc(request->pool, sizeof(*view));
 
         transformation->next = NULL;
         transformation->type = TRANSFORMATION_PROCESS;
@@ -376,7 +376,7 @@ serve_document_root_file(struct request *request2,
 
         tr->views = view;
     } else {
-        struct transformation_view *view = p_calloc(request->pool, sizeof(*view));
+        struct widget_view *view = p_calloc(request->pool, sizeof(*view));
 
         tr->views = view;
     }
