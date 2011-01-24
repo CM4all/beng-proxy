@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "args.h"
 #include "widget.h"
+#include "widget-class.h"
 #include "growing-buffer.h"
 #include "tpool.h"
 #include "embed.h"

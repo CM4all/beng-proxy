@@ -6,6 +6,7 @@
 #include "tstock.h"
 #include "translate.h"
 #include "widget.h"
+#include "widget-class.h"
 #include "transformation.h"
 
 #include <string.h>

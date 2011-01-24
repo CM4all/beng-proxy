@@ -1,4 +1,5 @@
 #include "widget.h"
+#include "widget-class.h"
 #include "widget-http.h"
 #include "strmap.h"
 #include "growing-buffer.h"

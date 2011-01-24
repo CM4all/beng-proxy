@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget.h"
+#include "widget-class.h"
 #include "transformation.h"
 
 const struct widget_class root_widget_class = {

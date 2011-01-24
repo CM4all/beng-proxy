@@ -7,6 +7,7 @@
 #include "widget-http.h"
 #include "processor.h"
 #include "widget.h"
+#include "widget-class.h"
 #include "session.h"
 #include "cookie-client.h"
 #include "async.h"

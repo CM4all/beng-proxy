@@ -2,6 +2,7 @@
 #include "uri-parser.h"
 #include "embed.h"
 #include "widget.h"
+#include "widget-class.h"
 #include "widget-stream.h"
 #include "rewrite-uri.h"
 

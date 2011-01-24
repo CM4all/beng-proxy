@@ -5,6 +5,7 @@
  */
 
 #include "widget.h"
+#include "widget-class.h"
 #include "strref-pool.h"
 
 #include <string.h>

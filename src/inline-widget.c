@@ -8,6 +8,7 @@
 #include "widget-http.h"
 #include "processor.h"
 #include "widget.h"
+#include "widget-class.h"
 #include "widget-resolver.h"
 #include "async.h"
 #include "global.h"

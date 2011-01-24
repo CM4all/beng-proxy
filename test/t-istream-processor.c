@@ -1,5 +1,6 @@
 #include "istream.h"
 #include "widget.h"
+#include "widget-class.h"
 #include "processor.h"
 #include "uri-parser.h"
 #include "session.h"

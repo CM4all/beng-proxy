@@ -5,6 +5,7 @@
  */
 
 #include "widget.h"
+#include "widget-class.h"
 #include "uri-relative.h"
 #include "uri-parser.h"
 #include "uri-edit.h"

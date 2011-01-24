@@ -1,6 +1,7 @@
 #include "rewrite-uri.h"
 #include "session.h"
 #include "widget.h"
+#include "widget-class.h"
 #include "widget-resolver.h"
 #include "uri-parser.h"
 #include "sink-gstring.h"

@@ -10,6 +10,7 @@
 #include "header-writer.h"
 #include "header-forward.h"
 #include "widget.h"
+#include "widget-class.h"
 #include "embed.h"
 #include "proxy-widget.h"
 #include "session.h"

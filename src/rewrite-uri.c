@@ -7,6 +7,7 @@
 #include "rewrite-uri.h"
 #include "widget.h"
 #include "widget-resolver.h"
+#include "widget-class.h"
 #include "strref-pool.h"
 #include "uri-parser.h"
 #include "uri-extract.h"
