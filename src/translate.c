@@ -430,9 +430,8 @@ add_view(struct translate_client *client, const char *name)
     }
 
     view = p_malloc(client->pool, sizeof(*view));
-    view->next = NULL;
+    widget_view_init(view);
     view->name = name;
-    view->transformation = NULL;
 
     *client->widget_view_tail = view;
     client->widget_view_tail = &view->next;
@@ -634,7 +633,8 @@ translate_handle_packet(struct translate_client *client,
 
         client->response.max_age = -1;
         client->response.user_max_age = -1;
-        client->response.views = p_calloc(client->pool, sizeof(*client->response.views));
+        client->response.views = p_malloc(client->pool, sizeof(*client->response.views));
+        widget_view_init(client->response.views);
         client->widget_view_tail = &client->response.views->next;
         client->transformation = NULL;
         client->transformation_tail = &client->response.views->transformation;

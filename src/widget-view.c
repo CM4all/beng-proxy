@@ -10,6 +10,14 @@
 
 #include <string.h>
 
+void
+widget_view_init(struct widget_view *view)
+{
+    view->next = NULL;
+    view->name = NULL;
+    view->transformation = NULL;
+}
+
 const struct widget_view *
 widget_view_lookup(const struct widget_view *view, const char *name)
 {
@@ -34,8 +42,8 @@ static struct widget_view *
 widget_view_dup(struct pool *pool, const struct widget_view *src)
 {
     struct widget_view *dest = p_malloc(pool, sizeof(*dest));
+    widget_view_init(dest);
 
-    dest->next = NULL;
     dest->name = src->name != NULL ? p_strdup(pool, src->name) : NULL;
     dest->transformation = transformation_dup_chain(pool, src->transformation);
 

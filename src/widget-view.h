@@ -21,6 +21,9 @@ struct widget_view {
     struct transformation *transformation;
 };
 
+void
+widget_view_init(struct widget_view *view);
+
 /**
  * Finds a view by its name.  If name==NULL, it returns the first
  * view.

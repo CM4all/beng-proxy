@@ -366,17 +366,17 @@ serve_document_root_file(struct request *request2,
     if (process) {
         struct transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
         struct widget_view *view = p_malloc(request->pool, sizeof(*view));
+        widget_view_init(view);
 
         transformation->next = NULL;
         transformation->type = TRANSFORMATION_PROCESS;
 
-        view->next = NULL;
-        view->name = NULL;
         view->transformation = transformation;
 
         tr->views = view;
     } else {
-        struct widget_view *view = p_calloc(request->pool, sizeof(*view));
+        struct widget_view *view = p_malloc(request->pool, sizeof(*view));
+        widget_view_init(view);
 
         tr->views = view;
     }
