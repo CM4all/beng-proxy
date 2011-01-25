@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.4) unstable; urgency=low
 
-  * 
+  * widget-class: allow distinct addresses for each view
 
  --
 

@@ -15,7 +15,35 @@ widget_view_init(struct widget_view *view)
 {
     view->next = NULL;
     view->name = NULL;
+    view->address.type = RESOURCE_ADDRESS_NONE;
+    view->filter_4xx = false;
     view->transformation = NULL;
+}
+
+bool
+widget_view_inherit_address(pool_t pool, struct widget_view *view,
+                            const struct resource_address *address)
+{
+    assert(view != NULL);
+    assert(address != NULL);
+
+    if (view->address.type != RESOURCE_ADDRESS_NONE ||
+        address->type == RESOURCE_ADDRESS_NONE)
+        return false;
+
+    resource_address_copy(pool, &view->address, address);
+    return true;
+}
+
+bool
+widget_view_inherit_from(pool_t pool, struct widget_view *dest,
+                         const struct widget_view *src)
+{
+    if (widget_view_inherit_address(pool, dest, &src->address)) {
+        dest->filter_4xx = src->filter_4xx;
+        return true;
+    } else
+        return false;
 }
 
 const struct widget_view *
@@ -45,6 +73,8 @@ widget_view_dup(struct pool *pool, const struct widget_view *src)
     widget_view_init(dest);
 
     dest->name = src->name != NULL ? p_strdup(pool, src->name) : NULL;
+    resource_address_copy(pool, &dest->address, &src->address);
+    dest->filter_4xx = src->filter_4xx;
     dest->transformation = transformation_dup_chain(pool, src->transformation);
 
     return dest;

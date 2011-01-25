@@ -50,6 +50,21 @@ widget_base_address(pool_t pool, struct widget *widget, bool stateful)
     return dest;
 }
 
+static const struct resource_address *
+widget_get_original_address(const struct widget *widget)
+{
+    assert(widget != NULL);
+    assert(widget->class != NULL);
+
+    const struct widget_view *view =
+        widget_view_lookup(&widget->class->views, widget->from_request.view);
+    if (view == NULL)
+        /* fall back to default view */
+        view = &widget->class->views;
+
+    return &view->address;
+}
+
 const struct resource_address *
 widget_determine_address(const struct widget *widget, bool stateful)
 {
@@ -63,7 +78,8 @@ widget_determine_address(const struct widget *widget, bool stateful)
     path_info = stateful ? widget_get_path_info(widget) : widget->path_info;
     assert(path_info != NULL);
 
-    const struct resource_address *original_address = &widget->class->address;
+    const struct resource_address *original_address =
+        widget_get_original_address(widget);
     switch (original_address->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
@@ -192,7 +208,9 @@ widget_relative_uri(pool_t pool, struct widget *widget, bool stateful,
     if (address == NULL)
         return NULL;
 
-    return resource_address_relative(&widget->class->address, address, buffer);
+    const struct resource_address *original_address =
+        widget_get_original_address(widget);
+    return resource_address_relative(original_address, address, buffer);
 }
 
 const char *

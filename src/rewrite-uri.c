@@ -110,7 +110,8 @@ do_rewrite_widget_uri(pool_t pool,
 
     switch (mode) {
     case URI_MODE_DIRECT:
-        if (widget->class->address.type != RESOURCE_ADDRESS_HTTP)
+        if (widget_get_view(widget) == NULL ||
+            widget_get_view(widget)->address.type != RESOURCE_ADDRESS_HTTP)
             /* the browser can only contact HTTP widgets directly */
             return NULL;
 

@@ -853,7 +853,8 @@ embed_widget(struct processor *processor, struct processor_env *env,
 {
     if (widget->class_name == NULL &&
         (widget->class == NULL ||
-         widget->class->address.type == RESOURCE_ADDRESS_NONE)) {
+         widget_get_view(widget) == NULL ||
+         widget_get_view(widget)->address.type == RESOURCE_ADDRESS_NONE)) {
         widget_cancel(widget);
         return NULL;
     }

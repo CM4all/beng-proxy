@@ -8,16 +8,12 @@
 #define BENG_PROXY_WIDGET_CLASS_H
 
 #include "widget-view.h"
-#include "resource-address.h"
 #include "header-forward.h"
 
 /**
  * A widget class is a server which provides a widget.
  */
 struct widget_class {
-    /** the base URI of this widget, as specified in the template */
-    struct resource_address address;
-
     /**
      * A linked list of view descriptions.
      */
@@ -41,11 +37,6 @@ struct widget_class {
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */
     bool stateful;
-
-    /**
-     * Filter client error messages?
-     */
-    bool filter_4xx;
 
     /**
      * Which request headers are forwarded?

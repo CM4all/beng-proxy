@@ -125,7 +125,8 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (embed->num_redirects >= 8)
         return false;
 
-    if (embed->widget->class->address.type != RESOURCE_ADDRESS_HTTP)
+    if (widget_get_view(embed->widget) == NULL ||
+        widget_get_view(embed->widget)->address.type != RESOURCE_ADDRESS_HTTP)
         /* a static or CGI widget cannot send redirects */
         return false;
 
@@ -294,7 +295,9 @@ widget_transformation_enabled(const struct widget *widget,
                               http_status_t status)
 {
     return http_status_is_success(status) ||
-        (http_status_is_client_error(status) && widget->class->filter_4xx);
+        (http_status_is_client_error(status) &&
+         widget_get_view(widget) != NULL &&
+         widget_get_view(widget)->filter_4xx);
 }
 
 /**
@@ -436,8 +439,8 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->widget = widget;
     embed->env = env;
     embed->host_and_port =
-        embed->widget->class->address.type == RESOURCE_ADDRESS_HTTP
-        ? uri_host_and_port(pool, embed->widget->class->address.u.http->uri)
+        view->address.type == RESOURCE_ADDRESS_HTTP
+        ? uri_host_and_port(pool, view->address.u.http->uri)
         : NULL;
     embed->transformation = embed->widget->from_request.raw
         ? NULL : view->transformation;

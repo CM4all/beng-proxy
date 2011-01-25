@@ -78,6 +78,9 @@ struct translate_client {
     /** the current resource address being edited */
     struct resource_address *resource_address;
 
+    /** the current widget view */
+    struct widget_view *view;
+
     /** pointer to the tail of the transformation view linked list */
     struct widget_view **widget_view_tail;
 
@@ -417,17 +420,50 @@ valid_view_name(const char *name)
     return true;
 }
 
+/**
+ * Finish the settings in the current view, i.e. copy attributes from
+ * the "parent" view.
+ */
+static void
+finish_view(struct translate_client *client)
+{
+    assert(client != NULL);
+    assert(client->response.views != NULL);
+
+    struct widget_view *view = client->view;
+    if (client->view == NULL) {
+        view = client->response.views;
+        assert(view != NULL);
+
+        const struct resource_address *address = &client->response.address;
+        if (address->type != RESOURCE_ADDRESS_NONE &&
+            view->address.type == RESOURCE_ADDRESS_NONE)
+            /* no address yet: copy address from response */
+            view->address = *address;
+    } else {
+        if (client->view->address.type == RESOURCE_ADDRESS_NONE &&
+            client->view != client->response.views)
+            /* no address yet: inherits settings from the default view */
+            widget_view_inherit_from(client->pool, client->view,
+                                     client->response.views);
+    }
+}
+
 static void
 add_view(struct translate_client *client, const char *name)
 {
+    finish_view(client);
+
     struct widget_view *view;
 
     view = p_malloc(client->pool, sizeof(*view));
     widget_view_init(view);
     view->name = name;
 
+    client->view = view;
     *client->widget_view_tail = view;
     client->widget_view_tail = &view->next;
+    client->resource_address = &view->address;
     client->transformation_tail = &view->transformation;
     client->transformation = NULL;
 }
@@ -596,6 +632,8 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
+        finish_view(client);
+
         async_operation_finished(&client->async);
         client->handler->response(&client->response, client->handler_ctx);
         translate_client_release(client, true);
@@ -630,6 +668,7 @@ translate_handle_packet(struct translate_client *client,
         client->response.user_max_age = -1;
         client->response.views = p_malloc(client->pool, sizeof(*client->response.views));
         widget_view_init(client->response.views);
+        client->view = NULL;
         client->widget_view_tail = &client->response.views->next;
         client->transformation = NULL;
         client->transformation_tail = &client->response.views->transformation;
@@ -786,7 +825,10 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_FILTER_4XX:
-        client->response.filter_4xx = true;
+        if (client->view != NULL)
+            client->view->filter_4xx = true;
+        else
+            client->response.filter_4xx = true;
         break;
 
     case TRANSLATE_PROCESS:
