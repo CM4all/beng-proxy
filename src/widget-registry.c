@@ -72,9 +72,10 @@ widget_translate_response(const struct translate_response *response, void *ctx)
     class->stateful = response->stateful;
     class->filter_4xx = response->filter_4xx;
     resource_address_copy(lookup->pool, &class->address, &response->address);
-    class->views = response->views != NULL
-        ? widget_view_dup_chain(lookup->pool, response->views)
-        : NULL;
+    if (response->views != NULL)
+        class->views = *widget_view_dup_chain(lookup->pool, response->views);
+    else
+        widget_view_init(&class->views);
 
     class->request_header_forward = response->request_header_forward;
     class->response_header_forward = response->response_header_forward;

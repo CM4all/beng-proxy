@@ -420,7 +420,8 @@ widget_http_request(pool_t pool, struct widget *widget,
     assert(widget->class != NULL);
 
     const struct widget_view *view =
-        widget_view_lookup(widget->class->views, widget_get_view_name(widget));
+        widget_view_lookup(&widget->class->views,
+                           widget_get_view_name(widget));
     if (view == NULL) {
         GError *error =
             g_error_new(widget_quark(), 0,

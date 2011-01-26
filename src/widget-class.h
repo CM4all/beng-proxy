@@ -21,7 +21,7 @@ struct widget_class {
     /**
      * A linked list of view descriptions.
      */
-    const struct widget_view *views;
+    struct widget_view views;
 
     /**
      * The (beng-proxy) hostname on which requests to this widget are
