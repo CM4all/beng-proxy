@@ -546,17 +546,19 @@ translate_response_finish(struct translate_response *response,
         if (response->address.u.cgi.document_root == NULL)
             response->address.u.cgi.document_root = response->document_root;
 
-        return translate_jail_finish(&response->address.u.cgi.jail, response,
-                                     response->address.u.cgi.document_root,
-                                     error_r);
+        if (!translate_jail_finish(&response->address.u.cgi.jail, response,
+                                   response->address.u.cgi.document_root,
+                                   error_r))
+            return false;
     } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
         if (response->address.u.local.jail.enabled &&
             response->address.u.local.document_root == NULL)
             response->address.u.local.document_root = response->document_root;
 
-        return translate_jail_finish(&response->address.u.local.jail, response,
-                                     response->address.u.local.document_root,
-                                     error_r);
+        if (!translate_jail_finish(&response->address.u.local.jail, response,
+                                   response->address.u.local.document_root,
+                                   error_r))
+            return false;
     }
 
     return true;
