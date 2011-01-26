@@ -63,7 +63,8 @@ widget_determine_address(const struct widget *widget, bool stateful)
     path_info = stateful ? widget_get_path_info(widget) : widget->path_info;
     assert(path_info != NULL);
 
-    switch (widget->class->address.type) {
+    const struct resource_address *original_address = &widget->class->address;
+    switch (original_address->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
     case RESOURCE_ADDRESS_PIPE:
@@ -71,7 +72,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        assert(widget->class->address.u.http->uri != NULL);
+        assert(original_address->u.http->uri != NULL);
 
         if ((!stateful ||
              strref_is_empty(&widget->from_request.query_string)) &&
@@ -79,7 +80,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
             widget->query_string == NULL)
             break;
 
-        uri = widget->class->address.u.http->uri;
+        uri = original_address->u.http->uri;
 
         if (*path_info != 0)
             uri = p_strcat(pool, uri, path_info, NULL);
@@ -93,7 +94,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
                                             widget->from_request.query_string.data,
                                             widget->from_request.query_string.length);
 
-        address = resource_address_dup(pool, &widget->class->address);
+        address = resource_address_dup(pool, original_address);
         address->u.http->uri = uri;
         return address;
 
@@ -106,7 +107,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
             widget->query_string == NULL)
             break;
 
-        address = resource_address_dup(pool, &widget->class->address);
+        address = resource_address_dup(pool, original_address);
 
         if (*path_info != 0)
             address->u.cgi.path_info = path_info;
@@ -130,7 +131,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
         return address;
     }
 
-    return &widget->class->address;
+    return original_address;
 }
 
 const char *
