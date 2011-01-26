@@ -13,6 +13,7 @@
 #include "resource-address.h"
 
 #include <inline/list.h>
+#include <inline/compiler.h>
 #include <http/method.h>
 
 #include <assert.h>
@@ -203,6 +204,10 @@ widget_get_view_name(const struct widget *widget)
         ? widget->from_request.view
         : widget->view;
 }
+
+__attr_pure
+const struct widget_view *
+widget_get_view(const struct widget *widget);
 
 /**
  * Returns the widget's session object.  The passed session object

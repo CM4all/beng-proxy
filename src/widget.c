@@ -6,6 +6,7 @@
 
 #include "widget.h"
 #include "widget-class.h"
+#include "widget-view.h"
 #include "strref-pool.h"
 
 #include <string.h>
@@ -31,6 +32,16 @@ widget_set_id(struct widget *widget, pool_t pool, const struct strref *id)
     p = widget_prefix(widget->parent);
     if (p != NULL)
         widget->lazy.prefix = p_strcat(pool, p, widget->id, "__", NULL);
+}
+
+const struct widget_view *
+widget_get_view(const struct widget *widget)
+{
+    assert(widget != NULL);
+    assert(widget->class != NULL);
+
+    return widget_view_lookup(&widget->class->views,
+                              widget_get_view_name(widget));
 }
 
 struct widget *
