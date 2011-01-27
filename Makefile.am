@@ -1014,6 +1014,7 @@ test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	$(POOL_SRC) src/tpool.c \
 	src/rewrite-uri.c src/widget-uri.c src/widget.c \
+	src/widget-view.c src/transformation.c \
 	src/istream-null.c src/istream-delayed.c src/istream-memory.c \
 	src/istream-forward.c src/istream-string.c \
 	src/sink-gstring.c \
@@ -1064,7 +1065,7 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
 	src/widget-session.c src/session.c \
-	src/widget-view.c \
+	src/widget-view.c src/widget.c \
 	src/random.c src/socket-util.c src/fd-util.c \
 	src/fd_util.c \
 	src/args.c src/uri-escape.c src/uri-verify.c \
@@ -1104,7 +1105,11 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/strutil.c \
 	src/abort-unref.c \
 	src/uri-address.c src/uri-edit.c \
+	src/uri-escape.c src/uri-relative.c src/uri-verify.c \
+	src/format.c \
 	src/stopwatch.c \
+	src/widget-view.c \
+	src/resource-address.c src/transformation.c src/jail.c \
 	$(POOL_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1164,6 +1169,8 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/client-socket.c src/fd_util.c \
 	src/format.c src/header-parser.c src/strutil.c \
 	src/widget-request.c \
+	src/widget-view.c \
+	src/resource-address.c src/jail.c src/transformation.c \
 	src/istream-tee.c src/istream-null.c \
 	src/event2.c src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \
@@ -1195,6 +1202,8 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/client-socket.c src/fd_util.c \
 	src/format.c src/header-parser.c src/strutil.c \
 	src/widget-request.c \
+	src/widget-view.c \
+	src/resource-address.c src/jail.c src/transformation.c \
 	src/istream-tee.c src/istream-null.c \
 	src/event2.c src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \

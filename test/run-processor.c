@@ -23,8 +23,10 @@ static bool is_eof;
  */
 
 const struct widget_class root_widget_class = {
-    .address = {
-        .type = RESOURCE_ADDRESS_NONE,
+    .views = {
+        .address = {
+            .type = RESOURCE_ADDRESS_NONE,
+        },
     },
     .stateful = false,
 };

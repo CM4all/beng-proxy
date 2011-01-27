@@ -197,15 +197,16 @@ test_cookie_client(pool_t pool)
     static struct uri_with_address address = {
         .uri = "http://foo/bar/",
     };
-    static const struct widget_view view;
     static const struct widget_class cls = {
-        .address = {
-            .type = RESOURCE_ADDRESS_HTTP,
-            .u = {
-                .http = &address,
+        .views = {
+            .address = {
+                .type = RESOURCE_ADDRESS_HTTP,
+                .u = {
+                    .http = &address,
+                },
             },
         },
-        .views = &view,
+
         .stateful = true,
 
         .request_header_forward = {

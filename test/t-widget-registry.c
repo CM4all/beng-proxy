@@ -69,6 +69,7 @@ tstock_translate(__attr_unused struct tstock *stock, pool_t pool,
         response->address.type = RESOURCE_ADDRESS_HTTP;
         response->address.u.http = uri_address_new(pool, "http://foo/");
         response->views = p_calloc(pool, sizeof(*response->views));
+        response->views->address = response->address;
         handler->response(response, ctx);
     } else if (strcmp(request->widget_type, "block") == 0) {
         struct async_operation *ao = p_malloc(pool, sizeof(*ao));
@@ -106,11 +107,10 @@ test_normal(pool_t pool)
     assert(!aborted);
     assert(data.got_class);
     assert(data.class != NULL);
-    assert(data.class->address.type == RESOURCE_ADDRESS_HTTP);
-    assert(strcmp(data.class->address.u.http->uri, "http://foo/") == 0);
-    assert(data.class->views != NULL);
-    assert(data.class->views->next == NULL);
-    assert(data.class->views->transformation == NULL);
+    assert(data.class->views.address.type == RESOURCE_ADDRESS_HTTP);
+    assert(strcmp(data.class->views.address.u.http->uri, "http://foo/") == 0);
+    assert(data.class->views.next == NULL);
+    assert(data.class->views.transformation == NULL);
 
     pool_unref(pool);
 

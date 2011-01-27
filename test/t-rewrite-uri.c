@@ -18,8 +18,10 @@
  */
 
 const struct widget_class root_widget_class = {
-    .address = {
-        .type = RESOURCE_ADDRESS_NONE,
+    .views = {
+        .address = {
+            .type = RESOURCE_ADDRESS_NONE,
+        },
     },
     .stateful = false,
 };
@@ -58,10 +60,12 @@ widget_resolver_new(G_GNUC_UNUSED pool_t pool, G_GNUC_UNUSED pool_t widget_pool,
         .uri = "http://widget-server/1/",
     };
     static const struct widget_class class1 = {
-        .address = {
-            .type = RESOURCE_ADDRESS_HTTP,
-            .u = {
-                .http = &address1,
+        .views = {
+            .address = {
+                .type = RESOURCE_ADDRESS_HTTP,
+                .u = {
+                    .http = &address1,
+                },
             },
         },
     };
@@ -69,10 +73,12 @@ widget_resolver_new(G_GNUC_UNUSED pool_t pool, G_GNUC_UNUSED pool_t widget_pool,
         .uri = "http://widget-server/2",
     };
     static const struct widget_class class2 = {
-        .address = {
-            .type = RESOURCE_ADDRESS_HTTP,
-            .u = {
-                .http = &address2,
+        .views = {
+            .address = {
+                .type = RESOURCE_ADDRESS_HTTP,
+                .u = {
+                    .http = &address2,
+                },
             },
         },
     };
