@@ -285,6 +285,7 @@ SRC = src/main.c \
 	src/request.c \
 	src/request-forward.c \
 	src/response.c \
+	src/rerror.c \
 	src/handler.c \
 	src/file-handler.c \
 	src/proxy-handler.c \

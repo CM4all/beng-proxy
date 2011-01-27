@@ -574,11 +574,10 @@ response_abort(GError *error, void *ctx)
     assert(!request->response_sent);
 
     daemon_log(2, "error on %s: %s\n", request->request->uri, error->message);
-    g_error_free(error);
 
-    response_dispatch_message(request,
-                              HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                              "Internal server error");
+    response_dispatch_error(request, error);
+
+    g_error_free(error);
 }
 
 const struct http_response_handler response_handler = {
