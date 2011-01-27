@@ -431,9 +431,11 @@ finish_view(struct translate_client *client)
 
         const struct resource_address *address = &client->response.address;
         if (address->type != RESOURCE_ADDRESS_NONE &&
-            view->address.type == RESOURCE_ADDRESS_NONE)
+            view->address.type == RESOURCE_ADDRESS_NONE) {
             /* no address yet: copy address from response */
             view->address = *address;
+            view->filter_4xx = client->response.filter_4xx;
+        }
     } else {
         if (client->view->address.type == RESOURCE_ADDRESS_NONE &&
             client->view != client->response.views)
