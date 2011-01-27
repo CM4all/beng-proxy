@@ -422,13 +422,6 @@ add_view(struct translate_client *client, const char *name)
 {
     struct widget_view *view;
 
-    if (!valid_view_name(name)) {
-        GError *error = g_error_new_literal(translate_quark(), 0,
-                                            "invalid view name");
-        translate_client_abort(client, error);
-        return;
-    }
-
     view = p_malloc(client->pool, sizeof(*view));
     widget_view_init(view);
     view->name = name;
@@ -1098,6 +1091,11 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_VIEW:
+        if (!valid_view_name(payload)) {
+            translate_client_error(client, "invalid view name");
+            return false;
+        }
+
         add_view(client, payload);
         break;
 
