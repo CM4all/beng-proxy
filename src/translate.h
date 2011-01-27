@@ -136,6 +136,13 @@ struct translate_handler {
     void (*error)(GError *error, void *ctx);
 };
 
+G_GNUC_CONST
+static inline GQuark
+translate_quark(void)
+{
+    return g_quark_from_static_string("translate");
+}
+
 void
 translate(pool_t pool, int fd,
           const struct lease *lease, void *lease_ctx,

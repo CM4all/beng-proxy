@@ -103,12 +103,6 @@ static const struct timeval http_client_timeout = {
     .tv_usec = 0,
 };
 
-static inline GQuark
-http_client_quark(void)
-{
-    return g_quark_from_static_string("http_client");
-}
-
 static inline bool
 http_client_valid(const struct http_client *client)
 {

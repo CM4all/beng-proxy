@@ -17,6 +17,13 @@ struct growing_buffer;
 struct http_response_handler;
 struct async_operation_ref;
 
+G_GNUC_CONST
+static inline GQuark
+http_client_quark(void)
+{
+    return g_quark_from_static_string("http_client");
+}
+
 /**
  * Sends a HTTP request on a socket, and passes the response to the
  * handler.

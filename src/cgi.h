@@ -16,6 +16,13 @@ struct http_response_handler;
 struct async_operation_ref;
 struct jail_params;
 
+G_GNUC_CONST
+static inline GQuark
+cgi_quark(void)
+{
+    return g_quark_from_static_string("cgi");
+}
+
 void
 cgi_new(pool_t pool, const struct jail_params *jail,
         const char *interpreter, const char *action,

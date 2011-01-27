@@ -95,12 +95,6 @@ struct translate_client {
     struct async_operation async;
 };
 
-static inline GQuark
-translate_quark(void)
-{
-    return g_quark_from_static_string("translate");
-}
-
 /**
  * Release resources held by this object: the event object, the socket
  * lease, and the pool reference.

@@ -88,12 +88,6 @@ static const struct ajp_header empty_body_chunk = {
     .a = 0x12, .b = 0x34,
 };
 
-static GQuark
-ajp_client_quark(void)
-{
-    return g_quark_from_static_string("ajp_client");
-}
-
 static inline bool
 ajp_connection_valid(struct ajp_client *client)
 {

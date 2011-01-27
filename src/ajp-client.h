@@ -15,6 +15,13 @@ struct lease;
 struct http_response_handler;
 struct strmap;
 
+G_GNUC_CONST
+static inline GQuark
+ajp_client_quark(void)
+{
+    return g_quark_from_static_string("ajp_client");
+}
+
 /**
  * Sends a HTTP request on a socket to an AJPv13 server, and passes
  * the response to the handler.

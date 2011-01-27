@@ -49,12 +49,6 @@ struct cgi {
     struct http_response_handler_ref handler;
 };
 
-static GQuark
-cgi_quark(void)
-{
-    return g_quark_from_static_string("cgi");
-}
-
 static bool
 cgi_handle_line(struct cgi *cgi, const char *line, size_t length)
 {

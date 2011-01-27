@@ -28,6 +28,7 @@ struct memcached_client_handler {
     void (*error)(GError *error, void *ctx);
 };
 
+G_GNUC_CONST
 static inline GQuark
 memcached_client_quark(void)
 {
