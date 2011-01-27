@@ -1,0 +1,13 @@
+cgi "/usr/share/cm4all/beng-proxy/demo/time3.py"
+script_name "/time3.py"
+
+view "cfatest01"
+server "http://cfatest01.intern.cm-ag/"
+
+view "date"
+cgi "/usr/share/cm4all/beng-proxy/demo/date2.py"
+
+view "inherit"
+
+view "process"
+process
