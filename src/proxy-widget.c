@@ -55,7 +55,8 @@ widget_proxy_abort(GError *error, void *ctx)
 {
     struct request *request2 = ctx;
 
-    daemon_log(2, "error from widget: %s\n", error->message);
+    daemon_log(2, "error from widget on %s: %s\n",
+               request2->request->uri, error->message);
     g_error_free(error);
 
     response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
