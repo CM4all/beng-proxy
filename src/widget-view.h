@@ -8,6 +8,7 @@
 #define BENG_PROXY_WIDGET_VIEW_H
 
 #include "resource-address.h"
+#include "header-forward.h"
 
 struct pool;
 
@@ -29,6 +30,16 @@ struct widget_view {
     bool filter_4xx;
 
     struct transformation *transformation;
+
+    /**
+     * Which request headers are forwarded?
+     */
+    struct header_forward_settings request_header_forward;
+
+    /**
+     * Which response headers are forwarded?
+     */
+    struct header_forward_settings response_header_forward;
 };
 
 void

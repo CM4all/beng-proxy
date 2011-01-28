@@ -75,9 +75,6 @@ widget_translate_response(const struct translate_response *response, void *ctx)
     else
         widget_view_init(&class->views);
 
-    class->request_header_forward = response->request_header_forward;
-    class->response_header_forward = response->response_header_forward;
-
     lookup->callback(class, lookup->callback_ctx);
 }
 

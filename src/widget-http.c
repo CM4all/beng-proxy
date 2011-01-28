@@ -80,7 +80,8 @@ widget_uri(struct widget *widget)
 }
 
 static struct strmap *
-widget_request_headers(struct embed *embed, bool exclude_host, bool with_body)
+widget_request_headers(struct embed *embed, const struct widget_view *view,
+                       bool exclude_host, bool with_body)
 {
     struct strmap *headers;
     struct session *session;
@@ -92,7 +93,7 @@ widget_request_headers(struct embed *embed, bool exclude_host, bool with_body)
                                       embed->env->remote_host,
                                       exclude_host, with_body,
                                       false, false,
-                                      &embed->widget->class->request_header_forward,
+                                      &view->request_header_forward,
                                       session,
                                       embed->host_and_port,
                                       widget_uri(embed->widget));
@@ -161,7 +162,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (body != NULL)
         istream_close_unused(body);
 
-    headers = widget_request_headers(embed,
+    headers = widget_request_headers(embed, view,
                                      address->type == RESOURCE_ADDRESS_HTTP,
                                      false);
 
@@ -462,7 +463,7 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->transformation = embed->widget->from_request.raw
         ? NULL : view->transformation;
 
-    headers = widget_request_headers(embed,
+    headers = widget_request_headers(embed, view,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,
                                      widget->from_request.body != NULL);
 
@@ -524,7 +525,7 @@ widget_http_lookup(pool_t pool, struct widget *widget, const char *id,
         : NULL;
     embed->transformation = view->transformation;
 
-    headers = widget_request_headers(embed,
+    headers = widget_request_headers(embed, view,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,
                                      widget->from_request.body != NULL);
 

@@ -31,9 +31,12 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     assert(widget != NULL);
     assert(widget->class != NULL);
 
+    const struct widget_view *view = widget_get_view(widget);
+    assert(view != NULL);
+
     headers = forward_response_headers(request->pool, headers,
                                        request->local_host,
-                                       &widget->class->response_header_forward);
+                                       &view->response_header_forward);
 
     headers2 = headers_dup(request->pool, headers);
 

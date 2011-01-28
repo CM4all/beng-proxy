@@ -457,6 +457,9 @@ finish_view(struct translate_client *client)
             resource_address_copy(client->pool, &view->address, address);
             view->filter_4xx = client->response.filter_4xx;
         }
+
+        view->request_header_forward = client->response.request_header_forward;
+        view->response_header_forward = client->response.response_header_forward;
     } else {
         if (client->view->address.type == RESOURCE_ADDRESS_NONE &&
             client->view != client->response.views)
@@ -1297,13 +1300,21 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_REQUEST_HEADER_FORWARD:
-        parse_header_forward(&client->response.request_header_forward,
-                             payload, payload_length);
+        if (client->view != NULL)
+            parse_header_forward(&client->view->request_header_forward,
+                                 payload, payload_length);
+        else
+            parse_header_forward(&client->response.request_header_forward,
+                                 payload, payload_length);
         break;
 
     case TRANSLATE_RESPONSE_HEADER_FORWARD:
-        parse_header_forward(&client->response.response_header_forward,
-                             payload, payload_length);
+        if (client->view != NULL)
+            parse_header_forward(&client->view->response_header_forward,
+                                 payload, payload_length);
+        else
+            parse_header_forward(&client->response.response_header_forward,
+                                 payload, payload_length);
         break;
 
     case TRANSLATE_WWW_AUTHENTICATE:

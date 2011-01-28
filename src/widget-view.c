@@ -41,6 +41,10 @@ widget_view_inherit_from(pool_t pool, struct widget_view *dest,
 {
     if (widget_view_inherit_address(pool, dest, &src->address)) {
         dest->filter_4xx = src->filter_4xx;
+
+        dest->request_header_forward = src->request_header_forward;
+        dest->response_header_forward = src->response_header_forward;
+
         return true;
     } else
         return false;
@@ -76,6 +80,8 @@ widget_view_dup(struct pool *pool, const struct widget_view *src)
     resource_address_copy(pool, &dest->address, &src->address);
     dest->filter_4xx = src->filter_4xx;
     dest->transformation = transformation_dup_chain(pool, src->transformation);
+    dest->request_header_forward = src->request_header_forward;
+    dest->response_header_forward = src->response_header_forward;
 
     return dest;
 }
