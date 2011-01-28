@@ -1,9 +1,10 @@
 #include "processor.h"
 #include "uri-parser.h"
-#include "embed.h"
+#include "inline-widget.h"
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-stream.h"
+#include "widget-lookup.h"
 #include "rewrite-uri.h"
 
 #include <glib.h>
@@ -42,19 +43,6 @@ embed_inline_widget(pool_t pool,
     return istream_string_new(pool, s);
 }
 
-void
-embed_frame_widget(__attr_unused pool_t pool,
-                   __attr_unused struct processor_env *env,
-                   __attr_unused struct widget *widget,
-                   const struct http_response_handler *handler,
-                   void *handler_ctx,
-                   __attr_unused struct async_operation_ref *async_ref)
-{
-    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
-                                        "Test");
-    http_response_handler_direct_abort(handler, handler_ctx, error);
-}
-
 struct widget_session *
 widget_get_session(__attr_unused struct widget *widget,
                    __attr_unused struct session *session,
@@ -85,23 +73,28 @@ rewrite_widget_uri(__attr_unused pool_t pool, __attr_unused pool_t widget_pool,
  */
 
 static void
-my_response(G_GNUC_UNUSED http_status_t status,
-            G_GNUC_UNUSED struct strmap *headers,
-            G_GNUC_UNUSED istream_t body,
-            G_GNUC_UNUSED void *ctx)
+my_widget_found(__attr_unused struct widget *widget, __attr_unused void *ctx)
 {
+    g_printerr("widget found\n");
 }
 
 static void
-my_response_abort(GError *error, G_GNUC_UNUSED void *ctx)
+my_widget_not_found(__attr_unused void *ctx)
+{
+    g_printerr("widget not found\n");
+}
+
+static void
+my_widget_error(GError *error, __attr_unused void *ctx)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);
 }
 
-static const struct http_response_handler my_response_handler = {
-    .response = my_response,
-    .abort = my_response_abort,
+static const struct widget_lookup_handler my_widget_lookup_handler = {
+    .found = my_widget_found,
+    .not_found = my_widget_not_found,
+    .error = my_widget_error,
 };
 
 /*
@@ -123,8 +116,6 @@ test_proxy_abort(pool_t pool)
 
     struct widget widget;
     widget_init(&widget, pool, &root_widget_class);
-    struct widget_ref proxy_ref = { .next = NULL, .id = "foo" };
-    widget.from_request.proxy_ref = &proxy_ref;
 
     struct processor_env env;
     processor_env_init(pool, &env,
@@ -140,11 +131,10 @@ test_proxy_abort(pool_t pool)
                        NULL);
 
     struct async_operation_ref async_ref;
-    processor_new(pool, HTTP_STATUS_OK, NULL,
-                  istream_block_new(pool),
-                  &widget, &env, PROCESSOR_CONTAINER,
-                  &my_response_handler, NULL,
-                  &async_ref);
+    processor_lookup_widget(pool, HTTP_STATUS_OK, istream_block_new(pool),
+                            &widget, "foo", &env, PROCESSOR_CONTAINER,
+                            &my_widget_lookup_handler, NULL,
+                            &async_ref);
 
     pool_unref(pool);
 

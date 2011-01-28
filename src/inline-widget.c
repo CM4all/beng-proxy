@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "embed.h"
+#include "inline-widget.h"
 #include "widget-http.h"
 #include "processor.h"
 #include "widget.h"

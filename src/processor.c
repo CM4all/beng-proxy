@@ -8,10 +8,11 @@
 #include "parser.h"
 #include "args.h"
 #include "widget.h"
+#include "widget-lookup.h"
 #include "widget-class.h"
 #include "growing-buffer.h"
 #include "tpool.h"
-#include "embed.h"
+#include "inline-widget.h"
 #include "async.h"
 #include "rewrite-uri.h"
 #include "strref2.h"
@@ -43,6 +44,7 @@ struct processor {
     pool_t pool, caller_pool;
 
     struct widget *container;
+    const char *lookup_id;
     struct processor_env *env;
     unsigned options;
 
@@ -109,14 +111,16 @@ struct processor {
 
     struct async_operation async;
 
-    struct http_response_handler_ref response_handler;
+    const struct widget_lookup_handler *handler;
+    void *handler_ctx;
+
     struct async_operation_ref *async_ref;
 };
 
 static inline GQuark
-parser_quark(void)
+processor_quark(void)
 {
-    return g_quark_from_static_string("parser");
+    return g_quark_from_static_string("processor");
 }
 
 static inline bool
@@ -221,7 +225,7 @@ headers_copy2(struct strmap *in, struct strmap *out,
     }
 }
 
-static struct strmap *
+struct strmap *
 processor_header_forward(pool_t pool, struct strmap *headers)
 {
     if (headers == NULL)
@@ -240,38 +244,16 @@ processor_header_forward(pool_t pool, struct strmap *headers)
     return headers2;
 }
 
-void
-processor_new(pool_t caller_pool, http_status_t status,
-              struct strmap *headers, istream_t istream,
+static struct processor *
+processor_new(pool_t caller_pool,
               struct widget *widget,
               struct processor_env *env,
-              unsigned options,
-              const struct http_response_handler *handler,
-              void *handler_ctx,
-              struct async_operation_ref *async_ref)
+              unsigned options)
 {
-    assert(!http_status_is_empty(status));
-    assert(istream != NULL);
-    assert(!istream_has_handler(istream));
     assert(widget != NULL);
-
-    if (widget->from_request.proxy_ref == NULL &&
-        http_method_is_empty(env->method)) {
-        istream_close_unused(istream);
-
-        headers = processor_header_forward(caller_pool, headers);
-        http_response_handler_direct_response(handler, handler_ctx,
-                                              status, headers, NULL);
-        return;
-    }
 
     pool_t pool = pool_new_linear(caller_pool, "processor", 32768);
     struct processor *processor;
-
-    if (widget->from_request.proxy_ref == NULL) {
-        istream = istream_subst_new(pool, istream);
-        processor_subst_beng_widget(istream, widget, env);
-    }
 
     processor = p_malloc(pool, sizeof(*processor));
     processor->pool = pool;
@@ -292,42 +274,89 @@ processor_new(pool_t caller_pool, http_status_t status,
     processor->widget.param.value = expansible_buffer_new(pool, 512);
     processor->widget.params = expansible_buffer_new(pool, 1024);
 
-    if (widget->from_request.proxy_ref == NULL) {
-        istream = istream_tee_new(pool, istream, true, true);
-        processor->replace = istream_replace_new(pool, istream_tee_second(istream));
-    } else {
-        processor->replace = NULL;
-    }
+    return processor;
+}
+
+istream_t
+processor_process(pool_t caller_pool, istream_t istream,
+                  struct widget *widget,
+                  struct processor_env *env,
+                  unsigned options)
+{
+    assert(istream != NULL);
+    assert(!istream_has_handler(istream));
+
+    struct processor *processor = processor_new(caller_pool, widget,
+                                                env, options);
+
+    processor->lookup_id = NULL;
+
+    istream = istream_subst_new(processor->pool, istream);
+    processor_subst_beng_widget(istream, widget, env);
+
+    istream = istream_tee_new(processor->pool, istream, true, true);
+    processor->replace = istream_replace_new(processor->pool,
+                                             istream_tee_second(istream));
 
     processor_parser_init(processor, istream);
-    pool_unref(pool);
+    pool_unref(processor->pool);
 
-    if (widget->from_request.proxy_ref == NULL) {
-        if (processor_option_rewrite_url(processor)) {
-            processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
-            processor->default_uri_rewrite.mode = URI_MODE_DIRECT;
-        }
-
-        headers = processor_header_forward(pool, headers);
-        http_response_handler_direct_response(handler, handler_ctx,
-                                              status, headers,
-                                              processor->replace);
-    } else {
-        http_response_handler_set(&processor->response_handler,
-                                  handler, handler_ctx);
-        pool_ref(caller_pool);
-
-        async_init(&processor->async, &processor_async_operation);
-        async_ref_set(async_ref, &processor->async);
-        processor->async_ref = async_ref;
-
-        pool_ref(pool);
-        do {
-            processor->had_input = false;
-            parser_read(processor->parser);
-        } while (processor->had_input && processor->parser != NULL);
-        pool_unref(pool);
+    if (processor_option_rewrite_url(processor)) {
+        processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
+        processor->default_uri_rewrite.mode = URI_MODE_DIRECT;
     }
+
+    //XXX headers = processor_header_forward(pool, headers);
+    return processor->replace;
+}
+
+void
+processor_lookup_widget(pool_t caller_pool, http_status_t status,
+                        istream_t istream,
+                        struct widget *widget, const char *id,
+                        struct processor_env *env,
+                        unsigned options,
+                        const struct widget_lookup_handler *handler,
+                        void *handler_ctx,
+                        struct async_operation_ref *async_ref)
+{
+    assert(!http_status_is_empty(status));
+    assert(istream != NULL);
+    assert(!istream_has_handler(istream));
+    assert(widget != NULL);
+    assert(id != NULL);
+
+    if ((options & PROCESSOR_CONTAINER) == 0) {
+        GError *error = g_error_new_literal(processor_quark(), 0,
+                                            "Not a container");
+        handler->error(error, handler_ctx);
+        return;
+    }
+
+    struct processor *processor = processor_new(caller_pool, widget,
+                                                env, options);
+
+    processor->lookup_id = id;
+
+    processor->replace = NULL;
+
+    processor_parser_init(processor, istream);
+
+    processor->handler = handler;
+    processor->handler_ctx = handler_ctx;
+
+    pool_ref(caller_pool);
+
+    async_init(&processor->async, &processor_async_operation);
+    async_ref_set(async_ref, &processor->async);
+    processor->async_ref = async_ref;
+
+    do {
+        processor->had_input = false;
+        parser_read(processor->parser);
+    } while (processor->had_input && processor->parser != NULL);
+
+    pool_unref(processor->pool);
 }
 
 static void
@@ -860,29 +889,8 @@ embed_widget(struct processor *processor, struct processor_env *env,
     }
 
     widget_copy_from_request(widget, env);
-    if (!widget->from_request.proxy &&
-        widget->from_request.proxy_ref == NULL &&
-        processor->replace == NULL) {
-        widget_cancel(widget);
-        return NULL;
-    }
 
-    if (widget->from_request.proxy || widget->from_request.proxy_ref != NULL) {
-        pool_t caller_pool = processor->caller_pool;
-        struct http_response_handler_ref handler_ref =
-            processor->response_handler;
-        struct async_operation_ref *async_ref = processor->async_ref;
-
-        parser_close(processor->parser);
-        processor->parser = NULL;
-
-        embed_frame_widget(caller_pool, env, widget,
-                           handler_ref.handler, handler_ref.ctx,
-                           async_ref);
-        pool_unref(caller_pool);
-
-        return NULL;
-    } else {
+    if (processor->replace != NULL) {
         istream_t istream;
 
         istream = embed_inline_widget(processor->pool, env, widget);
@@ -891,6 +899,23 @@ embed_widget(struct processor *processor, struct processor_env *env,
                                         widget_catch_callback, widget);
 
         return istream;
+    } else if (widget->id != NULL &&
+               strcmp(processor->lookup_id, widget->id) == 0) {
+        pool_t caller_pool = processor->caller_pool;
+        const struct widget_lookup_handler *handler = processor->handler;
+        void *handler_ctx = processor->handler_ctx;
+
+        parser_close(processor->parser);
+        processor->parser = NULL;
+
+        handler->found(widget, handler_ctx);
+
+        pool_unref(caller_pool);
+
+        return NULL;
+    } else {
+        widget_cancel(widget);
+        return NULL;
     }
 }
 
@@ -1053,11 +1078,11 @@ processor_parser_eof(void *ctx, off_t length __attr_unused)
     if (processor->replace != NULL)
         istream_replace_finish(processor->replace);
 
-    if (processor->container->from_request.proxy_ref != NULL) {
+    if (processor->lookup_id != NULL) {
+        /* widget was not found */
         async_operation_finished(&processor->async);
-        http_response_handler_invoke_message(&processor->response_handler, processor->pool,
-                                             HTTP_STATUS_NOT_FOUND,
-                                             "Widget not found");
+
+        processor->handler->not_found(processor->handler_ctx);
         pool_unref(processor->caller_pool);
     }
 }
@@ -1071,9 +1096,9 @@ processor_parser_abort(GError *error, void *ctx)
 
     processor->parser = NULL;
 
-    if (processor->container->from_request.proxy_ref != NULL) {
+    if (processor->lookup_id != NULL) {
         async_operation_finished(&processor->async);
-        http_response_handler_invoke_abort(&processor->response_handler, error);
+        processor->handler->error(error, processor->handler_ctx);
         pool_unref(processor->caller_pool);
     } else
         g_error_free(error);

@@ -11,7 +11,6 @@
 #include "header-forward.h"
 #include "widget.h"
 #include "widget-class.h"
-#include "embed.h"
 #include "proxy-widget.h"
 #include "session.h"
 #include "fcache.h"
@@ -218,28 +217,30 @@ response_invoke_processor(struct request *request2,
     if (widget->from_request.proxy_ref != NULL) {
         /* the client requests a widget in proxy mode */
 
-        processor_new(request->pool, status, response_headers, body,
-                      widget, &request2->env,
-                      transformation->u.processor.options,
-                      &widget_proxy_handler, request2,
-                      request2->async_ref);
+        proxy_widget(request2, status, body,
+                     widget, transformation->u.processor.options);
     } else {
         /* the client requests the whole template */
-        processor_new(request->pool, status, response_headers, body,
-                      widget, &request2->env,
-                      transformation->u.processor.options,
-                      &response_handler, request2,
-                      request2->async_ref);
-    }
+        body = processor_process(request->pool, body,
+                                 widget, &request2->env,
+                                 transformation->u.processor.options);
+        assert(body != NULL);
 
-    /*
+        /*
 #ifndef NO_DEFLATE
-    if (http_client_accepts_encoding(request->headers, "deflate")) {
-        header_write(response_headers, "content-encoding", "deflate");
-        body = istream_deflate_new(request->pool, body);
-    }
+        if (http_client_accepts_encoding(request->headers, "deflate")) {
+            header_write(response_headers, "content-encoding", "deflate");
+            body = istream_deflate_new(request->pool, body);
+        }
 #endif
-    */
+        */
+
+        response_headers = processor_header_forward(request->pool,
+                                                    response_headers);
+
+        http_response_handler_direct_response(&response_handler, request2,
+                                              status, response_headers, body);
+    }
 }
 
 /**

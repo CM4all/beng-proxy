@@ -1,9 +1,8 @@
 #include "processor.h"
 #include "uri-parser.h"
-#include "embed.h"
+#include "inline-widget.h"
 #include "widget.h"
 #include "widget-class.h"
-#include "widget-stream.h"
 #include "rewrite-uri.h"
 
 #include <event.h>
@@ -43,19 +42,6 @@ embed_inline_widget(pool_t pool,
         s = "widget";
 
     return istream_string_new(pool, s);
-}
-
-void
-embed_frame_widget(__attr_unused pool_t pool,
-                   __attr_unused struct processor_env *env,
-                   __attr_unused struct widget *widget,
-                   const struct http_response_handler *handler,
-                   void *handler_ctx,
-                   __attr_unused struct async_operation_ref *async_ref)
-{
-    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
-                                        "Test");
-    http_response_handler_direct_abort(handler, handler_ctx, error);
 }
 
 struct widget_session *
@@ -140,8 +126,6 @@ int main(int argc, char **argv) {
     struct parsed_uri parsed_uri;
     struct widget widget;
     struct processor_env env;
-    struct widget_stream *ws;
-    istream_t delayed;
 
     (void)argc;
     (void)argv;
@@ -171,15 +155,11 @@ int main(int argc, char **argv) {
                        HTTP_METHOD_GET, NULL,
                        NULL);
 
-    ws = widget_stream_new(pool);
-    delayed = ws->delayed;
-    istream_handler_set(delayed, &my_istream_handler, NULL, 0);
-
-    processor_new(pool, HTTP_STATUS_OK, NULL,
-                  istream_file_new(pool, "/dev/stdin", (off_t)-1),
-                  &widget, &env, PROCESSOR_CONTAINER,
-                  &widget_stream_response_handler, ws,
-                  widget_stream_async_ref(ws));
+    istream_t result =
+        processor_process(pool,
+                          istream_file_new(pool, "/dev/stdin", (off_t)-1),
+                          &widget, &env, PROCESSOR_CONTAINER);
+    istream_handler_set(result, &my_istream_handler, NULL, 0);
 
     if (!is_eof)
         event_dispatch();

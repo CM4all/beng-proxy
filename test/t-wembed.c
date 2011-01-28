@@ -1,4 +1,4 @@
-#include "embed.h"
+#include "inline-widget.h"
 #include "uri-parser.h"
 #include "widget.h"
 #include "widget-http.h"

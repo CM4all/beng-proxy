@@ -8,6 +8,7 @@
 #include "processor.h"
 #include "widget.h"
 #include "widget-class.h"
+#include "widget-lookup.h"
 #include "session.h"
 #include "cookie-client.h"
 #include "async.h"
@@ -30,6 +31,8 @@ struct embed {
     unsigned num_redirects;
 
     struct widget *widget;
+    const char *lookup_id;
+
     struct processor_env *env;
     const char *host_and_port;
 
@@ -44,6 +47,9 @@ struct embed {
      * resources.
      */
     const char *resource_tag;
+
+    const struct widget_lookup_handler *lookup_handler;
+    void *lookup_handler_ctx;
 
     struct http_response_handler_ref handler_ref;
     struct async_operation_ref *async_ref;
@@ -180,6 +186,10 @@ processable(const struct strmap *headers)
          strncmp(content_type, "application/xhtml+xml", 21) == 0);
 }
 
+static void
+widget_response_dispatch(struct embed *embed, http_status_t status,
+                         struct strmap *headers, istream_t body);
+
 /**
  * The widget response is going to be embedded into a template; check
  * its content type and run the processor (if applicable).
@@ -189,11 +199,6 @@ widget_response_process(struct embed *embed, http_status_t status,
                         struct strmap *headers, istream_t body,
                         unsigned options)
 {
-    if (embed->widget->from_request.proxy_ref != NULL)
-        /* disable all following transformations, because we're doing
-           a direct proxy request to a child widget */
-        embed->transformation = NULL;
-
     if (body == NULL) {
         GError *error =
             g_error_new(widget_quark(), 0,
@@ -214,10 +219,19 @@ widget_response_process(struct embed *embed, http_status_t status,
         return;
     }
 
-    processor_new(embed->pool, status, headers, body,
-                  embed->widget, embed->env, options,
-                  &widget_response_handler, embed,
-                  embed->async_ref);
+    if (embed->lookup_id != NULL)
+        processor_lookup_widget(embed->pool, status, body,
+                                embed->widget, embed->lookup_id,
+                                embed->env, options,
+                                embed->lookup_handler,
+                                embed->lookup_handler_ctx,
+                                embed->async_ref);
+    else {
+        body = processor_process(embed->pool, body,
+                                 embed->widget, embed->env, options);
+
+        widget_response_dispatch(embed, status, headers, body);
+    }
 }
 
 static void
@@ -438,6 +452,7 @@ widget_http_request(pool_t pool, struct widget *widget,
 
     embed->num_redirects = 0;
     embed->widget = widget;
+    embed->lookup_id = NULL;
     embed->env = env;
     embed->host_and_port =
         view->address.type == RESOURCE_ADDRESS_HTTP
@@ -451,6 +466,69 @@ widget_http_request(pool_t pool, struct widget *widget,
                                      widget->from_request.body != NULL);
 
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
+    embed->async_ref = async_ref;
+
+    address = widget_address(widget);
+    embed->resource_tag = resource_address_id(address, pool);
+
+    resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
+                 global_was_stock, global_delegate_stock,
+                 pool,
+                 widget->from_request.method,
+                 address,
+                 HTTP_STATUS_OK, headers,
+                 widget->from_request.body,
+                 &widget_response_handler, embed, async_ref);
+}
+
+void
+widget_http_lookup(pool_t pool, struct widget *widget, const char *id,
+                   struct processor_env *env,
+                   const struct widget_lookup_handler *handler,
+                   void *handler_ctx,
+                   struct async_operation_ref *async_ref)
+{
+    struct embed *embed;
+    struct strmap *headers;
+    const struct resource_address *address;
+
+    assert(widget != NULL);
+    assert(widget->class != NULL);
+    assert(id != NULL);
+    assert(handler != NULL);
+    assert(handler->found != NULL);
+    assert(handler->not_found != NULL);
+    assert(handler->error != NULL);
+
+    const struct widget_view *view = widget_get_view(widget);
+    if (view == NULL) {
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "unknown view name for class '%s': '%s'",
+                        widget->class_name, widget_get_view_name(widget));
+        handler->error(error, handler_ctx);
+        return;
+    }
+
+    embed = p_malloc(pool, sizeof(*embed));
+    embed->pool = pool;
+
+    embed->num_redirects = 0;
+    embed->widget = widget;
+    embed->lookup_id = id;
+    embed->env = env;
+    embed->host_and_port =
+        view->address.type == RESOURCE_ADDRESS_HTTP
+        ? uri_host_and_port(pool, view->address.u.http->uri)
+        : NULL;
+    embed->transformation = view->transformation;
+
+    headers = widget_request_headers(embed,
+                                     widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,
+                                     widget->from_request.body != NULL);
+
+    embed->lookup_handler = handler;
+    embed->lookup_handler_ctx = handler_ctx;
     embed->async_ref = async_ref;
 
     address = widget_address(widget);

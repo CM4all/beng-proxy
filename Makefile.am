@@ -314,6 +314,7 @@ SRC = src/main.c \
 	src/static-headers.c \
 	src/static-file.c \
 	src/widget-http.c \
+	src/widget-childc \
 	src/inline-widget.c \
 	src/frame.c \
 	src/fd-util.c \
@@ -745,7 +746,6 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/widget.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/parser.c src/widget-class.c \
 	src/widget-view.c \
-	src/widget-stream.c \
 	src/tpool.c src/rewrite-uri.c src/widget-resolver.c \
 	src/uri-address.c src/uri-extract.c \
 	src/address-list.c \
@@ -1176,7 +1176,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/tpool.c \
 	src/istream-string.c src/istream-subst.c src/istream-file.c \
-	src/istream-cat.c src/istream-memory.c src/istream-delayed.c \
+	src/istream-cat.c src/istream-memory.c \
 	src/istream-hold.c src/istream-dechunk.c src/istream-chunked.c \
 	src/header-writer.c src/args.c src/buffered-io.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
@@ -1190,7 +1190,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/balancer.c src/uri-address.c src/cache.c \
 	src/address-list.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
-	src/widget-stream.c src/expansible-buffer.c \
+	src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
 	src/stopwatch.c \
 	$(POOL_SRC)
@@ -1224,7 +1224,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/balancer.c src/uri-address.c src/cache.c \
 	src/address-list.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
-	src/widget-stream.c src/expansible-buffer.c \
+	src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
 	src/stopwatch.c \
 	$(POOL_SRC)

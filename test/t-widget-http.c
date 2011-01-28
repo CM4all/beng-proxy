@@ -1,6 +1,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-http.h"
+#include "widget-lookup.h"
 #include "strmap.h"
 #include "growing-buffer.h"
 #include "header-parser.h"
@@ -45,20 +46,28 @@ const struct widget_class root_widget_class;
 static unsigned test_id;
 static bool got_request, got_response;
 
-void
-processor_new(__attr_unused pool_t pool, __attr_unused http_status_t status,
-              __attr_unused struct strmap *headers,
-              __attr_unused istream_t istream,
-              __attr_unused struct widget *widget,
-              __attr_unused struct processor_env *env,
-              __attr_unused unsigned options,
-              const struct http_response_handler *handler,
-              void *handler_ctx,
-              __attr_unused struct async_operation_ref *async_ref)
+istream_t
+processor_process(__attr_unused pool_t pool, istream_t istream,
+                  __attr_unused struct widget *widget,
+                  __attr_unused struct processor_env *env,
+                  __attr_unused unsigned options)
 {
-    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
-                                        "Test");
-    http_response_handler_direct_abort(handler, handler_ctx, error);
+    return istream;
+}
+
+void
+processor_lookup_widget(__attr_unused pool_t pool,
+                        __attr_unused http_status_t status,
+                        __attr_unused istream_t istream,
+                        __attr_unused struct widget *widget,
+                        __attr_unused const char *id,
+                        __attr_unused struct processor_env *env,
+                        __attr_unused unsigned options,
+                        const struct widget_lookup_handler *handler,
+                        void *handler_ctx,
+                        __attr_unused struct async_operation_ref *async_ref)
+{
+    handler->not_found(handler_ctx);
 }
 
 struct filter_cache;
@@ -240,7 +249,6 @@ test_cookie_client(pool_t pool)
     session_put(session);
 
     widget_init(&widget, pool, &cls);
-    widget.from_request.proxy = true;
 
     for (test_id = 0; test_id < 4; ++test_id) {
         got_request = false;

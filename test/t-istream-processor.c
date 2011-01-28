@@ -4,8 +4,7 @@
 #include "processor.h"
 #include "uri-parser.h"
 #include "session.h"
-#include "widget-stream.h"
-#include "embed.h"
+#include "inline-widget.h"
 #include "widget-registry.h"
 #include "uri-address.h"
 #include "global.h"
@@ -33,19 +32,6 @@ embed_inline_widget(pool_t pool, struct processor_env *env __attr_unused,
     return istream_string_new(pool, p_strdup(pool, widget->class_name));
 }
 
-void
-embed_frame_widget(pool_t pool __attr_unused,
-                   struct processor_env *env __attr_unused,
-                   struct widget *widget __attr_unused,
-                   const struct http_response_handler *handler,
-                   void *handler_ctx,
-                   struct async_operation_ref *async_ref __attr_unused)
-{
-    GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
-                                        "Test");
-    http_response_handler_direct_abort(handler, handler_ctx, error);
-}
-
 static istream_t
 create_input(pool_t pool)
 {
@@ -61,8 +47,6 @@ create_test(pool_t pool, istream_t input)
     static struct widget widget;
     static struct processor_env env;
     struct session *session;
-    struct widget_stream *ws;
-    istream_t delayed;
 
     /* HACK, processor.c will ignore c:widget otherwise */
     global_translate_cache = (struct tcache *)(size_t)1;
@@ -90,15 +74,7 @@ create_test(pool_t pool, istream_t input)
                        NULL);
     session_put(session);
 
-    ws = widget_stream_new(pool);
-    delayed = ws->delayed;
-
-    processor_new(pool, HTTP_STATUS_OK, NULL, input,
-                  &widget, &env, PROCESSOR_CONTAINER,
-                  &widget_stream_response_handler, ws,
-                  widget_stream_async_ref(ws));
-
-    return delayed;
+    return processor_process(pool, input, &widget, &env, PROCESSOR_CONTAINER);
 }
 
 static void

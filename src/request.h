@@ -81,6 +81,13 @@ struct request {
     const struct widget *dump_widget_tree;
 #endif
 
+    /**
+     * The widget currently being processed by
+     * processor_lookup_widget() or widget_resolver_new(), see
+     * proxy-widget.c.
+     */
+    struct widget *widget;
+
     bool body_consumed;
 
     /**

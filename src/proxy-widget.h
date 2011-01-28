@@ -7,8 +7,16 @@
 #ifndef __BENG_PROXY_WIDGET_H
 #define __BENG_PROXY_WIDGET_H
 
-#include "http-response.h"
+#include "istream.h"
 
-extern struct http_response_handler widget_proxy_handler;
+#include <http/status.h>
+
+struct request;
+struct widget;
+
+void
+proxy_widget(struct request *request2, http_status_t status, istream_t body,
+             struct widget *widget,
+             unsigned options);
 
 #endif

@@ -25,6 +25,7 @@ enum processor_options {
 
 struct parsed_uri;
 struct widget;
+struct widget_lookup_handler;
 struct async_operation_ref;
 
 struct processor_env {
@@ -76,14 +77,34 @@ processor_env_init(pool_t pool,
                    struct strmap *request_headers,
                    istream_t request_body);
 
+struct strmap *
+processor_header_forward(pool_t pool, struct strmap *headers);
+
+/**
+ * Process the specified istream, and return the processed stream.
+ *
+ * @param widget the widget that represents the template
+ */
+istream_t
+processor_process(pool_t pool, istream_t istream,
+                  struct widget *widget,
+                  struct processor_env *env,
+                  unsigned options);
+
+/**
+ * Process the specified istream, and find the specified widget.
+ *
+ * @param widget the widget that represents the template
+ * @param id the id of the widget to be looked up
+ */
 void
-processor_new(pool_t pool, http_status_t status,
-              struct strmap *headers, istream_t istream,
-              struct widget *widget,
-              struct processor_env *env,
-              unsigned options,
-              const struct http_response_handler *handler,
-              void *handler_ctx,
-              struct async_operation_ref *async_ref);
+processor_lookup_widget(pool_t pool, http_status_t status,
+                        istream_t istream,
+                        struct widget *widget, const char *id,
+                        struct processor_env *env,
+                        unsigned options,
+                        const struct widget_lookup_handler *handler,
+                        void *handler_ctx,
+                        struct async_operation_ref *async_ref);
 
 #endif
