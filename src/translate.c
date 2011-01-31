@@ -762,7 +762,9 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_SITE:
-        if (client->resource_address == NULL)
+        assert(client->resource_address != NULL);
+
+        if (client->resource_address == &client->response.address)
             client->response.site = payload;
         else if (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
                  client->resource_address->type == RESOURCE_ADDRESS_WAS ||
