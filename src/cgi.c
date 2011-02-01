@@ -418,7 +418,8 @@ cgi_run(bool jail, const char *interpreter, const char *action,
         const char *script_name, const char *path_info,
         const char *query_string,
         const char *document_root,
-        struct strmap *headers)
+        struct strmap *headers,
+        off_t content_length)
 {
     const struct strmap_pair *pair;
     char buffer[512] = "HTTP_";
@@ -501,6 +502,13 @@ cgi_run(bool jail, const char *interpreter, const char *action,
     if (content_type != NULL)
         setenv("CONTENT_TYPE", content_type, 1);
 
+    if (content_length >= 0) {
+        char value[32];
+        snprintf(value, sizeof(value), "%llu",
+                 (unsigned long long)content_length);
+        setenv("CONTENT_LENGTH", value, 1);
+    }
+
     execl(path, path, arg, NULL);
     fprintf(stderr, "exec('%s') failed: %s\n",
             path, strerror(errno));
@@ -566,7 +574,8 @@ cgi_new(pool_t pool, bool jail,
     if (pid == 0)
         cgi_run(jail, interpreter, action, path, method, uri,
                 script_name, path_info, query_string, document_root,
-                headers);
+                headers,
+                body != NULL ? istream_available(body, false) : -1);
 
     stopwatch_event(stopwatch, "fork");
 
