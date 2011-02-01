@@ -474,9 +474,15 @@ cgi_run(bool jail, const char *interpreter, const char *action,
         }
     }
 
+    const char *content_type = NULL;
     if (headers != NULL) {
         strmap_rewind(headers);
         while ((pair = strmap_next(headers)) != NULL) {
+            if (strcmp(pair->key, "content-type") == 0) {
+                content_type = pair->value;
+                continue;
+            }
+
             for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
                 if (char_is_minuscule_letter(pair->key[i]))
                     buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
@@ -491,6 +497,9 @@ cgi_run(bool jail, const char *interpreter, const char *action,
             setenv(buffer, pair->value, 1);
         }
     }
+
+    if (content_type != NULL)
+        setenv("CONTENT_TYPE", content_type, 1);
 
     execl(path, path, arg, NULL);
     fprintf(stderr, "exec('%s') failed: %s\n",
