@@ -85,6 +85,22 @@ memcached_connection_valid(const struct memcached_client *client)
     return client->response.input != NULL;
 }
 
+/**
+ * Is I/O on the socket finished?  Is the rest of the response already
+ * in the buffer?
+ *
+ * Call this method only while reading the response value.
+ */
+static bool
+memcached_client_socket_is_done(const struct memcached_client *client)
+{
+    assert(client->response.read_state == READ_VALUE);
+    assert(client->request.istream == NULL);
+
+    return client->response.remaining ==
+        fifo_buffer_available(client->response.input);
+}
+
 static inline bool
 memcached_client_check_direct(const struct memcached_client *client)
 {
@@ -264,7 +280,7 @@ istream_memcached_close(istream_t istream)
     assert(client->request.istream == NULL);
 
     istream_deinit_abort(&client->response.value);
-    memcached_client_release(client, false);
+    memcached_client_release(client, memcached_client_socket_is_done(client));
 }
 
 static const struct istream memcached_response_value = {
