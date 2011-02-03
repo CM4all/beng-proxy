@@ -81,6 +81,26 @@ mcd_vary_hash(struct strmap *vary)
     return hash;
 }
 
+/**
+ * Auto-abbreviate the input string by replacing a long trailer with
+ * its MD5 sum.  This is a hack to allow storing long URIs as a
+ * memcached key (250 bytes max).
+ */
+static const char *
+maybe_abbreviate(const char *p)
+{
+    size_t length = strlen(p);
+    if (length < 232)
+        return p;
+
+    static char buffer[256];
+    char *checksum = g_compute_checksum_for_string(G_CHECKSUM_MD5, p + 200,
+                                                   length - 200);
+    snprintf(buffer, sizeof(buffer), "%.*s~%s", 200, p, checksum);
+    g_free(checksum);
+    return buffer;
+}
+
 const char *
 http_cache_choice_vary_key(pool_t pool, const char *uri, struct strmap *vary)
 {
@@ -88,13 +108,15 @@ http_cache_choice_vary_key(pool_t pool, const char *uri, struct strmap *vary)
     format_uint32_hex_fixed(hash, mcd_vary_hash(vary));
     hash[8] = 0;
 
+    uri = maybe_abbreviate(uri);
+
     return p_strcat(pool, uri, " ", hash, NULL);
 }
 
 static const char *
 http_cache_choice_key(pool_t pool, const char *uri)
 {
-    return p_strcat(pool, uri, " choice", NULL);
+    return p_strcat(pool, maybe_abbreviate(uri), " choice", NULL);
 }
 
 static void
