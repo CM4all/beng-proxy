@@ -610,8 +610,6 @@ memcached_client_try_direct(struct memcached_client *client)
         if (!memcached_consume_value(client))
             return;
 
-        pool_unref(client->pool);
-
         /* at this point, the handler might have changed, and the new
            handler might not support "direct" transfer - check
            again */
