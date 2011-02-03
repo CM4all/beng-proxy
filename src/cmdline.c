@@ -275,7 +275,7 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
             exit(0);
 
         case 'V':
-            printf("cm4all-workshop v%s\n", VERSION);
+            printf("cm4all-beng-proxy v%s\n", VERSION);
             exit(0);
 
         case 'v':
