@@ -30,6 +30,7 @@ frame_class_lookup_callback(void *ctx)
     struct frame_class_looup *fcl = ctx;
 
     if (fcl->widget->class == NULL) {
+        widget_cancel(fcl->widget);
         http_response_handler_invoke_abort(&fcl->handler);
         return;
     }
@@ -50,6 +51,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     if (!widget_check_host(widget, env->untrusted_host)) {
         daemon_log(4, "untrusted host name mismatch\n");
+        widget_cancel(widget);
         http_response_handler_direct_message(handler, handler_ctx,
                                              pool, HTTP_STATUS_FORBIDDEN,
                                              "Forbidden");
@@ -81,9 +83,7 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
            widget if it is not a container */
         daemon_log(4, "frame within non-container requested\n");
 
-        if (env->request_body != NULL)
-            istream_free(&env->request_body);
-
+        widget_cancel(widget);
         http_response_handler_direct_abort(handler, handler_ctx);
         return;
     }

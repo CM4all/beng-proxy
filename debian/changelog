@@ -6,6 +6,7 @@ cm4all-beng-proxy (0.8.22) unstable; urgency=low
   * http-cache-choice: abbreviate memcached keys
   * *-cache: allocate a parent pool for cache items
   * pool: re-enable linear pools
+  * frame: free the request body on error
 
  --
 
