@@ -5,6 +5,7 @@ cm4all-beng-proxy (0.8.22) unstable; urgency=low
   * memcached-client: reuse the socket if the remaining value is buffered
   * http-cache-choice: abbreviate memcached keys
   * *-cache: allocate a parent pool for cache items
+  * pool: re-enable linear pools
 
  --
 
