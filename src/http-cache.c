@@ -520,6 +520,8 @@ http_cache_new(pool_t pool, size_t max_size,
                struct memcached_stock *memcached_stock,
                struct resource_loader *resource_loader)
 {
+    pool = pool_new_libc(pool, "http_cache");
+
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
     cache->cache = memcached_stock == NULL && max_size > 0
@@ -568,6 +570,8 @@ http_cache_close(struct http_cache *cache)
 
     if (cache->cache != NULL)
         http_cache_heap_free(cache->cache);
+
+    pool_unref(cache->pool);
 }
 
 static void

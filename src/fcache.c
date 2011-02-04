@@ -460,6 +460,8 @@ struct filter_cache *
 filter_cache_new(pool_t pool, size_t max_size,
                  struct resource_loader *resource_loader)
 {
+    pool = pool_new_libc(pool, "filter_cache");
+
     struct filter_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
     cache->cache = cache_new(pool, &filter_cache_class, 65521, max_size);
@@ -495,6 +497,8 @@ filter_cache_close(struct filter_cache *cache)
     }
 
     cache_close(cache->cache);
+
+    pool_unref(cache->pool);
 }
 
 void

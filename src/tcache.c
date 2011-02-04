@@ -692,7 +692,7 @@ translate_cache_new(pool_t pool, struct tstock *stock,
 
     assert(stock != NULL);
 
-    pool_ref(pool);
+    pool = pool_new_libc(pool, "translate_cache");
 
     tcache->pool = pool;
     tcache->cache = cache_new(pool, &tcache_class, 65521, max_size);
