@@ -4,6 +4,6 @@
 #
 # Author: Max Kellermann <mk@cm4all.com>
 
-echo "Content-Type: $HTTP_CONTENT_TYPE"
+echo "Content-Type: $CONTENT_TYPE"
 echo
 exec cat
