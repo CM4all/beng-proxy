@@ -688,11 +688,10 @@ struct tcache *
 translate_cache_new(pool_t pool, struct tstock *stock,
                     unsigned max_size)
 {
+    pool = pool_new_libc(pool, "translate_cache");
     struct tcache *tcache = p_malloc(pool, sizeof(*tcache));
 
     assert(stock != NULL);
-
-    pool = pool_new_libc(pool, "translate_cache");
 
     tcache->pool = pool;
     tcache->cache = cache_new(pool, &tcache_class, 65521, max_size);
