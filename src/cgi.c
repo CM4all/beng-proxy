@@ -547,6 +547,10 @@ cgi_new(pool_t pool, bool jail,
     pid_t pid;
     istream_t input;
 
+    off_t available = body != NULL
+        ? istream_available(body, false)
+        : -1;
+
     stopwatch = stopwatch_new(pool, path);
 
     pid = beng_fork(pool, body, &input,
@@ -574,8 +578,7 @@ cgi_new(pool_t pool, bool jail,
     if (pid == 0)
         cgi_run(jail, interpreter, action, path, method, uri,
                 script_name, path_info, query_string, document_root,
-                headers,
-                body != NULL ? istream_available(body, false) : -1);
+                headers, available);
 
     stopwatch_event(stopwatch, "fork");
 
