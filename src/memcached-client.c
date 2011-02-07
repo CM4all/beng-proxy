@@ -215,12 +215,14 @@ memcached_connection_close(struct memcached_client *client)
 
     case READ_VALUE:
         memcached_connection_abort_response_value(client);
-        break;
+        return;
 
     case READ_END:
         memcached_client_release(client, false);
-        break;
+        return;
     }
+
+    assert(false);
 }
 
 static bool
