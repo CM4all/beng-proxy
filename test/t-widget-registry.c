@@ -139,9 +139,13 @@ test_abort(pool_t pool)
     assert(!data.got_class);
     assert(!aborted);
 
+    async_abort(&async_ref);
+
+    /* need to unref the pool after aborted(), because our fake
+       tstock_translate() implementation does not reference the
+       pool */
     pool_unref(pool);
 
-    async_abort(&async_ref);
     assert(aborted);
     assert(!data.got_class);
 
