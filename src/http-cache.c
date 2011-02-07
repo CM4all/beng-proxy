@@ -384,6 +384,11 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     if (request->document != NULL)
         http_cache_remove(request->cache, request->key, request->document);
 
+    if (request->document != NULL && request->cache->cache == NULL &&
+        request->document_body != NULL)
+        /* free the cached document istream (memcached) */
+        istream_close_handler(request->document_body);
+
     available = body == NULL ? 0 : istream_available(body, true);
 
     if (!http_cache_response_evaluate(request->info,
@@ -467,6 +472,11 @@ http_cache_response_abort(void *ctx)
 
     if (request->document != NULL && request->cache->cache != NULL)
         http_cache_unlock(request->cache, request->document);
+
+    if (request->document != NULL && request->cache->cache == NULL &&
+        request->document_body != NULL)
+        /* free the cached document istream (memcached) */
+        istream_close_handler(request->document_body);
 
     async_operation_finished(&request->operation);
     http_response_handler_invoke_abort(&request->handler);
