@@ -449,6 +449,7 @@ memcached_consume_key(struct memcached_client *client)
                                         fifo_buffer_empty(client->response.input));
 
         client->response.read_state = READ_END;
+        client->response.input = NULL;
 
         client->request.handler(g_ntohs(client->response.header.status),
                                 client->response.extras,
@@ -457,7 +458,7 @@ memcached_consume_key(struct memcached_client *client)
                                 g_ntohs(client->response.header.key_length),
                                 NULL, client->request.handler_ctx);
 
-        memcached_client_release(client, false);
+        pool_ref(client->pool);
         return false;
     }
 }
