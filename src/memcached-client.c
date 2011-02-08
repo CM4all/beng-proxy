@@ -172,9 +172,10 @@ memcached_connection_abort_response_header(struct memcached_client *client)
 
     async_operation_finished(&client->request.async);
 
-    pool_ref(client->pool);
+    client->response.input = NULL;
 
-    memcached_client_release(client, false);
+    if (client->fd >= 0)
+        memcached_client_release_socket(client, false);
 
     client->request.handler(-1, NULL, 0, NULL, 0, NULL,
                             client->request.handler_ctx);
@@ -193,9 +194,10 @@ memcached_connection_abort_response_value(struct memcached_client *client)
     assert(client->response.read_state == READ_VALUE);
     assert(client->request.istream == NULL);
 
-    pool_ref(client->pool);
+    client->response.input = NULL;
 
-    memcached_client_release(client, false);
+    if (client->fd >= 0)
+        memcached_client_release_socket(client, false);
 
     client->response.read_state = READ_END;
     istream_deinit_abort(&client->response.value);
