@@ -208,6 +208,8 @@ memcached_connection_abort_response_value(struct memcached_client *client)
 static void
 memcached_connection_close(struct memcached_client *client)
 {
+    assert(client->response.read_state != READ_END);
+
     switch (client->response.read_state) {
     case READ_HEADER:
     case READ_EXTRAS:
@@ -220,10 +222,10 @@ memcached_connection_close(struct memcached_client *client)
         return;
 
     case READ_END:
-        memcached_client_release(client, false);
-        return;
+        break;
     }
 
+    /* unreachable */
     assert(false);
 }
 
@@ -543,6 +545,7 @@ memcached_client_fill_buffer(struct memcached_client *client)
 {
     assert(client->fd >= 0);
     assert(client->response.input != NULL);
+    assert(client->response.read_state != READ_END);
     assert(!fifo_buffer_full(client->response.input));
 
     ssize_t nbytes = recv_to_buffer(client->fd, client->response.input,
@@ -652,6 +655,7 @@ memcached_client_send_event_callback(G_GNUC_UNUSED int fd, short event,
     struct memcached_client *client = ctx;
 
     assert(client->fd >= 0);
+    assert(client->response.read_state != READ_END);
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "memcached_client: send timeout\n");
@@ -676,6 +680,7 @@ memcached_client_recv_event_callback(G_GNUC_UNUSED int fd, short event,
     struct memcached_client *client = ctx;
 
     assert(client->fd >= 0);
+    assert(client->response.read_state != READ_END);
 
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "memcached_client: receive timeout\n");
