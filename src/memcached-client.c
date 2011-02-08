@@ -458,7 +458,7 @@ memcached_consume_key(struct memcached_client *client)
                                 g_ntohs(client->response.header.key_length),
                                 NULL, client->request.handler_ctx);
 
-        pool_ref(client->pool);
+        pool_unref(client->pool);
         return false;
     }
 }
