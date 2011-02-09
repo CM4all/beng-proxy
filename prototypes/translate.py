@@ -257,6 +257,11 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
             response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
             response.pair('DOCUMENT_PATH', os.path.join(demo_path, '../filter.xml'))
+        elif uri == '/xslt-filter':
+            response.path(os.path.join(demo_path, '../filter.xml'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
+            response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
         elif uri == '/check':
             if check is None:
                 response.packet(TRANSLATE_CHECK, 'ok')
