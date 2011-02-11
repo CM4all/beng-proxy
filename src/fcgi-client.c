@@ -791,7 +791,7 @@ fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
         snprintf(value, sizeof(value),
                  "%lu", (unsigned long)available);
 
-        const char *content_type = strmap_get(headers, "content-type");
+        const char *content_type = strmap_get_checked(headers, "content-type");
 
         fcgi_serialize_params(buffer, header.request_id,
                               "HTTP_CONTENT_LENGTH", value,
