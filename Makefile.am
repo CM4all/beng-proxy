@@ -351,6 +351,8 @@ SRC = src/main.c \
 	src/memcached-stock.c \
 	src/pipe.c \
 	src/cgi.c \
+	src/fcgi-launch.h \
+	src/fcgi-launch.c \
 	src/fcgi-stock.c \
 	src/fcgi-serialize.c \
 	src/fcgi-client.c \
