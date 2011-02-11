@@ -21,7 +21,7 @@ coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 coma_was = '/usr/lib/cm4all/was/bin/coma-was'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
-xslt_fastcgi = '/usr/lib/cm4all/filters/cgi-bin/xslt'
+xslt_fastcgi = '/usr/lib/cm4all/fcgi-bin/xslt'
 
 cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
