@@ -22,6 +22,7 @@ coma_was = '/usr/lib/cm4all/was/bin/coma-was'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
 xslt_fastcgi = '/usr/lib/cm4all/fcgi-bin/xslt'
+sed_fastcgi = '/usr/lib/cm4all/fcgi-bin/fsed'
 
 cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
@@ -262,6 +263,21 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
             response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
+        elif uri == '/sed':
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
+            response.pair('DOCUMENT_PATH', os.path.join(demo_path, 'hello.txt'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
+        elif uri == '/sed-filter':
+            response.path(os.path.join(demo_path, 'hello.txt'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
         elif uri == '/check':
             if check is None:
                 response.packet(TRANSLATE_CHECK, 'ok')
@@ -372,6 +388,7 @@ if __name__ == '__main__':
         coma_was = os.path.join(os.getcwd(), '../cgi-coma/src/coma-was')
         ticket_fastcgi_dir = os.path.join(os.getcwd(), '../mod_ticket/src')
         xslt_fastcgi = os.path.join(os.getcwd(), '../filters/src/xslt')
+        sed_fastcgi = os.path.join(os.getcwd(), '../sed/sed/fsed')
 
     if len(argv) >= 2:
         path = argv[1]
