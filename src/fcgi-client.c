@@ -298,6 +298,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
                 return at_headers && !fifo_buffer_full(client->input);
 
             fifo_buffer_consume(client->input, nbytes);
+            length -= nbytes;
             client->content_length -= nbytes;
 
             if (at_headers && client->response.read_state == READ_BODY) {
@@ -348,9 +349,11 @@ fcgi_client_consume_input(struct fcgi_client *client)
             if (client->content_length > 0)
                 return true;
 
-            if (client->response.read_state == READ_END &&
-                client->skip_length == 0) {
-                fcgi_client_release(client, fifo_buffer_empty(client->input));
+            if (client->response.read_state == READ_END) {
+                /* reuse the socket only if the remaining buffer
+                   length is exactly the padding (which is very
+                   likely) */
+                fcgi_client_release(client, length == client->skip_length);
                 return false;
             }
 

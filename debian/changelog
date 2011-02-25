@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.8.23) unstable; urgency=low
 
   * memcached-client: allocate a new memory pool
   * fcgi-client: check headers!=NULL
+  * fcgi-client: release the connection even when padding not consumed
 
  --
 
