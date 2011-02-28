@@ -284,6 +284,7 @@ static void
 istream_memcached_close(istream_t istream)
 {
     struct memcached_client *client = istream_to_memcached_client(istream);
+    pool_t caller_pool = client->caller_pool;
 
     assert(client->response.read_state == READ_VALUE);
     assert(client->request.istream == NULL);
@@ -291,7 +292,7 @@ istream_memcached_close(istream_t istream)
     memcached_client_release(client, memcached_client_socket_is_done(client));
 
     istream_deinit_abort(&client->response.value);
-    pool_unref(client->caller_pool);
+    pool_unref(caller_pool);
 }
 
 static const struct istream memcached_response_value = {
@@ -803,6 +804,8 @@ memcached_client_request_abort(struct async_operation *ao)
 {
     struct memcached_client *client
         = async_to_memcached_client(ao);
+    pool_t caller_pool = client->caller_pool;
+    istream_t request_istream = client->request.istream;
 
     /* async_abort() can only be used before the response was
        delivered to our callback */
@@ -811,10 +814,10 @@ memcached_client_request_abort(struct async_operation *ao)
            client->response.read_state == READ_KEY);
 
     memcached_client_release(client, false);
-    pool_unref(client->caller_pool);
+    pool_unref(caller_pool);
 
-    if (client->request.istream != NULL)
-        istream_free_handler(&client->request.istream);
+    if (request_istream != NULL)
+        istream_close_handler(request_istream);
 }
 
 static const struct async_operation_class memcached_client_async_operation = {
