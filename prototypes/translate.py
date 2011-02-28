@@ -21,8 +21,9 @@ coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 coma_was = '/usr/lib/cm4all/was/bin/coma-was'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
-xslt_fastcgi = '/usr/lib/cm4all/filters/cgi-bin/xslt'
-xmlstrip = '/usr/lib/cm4all/filters/cgi-bin/xmlstrip'
+xslt_fastcgi = '/usr/lib/cm4all/fcgi-bin/xslt'
+xmlstrip = '/usr/lib/cm4all/was/bin/xmlstrip'
+sed_fastcgi = '/usr/lib/cm4all/fcgi-bin/fsed'
 
 cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
@@ -272,6 +273,11 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
             response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
             response.pair('DOCUMENT_PATH', os.path.join(demo_path, '../filter.xml'))
+        elif uri == '/xslt-filter':
+            response.path(os.path.join(demo_path, '../filter.xml'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, xslt_fastcgi)
+            response.pair('STYLESHEET_PATH', os.path.join(demo_path, '../filter.xsl'))
         elif uri == '/xmlstrip':
             response.path(os.path.join(demo_path, 'xmlstrip2.html'))
             response.packet(TRANSLATE_FILTER)
@@ -280,6 +286,21 @@ class Translation(Protocol):
             response.path(os.path.join(demo_path, 'xmlstrip2.html'))
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_PIPE, os.path.join(cgi_path, 'xmlstrip.sed'))
+        elif uri == '/sed':
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
+            response.pair('DOCUMENT_PATH', os.path.join(demo_path, 'hello.txt'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
+        elif uri == '/sed-filter':
+            response.path(os.path.join(demo_path, 'hello.txt'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
         elif uri == '/check':
             if check is None:
                 response.packet(TRANSLATE_CHECK, 'ok')
@@ -399,6 +420,7 @@ if __name__ == '__main__':
         ticket_fastcgi_dir = os.path.join(src_dir, 'mod_ticket/src')
         xslt_fastcgi = os.path.join(src_dir, 'filters/src/xslt')
         xmlstrip = os.path.join(src_dir, 'filters/src/xmlstrip')
+        sed_fastcgi = os.path.join(src_dir, 'sed/sed/fsed')
 
     if len(argv) >= 2:
         path = argv[1]

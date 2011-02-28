@@ -41,6 +41,7 @@ frame_class_lookup_callback(void *ctx)
             g_error_new(widget_quark(), 0,
                         "lookup of widget class '%s' for '%s' failed",
                         fcl->widget->class_name, widget_path(fcl->widget));
+        widget_cancel(fcl->widget);
         http_response_handler_invoke_abort(&fcl->handler, error);
         return;
     }
@@ -61,6 +62,7 @@ frame_top_widget(pool_t pool, struct processor_env *env,
 
     if (!widget_check_host(widget, env->untrusted_host)) {
         daemon_log(4, "untrusted host name mismatch\n");
+        widget_cancel(widget);
         http_response_handler_direct_message(handler, handler_ctx,
                                              pool, HTTP_STATUS_FORBIDDEN,
                                              "Forbidden");
@@ -97,6 +99,7 @@ frame_parent_widget(pool_t pool, struct processor_env *env,
         GError *error =
             g_error_new(widget_quark(), 0,
                         "frame within non-container requested");
+        widget_cancel(widget);
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }

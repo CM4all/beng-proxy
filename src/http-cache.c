@@ -418,6 +418,11 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     if (request->document != NULL)
         http_cache_remove(request->cache, request->key, request->document);
 
+    if (request->document != NULL && request->cache->cache == NULL &&
+        request->document_body != NULL)
+        /* free the cached document istream (memcached) */
+        istream_close_handler(request->document_body);
+
     available = body == NULL ? 0 : istream_available(body, true);
 
     if (!http_cache_response_evaluate(request->info,
@@ -514,6 +519,11 @@ http_cache_response_abort(GError *error, void *ctx)
     if (request->document != NULL && request->cache->cache != NULL)
         http_cache_unlock(request->cache, request->document);
 
+    if (request->document != NULL && request->cache->cache == NULL &&
+        request->document_body != NULL)
+        /* free the cached document istream (memcached) */
+        istream_close_handler(request->document_body);
+
     pool_t caller_pool = request->caller_pool;
 #ifndef NDEBUG
     struct pool_notify notify;
@@ -572,6 +582,8 @@ http_cache_new(pool_t pool, size_t max_size,
                struct memcached_stock *memcached_stock,
                struct resource_loader *resource_loader)
 {
+    pool = pool_new_libc(pool, "http_cache");
+
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
     cache->cache = memcached_stock == NULL && max_size > 0
@@ -620,6 +632,8 @@ http_cache_close(struct http_cache *cache)
 
     if (cache->cache != NULL)
         http_cache_heap_free(cache->cache);
+
+    pool_unref(cache->pool);
 }
 
 static void

@@ -4,7 +4,6 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#define POOL_LIBC_ONLY
 #include "pool.h"
 
 #include <inline/poison.h>

@@ -423,7 +423,8 @@ cgi_run(const struct jail_params *jail,
         const char *query_string,
         const char *document_root,
         const char *remote_addr,
-        struct strmap *headers)
+        struct strmap *headers,
+        off_t content_length)
 {
     const struct strmap_pair *pair;
     char buffer[512] = "HTTP_";
@@ -485,9 +486,15 @@ cgi_run(const struct jail_params *jail,
         }
     }
 
+    const char *content_type = NULL;
     if (headers != NULL) {
         strmap_rewind(headers);
         while ((pair = strmap_next(headers)) != NULL) {
+            if (strcmp(pair->key, "content-type") == 0) {
+                content_type = pair->value;
+                continue;
+            }
+
             for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
                 if (char_is_minuscule_letter(pair->key[i]))
                     buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
@@ -501,6 +508,16 @@ cgi_run(const struct jail_params *jail,
             buffer[5 + i] = 0;
             setenv(buffer, pair->value, 1);
         }
+    }
+
+    if (content_type != NULL)
+        setenv("CONTENT_TYPE", content_type, 1);
+
+    if (content_length >= 0) {
+        char value[32];
+        snprintf(value, sizeof(value), "%llu",
+                 (unsigned long long)content_length);
+        setenv("CONTENT_LENGTH", value, 1);
     }
 
     execl(path, path, arg, NULL);
@@ -542,6 +559,10 @@ cgi_new(pool_t pool, const struct jail_params *jail,
     pid_t pid;
     istream_t input;
 
+    off_t available = body != NULL
+        ? istream_available(body, false)
+        : -1;
+
     stopwatch = stopwatch_new(pool, path);
 
     GError *error = NULL;
@@ -573,7 +594,7 @@ cgi_new(pool_t pool, const struct jail_params *jail,
         cgi_run(jail, interpreter, action, path, method, uri,
                 script_name, path_info, query_string, document_root,
                 remote_addr,
-                headers);
+                headers, available);
 
     stopwatch_event(stopwatch, "fork");
 
