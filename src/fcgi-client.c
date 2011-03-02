@@ -411,24 +411,18 @@ fcgi_client_consume_input(struct fcgi_client *client)
 
             client->skip_length = ntohs(header->content_length) + header->padding_length;
             fifo_buffer_consume(client->input, sizeof(*header));
+            length -= sizeof(*header);
 
             if (client->request.istream != NULL)
                 istream_close_handler(client->request.istream);
 
-            if (client->skip_length == 0)
-                fcgi_client_release_socket(client,
-                                           client->request.istream == NULL &&
-                                           fifo_buffer_empty(client->input));
+            fcgi_client_release_socket(client, length == client->skip_length);
 
             istream_deinit_eof(&client->response.body);
             client->response.read_state = READ_END;
 
-            if (client->skip_length == 0) {
-                fcgi_client_release(client, false);
-                return false;
-            }
-
-            break;
+            fcgi_client_release(client, false);
+            return false;
 
         default:
             client->skip_length = ntohs(header->content_length) + header->padding_length;
