@@ -3,9 +3,9 @@
 #include "inline-widget.h"
 #include "widget.h"
 #include "widget-class.h"
-#include "widget-stream.h"
 #include "widget-lookup.h"
 #include "rewrite-uri.h"
+#include "async.h"
 
 #include <glib.h>
 

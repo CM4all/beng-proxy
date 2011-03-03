@@ -253,7 +253,6 @@ HDR = \
 	src/widget-http.h \
 	src/widget-registry.h \
 	src/widget-resolver.h \
-	src/widget-stream.h \
 	src/widget.h \
 	src/worker.h \
 	test/libcore-gmtime.h \
@@ -300,7 +299,6 @@ SRC = src/main.c \
 	src/widget-session.c \
 	src/widget-uri.c \
 	src/widget-request.c \
-	src/widget-stream.c \
 	src/widget-registry.c \
 	src/widget-resolver.c \
 	src/proxy-widget.c \
@@ -541,7 +539,7 @@ check_PROGRAMS = \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
 	test/t-growing-buffer \
-	test/t-cgi test/t-widget-stream \
+	test/t-cgi \
 	test/t-http-server-mirror test/t-http-server-null \
 	test/t-http-server-dummy \
 	test/t-http-server-fixed \
@@ -583,7 +581,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
 	test/t-growing-buffer \
-	test/t-cgi test/t-widget-stream \
+	test/t-cgi \
 	$(srcdir)/test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
@@ -792,16 +790,6 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
-
-test_t_widget_stream_SOURCES = test/t-widget-stream.c \
-	$(POOL_SRC) \
-	src/istream-forward.c src/istream-null.c src/istream-memory.c \
-	src/istream-string.c src/istream-delayed.c \
-	src/widget-stream.c
-test_t_widget_stream_LDADD = $(LIBEVENT_LIBS) \
-	$(GLIB_LIBS) \
-	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_http_server_SOURCES = test/t-http-server.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
@@ -1060,7 +1048,6 @@ test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 test_t_wembed_SOURCES = test/t-wembed.c \
 	src/inline-widget.c \
 	$(POOL_SRC) \
-	src/widget-stream.c \
 	src/istream-delayed.c src/istream-hold.c src/istream-forward.c \
 	src/istream-null.c src/istream-iconv.c \
 	src/istream-string.c src/istream-memory.c \
