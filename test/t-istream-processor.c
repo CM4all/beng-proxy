@@ -30,7 +30,7 @@ istream_t
 embed_inline_widget(pool_t pool, struct processor_env *env __attr_unused,
                     struct widget *widget)
 {
-    return istream_string_new(pool, widget->class_name);
+    return istream_string_new(pool, p_strdup(pool, widget->class_name));
 }
 
 void
