@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.25) unstable; urgency=low
 
-  * 
+  * widget-http: discard request body on unknown view name
 
  --
 

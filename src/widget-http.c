@@ -413,6 +413,7 @@ widget_http_request(pool_t pool, struct widget *widget,
     if (view == NULL) {
         daemon_log(3, "unknown view name for class '%s': '%s'\n",
                    widget->class_name, widget_get_view_name(widget));
+        widget_cancel(widget);
         http_response_handler_direct_abort(handler, handler_ctx);
         return;
     }
