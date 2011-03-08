@@ -184,6 +184,7 @@ inline_widget_set(struct inline_widget *iw)
 
     if (!widget_check_host(widget, iw->env->untrusted_host)) {
         daemon_log(4, "untrusted host name mismatch\n");
+        widget_cancel(widget);
         istream_delayed_set_eof(iw->delayed);
         return;
     }
@@ -236,8 +237,10 @@ embed_inline_widget(pool_t pool, struct processor_env *env,
     assert(env != NULL);
     assert(widget != NULL);
 
-    if (widget->display == WIDGET_DISPLAY_NONE)
+    if (widget->display == WIDGET_DISPLAY_NONE) {
+        widget_cancel(widget);
         return NULL;
+    }
 
     iw->pool = pool;
     iw->env = env;

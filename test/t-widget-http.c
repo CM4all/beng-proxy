@@ -45,6 +45,11 @@ static unsigned test_id;
 static bool got_request, got_response;
 
 void
+widget_cancel(struct widget *widget __attr_unused)
+{
+}
+
+void
 processor_new(__attr_unused pool_t pool, __attr_unused http_status_t status,
               __attr_unused struct strmap *headers,
               __attr_unused istream_t istream,
