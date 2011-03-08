@@ -13,6 +13,7 @@
 #include "static-file.h"
 #include "cgi.h"
 #include "fcgi-request.h"
+#include "fcgi-remote.h"
 #include "was-glue.h"
 #include "ajp-request.h"
 #include "header-writer.h"
@@ -171,18 +172,33 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
         return;
 
     case RESOURCE_ADDRESS_FASTCGI:
-        fcgi_request(pool, rl->fcgi_stock, &address->u.cgi.jail,
-                     address->u.cgi.action,
-                     address->u.cgi.path,
-                     method, resource_address_cgi_uri(pool, address),
-                     address->u.cgi.script_name,
-                     address->u.cgi.path_info,
-                     address->u.cgi.query_string,
-                     address->u.cgi.document_root,
-                     extract_remote_ip(pool, headers),
-                     headers, body,
-                     address->u.cgi.args, address->u.cgi.num_args,
-                     handler, handler_ctx, async_ref);
+        if (address_list_is_empty(&address->u.cgi.address_list))
+            fcgi_request(pool, rl->fcgi_stock,
+                         &address->u.cgi.jail,
+                         address->u.cgi.action,
+                         address->u.cgi.path,
+                         method, resource_address_cgi_uri(pool, address),
+                         address->u.cgi.script_name,
+                         address->u.cgi.path_info,
+                         address->u.cgi.query_string,
+                         address->u.cgi.document_root,
+                         extract_remote_ip(pool, headers),
+                         headers, body,
+                         address->u.cgi.args, address->u.cgi.num_args,
+                         handler, handler_ctx, async_ref);
+        else
+            fcgi_remote_request(pool, rl->tcp_stock,
+                                &address->u.cgi.address_list,
+                                address->u.cgi.path,
+                                method, resource_address_cgi_uri(pool, address),
+                                address->u.cgi.script_name,
+                                address->u.cgi.path_info,
+                                address->u.cgi.query_string,
+                                address->u.cgi.document_root,
+                                extract_remote_ip(pool, headers),
+                                headers, body,
+                                address->u.cgi.args, address->u.cgi.num_args,
+                                handler, handler_ctx, async_ref);
         return;
 
     case RESOURCE_ADDRESS_WAS:

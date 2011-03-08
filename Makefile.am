@@ -359,6 +359,8 @@ SRC = src/main.c \
 	src/fcgi-serialize.c \
 	src/fcgi-client.c \
 	src/fcgi-request.c \
+	src/fcgi-remote.h \
+	src/fcgi-remote.c \
 	src/was-control.c \
 	src/was-output.c \
 	src/was-input.c \

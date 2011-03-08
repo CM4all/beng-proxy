@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.9.8) unstable; urgency=low
 
   * translate: support UNIX domain sockets in ADDRESS_STRING
+  * resource-address: support connections to existing FastCGI servers
 
  --
 

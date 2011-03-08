@@ -67,6 +67,11 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
             p_strdup_checked(pool, src->u.cgi.query_string);
         dest->u.cgi.document_root =
             p_strdup_checked(pool, src->u.cgi.document_root);
+
+        if (src->type == RESOURCE_ADDRESS_FASTCGI)
+            address_list_copy(pool, &dest->u.cgi.address_list,
+                              &src->u.cgi.address_list);
+
         break;
     }
 }

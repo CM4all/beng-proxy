@@ -999,6 +999,9 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
         memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
         client->resource_address->u.cgi.path = payload;
+
+        address_list_init(&client->resource_address->u.cgi.address_list);
+        client->address_list = &client->resource_address->u.cgi.address_list;
         break;
 
     case TRANSLATE_AJP:

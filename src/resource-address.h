@@ -61,6 +61,14 @@ struct resource_address {
             const char *uri;
             const char *script_name, *path_info, *query_string;
             const char *document_root;
+
+            /**
+             * An optional list of addresses to connect to.  If given
+             * for a FastCGI resource, then beng-proxy connects to one
+             * of the addresses instead of spawning a new child
+             * process.
+             */
+            struct address_list address_list;
         } cgi;
     } u;
 };
