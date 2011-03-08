@@ -378,6 +378,8 @@ SRC = src/main.c \
 	src/delegate-glue.c \
 	src/delegate-request.c \
 	src/delegate-handler.c \
+	src/address-list.h \
+	src/address-list.c \
 	src/uri-edit.c \
 	src/uri-extract.c \
 	src/uri-relative.c \

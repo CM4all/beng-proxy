@@ -8,6 +8,7 @@
 #define __BENG_URI_ADDRESS_H
 
 #include "pool.h"
+#include "address-list.h"
 
 #include <inline/list.h>
 
@@ -18,7 +19,7 @@ struct uri_with_address {
 
     const char *uri;
 
-    struct list_head addresses;
+    struct address_list addresses;
 };
 
 struct uri_with_address *
