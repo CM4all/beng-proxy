@@ -5,6 +5,7 @@
  */
 
 #include "address-list.h"
+#include "address-envelope.h"
 #include "pool.h"
 
 #include <socket/address.h>
@@ -14,9 +15,7 @@
 struct address_item {
     struct list_head siblings;
 
-    socklen_t length;
-
-    struct sockaddr address;
+    struct address_envelope envelope;
 };
 
 void
@@ -28,7 +27,8 @@ address_list_copy(pool_t pool, struct address_list *dest,
     for (const struct address_item *item = (const struct address_item *)src->addresses.next;
          &item->siblings != &src->addresses;
          item = (const struct address_item *)item->siblings.next)
-        address_list_add(pool, dest, &item->address, item->length);
+        address_list_add(pool, dest,
+                         &item->envelope.address, item->envelope.length);
 }
 
 void
@@ -36,9 +36,10 @@ address_list_add(pool_t pool, struct address_list *al,
                  const struct sockaddr *address, socklen_t length)
 {
     struct address_item *item = p_malloc(pool, sizeof(*item) -
-                                         sizeof(item->address) + length);
-    item->length = length;
-    memcpy(&item->address, address, length);
+                                         sizeof(item->envelope.address) +
+                                         length);
+    item->envelope.length = length;
+    memcpy(&item->envelope.address, address, length);
 
     list_add(&item->siblings, &al->addresses);
 }
@@ -50,8 +51,8 @@ address_list_first(const struct address_list *al, socklen_t *length_r)
         return NULL;
 
     struct address_item *item = (struct address_item *)al->addresses.next;
-    *length_r = item->length;
-    return &item->address;
+    *length_r = item->envelope.length;
+    return &item->envelope.address;
 }
 
 const struct sockaddr *
@@ -68,8 +69,8 @@ address_list_next(struct address_list *al, socklen_t *length_r)
     list_remove(&ua->siblings);
     list_add(&ua->siblings, al->addresses.prev);
 
-    *length_r = ua->length;
-    return &ua->address;
+    *length_r = ua->envelope.length;
+    return &ua->envelope.address;
 }
 
 bool
@@ -94,7 +95,8 @@ address_list_key(const struct address_list *al)
 
         success = socket_address_to_string(buffer + length,
                                            sizeof(buffer) - length,
-                                           &ua->address, ua->length);
+                                           &ua->envelope.address,
+                                           ua->envelope.length);
         if (success)
             length += strlen(buffer + length);
     }

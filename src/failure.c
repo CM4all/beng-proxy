@@ -6,6 +6,7 @@
 
 #include "failure.h"
 #include "expiry.h"
+#include "address-envelope.h"
 
 #include <daemon/log.h>
 
@@ -19,8 +20,7 @@ struct failure {
 
     time_t expires;
 
-    socklen_t addrlen;
-    struct sockaddr addr;
+    struct address_envelope envelope;
 };
 
 #define FAILURE_SLOTS 64
@@ -69,11 +69,11 @@ failure_add(const struct sockaddr *addr, socklen_t addrlen)
     int ret;
 
     assert(addr != NULL);
-    assert(addrlen >= sizeof(failure->addr));
+    assert(addrlen >= sizeof(failure->envelope.address));
 
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next) {
-        if (failure->addrlen == addrlen &&
-            memcmp(&failure->addr, addr, addrlen) == 0)
+        if (failure->envelope.length == addrlen &&
+            memcmp(&failure->envelope.address, addr, addrlen) == 0)
             /* this address is already in our list */
             return;
     }
@@ -87,11 +87,11 @@ failure_add(const struct sockaddr *addr, socklen_t addrlen)
         return;
     }
 
-    failure = p_malloc(fl.pool,
-                       sizeof(*failure) - sizeof(failure->addr) + addrlen);
+    failure = p_malloc(fl.pool, sizeof(*failure)
+                       - sizeof(failure->envelope.address) + addrlen);
     failure->expires = now.tv_sec + 20;
-    failure->addrlen = addrlen;
-    memcpy(&failure->addr, addr, addrlen);
+    failure->envelope.length = addrlen;
+    memcpy(&failure->envelope.address, addr, addrlen);
 
     failure->next = fl.slots[slot];
     fl.slots[slot] = failure;
@@ -104,13 +104,13 @@ failure_remove(const struct sockaddr *addr, socklen_t addrlen)
     struct failure **failure_r, *failure;
 
     assert(addr != NULL);
-    assert(addrlen >= sizeof(failure->addr));
+    assert(addrlen >= sizeof(failure->envelope.address));
 
     for (failure_r = &fl.slots[slot], failure = *failure_r;
          failure != NULL;
          failure_r = &failure->next, failure = *failure_r) {
-        if (failure->addrlen == addrlen &&
-            memcmp(&failure->addr, addr, addrlen) == 0) {
+        if (failure->envelope.length == addrlen &&
+            memcmp(&failure->envelope.address, addr, addrlen) == 0) {
             /* found it: remove it */
 
             *failure_r = failure->next;
@@ -127,11 +127,11 @@ failure_check(const struct sockaddr *addr, socklen_t addrlen)
     struct failure *failure;
 
     assert(addr != NULL);
-    assert(addrlen >= sizeof(failure->addr));
+    assert(addrlen >= sizeof(failure->envelope.address));
 
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next)
-        if (failure->addrlen == addrlen &&
-            memcmp(&failure->addr, addr, addrlen) == 0)
+        if (failure->envelope.length == addrlen &&
+            memcmp(&failure->envelope.address, addr, addrlen) == 0)
             return is_expired(failure->expires);
 
     return false;
