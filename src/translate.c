@@ -78,6 +78,9 @@ struct translate_client {
     /** the current resource address being edited */
     struct resource_address *resource_address;
 
+    /** the current address list being edited */
+    struct address_list *address_list;
+
     /** the current widget view */
     struct widget_view *view;
 
@@ -375,7 +378,7 @@ translate_add_transformation(struct translate_client *client)
 }
 
 static bool
-parse_address_string(struct uri_with_address *address, const char *p)
+parse_address_string(pool_t pool, struct address_list *list, const char *p)
 {
     struct addrinfo hints, *ai;
     int ret;
@@ -389,7 +392,7 @@ parse_address_string(struct uri_with_address *address, const char *p)
         return false;
 
     for (const struct addrinfo *i = ai; i != NULL; i = i->ai_next)
-        uri_address_add(address, i->ai_addr, i->ai_addrlen);
+        address_list_add(pool, list, i->ai_addr, i->ai_addrlen);
 
     freeaddrinfo(ai);
     return true;
@@ -460,6 +463,7 @@ add_view(struct translate_client *client, const char *name)
     *client->widget_view_tail = view;
     client->widget_view_tail = &view->next;
     client->resource_address = &view->address;
+    client->address_list = NULL;
     client->transformation_tail = &view->transformation;
     client->transformation = NULL;
 }
@@ -639,6 +643,7 @@ translate_handle_packet(struct translate_client *client,
         memset(&client->response, 0, sizeof(client->response));
         client->previous_command = command;
         client->resource_address = &client->response.address;
+        client->address_list = NULL;
 
         client->response.request_header_forward =
             (struct header_forward_settings){
@@ -805,6 +810,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->type = RESOURCE_ADDRESS_HTTP;
         client->resource_address->u.http =
             uri_address_new(client->pool, payload);
+        client->address_list = &client->resource_address->u.http->addresses;
         break;
 
     case TRANSLATE_REDIRECT:
@@ -820,6 +826,7 @@ translate_handle_packet(struct translate_client *client,
         transformation->type = TRANSFORMATION_FILTER;
         transformation->u.filter.type = RESOURCE_ADDRESS_NONE;
         client->resource_address = &transformation->u.filter;
+        client->address_list = NULL;
         break;
 
     case TRANSLATE_FILTER_4XX:
@@ -991,6 +998,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->type = RESOURCE_ADDRESS_AJP;
         client->resource_address->u.http =
             uri_address_new(client->pool, payload);
+        client->address_list = &client->resource_address->u.http->addresses;
         break;
 
     case TRANSLATE_JAILCGI:
@@ -1085,8 +1093,7 @@ translate_handle_packet(struct translate_client *client,
         break;
 
     case TRANSLATE_ADDRESS:
-        if (client->resource_address->type != RESOURCE_ADDRESS_HTTP &&
-            client->resource_address->type != RESOURCE_ADDRESS_AJP) {
+        if (client->address_list == NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_ADDRESS packet");
             return false;
@@ -1098,14 +1105,13 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        uri_address_add(client->resource_address->u.http,
-                        (const struct sockaddr *)payload, payload_length);
+        address_list_add(client->pool, client->address_list,
+                         (const struct sockaddr *)payload, payload_length);
         break;
 
 
     case TRANSLATE_ADDRESS_STRING:
-        if (client->resource_address->type != RESOURCE_ADDRESS_HTTP &&
-            client->resource_address->type != RESOURCE_ADDRESS_AJP) {
+        if (client->address_list == NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_ADDRESS_STRING packet");
             return false;
@@ -1120,7 +1126,8 @@ translate_handle_packet(struct translate_client *client,
         {
             bool ret;
 
-            ret = parse_address_string(client->resource_address->u.http, payload);
+            ret = parse_address_string(client->pool, client->address_list,
+                                       payload);
             if (!ret) {
                 translate_client_error(client,
                                        "malformed TRANSLATE_ADDRESS_STRING packet");
