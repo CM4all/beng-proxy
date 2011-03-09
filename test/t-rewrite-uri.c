@@ -84,10 +84,10 @@ widget_resolver_new(G_GNUC_UNUSED pool_t pool, G_GNUC_UNUSED pool_t widget_pool,
     };
 
     if (strcmp(widget->class_name, "1") == 0) {
-        list_init(&address1.addresses);
+        address_list_init(&address1.addresses);
         widget->class = &class1;
     } else if (strcmp(widget->class_name, "2") == 0) {
-        list_init(&address2.addresses);
+        address_list_init(&address2.addresses);
         widget->class = &class2;
     }
 
