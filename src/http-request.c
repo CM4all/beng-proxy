@@ -190,8 +190,8 @@ http_request(pool_t pool,
     header_write(hr->headers, "connection", "keep-alive");
 
     hr->host_and_port = host_and_port;
-    hstock_get(tcp_stock, pool,
-               host_and_port, uwa,
-               &http_request_stock_handler, hr,
-               async_ref);
+    tcp_stock_get(tcp_stock, pool,
+                  host_and_port, uwa,
+                  &http_request_stock_handler, hr,
+                  async_ref);
 }

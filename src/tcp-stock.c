@@ -165,7 +165,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
     struct balancer *balancer = ctx;
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
-    struct uri_with_address *uwa = info;
+    const struct uri_with_address *uwa = info;
 
     assert(uri != NULL);
 
@@ -278,6 +278,23 @@ struct hstock *
 tcp_stock_new(pool_t pool, struct balancer *balancer, unsigned limit)
 {
     return hstock_new(pool, &tcp_stock_class, balancer, limit);
+}
+
+void
+tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
+              const struct uri_with_address *address,
+              const struct stock_handler *handler, void *handler_ctx,
+              struct async_operation_ref *async_ref)
+{
+    union {
+        const struct uri_with_address *in;
+        void *out;
+    } u = {
+        .in = address,
+    };
+
+    hstock_get(tcp_stock, pool, name, u.out,
+               handler, handler_ctx, async_ref);
 }
 
 int

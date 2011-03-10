@@ -119,7 +119,7 @@ tstock_translate(struct tstock *stock, pool_t pool,
     r->handler_ctx = ctx;
     r->async_ref = async_ref;
 
-    hstock_get(stock->tcp_stock, pool, stock->socket_path, NULL,
-               &tstock_stock_handler, r,
-               async_ref);
+    tcp_stock_get(stock->tcp_stock, pool, stock->socket_path, NULL,
+                  &tstock_stock_handler, r,
+                  async_ref);
 }
