@@ -6,7 +6,7 @@
 
 #include "balancer.h"
 #include "cache.h"
-#include "uri-address.h"
+#include "address-list.h"
 #include "failure.h"
 #include "bulldog.h"
 
@@ -19,7 +19,7 @@ struct balancer_item {
 
     pool_t pool;
 
-    struct uri_with_address *uwa;
+    struct address_list addresses;
 };
 
 struct balancer {
@@ -33,9 +33,9 @@ struct balancer {
 };
 
 static const struct sockaddr *
-uri_address_next_checked(struct uri_with_address *uwa, socklen_t *addrlen_r)
+uri_address_next_checked(struct address_list *list, socklen_t *addrlen_r)
 {
-    const struct sockaddr *first = uri_address_next(uwa, addrlen_r), *ret = first;
+    const struct sockaddr *first = address_list_next(list, addrlen_r), *ret = first;
     if (first == NULL)
         return NULL;
 
@@ -44,7 +44,7 @@ uri_address_next_checked(struct uri_with_address *uwa, socklen_t *addrlen_r)
             bulldog_check(ret, *addrlen_r))
             return ret;
 
-        ret = uri_address_next(uwa, addrlen_r);
+        ret = address_list_next(list, addrlen_r);
         assert(ret != NULL);
     } while (ret != first);
 
@@ -94,16 +94,16 @@ balancer_free(struct balancer *balancer)
 
 const struct sockaddr *
 balancer_get(struct balancer *balancer,
-             const struct uri_with_address *uwa, socklen_t *address_size_r)
+             const struct address_list *list, socklen_t *address_size_r)
 {
     const char *key;
     struct balancer_item *item;
     pool_t pool;
 
-    if (uri_address_is_single(uwa))
-        return uri_address_first(uwa, address_size_r);
+    if (address_list_is_single(list))
+        return address_list_first(list, address_size_r);
 
-    key = uri_address_key(uwa);
+    key = address_list_key(list);
     item = (struct balancer_item *)cache_get(balancer->cache, key);
 
     if (item == NULL) {
@@ -113,10 +113,10 @@ balancer_get(struct balancer *balancer,
         item = p_malloc(pool, sizeof(*item));
         cache_item_init(&item->item, time(NULL) + 1800, 1);
         item->pool = pool;
-        item->uwa = uri_address_dup(pool, uwa);
+        address_list_copy(pool, &item->addresses, list);
 
         cache_put(balancer->cache, p_strdup(pool, key), &item->item);
     }
 
-    return uri_address_next_checked(item->uwa, address_size_r);
+    return uri_address_next_checked(&item->addresses, address_size_r);
 }

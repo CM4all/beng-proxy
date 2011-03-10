@@ -12,7 +12,7 @@
 #include <sys/socket.h>
 
 struct balancer;
-struct uri_with_address;
+struct address_list;
 struct sockaddr;
 
 struct balancer *
@@ -28,6 +28,6 @@ balancer_free(struct balancer *balancer);
  */
 const struct sockaddr *
 balancer_get(struct balancer *balancer,
-             const struct uri_with_address *uwa, socklen_t *address_size_r);
+             const struct address_list *list, socklen_t *address_size_r);
 
 #endif
