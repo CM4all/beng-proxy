@@ -8,7 +8,7 @@
 #include "stock.h"
 #include "async.h"
 #include "client-socket.h"
-#include "uri-address.h"
+#include "address-list.h"
 #include "balancer.h"
 #include "failure.h"
 #include "pevent.h"
@@ -165,7 +165,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
     struct balancer *balancer = ctx;
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
-    const struct uri_with_address *uwa = info;
+    const struct address_list *address_list = info;
 
     assert(uri != NULL);
 
@@ -176,8 +176,8 @@ tcp_stock_create(void *ctx, struct stock_item *item,
 
     connection->uri = uri;
 
-    if (uwa != NULL)
-        connection->addr = balancer_get(balancer, &uwa->addresses,
+    if (address_list != NULL)
+        connection->addr = balancer_get(balancer, address_list,
                                         &connection->addrlen);
     else
         connection->addr = NULL;
@@ -283,15 +283,15 @@ tcp_stock_new(pool_t pool, struct balancer *balancer, unsigned limit)
 
 void
 tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
-              const struct uri_with_address *address,
+              const struct address_list *address_list,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
     union {
-        const struct uri_with_address *in;
+        const struct address_list *in;
         void *out;
     } u = {
-        .in = address,
+        .in = address_list,
     };
 
     hstock_get(tcp_stock, pool, name, u.out,

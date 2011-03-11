@@ -13,7 +13,7 @@ struct balancer;
 struct stock_item;
 struct stock_handler;
 struct async_operation_ref;
-struct uri_with_address;
+struct address_list;
 
 /**
  * Creates a new TCP connection stock.
@@ -28,7 +28,7 @@ tcp_stock_new(pool_t pool, struct balancer *balancer, unsigned limit);
 
 void
 tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
-              const struct uri_with_address *uwa,
+              const struct address_list *address_list,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 

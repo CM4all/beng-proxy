@@ -148,7 +148,7 @@ memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
     request->async_ref = async_ref;
 
     tcp_stock_get(stock->tcp_stock, pool,
-                  stock->address->uri, stock->address,
+                  stock->address->uri, &stock->address->addresses,
                   &memcached_stock_handler, request,
                   async_ref);
 }

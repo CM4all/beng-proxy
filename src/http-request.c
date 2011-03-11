@@ -191,7 +191,7 @@ http_request(pool_t pool,
 
     hr->host_and_port = host_and_port;
     tcp_stock_get(tcp_stock, pool,
-                  host_and_port, uwa,
+                  host_and_port, &uwa->addresses,
                   &http_request_stock_handler, hr,
                   async_ref);
 }

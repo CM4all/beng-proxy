@@ -155,7 +155,7 @@ ajp_stock_request(pool_t pool,
         hr->body = NULL;
 
     tcp_stock_get(tcp_stock, pool,
-                  uwa->uri, uwa,
+                  uwa->uri, &uwa->addresses,
                   &ajp_request_stock_handler, hr,
                   async_ref);
 }
