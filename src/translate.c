@@ -34,6 +34,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/un.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -380,6 +381,23 @@ translate_add_transformation(struct translate_client *client)
 static bool
 parse_address_string(pool_t pool, struct address_list *list, const char *p)
 {
+    if (*p == '/') {
+        /* unix domain socket */
+
+        struct sockaddr_un sun;
+        size_t path_length = strlen(p);
+
+        if (path_length >= sizeof(sun.sun_path))
+            return false;
+
+        sun.sun_family = AF_UNIX;
+        memcpy(sun.sun_path, p, path_length + 1);
+
+        address_list_add(pool, list,
+                         (const struct sockaddr *)&sun, sizeof(sun));
+        return true;
+    }
+
     struct addrinfo hints, *ai;
     int ret;
 
