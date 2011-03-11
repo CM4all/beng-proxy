@@ -294,6 +294,11 @@ tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
         .in = address_list,
     };
 
+    if (name == NULL) {
+        assert(address_list != NULL);
+        name = p_strdup(pool, address_list_key(address_list));
+    }
+
     hstock_get(tcp_stock, pool, name, u.out,
                handler, handler_ctx, async_ref);
 }

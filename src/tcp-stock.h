@@ -26,6 +26,10 @@ struct address_list;
 struct hstock *
 tcp_stock_new(pool_t pool, struct balancer *balancer, unsigned limit);
 
+/**
+ * @param name the hstock name; it is auto-generated from the
+ * #address_list if NULL is passed here
+ */
 void
 tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
               const struct address_list *address_list,
