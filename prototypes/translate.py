@@ -301,6 +301,13 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
+        elif uri == '/remote-sed':
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_ADDRESS_STRING, '/tmp/sed.socket')
+            response.pair('DOCUMENT_PATH', os.path.join(demo_path, 'hello.txt'))
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
+            response.packet(TRANSLATE_ACTION, sed_fastcgi)
         elif uri == '/check':
             if check is None:
                 response.packet(TRANSLATE_CHECK, 'ok')
