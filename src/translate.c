@@ -436,7 +436,7 @@ finish_view(struct translate_client *client)
         if (address->type != RESOURCE_ADDRESS_NONE &&
             view->address.type == RESOURCE_ADDRESS_NONE) {
             /* no address yet: copy address from response */
-            view->address = *address;
+            resource_address_copy(client->pool, &view->address, address);
             view->filter_4xx = client->response.filter_4xx;
         }
     } else {
