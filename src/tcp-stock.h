@@ -32,6 +32,9 @@ tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 
+void
+tcp_stock_put(struct hstock *tcp_stock, struct stock_item *item, bool destroy);
+
 int
 tcp_stock_item_get(const struct stock_item *item);
 

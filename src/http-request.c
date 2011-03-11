@@ -53,7 +53,7 @@ http_socket_release(bool reuse, void *ctx)
 {
     struct http_request *hr = ctx;
 
-    hstock_put(hr->tcp_stock, hr->host_and_port, hr->stock_item, !reuse);
+    tcp_stock_put(hr->tcp_stock, hr->stock_item, !reuse);
 }
 
 static const struct lease http_socket_lease = {

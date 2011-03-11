@@ -71,8 +71,7 @@ memcached_socket_release(bool reuse, void *ctx)
 {
     struct memcached_stock_request *request = ctx;
 
-    hstock_put(request->stock->tcp_stock, request->stock->address->uri,
-               request->item, !reuse);
+    tcp_stock_put(request->stock->tcp_stock, request->item, !reuse);
 }
 
 static const struct lease memcached_socket_lease = {

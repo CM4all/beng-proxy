@@ -298,6 +298,15 @@ tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
                handler, handler_ctx, async_ref);
 }
 
+void
+tcp_stock_put(struct hstock *tcp_stock, struct stock_item *item, bool destroy)
+{
+    struct tcp_stock_connection *connection =
+        (struct tcp_stock_connection *)item;
+
+    hstock_put(tcp_stock, connection->uri, item, destroy);
+}
+
 int
 tcp_stock_item_get(const struct stock_item *item)
 {

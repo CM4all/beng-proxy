@@ -45,8 +45,7 @@ tstock_socket_release(bool reuse, void *ctx)
 {
     struct tstock_request *r = ctx;
 
-    hstock_put(r->stock->tcp_stock, r->stock->socket_path,
-               r->item, !reuse);
+    tcp_stock_put(r->stock->tcp_stock, r->item, !reuse);
 }
 
 static const struct lease tstock_socket_lease = {
