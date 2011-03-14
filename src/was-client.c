@@ -504,7 +504,7 @@ was_client_request(pool_t caller_pool, int control_fd,
         : NULL;
 
     client->response.status = HTTP_STATUS_OK;
-    client->response.headers = strmap_new(pool, 41);
+    client->response.headers = strmap_new(caller_pool, 41);
     client->response.body = !http_method_is_empty(method)
         ? was_input_new(pool, input_fd, &was_client_input_handler, client)
         : NULL;

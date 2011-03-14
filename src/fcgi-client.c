@@ -758,7 +758,7 @@ fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     client->id = header.request_id;
 
     client->response.read_state = READ_HEADERS;
-    client->response.headers = strmap_new(client->pool, 17);
+    client->response.headers = strmap_new(client->caller_pool, 17);
     client->input = fifo_buffer_new(pool, 4096);
     client->content_length = 0;
     client->skip_length = 0;
