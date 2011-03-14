@@ -425,7 +425,7 @@ http_client_parse_status_line(struct http_client *client,
     }
 
     client->response.read_state = READ_HEADERS;
-    client->response.headers = strmap_new(client->pool, 64);
+    client->response.headers = strmap_new(client->caller_pool, 64);
     return true;
 }
 

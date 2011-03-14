@@ -428,6 +428,7 @@ widget_http_request(pool_t pool, struct widget *widget,
             g_error_new(widget_quark(), 0,
                         "unknown view name for class '%s': '%s'",
                         widget->class_name, widget_get_view_name(widget));
+        widget_cancel(widget);
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }

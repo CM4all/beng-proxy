@@ -12,6 +12,11 @@
 #include <errno.h>
 #include <string.h>
 
+void
+widget_cancel(struct widget *widget __attr_unused)
+{
+}
+
 bool
 widget_check_host(const struct widget *widget __attr_unused,
                   const char *host __attr_unused)
