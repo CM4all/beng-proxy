@@ -763,6 +763,13 @@ server, see section \ref{sessions} \\
 
 \hline
 
+\texttt{REALM} & a realm name for this session.  An existing session
+matches only if its realm matches the current request's realm.  If
+this packet is not specified in the translation response, then the
+``Host'' request header is used. \\
+
+\hline
+
 \texttt{LANGUAGE} & overrides the \texttt{Accept-Language} request
 header for this session \\
 \hline

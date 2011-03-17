@@ -770,6 +770,10 @@ translate_handle_packet(struct translate_client *client,
         client->previous_command = command;
         break;
 
+    case TRANSLATE_REALM:
+        client->response.realm = payload;
+        break;
+
     case TRANSLATE_LANGUAGE:
         client->response.language = payload;
         break;

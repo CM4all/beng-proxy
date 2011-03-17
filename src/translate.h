@@ -105,6 +105,8 @@ struct translate_response {
     const char *user;
     unsigned user_max_age;
 
+    const char *realm;
+
     const char *language;
 
     /**
