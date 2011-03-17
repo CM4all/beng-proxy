@@ -55,10 +55,41 @@ bounce_uri(pool_t pool, const struct request *request,
     return p_strcat(pool, response->bounce, escaped_uri, NULL);
 }
 
+/**
+ * Determine the realm name, consider the override by the translation
+ * server.  Guaranteed to return non-NULL.
+ */
+static const char *
+get_request_realm(const struct strmap *request_headers,
+                  const struct translate_response *response)
+{
+    assert(response != NULL);
+
+    if (response->realm != NULL)
+        return response->realm;
+
+    const char *host = strmap_get_checked(request_headers, "host");
+    if (host != NULL)
+        return host;
+
+    /* fall back to empty string as the default realm if there is no
+       "Host" header */
+    return "";
+}
+
 static void
 handle_translated_request(struct request *request,
                           const struct translate_response *response)
 {
+    request->realm = get_request_realm(request->request->headers, response);
+
+    if (request->session_realm != NULL &&
+        strcmp(request->realm, request->session_realm) != 0) {
+        daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",
+                   request->realm, request->session_realm);
+        request_ignore_session(request);
+    }
+
     struct session *session;
 
     request->connection->site_name = response->site;

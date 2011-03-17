@@ -12,6 +12,7 @@
 #include "transformation.h"
 #include "args.h"
 #include "bot.h"
+#include "dpool.h"
 
 #include <daemon/log.h>
 
@@ -127,6 +128,8 @@ request_determine_session(struct request *request)
 
     assert(request != NULL);
 
+    request->session_realm = NULL;
+
     user_agent = strmap_get(request->request->headers, "user-agent");
     request->stateless = user_agent == NULL ||
         user_agent_is_bot(user_agent);
@@ -166,6 +169,8 @@ request_determine_session(struct request *request)
             strmap_remove(request->args, "session");
     }
 
+    request->session_realm = p_strdup(request->request->pool, session->realm);
+
     session_put(session);
 }
 
@@ -189,6 +194,8 @@ request_make_session(struct request *request)
         return NULL;
     }
 
+    session->realm = d_strdup(session->pool, request->realm);
+
     request->session_id = session->id;
     request->send_session_cookie = true;
 
@@ -199,6 +206,15 @@ request_make_session(struct request *request)
                                  &request->session_id_string));
 
     return session;
+}
+
+void
+request_ignore_session(struct request *request)
+{
+    if (request->args != NULL)
+        strmap_remove(request->args, "session");
+
+    session_id_clear(&request->session_id);
 }
 
 void

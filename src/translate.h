@@ -105,9 +105,9 @@ struct translate_response {
     const char *user;
     unsigned user_max_age;
 
-    const char *realm;
-
     const char *language;
+
+    const char *realm;
 
     /**
      * The value of the "WWW-Authenticate" HTTP response header.

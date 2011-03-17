@@ -28,6 +28,18 @@ struct request {
     struct session_id_string session_id_string;
     bool send_session_cookie;
 
+    /**
+     * The realm name of the request.  This is valid only after the
+     * translation server has responded, because the translation
+     * server may override it.
+     */
+    const char *realm;
+
+    /**
+     * The realm name of the session.
+     */
+    const char *session_realm;
+
     bool stateless;
 
     struct {
@@ -131,6 +143,9 @@ request_get_session(const struct request *request)
 
 struct session *
 request_make_session(struct request *request);
+
+void
+request_ignore_session(struct request *request);
 
 void
 request_discard_session(struct request *request);
