@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.26) unstable; urgency=low
 
-  * 
+  * python/response: fix typo in ajp()
 
  --
 
