@@ -895,15 +895,9 @@ embed_widget(struct processor *processor, struct processor_env *env,
 }
 
 static istream_t
-open_widget_element(struct processor *processor)
+open_widget_element(struct processor *processor, struct widget *widget)
 {
-    struct widget *widget;
-
-    assert(processor->widget.widget != NULL);
-    assert(processor->widget.widget->parent == processor->container);
-
-    widget = processor->widget.widget;
-    processor->widget.widget = NULL;
+    assert(widget->parent == processor->container);
 
     if (widget->class_name != NULL && widget_check_recursion(widget->parent)) {
         daemon_log(5, "maximum widget depth exceeded\n");
@@ -919,9 +913,9 @@ open_widget_element(struct processor *processor)
 
 static void
 widget_element_finished(struct processor *processor,
-                        const struct parser_tag *tag)
+                        const struct parser_tag *tag, struct widget *widget)
 {
-    istream_t istream = open_widget_element(processor);
+    istream_t istream = open_widget_element(processor, widget);
     assert(istream == NULL || processor->replace != NULL);
 
     if (processor->replace != NULL)
@@ -964,10 +958,13 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         assert(processor->widget.widget != NULL);
 
+        struct widget *widget = processor->widget.widget;
+        processor->widget.widget = NULL;
+
         if (tag->type == TAG_OPEN)
             return;
 
-        widget_element_finished(processor, tag);
+        widget_element_finished(processor, tag, widget);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
         struct pool_mark mark;
         const char *p;
