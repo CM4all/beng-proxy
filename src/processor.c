@@ -895,7 +895,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
 }
 
 static istream_t
-widget_element_finished(struct processor *processor)
+open_widget_element(struct processor *processor)
 {
     struct widget *widget;
 
@@ -915,6 +915,18 @@ widget_element_finished(struct processor *processor)
                                                         processor->widget.pool);
 
     return embed_widget(processor, processor->env, widget);
+}
+
+static void
+widget_element_finished(struct processor *processor,
+                        const struct parser_tag *tag)
+{
+    istream_t istream = open_widget_element(processor);
+    assert(istream == NULL || processor->replace != NULL);
+
+    if (processor->replace != NULL)
+        processor_replace_add(processor, processor->widget.start_offset,
+                              tag->end, istream);
 }
 
 static bool
@@ -945,8 +957,6 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         processor_uri_rewrite_commit(processor);
 
     if (processor->tag == TAG_WIDGET) {
-        istream_t istream;
-
         if (tag->type == TAG_OPEN || tag->type == TAG_SHORT)
             processor->widget.start_offset = tag->start;
         else if (processor->widget.widget == NULL)
@@ -957,12 +967,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         if (tag->type == TAG_OPEN)
             return;
 
-        istream = widget_element_finished(processor);
-        assert(istream == NULL || processor->replace != NULL);
-
-        if (processor->replace != NULL)
-            processor_replace_add(processor, processor->widget.start_offset,
-                                  tag->end, istream);
+        widget_element_finished(processor, tag);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
         struct pool_mark mark;
         const char *p;
