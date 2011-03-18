@@ -131,7 +131,6 @@ ajp_stock_request(pool_t pool,
     hr->server_port = server_port;
     hr->is_ssl = is_ssl;
     hr->method = method;
-    hr->uri = uwa->uri;
 
     hr->headers = headers;
     if (hr->headers == NULL)
@@ -146,8 +145,32 @@ ajp_stock_request(pool_t pool,
     } else
         hr->body = NULL;
 
+    const char *host_and_port;
+    if (memcmp(uwa->uri, "ajp://", 6) == 0) {
+        /* AJP over TCP */
+
+        const char *p = uwa->uri + 6;
+        const char *slash = strchr(p, '/');
+        if (slash == p) {
+            istream_close(hr->body);
+            http_response_handler_invoke_abort(&hr->handler);
+            return;
+        }
+
+        if (slash == NULL) {
+            host_and_port = p;
+            slash = "/";
+        } else
+            host_and_port = p_strndup(hr->pool, p, slash - p);
+
+        hr->uri = slash;
+    } else {
+        http_response_handler_invoke_abort(&hr->handler);
+        return;
+    }
+
     hstock_get(tcp_stock, pool,
-               uwa->uri, uwa,
+               hr->uri, uwa,
                ajp_request_stock_callback, hr,
                async_ref);
 }
