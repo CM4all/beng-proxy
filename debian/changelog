@@ -1,3 +1,9 @@
+cm4all-beng-proxy (0.8.28) unstable; urgency=low
+
+  * 
+
+ --
+
 cm4all-beng-proxy (0.8.27) unstable; urgency=low
 
   * http-request: close the request body on malformed URI
