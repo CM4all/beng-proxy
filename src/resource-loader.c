@@ -47,7 +47,7 @@ resource_loader_new(pool_t pool, struct hstock *tcp_stock,
 }
 
 static const char *
-extract_remote_host(const struct strmap *headers)
+extract_remote_addr(const struct strmap *headers)
 {
     const char *xff = strmap_get_checked(headers, "x-forwarded-for");
     if (xff == NULL)
@@ -62,6 +62,18 @@ extract_remote_host(const struct strmap *headers)
         ++p;
 
     return p;
+}
+
+static const char *
+extract_remote_host(pool_t pool, const struct strmap *headers)
+{
+    const char *remote_addr = extract_remote_addr(headers);
+    const char *colon = strchr(remote_addr, ':');
+    if (strchr(colon + 1, ':') == 0)
+        return p_strndup(pool, remote_addr, colon - remote_addr);
+
+    /* XXX handle IPv6 addresses properly */
+    return remote_addr;
 }
 
 static const char *
@@ -177,8 +189,8 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
 
     case RESOURCE_ADDRESS_AJP:
         ajp_stock_request(pool, rl->tcp_stock,
-                          "http", extract_remote_host(headers),
-                          extract_remote_host(headers),
+                          "http", extract_remote_addr(headers),
+                          extract_remote_host(pool, headers),
                           extract_server_name(headers),
                           80, /* XXX */
                           false,
