@@ -110,6 +110,8 @@ struct translate_response {
 
     const char *language;
 
+    const char *realm;
+
     /**
      * The value of the "WWW-Authenticate" HTTP response header.
      */

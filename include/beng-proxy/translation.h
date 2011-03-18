@@ -138,6 +138,12 @@ enum beng_translation_command {
      * (hosting account).
      */
     TRANSLATE_HOME = 67,
+
+    /**
+     * Specifies the session realm.  An existing session matches only
+     * if its realm matches the current request's realm.
+     */
+    TRANSLATE_REALM = 68,
 };
 
 struct beng_translation_header {

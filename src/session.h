@@ -99,6 +99,11 @@ struct session {
     /** has a HTTP cookie with this session id already been received? */
     bool cookie_received;
 
+    /**
+     * The name of this session's realm.  It is always non-NULL.
+     */
+    const char *realm;
+
     /** an opaque string for the translation server */
     const char *translate;
 

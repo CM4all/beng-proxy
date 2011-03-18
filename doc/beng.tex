@@ -653,7 +653,8 @@ remote HTTP server (see \ref{http}) \\
 \hline
 
 \texttt{AJP} & Load the resource from an AJPv13 server (see
-\ref{ajp}). \\
+\ref{ajp}).  The payload of this packet is an absolute URI in the form
+\texttt{ajp://host:port/path} \\
 
 \hline
 
@@ -773,6 +774,13 @@ server, see section \ref{sessions} \\
 \hline
 
 \texttt{USER} & the user name associated with this session \\
+
+\hline
+
+\texttt{REALM} & a realm name for this session.  An existing session
+matches only if its realm matches the current request's realm.  If
+this packet is not specified in the translation response, then the
+``Host'' request header is used. \\
 
 \hline
 

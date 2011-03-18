@@ -154,7 +154,7 @@ class Translation(Protocol):
             response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
             response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
         elif raw_uri[:5] == '/ajp/':
-            response.ajp(raw_uri[4:], 'cfatest01.intern.cm-ag:8009')
+            response.ajp('ajp://cfatest01.intern.cm-ag:8009' + raw_uri[4:], 'cfatest01.intern.cm-ag:8009')
         elif uri[:8] == '/fcgi.rb':
             response.packet(TRANSLATE_FASTCGI, os.path.join(test_path, 'fcgi.rb'))
         elif uri == '/discard':

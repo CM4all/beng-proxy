@@ -75,7 +75,7 @@ class Response:
         list, this function looks up the URI's host name with the
         local resolver (which may throw socket.gaierror)."""
 
-        assert isinstance(addresses, str) or hasattr(address, '__iter__')
+        assert isinstance(addresses, str) or hasattr(addresses, '__iter__')
 
         if isinstance(addresses, str):
             from socket import gethostbyname
