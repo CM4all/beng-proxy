@@ -135,6 +135,7 @@ http_request(pool_t pool,
         p = uwa->uri + 7;
         slash = strchr(p, '/');
         if (slash == p) {
+            istream_close(hr->body);
             http_response_handler_invoke_abort(&hr->handler);
             return;
         }
@@ -161,6 +162,7 @@ http_request(pool_t pool,
         else
             host_and_port = p_strndup(hr->pool, p, qmark - p);
     } else {
+        istream_close(hr->body);
         http_response_handler_invoke_abort(&hr->handler);
         return;
     }
