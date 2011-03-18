@@ -88,6 +88,12 @@ struct request {
      */
     struct widget *widget;
 
+    /**
+     * A reference to the widget that should be proxied.  Used by
+     * proxy_widget().
+     */
+    const struct widget_ref *proxy_ref;
+
     bool body_consumed;
 
     /**

@@ -80,15 +80,13 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 {
     struct http_server_request *request = request2->request;
 
-    if (widget->from_request.proxy_ref != NULL) {
+    if (request2->proxy_ref != NULL) {
         frame_parent_widget(request->pool, widget,
-                            widget->from_request.proxy_ref->id,
+                            request2->proxy_ref->id,
                             &request2->env,
                             &widget_processor_handler, request2,
                             request2->async_ref);
     } else {
-        assert(widget->from_request.proxy);
-
         const struct processor_env *env = &request2->env;
 
         if (strmap_get(env->args, "raw") != NULL)
@@ -131,6 +129,7 @@ widget_proxy_found(struct widget *widget, void *ctx)
     struct http_server_request *request = request2->request;
 
     request2->widget = widget;
+    request2->proxy_ref = request2->proxy_ref->next;
 
     if (widget->class == NULL) {
         widget_resolver_new(request->pool, request2->env.pool, widget,
@@ -149,10 +148,10 @@ widget_proxy_not_found(void *ctx)
     struct request *request2 = ctx;
     struct widget *widget = request2->widget;
 
-    assert(widget->from_request.proxy_ref != NULL);
+    assert(request2->proxy_ref != NULL);
 
     daemon_log(2, "widget '%s' not found in %s [%s]\n",
-               widget->from_request.proxy_ref->id,
+               request2->proxy_ref->id,
                widget_path(widget), request2->request->uri);
 
     widget_cancel(widget);
@@ -183,17 +182,18 @@ static const struct widget_lookup_handler widget_processor_handler = {
 
 void
 proxy_widget(struct request *request2, http_status_t status, istream_t body,
-             struct widget *widget,
+             struct widget *widget, const struct widget_ref *proxy_ref,
              unsigned options)
 {
     assert(request2 != NULL);
     assert(widget != NULL);
-    assert(widget->from_request.proxy_ref != NULL);
+    assert(proxy_ref != NULL);
 
     request2->widget = widget;
+    request2->proxy_ref = proxy_ref;
 
     processor_lookup_widget(request2->request->pool, status, body,
-                            widget, widget->from_request.proxy_ref->id,
+                            widget, proxy_ref->id,
                             &request2->env, options,
                             &widget_processor_handler, request2,
                             request2->async_ref);

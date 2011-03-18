@@ -70,8 +70,6 @@ struct widget {
     } session;
 
     struct {
-        const struct widget_ref *proxy_ref;
-
         const struct widget_ref *focus_ref;
 
         /** the path_info provided by the browser (from processor_env.args) */
@@ -85,10 +83,6 @@ struct widget {
 
         /** the request body (from processor_env.body) */
         istream_t body;
-
-        /** is this the single widget in this whole request which should
-            be proxied? */
-        bool proxy;
 
         /** should the resource be passed raw, i.e. not processed? */
         bool raw;
@@ -144,13 +138,11 @@ widget_init(struct widget *widget, pool_t pool,
     widget->headers = NULL;
     widget->view = NULL;
     widget->session = WIDGET_SESSION_RESOURCE;
-    widget->from_request.proxy_ref = NULL;
     widget->from_request.focus_ref = NULL;
     widget->from_request.path_info = NULL;
     strref_clear(&widget->from_request.query_string);
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
-    widget->from_request.proxy = false;
     widget->from_request.raw = false;
     widget->from_request.view = NULL;
     widget->lazy.path = NULL;

@@ -141,17 +141,17 @@ response_invoke_processor(struct request *request2,
         widget_ref_parse(request->pool,
                          strmap_remove_checked(request2->args, "focus"));
 
-    widget->from_request.proxy_ref =
+    const struct widget_ref *proxy_ref =
         widget_ref_parse(request->pool,
                          strmap_get_checked(request2->args, "frame"));
 
-    if (widget->from_request.proxy_ref != NULL)
+    if (proxy_ref != NULL)
         /* disable all following transformations, because we're doing
            a direct proxy request to a widget */
         request2->translate.transformation = NULL;
 
     if (request2->translate.response->untrusted != NULL &&
-        widget->from_request.proxy_ref == NULL) {
+        proxy_ref == NULL) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2->translate.response->untrusted);
         istream_close_unused(body);
@@ -183,7 +183,7 @@ response_invoke_processor(struct request *request2,
                no focus */
             session_drop_widgets(session,
                                  strref_dup(request->pool, &request2->uri.base),
-                                 widget->from_request.proxy_ref);
+                                 proxy_ref);
 
         session_put(session);
     }
@@ -214,11 +214,11 @@ response_invoke_processor(struct request *request2,
     request2->dump_widget_tree = widget;
 #endif
 
-    if (widget->from_request.proxy_ref != NULL) {
+    if (proxy_ref != NULL) {
         /* the client requests a widget in proxy mode */
 
         proxy_widget(request2, status, body,
-                     widget, transformation->u.processor.options);
+                     widget, proxy_ref, transformation->u.processor.options);
     } else {
         /* the client requests the whole template */
         body = processor_process(request->pool, body,
