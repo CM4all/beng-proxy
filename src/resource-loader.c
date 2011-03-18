@@ -49,19 +49,19 @@ resource_loader_new(pool_t pool, struct hstock *tcp_stock,
 static const char *
 extract_remote_host(const struct strmap *headers)
 {
-    const char *p = strmap_get_checked(headers, "via");
-    if (p == NULL)
+    const char *xff = strmap_get_checked(headers, "x-forwarded-for");
+    if (xff == NULL)
         return "";
 
-    p = strrchr(p, ',');
+    /* extract the last host name in X-Forwarded-For */
+    const char *p = strrchr(xff, ',');
     if (p == NULL)
-        return "";
+        p = xff;
 
-    p = strchr(p + 1, ' ');
-    if (p == NULL)
-        return "";
+    while (*p == ' ')
+        ++p;
 
-    return p + 1;
+    return p;
 }
 
 static const char *
