@@ -183,6 +183,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->user = NULL;
 
     dest->language = NULL;
+    dest->realm = p_strdup_checked(pool, src->realm);
     dest->www_authenticate = p_strdup_checked(pool, src->www_authenticate);
     dest->authentication_info = p_strdup_checked(pool,
                                                  src->authentication_info);
