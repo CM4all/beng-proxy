@@ -211,8 +211,8 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
         server_port = 80;
         server_name = extract_server_name(pool, headers, &server_port);
         ajp_stock_request(pool, rl->tcp_stock,
-                          "http", extract_remote_addr(headers),
-                          extract_remote_host(pool, headers),
+                          "http", extract_remote_host(pool, headers),
+                          NULL,
                           server_name, server_port,
                           false,
                           method, address->u.http,
