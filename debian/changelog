@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.11) unstable; urgency=low
 
-  * 
+  * processor: major API refactorization
 
  --
 
