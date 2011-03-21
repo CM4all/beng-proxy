@@ -69,7 +69,7 @@ extract_remote_host(pool_t pool, const struct strmap *headers)
 {
     const char *remote_addr = extract_remote_addr(headers);
     const char *colon = strchr(remote_addr, ':');
-    if (strchr(colon + 1, ':') == 0)
+    if (colon != NULL && strchr(colon + 1, ':') == NULL)
         return p_strndup(pool, remote_addr, colon - remote_addr);
 
     /* XXX handle IPv6 addresses properly */
