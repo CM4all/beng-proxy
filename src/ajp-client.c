@@ -508,7 +508,8 @@ ajp_try_read(struct ajp_client *client)
         return;
     }
 
-    if (nbytes < 0) {
+    if (nbytes < 0 && (errno != EAGAIN ||
+                       fifo_buffer_empty(client->response.input))) {
         if (errno == EAGAIN) {
             ajp_client_schedule_read(client);
             return;
