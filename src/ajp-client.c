@@ -790,19 +790,17 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
     } else
         num_headers = 0;
 
-    if (body != NULL)
-        /* if there's a request body, we'll append the Content-Length
-           header */
-        ++num_headers;
+    /* Content-Length */
+    ++num_headers;
 
     serialize_ajp_integer(gb, num_headers);
     if (headers != NULL)
         growing_buffer_cat(gb, headers_buffer);
 
-    if (body != NULL) {
-        off_t available;
-        char buffer[32];
+    off_t available = 0;
+    char buffer[32];
 
+    if (body != NULL) {
         available = istream_available(body, false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
@@ -811,25 +809,21 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
             return;
         }
 
-        format_uint64(buffer, (uint64_t)available);
-        serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
-        serialize_ajp_string(gb, buffer);
-
         if (available == 0)
             istream_free(&body);
         else
             requested = 1024;
     }
 
+    format_uint64(buffer, (uint64_t)available);
+    serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
+    serialize_ajp_string(gb, buffer);
+
     growing_buffer_write_buffer(gb, "\xff", 1);
     
     /* XXX is this correct? */
 
     header->length = htons(growing_buffer_size(gb) - sizeof(*header));
-
-    if (body == NULL)
-        growing_buffer_write_buffer(gb, &empty_body_chunk,
-                                    sizeof(empty_body_chunk));
 
     request = growing_buffer_istream(gb);
     if (body != NULL) {
