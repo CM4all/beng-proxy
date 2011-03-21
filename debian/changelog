@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.9.11) unstable; urgency=low
   * processor: major API refactorization
   * merge release 0.8.29
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 21 Mar 2011 19:43:28 +0100
 
 cm4all-beng-proxy (0.9.10) unstable; urgency=low
 
