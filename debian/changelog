@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.29) unstable; urgency=low
 
-  * 
+  * ajp-client: send query string in an AJP attribute
 
  --
 

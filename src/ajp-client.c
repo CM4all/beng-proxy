@@ -774,8 +774,13 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
 
     growing_buffer_write_buffer(gb, &prefix_and_method, sizeof(prefix_and_method));
 
+    const char *query_string = strchr(uri, '?');
+    size_t uri_length = query_string != NULL
+        ? (size_t)(query_string - uri)
+        : strlen(uri);
+
     serialize_ajp_string(gb, protocol);
-    serialize_ajp_string(gb, uri);
+    serialize_ajp_string_n(gb, uri, uri_length);
     serialize_ajp_string(gb, remote_addr);
     serialize_ajp_string(gb, remote_host);
     serialize_ajp_string(gb, server_name);
@@ -819,6 +824,14 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
     format_uint64(buffer, (uint64_t)available);
     serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
     serialize_ajp_string(gb, buffer);
+
+    /* attributes */
+
+    if (query_string != NULL) {
+        char name = AJP_ATTRIBUTE_QUERY_STRING;
+        growing_buffer_write_buffer(gb, &name, sizeof(name));
+        serialize_ajp_string(gb, query_string + 1); /* skip the '?' */
+    }
 
     growing_buffer_write_buffer(gb, "\xff", 1);
     
