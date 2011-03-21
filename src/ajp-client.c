@@ -492,9 +492,15 @@ ajp_consume_input(struct ajp_client *client)
                             sizeof(*header) + header_length);
     }
 }
- 
-static void
-ajp_try_read(struct ajp_client *client)
+
+/**
+ * Fill the input buffer.
+ *
+ * @return true if there is data in the buffer, false if it is empty
+ * or if the connection was closed
+ */
+static bool
+ajp_fill_buffer(struct ajp_client *client)
 {
     ssize_t nbytes;
 
@@ -505,20 +511,31 @@ ajp_try_read(struct ajp_client *client)
     if (nbytes == 0) {
         daemon_log(1, "AJP server closed the connection\n");
         ajp_connection_close(client);
-        return;
+        return false;
     }
 
-    if (nbytes < 0 && (errno != EAGAIN ||
-                       fifo_buffer_empty(client->response.input))) {
+    if (nbytes < 0) {
         if (errno == EAGAIN) {
-            ajp_client_schedule_read(client);
-            return;
+            if (fifo_buffer_empty(client->response.input)) {
+                ajp_client_schedule_read(client);
+                return false;
+            } else
+                return true;
         }
 
         daemon_log(1, "read error on AJP connection: %s\n", strerror(errno));
         ajp_connection_close(client);
-        return;
+        return false;
     }
+
+    return true;
+}
+
+static void
+ajp_try_read(struct ajp_client *client)
+{
+    if (!ajp_fill_buffer(client))
+        return;
 
     pool_ref(client->pool);
 
