@@ -22,6 +22,7 @@
 #include "strutil.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 struct resource_loader {
     struct hstock *tcp_stock;
@@ -94,14 +95,27 @@ extract_remote_ip(pool_t pool, const struct strmap *headers)
 }
 
 static const char *
-extract_server_name(const struct strmap *headers)
+extract_server_name(pool_t pool, const struct strmap *headers,
+                    unsigned *port_r)
 {
     const char *p = strmap_get_checked(headers, "host");
     if (p == NULL)
-        return ""; /* XXX */
+        return NULL;
 
-    /* XXX remove port? */
-    return p;
+    const char *colon = strchr(p, ':');
+    if (colon == NULL)
+        return p;
+
+    if (strchr(colon + 1, ':') != NULL)
+        /* XXX handle IPv6 addresses properly */
+        return p;
+
+    char *endptr;
+    unsigned port = strtoul(colon + 1, &endptr, 10);
+    if (endptr > colon + 1 && *endptr == 0)
+        *port_r = port;
+
+    return p_strndup(pool, p, colon - p);
 }
 
 void
@@ -119,6 +133,9 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
     assert(address != NULL);
 
     switch (address->type) {
+        const char *server_name;
+        unsigned server_port;
+
     case RESOURCE_ADDRESS_NONE:
         break;
 
@@ -222,11 +239,12 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
         return;
 
     case RESOURCE_ADDRESS_AJP:
+        server_port = 80;
+        server_name = extract_server_name(pool, headers, &server_port);
         ajp_stock_request(pool, rl->tcp_stock,
-                          "http", extract_remote_host(pool, headers),
-                          extract_remote_host(pool, headers),
-                          extract_server_name(headers),
-                          80, /* XXX */
+                          "http", extract_remote_ip(pool, headers),
+                          NULL,
+                          server_name, server_port,
                           false,
                           method, address->u.http,
                           headers, body,

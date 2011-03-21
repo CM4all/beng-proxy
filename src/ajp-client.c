@@ -452,6 +452,12 @@ ajp_consume_body_junk(struct ajp_client *client)
     return client->response.junk_length == 0;
 }
 
+/**
+ * Handle the remaining data in the input buffer.
+ *
+ * @return false if the buffer is full or if this object has been
+ * destructed.
+ */
 static void
 ajp_consume_input(struct ajp_client *client)
 {
@@ -560,9 +566,15 @@ ajp_consume_input(struct ajp_client *client)
                             sizeof(*header) + header_length);
     }
 }
- 
-static void
-ajp_try_read(struct ajp_client *client)
+
+/**
+ * Fill the input buffer.
+ *
+ * @return true if there is data in the buffer, false if it is empty
+ * or if the connection was closed
+ */
+static bool
+ajp_fill_buffer(struct ajp_client *client)
 {
     ssize_t nbytes;
 
@@ -575,21 +587,33 @@ ajp_try_read(struct ajp_client *client)
             g_error_new_literal(ajp_client_quark(), 0,
                                 "AJP server closed the connection");
         ajp_client_abort_response(client, error);
-        return;
+        return false;
     }
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            ajp_client_schedule_read(client);
-            return;
+            if (fifo_buffer_empty(client->response.input)) {
+                ajp_client_schedule_read(client);
+                return false;
+            } else
+                return true;
         }
 
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "read error on AJP connection: %s", strerror(errno));
         ajp_client_abort_response(client, error);
-        return;
+        return false;
     }
+
+    return true;
+}
+
+static void
+ajp_try_read(struct ajp_client *client)
+{
+    if (!ajp_fill_buffer(client))
+        return;
 
     pool_ref(client->pool);
 
@@ -815,9 +839,6 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
     size_t requested;
 
     assert(protocol != NULL);
-    assert(remote_addr != NULL);
-    assert(remote_host != NULL);
-    assert(server_name != NULL);
     assert(http_method_is_valid(method));
 
     if (!uri_verify_quick(uri)) {
@@ -861,8 +882,13 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
 
     growing_buffer_write_buffer(gb, &prefix_and_method, sizeof(prefix_and_method));
 
+    const char *query_string = strchr(uri, '?');
+    size_t uri_length = query_string != NULL
+        ? (size_t)(query_string - uri)
+        : strlen(uri);
+
     serialize_ajp_string(gb, protocol);
-    serialize_ajp_string(gb, uri);
+    serialize_ajp_string_n(gb, uri, uri_length);
     serialize_ajp_string(gb, remote_addr);
     serialize_ajp_string(gb, remote_host);
     serialize_ajp_string(gb, server_name);
@@ -878,19 +904,17 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
     } else
         num_headers = 0;
 
-    if (body != NULL)
-        /* if there's a request body, we'll append the Content-Length
-           header */
-        ++num_headers;
+    /* Content-Length */
+    ++num_headers;
 
     serialize_ajp_integer(gb, num_headers);
     if (headers != NULL)
         growing_buffer_cat(gb, headers_buffer);
 
-    if (body != NULL) {
-        off_t available;
-        char buffer[32];
+    off_t available = 0;
+    char buffer[32];
 
+    if (body != NULL) {
         available = istream_available(body, false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
@@ -903,14 +927,22 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
             return;
         }
 
-        format_uint64(buffer, (uint64_t)available);
-        serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
-        serialize_ajp_string(gb, buffer);
-
         if (available == 0)
             istream_free_unused(&body);
         else
             requested = 1024;
+    }
+
+    format_uint64(buffer, (uint64_t)available);
+    serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
+    serialize_ajp_string(gb, buffer);
+
+    /* attributes */
+
+    if (query_string != NULL) {
+        char name = AJP_ATTRIBUTE_QUERY_STRING;
+        growing_buffer_write_buffer(gb, &name, sizeof(name));
+        serialize_ajp_string(gb, query_string + 1); /* skip the '?' */
     }
 
     growing_buffer_write_buffer(gb, "\xff", 1);
@@ -918,10 +950,6 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
     /* XXX is this correct? */
 
     header->length = htons(growing_buffer_size(gb) - sizeof(*header));
-
-    if (body == NULL)
-        growing_buffer_write_buffer(gb, &empty_body_chunk,
-                                    sizeof(empty_body_chunk));
 
     request = growing_buffer_istream(gb);
     if (body != NULL) {

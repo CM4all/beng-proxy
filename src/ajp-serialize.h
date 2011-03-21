@@ -8,9 +8,13 @@
 #define BENG_PROXY_AJP_SERIALIZE_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 struct growing_buffer;
 struct strref;
+
+void
+serialize_ajp_string_n(struct growing_buffer *gb, const char *s, size_t length);
 
 void
 serialize_ajp_string(struct growing_buffer *gb, const char *s);

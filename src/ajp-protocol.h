@@ -46,6 +46,10 @@ enum ajp_header_code {
     AJP_HEADER_USER_AGENT = 0xa00e,
 };
 
+enum ajp_attribute_code {
+    AJP_ATTRIBUTE_QUERY_STRING = 0x05,
+};
+
 typedef enum {
     AJP_CODE_FORWARD_REQUEST = 2,
     AJP_CODE_SEND_BODY_CHUNK = 3,
