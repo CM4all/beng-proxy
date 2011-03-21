@@ -15,11 +15,20 @@
 void
 serialize_ajp_string(struct growing_buffer *gb, const char *s)
 {
+    if (s == NULL) {
+        /* 0xffff means NULL; this is not documented, I have
+           determined it from a wireshark dump */
+
+        uint16_t *p = growing_buffer_write(gb, 2);
+        *p = 0xffff;
+        return;
+    }
+
     size_t length = strlen(s);
     char *p;
 
-    if (length > 0xffff)
-        length = 0xffff; /* XXX too long, cut off */
+    if (length > 0xfffe)
+        length = 0xfffe; /* XXX too long, cut off */
 
     p = growing_buffer_write(gb, 2 + length + 1);
     *(uint16_t*)p = htons(length);
@@ -45,6 +54,11 @@ const char *
 deserialize_ajp_string(struct strref *input)
 {
     size_t length = deserialize_uint16(input);
+    if (length == 0xffff)
+        /* 0xffff means NULL; this is not documented, I have
+           determined it from a wireshark dump */
+        return NULL;
+
     const char *value;
 
     if (input->length <= length || input->data[length] != 0) {
