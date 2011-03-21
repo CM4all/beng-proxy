@@ -406,6 +406,9 @@ ajp_consume_body_junk(struct ajp_client *client)
 
 /**
  * Handle the remaining data in the input buffer.
+ *
+ * @return false if the buffer is full or if this object has been
+ * destructed.
  */
 static void
 ajp_consume_input(struct ajp_client *client)
