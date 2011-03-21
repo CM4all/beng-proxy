@@ -52,7 +52,7 @@ extract_remote_addr(const struct strmap *headers)
 {
     const char *xff = strmap_get_checked(headers, "x-forwarded-for");
     if (xff == NULL)
-        return "";
+        return NULL;
 
     /* extract the last host name in X-Forwarded-For */
     const char *p = strrchr(xff, ',');
@@ -69,6 +69,9 @@ static const char *
 extract_remote_host(pool_t pool, const struct strmap *headers)
 {
     const char *remote_addr = extract_remote_addr(headers);
+    if (remote_addr == NULL)
+        return NULL;
+
     const char *colon = strchr(remote_addr, ':');
     if (colon != NULL && strchr(colon + 1, ':') == NULL)
         return p_strndup(pool, remote_addr, colon - remote_addr);
@@ -83,7 +86,7 @@ extract_server_name(pool_t pool, const struct strmap *headers,
 {
     const char *p = strmap_get_checked(headers, "host");
     if (p == NULL)
-        return ""; /* XXX */
+        return NULL;
 
     const char *colon = strchr(p, ':');
     if (colon == NULL)

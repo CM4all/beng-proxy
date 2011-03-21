@@ -735,9 +735,6 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
     size_t requested;
 
     assert(protocol != NULL);
-    assert(remote_addr != NULL);
-    assert(remote_host != NULL);
-    assert(server_name != NULL);
     assert(http_method_is_valid(method));
 
     if (!uri_verify_quick(uri)) {
