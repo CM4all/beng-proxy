@@ -13,6 +13,21 @@
 #include <string.h>
 
 void
+serialize_ajp_string_n(struct growing_buffer *gb, const char *s, size_t length)
+{
+    assert(gb != NULL);
+    assert(s != NULL);
+
+    if (length > 0xfffe)
+        length = 0xfffe; /* XXX too long, cut off */
+
+    char *p = growing_buffer_write(gb, 2 + length + 1);
+    *(uint16_t*)p = htons(length);
+    memcpy(p + 2, s, length);
+    p[2 + length] = 0;
+}
+
+void
 serialize_ajp_string(struct growing_buffer *gb, const char *s)
 {
     if (s == NULL) {
@@ -24,15 +39,7 @@ serialize_ajp_string(struct growing_buffer *gb, const char *s)
         return;
     }
 
-    size_t length = strlen(s);
-    char *p;
-
-    if (length > 0xfffe)
-        length = 0xfffe; /* XXX too long, cut off */
-
-    p = growing_buffer_write(gb, 2 + length + 1);
-    *(uint16_t*)p = htons(length);
-    memcpy(p + 2, s, length + 1);
+    serialize_ajp_string_n(gb, s, strlen(s));
 }
 
 void
