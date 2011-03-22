@@ -56,6 +56,7 @@ void
 widget_copy_from_request(struct widget *widget, struct processor_env *env)
 {
     assert(widget != NULL);
+    assert(widget->parent != NULL);
     assert(widget->lazy.address == NULL);
     assert(widget->from_request.path_info == NULL);
     assert(strref_is_empty(&widget->from_request.query_string));
@@ -63,7 +64,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
     assert(widget->from_request.method == HTTP_METHOD_GET);
     assert(widget->from_request.body == NULL);
 
-    if (widget->id == NULL || widget->parent == NULL)
+    if (widget->id == NULL)
         return;
 
     /* are we focused? */
@@ -97,13 +98,14 @@ void
 widget_sync_session(struct widget *widget, struct session *session)
 {
     assert(widget != NULL);
+    assert(widget->parent != NULL);
     assert(widget->lazy.address == NULL);
     assert(widget->class != NULL);
     assert(widget->class->stateful);
 
     /* are we focused? */
 
-    if (widget->id != NULL && widget->parent != NULL &&
+    if (widget->id != NULL &&
         widget->parent->from_request.focus_ref != NULL &&
         strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
         widget->parent->from_request.focus_ref->next == NULL) {
