@@ -99,7 +99,7 @@ was_control_abort(struct was_control *control, GError *error)
 
     was_control_release_socket(control);
 
-    control->handler->abort(control->handler_ctx, error);
+    control->handler->abort(error, control->handler_ctx);
 }
 
 static bool
