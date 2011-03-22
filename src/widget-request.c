@@ -52,6 +52,30 @@ session_to_widget(struct widget *widget, const struct widget_session *ws)
         strref_set_c(&widget->from_request.query_string, ws->query_string);
 }
 
+static bool
+widget_has_focus(const struct widget *widget)
+{
+    assert(widget != NULL);
+    assert(widget->parent != NULL);
+
+    return widget->id != NULL &&
+        widget->parent->from_request.focus_ref != NULL &&
+        strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
+        widget->parent->from_request.focus_ref->next == NULL;
+}
+
+static bool
+widget_descendant_has_focus(const struct widget *widget)
+{
+    assert(widget != NULL);
+    assert(widget->parent != NULL);
+
+    return widget->id != NULL &&
+        widget->parent->from_request.focus_ref != NULL &&
+        strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
+        widget->parent->from_request.focus_ref->next != NULL;
+}
+
 void
 widget_copy_from_request(struct widget *widget, struct processor_env *env)
 {
@@ -69,9 +93,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
 
     /* are we focused? */
 
-    if (widget->parent->from_request.focus_ref != NULL &&
-        strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
-        widget->parent->from_request.focus_ref->next == NULL) {
+    if (widget_has_focus(widget)) {
         /* we're in focus.  forward query string and request body. */
         widget->from_request.path_info = strmap_remove(env->args, "path");
         if (widget->from_request.path_info != NULL)
@@ -83,9 +105,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
         widget->from_request.method = env->method;
         widget->from_request.body = env->request_body;
         env->request_body = NULL;
-    } else if (widget->parent->from_request.focus_ref != NULL &&
-               strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
-               widget->parent->from_request.focus_ref->next != NULL) {
+    } else if (widget_descendant_has_focus(widget)) {
         /* we are the parent (or grant-parent) of the focused widget.
            store the relative focus_ref. */
 
@@ -105,10 +125,7 @@ widget_sync_session(struct widget *widget, struct session *session)
 
     /* are we focused? */
 
-    if (widget->id != NULL &&
-        widget->parent->from_request.focus_ref != NULL &&
-        strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
-        widget->parent->from_request.focus_ref->next == NULL) {
+    if (widget_has_focus(widget)) {
 
         /* do not save to session when this is a raw or POST request */
         if (!widget->from_request.raw && widget->from_request.body == NULL) {
