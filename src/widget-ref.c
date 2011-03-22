@@ -46,3 +46,23 @@ widget_ref_parse(pool_t pool, const char *_p)
 
     return root;
 }
+
+bool
+widget_ref_includes(const struct widget_ref *outer,
+                    const struct widget_ref *inner)
+{
+    assert(inner != NULL);
+
+    while (true) {
+        if (strcmp(outer->id, inner->id) != 0)
+            return false;
+
+        outer = outer->next;
+        if (outer == NULL)
+            return true;
+
+        inner = inner->next;
+        if (inner == NULL)
+            return false;
+    }
+}

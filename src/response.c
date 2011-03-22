@@ -137,13 +137,17 @@ response_invoke_processor(struct request *request2,
     widget->lazy.path = "";
     widget->lazy.prefix = "__";
 
-    widget->from_request.focus_ref =
+    const struct widget_ref *focus_ref =
         widget_ref_parse(request->pool,
                          strmap_remove_checked(request2->args, "focus"));
 
     const struct widget_ref *proxy_ref =
         widget_ref_parse(request->pool,
                          strmap_get_checked(request2->args, "frame"));
+
+    if (focus_ref != NULL && (proxy_ref == NULL ||
+                              widget_ref_includes(proxy_ref, focus_ref)))
+        widget->from_request.focus_ref = focus_ref;
 
     if (proxy_ref != NULL)
         /* disable all following transformations, because we're doing

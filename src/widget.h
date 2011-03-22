@@ -213,6 +213,13 @@ const struct widget_ref *
 widget_ref_parse(pool_t pool, const char *p);
 
 /**
+ * Is the specified "inner" reference inside or the same as "outer"?
+ */
+bool
+widget_ref_includes(const struct widget_ref *outer,
+                    const struct widget_ref *inner);
+
+/**
  * Copy parameters from the request to the widget.
  */
 void
