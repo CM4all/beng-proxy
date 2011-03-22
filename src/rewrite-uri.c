@@ -13,24 +13,12 @@
 #include "uri-extract.h"
 #include "tpool.h"
 #include "html-escape.h"
+#include "strmap.h"
 
 /*
  * The "real" rewriting code
  *
  */
-
-static const char *
-current_frame(const struct widget *widget)
-{
-    do {
-        if (widget->from_request.proxy)
-            return widget_path(widget);
-
-        widget = widget->parent;
-    } while (widget != NULL);
-
-    return NULL;
-}
 
 static const char *
 uri_replace_hostname(pool_t pool, const char *uri, const char *hostname)
@@ -118,7 +106,7 @@ do_rewrite_widget_uri(pool_t pool,
         return widget_absolute_uri(pool, widget, stateful, value);
 
     case URI_MODE_FOCUS:
-        frame = current_frame(widget);
+        frame = strmap_get_checked(args, "frame");
         break;
 
     case URI_MODE_PROXY:
