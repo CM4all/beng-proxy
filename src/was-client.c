@@ -133,7 +133,7 @@ was_client_abort_response_headers(struct was_client *client, GError *error)
 
     async_operation_finished(&client->async);
 
-    was_client_clear(client, error);
+    was_client_clear(client, g_error_copy(error));
 
     http_response_handler_invoke_abort(&client->handler, error);
     pool_unref(client->caller_pool);
