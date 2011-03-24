@@ -1267,6 +1267,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_PAIR:
         if (client->resource_address != NULL &&
             (client->resource_address->type == RESOURCE_ADDRESS_FASTCGI ||
+             client->resource_address->type == RESOURCE_ADDRESS_CGI ||
              client->resource_address->type == RESOURCE_ADDRESS_WAS)) {
             if (client->resource_address->u.cgi.num_args >=
                 G_N_ELEMENTS(client->resource_address->u.cgi.args)) {
