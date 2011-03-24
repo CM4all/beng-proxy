@@ -166,6 +166,7 @@ test_normal(pool_t pool, struct context *c)
             HTTP_METHOD_GET, "/",
             "env.py", NULL, NULL, "/var/www",
             NULL, NULL, NULL,
+            NULL, 0,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -198,6 +199,7 @@ test_close_early(pool_t pool, struct context *c)
             HTTP_METHOD_GET, "/",
             "env.py", NULL, NULL, "/var/www",
             NULL, NULL, NULL,
+            NULL, 0,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -230,6 +232,7 @@ test_close_late(pool_t pool, struct context *c)
             HTTP_METHOD_GET, "/",
             "env.py", NULL, NULL, "/var/www",
             NULL, NULL, NULL,
+            NULL, 0,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -261,6 +264,7 @@ test_close_data(pool_t pool, struct context *c)
             HTTP_METHOD_GET, "/",
             "env.py", NULL, NULL, "/var/www",
             NULL, NULL, NULL,
+            NULL, 0,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -293,6 +297,7 @@ test_post(pool_t pool, struct context *c)
             HTTP_METHOD_POST, "/",
             "cat.sh", NULL, NULL, "/var/www", NULL,
             NULL, istream_file_new(pool, "Makefile", 8192),
+            NULL, 0,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -325,6 +330,7 @@ test_status(pool_t pool, struct context *c)
             HTTP_METHOD_GET, "/",
             "status.sh", NULL, NULL, "/var/www",
             NULL, NULL, NULL,
+            NULL, 0,
             &my_response_handler, c,
             &c->async_ref);
 
@@ -357,6 +363,7 @@ test_no_content(pool_t pool, struct context *c)
             HTTP_METHOD_GET, "/",
             "no_content.sh", NULL, NULL, "/var/www",
             NULL, NULL, NULL,
+            NULL, 0,
             &my_response_handler, c,
             &c->async_ref);
 

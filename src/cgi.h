@@ -23,6 +23,9 @@ cgi_quark(void)
     return g_quark_from_static_string("cgi");
 }
 
+/**
+ * @param params environment variables for the child process
+ */
 void
 cgi_new(pool_t pool, const struct jail_params *jail,
         const char *interpreter, const char *action,
@@ -33,6 +36,7 @@ cgi_new(pool_t pool, const struct jail_params *jail,
         const char *document_root,
         const char *remote_addr,
         struct strmap *headers, istream_t body,
+        const char *const params[], unsigned num_params,
         const struct http_response_handler *handler,
         void *handler_ctx,
         struct async_operation_ref *async_ref);

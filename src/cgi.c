@@ -424,7 +424,8 @@ cgi_run(const struct jail_params *jail,
         const char *document_root,
         const char *remote_addr,
         struct strmap *headers,
-        off_t content_length)
+        off_t content_length,
+        const char *const params[], unsigned num_params)
 {
     const struct strmap_pair *pair;
     char buffer[512] = "HTTP_";
@@ -448,6 +449,17 @@ cgi_run(const struct jail_params *jail,
         document_root = "/var/www";
 
     clearenv();
+
+    for (unsigned j = 0; j < num_params; ++j) {
+        union {
+            const char *in;
+            char *out;
+        } u = {
+            .in = params[j],
+        };
+
+        putenv(u.out);
+    }
 
     setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
@@ -550,6 +562,7 @@ cgi_new(pool_t pool, const struct jail_params *jail,
         const char *document_root,
         const char *remote_addr,
         struct strmap *headers, istream_t body,
+        const char *const params[], unsigned num_params,
         const struct http_response_handler *handler,
         void *handler_ctx,
         struct async_operation_ref *async_ref)
@@ -594,7 +607,8 @@ cgi_new(pool_t pool, const struct jail_params *jail,
         cgi_run(jail, interpreter, action, path, method, uri,
                 script_name, path_info, query_string, document_root,
                 remote_addr,
-                headers, available);
+                headers, available,
+                params, num_params);
 
     stopwatch_event(stopwatch, "fork");
 

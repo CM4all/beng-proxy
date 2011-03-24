@@ -185,6 +185,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
                 address->u.cgi.document_root,
                 extract_remote_ip(pool, headers),
                 headers, body,
+                address->u.cgi.args, address->u.cgi.num_args,
                 handler, handler_ctx, async_ref);
         return;
 
