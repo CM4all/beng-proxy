@@ -76,7 +76,7 @@ delegate_handler_callback(int fd, void *ctx)
 
     /* request options */
 
-    if (!file_evaluate_request(request2, &st, &file_request)) {
+    if (!file_evaluate_request(request2, fd, &st, &file_request)) {
         close(fd);
         return;
     }

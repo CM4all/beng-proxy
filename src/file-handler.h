@@ -28,7 +28,7 @@ struct file_request {
 };
 
 bool
-file_evaluate_request(struct request *request2, const struct stat *st,
+file_evaluate_request(struct request *request2, int fd, const struct stat *st,
                       struct file_request *file_request);
 
 void

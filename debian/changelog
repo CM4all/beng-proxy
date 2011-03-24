@@ -3,6 +3,7 @@ cm4all-beng-proxy (0.9.12) unstable; urgency=low
   * widget: API refactorization
   * was-control: fix argument order in "abort" call
   * was-client: duplicate the GError object when it is used twice
+  * {file,delegate}-handler: add Expires/ETag headers to 304 response
 
  --
 

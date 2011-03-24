@@ -23,6 +23,10 @@
 #include <attr/xattr.h>
 #endif
 
+static void
+file_cache_headers(struct growing_buffer *headers,
+                   int fd, const struct stat *st);
+
 static enum range_type
 parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
 {
@@ -124,7 +128,7 @@ check_if_range(const char *if_range, const struct stat *st)
 }
 
 bool
-file_evaluate_request(struct request *request2, const struct stat *st,
+file_evaluate_request(struct request *request2, int fd, const struct stat *st,
                       struct file_request *file_request)
 {
     struct http_server_request *request = request2->request;
@@ -150,7 +154,14 @@ file_evaluate_request(struct request *request2, const struct stat *st,
     if (p != NULL) {
         time_t t = http_date_parse(p);
         if (t != (time_t)-1 && st->st_mtime <= t) {
-            response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED, NULL, NULL);
+            struct growing_buffer *headers = NULL;
+            if (!request_processor_first(request2)) {
+                headers = growing_buffer_new(request->pool, 512);
+                file_cache_headers(headers, fd, st);
+            }
+
+            response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
+                              headers, NULL);
             return false;
         }
     }
@@ -445,7 +456,8 @@ file_callback(struct request *request2)
 
     /* request options */
 
-    if (!file_evaluate_request(request2, &st, &file_request)) {
+    if (!file_evaluate_request(request2, istream_file_fd(body), &st,
+                               &file_request)) {
         istream_close_unused(body);
         return;
     }
