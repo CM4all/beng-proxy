@@ -197,56 +197,62 @@ file_evaluate_request(struct request *request2, const struct stat *st,
 }
 
 static void
+file_cache_headers(struct growing_buffer *headers,
+                   int fd, const struct stat *st)
+{
+    char buffer[64];
+
+#ifndef NO_XATTR
+    ssize_t nbytes;
+    char etag[512];
+
+    nbytes = fgetxattr(fd, "user.ETag",
+                       etag + 1, sizeof(etag) - 3);
+    if (nbytes > 0) {
+        assert((size_t)nbytes < sizeof(etag));
+        etag[0] = '"';
+        etag[nbytes + 1] = '"';
+        etag[nbytes + 2] = 0;
+        header_write(headers, "etag", etag);
+    } else {
+#endif
+        make_etag(buffer, st);
+        header_write(headers, "etag", buffer);
+#ifndef NO_XATTR
+    }
+#endif
+
+#ifndef NO_XATTR
+    nbytes = fgetxattr(fd, "user.MaxAge",
+                       buffer, sizeof(buffer) - 1);
+    if (nbytes > 0) {
+        char *endptr;
+        long max_age;
+
+        buffer[nbytes] = 0;
+        max_age = strtol(buffer, &endptr, 10);
+
+        if (*endptr == 0 && max_age > 0) {
+            if (max_age > 365 * 24 * 3600)
+                /* limit max_age to approximately one year */
+                max_age = 365 * 24 * 3600;
+
+            /* generate an "Expires" response header */
+            header_write(headers, "expires",
+                         http_date_format(time(NULL) + max_age));
+        }
+    }
+#endif
+}
+
+static void
 file_headers(struct growing_buffer *headers,
              const struct translate_response *tr,
              int fd, const struct stat *st,
              bool processor_enabled, bool processor_first)
 {
-    char buffer[64];
-
-    if (!processor_first) {
-#ifndef NO_XATTR
-        ssize_t nbytes;
-        char etag[512];
-
-        nbytes = fgetxattr(fd, "user.ETag",
-                           etag + 1, sizeof(etag) - 3);
-        if (nbytes > 0) {
-            assert((size_t)nbytes < sizeof(etag));
-            etag[0] = '"';
-            etag[nbytes + 1] = '"';
-            etag[nbytes + 2] = 0;
-            header_write(headers, "etag", etag);
-        } else {
-#endif
-            make_etag(buffer, st);
-            header_write(headers, "etag", buffer);
-#ifndef NO_XATTR
-        }
-#endif
-
-#ifndef NO_XATTR
-        nbytes = fgetxattr(fd, "user.MaxAge",
-                           buffer, sizeof(buffer) - 1);
-        if (nbytes > 0) {
-            char *endptr;
-            long max_age;
-
-            buffer[nbytes] = 0;
-            max_age = strtol(buffer, &endptr, 10);
-
-            if (*endptr == 0 && max_age > 0) {
-                if (max_age > 365 * 24 * 3600)
-                    /* limit max_age to approximately one year */
-                    max_age = 365 * 24 * 3600;
-
-                /* generate an "Expires" response header */
-                header_write(headers, "expires",
-                             http_date_format(time(NULL) + max_age));
-            }
-        }
-#endif
-    }
+    if (!processor_first)
+        file_cache_headers(headers, fd, st);
 
     if (tr->address.u.local.content_type != NULL) {
         /* content type override from the translation server */
