@@ -6,7 +6,7 @@ cm4all-beng-proxy (0.9.12) unstable; urgency=low
   * {file,delegate}-handler: add Expires/ETag headers to 304 response
   * cgi: allow setting environment variables
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 24 Mar 2011 15:12:54 +0100
 
 cm4all-beng-proxy (0.9.11) unstable; urgency=low
 
