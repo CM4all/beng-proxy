@@ -21,6 +21,7 @@
 #include "transformation.h"
 #include "expiry.h"
 #include "uri-escape.h"
+#include "strutil.h"
 
 #include <daemon/log.h>
 
@@ -60,7 +61,7 @@ bounce_uri(pool_t pool, const struct request *request,
  * server.  Guaranteed to return non-NULL.
  */
 static const char *
-get_request_realm(const struct strmap *request_headers,
+get_request_realm(pool_t pool, const struct strmap *request_headers,
                   const struct translate_response *response)
 {
     assert(response != NULL);
@@ -69,8 +70,11 @@ get_request_realm(const struct strmap *request_headers,
         return response->realm;
 
     const char *host = strmap_get_checked(request_headers, "host");
-    if (host != NULL)
-        return host;
+    if (host != NULL) {
+        char *p = p_strdup(pool, host);
+        str_to_lower(p);
+        return p;
+    }
 
     /* fall back to empty string as the default realm if there is no
        "Host" header */
@@ -81,7 +85,8 @@ static void
 handle_translated_request(struct request *request,
                           const struct translate_response *response)
 {
-    request->realm = get_request_realm(request->request->headers, response);
+    request->realm = get_request_realm(request->request->pool,
+                                       request->request->headers, response);
 
     if (request->session_realm != NULL &&
         strcmp(request->realm, request->session_realm) != 0) {

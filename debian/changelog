@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.30) unstable; urgency=low
 
-  * 
+  * handler: make lower-case realm name from the "Host" header
 
  --
 
