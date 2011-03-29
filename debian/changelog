@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.8.30) unstable; urgency=low
   * handler: make lower-case realm name from the "Host" header
   * session: copy attribute "realm", fixes segmentation fault
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 29 Mar 2011 16:47:43 +0200
 
 cm4all-beng-proxy (0.8.29) unstable; urgency=low
 
