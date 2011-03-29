@@ -636,6 +636,11 @@ session_dup(struct dpool *pool, const struct session *src)
     dest->cookie_sent = src->cookie_sent;
     dest->cookie_received = src->cookie_received;
 
+    if (src->realm != NULL)
+        dest->realm = d_strdup(pool, src->realm);
+    else
+        dest->realm = NULL;
+
     if (src->translate != NULL)
         dest->translate = d_strdup(pool, src->translate);
     else
