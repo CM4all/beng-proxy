@@ -25,11 +25,15 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 {
     struct request *request2 = ctx;
     struct http_server_request *request = request2->request;
+    struct widget *widget = request2->widget;
     struct growing_buffer *headers2;
+
+    assert(widget != NULL);
+    assert(widget->class != NULL);
 
     headers = forward_response_headers(request->pool, headers,
                                        request->local_host,
-                                       &request2->translate.response->response_header_forward);
+                                       &widget->class->response_header_forward);
 
     headers2 = headers_dup(request->pool, headers);
 
