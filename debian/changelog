@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.31) unstable; urgency=low
 
-  * 
+  * proxy-widget: eliminate the duplicate "Server" response header
 
  --
 

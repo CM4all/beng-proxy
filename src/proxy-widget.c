@@ -24,6 +24,8 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
                                        request->local_host,
                                        &request2->translate.response->response_header_forward);
 
+    request2->product_token = strmap_remove(headers, "server");
+
     headers2 = headers_dup(request->pool, headers);
 
 #ifndef NO_DEFLATE
