@@ -84,6 +84,8 @@ ISTREAM_SRC = \
 	src/istream-tee.c \
 	src/istream-replace.c \
 	src/istream-socketpair.c \
+	src/istream-notify.h \
+	src/istream-notify.c \
 	src/format.c \
 	src/fifo-buffer.c \
 	src/sink-null.c \
