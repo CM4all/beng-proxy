@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.9.13) unstable; urgency=low
 
   * proxy-widget: apply the widget's response header forward settings
+  * response: add option to dump the widget tree
 
  --
 

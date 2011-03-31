@@ -303,6 +303,8 @@ SRC = src/main.c \
 	src/widget-request.c \
 	src/widget-registry.c \
 	src/widget-resolver.c \
+	src/widget-dump.h \
+	src/widget-dump.c \
 	src/proxy-widget.c \
 	src/html-escape.c \
 	src/processor.c \

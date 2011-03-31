@@ -11,6 +11,7 @@
 #include "header-forward.h"
 #include "widget.h"
 #include "widget-class.h"
+#include "widget-dump.h"
 #include "proxy-widget.h"
 #include "session.h"
 #include "fcache.h"
@@ -23,6 +24,8 @@
 #include "hostname.h"
 #include "dhashmap.h"
 #include "errdoc.h"
+#include "connection.h"
+#include "instance.h"
 
 #include <daemon/log.h>
 
@@ -214,10 +217,6 @@ response_invoke_processor(struct request *request2,
                        method, request->headers,
                        request_body);
 
-#ifdef DUMP_WIDGET_TREE
-    request2->dump_widget_tree = widget;
-#endif
-
     if (proxy_ref != NULL) {
         /* the client requests a widget in proxy mode */
 
@@ -229,6 +228,9 @@ response_invoke_processor(struct request *request2,
                                  widget, &request2->env,
                                  transformation->u.processor.options);
         assert(body != NULL);
+
+        if (request2->connection->instance->config.dump_widget_tree)
+            body = widget_dump_tree_after_istream(request->pool, body, widget);
 
         /*
 #ifndef NO_DEFLATE
@@ -495,27 +497,6 @@ response_dispatch_redirect(struct request *request2, http_status_t status,
     response_dispatch_message2(request2, status, headers, msg);
 }
 
-
-/*
- * debug
- *
- */
-
-#ifdef DUMP_WIDGET_TREE
-static void dump_widget_tree(unsigned indent, const struct widget *widget)
-{
-    const struct widget *child;
-
-    daemon_log(4, "%*swidget id='%s' class='%s'\n", indent, "",
-               widget->id, widget->class_name);
-
-    for (child = (const struct widget *)widget->children.next;
-         &child->siblings != &widget->children;
-         child = (const struct widget *)child->siblings.next)
-        dump_widget_tree(indent + 2, widget);
-}
-#endif
-
 /*
  * HTTP response handler
  *
@@ -532,18 +513,6 @@ response_response(http_status_t status, struct strmap *headers,
 
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
-
-#ifdef DUMP_WIDGET_TREE
-    if (request2->dump_widget_tree != NULL) {
-        if (body == NULL) {
-            daemon_log(4, "dumping widget tree of request '%s'\n", request->uri);
-            dump_widget_tree(0, request2->dump_widget_tree);
-            request2->dump_widget_tree = NULL;
-        } /* else
-             XXX find some way to print widget tree after stream's EOF
-          */
-    }
-#endif
 
     if (request2->translate.transformation != NULL &&
         http_status_is_success(status)) {

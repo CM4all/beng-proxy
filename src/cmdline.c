@@ -139,6 +139,7 @@ handle_set2(struct config *config, const char *argv0,
     static const char translate_cache_size[] = "translate_cache_size";
     static const char stopwatch[] = "stopwatch";
     static const char enable_splice[] = "enable_splice";
+    static const char dump_widget_tree[] = "dump_widget_tree";
     char *endptr;
     long l;
 
@@ -209,6 +210,13 @@ handle_set2(struct config *config, const char *argv0,
             config->enable_splice = false;
         else if (strcmp(value, "yes") != 0)
             arg_error(argv0, "Invalid value for enable_splice");
+    } else if (name_length == sizeof(dump_widget_tree) - 1 &&
+               memcmp(name, dump_widget_tree,
+                      sizeof(dump_widget_tree) - 1) == 0) {
+        if (strcmp(value, "yes") == 0)
+            config->dump_widget_tree = true;
+        else if (strcmp(value, "no") != 0)
+            arg_error(argv0, "Invalid value for dump_widget_tree");
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }

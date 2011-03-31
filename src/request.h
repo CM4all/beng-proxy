@@ -77,10 +77,6 @@ struct request {
 
     struct processor_env env;
 
-#ifdef DUMP_WIDGET_TREE
-    const struct widget *dump_widget_tree;
-#endif
-
     /**
      * The widget currently being processed by
      * processor_lookup_widget() or widget_resolver_new(), see
