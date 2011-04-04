@@ -85,6 +85,12 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
     struct http_server_request *request = request2->request;
 
     if (request2->proxy_ref != NULL) {
+        if (widget_get_view(widget) == NULL) {
+            response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+                                      "No such view");
+            return;
+        }
+
         frame_parent_widget(request->pool, widget,
                             request2->proxy_ref->id,
                             &request2->env,
@@ -99,6 +105,12 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
         /* the client can select the view; he can never explicitly
            select the default view */
         widget->from_request.view = strmap_remove(env->args, "view");
+
+        if (widget_get_view(widget) == NULL) {
+            response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+                                      "No such view");
+            return;
+        }
 
         frame_top_widget(request->pool, widget,
                          &request2->env,
