@@ -131,8 +131,9 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (embed->num_redirects >= 8)
         return false;
 
-    if (widget_get_view(embed->widget) == NULL ||
-        widget_get_view(embed->widget)->address.type != RESOURCE_ADDRESS_HTTP)
+    const struct widget_view *view = widget_get_view(embed->widget);
+
+    if (view == NULL || view->address.type != RESOURCE_ADDRESS_HTTP)
         /* a static or CGI widget cannot send redirects */
         return false;
 
