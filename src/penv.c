@@ -9,6 +9,7 @@
 
 void
 processor_env_init(pool_t pool, struct processor_env *env,
+                   const char *site_name,
                    const char *untrusted_host,
                    const char *local_host,
                    const char *remote_host,
@@ -24,6 +25,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
     assert(request_body == NULL || !istream_has_handler(request_body));
 
     env->pool = pool;
+    env->site_name = site_name;
     env->untrusted_host = untrusted_host;
     env->local_host = local_host;
     env->remote_host = remote_host;
