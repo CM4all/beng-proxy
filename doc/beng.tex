@@ -1055,6 +1055,14 @@ Example: \texttt{UNTRUSTED\_PREFIX="foo"} matches a request with
 
 \hline
 
+\texttt{UNTRUSTED\_SITE\_SUFFIX} & similar to
+\texttt{UNTRUSTED\_PREFIX}, but matches the suffix instead of the
+prefix.  When generating untrusted URIs, the site name is prepended.
+During verification, the request's \texttt{UNTRUSTED} value must
+exactly match this scheme. \\
+
+\hline
+
 \texttt{STATEFUL} & remember the state of this widget, i.e. path info
 and query string \\
 

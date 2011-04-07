@@ -33,6 +33,10 @@ class _Lookup:
         if m:
             response.packet(TRANSLATE_UNTRUSTED_PREFIX, m.group(1))
             return
+        m = re.match(r'^untrusted_site_suffix\s+"(\S+)"$', line)
+        if m:
+            response.packet(TRANSLATE_UNTRUSTED_SITE_SUFFIX, m.group(1))
+            return
         m = re.match(r'^server\s+"(\S+)"$', line)
         if m:
             uri = m.group(1)

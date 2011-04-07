@@ -46,6 +46,13 @@ struct widget_class {
      */
     const char *untrusted_prefix;
 
+    /**
+     * A hostname suffix on which requests to this widget are allowed.
+     * If not set, then this is a trusted widget.  Requests from an
+     * untrusted widget to a trusted one are forbidden.
+     */
+    const char *untrusted_site_suffix;
+
     /** transformations applied to the widget response */
     const struct transformation_view *views;
 
@@ -341,7 +348,8 @@ widget_external_uri(pool_t pool,
  * the specified host name.
  */
 bool
-widget_check_host(const struct widget *widget, const char *host);
+widget_check_host(const struct widget *widget, const char *host,
+                  const char *site_name);
 
 /**
  * Recursion detection: check if the widget or its parent chain

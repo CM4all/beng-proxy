@@ -95,9 +95,39 @@ uri_add_prefix(pool_t pool, const char *uri, const char *absolute_uri,
 }
 
 static const char *
+uri_add_site_suffix(pool_t pool, const char *uri, const char *site_name,
+                    const char *untrusted_host,
+                    const char *untrusted_site_suffix)
+{
+    assert(untrusted_site_suffix != NULL);
+
+    if (untrusted_host != NULL)
+        /* this request comes from an untrusted host - either we're
+           already in the correct suffix (no-op), or this is a
+           different untrusted domain (not supported) */
+        return uri;
+
+    if (site_name == NULL)
+        /* we don't know the site name of this request; we cannot do
+           anything, so we're just returning the unmodified URI, which
+           will render an error message */
+        return uri;
+
+    const char *path = uri_path(uri);
+    if (path == NULL)
+        /* without an absolute path, we cannot build a new absolute
+           URI */
+        return uri;
+
+    return p_strcat(pool, "http://", site_name, ".", untrusted_site_suffix,
+                    path, NULL);
+}
+
+static const char *
 do_rewrite_widget_uri(pool_t pool,
                       const char *absolute_uri,
                       const struct parsed_uri *external_uri,
+                      const char *site_name,
                       const char *untrusted_host,
                       struct strmap *args, struct widget *widget,
                       const struct strref *value,
@@ -144,6 +174,9 @@ do_rewrite_widget_uri(pool_t pool,
     else if (widget->class->untrusted_prefix != NULL)
         uri = uri_add_prefix(pool, uri, absolute_uri, untrusted_host,
                              widget->class->untrusted_prefix);
+    else if (widget->class->untrusted_site_suffix != NULL)
+        uri = uri_add_site_suffix(pool, uri, site_name, untrusted_host,
+                                  widget->class->untrusted_site_suffix);
 
     return uri;
 }
@@ -158,6 +191,7 @@ struct rewrite_widget_uri {
     pool_t pool;
     const char *absolute_uri;
     const struct parsed_uri *external_uri;
+    const char *site_name;
     const char *untrusted_host;
     struct strmap *args;
     struct widget *widget;
@@ -203,8 +237,8 @@ class_lookup_callback(void *ctx)
         }
 
         uri = do_rewrite_widget_uri(rwu->pool,
-                                    rwu->absolute_uri,
-                                    rwu->external_uri, rwu->untrusted_host,
+                                    rwu->absolute_uri, rwu->external_uri,
+                                    rwu->site_name, rwu->untrusted_host,
                                     rwu->args, rwu->widget,
                                     rwu->value, rwu->mode, rwu->stateful);
 
@@ -245,6 +279,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct tcache *translate_cache,
                    const char *absolute_uri,
                    const struct parsed_uri *external_uri,
+                   const char *site_name,
                    const char *untrusted_host,
                    struct strmap *args, struct widget *widget,
                    session_id_t session_id,
@@ -263,7 +298,8 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
             value = &unescaped;
         }
 
-        uri = do_rewrite_widget_uri(pool, absolute_uri, external_uri, untrusted_host,
+        uri = do_rewrite_widget_uri(pool, absolute_uri, external_uri,
+                                    site_name, untrusted_host,
                                     args, widget, value, mode, stateful);
         if (value == &unescaped)
             pool_rewind(tpool, &mark);
@@ -281,6 +317,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
         rwu->pool = pool;
         rwu->external_uri = external_uri;
         rwu->absolute_uri = absolute_uri;
+        rwu->site_name = site_name;
         rwu->untrusted_host = untrusted_host;
         rwu->args = args;
         rwu->widget = widget;

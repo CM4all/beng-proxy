@@ -90,8 +90,31 @@ widget_check_untrusted_prefix(const struct widget *widget, const char *host)
         host[length] == '.';
 }
 
+static bool
+widget_check_untrusted_site_suffix(const struct widget *widget,
+                                   const char *host, const char *site_name)
+{
+    assert(widget->class != NULL);
+
+    if (widget->class->untrusted_site_suffix == NULL)
+        /* trusted widget is only allowed on a trusted host name
+           (host==NULL) */
+        return host == NULL;
+
+    if (host == NULL || site_name == NULL)
+        /* untrusted widget not allowed on trusted host name */
+        return false;
+
+    size_t site_name_length = strlen(site_name);
+    return memcmp(host, site_name, site_name_length) == 0 &&
+        host[site_name_length] == '.' &&
+        strcmp(host + site_name_length + 1,
+               widget->class->untrusted_site_suffix) == 0;
+}
+
 bool
-widget_check_host(const struct widget *widget, const char *host)
+widget_check_host(const struct widget *widget, const char *host,
+                  const char *site_name)
 {
     assert(widget->class != NULL);
 
@@ -99,6 +122,8 @@ widget_check_host(const struct widget *widget, const char *host)
         return widget_check_untrusted_host(widget, host);
     else if (widget->class->untrusted_prefix != NULL)
         return widget_check_untrusted_prefix(widget, host);
+    else if (widget->class->untrusted_site_suffix != NULL)
+        return widget_check_untrusted_site_suffix(widget, host, site_name);
     else
         /* trusted widget is only allowed on a trusted host name
            (host==NULL) */

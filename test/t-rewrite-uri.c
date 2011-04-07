@@ -153,7 +153,7 @@ assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
     }
 
     istream = rewrite_widget_uri(pool, widget_pool, (struct tcache *)0x1,
-                                 NULL, &external_uri, NULL,
+                                 NULL, &external_uri, NULL, NULL,
                                  NULL, widget, 1,
                                  value != NULL ? &value2 : NULL,
                                  mode, stateful);
