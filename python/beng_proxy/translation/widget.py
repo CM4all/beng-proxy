@@ -43,7 +43,7 @@ class _Lookup:
             args = []
             line = re.sub(r'\s+"([^"]*)"', lambda m: args.append(m.group(1)), line)
             if not re.match(r'^\s*$', line):
-                raise MalformedLineError(path, line)
+                raise MalformedLineError(self.path, line)
 
             response.pipe(*args)
             return
@@ -102,7 +102,7 @@ class _Lookup:
         elif line == 'filter_4xx':
             response.packet(TRANSLATE_FILTER_4XX)
         else:
-            raise MalformedLineError(path, line)
+            raise MalformedLineError(self.path, line)
 
     def do(self):
         while True:
