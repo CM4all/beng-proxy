@@ -18,7 +18,8 @@ uri_harmless_char(char ch)
 }
 
 size_t
-uri_escape(char *dest, const char *src, size_t src_length)
+uri_escape(char *dest, const char *src, size_t src_length,
+           char escape_char)
 {
     size_t i, dest_length = 0;
 
@@ -26,7 +27,7 @@ uri_escape(char *dest, const char *src, size_t src_length)
         if (uri_harmless_char(src[i])) {
             dest[dest_length++] = src[i];
         } else {
-            dest[dest_length++] = '%';
+            dest[dest_length++] = escape_char;
             format_uint8_hex_fixed(&dest[dest_length], (uint8_t)src[i]);
             dest_length += 2;
         }
@@ -49,13 +50,13 @@ parse_hexdigit(char ch)
 }
 
 size_t
-uri_unescape_inplace(char *src, size_t length)
+uri_unescape_inplace(char *src, size_t length, char escape_char)
 {
     char *end = src + length, *p = src;
     int digit1, digit2;
     char ch;
 
-    while ((p = memchr(p, '%', end - p)) != NULL) {
+    while ((p = memchr(p, escape_char, end - p)) != NULL) {
         if (p >= end - 2)
             /* percent sign at the end of string */
             return 0;

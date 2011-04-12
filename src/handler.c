@@ -51,7 +51,7 @@ bounce_uri(pool_t pool, const struct request *request,
     const char *current_uri = p_strcat(pool, scheme, "://", host, uri_path,
                                        NULL);
     const char *escaped_uri = uri_escape_dup(pool, current_uri,
-                                             strlen(current_uri));
+                                             strlen(current_uri), '%');
 
     return p_strcat(pool, response->bounce, escaped_uri, NULL);
 }
