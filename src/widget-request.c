@@ -80,7 +80,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
 
             /* the client can select the view; he can never explicitly
                select the default view */
-            widget->from_request.view = strmap_remove(env->args, "view");
+            widget->from_request.view = env->view_name;
         } else
             widget->parent->from_request.proxy_ref = NULL;
     }
@@ -91,7 +91,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
         strcmp(widget->id, widget->parent->from_request.focus_ref->id) == 0 &&
         widget->parent->from_request.focus_ref->next == NULL) {
         /* we're in focus.  forward query string and request body. */
-        widget->from_request.path_info = strmap_remove(env->args, "path");
+        widget->from_request.path_info = env->path_info;
         if (widget->from_request.path_info != NULL)
             widget->from_request.path_info =
                 uri_compress(env->pool, widget->from_request.path_info);

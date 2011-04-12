@@ -38,6 +38,9 @@ processor_env_init(pool_t pool, struct processor_env *env,
     else
         env->args = args;
 
+    env->path_info = strmap_remove(env->args, "path");
+    env->view_name = strmap_remove(env->args, "view");
+
     env->method = method;
     env->request_headers = request_headers;
     env->request_body = request_body;

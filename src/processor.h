@@ -50,6 +50,16 @@ struct processor_env {
     struct strmap *args;
 
     /**
+     * The new path_info for the focused widget.
+     */
+    const char *path_info;
+
+    /**
+     * The view name of the top widget.
+     */
+    const char *view_name;
+
+    /**
      * The HTTP method of the original request.
      */
     http_method_t method;
