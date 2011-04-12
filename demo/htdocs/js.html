@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <title>beng-proxy JavaScript demo</title>
+    <script type="text/javascript" src="/cm4all-beng-proxy/beng-proxy.js"></script>
+  </head>
+
+  <body>
+    <h1>beng-proxy JavaScript demo</h1>
+
+    <p>
+      <script language="javascript">
+        document.write(_beng_proxy_escape('test'))
+      </script>
+    </p>
+
+    <p>
+      <script language="javascript">
+        document.write(_beng_proxy_escape('slash/slash'))
+      </script>
+    </p>
+
+    <p>
+      <script language="javascript">
+        document.write(_beng_proxy_escape('percent%percent'))
+      </script>
+    </p>
+
+    <p>
+      <script language="javascript">
+        document.write(_beng_proxy_escape('dollar$dollar'))
+      </script>
+    </p>
+  </body>
+</html>
+

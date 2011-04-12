@@ -268,12 +268,12 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/1/456/123");
     assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
-                         "/index.html;focus=1&path=456%2f123");
+                         "/index.html;focus=1&path=456$2f123");
 
     assert_rewrite_check(pool, &widget, "", URI_MODE_DIRECT,
                          "http://widget-server/1/456/");
     assert_rewrite_check(pool, &widget, "", URI_MODE_FOCUS,
-                         "/index.html;focus=1&path=456%2f");
+                         "/index.html;focus=1&path=456$2f");
 
     /* with configured query string */
 
@@ -289,19 +289,19 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/1/456/123?a=b");
     assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
-                         "/index.html;focus=1&path=456%2f123");
+                         "/index.html;focus=1&path=456$2f123");
 
     assert_rewrite_check(pool, &widget, "", URI_MODE_DIRECT,
                          "http://widget-server/1/456/?a=b");
     assert_rewrite_check(pool, &widget, "", URI_MODE_FOCUS,
-                         "/index.html;focus=1&path=456%2f");
+                         "/index.html;focus=1&path=456$2f");
 
     /* with both configured and supplied query string */
 
     assert_rewrite_check(pool, &widget, "?c=d", URI_MODE_DIRECT,
                          "http://widget-server/1/456/?a=b&c=d");
     assert_rewrite_check(pool, &widget, "?c=d", URI_MODE_FOCUS,
-                         "/index.html;focus=1&path=456%2f?c=d");
+                         "/index.html;focus=1&path=456$2f?c=d");
 
     /* session data */
 
@@ -321,12 +321,12 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                          "http://widget-server/1/789/123?a=b");
     */
     assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
-                         "/index.html;focus=1&path=789%2f123");
+                         "/index.html;focus=1&path=789$2f123");
 
     assert_rewrite_check(pool, &widget, "", URI_MODE_DIRECT,
                          "http://widget-server/1/789/?a=b&e=f");
     assert_rewrite_check(pool, &widget, "", URI_MODE_FOCUS,
-                         "/index.html;focus=1&path=789%2f?e=f");
+                         "/index.html;focus=1&path=789$2f?e=f");
 
     /* session data, but stateless */
 
@@ -341,12 +341,12 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     assert_rewrite_check2(pool, &widget, "123", URI_MODE_DIRECT, false,
                           "http://widget-server/1/456/123?a=b");
     assert_rewrite_check2(pool, &widget, "123", URI_MODE_FOCUS, false,
-                          "/index.html;focus=1&path=456%2f123");
+                          "/index.html;focus=1&path=456$2f123");
 
     assert_rewrite_check2(pool, &widget, "", URI_MODE_DIRECT, false,
                           "http://widget-server/1/456/?a=b");
     assert_rewrite_check2(pool, &widget, "", URI_MODE_FOCUS, false,
-                          "/index.html;focus=1&path=456%2f");
+                          "/index.html;focus=1&path=456$2f");
 
     /* without trailing slash in server URI; first with an invalid
        suffix, which does not match the server URI */
@@ -379,7 +379,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                          "http://widget-server/2/foo");
 
     assert_rewrite_check(pool, &widget, "2/foo", URI_MODE_FOCUS,
-                         "/index.html;focus=1&path=%2ffoo");
+                         "/index.html;focus=1&path=$2ffoo");
 
     /* cleanup */
 

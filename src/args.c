@@ -10,7 +10,7 @@
 
 #include <string.h>
 
-static const char ARGS_ESCAPE_CHAR = '%';
+static const char ARGS_ESCAPE_CHAR = '$';
 
 struct strmap *
 args_parse(pool_t pool, const char *p, size_t length)
