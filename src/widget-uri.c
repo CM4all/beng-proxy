@@ -155,27 +155,6 @@ widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
     return uri;
 }
 
-const char *
-widget_translation_uri(pool_t pool,
-                       const struct parsed_uri *external_uri,
-                       struct strmap *args,
-                       const char *translation)
-{
-    const char *args2;
-
-    args2 = args_format(pool, args,
-                        "translate", translation,
-                        NULL, NULL,
-                        "frame");
-
-    return p_strncat(pool,
-                     external_uri->base.data,
-                     external_uri->base.length,
-                     ";", (size_t)1,
-                     args2, strlen(args2),
-                     NULL);
-}
-
 const struct strref *
 widget_relative_uri(pool_t pool, struct widget *widget, bool stateful,
                     const char *relative_uri, size_t relative_uri_length,

@@ -321,12 +321,6 @@ const char *
 widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
                     const struct strref *relative_uri);
 
-const char *
-widget_translation_uri(pool_t pool,
-                       const struct parsed_uri *external_uri,
-                       struct strmap *args,
-                       const char *translation);
-
 /**
  * Returns an URI relative to the widget base address.
  */
