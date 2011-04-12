@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.8.33) unstable; urgency=low
   * widget-request: safely remove "view" and "path" from argument table
   * debian/control: add "Breaks << 0.8.32" on the JavaScript library
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 12 Apr 2011 18:21:55 +0200
 
 cm4all-beng-proxy (0.8.32) unstable; urgency=low
 
