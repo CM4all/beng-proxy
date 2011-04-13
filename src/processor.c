@@ -993,11 +993,11 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         assert(processor->widget.widget != NULL);
 
-        struct widget *widget = processor->widget.widget;
-        processor->widget.widget = NULL;
-
         if (tag->type == TAG_OPEN)
             return;
+
+        struct widget *widget = processor->widget.widget;
+        processor->widget.widget = NULL;
 
         widget_element_finished(processor, tag, widget);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
