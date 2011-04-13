@@ -19,6 +19,12 @@
 #include <string.h>
 #include <netdb.h>
 
+#ifndef NDEBUG
+/* hack: variable from args.c; to be removed after all widgets have
+   been fixed */
+extern char ARGS_ESCAPE_CHAR;
+#endif
+
 static void usage(void) {
     puts("usage: cm4all-beng-proxy [options]\n\n"
          "valid options:\n"
@@ -140,6 +146,9 @@ handle_set2(struct config *config, const char *argv0,
     static const char stopwatch[] = "stopwatch";
     static const char enable_splice[] = "enable_splice";
     static const char dump_widget_tree[] = "dump_widget_tree";
+#ifndef NDEBUG
+    static const char args_escape_char[] = "args_escape_char";
+#endif
     char *endptr;
     long l;
 
@@ -217,6 +226,15 @@ handle_set2(struct config *config, const char *argv0,
             config->dump_widget_tree = true;
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for dump_widget_tree");
+#ifndef NDEBUG
+    } else if (name_length == sizeof(args_escape_char) - 1 &&
+               memcmp(name, args_escape_char,
+                      sizeof(args_escape_char) - 1) == 0) {
+        if (value[0] != 0 && value[1] == 0)
+            ARGS_ESCAPE_CHAR = value[0];
+        else
+            arg_error(argv0, "Invalid value for args_escape_char");
+#endif
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }
