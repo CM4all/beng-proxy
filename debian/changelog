@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.9.14) unstable; urgency=low
   * debian: move ulimit call from init script to *.default
   * merge release 0.8.33
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 13 Apr 2011 17:03:29 +0200
 
 cm4all-beng-proxy (0.9.13) unstable; urgency=low
 
