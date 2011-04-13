@@ -38,6 +38,8 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
                                        request->local_host,
                                        &view->response_header_forward);
 
+    request2->product_token = strmap_remove(headers, "server");
+
     headers2 = headers_dup(request->pool, headers);
 
 #ifndef NO_DEFLATE
@@ -107,7 +109,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 
         /* the client can select the view; he can never explicitly
            select the default view */
-        widget->from_request.view = strmap_remove(env->args, "view");
+        widget->from_request.view = env->view_name;
 
         if (widget_get_view(widget) == NULL) {
             response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,

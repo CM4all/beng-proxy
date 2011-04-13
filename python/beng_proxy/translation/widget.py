@@ -33,6 +33,10 @@ class _Lookup:
         if m:
             response.packet(TRANSLATE_UNTRUSTED_PREFIX, m.group(1))
             return
+        m = re.match(r'^untrusted_site_suffix\s+"(\S+)"$', line)
+        if m:
+            response.packet(TRANSLATE_UNTRUSTED_SITE_SUFFIX, m.group(1))
+            return
         m = re.match(r'^server\s+"(\S+)"$', line)
         if m:
             uri = m.group(1)
@@ -43,7 +47,7 @@ class _Lookup:
             args = []
             line = re.sub(r'\s+"([^"]*)"', lambda m: args.append(m.group(1)), line)
             if not re.match(r'^\s*$', line):
-                raise MalformedLineError(path, line)
+                raise MalformedLineError(self.path, line)
 
             response.pipe(*args)
             return
@@ -106,7 +110,7 @@ class _Lookup:
         elif line == 'filter_4xx':
             response.packet(TRANSLATE_FILTER_4XX)
         else:
-            raise MalformedLineError(path, line)
+            raise MalformedLineError(self.path, line)
 
     def do(self):
         while True:

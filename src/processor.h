@@ -31,6 +31,8 @@ struct async_operation_ref;
 struct processor_env {
     pool_t pool;
 
+    const char *site_name;
+
     /**
      * If non-NULL, then only untrusted widgets with this host are
      * allowed; all trusted widgets are rejected.
@@ -51,6 +53,16 @@ struct processor_env {
     struct strmap *args;
 
     /**
+     * The new path_info for the focused widget.
+     */
+    const char *path_info;
+
+    /**
+     * The view name of the top widget.
+     */
+    const char *view_name;
+
+    /**
      * The HTTP method of the original request.
      */
     http_method_t method;
@@ -65,6 +77,7 @@ struct processor_env {
 void
 processor_env_init(pool_t pool,
                    struct processor_env *env,
+                   const char *site_name,
                    const char *untrusted_host,
                    const char *local_host,
                    const char *remote_host,

@@ -265,12 +265,6 @@ const char *
 widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
                     const struct strref *relative_uri);
 
-const char *
-widget_translation_uri(pool_t pool,
-                       const struct parsed_uri *external_uri,
-                       struct strmap *args,
-                       const char *translation);
-
 /**
  * Returns an URI relative to the widget base address.
  */
@@ -292,7 +286,8 @@ widget_external_uri(pool_t pool,
  * the specified host name.
  */
 bool
-widget_check_host(const struct widget *widget, const char *host);
+widget_check_host(const struct widget *widget, const char *host,
+                  const char *site_name);
 
 /**
  * Recursion detection: check if the widget or its parent chain

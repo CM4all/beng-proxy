@@ -6,7 +6,7 @@
 
 #include "processor.h"
 #include "parser.h"
-#include "args.h"
+#include "uri-escape.h"
 #include "widget.h"
 #include "widget-lookup.h"
 #include "widget-class.h"
@@ -677,6 +677,7 @@ transform_uri_attribute(struct processor *processor,
                                  global_translate_cache,
                                  processor->env->absolute_uri,
                                  processor->env->external_uri,
+                                 processor->env->site_name,
                                  processor->env->untrusted_host,
                                  processor->env->args, widget,
                                  processor->env->session_id,
@@ -966,6 +967,15 @@ header_name_valid(const char *name, size_t length)
 }
 
 static void
+expansible_buffer_append_uri_escaped(struct expansible_buffer *buffer,
+                                     const char *value, size_t length)
+{
+    char *escaped = p_malloc(tpool, length * 3);
+    length = uri_escape(escaped, value, length, '%');
+    expansible_buffer_write_buffer(buffer, escaped, length);
+}
+
+static void
 processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
     struct processor *processor = ctx;
@@ -1009,15 +1019,20 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
             p = q;
         }
 
-        p = args_format_n(tpool, NULL,
-                          expansible_buffer_read_string(processor->widget.param.name),
-                          p, length,
-                          NULL, NULL, 0, NULL, NULL, 0, NULL);
-        length = strlen(p);
-
         if (!expansible_buffer_is_empty(processor->widget.params))
             expansible_buffer_write_buffer(processor->widget.params, "&", 1);
-        expansible_buffer_write_buffer(processor->widget.params, p, length);
+
+        size_t name_length;
+        const char *name = expansible_buffer_read(processor->widget.param.name,
+                                                  &name_length);
+
+        expansible_buffer_append_uri_escaped(processor->widget.params,
+                                             name, name_length);
+
+        expansible_buffer_write_buffer(processor->widget.params, "=", 1);
+
+        expansible_buffer_append_uri_escaped(processor->widget.params,
+                                             p, length);
 
         pool_rewind(tpool, &mark);
     } else if (processor->tag == TAG_WIDGET_HEADER) {

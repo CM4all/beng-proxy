@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.9.14) unstable; urgency=low
 
   * debian: move ulimit call from init script to *.default
+  * merge release 0.8.33
 
  --
 
@@ -127,6 +128,27 @@ cm4all-beng-proxy (0.9) unstable; urgency=low
   * main: default WAS stock limit is 16
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 18 Nov 2010 19:56:17 +0100
+
+cm4all-beng-proxy (0.8.33) unstable; urgency=low
+
+  * processor: don't quote query string arguments with dollar sign
+  * widget-request: safely remove "view" and "path" from argument table
+  * debian/control: add "Breaks << 0.8.32" on the JavaScript library
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 12 Apr 2011 18:21:55 +0200
+
+cm4all-beng-proxy (0.8.32) unstable; urgency=low
+
+  * args: quote arguments with the dollar sign
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 12 Apr 2011 13:34:42 +0200
+
+cm4all-beng-proxy (0.8.31) unstable; urgency=low
+
+  * proxy-widget: eliminate the duplicate "Server" response header
+  * translation: add packet UNTRUSTED_SITE_SUFFIX
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 07 Apr 2011 16:23:37 +0200
 
 cm4all-beng-proxy (0.8.30) unstable; urgency=low
 

@@ -885,7 +885,8 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        if (client->response.untrusted_prefix != NULL) {
+        if (client->response.untrusted_prefix != NULL ||
+            client->response.untrusted_site_suffix != NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_UNTRUSTED packet");
             return false;
@@ -901,13 +902,29 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        if (client->response.untrusted != NULL) {
+        if (client->response.untrusted != NULL ||
+            client->response.untrusted_site_suffix != NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_UNTRUSTED_PREFIX packet");
             return false;
         }
 
         client->response.untrusted_prefix = payload;
+        break;
+
+    case TRANSLATE_UNTRUSTED_SITE_SUFFIX:
+        if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
+            daemon_log(2, "malformed TRANSLATE_UNTRUSTED_SITE_SUFFIX packet\n");
+            break;
+        }
+
+        if (client->response.untrusted != NULL ||
+            client->response.untrusted_prefix != NULL) {
+            daemon_log(2, "misplaced TRANSLATE_UNTRUSTED_SITE_SUFFIX packet\n");
+            break;
+        }
+
+        client->response.untrusted_site_suffix = payload;
         break;
 
     case TRANSLATE_SCHEME:

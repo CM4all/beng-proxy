@@ -33,6 +33,13 @@ struct widget_class {
      */
     const char *untrusted_prefix;
 
+    /**
+     * A hostname suffix on which requests to this widget are allowed.
+     * If not set, then this is a trusted widget.  Requests from an
+     * untrusted widget to a trusted one are forbidden.
+     */
+    const char *untrusted_site_suffix;
+
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */
     bool stateful;

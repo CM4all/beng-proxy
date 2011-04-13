@@ -83,6 +83,7 @@ struct translate_response {
 
     const char *untrusted;
     const char *untrusted_prefix;
+    const char *untrusted_site_suffix;
 
     bool stateful;
 

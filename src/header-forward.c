@@ -314,11 +314,12 @@ forward_server(struct strmap *dest, const struct strmap *src,
 {
     const char *p;
 
-    p = !mangle
-        ? strmap_get_checked(src, "server")
-        : NULL;
+    if (mangle)
+        return;
+
+    p = strmap_get_checked(src, "server");
     if (p == NULL)
-        p = "beng-proxy v" VERSION;
+        return;
 
     strmap_add(dest, "server", p);
 }

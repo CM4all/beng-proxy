@@ -95,7 +95,7 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
 
     if (widget_has_focus(widget)) {
         /* we're in focus.  forward query string and request body. */
-        widget->from_request.path_info = strmap_remove(env->args, "path");
+        widget->from_request.path_info = env->path_info;
         if (widget->from_request.path_info != NULL)
             widget->from_request.path_info =
                 uri_compress(env->pool, widget->from_request.path_info);

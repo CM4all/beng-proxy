@@ -144,6 +144,8 @@ enum beng_translation_command {
      * if its realm matches the current request's realm.
      */
     TRANSLATE_REALM = 68,
+
+    TRANSLATE_UNTRUSTED_SITE_SUFFIX = 69,
 };
 
 struct beng_translation_header {

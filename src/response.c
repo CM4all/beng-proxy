@@ -204,6 +204,7 @@ response_invoke_processor(struct request *request2,
         method = HTTP_METHOD_GET;
 
     processor_env_init(request->pool, &request2->env,
+                       request2->translate.response->site,
                        request2->translate.response->untrusted,
                        request->local_host, request->remote_host,
                        uri,

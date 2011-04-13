@@ -10,6 +10,8 @@
 
 #include <string.h>
 
+static const char ARGS_ESCAPE_CHAR = '$';
+
 struct strmap *
 args_parse(pool_t pool, const char *p, size_t length)
 {
@@ -27,7 +29,8 @@ args_parse(pool_t pool, const char *p, size_t length)
         if (equals > p) {
             size_t value_length = and - equals - 1;
             char *value = p_strndup(pool, equals + 1, value_length);
-            value_length = uri_unescape_inplace(value, value_length);
+            value_length = uri_unescape_inplace(value, value_length,
+                                                ARGS_ESCAPE_CHAR);
             value[value_length] = 0;
 
             strmap_add(args, p_strndup(pool, p, equals - p), value);
@@ -90,7 +93,8 @@ args_format_n(pool_t pool, struct strmap *args,
             memcpy(p, pair->key, length);
             p += length;
             *p++ = '=';
-            p += uri_escape(p, pair->value, strlen(pair->value));
+            p += uri_escape(p, pair->value, strlen(pair->value),
+                            ARGS_ESCAPE_CHAR);
         }
     }
 
@@ -101,7 +105,8 @@ args_format_n(pool_t pool, struct strmap *args,
         memcpy(p, replace_key, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, replace_value, replace_value_length);
+        p += uri_escape(p, replace_value, replace_value_length,
+                        ARGS_ESCAPE_CHAR);
     }
 
     if (replace_key2 != NULL) {
@@ -111,7 +116,8 @@ args_format_n(pool_t pool, struct strmap *args,
         memcpy(p, replace_key2, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, replace_value2, replace_value2_length);
+        p += uri_escape(p, replace_value2, replace_value2_length,
+                        ARGS_ESCAPE_CHAR);
     }
 
     if (replace_key3 != NULL) {
@@ -121,7 +127,8 @@ args_format_n(pool_t pool, struct strmap *args,
         memcpy(p, replace_key3, length);
         p += length;
         *p++ = '=';
-        p += uri_escape(p, replace_value3, replace_value3_length);
+        p += uri_escape(p, replace_value3, replace_value3_length,
+                        ARGS_ESCAPE_CHAR);
     }
 
     *p = 0;

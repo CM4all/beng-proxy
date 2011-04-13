@@ -147,7 +147,7 @@ static size_t
 base_string_unescape(pool_t pool, const char *p, const char *suffix)
 {
     char *unescaped = p_strdup(pool, suffix);
-    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
+    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
     return base_string(p, unescaped);
 }
@@ -229,7 +229,7 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
             return NULL;
 
         unescaped = p_strdup(pool, suffix);
-        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
+        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
         dest = resource_address_dup(pool, src);
         dest->u.cgi.path_info = p_strcat(pool, dest->u.cgi.path_info,
@@ -242,7 +242,7 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
         assert(src->u.local.path[strlen(src->u.local.path) - 1] == '/');
 
         unescaped = p_strdup(pool, suffix);
-        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
+        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
         dest = resource_address_dup(pool, src);
         dest->u.local.path = p_strcat(pool, dest->u.local.path,

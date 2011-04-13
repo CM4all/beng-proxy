@@ -249,7 +249,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     out = forward_response_headers(pool, NULL,
                                    "192.168.0.2",
                                    &settings);
-    assert(g_str_has_prefix(strmap_remove(out, "server"), "beng-proxy"));
+    assert(strmap_remove(out, "server") == NULL);
     check_strmap(out, "");
 
     /* response headers: basic test */
@@ -264,7 +264,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     out = forward_response_headers(pool, headers,
                                    "192.168.0.2",
                                    &settings);
-    assert(g_str_has_prefix(strmap_remove(out, "server"), "beng-proxy"));
+    assert(strmap_get(out, "server") == NULL);
     check_strmap(out, "content-type=image/jpeg;");
 
     /* response headers: server */

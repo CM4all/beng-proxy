@@ -19,7 +19,8 @@ widget_cancel(struct widget *widget __attr_unused)
 
 bool
 widget_check_host(const struct widget *widget __attr_unused,
-                  const char *host __attr_unused)
+                  const char *host __attr_unused,
+                  const char *site_name __attr_unused)
 {
     return true;
 }

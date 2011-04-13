@@ -57,6 +57,7 @@ rewrite_widget_uri(__attr_unused pool_t pool, __attr_unused pool_t widget_pool,
                    __attr_unused struct tcache *translate_cache,
                    __attr_unused const char *absolute_uri,
                    __attr_unused const struct parsed_uri *external_uri,
+                   __attr_unused const char *site_name,
                    __attr_unused const char *untrusted_host,
                    __attr_unused struct strmap *args,
                    __attr_unused struct widget *widget,
@@ -144,7 +145,7 @@ int main(int argc, char **argv) {
     widget_init(&widget, pool, &root_widget_class);
 
     processor_env_init(pool, &env,
-                       NULL,
+                       NULL, NULL,
                        "localhost:8080",
                        "localhost:8080",
                        "/beng.html",

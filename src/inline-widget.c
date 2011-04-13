@@ -192,7 +192,8 @@ inline_widget_set(struct inline_widget *iw)
 {
     struct widget *widget = iw->widget;
 
-    if (!widget_check_host(widget, iw->env->untrusted_host)) {
+    if (!widget_check_host(widget, iw->env->untrusted_host,
+                           iw->env->site_name)) {
         GError *error =
             g_error_new(widget_quark(), 0,
                         "untrusted host name mismatch");

@@ -4,6 +4,14 @@
 // Author: Max Kellermann <mk@cm4all.com>
 //
 
+/**
+ * Internal function.  Do not use.
+ */
+function _beng_proxy_escape(x)
+{
+    return encodeURIComponent(x).replace('%', '$');
+}
+
 function beng_widget_uri(base_uri, session_id, frame, focus, mode,
                          path, translate, view) {
     if (base_uri == null ||
@@ -11,20 +19,20 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
          mode != "partial" && mode != "proxy" && mode != "save"))
         return null;
 
-    var uri = base_uri + ";session=" + escape(session_id);
+    var uri = base_uri + ";session=" + _beng_proxy_escape(session_id);
     if (focus != null) {
         if (mode == "frame")
             mode = "partial";
 
-        uri += "&focus=" + escape(focus);
+        uri += "&focus=" + _beng_proxy_escape(focus);
         if (mode == "partial" || mode == "proxy" || mode == "save")
             frame = focus;
 
         if (frame != null) {
-            uri += "&frame=" + escape(frame);
+            uri += "&frame=" + _beng_proxy_escape(frame);
 
             if (view != null)
-                uri += "&view=" + escape(view);
+                uri += "&view=" + _beng_proxy_escape(view);
         }
 
         if (mode == "proxy")
@@ -38,14 +46,14 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
                 query_string = path.substring(qmark);
                 path = path.substring(0, qmark);
             }
-            uri += "&path=" + escape(path);
+            uri += "&path=" + _beng_proxy_escape(path);
             if (query_string != null)
                 uri += query_string;
         }
     }
 
     if (translate != null)
-        uri += "&translate=" + escape(translate);
+        uri += "&translate=" + _beng_proxy_escape(translate);
 
     return uri;
 }

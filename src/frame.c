@@ -33,7 +33,8 @@ frame_top_widget(pool_t pool, struct widget *widget, struct processor_env *env,
     assert(widget->class != NULL);
     assert(env != NULL);
 
-    if (!widget_check_host(widget, env->untrusted_host)) {
+    if (!widget_check_host(widget, env->untrusted_host,
+                           env->site_name)) {
         daemon_log(4, "untrusted host name mismatch\n");
         widget_cancel(widget);
         http_response_handler_direct_message(handler, handler_ctx,

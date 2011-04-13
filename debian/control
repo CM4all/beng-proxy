@@ -26,6 +26,7 @@ Suggests: attr, cm4all-jailcgi-wrapper, cm4all-coma-cgi,
 Provides: httpd, httpd-cgi
 Conflicts: libevent1 (>= 1.4~), libevent2,
  cm4all-jailcgi-wrapper (<< 1.4)
+Breaks: libcm4all-beng-proxy-js (<< 0.9.14)
 Description: HTTP proxy server
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
@@ -111,6 +112,7 @@ Description: HTTP proxy server, delegate helper for JailCGI
 Package: libcm4all-beng-proxy-js
 Architecture: all
 Enhances: cm4all-beng-proxy
+Breaks: cm4all-beng-proxy (<< 0.8.14)
 Description: JavaScript library for cm4all-beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
