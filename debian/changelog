@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.8.34) unstable; urgency=low
   * js: check if session_id is null
   * debian: add package cm4all-beng-proxy-tools
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 19 Apr 2011 18:43:54 +0200
 
 cm4all-beng-proxy (0.8.33) unstable; urgency=low
 
