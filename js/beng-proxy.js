@@ -8,7 +8,7 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
                          path, translate, view) {
     function _beng_proxy_escape(x)
     {
-        return encodeURIComponent(x).replace('%', '$');
+        return encodeURIComponent(x).replace(/%/g, '$');
     }
 
     if (base_uri == null ||
