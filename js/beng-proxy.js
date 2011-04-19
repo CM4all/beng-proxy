@@ -4,16 +4,13 @@
 // Author: Max Kellermann <mk@cm4all.com>
 //
 
-/**
- * Internal function.  Do not use.
- */
-function _beng_proxy_escape(x)
-{
-    return encodeURIComponent(x).replace('%', '$');
-}
-
 function beng_widget_uri(base_uri, session_id, frame, focus, mode,
                          path, translate, view) {
+    function _beng_proxy_escape(x)
+    {
+        return encodeURIComponent(x).replace('%', '$');
+    }
+
     if (base_uri == null ||
         (mode != null && mode != "focus" && mode != "frame" &&
          mode != "partial" && mode != "proxy" && mode != "save"))
