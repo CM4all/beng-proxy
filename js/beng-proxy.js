@@ -16,7 +16,7 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
          mode != "partial" && mode != "proxy" && mode != "save"))
         return null;
 
-    var uri = base_uri + ";session=" + _beng_proxy_escape(session_id);
+    var uri = base_uri + ";session=" + _beng_proxy_escape(session_id || "");
     if (focus != null) {
         if (mode == "frame")
             mode = "partial";
