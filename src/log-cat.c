@@ -52,11 +52,20 @@ dump_http(const struct log_datagram *d)
         length = length_buffer;
     }
 
-    printf("%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\"\n",
+    char duration_buffer[32];
+    const char *duration = "-";
+    if (d->valid_duration) {
+        snprintf(duration_buffer, sizeof(duration_buffer), "%llu",
+                 (unsigned long long)d->duration);
+        duration = duration_buffer;
+    }
+
+    printf("%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %s\n",
            site, remote_host, stamp, method, d->http_uri,
            d->http_status, length,
            optional_string(d->http_referer),
-           optional_string(d->user_agent));
+           optional_string(d->user_agent),
+           duration);
 }
 
 static void

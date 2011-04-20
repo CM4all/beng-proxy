@@ -3,6 +3,7 @@ cm4all-beng-proxy (0.9.15) unstable; urgency=low
   * configure.ac: check if valgrind/memcheck.h is installed
   * configure.ac: check if libattr is available
   * access-log: log Referer and User-Agent
+  * access-log: log the request duration
 
  --
 
