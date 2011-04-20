@@ -35,19 +35,23 @@ access_log(struct http_server_request *request, const char *site,
     strftime(stamp, sizeof(stamp),
              "%d/%b/%Y:%H:%M:%S %z", localtime(&now));
 
-    if (content_length < 0)
-        daemon_log(1, "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %c\n",
-                   site, request->remote_host, stamp,
-                   http_method_to_string(request->method),
-                   request->uri,
-                   status,
-                   content_length == -2 ? '-' : '?');
-    else
-        daemon_log(1, "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %lu\n",
-                   site, request->remote_host, stamp,
-                   http_method_to_string(request->method),
-                   request->uri,
-                   status, (unsigned long)content_length);
+    char length_buffer[32];
+    const char *length;
+    if (content_length == -2)
+        length = "?";
+    else if (content_length < 0)
+        length = "-";
+    else {
+        snprintf(length_buffer, sizeof(length_buffer), "%llu",
+                 (unsigned long long)content_length);
+        length = length_buffer;
+    }
+
+    daemon_log(1, "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s\n",
+               site, request->remote_host, stamp,
+               http_method_to_string(request->method),
+               request->uri,
+               status, length);
 }
 
 #endif
