@@ -38,6 +38,8 @@ PKG_CHECK_MODULES([LIBCM4ALL_SOCKET], [libcm4all-socket],,
 PKG_CHECK_MODULES([LIBWAS], [libcm4all-was-simple],,
 	[AC_MSG_ERROR([libwas not found])])
 
+AC_CHECK_HEADERS(valgrind/memcheck.h)
+
 dnl
 dnl CFLAGS
 dnl
@@ -87,7 +89,7 @@ AM_CONDITIONAL(TEST, test x$enable_test = xyes)
 
 if test x$enable_debug = xyes; then
 	AM_CFLAGS="$AM_CFLAGS -Werror -pedantic-errors"
-	AM_CPPFLAGS="$AM_CPPFLAGS -DPOISON -DVALGRIND"
+	AM_CPPFLAGS="$AM_CPPFLAGS -DPOISON"
 	AM_CPPFLAGS="$AM_CPPFLAGS -DTRACE"
 	AM_CPPFLAGS="$AM_CPPFLAGS -DDEBUG_POOL_REF"
 	AM_CPPFLAGS="$AM_CPPFLAGS -DCACHE_LOG"
@@ -95,6 +97,10 @@ if test x$enable_debug = xyes; then
 	# -DDUMP_POOL_UNREF
 	# -DDUMP_WIDGET_TREE
 	# -DDUMP_POOL_ALLOC_ALL
+
+	if test x$ac_cv_header_valgrind_memcheck_h = xyes; then
+		AM_CPPFLAGS="$AM_CPPFLAGS -DVALGRIND"
+	fi
 else
 	AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
 fi

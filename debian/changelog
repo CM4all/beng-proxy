@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.15) unstable; urgency=low
 
-  * 
+  * configure.ac: check if valgrind/memcheck.h is installed
 
  --
 
