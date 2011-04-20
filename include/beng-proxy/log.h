@@ -63,6 +63,12 @@ enum beng_log_attribute {
      * headers.
      */
     LOG_TRAFFIC,
+
+    /**
+     * The wallclock duration of the operation as a 64 bit unsigned
+     * integer specifying the number of microseconds.
+     */
+    LOG_DURATION,
 };
 
 /**

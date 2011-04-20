@@ -12,6 +12,7 @@
 #include <inline/list.h>
 
 #include <sys/socket.h>
+#include <stdint.h>
 
 struct config;
 
@@ -29,6 +30,12 @@ struct client_connection {
      * information.
      */
     const char *site_name;
+
+    /**
+     * The time stamp at the start of the request.  Used to calculate
+     * the request duration.
+     */
+    uint64_t request_start_time;
 };
 
 void

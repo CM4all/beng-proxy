@@ -173,6 +173,11 @@ log_server_apply_attributes(struct log_datagram *datagram, const void *p,
                 p = read_uint64(&datagram->traffic_sent, p, end);
             datagram->valid_traffic = true;
             break;
+
+        case LOG_DURATION:
+            p = read_uint64(&datagram->duration, p, end);
+            datagram->valid_duration = true;
+            break;
         }
 
         if (p == NULL)

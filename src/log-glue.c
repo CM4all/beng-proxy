@@ -51,7 +51,8 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
                  const char *remote_host, const char *site,
                  const char *referer, const char *user_agent,
                  http_status_t status, uint64_t length,
-                 uint64_t traffic_received, uint64_t traffic_sent)
+                 uint64_t traffic_received, uint64_t traffic_sent,
+                 uint64_t duration)
 {
     assert(http_method_is_valid(method));
     assert(uri != NULL);
@@ -86,6 +87,9 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
 
     log_client_append_attribute(global_log_client, LOG_TRAFFIC,
                                 &traffic, sizeof(traffic));
+
+    if (duration > 0)
+        log_client_append_u64(global_log_client, LOG_DURATION, duration);
 
     return log_client_commit(global_log_client);
 }

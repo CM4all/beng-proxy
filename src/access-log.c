@@ -26,14 +26,16 @@ void
 access_log(struct http_server_request *request, const char *site,
            const char *referer, const char *user_agent,
            http_status_t status, off_t content_length,
-           uint64_t bytes_received, uint64_t bytes_sent)
+           uint64_t bytes_received, uint64_t bytes_sent,
+           uint64_t duration)
 {
     if (log_global_enabled()) {
         log_http_request(time(NULL) * 1000000, request->method, request->uri,
                          request->remote_host, site,
                          referer, user_agent,
                          status, content_length,
-                         bytes_received, bytes_sent);
+                         bytes_received, bytes_sent,
+                         duration);
         return;
     }
 

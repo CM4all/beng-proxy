@@ -28,8 +28,11 @@ struct log_datagram {
 
     uint64_t traffic_received, traffic_sent;
 
+    uint64_t duration;
+
     bool valid_timestamp, valid_http_method, valid_http_status;
     bool valid_length, valid_traffic;
+    bool valid_duration;
 };
 
 struct log_server *

@@ -265,6 +265,7 @@ HDR = \
 	test/t-istream-filter.h
 
 SRC = src/main.c \
+	src/clock.h \
 	src/cmdline.c \
 	src/global.c \
 	src/event2.c \

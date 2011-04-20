@@ -12,6 +12,7 @@
 #include "address.h"
 #include "access-log.h"
 #include "drop.h"
+#include "clock.h"
 
 #include <daemon/log.h>
 
@@ -40,6 +41,7 @@ my_http_server_connection_request(struct http_server_request *request,
     struct client_connection *connection = ctx;
 
     connection->site_name = NULL;
+    connection->request_start_time = now_us();
 
     handle_http_request(connection, request, async_ref);
 }
@@ -56,7 +58,8 @@ my_http_server_connection_log(struct http_server_request *request,
                strmap_get_checked(request->headers, "referer"),
                strmap_get_checked(request->headers, "user-agent"),
                status, length,
-               bytes_received, bytes_sent);
+               bytes_received, bytes_sent,
+               now_us() - connection->request_start_time);
     connection->site_name = NULL;
 }
 
