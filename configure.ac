@@ -18,6 +18,9 @@ AC_SYS_LARGEFILE
 
 AC_CHECK_FUNCS(pipe2 accept4)
 
+AC_CHECK_HEADERS(attr/xattr.h)
+AM_CONDITIONAL(HAVE_ATTR_XATTR_H, test x$ac_cv_header_attr_xattr_h = xyes)
+
 dnl Checks for libraries.
 
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],,

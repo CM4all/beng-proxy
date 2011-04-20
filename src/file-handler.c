@@ -19,6 +19,10 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#ifndef HAVE_ATTR_XATTR_H
+#define NO_XATTR 1
+#endif
+
 #ifndef NO_XATTR
 #include <attr/xattr.h>
 #endif
@@ -212,6 +216,10 @@ file_cache_headers(struct growing_buffer *headers,
                    int fd, const struct stat *st)
 {
     char buffer[64];
+
+#ifdef NO_XATTR
+    (void)fd;
+#endif
 
 #ifndef NO_XATTR
     ssize_t nbytes;

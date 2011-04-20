@@ -12,6 +12,10 @@
 #include <assert.h>
 #include <sys/stat.h>
 
+#ifndef HAVE_ATTR_XATTR_H
+#define NO_XATTR 1
+#endif
+
 #ifndef NO_XATTR
 #include <attr/xattr.h>
 #endif
@@ -41,6 +45,10 @@ static_response_headers(pool_t pool, struct strmap *headers,
                         const char *content_type)
 {
     char buffer[256];
+
+#ifdef NO_XATTR
+    (void)fd;
+#endif
 
     if (content_type == NULL) {
 #ifndef NO_XATTR
