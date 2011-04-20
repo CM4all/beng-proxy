@@ -6,6 +6,7 @@
 
 #include "connection.h"
 #include "instance.h"
+#include "strmap.h"
 #include "http-server.h"
 #include "handler.h"
 #include "address.h"
@@ -51,7 +52,10 @@ my_http_server_connection_log(struct http_server_request *request,
 {
     struct client_connection *connection = ctx;
 
-    access_log(request, connection->site_name, status, length,
+    access_log(request, connection->site_name,
+               strmap_get_checked(request->headers, "referer"),
+               strmap_get_checked(request->headers, "user-agent"),
+               status, length,
                bytes_received, bytes_sent);
     connection->site_name = NULL;
 }

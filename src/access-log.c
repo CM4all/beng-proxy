@@ -13,14 +13,25 @@
 
 #include <time.h>
 
+static const char *
+optional_string(const char *p)
+{
+    if (p == NULL)
+        return "-";
+
+    return p;
+}
+
 void
 access_log(struct http_server_request *request, const char *site,
+           const char *referer, const char *user_agent,
            http_status_t status, off_t content_length,
            uint64_t bytes_received, uint64_t bytes_sent)
 {
     if (log_global_enabled()) {
         log_http_request(time(NULL) * 1000000, request->method, request->uri,
-                         request->remote_host, site, NULL, NULL,
+                         request->remote_host, site,
+                         referer, user_agent,
                          status, content_length,
                          bytes_received, bytes_sent);
         return;
@@ -47,11 +58,13 @@ access_log(struct http_server_request *request, const char *site,
         length = length_buffer;
     }
 
-    daemon_log(1, "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s\n",
+    daemon_log(1, "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\"\n",
                site, request->remote_host, stamp,
                http_method_to_string(request->method),
                request->uri,
-               status, length);
+               status, length,
+               optional_string(referer),
+               optional_string(user_agent));
 }
 
 #endif
