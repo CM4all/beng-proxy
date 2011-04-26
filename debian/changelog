@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.8.35) unstable; urgency=low
 
   * session: fix potential session defragmentation crash
   * ajp-request: use "host:port" as TCP stock key
+  * cgi: evaluate the Content-Length response header
 
  --
 

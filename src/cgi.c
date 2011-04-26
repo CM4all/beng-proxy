@@ -35,6 +35,12 @@ struct cgi {
     struct strmap *headers;
 
     /**
+     * The remaining number of bytes in the response body, -1 if
+     * unknown.
+     */
+    off_t remaining;
+
+    /**
      * This flag is true while cgi_parse_headers() is calling
      * http_response_handler_invoke_response().  In this case,
      * istream_read(cgi->input) is already up in the stack, and must
@@ -97,6 +103,28 @@ cgi_return_response(struct cgi *cgi)
         pool_unref(cgi->output.pool);
     } else {
         stopwatch_event(cgi->stopwatch, "headers");
+
+        p = strmap_remove(headers, "content-length");
+        if (p != NULL) {
+            char *endptr;
+            cgi->remaining = (off_t)strtoull(p, &endptr, 10);
+            if (endptr == p || *endptr != 0 || cgi->remaining < 0)
+                cgi->remaining = -1;
+        } else
+            cgi->remaining = -1;
+
+        if (cgi->remaining != -1) {
+            if ((off_t)fifo_buffer_available(cgi->buffer) > cgi->remaining) {
+                daemon_log(1, "too much data from CGI script\n");
+                istream_free_handler(&cgi->input);
+                http_response_handler_invoke_abort(&cgi->handler);
+                cgi->in_response_callback = false;
+                pool_unref(cgi->output.pool);
+                return;
+            }
+
+            cgi->remaining -= fifo_buffer_available(cgi->buffer);
+        }
 
         http_response_handler_invoke_response(&cgi->handler,
                                               status, headers,
@@ -186,10 +214,34 @@ cgi_input_data(const void *data, size_t length, void *ctx)
             cgi->had_output = true;
         }
 
+        if (cgi->headers == NULL && cgi->input != NULL &&
+            cgi->remaining == 0 && fifo_buffer_empty(cgi->buffer)) {
+            /* the response body is already finished (probably because
+               it was present, but empty); submit that result to the
+               handler immediately */
+
+            stopwatch_event(cgi->stopwatch, "end");
+            stopwatch_dump(cgi->stopwatch);
+
+            pool_unref(cgi->output.pool);
+            istream_close_handler(cgi->input);
+            istream_deinit_eof(&cgi->output);
+            return 0;
+        }
+
         pool_unref(cgi->output.pool);
 
         return length;
     } else {
+        if (cgi->remaining != -1 && (off_t)length > cgi->remaining) {
+            daemon_log(1, "too much data from CGI script\n");
+            stopwatch_event(cgi->stopwatch, "malformed");
+            stopwatch_dump(cgi->stopwatch);
+
+            istream_close(cgi->input);
+            return 0;
+        }
+
         if (cgi->buffer != NULL) {
             size_t rest = istream_buffer_consume(&cgi->output, cgi->buffer);
             if (rest > 0)
@@ -199,7 +251,21 @@ cgi_input_data(const void *data, size_t length, void *ctx)
         }
 
         cgi->had_output = true;
-        return istream_invoke_data(&cgi->output, data, length);
+
+        size_t nbytes = istream_invoke_data(&cgi->output, data, length);
+        if (nbytes > 0 && cgi->remaining != -1)
+            cgi->remaining -= nbytes;
+
+        if (cgi->remaining == 0) {
+            stopwatch_event(cgi->stopwatch, "end");
+            stopwatch_dump(cgi->stopwatch);
+
+            istream_close_handler(cgi->input);
+            istream_deinit_eof(&cgi->output);
+            return 0;
+        }
+
+        return nbytes;
     }
 }
 
@@ -213,7 +279,13 @@ cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     cgi->had_input = true;
     cgi->had_output = true;
 
-    return istream_invoke_direct(&cgi->output, type, fd, max_length);
+    if (cgi->remaining != -1 && (off_t)max_length > cgi->remaining)
+        max_length = (size_t)cgi->remaining;
+
+    ssize_t nbytes = istream_invoke_direct(&cgi->output, type, fd, max_length);
+    if (nbytes > 0 && cgi->remaining != -1)
+        cgi->remaining -= nbytes;
+    return nbytes;
 }
 
 static void
@@ -232,6 +304,12 @@ cgi_input_eof(void *ctx)
 
         http_response_handler_invoke_abort(&cgi->handler);
         pool_unref(cgi->output.pool);
+    } else if (cgi->remaining > 0) {
+        daemon_log(1, "premature end of response body from CGI script\n");
+        stopwatch_event(cgi->stopwatch, "malformed");
+        stopwatch_dump(cgi->stopwatch);
+
+        istream_deinit_abort(&cgi->output);
     } else if (cgi->buffer == NULL || fifo_buffer_empty(cgi->buffer)) {
         stopwatch_event(cgi->stopwatch, "end");
         stopwatch_dump(cgi->stopwatch);
@@ -291,6 +369,9 @@ istream_cgi_available(istream_t istream, bool partial)
         length = fifo_buffer_available(cgi->buffer);
     } else
         length = 0;
+
+    if (cgi->remaining != -1)
+        return (off_t)length + cgi->remaining;
 
     if (cgi->input == NULL)
         return length;
