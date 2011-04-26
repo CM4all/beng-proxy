@@ -388,7 +388,7 @@ http_client_parse_status_line(struct http_client *client,
         stopwatch_event(client->stopwatch, "malformed");
 
         GError *error =
-            g_error_new_literal(http_client_quark(), 0,
+            g_error_new_literal(http_client_quark(), HTTP_CLIENT_UNSPECIFIED,
                                 "malformed HTTP status line");
         http_client_abort_response_headers(client, error);
         return false;
@@ -405,7 +405,7 @@ http_client_parse_status_line(struct http_client *client,
         stopwatch_event(client->stopwatch, "malformed");
 
         GError *error =
-            g_error_new_literal(http_client_quark(), 0,
+            g_error_new_literal(http_client_quark(), HTTP_CLIENT_UNSPECIFIED,
                                 "no HTTP status found");
         http_client_abort_response_headers(client, error);
         return false;
@@ -416,7 +416,7 @@ http_client_parse_status_line(struct http_client *client,
         stopwatch_event(client->stopwatch, "malformed");
 
         GError *error =
-            g_error_new(http_client_quark(), 0,
+            g_error_new(http_client_quark(), HTTP_CLIENT_UNSPECIFIED,
                         "invalid HTTP status %d",
                         client->response.status);
         http_client_abort_response_headers(client, error);
@@ -470,7 +470,8 @@ http_client_headers_finished(struct http_client *client)
                 stopwatch_event(client->stopwatch, "malformed");
 
                 GError *error =
-                    g_error_new_literal(http_client_quark(), 0,
+                    g_error_new_literal(http_client_quark(),
+                                        HTTP_CLIENT_UNSPECIFIED,
                                         "no Content-Length header response");
                 http_client_abort_response_headers(client, error);
                 return false;
@@ -485,7 +486,8 @@ http_client_headers_finished(struct http_client *client)
                 stopwatch_event(client->stopwatch, "malformed");
 
                 GError *error =
-                    g_error_new_literal(http_client_quark(), 0,
+                    g_error_new_literal(http_client_quark(),
+                                        HTTP_CLIENT_UNSPECIFIED,
                                         "invalid Content-Length header in response");
                 http_client_abort_response_headers(client, error);
                 return false;
@@ -610,7 +612,8 @@ http_client_parse_headers(struct http_client *client)
         if (next == NULL && fifo_buffer_full(client->input)) {
             /* the line is too large for our input buffer */
             GError *error =
-                g_error_new_literal(http_client_quark(), 0,
+                g_error_new_literal(http_client_quark(),
+                                    HTTP_CLIENT_UNSPECIFIED,
                                     "response header too long");
             http_client_abort_response_headers(client, error);
             return false;
@@ -699,7 +702,8 @@ http_client_consume_headers(struct http_client *client)
         assert(client->response.body == NULL);
 
         if (client->request.body == NULL) {
-            GError *error = g_error_new_literal(http_client_quark(), 0,
+            GError *error = g_error_new_literal(http_client_quark(),
+                                                HTTP_CLIENT_UNSPECIFIED,
                                                 "unexpected status 100");
 #ifndef NDEBUG
             /* assertion workaround */
@@ -820,7 +824,8 @@ http_client_try_read_buffered(struct http_client *client)
             stopwatch_event(client->stopwatch, "error");
 
             GError *error =
-                g_error_new_literal(http_client_quark(), 0,
+                g_error_new_literal(http_client_quark(),
+                                    HTTP_CLIENT_UNSPECIFIED,
                                     "server closed connection "
                                     "during response headers");
             http_client_abort_response_headers(client, error);
@@ -837,7 +842,8 @@ http_client_try_read_buffered(struct http_client *client)
 
         stopwatch_event(client->stopwatch, "error");
 
-        GError *error = g_error_new(http_client_quark(), 0,
+        GError *error = g_error_new(http_client_quark(),
+                                    HTTP_CLIENT_UNSPECIFIED,
                                     "read error (%s)", strerror(errno));
         http_client_abort_response(client, error);
         return;
@@ -897,7 +903,8 @@ http_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
     if (unlikely(event & EV_TIMEOUT)) {
         stopwatch_event(client->stopwatch, "timeout");
 
-        GError *error = g_error_new_literal(http_client_quark(), 0,
+        GError *error = g_error_new_literal(http_client_quark(),
+                                            HTTP_CLIENT_UNSPECIFIED,
                                             "send timeout");
         http_client_abort_response(client, error);
         return;
@@ -920,7 +927,8 @@ http_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
     if (unlikely(event & EV_TIMEOUT)) {
         stopwatch_event(client->stopwatch, "timeout");
 
-        GError *error = g_error_new_literal(http_client_quark(), 0,
+        GError *error = g_error_new_literal(http_client_quark(),
+                                            HTTP_CLIENT_UNSPECIFIED,
                                             "receive timeout");
         http_client_abort_response(client, error);
         return;
@@ -980,7 +988,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     stopwatch_event(client->stopwatch, "error");
 
-    GError *error = g_error_new(http_client_quark(), 0,
+    GError *error = g_error_new(http_client_quark(), HTTP_CLIENT_UNSPECIFIED,
                                 "write error (%s)", strerror(_errno));
     http_client_abort_response(client, error);
     return 0;
@@ -1114,7 +1122,8 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     assert(handler->response != NULL);
 
     if (!uri_verify_quick(uri)) {
-        GError *error = g_error_new(http_client_quark(), 0,
+        GError *error = g_error_new(http_client_quark(),
+                                    HTTP_CLIENT_UNSPECIFIED,
                                     "malformed request URI '%s'", uri);
         http_response_handler_direct_abort(handler, ctx, error);
         return;

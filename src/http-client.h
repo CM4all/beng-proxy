@@ -17,6 +17,13 @@ struct growing_buffer;
 struct http_response_handler;
 struct async_operation_ref;
 
+/**
+ * GError codes for http_client_quark().
+ */
+enum http_client_error {
+    HTTP_CLIENT_UNSPECIFIED,
+};
+
 G_GNUC_CONST
 static inline GQuark
 http_client_quark(void)
