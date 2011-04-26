@@ -34,6 +34,7 @@ struct ajp_request {
     bool is_ssl;
 
     http_method_t method;
+    const char *host_and_port;
     const char *uri;
     struct strmap *headers;
     istream_t body;
@@ -53,7 +54,7 @@ ajp_socket_release(bool reuse, void *ctx)
 {
     struct ajp_request *hr = ctx;
 
-    hstock_put(hr->tcp_stock, hr->uri, hr->stock_item, !reuse);
+    hstock_put(hr->tcp_stock, hr->host_and_port, hr->stock_item, !reuse);
 }
 
 static const struct lease ajp_socket_lease = {
@@ -145,7 +146,6 @@ ajp_stock_request(pool_t pool,
     } else
         hr->body = NULL;
 
-    const char *host_and_port;
     if (memcmp(uwa->uri, "ajp://", 6) == 0) {
         /* AJP over TCP */
 
@@ -158,10 +158,10 @@ ajp_stock_request(pool_t pool,
         }
 
         if (slash == NULL) {
-            host_and_port = p;
+            hr->host_and_port = p;
             slash = "/";
         } else
-            host_and_port = p_strndup(hr->pool, p, slash - p);
+            hr->host_and_port = p_strndup(hr->pool, p, slash - p);
 
         hr->uri = slash;
     } else {
@@ -170,7 +170,7 @@ ajp_stock_request(pool_t pool,
     }
 
     hstock_get(tcp_stock, pool,
-               hr->uri, uwa,
+               hr->host_and_port, uwa,
                ajp_request_stock_callback, hr,
                async_ref);
 }
