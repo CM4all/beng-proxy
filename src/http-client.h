@@ -22,6 +22,11 @@ struct async_operation_ref;
  */
 enum http_client_error {
     HTTP_CLIENT_UNSPECIFIED,
+
+    /**
+     * The server has closed the connection prematurely.
+     */
+    HTTP_CLIENT_PREMATURE,
 };
 
 G_GNUC_CONST

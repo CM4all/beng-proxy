@@ -825,7 +825,7 @@ http_client_try_read_buffered(struct http_client *client)
 
             GError *error =
                 g_error_new_literal(http_client_quark(),
-                                    HTTP_CLIENT_UNSPECIFIED,
+                                    HTTP_CLIENT_PREMATURE,
                                     "server closed connection "
                                     "during response headers");
             http_client_abort_response_headers(client, error);
