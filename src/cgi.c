@@ -288,9 +288,7 @@ istream_cgi_available(istream_t istream, bool partial)
 
     size_t length;
     if (cgi->buffer != NULL) {
-        const void *data = fifo_buffer_read(cgi->buffer, &length);
-        if (data == NULL)
-            length = 0;
+        length = fifo_buffer_available(cgi->buffer);
     } else
         length = 0;
 
