@@ -68,8 +68,6 @@ static void
 cgi_return_response(struct cgi *cgi)
 {
     struct strmap *headers;
-    const char *p;
-    http_status_t status = HTTP_STATUS_OK;
 
     async_operation_finished(&cgi->async);
 
@@ -77,7 +75,8 @@ cgi_return_response(struct cgi *cgi)
     cgi->headers = NULL;
     cgi->in_response_callback = true;
 
-    p = strmap_remove(headers, "status");
+    http_status_t status = HTTP_STATUS_OK;
+    const char *p = strmap_remove(headers, "status");
     if (p != NULL) {
         int i = atoi(p);
         if (http_status_is_valid(i))
@@ -110,18 +109,16 @@ cgi_return_response(struct cgi *cgi)
 static void
 cgi_parse_headers(struct cgi *cgi)
 {
-    const char *buffer, *buffer_end, *start, *end, *next = NULL;
     size_t length;
-    bool finished = false;
-
-    buffer = fifo_buffer_read(cgi->buffer, &length);
+    const char *buffer = fifo_buffer_read(cgi->buffer, &length);
     if (buffer == NULL)
         return;
 
     assert(length > 0);
-    buffer_end = buffer + length;
+    const char *buffer_end = buffer + length;
 
-    start = buffer;
+    bool finished = false;
+    const char *start = buffer, *end, *next = NULL;
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
         --end;
@@ -157,10 +154,8 @@ cgi_input_data(const void *data, size_t length, void *ctx)
     cgi->had_input = true;
 
     if (cgi->headers != NULL) {
-        void *dest;
         size_t max_length;
-
-        dest = fifo_buffer_write(cgi->buffer, &max_length);
+        void *dest = fifo_buffer_write(cgi->buffer, &max_length);
         if (dest == NULL)
             return 0;
 
@@ -290,12 +285,10 @@ static off_t
 istream_cgi_available(istream_t istream, bool partial)
 {
     struct cgi *cgi = istream_to_cgi(istream);
-    const void *data;
-    size_t length;
-    off_t available;
 
+    size_t length;
     if (cgi->buffer != NULL) {
-        data = fifo_buffer_read(cgi->buffer, &length);
+        const void *data = fifo_buffer_read(cgi->buffer, &length);
         if (data == NULL)
             length = 0;
     } else
@@ -314,7 +307,7 @@ istream_cgi_available(istream_t istream, bool partial)
             return (off_t)-1;
     }
 
-    available = istream_available(cgi->input, partial);
+    off_t available = istream_available(cgi->input, partial);
     if (available == (off_t)-1) {
         if (partial)
             return length;
@@ -422,8 +415,6 @@ cgi_run(bool jail, const char *interpreter, const char *action,
         off_t content_length)
 {
     const struct strmap_pair *pair;
-    char buffer[512] = "HTTP_";
-    size_t i;
     const char *arg = NULL;
 
     assert(path != NULL);
@@ -484,6 +475,8 @@ cgi_run(bool jail, const char *interpreter, const char *action,
                 continue;
             }
 
+            char buffer[512] = "HTTP_";
+            size_t i;
             for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
                 if (char_is_minuscule_letter(pair->key[i]))
                     buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
@@ -542,19 +535,15 @@ cgi_new(pool_t pool, bool jail,
         void *handler_ctx,
         struct async_operation_ref *async_ref)
 {
-    struct stopwatch *stopwatch;
-    struct cgi *cgi;
-    pid_t pid;
-    istream_t input;
+    struct stopwatch *stopwatch = stopwatch_new(pool, path);
 
     off_t available = body != NULL
         ? istream_available(body, false)
         : -1;
 
-    stopwatch = stopwatch_new(pool, path);
-
-    pid = beng_fork(pool, body, &input,
-                    cgi_child_callback, NULL);
+    istream_t input;
+    pid_t pid = beng_fork(pool, body, &input,
+                          cgi_child_callback, NULL);
     if (pid < 0) {
         if (body != NULL) {
             /* beng_fork() left the request body open - free this
@@ -582,7 +571,7 @@ cgi_new(pool_t pool, bool jail,
 
     stopwatch_event(stopwatch, "fork");
 
-    cgi = (struct cgi *)istream_new(pool, &istream_cgi, sizeof(*cgi));
+    struct cgi *cgi = (struct cgi *)istream_new(pool, &istream_cgi, sizeof(*cgi));
     cgi->stopwatch = stopwatch;
     istream_assign_handler(&cgi->input, input,
                            &cgi_input_handler, cgi, 0);
