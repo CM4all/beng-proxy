@@ -31,6 +31,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
 
 #ifndef NDEBUG
     handler = istream->handler;
+    (void)handler;
 
     pool_notify(istream->pool, &notify);
     istream->in_data = true;
@@ -86,6 +87,7 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
 
 #ifndef NDEBUG
     handler = istream->handler;
+    (void)handler;
 
     pool_notify(istream->pool, &notify);
     istream->in_data = true;

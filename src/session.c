@@ -766,7 +766,7 @@ static void
 session_defragment_id(session_id_t id)
 {
     struct session *session = session_find(id);
-    if (session_find == NULL)
+    if (session == NULL)
         return;
 
     /* unlock the session, because session_defragment() may call

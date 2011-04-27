@@ -480,8 +480,10 @@ http_client_headers_finished(struct http_client *client)
             }
             content_length = (off_t)-1;
         } else {
-            content_length = strtoul(content_length_string, &endptr, 10);
-            if (unlikely(*endptr != 0 || content_length < 0)) {
+            content_length = (off_t)strtoull(content_length_string,
+                                             &endptr, 10);
+            if (unlikely(endptr == content_length_string || *endptr != 0 ||
+                         content_length < 0)) {
                 stopwatch_event(client->stopwatch, "malformed");
 
                 GError *error =

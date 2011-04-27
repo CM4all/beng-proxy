@@ -26,7 +26,7 @@ struct context {
     http_status_t status;
 
     istream_t body;
-    off_t body_data;
+    off_t body_data, body_available;
     bool body_eof, body_abort, body_closed;
 };
 
@@ -108,8 +108,10 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
     if (c->close_response_body_early) {
         istream_close_unused(body);
         children_shutdown();
-    } else if (body != NULL)
+    } else if (body != NULL) {
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
+        c->body_available = istream_available(body, false);
+    }
 
     if (c->close_response_body_late) {
         c->body_closed = true;
@@ -378,6 +380,150 @@ test_no_content(pool_t pool, struct context *c)
     assert(!c->body_abort);
 }
 
+static void
+test_no_length(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/length0.sh", NULL);
+    else
+        path = "./demo/cgi-bin/length0.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "length0.sh", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->body_available == -1);
+    assert(c->body_eof);
+}
+
+static void
+test_length_ok(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/length1.sh", NULL);
+    else
+        path = "./demo/cgi-bin/length1.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "length1.sh", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->body_available == 4);
+    assert(c->body_eof);
+}
+
+static void
+test_length_too_small(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/length2.sh", NULL);
+    else
+        path = "./demo/cgi-bin/length2.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "length2.sh", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->aborted);
+}
+
+static void
+test_length_too_big(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/length3.sh", NULL);
+    else
+        path = "./demo/cgi-bin/length3.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "length3.sh", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(!c->aborted);
+    assert(c->body_abort);
+}
+
+static void
+test_length_too_small_late(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/length4.sh", NULL);
+    else
+        path = "./demo/cgi-bin/length4.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "length4.sh", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(!c->aborted);
+    assert(c->body_abort);
+}
+
 
 /*
  * main
@@ -418,6 +564,11 @@ int main(int argc, char **argv) {
     run_test(pool, test_post);
     run_test(pool, test_status);
     run_test(pool, test_no_content);
+    run_test(pool, test_no_length);
+    run_test(pool, test_length_ok);
+    run_test(pool, test_length_too_small);
+    run_test(pool, test_length_too_big);
+    run_test(pool, test_length_too_small_late);
 
     pool_unref(pool);
     pool_commit();

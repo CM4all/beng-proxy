@@ -158,6 +158,16 @@ Description: Python bindings for beng-proxy
  .
  This is the Python translation server library.
 
+Package: cm4all-beng-proxy-tools
+Architecture: all
+Depends: ruby (>= 1.8.2), ruby1.8 (>= 1.8.2)
+Enhances: cm4all-beng-proxy
+Description: Tools for beng-proxy
+ BENG proxy is an HTTP proxy server which includes a HTML template
+ processor.
+ .
+ This package provides tools for working with beng-proxy.
+
 Package: cm4all-beng-proxy-translation-prototype
 Architecture: all
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6), python, daemon,
