@@ -58,6 +58,21 @@ uri_address_insert_query_string(pool_t pool,
     return p;
 }
 
+struct uri_with_address *
+uri_address_insert_args(pool_t pool,
+                        const struct uri_with_address *uwa,
+                        const char *args, size_t length)
+{
+    struct uri_with_address *p = p_malloc(pool, sizeof(*uwa));
+
+    p->pool = pool;
+    p->uri = uri_insert_args(pool, uwa->uri, args, length);
+
+    address_list_copy(pool, &p->addresses, &uwa->addresses);
+
+    return p;
+}
+
 void
 uri_address_add(struct uri_with_address *uwa,
                 const struct sockaddr *addr, socklen_t addrlen)

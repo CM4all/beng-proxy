@@ -25,4 +25,8 @@ const char *
 uri_delete_query_string(pool_t pool, const char *uri,
                         const char *needle, size_t needle_length);
 
+const char *
+uri_insert_args(pool_t pool, const char *uri,
+                const char *args, size_t length);
+
 #endif

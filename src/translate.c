@@ -1388,6 +1388,10 @@ translate_handle_packet(struct translate_client *client,
         memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
         client->resource_address->u.cgi.path = payload;
         break;
+
+    case TRANSLATE_TRANSPARENT:
+        client->response.transparent = true;
+        break;
     }
 
     return true;

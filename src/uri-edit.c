@@ -96,3 +96,17 @@ uri_delete_query_string(pool_t pool, const char *uri,
                      p + delete_length, strlen(p + delete_length),
                      NULL);
 }
+
+const char *
+uri_insert_args(pool_t pool, const char *uri,
+                const char *args, size_t length)
+{
+    const char *q = strchr(uri, '?');
+    if (q == NULL)
+        q = uri + strlen(uri);
+
+    return p_strncat(pool, uri, q - uri,
+                     ";", (size_t)1, args, length,
+                     q, strlen(q),
+                     NULL);
+}

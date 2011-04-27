@@ -112,6 +112,12 @@ proxy_handler(struct request *request2)
                     tr->address.type == RESOURCE_ADDRESS_HTTP);
 
     const struct resource_address *address = &tr->address;
+    if (request2->translate.response->transparent &&
+        !strref_is_empty(&request2->uri.args))
+        address = resource_address_insert_args(request->pool, address,
+                                               request2->uri.args.data,
+                                               request2->uri.args.length);
+
     if (!request2->processor_focus)
         /* forward query string */
         address = resource_address_insert_query_string_from(request->pool,

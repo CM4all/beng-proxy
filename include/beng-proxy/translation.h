@@ -146,6 +146,12 @@ enum beng_translation_command {
     TRANSLATE_REALM = 68,
 
     TRANSLATE_UNTRUSTED_SITE_SUFFIX = 69,
+
+    /**
+     * Transparent proxy: forward URI arguments to the request handler
+     * instead of using them.
+     */
+    TRANSLATE_TRANSPARENT = 70,
 };
 
 struct beng_translation_header {

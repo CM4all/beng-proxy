@@ -4,6 +4,7 @@ cm4all-beng-proxy (0.9.15) unstable; urgency=low
   * configure.ac: check if libattr is available
   * access-log: log Referer and User-Agent
   * access-log: log the request duration
+  * proxy-handler: allow forwarding URI arguments
   * merge release 0.8.35
 
  --

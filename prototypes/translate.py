@@ -145,6 +145,9 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, uri[9:]))
         elif raw_uri[:11] == '/cfatest01/':
             response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
+        elif raw_uri[:13] == '/transparent/':
+            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
+            response.packet(TRANSLATE_TRANSPARENT)
         elif raw_uri[:7] == '/proxy/':
             response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[7:])
             response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_YES))

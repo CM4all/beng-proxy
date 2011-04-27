@@ -97,6 +97,8 @@ struct translate_response {
 
     bool previous;
 
+    bool transparent;
+
     const char *session;
 
     /**

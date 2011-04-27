@@ -9,6 +9,7 @@
 #include "uri-relative.h"
 #include "uri-verify.h"
 #include "uri-escape.h"
+#include "uri-edit.h"
 #include "strref.h"
 
 void
@@ -124,6 +125,50 @@ resource_address_insert_query_string_from(pool_t pool,
                                                 dest->u.cgi.query_string, NULL);
         else
             dest->u.cgi.query_string = p_strdup(pool, query_string);
+        return dest;
+    }
+
+    /* unreachable */
+    assert(false);
+    return src;
+}
+
+const struct resource_address *
+resource_address_insert_args(pool_t pool,
+                             const struct resource_address *src,
+                             const char *args, size_t length)
+{
+    struct resource_address *dest;
+
+    switch (src->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
+        /* no arguments support */
+        return src;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        assert(src->u.http != NULL);
+
+        dest = p_malloc(pool, sizeof(*dest));
+        dest->type = src->type;
+        dest->u.http = uri_address_insert_args(pool, src->u.http,
+                                               args, length);
+        return dest;
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        assert(src->u.cgi.path != NULL);
+
+        if (src->u.cgi.uri == NULL)
+            return src;
+
+        dest = p_malloc(pool, sizeof(*dest));
+        resource_address_copy(pool, dest, src);
+
+        dest->u.cgi.uri = uri_insert_args(pool, src->u.cgi.uri, args, length);
         return dest;
     }
 

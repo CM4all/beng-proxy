@@ -123,6 +123,16 @@ resource_address_insert_query_string_from(pool_t pool,
                                           const char *uri);
 
 /**
+ * Duplicate this #resource_address object, and inserts the URI
+ * arguments.  If this resource address does not support URI
+ * arguments, the original #resource_address pointer is returned.
+ */
+const struct resource_address *
+resource_address_insert_args(pool_t pool,
+                             const struct resource_address *src,
+                             const char *args, size_t length);
+
+/**
  * Duplicate a resource address, but return the base address.
  *
  * @param src the original resource address

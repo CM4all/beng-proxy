@@ -37,6 +37,15 @@ uri_address_insert_query_string(pool_t pool,
                                 const struct uri_with_address *uwa,
                                 const char *query_string);
 
+/**
+ * Duplicates this #uri_with_address object and inserts the specified
+ * arguments into the URI.
+ */
+struct uri_with_address *
+uri_address_insert_args(pool_t pool,
+                        const struct uri_with_address *uwa,
+                        const char *args, size_t length);
+
 void
 uri_address_add(struct uri_with_address *uwa,
                 const struct sockaddr *addr, socklen_t addrlen);

@@ -173,6 +173,7 @@ tcache_dup_response(pool_t pool, struct translate_response *dest,
     dest->filter_4xx = src->filter_4xx;
     dest->error_document = src->error_document;
     dest->previous = src->previous;
+    dest->transparent = src->transparent;
     dest->session = NULL;
 
     if (strref_is_null(&src->check))

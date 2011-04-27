@@ -99,7 +99,12 @@ handle_translated_request(struct request *request,
 
     request->connection->site_name = response->site;
 
-    if (response->discard_session)
+    if (response->transparent) {
+        request->stateless = true;
+        request->args = NULL;
+    }
+
+    if (response->discard_session || response->transparent)
         request_discard_session(request);
 
     request->translate.response = response;
@@ -415,6 +420,7 @@ serve_document_root_file(struct request *request2,
         widget_view_init(view);
 
         tr->views = view;
+        tr->transparent = true;
     }
 
     request2->translate.transformation = tr->views->transformation;
