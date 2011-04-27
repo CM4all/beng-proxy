@@ -125,6 +125,24 @@ growing_buffer_size(const struct growing_buffer *gb)
     return size;
 }
 
+size_t
+growing_buffer_available(const struct growing_buffer *gb)
+{
+    assert(gb->size == 0);
+    assert(gb->tail == NULL);
+    assert(gb->current != NULL);
+
+    size_t available = 0;
+    for (struct buffer *buffer = gb->current;
+         buffer != NULL; buffer = buffer->next) {
+        assert(buffer->position <= buffer->length);
+
+        available += buffer->length - buffer->position;
+    }
+
+    return available;
+}
+
 const void *
 growing_buffer_read(struct growing_buffer *gb, size_t *length_r)
 {
@@ -239,18 +257,8 @@ static off_t
 istream_gb_available(istream_t istream, bool partial __attr_unused)
 {
     struct growing_buffer *gb = istream_to_gb(istream);
-    struct buffer *buffer;
-    off_t available = 0;
 
-    assert(gb->size == 0);
-    assert(gb->tail == NULL);
-    assert(gb->current != NULL);
-    assert(gb->current->position <= gb->current->length);
-
-    for (buffer = gb->current; buffer != NULL; buffer = buffer->next)
-        available += buffer->length - buffer->position;
-
-    return available;
+    return growing_buffer_available(gb);
 }
 
 static void

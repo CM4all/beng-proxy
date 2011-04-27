@@ -34,6 +34,13 @@ growing_buffer_empty(struct growing_buffer *gb);
 size_t
 growing_buffer_size(const struct growing_buffer *gb);
 
+/**
+ * Returns the remaining number of bytes that can be read from the
+ * buffer.
+ */
+size_t
+growing_buffer_available(const struct growing_buffer *gb);
+
 const void *
 growing_buffer_read(struct growing_buffer *gb, size_t *length_r);
 
