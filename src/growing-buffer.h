@@ -8,7 +8,6 @@
 #define __BENG_GROWING_BUFFER_H
 
 #include "pool.h"
-#include "istream.h"
 
 struct growing_buffer_reader {
     const struct buffer *buffer;
@@ -83,8 +82,5 @@ void *
 growing_buffer_dup2(const struct growing_buffer *a,
                     const struct growing_buffer *b,
                     pool_t pool, size_t *length_r);
-
-istream_t
-growing_buffer_istream(struct growing_buffer *gb);
 
 #endif

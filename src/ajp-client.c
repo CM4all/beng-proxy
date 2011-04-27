@@ -14,6 +14,7 @@
 #include "format.h"
 #include "buffered-io.h"
 #include "istream-internal.h"
+#include "istream-gb.h"
 #include "ajp-protocol.h"
 #include "ajp-serialize.h"
 #include "serialize.h"
@@ -951,7 +952,7 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
 
     header->length = htons(growing_buffer_size(gb) - sizeof(*header));
 
-    request = growing_buffer_istream(gb);
+    request = istream_gb_new(pool, gb);
     if (body != NULL) {
         client->request.ajp_body = istream_ajp_body_new(pool, body);
         istream_ajp_body_request(client->request.ajp_body, requested);

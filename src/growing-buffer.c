@@ -5,7 +5,6 @@
  */
 
 #include "growing-buffer.h"
-#include "istream-internal.h"
 
 #include <assert.h>
 #include <string.h>
@@ -18,7 +17,6 @@ struct buffer {
 
 struct growing_buffer {
     pool_t pool;
-    struct istream stream;
     size_t size;
     struct buffer *current, *tail, first;
 };
@@ -314,84 +312,4 @@ growing_buffer_dup2(const struct growing_buffer *a,
     growing_buffer_copy(growing_buffer_copy(dest, a), b);
 
     return dest;
-}
-
-
-static inline struct growing_buffer *
-istream_to_gb(istream_t istream)
-{
-    return (struct growing_buffer *)(((char*)istream) - offsetof(struct growing_buffer, stream));
-}
-
-static off_t
-istream_gb_available(istream_t istream, bool partial __attr_unused)
-{
-    struct growing_buffer *gb = istream_to_gb(istream);
-
-    return growing_buffer_available(gb);
-}
-
-static void
-istream_gb_read(istream_t istream)
-{
-    struct growing_buffer *gb = istream_to_gb(istream);
-    const void *data;
-    size_t length, nbytes;
-
-    assert(gb->size == 0);
-    assert(gb->tail == NULL);
-    assert(gb->current != NULL);
-    assert(gb->current->position <= gb->current->length);
-
-    /* this loop is required to cross the buffer borders */
-    while (1) {
-        data = growing_buffer_read(gb, &length);
-        if (data == NULL) {
-            gb->current = NULL;
-            istream_invoke_eof(&gb->stream);
-            return;
-        }
-
-        nbytes = istream_invoke_data(&gb->stream, data, length);
-        if (nbytes == 0)
-            /* growing_buffer has been closed */
-            return;
-
-        growing_buffer_consume(gb, nbytes);
-        if (nbytes < length)
-            return;
-    }
-}
-
-static void
-istream_gb_close(istream_t istream)
-{
-    struct growing_buffer *gb = istream_to_gb(istream);
-
-    assert(gb->size == 0);
-    assert(gb->tail == NULL);
-
-    gb->current = NULL;
-}
-
-static const struct istream istream_gb = {
-    .available = istream_gb_available,
-    .read = istream_gb_read,
-    .close = istream_gb_close,
-};
-
-istream_t
-growing_buffer_istream(struct growing_buffer *gb)
-{
-    assert(gb != NULL);
-    assert(gb->size > 0);
-
-    gb->size = 0; /* "read mode" marker for assertions */
-    assert(gb->first.position == 0);
-    assert(gb->current == &gb->first);
-    gb->tail = NULL;
-    gb->stream = istream_gb;
-    gb->stream.pool = gb->pool;
-
-    return istream_struct_cast(&gb->stream);
 }

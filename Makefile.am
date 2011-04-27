@@ -350,6 +350,8 @@ SRC = src/main.c \
 	src/http-client.c \
 	src/http-util.c \
 	src/istream-ajp-body.c \
+	src/istream-gb.h \
+	src/istream-gb.c \
 	src/ajp-client.c \
 	src/access-log.c \
 	src/tcp-stock.c \
@@ -781,6 +783,7 @@ test_t_istream_tee_SOURCES = test/t-istream-tee.c \
 test_t_istream_tee_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_growing_buffer_SOURCES = test/t-growing-buffer.c \
+	src/istream-gb.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
 
@@ -809,6 +812,7 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/buffered-io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
+	src/istream-gb.c \
 	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
 	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
@@ -838,6 +842,7 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/buffered-io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
+	src/istream-gb.c \
 	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
 	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
@@ -863,6 +868,7 @@ test_t_http_server_null_SOURCES = test/t-http-server-null.c \
 	src/buffered-io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
+	src/istream-gb.c \
 	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
 	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
@@ -889,6 +895,7 @@ test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
 	src/buffered-io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
+	src/istream-gb.c \
 	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
 	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
@@ -916,6 +923,7 @@ test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
 	src/buffered-io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
+	src/istream-gb.c \
 	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
 	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
@@ -938,6 +946,7 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/header-writer.c \
+	src/istream-gb.c \
 	src/istream-forward.c src/istream-string.c src/istream-memory.c \
 	src/istream-cat.c src/istream-fail.c src/istream-block.c \
 	src/istream-chunked.c src/istream-dechunk.c \
@@ -968,6 +977,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/fifo-buffer.c src/header-parser.c \
 	src/growing-buffer.c \
 	src/strutil.c \
+	src/istream-gb.c \
 	src/istream-memory.c src/istream-string.c \
 	src/http-cache.c src/http-cache-rfc.c \
 	src/http-cache-info.c src/http-cache-document.c \
@@ -1238,6 +1248,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/growing-buffer.c src/fd-util.c src/fd_util.c \
 	src/strmap.c src/hashmap.c \
 	src/strutil.c \
+	src/istream-gb.c \
 	src/istream-file.c \
 	src/istream-cat.c \
 	src/istream-memory.c \

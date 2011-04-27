@@ -15,6 +15,7 @@
 #include "strmap.h"
 #include "tpool.h"
 #include "background.h"
+#include "istream-gb.h"
 
 #include <glib.h>
 
@@ -429,7 +430,7 @@ http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
     value = istream_cat_new(pool,
                             istream_memory_new(pool, &request->header_size,
                                                sizeof(request->header_size)),
-                            growing_buffer_istream(gb), value, NULL);
+                            istream_gb_new(pool, gb), value, NULL);
 
     request->extras.set.flags = 0;
     request->extras.set.expiration = info->expires > 0

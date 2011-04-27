@@ -15,6 +15,7 @@
 #include "http-util.h"
 #include "async.h"
 #include "background.h"
+#include "istream-gb.h"
 
 #include <glib.h>
 
@@ -231,7 +232,7 @@ http_cache_put(struct http_cache_request *request)
         struct background_job *job = p_malloc(request->pool, sizeof(*job));
 
         istream_t value = request->response.output != NULL
-            ? growing_buffer_istream(request->response.output)
+            ? istream_gb_new(request->pool, request->response.output)
             : NULL;
 
         http_cache_memcached_put(request->pool, request->cache->memcached_stock,

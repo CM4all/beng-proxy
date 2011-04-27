@@ -14,6 +14,7 @@
 #include "pevent.h"
 #include "http-body.h"
 #include "istream-internal.h"
+#include "istream-gb.h"
 #include "async.h"
 #include "growing-buffer.h"
 #include "please.h"
@@ -1202,7 +1203,7 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
 
     growing_buffer_write_buffer(headers, "\r\n", 2);
 
-    header_stream = growing_buffer_istream(headers);
+    header_stream = istream_gb_new(client->pool, headers);
 
     /* request istream */
 

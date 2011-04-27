@@ -1,5 +1,6 @@
 #include "growing-buffer.h"
 #include "direct.h"
+#include "istream-gb.h"
 
 #include <event.h>
 
@@ -134,7 +135,7 @@ create_test(pool_t pool)
 {
     struct growing_buffer *gb = growing_buffer_new(pool, 64);
     growing_buffer_write_string(gb, "foo");
-    return growing_buffer_istream(gb);
+    return istream_gb_new(pool, gb);
 }
 
 

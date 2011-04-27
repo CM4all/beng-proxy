@@ -13,6 +13,7 @@
 #include "async.h"
 #include "buffered-io.h"
 #include "istream-internal.h"
+#include "istream-gb.h"
 #include "please.h"
 #include "strutil.h"
 #include "header-parser.h"
@@ -839,7 +840,7 @@ fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
     if (body != NULL)
         /* format the request body */
         request = istream_cat_new(pool,
-                                  growing_buffer_istream(buffer),
+                                  istream_gb_new(pool, buffer),
                                   istream_fcgi_new(pool, body,
                                                    header.request_id),
                                   NULL);
@@ -849,7 +850,7 @@ fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
         header.content_length = htons(0);
         growing_buffer_write_buffer(buffer, &header, sizeof(header));
 
-        request = growing_buffer_istream(buffer);
+        request = istream_gb_new(pool, buffer);
     }
 
     istream_assign_handler(&client->request.istream, request,

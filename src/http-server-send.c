@@ -10,6 +10,7 @@
 #include "format.h"
 #include "date.h"
 #include "growing-buffer.h"
+#include "istream-gb.h"
 
 #include <socket/util.h>
 
@@ -137,7 +138,7 @@ http_server_response(const struct http_server_request *request,
 
     growing_buffer_write_buffer(headers, "\r\n", 2);
 
-    header_stream = growing_buffer_istream(headers);
+    header_stream = istream_gb_new(request->pool, headers);
 
     connection->response.length = - istream_available(status_stream, false)
         - istream_available(header_stream, false);
