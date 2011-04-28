@@ -11,6 +11,7 @@
 #include "fifo-buffer.h"
 #include "tpool.h"
 
+#include <assert.h>
 #include <string.h>
 
 void

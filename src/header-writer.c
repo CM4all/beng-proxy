@@ -10,6 +10,7 @@
 
 #include <http/header.h>
 
+#include <assert.h>
 #include <string.h>
 
 void
