@@ -10,6 +10,11 @@
 #include "pool.h"
 #include "istream.h"
 
+struct growing_buffer_reader {
+    const struct buffer *buffer;
+    size_t position;
+};
+
 struct growing_buffer *__attr_malloc
 growing_buffer_new(pool_t pool, size_t initial_size);
 
@@ -33,6 +38,21 @@ growing_buffer_empty(struct growing_buffer *gb);
  */
 size_t
 growing_buffer_size(const struct growing_buffer *gb);
+
+void
+growing_buffer_reader_init(struct growing_buffer_reader *reader,
+                           const struct growing_buffer *gb);
+
+size_t
+growing_buffer_reader_available(const struct growing_buffer_reader *reader);
+
+const void *
+growing_buffer_reader_read(const struct growing_buffer_reader *reader,
+                           size_t *length_r);
+
+void
+growing_buffer_reader_consume(struct growing_buffer_reader *reader,
+                              size_t length);
 
 /**
  * Returns the remaining number of bytes that can be read from the

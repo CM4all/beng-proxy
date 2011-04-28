@@ -125,6 +125,76 @@ growing_buffer_size(const struct growing_buffer *gb)
     return size;
 }
 
+void
+growing_buffer_reader_init(struct growing_buffer_reader *reader,
+                           const struct growing_buffer *gb)
+{
+    assert(reader != NULL);
+    assert(gb != NULL);
+    assert(gb->first.length > 0 || gb->first.next == NULL);
+
+    reader->buffer = &gb->first;
+    reader->position = 0;
+}
+
+size_t
+growing_buffer_reader_available(const struct growing_buffer_reader *reader)
+{
+    assert(reader != NULL);
+    assert(reader->buffer != NULL);
+    assert(reader->position <= reader->buffer->length);
+
+    size_t available = reader->buffer->length - reader->position;
+    for (const struct buffer *buffer = reader->buffer->next;
+         buffer != NULL; buffer = buffer->next) {
+        assert(buffer->length > 0);
+
+        available += buffer->length;
+    }
+
+    return available;
+}
+
+const void *
+growing_buffer_reader_read(const struct growing_buffer_reader *reader,
+                           size_t *length_r)
+{
+    assert(reader != NULL);
+    assert(reader->buffer != NULL);
+
+    if (reader->position >= reader->buffer->length) {
+        assert(reader->position == reader->buffer->length);
+        assert(reader->buffer->next == NULL);
+        return NULL;
+    }
+
+    *length_r = reader->buffer->length - reader->position;
+    return reader->buffer->data + reader->position;
+}
+
+void
+growing_buffer_reader_consume(struct growing_buffer_reader *reader,
+                              size_t length)
+{
+    assert(reader != NULL);
+    assert(reader->buffer != NULL);
+
+    if (length == 0)
+        return;
+
+    reader->position += length;
+
+    assert(reader->position <= reader->buffer->length);
+
+    if (reader->position >= reader->buffer->length) {
+        if (reader->buffer->next == NULL)
+            return;
+
+        reader->buffer = reader->buffer->next;
+        reader->position = 0;
+    }
+}
+
 size_t
 growing_buffer_available(const struct growing_buffer *gb)
 {
