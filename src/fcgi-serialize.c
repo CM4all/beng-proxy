@@ -12,6 +12,7 @@
 
 #include <glib.h>
 
+#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
