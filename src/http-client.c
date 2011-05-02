@@ -266,7 +266,6 @@ static void
 http_client_response_stream_read(istream_t istream)
 {
     struct http_client *client = response_stream_to_http_client(istream);
-    bool bret;
 
     assert(client != NULL);
     assert(client->input != NULL);
@@ -277,7 +276,7 @@ http_client_response_stream_read(istream_t istream)
     assert(client->response.body_reader.output.handler != NULL);
     assert(http_response_handler_used(&client->request.handler));
 
-    bret = http_client_consume_body(client);
+    bool bret = http_client_consume_body(client);
     if (!bret)
         return;
 
@@ -380,11 +379,10 @@ static bool
 http_client_parse_status_line(struct http_client *client,
                               const char *line, size_t length)
 {
-    const char *space;
-
     assert(client != NULL);
     assert(client->response.read_state == READ_STATUS);
 
+    const char *space;
     if (length < 10 || memcmp(line, "HTTP/", 5) != 0 ||
         (space = memchr(line + 6, ' ', length - 6)) == NULL) {
         stopwatch_event(client->stopwatch, "malformed");
@@ -436,14 +434,10 @@ http_client_parse_status_line(struct http_client *client,
 static bool
 http_client_headers_finished(struct http_client *client)
 {
-    const char *header_connection, *transfer_encoding, *content_length_string;
-    char *endptr;
-    off_t content_length;
-    bool chunked;
-
     stopwatch_event(client->stopwatch, "headers");
 
-    header_connection = strmap_remove(client->response.headers, "connection");
+    const char *header_connection =
+        strmap_remove(client->response.headers, "connection");
     client->keep_alive =
         (header_connection == NULL && !client->response.http_1_0) ||
         (header_connection != NULL &&
@@ -456,15 +450,17 @@ http_client_headers_finished(struct http_client *client)
         return true;
     }
 
-    transfer_encoding = strmap_remove(client->response.headers,
-                                      "transfer-encoding");
-    content_length_string = strmap_remove(client->response.headers,
-                                          "content-length");
+    const char *transfer_encoding = strmap_remove(client->response.headers,
+                                                  "transfer-encoding");
+    const char *content_length_string = strmap_remove(client->response.headers,
+                                                      "content-length");
 
     /* remove the other hop-by-hop response headers */
     strmap_remove(client->response.headers, "proxy-authenticate");
     strmap_remove(client->response.headers, "upgrade");
 
+    off_t content_length;
+    bool chunked;
     if (transfer_encoding == NULL ||
         strcasecmp(transfer_encoding, "chunked") != 0) {
         /* not chunked */
@@ -481,6 +477,7 @@ http_client_headers_finished(struct http_client *client)
             }
             content_length = (off_t)-1;
         } else {
+            char *endptr;
             content_length = (off_t)strtoull(content_length_string,
                                              &endptr, 10);
             if (unlikely(endptr == content_length_string || *endptr != 0 ||
@@ -569,23 +566,20 @@ http_client_response_finished(struct http_client *client)
 static bool
 http_client_parse_headers(struct http_client *client)
 {
-    const char *buffer, *buffer_end, *start, *end, *next = NULL;
-    size_t length;
-    bool bret;
-
     assert(client != NULL);
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
-    buffer = fifo_buffer_read(client->input, &length);
+    size_t length;
+    const char *buffer = fifo_buffer_read(client->input, &length);
     if (buffer == NULL)
         return false;
 
     assert(length > 0);
-    buffer_end = buffer + length;
+    const char *buffer_end = buffer + length;
 
     /* parse line by line */
-    start = buffer;
+    const char *start = buffer, *end, *next = NULL;
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
 
@@ -595,8 +589,7 @@ http_client_parse_headers(struct http_client *client)
             --end;
 
         /* handle this line */
-        bret = http_client_handle_line(client, start, end - start + 1);
-        if (!bret)
+        if (!http_client_handle_line(client, start, end - start + 1))
             return false;
 
         if (client->response.read_state != READ_HEADERS)
@@ -656,8 +649,6 @@ http_client_response_stream_eof(struct http_client *client)
 static bool
 http_client_consume_body(struct http_client *client)
 {
-    size_t nbytes;
-
     assert(client != NULL);
     assert(client->response.read_state == READ_BODY);
 
@@ -669,7 +660,8 @@ http_client_consume_body(struct http_client *client)
            function */
         p_event_del(&client->response.event, client->pool);
 
-    nbytes = http_body_consume_body(&client->response.body_reader, client->input);
+    size_t nbytes = http_body_consume_body(&client->response.body_reader,
+                                           client->input);
     if (nbytes == 0)
         return false;
 
@@ -690,15 +682,12 @@ http_client_consume_body(struct http_client *client)
 static bool
 http_client_consume_headers(struct http_client *client)
 {
-    bool bret;
-
     assert(client != NULL);
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
     do {
-        bret = http_client_parse_headers(client);
-        if (!bret)
+        if (!http_client_parse_headers(client))
             return false;
     } while (client->response.read_state == READ_HEADERS);
 
@@ -770,14 +759,12 @@ http_client_consume_headers(struct http_client *client)
 static void
 http_client_try_response_direct(struct http_client *client)
 {
-    ssize_t nbytes;
-
     assert(client->fd >= 0);
     assert(client->response.read_state == READ_BODY);
     assert(http_client_check_direct(client));
 
-    nbytes = http_body_try_direct(&client->response.body_reader,
-                                  client->fd, client->fd_type);
+    ssize_t nbytes = http_body_try_direct(&client->response.body_reader,
+                                          client->fd, client->fd_type);
     if (nbytes == -2 || nbytes == -3)
         /* either the destination fd blocks (-2) or the stream (and
            the whole connection) has been closed during the direct()
@@ -811,9 +798,7 @@ http_client_try_response_direct(struct http_client *client)
 static void
 http_client_try_read_buffered(struct http_client *client)
 {
-    ssize_t nbytes;
-
-    nbytes = recv_to_buffer(client->fd, client->input, INT_MAX);
+    ssize_t nbytes = recv_to_buffer(client->fd, client->input, INT_MAX);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
@@ -875,8 +860,6 @@ http_client_try_read_buffered(struct http_client *client)
 static void
 http_client_try_read(struct http_client *client)
 {
-    bool bret;
-
     assert(client->fd >= 0);
 
     if (client->response.read_state == READ_BODY &&
@@ -884,8 +867,8 @@ http_client_try_read(struct http_client *client)
         if (!fifo_buffer_empty(client->input)) {
             /* there is still data in the body, which we have to
                consume before we do direct splice() */
-            bret = http_client_consume_body(client);
-            if (!bret || !fifo_buffer_empty(client->input))
+            if (!http_client_consume_body(client) ||
+                !fifo_buffer_empty(client->input))
                 return;
 
             /* at this point, the handler might have changed, and the
@@ -958,11 +941,10 @@ static size_t
 http_client_request_stream_data(const void *data, size_t length, void *ctx)
 {
     struct http_client *client = ctx;
-    ssize_t nbytes;
 
     assert(client->fd >= 0);
 
-    nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    ssize_t nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (likely(nbytes >= 0)) {
         http_client_schedule_write(client);
         return (size_t)nbytes;
@@ -1009,11 +991,11 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
                                   size_t max_length, void *ctx)
 {
     struct http_client *client = ctx;
-    ssize_t nbytes;
 
     assert(client->fd >= 0);
 
-    nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
+    ssize_t nbytes = istream_direct_to_socket(type, fd, client->fd,
+                                              max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(client->fd)) {
             http_client_schedule_write(client);
@@ -1126,11 +1108,6 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                     void *ctx,
                     struct async_operation_ref *async_ref)
 {
-    pool_t pool;
-    struct http_client *client;
-    const char *p;
-    istream_t request_line_stream, header_stream;
-
     assert(fd >= 0);
     assert(http_method_is_valid(method));
     assert(handler != NULL);
@@ -1143,9 +1120,9 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
         return;
     }
 
-    pool = pool_new_linear(caller_pool, "http_client_request", 8192);
+    pool_t pool = pool_new_linear(caller_pool, "http_client_request", 8192);
 
-    client = p_malloc(pool, sizeof(*client));
+    struct http_client *client = p_malloc(pool, sizeof(*client));
     client->stopwatch = stopwatch_fd_new(pool, fd, uri);
     client->pool = pool;
     client->fd = fd;
@@ -1172,10 +1149,10 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
 
     /* request line */
 
-    p = p_strcat(client->pool,
-                 http_method_to_string(method), " ", uri,
-                 " HTTP/1.1\r\n", NULL);
-    request_line_stream = istream_string_new(client->pool, p);
+    const char *p = p_strcat(client->pool,
+                             http_method_to_string(method), " ", uri,
+                             " HTTP/1.1\r\n", NULL);
+    istream_t request_line_stream = istream_string_new(client->pool, p);
 
     /* headers */
 
@@ -1203,7 +1180,7 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
 
     growing_buffer_write_buffer(headers, "\r\n", 2);
 
-    header_stream = istream_gb_new(client->pool, headers);
+    istream_t header_stream = istream_gb_new(client->pool, headers);
 
     /* request istream */
 
