@@ -65,7 +65,7 @@ static const struct istream istream_gb = {
 };
 
 istream_t
-istream_gb_new(struct pool *pool, struct growing_buffer *gb)
+istream_gb_new(struct pool *pool, const struct growing_buffer *gb)
 {
     assert(gb != NULL);
 

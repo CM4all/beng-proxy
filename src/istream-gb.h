@@ -12,6 +12,6 @@
 struct growing_buffer;
 
 istream_t
-istream_gb_new(struct pool *pool, struct growing_buffer *gb);
+istream_gb_new(struct pool *pool, const struct growing_buffer *gb);
 
 #endif
