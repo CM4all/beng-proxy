@@ -156,6 +156,23 @@ class Translation(Protocol):
             response.packet(TRANSLATE_SCRIPT_NAME, script_name)
             if path_info is not None:
                 response.packet(TRANSLATE_PATH_INFO, path_info)
+        elif uri[:17] == '/cgi-transparent/':
+            i = uri.find('/', 17)
+            if i > 0:
+                script = uri[17:i]
+                script_name = uri[:i]
+                path_info = uri[i:]
+            else:
+                script = uri[17:]
+                script_name = uri
+                path_info = None
+
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, script))
+            response.packet(TRANSLATE_SCRIPT_NAME, script_name)
+            if path_info is not None:
+                response.packet(TRANSLATE_PATH_INFO, path_info)
+
+            response.packet(TRANSLATE_TRANSPARENT)
         elif raw_uri[:11] == '/cfatest01/':
             response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
         elif raw_uri[:13] == '/transparent/':
