@@ -162,13 +162,22 @@ resource_address_insert_args(pool_t pool,
     case RESOURCE_ADDRESS_WAS:
         assert(src->u.cgi.path != NULL);
 
-        if (src->u.cgi.uri == NULL)
+        if (src->u.cgi.uri == NULL && src->u.cgi.path_info == NULL)
             return src;
 
         dest = p_malloc(pool, sizeof(*dest));
         resource_address_copy(pool, dest, src);
 
-        dest->u.cgi.uri = uri_insert_args(pool, src->u.cgi.uri, args, length);
+        if (src->u.cgi.uri != NULL)
+            dest->u.cgi.uri = uri_insert_args(pool, src->u.cgi.uri,
+                                              args, length);
+
+        if (src->u.cgi.path_info != NULL)
+            dest->u.cgi.path_info =
+                p_strncat(pool,
+                          src->u.cgi.path_info, strlen(src->u.cgi.path_info),
+                          ";", (size_t)1, args, length, NULL);
+
         return dest;
     }
 
