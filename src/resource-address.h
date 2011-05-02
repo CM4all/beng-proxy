@@ -141,7 +141,8 @@ resource_address_insert_args(pool_t pool,
  * cannot have a base address
  */
 struct resource_address *
-resource_address_save_base(pool_t pool, const struct resource_address *src,
+resource_address_save_base(pool_t pool, struct resource_address *dest,
+                           const struct resource_address *src,
                            const char *suffix);
 
 /**
@@ -152,7 +153,8 @@ resource_address_save_base(pool_t pool, const struct resource_address *src,
  * @return NULL if this address type cannot have a base address
  */
 struct resource_address *
-resource_address_load_base(pool_t pool, const struct resource_address *src,
+resource_address_load_base(pool_t pool, struct resource_address *dest,
+                           const struct resource_address *src,
                            const char *suffix);
 
 const struct resource_address *

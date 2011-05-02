@@ -207,10 +207,12 @@ base_string_unescape(pool_t pool, const char *p, const char *suffix)
 }
 
 struct resource_address *
-resource_address_save_base(pool_t pool, const struct resource_address *src,
+resource_address_save_base(pool_t pool, struct resource_address *dest,
+                           const struct resource_address *src,
                            const char *suffix)
 {
-    struct resource_address *dest;
+    assert(src != dest);
+
     size_t length;
 
     switch (src->type) {
@@ -228,7 +230,7 @@ resource_address_save_base(pool_t pool, const struct resource_address *src,
         if (length == 0)
             return NULL;
 
-        dest = resource_address_dup(pool, src);
+        resource_address_copy(pool, dest, src);
         dest->u.cgi.path_info = p_strndup(pool, dest->u.cgi.path_info, length);
         return dest;
 
@@ -237,7 +239,7 @@ resource_address_save_base(pool_t pool, const struct resource_address *src,
         if (length == 0)
             return NULL;
 
-        dest = resource_address_dup(pool, src);
+        resource_address_copy(pool, dest, src);
         dest->u.local.path = p_strndup(pool, dest->u.local.path, length);
 
         /* BASE+DEFLATED is not supported */
@@ -251,7 +253,7 @@ resource_address_save_base(pool_t pool, const struct resource_address *src,
         if (length == 0)
             return NULL;
 
-        dest = resource_address_dup(pool, src);
+        resource_address_copy(pool, dest, src);
         dest->u.http->uri = p_strndup(pool, dest->u.http->uri, length);
         return dest;
     }
@@ -261,10 +263,12 @@ resource_address_save_base(pool_t pool, const struct resource_address *src,
 }
 
 struct resource_address *
-resource_address_load_base(pool_t pool, const struct resource_address *src,
+resource_address_load_base(pool_t pool, struct resource_address *dest,
+                           const struct resource_address *src,
                            const char *suffix)
 {
-    struct resource_address *dest;
+    assert(src != dest);
+
     char *unescaped;
 
     if (!uri_path_verify_paranoid(suffix))
@@ -285,7 +289,7 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
         unescaped = p_strdup(pool, suffix);
         unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
-        dest = resource_address_dup(pool, src);
+        resource_address_copy(pool, dest, src);
         dest->u.cgi.path_info = p_strcat(pool, dest->u.cgi.path_info,
                                          unescaped, NULL);
         return dest;
@@ -298,7 +302,7 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
         unescaped = p_strdup(pool, suffix);
         unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
-        dest = resource_address_dup(pool, src);
+        resource_address_copy(pool, dest, src);
         dest->u.local.path = p_strcat(pool, dest->u.local.path,
                                       unescaped, NULL);
         return dest;
@@ -309,7 +313,7 @@ resource_address_load_base(pool_t pool, const struct resource_address *src,
         assert(*src->u.http->uri != 0);
         assert(src->u.http->uri[strlen(src->u.http->uri) - 1] == '/');
 
-        dest = resource_address_dup(pool, src);
+        resource_address_copy(pool, dest, src);
         dest->u.http->uri = p_strcat(pool, dest->u.http->uri, suffix, NULL);
         return dest;
     }

@@ -35,91 +35,91 @@ int main(int argc, char **argv) {
             },
         },
     };
-    struct resource_address *a, *b;
+    struct resource_address *a, *b, dest, dest2;
 
     (void)argc;
     (void)argv;
 
     pool = pool_new_libc(NULL, "root");
 
-    a = resource_address_save_base(pool, &ra1, "bar.html");
+    a = resource_address_save_base(pool, &dest2, &ra1, "bar.html");
     assert(a != NULL);
     assert(a->type == RESOURCE_ADDRESS_LOCAL);
     assert(strcmp(a->u.local.path, "/var/www/foo/") == 0);
 
-    b = resource_address_load_base(pool, a, "index.html");
+    b = resource_address_load_base(pool, &dest, a, "index.html");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_LOCAL);
     assert(strcmp(b->u.local.path, "/var/www/foo/index.html") == 0);
 
-    b = resource_address_load_base(pool, a, "../hackme");
+    b = resource_address_load_base(pool, &dest, a, "../hackme");
     assert(b == NULL);
 
-    b = resource_address_load_base(pool, a, ".%2e/hackme");
+    b = resource_address_load_base(pool, &dest, a, ".%2e/hackme");
     assert(b == NULL);
 
-    b = resource_address_load_base(pool, a, "foo//bar");
+    b = resource_address_load_base(pool, &dest, a, "foo//bar");
     assert(b == NULL);
 
-    b = resource_address_load_base(pool, a, "foo/./bar");
+    b = resource_address_load_base(pool, &dest, a, "foo/./bar");
     assert(b == NULL);
 
-    b = resource_address_load_base(pool, a, "foo/../bar");
+    b = resource_address_load_base(pool, &dest, a, "foo/../bar");
     assert(b == NULL);
 
-    b = resource_address_load_base(pool, a, "foo/%2e/bar");
+    b = resource_address_load_base(pool, &dest, a, "foo/%2e/bar");
     assert(b == NULL);
 
-    b = resource_address_load_base(pool, a, "foo/.%2e/bar");
+    b = resource_address_load_base(pool, &dest, a, "foo/.%2e/bar");
     assert(b == NULL);
 
-    b = resource_address_load_base(pool, a, "foo/.%2e");
+    b = resource_address_load_base(pool, &dest, a, "foo/.%2e");
     assert(b == NULL);
 
-    b = resource_address_load_base(pool, a, "f%00");
+    b = resource_address_load_base(pool, &dest, a, "f%00");
     assert(b == NULL);
 
-    a = resource_address_save_base(pool, &ra2, "space%20.txt");
+    a = resource_address_save_base(pool, &dest2, &ra2, "space%20.txt");
     assert(a != NULL);
     assert(a->type == RESOURCE_ADDRESS_LOCAL);
     assert(strcmp(a->u.local.path, "/var/www/foo/") == 0);
 
-    b = resource_address_load_base(pool, a, "index%2ehtml");
+    b = resource_address_load_base(pool, &dest, a, "index%2ehtml");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_LOCAL);
     assert(strcmp(b->u.local.path, "/var/www/foo/index.html") == 0);
 
-    a = resource_address_save_base(pool, &ra3, "bar/baz");
+    a = resource_address_save_base(pool, &dest2, &ra3, "bar/baz");
     assert(a != NULL);
     assert(a->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(a->u.cgi.path, ra3.u.cgi.path) == 0);
     assert(strcmp(a->u.cgi.path_info, "/") == 0);
 
-    b = resource_address_load_base(pool, a, "");
+    b = resource_address_load_base(pool, &dest, a, "");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
     assert(strcmp(b->u.cgi.path_info, "/") == 0);
 
-    b = resource_address_load_base(pool, a, "xyz");
+    b = resource_address_load_base(pool, &dest, a, "xyz");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
     assert(strcmp(b->u.cgi.path_info, "/xyz") == 0);
 
-    a = resource_address_save_base(pool, &ra3, "baz");
+    a = resource_address_save_base(pool, &dest2, &ra3, "baz");
     assert(a != NULL);
     assert(a->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(a->u.cgi.path, ra3.u.cgi.path) == 0);
     assert(strcmp(a->u.cgi.path_info, "/bar/") == 0);
 
-    b = resource_address_load_base(pool, a, "bar/");
+    b = resource_address_load_base(pool, &dest, a, "bar/");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
     assert(strcmp(b->u.cgi.path_info, "/bar/bar/") == 0);
 
-    b = resource_address_load_base(pool, a, "bar/xyz");
+    b = resource_address_load_base(pool, &dest, a, "bar/xyz");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);

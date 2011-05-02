@@ -238,12 +238,8 @@ tcache_store_address(pool_t pool, struct resource_address *dest,
     if (suffix != NULL) {
         /* we received a valid BASE packet - store only the base
            URI */
-        struct resource_address *a =
-            resource_address_save_base(pool, src, suffix);
-        if (a != NULL) {
-            *dest = *a;
+        if (resource_address_save_base(pool, dest, src, suffix) != NULL)
             return p_strndup(pool, uri, suffix - uri);
-        }
     }
 
     resource_address_copy(pool, dest, src);
@@ -293,16 +289,11 @@ tcache_load_address(pool_t pool, const char *uri,
                     const struct translate_response *src)
 {
     if (src->base != NULL) {
-        struct resource_address *a;
-
         assert(memcmp(src->base, uri, strlen(src->base)) == 0);
 
-        a = resource_address_load_base(pool, &src->address,
-                                       uri + strlen(src->base));
-        if (a != NULL) {
-            *dest = *a;
+        if (resource_address_load_base(pool, dest, &src->address,
+                                       uri + strlen(src->base)) != NULL)
             return;
-        }
     }
 
     resource_address_copy(pool, dest, &src->address);
