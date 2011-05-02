@@ -142,7 +142,20 @@ class Translation(Protocol):
                 path = join(dirname(dirname(abspath(argv[0]))), 'js/')
             self._handle_local_file(path + uri[19:], response)
         elif uri[:9] == '/cgi-bin/':
-            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, uri[9:]))
+            i = uri.find('/', 9)
+            if i > 0:
+                script = uri[9:i]
+                script_name = uri[:i]
+                path_info = uri[i:]
+            else:
+                script = uri[9:]
+                script_name = uri
+                path_info = None
+
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, script))
+            response.packet(TRANSLATE_SCRIPT_NAME, script_name)
+            if path_info is not None:
+                response.packet(TRANSLATE_PATH_INFO, path_info)
         elif raw_uri[:11] == '/cfatest01/':
             response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
         elif raw_uri[:13] == '/transparent/':
