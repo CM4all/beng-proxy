@@ -1102,7 +1102,7 @@ void
 http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
-                    struct growing_buffer *headers,
+                    const struct growing_buffer *headers,
                     istream_t body,
                     const struct http_response_handler *handler,
                     void *ctx,
@@ -1156,37 +1156,42 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
 
     /* headers */
 
-    if (headers == NULL)
-        headers = growing_buffer_new(client->pool, 256);
+    istream_t header_stream = headers != NULL
+        ? istream_gb_new(client->pool, headers)
+        : istream_null_new(client->pool);
+
+    struct growing_buffer *headers2 =
+        growing_buffer_new(client->pool, 256);
 
     if (body != NULL) {
         off_t content_length = istream_available(body, false);
         if (content_length == (off_t)-1) {
-            header_write(headers, "transfer-encoding", "chunked");
+            header_write(headers2, "transfer-encoding", "chunked");
             body = istream_chunked_new(client->pool, body);
         } else {
             snprintf(client->request.content_length_buffer,
                      sizeof(client->request.content_length_buffer),
                      "%lu", (unsigned long)content_length);
-            header_write(headers, "content-length",
+            header_write(headers2, "content-length",
                          client->request.content_length_buffer);
         }
 
-        header_write(headers, "expect", "100-continue");
+        header_write(headers2, "expect", "100-continue");
 
         body = client->request.body = istream_optional_new(pool, body);
     } else
         client->request.body = NULL;
 
-    growing_buffer_write_buffer(headers, "\r\n", 2);
+    growing_buffer_write_buffer(headers2, "\r\n", 2);
 
-    istream_t header_stream = istream_gb_new(client->pool, headers);
+    istream_t header_stream2 = istream_gb_new(client->pool, headers2);
 
     /* request istream */
 
     client->request.istream = istream_cat_new(client->pool,
                                               request_line_stream,
-                                              header_stream, body,
+                                              header_stream, header_stream2,
+                                              body,
                                               NULL);
 
     istream_handler_set(client->request.istream,
