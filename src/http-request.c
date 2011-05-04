@@ -29,8 +29,11 @@ struct http_request {
 
     http_method_t method;
     const char *uri;
+    struct uri_with_address *uwa;
     struct growing_buffer *headers;
     istream_t body;
+
+    unsigned retries;
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
@@ -41,6 +44,50 @@ http_request_quark(void)
 {
     return g_quark_from_static_string("http_request");
 }
+
+static const struct stock_handler http_request_stock_handler;
+
+/*
+ * HTTP response handler
+ *
+ */
+
+static void
+http_request_response_response(http_status_t status, struct strmap *headers,
+                               istream_t body, void *ctx)
+{
+    struct http_request *hr = ctx;
+
+    http_response_handler_invoke_response(&hr->handler,
+                                          status, headers, body);
+}
+
+static void
+http_request_response_abort(GError *error, void *ctx)
+{
+    struct http_request *hr = ctx;
+
+    if (hr->retries > 0 && error->domain == http_client_quark() &&
+        error->code == HTTP_CLIENT_PREMATURE) {
+        /* the server has closed the connection prematurely, maybe
+           because it didn't want to get any further requests on that
+           TCP connection.  Let's try again. */
+
+        g_error_free(error);
+
+        --hr->retries;
+        tcp_stock_get(hr->tcp_stock, hr->pool,
+                      hr->host_and_port, &hr->uwa->addresses,
+                      &http_request_stock_handler, hr,
+                      hr->async_ref);
+    } else
+        http_response_handler_invoke_abort(&hr->handler, error);
+}
+
+static const struct http_response_handler http_request_response_handler = {
+    .response = http_request_response_response,
+    .abort = http_request_response_abort,
+};
 
 
 /*
@@ -79,7 +126,7 @@ http_request_stock_ready(struct stock_item *item, void *ctx)
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         &http_socket_lease, hr,
                         hr->method, hr->uri, hr->headers, hr->body,
-                        hr->handler.handler, hr->handler.ctx,
+                        &http_request_response_handler, hr,
                         hr->async_ref);
 }
 
@@ -129,6 +176,7 @@ http_request(pool_t pool,
     hr->pool = pool;
     hr->tcp_stock = tcp_stock;
     hr->method = method;
+    hr->uwa = uwa;
 
     hr->headers = headers;
     if (hr->headers == NULL)
@@ -193,6 +241,7 @@ http_request(pool_t pool,
     header_write(hr->headers, "connection", "keep-alive");
 
     hr->host_and_port = host_and_port;
+    hr->retries = 2;
     tcp_stock_get(tcp_stock, pool,
                   host_and_port, &uwa->addresses,
                   &http_request_stock_handler, hr,

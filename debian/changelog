@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.9.17) unstable; urgency=low
 
   * growing-buffer: fix assertion failure after large initial write
+  * http-request: retry after connection failure
   * test/t-cgi: fix bashisms in test scripts
 
  --
