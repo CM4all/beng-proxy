@@ -80,18 +80,6 @@ uri_address_add(struct uri_with_address *uwa,
     address_list_add(uwa->pool, &uwa->addresses, addr, addrlen);
 }
 
-const struct sockaddr *
-uri_address_first(const struct uri_with_address *uwa, socklen_t *addrlen_r)
-{
-    return address_list_first(&uwa->addresses, addrlen_r);
-}
-
-const struct sockaddr *
-uri_address_next(struct uri_with_address *uwa, socklen_t *addrlen_r)
-{
-    return address_list_next(&uwa->addresses, addrlen_r);
-}
-
 bool
 uri_address_is_single(const struct uri_with_address *uwa)
 {
