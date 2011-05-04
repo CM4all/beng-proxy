@@ -17,6 +17,11 @@ struct buffer {
 
 struct growing_buffer {
     pool_t pool;
+
+#ifndef NDEBUG
+    size_t initial_size;
+#endif
+
     size_t size;
     struct buffer *current, *tail, first;
 };
@@ -27,6 +32,11 @@ growing_buffer_new(pool_t pool, size_t initial_size)
     struct growing_buffer *gb = p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);
 
     gb->pool = pool;
+
+#ifndef NDEBUG
+    gb->initial_size = initial_size;
+#endif
+
     gb->size = initial_size;
     gb->current = &gb->first;
     gb->tail = &gb->first;
@@ -129,9 +139,15 @@ growing_buffer_reader_init(struct growing_buffer_reader *reader,
 {
     assert(reader != NULL);
     assert(gb != NULL);
-    assert(gb->first.length > 0 || gb->first.next == NULL);
+    assert(gb->first.length > 0 || gb->first.next == NULL ||
+           (gb->first.next != NULL &&
+            gb->size > gb->initial_size &&
+            gb->first.next->length > gb->initial_size));
 
     reader->buffer = &gb->first;
+    if (reader->buffer->length == 0)
+        reader->buffer = reader->buffer->next;
+
     reader->position = 0;
 }
 
