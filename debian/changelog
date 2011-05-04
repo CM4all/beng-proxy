@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.9.17) unstable; urgency=low
   * http-request: retry after connection failure
   * test/t-cgi: fix bashisms in test scripts
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 04 May 2011 18:54:57 +0200
 
 cm4all-beng-proxy (0.9.16) unstable; urgency=low
 
