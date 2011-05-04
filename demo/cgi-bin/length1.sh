@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Correct Content-Length response header.
 
