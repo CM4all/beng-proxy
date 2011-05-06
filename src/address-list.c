@@ -29,6 +29,8 @@ address_list_copy(pool_t pool, struct address_list *dest,
          item = (const struct address_item *)item->siblings.next)
         address_list_add(pool, dest,
                          &item->envelope.address, item->envelope.length);
+
+    dest->size = src->size;
 }
 
 void
@@ -42,6 +44,7 @@ address_list_add(pool_t pool, struct address_list *al,
     memcpy(&item->envelope.address, address, length);
 
     list_add(&item->siblings, &al->addresses);
+    ++al->size;
 }
 
 const struct sockaddr *
@@ -71,12 +74,6 @@ address_list_next(struct address_list *al, socklen_t *length_r)
 
     *length_r = ua->envelope.length;
     return &ua->envelope.address;
-}
-
-bool
-address_list_is_single(const struct address_list *al)
-{
-    return al->addresses.next->next == &al->addresses;
 }
 
 const char *

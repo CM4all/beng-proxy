@@ -15,12 +15,16 @@
 struct pool;
 
 struct address_list {
+    /** the number of addresses */
+    unsigned size;
+
     struct list_head addresses;
 };
 
 static inline void
 address_list_init(struct address_list *list)
 {
+    list->size = 0;
     list_init(&list->addresses);
 }
 
@@ -41,14 +45,17 @@ address_list_next(struct address_list *list, socklen_t *length_r);
 static inline bool
 address_list_is_empty(const struct address_list *list)
 {
-    return list_empty(&list->addresses);
+    return list->size == 0;
 }
 
 /**
  * Is there no more than one address?
  */
-bool
-address_list_is_single(const struct address_list *list);
+static inline bool
+address_list_is_single(const struct address_list *list)
+{
+    return list->size == 1;
+}
 
 /**
  * Generates a unique string which identifies this object in a hash
