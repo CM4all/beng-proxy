@@ -615,13 +615,7 @@ memcached_client_try_read_direct(struct memcached_client *client)
 {
     assert(client->response.read_state == READ_VALUE);
     assert(client->response.remaining > 0);
-
-    if (!fifo_buffer_empty(client->response.input)) {
-        if (!memcached_consume_input(client))
-            return;
-
-        assert(client->response.remaining > 0);
-    }
+    assert(fifo_buffer_empty(client->response.input));
 
     ssize_t nbytes = istream_invoke_direct(&client->response.value,
                                            client->fd_type, client->fd,
