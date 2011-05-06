@@ -29,6 +29,10 @@ struct http_cache {
     struct memcached_stock *memcached_stock;
     struct resource_loader *resource_loader;
 
+    /**
+     * A list of requests that are currently saving their contents to
+     * the cache.
+     */
     struct list_head requests;
 
     struct background_manager background;
