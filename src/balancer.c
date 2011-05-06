@@ -7,6 +7,7 @@
 #include "balancer.h"
 #include "cache.h"
 #include "address-list.h"
+#include "address-envelope.h"
 #include "failure.h"
 #include "bulldog.h"
 
@@ -32,19 +33,20 @@ struct balancer {
     struct cache *cache;
 };
 
-static const struct sockaddr *
-uri_address_next_checked(struct address_list *list, socklen_t *addrlen_r)
+static const struct address_envelope *
+uri_address_next_checked(struct address_list *list)
 {
-    const struct sockaddr *first = address_list_next(list, addrlen_r), *ret = first;
+    const struct address_envelope *first = address_list_next(list);
     if (first == NULL)
         return NULL;
 
+    const struct address_envelope *ret = first;
     do {
-        if (!failure_check(ret, *addrlen_r) &&
-            bulldog_check(ret, *addrlen_r))
+        if (!failure_check(&ret->address, ret->length) &&
+            bulldog_check(&ret->address, ret->length))
             return ret;
 
-        ret = address_list_next(list, addrlen_r);
+        ret = address_list_next(list);
         assert(ret != NULL);
     } while (ret != first);
 
@@ -92,16 +94,15 @@ balancer_free(struct balancer *balancer)
     cache_close(balancer->cache);
 }
 
-const struct sockaddr *
-balancer_get(struct balancer *balancer,
-             const struct address_list *list, socklen_t *address_size_r)
+const struct address_envelope *
+balancer_get(struct balancer *balancer, const struct address_list *list)
 {
     const char *key;
     struct balancer_item *item;
     pool_t pool;
 
     if (address_list_is_single(list))
-        return address_list_first(list, address_size_r);
+        return address_list_first(list);
 
     key = address_list_key(list);
     item = (struct balancer_item *)cache_get(balancer->cache, key);
@@ -118,5 +119,5 @@ balancer_get(struct balancer *balancer,
         cache_put(balancer->cache, p_strdup(pool, key), &item->item);
     }
 
-    return uri_address_next_checked(&item->addresses, address_size_r);
+    return uri_address_next_checked(&item->addresses);
 }

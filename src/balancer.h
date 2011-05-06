@@ -26,8 +26,7 @@ balancer_free(struct balancer *balancer);
  * a round-robin fashion, which results in symmetric load-balancing.
  * If a server is known to be faulty, it is not used (see failure.h).
  */
-const struct sockaddr *
-balancer_get(struct balancer *balancer,
-             const struct address_list *list, socklen_t *address_size_r);
+const struct address_envelope *
+balancer_get(struct balancer *balancer, const struct address_list *list);
 
 #endif

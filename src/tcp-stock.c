@@ -9,6 +9,7 @@
 #include "async.h"
 #include "client-socket.h"
 #include "address-list.h"
+#include "address-envelope.h"
 #include "balancer.h"
 #include "failure.h"
 #include "pevent.h"
@@ -28,8 +29,7 @@ struct tcp_stock_connection {
 
     struct async_operation create_operation;
 
-    const struct sockaddr *addr;
-    socklen_t addrlen;
+    const struct address_envelope *address;
 
     struct async_operation_ref client_socket;
 
@@ -123,8 +123,9 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
         assert(fd >= 0);
 
         /* XXX check HTTP status code? */
-        if (connection->addr != NULL)
-            failure_remove(connection->addr, connection->addrlen);
+        if (connection->address != NULL)
+            failure_remove(&connection->address->address,
+                           connection->address->length);
 
         connection->fd = fd;
         event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
@@ -136,8 +137,9 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
                                     "failed to connect to '%s': %s",
                                     connection->uri, strerror(err));
 
-        if (connection->addr != NULL)
-            failure_add(connection->addr, connection->addrlen);
+        if (connection->address != NULL)
+            failure_add(&connection->address->address,
+                        connection->address->length);
 
         stock_item_failed(&connection->stock_item, error);
     }
@@ -177,16 +179,17 @@ tcp_stock_create(void *ctx, struct stock_item *item,
     connection->uri = uri;
 
     if (address_list != NULL)
-        connection->addr = balancer_get(balancer, address_list,
-                                        &connection->addrlen);
+        connection->address = balancer_get(balancer, address_list);
     else
-        connection->addr = NULL;
+        connection->address = NULL;
 
-    if (connection->addr != NULL) {
-        connection->domain = connection->addr->sa_family;
+    if (connection->address != NULL) {
+        connection->domain = connection->address->address.sa_family;
         client_socket_new(caller_pool,
-                          connection->addr->sa_family, SOCK_STREAM, 0,
-                          connection->addr, connection->addrlen,
+                          connection->address->address.sa_family,
+                          SOCK_STREAM, 0,
+                          &connection->address->address,
+                          connection->address->length,
                           tcp_stock_socket_callback, connection,
                           &connection->client_socket);
     } else if (uri[0] != '/') {

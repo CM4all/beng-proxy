@@ -36,11 +36,11 @@ void
 address_list_add(struct pool *pool, struct address_list *list,
                  const struct sockaddr *address, socklen_t length);
 
-const struct sockaddr *
-address_list_first(const struct address_list *list, socklen_t *length_r);
+const struct address_envelope *
+address_list_first(const struct address_list *list);
 
-const struct sockaddr *
-address_list_next(struct address_list *list, socklen_t *length_r);
+const struct address_envelope *
+address_list_next(struct address_list *list);
 
 static inline bool
 address_list_is_empty(const struct address_list *list)

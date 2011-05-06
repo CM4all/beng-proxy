@@ -47,19 +47,18 @@ address_list_add(pool_t pool, struct address_list *al,
     ++al->size;
 }
 
-const struct sockaddr *
-address_list_first(const struct address_list *al, socklen_t *length_r)
+const struct address_envelope *
+address_list_first(const struct address_list *al)
 {
     if (list_empty(&al->addresses))
         return NULL;
 
     struct address_item *item = (struct address_item *)al->addresses.next;
-    *length_r = item->envelope.length;
-    return &item->envelope.address;
+    return &item->envelope;
 }
 
-const struct sockaddr *
-address_list_next(struct address_list *al, socklen_t *length_r)
+const struct address_envelope *
+address_list_next(struct address_list *al)
 {
     struct address_item *ua;
 
@@ -72,8 +71,7 @@ address_list_next(struct address_list *al, socklen_t *length_r)
     list_remove(&ua->siblings);
     list_add(&ua->siblings, al->addresses.prev);
 
-    *length_r = ua->envelope.length;
-    return &ua->envelope.address;
+    return &ua->envelope;
 }
 
 const char *
