@@ -284,6 +284,11 @@ http_server_parse_headers(struct http_server_connection *connection)
 static bool
 http_server_submit_request(struct http_server_connection *connection)
 {
+    if (connection->request.read_state == READ_END)
+        /* re-enable the event, to detect client disconnect while
+           we're processing the request */
+        event2_or(&connection->event, EV_READ);
+
     pool_ref(connection->pool);
 
     if (connection->request.expect_failed)

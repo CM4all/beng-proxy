@@ -34,6 +34,11 @@ http_server_consume_body(struct http_server_connection *connection)
     if (connection->request.read_state == READ_BODY &&
         http_body_eof(&connection->request.body_reader)) {
         connection->request.read_state = READ_END;
+        if (connection->request.read_state == READ_END)
+            /* re-enable the event, to detect client disconnect while
+               we're processing the request */
+            event2_or(&connection->event, EV_READ);
+
         istream_deinit_eof(&connection->request.body_reader.output);
         if (!http_server_connection_valid(connection))
             return false;

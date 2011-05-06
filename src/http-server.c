@@ -115,6 +115,28 @@ http_server_event_callback2(struct http_server_connection *connection,
         !http_server_try_write(connection))
         return false;
 
+    if ((event & EV_READ) != 0 &&
+        connection->request.read_state == READ_END) {
+        /* check if the connection was closed by the client while we
+           were processing the request */
+
+        if (fifo_buffer_full(connection->input)) {
+            /* the buffer is full, the peer has been pipelining too
+               much - that would disallow us to detect a disconnect;
+               let's disable keep-alive now and discard all data */
+            connection->keep_alive = false;
+            fifo_buffer_clear(connection->input);
+        }
+
+        if (!http_server_read_to_buffer(connection))
+            /* client has disconnected */
+            return false;
+
+        /* read more */
+        event2_or(&connection->event, EV_READ);
+        return true;
+    }
+
     if ((event & EV_READ) != 0) {
         pool_ref(connection->pool);
         http_server_try_read(connection);

@@ -1,5 +1,6 @@
 cm4all-beng-proxy (0.8.36) unstable; urgency=low
 
+  * http-server: check if client closes connection while processing
   * http-client: release the socket before invoking the callback
   * fcgi-client: fix assertion failure on full input buffer
   * test/t-cgi: fix bashisms in test scripts
