@@ -99,6 +99,10 @@ http_body_socket_is_done(struct http_body_reader *body,
 bool
 http_body_socket_eof(struct http_body_reader *body, struct fifo_buffer *buffer)
 {
+#ifndef NDEBUG
+    body->socket_eof = true;
+#endif
+
     /* see how much is left in the buffer */
     size_t length;
     const void *data = fifo_buffer_read(buffer, &length);
@@ -140,7 +144,7 @@ http_body_dechunker_eof(void *ctx)
     struct http_body_reader *body = ctx;
 
     assert(body->chunked);
-    assert(body->rest == -1);
+    assert(body->rest == -1 || (body->socket_eof && body->rest >= 0));
 
     body->rest = -2;
 }
@@ -157,6 +161,7 @@ http_body_init(struct http_body_reader *body,
 
 #ifndef NDEBUG
     body->chunked = chunked;
+    body->socket_eof = false;
 #endif
 
     istream_t istream = http_body_istream(body);

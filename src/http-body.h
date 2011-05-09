@@ -26,7 +26,7 @@ struct http_body_reader {
     off_t rest;
 
 #ifndef NDEBUG
-    bool chunked;
+    bool chunked, socket_eof;
 #endif
 };
 

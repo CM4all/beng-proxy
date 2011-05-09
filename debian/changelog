@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.18) unstable; urgency=low
 
-  * 
+  * http-body: fix assertion failure on EOF chunk after socket was closed
 
  --
 
