@@ -55,15 +55,13 @@ size_t
 http_body_consume_body(struct http_body_reader *body,
                        struct fifo_buffer *buffer)
 {
-    const void *data;
-    size_t length, consumed;
-
-    data = fifo_buffer_read(buffer, &length);
+    size_t length;
+    const void *data = fifo_buffer_read(buffer, &length);
     if (data == NULL)
         return (size_t)-1;
 
     length = http_body_max_read(body, length);
-    consumed = istream_invoke_data(&body->output, data, length);
+    size_t consumed = istream_invoke_data(&body->output, data, length);
     if (consumed > 0) {
         fifo_buffer_consume(buffer, consumed);
         http_body_consumed(body, consumed);
@@ -76,15 +74,13 @@ ssize_t
 http_body_try_direct(struct http_body_reader *body, int fd,
                      enum istream_direct fd_type)
 {
-    ssize_t nbytes;
-
     assert(fd >= 0);
     assert(istream_check_direct(&body->output, fd_type));
     assert(body->output.handler->direct != NULL);
 
-    nbytes = istream_invoke_direct(&body->output,
-                                   fd_type, fd,
-                                   http_body_max_read(body, INT_MAX));
+    ssize_t nbytes = istream_invoke_direct(&body->output,
+                                           fd_type, fd,
+                                           http_body_max_read(body, INT_MAX));
     if (nbytes > 0)
         http_body_consumed(body, (size_t)nbytes);
 
@@ -103,11 +99,9 @@ http_body_socket_is_done(struct http_body_reader *body,
 bool
 http_body_socket_eof(struct http_body_reader *body, struct fifo_buffer *buffer)
 {
-    const void *data;
-    size_t length;
-
     /* see how much is left in the buffer */
-    data = fifo_buffer_read(buffer, &length);
+    size_t length;
+    const void *data = fifo_buffer_read(buffer, &length);
     if (data == NULL)
         length = 0;
 
@@ -156,8 +150,6 @@ http_body_init(struct http_body_reader *body,
                const struct istream *stream, pool_t stream_pool,
                pool_t pool, off_t content_length, bool chunked)
 {
-    istream_t istream;
-
     assert(pool_contains(stream_pool, body, sizeof(*body)));
 
     istream_init(&body->output, stream, stream_pool);
@@ -167,7 +159,7 @@ http_body_init(struct http_body_reader *body,
     body->chunked = chunked;
 #endif
 
-    istream = http_body_istream(body);
+    istream_t istream = http_body_istream(body);
     if (chunked) {
         assert(content_length == (off_t)-1);
 
