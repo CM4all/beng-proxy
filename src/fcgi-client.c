@@ -588,7 +588,6 @@ fcgi_request_stream_eof(void *ctx)
     client->request.istream = NULL;
 
     p_event_del(&client->request.event, client->pool);
-    fcgi_client_schedule_read(client);
 }
 
 static void
