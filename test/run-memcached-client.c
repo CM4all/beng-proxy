@@ -14,6 +14,7 @@
 #include <sys/signal.h>
 #include <netdb.h>
 #include <errno.h>
+#include <string.h>
 
 struct context {
     int fd;
