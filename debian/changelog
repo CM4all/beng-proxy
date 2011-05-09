@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.8.36) unstable; urgency=low
 
-  * 
+  * http-client: release the socket before invoking the callback
 
  --
 

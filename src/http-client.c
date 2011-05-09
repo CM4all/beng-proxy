@@ -195,6 +195,9 @@ http_client_abort_response_headers(struct http_client *client)
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
 
+    if (client->fd >= 0)
+        http_client_release_socket(client, false);
+
     http_response_handler_invoke_abort(&client->request.handler);
     http_client_release(client, false);
 }
