@@ -622,7 +622,8 @@ memcached_client_try_read_direct(struct memcached_client *client)
             istream_deinit_eof(&client->response.value);
             pool_unref(client->caller_pool);
             pool_unref(client->pool);
-        }
+        } else
+            memcached_client_schedule_read(client);
     } else if (unlikely(nbytes == 0)) {
         daemon_log(1, "memcached server closed the connection\n");
         memcached_connection_abort_response_value(client);
