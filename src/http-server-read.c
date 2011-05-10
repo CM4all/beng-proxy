@@ -284,6 +284,11 @@ http_server_parse_headers(struct http_server_connection *connection)
 static bool
 http_server_submit_request(struct http_server_connection *connection)
 {
+    if (connection->request.read_state == READ_END)
+        /* re-enable the event, to detect client disconnect while
+           we're processing the request */
+        event2_or(&connection->event, EV_READ);
+
     pool_ref(connection->pool);
 
     if (connection->request.expect_failed)
@@ -329,35 +334,53 @@ http_server_consume_input(struct http_server_connection *connection)
     return true;
 }
 
+bool
+http_server_read_to_buffer(struct http_server_connection *connection)
+{
+    assert(!fifo_buffer_full(connection->input));
+
+    ssize_t nbytes = recv_to_buffer(connection->fd, connection->input,
+                                    INT_MAX);
+    if (nbytes > 0) {
+        connection->request.bytes_received += nbytes;
+        return true;
+    } else if (nbytes == 0) {
+        /* the client closed the connection; do the same on our side */
+        http_server_connection_close(connection);
+        return false;
+    } else if (nbytes == -2) {
+        assert(false);
+        return true;
+    } else if (errno == EAGAIN) {
+        event2_or(&connection->event, EV_READ);
+        return true;
+    } else {
+        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
+        http_server_connection_close(connection);
+        return false;
+    }
+}
+
+/**
+ * @return true if data is available in the buffer
+ */
+static bool
+http_server_fill_buffer(struct http_server_connection *connection)
+{
+    return fifo_buffer_full(connection->input) ||
+        (http_server_read_to_buffer(connection) &&
+         !fifo_buffer_empty(connection->input));
+}
+
 static void
 http_server_try_read_buffered(struct http_server_connection *connection)
 {
-    ssize_t nbytes;
-
     if (connection->request.read_state == READ_BODY &&
         !http_server_maybe_send_100_continue(connection))
         return;
 
-    nbytes = recv_to_buffer(connection->fd, connection->input, INT_MAX);
-    if (nbytes > 0)
-        connection->request.bytes_received += nbytes;
-
-    if (unlikely(nbytes < 0 && nbytes != -2)) {
-        if (errno == EAGAIN) {
-            event2_or(&connection->event, EV_READ);
-            return;
-        }
-
-        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
-        http_server_connection_close(connection);
+    if (!http_server_fill_buffer(connection))
         return;
-    }
-
-    if (unlikely(nbytes == 0)) {
-        /* the client closed the connection; do the same on our side */
-        http_server_connection_close(connection);
-        return;
-    }
 
     if (connection->score == HTTP_SERVER_NEW)
         connection->score = HTTP_SERVER_FIRST;

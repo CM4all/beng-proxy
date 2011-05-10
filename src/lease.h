@@ -7,9 +7,8 @@
 #ifndef __BENG_LEASE_H
 #define __BENG_LEASE_H
 
-#include <inline/poison.h>
-
 #include <assert.h>
+#include <stdbool.h>
 
 struct lease {
     void (*release)(bool reuse, void *ctx);
@@ -19,6 +18,10 @@ struct lease_ref {
     const struct lease *lease;
 
     void *ctx;
+
+#ifndef NDEBUG
+    bool released;
+#endif
 };
 
 static inline void
@@ -30,14 +33,10 @@ lease_ref_set(struct lease_ref *lease_ref,
 
     lease_ref->lease = lease;
     lease_ref->ctx = ctx;
-}
 
-static inline void
-lease_ref_poison(struct lease_ref *lease_ref)
-{
-    assert(lease_ref != NULL);
-
-    poison_undefined(lease_ref, sizeof(*lease_ref));
+#ifndef NDEBUG
+    lease_ref->released = false;
+#endif
 }
 
 static inline void
@@ -53,9 +52,13 @@ lease_release(struct lease_ref *lease_ref, bool reuse)
 {
     assert(lease_ref != NULL);
     assert(lease_ref->lease != NULL);
+    assert(!lease_ref->released);
+
+#ifndef NDEBUG
+    lease_ref->released = true;
+#endif
 
     lease_direct_release(lease_ref->lease, lease_ref->ctx, reuse);
-    lease_ref_poison(lease_ref);
 }
 
 #endif

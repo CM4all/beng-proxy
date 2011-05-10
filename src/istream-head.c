@@ -12,7 +12,7 @@
 struct istream_head {
     struct istream output;
     istream_t input;
-    size_t rest;
+    off_t rest;
 };
 
 
@@ -33,11 +33,11 @@ head_input_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    if (length > head->rest)
+    if ((off_t)length > head->rest)
         length = head->rest;
 
     nbytes = istream_invoke_data(&head->output, data, length);
-    assert(nbytes <= head->rest);
+    assert((off_t)nbytes <= head->rest);
 
     if (nbytes > 0) {
         head->rest -= nbytes;
@@ -63,11 +63,11 @@ head_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         return -3;
     }
 
-    if (max_length > head->rest)
+    if ((off_t)max_length > head->rest)
         max_length = head->rest;
 
     nbytes = istream_invoke_direct(&head->output, type, fd, max_length);
-    assert(nbytes < 0 || (size_t)nbytes <= head->rest);
+    assert(nbytes < 0 || (off_t)nbytes <= head->rest);
 
     if (nbytes > 0) {
         head->rest -= (size_t)nbytes;
@@ -112,6 +112,23 @@ istream_head_available(__attr_unused istream_t istream, bool partial)
     return available;
 }
 
+static off_t
+istream_head_skip(istream_t istream, off_t length)
+{
+    struct istream_head *head = istream_to_head(istream);
+
+    if (length >= head->rest)
+        length = head->rest;
+
+    off_t nbytes = istream_skip(head->input, length);
+    assert(nbytes <= length);
+
+    if (nbytes > 0)
+        head->rest -= nbytes;
+
+    return nbytes;
+}
+
 static void
 istream_head_read(istream_t istream)
 {
@@ -138,6 +155,7 @@ istream_head_close(istream_t istream)
 
 static const struct istream istream_head = {
     .available = istream_head_available,
+    .skip = istream_head_skip,
     .read = istream_head_read,
     .close = istream_head_close,
 };

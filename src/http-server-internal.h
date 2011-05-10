@@ -130,6 +130,14 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection);
 bool
 http_server_consume_input(struct http_server_connection *connection);
 
+/**
+ * Read data into the input buffer.
+ *
+ * @return false if the connection has been closed
+ */
+bool
+http_server_read_to_buffer(struct http_server_connection *connection);
+
 void
 http_server_try_read(struct http_server_connection *connection);
 
