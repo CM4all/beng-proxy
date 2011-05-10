@@ -458,5 +458,9 @@ file_callback(struct request *request2)
 
     /* build the response */
 
+    if (file_request.range == RANGE_VALID &&
+        file_request.size < (off_t)st.st_size)
+        body = istream_head_new(request->pool, body, file_request.size);
+
     file_dispatch(request2, &st, &file_request, body);
 }
