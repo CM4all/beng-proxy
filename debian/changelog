@@ -7,7 +7,7 @@ cm4all-beng-proxy (0.8.36) unstable; urgency=low
   * istream-file: fix assertion failure on range request
   * test/t-cgi: fix bashisms in test scripts
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 10 May 2011 18:45:48 +0200
 
 cm4all-beng-proxy (0.8.35) unstable; urgency=low
 
