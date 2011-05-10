@@ -192,6 +192,18 @@ static void
 widget_response_dispatch(struct embed *embed, http_status_t status,
                          struct strmap *headers, istream_t body);
 
+static void
+widget_dispatch_error(struct embed *embed, GError *error)
+{
+    assert(embed != NULL);
+    assert(error != NULL);
+
+    if (embed->lookup_id != NULL)
+        embed->lookup_handler->error(error, embed->lookup_handler_ctx);
+    else
+        http_response_handler_invoke_abort(&embed->handler_ref, error);
+}
+
 /**
  * The widget response is going to be embedded into a template; check
  * its content type and run the processor (if applicable).
@@ -206,7 +218,7 @@ widget_response_process(struct embed *embed, http_status_t status,
             g_error_new(widget_quark(), 0,
                         "widget '%s' didn't send a response body",
                         widget_path(embed->widget));
-        http_response_handler_invoke_abort(&embed->handler_ref, error);
+        widget_dispatch_error(embed, error);
         return;
     }
 
@@ -217,7 +229,7 @@ widget_response_process(struct embed *embed, http_status_t status,
             g_error_new(widget_quark(), 0,
                         "widget '%s' sent non-HTML response",
                         widget_path(embed->widget));
-        http_response_handler_invoke_abort(&embed->handler_ref, error);
+        widget_dispatch_error(embed, error);
         return;
     }
 
@@ -286,7 +298,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
                         "cannot transform",
                         widget_path(embed->widget));
 
-        http_response_handler_invoke_abort(&embed->handler_ref, error);
+        widget_dispatch_error(embed, error);
         return;
     }
 
@@ -336,6 +348,15 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
 
         widget_response_transform(embed, status, headers,
                                   body, transformation);
+    } else if (embed->lookup_id != NULL) {
+        if (body != NULL)
+            istream_close_unused(body);
+
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "Cannot process container widget response of %s",
+                        widget_path(embed->widget));
+        embed->lookup_handler->error(error, embed->lookup_handler_ctx);
     } else {
         /* no transformation left */
 
@@ -410,7 +431,7 @@ widget_response_abort(GError *error, void *ctx)
 {
     struct embed *embed = ctx;
 
-    http_response_handler_invoke_abort(&embed->handler_ref, error);
+    widget_dispatch_error(embed, error);
 }
 
 static const struct http_response_handler widget_response_handler = {
