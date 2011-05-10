@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.9.18) unstable; urgency=low
   * widget-http: fix crash in widget lookup error handler
   * merge release 0.8.36
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 10 May 2011 18:56:33 +0200
 
 cm4all-beng-proxy (0.9.17) unstable; urgency=low
 
