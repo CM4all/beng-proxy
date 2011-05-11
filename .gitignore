@@ -10,6 +10,7 @@ src/cm4all-beng-proxy-log-split
 src/cm4all-beng-proxy-log-forward
 src/cm4all-beng-proxy-log-exec
 src/cm4all-beng-proxy-log-traffic
+src/cm4all-beng-lb
 
 test/benchmark-gmtime
 test/format-http-date

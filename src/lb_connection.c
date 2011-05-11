@@ -1,0 +1,133 @@
+/*
+ * Handler for HTTP requests.
+ *
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#include "lb_connection.h"
+#include "lb_instance.h"
+#include "lb_handler.h"
+#include "strmap.h"
+#include "http-server.h"
+#include "address.h"
+#include "access-log.h"
+#include "drop.h"
+#include "clock.h"
+
+#include <daemon/log.h>
+
+#include <assert.h>
+#include <unistd.h>
+#include <sys/socket.h>
+
+
+/*
+ * http connection handler
+ *
+ */
+
+static void
+my_http_server_connection_request(struct http_server_request *request,
+                                  void *ctx,
+                                  struct async_operation_ref *async_ref)
+{
+    struct lb_connection *connection = ctx;
+
+    connection->request_start_time = now_us();
+
+    handle_http_request(connection, request, async_ref);
+}
+
+static void
+my_http_server_connection_log(struct http_server_request *request,
+                              http_status_t status, off_t length,
+                              uint64_t bytes_received, uint64_t bytes_sent,
+                              void *ctx)
+{
+    struct lb_connection *connection = ctx;
+
+    access_log(request, NULL,
+               strmap_get_checked(request->headers, "referer"),
+               strmap_get_checked(request->headers, "user-agent"),
+               status, length,
+               bytes_received, bytes_sent,
+               now_us() - connection->request_start_time);
+}
+
+static void
+my_http_server_connection_free(void *ctx)
+{
+    struct lb_connection *connection = ctx;
+    pool_t pool;
+
+    assert(connection->http != NULL);
+    assert(connection->instance != NULL);
+    assert(connection->instance->num_connections > 0);
+
+    connection->http = NULL;
+
+    list_remove(&connection->siblings);
+    --connection->instance->num_connections;
+
+    pool = connection->pool;
+    pool_trash(pool);
+    pool_unref(pool);
+}
+
+static const struct http_server_connection_handler my_http_server_connection_handler = {
+    .request = my_http_server_connection_request,
+    .log = my_http_server_connection_log,
+    .free = my_http_server_connection_free,
+};
+
+
+/*
+ * public
+ *
+ */
+
+struct lb_connection *
+connection_new(struct lb_instance *instance,
+               const struct lb_listener_config *listener,
+               int fd, const struct sockaddr *addr, size_t addrlen)
+{
+    struct lb_connection *connection;
+
+    /* determine the local socket address */
+    struct sockaddr_storage local_address;
+    socklen_t local_address_length = sizeof(local_address);
+    if (getsockname(fd, (struct sockaddr *)&local_address,
+                    &local_address_length) < 0)
+        local_address_length = 0;
+
+    struct pool *pool = pool_new_linear(instance->pool, "client_connection",
+                                        16384);
+    pool_set_major(pool);
+
+    connection = p_malloc(pool, sizeof(*connection));
+    connection->pool = pool;
+    connection->instance = instance;
+    connection->listener = listener;
+
+    list_add(&connection->siblings, &instance->connections);
+    ++connection->instance->num_connections;
+
+    http_server_connection_new(pool, fd, ISTREAM_TCP,
+                               local_address_length > 0
+                               ? (const struct sockaddr *)&local_address
+                               : NULL,
+                               local_address_length,
+                               address_to_string(pool, addr, addrlen),
+                               &my_http_server_connection_handler,
+                               connection,
+                               &connection->http);
+    return connection;
+}
+
+void
+connection_close(struct lb_connection *connection)
+{
+    assert(connection->http != NULL);
+
+    http_server_connection_close(connection->http);
+}

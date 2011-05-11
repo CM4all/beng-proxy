@@ -445,12 +445,95 @@ endif
 #
 
 bin_PROGRAMS = src/cm4all-beng-proxy \
+	src/cm4all-beng-lb \
 	src/cm4all-beng-proxy-log-cat \
 	src/cm4all-beng-proxy-log-traffic \
 	src/cm4all-beng-proxy-log-split \
 	src/cm4all-beng-proxy-log-forward \
 	src/cm4all-beng-proxy-log-exec \
 	src/cm4all-beng-proxy-delegate-helper
+
+src_cm4all_beng_lb_SOURCES = \
+	src/pool.c \
+	src/pstring.c \
+	src/format.c \
+	src/date.c \
+	src/gmtime.c \
+	src/strutil.c \
+	src/istream-null.c \
+	src/istream-chunked.c \
+	src/istream-dechunk.c \
+	src/istream-memory.c \
+	src/istream-string.c \
+	src/istream-cat.c \
+	src/istream-optional.c \
+	src/istream-forward.c \
+	src/tpool.c \
+	src/stock.c \
+	src/hstock.c \
+	src/tcp-stock.c \
+	src/tcp-balancer.c \
+	src/pipe-stock.c \
+	src/failure.c \
+	src/balancer.c \
+	src/address.c \
+	src/address-list.c \
+	src/address-string.h \
+	src/address-string.c \
+	src/listener.c \
+	src/client-socket.c \
+	src/bulldog.c \
+	src/child.c \
+	src/hashmap.c \
+	src/strmap.c \
+	src/cache.c \
+	src/http-body.c \
+	src/http-server.c \
+	src/http-server-send.c \
+	src/http-server-request.c \
+	src/http-server-read.c \
+	src/http-server-response.c \
+	src/http-client.c \
+	src/header-writer.c \
+	src/header-parser.c \
+	src/uri-verify.c \
+	src/uri-resolver.c \
+	src/uri-address.c \
+	src/uri-edit.c \
+	src/fifo-buffer.c \
+	src/growing-buffer.c \
+	src/istream-gb.c \
+	src/buffered-io.c \
+	src/event2.c \
+	src/fd_util.c \
+	src/fd-util.c \
+	src/stopwatch.c \
+	src/direct.c \
+	src/access-log.c \
+	src/log-glue.c \
+	src/log-client.c \
+	src/log-launch.c \
+	src/lb_global.c \
+	src/lb_cmdline.h \
+	src/lb_cmdline.c \
+	src/lb_listener.h \
+	src/lb_listener.c \
+	src/lb_connection.h \
+	src/lb_connection.c \
+	src/lb_handler.h \
+	src/lb_handler.c \
+	src/lb_config.h \
+	src/lb_config.c \
+	src/lb_setup.h \
+	src/lb_setup.c \
+	src/lb_main.c
+src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_INLINE_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBEVENT_LIBS)
+src_cm4all_beng_lb_LDFLAGS = $(AM_LDFLAGS)
 
 src_cm4all_beng_proxy_SOURCES = $(SRC)
 src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
