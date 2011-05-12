@@ -37,6 +37,9 @@ address_list_add(struct pool *pool, struct address_list *list,
                  const struct sockaddr *address, socklen_t length);
 
 const struct address_envelope *
+address_list_get_n(const struct address_list *list, unsigned n);
+
+const struct address_envelope *
 address_list_first(const struct address_list *list);
 
 const struct address_envelope *

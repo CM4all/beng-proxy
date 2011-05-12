@@ -10,6 +10,7 @@
 
 #include <socket/address.h>
 
+#include <assert.h>
 #include <string.h>
 
 struct address_item {
@@ -45,6 +46,24 @@ address_list_add(pool_t pool, struct address_list *al,
 
     list_add(&item->siblings, &al->addresses);
     ++al->size;
+}
+
+const struct address_envelope *
+address_list_get_n(const struct address_list *list, unsigned n)
+{
+    assert(list != NULL);
+    assert(n < list->size);
+
+    const struct address_item *item =
+        (const struct address_item *)list->addresses.next;
+    assert(&item->siblings != &list->addresses);
+
+    while (n-- > 0) {
+        item = (const struct address_item *)item->siblings.next;
+        assert(&item->siblings != &list->addresses);
+    }
+
+    return &item->envelope;
 }
 
 const struct address_envelope *
