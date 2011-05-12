@@ -234,7 +234,6 @@ int main(int argc, char **argv)
             .http_cache_size = 512 * 1024 * 1024,
             .filter_cache_size = 128 * 1024 * 1024,
             .translate_cache_size = 131072,
-            .tcp_stock_limit = 256,
             .enable_splice = true,
         },
     };
