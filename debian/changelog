@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.19) unstable; urgency=low
 
-  * 
+  * http-request: don't retry requests with a request body
 
  --
 

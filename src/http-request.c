@@ -67,7 +67,8 @@ http_request_response_abort(GError *error, void *ctx)
 {
     struct http_request *hr = ctx;
 
-    if (hr->retries > 0 && error->domain == http_client_quark() &&
+    if (hr->retries > 0 && hr->body == NULL &&
+        error->domain == http_client_quark() &&
         error->code == HTTP_CLIENT_PREMATURE) {
         /* the server has closed the connection prematurely, maybe
            because it didn't want to get any further requests on that
