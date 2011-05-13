@@ -25,8 +25,12 @@ balancer_free(struct balancer *balancer);
  * Gets the next socket address to connect to.  These are selected in
  * a round-robin fashion, which results in symmetric load-balancing.
  * If a server is known to be faulty, it is not used (see failure.h).
+ *
+ * @param session a portion of the session id used to select an
+ * address if stickiness is enabled; 0 if there is no session
  */
 const struct address_envelope *
-balancer_get(struct balancer *balancer, const struct address_list *list);
+balancer_get(struct balancer *balancer, const struct address_list *list,
+             unsigned session);
 
 #endif

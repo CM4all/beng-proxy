@@ -179,7 +179,8 @@ tcp_stock_create(void *ctx, struct stock_item *item,
     connection->uri = uri;
 
     if (address_list != NULL)
-        connection->address = balancer_get(balancer, address_list);
+        connection->address = balancer_get(balancer, address_list,
+                                           0);
     else
         connection->address = NULL;
 

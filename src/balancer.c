@@ -71,6 +71,33 @@ next_address_checked(struct balancer_item *item)
     return first;
 }
 
+static const struct address_envelope *
+next_sticky_address_checked(const struct address_list *al, unsigned session)
+{
+    assert(al->size >= 2);
+
+    unsigned i = session % al->size;
+
+    const struct address_envelope *first = address_list_get_n(al, i);
+    assert(first != NULL);
+    const struct address_envelope *ret = first;
+    do {
+        if (!failure_check(&ret->address, ret->length) &&
+            bulldog_check(&ret->address, ret->length))
+            return ret;
+
+        ++i;
+        if (i >= al->size)
+            i = 0;
+
+        ret = address_list_get_n(al, i);
+
+    } while (ret != first);
+
+    /* all addresses failed: */
+    return first;
+}
+
 /*
  * cache class
  *
@@ -112,7 +139,8 @@ balancer_free(struct balancer *balancer)
 }
 
 const struct address_envelope *
-balancer_get(struct balancer *balancer, const struct address_list *list)
+balancer_get(struct balancer *balancer, const struct address_list *list,
+             unsigned session)
 {
     const char *key;
     struct balancer_item *item;
@@ -120,6 +148,9 @@ balancer_get(struct balancer *balancer, const struct address_list *list)
 
     if (address_list_is_single(list))
         return address_list_first(list);
+
+    if (list->sticky && session != 0)
+        return next_sticky_address_checked(list, session);
 
     key = address_list_key(list);
     item = (struct balancer_item *)cache_get(balancer->cache, key);
