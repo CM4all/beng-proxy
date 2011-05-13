@@ -13,104 +13,83 @@
 #include <assert.h>
 #include <string.h>
 
-struct address_item {
-    struct list_head siblings;
-
-    struct address_envelope envelope;
-};
-
 void
 address_list_copy(pool_t pool, struct address_list *dest,
                   const struct address_list *src)
 {
     address_list_init(dest);
 
-    for (const struct address_item *item = (const struct address_item *)src->addresses.next;
-         &item->siblings != &src->addresses;
-         item = (const struct address_item *)item->siblings.next)
+    for (unsigned i = 0; i < src->size; ++i)
         address_list_add(pool, dest,
-                         &item->envelope.address, item->envelope.length);
-
-    dest->size = src->size;
+                         &src->addresses[i]->address,
+                         src->addresses[i]->length);
 }
 
-void
+bool
 address_list_add(pool_t pool, struct address_list *al,
                  const struct sockaddr *address, socklen_t length)
 {
-    struct address_item *item = p_malloc(pool, sizeof(*item) -
-                                         sizeof(item->envelope.address) +
-                                         length);
-    item->envelope.length = length;
-    memcpy(&item->envelope.address, address, length);
+    assert(al->size <= MAX_ADDRESSES);
 
-    list_add(&item->siblings, &al->addresses);
-    ++al->size;
-}
+    if (al->size >= MAX_ADDRESSES)
+        return false;
 
-const struct address_envelope *
-address_list_get_n(const struct address_list *list, unsigned n)
-{
-    assert(list != NULL);
-    assert(n < list->size);
+    struct address_envelope *envelope = p_malloc(pool, sizeof(*envelope) -
+                                                 sizeof(envelope->address) +
+                                                 length);
+    envelope->length = length;
+    memcpy(&envelope->address, address, length);
 
-    const struct address_item *item =
-        (const struct address_item *)list->addresses.next;
-    assert(&item->siblings != &list->addresses);
-
-    while (n-- > 0) {
-        item = (const struct address_item *)item->siblings.next;
-        assert(&item->siblings != &list->addresses);
-    }
-
-    return &item->envelope;
+    al->addresses[al->size++] = envelope;
+    return true;
 }
 
 const struct address_envelope *
 address_list_first(const struct address_list *al)
 {
-    if (list_empty(&al->addresses))
+    assert(al->size <= MAX_ADDRESSES);
+
+    if (al->size < 1)
         return NULL;
 
-    struct address_item *item = (struct address_item *)al->addresses.next;
-    return &item->envelope;
+    return al->addresses[0];
 }
 
 const struct address_envelope *
 address_list_next(struct address_list *al)
 {
-    struct address_item *ua;
+    assert(al->size <= MAX_ADDRESSES);
 
-    if (list_empty(&al->addresses))
+    if (al->size == 0)
         return NULL;
 
-    ua = (struct address_item *)al->addresses.next;
+    assert(al->next < al->size);
 
-    /* move to back */
-    list_remove(&ua->siblings);
-    list_add(&ua->siblings, al->addresses.prev);
+    const struct address_envelope *envelope = al->addresses[al->next++];
+    if (al->next >= al->size)
+        al->next = 0;
 
-    return &ua->envelope;
+    return envelope;
 }
 
 const char *
 address_list_key(const struct address_list *al)
 {
+    assert(al->size <= MAX_ADDRESSES);
+
     static char buffer[2048];
     size_t length = 0;
-    const struct address_item *ua;
     bool success;
 
-    for (ua = (const struct address_item *)al->addresses.next;
-         ua != (const struct address_item *)&al->addresses;
-         ua = (const struct address_item *)ua->siblings.next) {
+    for (unsigned i = 0; i < al->size; ++i) {
+        const struct address_envelope *envelope = al->addresses[i];
         if (length > 0 && length < sizeof(buffer) - 1)
             buffer[length++] = ' ';
 
         success = socket_address_to_string(buffer + length,
                                            sizeof(buffer) - length,
-                                           &ua->envelope.address,
-                                           ua->envelope.length);
+                                           &envelope->address,
+                                           envelope->length);
         if (success)
             length += strlen(buffer + length);
     }
