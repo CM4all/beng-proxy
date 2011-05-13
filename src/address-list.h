@@ -16,6 +16,8 @@
 struct pool;
 
 struct address_list {
+    bool sticky;
+
     /** the number of addresses */
     unsigned size;
 
@@ -25,7 +27,14 @@ struct address_list {
 static inline void
 address_list_init(struct address_list *list)
 {
+    list->sticky = false;
     list->size = 0;
+}
+
+static inline void
+address_list_set_sticky(struct address_list *list)
+{
+    list->sticky = true;
 }
 
 void
