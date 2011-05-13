@@ -55,23 +55,6 @@ address_list_first(const struct address_list *al)
     return al->addresses[0];
 }
 
-const struct address_envelope *
-address_list_next(struct address_list *al)
-{
-    assert(al->size <= MAX_ADDRESSES);
-
-    if (al->size == 0)
-        return NULL;
-
-    assert(al->next < al->size);
-
-    const struct address_envelope *envelope = al->addresses[al->next++];
-    if (al->next >= al->size)
-        al->next = 0;
-
-    return envelope;
-}
-
 const char *
 address_list_key(const struct address_list *al)
 {

@@ -19,9 +19,6 @@ struct address_list {
     /** the number of addresses */
     unsigned size;
 
-    /** the index of the item that will be returned next */
-    unsigned next;
-
     struct address_envelope *addresses[MAX_ADDRESSES];
 };
 
@@ -29,7 +26,6 @@ static inline void
 address_list_init(struct address_list *list)
 {
     list->size = 0;
-    list->next = 0;
 }
 
 void
@@ -53,9 +49,6 @@ address_list_get_n(const struct address_list *list, unsigned n)
 
 const struct address_envelope *
 address_list_first(const struct address_list *list);
-
-const struct address_envelope *
-address_list_next(struct address_list *list);
 
 static inline bool
 address_list_is_empty(const struct address_list *list)

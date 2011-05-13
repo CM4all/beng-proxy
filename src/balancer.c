@@ -20,6 +20,9 @@ struct balancer_item {
 
     pool_t pool;
 
+    /** the index of the item that will be returned next */
+    unsigned next;
+
     struct address_list addresses;
 };
 
@@ -34,9 +37,23 @@ struct balancer {
 };
 
 static const struct address_envelope *
-uri_address_next_checked(struct address_list *list)
+next_address(struct balancer_item *item)
 {
-    const struct address_envelope *first = address_list_next(list);
+    assert(item->addresses.size >= 2);
+    assert(item->next < item->addresses.size);
+
+    const struct address_envelope *envelope =
+        address_list_get_n(&item->addresses, item->next);
+    if (item->next >= item->addresses.size)
+        item->next = 0;
+
+    return envelope;
+}
+
+static const struct address_envelope *
+next_address_checked(struct balancer_item *item)
+{
+    const struct address_envelope *first = next_address(item);
     if (first == NULL)
         return NULL;
 
@@ -46,7 +63,7 @@ uri_address_next_checked(struct address_list *list)
             bulldog_check(&ret->address, ret->length))
             return ret;
 
-        ret = address_list_next(list);
+        ret = next_address(item);
         assert(ret != NULL);
     } while (ret != first);
 
@@ -114,10 +131,11 @@ balancer_get(struct balancer *balancer, const struct address_list *list)
         item = p_malloc(pool, sizeof(*item));
         cache_item_init(&item->item, time(NULL) + 1800, 1);
         item->pool = pool;
+        item->next = 0;
         address_list_copy(pool, &item->addresses, list);
 
         cache_put(balancer->cache, p_strdup(pool, key), &item->item);
     }
 
-    return uri_address_next_checked(&item->addresses);
+    return next_address_checked(item);
 }
