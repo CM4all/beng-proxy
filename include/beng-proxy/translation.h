@@ -152,6 +152,12 @@ enum beng_translation_command {
      * instead of using them.
      */
     TRANSLATE_TRANSPARENT = 70,
+
+    /**
+     * Make the resource address "sticky", i.e. attempt to forward all
+     * requests of a session to the same worker.
+     */
+    TRANSLATE_STICKY = 71,
 };
 
 struct beng_translation_header {

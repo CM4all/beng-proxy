@@ -837,6 +837,11 @@ The same applies to \texttt{AJP} packets. \\
 
 \hline
 
+\texttt{STICKY} & Make the resource address "sticky", i.e. attempt to
+forward all requests of a session to the same worker. \\
+
+\hline
+
 \texttt{VIEW} & starts a new view; the body of the packet is the name
 of the view (ASCII letters, digits, underscore, dash only).  Each view
 can have different address/processor/filter settings.  The first view

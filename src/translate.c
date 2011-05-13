@@ -1392,6 +1392,16 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_TRANSPARENT:
         client->response.transparent = true;
         break;
+
+    case TRANSLATE_STICKY:
+        if (client->address_list == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_STICKY packet");
+            return false;
+        }
+
+        address_list_set_sticky(client->address_list);
+        break;
     }
 
     return true;
