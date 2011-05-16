@@ -234,7 +234,9 @@ http_request(pool_t pool,
             g_error_new_literal(http_request_quark(), 0,
                                 "malformed URI");
 
-        istream_close(hr->body);
+        if (hr->body != NULL)
+            istream_close(hr->body);
+
         http_response_handler_invoke_abort(&hr->handler, error);
         return;
     }
