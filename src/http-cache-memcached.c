@@ -153,7 +153,7 @@ http_cache_memcached_get_error(GError *error, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
-    request->callback.get(NULL, 0, error, request->callback_ctx);
+    request->callback.get(NULL, NULL, error, request->callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_get_handler = {
@@ -242,7 +242,7 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
     }
 
     istream_close_unused(tail);
-    request->callback.get(NULL, 0, NULL, request->callback_ctx);
+    request->callback.get(NULL, NULL, NULL, request->callback_ctx);
 }
 
 static void
@@ -250,7 +250,7 @@ http_cache_memcached_header_error(GError *error, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
-    request->callback.get(NULL, 0, error, request->callback_ctx);
+    request->callback.get(NULL, NULL, error, request->callback_ctx);
 }
 
 static const struct sink_header_handler http_cache_memcached_header_handler = {
@@ -283,7 +283,7 @@ http_cache_memcached_get_response(enum memcached_response_status status,
         if (value != NULL)
             istream_close_unused(value);
 
-        request->callback.get(NULL, 0, NULL, request->callback_ctx);
+        request->callback.get(NULL, NULL, NULL, request->callback_ctx);
         return;
     }
 
