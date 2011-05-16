@@ -195,12 +195,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
     }
 
     if (key == NULL) {
-        if (error != NULL) {
-            cache_log(2, "http-cache: GET from memcached failed: %s\n", error->message);
-            g_error_free(error);
-        }
-
-        request->callback.get(NULL, 0, NULL, request->callback_ctx);
+        request->callback.get(NULL, NULL, error, request->callback_ctx);
         return;
     }
 
