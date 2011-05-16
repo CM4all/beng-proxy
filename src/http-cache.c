@@ -426,7 +426,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     if (request->document != NULL && request->cache->cache == NULL &&
         request->document_body != NULL)
         /* free the cached document istream (memcached) */
-        istream_close_handler(request->document_body);
+        istream_close_unused(request->document_body);
 
     available = body == NULL ? 0 : istream_available(body, true);
 
@@ -527,7 +527,7 @@ http_cache_response_abort(GError *error, void *ctx)
     if (request->document != NULL && request->cache->cache == NULL &&
         request->document_body != NULL)
         /* free the cached document istream (memcached) */
-        istream_close_handler(request->document_body);
+        istream_close_unused(request->document_body);
 
     pool_t caller_pool = request->caller_pool;
 #ifndef NDEBUG

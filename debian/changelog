@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.20) unstable; urgency=low
 
-  * 
+  * http-cache: fix assertion failure caused by wrong destructor
 
  --
 
