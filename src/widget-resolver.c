@@ -44,8 +44,10 @@ struct widget_resolver {
 
     struct async_operation_ref async_ref;
 
+    bool finished;
+
 #ifndef NDEBUG
-    bool finished, aborted;
+    bool aborted;
 #endif
 };
 
@@ -205,6 +207,11 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
     if (resolver == NULL) {
         resolver = widget_resolver_alloc(widget_pool, widget);
         new = true;
+    } else if (resolver->finished) {
+        /* we have already failed to resolve this widget class; return
+           immediately, don't try again */
+        callback(ctx);
+        return;
     }
 
     assert(resolver->pool == widget_pool);
