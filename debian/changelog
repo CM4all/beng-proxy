@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.9.20) unstable; urgency=low
   * http-cache: fix assertion failure caused by wrong destructor
   * merge release 0.8.37
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 16 May 2011 14:03:09 +0200
 
 cm4all-beng-proxy (0.9.19) unstable; urgency=low
 
