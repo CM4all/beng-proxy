@@ -23,6 +23,10 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 
+struct tcp_stock_request {
+    const struct address_list *address_list;
+};
+
 struct tcp_stock_connection {
     struct stock_item stock_item;
     const char *uri;
@@ -167,7 +171,8 @@ tcp_stock_create(void *ctx, struct stock_item *item,
     struct balancer *balancer = ctx;
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
-    const struct address_list *address_list = info;
+    struct tcp_stock_request *request = info;
+    const struct address_list *address_list = request->address_list;
 
     assert(uri != NULL);
 
@@ -291,19 +296,15 @@ tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
-    union {
-        const struct address_list *in;
-        void *out;
-    } u = {
-        .in = address_list,
-    };
+    struct tcp_stock_request *request = p_malloc(pool, sizeof(*request));
+    request->address_list = address_list;
 
     if (name == NULL) {
         assert(address_list != NULL);
         name = p_strdup(pool, address_list_key(address_list));
     }
 
-    hstock_get(tcp_stock, pool, name, u.out,
+    hstock_get(tcp_stock, pool, name, request,
                handler, handler_ctx, async_ref);
 }
 
