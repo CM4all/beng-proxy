@@ -345,17 +345,16 @@ stock_get_idle(struct stock *stock,
                const struct stock_handler *handler, void *handler_ctx)
 {
     while (stock->num_idle > 0) {
-        struct stock_item *item = (struct stock_item *)stock->idle.next;
-
         assert(!list_empty(&stock->idle));
+
+        struct stock_item *item = (struct stock_item *)stock->idle.next;
+        assert(item->is_idle);
 
         list_remove(&item->list_head);
         --stock->num_idle;
 
         if (stock->num_idle == MAX_IDLE)
             stock_unschedule_cleanup(stock);
-
-        assert(item->is_idle);
 
         if (stock->class->borrow(stock->class_ctx, item)) {
 #ifndef NDEBUG
