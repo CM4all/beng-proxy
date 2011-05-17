@@ -21,6 +21,11 @@ struct tcp_balancer_request {
     struct pool *pool;
     struct tcp_balancer *tcp_balancer;
 
+    /**
+     * The "sticky id" of the incoming HTTP request.
+     */
+    unsigned session_sticky;
+
     const struct address_list *address_list;
     const struct address_envelope *current_address;
 
@@ -36,7 +41,8 @@ static void
 tcp_balancer_next(struct tcp_balancer_request *request)
 {
     request->current_address = balancer_get(request->tcp_balancer->balancer,
-                                            request->address_list, 0);
+                                            request->address_list,
+                                            request->session_sticky);
 
     tcp_stock_get(request->tcp_balancer->tcp_stock, request->pool,
                   NULL,
@@ -95,6 +101,7 @@ tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
 
 void
 tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
+                 unsigned session_sticky,
                  const struct address_list *address_list,
                  const struct stock_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
@@ -102,6 +109,7 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
     struct tcp_balancer_request *request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->tcp_balancer = tcp_balancer;
+    request->session_sticky = session_sticky;
     request->address_list = address_list;
     request->handler = handler;
     request->handler_ctx = handler_ctx;

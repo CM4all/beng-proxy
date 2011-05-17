@@ -30,11 +30,14 @@ resource_loader_new(pool_t pool, struct tcp_balancer *tcp_balancer,
  * client-side protocols implemented by beng-proxy.
  *
  * @param rl a resource_loader object created by resource_loader_new
+ * @param session_sticky a portion of the session id that is used to
+ * select the worker; 0 means disable stickiness
  * @param address the address of the resource
  * @param status a HTTP status code for protocols which do have one
  */
 void
 resource_loader_request(struct resource_loader *rl, pool_t pool,
+                        unsigned session_sticky,
                         http_method_t method,
                         const struct resource_address *address,
                         http_status_t status, struct strmap *headers,

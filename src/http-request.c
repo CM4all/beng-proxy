@@ -25,6 +25,9 @@ struct http_request {
     pool_t pool;
 
     struct tcp_balancer *tcp_balancer;
+
+    unsigned session_sticky;
+
     struct stock_item *stock_item;
 
     http_method_t method;
@@ -78,6 +81,7 @@ http_request_response_abort(GError *error, void *ctx)
 
         --hr->retries;
         tcp_balancer_get(hr->tcp_balancer, hr->pool,
+                         hr->session_sticky,
                          &hr->uwa->addresses,
                          &http_request_stock_handler, hr,
                          hr->async_ref);
@@ -156,6 +160,7 @@ static const struct stock_handler http_request_stock_handler = {
 void
 http_request(pool_t pool,
              struct tcp_balancer *tcp_balancer,
+             unsigned session_sticky,
              http_method_t method,
              struct uri_with_address *uwa,
              struct growing_buffer *headers,
@@ -175,6 +180,7 @@ http_request(pool_t pool,
     hr = p_malloc(pool, sizeof(*hr));
     hr->pool = pool;
     hr->tcp_balancer = tcp_balancer;
+    hr->session_sticky = session_sticky;
     hr->method = method;
     hr->uwa = uwa;
 
@@ -235,7 +241,7 @@ http_request(pool_t pool,
     header_write(hr->headers, "connection", "keep-alive");
 
     hr->retries = 2;
-    tcp_balancer_get(tcp_balancer, pool,
+    tcp_balancer_get(tcp_balancer, pool, session_sticky,
                      &uwa->addresses,
                      &http_request_stock_handler, hr,
                      async_ref);

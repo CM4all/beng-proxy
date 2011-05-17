@@ -119,6 +119,7 @@ extract_server_name(pool_t pool, const struct strmap *headers,
 
 void
 resource_loader_request(struct resource_loader *rl, pool_t pool,
+                        unsigned session_sticky,
                         http_method_t method,
                         const struct resource_address *address,
                         http_status_t status, struct strmap *headers,
@@ -232,7 +233,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
         return;
 
     case RESOURCE_ADDRESS_HTTP:
-        http_request(pool, rl->tcp_balancer,
+        http_request(pool, rl->tcp_balancer, session_sticky,
                      method, address->u.http,
                      headers_dup(pool, headers), body,
                      handler, handler_ctx, async_ref);
@@ -241,7 +242,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
     case RESOURCE_ADDRESS_AJP:
         server_port = 80;
         server_name = extract_server_name(pool, headers, &server_port);
-        ajp_stock_request(pool, rl->tcp_balancer,
+        ajp_stock_request(pool, rl->tcp_balancer, session_sticky,
                           "http", extract_remote_ip(pool, headers),
                           NULL,
                           server_name, server_port,

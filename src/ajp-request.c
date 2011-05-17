@@ -117,6 +117,7 @@ static const struct stock_handler ajp_request_stock_handler = {
 void
 ajp_stock_request(pool_t pool,
                   struct tcp_balancer *tcp_balancer,
+                  unsigned session_sticky,
                   const char *protocol, const char *remote_addr,
                   const char *remote_host, const char *server_name,
                   unsigned server_port, bool is_ssl,
@@ -189,7 +190,7 @@ ajp_stock_request(pool_t pool,
         return;
     }
 
-    tcp_balancer_get(tcp_balancer, pool,
+    tcp_balancer_get(tcp_balancer, pool, session_sticky,
                      &uwa->addresses,
                      &ajp_request_stock_handler, hr,
                      async_ref);

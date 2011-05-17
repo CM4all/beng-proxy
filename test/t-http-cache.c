@@ -176,6 +176,7 @@ parse_response_headers(pool_t pool, const struct request *request)
 
 void
 resource_loader_request(__attr_unused struct resource_loader *rl, pool_t pool,
+                        __attr_unused unsigned session_sticky,
                         http_method_t method,
                         __attr_unused const struct resource_address *address,
                         __attr_unused http_status_t status, struct strmap *headers,
@@ -345,7 +346,7 @@ run_cache_test(pool_t root_pool, unsigned num, bool cached)
     got_request = cached;
     got_response = false;
 
-    http_cache_request(cache, pool, request->method, &address,
+    http_cache_request(cache, pool, 0, request->method, &address,
                        headers, body,
                        &my_http_response_handler, pool,
                        &async_ref);

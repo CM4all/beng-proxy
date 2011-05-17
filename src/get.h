@@ -30,6 +30,8 @@ struct async_operation_ref;
  * @param fcgi_stock the stock for FastCGI instances
  * @param was_stock the stock for WAS instances
  * @param delegate_stock the stock for delegate programs
+ * @param session_sticky a portion of the session id that is used to
+ * select the worker; 0 means disable stickiness
  * @param address the address of the resource
  * @param status a HTTP status code for protocols which do have one
  */
@@ -40,6 +42,7 @@ resource_get(struct http_cache *cache,
              struct hstock *was_stock,
              struct hstock *delegate_stock,
              pool_t pool,
+             unsigned session_sticky,
              http_method_t method,
              const struct resource_address *address,
              http_status_t status, struct strmap *headers, istream_t body,

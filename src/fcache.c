@@ -558,7 +558,7 @@ filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
     cache_log(4, "filter_cache: miss %s\n", info->key);
 
     pool_ref(caller_pool);
-    resource_loader_request(cache->resource_loader, pool,
+    resource_loader_request(cache->resource_loader, pool, 0,
                             HTTP_METHOD_POST, address, status, headers, body,
                             &filter_cache_response_handler, request,
                             async_unref_on_abort(caller_pool, async_ref));
@@ -632,7 +632,7 @@ filter_cache_request(struct filter_cache *cache,
             filter_cache_found(cache, item, pool, body,
                                handler, handler_ctx);
     } else {
-        resource_loader_request(cache->resource_loader, pool,
+        resource_loader_request(cache->resource_loader, pool, 0,
                                 HTTP_METHOD_POST, address,
                                 status, headers, body,
                                 handler, handler_ctx, async_ref);

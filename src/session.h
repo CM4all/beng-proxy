@@ -194,6 +194,16 @@ session_id_parse(const char *p, session_id_t *id_r);
 const char *
 session_id_format(session_id_t id, struct session_id_string *string);
 
+static inline unsigned
+session_id_low(session_id_t id)
+{
+#ifdef SESSION_ID_WORDS
+    return id.data[0];
+#else
+    return (unsigned)id;
+#endif
+}
+
 /**
  * Create a new session with a random session id.
  *

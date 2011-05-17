@@ -51,6 +51,8 @@ struct http_cache_request {
     struct pool_notify caller_pool_notify;
 #endif
 
+    unsigned session_sticky;
+
     /**
      * The cache object which got this request.
      */
@@ -683,6 +685,7 @@ http_cache_flush(struct http_cache *cache)
  */
 static void
 http_cache_miss(struct http_cache *cache, pool_t caller_pool,
+                unsigned session_sticky,
                 struct http_cache_info *info,
                 http_method_t method,
                 const struct resource_address *address,
@@ -708,6 +711,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->caller_pool = caller_pool;
+    request->session_sticky = session_sticky;
     request->cache = cache;
     request->key = http_cache_key(pool, address);
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
@@ -722,7 +726,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
     async_ref_set(async_ref, &request->operation);
 
     pool_ref_notify(caller_pool, &request->caller_pool_notify);
-    resource_loader_request(cache->resource_loader, pool,
+    resource_loader_request(cache->resource_loader, pool, session_sticky,
                             method, address,
                             HTTP_STATUS_OK, headers, NULL,
                             &http_cache_response_handler, request,
@@ -816,6 +820,7 @@ http_cache_test(struct http_cache_request *request,
         strmap_set(headers, "if-none-match", document->info.etag);
 
     resource_loader_request(cache->resource_loader, request->pool,
+                            request->session_sticky,
                             method, address,
                             HTTP_STATUS_OK, headers, NULL,
                             &http_cache_response_handler, request,
@@ -829,6 +834,7 @@ http_cache_test(struct http_cache_request *request,
  */
 static void
 http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
+                     unsigned session_sticky,
                      struct http_cache_info *info,
                      struct http_cache_document *document,
                      http_method_t method,
@@ -845,6 +851,7 @@ http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
                                                   sizeof(*request));
     request->pool = pool;
     request->caller_pool = caller_pool;
+    request->session_sticky = session_sticky;
     request->cache = cache;
     request->key = http_cache_key(pool, address);
     request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
@@ -883,6 +890,7 @@ http_cache_found(struct http_cache *cache,
                  struct http_cache_info *info,
                  struct http_cache_document *document,
                  pool_t pool,
+                 unsigned session_sticky,
                  http_method_t method,
                  const struct resource_address *address,
                  struct strmap *headers,
@@ -895,7 +903,7 @@ http_cache_found(struct http_cache *cache,
                               http_cache_key(pool, address),
                               handler, handler_ctx);
     else
-        http_cache_heap_test(cache, pool, info, document,
+        http_cache_heap_test(cache, pool, session_sticky, info, document,
                              method, address, headers,
                              handler, handler_ctx, async_ref);
 }
@@ -908,7 +916,7 @@ http_cache_found(struct http_cache *cache,
  */
 static void
 http_cache_heap_use(struct http_cache *cache,
-                    pool_t pool,
+                    pool_t pool, unsigned session_sticky,
                     http_method_t method,
                     const struct resource_address *address,
                     struct strmap *headers,
@@ -922,11 +930,11 @@ http_cache_heap_use(struct http_cache *cache,
                               headers);
 
     if (document == NULL)
-        http_cache_miss(cache, pool, info,
+        http_cache_miss(cache, pool, session_sticky, info,
                         method, address, headers,
                         handler, handler_ctx, async_ref);
     else
-        http_cache_found(cache, info, document, pool,
+        http_cache_found(cache, info, document, pool, session_sticky,
                          method, address, headers,
                          handler, handler_ctx, async_ref);
 }
@@ -942,6 +950,7 @@ http_cache_memcached_forward(struct http_cache_request *request,
                              void *handler_ctx)
 {
     resource_loader_request(request->cache->resource_loader, request->pool,
+                            request->session_sticky,
                             request->method, request->address,
                             HTTP_STATUS_OK, request->headers, NULL,
                             handler, handler_ctx, &request->async_ref);
@@ -1034,7 +1043,7 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
  */
 static void
 http_cache_memcached_use(struct http_cache *cache,
-                         pool_t caller_pool,
+                         pool_t caller_pool, unsigned session_sticky,
                          http_method_t method,
                          const struct resource_address *address,
                          struct strmap *headers,
@@ -1055,6 +1064,7 @@ http_cache_memcached_use(struct http_cache *cache,
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->caller_pool = caller_pool;
+    request->session_sticky = session_sticky;
     request->cache = cache;
     request->method = method;
     request->address = resource_address_dup(pool, address);
@@ -1079,7 +1089,7 @@ http_cache_memcached_use(struct http_cache *cache,
 
 void
 http_cache_request(struct http_cache *cache,
-                   pool_t pool,
+                   pool_t pool, unsigned session_sticky,
                    http_method_t method,
                    const struct resource_address *address,
                    struct strmap *headers, istream_t body,
@@ -1095,7 +1105,7 @@ http_cache_request(struct http_cache *cache,
            and lots of unique parameters, and that's not worth the
            cache space anyway */
         strlen(key) > 8192) {
-        resource_loader_request(cache->resource_loader, pool,
+        resource_loader_request(cache->resource_loader, pool, session_sticky,
                                 method, address,
                                 HTTP_STATUS_OK, headers, body,
                                 handler, handler_ctx,
@@ -1112,10 +1122,12 @@ http_cache_request(struct http_cache *cache,
         assert(body == NULL);
 
         if (cache->cache != NULL)
-            http_cache_heap_use(cache, pool, method, address, headers, info,
+            http_cache_heap_use(cache, pool, session_sticky,
+                                method, address, headers, info,
                                 handler, handler_ctx, async_ref);
         else if (cache->memcached_stock != NULL)
-            http_cache_memcached_use(cache, pool, method, address, headers,
+            http_cache_memcached_use(cache, pool, session_sticky,
+                                     method, address, headers,
                                      info, handler, handler_ctx, async_ref);
     } else {
         if (http_cache_request_invalidate(method))
@@ -1123,7 +1135,7 @@ http_cache_request(struct http_cache *cache,
 
         cache_log(4, "http_cache: ignore %s\n", key);
 
-        resource_loader_request(cache->resource_loader, pool,
+        resource_loader_request(cache->resource_loader, pool, session_sticky,
                                 method, address,
                                 HTTP_STATUS_OK, headers, body,
                                 handler, handler_ctx,

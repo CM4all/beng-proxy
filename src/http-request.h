@@ -17,9 +17,14 @@ struct growing_buffer;
 struct http_response_handler;
 struct async_operation_ref;
 
+/**
+ * @param session_sticky a portion of the session id that is used to
+ * select the worker; 0 means disable stickiness
+ */
 void
 http_request(pool_t pool,
              struct tcp_balancer *tcp_balancer,
+             unsigned session_sticky,
              http_method_t method,
              struct uri_with_address *uwa,
              struct growing_buffer *headers, istream_t body,

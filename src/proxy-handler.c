@@ -144,6 +144,7 @@ proxy_handler(struct request *request2)
 #endif
 
     http_cache_request(global_http_cache, request->pool,
+                       session_id_low(request2->session_id),
                        forward.method, address,
                        forward.headers, forward.body,
                        &proxy_response_handler, request2,

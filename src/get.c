@@ -28,6 +28,7 @@ resource_get(struct http_cache *cache,
              struct hstock *was_stock,
              struct hstock *delegate_stock,
              pool_t pool,
+             unsigned session_sticky,
              http_method_t method,
              const struct resource_address *address,
              http_status_t status, struct strmap *headers, istream_t body,
@@ -40,7 +41,7 @@ resource_get(struct http_cache *cache,
     assert(address != NULL);
 
     if (cache != NULL) {
-        http_cache_request(cache, pool,
+        http_cache_request(cache, pool, session_sticky,
                            method, address,
                            headers, body,
                            handler, handler_ctx, async_ref);
@@ -49,7 +50,7 @@ resource_get(struct http_cache *cache,
             resource_loader_new(pool, tcp_balancer,
                                 fcgi_stock, was_stock,
                                 delegate_stock);
-        resource_loader_request(rl, pool,
+        resource_loader_request(rl, pool, session_sticky,
                                 method, address, status, headers, body,
                                 handler, handler_ctx, async_ref);
     }
