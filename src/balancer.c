@@ -44,6 +44,8 @@ next_address(struct balancer_item *item)
 
     const struct address_envelope *envelope =
         address_list_get_n(&item->addresses, item->next);
+
+    ++item->next;
     if (item->next >= item->addresses.size)
         item->next = 0;
 

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.21) unstable; urgency=low
 
-  * 
+  * balancer: re-enable load balancing (regression fix)
 
  --
 
