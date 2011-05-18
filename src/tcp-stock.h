@@ -7,8 +7,9 @@
 #ifndef __BENG_TCP_STOCK_H
 #define __BENG_TCP_STOCK_H
 
-#include "pool.h"
+#include <stdbool.h>
 
+struct pool;
 struct balancer;
 struct stock_item;
 struct stock_handler;
@@ -24,14 +25,14 @@ struct address_list;
  * @return the new TCP connections stock (this function cannot fail)
  */
 struct hstock *
-tcp_stock_new(pool_t pool, struct balancer *balancer, unsigned limit);
+tcp_stock_new(struct pool *pool, struct balancer *balancer, unsigned limit);
 
 /**
  * @param name the hstock name; it is auto-generated from the
  * #address_list if NULL is passed here
  */
 void
-tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
+tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               const struct address_list *address_list,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
