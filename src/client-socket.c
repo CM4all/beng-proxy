@@ -123,9 +123,9 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
  */
 
 void
-client_socket_new(pool_t pool,
+client_socket_new(struct pool *pool,
                   int domain, int type, int protocol,
-                  const struct sockaddr *addr, socklen_t addrlen,
+                  const struct sockaddr *addr, size_t addrlen,
                   client_socket_callback_t callback, void *ctx,
                   struct async_operation_ref *async_ref)
 {
