@@ -355,6 +355,8 @@ SRC = src/main.c \
 	src/ajp-client.c \
 	src/access-log.c \
 	src/tcp-stock.c \
+	src/tcp-balancer.h \
+	src/tcp-balancer.c \
 	src/http-request.c \
 	src/http-error.c \
 	src/ajp-request.c \
@@ -1293,7 +1295,8 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/uri-address.c src/uri-resolver.c src/uri-edit.c \
 	src/address-list.c \
-	src/failure.c src/bulldog.c src/balancer.c src/tcp-stock.c \
+	src/failure.c src/bulldog.c src/balancer.c \
+	src/tcp-stock.c src/tcp-balancer.c \
 	src/cache.c \
 	src/client-socket.c src/fd_util.c \
 	src/stock.c src/hstock.c \

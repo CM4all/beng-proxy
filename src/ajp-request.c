@@ -14,6 +14,7 @@
 #include "strmap.h"
 #include "lease.h"
 #include "tcp-stock.h"
+#include "tcp-balancer.h"
 #include "abort-close.h"
 
 #include <inline/compiler.h>
@@ -23,7 +24,7 @@
 struct ajp_request {
     pool_t pool;
 
-    struct hstock *tcp_stock;
+    struct tcp_balancer *tcp_balancer;
     struct stock_item *stock_item;
 
     const char *protocol;
@@ -58,7 +59,7 @@ ajp_socket_release(bool reuse, void *ctx)
 {
     struct ajp_request *hr = ctx;
 
-    tcp_stock_put(hr->tcp_stock, hr->stock_item, !reuse);
+    tcp_balancer_put(hr->tcp_balancer, hr->stock_item, !reuse);
 }
 
 static const struct lease ajp_socket_lease = {
@@ -115,7 +116,7 @@ static const struct stock_handler ajp_request_stock_handler = {
 
 void
 ajp_stock_request(pool_t pool,
-                  struct hstock *tcp_stock,
+                  struct tcp_balancer *tcp_balancer,
                   const char *protocol, const char *remote_addr,
                   const char *remote_host, const char *server_name,
                   unsigned server_port, bool is_ssl,
@@ -137,7 +138,7 @@ ajp_stock_request(pool_t pool,
 
     hr = p_malloc(pool, sizeof(*hr));
     hr->pool = pool;
-    hr->tcp_stock = tcp_stock;
+    hr->tcp_balancer = tcp_balancer;
     hr->protocol = protocol;
     hr->remote_addr = remote_addr;
     hr->remote_host = remote_host;
@@ -159,7 +160,6 @@ ajp_stock_request(pool_t pool,
     } else
         hr->body = NULL;
 
-    const char *host_and_port;
     if (memcmp(uwa->uri, "ajp://", 6) == 0) {
         /* AJP over TCP */
 
@@ -175,11 +175,8 @@ ajp_stock_request(pool_t pool,
             return;
         }
 
-        if (slash == NULL) {
-            host_and_port = p;
+        if (slash == NULL)
             slash = "/";
-        } else
-            host_and_port = p_strndup(hr->pool, p, slash - p);
 
         hr->uri = slash;
     } else {
@@ -192,8 +189,8 @@ ajp_stock_request(pool_t pool,
         return;
     }
 
-    tcp_stock_get(tcp_stock, pool,
-                  host_and_port, &uwa->addresses,
-                  &ajp_request_stock_handler, hr,
-                  async_ref);
+    tcp_balancer_get(tcp_balancer, pool,
+                     &uwa->addresses,
+                     &ajp_request_stock_handler, hr,
+                     async_ref);
 }

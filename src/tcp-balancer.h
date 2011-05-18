@@ -1,0 +1,45 @@
+/*
+ * Wrapper for the tcp_stock class to support load balancing.
+ *
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#ifndef BENG_PROXY_TCP_STOCK_H
+#define BENG_PROXY_TCP_STOCK_H
+
+#include <stdbool.h>
+
+struct hstock;
+struct pool;
+struct balancer;
+struct address_list;
+struct stock_handler;
+struct stock_item;
+struct async_operation_ref;
+
+struct tcp_balancer;
+
+/**
+ * Creates a new TCP connection stock.
+ *
+ * @param pool the memory pool
+ * @param tcp_stock the underlying tcp_stock object
+ * @param balancer the load balancer object
+ * @param limit the maximum number of connections per host
+ * @return the new TCP connections stock (this function cannot fail)
+ */
+struct tcp_balancer *
+tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
+                 struct balancer *balancer);
+
+void
+tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
+                 const struct address_list *address_list,
+                 const struct stock_handler *handler, void *handler_ctx,
+                 struct async_operation_ref *async_ref);
+
+void
+tcp_balancer_put(struct tcp_balancer *tcp_balancer, struct stock_item *item,
+                 bool destroy);
+
+#endif

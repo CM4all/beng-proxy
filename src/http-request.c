@@ -8,6 +8,7 @@
 #include "http-response.h"
 #include "header-writer.h"
 #include "tcp-stock.h"
+#include "tcp-balancer.h"
 #include "stock.h"
 #include "async.h"
 #include "http-client.h"
@@ -23,8 +24,7 @@
 struct http_request {
     pool_t pool;
 
-    struct hstock *tcp_stock;
-    const char *host_and_port;
+    struct tcp_balancer *tcp_balancer;
     struct stock_item *stock_item;
 
     http_method_t method;
@@ -77,10 +77,10 @@ http_request_response_abort(GError *error, void *ctx)
         g_error_free(error);
 
         --hr->retries;
-        tcp_stock_get(hr->tcp_stock, hr->pool,
-                      hr->host_and_port, &hr->uwa->addresses,
-                      &http_request_stock_handler, hr,
-                      hr->async_ref);
+        tcp_balancer_get(hr->tcp_balancer, hr->pool,
+                         &hr->uwa->addresses,
+                         &http_request_stock_handler, hr,
+                         hr->async_ref);
     } else
         http_response_handler_invoke_abort(&hr->handler, error);
 }
@@ -101,7 +101,7 @@ http_socket_release(bool reuse, void *ctx)
 {
     struct http_request *hr = ctx;
 
-    tcp_stock_put(hr->tcp_stock, hr->stock_item, !reuse);
+    tcp_balancer_put(hr->tcp_balancer, hr->stock_item, !reuse);
 }
 
 static const struct lease http_socket_lease = {
@@ -155,7 +155,7 @@ static const struct stock_handler http_request_stock_handler = {
 
 void
 http_request(pool_t pool,
-             struct hstock *tcp_stock,
+             struct tcp_balancer *tcp_balancer,
              http_method_t method,
              struct uri_with_address *uwa,
              struct growing_buffer *headers,
@@ -165,7 +165,6 @@ http_request(pool_t pool,
              struct async_operation_ref *async_ref)
 {
     struct http_request *hr;
-    const char *host_and_port;
 
     assert(uwa != NULL);
     assert(uwa->uri != NULL);
@@ -175,7 +174,7 @@ http_request(pool_t pool,
 
     hr = p_malloc(pool, sizeof(*hr));
     hr->pool = pool;
-    hr->tcp_stock = tcp_stock;
+    hr->tcp_balancer = tcp_balancer;
     hr->method = method;
     hr->uwa = uwa;
 
@@ -208,6 +207,7 @@ http_request(pool_t pool,
             return;
         }
 
+        const char *host_and_port;
         if (slash == NULL) {
             host_and_port = p;
             slash = "/";
@@ -219,16 +219,7 @@ http_request(pool_t pool,
         hr->uri = slash;
     } else if (memcmp(uwa->uri, "unix:/", 6) == 0) {
         /* HTTP over Unix socket */
-        const char *p, *qmark;
-
-        p = uwa->uri + 5;
-        hr->uri = p;
-
-        qmark = strchr(p, '?');
-        if (qmark == NULL)
-            host_and_port = p;
-        else
-            host_and_port = p_strndup(hr->pool, p, qmark - p);
+        hr->uri = uwa->uri + 5;
     } else {
         GError *error =
             g_error_new_literal(http_request_quark(), 0,
@@ -243,10 +234,9 @@ http_request(pool_t pool,
 
     header_write(hr->headers, "connection", "keep-alive");
 
-    hr->host_and_port = host_and_port;
     hr->retries = 2;
-    tcp_stock_get(tcp_stock, pool,
-                  host_and_port, &uwa->addresses,
-                  &http_request_stock_handler, hr,
-                  async_ref);
+    tcp_balancer_get(tcp_balancer, pool,
+                     &uwa->addresses,
+                     &http_request_stock_handler, hr,
+                     async_ref);
 }

@@ -11,7 +11,7 @@
 
 #include <http/method.h>
 
-struct hstock;
+struct tcp_balancer;
 struct uri_with_address;
 struct growing_buffer;
 struct http_response_handler;
@@ -19,7 +19,7 @@ struct async_operation_ref;
 
 void
 http_request(pool_t pool,
-             struct hstock *tcp_stock,
+             struct tcp_balancer *tcp_balancer,
              http_method_t method,
              struct uri_with_address *uwa,
              struct growing_buffer *headers, istream_t body,

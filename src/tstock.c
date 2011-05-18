@@ -13,11 +13,12 @@
 #include <daemon/log.h>
 
 #include <assert.h>
+#include <sys/un.h>
 
 struct tstock {
     struct hstock *tcp_stock;
 
-    const char *socket_path;
+    struct sockaddr_un address;
 };
 
 struct tstock_request {
@@ -98,7 +99,14 @@ tstock_new(pool_t pool, struct hstock *tcp_stock, const char *socket_path)
     assert(socket_path != NULL);
 
     stock->tcp_stock = tcp_stock;
-    stock->socket_path = socket_path;
+
+    size_t socket_path_length = strlen(socket_path);
+    if (socket_path_length >= sizeof(stock->address.sun_path))
+        socket_path_length = sizeof(stock->address.sun_path) - 1;
+
+    stock->address.sun_family = AF_UNIX;
+    memcpy(stock->address.sun_path, socket_path, socket_path_length);
+    stock->address.sun_path[socket_path_length] = 0;
 
     return stock;
 }
@@ -118,7 +126,9 @@ tstock_translate(struct tstock *stock, pool_t pool,
     r->handler_ctx = ctx;
     r->async_ref = async_ref;
 
-    tcp_stock_get(stock->tcp_stock, pool, stock->socket_path, NULL,
+    tcp_stock_get(stock->tcp_stock, pool, stock->address.sun_path,
+                  (const struct sockaddr *)&stock->address,
+                  sizeof(stock->address),
                   &tstock_stock_handler, r,
                   async_ref);
 }

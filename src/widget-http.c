@@ -166,8 +166,8 @@ widget_response_redirect(struct embed *embed, const char *location,
                                      address->type == RESOURCE_ADDRESS_HTTP,
                                      false);
 
-    resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
-                 global_was_stock, global_delegate_stock,
+    resource_get(global_http_cache, global_tcp_balancer,
+                 global_fcgi_stock, global_was_stock, global_delegate_stock,
                  embed->pool,
                  HTTP_METHOD_GET, address, HTTP_STATUS_OK, headers, NULL,
                  &widget_response_handler, embed,
@@ -494,8 +494,8 @@ widget_http_request(pool_t pool, struct widget *widget,
     address = widget_address(widget);
     embed->resource_tag = resource_address_id(address, pool);
 
-    resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
-                 global_was_stock, global_delegate_stock,
+    resource_get(global_http_cache, global_tcp_balancer,
+                 global_fcgi_stock, global_was_stock, global_delegate_stock,
                  pool,
                  widget->from_request.method,
                  address,
@@ -557,8 +557,8 @@ widget_http_lookup(pool_t pool, struct widget *widget, const char *id,
     address = widget_address(widget);
     embed->resource_tag = resource_address_id(address, pool);
 
-    resource_get(global_http_cache, global_tcp_stock, global_fcgi_stock,
-                 global_was_stock, global_delegate_stock,
+    resource_get(global_http_cache, global_tcp_balancer,
+                 global_fcgi_stock, global_was_stock, global_delegate_stock,
                  pool,
                  widget->from_request.method,
                  address,

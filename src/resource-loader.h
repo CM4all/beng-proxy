@@ -14,13 +14,14 @@
 #include <http/status.h>
 
 struct hstock;
+struct tcp_balancer;
 struct resource_address;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
 struct resource_loader *
-resource_loader_new(pool_t pool, struct hstock *tcp_stock,
+resource_loader_new(pool_t pool, struct tcp_balancer *tcp_balancer,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
                     struct hstock *delegate_stock);
 

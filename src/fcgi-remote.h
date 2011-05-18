@@ -11,14 +11,14 @@
 
 #include <http/method.h>
 
-struct hstock;
+struct tcp_balancer;
 struct address_list;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
 void
-fcgi_remote_request(pool_t pool, struct hstock *tcp_stock,
+fcgi_remote_request(pool_t pool, struct tcp_balancer *tcp_balancer,
                     const struct address_list *address_list,
                     const char *path,
                     http_method_t method, const char *uri,

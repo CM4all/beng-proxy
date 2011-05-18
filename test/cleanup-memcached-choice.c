@@ -1,4 +1,5 @@
 #include "tcp-stock.h"
+#include "tcp-balancer.h"
 #include "balancer.h"
 #include "stock.h"
 #include "uri-resolver.h"
@@ -81,8 +82,10 @@ int main(int argc, char **argv) {
     if (uwa == NULL)
         return 1;
 
-    tcp_stock = tcp_stock_new(ctx.pool, balancer_new(ctx.pool), 0);
-    stock = memcached_stock_new(ctx.pool, tcp_stock, uwa);
+    tcp_stock = tcp_stock_new(ctx.pool, 0);
+    struct tcp_balancer *tcp_balancer = tcp_balancer_new(ctx.pool, tcp_stock,
+                                                         balancer_new(ctx.pool));
+    stock = memcached_stock_new(ctx.pool, tcp_balancer, uwa);
 
     /* send memcached request */
 

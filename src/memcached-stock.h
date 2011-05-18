@@ -12,11 +12,11 @@
 
 struct memcached_client_handler;
 struct memcached_stock;
-struct hstock;
+struct tcp_balancer;
 struct uri_with_address;
 
 struct memcached_stock *
-memcached_stock_new(pool_t pool, struct hstock *tcp_stock,
+memcached_stock_new(pool_t pool, struct tcp_balancer *tcp_balancer,
                     struct uri_with_address *address);
 
 void

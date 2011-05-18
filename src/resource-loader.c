@@ -25,7 +25,7 @@
 #include <stdlib.h>
 
 struct resource_loader {
-    struct hstock *tcp_stock;
+    struct tcp_balancer *tcp_balancer;
     struct hstock *fcgi_stock;
     struct hstock *was_stock;
     struct hstock *delegate_stock;
@@ -38,16 +38,15 @@ resource_loader_quark(void)
 }
 
 struct resource_loader *
-resource_loader_new(pool_t pool, struct hstock *tcp_stock,
+resource_loader_new(pool_t pool, struct tcp_balancer *tcp_balancer,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
                     struct hstock *delegate_stock)
 {
-    assert(tcp_stock != NULL);
     assert(fcgi_stock != NULL);
 
     struct resource_loader *rl = p_malloc(pool, sizeof(*rl));
 
-    rl->tcp_stock = tcp_stock;
+    rl->tcp_balancer = tcp_balancer;
     rl->fcgi_stock = fcgi_stock;
     rl->was_stock = was_stock;
     rl->delegate_stock = delegate_stock;
@@ -205,7 +204,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
                          address->u.cgi.args, address->u.cgi.num_args,
                          handler, handler_ctx, async_ref);
         else
-            fcgi_remote_request(pool, rl->tcp_stock,
+            fcgi_remote_request(pool, rl->tcp_balancer,
                                 &address->u.cgi.address_list,
                                 address->u.cgi.path,
                                 method, resource_address_cgi_uri(pool, address),
@@ -233,7 +232,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
         return;
 
     case RESOURCE_ADDRESS_HTTP:
-        http_request(pool, rl->tcp_stock,
+        http_request(pool, rl->tcp_balancer,
                      method, address->u.http,
                      headers_dup(pool, headers), body,
                      handler, handler_ctx, async_ref);
@@ -242,7 +241,7 @@ resource_loader_request(struct resource_loader *rl, pool_t pool,
     case RESOURCE_ADDRESS_AJP:
         server_port = 80;
         server_name = extract_server_name(pool, headers, &server_port);
-        ajp_stock_request(pool, rl->tcp_stock,
+        ajp_stock_request(pool, rl->tcp_balancer,
                           "http", extract_remote_ip(pool, headers),
                           NULL,
                           server_name, server_port,

@@ -12,6 +12,7 @@
 #include "session.h"
 #include "tstock.h"
 #include "tcp-stock.h"
+#include "tcp-balancer.h"
 #include "memcached-stock.h"
 #include "stock.h"
 #include "tcache.h"
@@ -289,12 +290,14 @@ int main(int argc, char **argv)
         exit(2);
 
     instance.balancer = balancer_new(instance.pool);
-    instance.tcp_stock = tcp_stock_new(instance.pool, instance.balancer,
+    instance.tcp_stock = tcp_stock_new(instance.pool,
                                        instance.config.tcp_stock_limit);
+    instance.tcp_balancer = tcp_balancer_new(instance.pool, instance.tcp_stock,
+                                             instance.balancer);
 
     if (instance.config.memcached_server != NULL)
         instance.memcached_stock =
-            memcached_stock_new(instance.pool, instance.tcp_stock,
+            memcached_stock_new(instance.pool, instance.tcp_balancer,
                                 instance.config.memcached_server);
 
     if (instance.config.translation_socket != NULL) {
@@ -313,7 +316,7 @@ int main(int argc, char **argv)
 
     instance.delegate_stock = delegate_stock_new(instance.pool);
     instance.resource_loader = resource_loader_new(instance.pool,
-                                                   instance.tcp_stock,
+                                                   instance.tcp_balancer,
                                                    instance.fcgi_stock,
                                                    instance.was_stock,
                                                    instance.delegate_stock);
@@ -333,6 +336,7 @@ int main(int argc, char **argv)
 
     global_translate_cache = instance.translate_cache;
     global_tcp_stock = instance.tcp_stock;
+    global_tcp_balancer = instance.tcp_balancer;
     global_memcached_stock = instance.memcached_stock;
     global_http_cache = instance.http_cache;
     global_fcgi_stock = instance.fcgi_stock;

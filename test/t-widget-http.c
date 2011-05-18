@@ -40,7 +40,7 @@ int global_delegate_stock;
 int global_fcgi_stock;
 int global_was_stock;
 int global_http_cache;
-int global_tcp_stock;
+int global_tcp_balancer;
 const struct widget_class root_widget_class;
 
 static unsigned test_id;
@@ -105,7 +105,7 @@ struct hstock;
 
 void
 resource_get(__attr_unused struct http_cache *cache,
-             __attr_unused struct hstock *tcp_stock,
+             __attr_unused struct tcp_balancer *tcp_balancer,
              __attr_unused struct hstock *fcgi_stock,
              __attr_unused struct hstock *was_stock,
              __attr_unused struct hstock *delegate_stock,

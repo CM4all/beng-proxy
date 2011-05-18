@@ -8,24 +8,24 @@
 #define __BENG_TCP_STOCK_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 struct pool;
 struct balancer;
 struct stock_item;
 struct stock_handler;
 struct async_operation_ref;
-struct address_list;
+struct sockaddr;
 
 /**
  * Creates a new TCP connection stock.
  *
  * @param pool the memory pool
- * @param balancer the load balancer object
  * @param limit the maximum number of connections per host
  * @return the new TCP connections stock (this function cannot fail)
  */
 struct hstock *
-tcp_stock_new(struct pool *pool, struct balancer *balancer, unsigned limit);
+tcp_stock_new(struct pool *pool, unsigned limit);
 
 /**
  * @param name the hstock name; it is auto-generated from the
@@ -33,7 +33,7 @@ tcp_stock_new(struct pool *pool, struct balancer *balancer, unsigned limit);
  */
 void
 tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
-              const struct address_list *address_list,
+              const struct sockaddr *address, size_t address_length,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 

@@ -81,7 +81,8 @@ errdoc_translate_response(const struct translate_response *response, void *ctx)
         pool_t pool = request2->request->pool;
         struct instance *instance = request2->connection->instance;
 
-        resource_get(instance->http_cache, instance->tcp_stock,
+        resource_get(instance->http_cache,
+                     instance->tcp_balancer,
                      instance->fcgi_stock, instance->was_stock,
                      instance->delegate_stock,
                      pool, HTTP_METHOD_GET,

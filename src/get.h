@@ -15,6 +15,7 @@
 
 struct http_cache;
 struct hstock;
+struct tcp_balancer;
 struct resource_address;
 struct strmap;
 struct http_response_handler;
@@ -25,7 +26,7 @@ struct async_operation_ref;
  * client-side protocols implemented by beng-proxy.
  *
  * @param cache a HTTP cache object (optional)
- * @param tcp_stock the stock (pool) for TCP client connections
+ * @param tcp_balancer the stock (pool) for TCP client connections
  * @param fcgi_stock the stock for FastCGI instances
  * @param was_stock the stock for WAS instances
  * @param delegate_stock the stock for delegate programs
@@ -34,7 +35,7 @@ struct async_operation_ref;
  */
 void
 resource_get(struct http_cache *cache,
-             struct hstock *tcp_stock,
+             struct tcp_balancer *tcp_balancer,
              struct hstock *fcgi_stock,
              struct hstock *was_stock,
              struct hstock *delegate_stock,

@@ -43,6 +43,7 @@ struct instance {
     struct tcache *translate_cache;
     struct balancer *balancer;
     struct hstock *tcp_stock;
+    struct tcp_balancer *tcp_balancer;
     struct memcached_stock *memcached_stock;
 
     /* cache */

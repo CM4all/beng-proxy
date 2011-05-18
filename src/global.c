@@ -9,6 +9,7 @@
 struct tcache *global_translate_cache;
 
 struct hstock *global_tcp_stock;
+struct tcp_balancer *global_tcp_balancer;
 
 struct memcached_stock *global_memcached_stock;
 

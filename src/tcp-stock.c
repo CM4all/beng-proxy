@@ -10,11 +10,10 @@
 #include "client-socket.h"
 #include "address-list.h"
 #include "address-envelope.h"
-#include "balancer.h"
-#include "failure.h"
 #include "pevent.h"
 
 #include <daemon/log.h>
+#include <socket/address.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -24,7 +23,8 @@
 #include <sys/socket.h>
 
 struct tcp_stock_request {
-    const struct address_list *address_list;
+    const struct sockaddr *address;
+    size_t address_length;
 };
 
 struct tcp_stock_connection {
@@ -33,21 +33,12 @@ struct tcp_stock_connection {
 
     struct async_operation create_operation;
 
-    const struct address_envelope *address;
-
     struct async_operation_ref client_socket;
 
     int fd, domain;
 
     struct event event;
 };
-
-static GQuark
-tcp_stock_quark(void)
-{
-    return g_quark_from_static_string("tcp_stock");
-}
-
 
 /*
  * async operation
@@ -126,11 +117,6 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
     if (err == 0) {
         assert(fd >= 0);
 
-        /* XXX check HTTP status code? */
-        if (connection->address != NULL)
-            failure_remove(&connection->address->address,
-                           connection->address->length);
-
         connection->fd = fd;
         event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
                   tcp_stock_event, connection);
@@ -140,10 +126,6 @@ tcp_stock_socket_callback(int fd, int err, void *ctx)
         GError *error = g_error_new(g_file_error_quark(), err,
                                     "failed to connect to '%s': %s",
                                     connection->uri, strerror(err));
-
-        if (connection->address != NULL)
-            failure_add(&connection->address->address,
-                        connection->address->length);
 
         stock_item_failed(&connection->stock_item, error);
     }
@@ -168,11 +150,11 @@ tcp_stock_create(void *ctx, struct stock_item *item,
                  pool_t caller_pool,
                  struct async_operation_ref *async_ref)
 {
-    struct balancer *balancer = ctx;
+    (void)ctx;
+
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
     struct tcp_stock_request *request = info;
-    const struct address_list *address_list = request->address_list;
 
     assert(uri != NULL);
 
@@ -183,53 +165,11 @@ tcp_stock_create(void *ctx, struct stock_item *item,
 
     connection->uri = uri;
 
-    if (address_list != NULL)
-        connection->address = balancer_get(balancer, address_list,
-                                           0);
-    else
-        connection->address = NULL;
-
-    if (connection->address != NULL) {
-        connection->domain = connection->address->address.sa_family;
-        client_socket_new(caller_pool,
-                          connection->address->address.sa_family,
-                          SOCK_STREAM, 0,
-                          &connection->address->address,
-                          connection->address->length,
-                          tcp_stock_socket_callback, connection,
-                          &connection->client_socket);
-    } else if (uri[0] != '/') {
-        GError *error = g_error_new(tcp_stock_quark(), 0,
-                                    "address missing for '%s'", uri);
-
-        async_operation_finished(&connection->create_operation);
-        stock_item_failed(item, error);
-    } else {
-        /* HTTP over Unix socket */
-        size_t path_length;
-        struct sockaddr_un sun;
-
-        path_length = strlen(uri);
-
-        if (path_length >= sizeof(sun.sun_path)) {
-            GError *error = g_error_new(tcp_stock_quark(), 0,
-                                        "unix socket path is too long");
-
-            async_operation_finished(&connection->create_operation);
-            stock_item_failed(item, error);
-            return;
-        }
-
-        sun.sun_family = AF_UNIX;
-        memcpy(sun.sun_path, uri, path_length + 1);
-
-        connection->domain = AF_LOCAL;
-        client_socket_new(caller_pool,
-                          PF_UNIX, SOCK_STREAM, 0,
-                          (const struct sockaddr*)&sun, sizeof(sun),
-                          tcp_stock_socket_callback, connection,
-                          &connection->client_socket);
-    }
+    connection->domain = request->address->sa_family;
+    client_socket_new(caller_pool, connection->domain, SOCK_STREAM, 0,
+                      request->address, request->address_length,
+                      tcp_stock_socket_callback, connection,
+                      &connection->client_socket);
 }
 
 static bool
@@ -285,23 +225,31 @@ static const struct stock_class tcp_stock_class = {
  */
 
 struct hstock *
-tcp_stock_new(pool_t pool, struct balancer *balancer, unsigned limit)
+tcp_stock_new(pool_t pool, unsigned limit)
 {
-    return hstock_new(pool, &tcp_stock_class, balancer, limit);
+    return hstock_new(pool, &tcp_stock_class, NULL, limit);
 }
 
 void
 tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
-              const struct address_list *address_list,
+              const struct sockaddr *address, size_t address_length,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
+    assert(address != NULL);
+    assert(address_length > 0);
+
     struct tcp_stock_request *request = p_malloc(pool, sizeof(*request));
-    request->address_list = address_list;
+    request->address = address;
+    request->address_length = address_length;
 
     if (name == NULL) {
-        assert(address_list != NULL);
-        name = p_strdup(pool, address_list_key(address_list));
+        char buffer[1024];
+        if (!socket_address_to_string(buffer, sizeof(buffer),
+                                      address, address_length))
+            buffer[0] = 0;
+
+        name = p_strdup(pool, buffer);
     }
 
     hstock_get(tcp_stock, pool, name, request,

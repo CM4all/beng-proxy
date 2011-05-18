@@ -8,6 +8,7 @@
 #include "memcached-client.h"
 #include "stock.h"
 #include "tcp-stock.h"
+#include "tcp-balancer.h"
 #include "uri-address.h"
 #include "lease.h"
 
@@ -17,18 +18,18 @@
 #include <sys/socket.h>
 
 struct memcached_stock {
-    struct hstock *tcp_stock;
+    struct tcp_balancer *tcp_balancer;
 
     struct uri_with_address *address;
 };
 
 struct memcached_stock *
-memcached_stock_new(pool_t pool, struct hstock *tcp_stock,
+memcached_stock_new(pool_t pool, struct tcp_balancer *tcp_balancer,
                     struct uri_with_address *address)
 {
     struct memcached_stock *stock = p_malloc(pool, sizeof(*stock));
 
-    stock->tcp_stock = tcp_stock;
+    stock->tcp_balancer = tcp_balancer;
     stock->address = address;
 
     return stock;
@@ -71,7 +72,7 @@ memcached_socket_release(bool reuse, void *ctx)
 {
     struct memcached_stock_request *request = ctx;
 
-    tcp_stock_put(request->stock->tcp_stock, request->item, !reuse);
+    tcp_balancer_put(request->stock->tcp_balancer, request->item, !reuse);
 }
 
 static const struct lease memcached_socket_lease = {
@@ -146,8 +147,8 @@ memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
     request->handler_ctx = handler_ctx;
     request->async_ref = async_ref;
 
-    tcp_stock_get(stock->tcp_stock, pool,
-                  stock->address->uri, &stock->address->addresses,
-                  &memcached_stock_handler, request,
-                  async_ref);
+    tcp_balancer_get(stock->tcp_balancer, pool,
+                     &stock->address->addresses,
+                     &memcached_stock_handler, request,
+                     async_ref);
 }

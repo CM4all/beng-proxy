@@ -10,6 +10,7 @@
 #include "socket-util.h"
 #include "lease.h"
 #include "tcp-stock.h"
+#include "tcp-balancer.h"
 #include "stock.h"
 #include "abort-close.h"
 #include "address-list.h"
@@ -24,7 +25,7 @@
 struct fcgi_remote_request {
     pool_t pool;
 
-    struct hstock *tcp_stock;
+    struct tcp_balancer *tcp_balancer;
 
     struct stock_item *stock_item;
 
@@ -57,7 +58,7 @@ fcgi_socket_release(bool reuse, void *ctx)
 {
     struct fcgi_remote_request *request = ctx;
 
-    tcp_stock_put(request->tcp_stock, request->stock_item, !reuse);
+    tcp_balancer_put(request->tcp_balancer, request->stock_item, !reuse);
 }
 
 static const struct lease fcgi_socket_lease = {
@@ -113,7 +114,7 @@ static const struct stock_handler fcgi_remote_stock_handler = {
  */
 
 void
-fcgi_remote_request(pool_t pool, struct hstock *tcp_stock,
+fcgi_remote_request(pool_t pool, struct tcp_balancer *tcp_balancer,
                     const struct address_list *address_list,
                     const char *path,
                     http_method_t method, const char *uri,
@@ -131,7 +132,7 @@ fcgi_remote_request(pool_t pool, struct hstock *tcp_stock,
 
     request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
-    request->tcp_stock = tcp_stock;
+    request->tcp_balancer = tcp_balancer;
     request->method = method;
     request->uri = uri;
     request->script_filename = path;
@@ -153,7 +154,7 @@ fcgi_remote_request(pool_t pool, struct hstock *tcp_stock,
     } else
         request->body = NULL;
 
-    tcp_stock_get(tcp_stock, pool, NULL, address_list,
-                  &fcgi_remote_stock_handler, request,
-                  async_ref);
+    tcp_balancer_get(tcp_balancer, pool, address_list,
+                     &fcgi_remote_stock_handler, request,
+                     async_ref);
 }
