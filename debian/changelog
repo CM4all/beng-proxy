@@ -1,3 +1,9 @@
+cm4all-beng-proxy (0.8.38) unstable; urgency=low
+
+  * 
+
+ --
+
 cm4all-beng-proxy (0.8.37) unstable; urgency=low
 
   * widget-resolver: don't reuse failed resolver
