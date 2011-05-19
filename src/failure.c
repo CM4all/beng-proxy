@@ -73,9 +73,11 @@ failure_add(const struct sockaddr *addr, socklen_t addrlen)
 
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next) {
         if (failure->envelope.length == addrlen &&
-            memcmp(&failure->envelope.address, addr, addrlen) == 0)
+            memcmp(&failure->envelope.address, addr, addrlen) == 0) {
             /* this address is already in our list */
+            failure->expires = now.tv_sec + 20;
             return;
+        }
     }
 
     /* insert new failure object into the linked list */
