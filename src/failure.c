@@ -71,21 +71,23 @@ failure_add(const struct sockaddr *addr, socklen_t addrlen)
     assert(addr != NULL);
     assert(addrlen >= sizeof(failure->addr));
 
-    for (failure = fl.slots[slot]; failure != NULL; failure = failure->next) {
-        if (failure->addrlen == addrlen &&
-            memcmp(&failure->addr, addr, addrlen) == 0)
-            /* this address is already in our list */
-            return;
-    }
-
-    /* insert new failure object into the linked list */
-
     ret = clock_gettime(CLOCK_MONOTONIC, &now);
     if (ret < 0) {
         daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
                    strerror(errno));
         return;
     }
+
+    for (failure = fl.slots[slot]; failure != NULL; failure = failure->next) {
+        if (failure->addrlen == addrlen &&
+            memcmp(&failure->addr, addr, addrlen) == 0) {
+            /* this address is already in our list */
+            failure->expires = now.tv_sec + 20;
+            return;
+        }
+    }
+
+    /* insert new failure object into the linked list */
 
     failure = p_malloc(fl.pool,
                        sizeof(*failure) - sizeof(failure->addr) + addrlen);
