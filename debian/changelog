@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.9.21) unstable; urgency=low
 
   * balancer: re-enable load balancing (regression fix)
   * failure: update time stamp on existing item
+  * merge release 0.8.38
 
  --
 
@@ -183,6 +184,13 @@ cm4all-beng-proxy (0.9) unstable; urgency=low
   * main: default WAS stock limit is 16
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 18 Nov 2010 19:56:17 +0100
+
+cm4all-beng-proxy (0.8.38) unstable; urgency=low
+
+  * failure: update time stamp on existing item
+  * errdoc: free the original response body on abort
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 20 May 2011 10:17:14 +0200
 
 cm4all-beng-proxy (0.8.37) unstable; urgency=low
 

@@ -71,6 +71,13 @@ failure_add(const struct sockaddr *addr, socklen_t addrlen)
     assert(addr != NULL);
     assert(addrlen >= sizeof(failure->envelope.address));
 
+    ret = clock_gettime(CLOCK_MONOTONIC, &now);
+    if (ret < 0) {
+        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
+                   strerror(errno));
+        return;
+    }
+
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next) {
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
@@ -81,13 +88,6 @@ failure_add(const struct sockaddr *addr, socklen_t addrlen)
     }
 
     /* insert new failure object into the linked list */
-
-    ret = clock_gettime(CLOCK_MONOTONIC, &now);
-    if (ret < 0) {
-        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
-                   strerror(errno));
-        return;
-    }
 
     failure = p_malloc(fl.pool, sizeof(*failure)
                        - sizeof(failure->envelope.address) + addrlen);

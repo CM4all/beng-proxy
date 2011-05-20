@@ -15,6 +15,9 @@
 #include <daemon/log.h>
 
 struct error_response {
+    struct async_operation operation;
+    struct async_operation_ref async_ref;
+
     struct request *request2;
 
     http_status_t status;
@@ -29,6 +32,11 @@ errdoc_resubmit(const struct error_response *er)
 {
     response_dispatch(er->request2, er->status, er->headers, er->body);
 }
+
+/*
+ * HTTP response handler
+ *
+ */
 
 static void
 errdoc_response_response(http_status_t status, struct strmap *headers,
@@ -68,6 +76,11 @@ const struct http_response_handler errdoc_response_handler = {
     .response = errdoc_response_response,
     .abort = errdoc_response_abort,
 };
+
+/*
+ * translate handler
+ *
+ */
 
 static void
 errdoc_translate_response(const struct translate_response *response, void *ctx)
@@ -118,6 +131,29 @@ fill_translate_request(struct translate_request *t,
     t->error_document_status = status;
 }
 
+/*
+ * async operation
+ *
+ */
+
+static void
+errdoc_abort(struct async_operation *ao)
+{
+    struct error_response *er = (struct error_response *)ao;
+
+    istream_close_unused(er->body);
+    async_abort(&er->async_ref);
+}
+
+static const struct async_operation_class errdoc_operation = {
+    .abort = errdoc_abort,
+};
+
+/*
+ * constructor
+ *
+ */
+
 void
 errdoc_dispatch_response(struct request *request2, http_status_t status,
                          struct growing_buffer *headers, istream_t body)
@@ -135,10 +171,13 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
         ? istream_hold_new(pool, body)
         : NULL;
 
+    async_init(&er->operation, &errdoc_operation);
+    async_ref_set(request2->async_ref, &er->operation);
+
     fill_translate_request(&er->translate_request,
                            &request2->translate.request, status);
     translate_cache(pool, instance->translate_cache,
                     &er->translate_request,
                     &errdoc_translate_handler, er,
-                    request2->async_ref);
+                    &er->async_ref);
 }
