@@ -1,10 +1,9 @@
 cm4all-beng-proxy (0.9.21) unstable; urgency=low
 
   * balancer: re-enable load balancing (regression fix)
-  * failure: update time stamp on existing item
   * merge release 0.8.38
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 20 May 2011 11:03:31 +0200
 
 cm4all-beng-proxy (0.9.20) unstable; urgency=low
 
