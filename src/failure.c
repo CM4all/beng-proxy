@@ -134,7 +134,7 @@ failure_check(const struct sockaddr *addr, socklen_t addrlen)
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next)
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0)
-            return is_expired(failure->expires);
+            return !is_expired(failure->expires);
 
     return false;
 }

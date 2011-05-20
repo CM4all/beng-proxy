@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.10) unstable; urgency=low
 
-  * 
+  * failure: fix inverted logic bug in expiry check
 
  --
 
