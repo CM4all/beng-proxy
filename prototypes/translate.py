@@ -351,6 +351,13 @@ class Translation(Protocol):
             else:
                 # invalid request
                 response.status(400)
+        elif uri[:10] == '/balancer/':
+            response.proxy('http://balancer/' + raw_uri[10:],
+                           ('172.30.0.23:80', '172.30.0.23:8080'))
+        elif uri[:8] == '/sticky/':
+            response.proxy('http://sticky/' + raw_uri[8:],
+                           ('172.30.0.23:80', '172.30.0.23:8080'))
+            response.packet(TRANSLATE_STICKY)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
