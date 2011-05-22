@@ -394,6 +394,8 @@ SRC = src/main.c \
 	src/delegate-handler.c \
 	src/address-list.h \
 	src/address-list.c \
+	src/address-string.h \
+	src/address-string.c \
 	src/uri-edit.c \
 	src/uri-extract.c \
 	src/uri-relative.c \
