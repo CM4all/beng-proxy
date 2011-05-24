@@ -209,7 +209,7 @@ p_calloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
 
 #define p_calloc(pool, size) p_calloc_impl(pool, size TRACE_ARGS)
 
-char * __attr_malloc
+void * __attr_malloc
 p_memdup(pool_t pool, const void *src, size_t length);
 
 char * __attr_malloc
