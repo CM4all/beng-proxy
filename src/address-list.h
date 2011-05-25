@@ -7,13 +7,14 @@
 #ifndef BENG_PROXY_ADDRESS_LIST_H
 #define BENG_PROXY_ADDRESS_LIST_H
 
-#include <sys/socket.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <assert.h>
 
 #define MAX_ADDRESSES 16
 
 struct pool;
+struct sockaddr;
 
 struct address_list {
     bool sticky;
@@ -46,7 +47,7 @@ address_list_copy(struct pool *pool, struct address_list *dest,
  */
 bool
 address_list_add(struct pool *pool, struct address_list *list,
-                 const struct sockaddr *address, socklen_t length);
+                 const struct sockaddr *address, size_t length);
 
 static inline const struct address_envelope *
 address_list_get_n(const struct address_list *list, unsigned n)

@@ -28,7 +28,7 @@ address_list_copy(pool_t pool, struct address_list *dest,
 
 bool
 address_list_add(pool_t pool, struct address_list *al,
-                 const struct sockaddr *address, socklen_t length)
+                 const struct sockaddr *address, size_t length)
 {
     assert(al->size <= MAX_ADDRESSES);
 
