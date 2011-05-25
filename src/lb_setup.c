@@ -28,9 +28,10 @@ init_all_listeners(struct lb_instance *instance)
 void
 deinit_all_listeners(struct lb_instance *instance)
 {
-    for (struct lb_listener *listener = (struct lb_listener *)instance->listeners.next;
-         &listener->siblings != &instance->listeners;
-         listener = (struct lb_listener *)listener->siblings.next)
+    while (!list_empty(&instance->listeners)) {
+        struct lb_listener *listener =
+            (struct lb_listener *)instance->listeners.next;
+        list_remove(&listener->siblings);
         lb_listener_free(listener);
-    list_init(&instance->listeners);
+    }
 }
