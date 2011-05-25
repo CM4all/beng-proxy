@@ -13,10 +13,10 @@ uri_host_and_port(pool_t pool, const char *uri)
 {
     const char *slash;
 
-    if (memcmp(uri, "http://", 7) != 0)
+    if (memcmp(uri, "http://", 7) != 0 && memcmp(uri, "ajp://", 6) != 0)
         return NULL;
 
-    uri += 7;
+    uri += 6 + (uri[0] != 'a');
     slash = strchr(uri, '/');
     if (slash == NULL)
         return uri;
