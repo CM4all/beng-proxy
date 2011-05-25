@@ -9,10 +9,10 @@
 #include "lb_connection.h"
 #include "lb_config.h"
 #include "address-envelope.h"
-#include "address-edit.h"
 #include "http-server.h"
 #include "http-client.h"
 #include "tcp-stock.h"
+#include "tcp-balancer.h"
 #include "lease.h"
 #include "header-writer.h"
 #include "http-response.h"
@@ -41,8 +41,8 @@ my_socket_release(bool reuse, void *ctx)
 {
     struct lb_request *request2 = ctx;
 
-    tcp_stock_put(request2->connection->instance->tcp_stock,
-                  request2->stock_item, !reuse);
+    tcp_balancer_put(request2->connection->instance->tcp_balancer,
+                     request2->stock_item, !reuse);
 }
 
 static const struct lease my_socket_lease = {
@@ -141,21 +141,13 @@ handle_http_request(struct lb_connection *connection,
     assert(cluster != NULL);
     assert(cluster->num_members > 0);
 
-    const struct lb_member_config *member = &cluster->members[0];
-    const struct address_envelope *envelope = member->node->envelope;
-
-    const struct sockaddr *address =
-        sockaddr_set_port(request->pool,
-                          &envelope->address, envelope->length,
-                          member->port);
-
     struct lb_request *request2 = p_malloc(request->pool, sizeof(*request2));
     request2->connection = connection;
     request2->request = request;
     request2->async_ref = async_ref;
 
-    tcp_stock_get(connection->instance->tcp_stock, request->pool, NULL,
-                  address, envelope->length,
-                  &my_stock_handler, request2,
-                  async_ref);
+    tcp_balancer_get(connection->instance->tcp_balancer, request->pool, 0,
+                     &cluster->address_list,
+                     &my_stock_handler, request2,
+                     async_ref);
 }

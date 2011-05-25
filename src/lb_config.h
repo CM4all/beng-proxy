@@ -7,6 +7,8 @@
 #ifndef BENG_LB_CONFIG_H
 #define BENG_LB_CONFIG_H
 
+#include "address-list.h"
+
 #include <inline/list.h>
 
 #include <glib.h>
@@ -41,6 +43,11 @@ struct lb_cluster_config {
     unsigned num_members;
 
     struct lb_member_config members[MAX_CLUSTER_MEMBERS];
+
+    /**
+     * A list of node addresses.
+     */
+    struct address_list address_list;
 };
 
 struct lb_listener_config {

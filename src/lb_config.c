@@ -8,6 +8,7 @@
 #include "pool.h"
 #include "address-string.h"
 #include "address-envelope.h"
+#include "address-edit.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -547,6 +548,40 @@ config_parser_run(struct lb_config *config, FILE *file, GError **error_r)
     return true;
 }
 
+static bool
+lb_cluster_config_finish(struct pool *pool, struct lb_cluster_config *config,
+                         GError **error_r)
+{
+    address_list_init(&config->address_list);
+
+    for (unsigned i = 0; i < config->num_members; ++i) {
+        struct lb_member_config *member = &config->members[i];
+        const struct address_envelope *envelope =
+            member->node->envelope;
+        const struct sockaddr *address =
+            sockaddr_set_port(pool, &envelope->address, envelope->length,
+                              member->port);
+
+        if (!address_list_add(pool, &config->address_list,
+                              address, envelope->length))
+            return throw(error_r, "Too many members");
+    }
+
+    return true;
+}
+
+static bool
+lb_config_finish(struct lb_config *config, GError **error_r)
+{
+    for (struct lb_cluster_config *cluster = (struct lb_cluster_config *)config->clusters.next;
+         &cluster->siblings != &config->clusters;
+         cluster = (struct lb_cluster_config *)cluster->siblings.next)
+        if (!lb_cluster_config_finish(config->pool, cluster, error_r))
+            return false;
+
+    return true;
+}
+
 struct lb_config *
 lb_config_load(struct pool *pool, const char *path,
                GError **error_r)
@@ -568,7 +603,7 @@ lb_config_load(struct pool *pool, const char *path,
 
     bool success = config_parser_run(config, file, error_r);
     fclose(file);
-    if (!success) {
+    if (!success || !lb_config_finish(config, error_r)) {
         pool_unref(config->pool);
         config = NULL;
     }
