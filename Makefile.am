@@ -522,8 +522,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_listener.c \
 	src/lb_connection.h \
 	src/lb_connection.c \
-	src/lb_handler.h \
-	src/lb_handler.c \
+	src/lb_http.h \
+	src/lb_http.c \
 	src/lb_config.h \
 	src/lb_config.c \
 	src/lb_setup.h \
