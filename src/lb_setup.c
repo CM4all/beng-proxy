@@ -20,6 +20,8 @@ init_all_listeners(struct lb_instance *instance)
         struct lb_listener *listener = lb_listener_new(instance, config);
         if (listener == NULL)
             success = false;
+
+        list_add(&listener->siblings, &instance->listeners);
     }
 
     return success;
