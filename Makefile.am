@@ -480,6 +480,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/address-list.c \
 	src/address-string.h \
 	src/address-string.c \
+	src/address-edit.h \
+	src/address-edit.c \
 	src/listener.c \
 	src/client-socket.c \
 	src/bulldog.c \
