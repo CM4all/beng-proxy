@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ADDRESS_ENVELOPE_H
-#define BENG_PROXY_ADDRESS_LIST_H
+#ifndef BENG_PROXY_ADDRESS_STRING_H
+#define BENG_PROXY_ADDRESS_STRING_H
 
 struct pool;
 struct addrinfo;
