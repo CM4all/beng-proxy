@@ -147,6 +147,7 @@ next_value(char **pp)
     else
         return NULL;
 
+    ++p;
     char *q = strchr(p, stop);
     if (q == NULL)
         return NULL;
