@@ -36,6 +36,7 @@ debian/stamp-build:
 
 	# Build
 	$(MAKE) -C build/debug \
+		src/cm4all-beng-lb \
 		src/cm4all-beng-proxy \
 		src/cm4all-beng-proxy-delegate-helper \
 		src/libcm4all-istream.a doc/beng.pdf
