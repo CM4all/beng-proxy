@@ -119,6 +119,7 @@ binary-arch: build check
 	dh_strip -p cm4all-beng-proxy --dbg-package=cm4all-beng-proxy-dbg
 	dh_strip -p cm4all-beng-proxy-optimized --dbg-package=cm4all-beng-proxy-optimized-dbg
 	dh_strip -p cm4all-beng-proxy-toi --dbg-package=cm4all-beng-proxy-toi-dbg
+	dh_strip -p cm4all-beng-lb --dbg-package=cm4all-beng-lb-dbg
 	dh_compress -a
 	dh_fixperms -a
 	umask 0022 && dh_pycentral -a

@@ -236,3 +236,12 @@ Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6),
 Provides: httpd
 Description: HTTP load balancer
  BENG lb is a HTTP proxy server and load balancer.
+
+Package: cm4all-beng-lb-dbg
+Section: non-free/devel
+Architecture: any
+Depends: cm4all-beng-lb (= ${binary:Version})
+Description: HTTP load balancer, debug symbols
+ BENG lb is a HTTP proxy server and load balancer.
+ .
+ This package provides the debugging symbols.
