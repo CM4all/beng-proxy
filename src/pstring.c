@@ -11,7 +11,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-char *
+void *
 p_memdup(pool_t pool, const void *src, size_t length)
 {
     void *dest = p_malloc(pool, length);
