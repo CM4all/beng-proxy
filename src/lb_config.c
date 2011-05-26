@@ -564,9 +564,10 @@ lb_cluster_config_finish(struct pool *pool, struct lb_cluster_config *config,
         struct lb_member_config *member = &config->members[i];
         const struct address_envelope *envelope =
             member->node->envelope;
-        const struct sockaddr *address =
-            sockaddr_set_port(pool, &envelope->address, envelope->length,
-                              member->port);
+        const struct sockaddr *address = member->port != 0
+            ? sockaddr_set_port(pool, &envelope->address, envelope->length,
+                                member->port)
+            : &envelope->address;
 
         if (!address_list_add(pool, &config->address_list,
                               address, envelope->length))
