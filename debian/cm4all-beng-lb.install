@@ -1,1 +1,2 @@
 build/debug/src/cm4all-beng-lb usr/sbin
+debian/lb.conf etc/cm4all/beng
