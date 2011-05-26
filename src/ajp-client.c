@@ -751,7 +751,9 @@ ajp_request_stream_eof(void *ctx)
     client->request.istream = NULL;
 
     p_event_del(&client->request.event, client->pool);
-    ajp_client_schedule_read(client);
+
+    if (!fifo_buffer_full(client->response.input))
+        ajp_client_schedule_read(client);
 }
 
 static void
