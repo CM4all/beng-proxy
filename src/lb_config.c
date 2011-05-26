@@ -257,6 +257,25 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
     return true;
 }
 
+/**
+ * Extract the port number from a struct sockaddr.  Returns 0 if not
+ * applicable.
+ */
+static unsigned
+sockaddr_port(const struct sockaddr *address)
+{
+    switch (address->sa_family) {
+    case AF_INET:
+        return ntohs(((const struct sockaddr_in *)address)->sin_port);
+
+    case AF_INET6:
+        return ntohs(((const struct sockaddr_in6 *)address)->sin6_port);
+
+    default:
+        return 0;
+    }
+}
+
 static unsigned
 parse_port(const char *p, const struct address_envelope *envelope)
 {
@@ -269,20 +288,7 @@ parse_port(const char *p, const struct address_envelope *envelope)
     if (getaddrinfo(NULL, p, &hints, &ai) != 0)
         return 0;
 
-    unsigned port;
-    switch (ai->ai_addr->sa_family) {
-    case AF_INET:
-        port = ntohs(((const struct sockaddr_in *)ai->ai_addr)->sin_port);
-        break;
-
-    case AF_INET6:
-        port = ntohs(((const struct sockaddr_in6 *)ai->ai_addr)->sin6_port);
-        break;
-
-    default:
-        port = 0;
-    }
-
+    unsigned port = sockaddr_port(ai->ai_addr);
     freeaddrinfo(ai);
     return port;
 }
