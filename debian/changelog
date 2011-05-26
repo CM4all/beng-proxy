@@ -6,6 +6,14 @@ cm4all-beng-proxy (0.10) unstable; urgency=low
 
  --
 
+cm4all-beng-proxy (0.9.22) unstable; urgency=low
+
+  * failure: fix inverted logic bug in expiry check
+  * uri-extract: support AJP URLs, fixes AJP cookies
+  * ajp-client: don't schedule read event when buffer is full
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 26 May 2011 08:32:32 +0200
+
 cm4all-beng-proxy (0.9.21) unstable; urgency=low
 
   * balancer: re-enable load balancing (regression fix)

@@ -105,6 +105,7 @@ static void
 ajp_client_schedule_read(struct ajp_client *client)
 {
     assert(client->fd >= 0);
+    assert(!fifo_buffer_full(client->response.input));
 
     p_event_add(&client->response.event,
                 client->request.istream != NULL
@@ -750,7 +751,9 @@ ajp_request_stream_eof(void *ctx)
     client->request.istream = NULL;
 
     p_event_del(&client->request.event, client->pool);
-    ajp_client_schedule_read(client);
+
+    if (!fifo_buffer_full(client->response.input))
+        ajp_client_schedule_read(client);
 }
 
 static void
