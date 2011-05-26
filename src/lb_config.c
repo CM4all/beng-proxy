@@ -177,24 +177,20 @@ static bool
 config_parser_create_node(struct config_parser *parser, char *p,
                           GError **error_r)
 {
-    if (*p == '*')
-        /* ignore "node * monitor ..." */
-        return true;
-
-    const char *address = next_value(&p);
-    if (address == NULL)
-        return throw(error_r, "Node address expected");
+    const char *name = next_value(&p);
+    if (name == NULL)
+        return throw(error_r, "Node name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
         return throw(error_r, "'{' expected");
 
+    if (lb_config_find_node(parser->config, name) != NULL)
+        return throw(error_r, "Duplicate node name");
+
     struct lb_node_config *node =
         p_malloc(parser->config->pool, sizeof(*node));
-    node->name = node->screen = p_strdup(parser->config->pool, address);
-    node->envelope = address_envelope_parse(parser->config->pool,
-                                            address, 80);
-    if (node->envelope == NULL)
-        return throw(error_r, "Could not parse node address");
+    node->name = p_strdup(parser->config->pool, name);
+    node->envelope = NULL;
 
     parser->state = STATE_NODE;
     parser->node = node;
@@ -211,8 +207,12 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
-        if (lb_config_find_node(parser->config, node->name) != NULL)
-            return throw(error_r, "Duplicate node name");
+        if (node->envelope == NULL) {
+            node->envelope = address_envelope_parse(parser->config->pool,
+                                                    node->name, 80);
+            if (node->envelope == NULL)
+                return throw(error_r, "Could not parse node address from name");
+        }
 
         list_add(&node->siblings, &parser->config->nodes);
         parser->state = STATE_ROOT;
@@ -221,20 +221,66 @@ config_parser_feed_node(struct config_parser *parser, char *p,
 
     const char *word = next_word(&p);
     if (word != NULL) {
-        if (strcmp(word, "screen") == 0) {
-            const char *name = next_value(&p);
-            if (name == NULL)
-                return throw(error_r, "Node name expected");
+        if (strcmp(word, "address") == 0) {
+            const char *value = next_value(&p);
+            if (value == NULL)
+                return throw(error_r, "Node address expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            node->screen = p_strdup(parser->config->pool, name);
+            if (node->envelope != NULL)
+                return throw(error_r, "Duplicate node address");
+
+            node->envelope = address_envelope_parse(parser->config->pool,
+                                                    value, 80);
+            if (node->envelope == NULL)
+                return throw(error_r, "Could not parse node address");
+
+            return true;
+        } else if (strcmp(word, "monitor") == 0) {
+            /* ignore */
             return true;
         } else
             return throw(error_r, "Unknown option");
     } else
         return syntax_error(error_r);
+}
+
+static struct lb_node_config *
+auto_create_node(struct config_parser *parser, const char *name,
+                 GError **error_r)
+{
+    const struct address_envelope *envelope =
+        address_envelope_parse(parser->config->pool, name, 80);
+    if (envelope == NULL) {
+        g_set_error(error_r, lb_config_quark(), 0,
+                    "Failed to parse node address");
+        return NULL;
+    }
+
+    struct lb_node_config *node =
+        p_malloc(parser->config->pool, sizeof(*node));
+    node->name = p_strdup(parser->config->pool, name);
+    node->envelope = envelope;
+    list_add(&node->siblings, &parser->config->nodes);
+
+    return node;
+}
+
+static bool
+auto_create_member(struct config_parser *parser,
+                   struct lb_member_config *member,
+                   const char *name, GError **error_r)
+{
+    struct lb_node_config *node =
+        auto_create_node(parser, name, error_r);
+    if (node == NULL)
+        return false;
+
+    member->node = node;
+    member->port = 0;
+    return true;
 }
 
 static bool
@@ -350,18 +396,29 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 if (q != NULL) {
                     *q++ = 0;
                     member->node = lb_config_find_node(parser->config, name);
-                    if (member->node == NULL)
-                        return throw(error_r, "Unknown node name");
+                    if (member->node == NULL) {
+                        /* node doesn't exist: parse the given member
+                           name, auto-create a new node */
+
+                        /* restore the colon */
+                        *--q = ':';
+
+                        return auto_create_member(parser, member, name,
+                                                  error_r);
+                    }
 
                     member->port = parse_port(q, member->node->envelope);
                     if (member->port == 0)
                         return throw(error_r, "Malformed port");
                 } else
-                    return throw(error_r, "Unknown node name");
+                    /* node doesn't exist: parse the given member
+                       name, auto-create a new node */
+                    return auto_create_member(parser, member, name, error_r);
             }
 
             return true;
-        } else if (strcmp(word, "slow") == 0 ||
+        } else if (strcmp(word, "fallback") == 0 ||
+                   strcmp(word, "persist") == 0 ||
                    strcmp(word, "monitor") == 0) {
             /* ignore */
             return true;
@@ -373,7 +430,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
 static bool
 config_parser_create_listener(struct config_parser *parser, char *p,
-                          GError **error_r)
+                              GError **error_r)
 {
     const char *name = next_value(&p);
     if (name == NULL)
@@ -416,7 +473,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
 
     const char *word = next_word(&p);
     if (word != NULL) {
-        if (strcmp(word, "destination") == 0) {
+        if (strcmp(word, "bind") == 0) {
             const char *address = next_value(&p);
             if (address == NULL)
                 return throw(error_r, "Listener address expected");
@@ -446,7 +503,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
                 return throw(error_r, "No such pool");
 
             return true;
-        } else if (strcmp(word, "ip") == 0 ||
+        } else if (strcmp(word, "protocol") == 0 ||
                    strcmp(word, "profile") == 0 ||
                    strcmp(word, "persist") == 0 ||
                    strcmp(word, "vlans") == 0) {
@@ -492,13 +549,10 @@ config_parser_feed_root(struct config_parser *parser, char *p,
             return config_parser_create_node(parser, p, error_r);
         else if (strcmp(word, "pool") == 0)
             return config_parser_create_cluster(parser, p, error_r);
-        else if (strcmp(word, "virtual") == 0)
+        else if (strcmp(word, "listener") == 0)
             return config_parser_create_listener(parser, p, error_r);
-        else if (strcmp(word, "self") == 0 ||
-                 strcmp(word, "route") == 0 ||
-                 strcmp(word, "monitor") == 0 ||
-                 strcmp(word, "profile") == 0 ||
-                 strcmp(word, "snat") == 0)
+        else if (strcmp(word, "monitor") == 0 ||
+                 strcmp(word, "persist") == 0)
             return config_parser_create_xxx(parser);
         else
             return throw(error_r, "Unknown option");

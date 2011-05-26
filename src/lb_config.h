@@ -24,7 +24,7 @@ enum {
 struct lb_node_config {
     struct list_head siblings;
 
-    const char *name, *screen;
+    const char *name;
 
     const struct address_envelope *envelope;
 };
