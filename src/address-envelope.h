@@ -3,7 +3,7 @@
  */
 
 #ifndef BENG_PROXY_ADDRESS_ENVELOPE_H
-#define BENG_PROXY_ADDRESS_LIST_H
+#define BENG_PROXY_ADDRESS_ENVELOPE_H
 
 #include <sys/socket.h>
 
