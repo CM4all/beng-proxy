@@ -7,6 +7,7 @@
 #ifndef __BENG_LISTENER_H
 #define __BENG_LISTENER_H
 
+#include <glib.h>
 #include <stddef.h>
 
 struct pool;
@@ -19,11 +20,13 @@ typedef void (*listener_callback_t)(int fd, const struct sockaddr *address,
 struct listener *
 listener_new(struct pool *pool, int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
-             listener_callback_t callback, void *ctx);
+             listener_callback_t callback, void *ctx,
+             GError **error_r);
 
 struct listener *
 listener_tcp_port_new(struct pool *pool, int port,
-                      listener_callback_t callback, void *ctx);
+                      listener_callback_t callback, void *ctx,
+                      GError **error_r);
 
 void
 listener_free(struct listener **listener_r);

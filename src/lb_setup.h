@@ -7,12 +7,13 @@
 #ifndef BENG_PROXY_LB_SETUP_H
 #define BENG_PROXY_LB_SETUP_H
 
+#include <glib.h>
 #include <stdbool.h>
 
 struct lb_instance;
 
 bool
-init_all_listeners(struct lb_instance *instance);
+init_all_listeners(struct lb_instance *instance, GError **error_r);
 
 void
 deinit_all_listeners(struct lb_instance *instance);

@@ -24,7 +24,8 @@ lb_listener_callback(int fd,
 
 struct lb_listener *
 lb_listener_new(struct lb_instance *instance,
-                const struct lb_listener_config *config)
+                const struct lb_listener_config *config,
+                GError **error_r)
 {
     struct pool *pool = pool_new_linear(instance->pool, "lb_listener", 8192);
 
@@ -37,7 +38,8 @@ lb_listener_new(struct lb_instance *instance,
     listener->listener = listener_new(pool, envelope->address.sa_family,
                                       SOCK_STREAM, 0, &envelope->address,
                                       envelope->length,
-                                      lb_listener_callback, listener);
+                                      lb_listener_callback, listener,
+                                      error_r);
     if (listener->listener == NULL) {
         pool_unref(pool);
         return NULL;

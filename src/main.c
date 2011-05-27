@@ -188,6 +188,8 @@ deinit_signals(struct instance *instance)
 static void
 add_listener(struct instance *instance, struct addrinfo *ai)
 {
+    GError *error = NULL;
+
     assert(ai != NULL);
 
     do {
@@ -196,9 +198,11 @@ add_listener(struct instance *instance, struct addrinfo *ai)
         node->listener = listener_new(instance->pool, ai->ai_family, ai->ai_socktype,
                                       ai->ai_protocol, ai->ai_addr,
                                       ai->ai_addrlen,
-                                      &http_listener_callback, instance);
+                                      &http_listener_callback, instance,
+                                      &error);
         if (node->listener == NULL) {
-            perror("listener_tcp_port_new() failed");
+            fprintf(stderr, "%s\n", error->message);
+            g_error_free(error);
             exit(2);
         }
 
@@ -212,11 +216,14 @@ static void
 add_tcp_listener(struct instance *instance, int port)
 {
     struct listener_node *node = p_malloc(instance->pool, sizeof(*node));
+    GError *error = NULL;
 
     node->listener = listener_tcp_port_new(instance->pool, port,
-                                           &http_listener_callback, instance);
+                                           &http_listener_callback, instance,
+                                           &error);
     if (node->listener == NULL) {
-        perror("listener_tcp_port_new() failed");
+        fprintf(stderr, "%s\n", error->message);
+        g_error_free(error);
         exit(2);
     }
 

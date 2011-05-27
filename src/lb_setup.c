@@ -10,18 +10,19 @@
 #include "lb_listener.h"
 
 bool
-init_all_listeners(struct lb_instance *instance)
+init_all_listeners(struct lb_instance *instance, GError **error_r)
 {
     bool success = true;
 
     for (struct lb_listener_config *config = (struct lb_listener_config *)instance->config->listeners.next;
          &config->siblings != &instance->config->listeners;
          config = (struct lb_listener_config *)config->siblings.next) {
-        struct lb_listener *listener = lb_listener_new(instance, config);
+        struct lb_listener *listener = lb_listener_new(instance, config,
+                                                       error_r);
         if (listener == NULL)
-            success = false;
-        else
-            list_add(&listener->siblings, &instance->listeners);
+            return false;
+
+        list_add(&listener->siblings, &instance->listeners);
     }
 
     return success;

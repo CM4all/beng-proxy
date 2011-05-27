@@ -159,8 +159,11 @@ int main(int argc, char **argv)
     global_tcp_stock = instance.tcp_stock;
     global_pipe_stock = instance.pipe_stock;
 
-    if (!init_all_listeners(&instance))
+    if (!init_all_listeners(&instance, &error)) {
+        fprintf(stderr, "%s\n", error->message);
+        g_error_free(error);
         return EXIT_FAILURE;
+    }
 
     if (!log_global_init(instance.cmdline.access_logger))
         return EXIT_FAILURE;

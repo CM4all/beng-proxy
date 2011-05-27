@@ -11,6 +11,7 @@
 
 #include <daemon/log.h>
 #include <socket/util.h>
+#include <socket/address.h>
 
 #include <assert.h>
 #include <stddef.h>
@@ -78,7 +79,8 @@ my_htons(uint16_t x)
 struct listener *
 listener_new(pool_t pool, int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
-             listener_callback_t callback, void *ctx)
+             listener_callback_t callback, void *ctx,
+             GError **error_r)
 {
     struct listener *listener;
     int ret, param;
@@ -89,31 +91,37 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
 
     listener = p_calloc(pool, sizeof(*listener));
     listener->fd = socket_cloexec_nonblock(family, socktype, protocol);
-    if (listener->fd < 0)
+    if (listener->fd < 0) {
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "Failed to create socket: %s", strerror(errno));
         return NULL;
+    }
 
     param = 1;
     ret = setsockopt(listener->fd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
     if (ret < 0) {
-        int save_errno = errno;
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "Failed to configure SO_REUSEADDR: %s", strerror(errno));
         close(listener->fd);
-        errno = save_errno;
         return NULL;
     }
 
     ret = bind(listener->fd, address, address_length);
     if (ret < 0) {
-        int save_errno = errno;
+        char buffer[64];
+        socket_address_to_string(buffer, sizeof(buffer),
+                                 address, address_length);
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "Failed to bind to '%s': %s", buffer, strerror(errno));
         close(listener->fd);
-        errno = save_errno;
         return NULL;
     }
 
     ret = listen(listener->fd, 16);
     if (ret < 0) {
-        int save_errno = errno;
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "Failed to listen: %s", strerror(errno));
         close(listener->fd);
-        errno = save_errno;
         return NULL;
     }
 
@@ -130,7 +138,8 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
 
 struct listener *
 listener_tcp_port_new(pool_t pool, int port,
-                      listener_callback_t callback, void *ctx)
+                      listener_callback_t callback, void *ctx,
+                      GError **error_r)
 {
     struct listener *listener;
     struct sockaddr_in6 sa6;
@@ -146,7 +155,7 @@ listener_tcp_port_new(pool_t pool, int port,
 
     listener = listener_new(pool, PF_INET6, SOCK_STREAM, 0,
                             (const struct sockaddr *)&sa6, sizeof(sa6),
-                            callback, ctx);
+                            callback, ctx, NULL);
     if (listener != NULL)
         return listener;
 
@@ -157,7 +166,7 @@ listener_tcp_port_new(pool_t pool, int port,
 
     return listener_new(pool, PF_INET, SOCK_STREAM, 0,
                         (const struct sockaddr *)&sa4, sizeof(sa4),
-                        callback, ctx);
+                        callback, ctx, error_r);
 }
 
 void
