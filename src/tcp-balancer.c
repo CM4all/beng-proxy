@@ -8,6 +8,7 @@
 #include "tcp-stock.h"
 #include "stock.h"
 #include "address-envelope.h"
+#include "address-list.h"
 #include "balancer.h"
 #include "failure.h"
 
@@ -25,6 +26,12 @@ struct tcp_balancer_request {
      * The "sticky id" of the incoming HTTP request.
      */
     unsigned session_sticky;
+
+    /**
+     * The number of remaining connection attempts.  We give up when
+     * we get an error and this attribute is already zero.
+     */
+    unsigned retries;
 
     const struct address_list *address_list;
     const struct address_envelope *current_address;
@@ -76,7 +83,12 @@ tcp_balancer_stock_error(GError *error, void *ctx)
     failure_add(&request->current_address->address,
                 request->current_address->length);
 
-    request->handler->error(error, request->handler_ctx);
+    if (request->retries-- > 0)
+        /* try again, next address */
+        tcp_balancer_next(request);
+    else
+        /* give up */
+        request->handler->error(error, request->handler_ctx);
 }
 
 static const struct stock_handler tcp_balancer_stock_handler = {
@@ -110,6 +122,16 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
     request->pool = pool;
     request->tcp_balancer = tcp_balancer;
     request->session_sticky = session_sticky;
+
+    if (address_list->size <= 1)
+        request->retries = 0;
+    else if (address_list->size == 2)
+        request->retries = 1;
+    else if (address_list->size == 3)
+        request->retries = 2;
+    else
+        request->retries = 3;
+
     request->address_list = address_list;
     request->handler = handler;
     request->handler_ctx = handler_ctx;
