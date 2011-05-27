@@ -13,7 +13,7 @@
 
 static void
 lb_listener_callback(int fd,
-                     const struct sockaddr *address, socklen_t address_length,
+                     const struct sockaddr *address, size_t address_length,
                      void *ctx)
 {
     struct lb_listener *listener = ctx;

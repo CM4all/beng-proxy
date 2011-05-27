@@ -9,13 +9,11 @@
 
 #include "pool.h"
 
-#include <sys/socket.h>
-
+struct sockaddr;
 struct listener;
 
-typedef void (*listener_callback_t)(int fd,
-                                    const struct sockaddr *addr, socklen_t addrlen,
-                                    void *ctx);
+typedef void (*listener_callback_t)(int fd, const struct sockaddr *address,
+                                    size_t length, void *ctx);
 
 struct listener *
 listener_new(pool_t pool, int family, int socktype, int protocol,

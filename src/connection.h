@@ -11,9 +11,10 @@
 
 #include <inline/list.h>
 
-#include <sys/socket.h>
 #include <stdint.h>
+#include <stddef.h>
 
+struct sockaddr;
 struct config;
 
 struct client_connection {
@@ -43,7 +44,7 @@ close_connection(struct client_connection *connection);
 
 void
 http_listener_callback(int fd,
-                       const struct sockaddr *addr, socklen_t addrlen,
+                       const struct sockaddr *addr, size_t addrlen,
                        void *ctx);
 
 #endif

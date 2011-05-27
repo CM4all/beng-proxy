@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 void
 close_connection(struct client_connection *connection)
@@ -97,7 +98,7 @@ static const struct http_server_connection_handler my_http_server_connection_han
 
 void
 http_listener_callback(int fd,
-                       const struct sockaddr *addr, socklen_t addrlen,
+                       const struct sockaddr *addr, size_t addrlen,
                        void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
