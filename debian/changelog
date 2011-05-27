@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.10.1) unstable; urgency=low
 
-  * 
+  * lb_http: close request body on error
 
  --
 

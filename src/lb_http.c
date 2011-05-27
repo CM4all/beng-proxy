@@ -120,6 +120,9 @@ my_stock_error(GError *error, void *ctx)
     daemon_log(2, "Connection failure: %s\n", error->message);
     g_error_free(error);
 
+    if (request2->request->body != NULL)
+        istream_close_unused(request2->request->body);
+
     http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
                              "Connection failure");
 }
