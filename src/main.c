@@ -212,12 +212,10 @@ static void
 add_tcp_listener(struct instance *instance, int port)
 {
     struct listener_node *node = p_malloc(instance->pool, sizeof(*node));
-    int ret;
 
-    ret = listener_tcp_port_new(instance->pool, port,
-                                &http_listener_callback, instance,
-                                &node->listener);
-    if (ret < 0) {
+    node->listener = listener_tcp_port_new(instance->pool, port,
+                                           &http_listener_callback, instance);
+    if (node->listener == NULL) {
         perror("listener_tcp_port_new() failed");
         exit(2);
     }

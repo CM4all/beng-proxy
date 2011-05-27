@@ -21,10 +21,9 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
              listener_callback_t callback, void *ctx);
 
-int
+struct listener *
 listener_tcp_port_new(struct pool *pool, int port,
-                      listener_callback_t callback, void *ctx,
-                      struct listener **listener_r);
+                      listener_callback_t callback, void *ctx);
 
 void
 listener_free(struct listener **listener_r);
