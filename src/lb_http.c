@@ -8,6 +8,7 @@
 #include "lb_instance.h"
 #include "lb_connection.h"
 #include "lb_config.h"
+#include "lb_session.h"
 #include "address-envelope.h"
 #include "http-server.h"
 #include "http-client.h"
@@ -155,7 +156,12 @@ lb_http_connection_request(struct http_server_request *request,
     request2->request = request;
     request2->async_ref = async_ref;
 
-    tcp_balancer_get(connection->instance->tcp_balancer, request->pool, 0,
+    unsigned session_sticky = cluster->address_list.sticky
+        ? lb_session_get(request->headers)
+        : 0;
+
+    tcp_balancer_get(connection->instance->tcp_balancer, request->pool,
+                     session_sticky,
                      &cluster->address_list,
                      &my_stock_handler, request2,
                      async_ref);

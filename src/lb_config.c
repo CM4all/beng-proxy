@@ -297,6 +297,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
     struct lb_cluster_config *cluster =
         p_malloc(parser->config->pool, sizeof(*cluster));
     cluster->name = p_strdup(parser->config->pool, name);
+    cluster->sticky_mode = LB_STICKY_NONE;
     cluster->num_members = 0;
 
     parser->state = STATE_CLUSTER;
@@ -372,6 +373,22 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 return syntax_error(error_r);
 
             cluster->name = p_strdup(parser->config->pool, name);
+            return true;
+        } else if (strcmp(word, "sticky") == 0) {
+            const char *sticky_mode = next_value(&p);
+            if (sticky_mode == NULL)
+                return throw(error_r, "Sticky mode expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            if (strcmp(sticky_mode, "none") == 0)
+                cluster->sticky_mode = LB_STICKY_NONE;
+            else if (strcmp(sticky_mode, "session_hash") == 0)
+                cluster->sticky_mode = LB_STICKY_SESSION_HASH;
+            else
+                return throw(error_r, "Unknown sticky mode");
+
             return true;
         } else if (strcmp(word, "member") == 0) {
             const char *name = next_value(&p);
@@ -614,6 +631,15 @@ lb_cluster_config_finish(struct pool *pool, struct lb_cluster_config *config,
                          GError **error_r)
 {
     address_list_init(&config->address_list);
+
+    switch (config->sticky_mode) {
+    case LB_STICKY_NONE:
+        break;
+
+    case LB_STICKY_SESSION_HASH:
+        config->address_list.sticky = true;
+        break;
+    }
 
     for (unsigned i = 0; i < config->num_members; ++i) {
         struct lb_member_config *member = &config->members[i];

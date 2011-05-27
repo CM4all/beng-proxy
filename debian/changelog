@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.10.2) unstable; urgency=low
 
   * debian: fix beng-lb pid file name
+  * lb_http: implement sticky sessions
 
  --
 

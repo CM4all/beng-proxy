@@ -496,6 +496,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/http-server-read.c \
 	src/http-server-response.c \
 	src/http-client.c \
+	src/http-string.c \
 	src/header-writer.c \
 	src/header-parser.c \
 	src/uri-verify.c \
@@ -512,6 +513,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/stopwatch.c \
 	src/direct.c \
 	src/access-log.c \
+	src/cookie-server.c \
 	src/log-glue.c \
 	src/log-client.c \
 	src/log-launch.c \
@@ -524,6 +526,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_connection.c \
 	src/lb_http.h \
 	src/lb_http.c \
+	src/lb_session.h \
+	src/lb_session.c \
 	src/lb_config.h \
 	src/lb_config.c \
 	src/lb_setup.h \

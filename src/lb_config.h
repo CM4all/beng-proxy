@@ -21,6 +21,12 @@ enum {
     MAX_CLUSTER_MEMBERS = 64,
 };
 
+enum lb_sticky_mode {
+    LB_STICKY_NONE,
+
+    LB_STICKY_SESSION_HASH,
+};
+
 struct lb_node_config {
     struct list_head siblings;
 
@@ -39,6 +45,8 @@ struct lb_cluster_config {
     struct list_head siblings;
 
     const char *name;
+
+    enum lb_sticky_mode sticky_mode;
 
     unsigned num_members;
 
