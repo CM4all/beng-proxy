@@ -2,7 +2,7 @@ cm4all-beng-proxy (0.9.23) unstable; urgency=low
 
   * tcp-balancer: retry connecting to cluster if a node fails
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Fri, 27 May 2011 13:01:31 +0200
 
 cm4all-beng-proxy (0.9.22) unstable; urgency=low
 
