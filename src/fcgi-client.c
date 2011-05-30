@@ -96,6 +96,7 @@ static void
 fcgi_client_schedule_read(struct fcgi_client *client)
 {
     assert(client->fd >= 0);
+    assert(!fifo_buffer_full(client->input));
 
     p_event_add(&client->response.event,
                 client->request.istream != NULL
@@ -480,10 +481,8 @@ fcgi_client_try_read(struct fcgi_client *client)
         return false;
     }
 
-    if (fcgi_client_consume_input(client)) {
-        assert(!fifo_buffer_full(client->input));
+    if (fcgi_client_consume_input(client))
         fcgi_client_schedule_read(client);
-    }
 
     return true;
 }
