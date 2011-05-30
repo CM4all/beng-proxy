@@ -388,9 +388,13 @@ fcgi_client_consume_input(struct fcgi_client *client)
 
         header = data;
 
-        if (header->request_id != client->id)
+        if (header->request_id != client->id) {
             /* wrong request id; discard this packet */
+            client->skip_length =
+                ntohs(header->content_length) + header->padding_length;
+            fifo_buffer_consume(client->input, sizeof(*header));
             continue;
+        }
 
         switch (header->type) {
         case FCGI_STDOUT:
