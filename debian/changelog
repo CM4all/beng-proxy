@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.9.24) unstable; urgency=low
   * memcached-client: don't schedule read event when buffer is full
   * session: support beng-lb sticky sessions
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 31 May 2011 14:23:41 +0200
 
 cm4all-beng-proxy (0.9.23) unstable; urgency=low
 
