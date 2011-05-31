@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.10.2) unstable; urgency=low
   * lb_http: implement sticky sessions
   * merge release 0.9.24
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 31 May 2011 14:32:03 +0200
 
 cm4all-beng-proxy (0.10.1) unstable; urgency=low
 
