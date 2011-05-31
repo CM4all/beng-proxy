@@ -384,8 +384,8 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
             if (strcmp(sticky_mode, "none") == 0)
                 cluster->sticky_mode = LB_STICKY_NONE;
-            else if (strcmp(sticky_mode, "session_hash") == 0)
-                cluster->sticky_mode = LB_STICKY_SESSION_HASH;
+            else if (strcmp(sticky_mode, "session_modulo") == 0)
+                cluster->sticky_mode = LB_STICKY_SESSION_MODULO;
             else
                 return throw(error_r, "Unknown sticky mode");
 
@@ -636,7 +636,7 @@ lb_cluster_config_finish(struct pool *pool, struct lb_cluster_config *config,
     case LB_STICKY_NONE:
         break;
 
-    case LB_STICKY_SESSION_HASH:
+    case LB_STICKY_SESSION_MODULO:
         config->address_list.sticky = true;
         break;
     }

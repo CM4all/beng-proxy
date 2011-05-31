@@ -24,7 +24,7 @@ enum {
 enum lb_sticky_mode {
     LB_STICKY_NONE,
 
-    LB_STICKY_SESSION_HASH,
+    LB_STICKY_SESSION_MODULO,
 };
 
 struct lb_node_config {
