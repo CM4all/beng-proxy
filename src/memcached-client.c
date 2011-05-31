@@ -114,6 +114,7 @@ static void
 memcached_client_schedule_read(struct memcached_client *client)
 {
     assert(client->fd >= 0);
+    assert(!fifo_buffer_full(client->response.input));
 
     p_event_add(&client->response.event,
                 client->request.istream != NULL
@@ -779,7 +780,9 @@ memcached_request_stream_eof(void *ctx)
     client->request.istream = NULL;
 
     p_event_del(&client->request.event, client->pool);
-    memcached_client_schedule_read(client);
+
+    if (!fifo_buffer_full(client->response.input))
+        memcached_client_schedule_read(client);
 }
 
 static void

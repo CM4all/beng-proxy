@@ -128,9 +128,12 @@ struct session {
 /**
  * Initialize the global session manager or increase the reference
  * counter.
+ *
+ * @param cluster_size the number of nodes in the cluster
+ * @param cluster_node the index of this node in the cluster
  */
 bool
-session_manager_init(void);
+session_manager_init(unsigned cluster_size, unsigned cluster_node);
 
 /**
  * Decrease the reference counter and destroy the global session
