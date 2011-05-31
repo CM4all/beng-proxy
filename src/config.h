@@ -62,6 +62,8 @@ struct config {
 
     unsigned was_stock_limit;
 
+    unsigned cluster_size, cluster_node;
+
     /**
      * Use the splice() system call?
      */

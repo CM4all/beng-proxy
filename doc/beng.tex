@@ -171,6 +171,38 @@ With \texttt{--bulldog-path}, \emph{beng-proxy} reads status
 information on servers it contacts from the Bulldog-Tyke data
 directory.
 
+\subsection{Cluster Options}
+
+To run \emph{beng-proxy} as a \emph{beng-lb} cluster node with sticky
+sessions, each node needs special configuration.  It needs to generate
+new session numbers in a way that allows \emph{beng-lb} to derive the
+cluster node from it.
+
+To do that, specify the two command line options
+\texttt{--cluster-size} and \texttt{--cluster-node} to each
+\emph{beng-proxy} node.  Example for a cluster with 3 nodes:
+
+\begin{verbatim*}
+first# cm4all-beng-proxy --cluster-size=3 --cluster-node=0 ...
+second# cm4all-beng-proxy --cluster-size=3 --cluster-node=1 ...
+third# cm4all-beng-proxy --cluster-size=3 --cluster-node=2 ...
+\end{verbatim*}
+
+Each node number is assigned to exactly one cluster node.
+
+The according \texttt{lb.conf} would look like this:
+
+\begin{verbatim*}
+pool foo {
+  sticky "session_modulo"
+  member first:http
+  member second:http
+  member third:http
+}
+\end{verbatim*}
+
+The ordering of nodes matters.
+
 \section{Running}
 
 \subsection{Signals}

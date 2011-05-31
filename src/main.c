@@ -274,7 +274,8 @@ int main(int argc, char **argv)
 
     children_init(instance.pool);
 
-    bret = session_manager_init();
+    bret = session_manager_init(instance.config.cluster_size,
+                                instance.config.cluster_node);
     if (!bret) {
         fprintf(stderr, "session_manager_init() failed\n");
         exit(2);

@@ -109,6 +109,14 @@ static void usage(void) {
 #endif
          " -B PATH        obtain worker status information from the Bulldog-Tyke path\n"
 #ifdef __GLIBC__
+         " --cluster-size N\n"
+#endif
+         " -C N           set the size of the beng-lb cluster\n"
+#ifdef __GLIBC__
+         " --cluster-node N\n"
+#endif
+         " -N N           set the index of this node in the beng-lb cluster\n"
+#ifdef __GLIBC__
          " --set NAME=VALUE  tweak an internal variable, see manual for details\n"
 #endif
          " -s NAME=VALUE  \n"
@@ -288,6 +296,8 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
         {"translation-socket", 1, NULL, 't'},
         {"memcached-server", 1, NULL, 'M'},
         {"bulldog-path", 1, NULL, 'B'},
+        {"cluster-size", 1, NULL, 'C'},
+        {"cluster-node", 1, NULL, 'N'},
         {"set", 1, NULL, 's'},
         {NULL,0,NULL,0}
     };
@@ -299,10 +309,12 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:A:u:g:U:p:L:c:m:w:r:t:M:B:s:",
+        ret = getopt_long(argc, argv,
+                          "hVvqDP:l:A:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:A:u:g:U:p:L:c:m:w:r:t:M:B:s:");
+        ret = getopt(argc, argv,
+                     "hVvqDP:l:A:u:g:U:p:L:c:m:w:r:t:M:B:C:N:s:");
 #endif
         if (ret == -1)
             break;
@@ -426,6 +438,26 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 
         case 'B':
             config->bulldog_path = optarg;
+            break;
+
+        case 'C':
+            config->cluster_size = strtoul(optarg, &endptr, 10);
+            if (endptr == optarg || *endptr != 0 ||
+                config->cluster_size > 1024)
+                arg_error(argv[0], "Invalid cluster size number");
+
+            if (config->cluster_node >= config->cluster_size)
+                config->cluster_node = 0;
+            break;
+
+        case 'N':
+            config->cluster_node = strtoul(optarg, &endptr, 10);
+            if (endptr == optarg || *endptr != 0)
+                arg_error(argv[0], "Invalid cluster size number");
+
+            if ((config->cluster_node != 0 || config->cluster_size != 0) &&
+                config->cluster_node >= config->cluster_size)
+                arg_error(argv[0], "Cluster node too large");
             break;
 
         case 's':

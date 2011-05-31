@@ -35,6 +35,8 @@
 struct session_manager {
     struct refcount ref;
 
+    unsigned cluster_size, cluster_node;
+
     struct shm *shm;
 
     /** this lock protects the following hash table */
@@ -134,7 +136,7 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 static struct session_manager *
-session_manager_new(void)
+session_manager_new(unsigned cluster_size, unsigned cluster_node)
 {
     struct shm *shm;
     struct session_manager *sm;
@@ -148,6 +150,8 @@ session_manager_new(void)
 
     sm = shm_alloc(shm, SM_PAGES);
     refcount_init(&sm->ref);
+    sm->cluster_size = cluster_size;
+    sm->cluster_node = cluster_node;
     sm->shm = shm;
 
     rwlock_init(&sm->lock);
@@ -161,13 +165,16 @@ session_manager_new(void)
 }
 
 bool
-session_manager_init(void)
+session_manager_init(unsigned cluster_size, unsigned cluster_node)
 {
+    assert((cluster_size == 0 && cluster_node == 0) ||
+           cluster_node < cluster_size);
+
     session_rand = g_rand_new();
     obtain_entropy(session_rand);
 
     if (session_manager == NULL) {
-        session_manager = session_manager_new();
+        session_manager = session_manager_new(cluster_size, cluster_node);
         if (session_manager == NULL)
                 return false;
     } else {
@@ -372,14 +379,31 @@ session_id_format(session_id_t id, struct session_id_string *string)
     return string->buffer;
 }
 
+static uint32_t
+cluster_session_id(uint32_t id)
+{
+    if (session_manager == NULL || session_manager->cluster_size == 0)
+        return id;
+
+    uint32_t remainder = id % (uint32_t)session_manager->cluster_size;
+    assert(remainder < session_manager->cluster_size);
+
+    id -= remainder;
+    id += session_manager->cluster_node;
+    return id;
+}
+
 static void
 session_generate_id(session_id_t *id_r)
 {
 #ifdef SESSION_ID_WORDS
     for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
         id_r->data[i] = g_rand_int(session_rand);
+
+    id_r->data[SESSION_ID_WORDS - 1] =
+        cluster_session_id(id_r->data[SESSION_ID_WORDS - 1]);
 #else
-    *id_r = (session_id_t)g_rand_int(session_rand)
+    *id_r = (session_id_t)cluster_session_id(g_rand_int(session_rand))
         | (session_id_t)g_rand_int(session_rand) << 32;
 #endif
 }
