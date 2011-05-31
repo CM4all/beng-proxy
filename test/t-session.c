@@ -1,5 +1,6 @@
 #include "session.h"
 #include "cookie-client.h"
+#include "crash.h"
 
 #include <inline/compiler.h>
 
@@ -30,6 +31,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
     event_base = event_init();
 
+    crash_global_init();
     session_manager_init(0, 0);
     session_manager_event_del();
 
@@ -72,6 +74,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     }
 
     session_manager_deinit();
+    crash_global_deinit();
 
     event_base_free(event_base);
 }

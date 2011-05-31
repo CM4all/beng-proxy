@@ -12,6 +12,7 @@
 #include "async.h"
 #include "fcache.h"
 #include "transformation.h"
+#include "crash.h"
 
 #include <inline/compiler.h>
 
@@ -273,6 +274,7 @@ int main(int argc, char **argv) {
 
     event_base = event_init();
 
+    crash_global_init();
     success = session_manager_init(0, 0);
     assert(success);
 
@@ -287,6 +289,7 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     session_manager_deinit();
+    crash_global_deinit();
 
     event_base_free(event_base);
 }

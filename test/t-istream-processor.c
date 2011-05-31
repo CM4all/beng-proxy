@@ -8,6 +8,7 @@
 #include "widget-registry.h"
 #include "uri-address.h"
 #include "global.h"
+#include "crash.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,6 +59,7 @@ create_test(pool_t pool, istream_t input)
 
     widget_init(&widget, pool, &root_widget_class);
 
+    crash_global_init();
     session_manager_init(0, 0);
 
     session = session_new();
@@ -81,6 +83,7 @@ static void
 cleanup(void)
 {
     session_manager_deinit();
+    crash_global_deinit();
 }
 
 #define FILTER_CLEANUP

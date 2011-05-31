@@ -15,6 +15,7 @@
 #include "refcount.h"
 #include "expiry.h"
 #include "random.h"
+#include "crash.h"
 
 #include <daemon/log.h>
 
@@ -75,6 +76,8 @@ static const struct session *locked_session;
 static void
 session_destroy(struct session *session)
 {
+    assert(crash_in_unsafe());
+
     lock_destroy(&session->lock);
     dpool_destroy(session->pool);
 }
@@ -82,6 +85,7 @@ session_destroy(struct session *session)
 static void
 session_remove(struct session *session)
 {
+    assert(crash_in_unsafe());
     assert(rwlock_is_wlocked(&session_manager->lock));
     assert(session_manager->num_sessions > 0);
 
@@ -104,6 +108,7 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
     struct session *session, *next;
     bool non_empty;
 
+    assert(!crash_in_unsafe());
     assert(locked_session == NULL);
 
     ret = clock_gettime(CLOCK_MONOTONIC, &now);
@@ -113,6 +118,7 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
         return;
     }
 
+    crash_unsafe_enter();
     rwlock_wlock(&session_manager->lock);
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
@@ -128,6 +134,8 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
     non_empty = session_manager->num_sessions > 0;
 
     rwlock_wunlock(&session_manager->lock);
+    crash_unsafe_leave();
+    assert(!crash_in_unsafe());
 
     if (non_empty) {
         struct timeval tv = cleanup_interval;
@@ -194,6 +202,7 @@ session_manager_destroy(struct session_manager *sm)
 
     assert(locked_session == NULL);
 
+    crash_unsafe_enter();
     rwlock_wlock(&sm->lock);
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
@@ -205,6 +214,7 @@ session_manager_destroy(struct session_manager *sm)
 
     rwlock_wunlock(&sm->lock);
     rwlock_destroy(&sm->lock);
+    crash_unsafe_leave();
 
     g_rand_free(session_rand);
 }
@@ -287,6 +297,7 @@ session_manager_purge(void)
 
     assert(locked_session == NULL);
 
+    crash_unsafe_enter();
     rwlock_wlock(&session_manager->lock);
 
     for (unsigned i = 0; i < SESSION_SLOTS; ++i) {
@@ -306,6 +317,7 @@ session_manager_purge(void)
 
     if (num_sessions == 0) {
         rwlock_wunlock(&session_manager->lock);
+        crash_unsafe_leave();
         return false;
     }
 
@@ -318,6 +330,7 @@ session_manager_purge(void)
     }
 
     rwlock_wunlock(&session_manager->lock);
+    crash_unsafe_leave();
 
     return true;
 }
@@ -408,8 +421,8 @@ session_generate_id(session_id_t *id_r)
 #endif
 }
 
-struct session *
-session_new(void)
+static struct session *
+session_new_unsafe(void)
 {
     struct timespec now;
     int ret;
@@ -417,6 +430,7 @@ session_new(void)
     struct session *session;
     unsigned num_sessions;
 
+    assert(crash_in_unsafe());
     assert(locked_session == NULL);
 
     ret = clock_gettime(CLOCK_MONOTONIC, &now);
@@ -476,9 +490,20 @@ session_new(void)
     return session;
 }
 
+struct session *
+session_new(void)
+{
+    crash_unsafe_enter();
+    struct session *session = session_new_unsafe();
+    if (session == NULL)
+        crash_unsafe_leave();
+    return session;
+}
+
 void
 session_clear_translate(struct session *session)
 {
+    assert(crash_in_unsafe());
     assert(session != NULL);
 
     if (session->translate != NULL) {
@@ -490,6 +515,7 @@ session_clear_translate(struct session *session)
 void
 session_clear_user(struct session *session)
 {
+    assert(crash_in_unsafe());
     assert(session != NULL);
 
     if (session->user != NULL) {
@@ -501,6 +527,7 @@ session_clear_user(struct session *session)
 void
 session_clear_language(struct session *session)
 {
+    assert(crash_in_unsafe());
     assert(session != NULL);
 
     if (session->language != NULL) {
@@ -512,6 +539,7 @@ session_clear_language(struct session *session)
 bool
 session_set_translate(struct session *session, const char *translate)
 {
+    assert(crash_in_unsafe());
     assert(session != NULL);
     assert(translate != NULL);
 
@@ -528,6 +556,7 @@ session_set_translate(struct session *session, const char *translate)
 bool
 session_set_user(struct session *session, const char *user, unsigned max_age)
 {
+    assert(crash_in_unsafe());
     assert(session != NULL);
     assert(user != NULL);
 
@@ -554,6 +583,7 @@ session_set_user(struct session *session, const char *user, unsigned max_age)
 bool
 session_set_language(struct session *session, const char *language)
 {
+    assert(crash_in_unsafe());
     assert(session != NULL);
     assert(language != NULL);
 
@@ -577,6 +607,7 @@ widget_session_dup(struct dpool *pool, const struct widget_session *src,
 {
     struct widget_session *dest;
 
+    assert(crash_in_unsafe());
     assert(src != NULL);
     assert(src->id != NULL);
 
@@ -617,6 +648,8 @@ static struct dhashmap * __attr_malloc
 widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
                        struct session *session, struct widget_session *parent)
 {
+    assert(crash_in_unsafe());
+
     struct dhashmap *dest;
     const struct dhashmap_pair *pair;
 
@@ -646,6 +679,7 @@ session_dup(struct dpool *pool, const struct session *src)
 {
     struct session *dest;
 
+    assert(crash_in_unsafe());
     assert(locked_session == NULL);
 
     dest = d_malloc(pool, sizeof(*dest));
@@ -705,6 +739,8 @@ session_dup(struct dpool *pool, const struct session *src)
 static struct session * __attr_malloc
 session_defragment(struct session *src)
 {
+    assert(crash_in_unsafe());
+
     struct dpool *pool;
     struct session *dest;
 
@@ -738,6 +774,7 @@ session_find(session_id_t id)
     struct list_head *head = session_slot(id);
     struct session *session;
 
+    assert(crash_in_unsafe());
     assert(locked_session == NULL);
 
     for (session = (struct session *)head->next;
@@ -767,9 +804,13 @@ session_get(session_id_t id)
 
     assert(locked_session == NULL);
 
+    crash_unsafe_enter();
     rwlock_rlock(&session_manager->lock);
     session = session_find(id);
     rwlock_runlock(&session_manager->lock);
+
+    if (session == NULL)
+        crash_unsafe_leave();
 
     return session;
 }
@@ -777,9 +818,12 @@ session_get(session_id_t id)
 static void
 session_put_internal(struct session *session)
 {
+    assert(crash_in_unsafe());
     assert(session == locked_session);
 
     lock_unlock(&session->lock);
+
+    crash_unsafe_leave();
 
 #ifndef NDEBUG
     locked_session = NULL;
@@ -789,6 +833,8 @@ session_put_internal(struct session *session)
 static void
 session_defragment_id(session_id_t id)
 {
+    assert(crash_in_unsafe());
+
     struct session *session = session_find(id);
     if (session == NULL)
         return;
@@ -820,9 +866,11 @@ session_put(struct session *session)
            defragment the session by duplicating it into a new shared
            memory pool */
 
+        crash_unsafe_enter();
         rwlock_wlock(&session_manager->lock);
         session_defragment_id(defragment);
         rwlock_wunlock(&session_manager->lock);
+        crash_unsafe_leave();
     }
 }
 
@@ -833,6 +881,7 @@ session_delete(session_id_t id)
 
     assert(locked_session == NULL);
 
+    crash_unsafe_enter();
     rwlock_wlock(&session_manager->lock);
 
     session = session_find(id);
@@ -842,6 +891,7 @@ session_delete(session_id_t id)
     }
 
     rwlock_wunlock(&session_manager->lock);
+    crash_unsafe_leave();
 }
 
 static struct widget_session *
@@ -851,6 +901,7 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
     struct dhashmap *map;
     struct widget_session *ws;
 
+    assert(crash_in_unsafe());
     assert(session != NULL);
     assert(lock_is_locked(&session->lock));
     assert(map_r != NULL);
@@ -892,6 +943,7 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
 struct widget_session *
 session_get_widget(struct session *session, const char *id, bool create)
 {
+    assert(crash_in_unsafe());
     assert(session != NULL);
     assert(id != NULL);
 
@@ -904,6 +956,7 @@ widget_session_get_child(struct widget_session *parent,
                          const char *id,
                          bool create)
 {
+    assert(crash_in_unsafe());
     assert(parent != NULL);
     assert(parent->session != NULL);
     assert(id != NULL);
@@ -915,6 +968,8 @@ widget_session_get_child(struct widget_session *parent,
 static void
 widget_session_free(struct dpool *pool, struct widget_session *ws)
 {
+    assert(crash_in_unsafe());
+
     d_free(pool, ws->id);
 
     if (ws->path_info != NULL)
@@ -929,6 +984,7 @@ widget_session_free(struct dpool *pool, struct widget_session *ws)
 static void
 widget_session_clear_map(struct dpool *pool, struct dhashmap *map)
 {
+    assert(crash_in_unsafe());
     assert(pool != NULL);
     assert(map != NULL);
 
@@ -948,6 +1004,7 @@ widget_session_clear_map(struct dpool *pool, struct dhashmap *map)
 void
 widget_session_delete(struct dpool *pool, struct widget_session *ws)
 {
+    assert(crash_in_unsafe());
     assert(pool != NULL);
     assert(ws != NULL);
 
@@ -960,6 +1017,7 @@ widget_session_delete(struct dpool *pool, struct widget_session *ws)
 void
 session_delete_widgets(struct session *session)
 {
+    assert(crash_in_unsafe());
     assert(session != NULL);
 
     if (session->widgets != NULL)

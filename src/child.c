@@ -5,6 +5,7 @@
  */
 
 #include "child.h"
+#include "crash.h"
 
 #include <inline/list.h>
 
@@ -44,6 +45,8 @@ static void
 child_event_callback(int fd __attr_unused, short event __attr_unused,
                      void *ctx __attr_unused)
 {
+    assert(!crash_in_unsafe());
+
     pid_t pid;
     int status;
 
@@ -61,6 +64,7 @@ child_event_callback(int fd __attr_unused, short event __attr_unused,
         p_free(pool, child);
     }
 
+    assert(!crash_in_unsafe());
     pool_commit();
 }
 

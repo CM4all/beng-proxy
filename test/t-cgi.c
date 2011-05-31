@@ -3,6 +3,7 @@
 #include "http-response.h"
 #include "child.h"
 #include "direct.h"
+#include "crash.h"
 
 #include <inline/compiler.h>
 
@@ -553,6 +554,7 @@ int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
 
     direct_global_init();
+    crash_global_init();
     event_base = event_init();
 
     pool = pool_new_libc(NULL, "root");
@@ -575,5 +577,6 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     event_base_free(event_base);
+    crash_global_deinit();
     direct_global_deinit();
 }

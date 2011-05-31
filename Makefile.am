@@ -270,6 +270,8 @@ SRC = src/main.c \
 	src/global.c \
 	src/event2.c \
 	src/bot.c \
+	src/crash.h \
+	src/crash.c \
 	src/child.c \
 	src/defer.c \
 	src/worker.c \
@@ -665,6 +667,7 @@ test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/random.c src/socket-util.c src/fd-util.c \
 	src/fd_util.c \
+	src/crash.c \
 	src/session.c src/format.c \
 	src/tpool.c $(POOL_SRC)
 test_t_header_forward_LDADD = $(AM_LDADD) \
@@ -748,6 +751,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/uri-relative.c src/uri-parser.c src/uri-escape.c src/uri-edit.c \
 	src/uri-verify.c \
 	src/random.c \
+	src/crash.c \
 	src/session.c src/cookie-client.c \
 	src/http-string.c \
 	src/strmap.c src/hashmap.c \
@@ -800,6 +804,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/child.c \
 	src/strutil.c \
 	src/stopwatch.c \
+	src/crash.c \
 	src/istream-file.c src/abort-flag.c src/direct.c
 test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -1027,6 +1032,7 @@ test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/dpool.c src/dstring.c src/dhashmap.c \
 	src/format.c \
 	src/random.c src/socket-util.c src/fd-util.c src/fd_util.c \
+	src/crash.c \
 	src/session.c
 test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
@@ -1084,6 +1090,7 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 
 test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
+	src/crash.c \
 	src/widget-session.c src/session.c \
 	src/widget-view.c src/widget.c \
 	src/random.c src/socket-util.c src/fd-util.c \
