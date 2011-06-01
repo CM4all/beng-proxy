@@ -109,6 +109,8 @@ class _Lookup:
             response.packet(TRANSLATE_FILTER)
         elif line == 'filter_4xx':
             response.packet(TRANSLATE_FILTER_4XX)
+        elif line == 'sticky':
+            response.packet(TRANSLATE_STICKY)
         else:
             raise MalformedLineError(self.path, line)
 
