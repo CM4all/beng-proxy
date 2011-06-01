@@ -8,6 +8,7 @@
 #define BENG_LB_CONFIG_H
 
 #include "address-list.h"
+#include "sticky.h"
 
 #include <inline/list.h>
 
@@ -19,12 +20,6 @@ struct pool;
 
 enum {
     MAX_CLUSTER_MEMBERS = 64,
-};
-
-enum lb_sticky_mode {
-    LB_STICKY_NONE,
-
-    LB_STICKY_SESSION_MODULO,
 };
 
 struct lb_node_config {
@@ -46,7 +41,7 @@ struct lb_cluster_config {
 
     const char *name;
 
-    enum lb_sticky_mode sticky_mode;
+    enum sticky_mode sticky_mode;
 
     unsigned num_members;
 

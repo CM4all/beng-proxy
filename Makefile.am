@@ -517,6 +517,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/log-glue.c \
 	src/log-client.c \
 	src/log-launch.c \
+	src/sticky.h \
 	src/lb_global.c \
 	src/lb_cmdline.h \
 	src/lb_cmdline.c \
