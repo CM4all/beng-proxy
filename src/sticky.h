@@ -28,6 +28,12 @@ enum sticky_mode {
      * cooperation from beng-proxy on the nodes.
      */
     STICKY_SESSION_MODULO,
+
+    /**
+     * A cookie is sent to the client, which is later used to direct
+     * its requests to the same cluster node.
+     */
+    STICKY_COOKIE,
 };
 
 #endif

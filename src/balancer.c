@@ -179,6 +179,7 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
         return next_failover_address(list);
 
     case STICKY_SESSION_MODULO:
+    case STICKY_COOKIE:
         if (session != 0)
             return next_sticky_address_checked(list, session);
         break;

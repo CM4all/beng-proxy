@@ -1,7 +1,7 @@
 cm4all-beng-proxy (0.10.3) unstable; urgency=low
 
   * python/translation.widget: support keyword "sticky"
-  * lb: implement sticky mode "failover"
+  * lb: implement sticky modes "failover", "cookie"
 
  --
 

@@ -529,6 +529,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_http.c \
 	src/lb_session.h \
 	src/lb_session.c \
+	src/lb_cookie.h \
+	src/lb_cookie.c \
 	src/lb_config.h \
 	src/lb_config.c \
 	src/lb_setup.h \

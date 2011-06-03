@@ -388,6 +388,8 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 cluster->sticky_mode = STICKY_FAILOVER;
             else if (strcmp(sticky_mode, "session_modulo") == 0)
                 cluster->sticky_mode = STICKY_SESSION_MODULO;
+            else if (strcmp(sticky_mode, "cookie") == 0)
+                cluster->sticky_mode = STICKY_COOKIE;
             else
                 return throw(error_r, "Unknown sticky mode");
 

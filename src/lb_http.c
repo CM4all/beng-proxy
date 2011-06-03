@@ -9,6 +9,7 @@
 #include "lb_connection.h"
 #include "lb_config.h"
 #include "lb_session.h"
+#include "lb_cookie.h"
 #include "address-envelope.h"
 #include "http-server.h"
 #include "http-client.h"
@@ -32,6 +33,8 @@ struct lb_request {
     struct async_operation_ref *async_ref;
 
     struct stock_item *stock_item;
+
+    unsigned new_cookie;
 };
 
 /*
@@ -65,6 +68,16 @@ my_response_response(http_status_t status, struct strmap *headers,
     struct http_server_request *request = request2->request;
 
     struct growing_buffer *headers2 = headers_dup(request->pool, headers);
+
+    if (request2->new_cookie != 0) {
+        char buffer[64];
+        snprintf(buffer, sizeof(buffer),
+                 "beng_lb_node=0-%x; Discard; HttpOnly; Path=/; Version=1",
+                 request2->new_cookie);
+
+        header_write(headers2, "cookie2", "$Version=\"1\"");
+        header_write(headers2, "set-cookie", buffer);
+    }
 
     http_server_response(request2->request, status, headers2, body);
 }
@@ -155,6 +168,7 @@ lb_http_connection_request(struct http_server_request *request,
     request2->connection = connection;
     request2->request = request;
     request2->async_ref = async_ref;
+    request2->new_cookie = 0;
 
     unsigned session_sticky = 0;
     switch (cluster->address_list.sticky_mode) {
@@ -164,6 +178,13 @@ lb_http_connection_request(struct http_server_request *request,
 
     case STICKY_SESSION_MODULO:
         session_sticky = lb_session_get(request->headers);
+        break;
+
+    case STICKY_COOKIE:
+        session_sticky = lb_cookie_get(request->headers);
+        if (session_sticky == 0)
+            request2->new_cookie = session_sticky =
+                lb_cookie_generate(cluster->address_list.size);
         break;
     }
 
