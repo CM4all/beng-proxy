@@ -1400,7 +1400,8 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        address_list_set_sticky(client->address_list);
+        address_list_set_sticky_mode(client->address_list,
+                                     STICKY_SESSION_MODULO);
         break;
     }
 

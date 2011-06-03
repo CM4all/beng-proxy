@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_ADDRESS_LIST_H
 #define BENG_PROXY_ADDRESS_LIST_H
 
+#include "sticky.h"
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -17,7 +19,7 @@ struct pool;
 struct sockaddr;
 
 struct address_list {
-    bool sticky;
+    enum sticky_mode sticky_mode;
 
     /** the number of addresses */
     unsigned size;
@@ -28,14 +30,15 @@ struct address_list {
 static inline void
 address_list_init(struct address_list *list)
 {
-    list->sticky = false;
+    list->sticky_mode = STICKY_NONE;
     list->size = 0;
 }
 
 static inline void
-address_list_set_sticky(struct address_list *list)
+address_list_set_sticky_mode(struct address_list *list,
+                             enum sticky_mode sticky_mode)
 {
-    list->sticky = true;
+    list->sticky_mode = sticky_mode;
 }
 
 void

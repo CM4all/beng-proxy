@@ -632,14 +632,7 @@ lb_cluster_config_finish(struct pool *pool, struct lb_cluster_config *config,
 {
     address_list_init(&config->address_list);
 
-    switch (config->sticky_mode) {
-    case STICKY_NONE:
-        break;
-
-    case STICKY_SESSION_MODULO:
-        config->address_list.sticky = true;
-        break;
-    }
+    address_list_set_sticky_mode(&config->address_list, config->sticky_mode);
 
     for (unsigned i = 0; i < config->num_members; ++i) {
         struct lb_member_config *member = &config->members[i];

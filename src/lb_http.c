@@ -156,7 +156,8 @@ lb_http_connection_request(struct http_server_request *request,
     request2->request = request;
     request2->async_ref = async_ref;
 
-    unsigned session_sticky = cluster->address_list.sticky
+    unsigned session_sticky =
+        cluster->address_list.sticky_mode == STICKY_SESSION_MODULO
         ? lb_session_get(request->headers)
         : 0;
 

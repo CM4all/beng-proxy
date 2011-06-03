@@ -18,7 +18,7 @@ address_list_copy(pool_t pool, struct address_list *dest,
                   const struct address_list *src)
 {
     address_list_init(dest);
-    dest->sticky = src->sticky;
+    dest->sticky_mode = src->sticky_mode;
 
     for (unsigned i = 0; i < src->size; ++i)
         address_list_add(pool, dest,

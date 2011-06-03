@@ -151,8 +151,15 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
     if (address_list_is_single(list))
         return address_list_first(list);
 
-    if (list->sticky && session != 0)
-        return next_sticky_address_checked(list, session);
+    switch (list->sticky_mode) {
+    case STICKY_NONE:
+        break;
+
+    case STICKY_SESSION_MODULO:
+        if (session != 0)
+            return next_sticky_address_checked(list, session);
+        break;
+    }
 
     key = address_list_key(list);
     item = (struct balancer_item *)cache_get(balancer->cache, key);
