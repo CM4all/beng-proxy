@@ -36,6 +36,13 @@ struct balancer {
     struct cache *cache;
 };
 
+static bool
+check_envelope(const struct address_envelope *envelope)
+{
+    return !failure_check(&envelope->address, envelope->length) &&
+        bulldog_check(&envelope->address, envelope->length);
+}
+
 static const struct address_envelope *
 next_address(struct balancer_item *item)
 {
@@ -61,8 +68,7 @@ next_address_checked(struct balancer_item *item)
 
     const struct address_envelope *ret = first;
     do {
-        if (!failure_check(&ret->address, ret->length) &&
-            bulldog_check(&ret->address, ret->length))
+        if (check_envelope(ret))
             return ret;
 
         ret = next_address(item);
@@ -84,8 +90,7 @@ next_sticky_address_checked(const struct address_list *al, unsigned session)
     assert(first != NULL);
     const struct address_envelope *ret = first;
     do {
-        if (!failure_check(&ret->address, ret->length) &&
-            bulldog_check(&ret->address, ret->length))
+        if (check_envelope(ret))
             return ret;
 
         ++i;
