@@ -44,6 +44,21 @@ check_envelope(const struct address_envelope *envelope)
 }
 
 static const struct address_envelope *
+next_failover_address(const struct address_list *list)
+{
+    assert(list->size > 0);
+
+    for (unsigned i = 0; i < list->size; ++i) {
+        const struct address_envelope *envelope = list->addresses[i];
+        if (check_envelope(envelope))
+            return envelope;
+    }
+
+    /* none available - return first node as last resort */
+    return list->addresses[0];
+}
+
+static const struct address_envelope *
 next_address(struct balancer_item *item)
 {
     assert(item->addresses.size >= 2);
@@ -159,6 +174,9 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
     switch (list->sticky_mode) {
     case STICKY_NONE:
         break;
+
+    case STICKY_FAILOVER:
+        return next_failover_address(list);
 
     case STICKY_SESSION_MODULO:
         if (session != 0)

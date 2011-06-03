@@ -18,6 +18,11 @@ enum sticky_mode {
     STICKY_NONE,
 
     /**
+     * The first non-failing node is used.
+     */
+    STICKY_FAILOVER,
+
+    /**
      * A modulo of the lower 32 bit of the beng-proxy session id is
      * used to determine which worker shall be used.  Requires
      * cooperation from beng-proxy on the nodes.

@@ -384,6 +384,8 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
             if (strcmp(sticky_mode, "none") == 0)
                 cluster->sticky_mode = STICKY_NONE;
+            else if (strcmp(sticky_mode, "failover") == 0)
+                cluster->sticky_mode = STICKY_FAILOVER;
             else if (strcmp(sticky_mode, "session_modulo") == 0)
                 cluster->sticky_mode = STICKY_SESSION_MODULO;
             else
