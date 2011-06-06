@@ -156,10 +156,16 @@ lb_http_connection_request(struct http_server_request *request,
     request2->request = request;
     request2->async_ref = async_ref;
 
-    unsigned session_sticky =
-        cluster->address_list.sticky_mode == STICKY_SESSION_MODULO
-        ? lb_session_get(request->headers)
-        : 0;
+    unsigned session_sticky = 0;
+    switch (cluster->address_list.sticky_mode) {
+    case STICKY_NONE:
+    case STICKY_FAILOVER:
+        break;
+
+    case STICKY_SESSION_MODULO:
+        session_sticky = lb_session_get(request->headers);
+        break;
+    }
 
     tcp_balancer_get(connection->instance->tcp_balancer, request->pool,
                      session_sticky,
