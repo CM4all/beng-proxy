@@ -1,0 +1,124 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[pdftex,bookmarks]{hyperref}
+\usepackage{longtable}
+
+\setlength\LTleft{0pt}
+\setlength\LTright{0pt}
+
+\begin{document}
+\title{CM4all Beng Load Balancer}
+\author{Max Kellermann}
+
+\maketitle
+
+\begin{abstract}
+\emph{beng-lb} is a light-weight HTTP load balancer.
+\end{abstract}
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+\newpage
+
+\section{Features}
+
+\emph{beng-lb} listens on a number of socket, and forwards the
+requests to another server.  Behind one listener socket, more than one
+cluster node may be configured.
+
+The algorithm for selecting a cluster node is configurable: it may be
+pure load balancing, pure failover, stickiness with the
+\emph{beng-proxy} session cookie, or stickiness with a \emph{beng-lb}
+cookie.
+
+
+\section{Installation}
+
+\emph{beng-lb} requires a current Debian operating system.
+
+Install the package \texttt{cm4all-beng-lb}.  Edit the file
+\texttt{/etc/cm4all/beng/lb.conf}.  Finally, restart
+\emph{beng-lb}:
+
+\begin{verbatim*}
+/etc/init.d/cm4all-beng-lb restart
+\end{verbatim*}
+
+\section{Configuration}
+
+Configuration is read from the file
+\texttt{/etc/cm4all/beng/lb.conf}.  The following object types can be
+configured here:
+
+\begin{itemize}
+\item nodes
+\item pools
+\item listeners
+\end{itemize}
+
+\subsection{Nodes}
+
+A ``node'' is one server in a cluster.  It handles requests.  The node
+has an IP address, but no port/service.  A node can have multiple
+services, it can be member in multiple pools.  Technically, a physical
+server can have multiple nodes by having more than one IP address, but
+that is only a side effect and is not useful in practice.
+
+Example:
+
+\begin{verbatim*}
+node localhost {
+  address "127.0.0.1"
+}
+\end{verbatim*}
+
+\subsection{Pools}
+
+A pool is a cluster of nodes for a specific service.  When a request
+needs to be handled, the pool chooses a member and sends the request
+to this node.  Upon failure, it may repeat the request with a
+different node.
+
+Example:
+
+\begin{verbatim*}
+pool demo {
+  sticky "failover"
+  member "foo:http"
+  member "bar:http"
+}
+\end{verbatim*}
+
+Requests to this pool are always sent to the node named ``foo''.  The
+second node ``bar'' is only used when ``foo'' fails (failover).
+
+Other sticky modes:
+
+\begin{itemize}
+\item \texttt{none}: simple round-robin
+\item \texttt{failover}: the first non-failing node is used
+\item \texttt{session\_modulo}: the modulo of the \texttt{beng-proxy}
+  session is used to calculate the node
+\item \texttt{cookie}: a random cookie is generated, and the node is
+  chosen from the cookie that is received from the client
+\end{itemize}
+
+Instead of referring to a previously defined node name, you can
+configure an IP address instead, and \texttt{beng-lb} creates a new
+node implicitly.
+
+\subsection{Listener}
+
+A listener is a socket address (IP and port) which accepts incoming
+TCP connections.
+
+\begin{verbatim*}
+listener port80 {
+  bind "*:80"
+  pool "demo"
+}
+\end{verbatim*}
+
+A listener has a name, an socket address to bind to (including the
+port).  To handle requests, it is associated with exactly one pool.
+
+\end{document}
