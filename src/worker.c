@@ -76,13 +76,15 @@ worker_child_callback(int status, void *ctx)
         daemon_log(1, "worker %d exited with status %d\n",
                    worker->pid, exit_status);
 
+    crash_deinit(&worker->crash);
     list_remove(&worker->siblings);
     assert(instance->num_workers > 0);
     --instance->num_workers;
 
     p_free(instance->pool, worker);
 
-    if (WIFSIGNALED(status) && !instance->should_exit) {
+    if (WIFSIGNALED(status) && !instance->should_exit &&
+        !crash_is_safe(&worker->crash)) {
         /* a worker has died due to a signal - this is dangerous for
            all other processes (including us), because the worker may
            have corrupted shared memory.  Our only hope to recover is
@@ -111,6 +113,8 @@ worker_child_callback(int status, void *ctx)
 pid_t
 worker_new(struct instance *instance)
 {
+    assert(!crash_in_unsafe());
+
     pid_t pid;
     bool ret __attr_unused;
 
@@ -127,14 +131,23 @@ worker_new(struct instance *instance)
         }
     }
 
+    struct crash crash;
+    if (!crash_init(&crash))
+        return -1;
+
     pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
 
         if (distribute_socket >= 0)
             close(distribute_socket);
+
+        crash_deinit(&crash);
     } else if (pid == 0) {
         event_reinit(instance->event_base);
+
+        crash_deinit(&global_crash);
+        global_crash = crash;
 
         if (distribute_socket >= 0)
             global_control_handler_set_fd(distribute_socket);
@@ -170,6 +183,7 @@ worker_new(struct instance *instance)
         worker = p_malloc(instance->pool, sizeof(*worker));
         worker->instance = instance;
         worker->pid = pid;
+        worker->crash = crash;
 
         list_add(&worker->siblings, &instance->workers);
         ++instance->num_workers;

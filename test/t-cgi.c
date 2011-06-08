@@ -3,6 +3,7 @@
 #include "http-response.h"
 #include "child.h"
 #include "direct.h"
+#include "crash.h"
 
 #include <inline/compiler.h>
 
@@ -30,6 +31,7 @@ struct context {
     bool body_eof, body_abort, body_closed;
 };
 
+static istream_direct_t my_handler_direct = 0;
 
 /*
  * istream handler
@@ -58,6 +60,36 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
     return length;
 }
 
+static ssize_t
+my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
+                  size_t max_length, void *ctx)
+{
+    struct context *c = ctx;
+
+    if (c->close_response_body_data) {
+        c->body_closed = true;
+        istream_free_handler(&c->body);
+        children_shutdown();
+        return 0;
+    }
+
+    if (c->data_blocking) {
+        --c->data_blocking;
+        return -2;
+    }
+
+    char buffer[256];
+    if (max_length > sizeof(buffer))
+        max_length = sizeof(buffer);
+
+    ssize_t nbytes = read(fd, buffer, max_length);
+    if (nbytes <= 0)
+        return nbytes;
+
+    c->body_data += nbytes;
+    return nbytes;
+}
+
 static void
 my_istream_eof(void *ctx)
 {
@@ -84,6 +116,7 @@ my_istream_abort(GError *error, void *ctx)
 
 static const struct istream_handler my_istream_handler = {
     .data = my_istream_data,
+    .direct = my_istream_direct,
     .eof = my_istream_eof,
     .abort = my_istream_abort,
 };
@@ -109,7 +142,8 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
         istream_close_unused(body);
         children_shutdown();
     } else if (body != NULL) {
-        istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
+        istream_assign_handler(&c->body, body, &my_istream_handler, c,
+                               my_handler_direct);
         c->body_available = istream_available(body, false);
     }
 
@@ -439,6 +473,37 @@ test_length_ok(pool_t pool, struct context *c)
 }
 
 static void
+test_length_ok_large(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    c->body_read = true;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/length5.sh", NULL);
+    else
+        path = "./demo/cgi-bin/length5.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "length5.sh", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->body_available == 8192);
+    assert(c->body_eof);
+}
+
+static void
 test_length_too_small(pool_t pool, struct context *c)
 {
     const char *path;
@@ -543,6 +608,24 @@ run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
     pool_commit();
 }
 
+static void
+run_all_tests(pool_t pool)
+{
+    run_test(pool, test_normal);
+    run_test(pool, test_close_early);
+    run_test(pool, test_close_late);
+    run_test(pool, test_close_data);
+    run_test(pool, test_post);
+    run_test(pool, test_status);
+    run_test(pool, test_no_content);
+    run_test(pool, test_no_length);
+    run_test(pool, test_length_ok);
+    run_test(pool, test_length_ok_large);
+    run_test(pool, test_length_too_small);
+    run_test(pool, test_length_too_big);
+    run_test(pool, test_length_too_small_late);
+}
+
 int main(int argc, char **argv) {
     struct event_base *event_base;
     pool_t pool;
@@ -553,27 +636,21 @@ int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
 
     direct_global_init();
+    crash_global_init();
     event_base = event_init();
 
     pool = pool_new_libc(NULL, "root");
 
-    run_test(pool, test_normal);
-    run_test(pool, test_close_early);
-    run_test(pool, test_close_late);
-    run_test(pool, test_close_data);
-    run_test(pool, test_post);
-    run_test(pool, test_status);
-    run_test(pool, test_no_content);
-    run_test(pool, test_no_length);
-    run_test(pool, test_length_ok);
-    run_test(pool, test_length_too_small);
-    run_test(pool, test_length_too_big);
-    run_test(pool, test_length_too_small_late);
+    run_all_tests(pool);
+
+    my_handler_direct = ISTREAM_ANY;
+    run_all_tests(pool);
 
     pool_unref(pool);
     pool_commit();
     pool_recycler_clear();
 
     event_base_free(event_base);
+    crash_global_deinit();
     direct_global_deinit();
 }

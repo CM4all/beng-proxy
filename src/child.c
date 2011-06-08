@@ -5,6 +5,7 @@
  */
 
 #include "child.h"
+#include "crash.h"
 
 #include <inline/list.h>
 

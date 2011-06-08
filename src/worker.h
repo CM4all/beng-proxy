@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_WORKER_H
 #define BENG_PROXY_WORKER_H
 
+#include "crash.h"
+
 #include <inline/list.h>
 
 #include <unistd.h>
@@ -17,6 +19,8 @@ struct worker {
     struct instance *instance;
 
     pid_t pid;
+
+    struct crash crash;
 };
 
 pid_t

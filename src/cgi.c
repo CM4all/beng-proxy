@@ -286,12 +286,32 @@ cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     cgi->had_input = true;
     cgi->had_output = true;
 
+    if (cgi->remaining == 0) {
+        stopwatch_event(cgi->stopwatch, "end");
+        stopwatch_dump(cgi->stopwatch);
+
+        istream_close_handler(cgi->input);
+        istream_deinit_eof(&cgi->output);
+        return -3;
+    }
+
     if (cgi->remaining != -1 && (off_t)max_length > cgi->remaining)
         max_length = (size_t)cgi->remaining;
 
     ssize_t nbytes = istream_invoke_direct(&cgi->output, type, fd, max_length);
-    if (nbytes > 0 && cgi->remaining != -1)
+    if (nbytes > 0 && cgi->remaining != -1) {
         cgi->remaining -= nbytes;
+
+        if (cgi->remaining == 0) {
+            stopwatch_event(cgi->stopwatch, "end");
+            stopwatch_dump(cgi->stopwatch);
+
+            istream_close_handler(cgi->input);
+            istream_deinit_eof(&cgi->output);
+            return -3;
+        }
+    }
+
     return nbytes;
 }
 

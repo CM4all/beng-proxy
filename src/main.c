@@ -9,6 +9,7 @@
 #include "instance.h"
 #include "worker.h"
 #include "connection.h"
+#include "crash.h"
 #include "session.h"
 #include "tstock.h"
 #include "tcp-stock.h"
@@ -279,6 +280,11 @@ int main(int argc, char **argv)
 
     children_init(instance.pool);
 
+    if (!crash_global_init()) {
+        fprintf(stderr, "crash_global_init() failed\n");
+        return EXIT_FAILURE;
+    }
+
     bret = session_manager_init(instance.config.cluster_size,
                                 instance.config.cluster_node);
     if (!bret) {
@@ -403,6 +409,8 @@ int main(int argc, char **argv)
     pool_commit();
 
     pool_recycler_clear();
+
+    crash_global_deinit();
 
     daemonize_cleanup();
 

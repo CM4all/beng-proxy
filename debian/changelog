@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.10.4) unstable; urgency=low
 
   * doc: add beng-lb documentation
   * lb: implement "fallback" option
+  * merge release 0.9.25
 
  --
 
@@ -35,6 +36,14 @@ cm4all-beng-proxy (0.10) unstable; urgency=low
   * lb: new stand-alone load balancer
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 26 May 2011 14:32:02 +0200
+
+cm4all-beng-proxy (0.9.25) unstable; urgency=low
+
+  * response: discard the request body before passing to errdoc
+  * worker: don't restart all workers after "safe" worker crash
+  * cgi: check for end-of-file after splice
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 08 Jun 2011 15:02:35 +0200
 
 cm4all-beng-proxy (0.9.24) unstable; urgency=low
 

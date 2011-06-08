@@ -427,6 +427,11 @@ response_dispatch(struct request *request2,
     if (http_status_is_error(status) && !request2->transformed &&
         request2->translate.response->error_document) {
         request2->transformed = true;
+
+        /* for sure, the errdoc library doesn't use the request body;
+           discard it as early as possible */
+        request_discard_body(request2);
+
         errdoc_dispatch_response(request2, status, headers, body);
         return;
     }
