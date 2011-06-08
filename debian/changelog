@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.10.4) unstable; urgency=low
   * lb: implement "fallback" option
   * merge release 0.9.25
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 08 Jun 2011 14:13:43 +0200
 
 cm4all-beng-proxy (0.10.3) unstable; urgency=low
 
