@@ -39,7 +39,7 @@ debian/stamp-build:
 		src/cm4all-beng-lb \
 		src/cm4all-beng-proxy \
 		src/cm4all-beng-proxy-delegate-helper \
-		src/libcm4all-istream.a doc/beng.pdf
+		src/libcm4all-istream.a doc/beng.pdf doc/lb.pdf
 
 	# ./configure
 	cd build/optimized && CFLAGS="$(CFLAGS)" ../../configure \
