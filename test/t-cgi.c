@@ -575,6 +575,24 @@ run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
     pool_commit();
 }
 
+static void
+run_all_tests(pool_t pool)
+{
+    run_test(pool, test_normal);
+    run_test(pool, test_close_early);
+    run_test(pool, test_close_late);
+    run_test(pool, test_close_data);
+    run_test(pool, test_post);
+    run_test(pool, test_status);
+    run_test(pool, test_no_content);
+    run_test(pool, test_no_length);
+    run_test(pool, test_length_ok);
+    run_test(pool, test_length_ok_large);
+    run_test(pool, test_length_too_small);
+    run_test(pool, test_length_too_big);
+    run_test(pool, test_length_too_small_late);
+}
+
 int main(int argc, char **argv) {
     struct event_base *event_base;
     pool_t pool;
@@ -590,19 +608,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
 
-    run_test(pool, test_normal);
-    run_test(pool, test_close_early);
-    run_test(pool, test_close_late);
-    run_test(pool, test_close_data);
-    run_test(pool, test_post);
-    run_test(pool, test_status);
-    run_test(pool, test_no_content);
-    run_test(pool, test_no_length);
-    run_test(pool, test_length_ok);
-    run_test(pool, test_length_ok_large);
-    run_test(pool, test_length_too_small);
-    run_test(pool, test_length_too_big);
-    run_test(pool, test_length_too_small_late);
+    run_all_tests(pool);
 
     pool_unref(pool);
     pool_commit();
