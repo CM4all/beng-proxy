@@ -2,6 +2,7 @@ cm4all-beng-proxy (0.9.25) unstable; urgency=low
 
   * response: discard the request body before passing to errdoc
   * worker: don't restart all workers after "safe" worker crash
+  * cgi: check for end-of-file after splice
 
  --
 
