@@ -106,6 +106,27 @@ Instead of referring to a previously defined node name, you can
 configure an IP address instead, and \texttt{beng-lb} creates a new
 node implicitly.
 
+When all pool members fail, an error message is generated.  You can
+override that behaviour by configuring a ``fallback'':
+
+\begin{verbatim*}
+pool demo {
+  fallback "http://the.fallback.server/error.html"
+  # ...
+}
+\end{verbatim*}
+
+This would generate a ``320 Found'' redirect to the specified URL.
+Another type of fallback is a custom response, you can specify a HTTP
+status code and a brief message (plain text):
+
+\begin{verbatim*}
+pool demo {
+  fallback "500" "Currently not available."
+  # ...
+}
+\end{verbatim*}
+
 \subsection{Listener}
 
 A listener is a socket address (IP and port) which accepts incoming

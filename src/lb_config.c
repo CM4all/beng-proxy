@@ -283,6 +283,19 @@ auto_create_member(struct config_parser *parser,
     return true;
 }
 
+static void
+lb_fallback_config_init(struct lb_fallback_config *fallback)
+{
+    fallback->location = NULL;
+    fallback->message = NULL;
+}
+
+static bool
+lb_fallback_config_defined(const struct lb_fallback_config *fallback)
+{
+    return fallback->location != NULL || fallback->message != NULL;
+}
+
 static bool
 config_parser_create_cluster(struct config_parser *parser, char *p,
                              GError **error_r)
@@ -297,6 +310,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
     struct lb_cluster_config *cluster =
         p_malloc(parser->config->pool, sizeof(*cluster));
     cluster->name = p_strdup(parser->config->pool, name);
+    lb_fallback_config_init(&cluster->fallback);
     cluster->sticky_mode = STICKY_NONE;
     cluster->num_members = 0;
 
@@ -438,8 +452,42 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             }
 
             return true;
-        } else if (strcmp(word, "fallback") == 0 ||
-                   strcmp(word, "persist") == 0 ||
+        } else if (strcmp(word, "fallback") == 0) {
+            if (lb_fallback_config_defined(&cluster->fallback))
+                return throw(error_r, "Duplicate fallback");
+
+            const char *location = next_value(&p);
+            if (strstr(location, "://") != NULL) {
+                if (!expect_eol(p))
+                    return syntax_error(error_r);
+
+                cluster->fallback.location =
+                    p_strdup(parser->config->pool, location);
+                return true;
+            } else {
+                char *endptr;
+                http_status_t status =
+                    (http_status_t)(unsigned)strtoul(location, &endptr, 10);
+                if (*endptr != 0 || !http_status_is_valid(status))
+                    return throw(error_r, "Invalid HTTP status code");
+
+                if (http_status_is_empty(status))
+                    return throw(error_r,
+                                 "This HTTP status does not allow a response body");
+
+                const char *message = next_value(&p);
+                if (message == NULL)
+                    return throw(error_r, "Message expected");
+
+                if (!expect_eol(p))
+                    return syntax_error(error_r);
+
+                cluster->fallback.status = status;
+                cluster->fallback.message =
+                    p_strdup(parser->config->pool, message);
+                return true;
+            }
+        } else if (strcmp(word, "persist") == 0 ||
                    strcmp(word, "monitor") == 0) {
             /* ignore */
             return true;

@@ -11,6 +11,7 @@
 #include "sticky.h"
 
 #include <inline/list.h>
+#include <http/status.h>
 
 #include <glib.h>
 
@@ -36,10 +37,23 @@ struct lb_member_config {
     unsigned port;
 };
 
+struct lb_fallback_config {
+    http_status_t status;
+
+    /**
+     * The "Location" response header.
+     */
+    const char *location;
+
+    const char *message;
+};
+
 struct lb_cluster_config {
     struct list_head siblings;
 
     const char *name;
+
+    struct lb_fallback_config fallback;
 
     enum sticky_mode sticky_mode;
 

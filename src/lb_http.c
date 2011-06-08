@@ -21,6 +21,7 @@
 #include "stock.h"
 #include "clock.h"
 #include "access-log.h"
+#include "strmap.h"
 
 #include <http/status.h>
 #include <daemon/log.h>
@@ -36,6 +37,24 @@ struct lb_request {
 
     unsigned new_cookie;
 };
+
+static bool
+send_fallback(struct http_server_request *request,
+              const struct lb_fallback_config *fallback)
+{
+    if (fallback->location != NULL) {
+        http_server_send_redirect(request, HTTP_STATUS_FOUND,
+                                  fallback->location, "Found");
+        return true;
+    } else if (fallback->message != NULL) {
+        /* custom status + error message */
+        assert(http_status_is_valid(fallback->status));
+
+        http_server_send_message(request, fallback->status, fallback->message);
+        return true;
+    } else
+        return false;
+}
 
 /*
  * socket lease
@@ -90,8 +109,10 @@ my_response_abort(GError *error, void *ctx)
     daemon_log(2, "error on %s: %s\n", request2->request->uri, error->message);
     g_error_free(error);
 
-    http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
-                             "Server failure");
+    if (!send_fallback(request2->request,
+                       &request2->connection->listener->cluster->fallback))
+        http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
+                                 "Server failure");
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -137,8 +158,10 @@ my_stock_error(GError *error, void *ctx)
     if (request2->request->body != NULL)
         istream_close_unused(request2->request->body);
 
-    http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
-                             "Connection failure");
+    if (!send_fallback(request2->request,
+                       &request2->connection->listener->cluster->fallback))
+        http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
+                                 "Connection failure");
 }
 
 static const struct stock_handler my_stock_handler = {

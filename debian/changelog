@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.10.4) unstable; urgency=low
 
   * doc: add beng-lb documentation
+  * lb: implement "fallback" option
 
  --
 
