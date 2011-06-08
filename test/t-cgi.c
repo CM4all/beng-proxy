@@ -440,6 +440,37 @@ test_length_ok(pool_t pool, struct context *c)
 }
 
 static void
+test_length_ok_large(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    c->body_read = true;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/length5.sh", NULL);
+    else
+        path = "./demo/cgi-bin/length5.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "length5.sh", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->body_available == 8192);
+    assert(c->body_eof);
+}
+
+static void
 test_length_too_small(pool_t pool, struct context *c)
 {
     const char *path;
@@ -568,6 +599,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_no_content);
     run_test(pool, test_no_length);
     run_test(pool, test_length_ok);
+    run_test(pool, test_length_ok_large);
     run_test(pool, test_length_too_small);
     run_test(pool, test_length_too_big);
     run_test(pool, test_length_too_small_late);
