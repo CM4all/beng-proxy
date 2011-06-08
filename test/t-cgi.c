@@ -31,6 +31,7 @@ struct context {
     bool body_eof, body_abort, body_closed;
 };
 
+static istream_direct_t my_handler_direct = 0;
 
 /*
  * istream handler
@@ -59,6 +60,36 @@ my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
     return length;
 }
 
+static ssize_t
+my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
+                  size_t max_length, void *ctx)
+{
+    struct context *c = ctx;
+
+    if (c->close_response_body_data) {
+        c->body_closed = true;
+        istream_free_handler(&c->body);
+        children_shutdown();
+        return 0;
+    }
+
+    if (c->data_blocking) {
+        --c->data_blocking;
+        return -2;
+    }
+
+    char buffer[256];
+    if (max_length > sizeof(buffer))
+        max_length = sizeof(buffer);
+
+    ssize_t nbytes = read(fd, buffer, max_length);
+    if (nbytes <= 0)
+        return nbytes;
+
+    c->body_data += nbytes;
+    return nbytes;
+}
+
 static void
 my_istream_eof(void *ctx)
 {
@@ -85,6 +116,7 @@ my_istream_abort(GError *error, void *ctx)
 
 static const struct istream_handler my_istream_handler = {
     .data = my_istream_data,
+    .direct = my_istream_direct,
     .eof = my_istream_eof,
     .abort = my_istream_abort,
 };
@@ -110,7 +142,8 @@ my_response(http_status_t status, struct strmap *headers __attr_unused,
         istream_close_unused(body);
         children_shutdown();
     } else if (body != NULL) {
-        istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
+        istream_assign_handler(&c->body, body, &my_istream_handler, c,
+                               my_handler_direct);
         c->body_available = istream_available(body, false);
     }
 
@@ -608,6 +641,9 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
 
+    run_all_tests(pool);
+
+    my_handler_direct = ISTREAM_ANY;
     run_all_tests(pool);
 
     pool_unref(pool);
