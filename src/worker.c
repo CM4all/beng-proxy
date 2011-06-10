@@ -76,6 +76,7 @@ worker_child_callback(int status, void *ctx)
         daemon_log(1, "worker %d exited with status %d\n",
                    worker->pid, exit_status);
 
+    const bool safe = crash_is_safe(&worker->crash);
     crash_deinit(&worker->crash);
     list_remove(&worker->siblings);
     assert(instance->num_workers > 0);
@@ -83,8 +84,7 @@ worker_child_callback(int status, void *ctx)
 
     p_free(instance->pool, worker);
 
-    if (WIFSIGNALED(status) && !instance->should_exit &&
-        !crash_is_safe(&worker->crash)) {
+    if (WIFSIGNALED(status) && !instance->should_exit && !safe) {
         /* a worker has died due to a signal - this is dangerous for
            all other processes (including us), because the worker may
            have corrupted shared memory.  Our only hope to recover is

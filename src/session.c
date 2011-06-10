@@ -823,8 +823,6 @@ session_put_internal(struct session *session)
 
     lock_unlock(&session->lock);
 
-    crash_unsafe_leave();
-
 #ifndef NDEBUG
     locked_session = NULL;
 #endif
@@ -866,12 +864,12 @@ session_put(struct session *session)
            defragment the session by duplicating it into a new shared
            memory pool */
 
-        crash_unsafe_enter();
         rwlock_wlock(&session_manager->lock);
         session_defragment_id(defragment);
         rwlock_wunlock(&session_manager->lock);
-        crash_unsafe_leave();
     }
+
+    crash_unsafe_leave();
 }
 
 void
