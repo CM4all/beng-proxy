@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.9.26) unstable; urgency=low
 
   * worker: read "crash" value before destroying shared memory
+  * session: fix crash while discarding session
 
  --
 
