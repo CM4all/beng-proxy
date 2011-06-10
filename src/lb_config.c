@@ -158,6 +158,23 @@ next_value(char **pp)
 }
 
 static bool
+next_bool(char **pp, bool *value_r, GError **error_r)
+{
+    const char *value = next_value(pp);
+    if (value == NULL)
+        return throw(error_r, "yes/no expected");
+
+    if (strcmp(value, "yes") == 0)
+        *value_r = true;
+    else if (strcmp(value, "no") == 0)
+        *value_r = false;
+    else
+        return throw(error_r, "yes/no expected");
+
+    return true;
+}
+
+static bool
 expect_eol(char *p)
 {
     p = fast_chug(p);
@@ -525,6 +542,8 @@ config_parser_create_listener(struct config_parser *parser, char *p,
     listener->name = p_strdup(parser->config->pool, name);
     listener->envelope = NULL;
     listener->cluster = NULL;
+    listener->ssl = false;
+    ssl_config_clear(&listener->ssl_config);
 
     parser->state = STATE_LISTENER;
     parser->listener = listener;
@@ -546,6 +565,9 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
 
         if (listener->envelope == NULL)
             return throw(error_r, "Listener has no destination");
+
+        if (listener->ssl && !ssl_config_valid(&listener->ssl_config))
+            return throw(error_r, "Incomplete SSL configuration");
 
         list_add(&listener->siblings, &parser->config->listeners);
         parser->state = STATE_ROOT;
@@ -583,6 +605,53 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (listener->cluster == NULL)
                 return throw(error_r, "No such pool");
 
+            return true;
+        } else if (strcmp(word, "ssl") == 0) {
+            bool value;
+            if (!next_bool(&p, &value, error_r))
+                return false;
+
+            if (listener->ssl && !value)
+                return throw(error_r, "SSL cannot be disabled at this point");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            listener->ssl = value;
+            return true;
+        } else if (strcmp(word, "ssl_cert") == 0) {
+            if (!listener->ssl)
+                return throw(error_r, "SSL is not enabled");
+
+            if (listener->ssl_config.cert_file != NULL)
+                return throw(error_r, "Certificate already configured");
+
+            const char *path = next_value(&p);
+            if (path == NULL)
+                return throw(error_r, "Path expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            listener->ssl_config.cert_file =
+                p_strdup(parser->config->pool, path);
+            return true;
+        } else if (strcmp(word, "ssl_key") == 0) {
+            if (!listener->ssl)
+                return throw(error_r, "SSL is not enabled");
+
+            if (listener->ssl_config.key_file != NULL)
+                return throw(error_r, "Key already configured");
+
+            const char *path = next_value(&p);
+            if (path == NULL)
+                return throw(error_r, "Path expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            listener->ssl_config.key_file =
+                p_strdup(parser->config->pool, path);
             return true;
         } else if (strcmp(word, "protocol") == 0 ||
                    strcmp(word, "profile") == 0 ||

@@ -521,6 +521,16 @@ src_cm4all_beng_lb_SOURCES = \
 	src/log-client.c \
 	src/log-launch.c \
 	src/sticky.h \
+	src/notify.h \
+	src/notify.c \
+	src/ssl_quark.h \
+	src/ssl_init.h \
+	src/ssl_init.c \
+	src/ssl_config.h \
+	src/ssl_create.h \
+	src/ssl_create.c \
+	src/ssl_filter.h \
+	src/ssl_filter.c \
 	src/lb_global.c \
 	src/lb_cmdline.h \
 	src/lb_cmdline.c \
@@ -544,6 +554,7 @@ src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBSSL_LIBS) \
 	$(LIBEVENT_LIBS)
 src_cm4all_beng_lb_LDFLAGS = $(AM_LDFLAGS)
 

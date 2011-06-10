@@ -20,6 +20,7 @@
 #include "pipe-stock.h"
 #include "log-glue.h"
 #include "lb_config.h"
+#include "ssl_init.h"
 
 #include <daemon/daemonize.h>
 
@@ -134,6 +135,8 @@ int main(int argc, char **argv)
     }
 
     /* initialize */
+
+    ssl_global_init();
 
     if (instance.cmdline.enable_splice)
         direct_global_init();

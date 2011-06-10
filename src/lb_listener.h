@@ -10,6 +10,7 @@
 #include <inline/list.h>
 
 #include <glib.h>
+#include <openssl/ssl.h>
 
 struct pool;
 
@@ -21,6 +22,10 @@ struct lb_listener {
     struct lb_instance *instance;
 
     const struct lb_listener_config *config;
+
+    SSL_CTX *ssl_ctx;
+
+    struct notify *notify;
 
     struct listener *listener;
 };

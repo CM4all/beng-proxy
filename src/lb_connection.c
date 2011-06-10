@@ -11,6 +11,8 @@
 #include "http-server.h"
 #include "address.h"
 #include "drop.h"
+#include "fd_util.h"
+#include "ssl_filter.h"
 
 #include <daemon/log.h>
 
@@ -26,6 +28,7 @@
 struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
+                  SSL_CTX *ssl_ctx, struct notify *notify,
                   int fd, const struct sockaddr *addr, size_t addrlen)
 {
     struct lb_connection *connection;
@@ -45,6 +48,32 @@ lb_connection_new(struct lb_instance *instance,
     connection->pool = pool;
     connection->instance = instance;
     connection->listener = listener;
+
+    if (ssl_ctx != NULL) {
+        int fds[2];
+        if (socketpair_cloexec_nonblock(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
+            close(fd);
+            pool_unref(pool);
+            return NULL;
+        }
+
+        GError *error = NULL;
+        connection->ssl_filter = ssl_filter_new(pool, ssl_ctx,
+                                                fd, fds[0], notify,
+                                                &error);
+        if (connection->ssl_filter == NULL) {
+            close(fd);
+            close(fds[0]);
+            close(fds[1]);
+            pool_unref(pool);
+            daemon_log(1, "%s\n", error->message);
+            g_error_free(error);
+            return NULL;
+        }
+
+        fd = fds[1];
+    } else
+        connection->ssl_filter = NULL;
 
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;

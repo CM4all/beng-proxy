@@ -142,4 +142,20 @@ listener port80 {
 A listener has a name, an socket address to bind to (including the
 port).  To handle requests, it is associated with exactly one pool.
 
+\subsection{SSL/TLS}
+
+To enable SSL/TLS on a listener, configure:
+
+\begin{verbatim*}
+listener ssl {
+  bind "*:443"
+  pool "demo"
+  ssl "yes"
+  ssl_cert "/etc/cm4all/beng/lb/cert.pem"
+  ssl_key "/etc/cm4all/beng/lb/key.pem"
+}
+\end{verbatim*}
+
+One pool can be shared by listeners with and without SSL.
+
 \end{document}

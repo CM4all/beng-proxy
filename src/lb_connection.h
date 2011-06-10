@@ -9,10 +9,13 @@
 
 #include <inline/list.h>
 
+#include <openssl/ssl.h>
+
 #include <stdint.h>
 #include <stddef.h>
 
 struct pool;
+struct notify;
 struct sockaddr;
 
 struct lb_connection {
@@ -25,6 +28,7 @@ struct lb_connection {
     const struct lb_listener_config *listener;
 
     const struct config *config;
+    struct ssl_filter *ssl_filter;
     struct http_server_connection *http;
 
     /**
@@ -37,6 +41,7 @@ struct lb_connection {
 struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
+                  SSL_CTX *ssl_ctx, struct notify *notify,
                   int fd, const struct sockaddr *addr, size_t addrlen);
 
 void

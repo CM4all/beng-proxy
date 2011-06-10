@@ -9,6 +9,7 @@
 
 #include "address-list.h"
 #include "sticky.h"
+#include "ssl_config.h"
 
 #include <inline/list.h>
 #include <http/status.h>
@@ -77,6 +78,10 @@ struct lb_listener_config {
     const struct address_envelope *envelope;
 
     const struct lb_cluster_config *cluster;
+
+    bool ssl;
+
+    struct ssl_config ssl_config;
 };
 
 struct lb_config {

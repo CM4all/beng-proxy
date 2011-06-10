@@ -10,6 +10,7 @@
 #include "lb_config.h"
 #include "lb_session.h"
 #include "lb_cookie.h"
+#include "ssl_filter.h"
 #include "address-envelope.h"
 #include "http-server.h"
 #include "http-client.h"
@@ -252,6 +253,9 @@ lb_http_connection_free(void *ctx)
 
     list_remove(&connection->siblings);
     --connection->instance->num_connections;
+
+    if (connection->ssl_filter != NULL)
+        ssl_filter_free(connection->ssl_filter);
 
     pool = connection->pool;
     pool_trash(pool);
