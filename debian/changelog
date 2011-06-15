@@ -2,7 +2,7 @@ cm4all-beng-proxy (0.9.27) unstable; urgency=low
 
   * handler: don't delete existing session in TRANSPARENT mode
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 15 Jun 2011 09:08:48 +0200
 
 cm4all-beng-proxy (0.9.26) unstable; urgency=low
 
