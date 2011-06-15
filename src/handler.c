@@ -104,8 +104,10 @@ handle_translated_request(struct request *request,
         request->args = NULL;
     }
 
-    if (response->discard_session || response->transparent)
+    if (response->discard_session)
         request_discard_session(request);
+    else if (response->transparent)
+        request_ignore_session(request);
 
     request->translate.response = response;
     request->translate.transformation = response->views != NULL
