@@ -126,7 +126,10 @@ widget_determine_address(const struct widget *widget, bool stateful)
         address = resource_address_dup(pool, original_address);
 
         if (*path_info != 0)
-            address->u.cgi.path_info = path_info;
+            address->u.cgi.path_info = address->u.cgi.path_info != NULL
+                ? uri_absolute(pool, address->u.cgi.path_info,
+                               path_info, strlen(path_info))
+                : path_info;
 
         if (!stateful)
             address->u.cgi.query_string = widget->query_string;
