@@ -105,10 +105,10 @@ uri_path(const char *uri)
 {
     if (uri[0] == '/')
         return uri;
-    uri = strchr(uri, ':');
-    if (uri == NULL)
+    const char *colon = strchr(uri, ':');
+    if (colon == NULL)
         return uri;
-    ++uri;
+    uri = colon + 1;
     while (*uri == '/')
         ++uri;
     return strchr(uri, '/');
