@@ -30,6 +30,8 @@ struct config {
     struct addrinfo *listen[MAX_LISTEN];
     unsigned num_listen;
 
+    const char *session_cookie;
+
     const char *control_listen, *multicast_group;
 
     const char *document_root;

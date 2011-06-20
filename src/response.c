@@ -320,7 +320,8 @@ response_dispatch_direct(struct request *request2,
 
         header_write(headers, "set-cookie",
                      p_strcat(request2->request->pool,
-                              "beng_proxy_session=",
+                              request2->connection->instance->config.session_cookie,
+                              "=",
                               session_id_format(request2->session_id,
                                                 &request2->session_id_string),
                               "; Discard; HttpOnly; Path=/; Version=1",
@@ -336,9 +337,13 @@ response_dispatch_direct(struct request *request2,
     } else if (request2->translate.response->discard_session &&
                !session_id_is_defined(request2->session_id)) {
         /* delete the cookie for the discarded session */
-        header_write(headers, "set-cookie",
-                     "beng_proxy_session=; Discard; HttpOnly; "
-                     "Path=/; Max-Age=0; Version=1");
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer),
+                 "%s=; Discard; HttpOnly; "
+                 "Path=/; Max-Age=0; Version=1",
+                 request2->connection->instance->config.session_cookie);
+
+        header_write(headers, "set-cookie", buffer);
     }
 
 #ifdef SPLICE

@@ -13,7 +13,8 @@
 #include <stdlib.h>
 
 static unsigned
-lb_session_get_internal(const struct strmap *request_headers)
+lb_session_get_internal(const struct strmap *request_headers,
+                        const char *cookie_name)
 {
     const char *cookie = strmap_get(request_headers, "cookie");
     if (cookie == NULL)
@@ -22,7 +23,7 @@ lb_session_get_internal(const struct strmap *request_headers)
     struct strmap *jar = strmap_new(tpool, 8);
     cookie_map_parse(jar, cookie, tpool);
 
-    const char *session = strmap_get(jar, "beng_proxy_session");
+    const char *session = strmap_get(jar, cookie_name);
     if (session == NULL)
         return 0;
 
@@ -40,12 +41,12 @@ lb_session_get_internal(const struct strmap *request_headers)
 }
 
 unsigned
-lb_session_get(const struct strmap *request_headers)
+lb_session_get(const struct strmap *request_headers, const char *cookie_name)
 {
     struct pool_mark mark;
     pool_mark(tpool, &mark);
 
-    unsigned id = lb_session_get_internal(request_headers);
+    unsigned id = lb_session_get_internal(request_headers, cookie_name);
     pool_rewind(tpool, &mark);
 
     return id;

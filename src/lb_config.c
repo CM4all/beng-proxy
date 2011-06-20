@@ -312,6 +312,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
     cluster->name = p_strdup(parser->config->pool, name);
     lb_fallback_config_init(&cluster->fallback);
     cluster->sticky_mode = STICKY_NONE;
+    cluster->session_cookie = "beng_proxy_session";
     cluster->num_members = 0;
 
     parser->state = STATE_CLUSTER;
@@ -407,6 +408,17 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             else
                 return throw(error_r, "Unknown sticky mode");
 
+            return true;
+        } else if (strcmp(word, "session_cookie") == 0) {
+            const char *session_cookie = next_value(&p);
+            if (session_cookie == NULL)
+                return throw(error_r, "Cookie name expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            cluster->session_cookie = p_strdup(parser->config->pool,
+                                               session_cookie);
             return true;
         } else if (strcmp(word, "member") == 0) {
             const char *name = next_value(&p);

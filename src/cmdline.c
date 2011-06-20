@@ -147,9 +147,10 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 }
 
 static void
-handle_set2(struct config *config, const char *argv0,
+handle_set2(struct config *config, struct pool *pool, const char *argv0,
             const char *name, size_t name_length, const char *value)
 {
+    static const char session_cookie[] = "session_cookie";
     static const char max_connections[] = "max_connections";
     static const char tcp_stock_limit[] = "tcp_stock_limit";
     static const char fcgi_stock_limit[] = "fastcgi_stock_limit";
@@ -249,12 +250,20 @@ handle_set2(struct config *config, const char *argv0,
         else
             arg_error(argv0, "Invalid value for args_escape_char");
 #endif
+    } else if (name_length == sizeof(session_cookie) - 1 &&
+               memcmp(name, session_cookie,
+                      sizeof(session_cookie) - 1) == 0) {
+        if (*value == 0)
+            arg_error(argv0, "Invalid value for session_cookie");
+
+        config->session_cookie = p_strdup(pool, value);
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }
 
 static void
-handle_set(struct config *config, const char *argv0, const char *p)
+handle_set(struct config *config, struct pool *pool,
+           const char *argv0, const char *p)
 {
     const char *eq;
 
@@ -265,7 +274,7 @@ handle_set(struct config *config, const char *argv0, const char *p)
     if (eq == p)
         arg_error(argv0, "No name found in --set argument");
 
-    handle_set2(config, argv0, p, eq - p, eq + 1);
+    handle_set2(config, pool, argv0, p, eq - p, eq + 1);
 }
 
 /** read configuration options from the command line */
@@ -461,7 +470,7 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
             break;
 
         case 's':
-            handle_set(config, argv[0], optarg);
+            handle_set(config, pool, argv[0], optarg);
             break;
 
         case '?':

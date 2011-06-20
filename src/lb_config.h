@@ -57,6 +57,8 @@ struct lb_cluster_config {
 
     enum sticky_mode sticky_mode;
 
+    const char *session_cookie;
+
     unsigned num_members;
 
     struct lb_member_config members[MAX_CLUSTER_MEMBERS];

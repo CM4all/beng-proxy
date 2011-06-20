@@ -238,6 +238,7 @@ int main(int argc, char **argv)
     int __attr_unused ref;
     static struct instance instance = {
         .config = {
+            .session_cookie = "beng_proxy_session",
             .max_connections = 8192,
             .http_cache_size = 512 * 1024 * 1024,
             .filter_cache_size = 128 * 1024 * 1024,

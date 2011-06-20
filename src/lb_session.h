@@ -13,6 +13,7 @@ struct strmap;
  * Extract a session identifier from the request headers.
  */
 unsigned
-lb_session_get(const struct strmap *request_headers);
+lb_session_get(const struct strmap *request_headers,
+               const char *cookie_name);
 
 #endif

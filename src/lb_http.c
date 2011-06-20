@@ -200,7 +200,8 @@ lb_http_connection_request(struct http_server_request *request,
         break;
 
     case STICKY_SESSION_MODULO:
-        session_sticky = lb_session_get(request->headers);
+        session_sticky = lb_session_get(request->headers,
+                                        connection->listener->cluster->session_cookie);
         break;
 
     case STICKY_COOKIE:

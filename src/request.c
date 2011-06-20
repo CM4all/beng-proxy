@@ -6,6 +6,8 @@
  */
 
 #include "request.h"
+#include "connection.h"
+#include "instance.h"
 #include "session.h"
 #include "http-server.h"
 #include "cookie-server.h"
@@ -115,7 +117,8 @@ request_get_cookie_session_id(struct request *request)
 {
     const struct strmap *cookies = request_get_cookies(request);
 
-    return strmap_get_checked(cookies, "beng_proxy_session");
+    return strmap_get_checked(cookies,
+                              request->connection->instance->config.session_cookie);
 }
 
 void
