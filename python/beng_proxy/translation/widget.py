@@ -78,6 +78,10 @@ class _Lookup:
         if m:
             response.packet(TRANSLATE_SCRIPT_NAME, m.group(1))
             return
+        m = re.match(r'^path_info\s+"(\S+)"$', line)
+        if m:
+            response.packet(TRANSLATE_PATH_INFO, m.group(1))
+            return
         m = re.match(r'^document_root\s+"(\S+)"$', line)
         if m:
             response.packet(TRANSLATE_DOCUMENT_ROOT, m.group(1))
