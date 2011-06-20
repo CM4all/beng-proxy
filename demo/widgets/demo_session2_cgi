@@ -1,0 +1,6 @@
+cgi "/usr/share/cm4all/beng-proxy/demo/session2.sh"
+script_name "/session1.sh"
+path_info "/"
+process
+container
+stateful
