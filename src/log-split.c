@@ -7,6 +7,8 @@
 
 #include "log-server.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
