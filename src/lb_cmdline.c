@@ -43,6 +43,9 @@ static void usage(void) {
          " --access-logger program\n"
 #endif
          " -A program     specifies an access logger program (executed by /bin/sh)\n"
+#ifdef __GLIBC__
+         " --no-daemon\n"
+#endif
          " -D             don't detach (daemonize)\n"
 #ifdef __GLIBC__
          " --pidfile file\n"
@@ -172,6 +175,7 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
         {"quiet", 0, NULL, 'q'},
         {"logger", 1, NULL, 'l'},
         {"access-logger", 1, NULL, 'A'},
+        {"no-daemon", 0, NULL, 'D'},
         {"pidfile", 1, NULL, 'P'},
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
