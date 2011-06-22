@@ -37,10 +37,17 @@ case "$1" in
     start)
 	log_begin_msg "Starting CM4all BENG load balancer daemon"
         start-stop-daemon --start --quiet \
-            --exec /usr/sbin/cm4all-beng-lb \
+            --exec /usr/bin/daemon \
             --pidfile "$PIDFILE" \
             -- \
+            --noconfig \
             --pidfile "$PIDFILE" \
+            --core \
+            --delay=30 \
+            --respawn \
+            -- \
+            /usr/sbin/cm4all-beng-lb \
+            --no-daemon \
             --user "$DAEMON_USER" \
             --logger "$LOGGER" \
             --logger-user "$LOGGER_USER" \
@@ -53,8 +60,7 @@ case "$1" in
             --retry 60 \
             --oknodo \
             --pidfile "$PIDFILE" \
-            --user "$DAEMON_USER" \
-            --exec /usr/sbin/cm4all-beng-lb
+            --exec /usr/bin/daemon
 	log_end_msg $?
 	;;
     restart|force-reload)

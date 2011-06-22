@@ -1,6 +1,7 @@
 cm4all-beng-proxy (0.10.8) unstable; urgency=low
 
   * lb_http: don't access the connection object after it was closed
+  * restart the load balancer automatically
 
  --
 
