@@ -29,6 +29,8 @@
 struct lb_request {
     struct lb_connection *connection;
 
+    struct tcp_balancer *balancer;
+
     struct http_server_request *request;
 
     struct async_operation_ref *async_ref;
@@ -66,7 +68,7 @@ my_socket_release(bool reuse, void *ctx)
 {
     struct lb_request *request2 = ctx;
 
-    tcp_balancer_put(request2->connection->instance->tcp_balancer,
+    tcp_balancer_put(request2->balancer,
                      request2->stock_item, !reuse);
 }
 
@@ -189,6 +191,7 @@ lb_http_connection_request(struct http_server_request *request,
 
     struct lb_request *request2 = p_malloc(request->pool, sizeof(*request2));
     request2->connection = connection;
+    request2->balancer = connection->instance->tcp_balancer;
     request2->request = request;
     request2->async_ref = async_ref;
     request2->new_cookie = 0;
@@ -212,7 +215,7 @@ lb_http_connection_request(struct http_server_request *request,
         break;
     }
 
-    tcp_balancer_get(connection->instance->tcp_balancer, request->pool,
+    tcp_balancer_get(request2->balancer, request->pool,
                      session_sticky,
                      &cluster->address_list,
                      &my_stock_handler, request2,
