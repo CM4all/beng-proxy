@@ -51,7 +51,8 @@ http_next_quoted_string(pool_t pool, struct strref *input, struct strref *value)
 static __attr_always_inline bool
 char_is_rfc_ignorant(char ch)
 {
-    return char_is_http_token(ch) || ch == '[' || ch == ']';
+    return char_is_http_token(ch) || ch == '[' || ch == ']' ||
+        ch == '(' || ch == ')';
 }
 
 static void
