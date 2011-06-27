@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.10.9) unstable; urgency=low
 
-  * 
+  * merge release 0.9.28
 
  --
 
@@ -70,6 +70,12 @@ cm4all-beng-proxy (0.10) unstable; urgency=low
   * lb: new stand-alone load balancer
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 26 May 2011 14:32:02 +0200
+
+cm4all-beng-proxy (0.9.28) unstable; urgency=low
+
+  * http-string: allow round brackets in cookie values (RFC ignorant)
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 27 Jun 2011 13:23:58 +0200
 
 cm4all-beng-proxy (0.9.27) unstable; urgency=low
 
