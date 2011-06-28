@@ -31,7 +31,7 @@ enum {
 
 typedef unsigned istream_direct_t;
 
-typedef struct istream_opaque *istream_t;
+typedef struct istream *istream_t;
 
 /** data sink for an istream */
 struct istream_handler {
@@ -158,14 +158,6 @@ struct istream {
     void (*close)(istream_t istream);
 };
 
-static inline struct istream *
-_istream_opaque_cast(istream_t istream)
-{
-    assert(istream != NULL);
-
-    return (struct istream *)istream;
-}
-
 static inline istream_t
 istream_struct_cast(struct istream *istream)
 {
@@ -175,9 +167,8 @@ istream_struct_cast(struct istream *istream)
 }
 
 static inline off_t
-istream_available(istream_t _istream, bool partial)
+istream_available(struct istream *istream, bool partial)
 {
-    struct istream *istream = _istream_opaque_cast(_istream);
     off_t available;
 #ifndef NDEBUG
     struct pool_notify notify;
@@ -193,7 +184,7 @@ istream_available(istream_t _istream, bool partial)
     if (istream->available == NULL)
         available = (off_t)-1;
     else
-        available = istream->available(_istream, partial);
+        available = istream->available(istream, partial);
 
 #ifndef NDEBUG
     assert(available >= -1);
@@ -222,9 +213,8 @@ istream_available(istream_t _istream, bool partial)
 }
 
 static inline off_t
-istream_skip(istream_t _istream, off_t length)
+istream_skip(struct istream *istream, off_t length)
 {
-    struct istream *istream = _istream_opaque_cast(_istream);
     off_t nbytes;
 #ifndef NDEBUG
     struct pool_notify notify;
@@ -240,7 +230,7 @@ istream_skip(istream_t _istream, off_t length)
     if (istream->skip == NULL)
         nbytes = (off_t)-1;
     else
-        nbytes = istream->skip(_istream, length);
+        nbytes = istream->skip(istream, length);
 
     assert(nbytes <= length);
 
@@ -267,9 +257,8 @@ istream_skip(istream_t _istream, off_t length)
 }
 
 static inline void
-istream_read(istream_t _istream)
+istream_read(struct istream *istream)
 {
-    struct istream *istream = _istream_opaque_cast(_istream);
 #ifndef NDEBUG
     struct pool_notify notify;
 
@@ -282,7 +271,7 @@ istream_read(istream_t _istream)
     istream->reading = true;
 #endif
 
-    istream->read(_istream);
+    istream->read(istream);
 
 #ifndef NDEBUG
     if (pool_denotify(&notify) || istream->destroyed)
@@ -293,9 +282,8 @@ istream_read(istream_t _istream)
 }
 
 static inline int
-istream_as_fd(istream_t _istream)
+istream_as_fd(struct istream *istream)
 {
-    struct istream *istream = _istream_opaque_cast(_istream);
 #ifndef NDEBUG
     struct pool_notify notify;
 
@@ -313,7 +301,7 @@ istream_as_fd(istream_t _istream)
     istream->reading = true;
 #endif
 
-    int fd = istream->as_fd(_istream);
+    int fd = istream->as_fd(istream);
 
 #ifndef NDEBUG
     assert(!pool_denotify(&notify) || fd >= 0);
@@ -326,10 +314,8 @@ istream_as_fd(istream_t _istream)
 }
 
 static inline void
-istream_close(istream_t _istream)
+istream_close(struct istream *istream)
 {
-    struct istream *istream = _istream_opaque_cast(_istream);
-
     assert(!istream->closing);
     assert(!istream->eof);
 
@@ -337,7 +323,7 @@ istream_close(istream_t _istream)
     istream->closing = true;
 #endif
 
-    istream->close(_istream);
+    istream->close(istream);
 }
 
 static inline void
@@ -349,22 +335,18 @@ istream_free(istream_t *istream_r)
 }
 
 static inline bool
-istream_has_handler(istream_t _istream)
+istream_has_handler(struct istream *istream)
 {
-    struct istream *istream = _istream_opaque_cast(_istream);
-
     return istream->handler != NULL;
 }
 
 
 static inline void
-istream_handler_set(istream_t _istream,
+istream_handler_set(struct istream *istream,
                     const struct istream_handler *handler,
                     void *handler_ctx,
                     istream_direct_t handler_direct)
 {
-    struct istream *istream = _istream_opaque_cast(_istream);
-
     assert(pool_contains(istream->pool, istream, sizeof(*istream)));
     assert(handler != NULL);
     assert(handler->data != NULL);
@@ -387,19 +369,15 @@ istream_assign_handler(istream_t *istream_r, istream_t istream,
 }
 
 static inline void
-istream_handler_set_direct(istream_t _istream,
+istream_handler_set_direct(struct istream *istream,
                            istream_direct_t handler_direct)
 {
-    struct istream *istream = _istream_opaque_cast(_istream);
-
     istream->handler_direct = handler_direct;
 }
 
 static inline void
-istream_handler_clear(istream_t _istream)
+istream_handler_clear(struct istream *istream)
 {
-    struct istream *istream = _istream_opaque_cast(_istream);
-
     assert(!istream->eof);
     assert(istream->handler != NULL);
 
