@@ -82,7 +82,7 @@ my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
     struct strref data;
     struct pool_mark mark;
     struct http_cache_document document;
-    uint32_t magic;
+    /*uint32_t magic;*/
 
     strref_set(&data, data0, length);
 
@@ -90,7 +90,7 @@ my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
 
         pool_mark(tpool, &mark);
 
-        magic = deserialize_uint32(&data);
+        /*magic = */deserialize_uint32(&data);
         /*
         if (magic != CHOICE_MAGIC)
             break;
