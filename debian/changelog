@@ -77,6 +77,12 @@ cm4all-beng-proxy (0.10) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 26 May 2011 14:32:02 +0200
 
+cm4all-beng-proxy (0.9.29) unstable; urgency=low
+
+  * http-string: allow the equality sign in cookie values (RFC ignorant)
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 28 Jun 2011 17:50:23 +0200
+
 cm4all-beng-proxy (0.9.28) unstable; urgency=low
 
   * http-string: allow round brackets in cookie values (RFC ignorant)
