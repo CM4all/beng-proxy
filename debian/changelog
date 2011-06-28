@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.29) unstable; urgency=low
 
-  * 
+  * http-string: allow the equality sign in cookie values (RFC ignorant)
 
  --
 
