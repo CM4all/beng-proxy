@@ -24,9 +24,9 @@
  */
 
 struct lb_connection *
-connection_new(struct lb_instance *instance,
-               const struct lb_listener_config *listener,
-               int fd, const struct sockaddr *addr, size_t addrlen)
+lb_connection_new(struct lb_instance *instance,
+                  const struct lb_listener_config *listener,
+                  int fd, const struct sockaddr *addr, size_t addrlen)
 {
     struct lb_connection *connection;
 
@@ -62,7 +62,7 @@ connection_new(struct lb_instance *instance,
 }
 
 void
-connection_close(struct lb_connection *connection)
+lb_connection_close(struct lb_connection *connection)
 {
     assert(connection->http != NULL);
 

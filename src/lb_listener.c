@@ -18,8 +18,8 @@ lb_listener_callback(int fd,
 {
     struct lb_listener *listener = ctx;
 
-    connection_new(listener->instance, listener->config,
-                   fd, address, address_length);
+    lb_connection_new(listener->instance, listener->config,
+                      fd, address, address_length);
 }
 
 struct lb_listener *

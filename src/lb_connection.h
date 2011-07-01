@@ -35,11 +35,11 @@ struct lb_connection {
 };
 
 struct lb_connection *
-connection_new(struct lb_instance *instance,
-               const struct lb_listener_config *listener,
-               int fd, const struct sockaddr *addr, size_t addrlen);
+lb_connection_new(struct lb_instance *instance,
+                  const struct lb_listener_config *listener,
+                  int fd, const struct sockaddr *addr, size_t addrlen);
 
 void
-connection_close(struct lb_connection *connection);
+lb_connection_close(struct lb_connection *connection);
 
 #endif

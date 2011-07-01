@@ -46,7 +46,7 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     deinit_all_listeners(instance);
 
     while (!list_empty(&instance->connections))
-        connection_close((struct lb_connection*)instance->connections.next);
+        lb_connection_close((struct lb_connection*)instance->connections.next);
 
     pool_commit();
 
