@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2010 The Music Player Daemon Project
+ * Copyright (C) 2003-2011 The Music Player Daemon Project
  * http://www.musicpd.org
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,6 +88,13 @@ pipe_cloexec_nonblock(int fd[2]);
  */
 int
 socketpair_cloexec(int domain, int type, int protocol, int sv[2]);
+
+/**
+ * Wrapper for socketpair(), which sets the flags CLOEXEC and NONBLOCK
+ * (atomically if supported by the OS).
+ */
+int
+socketpair_cloexec_nonblock(int domain, int type, int protocol, int sv[2]);
 
 #endif
 
