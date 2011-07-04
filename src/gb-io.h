@@ -9,7 +9,7 @@
 
 #include <sys/types.h>
 
-struct growing_buffer;
+struct growing_buffer_reader;
 
 /**
  * Writes data from the buffer to the file.
@@ -19,7 +19,7 @@ struct growing_buffer;
  * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
  */
 ssize_t
-write_from_gb(int fd, struct growing_buffer *gb);
+write_from_gb(int fd, struct growing_buffer_reader *reader);
 
 /**
  * Sends data from the buffer to the socket.
@@ -29,6 +29,6 @@ write_from_gb(int fd, struct growing_buffer *gb);
  * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
  */
 ssize_t
-send_from_gb(int fd, struct growing_buffer *gb);
+send_from_gb(int fd, struct growing_buffer_reader *reader);
 
 #endif

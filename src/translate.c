@@ -66,7 +66,7 @@ struct translate_client {
     struct event event;
 
     /** the marshalled translate request */
-    struct growing_buffer *request;
+    struct growing_buffer_reader request;
 
     const struct translate_handler *handler;
     void *handler_ctx;
@@ -1484,7 +1484,7 @@ translate_try_write(struct translate_client *client, int fd)
         .tv_usec = 0,
     };
 
-    nbytes = send_from_gb(fd, client->request);
+    nbytes = send_from_gb(fd, &client->request);
     assert(nbytes != -2);
 
     if (nbytes < 0) {
@@ -1496,7 +1496,7 @@ translate_try_write(struct translate_client *client, int fd)
         return;
     }
 
-    if (nbytes == 0 && growing_buffer_empty(client->request)) {
+    if (nbytes == 0 && growing_buffer_reader_eof(&client->request)) {
         /* the buffer is empty, i.e. the request has been sent -
            start reading the response */
 
@@ -1601,7 +1601,7 @@ translate(pool_t pool, int fd,
     event_set(&client->event, fd, EV_WRITE|EV_TIMEOUT,
               translate_write_event_callback, client);
 
-    client->request = gb;
+    growing_buffer_reader_init(&client->request, gb);
     client->handler = handler;
     client->handler_ctx = ctx;
     client->response.status = (http_status_t)-1;

@@ -12,13 +12,13 @@
 #include <errno.h>
 
 ssize_t
-write_from_gb(int fd, struct growing_buffer *gb)
+write_from_gb(int fd, struct growing_buffer_reader *reader)
 {
     const void *data;
     size_t length;
     ssize_t nbytes;
 
-    data = growing_buffer_read(gb, &length);
+    data = growing_buffer_reader_read(reader, &length);
     if (data == NULL)
         return -2;
 
@@ -29,18 +29,18 @@ write_from_gb(int fd, struct growing_buffer *gb)
     if (nbytes <= 0)
         return length;
 
-    growing_buffer_consume(gb, (size_t)nbytes);
+    growing_buffer_reader_consume(reader, (size_t)nbytes);
     return (ssize_t)length - nbytes;
 }
 
 ssize_t
-send_from_gb(int fd, struct growing_buffer *gb)
+send_from_gb(int fd, struct growing_buffer_reader *reader)
 {
     const void *data;
     size_t length;
     ssize_t nbytes;
 
-    data = growing_buffer_read(gb, &length);
+    data = growing_buffer_reader_read(reader, &length);
     if (data == NULL)
         return -2;
 
@@ -51,6 +51,6 @@ send_from_gb(int fd, struct growing_buffer *gb)
     if (nbytes <= 0)
         return length;
 
-    growing_buffer_consume(gb, (size_t)nbytes);
+    growing_buffer_reader_consume(reader, (size_t)nbytes);
     return (ssize_t)length - nbytes;
 }
