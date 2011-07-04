@@ -138,6 +138,13 @@ create_test(pool_t pool)
     return istream_gb_new(pool, gb);
 }
 
+static istream_t
+create_empty(pool_t pool)
+{
+    struct growing_buffer *gb = growing_buffer_new(pool, 64);
+    return istream_gb_new(pool, gb);
+}
+
 
 /*
  * tests
@@ -152,6 +159,18 @@ test_normal(pool_t pool)
 
     pool = pool_new_linear(pool, "test", 8192);
     istream = create_test(pool);
+
+    run_istream(pool, istream);
+}
+
+/** empty input */
+static void
+test_empty(pool_t pool)
+{
+    istream_t istream;
+
+    pool = pool_new_linear(pool, "test", 8192);
+    istream = create_empty(pool);
 
     run_istream(pool, istream);
 }
@@ -241,6 +260,7 @@ int main(int argc, char **argv) {
     /* run test suite */
 
     test_normal(root_pool);
+    test_empty(root_pool);
     test_abort_without_handler(root_pool);
     test_abort_with_handler(root_pool);
     test_abort_in_handler(root_pool);
