@@ -26,10 +26,13 @@ int main(int argc, char **argv) {
     struct strmap *headers = strmap_new(pool, 4);
     cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
 
-    struct growing_buffer *gb = headers_dup(pool, headers);
+    const struct growing_buffer *gb = headers_dup(pool, headers);
+    struct growing_buffer_reader reader;
+    growing_buffer_reader_init(&reader, gb);
+
     const void *data;
     size_t length;
-    while ((data = growing_buffer_read(gb, &length)) != NULL) {
+    while ((data = growing_buffer_reader_read(&reader, &length)) != NULL) {
         ssize_t nbytes = write(1, data, length);
         if (nbytes < 0) {
             perror("write() failed");
@@ -39,7 +42,7 @@ int main(int argc, char **argv) {
         if (nbytes == 0)
             break;
 
-        growing_buffer_consume(gb, (size_t)nbytes);
+        growing_buffer_reader_consume(&reader, (size_t)nbytes);
     }
 
     dpool_destroy(dpool);
