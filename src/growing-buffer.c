@@ -145,7 +145,7 @@ growing_buffer_reader_init(struct growing_buffer_reader *reader,
             gb->first.next->length > gb->initial_size));
 
     reader->buffer = &gb->first;
-    if (reader->buffer->length == 0)
+    if (reader->buffer->length == 0 && reader->buffer->next != NULL)
         reader->buffer = reader->buffer->next;
 
     reader->position = 0;
