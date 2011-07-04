@@ -46,6 +46,9 @@ void
 growing_buffer_reader_init(struct growing_buffer_reader *reader,
                            const struct growing_buffer *gb);
 
+bool
+growing_buffer_reader_eof(const struct growing_buffer_reader *reader);
+
 size_t
 growing_buffer_reader_available(const struct growing_buffer_reader *reader);
 

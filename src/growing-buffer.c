@@ -155,6 +155,16 @@ growing_buffer_reader_init(struct growing_buffer_reader *reader,
     reader->position = 0;
 }
 
+bool
+growing_buffer_reader_eof(const struct growing_buffer_reader *reader)
+{
+    assert(reader != NULL);
+    assert(reader->buffer != NULL);
+    assert(reader->position <= reader->buffer->length);
+
+    return reader->position == reader->buffer->length;
+}
+
 size_t
 growing_buffer_reader_available(const struct growing_buffer_reader *reader)
 {

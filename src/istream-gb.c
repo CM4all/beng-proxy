@@ -35,9 +35,12 @@ istream_gb_read(istream_t istream)
         size_t length;
         const void *data = growing_buffer_reader_read(&igb->reader, &length);
         if (data == NULL) {
+            assert(growing_buffer_reader_eof(&igb->reader));
             istream_deinit_eof(&igb->output);
             return;
         }
+
+        assert(!growing_buffer_reader_eof(&igb->reader));
 
         size_t nbytes = istream_invoke_data(&igb->output, data, length);
         if (nbytes == 0)
