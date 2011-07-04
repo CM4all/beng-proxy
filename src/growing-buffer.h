@@ -10,6 +10,10 @@
 #include "pool.h"
 
 struct growing_buffer_reader {
+#ifndef NDEBUG
+    const struct growing_buffer *growing_buffer;
+#endif
+
     const struct buffer *buffer;
     size_t position;
 };
