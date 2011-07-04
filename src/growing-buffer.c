@@ -11,7 +11,7 @@
 
 struct buffer {
     struct buffer *next;
-    size_t length, position;
+    size_t length;
     char data[sizeof(size_t)];
 };
 
@@ -42,7 +42,6 @@ growing_buffer_new(pool_t pool, size_t initial_size)
     gb->tail = &gb->first;
     gb->first.next = NULL;
     gb->first.length = 0;
-    gb->first.position = 0;
 
     return gb;
 }
@@ -72,7 +71,6 @@ growing_buffer_write(struct growing_buffer *gb, size_t length)
         buffer = p_malloc(gb->pool, sizeof(*buffer) - sizeof(buffer->data) + gb->size);
         buffer->next = NULL;
         buffer->length = 0;
-        buffer->position = 0;
 
         growing_buffer_append_buffer(gb, buffer);
     }
@@ -103,22 +101,6 @@ growing_buffer_cat(struct growing_buffer *dest, struct growing_buffer *src)
     dest->tail->next = &src->first;
     dest->tail = src->tail;
     dest->size = src->size;
-}
-
-bool
-growing_buffer_empty(struct growing_buffer *gb)
-{
-    assert(gb->current != NULL);
-
-    while (gb->current->position == gb->current->length) {
-        assert(gb->current->position <= gb->current->length);
-        if (gb->current->next == NULL)
-            return true;
-        gb->current = gb->current->next;
-        assert(gb->current->position == 0);
-    }
-
-    return false;
 }
 
 size_t
@@ -220,76 +202,6 @@ growing_buffer_reader_consume(struct growing_buffer_reader *reader,
 
         reader->buffer = reader->buffer->next;
         reader->position = 0;
-    }
-}
-
-size_t
-growing_buffer_available(const struct growing_buffer *gb)
-{
-    assert(gb->size == 0);
-    assert(gb->tail == NULL);
-    assert(gb->current != NULL);
-
-    size_t available = 0;
-    for (struct buffer *buffer = gb->current;
-         buffer != NULL; buffer = buffer->next) {
-        assert(buffer->position <= buffer->length);
-
-        available += buffer->length - buffer->position;
-    }
-
-    return available;
-}
-
-const void *
-growing_buffer_read(struct growing_buffer *gb, size_t *length_r)
-{
-    assert(gb->current != NULL);
-
-    while (gb->current->position == gb->current->length) {
-        assert(gb->current->position <= gb->current->length);
-        if (gb->current->next == NULL)
-            return NULL;
-        gb->current = gb->current->next;
-        assert(gb->current->position == 0);
-    }
-
-    assert(gb->current->position < gb->current->length);
-
-    *length_r = gb->current->length - gb->current->position;
-    return gb->current->data + gb->current->position;
-}
-
-void
-growing_buffer_consume(struct growing_buffer *gb, size_t length)
-{
-    assert(gb->current != NULL);
-    assert(gb->current->position <= gb->current->length);
-
-    while (length > 0) {
-        assert(gb->current != NULL);
-
-        if (gb->current->position + length < gb->current->length) {
-            gb->current->position += length;
-            length = 0;
-        } else {
-            length -= gb->current->length - gb->current->position;
-            gb->current->position = gb->current->length;
-
-            if (length > 0) {
-                assert(gb->current->next != NULL);
-                gb->current = gb->current->next;
-            }
-        }
-    }
-
-    if (gb->current->next == NULL &&
-        gb->current->position == gb->current->length) {
-        /* allow buffer recycling - we're on the last buffer, and
-           someone might still be writing to it.  if we clear it here,
-           the full buffer may be reused */
-        gb->current->position = 0;
-        gb->current->length = 0;
     }
 }
 
