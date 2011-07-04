@@ -2,7 +2,7 @@ cm4all-beng-proxy (0.9.30) unstable; urgency=low
 
   * growing-buffer: fix assertion failure in reader when buffer is empty
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 04 Jul 2011 16:59:28 +0200
 
 cm4all-beng-proxy (0.9.29) unstable; urgency=low
 
