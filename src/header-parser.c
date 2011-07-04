@@ -45,27 +45,24 @@ void
 header_parse_buffer(pool_t pool, struct strmap *headers,
                     struct growing_buffer *gb)
 {
-    struct pool_mark mark;
-    struct fifo_buffer *buffer;
-    void *dest;
-    const char *src, *p, *eol;
-    size_t max_length, length;
-
     assert(pool != NULL);
     assert(headers != NULL);
     assert(gb != NULL);
 
+    struct pool_mark mark;
     pool_mark(tpool, &mark);
 
-    buffer = fifo_buffer_new(tpool, 4096);
+    struct fifo_buffer *buffer = fifo_buffer_new(tpool, 4096);
 
     while (true) {
         /* copy gb to buffer */
 
         if (gb != NULL) {
-            dest = fifo_buffer_write(buffer, &max_length);
+            size_t max_length;
+            void *dest = fifo_buffer_write(buffer, &max_length);
             if (dest != NULL) {
-                src = growing_buffer_read(gb, &length);
+                size_t length;
+                const char *src = growing_buffer_read(gb, &length);
                 if (src != NULL) {
                     if (length > max_length)
                         length = max_length;
@@ -80,6 +77,8 @@ header_parse_buffer(pool_t pool, struct strmap *headers,
 
         /* parse lines from the buffer */
 
+        const char *src, *p;
+        size_t length;
         p = src = fifo_buffer_read(buffer, &length);
         if (src == NULL && gb == NULL)
             break;
@@ -88,6 +87,7 @@ header_parse_buffer(pool_t pool, struct strmap *headers,
             while (p < src + length && char_is_whitespace(*p))
                 ++p;
 
+            const char *eol;
             eol = memchr(p, '\n', src + length - p);
             if (eol == NULL) {
                 if (gb == NULL)

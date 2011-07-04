@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.10.11) unstable; urgency=low
 
-  * 
+  * merge release 0.9.30
 
  --
 
@@ -82,6 +82,12 @@ cm4all-beng-proxy (0.10) unstable; urgency=low
   * lb: new stand-alone load balancer
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 26 May 2011 14:32:02 +0200
+
+cm4all-beng-proxy (0.9.30) unstable; urgency=low
+
+  * growing-buffer: fix assertion failure in reader when buffer is empty
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 04 Jul 2011 16:59:28 +0200
 
 cm4all-beng-proxy (0.9.29) unstable; urgency=low
 

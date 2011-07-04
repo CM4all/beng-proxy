@@ -144,8 +144,12 @@ growing_buffer_reader_init(struct growing_buffer_reader *reader,
             gb->size > gb->initial_size &&
             gb->first.next->length > gb->initial_size));
 
+#ifndef NDEBUG
+    reader->growing_buffer = gb;
+#endif
+
     reader->buffer = &gb->first;
-    if (reader->buffer->length == 0)
+    if (reader->buffer->length == 0 && reader->buffer->next != NULL)
         reader->buffer = reader->buffer->next;
 
     reader->position = 0;
