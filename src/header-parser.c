@@ -43,7 +43,7 @@ header_parse_line(pool_t pool, struct strmap *headers,
 
 void
 header_parse_buffer(pool_t pool, struct strmap *headers,
-                    struct growing_buffer *gb)
+                    const struct growing_buffer *gb)
 {
     assert(pool != NULL);
     assert(headers != NULL);
@@ -51,6 +51,9 @@ header_parse_buffer(pool_t pool, struct strmap *headers,
 
     struct pool_mark mark;
     pool_mark(tpool, &mark);
+
+    struct growing_buffer_reader reader;
+    growing_buffer_reader_init(&reader, gb);
 
     struct fifo_buffer *buffer = fifo_buffer_new(tpool, 4096);
 
@@ -62,14 +65,14 @@ header_parse_buffer(pool_t pool, struct strmap *headers,
             void *dest = fifo_buffer_write(buffer, &max_length);
             if (dest != NULL) {
                 size_t length;
-                const char *src = growing_buffer_read(gb, &length);
+                const char *src = growing_buffer_reader_read(&reader, &length);
                 if (src != NULL) {
                     if (length > max_length)
                         length = max_length;
 
                     memcpy(dest, src, length);
                     fifo_buffer_append(buffer, length);
-                    growing_buffer_consume(gb, length);
+                    growing_buffer_reader_consume(&reader, length);
                 } else
                     gb = NULL;
             }

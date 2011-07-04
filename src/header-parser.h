@@ -20,6 +20,6 @@ header_parse_line(pool_t pool, struct strmap *headers,
 
 void
 header_parse_buffer(pool_t pool, struct strmap *headers,
-                    struct growing_buffer *gb);
+                    const struct growing_buffer *gb);
 
 #endif
