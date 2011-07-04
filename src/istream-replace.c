@@ -29,6 +29,8 @@ struct istream_replace {
     struct growing_buffer *buffer;
     off_t source_length, position;
 
+    struct growing_buffer_reader reader;
+
     struct substitution *first_substitution, **append_substitution_p;
 
 #ifndef NDEBUG
@@ -105,7 +107,7 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
     assert(s->istream == NULL);
     assert(s->start <= s->end);
 
-    growing_buffer_consume(replace->buffer, s->end - s->start);
+    growing_buffer_reader_consume(&replace->reader, s->end - s->start);
     replace->position = s->end;
 
     replace->first_substitution = s->next;
@@ -262,7 +264,7 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
     assert(replace != NULL);
     assert(max_length > 0);
 
-    data = growing_buffer_read(replace->buffer, &length);
+    data = growing_buffer_reader_read(&replace->reader, &length);
     assert(data != NULL);
     assert(length > 0);
 
@@ -277,7 +279,7 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
         /* istream_replace has been closed */
         return length;
 
-    growing_buffer_consume(replace->buffer, nbytes);
+    growing_buffer_reader_consume(&replace->reader, nbytes);
     replace->position += nbytes;
 
     assert(replace->position <= replace->source_length);
@@ -595,6 +597,8 @@ istream_replace_new(pool_t pool, istream_t input)
     replace->buffer = growing_buffer_new(replace->output.pool, 4096);
     replace->source_length = 0;
     replace->position = 0;
+
+    growing_buffer_reader_init(&replace->reader, replace->buffer);
 
     replace->first_substitution = NULL;
     replace->append_substitution_p = &replace->first_substitution;
