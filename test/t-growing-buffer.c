@@ -175,6 +175,29 @@ test_empty(pool_t pool)
     run_istream(pool, istream);
 }
 
+/** first buffer is too small, empty */
+static void
+test_first_empty(pool_t pool)
+{
+    pool = pool_new_linear(pool, "test", 8192);
+    struct growing_buffer *buffer = growing_buffer_new(pool, 16);
+    struct growing_buffer_reader reader;
+    growing_buffer_reader_init(&reader, buffer);
+
+    growing_buffer_write_string(buffer, "0123456789abcdefg");
+
+    size_t length;
+    const void *data = growing_buffer_reader_read(&reader, &length);
+    assert(data != NULL);
+    assert(length == 17);
+
+    growing_buffer_reader_consume(&reader, length);
+
+    pool_trash(pool);
+    pool_unref(pool);
+    pool_commit();
+}
+
 /** abort without handler */
 static void
 test_abort_without_handler(pool_t pool)
@@ -261,6 +284,7 @@ int main(int argc, char **argv) {
 
     test_normal(root_pool);
     test_empty(root_pool);
+    test_first_empty(root_pool);
     test_abort_without_handler(root_pool);
     test_abort_with_handler(root_pool);
     test_abort_in_handler(root_pool);
