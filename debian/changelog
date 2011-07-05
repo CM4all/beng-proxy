@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.31) unstable; urgency=low
 
-  * 
+  * growing-buffer: fix assertion failure with empty first buffer
 
  --
 

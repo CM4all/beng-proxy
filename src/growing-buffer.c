@@ -182,6 +182,14 @@ growing_buffer_reader_read(const struct growing_buffer_reader *reader,
 
     const struct buffer *buffer = reader->buffer;
 
+    if (buffer->length == 0 && buffer->next != NULL) {
+        /* skip the empty first buffer that was too small */
+        assert(buffer == &reader->growing_buffer->first);
+        assert(reader->position == 0);
+
+        buffer = buffer->next;
+    }
+
     if (reader->position >= buffer->length) {
         assert(reader->position == buffer->length);
         assert(reader->buffer->next == NULL);
@@ -201,6 +209,14 @@ growing_buffer_reader_consume(struct growing_buffer_reader *reader,
 
     if (length == 0)
         return;
+
+    if (reader->buffer->length == 0 && reader->buffer->next != NULL) {
+        /* skip the empty first buffer that was too small */
+        assert(reader->buffer == &reader->growing_buffer->first);
+        assert(reader->position == 0);
+
+        reader->buffer = reader->buffer->next;
+    }
 
     reader->position += length;
 
