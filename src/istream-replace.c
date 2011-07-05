@@ -107,7 +107,7 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
     assert(s->istream == NULL);
     assert(s->start <= s->end);
 
-    growing_buffer_reader_consume(&replace->reader, s->end - s->start);
+    growing_buffer_reader_skip(&replace->reader, s->end - s->start);
     replace->position = s->end;
 
     replace->first_substitution = s->next;

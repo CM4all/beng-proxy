@@ -53,9 +53,20 @@ const void *
 growing_buffer_reader_read(const struct growing_buffer_reader *reader,
                            size_t *length_r);
 
+/**
+ * Consume data returned by growing_buffer_reader_read().
+ */
 void
 growing_buffer_reader_consume(struct growing_buffer_reader *reader,
                               size_t length);
+
+/**
+ * Skip an arbitrary number of data bytes, which may span over
+ * multiple internal buffers.
+ */
+void
+growing_buffer_reader_skip(struct growing_buffer_reader *reader,
+                           size_t length);
 
 /**
  * Duplicates the whole buffer (including all chunks) to one

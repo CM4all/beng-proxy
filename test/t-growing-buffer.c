@@ -198,6 +198,32 @@ test_first_empty(pool_t pool)
     pool_commit();
 }
 
+/** test growing_buffer_reader_skip() */
+static void
+test_skip(pool_t pool)
+{
+    pool = pool_new_linear(pool, "test", 8192);
+    struct growing_buffer *buffer = growing_buffer_new(pool, 16);
+    struct growing_buffer_reader reader;
+    growing_buffer_reader_init(&reader, buffer);
+
+    growing_buffer_write_string(buffer, "0123456789abcdefg");
+    growing_buffer_write_string(buffer, "hij");
+
+    growing_buffer_reader_skip(&reader, 18);
+
+    size_t length;
+    const void *data = growing_buffer_reader_read(&reader, &length);
+    assert(data != NULL);
+    assert(length == 2);
+
+    growing_buffer_reader_consume(&reader, 1);
+
+    pool_trash(pool);
+    pool_unref(pool);
+    pool_commit();
+}
+
 /** abort without handler */
 static void
 test_abort_without_handler(pool_t pool)
@@ -285,6 +311,7 @@ int main(int argc, char **argv) {
     test_normal(root_pool);
     test_empty(root_pool);
     test_first_empty(root_pool);
+    test_skip(root_pool);
     test_abort_without_handler(root_pool);
     test_abort_with_handler(root_pool);
     test_abort_in_handler(root_pool);

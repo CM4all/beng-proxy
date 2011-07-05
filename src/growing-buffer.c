@@ -223,6 +223,28 @@ growing_buffer_reader_consume(struct growing_buffer_reader *reader,
     }
 }
 
+void
+growing_buffer_reader_skip(struct growing_buffer_reader *reader,
+                           size_t length)
+{
+    assert(reader != NULL);
+    assert(reader->buffer != NULL);
+
+    while (length > 0) {
+        size_t remaining = reader->buffer->length - reader->position;
+        if (length < remaining ||
+            (length == remaining && reader->buffer->next == NULL)) {
+            reader->position += length;
+            return;
+        }
+
+        length -= remaining;
+
+        assert(reader->buffer->next != NULL);
+        reader->buffer = reader->buffer->next;
+    }
+}
+
 static void *
 growing_buffer_copy(void *dest0, const struct growing_buffer *gb)
 {
