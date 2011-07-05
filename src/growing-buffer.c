@@ -180,14 +180,16 @@ growing_buffer_reader_read(const struct growing_buffer_reader *reader,
     assert(reader != NULL);
     assert(reader->buffer != NULL);
 
-    if (reader->position >= reader->buffer->length) {
-        assert(reader->position == reader->buffer->length);
+    const struct buffer *buffer = reader->buffer;
+
+    if (reader->position >= buffer->length) {
+        assert(reader->position == buffer->length);
         assert(reader->buffer->next == NULL);
         return NULL;
     }
 
-    *length_r = reader->buffer->length - reader->position;
-    return reader->buffer->data + reader->position;
+    *length_r = buffer->length - reader->position;
+    return buffer->data + reader->position;
 }
 
 void
