@@ -15,6 +15,8 @@
 #include "html-escape.h"
 #include "strmap.h"
 
+#include <daemon/log.h>
+
 /*
  * The "real" rewriting code
  *
@@ -154,8 +156,11 @@ do_rewrite_widget_uri(pool_t pool,
                               widget, stateful,
                               value,
                               frame, raw);
-    if (uri == NULL)
+    if (uri == NULL) {
+        daemon_log(4, "Base mismatch in widget '%s', type '%s'\n",
+                   widget_path(widget), widget->class_name);
         return NULL;
+    }
 
     if (widget->class->untrusted_host != NULL &&
         (untrusted_host == NULL ||
