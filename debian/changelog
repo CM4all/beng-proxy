@@ -4,7 +4,7 @@ cm4all-beng-proxy (0.10.12) unstable; urgency=low
   * rewrite-uri: log widget base mismatch
   * istream-replace: fix assertion failure with splitted buffer
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 05 Jul 2011 22:05:44 +0200
 
 cm4all-beng-proxy (0.10.11) unstable; urgency=low
 
