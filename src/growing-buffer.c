@@ -242,6 +242,7 @@ growing_buffer_reader_skip(struct growing_buffer_reader *reader,
 
         assert(reader->buffer->next != NULL);
         reader->buffer = reader->buffer->next;
+        reader->position = 0;
     }
 }
 
