@@ -203,21 +203,32 @@ static void
 test_skip(pool_t pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    struct growing_buffer *buffer = growing_buffer_new(pool, 16);
+    struct growing_buffer *buffer = growing_buffer_new(pool, 3);
     struct growing_buffer_reader reader;
     growing_buffer_reader_init(&reader, buffer);
 
-    growing_buffer_write_string(buffer, "0123456789abcdefg");
-    growing_buffer_write_string(buffer, "hij");
+    growing_buffer_write_string(buffer, "0123");
+    growing_buffer_write_string(buffer, "4567");
+    growing_buffer_write_string(buffer, "89ab");
+    growing_buffer_write_string(buffer, "cdef");
 
-    growing_buffer_reader_skip(&reader, 18);
+    growing_buffer_reader_skip(&reader, 6);
 
     size_t length;
     const void *data = growing_buffer_reader_read(&reader, &length);
     assert(data != NULL);
     assert(length == 2);
-
     growing_buffer_reader_consume(&reader, 1);
+
+    growing_buffer_reader_skip(&reader, 5);
+
+    data = growing_buffer_reader_read(&reader, &length);
+    assert(data != NULL);
+    assert(length == 4);
+    growing_buffer_reader_consume(&reader, 4);
+
+    data = growing_buffer_reader_read(&reader, &length);
+    assert(data == NULL);
 
     pool_trash(pool);
     pool_unref(pool);
