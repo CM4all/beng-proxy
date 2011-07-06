@@ -2,7 +2,7 @@ cm4all-beng-proxy (0.10.13) unstable; urgency=low
 
   * growing-buffer: reset the position when skipping buffers
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Wed, 06 Jul 2011 10:07:50 +0200
 
 cm4all-beng-proxy (0.10.12) unstable; urgency=low
 
