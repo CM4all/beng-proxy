@@ -531,6 +531,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/ssl_create.c \
 	src/ssl_filter.h \
 	src/ssl_filter.c \
+	src/ping.c src/ping.h \
 	src/lb_global.c \
 	src/lb_cmdline.h \
 	src/lb_cmdline.c \
@@ -648,6 +649,7 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 	test/t-istream-processor
 
 check_PROGRAMS = \
+	test/run-ping \
 	test/run-was \
 	test/was-mirror \
 	test/t-hashmap test/t-cache test/t-tcache \
@@ -714,6 +716,14 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-wembed test/t-widget-http
+
+test_run_ping_SOURCES = test/run-ping.c \
+	src/ping.c \
+	src/address-string.c \
+	$(POOL_SRC)
+test_run_ping_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
 
 test_run_was_SOURCES = test/run-was.c \
 	src/was-launch.c src/was-client.c src/was-control.c src/was-input.c src/was-output.c \

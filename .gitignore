@@ -85,6 +85,7 @@ test/dump-control
 test/send-control
 test/was-mirror
 test/run-was
+test/run-ping
 
 *.aux
 *.log
