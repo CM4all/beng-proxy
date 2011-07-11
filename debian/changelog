@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.9.32) unstable; urgency=low
 
-  * 
+  * processor: dispose request body when focused widget was not found
 
  --
 
