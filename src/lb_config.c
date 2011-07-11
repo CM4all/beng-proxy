@@ -23,6 +23,7 @@ struct config_parser {
 
     enum {
         STATE_ROOT,
+        STATE_MONITOR,
         STATE_NODE,
         STATE_CLUSTER,
         STATE_LISTENER,
@@ -30,6 +31,7 @@ struct config_parser {
         STATE_XXX, /* XXX delete this */
     } state;
 
+    struct lb_monitor_config *monitor;
     struct lb_node_config *node;
     struct lb_cluster_config *cluster;
     struct lb_listener_config *listener;
@@ -191,6 +193,72 @@ expect_symbol_and_eol(char *p, char symbol)
 }
 
 static bool
+config_parser_create_monitor(struct config_parser *parser, char *p,
+                             GError **error_r)
+{
+    const char *name = next_value(&p);
+    if (name == NULL)
+        return throw(error_r, "Monitor name expected");
+
+    if (!expect_symbol_and_eol(p, '{'))
+        return throw(error_r, "'{' expected");
+
+    if (lb_config_find_monitor(parser->config, name) != NULL)
+        return throw(error_r, "Duplicate monitor name");
+
+    struct lb_monitor_config *monitor =
+        p_malloc(parser->config->pool, sizeof(*monitor));
+    monitor->name = p_strdup(parser->config->pool, name);
+    monitor->type = MONITOR_NONE;
+
+    parser->state = STATE_MONITOR;
+    parser->monitor = monitor;
+    return true;
+}
+
+static bool
+config_parser_feed_monitor(struct config_parser *parser, char *p,
+                           GError **error_r)
+{
+    struct lb_monitor_config *monitor = parser->monitor;
+
+    if (*p == '}') {
+        if (!expect_eol(p + 1))
+            return syntax_error(error_r);
+
+        list_add(&monitor->siblings, &parser->config->monitors);
+        parser->state = STATE_ROOT;
+        return true;
+    }
+
+    const char *word = next_word(&p);
+    if (word != NULL) {
+        if (strcmp(word, "type") == 0) {
+            const char *value = next_value(&p);
+            if (value == NULL)
+                return throw(error_r, "Monitor address expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            if (strcmp(value, "none") == 0)
+                monitor->type = MONITOR_NONE;
+            else if (strcmp(value, "ping") == 0)
+                monitor->type = MONITOR_PING;
+            else
+                return throw(error_r, "Unknown monitor type");
+
+            return true;
+        } else if (strcmp(word, "monitor") == 0) {
+            /* ignore */
+            return true;
+        } else
+            return throw(error_r, "Unknown option");
+    } else
+        return syntax_error(error_r);
+}
+
+static bool
 config_parser_create_node(struct config_parser *parser, char *p,
                           GError **error_r)
 {
@@ -330,6 +398,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
     lb_fallback_config_init(&cluster->fallback);
     cluster->sticky_mode = STICKY_NONE;
     cluster->session_cookie = "beng_proxy_session";
+    cluster->monitor = NULL;
     cluster->num_members = 0;
 
     parser->state = STATE_CLUSTER;
@@ -436,6 +505,22 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
             cluster->session_cookie = p_strdup(parser->config->pool,
                                                session_cookie);
+            return true;
+        } else if (strcmp(word, "monitor") == 0) {
+            const char *name = next_value(&p);
+            if (name == NULL)
+                return throw(error_r, "Monitor name expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            if (cluster->monitor != NULL)
+                return throw(error_r, "Monitor already specified");
+
+            cluster->monitor = lb_config_find_monitor(parser->config, name);
+            if (cluster->monitor == NULL)
+                return throw(error_r, "No such monitor");
+
             return true;
         } else if (strcmp(word, "member") == 0) {
             const char *name = next_value(&p);
@@ -701,9 +786,10 @@ config_parser_feed_root(struct config_parser *parser, char *p,
             return config_parser_create_cluster(parser, p, error_r);
         else if (strcmp(word, "listener") == 0)
             return config_parser_create_listener(parser, p, error_r);
-        else if (strcmp(word, "monitor") == 0 ||
-                 strcmp(word, "persist") == 0)
+        else if (strcmp(word, "persist") == 0)
             return config_parser_create_xxx(parser);
+        else if (strcmp(word, "monitor") == 0)
+            return config_parser_create_monitor(parser, p, error_r);
         else
             return throw(error_r, "Unknown option");
     } else
@@ -720,6 +806,9 @@ config_parser_feed(struct config_parser *parser, char *line,
     switch (parser->state) {
     case STATE_ROOT:
         return config_parser_feed_root(parser, line, error_r);
+
+    case STATE_MONITOR:
+        return config_parser_feed_monitor(parser, line, error_r);
 
     case STATE_NODE:
         return config_parser_feed_node(parser, line, error_r);
@@ -811,6 +900,7 @@ lb_config_load(struct pool *pool, const char *path,
     pool = pool_new_linear(pool, "lb_config", 32768);
     struct lb_config *config = p_malloc(pool, sizeof(*config));
     config->pool = pool;
+    list_init(&config->monitors);
     list_init(&config->nodes);
     list_init(&config->clusters);
     list_init(&config->listeners);
@@ -823,6 +913,18 @@ lb_config_load(struct pool *pool, const char *path,
     }
 
     return config;
+}
+
+const struct lb_monitor_config *
+lb_config_find_monitor(const struct lb_config *config, const char *name)
+{
+    for (const struct lb_monitor_config *monitor = (const struct lb_monitor_config *)config->monitors.next;
+         &monitor->siblings != &config->monitors;
+         monitor = (const struct lb_monitor_config *)monitor->siblings.next)
+        if (strcmp(monitor->name, name) == 0)
+            return monitor;
+
+    return NULL;
 }
 
 const struct lb_node_config *

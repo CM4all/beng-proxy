@@ -158,4 +158,32 @@ listener ssl {
 
 One pool can be shared by listeners with and without SSL.
 
+\subsection{Monitors}
+
+A ``monitor'' describes how the availability of nodes in a pool is
+checked periodically.  By default, there is no monitor, just a list of
+``known-bad'' nodes, filled with failures.
+
+\subsubsection{Ping}
+
+The ``ping'' monitor periodically sends echo-request ICMP packets to
+the node, and excepts echo-reply ICMP packets.
+
+\begin{verbatim*}
+monitor "my_monitor" {
+  type "ping"
+}
+
+pool "demo" {
+  member "...
+  monitor "my_monitor"
+}
+\end{verbatim*}
+
+This requires Linux kernel 3.0 or newer.  \emph{beng-lb} must be
+allowed to use the ICMP socket, which can be configured in the virtual
+file:
+
+\texttt{/proc/sys/net/ipv4/ping\_group\_range}
+
 \end{document}

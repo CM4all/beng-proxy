@@ -549,6 +549,12 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_config.c \
 	src/lb_setup.h \
 	src/lb_setup.c \
+	src/lb_monitor.h \
+	src/lb_monitor.c \
+	src/lb_ping_monitor.h \
+	src/lb_ping_monitor.c \
+	src/lb_hmonitor.h \
+	src/lb_hmonitor.c \
 	src/lb_main.c
 src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \

@@ -24,6 +24,17 @@ enum {
     MAX_CLUSTER_MEMBERS = 64,
 };
 
+struct lb_monitor_config {
+    struct list_head siblings;
+
+    const char *name;
+
+    enum {
+        MONITOR_NONE,
+        MONITOR_PING,
+    } type;
+};
+
 struct lb_node_config {
     struct list_head siblings;
 
@@ -60,6 +71,8 @@ struct lb_cluster_config {
 
     const char *session_cookie;
 
+    const struct lb_monitor_config *monitor;
+
     unsigned num_members;
 
     struct lb_member_config members[MAX_CLUSTER_MEMBERS];
@@ -87,6 +100,8 @@ struct lb_listener_config {
 struct lb_config {
     struct pool *pool;
 
+    struct list_head monitors;
+
     struct list_head nodes;
 
     struct list_head clusters;
@@ -110,6 +125,10 @@ lb_config_quark(void)
 struct lb_config *
 lb_config_load(struct pool *pool, const char *path,
                GError **error_r);
+
+G_GNUC_PURE
+const struct lb_monitor_config *
+lb_config_find_monitor(const struct lb_config *config, const char *name);
 
 G_GNUC_PURE
 const struct lb_node_config *

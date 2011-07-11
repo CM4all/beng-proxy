@@ -20,6 +20,7 @@
 #include "pipe-stock.h"
 #include "log-glue.h"
 #include "lb_config.h"
+#include "lb_hmonitor.h"
 #include "ssl_init.h"
 
 #include <daemon/daemonize.h>
@@ -48,6 +49,8 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 
     while (!list_empty(&instance->connections))
         lb_connection_close((struct lb_connection*)instance->connections.next);
+
+    lb_hmonitor_deinit();
 
     pool_commit();
 
@@ -135,6 +138,8 @@ int main(int argc, char **argv)
     }
 
     /* initialize */
+
+    lb_hmonitor_init(instance.pool);
 
     ssl_global_init();
 
