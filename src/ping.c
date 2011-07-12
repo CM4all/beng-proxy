@@ -236,21 +236,22 @@ ping(struct pool *pool, const struct address_envelope *envelope,
 
     uint16_t ident = sin.sin_port;
 
-    static char buffer[sizeof(struct icmphdr) + 8];
+    struct {
+        struct icmphdr header;
+        char data[8];
+    } packet;
 
-    struct icmphdr *hdr = (struct icmphdr *)buffer;
-    hdr->type = ICMP_ECHO;
-    hdr->code = 0;
-    hdr->checksum = 0;
-    hdr->un.echo.sequence = htons(1);
-    hdr->un.echo.id = ident;
-    memset(hdr + 1, 0, sizeof(struct timeval));
-
-    hdr->checksum = in_cksum((u_short *)buffer, sizeof(buffer), 0);
+    packet.header.type = ICMP_ECHO;
+    packet.header.code = 0;
+    packet.header.checksum = 0;
+    packet.header.un.echo.sequence = htons(1);
+    packet.header.un.echo.id = ident;
+    memset(packet.data, 0, sizeof(packet.data));
+    packet.header.checksum = in_cksum((u_short *)&packet, sizeof(packet), 0);
 
     struct iovec iov = {
-        .iov_base = buffer,
-        .iov_len = sizeof(buffer),
+        .iov_base = &packet,
+        .iov_len = sizeof(packet),
     };
 
     struct msghdr m = {
