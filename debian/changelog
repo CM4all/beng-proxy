@@ -1,6 +1,6 @@
 cm4all-beng-proxy (0.11) unstable; urgency=low
 
-  * 
+  * http-client: send "Expect: 100-continue" only for big request body
 
  --
 

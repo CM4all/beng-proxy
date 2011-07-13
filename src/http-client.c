@@ -99,6 +99,12 @@ struct http_client {
 #endif
 };
 
+/**
+ * With a request body of this size or larger, we send "Expect:
+ * 100-continue".
+ */
+static const off_t EXPECT_100_THRESHOLD = 1024;
+
 static const struct timeval http_client_timeout = {
     .tv_sec = 30,
     .tv_usec = 0,
@@ -1188,9 +1194,15 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                          client->request.content_length_buffer);
         }
 
-        header_write(headers2, "expect", "100-continue");
-
-        body = client->request.body = istream_optional_new(pool, body);
+        off_t available = istream_available(body, true);
+        if (available < 0 || available >= EXPECT_100_THRESHOLD) {
+            /* large request body: ask the server for confirmation
+               that he's really interested */
+            header_write(headers2, "expect", "100-continue");
+            body = client->request.body = istream_optional_new(pool, body);
+        } else
+            /* short request body: send it immediately */
+            client->request.body = NULL;
     } else
         client->request.body = NULL;
 
