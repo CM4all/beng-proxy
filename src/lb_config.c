@@ -245,6 +245,8 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                 monitor->type = MONITOR_NONE;
             else if (strcmp(value, "ping") == 0)
                 monitor->type = MONITOR_PING;
+            else if (strcmp(value, "connect") == 0)
+                monitor->type = MONITOR_CONNECT;
             else
                 return throw(error_r, "Unknown monitor type");
 

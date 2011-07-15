@@ -32,6 +32,7 @@ struct lb_monitor_config {
     enum {
         MONITOR_NONE,
         MONITOR_PING,
+        MONITOR_CONNECT,
     } type;
 };
 
