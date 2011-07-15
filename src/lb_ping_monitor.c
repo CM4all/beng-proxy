@@ -6,6 +6,7 @@
 
 #include "lb_ping_monitor.h"
 #include "lb_monitor.h"
+#include "address-envelope.h"
 #include "ping.h"
 #include "pool.h"
 
@@ -50,7 +51,7 @@ ping_monitor_run(struct pool *pool, const struct address_envelope *envelope,
     p->handler = handler;
     p->handler_ctx = handler_ctx;
 
-    ping(pool, envelope,
+    ping(pool, &envelope->address, envelope->length,
          &ping_monitor_handler, p,
          async_ref);
 }

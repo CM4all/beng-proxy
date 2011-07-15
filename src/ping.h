@@ -9,6 +9,7 @@
 
 #include <glib.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 struct ping_handler {
     void (*response)(void *ctx);
@@ -17,7 +18,7 @@ struct ping_handler {
 };
 
 struct pool;
-struct address_envelope;
+struct sockaddr;
 struct async_operation_ref;
 
 static inline GQuark
@@ -37,7 +38,7 @@ ping_available(void);
  * Sends a "ping" to the server, and waits for the reply.
  */
 void
-ping(struct pool *pool, const struct address_envelope *envelope,
+ping(struct pool *pool, const struct sockaddr *address, size_t address_length,
      const struct ping_handler *handler, void *ctx,
      struct async_operation_ref *async_ref);
 

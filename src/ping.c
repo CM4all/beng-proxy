@@ -7,7 +7,6 @@
 #include "ping.h"
 #include "pool.h"
 #include "pevent.h"
-#include "address-envelope.h"
 #include "async.h"
 
 #include <event.h>
@@ -77,12 +76,12 @@ in_cksum(const u_short *addr, register int len, u_short csum)
 }
 
 static void *
-deconst_address(const struct address_envelope *envelope)
+deconst_address(const struct sockaddr *address)
 {
     union {
         const struct sockaddr *in;
         void *out;
-    } u = { .in = &envelope->address };
+    } u = { .in = address };
     return u.out;
 }
 
@@ -209,7 +208,7 @@ ping_available(void)
 }
 
 void
-ping(struct pool *pool, const struct address_envelope *envelope,
+ping(struct pool *pool, const struct sockaddr *address, size_t address_length,
      const struct ping_handler *handler, void *ctx,
      struct async_operation_ref *async_ref)
 {
@@ -255,8 +254,8 @@ ping(struct pool *pool, const struct address_envelope *envelope,
     };
 
     struct msghdr m = {
-        .msg_name = deconst_address(envelope),
-        .msg_namelen = envelope->length,
+        .msg_name = deconst_address(address),
+        .msg_namelen = address_length,
         .msg_iov = &iov,
         .msg_iovlen = 1,
         .msg_control = NULL,
