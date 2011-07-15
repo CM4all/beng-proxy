@@ -12,6 +12,7 @@
 #include "tpool.h"
 #include "hashmap.h"
 #include "address-envelope.h"
+#include "address-edit.h"
 
 static struct pool *hmonitor_pool;
 static struct hashmap *hmonitor_map;
@@ -60,9 +61,14 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
         /* doesn't exist yet: create it */
         struct pool *pool = pool_new_linear(hmonitor_pool, "monitor", 1024);
         key = p_strdup(pool, key);
+
+        const struct sockaddr *address = &node->envelope->address;
+        if (port > 0)
+            address = sockaddr_set_port(pool, address,
+                                        node->envelope->length, port);
+
         monitor = lb_monitor_new(pool, key,
-                                 &node->envelope->address,
-                                 node->envelope->length,
+                                 address, node->envelope->length,
                                  class);
         pool_unref(pool);
         hashmap_add(hmonitor_map, key, monitor);
