@@ -31,8 +31,9 @@ struct client_socket {
     pool_t pool;
     int fd;
     struct event event;
-    client_socket_callback_t callback;
-    void *callback_ctx;
+
+    const struct client_socket_handler *handler;
+    void *handler_ctx;
 
 #ifdef ENABLE_STOPWATCH
     struct stopwatch *stopwatch;
@@ -90,7 +91,7 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
 
     if (event & EV_TIMEOUT) {
         close(fd);
-        client_socket->callback(-1, ETIMEDOUT, client_socket->callback_ctx);
+        client_socket->handler->timeout(client_socket->handler_ctx);
         pool_unref(client_socket->pool);
         pool_commit();
         return;
@@ -106,10 +107,13 @@ client_socket_event_callback(int fd, short event __attr_unused, void *ctx)
         stopwatch_dump(client_socket->stopwatch);
 #endif
 
-        client_socket->callback(fd, 0, client_socket->callback_ctx);
+        client_socket->handler->success(fd, client_socket->handler_ctx);
     } else {
         close(fd);
-        client_socket->callback(-1, s_err, client_socket->callback_ctx);
+
+        GError *error = g_error_new_literal(g_file_error_quark(), s_err,
+                                            strerror(s_err));
+        client_socket->handler->error(error, client_socket->handler_ctx);
     }
 
     pool_unref(client_socket->pool);
@@ -126,7 +130,7 @@ void
 client_socket_new(struct pool *pool,
                   int domain, int type, int protocol,
                   const struct sockaddr *addr, size_t addrlen,
-                  client_socket_callback_t callback, void *ctx,
+                  const struct client_socket_handler *handler, void *ctx,
                   struct async_operation_ref *async_ref)
 {
     int fd, ret;
@@ -136,19 +140,22 @@ client_socket_new(struct pool *pool,
 
     assert(addr != NULL);
     assert(addrlen > 0);
-    assert(callback != NULL);
+    assert(handler != NULL);
 
     fd = socket_cloexec_nonblock(domain, type, protocol);
     if (fd < 0) {
-        callback(-1, errno, ctx);
+        GError *error = g_error_new_literal(g_file_error_quark(), errno,
+                                            strerror(errno));
+        handler->error(error, ctx);
         return;
     }
 
     if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM) {
         if (!socket_set_nodelay(fd, true)) {
-            int save_errno = errno;
+            GError *error = g_error_new_literal(g_file_error_quark(), errno,
+                                                strerror(errno));
             close(fd);
-            callback(-1, save_errno, ctx);
+            handler->error(error, ctx);
             return;
         }
     }
@@ -164,7 +171,7 @@ client_socket_new(struct pool *pool,
         stopwatch_dump(stopwatch);
 #endif
 
-        callback(fd, 0, ctx);
+        handler->success(fd, ctx);
     } else if (errno == EINPROGRESS) {
         struct client_socket *client_socket;
         struct timeval tv = {
@@ -176,8 +183,8 @@ client_socket_new(struct pool *pool,
         client_socket = p_malloc(pool, sizeof(*client_socket));
         client_socket->pool = pool;
         client_socket->fd = fd;
-        client_socket->callback = callback;
-        client_socket->callback_ctx = ctx;
+        client_socket->handler = handler;
+        client_socket->handler_ctx = ctx;
 
 #ifdef ENABLE_STOPWATCH
         client_socket->stopwatch = stopwatch;
@@ -192,8 +199,9 @@ client_socket_new(struct pool *pool,
         p_event_add(&client_socket->event, &tv,
                     client_socket->pool, "client_socket_event");
     } else {
-        int save_errno = errno;
+        GError *error = g_error_new_literal(g_file_error_quark(), errno,
+                                            strerror(errno));
         close(fd);
-        callback(-1, save_errno, ctx);
+        handler->error(error, ctx);
     }
 }

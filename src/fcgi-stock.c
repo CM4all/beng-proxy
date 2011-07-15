@@ -150,37 +150,63 @@ fcgi_child_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 }
 
 /*
- * client_socket callback
+ * client_socket handler
  *
  */
 
 static void
-fcgi_connect_callback(int fd, int err, void *ctx)
+fcgi_stock_socket_success(int fd, void *ctx)
 {
+    assert(fd >= 0);
+
     struct fcgi_child *child = ctx;
+    async_ref_clear(&child->connect_operation);
+    async_operation_finished(&child->create_operation);
 
     unlink(child->address.sun_path);
 
-    async_ref_clear(&child->connect_operation);
+    child->fd = fd;
 
-    if (err == 0) {
-        assert(fd >= 0);
+    event_set(&child->event, child->fd, EV_READ|EV_TIMEOUT,
+              fcgi_child_event_callback, child);
 
-        child->fd = fd;
-
-        event_set(&child->event, child->fd, EV_READ|EV_TIMEOUT,
-                  fcgi_child_event_callback, child);
-
-        stock_item_available(&child->base);
-    } else {
-        GError *error =
-            g_error_new(g_file_error_quark(), err,
-                        "failed to connect to FastCGI server '%s': %s",
-                        child->key, strerror(err));
-
-        stock_item_failed(&child->base, error);
-    }
+    stock_item_available(&child->base);
 }
+
+static void
+fcgi_stock_socket_timeout(void *ctx)
+{
+    struct fcgi_child *child = ctx;
+    async_ref_clear(&child->connect_operation);
+    async_operation_finished(&child->create_operation);
+
+    unlink(child->address.sun_path);
+
+    GError *error = g_error_new(g_file_error_quark(), ETIMEDOUT,
+                                "failed to connect to FastCGI server '%s': timeout",
+                                child->key);
+    stock_item_failed(&child->base, error);
+}
+
+static void
+fcgi_stock_socket_error(GError *error, void *ctx)
+{
+    struct fcgi_child *child = ctx;
+    async_ref_clear(&child->connect_operation);
+    async_operation_finished(&child->create_operation);
+
+    unlink(child->address.sun_path);
+
+    g_prefix_error(&error, "failed to connect to FastCGI server '%s': ",
+                   child->key);
+    stock_item_failed(&child->base, error);
+}
+
+static const struct client_socket_handler fcgi_stock_socket_handler = {
+    .success = fcgi_stock_socket_success,
+    .timeout = fcgi_stock_socket_timeout,
+    .error = fcgi_stock_socket_error,
+};
 
 /*
  * async operation
@@ -284,7 +310,7 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     client_socket_new(caller_pool, AF_UNIX, SOCK_STREAM, 0,
                       (const struct sockaddr*)&child->address,
                       sizeof(child->address),
-                      fcgi_connect_callback, child,
+                      &fcgi_stock_socket_handler, child,
                       &child->connect_operation);
 }
 

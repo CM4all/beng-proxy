@@ -107,29 +107,50 @@ tcp_stock_event(int fd, short event, void *ctx)
  */
 
 static void
-tcp_stock_socket_callback(int fd, int err, void *ctx)
+tcp_stock_socket_success(int fd, void *ctx)
 {
-    struct tcp_stock_connection *connection = ctx;
+    assert(fd >= 0);
 
+    struct tcp_stock_connection *connection = ctx;
     async_ref_clear(&connection->client_socket);
     async_operation_finished(&connection->create_operation);
 
-    if (err == 0) {
-        assert(fd >= 0);
+    connection->fd = fd;
+    event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
+              tcp_stock_event, connection);
 
-        connection->fd = fd;
-        event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
-                  tcp_stock_event, connection);
-
-        stock_item_available(&connection->stock_item);
-    } else {
-        GError *error = g_error_new(g_file_error_quark(), err,
-                                    "failed to connect to '%s': %s",
-                                    connection->uri, strerror(err));
-
-        stock_item_failed(&connection->stock_item, error);
-    }
+    stock_item_available(&connection->stock_item);
 }
+
+static void
+tcp_stock_socket_timeout(void *ctx)
+{
+    struct tcp_stock_connection *connection = ctx;
+    async_ref_clear(&connection->client_socket);
+    async_operation_finished(&connection->create_operation);
+
+    GError *error = g_error_new(g_file_error_quark(), ETIMEDOUT,
+                                "failed to connect to '%s': timeout",
+                                connection->uri);
+    stock_item_failed(&connection->stock_item, error);
+}
+
+static void
+tcp_stock_socket_error(GError *error, void *ctx)
+{
+    struct tcp_stock_connection *connection = ctx;
+    async_ref_clear(&connection->client_socket);
+    async_operation_finished(&connection->create_operation);
+
+    g_prefix_error(&error, "failed to connect to '%s': ", connection->uri);
+    stock_item_failed(&connection->stock_item, error);
+}
+
+static const struct client_socket_handler tcp_stock_socket_handler = {
+    .success = tcp_stock_socket_success,
+    .timeout = tcp_stock_socket_timeout,
+    .error = tcp_stock_socket_error,
+};
 
 
 /*
@@ -168,7 +189,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
     connection->domain = request->address->sa_family;
     client_socket_new(caller_pool, connection->domain, SOCK_STREAM, 0,
                       request->address, request->address_length,
-                      tcp_stock_socket_callback, connection,
+                      &tcp_stock_socket_handler, connection,
                       &connection->client_socket);
 }
 
