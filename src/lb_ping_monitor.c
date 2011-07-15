@@ -6,7 +6,6 @@
 
 #include "lb_ping_monitor.h"
 #include "lb_monitor.h"
-#include "address-envelope.h"
 #include "ping.h"
 #include "pool.h"
 
@@ -43,7 +42,8 @@ static const struct ping_handler ping_monitor_handler = {
 };
 
 static void
-ping_monitor_run(struct pool *pool, const struct address_envelope *envelope,
+ping_monitor_run(struct pool *pool,
+                 const struct sockaddr *address, size_t address_length,
                  const struct lb_monitor_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
@@ -51,7 +51,7 @@ ping_monitor_run(struct pool *pool, const struct address_envelope *envelope,
     p->handler = handler;
     p->handler_ctx = handler_ctx;
 
-    ping(pool, &envelope->address, envelope->length,
+    ping(pool, address, address_length,
          &ping_monitor_handler, p,
          async_ref);
 }

@@ -11,6 +11,7 @@
 #include "pool.h"
 #include "tpool.h"
 #include "hashmap.h"
+#include "address-envelope.h"
 
 static struct pool *hmonitor_pool;
 static struct hashmap *hmonitor_map;
@@ -59,7 +60,10 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
         /* doesn't exist yet: create it */
         struct pool *pool = pool_new_linear(hmonitor_pool, "monitor", 1024);
         key = p_strdup(pool, key);
-        monitor = lb_monitor_new(pool, key, node->envelope, class);
+        monitor = lb_monitor_new(pool, key,
+                                 &node->envelope->address,
+                                 node->envelope->length,
+                                 class);
         pool_unref(pool);
         hashmap_add(hmonitor_map, key, monitor);
     }

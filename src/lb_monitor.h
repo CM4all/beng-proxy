@@ -11,7 +11,7 @@
 #include <stdbool.h>
 
 struct pool;
-struct address_envelope;
+struct sockaddr;
 struct async_operation_ref;
 
 struct lb_monitor_handler {
@@ -21,14 +21,15 @@ struct lb_monitor_handler {
 };
 
 struct lb_monitor_class {
-    void (*run)(struct pool *pool, const struct address_envelope *envelope,
+    void (*run)(struct pool *pool,
+                const struct sockaddr *address, size_t address_length,
                 const struct lb_monitor_handler *handler, void *handler_ctx,
                 struct async_operation_ref *async_ref);
 };
 
 struct lb_monitor *
 lb_monitor_new(struct pool *pool, const char *name,
-               const struct address_envelope *envelope,
+               const struct sockaddr *address, size_t address_length,
                const struct lb_monitor_class *class);
 
 void

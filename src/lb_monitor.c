@@ -8,7 +8,6 @@
 #include "async.h"
 #include "pool.h"
 #include "failure.h"
-#include "address-envelope.h"
 
 #include <daemon/log.h>
 
@@ -18,7 +17,8 @@ struct lb_monitor {
     struct pool *pool;
 
     const char *name;
-    const struct address_envelope *envelope;
+    const struct sockaddr *address;
+    size_t address_length;
     const struct lb_monitor_class *class;
 
     struct event timer_event;
@@ -59,7 +59,7 @@ monitor_handler_timeout(void *ctx)
                "monitor timeout: %s\n", monitor->name);
 
     monitor->state = false;
-    failure_add(&monitor->envelope->address, monitor->envelope->length);
+    failure_add(monitor->address, monitor->address_length);
 
     evtimer_add(&monitor->timer_event, &monitor_period);
 }
@@ -79,7 +79,7 @@ monitor_handler_error(GError *error, void *ctx)
     g_error_free(error);
 
     monitor->state = false;
-    failure_add(&monitor->envelope->address, monitor->envelope->length);
+    failure_add(monitor->address, monitor->address_length);
 
     evtimer_add(&monitor->timer_event, &monitor_period);
 }
@@ -98,7 +98,8 @@ lb_monitor_timer_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
     daemon_log(6, "running monitor %s\n", monitor->name);
 
     struct pool *pool = pool_new_linear(monitor->pool, "monitor_run", 8192);
-    monitor->class->run(pool, monitor->envelope,
+    monitor->class->run(pool,
+                        monitor->address, monitor->address_length,
                         &monitor_handler, monitor,
                         &monitor->async_ref);
     pool_unref(pool);
@@ -106,14 +107,15 @@ lb_monitor_timer_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
 
 struct lb_monitor *
 lb_monitor_new(struct pool *pool, const char *name,
-               const struct address_envelope *envelope,
+               const struct sockaddr *address, size_t address_length,
                const struct lb_monitor_class *class)
 {
     pool_ref(pool);
     struct lb_monitor *monitor = p_malloc(pool, sizeof(*monitor));
     monitor->pool = pool;
     monitor->name = name;
-    monitor->envelope = envelope;
+    monitor->address = address;
+    monitor->address_length = address_length;
     monitor->class = class;
     evtimer_set(&monitor->timer_event, lb_monitor_timer_callback, monitor);
     async_ref_clear(&monitor->async_ref);
