@@ -141,7 +141,9 @@ errdoc_abort(struct async_operation *ao)
 {
     struct error_response *er = (struct error_response *)ao;
 
-    istream_close_unused(er->body);
+    if (er->body != NULL)
+        istream_close_unused(er->body);
+
     async_abort(&er->async_ref);
 }
 
