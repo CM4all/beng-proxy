@@ -8,7 +8,6 @@
 #define __BENG_URI_PARSER_H
 
 #include "strref.h"
-#include "pool.h"
 
 #include <stdbool.h>
 
