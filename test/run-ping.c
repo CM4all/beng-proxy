@@ -2,6 +2,7 @@
 #include "pool.h"
 #include "async.h"
 #include "address-string.h"
+#include "address-envelope.h"
 
 #include <event.h>
 #include <stdio.h>
@@ -57,7 +58,7 @@ int main(int argc, char **argv)
 
     struct event_base *event_base = event_init();
 
-    ping(pool, envelope,
+    ping(pool, &envelope->address, envelope->length,
          &my_ping_handler, NULL,
          &my_async_ref);
 
