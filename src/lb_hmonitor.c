@@ -72,7 +72,7 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
             address = sockaddr_set_port(pool, address,
                                         node->envelope->length, port);
 
-        monitor = lb_monitor_new(pool, key,
+        monitor = lb_monitor_new(pool, key, config,
                                  address, node->envelope->length,
                                  class);
         pool_unref(pool);

@@ -43,6 +43,7 @@ static const struct ping_handler ping_monitor_handler = {
 
 static void
 ping_monitor_run(struct pool *pool,
+                 G_GNUC_UNUSED const struct lb_monitor_config *config,
                  const struct sockaddr *address, size_t address_length,
                  const struct lb_monitor_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)

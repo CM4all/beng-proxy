@@ -17,6 +17,7 @@ struct lb_monitor {
     struct pool *pool;
 
     const char *name;
+    const struct lb_monitor_config *config;
     const struct sockaddr *address;
     size_t address_length;
     const struct lb_monitor_class *class;
@@ -98,7 +99,7 @@ lb_monitor_timer_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
     daemon_log(6, "running monitor %s\n", monitor->name);
 
     struct pool *pool = pool_new_linear(monitor->pool, "monitor_run", 8192);
-    monitor->class->run(pool,
+    monitor->class->run(pool, monitor->config,
                         monitor->address, monitor->address_length,
                         &monitor_handler, monitor,
                         &monitor->async_ref);
@@ -107,6 +108,7 @@ lb_monitor_timer_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
 
 struct lb_monitor *
 lb_monitor_new(struct pool *pool, const char *name,
+               const struct lb_monitor_config *config,
                const struct sockaddr *address, size_t address_length,
                const struct lb_monitor_class *class)
 {
@@ -114,6 +116,7 @@ lb_monitor_new(struct pool *pool, const char *name,
     struct lb_monitor *monitor = p_malloc(pool, sizeof(*monitor));
     monitor->pool = pool;
     monitor->name = name;
+    monitor->config = config;
     monitor->address = address;
     monitor->address_length = address_length;
     monitor->class = class;
