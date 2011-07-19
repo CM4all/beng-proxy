@@ -1090,6 +1090,12 @@ processor_parser_eof(void *ctx, off_t length __attr_unused)
 
     processor->parser = NULL;
 
+    if (processor->env->request_body != NULL &&
+        processor->container->from_request.focus_ref != NULL)
+        /* the request body could not be submitted to the focused
+           widget, because we didn't find it; dispose it now */
+        istream_free_unused(&processor->env->request_body);
+
     if (processor->replace != NULL)
         istream_replace_finish(processor->replace);
 
@@ -1110,6 +1116,12 @@ processor_parser_abort(GError *error, void *ctx)
     assert(processor->parser != NULL);
 
     processor->parser = NULL;
+
+    if (processor->env->request_body != NULL &&
+        processor->container->from_request.focus_ref != NULL)
+        /* the request body could not be submitted to the focused
+           widget, because we didn't find it; dispose it now */
+        istream_free_unused(&processor->env->request_body);
 
     if (processor->lookup_id != NULL) {
         async_operation_finished(&processor->async);

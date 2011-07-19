@@ -91,6 +91,7 @@ static const char *const cookie_response_headers[] = {
 static const char *const exclude_response_headers[] = {
     "server",
     "via",
+    "date",
     NULL,
 };
 
