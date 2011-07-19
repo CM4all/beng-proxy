@@ -191,4 +191,19 @@ file:
 The ``connect'' monitor attempts to establish a TCP connection, and
 closes it immediately.
 
+\subsubsection{TCP Expect}
+
+The ``tcp\_expect'' monitor opens a TCP connection, optionally sends
+some data, and expects a certain string in the response.
+
+\begin{verbatim*}
+monitor "expect_monitor" {
+  type "tcp_expect"
+  send "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
+  expect "HTTP/1.1 200 OK"
+}
+\end{verbatim*}
+
+The \texttt{send} setting is optional.
+
 \end{document}

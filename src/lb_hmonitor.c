@@ -8,6 +8,7 @@
 #include "lb_monitor.h"
 #include "lb_ping_monitor.h"
 #include "lb_syn_monitor.h"
+#include "lb_expect_monitor.h"
 #include "lb_config.h"
 #include "pool.h"
 #include "tpool.h"
@@ -54,6 +55,10 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
 
     case MONITOR_CONNECT:
         class = &syn_monitor_class;
+        break;
+
+    case MONITOR_TCP_EXPECT:
+        class = &expect_monitor_class;
         break;
     }
 

@@ -33,7 +33,21 @@ struct lb_monitor_config {
         MONITOR_NONE,
         MONITOR_PING,
         MONITOR_CONNECT,
+        MONITOR_TCP_EXPECT,
     } type;
+
+    /**
+     * For #MONITOR_TCP_EXPECT: a string that is sent to the peer
+     * after the connection has been established.  May be NULL or
+     * empty.
+     */
+    const char *send;
+
+    /**
+     * For #MONITOR_TCP_EXPECT: a string that is expected to be
+     * received from the peer after the #send string has been sent.
+     */
+    const char *expect;
 };
 
 struct lb_node_config {

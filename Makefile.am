@@ -555,6 +555,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_ping_monitor.c \
 	src/lb_syn_monitor.h \
 	src/lb_syn_monitor.c \
+	src/lb_expect_monitor.h \
+	src/lb_expect_monitor.c \
 	src/lb_hmonitor.h \
 	src/lb_hmonitor.c \
 	src/lb_main.c

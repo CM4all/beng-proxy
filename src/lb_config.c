@@ -159,6 +159,53 @@ next_value(char **pp)
     return p;
 }
 
+static const char *
+next_unescape(char **pp)
+{
+    char *p = *pp;
+    char stop;
+    if (*p == '"' || *p == '\'')
+        stop = *p;
+    else
+        return NULL;
+
+    char *dest = ++p;
+    const char *value = dest;
+
+    while (true) {
+        char ch = *p++;
+
+        if (ch == 0)
+            return NULL;
+        else if (ch == stop) {
+            *dest = 0;
+            *pp = fast_chug(p + 1);
+            return value;
+        } else if (ch == '\\') {
+            ch = *p++;
+
+            switch (ch) {
+            case 'r':
+                *dest++ = '\r';
+                break;
+
+            case 'n':
+                *dest++ = '\n';
+                break;
+
+            case '\'':
+            case '\"':
+                *dest++ = ch;
+                break;
+
+            default:
+                return NULL;
+            }
+        } else
+            *dest++ = ch;
+    }
+}
+
 static bool
 next_bool(char **pp, bool *value_r, GError **error_r)
 {
@@ -226,6 +273,10 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
+        if (monitor->type == MONITOR_TCP_EXPECT &&
+            monitor->expect == NULL)
+            return throw(error_r, "No 'expect' string configured");
+
         list_add(&monitor->siblings, &parser->config->monitors);
         parser->state = STATE_ROOT;
         return true;
@@ -241,18 +292,48 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
+            if (monitor->type != MONITOR_NONE)
+                return throw(error_r, "Monitor type already specified");
+
             if (strcmp(value, "none") == 0)
                 monitor->type = MONITOR_NONE;
             else if (strcmp(value, "ping") == 0)
                 monitor->type = MONITOR_PING;
             else if (strcmp(value, "connect") == 0)
                 monitor->type = MONITOR_CONNECT;
-            else
+            else if (strcmp(value, "tcp_expect") == 0) {
+                monitor->type = MONITOR_TCP_EXPECT;
+                monitor->send = NULL;
+                monitor->expect = NULL;
+            } else
                 return throw(error_r, "Unknown monitor type");
 
             return true;
-        } else if (strcmp(word, "monitor") == 0) {
-            /* ignore */
+        } else if (monitor->type == MONITOR_TCP_EXPECT &&
+                   strcmp(word, "send") == 0) {
+            const char *value = next_unescape(&p);
+            if (value == NULL)
+                return throw(error_r, "String value expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            monitor->send = *value != 0
+                ? p_strdup(parser->config->pool, value)
+                : NULL;
+            return true;
+        } else if (monitor->type == MONITOR_TCP_EXPECT &&
+                   strcmp(word, "expect") == 0) {
+            const char *value = next_unescape(&p);
+            if (value == NULL)
+                return throw(error_r, "String value expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            monitor->expect = *value != 0
+                ? p_strdup(parser->config->pool, value)
+                : NULL;
             return true;
         } else
             return throw(error_r, "Unknown option");
