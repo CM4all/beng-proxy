@@ -42,7 +42,7 @@ void
 lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
                 const struct lb_monitor_config *config)
 {
-    const struct lb_monitor_class *class;
+    const struct lb_monitor_class *class = NULL;
     switch (config->type) {
     case MONITOR_NONE:
         /* nothing to do */
@@ -56,6 +56,8 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
         class = &syn_monitor_class;
         break;
     }
+
+    assert(class != NULL);
 
     struct pool_mark mark;
     pool_mark(tpool, &mark);
