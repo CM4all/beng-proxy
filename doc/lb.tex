@@ -128,6 +128,16 @@ pool demo {
 }
 \end{verbatim*}
 
+\subsubsection{Protocols}
+
+The protocol \texttt{tcp} forwards raw a raw bidirectional TCP stream.
+It is the fastest mode, and should be used when no special protocol
+parsing is needed.
+
+The protocol \texttt{http} means that \texttt{beng-lb} parses the
+HTTP/1.1 request/response, and forwards them to the peer.  This HTTP
+parser is needed for some of the advanced features, such as cookies.
+
 \subsection{Listener}
 
 A listener is a socket address (IP and port) which accepts incoming

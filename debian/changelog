@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.3) unstable; urgency=low
 
-  * 
+  * lb: add protocol "tcp"
 
  --
 

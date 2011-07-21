@@ -678,6 +678,8 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
             if (strcmp(protocol, "http") == 0)
                 cluster->protocol = LB_PROTOCOL_HTTP;
+            else if (strcmp(protocol, "tcp") == 0)
+                cluster->protocol = LB_PROTOCOL_TCP;
             else
                 return throw(error_r, "Unknown protocol");
 

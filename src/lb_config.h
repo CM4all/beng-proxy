@@ -26,6 +26,7 @@ enum {
 
 enum lb_protocol {
     LB_PROTOCOL_HTTP,
+    LB_PROTOCOL_TCP,
 };
 
 struct lb_monitor_config {

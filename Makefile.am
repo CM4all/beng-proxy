@@ -471,6 +471,9 @@ src_cm4all_beng_lb_SOURCES = \
 	src/istream-cat.c \
 	src/istream-optional.c \
 	src/istream-forward.c \
+	src/istream-socket.c \
+	src/istream-pipe.c \
+	src/sink-socket.c \
 	src/tpool.c \
 	src/stock.c \
 	src/hstock.c \
@@ -542,6 +545,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_connection.c \
 	src/lb_http.h \
 	src/lb_http.c \
+	src/lb_tcp.h \
+	src/lb_tcp.c \
 	src/lb_session.h \
 	src/lb_session.c \
 	src/lb_cookie.h \

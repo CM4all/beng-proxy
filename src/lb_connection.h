@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_LB_CONNECTION_H
 #define BENG_PROXY_LB_CONNECTION_H
 
+#include "async.h"
+
 #include <inline/list.h>
 
 #include <openssl/ssl.h>
@@ -36,6 +38,16 @@ struct lb_connection {
      * the request duration.
      */
     uint64_t request_start_time;
+
+    struct {
+        struct {
+            int fd;
+
+            struct sink_socket *sink;
+        } peers[2];
+
+        struct async_operation_ref connect;
+    } tcp;
 };
 
 struct lb_connection *

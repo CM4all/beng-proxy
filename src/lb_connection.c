@@ -8,6 +8,7 @@
 #include "lb_config.h"
 #include "lb_instance.h"
 #include "lb_http.h"
+#include "lb_tcp.h"
 #include "strmap.h"
 #include "http-server.h"
 #include "address.h"
@@ -91,6 +92,10 @@ lb_connection_new(struct lb_instance *instance,
                                    connection,
                                    &connection->http);
         break;
+
+    case LB_PROTOCOL_TCP:
+        lb_tcp_new(connection, fd);
+        break;
     }
 
     return connection;
@@ -122,6 +127,10 @@ lb_connection_close(struct lb_connection *connection)
     switch (connection->listener->cluster->protocol) {
     case LB_PROTOCOL_HTTP:
         http_server_connection_close(connection->http);
+        break;
+
+    case LB_PROTOCOL_TCP:
+        lb_tcp_close(connection);
         break;
     }
 
