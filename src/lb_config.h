@@ -24,6 +24,10 @@ enum {
     MAX_CLUSTER_MEMBERS = 64,
 };
 
+enum lb_protocol {
+    LB_PROTOCOL_HTTP,
+};
+
 struct lb_monitor_config {
     struct list_head siblings;
 
@@ -79,6 +83,11 @@ struct lb_cluster_config {
     struct list_head siblings;
 
     const char *name;
+
+    /**
+     * The protocol that is spoken on this cluster.
+     */
+    enum lb_protocol protocol;
 
     struct lb_fallback_config fallback;
 

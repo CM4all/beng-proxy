@@ -478,6 +478,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
     struct lb_cluster_config *cluster =
         p_malloc(parser->config->pool, sizeof(*cluster));
     cluster->name = p_strdup(parser->config->pool, name);
+    cluster->protocol = LB_PROTOCOL_HTTP;
     lb_fallback_config_init(&cluster->fallback);
     cluster->sticky_mode = STICKY_NONE;
     cluster->session_cookie = "beng_proxy_session";
