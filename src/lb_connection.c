@@ -5,6 +5,7 @@
  */
 
 #include "lb_connection.h"
+#include "lb_config.h"
 #include "lb_instance.h"
 #include "lb_http.h"
 #include "strmap.h"
@@ -78,15 +79,20 @@ lb_connection_new(struct lb_instance *instance,
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;
 
-    http_server_connection_new(pool, fd, ISTREAM_TCP,
-                               local_address_length > 0
-                               ? (const struct sockaddr *)&local_address
-                               : NULL,
-                               local_address_length,
-                               address_to_string(pool, addr, addrlen),
-                               &lb_http_connection_handler,
-                               connection,
-                               &connection->http);
+    switch (listener->cluster->protocol) {
+    case LB_PROTOCOL_HTTP:
+        http_server_connection_new(pool, fd, ISTREAM_TCP,
+                                   local_address_length > 0
+                                   ? (const struct sockaddr *)&local_address
+                                   : NULL,
+                                   local_address_length,
+                                   address_to_string(pool, addr, addrlen),
+                                   &lb_http_connection_handler,
+                                   connection,
+                                   &connection->http);
+        break;
+    }
+
     return connection;
 }
 
@@ -95,5 +101,9 @@ lb_connection_close(struct lb_connection *connection)
 {
     assert(connection->http != NULL);
 
-    http_server_connection_close(connection->http);
+    switch (connection->listener->cluster->protocol) {
+    case LB_PROTOCOL_HTTP:
+        http_server_connection_close(connection->http);
+        break;
+    }
 }
