@@ -83,6 +83,7 @@ Example:
 \begin{verbatim*}
 pool demo {
   sticky "failover"
+  protocol "http"
   member "foo:http"
   member "bar:http"
 }

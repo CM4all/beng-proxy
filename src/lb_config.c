@@ -673,6 +673,20 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             }
 
             return true;
+        } else if (strcmp(word, "protocol") == 0) {
+            const char *protocol = next_value(&p);
+            if (protocol == NULL)
+                return throw(error_r, "Protocol name expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            if (strcmp(protocol, "http") == 0)
+                cluster->protocol = LB_PROTOCOL_HTTP;
+            else
+                return throw(error_r, "Unknown protocol");
+
+            return true;
         } else if (strcmp(word, "fallback") == 0) {
             if (lb_fallback_config_defined(&cluster->fallback))
                 return throw(error_r, "Duplicate fallback");
