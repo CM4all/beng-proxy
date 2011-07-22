@@ -27,8 +27,6 @@ struct config_parser {
         STATE_NODE,
         STATE_CLUSTER,
         STATE_LISTENER,
-
-        STATE_XXX, /* XXX delete this */
     } state;
 
     struct lb_monitor_config *monitor;
@@ -429,9 +427,6 @@ config_parser_feed_node(struct config_parser *parser, char *p,
                 return throw(error_r, "Could not parse node address");
 
             return true;
-        } else if (strcmp(word, "monitor") == 0) {
-            /* ignore */
-            return true;
         } else
             return throw(error_r, "Unknown option");
     } else
@@ -722,10 +717,6 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                     p_strdup(parser->config->pool, message);
                 return true;
             }
-        } else if (strcmp(word, "persist") == 0 ||
-                   strcmp(word, "monitor") == 0) {
-            /* ignore */
-            return true;
         } else
             return throw(error_r, "Unknown option");
     } else
@@ -871,28 +862,6 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
 }
 
 static bool
-config_parser_create_xxx(struct config_parser *parser)
-{
-    parser->state = STATE_XXX;
-    return true;
-}
-
-static bool
-config_parser_feed_xxx(struct config_parser *parser, char *p,
-                       GError **error_r)
-{
-    if (*p == '}') {
-        if (!expect_eol(p + 1))
-            return syntax_error(error_r);
-
-        parser->state = STATE_ROOT;
-        return true;
-    }
-
-    return true;
-}
-
-static bool
 config_parser_feed_root(struct config_parser *parser, char *p,
                         GError **error_r)
 {
@@ -907,8 +876,6 @@ config_parser_feed_root(struct config_parser *parser, char *p,
             return config_parser_create_cluster(parser, p, error_r);
         else if (strcmp(word, "listener") == 0)
             return config_parser_create_listener(parser, p, error_r);
-        else if (strcmp(word, "persist") == 0)
-            return config_parser_create_xxx(parser);
         else if (strcmp(word, "monitor") == 0)
             return config_parser_create_monitor(parser, p, error_r);
         else
@@ -939,9 +906,6 @@ config_parser_feed(struct config_parser *parser, char *line,
 
     case STATE_LISTENER:
         return config_parser_feed_listener(parser, line, error_r);
-
-    case STATE_XXX:
-        return config_parser_feed_xxx(parser, line, error_r);
     }
 
     assert(false);
