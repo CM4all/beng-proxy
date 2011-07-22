@@ -33,6 +33,11 @@ struct lb_monitor_config {
 
     const char *name;
 
+    /**
+     * Time in seconds between two monitor checks.
+     */
+    unsigned interval;
+
     enum {
         MONITOR_NONE,
         MONITOR_PING,

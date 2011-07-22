@@ -5,6 +5,7 @@
  */
 
 #include "lb_monitor.h"
+#include "lb_config.h"
 #include "async.h"
 #include "pool.h"
 #include "failure.h"
@@ -22,17 +23,13 @@ struct lb_monitor {
     size_t address_length;
     const struct lb_monitor_class *class;
 
+    struct timeval interval;
     struct event timer_event;
 
     struct pool_mark mark;
     struct async_operation_ref async_ref;
 
     bool state;
-};
-
-static const struct timeval monitor_period = {
-    .tv_sec = 10,
-    .tv_usec = 0,
 };
 
 static void
@@ -47,7 +44,7 @@ monitor_handler_success(void *ctx)
         daemon_log(6, "monitor ok: %s\n", monitor->name);
 
     monitor->state = true;
-    evtimer_add(&monitor->timer_event, &monitor_period);
+    evtimer_add(&monitor->timer_event, &monitor->interval);
 }
 
 static void
@@ -62,7 +59,7 @@ monitor_handler_timeout(void *ctx)
     monitor->state = false;
     failure_add(monitor->address, monitor->address_length);
 
-    evtimer_add(&monitor->timer_event, &monitor_period);
+    evtimer_add(&monitor->timer_event, &monitor->interval);
 }
 
 static void
@@ -82,7 +79,7 @@ monitor_handler_error(GError *error, void *ctx)
     monitor->state = false;
     failure_add(monitor->address, monitor->address_length);
 
-    evtimer_add(&monitor->timer_event, &monitor_period);
+    evtimer_add(&monitor->timer_event, &monitor->interval);
 }
 
 static const struct lb_monitor_handler monitor_handler = {
@@ -120,11 +117,13 @@ lb_monitor_new(struct pool *pool, const char *name,
     monitor->address = address;
     monitor->address_length = address_length;
     monitor->class = class;
+    monitor->interval.tv_sec = config->interval;
+    monitor->interval.tv_usec = 0;
     evtimer_set(&monitor->timer_event, lb_monitor_timer_callback, monitor);
     async_ref_clear(&monitor->async_ref);
     monitor->state = true;
 
-    evtimer_add(&monitor->timer_event, &monitor_period);
+    evtimer_add(&monitor->timer_event, &monitor->interval);
     return monitor;
 }
 

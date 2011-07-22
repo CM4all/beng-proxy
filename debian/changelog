@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.1) unstable; urgency=low
 
-  * 
+  * lb: configurable monitor check interval
 
  --
 

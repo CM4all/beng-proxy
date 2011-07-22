@@ -164,6 +164,9 @@ A ``monitor'' describes how the availability of nodes in a pool is
 checked periodically.  By default, there is no monitor, just a list of
 ``known-bad'' nodes, filled with failures.
 
+The option ``interval'' configures how often the monitor is executed
+(in seconds).
+
 \subsubsection{Ping}
 
 The ``ping'' monitor periodically sends echo-request ICMP packets to
@@ -172,6 +175,7 @@ the node, and excepts echo-reply ICMP packets.
 \begin{verbatim*}
 monitor "my_monitor" {
   type "ping"
+  interval "2"
 }
 
 pool "demo" {

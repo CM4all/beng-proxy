@@ -223,6 +223,21 @@ next_bool(char **pp, bool *value_r, GError **error_r)
     return true;
 }
 
+static unsigned
+next_positive_integer(char **pp)
+{
+    const char *string = next_value(pp);
+    if (string == NULL)
+        return 0;
+
+    char *endptr;
+    unsigned long l = strtoul(string, &endptr, 10);
+    if (endptr == string || *endptr != 0)
+        return 0;
+
+    return (unsigned)l;
+}
+
 static bool
 expect_eol(char *p)
 {
@@ -256,6 +271,7 @@ config_parser_create_monitor(struct config_parser *parser, char *p,
     struct lb_monitor_config *monitor =
         p_malloc(parser->config->pool, sizeof(*monitor));
     monitor->name = p_strdup(parser->config->pool, name);
+    monitor->interval = 10;
     monitor->type = MONITOR_NONE;
 
     parser->state = STATE_MONITOR;
@@ -308,6 +324,13 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
             } else
                 return throw(error_r, "Unknown monitor type");
 
+            return true;
+        } else if (strcmp(word, "interval") == 0) {
+            unsigned value = next_positive_integer(&p);
+            if (value == 0)
+                return throw(error_r, "Positive integer expected");
+
+            monitor->interval = value;
             return true;
         } else if (monitor->type == MONITOR_TCP_EXPECT &&
                    strcmp(word, "send") == 0) {
