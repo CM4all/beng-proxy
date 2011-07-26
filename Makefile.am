@@ -487,6 +487,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/address-edit.c \
 	src/listener.c \
 	src/client-socket.c \
+	src/client-balancer.c src/client-balancer.h \
 	src/bulldog.c \
 	src/child.c \
 	src/hashmap.c \
@@ -694,6 +695,7 @@ check_PROGRAMS = \
 	test/run-html-unescape test/run-html-escape \
 	test/run-processor \
 	test/t-processor \
+	test/run-client-balancer \
 	test/run-ajp-client \
 	test/run-memcached-client \
 	test/dump-memcached-choice \
@@ -1373,6 +1375,24 @@ test_t_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
+
+test_run_client_balancer_SOURCES = test/run-client-balancer.c \
+	src/address-list.c \
+	src/client-balancer.c \
+	src/client-socket.c \
+	src/balancer.c \
+	src/failure.c \
+	src/bulldog.c \
+	src/cache.c \
+	src/hashmap.c \
+	src/fd_util.c \
+	src/stopwatch.c \
+	$(POOL_SRC)
+test_run_client_balancer_LDADD = $(LIBEVENT_LIBS) \
+	-lrt \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS)
 
 test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/ajp-serialize.c \
