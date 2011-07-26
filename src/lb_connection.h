@@ -45,6 +45,9 @@ lb_connection_new(struct lb_instance *instance,
                   int fd, const struct sockaddr *addr, size_t addrlen);
 
 void
+lb_connection_remove(struct lb_connection *connection);
+
+void
 lb_connection_close(struct lb_connection *connection);
 
 #endif

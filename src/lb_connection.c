@@ -97,6 +97,24 @@ lb_connection_new(struct lb_instance *instance,
 }
 
 void
+lb_connection_remove(struct lb_connection *connection)
+{
+    assert(connection != NULL);
+    assert(connection->instance != NULL);
+    assert(connection->instance->num_connections > 0);
+
+    list_remove(&connection->siblings);
+    --connection->instance->num_connections;
+
+    if (connection->ssl_filter != NULL)
+        ssl_filter_free(connection->ssl_filter);
+
+    struct pool *pool = connection->pool;
+    pool_trash(pool);
+    pool_unref(pool);
+}
+
+void
 lb_connection_close(struct lb_connection *connection)
 {
     assert(connection->http != NULL);

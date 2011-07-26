@@ -243,23 +243,12 @@ static void
 lb_http_connection_free(void *ctx)
 {
     struct lb_connection *connection = ctx;
-    pool_t pool;
 
     assert(connection->http != NULL);
-    assert(connection->instance != NULL);
-    assert(connection->instance->num_connections > 0);
 
     connection->http = NULL;
 
-    list_remove(&connection->siblings);
-    --connection->instance->num_connections;
-
-    if (connection->ssl_filter != NULL)
-        ssl_filter_free(connection->ssl_filter);
-
-    pool = connection->pool;
-    pool_trash(pool);
-    pool_unref(pool);
+    lb_connection_remove(connection);
 }
 
 const struct http_server_connection_handler lb_http_connection_handler = {
