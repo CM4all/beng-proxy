@@ -29,7 +29,7 @@
 #define SM_PAGES ((sizeof(struct session_manager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE)
 
 #define SESSION_TTL_NEW 120
-#define SESSION_TTL 600
+#define SESSION_TTL 1200
 
 #define SESSION_SLOTS 16381
 
