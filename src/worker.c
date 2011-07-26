@@ -97,7 +97,8 @@ worker_child_callback(int status, void *ctx)
 
         session_manager_abandon();
 
-        ret = session_manager_init(instance->config.cluster_size,
+        ret = session_manager_init(instance->config.session_idle_timeout,
+                                   instance->config.cluster_size,
                                    instance->config.cluster_node);
         if (!ret) {
             daemon_log(1, "session_manager_init() failed\n");
@@ -167,7 +168,8 @@ worker_new(struct instance *instance)
 
         session_manager_event_del();
 
-        ret = session_manager_init(instance->config.cluster_size,
+        ret = session_manager_init(instance->config.session_idle_timeout,
+                                   instance->config.cluster_size,
                                    instance->config.cluster_node);
         assert(ret);
 

@@ -239,6 +239,7 @@ int main(int argc, char **argv)
     static struct instance instance = {
         .config = {
             .session_cookie = "beng_proxy_session",
+            .session_idle_timeout = 1200,
             .max_connections = 8192,
             .http_cache_size = 512 * 1024 * 1024,
             .filter_cache_size = 128 * 1024 * 1024,
@@ -286,7 +287,8 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    bret = session_manager_init(instance.config.cluster_size,
+    bret = session_manager_init(instance.config.session_idle_timeout,
+                                instance.config.cluster_size,
                                 instance.config.cluster_node);
     if (!bret) {
         fprintf(stderr, "session_manager_init() failed\n");

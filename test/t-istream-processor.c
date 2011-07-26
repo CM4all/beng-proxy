@@ -60,7 +60,7 @@ create_test(pool_t pool, istream_t input)
     widget_init(&widget, pool, &root_widget_class);
 
     crash_global_init();
-    session_manager_init(0, 0);
+    session_manager_init(1200, 0, 0);
 
     session = session_new();
     processor_env_init(pool, &env,

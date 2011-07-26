@@ -32,7 +32,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     event_base = event_init();
 
     crash_global_init();
-    session_manager_init(0, 0);
+    session_manager_init(1200, 0, 0);
     session_manager_event_del();
 
     pipe(fds);
@@ -45,7 +45,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
         event_base_free(event_base);
         event_base = event_init();
-        session_manager_init(0, 0);
+        session_manager_init(1200, 0, 0);
 
         session = session_new();
         write(fds[1], &session->id, sizeof(session->id));

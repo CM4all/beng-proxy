@@ -32,6 +32,8 @@ struct config {
 
     const char *session_cookie;
 
+    unsigned session_idle_timeout;
+
     const char *control_listen, *multicast_group;
 
     const char *document_root;

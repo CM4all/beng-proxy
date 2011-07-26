@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
     event_base = event_init();
 
     crash_global_init();
-    success = session_manager_init(0, 0);
+    success = session_manager_init(1200, 0, 0);
     assert(success);
 
     pool = pool_new_libc(NULL, "root");

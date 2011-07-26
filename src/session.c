@@ -29,12 +29,16 @@
 #define SM_PAGES ((sizeof(struct session_manager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE)
 
 #define SESSION_TTL_NEW 120
-#define SESSION_TTL 1200
 
 #define SESSION_SLOTS 16381
 
 struct session_manager {
     struct refcount ref;
+
+    /**
+     * The idle timeout of sessions [seconds].
+     */
+    unsigned idle_timeout;
 
     unsigned cluster_size, cluster_node;
 
@@ -144,7 +148,8 @@ cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 static struct session_manager *
-session_manager_new(unsigned cluster_size, unsigned cluster_node)
+session_manager_new(unsigned idle_timeout,
+                    unsigned cluster_size, unsigned cluster_node)
 {
     struct shm *shm;
     struct session_manager *sm;
@@ -158,6 +163,7 @@ session_manager_new(unsigned cluster_size, unsigned cluster_node)
 
     sm = shm_alloc(shm, SM_PAGES);
     refcount_init(&sm->ref);
+    sm->idle_timeout = idle_timeout;
     sm->cluster_size = cluster_size;
     sm->cluster_node = cluster_node;
     sm->shm = shm;
@@ -173,7 +179,8 @@ session_manager_new(unsigned cluster_size, unsigned cluster_node)
 }
 
 bool
-session_manager_init(unsigned cluster_size, unsigned cluster_node)
+session_manager_init(unsigned idle_timeout,
+                     unsigned cluster_size, unsigned cluster_node)
 {
     assert((cluster_size == 0 && cluster_node == 0) ||
            cluster_node < cluster_size);
@@ -182,7 +189,8 @@ session_manager_init(unsigned cluster_size, unsigned cluster_node)
     obtain_entropy(session_rand);
 
     if (session_manager == NULL) {
-        session_manager = session_manager_new(cluster_size, cluster_node);
+        session_manager = session_manager_new(idle_timeout,
+                                              cluster_size, cluster_node);
         if (session_manager == NULL)
                 return false;
     } else {
@@ -788,7 +796,7 @@ session_find(session_id_t id)
 #endif
             lock_lock(&session->lock);
 
-            session->expires = expiry_touch(SESSION_TTL);
+            session->expires = expiry_touch(session_manager->idle_timeout);
             ++session->counter;
             return session;
         }
