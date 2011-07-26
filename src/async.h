@@ -32,6 +32,7 @@
 #include <inline/compiler.h>
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 struct async_operation;
