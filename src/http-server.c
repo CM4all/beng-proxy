@@ -245,6 +245,8 @@ void
 http_server_connection_close(struct http_server_connection *connection)
 {
     assert(connection != NULL);
+    assert(connection->handler != NULL);
+    assert(connection->handler->free != NULL);
 
     if (connection->fd >= 0) {
         event2_set(&connection->event, 0);
@@ -261,11 +263,8 @@ http_server_connection_close(struct http_server_connection *connection)
         http_server_request_close(connection);
 
     if (connection->handler != NULL) {
-        const struct http_server_connection_handler *handler = connection->handler;
-        void *handler_ctx = connection->handler_ctx;
+        connection->handler->free(connection->handler_ctx);
         connection->handler = NULL;
-        connection->handler_ctx = NULL;
-        handler->free(handler_ctx);
     }
 
     pool_unref(connection->pool);
