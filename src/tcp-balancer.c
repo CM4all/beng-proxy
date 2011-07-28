@@ -83,10 +83,12 @@ tcp_balancer_stock_error(GError *error, void *ctx)
     failure_add(&request->current_address->address,
                 request->current_address->length);
 
-    if (request->retries-- > 0)
+    if (request->retries-- > 0) {
         /* try again, next address */
+        g_error_free(error);
+
         tcp_balancer_next(request);
-    else
+    } else
         /* give up */
         request->handler->error(error, request->handler_ctx);
 }
