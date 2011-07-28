@@ -73,9 +73,24 @@ struct http_server_connection_handler {
                 http_status_t status, off_t length,
                 uint64_t bytes_received, uint64_t bytes_sent,
                 void *ctx);
+
+    /**
+     * A fatal protocol level error has occurred, and the connection
+     * was closed.
+     *
+     * This will be called instead of free().
+     */
+    void (*error)(GError *error, void *ctx);
+
     void (*free)(void *ctx);
 };
 
+G_GNUC_CONST
+static inline GQuark
+http_server_quark(void)
+{
+    return g_quark_from_static_string("http_server");
+}
 
 void
 http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,

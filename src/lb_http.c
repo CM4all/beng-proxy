@@ -240,6 +240,20 @@ lb_http_connection_log(struct http_server_request *request,
 }
 
 static void
+lb_http_connection_error(GError *error, void *ctx)
+{
+    struct lb_connection *connection = ctx;
+
+    daemon_log(2, "%s\n", error->message);
+    g_error_free(error);
+
+    assert(connection->http != NULL);
+    connection->http = NULL;
+
+    lb_connection_remove(connection);
+}
+
+static void
 lb_http_connection_free(void *ctx)
 {
     struct lb_connection *connection = ctx;
@@ -254,5 +268,6 @@ lb_http_connection_free(void *ctx)
 const struct http_server_connection_handler lb_http_connection_handler = {
     .request = lb_http_connection_request,
     .log = lb_http_connection_log,
+    .error = lb_http_connection_error,
     .free = lb_http_connection_free,
 };

@@ -43,10 +43,8 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
 
     if (errno == ECONNRESET)
         http_server_cancel(connection);
-    else {
-        daemon_log(1, "write error on HTTP connection: %s\n", strerror(errno));
-        http_server_connection_close(connection);
-    }
+    else
+        http_server_errno(connection, "write error on HTTP connection");
 
     return 0;
 }
@@ -160,16 +158,14 @@ http_server_response_stream_abort(GError *error, void *ctx)
 
     assert(connection->response.istream != NULL);
 
-    daemon_log(1, "error on HTTP response stream: %s", error->message);
-    g_error_free(error);
-
     connection->response.istream = NULL;
 
     /* we clear this async_ref here so http_server_request_close()
        won't think we havn't sent a response yet */
     async_ref_clear(&connection->request.async_ref);
 
-    http_server_connection_close(connection);
+    g_prefix_error(&error, "error on HTTP response stream: ");
+    http_server_error(connection, error);
 }
 
 const struct istream_handler http_server_response_stream_handler = {

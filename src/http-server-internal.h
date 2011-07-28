@@ -96,17 +96,26 @@ struct http_server_connection {
     bool keep_alive;
 };
 
-static inline GQuark
-http_server_quark(void)
-{
-    return g_quark_from_static_string("http_server");
-}
-
 static inline int
 http_server_connection_valid(struct http_server_connection *connection)
 {
     return connection->fd >= 0;
 }
+
+/**
+ * A fatal error has occurred, and the connection should be closed
+ * immediately, without sending any further information to the client.
+ * This invokes the error() handler method, but not free().
+ */
+void
+http_server_error(struct http_server_connection *connection, GError *error);
+
+void
+http_server_error_message(struct http_server_connection *connection,
+                          const char *msg);
+
+void
+http_server_errno(struct http_server_connection *connection, const char *msg);
 
 struct http_server_request *
 http_server_request_new(struct http_server_connection *connection);

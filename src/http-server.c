@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 struct http_server_request *
 http_server_request_new(struct http_server_connection *connection)
@@ -161,6 +162,7 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
     assert(fd >= 0);
     assert(handler != NULL);
     assert(handler->request != NULL);
+    assert(handler->error != NULL);
     assert(handler->free != NULL);
     assert((local_address == NULL) == (local_address_length == 0));
 
@@ -295,6 +297,41 @@ http_server_cancel(struct http_server_connection *connection)
 }
 
 void
+http_server_error(struct http_server_connection *connection, GError *error)
+{
+    assert(connection != NULL);
+    assert(connection->handler != NULL);
+    assert(connection->handler->free != NULL);
+
+    if (connection->fd >= 0)
+        http_server_socket_close(connection);
+
+    pool_ref(connection->pool);
+
+    if (connection->request.read_state != READ_START)
+        http_server_request_close(connection);
+
+    if (connection->handler != NULL) {
+        const struct http_server_connection_handler *handler = connection->handler;
+        void *handler_ctx = connection->handler_ctx;
+        connection->handler = NULL;
+        connection->handler_ctx = NULL;
+        handler->error(error, handler_ctx);
+    } else
+        g_error_free(error);
+
+    pool_unref(connection->pool);
+}
+
+void
+http_server_error_message(struct http_server_connection *connection,
+                          const char *msg)
+{
+    GError *error = g_error_new_literal(http_server_quark(), 0, msg);
+    http_server_error(connection, error);
+}
+
+void
 http_server_connection_close(struct http_server_connection *connection)
 {
     assert(connection != NULL);
@@ -315,6 +352,14 @@ http_server_connection_close(struct http_server_connection *connection)
     }
 
     pool_unref(connection->pool);
+}
+
+void
+http_server_errno(struct http_server_connection *connection, const char *msg)
+{
+    GError *error = g_error_new(g_file_error_quark(), errno,
+                                "%s: %s", msg, strerror(errno));
+    http_server_error(connection, error);
 }
 
 void

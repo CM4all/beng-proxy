@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.2) unstable; urgency=low
 
-  * 
+  * http-server: report detailed errors
 
  --
 

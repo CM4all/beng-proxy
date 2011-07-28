@@ -40,7 +40,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
     assert(connection->request.request == NULL);
 
     if (unlikely(length < 5)) {
-        http_server_connection_close(connection);
+        http_server_error_message(connection, "malformed request line");
         return false;
     }
 
@@ -87,7 +87,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
     if (method == HTTP_METHOD_NULL) {
         /* invalid request method */
 
-        http_server_connection_close(connection);
+        http_server_error_message(connection, "unrecognized request method");
         return false;
     }
 
@@ -161,8 +161,8 @@ http_server_headers_finished(struct http_server_connection *connection)
 
             content_length = strtoul(value, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
-                daemon_log(2, "invalid Content-Length header in HTTP request\n");
-                http_server_connection_close(connection);
+                http_server_error_message(connection,
+                                          "invalid Content-Length header in HTTP request");
                 return false;
             }
 
@@ -266,8 +266,7 @@ http_server_parse_headers(struct http_server_connection *connection)
     if (next == NULL) {
         if (fifo_buffer_full(connection->input)) {
             /* the line is too large for our input buffer */
-            daemon_log(2, "http_server: request header too long\n");
-            http_server_connection_close(connection);
+            http_server_error_message(connection, "request header too long");
             return false;
         }
 
@@ -355,8 +354,7 @@ http_server_read_to_buffer(struct http_server_connection *connection)
         event2_or(&connection->event, EV_READ);
         return true;
     } else {
-        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
-        http_server_connection_close(connection);
+        http_server_errno(connection, "read error on HTTP connection");
         return false;
     }
 }
@@ -413,8 +411,7 @@ http_server_try_request_direct(struct http_server_connection *connection)
             return;
         }
 
-        daemon_log(1, "read error on HTTP connection: %s\n", strerror(errno));
-        http_server_connection_close(connection);
+        http_server_errno(connection, "read error on HTTP connection");
         return;
     }
 

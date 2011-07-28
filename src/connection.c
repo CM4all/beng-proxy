@@ -84,6 +84,17 @@ my_http_server_connection_log(struct http_server_request *request,
 }
 
 static void
+my_http_server_connection_error(GError *error, void *ctx)
+{
+    struct client_connection *connection = ctx;
+
+    daemon_log(2, "%s\n", error->message);
+    g_error_free(error);
+
+    remove_connection(connection);
+}
+
+static void
 my_http_server_connection_free(void *ctx)
 {
     struct client_connection *connection = ctx;
@@ -94,6 +105,7 @@ my_http_server_connection_free(void *ctx)
 static const struct http_server_connection_handler my_http_server_connection_handler = {
     .request = my_http_server_connection_request,
     .log = my_http_server_connection_log,
+    .error = my_http_server_connection_error,
     .free = my_http_server_connection_free,
 };
 

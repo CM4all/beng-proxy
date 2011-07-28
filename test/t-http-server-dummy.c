@@ -25,6 +25,15 @@ my_request(struct http_server_request *request, void *ctx,
 }
 
 static void
+my_error(GError *error, void *ctx)
+{
+    (void)ctx;
+
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
+}
+
+static void
 my_free(void *ctx)
 {
     (void)ctx;
@@ -32,6 +41,7 @@ my_free(void *ctx)
 
 static const struct http_server_connection_handler handler = {
     .request = my_request,
+    .error = my_error,
     .free = my_free,
 };
 

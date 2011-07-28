@@ -27,6 +27,15 @@ catch_close_request(struct http_server_request *request, void *ctx,
 }
 
 static void
+catch_close_error(GError *error, void *ctx)
+{
+    (void)ctx;
+
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
+}
+
+static void
 catch_close_free(void *ctx)
 {
     (void)ctx;
@@ -34,6 +43,7 @@ catch_close_free(void *ctx)
 
 static const struct http_server_connection_handler catch_close_handler = {
     .request = catch_close_request,
+    .error = catch_close_error,
     .free = catch_close_free,
 };
 
