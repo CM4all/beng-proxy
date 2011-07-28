@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.0.2) unstable; urgency=low
 
-  * 
+  * handler: always log translate client errors
 
  --
 

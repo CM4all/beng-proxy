@@ -293,7 +293,7 @@ handler_translate_error(GError *error, void *ctx)
 {
     struct request *request = ctx;
 
-    daemon_log(2, "translation error on '%s': %s\n",
+    daemon_log(1, "translation error on '%s': %s\n",
                request->request->uri, error->message);
     g_error_free(error);
 
