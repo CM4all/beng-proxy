@@ -335,23 +335,14 @@ void
 http_server_connection_close(struct http_server_connection *connection)
 {
     assert(connection != NULL);
-    assert(connection->handler != NULL);
-    assert(connection->handler->free != NULL);
 
     if (connection->fd >= 0)
         http_server_socket_close(connection);
 
-    pool_ref(connection->pool);
+    connection->handler = NULL;
 
     if (connection->request.read_state != READ_START)
         http_server_request_close(connection);
-
-    if (connection->handler != NULL) {
-        connection->handler->free(connection->handler_ctx);
-        connection->handler = NULL;
-    }
-
-    pool_unref(connection->pool);
 }
 
 void

@@ -124,4 +124,6 @@ lb_connection_close(struct lb_connection *connection)
         http_server_connection_close(connection->http);
         break;
     }
+
+    lb_connection_remove(connection);
 }
