@@ -161,6 +161,7 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
     assert(fd >= 0);
     assert(handler != NULL);
     assert(handler->request != NULL);
+    assert(handler->free != NULL);
     assert((local_address == NULL) == (local_address_length == 0));
 
     connection = p_malloc(pool, sizeof(*connection));
@@ -259,7 +260,7 @@ http_server_connection_close(struct http_server_connection *connection)
     if (connection->request.read_state != READ_START)
         http_server_request_close(connection);
 
-    if (connection->handler != NULL && connection->handler->free != NULL) {
+    if (connection->handler != NULL) {
         const struct http_server_connection_handler *handler = connection->handler;
         void *handler_ctx = connection->handler_ctx;
         connection->handler = NULL;
