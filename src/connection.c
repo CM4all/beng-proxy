@@ -20,6 +20,25 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
+static void
+remove_connection(struct client_connection *connection)
+{
+    pool_t pool;
+
+    assert(connection->http != NULL);
+    assert(connection->instance != NULL);
+    assert(connection->instance->num_connections > 0);
+
+    connection->http = NULL;
+
+    list_remove(&connection->siblings);
+    --connection->instance->num_connections;
+
+    pool = connection->pool;
+    pool_trash(pool);
+    pool_unref(pool);
+}
+
 void
 close_connection(struct client_connection *connection)
 {
@@ -68,20 +87,8 @@ static void
 my_http_server_connection_free(void *ctx)
 {
     struct client_connection *connection = ctx;
-    pool_t pool;
 
-    assert(connection->http != NULL);
-    assert(connection->instance != NULL);
-    assert(connection->instance->num_connections > 0);
-
-    connection->http = NULL;
-
-    list_remove(&connection->siblings);
-    --connection->instance->num_connections;
-
-    pool = connection->pool;
-    pool_trash(pool);
-    pool_unref(pool);
+    remove_connection(connection);
 }
 
 static const struct http_server_connection_handler my_http_server_connection_handler = {
