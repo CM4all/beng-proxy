@@ -346,7 +346,7 @@ http_server_read_to_buffer(struct http_server_connection *connection)
         return true;
     } else if (nbytes == 0) {
         /* the client closed the connection; do the same on our side */
-        http_server_connection_close(connection);
+        http_server_cancel(connection);
         return false;
     } else if (nbytes == -2) {
         assert(false);

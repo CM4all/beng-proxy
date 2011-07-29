@@ -41,8 +41,13 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    daemon_log(1, "write error on HTTP connection: %s\n", strerror(errno));
-    http_server_connection_close(connection);
+    if (errno == ECONNRESET)
+        http_server_cancel(connection);
+    else {
+        daemon_log(1, "write error on HTTP connection: %s\n", strerror(errno));
+        http_server_connection_close(connection);
+    }
+
     return 0;
 }
 

@@ -75,7 +75,7 @@ http_server_event_callback2(struct http_server_connection *connection,
 {
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");
-        http_server_connection_close(connection);
+        http_server_cancel(connection);
         return false;
     }
 
@@ -140,7 +140,7 @@ http_server_timeout_callback(int fd __attr_unused, short event __attr_unused,
     struct http_server_connection *connection = ctx;
 
     daemon_log(4, "header timeout\n");
-    http_server_connection_close(connection);
+    http_server_cancel(connection);
 }
 
 void
@@ -272,6 +272,29 @@ http_server_done(struct http_server_connection *connection)
 }
 
 void
+http_server_cancel(struct http_server_connection *connection)
+{
+    assert(connection != NULL);
+    assert(connection->handler != NULL);
+    assert(connection->handler->free != NULL);
+
+    if (connection->fd >= 0)
+        http_server_socket_close(connection);
+
+    pool_ref(connection->pool);
+
+    if (connection->request.read_state != READ_START)
+        http_server_request_close(connection);
+
+    if (connection->handler != NULL) {
+        connection->handler->free(connection->handler_ctx);
+        connection->handler = NULL;
+    }
+
+    pool_unref(connection->pool);
+}
+
+void
 http_server_connection_close(struct http_server_connection *connection)
 {
     assert(connection != NULL);
@@ -302,7 +325,7 @@ http_server_connection_graceful(struct http_server_connection *connection)
     if (connection->request.read_state == READ_START)
         /* there is no request currently; close the connection
            immediately */
-        http_server_connection_close(connection);
+        http_server_done(connection);
     else
         /* a request is currently being handled; disable keep_alive so
            the connection will be closed after this last request */
