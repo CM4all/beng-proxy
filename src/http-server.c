@@ -209,6 +209,19 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
 }
 
 static void
+http_server_socket_close(struct http_server_connection *connection)
+{
+    assert(connection->fd >= 0);
+
+    event2_set(&connection->event, 0);
+    event2_commit(&connection->event);
+    close(connection->fd);
+    connection->fd = -1;
+
+    evtimer_del(&connection->timeout);
+}
+
+static void
 http_server_request_close(struct http_server_connection *connection)
 {
     pool_t pool;
@@ -248,14 +261,8 @@ http_server_connection_close(struct http_server_connection *connection)
     assert(connection->handler != NULL);
     assert(connection->handler->free != NULL);
 
-    if (connection->fd >= 0) {
-        event2_set(&connection->event, 0);
-        event2_commit(&connection->event);
-        close(connection->fd);
-        connection->fd = -1;
-
-        evtimer_del(&connection->timeout);
-    }
+    if (connection->fd >= 0)
+        http_server_socket_close(connection);
 
     pool_ref(connection->pool);
 
