@@ -152,6 +152,13 @@ http_server_try_read(struct http_server_connection *connection);
 bool
 http_server_consume_body(struct http_server_connection *connection);
 
+/**
+ * The last response on this connection is finished, and it should be
+ * closed.
+ */
+void
+http_server_done(struct http_server_connection *connection);
+
 extern const struct istream http_server_request_stream;
 
 extern const struct istream_handler http_server_response_stream_handler;

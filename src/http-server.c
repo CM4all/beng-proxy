@@ -255,6 +255,23 @@ http_server_request_close(struct http_server_connection *connection)
 }
 
 void
+http_server_done(struct http_server_connection *connection)
+{
+    assert(connection != NULL);
+    assert(connection->handler != NULL);
+    assert(connection->handler->free != NULL);
+    assert(connection->request.read_state == READ_START);
+
+    if (connection->fd >= 0)
+        http_server_socket_close(connection);
+
+    const struct http_server_connection_handler *handler = connection->handler;
+    connection->handler = NULL;
+
+    handler->free(connection->handler_ctx);
+}
+
+void
 http_server_connection_close(struct http_server_connection *connection)
 {
     assert(connection != NULL);

@@ -144,7 +144,7 @@ http_server_response_stream_eof(void *ctx)
     } else {
         /* keepalive disabled and response is finished: we must close
            the connection */
-        http_server_connection_close(connection);
+        http_server_done(connection);
     }
 }
 

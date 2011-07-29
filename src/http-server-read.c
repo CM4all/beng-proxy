@@ -99,7 +99,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
             "This server requires HTTP 1.1.";
 
         send(connection->fd, msg, sizeof(msg) - 1, MSG_DONTWAIT|MSG_NOSIGNAL);
-        http_server_connection_close(connection);
+        http_server_done(connection);
         return false;
     }
 
