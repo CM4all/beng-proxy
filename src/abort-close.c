@@ -59,3 +59,12 @@ async_close_on_abort(pool_t pool, istream_t istream,
 
     return &coa->ref;
 }
+
+struct async_operation_ref *
+async_optional_close_on_abort(pool_t pool, istream_t istream,
+                              struct async_operation_ref *async_ref)
+{
+    return istream != NULL
+        ? async_close_on_abort(pool, istream, async_ref)
+        : async_ref;
+}
