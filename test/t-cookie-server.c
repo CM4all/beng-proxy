@@ -24,7 +24,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     cookie_map_parse(cookies, "quoted=\"quoted!\\\\", pool);
     assert(strcmp(strmap_get(cookies, "quoted"), "quoted!\\") == 0);
 
-    cookie_map_parse(cookies, "invalid1=foo@", pool);
+    cookie_map_parse(cookies, "invalid1=foo\t", pool);
     assert(strcmp(strmap_get(cookies, "invalid1"), "foo") == 0);
 
     /* this is actually invalid, but unfortunately RFC ignorance is
