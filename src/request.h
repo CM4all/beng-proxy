@@ -107,7 +107,13 @@ struct request {
     bool response_sent;
 #endif
 
-    struct async_operation_ref *async_ref;
+    /**
+     * This attribute represents the operation that handles the HTTP
+     * request.  It is used to clean up resources on abort.
+     */
+    struct async_operation operation;
+
+    struct async_operation_ref async_ref;
 };
 
 static inline bool

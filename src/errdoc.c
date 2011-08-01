@@ -101,7 +101,7 @@ errdoc_translate_response(const struct translate_response *response, void *ctx)
                      pool, HTTP_METHOD_GET,
                      &response->address, HTTP_STATUS_OK, NULL, NULL,
                      &errdoc_response_handler, er,
-                     request2->async_ref);
+                     &request2->async_ref);
     } else
         errdoc_resubmit(er);
 }
@@ -174,7 +174,7 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
         : NULL;
 
     async_init(&er->operation, &errdoc_operation);
-    async_ref_set(request2->async_ref, &er->operation);
+    async_ref_set(&request2->async_ref, &er->operation);
 
     fill_translate_request(&er->translate_request,
                            &request2->translate.request, status);

@@ -379,7 +379,7 @@ response_apply_filter(struct request *request2,
     filter_cache_request(global_filter_cache, request->pool, filter,
                          source_tag, status, headers2, body,
                          &response_handler, request2,
-                         request2->async_ref);
+                         &request2->async_ref);
 }
 
 static void

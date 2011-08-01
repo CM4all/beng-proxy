@@ -147,5 +147,5 @@ proxy_handler(struct request *request2)
                        forward.method, address,
                        forward.headers, forward.body,
                        &proxy_response_handler, request2,
-                       request2->async_ref);
+                       &request2->async_ref);
 }
