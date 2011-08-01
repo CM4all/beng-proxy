@@ -3,7 +3,7 @@ cm4all-beng-proxy (0.9.34) unstable; urgency=low
   * request: fix double request body close in errdoc handler
   * handler: close request body on early abort
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 01 Aug 2011 16:21:43 +0200
 
 cm4all-beng-proxy (0.9.33) unstable; urgency=low
 
