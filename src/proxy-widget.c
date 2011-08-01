@@ -100,7 +100,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
                             request2->proxy_ref->id,
                             &request2->env,
                             &widget_processor_handler, request2,
-                            request2->async_ref);
+                            &request2->async_ref);
     } else {
         const struct processor_env *env = &request2->env;
 
@@ -120,7 +120,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
         frame_top_widget(request->pool, widget,
                          &request2->env,
                          &widget_response_handler, request2,
-                         request2->async_ref);
+                         &request2->async_ref);
     }
 }
 
@@ -156,7 +156,7 @@ widget_proxy_found(struct widget *widget, void *ctx)
         widget_resolver_new(request->pool, request2->env.pool, widget,
                             global_translate_cache,
                             &proxy_widget_resolver_callback, request2,
-                            request2->async_ref);
+                            &request2->async_ref);
         return;
     }
 
@@ -217,5 +217,5 @@ proxy_widget(struct request *request2, http_status_t status, istream_t body,
                             widget, proxy_ref->id,
                             &request2->env, options,
                             &widget_processor_handler, request2,
-                            request2->async_ref);
+                            &request2->async_ref);
 }

@@ -19,4 +19,11 @@ struct async_operation_ref *
 async_close_on_abort(pool_t pool, istream_t istream,
                      struct async_operation_ref *async_ref);
 
+/**
+ * Same as async_close_on_abort(), but allows #istream to be NULL.
+ */
+struct async_operation_ref *
+async_optional_close_on_abort(pool_t pool, istream_t istream,
+                              struct async_operation_ref *async_ref);
+
 #endif
