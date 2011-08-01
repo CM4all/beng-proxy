@@ -477,6 +477,8 @@ handler_abort(struct async_operation *ao)
 {
     struct request *request2 = async_to_request(ao);
 
+    request_discard_body(request2);
+
     /* forward the abort to the http_server library */
     async_abort(&request2->async_ref);
 }
