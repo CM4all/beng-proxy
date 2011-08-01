@@ -269,7 +269,7 @@ handler_translate_response(const struct translate_response *response,
                         request->connection->instance->translate_cache,
                         &request->translate.request,
                         &handler_translate_handler, request,
-                        request->async_ref);
+                        &request->async_ref);
         return;
     }
 
@@ -381,7 +381,7 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
                            &request2->uri, request2->args);
     translate_cache(request->pool, tcache, &request2->translate.request,
                     &handler_translate_handler, request2,
-                    request2->async_ref);
+                    &request2->async_ref);
 }
 
 static void
@@ -461,6 +461,37 @@ serve_document_root_file(struct request *request2,
     file_callback(request2);
 }
 
+/*
+ * async operation
+ *
+ */
+
+static struct request *
+async_to_request(struct async_operation *ao)
+{
+    return (struct request *)(((char *)ao) - offsetof(struct request, operation));
+}
+
+static void
+handler_abort(struct async_operation *ao)
+{
+    struct request *request2 = async_to_request(ao);
+
+    request_discard_body(request2);
+
+    /* forward the abort to the http_server library */
+    async_abort(&request2->async_ref);
+}
+
+static const struct async_operation_class handler_operation = {
+    .abort = handler_abort,
+};
+
+/*
+ * constructor
+ *
+ */
+
 void
 handle_http_request(struct client_connection *connection,
                     struct http_server_request *request,
@@ -486,7 +517,8 @@ handle_http_request(struct client_connection *connection,
     request2->body_consumed = false;
     request2->transformed = false;
 
-    request2->async_ref = async_ref;
+    async_init(&request2->operation, &handler_operation);
+    async_ref_set(async_ref, &request2->operation);
 
 #ifndef NDEBUG
     request2->response_sent = false;

@@ -115,5 +115,5 @@ delegate_handler(struct request *request2)
                         &tr->address.u.local.jail,
                         tr->address.u.local.path,
                         delegate_handler_callback, request2,
-                        request2->async_ref);
+                        &request2->async_ref);
 }
