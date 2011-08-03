@@ -158,6 +158,13 @@ enum beng_translation_command {
      * requests of a session to the same worker.
      */
     TRANSLATE_STICKY = 71,
+
+    /**
+     * Enable header dumps for the widget: on a HTTP request, the
+     * request and response headers will be logged.  Only for
+     * debugging purposes.
+     */
+    TRANSLATE_DUMP_HEADERS = 72,
 };
 
 struct beng_translation_header {

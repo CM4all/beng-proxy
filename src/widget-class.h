@@ -43,6 +43,8 @@ struct widget_class {
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */
     bool stateful;
+
+    bool dump_headers;
 };
 
 extern const struct widget_class root_widget_class;

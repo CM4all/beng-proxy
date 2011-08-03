@@ -236,6 +236,7 @@ test_cookie_client(pool_t pool)
         },
 
         .stateful = true,
+        .header_dump = false,
     };
     struct widget widget;
     struct session *session;

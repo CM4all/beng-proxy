@@ -115,6 +115,8 @@ class _Lookup:
             response.packet(TRANSLATE_FILTER_4XX)
         elif line == 'sticky':
             response.packet(TRANSLATE_STICKY)
+        elif line == 'dump_headers':
+            response.packet(TRANSLATE_DUMP_HEADERS)
         else:
             raise MalformedLineError(self.path, line)
 

@@ -1403,6 +1403,10 @@ translate_handle_packet(struct translate_client *client,
         address_list_set_sticky_mode(client->address_list,
                                      STICKY_SESSION_MODULO);
         break;
+
+    case TRANSLATE_DUMP_HEADERS:
+        client->response.dump_headers = true;
+        break;
     }
 
     return true;

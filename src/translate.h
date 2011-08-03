@@ -99,6 +99,8 @@ struct translate_response {
 
     bool transparent;
 
+    bool dump_headers;
+
     const char *session;
 
     /**

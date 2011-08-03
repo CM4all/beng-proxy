@@ -22,6 +22,8 @@
 #include "resource-tag.h"
 #include "uri-extract.h"
 
+#include <daemon/log.h>
+
 #include <assert.h>
 #include <string.h>
 
@@ -395,6 +397,15 @@ widget_response_response(http_status_t status, struct strmap *headers,
     /*const char *translate;*/
 
     if (headers != NULL) {
+        if (embed->widget->class->dump_headers) {
+            daemon_log(4, "response headers from widget '%s'\n",
+                       widget_path(embed->widget));
+            strmap_rewind(headers);
+            const struct strmap_pair *pair;
+            while ((pair = strmap_next(headers)) != NULL)
+                daemon_log(4, "  %s: %s\n", pair->key, pair->value);
+        }
+
         if (embed->host_and_port != NULL) {
             struct session *session = session_get(embed->env->session_id);
             if (session != NULL) {
@@ -487,6 +498,14 @@ widget_http_request(pool_t pool, struct widget *widget,
     headers = widget_request_headers(embed, view,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,
                                      widget->from_request.body != NULL);
+
+    if (widget->class->dump_headers) {
+        daemon_log(4, "request headers for widget '%s'\n", widget_path(widget));
+        strmap_rewind(headers);
+        const struct strmap_pair *pair;
+        while ((pair = strmap_next(headers)) != NULL)
+            daemon_log(4, "  %s: %s\n", pair->key, pair->value);
+    }
 
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
     embed->async_ref = async_ref;
