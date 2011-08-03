@@ -102,6 +102,10 @@ class _Lookup:
         if m:
             response.view(m.group(1))
             return
+        m = re.match(r'^cookie_host\s+"([-._\w]+)"$', line)
+        if m:
+            response.packet(TRANSLATE_COOKIE_HOST, m.group(1))
+            return
 
         if line == 'process':
             response.process()

@@ -34,8 +34,10 @@ proxy_collect_cookies(struct request *request2, const struct strmap *headers)
             return;
     }
 
-    const char *host_and_port =
-        resource_address_host_and_port(&tr->address, request2->request->pool);
+    const char *host_and_port = request2->translate.response->cookie_host;
+    if (host_and_port == NULL)
+        host_and_port = resource_address_host_and_port(&tr->address,
+                                                       request2->request->pool);
     if (host_and_port == NULL)
         return;
 

@@ -1407,6 +1407,23 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_DUMP_HEADERS:
         client->response.dump_headers = true;
         break;
+
+    case TRANSLATE_COOKIE_HOST:
+        if (client->resource_address == NULL ||
+            client->resource_address->type == RESOURCE_ADDRESS_NONE) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_COOKIE_HOST packet");
+            return false;
+        }
+
+        if (payload == NULL) {
+            translate_client_error(client,
+                                   "malformed TRANSLATE_COOKIE_HOST packet");
+            return false;
+        }
+
+        client->response.cookie_host = payload;
+        break;
     }
 
     return true;

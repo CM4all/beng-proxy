@@ -1,0 +1,3 @@
+cgi "/usr/share/cm4all/beng-proxy/demo/cookie.py"
+script_name "/cookie.py"
+cookie_host "my.cookie.host"

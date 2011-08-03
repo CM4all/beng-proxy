@@ -70,6 +70,7 @@ widget_translate_response(const struct translate_response *response, void *ctx)
     if (class->untrusted_host == NULL)
         /* compatibility with v0.7.16 */
         class->untrusted_host = response->host;
+    class->cookie_host = response->cookie_host;
     class->stateful = response->stateful;
     class->dump_headers = response->dump_headers;
     if (response->views != NULL)

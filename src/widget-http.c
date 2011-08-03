@@ -488,8 +488,9 @@ widget_http_request(pool_t pool, struct widget *widget,
     embed->widget = widget;
     embed->lookup_id = NULL;
     embed->env = env;
-    embed->host_and_port =
-        resource_address_host_and_port(&view->address, pool);
+    embed->host_and_port = widget->class->cookie_host != NULL
+        ? widget->class->cookie_host
+        : resource_address_host_and_port(&view->address, pool);
     embed->transformation = embed->widget->from_request.raw
         ? NULL : view->transformation;
 
@@ -557,8 +558,9 @@ widget_http_lookup(pool_t pool, struct widget *widget, const char *id,
     embed->widget = widget;
     embed->lookup_id = id;
     embed->env = env;
-    embed->host_and_port =
-        resource_address_host_and_port(&view->address, pool);
+    embed->host_and_port = widget->class->cookie_host != NULL
+        ? widget->class->cookie_host
+        : resource_address_host_and_port(&view->address, pool);
     embed->transformation = view->transformation;
 
     headers = widget_request_headers(embed, view,

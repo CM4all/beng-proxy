@@ -165,6 +165,13 @@ enum beng_translation_command {
      * debugging purposes.
      */
     TRANSLATE_DUMP_HEADERS = 72,
+
+    /**
+     * Override the cookie host name.  This host name is used for
+     * storing and looking up cookies in the jar.  It is especially
+     * useful for protocols that don't have a host name, such as CGI.
+     */
+    TRANSLATE_COOKIE_HOST = 73,
 };
 
 struct beng_translation_header {

@@ -127,6 +127,8 @@ struct translate_response {
      */
     const char *authentication_info;
 
+    const char *cookie_host;
+
     struct strmap *headers;
 
     struct widget_view *views;

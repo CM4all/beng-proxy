@@ -40,6 +40,8 @@ struct widget_class {
      */
     const char *untrusted_site_suffix;
 
+    const char *cookie_host;
+
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */
     bool stateful;
