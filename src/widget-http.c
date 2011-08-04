@@ -78,28 +78,7 @@ widget_uri(struct widget *widget)
     if (address == NULL)
         return NULL;
 
-    switch (address->type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_PIPE:
-        return NULL;
-
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
-        return uri_path(address->u.http->uri);
-
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-        if (address->u.cgi.uri != NULL)
-            return address->u.cgi.uri;
-
-        return address->u.cgi.script_name;
-    }
-
-    /* unreachable */
-    assert(false);
-    return NULL;
+    return resource_address_uri_path(address);
 }
 
 static struct strmap *

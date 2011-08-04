@@ -174,4 +174,11 @@ resource_address_relative(const struct resource_address *base,
 const char *
 resource_address_id(const struct resource_address *address, pool_t pool);
 
+/**
+ * Determine the URI path.  May return NULL if unknown or not
+ * applicable.
+ */
+const char *
+resource_address_uri_path(const struct resource_address *address);
+
 #endif

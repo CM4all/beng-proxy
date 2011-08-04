@@ -10,6 +10,7 @@
 #include "uri-verify.h"
 #include "uri-escape.h"
 #include "uri-edit.h"
+#include "uri-extract.h"
 #include "strref.h"
 
 void
@@ -447,4 +448,33 @@ resource_address_id(const struct resource_address *address, pool_t pool)
 
     assert(false);
     return "";
+}
+
+const char *
+resource_address_uri_path(const struct resource_address *address)
+{
+    assert(address != NULL);
+
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
+        return NULL;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        return uri_path(address->u.http->uri);
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        if (address->u.cgi.uri != NULL)
+            return address->u.cgi.uri;
+
+        return address->u.cgi.script_name;
+    }
+
+    /* unreachable */
+    assert(false);
+    return NULL;
 }
