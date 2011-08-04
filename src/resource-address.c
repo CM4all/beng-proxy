@@ -451,6 +451,32 @@ resource_address_id(const struct resource_address *address, pool_t pool)
 }
 
 const char *
+resource_address_host_and_port(const struct resource_address *address,
+                               struct pool *pool)
+{
+    assert(address != NULL);
+    assert(pool != NULL);
+
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        return NULL;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        return uri_host_and_port(pool, address->u.http->uri);
+    }
+
+    /* unreachable */
+    assert(false);
+    return NULL;
+}
+
+const char *
 resource_address_uri_path(const struct resource_address *address)
 {
     assert(address != NULL);
