@@ -75,10 +75,31 @@ static const char *
 widget_uri(struct widget *widget)
 {
     const struct resource_address *address = widget_address(widget);
-    if (address == NULL || address->type != RESOURCE_ADDRESS_HTTP)
+    if (address == NULL)
         return NULL;
 
-    return uri_path(address->u.http->uri);
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
+        return NULL;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        return uri_path(address->u.http->uri);
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        if (address->u.cgi.uri != NULL)
+            return address->u.cgi.uri;
+
+        return address->u.cgi.script_name;
+    }
+
+    /* unreachable */
+    assert(false);
+    return NULL;
 }
 
 static struct strmap *
