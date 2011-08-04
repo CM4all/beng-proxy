@@ -16,11 +16,11 @@
 #include "strref-pool.h"
 
 static void
-proxy_collect_cookies(struct request *request2, const struct strmap *headers,
-                      const char *uri)
+proxy_collect_cookies(struct request *request2, const struct strmap *headers)
 {
+    const struct translate_response *tr = request2->translate.response;
     const char *key = "set-cookie2";
-    const char *cookies, *host_and_port;
+    const char *cookies;
     struct session *session;
 
     if (headers == NULL)
@@ -34,8 +34,13 @@ proxy_collect_cookies(struct request *request2, const struct strmap *headers,
             return;
     }
 
-    host_and_port = uri_host_and_port(request2->request->pool, uri);
+    const char *host_and_port =
+        resource_address_host_and_port(&tr->address, request2->request->pool);
     if (host_and_port == NULL)
+        return;
+
+    const char *path = resource_address_uri_path(&tr->address);
+    if (path == NULL)
         return;
 
     session = request_make_session(request2);
@@ -43,8 +48,7 @@ proxy_collect_cookies(struct request *request2, const struct strmap *headers,
         return;
 
     do {
-        cookie_jar_set_cookie2(session->cookies, cookies, host_and_port,
-                               uri_path(uri));
+        cookie_jar_set_cookie2(session->cookies, cookies, host_and_port, path);
 
         cookies = strmap_get_next(headers, key, cookies);
     } while (cookies != NULL);
@@ -65,9 +69,7 @@ proxy_response(http_status_t status, struct strmap *headers,
            tr->address.type == RESOURCE_ADDRESS_WAS ||
            tr->address.type == RESOURCE_ADDRESS_FASTCGI);
 
-    if (tr->address.type == RESOURCE_ADDRESS_HTTP ||
-        tr->address.type == RESOURCE_ADDRESS_AJP)
-        proxy_collect_cookies(request2, headers, tr->address.u.http->uri);
+    proxy_collect_cookies(request2, headers);
 
     http_response_handler_direct_response(&response_handler, request2,
                                           status, headers, body);
