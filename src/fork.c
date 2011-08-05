@@ -6,7 +6,6 @@
 
 #include "fork.h"
 #include "fd_util.h"
-#include "socket-util.h"
 #include "istream-buffer.h"
 #include "buffered-io.h"
 #include "fd-util.h"
@@ -400,7 +399,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
             return -1;
         }
 
-        ret = socket_set_nonblock(stdin_pipe[1], 1);
+        ret = fd_set_nonblock(stdin_pipe[1], 1);
         if (ret < 0) {
             g_set_error(error_r, fork_quark(), errno,
                         "fcntl(O_NONBLOCK) failed: %s", strerror(errno));
@@ -424,7 +423,7 @@ beng_fork(pool_t pool, istream_t input, istream_t *output_r,
         return -1;
     }
 
-    ret = socket_set_nonblock(stdout_pipe[0], 1);
+    ret = fd_set_nonblock(stdout_pipe[0], 1);
     if (ret < 0) {
         g_set_error(error_r, fork_quark(), errno,
                     "fcntl(O_NONBLOCK) failed: %s", strerror(errno));

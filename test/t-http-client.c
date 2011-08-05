@@ -2,7 +2,7 @@
 #include "http-response.h"
 #include "duplex.h"
 #include "async.h"
-#include "socket-util.h"
+#include "fd-util.h"
 #include "growing-buffer.h"
 #include "header-writer.h"
 #include "lease.h"
@@ -56,7 +56,7 @@ connect_server(const char *path)
 
     close(sv[1]);
 
-    socket_set_nonblock(sv[0], 1);
+    fd_set_nonblock(sv[0], 1);
 
     return sv[0];
 }

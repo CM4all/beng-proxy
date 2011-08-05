@@ -11,7 +11,7 @@
 #include "istream-internal.h"
 #include "istream-buffer.h"
 #include "fd_util.h"
-#include "socket-util.h"
+#include "fd-util.h"
 #include "fifo-buffer.h"
 #include "buffered-io.h"
 #include "pevent.h"
@@ -271,8 +271,8 @@ istream_socketpair_new(pool_t pool, istream_t input, int *fd_r)
         return NULL;
     }
 
-    if (socket_set_nonblock(fds[1], true) < 0) {
-        daemon_log(1, "socket_set_nonblock() failed: %s\n", strerror(errno));
+    if (fd_set_nonblock(fds[1], true) < 0) {
+        daemon_log(1, "fd_set_nonblock() failed: %s\n", strerror(errno));
         close(fds[0]);
         close(fds[1]);
         return NULL;

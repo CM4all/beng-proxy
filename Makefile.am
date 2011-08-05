@@ -227,7 +227,6 @@ HDR = \
 	src/shm.h \
 	src/sink-gstring.h \
 	src/sink-impl.h \
-	src/socket-util.h \
 	src/static-file.h \
 	src/static-headers.h \
 	src/stock.h \
@@ -330,7 +329,6 @@ SRC = src/main.c \
 	src/fd-util.c \
 	src/fd_util.c \
 	src/fd_util.h \
-	src/socket-util.c \
 	src/hostname.c \
 	src/address.c \
 	src/resource-address.c \
@@ -743,7 +741,7 @@ test_run_was_SOURCES = test/run-was.c \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/buffered-io.c \
 	src/direct.c \
-	src/fd_util.c src/fd-util.c src/socket-util.c \
+	src/fd_util.c src/fd-util.c \
 	src/istream-file.c \
 	$(POOL_SRC)
 test_run_was_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
@@ -760,7 +758,7 @@ test_was_mirror_SOURCES = test/was-mirror.c \
 	src/istream-forward.c src/istream-string.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
 	src/direct.c \
-	src/fd_util.c src/fd-util.c src/socket-util.c
+	src/fd_util.c src/fd-util.c
 test_was_mirror_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -794,7 +792,7 @@ test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/growing-buffer.c \
 	src/cookie-client.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
-	src/random.c src/socket-util.c src/fd-util.c \
+	src/random.c src/fd-util.c \
 	src/fd_util.c \
 	src/crash.c \
 	src/session.c src/format.c \
@@ -832,7 +830,7 @@ T_ISTREAM_FILTER_SRC = $(ISTREAM_SRC) \
 	src/buffered-io.c src/event2.c \
 	src/pipe-stock.c src/stock.c \
 	src/fd_util.c \
-	src/growing-buffer.c src/fd-util.c src/socket-util.c
+	src/growing-buffer.c src/fd-util.c
 T_ISTREAM_FILTER_LIB = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(LIBZ_LIBS)
 
 test_t_istream_cat_SOURCES = test/t-istream-cat.c $(T_ISTREAM_FILTER_SRC)
@@ -930,7 +928,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/header-parser.c \
 	src/strmap.c src/hashmap.c \
 	src/event2.c \
-	src/fd_util.c src/socket-util.c src/fd-util.c \
+	src/fd_util.c src/fd-util.c \
 	src/child.c \
 	src/strutil.c \
 	src/stopwatch.c \
@@ -956,7 +954,7 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
 	src/http-body.c src/date.c \
-	src/fd_util.c src/fd-util.c src/socket-util.c \
+	src/fd_util.c src/fd-util.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c \
@@ -986,7 +984,7 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
 	src/http-body.c src/date.c \
-	src/fd_util.c src/fd-util.c src/socket-util.c \
+	src/fd_util.c src/fd-util.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
@@ -1013,7 +1011,7 @@ test_t_http_server_null_SOURCES = test/t-http-server-null.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
 	src/http-body.c src/date.c \
-	src/fd_util.c src/fd-util.c src/socket-util.c \
+	src/fd_util.c src/fd-util.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
@@ -1041,7 +1039,7 @@ test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
 	src/http-body.c src/date.c \
-	src/fd_util.c src/fd-util.c src/socket-util.c \
+	src/fd_util.c src/fd-util.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
@@ -1068,7 +1066,7 @@ test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
 	src/http-body.c src/date.c \
-	src/fd_util.c src/fd-util.c src/socket-util.c \
+	src/fd_util.c src/fd-util.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
@@ -1093,7 +1091,7 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/direct.c \
 	src/http-body.c src/header-parser.c \
 	src/format.c src/strutil.c \
-	src/buffered-io.c src/fd_util.c src/fd-util.c src/socket-util.c \
+	src/buffered-io.c src/fd_util.c src/fd-util.c \
 	src/uri-verify.c \
 	src/stopwatch.c \
 	src/tpool.c src/event2.c
@@ -1162,7 +1160,7 @@ test_t_dpool_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/dpool.c src/dstring.c src/dhashmap.c \
 	src/format.c \
-	src/random.c src/socket-util.c src/fd-util.c src/fd_util.c \
+	src/random.c src/fd-util.c src/fd_util.c \
 	src/crash.c \
 	src/session.c
 test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
@@ -1225,7 +1223,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/crash.c \
 	src/widget-session.c src/session.c \
 	src/widget-view.c src/widget.c \
-	src/random.c src/socket-util.c src/fd-util.c \
+	src/random.c src/fd-util.c \
 	src/fd_util.c \
 	src/args.c src/uri-escape.c src/uri-verify.c \
 	src/format.c \
@@ -1260,7 +1258,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/translate.c src/tstock.c src/growing-buffer.c src/gb-io.c \
 	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
 	src/tcp-stock.c src/client-socket.c \
-	src/fd_util.c src/fd-util.c src/socket-util.c \
+	src/fd_util.c src/fd-util.c \
 	src/stock.c src/hstock.c src/hashmap.c src/strmap.c \
 	src/strutil.c \
 	src/abort-unref.c \
@@ -1426,7 +1424,7 @@ test_run_ajp_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/buffered-io.c src/fifo-buffer.c \
-	src/socket-util.c src/fd-util.c \
+	src/fd-util.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
 	src/istream-string.c \
 	src/event2.c \
@@ -1438,7 +1436,7 @@ test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/buffered-io.c src/fifo-buffer.c \
-	src/socket-util.c src/fd-util.c \
+	src/fd-util.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
 	src/istream-string.c \
 	src/event2.c \
@@ -1483,7 +1481,7 @@ test_t_memcached_client_SOURCES = test/t-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/direct.c \
 	src/fifo-buffer.c src/buffered-io.c \
-	src/socket-util.c src/fd-util.c src/fd_util.c \
+	src/fd-util.c src/fd_util.c \
 	src/event2.c \
 	src/istream-memory.c src/istream-null.c src/istream-cat.c \
 	$(POOL_SRC)

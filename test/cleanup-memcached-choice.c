@@ -7,7 +7,6 @@
 #include "http-cache-choice.h"
 #include "lease.h"
 #include "async.h"
-#include "socket-util.h"
 #include "strref.h"
 #include "strmap.h"
 #include "tpool.h"

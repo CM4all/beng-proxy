@@ -2,7 +2,7 @@
 #include "http-cache-internal.h"
 #include "lease.h"
 #include "async.h"
-#include "socket-util.h"
+#include "fd-util.h"
 #include "strref.h"
 #include "strmap.h"
 #include "tpool.h"
@@ -206,7 +206,7 @@ int main(int argc, char **argv) {
 
     freeaddrinfo(ai);
 
-    socket_set_nonblock(fd, true);
+    fd_set_nonblock(fd, true);
     socket_set_nodelay(fd, true);
 
     /* initialize */

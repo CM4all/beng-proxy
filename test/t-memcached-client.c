@@ -2,7 +2,7 @@
 #include "http-response.h"
 #include "duplex.h"
 #include "async.h"
-#include "socket-util.h"
+#include "fd-util.h"
 #include "growing-buffer.h"
 #include "header-writer.h"
 #include "lease.h"
@@ -57,7 +57,7 @@ connect_fake_server(void)
 
     close(sv[1]);
 
-    socket_set_nonblock(sv[0], true);
+    fd_set_nonblock(sv[0], true);
 
     return sv[0];
 }

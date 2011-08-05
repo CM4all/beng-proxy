@@ -5,7 +5,6 @@
  */
 
 #include "listener.h"
-#include "socket-util.h"
 #include "fd_util.h"
 #include "pool.h"
 

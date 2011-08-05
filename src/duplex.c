@@ -8,7 +8,7 @@
  */
 
 #include "duplex.h"
-#include "socket-util.h"
+#include "fd-util.h"
 #include "fifo-buffer.h"
 #include "event2.h"
 #include "buffered-io.h"
@@ -193,7 +193,7 @@ duplex_new(pool_t pool, int read_fd, int write_fd)
     if (ret < 0)
         return -1;
 
-    if (socket_set_nonblock(fds[1], 1) < 0) {
+    if (fd_set_nonblock(fds[1], 1) < 0) {
         int save_errno = errno;
         close(fds[0]);
         close(fds[1]);

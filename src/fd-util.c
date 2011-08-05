@@ -24,6 +24,12 @@ fd_mask_status_flags(int fd, int and_mask, int xor_mask)
     return fcntl(fd, F_SETFL, (ret & and_mask) ^ xor_mask);
 }
 
+int
+fd_set_nonblock(int fd, bool value)
+{
+    return fd_mask_status_flags(fd, ~O_NONBLOCK, value ? O_NONBLOCK : 0);
+}
+
 bool
 fd_ready_for_writing(int fd)
 {

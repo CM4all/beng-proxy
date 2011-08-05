@@ -6,7 +6,7 @@
 
 #include "random.h"
 #include "fd_util.h"
-#include "socket-util.h"
+#include "fd-util.h"
 
 #include <daemon/log.h>
 
@@ -26,7 +26,7 @@ read_some_entropy(const char *path, guint32 *dest, unsigned max)
         return 0;
     }
 
-    socket_set_nonblock(fd, true);
+    fd_set_nonblock(fd, true);
 
     ssize_t nbytes = read(fd, dest, max * sizeof(dest[0]));
     if (nbytes < 0) {

@@ -7,7 +7,6 @@
 #include "fcgi-remote.h"
 #include "fcgi-client.h"
 #include "http-response.h"
-#include "socket-util.h"
 #include "lease.h"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"

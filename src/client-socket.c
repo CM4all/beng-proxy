@@ -5,7 +5,6 @@
  */
 
 #include "client-socket.h"
-#include "socket-util.h"
 #include "async.h"
 #include "fd_util.h"
 #include "stopwatch.h"
