@@ -97,6 +97,7 @@ ISTREAM_SRC = \
 	src/sink-null.c \
 	src/sink-buffer.c \
 	src/sink-header.c \
+	src/sink-socket.c src/sink-socket.h \
 	$(POOL_SRC)
 
 HDR = \
