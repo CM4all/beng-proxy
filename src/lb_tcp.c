@@ -253,6 +253,8 @@ lb_tcp_stock_timeout(void *ctx)
 {
     struct lb_connection *connection = ctx;
 
+    close(connection->tcp.peers[0].fd);
+
     daemon_log(4, "timeout\n");
 
     lb_connection_remove(connection);
@@ -262,6 +264,8 @@ static void
 lb_tcp_stock_error(GError *error, void *ctx)
 {
     struct lb_connection *connection = ctx;
+
+    close(connection->tcp.peers[0].fd);
 
     daemon_log(3, "%s\n", error->message);
     g_error_free(error);
