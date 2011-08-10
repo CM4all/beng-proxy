@@ -49,10 +49,10 @@ sink_socket_data(const void *data, size_t length, void *ctx)
 
     ssize_t nbytes = send(ss->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes >= 0) {
-        event_add(&ss->event, NULL);
+        sink_socket_schedule_write(ss);
         return nbytes;
     } else if (errno == EAGAIN) {
-        event_add(&ss->event, NULL);
+        sink_socket_schedule_write(ss);
         return 0;
     } else {
         ss->handler->send_error(errno, ss->handler_ctx);
