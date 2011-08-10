@@ -26,8 +26,11 @@ struct sink_socket_handler {
     /**
      * Called when a send error has occurred on the socket, right
      * before the sink is destructed.
+     *
+     * @return true to close the stream, false when this method has
+     * already destructed the sink
      */
-    void (*send_error)(int error, void *ctx);
+    bool (*send_error)(int error, void *ctx);
 };
 
 struct sink_socket *

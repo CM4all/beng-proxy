@@ -158,13 +158,14 @@ first_sink_input_error(GError *error, void *ctx)
     lb_connection_close(connection);
 }
 
-static void
+static bool
 first_sink_send_error(int error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
     daemon_log(3, "Send failed: %s\n", strerror(error));
     lb_connection_close(connection);
+    return false;
 }
 
 static const struct sink_socket_handler first_sink_socket_handler = {
@@ -197,13 +198,14 @@ second_sink_input_error(GError *error, void *ctx)
     lb_connection_close(connection);
 }
 
-static void
+static bool
 second_sink_send_error(int error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
     daemon_log(3, "Send failed: %s\n", strerror(error));
     lb_connection_close(connection);
+    return false;
 }
 
 static const struct sink_socket_handler second_sink_socket_handler = {

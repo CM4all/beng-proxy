@@ -55,8 +55,8 @@ sink_socket_data(const void *data, size_t length, void *ctx)
         sink_socket_schedule_write(ss);
         return 0;
     } else {
-        ss->handler->send_error(errno, ss->handler_ctx);
-        istream_close(ss->input);
+        if (ss->handler->send_error(errno, ss->handler_ctx))
+            istream_close(ss->input);
         return 0;
     }
 }
