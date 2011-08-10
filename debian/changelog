@@ -1,5 +1,6 @@
 cm4all-beng-proxy (1.1.3) unstable; urgency=low
 
+  * widget: quote invalid XMLID/JS characters for &c:prefix;
   * lb: add protocol "tcp"
 
  --

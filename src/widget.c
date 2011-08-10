@@ -8,9 +8,77 @@
 #include "widget-class.h"
 #include "widget-view.h"
 #include "strref-pool.h"
+#include "format.h"
 
 #include <string.h>
 #include <assert.h>
+
+static bool
+valid_prefix_start_char(char ch)
+{
+    return (ch >= 'A' && ch <= 'Z') ||
+        (ch >= 'a' && ch <= 'z') ||
+        ch == '_';
+}
+
+static bool
+valid_prefix_char(char ch)
+{
+    return valid_prefix_start_char(ch) ||
+        (ch >= '0' && ch <= '9');
+}
+
+static size_t
+count_invalid_chars(const char *p)
+{
+    assert(*p != 0);
+
+    size_t n = 0;
+    if (!valid_prefix_start_char(*p))
+        ++n;
+
+    for (++p; *p != 0; ++p)
+        if (!valid_prefix_char(*p))
+            ++n;
+
+    return n;
+}
+
+static char *
+quote_byte(char *p, uint8_t ch)
+{
+    *p++ = '_';
+    format_uint8_hex_fixed(p, ch);
+    return p + 2;
+}
+
+static const char *
+quote_prefix(struct pool *pool, const char *p)
+{
+    if (*p == 0)
+        return p;
+
+    size_t n_quotes = count_invalid_chars(p);
+    if (n_quotes == 0)
+        /* no escaping needed */
+        return p;
+
+    const size_t src_length = strlen(p);
+    char *buffer = p_malloc(pool, src_length + n_quotes * 2 + 1), *q = buffer;
+
+    if (!valid_prefix_start_char(*p))
+        q = quote_byte(q, *p++);
+
+    while (*p != 0) {
+        if (!valid_prefix_char(*p))
+            q = quote_byte(q, *p++);
+        else
+            *q++ = *p++;
+    }
+
+    *q = 0;
+    return buffer;
+}
 
 void
 widget_set_id(struct widget *widget, pool_t pool, const struct strref *id)
@@ -31,7 +99,9 @@ widget_set_id(struct widget *widget, pool_t pool, const struct strref *id)
 
     p = widget_prefix(widget->parent);
     if (p != NULL)
-        widget->lazy.prefix = p_strcat(pool, p, widget->id, "__", NULL);
+        widget->lazy.prefix = p_strcat(pool, p,
+                                       quote_prefix(pool, widget->id),
+                                       "__", NULL);
 }
 
 const struct widget_view *
