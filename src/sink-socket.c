@@ -79,7 +79,9 @@ sink_socket_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         nbytes = istream_direct_to_socket(type, fd, ss->fd, max_length);
     }
 
-    if (likely(nbytes > 0))
+    if (likely(nbytes > 0) && type == ISTREAM_FILE)
+        /* regular files don't have support for EV_READ, and thus the
+           sink is responsible for triggering the next splice */
         sink_socket_schedule_write(ss);
 
     return nbytes;
