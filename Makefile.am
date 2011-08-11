@@ -56,6 +56,14 @@ endif
 # Source files
 #
 
+if ENABLE_STOPWATCH
+STOPWATCH_SRC = \
+	src/istream-stopwatch.c \
+	src/stopwatch.c src/stopwatch.h
+else
+STOPWATCH_SRC =
+endif
+
 POOL_SRC = src/pool.c src/pstring.c
 
 ISTREAM_SRC = \
@@ -231,7 +239,6 @@ HDR = \
 	src/static-file.h \
 	src/static-headers.h \
 	src/stock.h \
-	src/stopwatch.h \
 	src/strmap.h \
 	src/strref-dpool.h \
 	src/strref-pool.h \
@@ -266,6 +273,7 @@ HDR = \
 	test/t-istream-filter.h
 
 SRC = src/main.c \
+	$(STOPWATCH_SRC) \
 	src/clock.h \
 	src/cmdline.c \
 	src/global.c \
@@ -439,10 +447,6 @@ SRC = src/main.c \
 	src/log-glue.c src/log-glue.h \
 	$(HDR)
 
-if ENABLE_STOPWATCH
-SRC += src/stopwatch.c src/istream-stopwatch.c
-endif
-
 #
 # Programs
 #
@@ -513,7 +517,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/event2.c \
 	src/fd_util.c \
 	src/fd-util.c \
-	src/stopwatch.c \
+	$(STOPWATCH_SRC) \
 	src/direct.c \
 	src/access-log.c \
 	src/cookie-server.c \
@@ -900,6 +904,7 @@ test_t_growing_buffer_SOURCES = test/t-growing-buffer.c \
 test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_cgi_SOURCES = test/t-cgi.c \
+	$(STOPWATCH_SRC) \
 	src/cgi.c src/fork.c \
 	$(POOL_SRC) src/tpool.c \
 	src/fifo-buffer.c src/buffered-io.c src/growing-buffer.c \
@@ -909,8 +914,8 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/fd_util.c src/socket-util.c src/fd-util.c \
 	src/child.c \
 	src/strutil.c \
-	src/stopwatch.c \
 	src/crash.c \
+	src/istream-forward.c \
 	src/istream-file.c src/abort-flag.c src/direct.c
 test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -1056,6 +1061,7 @@ test_t_http_server_fixed_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_t_http_client_SOURCES = test/t-http-client.c \
 	src/http-client.c \
 	$(POOL_SRC) \
+	$(STOPWATCH_SRC) \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/header-writer.c \
@@ -1071,7 +1077,6 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/format.c src/strutil.c \
 	src/buffered-io.c src/fd_util.c src/fd-util.c src/socket-util.c \
 	src/uri-verify.c \
-	src/stopwatch.c \
 	src/tpool.c src/event2.c
 test_t_http_client_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS) \
@@ -1242,9 +1247,10 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/uri-escape.c src/uri-relative.c src/uri-verify.c \
 	src/address-list.c \
 	src/format.c \
-	src/stopwatch.c \
 	src/widget-view.c \
 	src/resource-address.c src/transformation.c src/jail.c \
+	src/istream-forward.c \
+	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1313,7 +1319,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
-	src/stopwatch.c \
+	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1347,7 +1353,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
-	src/stopwatch.c \
+	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_t_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1418,6 +1424,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/http-cache-choice.c src/http-cache-rfc.c \
 	src/date.c src/http-util.c src/format.c src/gmtime.c src/strutil.c \
 	src/serialize.c \
+	src/istream-forward.c \
 	src/istream-null.c src/istream-memory.c src/istream-cat.c \
 	src/sink-buffer.c \
 	src/growing-buffer.c \
@@ -1425,7 +1432,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/hashmap.c src/strmap.c \
 	src/event2.c \
 	src/tpool.c \
-	src/stopwatch.c \
+	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
