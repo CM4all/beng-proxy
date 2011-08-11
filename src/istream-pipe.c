@@ -67,6 +67,7 @@ pipe_consume(struct istream_pipe *p)
 
     assert(p->fds[0] >= 0);
     assert(p->piped > 0);
+    assert(p->stock_item != NULL);
 
     nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
     if (unlikely(nbytes == -2 || nbytes == -3))
@@ -84,6 +85,16 @@ pipe_consume(struct istream_pipe *p)
     if (nbytes > 0) {
         assert((size_t)nbytes <= p->piped);
         p->piped -= (size_t)nbytes;
+
+        if (p->piped == 0 && p->stock != NULL) {
+            /* if the pipe was drained, return it to the stock, to
+               make it available to other streams */
+
+            stock_put(p->stock_item, false);
+            p->stock_item = NULL;
+            p->fds[0] = -1;
+            p->fds[1] = -1;
+        }
 
         if (p->piped == 0 && p->input == NULL) {
             /* p->input has already reported EOF, and we have been
