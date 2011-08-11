@@ -25,6 +25,14 @@ struct sink_socket {
     void *handler_ctx;
 
     struct event event;
+
+    /**
+     * This flag is used to determine if the EV_WRITE event shall be
+     * scheduled after a splice().  We need to add the event only if
+     * the splice() was triggered by EV_WRITE, because then we're
+     * responsible for querying more data.
+     */
+    bool got_event;
 };
 
 static void
@@ -33,6 +41,8 @@ sink_socket_schedule_write(struct sink_socket *ss)
     assert(ss != NULL);
     assert(ss->fd >= 0);
     assert(ss->input != NULL);
+
+    ss->got_event = false;
 
     p_event_add(&ss->event, NULL, ss->pool, "sink_socket");
 }
@@ -79,7 +89,7 @@ sink_socket_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         nbytes = istream_direct_to_socket(type, fd, ss->fd, max_length);
     }
 
-    if (likely(nbytes > 0) && type == ISTREAM_FILE)
+    if (likely(nbytes > 0) && (ss->got_event || type == ISTREAM_FILE))
         /* regular files don't have support for EV_READ, and thus the
            sink is responsible for triggering the next splice */
         sink_socket_schedule_write(ss);
@@ -127,6 +137,7 @@ socket_event_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
 
     assert(fd == ss->fd);
 
+    ss->got_event = true;
     istream_read(ss->input);
 
     pool_commit();
@@ -163,6 +174,8 @@ sink_socket_new(struct pool *pool, struct istream *istream,
 
     event_set(&ss->event, fd, EV_WRITE, socket_event_callback, ss);
     sink_socket_schedule_write(ss);
+
+    ss->got_event = false;
 
     return ss;
 }
