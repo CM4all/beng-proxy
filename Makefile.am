@@ -944,6 +944,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/child.c \
 	src/strutil.c \
 	src/crash.c \
+	src/istream-forward.c \
 	src/istream-file.c src/abort-flag.c src/direct.c
 test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -1280,6 +1281,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/format.c \
 	src/widget-view.c \
 	src/resource-address.c src/transformation.c src/jail.c \
+	src/istream-forward.c \
 	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
@@ -1401,6 +1403,7 @@ test_run_client_balancer_SOURCES = test/run-client-balancer.c \
 	src/cache.c \
 	src/hashmap.c \
 	src/fd_util.c \
+	src/istream-forward.c \
 	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_run_client_balancer_LDADD = $(LIBEVENT_LIBS) \
@@ -1473,6 +1476,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/http-cache-choice.c src/http-cache-rfc.c \
 	src/date.c src/http-util.c src/format.c src/gmtime.c src/strutil.c \
 	src/serialize.c \
+	src/istream-forward.c \
 	src/istream-null.c src/istream-memory.c src/istream-cat.c \
 	src/sink-buffer.c \
 	src/growing-buffer.c \
