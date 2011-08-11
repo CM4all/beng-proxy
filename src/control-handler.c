@@ -74,6 +74,8 @@ decode_translation_packets(pool_t pool, struct translate_request *request,
                            const void *data, size_t length,
                            const char **site_r)
 {
+    *site_r = NULL;
+
     unsigned num_cmds = 0;
 
     if (length % 4 != 0)
