@@ -26,6 +26,7 @@ test/t-istream-subst
 test/t-istream-deflate
 test/t-istream-byte
 test/run-parser-cdata
+test/run_css_parser
 test/run-html-unescape
 test/run-html-escape
 test/t-html-escape

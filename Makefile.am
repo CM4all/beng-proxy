@@ -326,6 +326,7 @@ SRC = src/main.c \
 	src/processor.c \
 	src/penv.c src/penv.h \
 	src/parser.c \
+	src/css_parser.c src/css_parser.h \
 	src/rewrite-uri.c \
 	src/resource-loader.c \
 	src/get.c \
@@ -661,6 +662,7 @@ pkgconfig_DATA = libcm4all-beng-proxy.pc libcm4all-istream.pc
 if TEST
 
 noinst_PROGRAMS = \
+	test/run_css_parser \
 	test/run-ping \
 	test/run-was \
 	test/was-mirror \
@@ -1540,6 +1542,13 @@ test_run_parser_cdata_SOURCES = test/t-parser-cdata.c \
 	src/fd_util.c \
 	$(POOL_SRC)
 test_run_parser_cdata_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
+
+test_run_css_parser_SOURCES = test/run_css_parser.c \
+	src/css_parser.c src/istream-file.c \
+	src/fifo-buffer.c src/buffered-io.c \
+	src/fd_util.c \
+	$(POOL_SRC)
+test_run_css_parser_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS)
 
 endif
 
