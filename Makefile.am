@@ -659,6 +659,28 @@ pkgconfig_DATA = libcm4all-beng-proxy.pc libcm4all-istream.pc
 
 if TEST
 
+noinst_PROGRAMS = \
+	test/run-ping \
+	test/run-was \
+	test/was-mirror \
+	test/benchmark-gmtime test/format-http-date \
+	test/request-translation \
+	test/run-subst \
+	test/run-cookie-client \
+	test/run-cookie-server \
+	test/run-header-parser \
+	test/run-html-unescape test/run-html-escape \
+	test/run-processor \
+	test/run-client-balancer \
+	test/run-ajp-client \
+	test/run-memcached-client \
+	test/dump-memcached-choice \
+	test/cleanup-memcached-choice \
+	test/fake-memcached-server \
+	test/run-delegate \
+	test/dump-udp test/dump-control test/send-control \
+	test/run-parser-cdata
+
 FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk \
 	test/t-istream-pipe test/t-istream-hold test/t-istream-delayed \
 	test/t-istream-subst test/t-istream-deflate test/t-istream-byte \
@@ -669,9 +691,6 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 	test/t-istream-processor
 
 check_PROGRAMS = \
-	test/run-ping \
-	test/run-was \
-	test/was-mirror \
 	test/t-hashmap test/t-cache test/t-tcache \
 	test/t-header-forward \
 	test/t-stock \
@@ -695,25 +714,8 @@ check_PROGRAMS = \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-wembed test/t-widget-http \
-	test/benchmark-gmtime test/format-http-date \
-	test/request-translation \
-	test/run-subst \
-	test/run-cookie-client \
-	test/run-cookie-server \
-	test/run-header-parser \
-	test/run-html-unescape test/run-html-escape \
-	test/run-processor \
 	test/t-processor \
-	test/run-client-balancer \
-	test/run-ajp-client \
-	test/run-memcached-client \
-	test/dump-memcached-choice \
-	test/cleanup-memcached-choice \
-	test/fake-memcached-server \
-	test/t-memcached-client \
-	test/run-delegate \
-	test/dump-udp test/dump-control test/send-control \
-	test/run-parser-cdata
+	test/t-memcached-client
 
 TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-header-forward \
