@@ -327,6 +327,7 @@ SRC = src/main.c \
 	src/penv.c src/penv.h \
 	src/parser.c \
 	src/css_parser.c src/css_parser.h \
+	src/css_processor.c src/css_processor.h \
 	src/rewrite-uri.c \
 	src/resource-loader.c \
 	src/get.c \
