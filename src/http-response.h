@@ -7,8 +7,6 @@
 #ifndef __BENG_HTTP_RESPONSE_H
 #define __BENG_HTTP_RESPONSE_H
 
-#include "istream.h"
-
 #include <http/status.h>
 
 #include <glib.h>
@@ -16,11 +14,13 @@
 #include <assert.h>
 #include <stddef.h>
 
+struct pool;
 struct strmap;
+struct istream;
 
 struct http_response_handler {
     void (*response)(http_status_t status, struct strmap *headers,
-                     istream_t body, void *ctx);
+                     struct istream *body, void *ctx);
     void (*abort)(GError *error, void *ctx);
 };
 
@@ -83,7 +83,8 @@ static inline void
 http_response_handler_direct_response(const struct http_response_handler *handler,
                                       void *ctx,
                                       http_status_t status,
-                                      struct strmap *headers, istream_t body)
+                                      struct strmap *headers,
+                                      struct istream *body)
 {
     assert(handler != NULL);
     assert(handler->response != NULL);
@@ -111,13 +112,14 @@ http_response_handler_direct_abort(const struct http_response_handler *handler,
 void
 http_response_handler_direct_message(const struct http_response_handler *handler,
                                      void *ctx,
-                                     pool_t pool,
+                                     struct pool *pool,
                                      http_status_t status, const char *msg);
 
 static inline void
 http_response_handler_invoke_response(struct http_response_handler_ref *ref,
                                       http_status_t status,
-                                      struct strmap *headers, istream_t body)
+                                      struct strmap *headers,
+                                      struct istream *body)
 {
     const struct http_response_handler *handler;
 
@@ -161,7 +163,7 @@ http_response_handler_invoke_abort(struct http_response_handler_ref *ref,
  */
 void
 http_response_handler_invoke_message(struct http_response_handler_ref *ref,
-                                     pool_t pool,
+                                     struct pool *pool,
                                      http_status_t status, const char *msg);
 
 #endif

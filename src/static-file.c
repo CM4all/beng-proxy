@@ -9,6 +9,7 @@
 #include "http-response.h"
 #include "http-error.h"
 #include "strmap.h"
+#include "istream.h"
 
 #include <http/status.h>
 

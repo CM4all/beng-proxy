@@ -6,11 +6,12 @@
 
 #include "http-response.h"
 #include "strmap.h"
+#include "istream.h"
 
 void
 http_response_handler_direct_message(const struct http_response_handler *handler,
                                      void *ctx,
-                                     pool_t pool,
+                                     struct pool *pool,
                                      http_status_t status, const char *msg)
 {
     struct strmap *headers = strmap_new(pool, 2);
@@ -21,7 +22,7 @@ http_response_handler_direct_message(const struct http_response_handler *handler
 
 void
 http_response_handler_invoke_message(struct http_response_handler_ref *ref,
-                                     pool_t pool,
+                                     struct pool *pool,
                                      http_status_t status, const char *msg)
 {
     struct strmap *headers = strmap_new(pool, 2);
