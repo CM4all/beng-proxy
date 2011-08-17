@@ -29,6 +29,7 @@
 #include "instance.h"
 #include "strmap.h"
 #include "processor.h"
+#include "css_processor.h"
 
 #include <daemon/log.h>
 
@@ -253,6 +254,88 @@ response_invoke_processor(struct request *request2,
     }
 }
 
+static bool
+css_processable(const struct strmap *headers)
+{
+    const char *content_type;
+
+    content_type = strmap_get_checked(headers, "content-type");
+    return content_type != NULL &&
+        strncmp(content_type, "text/css", 8) == 0;
+}
+
+static void
+response_invoke_css_processor(struct request *request2,
+                              http_status_t status,
+                              struct strmap *response_headers,
+                              istream_t body)
+{
+    struct http_server_request *request = request2->request;
+
+    assert(!request2->response_sent);
+    assert(body == NULL || !istream_has_handler(body));
+
+    if (body == NULL) {
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+                                  "Empty template cannot be processed");
+        return;
+    }
+
+    if (!css_processable(response_headers)) {
+        istream_close_unused(body);
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
+                                  "Invalid template content type");
+        return;
+    }
+
+    struct widget *widget = p_malloc(request->pool, sizeof(*widget));
+    widget_init(widget, request->pool, &root_widget_class);
+    widget->id = strref_dup(request->pool, &request2->uri.base);
+    widget->lazy.path = "";
+    widget->lazy.prefix = "__";
+
+    if (request2->translate.response->untrusted != NULL) {
+        daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
+                   request2->translate.response->untrusted);
+        istream_close_unused(body);
+        response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
+                                  "Forbidden");
+        return;
+    }
+
+    const char *uri = request2->translate.response->uri != NULL
+        ? request2->translate.response->uri
+        : request->uri;
+
+    if (request2->translate.response->uri != NULL)
+        strref_set_c(&request2->uri.base, request2->translate.response->uri);
+
+    processor_env_init(request->pool, &request2->env,
+                       request2->translate.response->site,
+                       request2->translate.response->untrusted,
+                       request->local_host, request->remote_host,
+                       uri,
+                       request_absolute_uri(request,
+                                            request2->translate.response->scheme,
+                                            request2->translate.response->host,
+                                            uri),
+                       &request2->uri,
+                       request2->args,
+                       request2->session_id,
+                       HTTP_METHOD_GET, request->headers,
+                       NULL);
+
+    body = css_processor(request->pool, body,
+                         widget, &request2->env);
+    assert(body != NULL);
+
+    response_headers = processor_header_forward(request->pool,
+                                                response_headers);
+
+    http_response_handler_direct_response(&response_handler, request2,
+                                          status, response_headers, body);
+}
+
 /**
  * Append response headers set by the translation server.
  */
@@ -413,6 +496,12 @@ response_apply_transformation(struct request *request2,
         response_invoke_processor(request2, status, headers, body,
                                   transformation);
         break;
+
+    case TRANSFORMATION_PROCESS_CSS:
+        /* processor responses cannot be cached */
+        request2->resource_tag = NULL;
+
+        response_invoke_css_processor(request2, status, headers, body);
     }
 }
 

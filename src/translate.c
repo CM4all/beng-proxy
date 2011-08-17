@@ -1424,6 +1424,11 @@ translate_handle_packet(struct translate_client *client,
 
         client->response.cookie_host = payload;
         break;
+
+    case TRANSLATE_PROCESS_CSS:
+        transformation = translate_add_transformation(client);
+        transformation->type = TRANSFORMATION_PROCESS_CSS;
+        break;
     }
 
     return true;

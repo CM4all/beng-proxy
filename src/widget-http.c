@@ -7,6 +7,7 @@
 #include "widget-http.h"
 #include "http-response.h"
 #include "processor.h"
+#include "css_processor.h"
 #include "penv.h"
 #include "widget.h"
 #include "widget-class.h"
@@ -253,6 +254,44 @@ widget_response_process(struct embed *embed, http_status_t status,
     }
 }
 
+static bool
+css_processable(const struct strmap *headers)
+{
+    const char *content_type;
+
+    content_type = strmap_get_checked(headers, "content-type");
+    return content_type != NULL &&
+        strncmp(content_type, "text/css", 8) == 0;
+}
+
+static void
+widget_response_process_css(struct embed *embed, http_status_t status,
+                            struct strmap *headers, istream_t body)
+{
+    if (body == NULL) {
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "widget '%s' didn't send a response body",
+                        widget_path(embed->widget));
+        widget_dispatch_error(embed, error);
+        return;
+    }
+
+    if (!css_processable(headers)) {
+        istream_close_unused(body);
+
+        GError *error =
+            g_error_new(widget_quark(), 0,
+                        "widget '%s' sent non-CSS response",
+                        widget_path(embed->widget));
+        widget_dispatch_error(embed, error);
+        return;
+    }
+
+    body = css_processor(embed->pool, body, embed->widget, embed->env);
+    widget_response_dispatch(embed, status, headers, body);
+}
+
 static void
 widget_response_apply_filter(struct embed *embed, http_status_t status,
                              struct strmap *headers, istream_t body,
@@ -314,6 +353,13 @@ widget_response_transform(struct embed *embed, http_status_t status,
 
         widget_response_process(embed, status, headers, body,
                                 transformation->u.processor.options);
+        break;
+
+    case TRANSFORMATION_PROCESS_CSS:
+        /* processor responses cannot be cached */
+        embed->resource_tag = NULL;
+
+        widget_response_process_css(embed, status, headers, body);
         break;
 
     case TRANSFORMATION_FILTER:

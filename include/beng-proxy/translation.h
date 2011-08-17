@@ -172,6 +172,11 @@ enum beng_translation_command {
      * useful for protocols that don't have a host name, such as CGI.
      */
     TRANSLATE_COOKIE_HOST = 73,
+
+    /**
+     * Run the CSS processor.
+     */
+    TRANSLATE_PROCESS_CSS = 74,
 };
 
 struct beng_translation_header {

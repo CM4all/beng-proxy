@@ -76,6 +76,10 @@ my_translate_response(const struct translate_response *response,
                 printf("process\n");
                 break;
 
+            case TRANSFORMATION_PROCESS_CSS:
+                printf("process_css\n");
+                break;
+
             case TRANSFORMATION_FILTER:
                 printf("filter\n");
                 print_resource_address(&transformation->u.filter);
