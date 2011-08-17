@@ -5,6 +5,7 @@
 #include "widget-resolver.h"
 #include "processor.h"
 #include "async.h"
+#include "http-response.h"
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -7,9 +7,10 @@
 #include "processor.h"
 #include "session.h"
 #include "strmap.h"
+#include "istream.h"
 
 void
-processor_env_init(pool_t pool, struct processor_env *env,
+processor_env_init(struct pool *pool, struct processor_env *env,
                    const char *site_name,
                    const char *untrusted_host,
                    const char *local_host,
@@ -21,7 +22,7 @@ processor_env_init(pool_t pool, struct processor_env *env,
                    session_id_t session_id,
                    http_method_t method,
                    struct strmap *request_headers,
-                   istream_t request_body)
+                   struct istream *request_body)
 {
     assert(request_body == NULL || !istream_has_handler(request_body));
 

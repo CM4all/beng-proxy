@@ -9,6 +9,7 @@
 #include "request-forward.h"
 #include "http-server.h"
 #include "http-cache.h"
+#include "http-response.h"
 #include "uri-address.h"
 #include "global.h"
 #include "cookie-client.h"

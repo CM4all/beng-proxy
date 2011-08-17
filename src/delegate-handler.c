@@ -12,6 +12,7 @@
 #include "header-writer.h"
 #include "growing-buffer.h"
 #include "http-server.h"
+#include "http-response.h"
 #include "global.h"
 
 #include <assert.h>

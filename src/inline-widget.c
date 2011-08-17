@@ -13,6 +13,7 @@
 #include "async.h"
 #include "global.h"
 #include "http-util.h"
+#include "http-response.h"
 #include "strref-pool.h"
 #include "strref2.h"
 #include "strmap.h"

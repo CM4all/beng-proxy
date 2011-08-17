@@ -9,6 +9,7 @@
 #include "connection.h"
 #include "instance.h"
 #include "http-server.h"
+#include "http-response.h"
 #include "tcache.h"
 #include "get.h"
 

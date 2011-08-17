@@ -7,8 +7,6 @@
 #ifndef __BENG_PROCESSOR_H
 #define __BENG_PROCESSOR_H
 
-#include "istream.h"
-#include "http-response.h"
 #include "session.h"
 
 #include <http/method.h>
@@ -29,7 +27,7 @@ struct widget_lookup_handler;
 struct async_operation_ref;
 
 struct processor_env {
-    pool_t pool;
+    struct pool *pool;
 
     const char *site_name;
 
@@ -69,13 +67,13 @@ struct processor_env {
 
     struct strmap *request_headers;
 
-    istream_t request_body;
+    struct istream *request_body;
 
     session_id_t session_id;
 };
 
 void
-processor_env_init(pool_t pool,
+processor_env_init(struct pool *pool,
                    struct processor_env *env,
                    const char *site_name,
                    const char *untrusted_host,
@@ -88,18 +86,18 @@ processor_env_init(pool_t pool,
                    session_id_t session_id,
                    http_method_t method,
                    struct strmap *request_headers,
-                   istream_t request_body);
+                   struct istream *request_body);
 
 struct strmap *
-processor_header_forward(pool_t pool, struct strmap *headers);
+processor_header_forward(struct pool *pool, struct strmap *headers);
 
 /**
  * Process the specified istream, and return the processed stream.
  *
  * @param widget the widget that represents the template
  */
-istream_t
-processor_process(pool_t pool, istream_t istream,
+struct istream *
+processor_process(struct pool *pool, struct istream *istream,
                   struct widget *widget,
                   struct processor_env *env,
                   unsigned options);
@@ -111,8 +109,8 @@ processor_process(pool_t pool, istream_t istream,
  * @param id the id of the widget to be looked up
  */
 void
-processor_lookup_widget(pool_t pool, http_status_t status,
-                        istream_t istream,
+processor_lookup_widget(struct pool *pool, http_status_t status,
+                        struct istream *istream,
                         struct widget *widget, const char *id,
                         struct processor_env *env,
                         unsigned options,

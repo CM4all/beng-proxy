@@ -5,6 +5,7 @@
  */
 
 #include "widget-http.h"
+#include "http-response.h"
 #include "processor.h"
 #include "widget.h"
 #include "widget-class.h"

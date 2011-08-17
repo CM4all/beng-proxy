@@ -12,6 +12,7 @@
 #include "widget-resolver.h"
 #include "widget-lookup.h"
 #include "global.h"
+#include "http-response.h"
 
 #include <daemon/log.h>
 

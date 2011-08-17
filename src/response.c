@@ -7,6 +7,7 @@
 #include "request.h"
 #include "transformation.h"
 #include "http-server.h"
+#include "http-response.h"
 #include "header-writer.h"
 #include "header-forward.h"
 #include "widget.h"
