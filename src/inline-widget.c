@@ -6,7 +6,7 @@
 
 #include "inline-widget.h"
 #include "widget-http.h"
-#include "processor.h"
+#include "penv.h"
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-resolver.h"
@@ -17,6 +17,7 @@
 #include "strref-pool.h"
 #include "strref2.h"
 #include "strmap.h"
+#include "http-response.h"
 
 #include <daemon/log.h>
 

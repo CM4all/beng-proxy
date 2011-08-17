@@ -5,6 +5,7 @@
  */
 
 #include "processor.h"
+#include "penv.h"
 #include "parser.h"
 #include "uri-escape.h"
 #include "widget.h"

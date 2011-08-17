@@ -6,7 +6,7 @@
 
 #include "frame.h"
 #include "widget-http.h"
-#include "processor.h"
+#include "penv.h"
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-resolver.h"

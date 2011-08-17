@@ -4,6 +4,7 @@
 #include "widget-http.h"
 #include "widget-resolver.h"
 #include "processor.h"
+#include "penv.h"
 #include "async.h"
 #include "http-response.h"
 

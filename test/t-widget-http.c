@@ -9,6 +9,7 @@
 #include "get.h"
 #include "http-response.h"
 #include "processor.h"
+#include "penv.h"
 #include "async.h"
 #include "fcache.h"
 #include "transformation.h"

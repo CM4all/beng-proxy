@@ -7,7 +7,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "session.h"
-#include "processor.h"
+#include "penv.h"
 #include "uri-parser.h"
 #include "uri-relative.h"
 #include "strref-dpool.h"

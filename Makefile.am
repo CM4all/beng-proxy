@@ -324,7 +324,7 @@ SRC = src/main.c \
 	src/proxy-widget.c \
 	src/html-escape.c \
 	src/processor.c \
-	src/penv.c \
+	src/penv.c src/penv.h \
 	src/parser.c \
 	src/rewrite-uri.c \
 	src/resource-loader.c \

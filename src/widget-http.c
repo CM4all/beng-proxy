@@ -7,6 +7,7 @@
 #include "widget-http.h"
 #include "http-response.h"
 #include "processor.h"
+#include "penv.h"
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-lookup.h"

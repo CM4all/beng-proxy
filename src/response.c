@@ -28,6 +28,7 @@
 #include "connection.h"
 #include "instance.h"
 #include "strmap.h"
+#include "processor.h"
 
 #include <daemon/log.h>
 

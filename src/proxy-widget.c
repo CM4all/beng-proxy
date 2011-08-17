@@ -16,6 +16,7 @@
 #include "http-server.h"
 #include "http-util.h"
 #include "http-response.h"
+#include "processor.h"
 #include "global.h"
 
 #include <daemon/log.h>

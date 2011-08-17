@@ -1,4 +1,5 @@
 #include "processor.h"
+#include "penv.h"
 #include "uri-parser.h"
 #include "inline-widget.h"
 #include "widget.h"
