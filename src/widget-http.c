@@ -21,6 +21,7 @@
 #include "global.h"
 #include "resource-tag.h"
 #include "uri-extract.h"
+#include "strmap.h"
 
 #include <daemon/log.h>
 

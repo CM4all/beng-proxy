@@ -10,6 +10,7 @@
 #include "static-headers.h"
 #include "http-response.h"
 #include "http-error.h"
+#include "strmap.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

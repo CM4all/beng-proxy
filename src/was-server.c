@@ -17,6 +17,7 @@
 #include "fifo-buffer.h"
 #include "buffered-io.h"
 #include "fd-util.h"
+#include "strmap.h"
 
 #include <was/protocol.h>
 #include <daemon/log.h>

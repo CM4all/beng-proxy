@@ -20,6 +20,7 @@
 #include "pipe.h"
 #include "delegate-request.h"
 #include "strutil.h"
+#include "strmap.h"
 
 #include <string.h>
 #include <stdlib.h>

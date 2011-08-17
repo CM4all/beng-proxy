@@ -20,6 +20,7 @@
 #include "global.h"
 #include "expansible-buffer.h"
 #include "html-escape.h"
+#include "strmap.h"
 
 #include <daemon/log.h>
 

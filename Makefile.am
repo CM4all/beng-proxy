@@ -192,7 +192,6 @@ HDR = \
 	src/http-client.h \
 	src/http-error.h \
 	src/http-request.h \
-	src/http-response.h \
 	src/http-server-internal.h \
 	src/http-server.h \
 	src/http-string.h \
@@ -351,6 +350,7 @@ SRC = src/main.c \
 	src/header-parser.c \
 	src/header-writer.c \
 	src/header-forward.c \
+	src/http-response.c src/http-response.h \
 	src/http-string.c \
 	src/http-body.c \
 	src/http-server.c \

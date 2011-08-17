@@ -15,6 +15,7 @@
 #include "http-util.h"
 #include "strref-pool.h"
 #include "strref2.h"
+#include "strmap.h"
 
 #include <daemon/log.h>
 

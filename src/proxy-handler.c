@@ -14,6 +14,7 @@
 #include "cookie-client.h"
 #include "uri-extract.h"
 #include "strref-pool.h"
+#include "strmap.h"
 
 static void
 proxy_collect_cookies(struct request *request2, const struct strmap *headers)

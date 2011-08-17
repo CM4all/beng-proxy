@@ -23,6 +23,7 @@
 #include "uri-verify.h"
 #include "direct.h"
 #include "fd-util.h"
+#include "strmap.h"
 
 #include <daemon/log.h>
 #include <socket/util.h>

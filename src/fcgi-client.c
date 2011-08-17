@@ -20,6 +20,7 @@
 #include "pevent.h"
 #include "direct.h"
 #include "fd-util.h"
+#include "strmap.h"
 
 #include <glib.h>
 

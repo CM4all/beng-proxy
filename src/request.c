@@ -15,6 +15,7 @@
 #include "args.h"
 #include "bot.h"
 #include "dpool.h"
+#include "strmap.h"
 
 #include <daemon/log.h>
 

@@ -9,6 +9,7 @@
 #include "fork.h"
 #include "format.h"
 #include "stopwatch.h"
+#include "strmap.h"
 
 #include <daemon/log.h>
 

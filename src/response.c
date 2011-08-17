@@ -26,6 +26,7 @@
 #include "errdoc.h"
 #include "connection.h"
 #include "instance.h"
+#include "strmap.h"
 
 #include <daemon/log.h>
 

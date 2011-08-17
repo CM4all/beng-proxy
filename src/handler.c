@@ -22,6 +22,7 @@
 #include "expiry.h"
 #include "uri-escape.h"
 #include "strutil.h"
+#include "strmap.h"
 
 #include <daemon/log.h>
 

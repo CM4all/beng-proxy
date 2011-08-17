@@ -23,6 +23,7 @@
 #include "fd-util.h"
 #include "fd_util.h"
 #include "stopwatch.h"
+#include "strmap.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>

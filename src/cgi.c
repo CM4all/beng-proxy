@@ -15,6 +15,7 @@
 #include "abort-flag.h"
 #include "stopwatch.h"
 #include "jail.h"
+#include "strmap.h"
 
 #include <daemon/log.h>
 
