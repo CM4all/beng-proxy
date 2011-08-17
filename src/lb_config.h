@@ -95,6 +95,8 @@ struct lb_cluster_config {
      */
     enum lb_protocol protocol;
 
+    bool mangle_via;
+
     struct lb_fallback_config fallback;
 
     enum sticky_mode sticky_mode;

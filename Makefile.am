@@ -549,6 +549,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_connection.c \
 	src/lb_http.h \
 	src/lb_http.c \
+	src/lb_headers.c src/lb_headers.h \
 	src/lb_tcp.h \
 	src/lb_tcp.c \
 	src/lb_session.h \

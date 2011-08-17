@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.5) unstable; urgency=low
 
-  * 
+  * lb: optionally generate Via and X-Forwarded-For
 
  --
 

@@ -10,6 +10,7 @@
 #include "lb_config.h"
 #include "lb_session.h"
 #include "lb_cookie.h"
+#include "lb_headers.h"
 #include "ssl_filter.h"
 #include "address-envelope.h"
 #include "http-server.h"
@@ -136,8 +137,13 @@ my_stock_ready(struct stock_item *item, void *ctx)
 
     request2->stock_item = item;
 
-    struct growing_buffer *headers2 = headers_dup(request->pool,
-                                                  request->headers);
+    struct strmap *headers =
+        lb_forward_request_headers(request->pool, request->headers,
+                                   request->local_host,
+                                   request->remote_host,
+                                   request2->connection->listener->cluster->mangle_via);
+
+    struct growing_buffer *headers2 = headers_dup(request->pool, headers);
 
     http_client_request(request->pool,
                         tcp_stock_item_get(item),

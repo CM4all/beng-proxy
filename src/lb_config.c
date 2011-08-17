@@ -497,6 +497,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
         p_malloc(parser->config->pool, sizeof(*cluster));
     cluster->name = p_strdup(parser->config->pool, name);
     cluster->protocol = LB_PROTOCOL_HTTP;
+    cluster->mangle_via = false;
     lb_fallback_config_init(&cluster->fallback);
     cluster->sticky_mode = STICKY_NONE;
     cluster->session_cookie = "beng_proxy_session";
@@ -682,6 +683,14 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 cluster->protocol = LB_PROTOCOL_TCP;
             else
                 return throw(error_r, "Unknown protocol");
+
+            return true;
+        } else if (strcmp(word, "mangle_via") == 0) {
+            if (!next_bool(&p, &cluster->mangle_via, error_r))
+                return false;
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
 
             return true;
         } else if (strcmp(word, "fallback") == 0) {
