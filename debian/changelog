@@ -1,8 +1,9 @@
 cm4all-beng-proxy (1.0.3) unstable; urgency=low
 
+  * merge release 0.9.35
   * control-handler: fix uninitialized variable
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Thu, 18 Aug 2011 15:15:52 +0200
 
 cm4all-beng-proxy (1.0.2) unstable; urgency=low
 
