@@ -91,7 +91,6 @@ ISTREAM_SRC = \
 	src/istream-fail.c \
 	src/istream-inject.c \
 	src/istream-catch.c \
-	src/istream-html-escape.c \
 	src/istream-later.c \
 	src/istream-head.c \
 	src/istream-tee.c \
@@ -184,7 +183,6 @@ HDR = \
 	src/header-writer.h \
 	src/hostname.h \
 	src/html-chars.h \
-	src/html-escape.h \
 	src/http-body.h \
 	src/http-cache-choice.h \
 	src/http-cache-internal.h \
@@ -322,7 +320,11 @@ SRC = src/main.c \
 	src/widget-dump.h \
 	src/widget-dump.c \
 	src/proxy-widget.c \
-	src/html-escape.c \
+	src/escape_class.h \
+	src/escape_pool.c src/escape_pool.h \
+	src/escape_html.c src/escape_html.h \
+	src/istream-escape.c src/istream-escape.h \
+	src/istream-html-escape.c \
 	src/processor.c \
 	src/penv.c src/penv.h \
 	src/parser.c \
@@ -886,13 +888,20 @@ test_t_istream_replace_LDADD = $(T_ISTREAM_FILTER_LIB)
 test_t_istream_replace2_SOURCES = test/t-istream-replace2.c $(T_ISTREAM_FILTER_SRC)
 test_t_istream_replace2_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_html_escape_SOURCES = test/t-istream-html-escape.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_html_escape_SOURCES = \
+	src/escape_html.c \
+	src/istream-escape.c \
+	src/istream-html-escape.c \
+	test/t-istream-html-escape.c $(T_ISTREAM_FILTER_SRC)
 test_t_istream_html_escape_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_fcgi_SOURCES = test/t-istream-cat.c $(T_ISTREAM_FILTER_SRC)
 test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_processor_SOURCES = test/t-istream-processor.c \
+	src/escape_html.c \
+	src/istream-escape.c \
+	src/istream-html-escape.c \
 	src/uri-relative.c src/uri-parser.c src/uri-escape.c src/uri-edit.c \
 	src/uri-verify.c \
 	src/random.c \
@@ -901,7 +910,6 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/http-string.c \
 	src/strmap.c src/hashmap.c \
 	src/penv.c src/processor.c \
-	src/html-escape.c \
 	src/widget-request.c \
 	src/widget.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/parser.c src/widget-class.c \
@@ -1185,6 +1193,10 @@ test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	$(POOL_SRC) src/tpool.c \
+	src/escape_html.c \
+	src/escape_pool.c \
+	src/istream-escape.c \
+	src/istream-html-escape.c \
 	src/rewrite-uri.c src/widget-uri.c src/widget.c \
 	src/widget-view.c src/transformation.c \
 	src/istream-null.c src/istream-delayed.c src/istream-memory.c \
@@ -1197,7 +1209,6 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/jail.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
 	src/uri-verify.c src/uri-extract.c \
-	src/html-escape.c src/istream-html-escape.c \
 	src/format.c
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1227,6 +1238,8 @@ test_t_wembed_SOURCES = test/t-wembed.c \
 	src/istream-null.c src/istream-iconv.c \
 	src/istream-string.c src/istream-memory.c \
 	src/istream-cat.c src/istream-html-escape.c \
+	src/istream-escape.c \
+	src/escape_html.c \
 	src/fifo-buffer.c \
 	src/hashmap.c src/strmap.c \
 	src/http-util.c src/strutil.c \
@@ -1255,6 +1268,8 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/strutil.c src/http-string.c src/http-util.c \
+	src/istream-escape.c \
+	src/escape_html.c \
 	src/istream-string.c src/istream-iconv.c src/istream-html-escape.c \
 	src/istream-cat.c src/istream-forward.c src/istream-memory.c \
 	src/istream-null.c \
@@ -1325,14 +1340,23 @@ test_run_header_parser_SOURCES = test/run-header-parser.c \
 	$(POOL_SRC)
 test_run_header_parser_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
-test_run_html_unescape_SOURCES = test/run-html-unescape.c src/html-escape.c
-test_run_html_escape_SOURCES = test/run-html-escape.c src/html-escape.c
+test_run_html_unescape_SOURCES = \
+	src/escape_static.c \
+	src/escape_html.c \
+	test/run-html-unescape.c
+test_run_html_escape_SOURCES = \
+	src/escape_static.c \
+	src/escape_html.c \
+	test/run-html-escape.c
 
-test_t_html_escape_SOURCES = test/t-html-escape.c src/html-escape.c
+test_t_html_escape_SOURCES = \
+	src/escape_html.c \
+	src/escape_static.c \
+	test/t-html-escape.c
 
 test_run_processor_SOURCES = test/run-processor.c \
 	src/processor.c src/penv.c src/parser.c \
-	src/html-escape.c \
+	src/escape_html.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c \
@@ -1366,7 +1390,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 
 test_t_processor_SOURCES = test/t-processor.c \
 	src/processor.c src/penv.c src/parser.c \
-	src/html-escape.c \
+	src/escape_html.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c \

@@ -7,8 +7,8 @@
 #include "sink-gstring.h"
 #include "tpool.h"
 #include "async.h"
-#include "html-escape.h"
-#include "strref-pool.h"
+#include "escape_pool.h"
+#include "escape_html.h"
 
 #include <glib.h>
 
@@ -151,15 +151,14 @@ assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
 
     if (value != NULL) {
         strref_set_c(&value2, value);
-        html_escape(&value2);
-        strref_set_dup(widget_pool, &value2, &value2);
+        strref_set_c(&value2,
+                     escape_dup(widget_pool, &html_escape_class,
+                                value2.data, value2.length));
     }
 
     if (result != NULL) {
-        struct strref result2;
-        strref_set_c(&result2, result);
-        html_escape(&result2);
-        result = strref_dup(widget_pool, &result2);
+        result = escape_dup(widget_pool, &html_escape_class,
+                            result, strlen(result));
     }
 
     istream = rewrite_widget_uri(pool, widget_pool, (struct tcache *)0x1,

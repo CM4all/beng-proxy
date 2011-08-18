@@ -20,7 +20,6 @@
 #include "strref-pool.h"
 #include "global.h"
 #include "expansible-buffer.h"
-#include "html-escape.h"
 
 #include <daemon/log.h>
 

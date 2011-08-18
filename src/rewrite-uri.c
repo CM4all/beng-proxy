@@ -12,7 +12,8 @@
 #include "uri-parser.h"
 #include "uri-extract.h"
 #include "tpool.h"
-#include "html-escape.h"
+#include "escape_class.h"
+#include "escape_html.h"
 #include "strmap.h"
 
 #include <daemon/log.h>
@@ -227,7 +228,8 @@ class_lookup_callback(void *ctx)
         if (rwu->value != NULL && strref_chr(rwu->value, '&') != NULL) {
             pool_mark(tpool, &mark);
             char *unescaped2 = strref_set_dup(tpool, &unescaped, rwu->value);
-            unescaped.length = html_unescape_inplace(unescaped2, unescaped.length);
+            unescaped.length = unescape_inplace(&html_escape_class,
+                                                unescaped2, unescaped.length);
             rwu->value = &unescaped;
         }
 
@@ -289,7 +291,8 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
         if (value != NULL && strref_chr(value, '&') != NULL) {
             pool_mark(tpool, &mark);
             char *unescaped2 = strref_set_dup(tpool, &unescaped, value);
-            unescaped.length = html_unescape_inplace(unescaped2, unescaped.length);
+            unescaped.length = unescape_inplace(&html_escape_class,
+                                                unescaped2, unescaped.length);
             value = &unescaped;
         }
 
