@@ -1,5 +1,6 @@
 cm4all-beng-proxy (1.1.6) unstable; urgency=low
 
+  * merge release 1.0.3
   * implement CSS processor
 
  --
@@ -50,6 +51,13 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.3) unstable; urgency=low
+
+  * merge release 0.9.35
+  * control-handler: fix uninitialized variable
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 18 Aug 2011 15:15:52 +0200
+
 cm4all-beng-proxy (1.0.2) unstable; urgency=low
 
   * merge release 0.9.34
@@ -178,6 +186,12 @@ cm4all-beng-proxy (0.10) unstable; urgency=low
   * lb: new stand-alone load balancer
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 26 May 2011 14:32:02 +0200
+
+cm4all-beng-proxy (0.9.35) unstable; urgency=low
+
+  * resource-loader: pass the last X-Forwarded-For element to AJP
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 18 Aug 2011 15:05:02 +0200
 
 cm4all-beng-proxy (0.9.34) unstable; urgency=low
 
