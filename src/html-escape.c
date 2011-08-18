@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <string.h>
 
-static char buffer[1024];
+static char buffer[8192];
 
 static size_t
 copy_to_buffer(size_t pos, const char *src, size_t length)
