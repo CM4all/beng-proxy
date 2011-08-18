@@ -9,6 +9,7 @@
 #include "get.h"
 #include "http-response.h"
 #include "processor.h"
+#include "css_processor.h"
 #include "penv.h"
 #include "async.h"
 #include "fcache.h"
@@ -70,6 +71,14 @@ processor_lookup_widget(__attr_unused pool_t pool,
                         __attr_unused struct async_operation_ref *async_ref)
 {
     handler->not_found(handler_ctx);
+}
+
+struct istream *
+css_processor(__attr_unused struct pool *pool, struct istream *stream,
+              __attr_unused struct widget *widget,
+              __attr_unused struct processor_env *env)
+{
+    return stream;
 }
 
 struct filter_cache;
