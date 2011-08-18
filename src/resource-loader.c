@@ -55,26 +55,27 @@ resource_loader_new(pool_t pool, struct tcp_balancer *tcp_balancer,
 }
 
 static const char *
-extract_remote_host(pool_t pool, const struct strmap *headers)
+extract_remote_addr(const struct strmap *headers)
 {
-    const char *p = strmap_get_checked(headers, "x-forwarded-for");
+    const char *xff = strmap_get_checked(headers, "x-forwarded-for");
+    if (xff == NULL)
+        return NULL;
+
+    /* extract the last host name in X-Forwarded-For */
+    const char *p = strrchr(xff, ',');
     if (p == NULL)
-        return "";
+        p = xff;
 
-    const char *end = strchr(p, ',');
-    if (end == NULL)
-        end = p + strlen(p);
+    while (*p == ' ')
+        ++p;
 
-    while (end > p && char_is_whitespace(end[-1]))
-        --end;
-
-    return p_strndup(pool, p, end - p);
+    return p;
 }
 
 static const char *
 extract_remote_ip(pool_t pool, const struct strmap *headers)
 {
-    const char *p = extract_remote_host(pool, headers);
+    const char *p = extract_remote_addr(headers);
     if (p == NULL)
         return p;
 
