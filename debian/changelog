@@ -3,7 +3,7 @@ cm4all-beng-proxy (1.1.6) unstable; urgency=low
   * merge release 1.0.3
   * implement CSS processor
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 22 Aug 2011 17:13:56 +0200
 
 cm4all-beng-proxy (1.1.5) unstable; urgency=low
 
