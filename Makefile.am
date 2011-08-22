@@ -323,6 +323,7 @@ SRC = src/main.c \
 	src/escape_class.h \
 	src/escape_pool.c src/escape_pool.h \
 	src/escape_html.c src/escape_html.h \
+	src/escape_css.c src/escape_css.h \
 	src/istream-escape.c src/istream-escape.h \
 	src/istream-html-escape.c \
 	src/processor.c \
@@ -703,6 +704,7 @@ check_PROGRAMS = \
 	test/t-resource-address \
 	test/t-uri-relative \
 	test/t-html-escape \
+	test/t-escape-css \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
@@ -729,6 +731,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-resource-address \
 	test/t-uri-relative \
 	test/t-html-escape \
+	test/t-escape-css \
 	test/t-expansible-buffer \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
@@ -1353,6 +1356,11 @@ test_t_html_escape_SOURCES = \
 	src/escape_html.c \
 	src/escape_static.c \
 	test/t-html-escape.c
+
+test_t_escape_css_SOURCES = \
+	src/escape_css.c \
+	src/escape_static.c \
+	test/t-escape-css.c
 
 test_run_processor_SOURCES = test/run-processor.c \
 	src/processor.c src/penv.c src/parser.c \
