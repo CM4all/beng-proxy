@@ -165,7 +165,7 @@ assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
                                  NULL, &external_uri, NULL, NULL,
                                  NULL, widget, 1,
                                  value != NULL ? &value2 : NULL,
-                                 mode, stateful);
+                                 mode, stateful, &html_escape_class);
     if (result == NULL)
         assert(istream == NULL);
     else

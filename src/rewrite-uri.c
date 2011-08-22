@@ -13,7 +13,7 @@
 #include "uri-extract.h"
 #include "tpool.h"
 #include "escape_class.h"
-#include "escape_html.h"
+#include "istream-escape.h"
 #include "strmap.h"
 
 #include <daemon/log.h>
@@ -202,6 +202,8 @@ struct rewrite_widget_uri {
     enum uri_mode mode;
     bool stateful;
 
+    const struct escape_class *escape;
+
     istream_t delayed;
 };
 
@@ -228,7 +230,7 @@ class_lookup_callback(void *ctx)
         if (rwu->value != NULL && strref_chr(rwu->value, '&') != NULL) {
             pool_mark(tpool, &mark);
             char *unescaped2 = strref_set_dup(tpool, &unescaped, rwu->value);
-            unescaped.length = unescape_inplace(&html_escape_class,
+            unescaped.length = unescape_inplace(rwu->escape,
                                                 unescaped2, unescaped.length);
             rwu->value = &unescaped;
         }
@@ -253,8 +255,8 @@ class_lookup_callback(void *ctx)
         istream = istream_memory_new(rwu->pool,
                                      rwu->value->data, rwu->value->length);
 
-        if (escape)
-            istream = istream_html_escape_new(rwu->pool, istream);
+        if (escape && rwu->escape != NULL)
+            istream = istream_escape_new(rwu->pool, istream, rwu->escape);
     } else
         istream = istream_null_new(rwu->pool);
 
@@ -281,17 +283,19 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct strmap *args, struct widget *widget,
                    session_id_t session_id,
                    const struct strref *value,
-                   enum uri_mode mode, bool stateful)
+                   enum uri_mode mode, bool stateful,
+                   const struct escape_class *escape)
 {
     const char *uri;
 
     if (widget->class != NULL) {
         struct pool_mark mark;
         struct strref unescaped;
-        if (value != NULL && strref_chr(value, '&') != NULL) {
+        if (escape != NULL && value != NULL &&
+            unescape_find(escape, value->data, value->length) != NULL) {
             pool_mark(tpool, &mark);
             char *unescaped2 = strref_set_dup(tpool, &unescaped, value);
-            unescaped.length = unescape_inplace(&html_escape_class,
+            unescaped.length = unescape_inplace(escape,
                                                 unescaped2, unescaped.length);
             value = &unescaped;
         }
@@ -306,7 +310,8 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
             return NULL;
 
         istream_t istream = istream_string_new(pool, uri);
-        istream = istream_html_escape_new(pool, istream);
+        if (escape != NULL)
+            istream = istream_escape_new(pool, istream, escape);
 
         return istream;
     } else {
@@ -329,6 +334,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
 
         rwu->mode = mode;
         rwu->stateful = stateful;
+        rwu->escape = escape;
         rwu->delayed = istream_delayed_new(pool);
 
         widget_resolver_new(pool, widget_pool,

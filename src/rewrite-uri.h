@@ -15,6 +15,7 @@ struct parsed_uri;
 struct strmap;
 struct widget;
 struct strref;
+struct escape_class;
 
 enum uri_mode {
     URI_MODE_DIRECT,
@@ -39,6 +40,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    struct strmap *args, struct widget *widget,
                    session_id_t session_id,
                    const struct strref *value,
-                   enum uri_mode mode, bool stateful);
+                   enum uri_mode mode, bool stateful,
+                   const struct escape_class *escape);
 
 #endif

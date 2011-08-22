@@ -20,6 +20,7 @@
 #include "strref-pool.h"
 #include "global.h"
 #include "expansible-buffer.h"
+#include "escape_css.h"
 
 #include <daemon/log.h>
 
@@ -109,7 +110,8 @@ css_processor_parser_url(const struct css_parser_url *url, void *ctx)
                            processor->env->args,
                            processor->container,
                            processor->env->session_id,
-                           &url->value, URI_MODE_PROXY, false);
+                           &url->value, URI_MODE_PROXY, false,
+                           &css_escape_class);
     if (istream != NULL)
         css_processor_replace_add(processor, url->start, url->end, istream);
 }

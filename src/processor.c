@@ -684,7 +684,8 @@ transform_uri_attribute(struct processor *processor,
                                  processor->env->untrusted_host,
                                  processor->env->args, widget,
                                  processor->env->session_id,
-                                 value, mode, widget == processor->container);
+                                 value, mode, widget == processor->container,
+                                 &html_escape_class);
     if (istream != NULL)
         replace_attribute_value(processor, attr, istream);
 }
