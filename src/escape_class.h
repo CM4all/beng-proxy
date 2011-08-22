@@ -123,7 +123,7 @@ escape_buffer(const struct escape_class *class, const char *p, size_t length,
     assert(q != NULL);
 
     size_t length2 = class->escape(p, length, q);
-    assert(length2 <= length);
+    assert(length2 >= length);
 
     return length2;
 }
