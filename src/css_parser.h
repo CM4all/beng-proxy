@@ -22,8 +22,19 @@ struct css_parser_url {
 };
 
 struct css_parser_handler {
+    /**
+     * A property value with a URL was found.
+     */
     void (*url)(const struct css_parser_url *url, void *ctx);
+
+    /**
+     * The CSS end-of-file was reached.
+     */
     void (*eof)(void *ctx, off_t length);
+
+    /**
+     * An I/O error has occurred.
+     */
     void (*error)(GError *error, void *ctx);
 };
 
@@ -31,9 +42,16 @@ struct css_parser *
 css_parser_new(struct pool *pool, struct istream *input,
                const struct css_parser_handler *handler, void *handler_ctx);
 
+/**
+ * Force-closen the CSS parser, don't invoke any handler methods.
+ */
 void
 css_parser_close(struct css_parser *parser);
 
+/**
+ * Ask the CSS parser to read and parse more CSS source code.  Does
+ * nothing if the istream blocks.
+ */
 void
 css_parser_read(struct css_parser *parser);
 
