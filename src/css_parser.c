@@ -74,6 +74,10 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 
             parser->state = CSS_PARSER_BLOCK;
             buffer = p + 1;
+
+            if (parser->handler->block != NULL)
+                parser->handler->block(parser->handler_ctx);
+
             break;
 
         case CSS_PARSER_BLOCK:
