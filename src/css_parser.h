@@ -23,7 +23,7 @@ struct css_parser_url {
 
 struct css_parser_handler {
     /**
-     * A property value with a URL was found.
+     * A property value with a URL was found.  Optional method.
      */
     void (*url)(const struct css_parser_url *url, void *ctx);
 

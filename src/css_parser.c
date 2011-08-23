@@ -158,7 +158,8 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                         break;
 
                     parser->value[parser->value_length++] = *buffer;
-                    if (parser->value_length == 4 &&
+                    if (parser->handler->url != NULL &&
+                        parser->value_length == 4 &&
                         memcmp(parser->value, "url(", 4) == 0)
                         parser->state = CSS_PARSER_PRE_URL;
                 }
