@@ -13,6 +13,14 @@ static bool should_exit;
  */
 
 static void
+my_parser_property_keyword(const char *name, const char *value, void *ctx)
+{
+    (void)ctx;
+
+    printf("%s = %s\n", name, value);
+}
+
+static void
 my_parser_url(const struct css_parser_url *url, void *ctx)
 {
     (void)ctx;
@@ -40,6 +48,7 @@ my_parser_error(GError *error, void *ctx)
 }
 
 static const struct css_parser_handler my_parser_handler = {
+    .property_keyword = my_parser_property_keyword,
     .url = my_parser_url,
     .eof = my_parser_eof,
     .error = my_parser_error,

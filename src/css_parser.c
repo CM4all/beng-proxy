@@ -5,6 +5,7 @@
  */
 
 #include "css_parser.h"
+#include "css_syntax.h"
 #include "pool.h"
 #include "istream.h"
 #include "strutil.h"
@@ -13,6 +14,8 @@ enum css_parser_state {
     CSS_PARSER_NONE,
     CSS_PARSER_BLOCK,
     CSS_PARSER_DISCARD_QUOTED,
+    CSS_PARSER_PROPERTY,
+    CSS_PARSER_POST_PROPERTY,
     CSS_PARSER_PRE_VALUE,
     CSS_PARSER_VALUE,
     CSS_PARSER_PRE_URL,
@@ -32,6 +35,9 @@ struct css_parser {
     enum css_parser_state state;
 
     char quote;
+
+    size_t name_length;
+    char name[64];
 
     size_t value_length;
     char value[64];
@@ -91,6 +97,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                 case ':':
                     /* colon introduces property value */
                     parser->state = CSS_PARSER_PRE_VALUE;
+                    parser->name_length = 0;
                     break;
 
                 case '\'':
@@ -98,6 +105,14 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                     parser->state = CSS_PARSER_DISCARD_QUOTED;
                     parser->quote = *buffer;
                     break;
+
+                default:
+                    if (is_css_ident_start(*buffer) &&
+                        parser->handler->property_keyword != NULL) {
+                        parser->state = CSS_PARSER_PROPERTY;
+                        parser->name[0] = *buffer;
+                        parser->name_length = 1;
+                    }
                 }
 
                 ++buffer;
@@ -114,6 +129,45 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 
             parser->state = CSS_PARSER_BLOCK;
             buffer = p + 1;
+            break;
+
+        case CSS_PARSER_PROPERTY:
+            while (buffer < end) {
+                if (!is_css_ident_char(*buffer)) {
+                    parser->state = CSS_PARSER_POST_PROPERTY;
+                    break;
+                }
+
+                if (parser->name_length < sizeof(parser->name) - 1)
+                    parser->name[parser->name_length++] = *buffer;
+
+                ++buffer;
+            }
+
+            break;
+
+        case CSS_PARSER_POST_PROPERTY:
+            do {
+                switch (*buffer) {
+                case '}':
+                    /* end of block */
+                    parser->state = CSS_PARSER_NONE;
+                    break;
+
+                case ':':
+                    /* colon introduces property value */
+                    parser->state = CSS_PARSER_PRE_VALUE;
+                    break;
+
+                case '\'':
+                case '"':
+                    parser->state = CSS_PARSER_DISCARD_QUOTED;
+                    parser->quote = *buffer;
+                    break;
+                }
+
+                ++buffer;
+            } while (buffer < end && parser->state == CSS_PARSER_BLOCK);
             break;
 
         case CSS_PARSER_PRE_VALUE:
@@ -148,6 +202,17 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                     break;
 
                 case ';':
+                    if (parser->name_length > 0) {
+                        assert(parser->handler->property_keyword != NULL);
+
+                        parser->name[parser->name_length] = 0;
+                        parser->value[parser->value_length] = 0;
+
+                        parser->handler->property_keyword(parser->name,
+                                                          parser->value,
+                                                          parser->handler_ctx);
+                    }
+
                     parser->state = CSS_PARSER_BLOCK;
                     break;
 

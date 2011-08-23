@@ -28,6 +28,11 @@ struct css_parser_handler {
     void (*block)(void *ctx);
 
     /**
+     * A property value with a keyword value.  Optional method.
+     */
+    void (*property_keyword)(const char *name, const char *value, void *ctx);
+
+    /**
      * A property value with a URL was found.  Optional method.
      */
     void (*url)(const struct css_parser_url *url, void *ctx);
