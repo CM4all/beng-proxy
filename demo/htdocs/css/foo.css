@@ -2,3 +2,9 @@ body {
     color: black;
     background-image:url('background.png');
 }
+
+div {
+    color: black;
+    -c-mode: proxy;
+    background-image:url('background.png');
+}

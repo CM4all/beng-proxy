@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.7) unstable; urgency=low
 
-  * 
+  * css_processor: implement property "-c-mode"
 
  --
 

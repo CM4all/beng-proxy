@@ -83,6 +83,27 @@ css_processor_replace_add(struct css_processor *processor,
  */
 
 static void
+css_processor_parser_block(void *ctx)
+{
+    struct css_processor *processor = ctx;
+
+    processor->uri_rewrite.mode = URI_MODE_DIRECT;
+}
+
+static void
+css_processor_parser_property_keyword(const char *name, const char *value,
+                                      void *ctx)
+{
+    struct css_processor *processor = ctx;
+
+    if (strcmp(name, "-c-mode") == 0) {
+        struct strref value2;
+        strref_set_c(&value2, value);
+        processor->uri_rewrite.mode = parse_uri_mode(&value2);
+    }
+}
+
+static void
 css_processor_parser_url(const struct css_parser_url *url, void *ctx)
 {
     struct css_processor *processor = ctx;
@@ -97,7 +118,7 @@ css_processor_parser_url(const struct css_parser_url *url, void *ctx)
                            processor->env->args,
                            processor->container,
                            processor->env->session_id,
-                           &url->value, URI_MODE_PROXY, false,
+                           &url->value, processor->uri_rewrite.mode, false,
                            &css_escape_class);
     if (istream != NULL)
         css_processor_replace_add(processor, url->start, url->end, istream);
@@ -128,6 +149,8 @@ css_processor_parser_error(GError *error, void *ctx)
 }
 
 static const struct css_parser_handler css_processor_parser_handler = {
+    .block = css_processor_parser_block,
+    .property_keyword = css_processor_parser_property_keyword,
     .url = css_processor_parser_url,
     .eof = css_processor_parser_eof,
     .error = css_processor_parser_error,

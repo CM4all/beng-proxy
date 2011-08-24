@@ -1623,6 +1623,7 @@ The base name must be specified in the element attribute
 the mode of the rewritten URI, you may use the attribute
 \texttt{c:mode}:
 
+\label{c_mode}
 \begin{tabular}{|l|p{10cm}|}
 \hline
 
@@ -1804,6 +1805,17 @@ translation server enables it with the packet \texttt{PROCESS\_CSS}.
 It is the equivalent of the HTML processor for CSS: it can convert
 URLs to widget resources.  This allows proxying resources that are
 referenced in CSS.
+
+The proprietary property \texttt{-c-mode} specifies the URL rewriting
+mode for the following URLs in the current block.  See \ref{c_mode}
+for a list of valid values.  Example:
+
+\begin{verbatim*}
+body {
+  -c-mode: proxy;
+  background-image:url('background.png');
+}
+\end{verbatim*}
 
 
 \section{The prototype translation server}
