@@ -55,11 +55,6 @@ struct css_processor {
     struct uri_rewrite uri_rewrite;
 
     /**
-     * The default value for #uri_rewrite.
-     */
-    struct uri_rewrite default_uri_rewrite;
-
-    /**
      * These values are used to buffer c:mode/c:base values in any
      * order, even after the actual URI attribute.
      */
@@ -210,9 +205,6 @@ css_processor(struct pool *caller_pool, struct istream *istream,
                                        &css_processor_parser_handler,
                                        processor);
     pool_unref(processor->pool);
-
-    processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
-    processor->default_uri_rewrite.mode = URI_MODE_DIRECT;
 
     return processor->replace;
 }
