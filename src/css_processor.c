@@ -29,15 +29,7 @@
 #include <assert.h>
 #include <string.h>
 
-enum uri_base {
-    URI_BASE_TEMPLATE,
-    URI_BASE_WIDGET,
-    URI_BASE_CHILD,
-    URI_BASE_PARENT,
-};
-
 struct uri_rewrite {
-    enum uri_base base;
     enum uri_mode mode;
 };
 
