@@ -24,6 +24,10 @@ enum uri_mode {
     URI_MODE_PROXY,
 };
 
+G_GNUC_PURE
+enum uri_mode
+parse_uri_mode(const struct strref *s);
+
 /**
  * @param untrusted_host the value of the UNTRUSTED translation
  * packet, or NULL if this is a "trusted" request

@@ -18,6 +18,24 @@
 
 #include <daemon/log.h>
 
+enum uri_mode
+parse_uri_mode(const struct strref *s)
+{
+    if (strref_cmp_literal(s, "direct") == 0)
+        return URI_MODE_DIRECT;
+    else if (strref_cmp_literal(s, "focus") == 0)
+        return URI_MODE_FOCUS;
+    else if (strref_cmp_literal(s, "partial") == 0)
+        return URI_MODE_PARTIAL;
+    else if (strref_cmp_literal(s, "partition") == 0)
+        /* deprecated */
+        return URI_MODE_PARTIAL;
+    else if (strref_cmp_literal(s, "proxy") == 0)
+        return URI_MODE_PROXY;
+    else
+        return URI_MODE_DIRECT;
+}
+
 /*
  * The "real" rewriting code
  *

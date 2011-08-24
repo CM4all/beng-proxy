@@ -52,6 +52,12 @@ widget_get_session(__attr_unused struct widget *widget,
     return NULL;
 }
 
+enum uri_mode
+parse_uri_mode(G_GNUC_UNUSED const struct strref *s)
+{
+    return URI_MODE_DIRECT;
+}
+
 istream_t
 rewrite_widget_uri(__attr_unused pool_t pool, __attr_unused pool_t widget_pool,
                    __attr_unused struct tcache *translate_cache,

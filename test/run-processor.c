@@ -18,7 +18,7 @@ static bool is_eof;
 
 
 /*
- * emulate missing librarie
+ * emulate missing libraries
  *
  */
 
@@ -51,6 +51,12 @@ widget_get_session(__attr_unused struct widget *widget,
                    __attr_unused bool create)
 {
     return NULL;
+}
+
+enum uri_mode
+parse_uri_mode(G_GNUC_UNUSED const struct strref *s)
+{
+    return URI_MODE_DIRECT;
 }
 
 istream_t
