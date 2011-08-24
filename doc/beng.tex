@@ -1796,6 +1796,16 @@ parameter is ignored unless \texttt{frame} is set, or \texttt{mode} is
 ``\texttt{partial}''.
 
 
+\section{The CSS Processor}
+\label{cssprocessor}
+
+The CSS processor is a transformation for cascading style sheets.  The
+translation server enables it with the packet \texttt{PROCESS\_CSS}.
+It is the equivalent of the HTML processor for CSS: it can convert
+URLs to widget resources.  This allows proxying resources that are
+referenced in CSS.
+
+
 \section{The prototype translation server}
 
 Until the \texttt{jetserv} daemon is finished, the prototype
