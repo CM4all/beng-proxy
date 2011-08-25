@@ -3,7 +3,7 @@ body {
     background-image:url('background.png');
 }
 
-div {
+div.test {
     color: black;
     -c-mode: proxy;
     background-image:url('background.png');

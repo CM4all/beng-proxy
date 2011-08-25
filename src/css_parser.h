@@ -23,6 +23,11 @@ struct css_parser_value {
 
 struct css_parser_handler {
     /**
+     * A class name was found.
+     */
+    void (*class_name)(const struct css_parser_value *name, void *ctx);
+
+    /**
      * A new block begins.  Optional method.
      */
     void (*block)(void *ctx);
