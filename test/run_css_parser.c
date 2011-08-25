@@ -21,7 +21,7 @@ my_parser_property_keyword(const char *name, const char *value, void *ctx)
 }
 
 static void
-my_parser_url(const struct css_parser_url *url, void *ctx)
+my_parser_url(const struct css_parser_value *url, void *ctx)
 {
     (void)ctx;
 

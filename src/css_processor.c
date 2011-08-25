@@ -104,7 +104,7 @@ css_processor_parser_property_keyword(const char *name, const char *value,
 }
 
 static void
-css_processor_parser_url(const struct css_parser_url *url, void *ctx)
+css_processor_parser_url(const struct css_parser_value *url, void *ctx)
 {
     struct css_processor *processor = ctx;
 

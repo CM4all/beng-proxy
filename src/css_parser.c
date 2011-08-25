@@ -66,7 +66,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 
     const char *buffer = start, *end = start + length, *p;
     size_t nbytes;
-    struct css_parser_url url;
+    struct css_parser_value url;
 
     while (buffer < end) {
         switch (parser->state) {

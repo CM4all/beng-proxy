@@ -16,7 +16,7 @@
 struct pool;
 struct istream;
 
-struct css_parser_url {
+struct css_parser_value {
     off_t start, end;
     struct strref value;
 };
@@ -35,7 +35,7 @@ struct css_parser_handler {
     /**
      * A property value with a URL was found.  Optional method.
      */
-    void (*url)(const struct css_parser_url *url, void *ctx);
+    void (*url)(const struct css_parser_value *url, void *ctx);
 
     /**
      * The CSS end-of-file was reached.
