@@ -8,3 +8,11 @@ div.test {
     -c-mode: proxy;
     background-image:url('background.png');
 }
+
+div._foo {
+    color: red;
+}
+
+div.__bar {
+    color: green;
+}

@@ -83,6 +83,45 @@ css_processor_replace_add(struct css_processor *processor,
  */
 
 static void
+css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
+{
+    struct css_processor *processor = ctx;
+
+    assert(name->value.length > 0);
+
+    if (name->value.length < 2 || name->value.data[0] != '_')
+        return;
+
+    if (name->value.data[1] == '_') {
+        if (name->value.length == 2 || name->value.data[2] == '_')
+            return;
+
+        /* double underscore: add widget path prefix */
+
+        const char *prefix = widget_prefix(processor->container);
+        if (prefix == NULL)
+            return;
+
+        while (*prefix == '_')
+            ++prefix;
+
+        css_processor_replace_add(processor, name->start, name->start + 2,
+                                  istream_string_new(processor->pool,
+                                                     prefix));
+    } else {
+        /* single underscore: add class name prefix */
+
+        const char *class_name = processor->container->class_name;
+        if (class_name == NULL)
+            return;
+
+        css_processor_replace_add(processor, name->start, name->start,
+                                  istream_string_new(processor->pool,
+                                                     class_name));
+    }
+}
+
+static void
 css_processor_parser_block(void *ctx)
 {
     struct css_processor *processor = ctx;
@@ -149,6 +188,7 @@ css_processor_parser_error(GError *error, void *ctx)
 }
 
 static const struct css_parser_handler css_processor_parser_handler = {
+    .class_name = css_processor_parser_class_name,
     .block = css_processor_parser_block,
     .property_keyword = css_processor_parser_property_keyword,
     .url = css_processor_parser_url,
