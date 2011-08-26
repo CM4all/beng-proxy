@@ -23,6 +23,7 @@
 #include "escape_class.h"
 #include "escape_html.h"
 #include "strmap.h"
+#include "css_syntax.h"
 
 #include <daemon/log.h>
 
@@ -46,6 +47,7 @@ struct uri_rewrite {
 enum tag {
     TAG_NONE,
     TAG_IGNORE,
+    TAG_OTHER,
     TAG_WIDGET,
     TAG_WIDGET_PATH_INFO,
     TAG_WIDGET_PARAM,
@@ -80,6 +82,12 @@ struct processor {
      * The default value for #uri_rewrite.
      */
     struct uri_rewrite default_uri_rewrite;
+
+    /**
+     * A buffer that may be used for various temporary purposes
+     * (e.g. attribute transformation).
+     */
+    struct expansible_buffer *buffer;
 
     /**
      * These values are used to buffer c:mode/c:base values in any
@@ -139,6 +147,12 @@ static inline bool
 processor_option_rewrite_url(const struct processor *processor)
 {
     return (processor->options & PROCESSOR_REWRITE_URL) != 0;
+}
+
+static inline bool
+processor_option_prefix_class(const struct processor *processor)
+{
+    return (processor->options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
 }
 
 static void
@@ -271,6 +285,8 @@ processor_new(pool_t caller_pool,
     processor->env = env;
     processor->options = options;
     processor->tag = TAG_NONE;
+
+    processor->buffer = expansible_buffer_new(pool, 512);
 
     processor->postponed_rewrite.pending = false;
     processor->postponed_rewrite.value = expansible_buffer_new(pool, 1024);
@@ -597,10 +613,16 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->tag = TAG_PARAM;
             processor_uri_rewrite_init(processor);
             return true;
+        } else if (processor_option_prefix_class(processor)) {
+            processor->tag = TAG_OTHER;
+            return true;
         } else {
             processor->tag = TAG_IGNORE;
             return false;
         }
+    } else if (processor_option_prefix_class(processor)) {
+        processor->tag = TAG_OTHER;
+        return true;
     } else {
         processor->tag = TAG_IGNORE;
         return false;
@@ -761,6 +783,84 @@ link_attr_finished(struct processor *processor, const struct parser_attr *attr)
     return false;
 }
 
+static const char *
+find_underscore(const char *p, const char *end)
+{
+    assert(p != NULL);
+    assert(end != NULL);
+    assert(p <= end);
+
+    if (p == end)
+        return NULL;
+
+    if (*p == '_')
+        return p;
+
+    while (true) {
+        p = memchr(p + 1, '_', end - p);
+        if (p == NULL)
+            return NULL;
+
+        if (char_is_whitespace(p[-1]))
+            return p;
+    }
+}
+
+static void
+handle_class_attribute(struct processor *processor,
+                       const struct parser_attr *attr)
+{
+    const char *p = attr->value.data, *const end = strref_end(&attr->value);
+
+    const char *u = find_underscore(p, end);
+    if (u == NULL)
+        return;
+
+    struct expansible_buffer *const buffer = processor->buffer;
+    expansible_buffer_reset(buffer);
+
+    do {
+        if (p + 1 >= end)
+            break;
+
+        expansible_buffer_write_buffer(buffer, p, u - p);
+        p = u;
+
+        if (p[1] == '_') {
+            const char *prefix;
+            if (p + 2 < end && p[2] != '_' && is_css_nmchar(p[2]) &&
+                (prefix = widget_prefix(processor->container)) != NULL) {
+                expansible_buffer_write_string(buffer, prefix);
+                p += 2;
+            } else {
+                while (u < end && *u == '_')
+                    ++u;
+
+                expansible_buffer_write_buffer(buffer, p, u - p);
+                p = u;
+            }
+        } else if (is_css_nmchar(p[1]) &&
+                   processor->container->class_name != NULL) {
+            expansible_buffer_write_string(buffer,
+                                           processor->container->class_name);
+            expansible_buffer_write_buffer(buffer, p, 1);
+            ++p;
+        } else {
+            expansible_buffer_write_buffer(buffer, p, 1);
+            ++p;
+        }
+
+        u = find_underscore(p, end);
+    } while (u != NULL);
+
+    expansible_buffer_write_buffer(buffer, p, end - p);
+
+    const size_t length = expansible_buffer_length(buffer);
+    void *q = expansible_buffer_dup(buffer, processor->pool);
+    replace_attribute_value(processor, attr,
+                            istream_memory_new(processor->pool, q, length));
+}
+
 /**
  * Is this a tag which can have a link attribute?
  */
@@ -770,6 +870,15 @@ is_link_tag(enum tag tag)
     return tag == TAG_A || tag == TAG_FORM ||
          tag == TAG_IMG || tag == TAG_SCRIPT ||
         tag == TAG_PARAM || tag == TAG_REWRITE_URI;
+}
+
+/**
+ * Is this a HTML tag? (i.e. not a proprietary beng-proxy tag)
+ */
+static bool
+is_html_tag(enum tag tag)
+{
+    return tag == TAG_OTHER || is_link_tag(tag);
 }
 
 static void
@@ -784,9 +893,21 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         link_attr_finished(processor, attr))
         return;
 
+    if (!processor_option_quiet(processor) &&
+        processor_option_prefix_class(processor) &&
+        /* due to a limitation in the processor and istream_replace,
+           we cannot edit attributes followed by a URI attribute */
+        !processor->postponed_rewrite.pending &&
+        is_html_tag(processor->tag) &&
+        strref_cmp_literal(&attr->name, "class") == 0) {
+        handle_class_attribute(processor, attr);
+        return;
+    }
+
     switch (processor->tag) {
     case TAG_NONE:
     case TAG_IGNORE:
+    case TAG_OTHER:
         break;
 
     case TAG_WIDGET:

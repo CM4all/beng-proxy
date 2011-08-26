@@ -15,6 +15,9 @@ enum processor_options {
     /** rewrite URLs */
     PROCESSOR_REWRITE_URL = 0x1,
 
+    /** add prefix to marked CSS class names */
+    PROCESSOR_PREFIX_CSS_CLASS = 0x2,
+
     /** enable the c:embed element */
     PROCESSOR_CONTAINER = 0x10,
 };
