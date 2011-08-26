@@ -43,6 +43,21 @@ struct uri_rewrite {
     enum uri_mode mode;
 };
 
+enum tag {
+    TAG_NONE,
+    TAG_WIDGET,
+    TAG_WIDGET_PATH_INFO,
+    TAG_WIDGET_PARAM,
+    TAG_WIDGET_HEADER,
+    TAG_WIDGET_VIEW,
+    TAG_A,
+    TAG_FORM,
+    TAG_IMG,
+    TAG_SCRIPT,
+    TAG_PARAM,
+    TAG_REWRITE_URI,
+};
+
 struct processor {
     pool_t pool, caller_pool;
 
@@ -56,20 +71,7 @@ struct processor {
     struct parser *parser;
     bool had_input;
 
-    enum {
-        TAG_NONE,
-        TAG_WIDGET,
-        TAG_WIDGET_PATH_INFO,
-        TAG_WIDGET_PARAM,
-        TAG_WIDGET_HEADER,
-        TAG_WIDGET_VIEW,
-        TAG_A,
-        TAG_FORM,
-        TAG_IMG,
-        TAG_SCRIPT,
-        TAG_PARAM,
-        TAG_REWRITE_URI,
-    } tag;
+    enum tag tag;
 
     struct uri_rewrite uri_rewrite;
 
