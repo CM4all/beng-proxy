@@ -102,9 +102,6 @@ css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
         if (prefix == NULL)
             return;
 
-        while (*prefix == '_')
-            ++prefix;
-
         css_processor_replace_add(processor, name->start, name->start + 2,
                                   istream_string_new(processor->pool,
                                                      prefix));
