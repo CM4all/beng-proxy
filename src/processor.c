@@ -555,26 +555,34 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         list_add(&processor->widget.widget->siblings,
                  &processor->container->children);
         processor->widget.widget->parent = processor->container;
+
+        return true;
     } else if (strref_lower_cmp_literal(&tag->name, "script") == 0) {
         processor->tag = TAG_SCRIPT;
         processor_uri_rewrite_init(processor);
+
+        return true;
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
         if (strref_lower_cmp_literal(&tag->name, "a") == 0 ||
             strref_lower_cmp_literal(&tag->name, "link") == 0) {
             processor->tag = TAG_A;
             processor_uri_rewrite_init(processor);
+            return true;
         } else if (strref_lower_cmp_literal(&tag->name, "link") == 0) {
             /* this isn't actually an anchor, but we are only interested in
                the HREF attribute */
             processor->tag = TAG_A;
             processor_uri_rewrite_init(processor);
+            return true;
         } else if (strref_lower_cmp_literal(&tag->name, "form") == 0) {
             processor->tag = TAG_FORM;
             processor_uri_rewrite_init(processor);
+            return true;
         } else if (strref_lower_cmp_literal(&tag->name, "img") == 0) {
             processor->tag = TAG_IMG;
             processor_uri_rewrite_init(processor);
+            return true;
         } else if (strref_lower_cmp_literal(&tag->name, "iframe") == 0 ||
                    strref_lower_cmp_literal(&tag->name, "embed") == 0 ||
                    strref_lower_cmp_literal(&tag->name, "video") == 0 ||
@@ -583,9 +591,11 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
                in the SRC attribute */
             processor->tag = TAG_IMG;
             processor_uri_rewrite_init(processor);
+            return true;
         } else if (strref_lower_cmp_literal(&tag->name, "param") == 0) {
             processor->tag = TAG_PARAM;
             processor_uri_rewrite_init(processor);
+            return true;
         } else {
             processor->tag = TAG_NONE;
             return false;
@@ -594,8 +604,6 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->tag = TAG_NONE;
         return false;
     }
-
-    return true;
 }
 
 static enum uri_base
