@@ -45,6 +45,7 @@ struct uri_rewrite {
 
 enum tag {
     TAG_NONE,
+    TAG_IGNORE,
     TAG_WIDGET,
     TAG_WIDGET_PATH_INFO,
     TAG_WIDGET_PARAM,
@@ -508,7 +509,7 @@ parser_element_start_in_widget(struct processor *processor,
     } else if (strref_cmp_literal(name, "view") == 0) {
         processor->tag = TAG_WIDGET_VIEW;
     } else {
-        processor->tag = TAG_NONE;
+        processor->tag = TAG_IGNORE;
         return false;
     }
 
@@ -528,7 +529,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
            except </SCRIPT> */
         return false;
 
-    processor->tag = TAG_NONE;
+    processor->tag = TAG_IGNORE;
 
     if (processor->widget.widget != NULL)
         return parser_element_start_in_widget(processor, tag->type, &tag->name);
@@ -597,11 +598,11 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor_uri_rewrite_init(processor);
             return true;
         } else {
-            processor->tag = TAG_NONE;
+            processor->tag = TAG_IGNORE;
             return false;
         }
     } else {
-        processor->tag = TAG_NONE;
+        processor->tag = TAG_IGNORE;
         return false;
     }
 }
@@ -785,6 +786,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
     switch (processor->tag) {
     case TAG_NONE:
+    case TAG_IGNORE:
         break;
 
     case TAG_WIDGET:
