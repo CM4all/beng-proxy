@@ -752,6 +752,17 @@ link_attr_finished(struct processor *processor, const struct parser_attr *attr)
     return false;
 }
 
+/**
+ * Is this a tag which can have a link attribute?
+ */
+static bool
+is_link_tag(enum tag tag)
+{
+    return tag == TAG_A || tag == TAG_FORM ||
+         tag == TAG_IMG || tag == TAG_SCRIPT ||
+        tag == TAG_PARAM || tag == TAG_REWRITE_URI;
+}
+
 static void
 processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
@@ -760,9 +771,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
     processor->had_input = true;
 
     if (!processor_option_quiet(processor) &&
-        (processor->tag == TAG_A || processor->tag == TAG_FORM ||
-         processor->tag == TAG_IMG || processor->tag == TAG_SCRIPT ||
-         processor->tag == TAG_PARAM || processor->tag == TAG_REWRITE_URI) &&
+        is_link_tag(processor->tag) &&
         link_attr_finished(processor, attr))
         return;
 
