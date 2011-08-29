@@ -49,6 +49,12 @@ expansible_buffer_is_empty(const struct expansible_buffer *eb)
     return eb->size == 0;
 }
 
+size_t
+expansible_buffer_length(const struct expansible_buffer *eb)
+{
+    return eb->size;
+}
+
 static void
 expansible_buffer_resize(struct expansible_buffer *eb, size_t max_size)
 {

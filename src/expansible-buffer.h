@@ -23,6 +23,9 @@ expansible_buffer_reset(struct expansible_buffer *eb);
 bool
 expansible_buffer_is_empty(const struct expansible_buffer *eb);
 
+size_t
+expansible_buffer_length(const struct expansible_buffer *eb);
+
 void *
 expansible_buffer_write(struct expansible_buffer *eb, size_t length);
 
