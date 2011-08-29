@@ -23,6 +23,10 @@ struct transformation {
             unsigned options;
         } processor;
 
+        struct {
+            unsigned options;
+        } css_processor;
+
         struct resource_address filter;
     } u;
 };

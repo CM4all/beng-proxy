@@ -266,7 +266,8 @@ css_processable(const struct strmap *headers)
 
 static void
 widget_response_process_css(struct embed *embed, http_status_t status,
-                            struct strmap *headers, istream_t body)
+                            struct strmap *headers, istream_t body,
+                            unsigned options)
 {
     if (body == NULL) {
         GError *error =
@@ -288,7 +289,8 @@ widget_response_process_css(struct embed *embed, http_status_t status,
         return;
     }
 
-    body = css_processor(embed->pool, body, embed->widget, embed->env);
+    body = css_processor(embed->pool, body, embed->widget, embed->env,
+                         options);
     widget_response_dispatch(embed, status, headers, body);
 }
 
@@ -359,7 +361,8 @@ widget_response_transform(struct embed *embed, http_status_t status,
         /* processor responses cannot be cached */
         embed->resource_tag = NULL;
 
-        widget_response_process_css(embed, status, headers, body);
+        widget_response_process_css(embed, status, headers, body,
+                                    transformation->u.css_processor.options);
         break;
 
     case TRANSFORMATION_FILTER:

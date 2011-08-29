@@ -76,7 +76,8 @@ processor_lookup_widget(__attr_unused pool_t pool,
 struct istream *
 css_processor(__attr_unused struct pool *pool, struct istream *stream,
               __attr_unused struct widget *widget,
-              __attr_unused struct processor_env *env)
+              __attr_unused struct processor_env *env,
+              __attr_unused unsigned options)
 {
     return stream;
 }

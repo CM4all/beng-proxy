@@ -38,6 +38,7 @@ struct css_processor {
 
     struct widget *container;
     struct processor_env *env;
+    unsigned options;
 
     istream_t replace;
 
@@ -69,6 +70,18 @@ struct css_processor {
     struct async_operation async;
 };
 
+static inline bool
+css_processor_option_rewrite_url(const struct css_processor *processor)
+{
+    return (processor->options & CSS_PROCESSOR_REWRITE_URL) != 0;
+}
+
+static inline bool
+css_processor_option_prefix_class(const struct css_processor *processor)
+{
+    return (processor->options & CSS_PROCESSOR_PREFIX_CLASS) != 0;
+}
+
 static void
 css_processor_replace_add(struct css_processor *processor,
                           off_t start, off_t end,
@@ -88,6 +101,9 @@ css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
     struct css_processor *processor = ctx;
 
     assert(name->value.length > 0);
+
+    if (!css_processor_option_prefix_class(processor))
+        return;
 
     if (name->value.length < 2 || name->value.data[0] != '_')
         return;
@@ -132,7 +148,8 @@ css_processor_parser_property_keyword(const char *name, const char *value,
 {
     struct css_processor *processor = ctx;
 
-    if (strcmp(name, "-c-mode") == 0) {
+    if (css_processor_option_rewrite_url(processor) &&
+        strcmp(name, "-c-mode") == 0) {
         struct strref value2;
         strref_set_c(&value2, value);
         processor->uri_rewrite.mode = parse_uri_mode(&value2);
@@ -143,6 +160,9 @@ static void
 css_processor_parser_url(const struct css_parser_value *url, void *ctx)
 {
     struct css_processor *processor = ctx;
+
+    if (!css_processor_option_rewrite_url(processor))
+        return;
 
     struct istream *istream =
         rewrite_widget_uri(processor->pool, processor->env->pool,
@@ -233,7 +253,8 @@ css_processor_header_forward(pool_t pool, struct strmap *headers)
 struct istream *
 css_processor(struct pool *caller_pool, struct istream *istream,
               struct widget *widget,
-              struct processor_env *env)
+              struct processor_env *env,
+              unsigned options)
 {
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
@@ -245,6 +266,7 @@ css_processor(struct pool *caller_pool, struct istream *istream,
 
     processor->container = widget;
     processor->env = env;
+    processor->options = options;
 
     processor->postponed_rewrite.pending = false;
     processor->postponed_rewrite.value = expansible_buffer_new(pool, 1024);

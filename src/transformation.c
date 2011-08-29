@@ -31,6 +31,7 @@ transformation_dup(pool_t pool, const struct transformation *src)
         break;
 
     case TRANSFORMATION_PROCESS_CSS:
+        dest->u.css_processor.options = src->u.css_processor.options;
         break;
 
     case TRANSFORMATION_FILTER:

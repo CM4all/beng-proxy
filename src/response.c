@@ -268,7 +268,8 @@ static void
 response_invoke_css_processor(struct request *request2,
                               http_status_t status,
                               struct strmap *response_headers,
-                              istream_t body)
+                              istream_t body,
+                              const struct transformation *transformation)
 {
     struct http_server_request *request = request2->request;
 
@@ -326,7 +327,8 @@ response_invoke_css_processor(struct request *request2,
                        NULL);
 
     body = css_processor(request->pool, body,
-                         widget, &request2->env);
+                         widget, &request2->env,
+                         transformation->u.css_processor.options);
     assert(body != NULL);
 
     response_headers = processor_header_forward(request->pool,
@@ -501,7 +503,8 @@ response_apply_transformation(struct request *request2,
         /* processor responses cannot be cached */
         request2->resource_tag = NULL;
 
-        response_invoke_css_processor(request2, status, headers, body);
+        response_invoke_css_processor(request2, status, headers, body,
+                                      transformation);
     }
 }
 

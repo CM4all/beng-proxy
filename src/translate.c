@@ -10,6 +10,7 @@
 #include "please.h"
 #include "growing-buffer.h"
 #include "processor.h"
+#include "css_processor.h"
 #include "async.h"
 #include "uri-address.h"
 #include "gb-io.h"
@@ -1428,17 +1429,31 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_PROCESS_CSS:
         transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_PROCESS_CSS;
+        transformation->u.css_processor.options = CSS_PROCESSOR_REWRITE_URL;
         break;
 
     case TRANSLATE_PREFIX_CSS_CLASS:
-        if (client->transformation == NULL ||
-            client->transformation->type != TRANSFORMATION_PROCESS) {
+        if (client->transformation == NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_PREFIX_CSS_CLASS packet");
             return false;
         }
 
-        client->transformation->u.processor.options |= PROCESSOR_PREFIX_CSS_CLASS;
+        switch (client->transformation->type) {
+        case TRANSFORMATION_PROCESS:
+            client->transformation->u.processor.options |= PROCESSOR_PREFIX_CSS_CLASS;
+            break;
+
+        case TRANSFORMATION_PROCESS_CSS:
+            client->transformation->u.css_processor.options |= CSS_PROCESSOR_PREFIX_CLASS;
+            break;
+
+        default:
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_PREFIX_CSS_CLASS packet");
+            return false;
+        }
+
         break;
     }
 
