@@ -4,7 +4,7 @@ cm4all-beng-proxy (1.1.7) unstable; urgency=low
   * css_processor: translate underscore prefix in class names
   * processor: translate underscore prefix in CSS class names
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 29 Aug 2011 17:47:48 +0200
 
 cm4all-beng-proxy (1.1.6) unstable; urgency=low
 
