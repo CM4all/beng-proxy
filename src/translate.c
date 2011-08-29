@@ -1429,6 +1429,17 @@ translate_handle_packet(struct translate_client *client,
         transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_PROCESS_CSS;
         break;
+
+    case TRANSLATE_PREFIX_CSS_CLASS:
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_PREFIX_CSS_CLASS packet");
+            return false;
+        }
+
+        client->transformation->u.processor.options |= PROCESSOR_PREFIX_CSS_CLASS;
+        break;
     }
 
     return true;

@@ -1485,6 +1485,11 @@ processor:
 \texttt{CONTAINER} & Allows embedding other widgets. \\
 
 \hline
+
+\texttt{PREFIX\_CSS\_CLASS} & CSS class names with leading underscore
+get a widget specific prefix, see \ref{prefix_css_class}. \\
+
+\hline
 \end{longtable}
 
 
@@ -1844,7 +1849,28 @@ CSS processor:
 \texttt{PROCESS\_CSS} & Enables the CSS processor. \\
 
 \hline
+
+\texttt{PREFIX\_CSS\_CLASS} & CSS class names with leading underscore
+get a widget specific prefix, see below. \\
+
+\hline
 \end{longtable}
+
+
+\subsection{Local Classes}
+\label{prefix_css_class}
+
+When the option \texttt{PREFIX\_CSS\_CLASS} is enabled, CSS class
+names with a leading underscore are rewritten.  The option is
+available in both processors (HTML and CSS).
+
+A single leading underscore makes the class local to the current
+widget class.  It may be shared by multiple instances of the same
+class.
+
+A double leading underscore makes the class local to the current
+widget instance.  Each instance may define different styles for this
+class.
 
 
 \section{The prototype translation server}

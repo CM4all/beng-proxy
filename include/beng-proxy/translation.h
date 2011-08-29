@@ -177,6 +177,11 @@ enum beng_translation_command {
      * Run the CSS processor.
      */
     TRANSLATE_PROCESS_CSS = 74,
+
+    /**
+     * Rewrite CSS class names with a leading underscore?
+     */
+    TRANSLATE_PREFIX_CSS_CLASS = 75,
 };
 
 struct beng_translation_header {
