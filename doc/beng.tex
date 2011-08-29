@@ -1118,8 +1118,6 @@ widgets \\
 
 \hline
 \texttt{PROCESS} & enable the BENG processor \\
-\hline
-\texttt{CONTAINER} & this widget can contain other widgets \\
 
 \hline
 
@@ -1472,6 +1470,24 @@ There is currently no suggested namespace URI, and \emph{beng-proxy}
 does not actually care, because it does not implement a full-featured
 XML parser.
 
+\subsection{Options}
+
+The following translation packets may be used to configure the
+processor:
+
+\begin{longtable}{|l|p{8cm}|}
+\hline
+
+\texttt{PROCESS} & Enables the processor. \\
+
+\hline
+
+\texttt{CONTAINER} & Allows embedding other widgets. \\
+
+\hline
+\end{longtable}
+
+
 \subsection{Adding a widget}
 
 To add a widget, use the following command:
@@ -1816,6 +1832,19 @@ body {
   background-image:url('background.png');
 }
 \end{verbatim*}
+
+\subsection{Options}
+
+The following translation packets may be used to configure the
+CSS processor:
+
+\begin{longtable}{|l|p{8cm}|}
+\hline
+
+\texttt{PROCESS\_CSS} & Enables the CSS processor. \\
+
+\hline
+\end{longtable}
 
 
 \section{The prototype translation server}
