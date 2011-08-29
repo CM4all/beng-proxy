@@ -1,4 +1,7 @@
 server "http://cfatest01.intern.cm-ag/widgets/css/"
+process
+prefix_css_class
 
 view "css"
 process_css
+prefix_css_class
