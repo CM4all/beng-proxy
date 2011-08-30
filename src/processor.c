@@ -24,6 +24,7 @@
 #include "escape_html.h"
 #include "strmap.h"
 #include "css_syntax.h"
+#include "css_util.h"
 
 #include <daemon/log.h>
 
@@ -793,7 +794,7 @@ find_underscore(const char *p, const char *end)
     if (p == end)
         return NULL;
 
-    if (*p == '_')
+    if (is_underscore_prefix(p, end))
         return p;
 
     while (true) {
@@ -801,7 +802,8 @@ find_underscore(const char *p, const char *end)
         if (p == NULL)
             return NULL;
 
-        if (char_is_whitespace(p[-1]))
+        if (char_is_whitespace(p[-1]) &&
+            is_underscore_prefix(p, end))
             return p;
     }
 }
@@ -820,34 +822,27 @@ handle_class_attribute(struct processor *processor,
     expansible_buffer_reset(buffer);
 
     do {
-        if (p + 1 >= end)
-            break;
-
         expansible_buffer_write_buffer(buffer, p, u - p);
         p = u;
 
-        if (p[1] == '_') {
-            const char *prefix;
-            if (p + 2 < end && p[2] != '_' && is_css_nmchar(p[2]) &&
-                (prefix = widget_prefix(processor->container)) != NULL) {
-                expansible_buffer_write_string(buffer, prefix);
-                p += 2;
-            } else {
-                while (u < end && *u == '_')
-                    ++u;
-
-                expansible_buffer_write_buffer(buffer, p, u - p);
-                p = u;
-            }
-        } else if (is_css_nmchar(p[1]) &&
-                   processor->container->class_name != NULL) {
+        const unsigned n = underscore_prefix(p, end);
+        const char *prefix;
+        if (n == 2 && (prefix = widget_prefix(processor->container)) != NULL) {
+            expansible_buffer_write_string(buffer, prefix);
+            p += 2;
+        } else if (n == 1 && processor->container->class_name != NULL) {
             expansible_buffer_write_string(buffer,
                                            processor->container->class_name);
             expansible_buffer_write_buffer(buffer, p, 1);
             ++p;
         } else {
-            expansible_buffer_write_buffer(buffer, p, 1);
-            ++p;
+            /* failure; skip all underscores and find the next
+               match */
+            while (u < end && *u == '_')
+                ++u;
+
+            expansible_buffer_write_buffer(buffer, p, u - p);
+            p = u;
         }
 
         u = find_underscore(p, end);

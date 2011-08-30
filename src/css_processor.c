@@ -6,6 +6,7 @@
 
 #include "css_processor.h"
 #include "css_parser.h"
+#include "css_util.h"
 #include "penv.h"
 #include "strmap.h"
 #include "widget.h"
@@ -105,13 +106,8 @@ css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
     if (!css_processor_option_prefix_class(processor))
         return;
 
-    if (name->value.length < 2 || name->value.data[0] != '_')
-        return;
-
-    if (name->value.data[1] == '_') {
-        if (name->value.length == 2 || name->value.data[2] == '_')
-            return;
-
+    unsigned n = underscore_prefix(name->value.data, strref_end(&name->value));
+    if (n == 2) {
         /* double underscore: add widget path prefix */
 
         const char *prefix = widget_prefix(processor->container);
@@ -121,7 +117,7 @@ css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
         css_processor_replace_add(processor, name->start, name->start + 2,
                                   istream_string_new(processor->pool,
                                                      prefix));
-    } else {
+    } else if (n == 1) {
         /* single underscore: add class name prefix */
 
         const char *class_name = processor->container->class_name;
