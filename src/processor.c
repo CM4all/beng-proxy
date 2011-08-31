@@ -765,19 +765,26 @@ link_attr_finished(struct processor *processor, const struct parser_attr *attr)
 {
     if (strref_cmp_literal(&attr->name, "c:base") == 0) {
         processor->uri_rewrite.base = parse_uri_base(&attr->value);
-        processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
+
+        if (processor->tag != TAG_REWRITE_URI)
+            processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
         return true;
     }
 
     if (strref_cmp_literal(&attr->name, "c:mode") == 0) {
         processor->uri_rewrite.mode = parse_uri_mode(&attr->value);
-        processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
+
+        if (processor->tag != TAG_REWRITE_URI)
+            processor_uri_rewrite_delete(processor,
+                                         attr->name_start, attr->end);
         return true;
     }
 
     if (strref_cmp_literal(&attr->name, "xmlns:c") == 0) {
         /* delete "xmlns:c" attributes */
-        processor_uri_rewrite_delete(processor, attr->name_start, attr->end);
+        if (processor->tag != TAG_REWRITE_URI)
+            processor_uri_rewrite_delete(processor,
+                                         attr->name_start, attr->end);
         return true;
     }
 
@@ -873,7 +880,7 @@ is_link_tag(enum tag tag)
 static bool
 is_html_tag(enum tag tag)
 {
-    return tag == TAG_OTHER || is_link_tag(tag);
+    return tag == TAG_OTHER || (is_link_tag(tag) && tag != TAG_REWRITE_URI);
 }
 
 static void
@@ -1187,6 +1194,8 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     } else if (processor->tag == TAG_REWRITE_URI) {
         /* the settings of this tag become the new default */
         processor->default_uri_rewrite = processor->uri_rewrite;
+
+        processor_replace_add(processor, tag->start, tag->end, NULL);
     }
 }
 
