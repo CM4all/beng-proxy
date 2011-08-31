@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.8) unstable; urgency=low
 
-  * 
+  * {css_,}processor: one more underscore for the prefix
 
  --
 

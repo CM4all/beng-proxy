@@ -9,10 +9,10 @@ div.test {
     background-image:url('background.png');
 }
 
-div._foo {
+div.__foo {
     color: red;
 }
 
-div.__bar {
+div.___bar {
     color: green;
 }

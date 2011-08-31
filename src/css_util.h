@@ -35,7 +35,7 @@ static inline bool
 is_underscore_prefix(const char *p, const char *end)
 {
     unsigned n = underscore_prefix(p, end);
-    return n == 1 || n == 2;
+    return n == 2 || n == 3;
 }
 
 #endif

@@ -827,14 +827,14 @@ handle_class_attribute(struct processor *processor,
 
         const unsigned n = underscore_prefix(p, end);
         const char *prefix;
-        if (n == 2 && (prefix = widget_prefix(processor->container)) != NULL) {
+        if (n == 3 && (prefix = widget_prefix(processor->container)) != NULL) {
             expansible_buffer_write_string(buffer, prefix);
-            p += 2;
-        } else if (n == 1 && processor->container->class_name != NULL) {
+            p += 3;
+        } else if (n == 2 && processor->container->class_name != NULL) {
             expansible_buffer_write_string(buffer,
                                            processor->container->class_name);
             expansible_buffer_write_buffer(buffer, p, 1);
-            ++p;
+            p += 2;
         } else {
             /* failure; skip all underscores and find the next
                match */
