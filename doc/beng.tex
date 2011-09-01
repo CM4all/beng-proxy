@@ -106,63 +106,63 @@ settings:
 \begin{longtable}{|l|p{8cm}|}
 \hline
 
-\texttt{session\_cookie} & The name of the session cookie.  The
+\verb|session_cookie| & The name of the session cookie.  The
 default value is ``beng\_proxy\_session''. \\ \hline
 
-\texttt{session\_idle\_timeout} & After this duration (in seconds), a
+\verb|session_idle_timeout| & After this duration (in seconds), a
 session expires, unless it gets refreshed by a request. \\
 
 \hline
 
-\texttt{max\_connections} & The maximum number of incoming HTTP
+\verb|max_connections| & The maximum number of incoming HTTP
 connections. \\
 \hline
 
-\texttt{tcp\_stock\_limit} & The maximum number of outgoing TCP
+\verb|tcp_stock_limit| & The maximum number of outgoing TCP
 connections per remote host.  0 means unlimited, which has shown to be
 a bad choice, because many servers do not scale well. \\
 
 \hline
 
-\texttt{fastcgi\_stock\_limit} & The maximum number of child processes
+\verb|fastcgi_stock_limit| & The maximum number of child processes
 for one FastCGI application.  0 means unlimited. \\
 
 \hline
 
-\texttt{was\_stock\_limit} & The maximum number of child processes for
+\verb|was_stock_limit| & The maximum number of child processes for
 one WAS application.  0 means unlimited. \\
 
 \hline
 
-\texttt{http\_cache\_size} & The maxmimum amount of memory used by the
+\verb|http_cache_size| & The maxmimum amount of memory used by the
 HTTP cache.  Set to 0 to disable the HTTP cache. \\
 
 \hline
 
-\texttt{filter\_cache\_size} & The maxmimum amount of memory used by
+\verb|filter_cache_size| & The maxmimum amount of memory used by
 the filter cache.  Set to 0 to disable the filter cache. \\
 
 \hline
 
-\texttt{translate\_cache\_size} & The maxmimum number of cached
+\verb|translate_cache_size| & The maxmimum number of cached
 translation server responses.  Set to 0 to disable the translate
 cache. \\
 
 \hline
 
-\texttt{stopwatch} & Set to \texttt{yes} to enable the stopwatch.  See
+\verb|stopwatch| & Set to \texttt{yes} to enable the stopwatch.  See
 \ref{stopwatch} for details. \\
 
 \hline
 
-\texttt{enable\_splice} & Set to \texttt{no} to disable the
+\verb|enable_splice| & Set to \texttt{no} to disable the
 \texttt{splice()} system call (enabled by default).  This may degrade
 the server performance, and is only intended to work around kernel
 bugs. \\
 
 \hline
 
-\texttt{dump\_widget\_tree} & Set to \texttt{yes} to dump the widget
+\verb|dump_widget_tree| & Set to \texttt{yes} to dump the widget
 tree for each request into the log file. \\
 
 \hline
@@ -256,7 +256,7 @@ connections, and manages system resources economically.  The default
 value is 8192.
 
 There are good reasons to limit the number of outgoing connections per
-host (\texttt{tcp\_stock\_limit}): most servers don't handle so many
+host (\verb|tcp_stock_limit|): most servers don't handle so many
 connections as well as \emph{beng-proxy}, and performance degrades
 when there are too many.  By default, there is no limit.
 
@@ -542,16 +542,16 @@ side closes the connection.
 \subsection{Example conversation}
 
 \begin{itemize}
-\item client sends \texttt{BEGIN}
-\item client sends \texttt{REMOTE\_HOST} ``192.168.1.77:1234''
-\item client sends \texttt{HOST} ``www.example.com''
-\item client sends \texttt{URI} ``/foo/index.html''
-\item client sends \texttt{END}
-\item server sends \texttt{BEGIN}
-\item server sends \texttt{PATH} ``/var/www/foo/index.html''
-\item server sends \texttt{CONTENT\_TYPE} ``text/html; charset=utf8''
-\item server sends \texttt{PROCESS}
-\item server sends \texttt{END}
+\item client sends \verb|BEGIN|
+\item client sends \verb|REMOTE_HOST| ``192.168.1.77:1234''
+\item client sends \verb|HOST| ``www.example.com''
+\item client sends \verb|URI| ``/foo/index.html''
+\item client sends \verb|END|
+\item server sends \verb|BEGIN|
+\item server sends \verb|PATH| ``/var/www/foo/index.html''
+\item server sends \verb|CONTENT_TYPE| ``text/html; charset=utf8''
+\item server sends \verb|PROCESS|
+\item server sends \verb|END|
 \end{itemize}
 
 \subsection{Command packets}
@@ -578,65 +578,65 @@ just the raw string, without terminating zero.
 \begin{longtable}{|l|p{10cm}|}
 \hline
 
-\texttt{LOCAL\_ADDRESS} & The local socket address the request was
+\verb|LOCAL_ADDRESS| & The local socket address the request was
 received on.  The payload is a \texttt{struct sockaddr}. \\
 
 \hline
 
-\texttt{REMOTE\_HOST} & the client's address or host name and the port
+\verb|REMOTE_HOST| & the client's address or host name and the port
 number (as string) \\
 
 \hline
-\texttt{HOST} & the \texttt{Host} HTTP request header \\
+\verb|HOST| & the \texttt{Host} HTTP request header \\
 \hline
-\texttt{URI} & the raw URI from the HTTP request (without the query
+\verb|URI| & the raw URI from the HTTP request (without the query
 string) \\
 \hline
 
-\texttt{QUERY\_STRING} & the query string from request URI, without
+\verb|QUERY_STRING| & the query string from request URI, without
 the question mark \\
 
 \hline
-\texttt{SESSION} & a session identifier generated by the translation
+\verb|SESSION| & a session identifier generated by the translation
 server, see section \ref{sessions} \\
 \hline
-\texttt{PARAM} & a parameter passed by the browser \\
+\verb|PARAM| & a parameter passed by the browser \\
 
 \hline
 
-\texttt{USER\_AGENT} & the \texttt{User-Agent} request header sent by
+\verb|USER_AGENT| & the \texttt{User-Agent} request header sent by
 the client (not in the widget registry) \\
 
 \hline
 
-\texttt{LANGUAGE} & the \texttt{Accept-Language} request header sent
+\verb|LANGUAGE| & the \texttt{Accept-Language} request header sent
 by the client (not in the widget registry) \\
 
 \hline
 
-\texttt{AUTHORIZATION} & the \texttt{Authorization} request header
+\verb|AUTHORIZATION| & the \texttt{Authorization} request header
 sent by the client (see RFC 2617) \\
 
 \hline
 
-\texttt{ERROR\_DOCUMENT} & a resource has failed, and the translation
+\verb|ERROR_DOCUMENT| & a resource has failed, and the translation
 server is asked to provide the location of the error document.  This
-is followed by the packets \texttt{URI} and \texttt{STATUS}.  See
+is followed by the packets \verb|URI| and \verb|STATUS|.  See
 \ref{errdoc} for a detailed description. \\
 
 \hline
 
-\texttt{CHECK} & causes beng-proxy to submit the same translation
+\verb|CHECK| & causes beng-proxy to submit the same translation
 request again, with this packet appended (its payload is opaque to
 \emph{beng-proxy}).  The current response is remembered, to be used
-when the second response contains the \texttt{PREVIOUS} packet.  This
+when the second response contains the \verb|PREVIOUS| packet.  This
 can be used to implement authentication (see \ref{authentication}). \\
 
 \hline
 
-\texttt{PREVIOUS} & Tells beng-proxy to use the resource address of
+\verb|PREVIOUS| & Tells beng-proxy to use the resource address of
 the previous translation response.  Only allowed if the request
-contains a \texttt{CHECK} packet. \\
+contains a \verb|CHECK| packet. \\
 
 \hline
 
@@ -648,288 +648,288 @@ contains a \texttt{CHECK} packet. \\
 
 \hline
 
-\texttt{URI} & the ``real'' raw URI from the HTTP request (without the
+\verb|URI| & the ``real'' raw URI from the HTTP request (without the
 query string); this is used to override the URI, e.g. when
 \emph{beng-proxy} is behind another proxy which modifies the URI \\
 
 \hline
 
-\texttt{HOST} & the host name for generating absolute URLs; default is
+\verb|HOST| & the host name for generating absolute URLs; default is
 the \texttt{Host} HTTP request header \\
 
 \hline
 
-\texttt{SCHEME} & the scheme for generating absolute URLs; default is
+\verb|SCHEME| & the scheme for generating absolute URLs; default is
 \texttt{http}.  This packet is useful if \emph{beng-proxy} is behind
 \texttt{stunnel} \\
 
 \hline
 
-\texttt{UNTRUSTED} & sets the ``untrusted'' host name for this
+\verb|UNTRUSTED| & sets the ``untrusted'' host name for this
 request: only untrusted widgets matching this host name are allowed.
 Trusted widgets are rejected. \\
 
 \hline
-\texttt{STATUS} & HTTP status code, encoded as \texttt{uint16\_t};
+\verb|STATUS| & HTTP status code, encoded as \texttt{uint16\_t};
 this parameter is usually not used \\
 \hline
 
-\texttt{PATH} & Absolute path of the local file to be served (see
+\verb|PATH| & Absolute path of the local file to be served (see
 \ref{static}). \\
 
 \hline
 
-\texttt{DEFLATED} & Absolute path of a precompressed version of the
+\verb|DEFLATED| & Absolute path of a precompressed version of the
 file.  The file is compressed with the ``deflate'' algorithm, without
-\texttt{gzip} headers.  May follow the \texttt{PATH} packet. \\
+\texttt{gzip} headers.  May follow the \verb|PATH| packet. \\
 
 \hline
 
-\texttt{GZIPPED} & Absolute path of a precompressed version of the
+\verb|GZIPPED| & Absolute path of a precompressed version of the
 file.  The file is compressed with \texttt{gzip}.  May follow the
-\texttt{PATH} packet. \\
+\verb|PATH| packet. \\
 
 \hline
 
-\texttt{PROXY} & this URL parameter may be specified instead of
-\texttt{PATH} to tell \emph{beng-proxy} to obtain the resource from a
+\verb|PROXY| & this URL parameter may be specified instead of
+\verb|PATH| to tell \emph{beng-proxy} to obtain the resource from a
 remote HTTP server (see \ref{http}) \\
 
 \hline
 
-\texttt{AJP} & Load the resource from an AJPv13 server (see
+\verb|AJP| & Load the resource from an AJPv13 server (see
 \ref{ajp}).  The payload of this packet is an absolute URI in the form
 \texttt{ajp://host:port/path} \\
 
 \hline
 
-\texttt{PIPE} & a local program which reads input from stdin and
+\verb|PIPE| & a local program which reads input from stdin and
 prints the modified resource on stdout (see \ref{pipe}). \\
 
 \hline
 
-\texttt{APPEND} & appends an argument to the command line of the
-preceding \texttt{PIPE} \\
+\verb|APPEND| & appends an argument to the command line of the
+preceding \verb|PIPE| \\
 
 \hline
 
-\texttt{CGI} & a local path which is executed as CGI script \\
+\verb|CGI| & a local path which is executed as CGI script \\
 
 \hline
 
-\texttt{FASTCGI} & a local path which is executed as FastCGI script.
+\verb|FASTCGI| & a local path which is executed as FastCGI script.
 To connect to an existing FastCGI server, specify one or more
-\texttt{ADDRESS} packets. \\
+\verb|ADDRESS| packets. \\
 
 \hline
 
-\texttt{WAS} & a local path which is executed as WAS application \\
+\verb|WAS| & a local path which is executed as WAS application \\
 
 \hline
 
-\texttt{PAIR} & adds a FastCGI/WAS parameter or CGI environment
+\verb|PAIR| & adds a FastCGI/WAS parameter or CGI environment
 variable in the form \texttt{KEY=VALUE}. \\
 
 \hline
 
-\texttt{REDIRECT} & another alternative to \texttt{PATH}: redirect the
-HTTP client to this URL; \texttt{STATUS} must be set to one of the
+\verb|REDIRECT| & another alternative to \verb|PATH|: redirect the
+HTTP client to this URL; \verb|STATUS| must be set to one of the
 HTTP 3xx codes \\
 
 \hline
 
-\texttt{BOUNCE} & Redirects the browser with a \texttt{303 See Other}
+\verb|BOUNCE| & Redirects the browser with a \texttt{303 See Other}
 status to this URI, and appends the current absolute URI
 (form-encoded).  This is useful to redirect to another server, which
 will need to redirect back to the original URI. \\
 
 \hline
 
-\texttt{PATH\_INFO} & optional URI substring which was left after
+\verb|PATH_INFO| & optional URI substring which was left after
 finding the file \\
 
 \hline
 
-\texttt{SITE} & optional identification or name of the site this
+\verb|SITE| & optional identification or name of the site this
 resource belongs to \\
 
 \hline
 
-\texttt{DOCUMENT\_ROOT} & base directory of the site; may also be
-passed after a \texttt{CGI}/\texttt{DELEGATE} command, to set the
+\verb|DOCUMENT_ROOT| & base directory of the site; may also be
+passed after a \verb|CGI|/\verb|DELEGATE| command, to set the
 document root only for this CGI/delegate \\
 
 \hline
 
-\texttt{CONTENT\_TYPE} & MIME type of the file (optional) \\
+\verb|CONTENT_TYPE| & MIME type of the file (optional) \\
 
 \hline
 
-\texttt{DELEGATE} & After \texttt{PATH}: delegates opening the file to
+\verb|DELEGATE| & After \verb|PATH|: delegates opening the file to
 a program.  The payload is the path of the delegate program.  See
 section \ref{delegate} for details. \\
 
 \hline
 
-\texttt{BASE} & Defines a realm in the URI space.  The payload
+\verb|BASE| & Defines a realm in the URI space.  The payload
 specifies the URI prefix (of the original request URI, ending with a
 slash) which contains this
 realm.  All resources in this realm can be addressed by
 \emph{beng-proxy} with a trivial pattern: append the relative URI
-(within the realm) to the resource address (e.g. the \texttt{PATH},
-\texttt{PROXY} or \texttt{PATH\_INFO} value).
+(within the realm) to the resource address (e.g. the \verb|PATH|,
+\verb|PROXY| or \verb|PATH_INFO| value).
 
 The address in this response applies to request URI, not the
 base URI (to allow backwards compatibility with translation clients
 which do not support this packet).
 
-Example: in the request, \texttt{URI} is \texttt{/foo/bar/index.html};
-in the response, \texttt{PATH} is \texttt{/var/www/foo/bar/index.html}
-and \texttt{BASE} is \texttt{/foo/}.  The \emph{beng-proxy}
+Example: in the request, \verb|URI| is \texttt{/foo/bar/index.html};
+in the response, \verb|PATH| is \texttt{/var/www/foo/bar/index.html}
+and \verb|BASE| is \texttt{/foo/}.  The \emph{beng-proxy}
 translation cache now knows: if a request on \texttt{/foo/test.png} is
 received, it can serve \texttt{/var/www/foo/test.png} without querying
 the translation server. \\
 
 \hline
 
-\texttt{FILTER} & the next resource address (\texttt{PROXY},
-\texttt{CGI}) will denote an output filter, see section \ref{filter}
+\verb|FILTER| & the next resource address (\verb|PROXY|,
+\verb|CGI|) will denote an output filter, see section \ref{filter}
 \\
 
 \hline
 
-\texttt{FILTER\_4XX} & Enable filtering of client errors (status 4xx).
+\verb|FILTER_4XX| & Enable filtering of client errors (status 4xx).
 Without this flag, only successful responses (2xx) are filtered.  Only
-useful when at least one \texttt{FILTER} was specified. \\
+useful when at least one \verb|FILTER| was specified. \\
 
 \hline
 
-\texttt{PROCESS} & enables the \emph{beng-proxy} processor, see
+\verb|PROCESS| & enables the \emph{beng-proxy} processor, see
 section \ref{processor} \\
 
 \hline
 
-\texttt{PROCESS\_CSS} & enables the \emph{beng-proxy} CSS processor \\
+\verb|PROCESS_CSS| & enables the \emph{beng-proxy} CSS processor \\
 
 \hline
 
-\texttt{DOMAIN} & the domain name for partitioned frames \\
+\verb|DOMAIN| & the domain name for partitioned frames \\
 
 \hline
 
-\texttt{SESSION} & a session identifier generated by the translation
+\verb|SESSION| & a session identifier generated by the translation
 server, see section \ref{sessions} \\
 
 \hline
 
-\texttt{USER} & the user name associated with this session \\
+\verb|USER| & the user name associated with this session \\
 
 \hline
 
-\texttt{REALM} & a realm name for this session.  An existing session
+\verb|REALM| & a realm name for this session.  An existing session
 matches only if its realm matches the current request's realm.  If
 this packet is not specified in the translation response, then the
 ``Host'' request header is used. \\
 
 \hline
 
-\texttt{TRANSPARENT} & Transparent proxy: forward URI arguments to the
+\verb|TRANSPARENT| & Transparent proxy: forward URI arguments to the
 request handler instead of using them.  As a side effect, session
 handling is disabled. \\
 
 \hline
 
-\texttt{LANGUAGE} & overrides the \texttt{Accept-Language} request
+\verb|LANGUAGE| & overrides the \texttt{Accept-Language} request
 header for this session \\
 \hline
 
-\texttt{DISCARD\_SESSION} & discard the current browser session \\
+\verb|DISCARD_SESSION| & discard the current browser session \\
 
 \hline
 
-\texttt{SECURE\_COOKIE} & Set the "secure" flag on the session cookie. \\
+\verb|SECURE_COOKIE| & Set the "secure" flag on the session cookie. \\
 
 \hline
 
-\texttt{JAILCGI} & enable JailCGI \\
+\verb|JAILCGI| & enable JailCGI \\
 
 \hline
 
-\texttt{HOME} & home directory of the account this site belongs to;
-will be mounted in the jail; defaults to \texttt{DOCUMENT\_ROOT} \\
+\verb|HOME| & home directory of the account this site belongs to;
+will be mounted in the jail; defaults to \verb|DOCUMENT_ROOT| \\
 
 \hline
 
-\texttt{INTERPRETER} & run a CGI script with the specified
+\verb|INTERPRETER| & run a CGI script with the specified
 interpreter; does not require the ``execute'' bit on the CGI script \\
 
 \hline
 
-\texttt{ACTION} & run the specified CGI program \\
+\verb|ACTION| & run the specified CGI program \\
 
 \hline
 
-\texttt{SCRIPT\_NAME} & the \texttt{SCRIPT\_NAME} environment variable
+\verb|SCRIPT_NAME| & the \verb|SCRIPT_NAME| environment variable
 for a CGI \\
 
 \hline
 
-\texttt{ADDRESS} & after each \texttt{PROXY} packet, there must be one
-or more \texttt{ADDRESS} packets which specify the resolved addresses.
+\verb|ADDRESS| & after each \verb|PROXY| packet, there must be one
+or more \verb|ADDRESS| packets which specify the resolved addresses.
 The payload of each is a \texttt{struct sockaddr}.
-The same applies to \texttt{AJP} packets. \\
+The same applies to \verb|AJP| packets. \\
 
 \hline
 
-\texttt{STICKY} & Make the resource address "sticky", i.e. attempt to
+\verb|STICKY| & Make the resource address "sticky", i.e. attempt to
 forward all requests of a session to the same worker. \\
 
 \hline
 
-\texttt{VIEW} & starts a new view; the body of the packet is the name
+\verb|VIEW| & starts a new view; the body of the packet is the name
 of the view (ASCII letters, digits, underscore, dash only).  Each view
 can have different address/processor/filter settings.  The first view
-(the one before the first \texttt{VIEW} packet) is the default and has
+(the one before the first \verb|VIEW| packet) is the default and has
 no name.  The root template has only the default view. \\
 
 \hline
 
-\texttt{MAX\_AGE} & a 32 bit unsigned integer specifying the number of
+\verb|MAX_AGE| & a 32 bit unsigned integer specifying the number of
 seconds the preceding piece of information is valid without having to
 revalidate.  A value of 0 specifies that \emph{beng-proxy} should not
 remember this value at all.  Without this packet, the maximum age is
 not limited.  Currently, this is only supported for the following
 packets:
 
-\texttt{BEGIN} (refers to the whole translate response), \texttt{USER}
+\verb|BEGIN| (refers to the whole translate response), \verb|USER|
 \\
 
 \hline
 
-\texttt{VARY} & similar to the HTTP \texttt{Vary} response header;
+\verb|VARY| & similar to the HTTP \texttt{Vary} response header;
 the payload contains an array of translation request commands which
 this response depends upon.
 
 The following request packets are currently supported:
-\texttt{SESSION},
-\texttt{LOCAL\_ADDRESS},
-\texttt{REMOTE\_HOST}, \texttt{HOST}, \texttt{LANGUAGE},
-\texttt{USER\_AGENT}, \texttt{QUERY\_STRING}.
+\verb|SESSION|,
+\verb|LOCAL_ADDRESS|,
+\verb|REMOTE_HOST|, \verb|HOST|, \verb|LANGUAGE|,
+\verb|USER_AGENT|, \verb|QUERY_STRING|.
 
 \\
 
 \hline
 
-\texttt{INVALIDATE} & Invalidates existing translation cache items
+\verb|INVALIDATE| & Invalidates existing translation cache items
 which depend on some of the request values.  The payload has the same
-format as \texttt{VARY}.  Additionally, the \texttt{URI} command is
+format as \verb|VARY|.  Additionally, the \verb|URI| command is
 supported, to invalidate all items pointing to the request URI.
 
 If you specify more than one command, all must match.  If you list a
 command which was not specified in the request (or a command which is
 not supported here), nothing will be deleted.
 
-Example: \texttt{INVALIDATE} on \texttt{SESSION} invalidates all cache
+Example: \verb|INVALIDATE| on \verb|SESSION| invalidates all cache
 items for the current session.
 
 \\
@@ -937,7 +937,7 @@ items for the current session.
 \hline
 
 \label{tfwdheader}
-\texttt{REQUEST\_HEADER\_FORWARD} &
+\verb|REQUEST_HEADER_FORWARD| &
 
 This packet specifies which request headers are forwarded to the
 request handler.  The payload is a list of group/mode pairs
@@ -970,26 +970,26 @@ behavior of the \texttt{COOKIE} setting on widgets is undefined.
 
 \hline
 
-\texttt{RESPONSE\_HEADER\_FORWARD} &
+\verb|RESPONSE_HEADER_FORWARD| &
 
-Same as \texttt{REQUEST\_HEADER\_FORWARD}, but applies to response
+Same as \verb|REQUEST_HEADER_FORWARD|, but applies to response
 headers forwarded to the client. \\
 
 \hline
 
-\texttt{WWW\_AUTHENTICATE} & the \texttt{WWW-Authenticate} response
+\verb|WWW_AUTHENTICATE| & the \texttt{WWW-Authenticate} response
 header sent to the client (see RFC 2617).  Currently, this is never
 cached.  This exact behavior is subject to change in the future, and
 will be cacheable. \\
 
 \hline
 
-\texttt{AUTHENTICATION\_INFO} & the \texttt{Authentication-Info}
+\verb|AUTHENTICATION_INFO| & the \texttt{Authentication-Info}
 response header sent to the client (see RFC 2617). \\
 
 \hline
 
-\texttt{HEADER} & A custom HTTP response header sent to the client.
+\verb|HEADER| & A custom HTTP response header sent to the client.
 Name and value are separated by a colon (without any whitespace).
 This will not override existing headers.  It is not allowed to set
 hop-by-hop headers (RFC 2616 13.5.1) this way.  This packet shall only
@@ -998,12 +998,12 @@ response header. \\
 
 \hline
 
-\texttt{ERROR\_DOCUMENT} & Indicates that the translation server is
+\verb|ERROR_DOCUMENT| & Indicates that the translation server is
 willing to provide a custom error document. \\
 
 \hline
 
-\texttt{COOKIE\_HOST} & Override the cookie host name.  This host name
+\verb|COOKIE_HOST| & Override the cookie host name.  This host name
 is used for storing and looking up cookies in the jar.  It is
 especially useful for protocols that don't have a host name, such as
 CGI. \\
@@ -1011,21 +1011,21 @@ CGI. \\
 \hline
 \end{longtable}
 
-If the translation server does not provide the \texttt{CONTENT\_TYPE}
+If the translation server does not provide the \verb|CONTENT_TYPE|
 header, \emph{beng-proxy} will attempt to discover the file type from
 its extended attributes (see \ref{xattr}).
 
 To send a standard error page, the translation server sends a response
-containing only the \texttt{STATUS} parameter with the desired HTTP
+containing only the \verb|STATUS| parameter with the desired HTTP
 status.
 
 \subsection{Proxying requests}
 
-When proxying HTTP requests with the a \texttt{PROXY} packet,
+When proxying HTTP requests with the a \verb|PROXY| packet,
 \emph{beng-proxy} forwards the request to the specified location,
 including the HTTP method and the request body.  There is one
-exception: if \texttt{PROCESS} is enabled and a widget is focused, the
-other HTTP server receives a \texttt{GET} request without a body,
+exception: if \verb|PROCESS| is enabled and a widget is focused, the
+other HTTP server receives a \verb|GET| request without a body,
 because the focused widget is going to receive the request body.
 
 If the filter URL starts with a slash, \emph{beng-proxy} assumes it is
@@ -1035,9 +1035,9 @@ the absolute path to a Unix socket.
 \label{filter}
 
 The translation server can tell \emph{beng-proxy} to apply a filter to
-the resource by sending the \texttt{FILTER} command.  It is followed
-by a packet specifying the filter server (\texttt{PROXY},
-\texttt{CGI}, \texttt{FASTCGI}, \texttt{AJP}).
+the resource by sending the \verb|FILTER| command.  It is followed
+by a packet specifying the filter server (\verb|PROXY|,
+\verb|CGI|, \verb|FASTCGI|, \verb|AJP|).
 
 A filter server is a HTTP server.  \emph{beng-proxy} sends the
 original resource with a POST request and expects the filtered
@@ -1047,8 +1047,8 @@ It is important that a filter is completely stateless.  Running the
 same filter twice on the same source must always render the same
 result, at any time.
 
-There may be more than one filter; the order of the \texttt{PROCESS}
-and \texttt{FILTER} packets is important.
+There may be more than one filter; the order of the \verb|PROCESS|
+and \verb|FILTER| packets is important.
 
 According to the HTTP specification, POST requests are not cached.  To
 gain the necessary performance, \emph{beng-proxy} caches filter
@@ -1074,11 +1074,11 @@ Errors from remote servers are forwarded to the client.  If no error
 document is available, \emph{beng-proxy} generates a simple one.
 
 The translation server indicates that it is willing to override the
-error document by sending an empty \texttt{ERROR\_DOCUMENT} packet in
+error document by sending an empty \verb|ERROR_DOCUMENT| packet in
 the translation response.  As soon as an error occurs (response status
 400..599), \emph{beng-proxy} sends another translation request,
-consisting of \texttt{ERROR\_DOCUMENT}, \texttt{URI} and
-\texttt{STATUS}.
+consisting of \verb|ERROR_DOCUMENT|, \verb|URI| and
+\verb|STATUS|.
 
 The translation server responds with a pointer to another resource
 which shall be used as the error document.  If the translation
@@ -1095,7 +1095,7 @@ following packets:
 
 \begin{longtable}{|l|p{10cm}|}
 \hline
-\texttt{WIDGET\_TYPE} & the name of the widget type \\
+\verb|WIDGET_TYPE| & the name of the widget type \\
 \hline
 \end{longtable}
 
@@ -1103,25 +1103,25 @@ The translation server's response consists of these packets:
 
 \begin{longtable}{|l|p{8cm}|}
 \hline
-\texttt{STATUS} & in case of a lookup error, this packet provides the
+\verb|STATUS| & in case of a lookup error, this packet provides the
 HTTP status code \\
 \hline
 
-\texttt{PATH}, \texttt{CGI}, \texttt{PROXY} & choose one of these
+\verb|PATH|, \verb|CGI|, \verb|PROXY| & choose one of these
 packets: a static widget (local file path), a local CGI script, or a
 HTTP server \\
 
 \hline
 
-\texttt{DOCUMENT\_ROOT}, \texttt{JAILCGI} & optional flags for CGI
+\verb|DOCUMENT_ROOT|, \verb|JAILCGI| & optional flags for CGI
 widgets \\
 
 \hline
-\texttt{PROCESS} & enable the BENG processor \\
+\verb|PROCESS| & enable the BENG processor \\
 
 \hline
 
-\texttt{UNTRUSTED} & sets the externally visible host name for requests
+\verb|UNTRUSTED| & sets the externally visible host name for requests
 which are proxied to this widget.  This marks the widget as
 ``untrusted'' and disallows any other way of embedding it.  This is
 useful for widget code whose JavaScript must not be executed in the
@@ -1129,29 +1129,29 @@ same context as another widget. \\
 
 \hline
 
-\texttt{UNTRUSTED\_PREFIX} & same as \texttt{UNTRUSTED}, but is a
+\verb|UNTRUSTED_PREFIX| & same as \verb|UNTRUSTED|, but is a
 prefix for the request host name.  This widget can only be used when
-the request's \texttt{UNTRUSTED} packet begins with this prefix.
-Example: \texttt{UNTRUSTED\_PREFIX="foo"} matches a request with
-\texttt{UNTRUSTED="foo.example.com"}, but not
-\texttt{UNTRUSTED="foobar.example.com"}. \\
+the request's \verb|UNTRUSTED| packet begins with this prefix.
+Example: \verb|UNTRUSTED_PREFIX="foo"| matches a request with
+\verb|UNTRUSTED="foo.example.com"|, but not
+\verb|UNTRUSTED="foobar.example.com"|. \\
 
 \hline
 
-\texttt{UNTRUSTED\_SITE\_SUFFIX} & similar to
-\texttt{UNTRUSTED\_PREFIX}, but matches the suffix instead of the
+\verb|UNTRUSTED_SITE_SUFFIX| & similar to
+\verb|UNTRUSTED_PREFIX|, but matches the suffix instead of the
 prefix.  When generating untrusted URIs, the site name is prepended.
-During verification, the request's \texttt{UNTRUSTED} value must
+During verification, the request's \verb|UNTRUSTED| value must
 exactly match this scheme. \\
 
 \hline
 
-\texttt{STATEFUL} & remember the state of this widget, i.e. path info
+\verb|STATEFUL| & remember the state of this widget, i.e. path info
 and query string \\
 
 \hline
 
-\texttt{DUMP\_HEADERS} & Enable header dumps for the widget: on a HTTP
+\verb|DUMP_HEADERS| & Enable header dumps for the widget: on a HTTP
 request, the request and response headers will be logged.  Only for
 debugging purposes. \\
 
@@ -1195,8 +1195,8 @@ To enable IP multicast, set the multicast group address with
 
 \hline
 
-\texttt{TCACHE\_INVALIDATE} & Invalidates translation cache entries.
-This packet follows the same semantics as the \texttt{INVALIDATE}
+\verb|TCACHE_INVALIDATE| & Invalidates translation cache entries.
+This packet follows the same semantics as the \verb|INVALIDATE|
 translation response packet, but instead of passing just a list of
 command numbers referring to a real translation request, you need to
 send the values as well.  The payload of this packet consists of one
@@ -1395,26 +1395,26 @@ storing the current state of a widget in its current URI (path info).
 There is currently no support for HTTP based authentification.
 
 Authentification is supported in the translation protocol.  After the
-translation server sets the \texttt{USER} session variable to a
+translation server sets the \verb|USER| session variable to a
 non-empty string, the session is presumed to be authenticated.  This
 user variable is passed to widget servers in the proprietary
 \texttt{X-CM4all-BENG-User} request header.  The user is logged out
-when the translation sends an empty \texttt{USER} packet.
+when the translation sends an empty \verb|USER| packet.
 
 \subsubsection{The \texttt{CHECK} packet}
 
 On a protected resource, the translation server may send the
-\texttt{CHECK} packet together with the normal response.  Now
+\verb|CHECK| packet together with the normal response.  Now
 \texttt{beng-proxy} queries the translation server again, sending the
-same request and a copy of the \texttt{CHECK} packet.  The translation
+same request and a copy of the \verb|CHECK| packet.  The translation
 server may now verify the current session, redirect to a login page,
 or anything else needed to authenticate the user.  The response to
 this second translation request may be a resource address as usual, or
-the \texttt{PREVIOUS} packet, which indicates that the first
+the \verb|PREVIOUS| packet, which indicates that the first
 translation shall be used.
 
 While the first response is usually cached for a long time, the second
-one may specify a short texttt{MAX\_AGE} value.  This means the latter
+one may specify a short \texttt{MAX\_AGE} value.  This means the latter
 is sent more often, but since it refers to the former, it is very
 small.
 
@@ -1478,15 +1478,15 @@ processor:
 \begin{longtable}{|l|p{8cm}|}
 \hline
 
-\texttt{PROCESS} & Enables the processor. \\
+\verb|PROCESS| & Enables the processor. \\
 
 \hline
 
-\texttt{CONTAINER} & Allows embedding other widgets. \\
+\verb|CONTAINER| & Allows embedding other widgets. \\
 
 \hline
 
-\texttt{PREFIX\_CSS\_CLASS} & CSS class names with leading underscore
+\verb|PREFIX_CSS_CLASS| & CSS class names with leading underscore
 get a widget specific prefix, see \ref{prefix_css_class}. \\
 
 \hline
@@ -1663,7 +1663,7 @@ widget; useful for frame contents \\
 \hline
 
 \texttt{partition} & same as \texttt{partial}, but try to provide a
-link to a different host name (provided by the \texttt{DOMAIN}
+link to a different host name (provided by the \verb|DOMAIN|
 translation packet) \\
 
 \hline
@@ -1757,7 +1757,7 @@ the \texttt{HOST} packet with a host name for that widget.  A host
 name may be shared by a group of widget classes.
 
 While translating a request, the translation server may send the
-\texttt{UNTRUSTED} packet, repeating the host name of the request.
+\verb|UNTRUSTED| packet, repeating the host name of the request.
 This makes the request itself ``untrusted'': trusted widgets are
 rejected, and only those untrusted widgets matching the specified host
 name are accepted.  If the packet is absend, all untrusted widgets are
@@ -1822,7 +1822,7 @@ parameter is ignored unless \texttt{frame} is set, or \texttt{mode} is
 \label{cssprocessor}
 
 The CSS processor is a transformation for cascading style sheets.  The
-translation server enables it with the packet \texttt{PROCESS\_CSS}.
+translation server enables it with the packet \verb|PROCESS\_CSS|.
 It is the equivalent of the HTML processor for CSS: it can convert
 URLs to widget resources.  This allows proxying resources that are
 referenced in CSS.
@@ -1846,11 +1846,11 @@ CSS processor:
 \begin{longtable}{|l|p{8cm}|}
 \hline
 
-\texttt{PROCESS\_CSS} & Enables the CSS processor. \\
+\verb|PROCESS_CSS| & Enables the CSS processor. \\
 
 \hline
 
-\texttt{PREFIX\_CSS\_CLASS} & CSS class names with leading underscore
+\verb|PREFIX_CSS_CLASS| & CSS class names with leading underscore
 get a widget specific prefix, see below. \\
 
 \hline
@@ -1860,7 +1860,7 @@ get a widget specific prefix, see below. \\
 \subsection{Local Classes}
 \label{prefix_css_class}
 
-When the option \texttt{PREFIX\_CSS\_CLASS} is enabled, CSS class
+When the option \verb|PREFIX_CSS_CLASS| is enabled, CSS class
 names with a leading underscore are rewritten.  The option is
 available in both processors (HTML and CSS).
 
@@ -1883,8 +1883,8 @@ section describes its hard-coded behaviour.
 
 The document root is \texttt{/var/www}.  File names ending with
 \texttt{.html} are mapped to the content type ``text/html;
-charset=utf-8'' and are marked with the flags \texttt{PROCESS},
-\texttt{CONTAINER}.
+charset=utf-8'' and are marked with the flags \verb|PROCESS|,
+\verb|CONTAINER|.
 
 \subsection{Widget registry}
 
