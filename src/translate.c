@@ -1455,6 +1455,17 @@ translate_handle_packet(struct translate_client *client,
         }
 
         return true;
+
+    case TRANSLATE_FOCUS_WIDGET:
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_FOCUS_WIDGET packet");
+            return false;
+        }
+
+        client->transformation->u.processor.options |= PROCESSOR_FOCUS_WIDGET;
+        return true;
     }
 
     GError *error = g_error_new(translate_quark(), 0,

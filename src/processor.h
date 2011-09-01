@@ -18,6 +18,11 @@ enum processor_options {
     /** add prefix to marked CSS class names */
     PROCESSOR_PREFIX_CSS_CLASS = 0x2,
 
+    /**
+     * Default URI rewrite mode is base=widget mode=focus.
+     */
+    PROCESSOR_FOCUS_WIDGET = 0x4,
+
     /** enable the c:embed element */
     PROCESSOR_CONTAINER = 0x10,
 };

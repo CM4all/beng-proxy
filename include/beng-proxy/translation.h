@@ -182,6 +182,11 @@ enum beng_translation_command {
      * Rewrite CSS class names with a leading underscore?
      */
     TRANSLATE_PREFIX_CSS_CLASS = 75,
+
+    /**
+     * Default URI rewrite mode is base=widget mode=focus.
+     */
+    TRANSLATE_FOCUS_WIDGET = 76,
 };
 
 struct beng_translation_header {

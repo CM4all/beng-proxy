@@ -125,6 +125,8 @@ class _Lookup:
             response.packet(TRANSLATE_STICKY)
         elif line == 'dump_headers':
             response.packet(TRANSLATE_DUMP_HEADERS)
+        elif line == 'focus_widget':
+            response.packet(TRANSLATE_FOCUS_WIDGET)
         else:
             raise MalformedLineError(self.path, line)
 

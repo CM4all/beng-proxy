@@ -327,6 +327,11 @@ processor_process(pool_t caller_pool, istream_t istream,
     if (processor_option_rewrite_url(processor)) {
         processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
         processor->default_uri_rewrite.mode = URI_MODE_DIRECT;
+
+        if (options & PROCESSOR_FOCUS_WIDGET) {
+            processor->default_uri_rewrite.base = URI_BASE_WIDGET;
+            processor->default_uri_rewrite.mode = URI_MODE_FOCUS;
+        }
     }
 
     //XXX headers = processor_header_forward(pool, headers);
