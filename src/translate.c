@@ -695,7 +695,7 @@ translate_handle_packet(struct translate_client *client,
         client->widget_view_tail = &client->response.views->next;
         client->transformation = NULL;
         client->transformation_tail = &client->response.views->transformation;
-        break;
+        return true;
 
     case TRANSLATE_PARAM:
     case TRANSLATE_REMOTE_HOST:
@@ -707,7 +707,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_LOCAL_ADDRESS_STRING:
     case TRANSLATE_AUTHORIZATION:
         daemon_log(2, "misplaced translate request packet\n");
-        break;
+        return true;
 
     case TRANSLATE_STATUS:
         if (payload_length != 2) {
@@ -726,7 +726,7 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        break;
+        return true;
 
     case TRANSLATE_PATH:
         if (client->resource_address == NULL ||
@@ -744,7 +744,7 @@ translate_handle_packet(struct translate_client *client,
         memset(&client->resource_address->u.local, 0,
                sizeof(client->resource_address->u.local));
         client->resource_address->u.local.path = payload;
-        break;
+        return true;
 
     case TRANSLATE_PATH_INFO:
         if (client->resource_address == NULL ||
@@ -752,7 +752,7 @@ translate_handle_packet(struct translate_client *client,
              client->resource_address->type != RESOURCE_ADDRESS_WAS &&
              client->resource_address->type != RESOURCE_ADDRESS_FASTCGI)) {
             /* don't emit this error when the resource is a local
-               path.  This combination might once be useful, but isn't
+               path.  This combination might be useful one day, but isn't
                currently used. */
             if (client->resource_address == NULL ||
                 client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
@@ -761,11 +761,11 @@ translate_handle_packet(struct translate_client *client,
                 return false;
             }
 
-            break;
+            return true;
         }
 
         client->resource_address->u.cgi.path_info = payload;
-        break;
+        return true;
 
     case TRANSLATE_DEFLATED:
         if (client->resource_address == NULL ||
@@ -776,7 +776,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->u.local.deflated = payload;
-        break;
+        return true;
 
     case TRANSLATE_GZIPPED:
         if (client->resource_address == NULL ||
@@ -786,7 +786,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->u.local.gzipped = payload;
-        break;
+        return true;
 
     case TRANSLATE_SITE:
         assert(client->resource_address != NULL);
@@ -805,7 +805,7 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        break;
+        return true;
 
     case TRANSLATE_CONTENT_TYPE:
         if (client->resource_address == NULL ||
@@ -815,7 +815,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->u.local.content_type = payload;
-        break;
+        return true;
 
     case TRANSLATE_PROXY:
         if (client->resource_address == NULL ||
@@ -833,15 +833,15 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->u.http =
             uri_address_new(client->pool, payload);
         client->address_list = &client->resource_address->u.http->addresses;
-        break;
+        return true;
 
     case TRANSLATE_REDIRECT:
         client->response.redirect = payload;
-        break;
+        return true;
 
     case TRANSLATE_BOUNCE:
         client->response.bounce = payload;
-        break;
+        return true;
 
     case TRANSLATE_FILTER:
         transformation = translate_add_transformation(client);
@@ -849,24 +849,24 @@ translate_handle_packet(struct translate_client *client,
         transformation->u.filter.type = RESOURCE_ADDRESS_NONE;
         client->resource_address = &transformation->u.filter;
         client->address_list = NULL;
-        break;
+        return true;
 
     case TRANSLATE_FILTER_4XX:
         if (client->view != NULL)
             client->view->filter_4xx = true;
         else
             client->response.filter_4xx = true;
-        break;
+        return true;
 
     case TRANSLATE_PROCESS:
         transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_PROCESS;
         transformation->u.processor.options = PROCESSOR_REWRITE_URL;
-        break;
+        return true;
 
     case TRANSLATE_DOMAIN:
         daemon_log(2, "deprecated TRANSLATE_DOMAIN packet\n");
-        break;
+        return true;
 
     case TRANSLATE_CONTAINER:
         if (client->transformation == NULL ||
@@ -877,7 +877,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->transformation->u.processor.options |= PROCESSOR_CONTAINER;
-        break;
+        return true;
 
     case TRANSLATE_UNTRUSTED:
         if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
@@ -894,7 +894,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->response.untrusted = payload;
-        break;
+        return true;
 
     case TRANSLATE_UNTRUSTED_PREFIX:
         if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
@@ -911,22 +911,22 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->response.untrusted_prefix = payload;
-        break;
+        return true;
 
     case TRANSLATE_UNTRUSTED_SITE_SUFFIX:
         if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
             daemon_log(2, "malformed TRANSLATE_UNTRUSTED_SITE_SUFFIX packet\n");
-            break;
+            return false;
         }
 
         if (client->response.untrusted != NULL ||
             client->response.untrusted_prefix != NULL) {
             daemon_log(2, "misplaced TRANSLATE_UNTRUSTED_SITE_SUFFIX packet\n");
-            break;
+            return false;
         }
 
         client->response.untrusted_site_suffix = payload;
-        break;
+        return true;
 
     case TRANSLATE_SCHEME:
         if (strncmp(payload, "http", 4) != 0) {
@@ -936,11 +936,11 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->response.scheme = payload;
-        break;
+        return true;
 
     case TRANSLATE_HOST:
         client->response.host = payload;
-        break;
+        return true;
 
     case TRANSLATE_URI:
         if (payload == NULL || *payload != '/') {
@@ -949,28 +949,28 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->response.uri = payload;
-        break;
+        return true;
 
     case TRANSLATE_STATEFUL:
         client->response.stateful = true;
-        break;
+        return true;
 
     case TRANSLATE_SESSION:
         client->response.session = payload;
-        break;
+        return true;
 
     case TRANSLATE_USER:
         client->response.user = payload;
         client->previous_command = command;
-        break;
+        return true;
 
     case TRANSLATE_REALM:
         client->response.realm = payload;
-        break;
+        return true;
 
     case TRANSLATE_LANGUAGE:
         client->response.language = payload;
-        break;
+        return true;
 
     case TRANSLATE_PIPE:
         if (client->resource_address == NULL ||
@@ -987,7 +987,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->type = RESOURCE_ADDRESS_PIPE;
         memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
         client->resource_address->u.cgi.path = payload;
-        break;
+        return true;
 
     case TRANSLATE_CGI:
         if (client->resource_address == NULL ||
@@ -1005,14 +1005,14 @@ translate_handle_packet(struct translate_client *client,
         memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
         client->resource_address->u.cgi.path = payload;
         client->resource_address->u.cgi.document_root = client->response.document_root;
-        break;
+        return true;
 
     case TRANSLATE_FASTCGI:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_FASTCGI packet");
-            break;
+            return false;
         }
 
         if (payload == NULL) {
@@ -1027,7 +1027,7 @@ translate_handle_packet(struct translate_client *client,
 
         address_list_init(&client->resource_address->u.cgi.address_list);
         client->address_list = &client->resource_address->u.cgi.address_list;
-        break;
+        return true;
 
     case TRANSLATE_AJP:
         if (client->resource_address == NULL ||
@@ -1045,7 +1045,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->u.http =
             uri_address_new(client->pool, payload);
         client->address_list = &client->resource_address->u.http->addresses;
-        break;
+        return true;
 
     case TRANSLATE_JAILCGI:
         if (client->resource_address != NULL &&
@@ -1063,7 +1063,7 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        break;
+        return true;
 
     case TRANSLATE_HOME:
         if ((client->resource_address->type == RESOURCE_ADDRESS_CGI ||
@@ -1082,7 +1082,7 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        break;
+        return true;
 
     case TRANSLATE_INTERPRETER:
         if (client->resource_address == NULL ||
@@ -1095,7 +1095,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->u.cgi.interpreter = payload;
-        break;
+        return true;
 
     case TRANSLATE_ACTION:
         if (client->resource_address == NULL ||
@@ -1108,7 +1108,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->u.cgi.action = payload;
-        break;
+        return true;
 
     case TRANSLATE_SCRIPT_NAME:
         if (client->resource_address == NULL ||
@@ -1122,7 +1122,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->u.cgi.script_name = payload;
-        break;
+        return true;
 
     case TRANSLATE_DOCUMENT_ROOT:
         if (client->resource_address != NULL &&
@@ -1136,7 +1136,7 @@ translate_handle_packet(struct translate_client *client,
             client->resource_address->u.local.document_root = payload;
         else
             client->response.document_root = payload;
-        break;
+        return true;
 
     case TRANSLATE_ADDRESS:
         if (client->address_list == NULL) {
@@ -1153,7 +1153,7 @@ translate_handle_packet(struct translate_client *client,
 
         address_list_add(client->pool, client->address_list,
                          (const struct sockaddr *)payload, payload_length);
-        break;
+        return true;
 
 
     case TRANSLATE_ADDRESS_STRING:
@@ -1181,7 +1181,7 @@ translate_handle_packet(struct translate_client *client,
             }
         }
 
-        break;
+        return true;
 
     case TRANSLATE_VIEW:
         if (!valid_view_name(payload)) {
@@ -1190,7 +1190,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         add_view(client, payload);
-        break;
+        return true;
 
     case TRANSLATE_MAX_AGE:
         if (payload_length != 4) {
@@ -1214,7 +1214,7 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        break;
+        return true;
 
     case TRANSLATE_VARY:
         if (payload_length == 0 ||
@@ -1225,7 +1225,7 @@ translate_handle_packet(struct translate_client *client,
 
         client->response.vary = (const uint16_t *)payload;
         client->response.num_vary = payload_length / sizeof(client->response.vary[0]);
-        break;
+        return true;
 
     case TRANSLATE_INVALIDATE:
         if (payload_length == 0 ||
@@ -1238,11 +1238,11 @@ translate_handle_packet(struct translate_client *client,
         client->response.invalidate = (const uint16_t *)payload;
         client->response.num_invalidate = payload_length /
             sizeof(client->response.invalidate[0]);
-        break;
+        return true;
 
     case TRANSLATE_BASE:
         client->response.base = payload;
-        break;
+        return true;
 
     case TRANSLATE_DELEGATE:
         if (client->resource_address == NULL ||
@@ -1259,7 +1259,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->u.local.delegate = payload;
-        break;
+        return true;
 
     case TRANSLATE_APPEND:
         if (client->resource_address == NULL ||
@@ -1283,7 +1283,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->u.cgi.args[client->resource_address->u.cgi.num_args++] = payload;
-        break;
+        return true;
 
     case TRANSLATE_PAIR:
         if (client->resource_address != NULL &&
@@ -1311,11 +1311,11 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        break;
+        return true;
 
     case TRANSLATE_DISCARD_SESSION:
         client->response.discard_session = true;
-        break;
+        return true;
 
     case TRANSLATE_REQUEST_HEADER_FORWARD:
         if (client->view != NULL)
@@ -1324,7 +1324,7 @@ translate_handle_packet(struct translate_client *client,
         else
             parse_header_forward(&client->response.request_header_forward,
                                  payload, payload_length);
-        break;
+        return true;
 
     case TRANSLATE_RESPONSE_HEADER_FORWARD:
         if (client->view != NULL)
@@ -1333,15 +1333,15 @@ translate_handle_packet(struct translate_client *client,
         else
             parse_header_forward(&client->response.response_header_forward,
                                  payload, payload_length);
-        break;
+        return true;
 
     case TRANSLATE_WWW_AUTHENTICATE:
         client->response.www_authenticate = payload;
-        break;
+        return true;
 
     case TRANSLATE_AUTHENTICATION_INFO:
         client->response.authentication_info = payload;
-        break;
+        return true;
 
     case TRANSLATE_HEADER:
         if (!parse_header(client->pool, &client->response,
@@ -1350,26 +1350,26 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        break;
+        return true;
 
     case TRANSLATE_SECURE_COOKIE:
         client->response.secure_cookie = true;
-        break;
+        return true;
 
     case TRANSLATE_ERROR_DOCUMENT:
         client->response.error_document = true;
-        break;
+        return true;
 
     case TRANSLATE_CHECK:
         if (payload != NULL)
             strref_set(&client->response.check, payload, payload_length);
         else
             strref_set(&client->response.check, "", 0);
-        break;
+        return true;
 
     case TRANSLATE_PREVIOUS:
         client->response.previous = true;
-        break;
+        return true;
 
     case TRANSLATE_WAS:
         if (client->resource_address == NULL ||
@@ -1388,11 +1388,11 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->type = RESOURCE_ADDRESS_WAS;
         memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
         client->resource_address->u.cgi.path = payload;
-        break;
+        return true;
 
     case TRANSLATE_TRANSPARENT:
         client->response.transparent = true;
-        break;
+        return true;
 
     case TRANSLATE_STICKY:
         if (client->address_list == NULL) {
@@ -1403,11 +1403,11 @@ translate_handle_packet(struct translate_client *client,
 
         address_list_set_sticky_mode(client->address_list,
                                      STICKY_SESSION_MODULO);
-        break;
+        return true;
 
     case TRANSLATE_DUMP_HEADERS:
         client->response.dump_headers = true;
-        break;
+        return true;
 
     case TRANSLATE_COOKIE_HOST:
         if (client->resource_address == NULL ||
@@ -1424,13 +1424,13 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->response.cookie_host = payload;
-        break;
+        return true;
 
     case TRANSLATE_PROCESS_CSS:
         transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_PROCESS_CSS;
         transformation->u.css_processor.options = CSS_PROCESSOR_REWRITE_URL;
-        break;
+        return true;
 
     case TRANSLATE_PREFIX_CSS_CLASS:
         if (client->transformation == NULL) {
@@ -1454,10 +1454,13 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        break;
+        return true;
     }
 
-    return true;
+    GError *error = g_error_new(translate_quark(), 0,
+                                "unknown translation packet: %u", command);
+    translate_client_abort(client, error);
+    return false;
 }
 
 static void
