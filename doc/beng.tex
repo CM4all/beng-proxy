@@ -1714,6 +1714,27 @@ This is recommended when many adjacent links share the same URI
 rewrite settings, or when you cannot guarantee the order of attributes
 (many XSLT processors mix the attribute order, which is allowed).
 
+\subsubsection{Absolute Widget Links}
+
+For widget with many nested levels of ``directories'', it can become
+hard to build a absolute links to its resources: a URI with a leading
+slash is difficult to do, because that would require the widget code
+to know where it was mounted; a relative link is as difficult, because
+it requires the widget to be aware of the current nesting level, and
+needs extra code.
+
+To do that more easily, the tilde symbol may be used as a URI prefix:
+the tilde followed by a slash is considered an absolute link pointing
+to the root of the widget.  Example:
+
+Give a widget served from \texttt{http://widget.server/foo/}, the URI
+\texttt{\~{}/bar.html} always points to
+\texttt{http://widget.server/foo/bar.html}.
+
+This is a proprietary extension in the spirit of the UNIX shell syntax
+(referring to the ``home'' of a widget).  It does not work without
+\emph{beng-proxy}.
+
 \subsection{Frames}
 \label{frames}
 

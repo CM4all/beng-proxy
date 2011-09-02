@@ -161,6 +161,14 @@ widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
 
     assert(widget_address(widget)->type == RESOURCE_ADDRESS_HTTP);
 
+    struct strref buffer;
+    if (relative_uri != NULL && strref_starts_with_n(relative_uri, "~/", 2)) {
+        buffer = *relative_uri;
+        strref_skip(&buffer, 2);
+        relative_uri = &buffer;
+        stateful = false;
+    }
+
     base = (stateful ? widget_address(widget)
             : widget_stateless_address(widget))->u.http->uri;
     if (relative_uri == NULL)
@@ -181,10 +189,19 @@ widget_relative_uri(pool_t pool, struct widget *widget, bool stateful,
                     const char *relative_uri, size_t relative_uri_length,
                     struct strref *buffer)
 {
+    const struct resource_address *base;
+    if (relative_uri_length >= 2 && relative_uri[0] == '~' &&
+        relative_uri[1] == '/') {
+        relative_uri += 2;
+        relative_uri_length -= 2;
+        base = widget_get_original_address(widget);
+    } else
+        base = widget_base_address(pool, widget, stateful);
+
     struct resource_address address_buffer;
     const struct resource_address *address;
 
-    address = resource_address_apply(pool, widget_base_address(pool, widget, stateful),
+    address = resource_address_apply(pool, base,
                                      relative_uri, relative_uri_length,
                                      &address_buffer);
     if (address == NULL)
