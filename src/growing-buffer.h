@@ -43,6 +43,13 @@ void
 growing_buffer_reader_init(struct growing_buffer_reader *reader,
                            const struct growing_buffer *gb);
 
+/**
+ * Update the reader object after data has been appended to the
+ * underlying buffer.
+ */
+void
+growing_buffer_reader_update(struct growing_buffer_reader *reader);
+
 bool
 growing_buffer_reader_eof(const struct growing_buffer_reader *reader);
 

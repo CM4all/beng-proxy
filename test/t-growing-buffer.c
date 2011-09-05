@@ -254,6 +254,8 @@ test_concurrent_rw(pool_t pool)
     assert(growing_buffer_reader_available(&reader) == 0);
 
     growing_buffer_write_string(buffer, "cdef");
+    growing_buffer_reader_update(&reader);
+
     assert(!growing_buffer_reader_eof(&reader));
     assert(growing_buffer_reader_available(&reader) == 4);
 
