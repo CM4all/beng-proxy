@@ -127,6 +127,8 @@ class _Lookup:
             response.packet(TRANSLATE_DUMP_HEADERS)
         elif line == 'focus_widget':
             response.packet(TRANSLATE_FOCUS_WIDGET)
+        elif line == 'anchor_absolute':
+            response.packet(TRANSLATE_ANCHOR_ABSOLUTE)
         else:
             raise MalformedLineError(self.path, line)
 

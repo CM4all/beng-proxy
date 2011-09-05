@@ -46,6 +46,12 @@ struct widget_class {
         query_string) of this widget? */
     bool stateful;
 
+    /**
+     * Absolute URI paths are considered relative to the base URI of
+     * the widget.
+     */
+    bool anchor_absolute;
+
     bool dump_headers;
 };
 

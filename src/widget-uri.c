@@ -167,6 +167,13 @@ widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
         strref_skip(&buffer, 2);
         relative_uri = &buffer;
         stateful = false;
+    } else if (relative_uri != NULL &&
+               strref_starts_with_n(relative_uri, "/", 1) &&
+               widget->class != NULL && widget->class->anchor_absolute) {
+        buffer = *relative_uri;
+        strref_skip(&buffer, 1);
+        relative_uri = &buffer;
+        stateful = false;
     }
 
     base = (stateful ? widget_address(widget)
@@ -194,6 +201,11 @@ widget_relative_uri(pool_t pool, struct widget *widget, bool stateful,
         relative_uri[1] == '/') {
         relative_uri += 2;
         relative_uri_length -= 2;
+        base = widget_get_original_address(widget);
+    } else if (relative_uri_length >= 1 && relative_uri[0] == '/' &&
+               widget->class != NULL && widget->class->anchor_absolute) {
+        relative_uri += 1;
+        relative_uri_length -= 1;
         base = widget_get_original_address(widget);
     } else
         base = widget_base_address(pool, widget, stateful);

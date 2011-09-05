@@ -1,0 +1,4 @@
+server "http://cfatest01.intern.cm-ag/widgets/anchor/"
+process
+focus_widget
+anchor_absolute

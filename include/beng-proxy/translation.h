@@ -187,6 +187,12 @@ enum beng_translation_command {
      * Default URI rewrite mode is base=widget mode=focus.
      */
     TRANSLATE_FOCUS_WIDGET = 76,
+
+    /**
+     * Absolute URI paths are considered relative to the base URI of
+     * the widget.
+     */
+    TRANSLATE_ANCHOR_ABSOLUTE = 77,
 };
 
 struct beng_translation_header {

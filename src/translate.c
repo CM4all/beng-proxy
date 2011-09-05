@@ -1466,6 +1466,17 @@ translate_handle_packet(struct translate_client *client,
 
         client->transformation->u.processor.options |= PROCESSOR_FOCUS_WIDGET;
         return true;
+
+    case TRANSLATE_ANCHOR_ABSOLUTE:
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_ANCHOR_ABSOLUTE packet");
+            return false;
+        }
+
+        client->response.anchor_absolute = true;
+        return true;
     }
 
     GError *error = g_error_new(translate_quark(), 0,
