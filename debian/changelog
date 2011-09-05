@@ -8,7 +8,7 @@ cm4all-beng-proxy (1.1.8) unstable; urgency=low
   * rewrite-uri: a leading tilde refers to the widget base; translation
     packet ANCHOR_ABSOLUTE enables it by default
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Mon, 05 Sep 2011 17:56:31 +0200
 
 cm4all-beng-proxy (1.1.7) unstable; urgency=low
 
