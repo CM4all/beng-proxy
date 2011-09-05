@@ -65,6 +65,8 @@ extract_remote_addr(const struct strmap *headers)
     const char *p = strrchr(xff, ',');
     if (p == NULL)
         p = xff;
+    else
+        ++p;
 
     while (*p == ' ')
         ++p;
