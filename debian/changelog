@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.8) unstable; urgency=low
 
-  * merge release 1.0.4
+  * merge release 1.0.5
   * {css_,}processor: one more underscore for the prefix
   * processor: remove rewrite-uri processing instructions from output
   * translate: unknown packet is a fatal error
@@ -71,6 +71,12 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.5) unstable; urgency=low
+
+  * resource-loader: delete comma when extracting from X-Forwarded-For
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 05 Sep 2011 17:43:22 +0200
+
 cm4all-beng-proxy (1.0.4) unstable; urgency=low
 
   * istream-replace: update the buffer reader after new data was added
