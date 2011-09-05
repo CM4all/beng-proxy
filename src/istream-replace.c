@@ -424,6 +424,8 @@ replace_input_data(const void *data, size_t length, void *ctx)
     growing_buffer_write_buffer(replace->buffer, data, length);
     replace->source_length += (off_t)length;
 
+    growing_buffer_reader_update(&replace->reader);
+
     pool_ref(replace->output.pool);
 
     replace_try_read_from_buffer(replace);

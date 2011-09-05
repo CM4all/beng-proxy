@@ -235,6 +235,40 @@ test_skip(pool_t pool)
     pool_commit();
 }
 
+/** test reading the head while appending to the tail */
+static void
+test_concurrent_rw(pool_t pool)
+{
+    pool = pool_new_linear(pool, "test", 8192);
+    struct growing_buffer *buffer = growing_buffer_new(pool, 3);
+    struct growing_buffer_reader reader;
+    growing_buffer_reader_init(&reader, buffer);
+
+    growing_buffer_write_string(buffer, "0123");
+    growing_buffer_write_string(buffer, "4567");
+    growing_buffer_write_string(buffer, "89ab");
+    assert(growing_buffer_reader_available(&reader) == 12);
+
+    growing_buffer_reader_skip(&reader, 12);
+    assert(growing_buffer_reader_eof(&reader));
+    assert(growing_buffer_reader_available(&reader) == 0);
+
+    growing_buffer_write_string(buffer, "cdef");
+    growing_buffer_reader_update(&reader);
+
+    assert(!growing_buffer_reader_eof(&reader));
+    assert(growing_buffer_reader_available(&reader) == 4);
+
+    size_t length;
+    const void *p = growing_buffer_reader_read(&reader, &length);
+    assert(p != NULL);
+    assert(length == 4);
+
+    pool_trash(pool);
+    pool_unref(pool);
+    pool_commit();
+}
+
 /** abort without handler */
 static void
 test_abort_without_handler(pool_t pool)
@@ -323,6 +357,7 @@ int main(int argc, char **argv) {
     test_empty(root_pool);
     test_first_empty(root_pool);
     test_skip(root_pool);
+    test_concurrent_rw(root_pool);
     test_abort_without_handler(root_pool);
     test_abort_with_handler(root_pool);
     test_abort_in_handler(root_pool);

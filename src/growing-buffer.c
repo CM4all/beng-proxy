@@ -137,6 +137,22 @@ growing_buffer_reader_init(struct growing_buffer_reader *reader,
     reader->position = 0;
 }
 
+void
+growing_buffer_reader_update(struct growing_buffer_reader *reader)
+{
+    assert(reader != NULL);
+    assert(reader->buffer != NULL);
+    assert(reader->position <= reader->buffer->length);
+
+    if (reader->position == reader->buffer->length &&
+        reader->buffer->next != NULL) {
+        /* the reader was at the end of all buffers, but then a new
+           buffer was appended */
+        reader->buffer = reader->buffer->next;
+        reader->position = 0;
+    }
+}
+
 bool
 growing_buffer_reader_eof(const struct growing_buffer_reader *reader)
 {
