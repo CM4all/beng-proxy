@@ -6,9 +6,11 @@
 
 #include "udp-listener.h"
 #include "fd_util.h"
+#include "address-envelope.h"
 
 #include <daemon/log.h>
 #include <socket/resolver.h>
+#include <socket/address.h>
 
 #include <glib.h>
 #include <event.h>
@@ -48,6 +50,46 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
     udp->handler->datagram(buffer, nbytes,
                            (struct sockaddr *)&sa, sa_len,
                            udp->handler_ctx);
+}
+
+struct udp_listener *
+udp_listener_envelope_new(struct pool *pool,
+                          const struct address_envelope *envelope,
+                          const struct udp_handler *handler, void *ctx)
+{
+    assert(envelope != NULL);
+
+    struct udp_listener *udp = p_malloc(pool, sizeof(*udp));
+    udp->fd = socket_cloexec_nonblock(envelope->address.sa_family,
+                                      SOCK_DGRAM, 0);
+    if (udp->fd < 0) {
+        daemon_log(1, "Failed to create socket: %s\n",
+                   strerror(errno));
+        return NULL;
+    }
+
+    if (bind(udp->fd, &envelope->address, envelope->length) < 0) {
+        char buffer[256];
+        const char *address =
+            socket_address_to_string(buffer, sizeof(buffer),
+                                     &envelope->address, envelope->length)
+            ? buffer
+            : "?";
+
+        daemon_log(1, "Failed to bind to %s: %s\n",
+                   address, strerror(errno));
+        close(udp->fd);
+        return NULL;
+    }
+
+    event_set(&udp->event, udp->fd,
+              EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
+    event_add(&udp->event, NULL);
+
+    udp->handler = handler;
+    udp->handler_ctx = ctx;
+
+    return udp;
 }
 
 struct udp_listener *

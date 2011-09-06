@@ -11,7 +11,7 @@
 
 #include <stddef.h>
 
-struct udp;
+struct address_envelope;
 struct sockaddr;
 struct in_addr;
 
@@ -20,6 +20,11 @@ struct udp_handler {
                      const struct sockaddr *addres, size_t address_length,
                      void *ctx);
 };
+
+struct udp_listener *
+udp_listener_envelope_new(struct pool *pool,
+                          const struct address_envelope *envelope,
+                          const struct udp_handler *handler, void *ctx);
 
 struct udp_listener *
 udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
