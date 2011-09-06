@@ -20,8 +20,16 @@ dump_udp_datagram(G_GNUC_UNUSED const void *data, size_t length,
     printf("packet: %zu\n", length);
 }
 
+static void
+dump_udp_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
+}
+
 static const struct udp_handler dump_udp_handler = {
     .datagram = dump_udp_datagram,
+    .error = dump_udp_error,
 };
 
 int main(int argc, char **argv) {
@@ -41,18 +49,26 @@ int main(int argc, char **argv) {
 
     pool_t pool = pool_new_libc(NULL, "root");
 
+    GError *error = NULL;
     struct udp_listener *udp =
         udp_listener_port_new(pool, listen_host, 1234,
-                              &dump_udp_handler, NULL);
-    if (udp == NULL)
+                              &dump_udp_handler, NULL, &error);
+    if (udp == NULL) {
+        g_printerr("%s\n", error->message);
+        g_error_free(error);
         return 2;
+    }
 
     if (mcast_group != NULL) {
         struct in_addr addr = {
             .s_addr = inet_addr(mcast_group),
         };
-        if (!udp_listener_join4(udp, &addr))
+
+        if (!udp_listener_join4(udp, &addr, &error)) {
+            g_printerr("%s\n", error->message);
+            g_error_free(error);
             return 2;
+        }
     }
 
     event_dispatch();

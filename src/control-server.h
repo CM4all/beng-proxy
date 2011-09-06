@@ -10,6 +10,8 @@
 #include "beng-proxy/control.h"
 #include "pool.h"
 
+#include <glib.h>
+
 #include <stddef.h>
 
 struct address_envelope;
@@ -26,12 +28,14 @@ struct control_server;
 struct control_server *
 control_server_new(pool_t pool, const char *host_and_port, int default_port,
                    const struct in_addr *group,
-                   const struct control_handler *handler, void *ctx);
+                   const struct control_handler *handler, void *ctx,
+                   GError **error_r);
 
 struct control_server *
 control_server_new_envelope(pool_t pool,
                             const struct address_envelope *envelope,
-                            const struct control_handler *handler, void *ctx);
+                            const struct control_handler *handler, void *ctx,
+                            GError **error_r);
 
 void
 control_server_free(struct control_server *cs);

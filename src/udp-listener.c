@@ -43,7 +43,9 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
     nbytes = recvfrom(fd, buffer, sizeof(buffer), MSG_DONTWAIT,
                       (struct sockaddr *)&sa, &sa_len);
     if (nbytes < 0) {
-        daemon_log(1, "recv() failed: %s\n", strerror(errno));
+        GError *error = g_error_new(udp_listener_quark(), errno,
+                                    "recv() failed: %s", g_strerror(errno));
+        udp->handler->error(error, udp->handler_ctx);
         return;
     }
 
@@ -55,16 +57,20 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 struct udp_listener *
 udp_listener_envelope_new(struct pool *pool,
                           const struct address_envelope *envelope,
-                          const struct udp_handler *handler, void *ctx)
+                          const struct udp_handler *handler, void *ctx,
+                          GError **error_r)
 {
     assert(envelope != NULL);
+    assert(handler != NULL);
+    assert(handler->datagram != NULL);
+    assert(handler->error != NULL);
 
     struct udp_listener *udp = p_malloc(pool, sizeof(*udp));
     udp->fd = socket_cloexec_nonblock(envelope->address.sa_family,
                                       SOCK_DGRAM, 0);
     if (udp->fd < 0) {
-        daemon_log(1, "Failed to create socket: %s\n",
-                   strerror(errno));
+        g_set_error(error_r, udp_listener_quark(), errno,
+                    "Failed to create socket: %s", g_strerror(errno));
         return NULL;
     }
 
@@ -76,8 +82,9 @@ udp_listener_envelope_new(struct pool *pool,
             ? buffer
             : "?";
 
-        daemon_log(1, "Failed to bind to %s: %s\n",
-                   address, strerror(errno));
+        g_set_error(error_r, udp_listener_quark(), errno,
+                    "Failed to bind to %s: %s",
+                    address, strerror(errno));
         close(udp->fd);
         return NULL;
     }
@@ -94,13 +101,17 @@ udp_listener_envelope_new(struct pool *pool,
 
 struct udp_listener *
 udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
-                      const struct udp_handler *handler, void *ctx)
+                      const struct udp_handler *handler, void *ctx,
+                      GError **error_r)
 {
     struct udp_listener *udp;
     int ret;
     struct addrinfo hints, *ai;
 
     assert(host_and_port != NULL);
+    assert(handler != NULL);
+    assert(handler->datagram != NULL);
+    assert(handler->error != NULL);
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags = AI_PASSIVE;
@@ -108,8 +119,9 @@ udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
 
     ret = socket_resolve_host_port(host_and_port, default_port, &hints, &ai);
     if (ret != 0) {
-        daemon_log(1, "Failed to resolve %s: %s\n",
-                   host_and_port, gai_strerror(ret));
+        g_set_error(error_r, udp_listener_quark(), ret,
+                    "Failed to resolve %s: %s",
+                    host_and_port, gai_strerror(ret));
         return NULL;
     }
 
@@ -117,16 +129,17 @@ udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
     udp->fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype,
                                       ai->ai_protocol);
     if (udp->fd < 0) {
-        daemon_log(1, "Failed to create socket: %s\n",
-                   strerror(errno));
+        g_set_error(error_r, udp_listener_quark(), errno,
+                    "Failed to create socket: %s", g_strerror(errno));
         freeaddrinfo(ai);
         return NULL;
     }
 
     ret = bind(udp->fd, ai->ai_addr, ai->ai_addrlen);
     if (ret < 0) {
-        daemon_log(1, "Failed to bind to %s: %s\n",
-                   host_and_port, strerror(errno));
+        g_set_error(error_r, udp_listener_quark(), errno,
+                    "Failed to bind to %s: %s",
+                    host_and_port, strerror(errno));
         close(udp->fd);
         freeaddrinfo(ai);
         return NULL;
@@ -173,7 +186,8 @@ udp_listener_set_fd(struct udp_listener *udp, int fd)
 }
 
 bool
-udp_listener_join4(struct udp_listener *udp, const struct in_addr *group)
+udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
+                   GError **error_r)
 {
     struct ip_mreq r;
     int ret;
@@ -183,7 +197,9 @@ udp_listener_join4(struct udp_listener *udp, const struct in_addr *group)
 
     ret = setsockopt(udp->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &r, sizeof(r));
     if (ret < 0) {
-        daemon_log(1, "Failed to join multicast group: %s\n", strerror(errno));
+        g_set_error(error_r, udp_listener_quark(), errno,
+                    "Failed to join multicast group: %s",
+                    g_strerror(errno));
         return false;
     }
 

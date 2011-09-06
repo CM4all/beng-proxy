@@ -85,14 +85,23 @@ control_server_udp_datagram(const void *data, size_t length,
     control_server_decode(data, length, cs->handler, cs->handler_ctx);
 }
 
+static void
+control_server_udp_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    daemon_log(2, "%s\n", error->message);
+    g_error_free(error);
+}
+
 static const struct udp_handler control_server_udp_handler = {
     .datagram = control_server_udp_datagram,
+    .error = control_server_udp_error,
 };
 
 struct control_server *
 control_server_new(pool_t pool, const char *host_and_port, int default_port,
                    const struct in_addr *group,
-                   const struct control_handler *handler, void *ctx)
+                   const struct control_handler *handler, void *ctx,
+                   GError **error_r)
 {
     assert(pool != NULL);
     assert(host_and_port != NULL);
@@ -101,11 +110,12 @@ control_server_new(pool_t pool, const char *host_and_port, int default_port,
 
     struct control_server *cs = p_malloc(pool, sizeof(*cs));
     cs->udp = udp_listener_port_new(pool, host_and_port, default_port,
-                                    &control_server_udp_handler, cs);
+                                    &control_server_udp_handler, cs,
+                                    error_r);
     if (cs->udp == NULL)
         return NULL;
 
-    if (group != NULL && !udp_listener_join4(cs->udp, group)) {
+    if (group != NULL && !udp_listener_join4(cs->udp, group, error_r)) {
         udp_listener_free(cs->udp);
         return NULL;
     }
@@ -119,7 +129,8 @@ control_server_new(pool_t pool, const char *host_and_port, int default_port,
 struct control_server *
 control_server_new_envelope(pool_t pool,
                             const struct address_envelope *envelope,
-                            const struct control_handler *handler, void *ctx)
+                            const struct control_handler *handler, void *ctx,
+                            GError **error_r)
 {
     assert(pool != NULL);
     assert(envelope != NULL);
@@ -128,7 +139,8 @@ control_server_new_envelope(pool_t pool,
 
     struct control_server *cs = p_malloc(pool, sizeof(*cs));
     cs->udp = udp_listener_envelope_new(pool, envelope,
-                                        &control_server_udp_handler, cs);
+                                        &control_server_udp_handler, cs,
+                                        error_r);
     if (cs->udp == NULL)
         return NULL;
 

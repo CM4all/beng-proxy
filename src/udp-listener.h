@@ -9,6 +9,8 @@
 
 #include "pool.h"
 
+#include <glib.h>
+
 #include <stddef.h>
 
 struct address_envelope;
@@ -19,16 +21,27 @@ struct udp_handler {
     void (*datagram)(const void *data, size_t length,
                      const struct sockaddr *addres, size_t address_length,
                      void *ctx);
+
+    void (*error)(GError *error, void *ctx);
 };
+
+G_GNUC_CONST
+static inline GQuark
+udp_listener_quark(void)
+{
+    return g_quark_from_static_string("udp_listener");
+}
 
 struct udp_listener *
 udp_listener_envelope_new(struct pool *pool,
                           const struct address_envelope *envelope,
-                          const struct udp_handler *handler, void *ctx);
+                          const struct udp_handler *handler, void *ctx,
+                          GError **error_r);
 
 struct udp_listener *
 udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
-                      const struct udp_handler *handler, void *ctx);
+                      const struct udp_handler *handler, void *ctx,
+                      GError **error_r);
 
 void
 udp_listener_free(struct udp_listener *udp);
@@ -46,6 +59,7 @@ udp_listener_set_fd(struct udp_listener *udp, int fd);
  * @return true on success
  */
 bool
-udp_listener_join4(struct udp_listener *udp, const struct in_addr *group);
+udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
+                   GError **error_r);
 
 #endif

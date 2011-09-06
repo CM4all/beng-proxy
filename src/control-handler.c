@@ -194,8 +194,16 @@ global_control_udp_datagram(const void *data, size_t length,
     control_server_decode(data, length, &global_control_handler, instance);
 }
 
+static void
+global_control_udp_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    daemon_log(2, "%s\n", error->message);
+    g_error_free(error);
+}
+
 static const struct udp_handler global_control_udp_handler = {
     .datagram = global_control_udp_datagram,
+    .error = global_control_udp_error,
 };
 
 static struct udp_listener *global_udp_listener;
@@ -206,19 +214,25 @@ global_control_handler_init(pool_t pool, struct instance *instance)
     if (instance->config.control_listen == NULL)
         return true;
 
+    GError *error = NULL;
     global_udp_listener =
         udp_listener_port_new(pool, instance->config.control_listen, 5478,
-                              &global_control_udp_handler, instance);
-    if (global_udp_listener == NULL)
+                              &global_control_udp_handler, instance, &error);
+    if (global_udp_listener == NULL) {
+        daemon_log(1, "%s\n", error->message);
+        g_error_free(error);
         return false;
+    }
 
     if (instance->config.multicast_group != NULL) {
         const struct in_addr group = {
             .s_addr = inet_addr(instance->config.multicast_group),
         };
 
-        if (!udp_listener_join4(global_udp_listener, &group)) {
+        if (!udp_listener_join4(global_udp_listener, &group, &error)) {
             udp_listener_free(global_udp_listener);
+            daemon_log(1, "%s\n", error->message);
+            g_error_free(error);
             return false;
         }
     }
