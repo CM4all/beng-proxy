@@ -8,7 +8,6 @@
 #include "fd_util.h"
 #include "address-envelope.h"
 
-#include <daemon/log.h>
 #include <socket/resolver.h>
 #include <socket/address.h>
 
