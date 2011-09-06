@@ -46,6 +46,7 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     deinit_signals(instance);
 
     deinit_all_listeners(instance);
+    deinit_all_controls(instance);
 
     while (!list_empty(&instance->connections))
         lb_connection_close((struct lb_connection*)instance->connections.next);
@@ -148,6 +149,7 @@ int main(int argc, char **argv)
 
     instance.event_base = event_init();
 
+    list_init(&instance.controls);
     list_init(&instance.listeners);
     list_init(&instance.connections);
 
@@ -167,7 +169,14 @@ int main(int argc, char **argv)
     global_tcp_stock = instance.tcp_stock;
     global_pipe_stock = instance.pipe_stock;
 
+    if (!init_all_controls(&instance, &error)) {
+        fprintf(stderr, "%s\n", error->message);
+        g_error_free(error);
+        return EXIT_FAILURE;
+    }
+
     if (!init_all_listeners(&instance, &error)) {
+        deinit_all_controls(&instance);
         fprintf(stderr, "%s\n", error->message);
         g_error_free(error);
         return EXIT_FAILURE;
@@ -196,6 +205,7 @@ int main(int argc, char **argv)
     failure_deinit();
 
     deinit_all_listeners(&instance);
+    deinit_all_controls(&instance);
 
 #ifndef PROFILE
     event_base_free(instance.event_base);

@@ -529,6 +529,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/fd_util.c \
 	src/fd-util.c \
 	$(STOPWATCH_SRC) \
+	src/udp-listener.c src/udp-listener.h \
+	src/control-server.c src/control-server.h \
 	src/direct.c \
 	src/access-log.c \
 	src/cookie-server.c \
@@ -550,6 +552,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_global.c \
 	src/lb_cmdline.h \
 	src/lb_cmdline.c \
+	src/lb_control.h \
+	src/lb_control.c \
 	src/lb_listener.h \
 	src/lb_listener.c \
 	src/lb_connection.h \

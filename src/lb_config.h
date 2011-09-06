@@ -29,6 +29,12 @@ enum lb_protocol {
     LB_PROTOCOL_TCP,
 };
 
+struct lb_control_config {
+    struct list_head siblings;
+
+    const struct address_envelope *envelope;
+};
+
 struct lb_monitor_config {
     struct list_head siblings;
 
@@ -131,6 +137,8 @@ struct lb_listener_config {
 
 struct lb_config {
     struct pool *pool;
+
+    struct list_head controls;
 
     struct list_head monitors;
 

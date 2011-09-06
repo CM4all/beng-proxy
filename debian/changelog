@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.9) unstable; urgency=low
 
-  * 
+  * lb: implement the control protocol
 
  --
 

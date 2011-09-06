@@ -18,4 +18,10 @@ init_all_listeners(struct lb_instance *instance, GError **error_r);
 void
 deinit_all_listeners(struct lb_instance *instance);
 
+bool
+init_all_controls(struct lb_instance *instance, GError **error_r);
+
+void
+deinit_all_controls(struct lb_instance *instance);
+
 #endif

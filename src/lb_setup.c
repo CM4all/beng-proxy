@@ -9,6 +9,7 @@
 #include "lb_instance.h"
 #include "lb_listener.h"
 #include "lb_hmonitor.h"
+#include "lb_control.h"
 
 static void
 init_cluster_monitors(const struct lb_cluster_config *cluster)
@@ -52,5 +53,32 @@ deinit_all_listeners(struct lb_instance *instance)
             (struct lb_listener *)instance->listeners.next;
         list_remove(&listener->siblings);
         lb_listener_free(listener);
+    }
+}
+
+bool
+init_all_controls(struct lb_instance *instance, GError **error_r)
+{
+    for (struct lb_control_config *config = (struct lb_control_config *)instance->config->controls.next;
+         &config->siblings != &instance->config->controls;
+         config = (struct lb_control_config *)config->siblings.next) {
+        struct lb_control *control = lb_control_new(instance, config, error_r);
+        if (control == NULL)
+            return false;
+
+        list_add(&control->siblings, &instance->controls);
+    }
+
+    return true;
+}
+
+void
+deinit_all_controls(struct lb_instance *instance)
+{
+    while (!list_empty(&instance->controls)) {
+        struct lb_control *control =
+            (struct lb_control *)instance->controls.next;
+        list_remove(&control->siblings);
+        lb_control_free(control);
     }
 }

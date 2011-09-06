@@ -22,6 +22,7 @@ struct lb_instance {
 
     struct event_base *event_base;
 
+    struct list_head controls;
     struct list_head listeners;
     struct list_head connections;
     unsigned num_connections;

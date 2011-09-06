@@ -23,12 +23,14 @@ struct config_parser {
 
     enum {
         STATE_ROOT,
+        STATE_CONTROL,
         STATE_MONITOR,
         STATE_NODE,
         STATE_CLUSTER,
         STATE_LISTENER,
     } state;
 
+    struct lb_control_config *control;
     struct lb_monitor_config *monitor;
     struct lb_node_config *node;
     struct lb_cluster_config *cluster;
@@ -250,6 +252,62 @@ expect_symbol_and_eol(char *p, char symbol)
         return false;
 
     return expect_eol(p + 1);
+}
+
+static bool
+config_parser_create_control(struct config_parser *parser, char *p,
+                             GError **error_r)
+{
+    if (!expect_symbol_and_eol(p, '{'))
+        return throw(error_r, "'{' expected");
+
+    struct lb_control_config *control =
+        p_malloc(parser->config->pool, sizeof(*control));
+    control->envelope = NULL;
+
+    parser->state = STATE_CONTROL;
+    parser->control = control;
+    return true;
+}
+
+static bool
+config_parser_feed_control(struct config_parser *parser, char *p,
+                           GError **error_r)
+{
+    struct lb_control_config *control = parser->control;
+
+    if (*p == '}') {
+        if (!expect_eol(p + 1))
+            return syntax_error(error_r);
+
+        if (control->envelope == NULL)
+            return throw(error_r, "Bind address is missing");
+
+        list_add(&control->siblings, &parser->config->controls);
+        parser->state = STATE_ROOT;
+        return true;
+    }
+
+    const char *word = next_word(&p);
+    if (word != NULL) {
+        if (strcmp(word, "bind") == 0) {
+            const char *address = next_value(&p);
+            if (address == NULL)
+                return throw(error_r, "Control address expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            control->envelope = address_envelope_parse(parser->config->pool,
+                                                       address, 80);
+            if (control->envelope == NULL)
+                return throw(error_r, "Could not parse control address");
+
+            return true;
+        } else
+            return throw(error_r, "Unknown option");
+    } else
+        return syntax_error(error_r);
 }
 
 static bool
@@ -889,6 +947,8 @@ config_parser_feed_root(struct config_parser *parser, char *p,
             return config_parser_create_listener(parser, p, error_r);
         else if (strcmp(word, "monitor") == 0)
             return config_parser_create_monitor(parser, p, error_r);
+        else if (strcmp(word, "control") == 0)
+            return config_parser_create_control(parser, p, error_r);
         else
             return throw(error_r, "Unknown option");
     } else
@@ -905,6 +965,9 @@ config_parser_feed(struct config_parser *parser, char *line,
     switch (parser->state) {
     case STATE_ROOT:
         return config_parser_feed_root(parser, line, error_r);
+
+    case STATE_CONTROL:
+        return config_parser_feed_control(parser, line, error_r);
 
     case STATE_MONITOR:
         return config_parser_feed_monitor(parser, line, error_r);
@@ -996,6 +1059,7 @@ lb_config_load(struct pool *pool, const char *path,
     pool = pool_new_linear(pool, "lb_config", 32768);
     struct lb_config *config = p_malloc(pool, sizeof(*config));
     config->pool = pool;
+    list_init(&config->controls);
     list_init(&config->monitors);
     list_init(&config->nodes);
     list_init(&config->clusters);
