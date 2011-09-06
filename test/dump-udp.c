@@ -12,13 +12,17 @@
 #include <signal.h>
 
 static void
-dump_udp_callback(G_GNUC_UNUSED const void *data, size_t length,
+dump_udp_datagram(G_GNUC_UNUSED const void *data, size_t length,
                   G_GNUC_UNUSED const struct sockaddr *addr,
                   G_GNUC_UNUSED size_t addrlen,
                   G_GNUC_UNUSED void *ctx)
 {
     printf("packet: %zu\n", length);
 }
+
+static const struct udp_handler dump_udp_handler = {
+    .datagram = dump_udp_datagram,
+};
 
 int main(int argc, char **argv) {
     daemon_log_config.verbose = 5;
@@ -39,7 +43,7 @@ int main(int argc, char **argv) {
 
     struct udp_listener *udp =
         udp_listener_port_new(pool, listen_host, 1234,
-                              dump_udp_callback, NULL);
+                              &dump_udp_handler, NULL);
     if (udp == NULL)
         return 2;
 
