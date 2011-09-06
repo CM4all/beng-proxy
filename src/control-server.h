@@ -21,9 +21,16 @@ struct control_handler {
     void (*packet)(enum beng_control_command command,
                    const void *payload, size_t payload_length,
                    void *ctx);
+
+    void (*error)(GError *error, void *ctx);
 };
 
-struct control_server;
+G_GNUC_CONST
+static inline GQuark
+control_server_quark(void)
+{
+    return g_quark_from_static_string("control_server");
+}
 
 struct control_server *
 control_server_new(pool_t pool, const char *host_and_port, int default_port,

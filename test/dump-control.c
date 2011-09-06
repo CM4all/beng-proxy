@@ -21,8 +21,16 @@ dump_control_packet(enum beng_control_command command,
     printf("packet command=%u length=%zu\n", command, payload_length);
 }
 
+static void
+dump_control_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
+}
+
 static const struct control_handler dump_control_handler = {
     .packet = dump_control_packet,
+    .error = dump_control_error,
 };
 
 int main(int argc, char **argv) {

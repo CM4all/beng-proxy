@@ -173,8 +173,16 @@ global_control_packet(enum beng_control_command command,
     }
 }
 
+static void
+global_control_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    daemon_log(2, "%s\n", error->message);
+    g_error_free(error);
+}
+
 static const struct control_handler global_control_handler = {
     .packet = global_control_packet,
+    .error = global_control_error,
 };
 
 static struct udp_distribute *global_udp_distribute;

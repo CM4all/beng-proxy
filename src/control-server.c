@@ -7,8 +7,6 @@
 #include "control-server.h"
 #include "udp-listener.h"
 
-#include <daemon/log.h>
-
 #include <glib.h>
 #include <assert.h>
 
@@ -23,12 +21,18 @@ void
 control_server_decode(const void *data, size_t length,
                       const struct control_handler *handler, void *handler_ctx)
 {
+    assert(handler != NULL);
+    assert(handler->packet != NULL);
+    assert(handler->error != NULL);
+
     /* verify the magic number */
 
     const uint32_t *magic = data;
 
     if (length < sizeof(*magic) || GUINT32_FROM_BE(*magic) != control_magic) {
-        daemon_log(2, "wrong magic\n");
+        GError *error = g_error_new_literal(control_server_quark(), 0,
+                                            "wrong magic");
+        handler->error(error, handler_ctx);
         return;
     }
 
@@ -36,7 +40,9 @@ control_server_decode(const void *data, size_t length,
     length -= sizeof(*magic);
 
     if (length % 4 != 0) {
-        daemon_log(2, "odd control packet (length=%zu)\n", length);
+        GError *error = g_error_new(control_server_quark(), 0,
+                                    "odd control packet (length=%zu)", length);
+        handler->error(error, handler_ctx);
         return;
     }
 
@@ -45,7 +51,9 @@ control_server_decode(const void *data, size_t length,
     while (length > 0) {
         const struct beng_control_header *header = data;
         if (length < sizeof(*header)) {
-            daemon_log(2, "partial header (length=%zu)\n", length);
+            GError *error = g_error_new(control_server_quark(), 0,
+                                        "partial header (length=%zu)", length);
+            handler->error(error, handler_ctx);
             return;
         }
 
@@ -57,8 +65,10 @@ control_server_decode(const void *data, size_t length,
 
         const char *payload = data;
         if (length < payload_length) {
-            daemon_log(2, "partial payload (length=%zu, expected=%zu)\n",
-                       length, payload_length);
+            GError *error = g_error_new(control_server_quark(), 0,
+                                        "partial payload (length=%zu, expected=%zu)",
+                                        length, payload_length);
+            handler->error(error, handler_ctx);
             return;
         }
 
@@ -86,10 +96,11 @@ control_server_udp_datagram(const void *data, size_t length,
 }
 
 static void
-control_server_udp_error(GError *error, G_GNUC_UNUSED void *ctx)
+control_server_udp_error(GError *error, void *ctx)
 {
-    daemon_log(2, "%s\n", error->message);
-    g_error_free(error);
+    struct control_server *cs = ctx;
+
+    cs->handler->error(error, cs->handler_ctx);
 }
 
 static const struct udp_handler control_server_udp_handler = {
@@ -107,6 +118,7 @@ control_server_new(pool_t pool, const char *host_and_port, int default_port,
     assert(host_and_port != NULL);
     assert(handler != NULL);
     assert(handler->packet != NULL);
+    assert(handler->error != NULL);
 
     struct control_server *cs = p_malloc(pool, sizeof(*cs));
     cs->udp = udp_listener_port_new(pool, host_and_port, default_port,
@@ -136,6 +148,7 @@ control_server_new_envelope(pool_t pool,
     assert(envelope != NULL);
     assert(handler != NULL);
     assert(handler->packet != NULL);
+    assert(handler->error != NULL);
 
     struct control_server *cs = p_malloc(pool, sizeof(*cs));
     cs->udp = udp_listener_envelope_new(pool, envelope,
