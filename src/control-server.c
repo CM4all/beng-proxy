@@ -75,7 +75,7 @@ control_server_decode(const void *data, size_t length,
 }
 
 static void
-control_server_udp_callback(const void *data, size_t length,
+control_server_udp_datagram(const void *data, size_t length,
                             G_GNUC_UNUSED const struct sockaddr *addr,
                             G_GNUC_UNUSED size_t addrlen,
                             void *ctx)
@@ -84,6 +84,10 @@ control_server_udp_callback(const void *data, size_t length,
 
     control_server_decode(data, length, cs->handler, cs->handler_ctx);
 }
+
+static const struct udp_handler control_server_udp_handler = {
+    .datagram = control_server_udp_datagram,
+};
 
 struct control_server *
 control_server_new(pool_t pool, const char *host_and_port, int default_port,
@@ -97,7 +101,7 @@ control_server_new(pool_t pool, const char *host_and_port, int default_port,
 
     struct control_server *cs = p_malloc(pool, sizeof(*cs));
     cs->udp = udp_listener_port_new(pool, host_and_port, default_port,
-                                    control_server_udp_callback, cs);
+                                    &control_server_udp_handler, cs);
     if (cs->udp == NULL)
         return NULL;
 

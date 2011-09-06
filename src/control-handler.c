@@ -180,7 +180,7 @@ static const struct control_handler global_control_handler = {
 static struct udp_distribute *global_udp_distribute;
 
 static void
-global_control_udp_callback(const void *data, size_t length,
+global_control_udp_datagram(const void *data, size_t length,
                             G_GNUC_UNUSED const struct sockaddr *addr,
                             G_GNUC_UNUSED size_t addrlen,
                             void *ctx)
@@ -194,6 +194,10 @@ global_control_udp_callback(const void *data, size_t length,
     control_server_decode(data, length, &global_control_handler, instance);
 }
 
+static const struct udp_handler global_control_udp_handler = {
+    .datagram = global_control_udp_datagram,
+};
+
 static struct udp_listener *global_udp_listener;
 
 bool
@@ -204,7 +208,7 @@ global_control_handler_init(pool_t pool, struct instance *instance)
 
     global_udp_listener =
         udp_listener_port_new(pool, instance->config.control_listen, 5478,
-                              global_control_udp_callback, instance);
+                              &global_control_udp_handler, instance);
     if (global_udp_listener == NULL)
         return false;
 

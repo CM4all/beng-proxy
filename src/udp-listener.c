@@ -24,8 +24,8 @@ struct udp_listener {
     int fd;
     struct event event;
 
-    udp_callback_t callback;
-    void *callback_ctx;
+    const struct udp_handler *handler;
+    void *handler_ctx;
 };
 
 static void
@@ -45,14 +45,14 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
         return;
     }
 
-    udp->callback(buffer, nbytes,
-                  (struct sockaddr *)&sa, sa_len,
-                  udp->callback_ctx);
+    udp->handler->datagram(buffer, nbytes,
+                           (struct sockaddr *)&sa, sa_len,
+                           udp->handler_ctx);
 }
 
 struct udp_listener *
 udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
-                      udp_callback_t callback, void *ctx)
+                      const struct udp_handler *handler, void *ctx)
 {
     struct udp_listener *udp;
     int ret;
@@ -96,8 +96,8 @@ udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
               EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
     event_add(&udp->event, NULL);
 
-    udp->callback = callback;
-    udp->callback_ctx = ctx;
+    udp->handler = handler;
+    udp->handler_ctx = ctx;
 
     return udp;
 }
