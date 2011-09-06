@@ -116,6 +116,28 @@ control_server_new(pool_t pool, const char *host_and_port, int default_port,
     return cs;
 }
 
+struct control_server *
+control_server_new_envelope(pool_t pool,
+                            const struct address_envelope *envelope,
+                            const struct control_handler *handler, void *ctx)
+{
+    assert(pool != NULL);
+    assert(envelope != NULL);
+    assert(handler != NULL);
+    assert(handler->packet != NULL);
+
+    struct control_server *cs = p_malloc(pool, sizeof(*cs));
+    cs->udp = udp_listener_envelope_new(pool, envelope,
+                                        &control_server_udp_handler, cs);
+    if (cs->udp == NULL)
+        return NULL;
+
+    cs->handler = handler;
+    cs->handler_ctx = ctx;
+
+    return cs;
+}
+
 void
 control_server_free(struct control_server *cs)
 {
