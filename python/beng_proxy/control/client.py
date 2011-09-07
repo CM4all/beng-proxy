@@ -13,10 +13,14 @@ class Client:
         assert isinstance(host, str)
         assert isinstance(port, int)
 
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        if broadcast:
-            self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self._socket.connect((host, port))
+        if host and host[0] == '/':
+            self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            self._socket.connect(host)
+        else:
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            if broadcast:
+                self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            self._socket.connect((host, port))
 
     def send(self, command, payload=None):
         assert isinstance(command, int)
