@@ -34,7 +34,7 @@ struct failure_list {
 static struct failure_list fl;
 
 static inline unsigned
-calc_hash(const struct sockaddr *addr, socklen_t addrlen)
+calc_hash(const struct sockaddr *addr, size_t addrlen)
 {
     const char *p = (const char*)addr;
     unsigned hash = 5381;
@@ -61,7 +61,7 @@ failure_deinit(void)
 }
 
 void
-failure_add(const struct sockaddr *addr, socklen_t addrlen)
+failure_add(const struct sockaddr *addr, size_t addrlen)
 {
     unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure *failure;
@@ -100,7 +100,7 @@ failure_add(const struct sockaddr *addr, socklen_t addrlen)
 }
 
 void
-failure_remove(const struct sockaddr *addr, socklen_t addrlen)
+failure_remove(const struct sockaddr *addr, size_t addrlen)
 {
     unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure **failure_r, *failure;
@@ -123,7 +123,7 @@ failure_remove(const struct sockaddr *addr, socklen_t addrlen)
 }
 
 bool
-failure_check(const struct sockaddr *addr, socklen_t addrlen)
+failure_check(const struct sockaddr *addr, size_t addrlen)
 {
     unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure *failure;
