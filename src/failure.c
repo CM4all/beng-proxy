@@ -20,6 +20,8 @@ struct failure {
 
     time_t expires;
 
+    enum failure_status status;
+
     struct address_envelope envelope;
 };
 
@@ -61,7 +63,8 @@ failure_deinit(void)
 }
 
 void
-failure_add(const struct sockaddr *addr, size_t addrlen)
+failure_set(const struct sockaddr *addr, size_t addrlen,
+            enum failure_status status)
 {
     unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure *failure;
@@ -70,6 +73,7 @@ failure_add(const struct sockaddr *addr, size_t addrlen)
 
     assert(addr != NULL);
     assert(addrlen >= sizeof(failure->envelope.address));
+    assert(status > FAILURE_OK);
 
     ret = clock_gettime(CLOCK_MONOTONIC, &now);
     if (ret < 0) {
@@ -82,7 +86,13 @@ failure_add(const struct sockaddr *addr, size_t addrlen)
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
             /* this address is already in our list */
+            if (status < failure->status && !is_expired(failure->expires))
+                /* don't update if the current status is more serious
+                   than the new one */
+                return;
+
             failure->expires = now.tv_sec + 20;
+            failure->status = status;
             return;
         }
     }
@@ -92,6 +102,7 @@ failure_add(const struct sockaddr *addr, size_t addrlen)
     failure = p_malloc(fl.pool, sizeof(*failure)
                        - sizeof(failure->envelope.address) + addrlen);
     failure->expires = now.tv_sec + 20;
+    failure->status = status;
     failure->envelope.length = addrlen;
     memcpy(&failure->envelope.address, addr, addrlen);
 
@@ -122,19 +133,21 @@ failure_remove(const struct sockaddr *addr, size_t addrlen)
     }
 }
 
-bool
-failure_check(const struct sockaddr *addr, size_t addrlen)
+enum failure_status
+failure_get_status(const struct sockaddr *address, size_t length)
 {
-    unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
+    unsigned slot = calc_hash(address, length) % FAILURE_SLOTS;
     struct failure *failure;
 
-    assert(addr != NULL);
-    assert(addrlen >= sizeof(failure->envelope.address));
+    assert(address != NULL);
+    assert(length >= sizeof(failure->envelope.address));
 
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next)
-        if (failure->envelope.length == addrlen &&
-            memcmp(&failure->envelope.address, addr, addrlen) == 0)
-            return !is_expired(failure->expires);
+        if (failure->envelope.length == length &&
+            memcmp(&failure->envelope.address, address, length) == 0)
+            return !is_expired(failure->expires)
+                ? failure->status
+                : FAILURE_OK;
 
-    return false;
+    return FAILURE_OK;
 }

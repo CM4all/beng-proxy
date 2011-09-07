@@ -14,6 +14,18 @@
 
 struct sockaddr;
 
+enum failure_status {
+    /**
+     * No failure, host is ok.
+     */
+    FAILURE_OK,
+
+    /**
+     * Host has failed.
+     */
+    FAILURE_FAILED,
+};
+
 void
 failure_init(pool_t pool);
 
@@ -21,15 +33,28 @@ void
 failure_deinit(void);
 
 void
-failure_add(const struct sockaddr *addr, size_t addrlen);
+failure_set(const struct sockaddr *address, size_t length,
+            enum failure_status status);
+
+static inline void
+failure_add(const struct sockaddr *address, size_t length)
+{
+    failure_set(address, length, FAILURE_FAILED);
+}
 
 void
 failure_remove(const struct sockaddr *addr, size_t addrlen);
 
+enum failure_status
+failure_get_status(const struct sockaddr *address, size_t length);
+
 /**
  * Returns true if the specified address has failed.
  */
-bool
-failure_check(const struct sockaddr *addr, size_t addrlen);
+static inline bool
+failure_check(const struct sockaddr *address, size_t length)
+{
+    return failure_get_status(address, length) != FAILURE_OK;
+}
 
 #endif
