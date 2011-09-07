@@ -21,6 +21,11 @@ enum failure_status {
     FAILURE_OK,
 
     /**
+     * Host is being faded out (graceful shutdown).  No new sessions.
+     */
+    FAILURE_FADE,
+
+    /**
      * Host has failed.
      */
     FAILURE_FAILED,

@@ -16,6 +16,25 @@ enum beng_control_command {
      * Drop items from the translation cache.
      */
     CONTROL_TCACHE_INVALIDATE = 1,
+
+    /**
+     * Re-enable the specified node after a failure, remove all
+     * failure/fade states.
+     *
+     * The payload is the node name according to lb.conf, followed by
+     * a colon and the port number.
+     */
+    CONTROL_ENABLE_NODE = 2,
+
+    /**
+     * Fade out the specified node, preparing for its shutdown: the
+     * node will only be used for pre-existing sessions that refer
+     * to it.
+     *
+     * The payload is the node name according to lb.conf, followed by
+     * a colon and the port number.
+     */
+    CONTROL_FADE_NODE = 3,
 };
 
 struct beng_control_header {

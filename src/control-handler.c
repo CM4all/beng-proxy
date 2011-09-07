@@ -170,6 +170,11 @@ global_control_packet(enum beng_control_command command,
     case CONTROL_TCACHE_INVALIDATE:
         control_tcache_invalidate(instance, payload, payload_length);
         break;
+
+    case CONTROL_ENABLE_NODE:
+    case CONTROL_FADE_NODE:
+        /* only for beng-lb */
+        break;
     }
 }
 

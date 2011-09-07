@@ -37,9 +37,19 @@ struct balancer {
 };
 
 static bool
-check_envelope(const struct address_envelope *envelope)
+check_failure(const struct address_envelope *envelope, bool with_session)
 {
-    return !failure_check(&envelope->address, envelope->length) &&
+    enum failure_status status = failure_get_status(&envelope->address,
+                                                    envelope->length);
+    if (status == FAILURE_FADE && with_session)
+        status = FAILURE_OK;
+    return status == FAILURE_OK;
+}
+
+static bool
+check_envelope(const struct address_envelope *envelope, bool with_session)
+{
+    return check_failure(envelope, with_session) &&
         bulldog_check(&envelope->address, envelope->length);
 }
 
@@ -50,7 +60,7 @@ next_failover_address(const struct address_list *list)
 
     for (unsigned i = 0; i < list->size; ++i) {
         const struct address_envelope *envelope = list->addresses[i];
-        if (check_envelope(envelope))
+        if (check_envelope(envelope, false))
             return envelope;
     }
 
@@ -83,7 +93,7 @@ next_address_checked(struct balancer_item *item)
 
     const struct address_envelope *ret = first;
     do {
-        if (check_envelope(ret))
+        if (check_envelope(ret, false))
             return ret;
 
         ret = next_address(item);
@@ -100,13 +110,18 @@ next_sticky_address_checked(const struct address_list *al, unsigned session)
     assert(al->size >= 2);
 
     unsigned i = session % al->size;
+    bool with_session = true;
 
     const struct address_envelope *first = address_list_get_n(al, i);
     assert(first != NULL);
     const struct address_envelope *ret = first;
     do {
-        if (check_envelope(ret))
+        if (check_envelope(ret, with_session))
             return ret;
+
+        /* only the first iteration is allowed to override
+           FAILURE_FADE */
+        with_session = false;
 
         ++i;
         if (i >= al->size)

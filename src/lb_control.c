@@ -9,8 +9,112 @@
 #include "lb_config.h"
 #include "control-server.h"
 #include "address-envelope.h"
+#include "address-edit.h"
+#include "failure.h"
+#include "tpool.h"
 
 #include <daemon/log.h>
+#include <socket/address.h>
+
+#include <string.h>
+#include <stdlib.h>
+
+static void
+enable_node(const struct lb_instance *instance,
+          const char *payload, size_t length)
+{
+    const char *colon = memchr(payload, ':', length);
+    if (colon == NULL || colon == payload || colon == payload + length - 1) {
+        daemon_log(3, "malformed FADE_NODE control packet: no port\n");
+        return;
+    }
+
+    struct pool_mark mark;
+    pool_mark(tpool, &mark);
+
+    char *node_name = p_strndup(tpool, payload, length);
+    char *port_string = node_name + (colon - payload);
+    *port_string++ = 0;
+
+    const struct lb_node_config *node =
+        lb_config_find_node(instance->config, node_name);
+    if (node == NULL) {
+        pool_rewind(tpool, &mark);
+        daemon_log(3, "unknown node in FADE_NODE control packet\n");
+        return;
+    }
+
+    char *endptr;
+    unsigned port = strtoul(port_string, &endptr, 10);
+    if (port == 0 || *endptr != 0) {
+        pool_rewind(tpool, &mark);
+        daemon_log(3, "malformed FADE_NODE control packet: port is not a number\n");
+        return;
+    }
+
+    const struct sockaddr *with_port =
+        sockaddr_set_port(tpool,
+                          &node->envelope->address, node->envelope->length,
+                          port);
+
+    char buffer[64];
+    socket_address_to_string(buffer, sizeof(buffer), with_port,
+                             node->envelope->length);
+    daemon_log(4, "enabling node %s (%s)\n", node_name, buffer);
+
+    failure_unset(with_port, node->envelope->length, FAILURE_OK);
+
+    pool_rewind(tpool, &mark);
+}
+
+static void
+fade_node(const struct lb_instance *instance,
+          const char *payload, size_t length)
+{
+    const char *colon = memchr(payload, ':', length);
+    if (colon == NULL || colon == payload || colon == payload + length - 1) {
+        daemon_log(3, "malformed FADE_NODE control packet: no port\n");
+        return;
+    }
+
+    struct pool_mark mark;
+    pool_mark(tpool, &mark);
+
+    char *node_name = p_strndup(tpool, payload, length);
+    char *port_string = node_name + (colon - payload);
+    *port_string++ = 0;
+
+    const struct lb_node_config *node =
+        lb_config_find_node(instance->config, node_name);
+    if (node == NULL) {
+        pool_rewind(tpool, &mark);
+        daemon_log(3, "unknown node in FADE_NODE control packet\n");
+        return;
+    }
+
+    char *endptr;
+    unsigned port = strtoul(port_string, &endptr, 10);
+    if (port == 0 || *endptr != 0) {
+        pool_rewind(tpool, &mark);
+        daemon_log(3, "malformed FADE_NODE control packet: port is not a number\n");
+        return;
+    }
+
+    const struct sockaddr *with_port =
+        sockaddr_set_port(tpool,
+                          &node->envelope->address, node->envelope->length,
+                          port);
+
+    char buffer[64];
+    socket_address_to_string(buffer, sizeof(buffer), with_port,
+                             node->envelope->length);
+    daemon_log(4, "fading node %s (%s)\n", node_name, buffer);
+
+    /* set status "FADE" for 5 minutes */
+    failure_set(with_port, node->envelope->length, FAILURE_FADE, 300);
+
+    pool_rewind(tpool, &mark);
+}
 
 static void
 lb_control_packet(enum beng_control_command command,
@@ -26,6 +130,14 @@ lb_control_packet(enum beng_control_command command,
     switch (command) {
     case CONTROL_NOP:
     case CONTROL_TCACHE_INVALIDATE:
+        break;
+
+    case CONTROL_ENABLE_NODE:
+        enable_node(control->instance, payload, payload_length);
+        break;
+
+    case CONTROL_FADE_NODE:
+        fade_node(control->instance, payload, payload_length);
         break;
     }
 }

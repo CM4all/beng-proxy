@@ -46,3 +46,15 @@ class Client:
             payload += ' ' * (3 - ((length - 1) & 0x3))
 
         self.send(CONTROL_TCACHE_INVALIDATE, payload)
+
+    def send_enable_node(self, node, port):
+        assert isinstance(node, str)
+        assert isinstance(port, int)
+
+        self.send(CONTROL_ENABLE_NODE, '%s:%i' % (node, port))
+
+    def send_fade_node(self, node, port):
+        assert isinstance(node, str)
+        assert isinstance(port, int)
+
+        self.send(CONTROL_FADE_NODE, '%s:%i' % (node, port))

@@ -158,10 +158,11 @@ failure_get_status(const struct sockaddr *address, size_t length)
 
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next)
         if (failure->envelope.length == length &&
-            memcmp(&failure->envelope.address, address, length) == 0)
+            memcmp(&failure->envelope.address, address, length) == 0) {
             return !is_expired(failure->expires)
                 ? failure->status
                 : FAILURE_OK;
+        }
 
     return FAILURE_OK;
 }
