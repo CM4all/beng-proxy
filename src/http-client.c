@@ -830,6 +830,14 @@ http_client_try_read_buffered(struct http_client *client)
             else
                 /* finished: close the HTTP client */
                 http_client_release(client, false);
+        } else if (client->response.read_state == READ_STATUS &&
+                   fifo_buffer_empty(client->input)) {
+            stopwatch_event(client->stopwatch, "error");
+
+            GError *error =
+                g_error_new_literal(http_client_quark(), HTTP_CLIENT_REFUSED,
+                                    "server refused request");
+            http_client_abort_response_headers(client, error);
         } else {
             stopwatch_event(client->stopwatch, "error");
 

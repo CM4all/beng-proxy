@@ -24,6 +24,12 @@ enum http_client_error {
     HTTP_CLIENT_UNSPECIFIED,
 
     /**
+     * The server has closed the connection before the first response
+     * byte.
+     */
+    HTTP_CLIENT_REFUSED,
+
+    /**
      * The server has closed the connection prematurely.
      */
     HTTP_CLIENT_PREMATURE,

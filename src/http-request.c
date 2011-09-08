@@ -72,7 +72,7 @@ http_request_response_abort(GError *error, void *ctx)
 
     if (hr->retries > 0 && hr->body == NULL &&
         error->domain == http_client_quark() &&
-        error->code == HTTP_CLIENT_PREMATURE) {
+        error->code == HTTP_CLIENT_REFUSED) {
         /* the server has closed the connection prematurely, maybe
            because it didn't want to get any further requests on that
            TCP connection.  Let's try again. */
