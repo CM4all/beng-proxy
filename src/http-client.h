@@ -29,6 +29,11 @@ enum http_client_error {
     HTTP_CLIENT_PREMATURE,
 
     /**
+     * Non-HTTP garbage was received.
+     */
+    HTTP_CLIENT_GARBAGE,
+
+    /**
      * The server has failed to respond or accept data in time.
      */
     HTTP_CLIENT_TIMEOUT,

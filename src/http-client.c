@@ -398,7 +398,7 @@ http_client_parse_status_line(struct http_client *client,
         stopwatch_event(client->stopwatch, "malformed");
 
         GError *error =
-            g_error_new_literal(http_client_quark(), HTTP_CLIENT_UNSPECIFIED,
+            g_error_new_literal(http_client_quark(), HTTP_CLIENT_GARBAGE,
                                 "malformed HTTP status line");
         http_client_abort_response_headers(client, error);
         return false;
@@ -415,7 +415,7 @@ http_client_parse_status_line(struct http_client *client,
         stopwatch_event(client->stopwatch, "malformed");
 
         GError *error =
-            g_error_new_literal(http_client_quark(), HTTP_CLIENT_UNSPECIFIED,
+            g_error_new_literal(http_client_quark(), HTTP_CLIENT_GARBAGE,
                                 "no HTTP status found");
         http_client_abort_response_headers(client, error);
         return false;
@@ -426,7 +426,7 @@ http_client_parse_status_line(struct http_client *client,
         stopwatch_event(client->stopwatch, "malformed");
 
         GError *error =
-            g_error_new(http_client_quark(), HTTP_CLIENT_UNSPECIFIED,
+            g_error_new(http_client_quark(), HTTP_CLIENT_GARBAGE,
                         "invalid HTTP status %d",
                         client->response.status);
         http_client_abort_response_headers(client, error);
