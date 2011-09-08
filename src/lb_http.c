@@ -24,6 +24,7 @@
 #include "clock.h"
 #include "access-log.h"
 #include "strmap.h"
+#include "failure.h"
 
 #include <http/status.h>
 #include <daemon/log.h>
@@ -58,6 +59,30 @@ send_fallback(struct http_server_request *request,
         return true;
     } else
         return false;
+}
+
+/**
+ * Generate a cookie for sticky worker selection.  Return only worker
+ * numbers that are not known to be failing.  Returns 0 on total
+ * failure.
+ */
+static unsigned
+generate_cookie(const struct address_list *list)
+{
+    assert(list->size >= 2);
+
+    for (unsigned i = list->size; i > 0; --i) {
+        unsigned n = lb_cookie_generate(list->size);
+        assert(n >= 1 && n <= list->size);
+
+        const struct address_envelope *envelope =
+            list->addresses[n % list->size];
+        if (!failure_check(&envelope->address, envelope->length))
+            return n;
+    }
+
+    /* failure */
+    return 0;
 }
 
 /*
@@ -218,7 +243,8 @@ lb_http_connection_request(struct http_server_request *request,
         session_sticky = lb_cookie_get(request->headers);
         if (session_sticky == 0)
             request2->new_cookie = session_sticky =
-                lb_cookie_generate(cluster->address_list.size);
+                generate_cookie(&cluster->address_list);
+
         break;
     }
 
