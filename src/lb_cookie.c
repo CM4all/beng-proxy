@@ -9,6 +9,7 @@
 #include "tpool.h"
 #include "cookie-server.h"
 
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -51,5 +52,7 @@ lb_cookie_get(const struct strmap *request_headers)
 unsigned
 lb_cookie_generate(unsigned n)
 {
+    assert(n >= 2);
+
     return (random() % n) + 1;
 }
