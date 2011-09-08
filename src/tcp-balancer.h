@@ -47,4 +47,12 @@ void
 tcp_balancer_put(struct tcp_balancer *tcp_balancer, struct stock_item *item,
                  bool destroy);
 
+/**
+ * Returns the address of the last connection that was established
+ * successfully.  This is a dirty hack to allow the #tcp_stock's
+ * #stock_handler to find this out.
+ */
+const struct address_envelope *
+tcp_balancer_get_last(void);
+
 #endif

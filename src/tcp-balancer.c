@@ -42,6 +42,8 @@ struct tcp_balancer_request {
     struct async_operation_ref *async_ref;
 };
 
+static const struct address_envelope *last_address;
+
 static const struct stock_handler tcp_balancer_stock_handler;
 
 static void
@@ -68,6 +70,8 @@ static void
 tcp_balancer_stock_ready(struct stock_item *item, void *ctx)
 {
     struct tcp_balancer_request *request = ctx;
+
+    last_address = request->current_address;
 
     failure_remove(&request->current_address->address,
                    request->current_address->length);
@@ -147,4 +151,10 @@ tcp_balancer_put(struct tcp_balancer *tcp_balancer, struct stock_item *item,
                  bool destroy)
 {
     tcp_stock_put(tcp_balancer->tcp_stock, item, destroy);
+}
+
+const struct address_envelope *
+tcp_balancer_get_last(void)
+{
+    return last_address;
 }
