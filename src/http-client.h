@@ -29,6 +29,11 @@ enum http_client_error {
     HTTP_CLIENT_PREMATURE,
 
     /**
+     * A socket I/O error has occurred.
+     */
+    HTTP_CLIENT_IO,
+
+    /**
      * Non-HTTP garbage was received.
      */
     HTTP_CLIENT_GARBAGE,

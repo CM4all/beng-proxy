@@ -853,7 +853,7 @@ http_client_try_read_buffered(struct http_client *client)
         stopwatch_event(client->stopwatch, "error");
 
         GError *error = g_error_new(http_client_quark(),
-                                    HTTP_CLIENT_UNSPECIFIED,
+                                    HTTP_CLIENT_IO,
                                     "read error (%s)", strerror(errno));
         http_client_abort_response(client, error);
         return;
@@ -998,7 +998,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     stopwatch_event(client->stopwatch, "error");
 
-    GError *error = g_error_new(http_client_quark(), HTTP_CLIENT_UNSPECIFIED,
+    GError *error = g_error_new(http_client_quark(), HTTP_CLIENT_IO,
                                 "write error (%s)", strerror(_errno));
     http_client_abort_response(client, error);
     return 0;
