@@ -39,6 +39,7 @@ struct lb_request {
     struct async_operation_ref *async_ref;
 
     struct stock_item *stock_item;
+    const struct address_envelope *current_address;
 
     unsigned new_cookie;
 };
@@ -83,6 +84,17 @@ generate_cookie(const struct address_list *list)
 
     /* failure */
     return 0;
+}
+
+/**
+ * Is the specified error a server failure, that justifies
+ * blacklisting the server for a while?
+ */
+static bool
+is_server_failure(GError *error)
+{
+    return error->domain == http_client_quark() &&
+        error->code != HTTP_CLIENT_UNSPECIFIED;
 }
 
 /*
@@ -135,6 +147,10 @@ my_response_abort(GError *error, void *ctx)
 {
     struct lb_request *request2 = ctx;
 
+    if (is_server_failure(error))
+        failure_add(&request2->current_address->address,
+                    request2->current_address->length);
+
     daemon_log(2, "error on %s: %s\n", request2->request->uri, error->message);
     g_error_free(error);
 
@@ -161,6 +177,7 @@ my_stock_ready(struct stock_item *item, void *ctx)
     struct http_server_request *request = request2->request;
 
     request2->stock_item = item;
+    request2->current_address = tcp_balancer_get_last();
 
     struct strmap *headers =
         lb_forward_request_headers(request->pool, request->headers,
