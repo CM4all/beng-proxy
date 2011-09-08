@@ -13,6 +13,7 @@
 #include "access-log.h"
 #include "drop.h"
 #include "clock.h"
+#include "listener.h"
 
 #include <daemon/log.h>
 
@@ -112,14 +113,14 @@ static const struct http_server_connection_handler my_http_server_connection_han
 
 
 /*
- * listener callback
+ * listener handler
  *
  */
 
-void
-http_listener_callback(int fd,
-                       const struct sockaddr *addr, size_t addrlen,
-                       void *ctx)
+static void
+http_listener_connected(int fd,
+                        const struct sockaddr *addr, size_t addrlen,
+                        void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
     pool_t pool;
@@ -168,3 +169,15 @@ http_listener_callback(int fd,
                                connection,
                                &connection->http);
 }
+
+static void
+http_listener_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    daemon_log(2, "%s\n", error->message);
+    g_error_free(error);
+}
+
+const struct listener_handler http_listener_handler = {
+    .connected = http_listener_connected,
+    .error = http_listener_error,
+};

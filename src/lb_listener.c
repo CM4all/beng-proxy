@@ -13,6 +13,8 @@
 #include "listener.h"
 #include "address-envelope.h"
 
+#include <daemon/log.h>
+
 static void
 lb_listener_notify_callback(void *ctx)
 {
@@ -21,10 +23,15 @@ lb_listener_notify_callback(void *ctx)
     /* XXX check SSL events */
 }
 
+/*
+ * listener_handler
+ *
+ */
+
 static void
-lb_listener_callback(int fd,
-                     const struct sockaddr *address, size_t address_length,
-                     void *ctx)
+lb_listener_connected(int fd,
+                      const struct sockaddr *address, size_t address_length,
+                      void *ctx)
 {
     struct lb_listener *listener = ctx;
 
@@ -32,6 +39,23 @@ lb_listener_callback(int fd,
                       listener->ssl_ctx, listener->notify,
                       fd, address, address_length);
 }
+
+static void
+lb_listener_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    daemon_log(2, "%s\n", error->message);
+    g_error_free(error);
+}
+
+const struct listener_handler lb_listener_handler = {
+    .connected = lb_listener_connected,
+    .error = lb_listener_error,
+};
+
+/*
+ * constructor
+ *
+ */
 
 struct lb_listener *
 lb_listener_new(struct lb_instance *instance,
@@ -70,7 +94,7 @@ lb_listener_new(struct lb_instance *instance,
     listener->listener = listener_new(pool, envelope->address.sa_family,
                                       SOCK_STREAM, 0, &envelope->address,
                                       envelope->length,
-                                      lb_listener_callback, listener,
+                                      &lb_listener_handler, listener,
                                       error_r);
     if (listener->listener == NULL) {
         if (listener->ssl_ctx != NULL)

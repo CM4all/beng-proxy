@@ -14,18 +14,21 @@ struct pool;
 struct sockaddr;
 struct listener;
 
-typedef void (*listener_callback_t)(int fd, const struct sockaddr *address,
-                                    size_t length, void *ctx);
+struct listener_handler {
+    void (*connected)(int fd, const struct sockaddr *address,
+                      size_t length, void *ctx);
+    void (*error)(GError *error, void *ctx);
+};
 
 struct listener *
 listener_new(struct pool *pool, int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
-             listener_callback_t callback, void *ctx,
+             const struct listener_handler *handler, void *ctx,
              GError **error_r);
 
 struct listener *
 listener_tcp_port_new(struct pool *pool, int port,
-                      listener_callback_t callback, void *ctx,
+                      const struct listener_handler *handler, void *ctx,
                       GError **error_r);
 
 void

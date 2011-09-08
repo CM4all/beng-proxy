@@ -8,7 +8,6 @@
 #include "fd_util.h"
 #include "pool.h"
 
-#include <daemon/log.h>
 #include <socket/util.h>
 #include <socket/address.h>
 
@@ -27,8 +26,9 @@
 struct listener {
     int fd;
     struct event event;
-    listener_callback_t callback;
-    void *callback_ctx;
+
+    const struct listener_handler *handler;
+    void *handler_ctx;
 };
 
 static void
@@ -42,20 +42,28 @@ listener_event_callback(int fd, short event __attr_unused, void *ctx)
     sa_len = sizeof(sa);
     remote_fd = accept_cloexec_nonblock(fd, (struct sockaddr*)&sa, &sa_len);
     if (remote_fd < 0) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK)
-            daemon_log(1, "accept() failed: %s\n", strerror(errno));
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            GError *error = g_error_new(g_file_error_quark(), errno,
+                                        "accept() failed: %s",
+                                        g_strerror(errno));
+            listener->handler->error(error, listener->handler_ctx);
+        }
+
         return;
     }
 
     if (!socket_set_nodelay(remote_fd, true)) {
-        daemon_log(1, "setsockopt(TCP_NODELAY) failed: %s\n", strerror(errno));
+        GError *error = g_error_new(g_file_error_quark(), errno,
+                                    "setsockopt(TCP_NODELAY) failed: %s",
+                                    g_strerror(errno));
         close(remote_fd);
+        listener->handler->error(error, listener->handler_ctx);
         return;
     }
 
-    listener->callback(remote_fd,
-                       (const struct sockaddr*)&sa, sa_len,
-                       listener->callback_ctx);
+    listener->handler->connected(remote_fd,
+                                 (const struct sockaddr*)&sa, sa_len,
+                                 listener->handler_ctx);
 
     pool_commit();
 }
@@ -78,7 +86,7 @@ my_htons(uint16_t x)
 struct listener *
 listener_new(pool_t pool, int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
-             listener_callback_t callback, void *ctx,
+             const struct listener_handler *handler, void *ctx,
              GError **error_r)
 {
     struct listener *listener;
@@ -86,7 +94,9 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
 
     assert(address != NULL);
     assert(address_length > 0);
-    assert(callback != NULL);
+    assert(handler != NULL);
+    assert(handler->connected != NULL);
+    assert(handler->error != NULL);
 
     listener = p_calloc(pool, sizeof(*listener));
     listener->fd = socket_cloexec_nonblock(family, socktype, protocol);
@@ -124,8 +134,8 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
         return NULL;
     }
 
-    listener->callback = callback;
-    listener->callback_ctx = ctx;
+    listener->handler = handler;
+    listener->handler_ctx = ctx;
 
     event_set(&listener->event, listener->fd,
               EV_READ|EV_PERSIST, listener_event_callback, listener);
@@ -137,7 +147,7 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
 
 struct listener *
 listener_tcp_port_new(pool_t pool, int port,
-                      listener_callback_t callback, void *ctx,
+                      const struct listener_handler *handler, void *ctx,
                       GError **error_r)
 {
     struct listener *listener;
@@ -145,7 +155,9 @@ listener_tcp_port_new(pool_t pool, int port,
     struct sockaddr_in sa4;
 
     assert(port > 0);
-    assert(callback != NULL);
+    assert(handler != NULL);
+    assert(handler->connected != NULL);
+    assert(handler->error != NULL);
 
     memset(&sa6, 0, sizeof(sa6));
     sa6.sin6_family = AF_INET6;
@@ -154,7 +166,7 @@ listener_tcp_port_new(pool_t pool, int port,
 
     listener = listener_new(pool, PF_INET6, SOCK_STREAM, 0,
                             (const struct sockaddr *)&sa6, sizeof(sa6),
-                            callback, ctx, NULL);
+                            handler, ctx, NULL);
     if (listener != NULL)
         return listener;
 
@@ -165,7 +177,7 @@ listener_tcp_port_new(pool_t pool, int port,
 
     return listener_new(pool, PF_INET, SOCK_STREAM, 0,
                         (const struct sockaddr *)&sa4, sizeof(sa4),
-                        callback, ctx, error_r);
+                        handler, ctx, error_r);
 }
 
 void

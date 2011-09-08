@@ -39,12 +39,9 @@ struct client_connection {
     uint64_t request_start_time;
 };
 
-void
-close_connection(struct client_connection *connection);
+extern const struct listener_handler http_listener_handler;
 
 void
-http_listener_callback(int fd,
-                       const struct sockaddr *addr, size_t addrlen,
-                       void *ctx);
+close_connection(struct client_connection *connection);
 
 #endif
