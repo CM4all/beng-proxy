@@ -16,6 +16,8 @@
 #include "growing-buffer.h"
 #include "lease.h"
 #include "abort-close.h"
+#include "failure.h"
+#include "address-envelope.h"
 
 #include <inline/compiler.h>
 
@@ -29,6 +31,7 @@ struct http_request {
     unsigned session_sticky;
 
     struct stock_item *stock_item;
+    const struct address_envelope *current_address;
 
     http_method_t method;
     const char *uri;
@@ -46,6 +49,17 @@ static GQuark
 http_request_quark(void)
 {
     return g_quark_from_static_string("http_request");
+}
+
+/**
+ * Is the specified error a server failure, that justifies
+ * blacklisting the server for a while?
+ */
+static bool
+is_server_failure(GError *error)
+{
+    return error->domain == http_client_quark() &&
+        error->code != HTTP_CLIENT_UNSPECIFIED;
 }
 
 static const struct stock_handler http_request_stock_handler;
@@ -85,8 +99,13 @@ http_request_response_abort(GError *error, void *ctx)
                          &hr->uwa->addresses,
                          &http_request_stock_handler, hr,
                          hr->async_ref);
-    } else
+    } else {
+        if (is_server_failure(error))
+            failure_add(&hr->current_address->address,
+                        hr->current_address->length);
+
         http_response_handler_invoke_abort(&hr->handler, error);
+    }
 }
 
 static const struct http_response_handler http_request_response_handler = {
@@ -124,6 +143,7 @@ http_request_stock_ready(struct stock_item *item, void *ctx)
     struct http_request *hr = ctx;
 
     hr->stock_item = item;
+    hr->current_address = tcp_balancer_get_last();
 
     http_client_request(hr->pool,
                         tcp_stock_item_get(item),

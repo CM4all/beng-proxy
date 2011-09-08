@@ -1,6 +1,7 @@
 cm4all-beng-proxy (1.1.9) unstable; urgency=low
 
   * http-request: improve keep-alive cancellation detection
+  * http-request: mark server "failed" after HTTP client error
   * lb: implement the control protocol
   * lb: don't allow sticky pool with only one member
   * lb: verify that a new sticky host is alive
