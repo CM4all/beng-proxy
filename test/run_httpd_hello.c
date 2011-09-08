@@ -21,6 +21,8 @@ struct connection {
 struct instance {
     struct pool *pool;
 
+    const char *response;
+
     struct listener *listener;
 
     struct list_head connections;
@@ -36,9 +38,9 @@ my_http_request(struct http_server_request *request, void *ctx,
                 G_GNUC_UNUSED struct async_operation_ref *async_ref)
 {
     struct connection *connection = ctx;
-    (void)connection;
 
-    http_server_send_message(request, HTTP_STATUS_OK, "Hello world!");
+    http_server_send_message(request, HTTP_STATUS_OK,
+                             connection->instance->response);
 }
 
 static void
@@ -104,8 +106,8 @@ static const struct listener_handler my_listener_handler = {
 };
 
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s PORT\n", argv[0]);
+    if (argc < 2 || argc > 3) {
+        fprintf(stderr, "Usage: %s PORT [MESSAGE]\n", argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -116,12 +118,16 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+    const char *response = argc >= 3
+        ? argv[2] : "Hello, world!";
+
     direct_global_init();
 
     struct event_base *event_base = event_init();
 
     struct instance instance;
     instance.pool = pool_new_libc(NULL, "root");
+    instance.response = response;
     list_init(&instance.connections);
 
     tpool_init(instance.pool);
