@@ -27,6 +27,11 @@ enum http_client_error {
      * The server has closed the connection prematurely.
      */
     HTTP_CLIENT_PREMATURE,
+
+    /**
+     * The server has failed to respond or accept data in time.
+     */
+    HTTP_CLIENT_TIMEOUT,
 };
 
 G_GNUC_CONST

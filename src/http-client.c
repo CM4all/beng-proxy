@@ -914,7 +914,7 @@ http_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
         stopwatch_event(client->stopwatch, "timeout");
 
         GError *error = g_error_new_literal(http_client_quark(),
-                                            HTTP_CLIENT_UNSPECIFIED,
+                                            HTTP_CLIENT_TIMEOUT,
                                             "send timeout");
         http_client_abort_response(client, error);
         return;
@@ -938,7 +938,7 @@ http_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
         stopwatch_event(client->stopwatch, "timeout");
 
         GError *error = g_error_new_literal(http_client_quark(),
-                                            HTTP_CLIENT_UNSPECIFIED,
+                                            HTTP_CLIENT_TIMEOUT,
                                             "receive timeout");
         http_client_abort_response(client, error);
         return;
