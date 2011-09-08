@@ -673,6 +673,7 @@ if TEST
 
 noinst_PROGRAMS = \
 	test/run_css_parser \
+	test/run_httpd_hello \
 	test/run-ping \
 	test/run-was \
 	test/was-mirror \
@@ -1588,6 +1589,33 @@ test_run_css_parser_SOURCES = test/run_css_parser.c \
 	src/fd_util.c \
 	$(POOL_SRC)
 test_run_css_parser_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS)
+
+test_run_httpd_hello_SOURCES = test/run_httpd_hello.c \
+	src/http-server.c src/http-server-send.c src/http-server-request.c \
+	src/http-server-read.c src/http-server-response.c \
+	src/http-body.c \
+	src/direct.c src/fd-util.c src/fd_util.c \
+	src/address.c \
+	src/listener.c \
+	src/strutil.c src/format.c src/date.c src/gmtime.c \
+	src/header-parser.c src/header-writer.c \
+	src/fifo-buffer.c \
+	src/buffered-io.c \
+	src/growing-buffer.c \
+	src/strmap.c src/hashmap.c \
+	src/istream-cat.c src/istream-chunked.c src/istream-dechunk.c \
+	src/istream-memory.c src/istream-string.c \
+	src/istream-null.c \
+	src/istream-gb.c \
+	src/tpool.c \
+	src/event2.c \
+	$(POOL_SRC)
+test_run_httpd_hello_LDADD = \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(GLIB_LIBS) \
+	$(LIBEVENT_LIBS)
 
 endif
 
