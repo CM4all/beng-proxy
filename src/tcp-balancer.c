@@ -73,8 +73,9 @@ tcp_balancer_stock_ready(struct stock_item *item, void *ctx)
 
     last_address = request->current_address;
 
-    failure_remove(&request->current_address->address,
-                   request->current_address->length);
+    failure_unset(&request->current_address->address,
+                  request->current_address->length,
+                  FAILURE_FAILED);
 
     request->handler->ready(item, request->handler_ctx);
 }

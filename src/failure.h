@@ -42,8 +42,15 @@ failure_add(const struct sockaddr *address, size_t length)
     failure_set(address, length, FAILURE_FAILED, 20);
 }
 
+/**
+ * Unset a failure status.
+ *
+ * @param status the status to be removed; #FAILURE_OK is a catch-all
+ * status that matches everything
+ */
 void
-failure_remove(const struct sockaddr *addr, size_t addrlen);
+failure_unset(const struct sockaddr *address, size_t length,
+              enum failure_status status);
 
 enum failure_status
 failure_get_status(const struct sockaddr *address, size_t length);

@@ -110,8 +110,16 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
     fl.slots[slot] = failure;
 }
 
+static bool
+match_status(enum failure_status current, enum failure_status match)
+{
+    /* FAILURE_OK is a catch-all magic value */
+    return match == FAILURE_OK || current == match;
+}
+
 void
-failure_remove(const struct sockaddr *addr, size_t addrlen)
+failure_unset(const struct sockaddr *addr, size_t addrlen,
+              enum failure_status status)
 {
     unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure **failure_r, *failure;
@@ -125,6 +133,12 @@ failure_remove(const struct sockaddr *addr, size_t addrlen)
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
             /* found it: remove it */
+
+            if (!match_status(failure->status, status) &&
+                !is_expired(failure->expires))
+                /* don't update if the current status is more serious
+                   than the one to be removed */
+                return;
 
             *failure_r = failure->next;
             p_free(fl.pool, failure);

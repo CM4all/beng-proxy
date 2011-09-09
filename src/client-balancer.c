@@ -63,8 +63,9 @@ client_balancer_socket_success(int fd, void *ctx)
 {
     struct client_balancer_request *request = ctx;
 
-    failure_remove(&request->current_address->address,
-                   request->current_address->length);
+    failure_unset(&request->current_address->address,
+                  request->current_address->length,
+                  FAILURE_FAILED);
 
     request->handler->success(fd, request->handler_ctx);
 }
