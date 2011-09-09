@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <errno.h>
@@ -113,6 +114,11 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
                     "Failed to configure SO_REUSEADDR: %s", strerror(errno));
         close(listener->fd);
         return NULL;
+    }
+
+    if (address->sa_family == AF_UNIX) {
+        const struct sockaddr_un *sun = (const struct sockaddr_un *)address;
+        unlink(sun->sun_path);
     }
 
     ret = bind(listener->fd, address, address_length);

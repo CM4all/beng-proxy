@@ -19,6 +19,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 struct udp_listener {
@@ -71,6 +72,12 @@ udp_listener_envelope_new(struct pool *pool,
         g_set_error(error_r, udp_listener_quark(), errno,
                     "Failed to create socket: %s", g_strerror(errno));
         return NULL;
+    }
+
+    if (envelope->address.sa_family == AF_UNIX) {
+        const struct sockaddr_un *sun =
+            (const struct sockaddr_un *)&envelope->address;
+        unlink(sun->sun_path);
     }
 
     if (bind(udp->fd, &envelope->address, envelope->length) < 0) {
