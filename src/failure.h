@@ -34,12 +34,12 @@ failure_deinit(void);
 
 void
 failure_set(const struct sockaddr *address, size_t length,
-            enum failure_status status);
+            enum failure_status status, unsigned duration);
 
 static inline void
 failure_add(const struct sockaddr *address, size_t length)
 {
-    failure_set(address, length, FAILURE_FAILED);
+    failure_set(address, length, FAILURE_FAILED, 20);
 }
 
 void

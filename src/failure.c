@@ -64,7 +64,7 @@ failure_deinit(void)
 
 void
 failure_set(const struct sockaddr *addr, size_t addrlen,
-            enum failure_status status)
+            enum failure_status status, unsigned duration)
 {
     unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure *failure;
@@ -91,7 +91,7 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
                    than the new one */
                 return;
 
-            failure->expires = now.tv_sec + 20;
+            failure->expires = now.tv_sec + duration;
             failure->status = status;
             return;
         }
@@ -101,7 +101,7 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
 
     failure = p_malloc(fl.pool, sizeof(*failure)
                        - sizeof(failure->envelope.address) + addrlen);
-    failure->expires = now.tv_sec + 20;
+    failure->expires = now.tv_sec + duration;
     failure->status = status;
     failure->envelope.length = addrlen;
     memcpy(&failure->envelope.address, addr, addrlen);
