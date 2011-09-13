@@ -1062,7 +1062,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     } else if (processor->tag == TAG_SCRIPT) {
         if (tag->type == TAG_OPEN)
             parser_script(processor->parser);
-        else if (tag->type == TAG_CLOSE)
+        else
             processor->tag = TAG_NONE;
     } else if (processor->tag == TAG_REWRITE_URI) {
         /* the settings of this tag become the new default */
