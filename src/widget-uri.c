@@ -56,8 +56,7 @@ widget_get_original_address(const struct widget *widget)
     assert(widget != NULL);
     assert(widget->class != NULL);
 
-    const struct widget_view *view =
-        widget_view_lookup(&widget->class->views, widget->from_request.view);
+    const struct widget_view *view = widget_get_view(widget);
     if (view == NULL)
         /* fall back to default view */
         view = &widget->class->views;
