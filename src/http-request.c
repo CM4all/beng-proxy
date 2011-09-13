@@ -75,6 +75,10 @@ http_request_response_response(http_status_t status, struct strmap *headers,
 {
     struct http_request *hr = ctx;
 
+    failure_unset(&hr->current_address->address,
+                  hr->current_address->length,
+                  FAILURE_RESPONSE);
+
     http_response_handler_invoke_response(&hr->handler,
                                           status, headers, body);
 }
@@ -101,8 +105,9 @@ http_request_response_abort(GError *error, void *ctx)
                          hr->async_ref);
     } else {
         if (is_server_failure(error))
-            failure_add(&hr->current_address->address,
-                        hr->current_address->length);
+            failure_set(&hr->current_address->address,
+                        hr->current_address->length,
+                        FAILURE_RESPONSE, 20);
 
         http_response_handler_invoke_abort(&hr->handler, error);
     }

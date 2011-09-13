@@ -26,6 +26,11 @@ enum failure_status {
     FAILURE_FADE,
 
     /**
+     * The response received from the server indicates a server error.
+     */
+    FAILURE_RESPONSE,
+
+    /**
      * Host has failed.
      */
     FAILURE_FAILED,
