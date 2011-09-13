@@ -193,12 +193,15 @@ ssl_filter_thread(void *ctx)
         if (n <= 0 || ssl->encrypted_fd < 0 || ssl->plain_fd < 0)
             break;
 
-        if ((pfds[1].revents & POLLIN) != 0 &&
-            recv_to_buffer(ssl->plain_fd, ssl->from_plain, 65536) < 0 &&
-            errno != EAGAIN) {
-            close(ssl->plain_fd);
-            ssl->plain_fd = -1;
-            break;
+        if ((pfds[1].revents & POLLIN) != 0) {
+            ssize_t nbytes = recv_to_buffer(ssl->plain_fd, ssl->from_plain, 65536);
+            assert(nbytes != -2);
+
+            if (nbytes == 0 || (nbytes < 0 && errno != EAGAIN)) {
+                close(ssl->plain_fd);
+                ssl->plain_fd = -1;
+                break;
+            }
         }
 
         if ((pfds[1].revents & POLLOUT) != 0 &&
