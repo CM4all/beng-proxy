@@ -61,7 +61,8 @@ socket_try_direct(struct istream_socket *s)
         socket_schedule_read(s);
     } else {
         const int e = errno;
-        s->handler->error(e, s->handler_ctx);
+        if (!s->handler->error(e, s->handler_ctx))
+            return;
 
         GError *error = g_error_new(g_file_error_quark(), e,
                                     "recv error: %s", strerror(e));
@@ -93,7 +94,8 @@ socket_try_buffered(struct istream_socket *s)
         socket_schedule_read(s);
     } else {
         const int e = errno;
-        s->handler->error(e, s->handler_ctx);
+        if (!s->handler->error(e, s->handler_ctx))
+            return;
 
         GError *error = g_error_new(g_file_error_quark(), e,
                                     "recv error: %s", strerror(e));
