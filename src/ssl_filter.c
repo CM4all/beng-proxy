@@ -212,8 +212,7 @@ ssl_filter_thread(void *ctx)
             break;
         }
 
-        if ((pfds[0].revents & POLLIN) != 0 ||
-            (pfds[1].revents & POLLOUT) != 0) {
+        if ((pfds[0].revents & POLLIN) != 0) {
             size_t length;
             void *buffer = fifo_buffer_write(ssl->from_encrypted, &length);
 
@@ -230,8 +229,7 @@ ssl_filter_thread(void *ctx)
             }
         }
 
-        if ((pfds[1].revents & POLLIN) != 0 ||
-            (pfds[0].revents & POLLOUT) != 0) {
+        if ((pfds[0].revents & POLLOUT) != 0) {
             size_t length;
             const void *buffer = fifo_buffer_read(ssl->from_plain, &length);
 

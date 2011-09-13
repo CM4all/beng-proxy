@@ -3,6 +3,7 @@ cm4all-beng-proxy (1.1.10) unstable; urgency=low
   * http-request: don't clear failure state on successful TCP connection
   * istream-socket: fix assertion failure after receive error
   * ssl_filter: check for end-of-file on plain socket
+  * ssl_filter: fix buffer assertion failures
 
  --
 
