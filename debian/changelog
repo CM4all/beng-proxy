@@ -1,5 +1,6 @@
 cm4all-beng-proxy (1.1.10) unstable; urgency=low
 
+  * merge release 1.0.6
   * http-request: don't clear failure state on successful TCP connection
   * istream-socket: fix assertion failure after receive error
   * ssl_filter: check for end-of-file on plain socket
@@ -92,6 +93,13 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.6) unstable; urgency=low
+
+  * processor: support short "SCRIPT" tag
+  * widget-uri: use the template's view specification
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 13 Sep 2011 18:14:24 +0200
+
 cm4all-beng-proxy (1.0.5) unstable; urgency=low
 
   * resource-loader: delete comma when extracting from X-Forwarded-For
