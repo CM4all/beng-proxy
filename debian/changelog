@@ -6,7 +6,7 @@ cm4all-beng-proxy (1.1.10) unstable; urgency=low
   * ssl_filter: check for end-of-file on plain socket
   * ssl_filter: fix buffer assertion failures
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 13 Sep 2011 18:50:18 +0200
 
 cm4all-beng-proxy (1.1.9) unstable; urgency=low
 
