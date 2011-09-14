@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.11) unstable; urgency=low
 
-  * 
+  * widget-http: response header X-CM4all-View selects a view
 
  --
 

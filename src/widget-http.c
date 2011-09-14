@@ -484,6 +484,32 @@ widget_response_response(http_status_t status, struct strmap *headers,
                 return;
             }
         }
+
+        /* select a new view? */
+
+        const char *view_name = strmap_get(headers, "x-cm4all-view");
+        if (view_name != NULL) {
+            /* yes, look it up in the class */
+
+            const struct widget_view *view =
+                widget_view_lookup(&embed->widget->class->views, view_name);
+            if (view == NULL) {
+                /* the view specified in the response header does not
+                   exist, bail out */
+
+                if (body != NULL)
+                    istream_close_unused(body);
+
+                GError *error =
+                    g_error_new(widget_quark(), 0,
+                                "No such view: %s", view_name);
+                widget_dispatch_error(embed, error);
+                return;
+            }
+
+            /* install the new view */
+            embed->transformation = view->transformation;
+        }
     }
 
     widget_response_dispatch(embed, status, headers, body);

@@ -1465,6 +1465,15 @@ Example 2, authenticated user:
 
 The \texttt{Referer} request header is not supported.
 
+\subsection{Views}
+
+The widget server can select the view with the response header
+\texttt{X-CM4all-View}.  Just the list of transformations (processor,
+filter) will be used, the new URI of the view will be ignored.  At
+this point, a ``partial'' request for a child widget may be discarded
+already when the previous view did not declare the widget as a
+``container''.  Due to these side effects, this feature should be
+avoided if possible; it is better to select the view in the request.
 
 \section{The Beng Template Language}
 \label{processor}
