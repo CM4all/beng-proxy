@@ -141,7 +141,8 @@ do_rewrite_widget_uri(pool_t pool,
                       const char *untrusted_host,
                       struct strmap *args, struct widget *widget,
                       const struct strref *value,
-                      enum uri_mode mode, bool stateful)
+                      enum uri_mode mode, bool stateful,
+                      const char *view)
 {
     const char *frame = NULL;
     bool raw = false;
@@ -174,7 +175,7 @@ do_rewrite_widget_uri(pool_t pool,
     uri = widget_external_uri(pool, external_uri, args,
                               widget, stateful,
                               value,
-                              frame, NULL, raw);
+                              frame, view, raw);
     if (uri == NULL) {
         daemon_log(4, "Base mismatch in widget '%s', type '%s'\n",
                    widget_path(widget), widget->class_name);
@@ -219,6 +220,7 @@ struct rewrite_widget_uri {
 
     enum uri_mode mode;
     bool stateful;
+    const char *view;
 
     const struct escape_class *escape;
 
@@ -257,7 +259,8 @@ class_lookup_callback(void *ctx)
                                     rwu->absolute_uri, rwu->external_uri,
                                     rwu->site_name, rwu->untrusted_host,
                                     rwu->args, rwu->widget,
-                                    rwu->value, rwu->mode, rwu->stateful);
+                                    rwu->value, rwu->mode, rwu->stateful,
+                                    rwu->view);
 
         if (rwu->value == &unescaped)
             pool_rewind(tpool, &mark);
@@ -302,6 +305,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    session_id_t session_id,
                    const struct strref *value,
                    enum uri_mode mode, bool stateful,
+                   const char *view,
                    const struct escape_class *escape)
 {
     const char *uri;
@@ -320,7 +324,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
 
         uri = do_rewrite_widget_uri(pool, absolute_uri, external_uri,
                                     site_name, untrusted_host,
-                                    args, widget, value, mode, stateful);
+                                    args, widget, value, mode, stateful, view);
         if (value == &unescaped)
             pool_rewind(tpool, &mark);
 
@@ -352,6 +356,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
 
         rwu->mode = mode;
         rwu->stateful = stateful;
+        rwu->view = view;
         rwu->escape = escape;
         rwu->delayed = istream_delayed_new(pool);
 

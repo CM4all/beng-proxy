@@ -33,6 +33,7 @@ parse_uri_mode(const struct strref *s);
  * packet, or NULL if this is a "trusted" request
  * @param stateful if true, then the current request/session state is
  * taken into account (path_info and query_string)
+ * @param view the name of a view, or NULL to use the default view
  */
 istream_t
 rewrite_widget_uri(pool_t pool, pool_t widget_pool,
@@ -45,6 +46,7 @@ rewrite_widget_uri(pool_t pool, pool_t widget_pool,
                    session_id_t session_id,
                    const struct strref *value,
                    enum uri_mode mode, bool stateful,
+                   const char *view,
                    const struct escape_class *escape);
 
 #endif

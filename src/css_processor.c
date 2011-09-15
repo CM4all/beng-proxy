@@ -211,6 +211,7 @@ css_processor_parser_url(const struct css_parser_value *url, void *ctx)
                            processor->container,
                            processor->env->session_id,
                            &url->value, processor->uri_rewrite.mode, false,
+                           NULL,
                            &css_escape_class);
     if (istream != NULL)
         css_processor_replace_add(processor, url->start, url->end, istream);

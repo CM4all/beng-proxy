@@ -141,8 +141,9 @@ assert_istream_equals(pool_t pool, istream_t istream, const char *value)
 }
 
 static void
-assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
+assert_rewrite_check3(pool_t widget_pool, struct widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
+                      const char *view,
                       const char *result)
 {
     pool_t pool = pool_new_libc(widget_pool, "rewrite");
@@ -165,13 +166,22 @@ assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
                                  NULL, &external_uri, NULL, NULL,
                                  NULL, widget, 1,
                                  value != NULL ? &value2 : NULL,
-                                 mode, stateful, &html_escape_class);
+                                 mode, stateful, view, &html_escape_class);
     if (result == NULL)
         assert(istream == NULL);
     else
         assert_istream_equals(pool, istream, result);
 
     pool_unref(pool);
+}
+
+static void
+assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
+                      const char *value, enum uri_mode mode, bool stateful,
+                      const char *result)
+{
+    assert_rewrite_check3(widget_pool, widget, value, mode, stateful, NULL,
+                          result);
 }
 
 static void
@@ -389,6 +399,13 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     assert_rewrite_check(pool, &widget, "2/foo", URI_MODE_FOCUS,
                          "/index.html;focus=1&path=$2ffoo");
+
+    /* with view value */
+
+    assert_rewrite_check3(pool, &widget, NULL, URI_MODE_DIRECT, false, "foo",
+                          "http://widget-server/2");
+    assert_rewrite_check3(pool, &widget, NULL, URI_MODE_FOCUS, false, "foo",
+                          "/index.html;focus=1&view=foo");
 
     /* cleanup */
 
