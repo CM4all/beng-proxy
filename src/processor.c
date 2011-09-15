@@ -43,6 +43,8 @@ enum uri_base {
 struct uri_rewrite {
     enum uri_base base;
     enum uri_mode mode;
+
+    char view[64];
 };
 
 enum tag {
@@ -339,6 +341,7 @@ processor_process(pool_t caller_pool, istream_t istream,
     if (processor_option_rewrite_url(processor)) {
         processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
         processor->default_uri_rewrite.mode = URI_MODE_DIRECT;
+        processor->default_uri_rewrite.view[0] = 0;
 
         if (options & PROCESSOR_FOCUS_WIDGET) {
             processor->default_uri_rewrite.base = URI_BASE_WIDGET;
@@ -438,7 +441,8 @@ static void
 transform_uri_attribute(struct processor *processor,
                         const struct parser_attr *attr,
                         enum uri_base base,
-                        enum uri_mode mode);
+                        enum uri_mode mode,
+                        const char *view);
 
 static void
 processor_uri_rewrite_attribute(struct processor *processor,
@@ -480,7 +484,9 @@ processor_uri_rewrite_commit(struct processor *processor)
                                   &uri_attribute.value);
     transform_uri_attribute(processor, &uri_attribute,
                             processor->uri_rewrite.base,
-                            processor->uri_rewrite.mode);
+                            processor->uri_rewrite.mode,
+                            processor->uri_rewrite.view[0] != 0
+                            ? processor->uri_rewrite.view : NULL);
 
     /* now delete all c:base/c:mode attributes which followed the
        URI */
@@ -679,7 +685,8 @@ static void
 transform_uri_attribute(struct processor *processor,
                         const struct parser_attr *attr,
                         enum uri_base base,
-                        enum uri_mode mode)
+                        enum uri_mode mode,
+                        const char *view)
 {
     struct widget *widget = NULL;
     const struct strref *value = &attr->value;
@@ -733,7 +740,7 @@ transform_uri_attribute(struct processor *processor,
                                  processor->env->args, widget,
                                  processor->env->session_id,
                                  value, mode, widget == processor->container,
-                                 NULL,
+                                 view,
                                  &html_escape_class);
     if (istream != NULL)
         replace_attribute_value(processor, attr, istream);
@@ -795,6 +802,19 @@ link_attr_finished(struct processor *processor, const struct parser_attr *attr)
         if (processor->tag != TAG_REWRITE_URI)
             processor_uri_rewrite_delete(processor,
                                          attr->name_start, attr->end);
+        return true;
+    }
+
+    if (strref_cmp_literal(&attr->name, "c:view") == 0 &&
+        attr->value.length < sizeof(processor->uri_rewrite.view)) {
+        memcpy(processor->uri_rewrite.view,
+               attr->value.data, attr->value.length);
+        processor->uri_rewrite.view[attr->value.length] = 0;
+
+        if (processor->tag != TAG_REWRITE_URI)
+            processor_uri_rewrite_delete(processor,
+                                         attr->name_start, attr->end);
+
         return true;
     }
 
