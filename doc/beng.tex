@@ -1883,11 +1883,13 @@ referenced in CSS.
 
 The proprietary property \texttt{-c-mode} specifies the URL rewriting
 mode for the following URLs in the current block.  See \ref{c_mode}
-for a list of valid values.  Example:
+for a list of valid values.  \texttt{-c-mode} configures a view name.
+Example:
 
 \begin{verbatim*}
 body {
   -c-mode: proxy;
+  -c-view: raw;
   background-image:url('background.png');
 }
 \end{verbatim*}

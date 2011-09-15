@@ -32,6 +32,8 @@
 
 struct uri_rewrite {
     enum uri_mode mode;
+
+    char view[64];
 };
 
 struct css_processor {
@@ -176,6 +178,7 @@ css_processor_parser_block(void *ctx)
     struct css_processor *processor = ctx;
 
     processor->uri_rewrite.mode = URI_MODE_DIRECT;
+    processor->uri_rewrite.view[0] = 0;
 }
 
 static void
@@ -190,6 +193,11 @@ css_processor_parser_property_keyword(const char *name, const char *value,
         strref_set_c(&value2, value);
         processor->uri_rewrite.mode = parse_uri_mode(&value2);
     }
+
+    if (css_processor_option_rewrite_url(processor) &&
+        strcmp(name, "-c-view") == 0)
+        g_strlcpy(processor->uri_rewrite.view, value,
+                  sizeof(processor->uri_rewrite.view));
 }
 
 static void
@@ -211,7 +219,8 @@ css_processor_parser_url(const struct css_parser_value *url, void *ctx)
                            processor->container,
                            processor->env->session_id,
                            &url->value, processor->uri_rewrite.mode, false,
-                           NULL,
+                           processor->uri_rewrite.view[0] != 0
+                           ? processor->uri_rewrite.view : NULL,
                            &css_escape_class);
     if (istream != NULL)
         css_processor_replace_add(processor, url->start, url->end, istream);

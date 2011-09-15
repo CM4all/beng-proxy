@@ -6,6 +6,7 @@ body {
 div.test {
     color: black;
     -c-mode: proxy;
+    -c-view: raw;
     background-image:url('background.png');
 }
 
