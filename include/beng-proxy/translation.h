@@ -193,6 +193,11 @@ enum beng_translation_command {
      * the widget.
      */
     TRANSLATE_ANCHOR_ABSOLUTE = 77,
+
+    /**
+     * Rewrite XML ids with a leading underscore?
+     */
+    TRANSLATE_PREFIX_XML_ID = 78,
 };
 
 struct beng_translation_header {

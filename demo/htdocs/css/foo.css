@@ -16,3 +16,11 @@ div.__foo {
 div.___bar {
     color: green;
 }
+
+#foo, #__foo {
+    color: blue;
+}
+
+#___bar {
+    color: yellow;
+}

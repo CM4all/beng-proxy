@@ -115,6 +115,8 @@ class _Lookup:
             response.packet(TRANSLATE_PROCESS_CSS)
         elif line == 'prefix_css_class':
             response.packet(TRANSLATE_PREFIX_CSS_CLASS)
+        elif line == 'prefix_xml_id':
+            response.packet(TRANSLATE_PREFIX_XML_ID)
         elif line == 'stateful':
             response.packet(TRANSLATE_STATEFUL)
         elif line == 'filter':

@@ -83,6 +83,12 @@ css_processor_option_prefix_class(const struct css_processor *processor)
     return (processor->options & CSS_PROCESSOR_PREFIX_CLASS) != 0;
 }
 
+static inline bool
+css_processor_option_prefix_id(const struct css_processor *processor)
+{
+    return (processor->options & CSS_PROCESSOR_PREFIX_ID) != 0;
+}
+
 static void
 css_processor_replace_add(struct css_processor *processor,
                           off_t start, off_t end,
@@ -104,6 +110,40 @@ css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
     assert(name->value.length > 0);
 
     if (!css_processor_option_prefix_class(processor))
+        return;
+
+    unsigned n = underscore_prefix(name->value.data, strref_end(&name->value));
+    if (n == 3) {
+        /* double underscore: add widget path prefix */
+
+        const char *prefix = widget_prefix(processor->container);
+        if (prefix == NULL)
+            return;
+
+        css_processor_replace_add(processor, name->start, name->start + 3,
+                                  istream_string_new(processor->pool,
+                                                     prefix));
+    } else if (n == 2) {
+        /* single underscore: add class name prefix */
+
+        const char *class_name = processor->container->class_name;
+        if (class_name == NULL)
+            return;
+
+        css_processor_replace_add(processor, name->start, name->start + 1,
+                                  istream_string_new(processor->pool,
+                                                     class_name));
+    }
+}
+
+static void
+css_processor_parser_xml_id(const struct css_parser_value *name, void *ctx)
+{
+    struct css_processor *processor = ctx;
+
+    assert(name->value.length > 0);
+
+    if (!css_processor_option_prefix_id(processor))
         return;
 
     unsigned n = underscore_prefix(name->value.data, strref_end(&name->value));
@@ -202,6 +242,7 @@ css_processor_parser_error(GError *error, void *ctx)
 
 static const struct css_parser_handler css_processor_parser_handler = {
     .class_name = css_processor_parser_class_name,
+    .xml_id = css_processor_parser_xml_id,
     .block = css_processor_parser_block,
     .property_keyword = css_processor_parser_property_keyword,
     .url = css_processor_parser_url,

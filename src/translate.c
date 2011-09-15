@@ -1456,6 +1456,30 @@ translate_handle_packet(struct translate_client *client,
 
         return true;
 
+    case TRANSLATE_PREFIX_XML_ID:
+        if (client->transformation == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_PREFIX_XML_ID packet");
+            return false;
+        }
+
+        switch (client->transformation->type) {
+        case TRANSFORMATION_PROCESS:
+            client->transformation->u.processor.options |= PROCESSOR_PREFIX_XML_ID;
+            break;
+
+        case TRANSFORMATION_PROCESS_CSS:
+            client->transformation->u.css_processor.options |= CSS_PROCESSOR_PREFIX_ID;
+            break;
+
+        default:
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_PREFIX_XML_ID packet");
+            return false;
+        }
+
+        return true;
+
     case TRANSLATE_FOCUS_WIDGET:
         if (client->transformation == NULL ||
             client->transformation->type != TRANSFORMATION_PROCESS) {

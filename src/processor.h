@@ -23,6 +23,9 @@ enum processor_options {
      */
     PROCESSOR_FOCUS_WIDGET = 0x4,
 
+    /** add prefix to marked XML ids */
+    PROCESSOR_PREFIX_XML_ID = 0x8,
+
     /** enable the c:embed element */
     PROCESSOR_CONTAINER = 0x10,
 };

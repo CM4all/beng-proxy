@@ -156,6 +156,18 @@ processor_option_prefix_class(const struct processor *processor)
     return (processor->options & PROCESSOR_PREFIX_CSS_CLASS) != 0;
 }
 
+static inline bool
+processor_option_prefix_id(const struct processor *processor)
+{
+    return (processor->options & PROCESSOR_PREFIX_XML_ID) != 0;
+}
+
+static inline bool
+processor_option_prefix(const struct processor *processor)
+{
+    return (processor->options & (PROCESSOR_PREFIX_CSS_CLASS|PROCESSOR_PREFIX_XML_ID)) != 0;
+}
+
 static void
 processor_replace_add(struct processor *processor, off_t start, off_t end,
                       istream_t istream)
@@ -619,14 +631,14 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             processor->tag = TAG_PARAM;
             processor_uri_rewrite_init(processor);
             return true;
-        } else if (processor_option_prefix_class(processor)) {
+        } else if (processor_option_prefix(processor)) {
             processor->tag = TAG_OTHER;
             return true;
         } else {
             processor->tag = TAG_IGNORE;
             return false;
         }
-    } else if (processor_option_prefix_class(processor)) {
+    } else if (processor_option_prefix(processor)) {
         processor->tag = TAG_OTHER;
         return true;
     } else {
@@ -868,6 +880,37 @@ handle_class_attribute(struct processor *processor,
                             istream_memory_new(processor->pool, q, length));
 }
 
+static void
+handle_id_attribute(struct processor *processor,
+                    const struct parser_attr *attr)
+{
+    const char *p = attr->value.data, *const end = strref_end(&attr->value);
+
+    const unsigned n = underscore_prefix(p, end);
+    if (n == 3) {
+        /* triple underscore: add widget path prefix */
+
+        const char *prefix = widget_prefix(processor->container);
+        if (prefix == NULL)
+            return;
+
+        processor_replace_add(processor, attr->value_start,
+                              attr->value_start + 3,
+                              istream_string_new(processor->pool, prefix));
+    } else if (n == 2) {
+        /* double underscore: add class name prefix */
+
+        const char *class_name = processor->container->class_name;
+        if (class_name == NULL)
+            return;
+
+        processor_replace_add(processor, attr->value_start,
+                              attr->value_start + 1,
+                              istream_string_new(processor->pool,
+                                                 class_name));
+    }
+}
+
 /**
  * Is this a tag which can have a link attribute?
  */
@@ -908,6 +951,17 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         is_html_tag(processor->tag) &&
         strref_cmp_literal(&attr->name, "class") == 0) {
         handle_class_attribute(processor, attr);
+        return;
+    }
+
+    if (!processor_option_quiet(processor) &&
+        processor_option_prefix_id(processor) &&
+        /* due to a limitation in the processor and istream_replace,
+           we cannot edit attributes followed by a URI attribute */
+        !processor->postponed_rewrite.pending &&
+        is_html_tag(processor->tag) &&
+        strref_cmp_literal(&attr->name, "id") == 0) {
+        handle_id_attribute(processor, attr);
         return;
     }
 
