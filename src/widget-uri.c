@@ -229,7 +229,7 @@ widget_external_uri(pool_t pool,
                     struct strmap *args,
                     struct widget *widget, bool stateful,
                     const struct strref *relative_uri,
-                    const char *frame, bool raw)
+                    const char *frame, const char *view, bool raw)
 {
     const char *path;
     const char *qmark, *args2, *new_uri;
@@ -297,6 +297,9 @@ widget_external_uri(pool_t pool,
                         ";", (size_t)1,
                         args2, strlen(args2),
                         "&raw=1", (size_t)(raw ? 6 : 0),
+                        "&view=", (size_t)(view != NULL ? 6 : 0),
+                        view != NULL ? view : "",
+                        view != NULL ? strlen(view) : (size_t)0,
                         query_string.data, query_string.length,
                         NULL);
 

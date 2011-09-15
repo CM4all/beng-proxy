@@ -174,7 +174,7 @@ do_rewrite_widget_uri(pool_t pool,
     uri = widget_external_uri(pool, external_uri, args,
                               widget, stateful,
                               value,
-                              frame, raw);
+                              frame, NULL, raw);
     if (uri == NULL) {
         daemon_log(4, "Base mismatch in widget '%s', type '%s'\n",
                    widget_path(widget), widget->class_name);

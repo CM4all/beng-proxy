@@ -279,7 +279,7 @@ widget_external_uri(pool_t pool,
                     struct strmap *args,
                     struct widget *widget, bool stateful,
                     const struct strref *relative_uri,
-                    const char *frame, bool raw);
+                    const char *frame, const char *view, bool raw);
 
 /**
  * Determines whether it is allowed to embed the widget in a page with
