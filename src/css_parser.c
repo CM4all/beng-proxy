@@ -14,6 +14,7 @@ enum css_parser_state {
     CSS_PARSER_NONE,
     CSS_PARSER_BLOCK,
     CSS_PARSER_CLASS_NAME,
+    CSS_PARSER_XML_ID,
     CSS_PARSER_DISCARD_QUOTED,
     CSS_PARSER_PROPERTY,
     CSS_PARSER_POST_PROPERTY,
@@ -91,6 +92,15 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                     }
 
                     break;
+
+                case '#':
+                    if (parser->handler->xml_id != NULL) {
+                        parser->state = CSS_PARSER_XML_ID;
+                        parser->name_start = parser->position + (off_t)(buffer - start) + 1;
+                        parser->name_length = 0;
+                    }
+
+                    break;
                 }
 
                 ++buffer;
@@ -111,6 +121,32 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                                    parser->name_length);
                         parser->handler->class_name(&name,
                                                     parser->handler_ctx);
+                    }
+
+                    parser->state = CSS_PARSER_NONE;
+                    break;
+                }
+
+                if (parser->name_length < sizeof(parser->name) - 1)
+                    parser->name[parser->name_length++] = *buffer;
+
+                ++buffer;
+            } while (buffer < end);
+
+            break;
+
+        case CSS_PARSER_XML_ID:
+            do {
+                if (!is_css_nmchar(*buffer)) {
+                    if (parser->name_length > 0) {
+                        struct css_parser_value name = {
+                            .start = parser->name_start,
+                            .end = parser->position + (off_t)(buffer - start),
+                        };
+
+                        strref_set(&name.value, parser->name,
+                                   parser->name_length);
+                        parser->handler->xml_id(&name, parser->handler_ctx);
                     }
 
                     parser->state = CSS_PARSER_NONE;

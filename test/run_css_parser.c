@@ -21,6 +21,14 @@ my_parser_class_name(const struct css_parser_value *name, void *ctx)
 }
 
 static void
+my_parser_xml_id(const struct css_parser_value *id, void *ctx)
+{
+    (void)ctx;
+
+    printf("#%.*s\n", (int)id->value.length, id->value.data);
+}
+
+static void
 my_parser_property_keyword(const char *name, const char *value, void *ctx)
 {
     (void)ctx;
@@ -57,6 +65,7 @@ my_parser_error(GError *error, void *ctx)
 
 static const struct css_parser_handler my_parser_handler = {
     .class_name = my_parser_class_name,
+    .xml_id = my_parser_xml_id,
     .property_keyword = my_parser_property_keyword,
     .url = my_parser_url,
     .eof = my_parser_eof,

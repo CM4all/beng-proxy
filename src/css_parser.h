@@ -28,6 +28,11 @@ struct css_parser_handler {
     void (*class_name)(const struct css_parser_value *name, void *ctx);
 
     /**
+     * A XML id was found.
+     */
+    void (*xml_id)(const struct css_parser_value *id, void *ctx);
+
+    /**
      * A new block begins.  Optional method.
      */
     void (*block)(void *ctx);
