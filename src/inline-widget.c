@@ -236,6 +236,7 @@ class_lookup_callback(void *_ctx)
             g_error_new(widget_quark(), 0,
                         "failed to look up widget class '%s'",
                         iw->widget->class_name);
+        widget_cancel(iw->widget);
         inline_widget_close(iw, error);
     }
 }

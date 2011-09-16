@@ -1,5 +1,6 @@
 cm4all-beng-proxy (1.1.11) unstable; urgency=low
 
+  * merge release 1.0.7
   * widget-http: response header X-CM4all-View selects a view
   * processor, css_processor: support prefixing XML ids
   * processor: property "c:view" selects a view
@@ -101,6 +102,12 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.7) unstable; urgency=low
+
+  * inline-widget: discard request body when class lookup fails
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 16 Sep 2011 12:16:04 +0200
+
 cm4all-beng-proxy (1.0.6) unstable; urgency=low
 
   * processor: support short "SCRIPT" tag
