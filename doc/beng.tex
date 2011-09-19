@@ -77,7 +77,7 @@ All other widget must be embedded in an IFRAME in another domain.
 \subsection{Forms}
 
 \emph{beng-proxy} itself does not use the query string and the request
-body.  Both is forwarded to the ``focused'' widget.  See \ref{rewrite}
+body.  Both is forwarded to the ``focused'' widget.  See \ref{focus}
 for information on widget focus.
 
 
@@ -1024,7 +1024,8 @@ status.
 When proxying HTTP requests with the a \verb|PROXY| packet,
 \emph{beng-proxy} forwards the request to the specified location,
 including the HTTP method and the request body.  There is one
-exception: if \verb|PROCESS| is enabled and a widget is focused, the
+exception: if \verb|PROCESS| is enabled and a widget is focused (see
+\ref{focus}), the
 other HTTP server receives a \verb|GET| request without a body,
 because the focused widget is going to receive the request body.
 
@@ -1374,6 +1375,18 @@ body.  This is always correct for ``303 See Other'', but may not be
 for the other redirection types.  Widget servers should therefore
 always redirect with ``303 See Other'' as follow-up to a POST request.
 
+\subsection{Focus}
+\label{focus}
+
+To navigate inside a widget, the widget must be ``focused''.  A focus
+can be assigned by clicking on a hyperlink that was generated using
+the ``focus'' URI rewriting mode (see \ref{c_mode}).
+
+A link pointing to the focused widget may change its current URI
+(relative to the widget's base URI).  If the HTTP request contains a
+query string or a request body, they are forwarded to that widget,
+instead of being sent to the template.
+
 \subsection{POSTing and other methods}
 
 Making the browser send a request body with a POST request is
@@ -1383,7 +1396,7 @@ redirect as a response to a POST request.  Always reckon that
 interaction of the browser.
 
 The same is true for other HTTP methods: \texttt{PUT}, \texttt{DELETE}
-and others are passed to the focused widget.
+and others are passed to the focused widget (see \ref{focus}).
 
 \subsection{Session tracking}
 
@@ -1684,7 +1697,7 @@ the mode of the rewritten URI, you may use the attribute
 \hline
 
 \texttt{focus} & link to \emph{beng-proxy} serving the full page (or
-the current frame), focusing the widget \\
+the current frame), focusing the widget (see \ref{focus}) \\
 
 \hline
 
