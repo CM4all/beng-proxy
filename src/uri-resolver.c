@@ -7,6 +7,7 @@
 
 #include "uri-resolver.h"
 #include "uri-address.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 #include <socket/resolver.h>
@@ -15,7 +16,7 @@
 #include <netdb.h>
 
 struct uri_with_address *
-uri_address_new_resolve(pool_t pool, const char *host_and_port,
+uri_address_new_resolve(struct pool *pool, const char *host_and_port,
                         int default_port, const struct addrinfo *hints)
 {
     int ret;

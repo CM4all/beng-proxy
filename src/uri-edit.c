@@ -5,12 +5,13 @@
  */
 
 #include "uri-edit.h"
+#include "pool.h"
 
 #include <assert.h>
 #include <string.h>
 
 const char *
-uri_insert_query_string(pool_t pool, const char *uri,
+uri_insert_query_string(struct pool *pool, const char *uri,
                         const char *query_string)
 {
     assert(pool != NULL);
@@ -31,7 +32,7 @@ uri_insert_query_string(pool_t pool, const char *uri,
 }
 
 const char *
-uri_append_query_string_n(pool_t pool, const char *uri,
+uri_append_query_string_n(struct pool *pool, const char *uri,
                           const char *query_string, size_t length)
 {
     assert(pool != NULL);
@@ -65,7 +66,7 @@ query_string_begins_with(const char *query_string, const char *needle,
 }
 
 const char *
-uri_delete_query_string(pool_t pool, const char *uri,
+uri_delete_query_string(struct pool *pool, const char *uri,
                         const char *needle, size_t needle_length)
 {
     assert(pool != NULL);
@@ -98,7 +99,7 @@ uri_delete_query_string(pool_t pool, const char *uri,
 }
 
 const char *
-uri_insert_args(pool_t pool, const char *uri,
+uri_insert_args(struct pool *pool, const char *uri,
                 const char *args, size_t length)
 {
     const char *q = strchr(uri, '?');

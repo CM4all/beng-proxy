@@ -5,11 +5,12 @@
  */
 
 #include "uri-extract.h"
+#include "pool.h"
 
 #include <string.h>
 
 const char *
-uri_host_and_port(pool_t pool, const char *uri)
+uri_host_and_port(struct pool *pool, const char *uri)
 {
     const char *slash;
 

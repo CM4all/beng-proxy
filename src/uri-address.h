@@ -7,15 +7,18 @@
 #ifndef __BENG_URI_ADDRESS_H
 #define __BENG_URI_ADDRESS_H
 
-#include "pool.h"
 #include "address-list.h"
 
 #include <inline/list.h>
 
 #include <sys/socket.h>
 
+#include <stddef.h>
+
+struct pool;
+
 struct uri_with_address {
-    pool_t pool;
+    struct pool *pool;
 
     const char *uri;
 
@@ -23,17 +26,17 @@ struct uri_with_address {
 };
 
 struct uri_with_address *
-uri_address_new(pool_t pool, const char *uri);
+uri_address_new(struct pool *pool, const char *uri);
 
 struct uri_with_address *
-uri_address_dup(pool_t pool, const struct uri_with_address *uwa);
+uri_address_dup(struct pool *pool, const struct uri_with_address *uwa);
 
 /**
  * Duplicates this #uri_with_address object and inserts the specified
  * query string into the URI.
  */
 struct uri_with_address *
-uri_address_insert_query_string(pool_t pool,
+uri_address_insert_query_string(struct pool *pool,
                                 const struct uri_with_address *uwa,
                                 const char *query_string);
 
@@ -42,7 +45,7 @@ uri_address_insert_query_string(pool_t pool,
  * arguments into the URI.
  */
 struct uri_with_address *
-uri_address_insert_args(pool_t pool,
+uri_address_insert_args(struct pool *pool,
                         const struct uri_with_address *uwa,
                         const char *args, size_t length);
 

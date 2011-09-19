@@ -7,8 +7,9 @@
 #ifndef __BENG_URI_H
 #define __BENG_URI_H
 
-#include "pool.h"
+#include <stddef.h>
 
+struct pool;
 struct strref;
 
 /**
@@ -16,14 +17,14 @@ struct strref;
  * the result.  May return NULL if there are too many "/../".
  */
 const char *
-uri_compress(pool_t pool, const char *uri);
+uri_compress(struct pool *pool, const char *uri);
 
 /**
  * Append a relative URI to an absolute base URI, and return the
  * resulting absolute URI.
  */
 const char *
-uri_absolute(pool_t pool, const char *base, const char *uri, size_t length);
+uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length);
 
 /**
  * Check if an (absolute) URI is relative to an a base URI (also

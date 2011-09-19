@@ -6,11 +6,12 @@
 
 #include "uri-relative.h"
 #include "strref.h"
+#include "pool.h"
 
 #include <string.h>
 
 const char *
-uri_compress(pool_t pool, const char *uri)
+uri_compress(struct pool *pool, const char *uri)
 {
     char *dest, *p;
 
@@ -128,7 +129,7 @@ uri_after_last_slash(const char *uri)
 }
 
 const char *
-uri_absolute(pool_t pool, const char *base, const char *uri, size_t length)
+uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length)
 {
     size_t base_length;
     char *dest;

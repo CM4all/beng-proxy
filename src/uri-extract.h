@@ -7,10 +7,10 @@
 #ifndef BENG_PROXY_URI_EXTRACT_H
 #define BENG_PROXY_URI_EXTRACT_H
 
-#include "pool.h"
+struct pool;
 
 const char *
-uri_host_and_port(pool_t pool, const char *uri);
+uri_host_and_port(struct pool *pool, const char *uri);
 
 const char *
 uri_path(const char *uri);
