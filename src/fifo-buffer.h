@@ -20,10 +20,11 @@
 #ifndef __FIFO_BUFFER_H
 #define __FIFO_BUFFER_H
 
-#include "pool.h"
+#include <inline/compiler.h>
 
 #include <stddef.h>
 
+struct pool;
 struct fifo_buffer;
 
 #ifdef __cplusplus
@@ -31,7 +32,7 @@ extern "C" {
 #endif
 
 struct fifo_buffer *__attr_malloc
-fifo_buffer_new(pool_t pool, size_t size);
+fifo_buffer_new(struct pool *pool, size_t size);
 
 void
 fifo_buffer_clear(struct fifo_buffer *buffer);

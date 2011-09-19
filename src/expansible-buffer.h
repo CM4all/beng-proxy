@@ -9,13 +9,15 @@
 #ifndef BENG_EXPANSIBLE_BUFFER_H
 #define BENG_EXPANSIBLE_BUFFER_H
 
-#include "pool.h"
+#include <stdbool.h>
+#include <stddef.h>
 
+struct pool;
 struct expansible_buffer;
 struct strref;
 
 struct expansible_buffer *
-expansible_buffer_new(pool_t pool, size_t initial_size);
+expansible_buffer_new(struct pool *pool, size_t initial_size);
 
 void
 expansible_buffer_reset(struct expansible_buffer *eb);
@@ -51,9 +53,10 @@ expansible_buffer_read_strref(const struct expansible_buffer *eb,
                               struct strref *s);
 
 void *
-expansible_buffer_dup(const struct expansible_buffer *eb, pool_t pool);
+expansible_buffer_dup(const struct expansible_buffer *eb, struct pool *pool);
 
 char *
-expansible_buffer_strdup(const struct expansible_buffer *eb, pool_t pool);
+expansible_buffer_strdup(const struct expansible_buffer *eb,
+                         struct pool *pool);
 
 #endif

@@ -5,6 +5,7 @@
  */
 
 #include "growing-buffer.h"
+#include "pool.h"
 
 #include <assert.h>
 #include <string.h>
@@ -16,7 +17,7 @@ struct buffer {
 };
 
 struct growing_buffer {
-    pool_t pool;
+    struct pool *pool;
 
 #ifndef NDEBUG
     size_t initial_size;
@@ -27,7 +28,7 @@ struct growing_buffer {
 };
 
 struct growing_buffer *__attr_malloc
-growing_buffer_new(pool_t pool, size_t initial_size)
+growing_buffer_new(struct pool *pool, size_t initial_size)
 {
     struct growing_buffer *gb = p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);
 
@@ -277,7 +278,7 @@ growing_buffer_copy(void *dest0, const struct growing_buffer *gb)
 }
 
 void *
-growing_buffer_dup(const struct growing_buffer *gb, pool_t pool,
+growing_buffer_dup(const struct growing_buffer *gb, struct pool *pool,
                    size_t *length_r)
 {
     unsigned char *dest;
@@ -297,7 +298,7 @@ growing_buffer_dup(const struct growing_buffer *gb, pool_t pool,
 void *
 growing_buffer_dup2(const struct growing_buffer *a,
                     const struct growing_buffer *b,
-                    pool_t pool, size_t *length_r)
+                    struct pool *pool, size_t *length_r)
 {
     void *dest;
     size_t length;

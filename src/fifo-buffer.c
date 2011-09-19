@@ -18,6 +18,7 @@
  */
 
 #include "fifo-buffer.h"
+#include "pool.h"
 
 #include <assert.h>
 #include <string.h>
@@ -28,7 +29,7 @@ struct fifo_buffer {
 };
 
 struct fifo_buffer *
-fifo_buffer_new(pool_t pool, size_t size)
+fifo_buffer_new(struct pool *pool, size_t size)
 {
     struct fifo_buffer *buffer;
 

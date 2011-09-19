@@ -7,7 +7,12 @@
 #ifndef __BENG_GROWING_BUFFER_H
 #define __BENG_GROWING_BUFFER_H
 
-#include "pool.h"
+#include <inline/compiler.h>
+
+#include <stdbool.h>
+#include <stddef.h>
+
+struct pool;
 
 struct growing_buffer_reader {
 #ifndef NDEBUG
@@ -19,7 +24,7 @@ struct growing_buffer_reader {
 };
 
 struct growing_buffer *__attr_malloc
-growing_buffer_new(pool_t pool, size_t initial_size);
+growing_buffer_new(struct pool *pool, size_t initial_size);
 
 void *
 growing_buffer_write(struct growing_buffer *gb, size_t length);
@@ -80,7 +85,7 @@ growing_buffer_reader_skip(struct growing_buffer_reader *reader,
  * contiguous buffer.
  */
 void *
-growing_buffer_dup(const struct growing_buffer *gb, pool_t pool,
+growing_buffer_dup(const struct growing_buffer *gb, struct pool *pool,
                    size_t *length_r);
 
 /**
@@ -90,6 +95,6 @@ growing_buffer_dup(const struct growing_buffer *gb, pool_t pool,
 void *
 growing_buffer_dup2(const struct growing_buffer *a,
                     const struct growing_buffer *b,
-                    pool_t pool, size_t *length_r);
+                    struct pool *pool, size_t *length_r);
 
 #endif

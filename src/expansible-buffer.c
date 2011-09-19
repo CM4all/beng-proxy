@@ -8,6 +8,7 @@
 
 #include "expansible-buffer.h"
 #include "strref.h"
+#include "pool.h"
 
 #include <inline/poison.h>
 
@@ -15,13 +16,13 @@
 #include <string.h>
 
 struct expansible_buffer {
-    pool_t pool;
+    struct pool *pool;
     char *buffer;
     size_t max_size, size;
 };
 
 struct expansible_buffer *
-expansible_buffer_new(pool_t pool, size_t initial_size)
+expansible_buffer_new(struct pool *pool, size_t initial_size)
 {
     struct expansible_buffer *eb = p_malloc(pool, sizeof(*eb));
 
@@ -138,13 +139,13 @@ expansible_buffer_read_strref(const struct expansible_buffer *eb,
 }
 
 void *
-expansible_buffer_dup(const struct expansible_buffer *eb, pool_t pool)
+expansible_buffer_dup(const struct expansible_buffer *eb, struct pool *pool)
 {
     return p_memdup(pool, eb->buffer, eb->size);
 }
 
 char *
-expansible_buffer_strdup(const struct expansible_buffer *eb, pool_t pool)
+expansible_buffer_strdup(const struct expansible_buffer *eb, struct pool *pool)
 {
     char *p = p_malloc(pool, eb->size + 1);
     memcpy(p, eb->buffer, eb->size);

@@ -1,4 +1,5 @@
 #include "expansible-buffer.h"
+#include "pool.h"
 
 #include <inline/compiler.h>
 
