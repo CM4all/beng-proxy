@@ -1,4 +1,5 @@
 #include "hashmap.h"
+#include "pool.h"
 
 #include <assert.h>
 
@@ -6,7 +7,7 @@ const char key[] = "foo";
 char a, b, c;
 
 int main(int argc __attr_unused, char **argv __attr_unused) {
-    pool_t pool;
+    struct pool *pool;
     struct hashmap *map;
     void *p;
 

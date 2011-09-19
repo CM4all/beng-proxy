@@ -7,7 +7,11 @@
 #ifndef __BENG_HASHMAP_H
 #define __BENG_HASHMAP_H
 
-#include "pool.h"
+#include <inline/compiler.h>
+
+#include <stdbool.h>
+
+struct pool;
 
 struct hashmap_pair {
     const char *key;
@@ -15,7 +19,7 @@ struct hashmap_pair {
 };
 
 struct hashmap *__attr_malloc
-hashmap_new(pool_t pool, unsigned capacity);
+hashmap_new(struct pool *pool, unsigned capacity);
 
 void
 hashmap_add(struct hashmap *map, const char *key, void *value);

@@ -7,11 +7,12 @@
 #include "http-util.h"
 #include "strutil.h"
 #include "strref.h"
+#include "pool.h"
 
 #include <string.h>
 
 char **
-http_list_split(pool_t pool, const char *p)
+http_list_split(struct pool *pool, const char *p)
 {
     enum { MAX_ITEMS = 64 };
     char *tmp[MAX_ITEMS + 1]; /* XXX dynamic allocation */

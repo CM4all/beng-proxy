@@ -6,6 +6,7 @@
 
 #include "strmap.h"
 #include "hashmap.h"
+#include "pool.h"
 
 #include <assert.h>
 
@@ -21,7 +22,7 @@ struct strmap {
 };
 
 struct strmap *
-strmap_new(pool_t pool, unsigned capacity)
+strmap_new(struct pool *pool, unsigned capacity)
 {
     struct strmap *map = p_calloc(pool, sizeof(*map));
     assert(capacity > 1);
@@ -33,7 +34,7 @@ strmap_new(pool_t pool, unsigned capacity)
 }
 
 struct strmap *__attr_malloc
-strmap_dup(pool_t pool, struct strmap *src)
+strmap_dup(struct pool *pool, struct strmap *src)
 {
     struct strmap *dest = strmap_new(pool, src->capacity);
     const struct strmap_pair *pair;

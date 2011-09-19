@@ -5,6 +5,7 @@
  */
 
 #include "hashmap.h"
+#include "pool.h"
 
 #include <inline/compiler.h>
 

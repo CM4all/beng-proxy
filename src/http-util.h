@@ -9,6 +9,9 @@
 
 #include "strmap.h"
 
+#include <stdbool.h>
+
+struct pool;
 struct strref;
 
 /**
@@ -16,7 +19,7 @@ struct strref;
  * value is NULL terminated.
  */
 char **
-http_list_split(pool_t pool, const char *p);
+http_list_split(struct pool *pool, const char *p);
 
 bool
 http_list_contains(const char *list, const char *item);
