@@ -7,19 +7,19 @@
 #ifndef BENG_PROXY_WAS_SERVER_H
 #define BENG_PROXY_WAS_SERVER_H
 
-#include "istream.h"
-
 #include <http/method.h>
 #include <http/status.h>
 
+struct pool;
+struct istream;
 struct lease;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
 struct was_server_handler {
-    void (*request)(pool_t pool, http_method_t method, const char *uri,
-                    struct strmap *headers, istream_t body, void *ctx);
+    void (*request)(struct pool *pool, http_method_t method, const char *uri,
+                    struct strmap *headers, struct istream *body, void *ctx);
 
     void (*free)(void *ctx);
 };
@@ -36,7 +36,7 @@ struct was_server_handler {
  * @param ctx a context pointer for the callback function
  */
 struct was_server *
-was_server_new(pool_t pool, int control_fd, int input_fd, int output_fd,
+was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
                const struct was_server_handler *handler, void *handler_ctx);
 
 void
@@ -44,6 +44,6 @@ was_server_free(struct was_server *server);
 
 void
 was_server_response(struct was_server *server, http_status_t status,
-                    struct strmap *headers, istream_t body);
+                    struct strmap *headers, struct istream *body);
 
 #endif

@@ -28,7 +28,7 @@
 #include <sys/socket.h>
 
 struct was_client {
-    pool_t pool, caller_pool;
+    struct pool *pool, *caller_pool;
 
     struct was_control *control;
 
@@ -412,7 +412,7 @@ was_client_control_drained(void *ctx)
     struct strmap *headers = client->response.headers;
     client->response.headers = NULL;
 
-    istream_t body = was_input_enable(client->response.body);
+    struct istream *body = was_input_enable(client->response.body);
 
     async_operation_finished(&client->async);
 
@@ -610,13 +610,13 @@ static const struct async_operation_class was_client_async_operation = {
  */
 
 void
-was_client_request(pool_t caller_pool, int control_fd,
+was_client_request(struct pool *caller_pool, int control_fd,
                    int input_fd, int output_fd,
                    const struct lease *lease, void *lease_ctx,
                    http_method_t method, const char *uri,
                    const char *script_name, const char *path_info,
                    const char *query_string,
-                   struct strmap *headers, istream_t body,
+                   struct strmap *headers, struct istream *body,
                    const char *const params[], unsigned num_params,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
@@ -625,7 +625,7 @@ was_client_request(pool_t caller_pool, int control_fd,
     assert(http_method_is_valid(method));
     assert(uri != NULL);
 
-    pool_t pool = pool_new_linear(caller_pool, "was_client_request", 32768);
+    struct pool *pool = pool_new_linear(caller_pool, "was_client_request", 32768);
     struct was_client *client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
     pool_ref(caller_pool);

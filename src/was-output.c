@@ -18,7 +18,7 @@
 #include <unistd.h>
 
 struct was_output {
-    pool_t pool;
+    struct pool *pool;
 
     int fd;
     struct event event;
@@ -26,7 +26,7 @@ struct was_output {
     const struct was_output_handler *handler;
     void *handler_ctx;
 
-    istream_t input;
+    struct istream *input;
 
     uint64_t sent;
 
@@ -197,7 +197,7 @@ static const struct istream_handler was_output_stream_handler = {
  */
 
 struct was_output *
-was_output_new(pool_t pool, int fd, istream_t input,
+was_output_new(struct pool *pool, int fd, struct istream *input,
                const struct was_output_handler *handler, void *handler_ctx)
 {
     assert(fd >= 0);

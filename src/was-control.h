@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_WAS_CONTROL_H
 #define BENG_PROXY_WAS_CONTROL_H
 
-#include "pool.h"
-
 #include <was/protocol.h>
 
 #include <glib.h>
@@ -16,6 +14,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+struct pool;
 struct strmap;
 
 struct was_control_handler {
@@ -40,7 +39,7 @@ struct was_control_handler {
 };
 
 struct was_control *
-was_control_new(pool_t pool, int fd,
+was_control_new(struct pool *pool, int fd,
                 const struct was_control_handler *handler,
                 void *handler_ctx);
 

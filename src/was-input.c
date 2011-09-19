@@ -271,13 +271,13 @@ was_input_event_callback(int fd __attr_unused, short event, void *ctx)
  */
 
 static inline struct was_input *
-response_stream_to_data(istream_t istream)
+response_stream_to_data(struct istream *istream)
 {
     return (struct was_input *)(((char*)istream) - offsetof(struct was_input, output));
 }
 
 static off_t
-was_input_istream_available(istream_t istream, bool partial)
+was_input_istream_available(struct istream *istream, bool partial)
 {
     struct was_input *input = response_stream_to_data(istream);
 
@@ -290,7 +290,7 @@ was_input_istream_available(istream_t istream, bool partial)
 }
 
 static void
-was_input_istream_read(istream_t istream)
+was_input_istream_read(struct istream *istream)
 {
     struct was_input *input = response_stream_to_data(istream);
 
@@ -301,7 +301,7 @@ was_input_istream_read(istream_t istream)
 }
 
 static void
-was_input_istream_close(istream_t istream)
+was_input_istream_close(struct istream *istream)
 {
     struct was_input *input = response_stream_to_data(istream);
 
@@ -329,8 +329,8 @@ static const struct istream was_input_stream = {
  */
 
 struct was_input *
-was_input_new(pool_t pool, int fd,
-             const struct was_input_handler *handler, void *handler_ctx)
+was_input_new(struct pool *pool, int fd,
+              const struct was_input_handler *handler, void *handler_ctx)
 {
     assert(fd >= 0);
     assert(handler != NULL);

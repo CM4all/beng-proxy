@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 struct was_control {
-    pool_t pool;
+    struct pool *pool;
 
     int fd;
 
@@ -295,7 +295,7 @@ was_control_output_event_callback(int fd __attr_unused, short event, void *ctx)
  */
 
 struct was_control *
-was_control_new(pool_t pool, int fd,
+was_control_new(struct pool *pool, int fd,
                 const struct was_control_handler *handler,
                 void *handler_ctx)
 {

@@ -7,10 +7,13 @@
 #ifndef BENG_PROXY_WAS_OUTPUT_H
 #define BENG_PROXY_WAS_OUTPUT_H
 
-#include "istream.h"
-
 #include <glib.h>
+
+#include <stdbool.h>
 #include <stdint.h>
+
+struct pool;
+struct istream;
 
 struct was_output_handler {
     /**
@@ -36,7 +39,7 @@ struct was_output_handler {
 };
 
 struct was_output *
-was_output_new(pool_t pool, int fd, istream_t input,
+was_output_new(struct pool *pool, int fd, struct istream *input,
                const struct was_output_handler *handler, void *handler_ctx);
 
 uint64_t

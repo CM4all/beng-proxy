@@ -14,6 +14,7 @@
 #include "stock.h"
 #include "abort-close.h"
 #include "jail.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -23,7 +24,7 @@
 #include <unistd.h>
 
 struct was_request {
-    pool_t pool;
+    struct pool *pool;
 
     struct hstock *was_stock;
     const char *action;
@@ -35,7 +36,7 @@ struct was_request {
     const char *path_info;
     const char *query_string;
     struct strmap *headers;
-    istream_t body;
+    struct istream *body;
 
     const char *const* parameters;
     unsigned num_parameters;
@@ -109,14 +110,14 @@ static const struct stock_handler was_stock_handler = {
  */
 
 void
-was_request(pool_t pool, struct hstock *was_stock,
+was_request(struct pool *pool, struct hstock *was_stock,
             const struct jail_params *jail,
             const char *action,
             const char *path,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
-            struct strmap *headers, istream_t body,
+            struct strmap *headers, struct istream *body,
             const char *const parameters[], unsigned num_parameters,
             const struct http_response_handler *handler,
             void *handler_ctx,

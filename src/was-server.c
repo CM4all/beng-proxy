@@ -28,7 +28,7 @@
 #include <unistd.h>
 
 struct was_server {
-    pool_t pool;
+    struct pool *pool;
 
     int control_fd, input_fd, output_fd;
 
@@ -38,7 +38,7 @@ struct was_server {
     void *handler_ctx;
 
     struct {
-        pool_t pool;
+        struct pool *pool;
 
         http_method_t method;
 
@@ -447,7 +447,7 @@ static const struct was_control_handler was_server_control_handler = {
  */
 
 struct was_server *
-was_server_new(pool_t pool, int control_fd, int input_fd, int output_fd,
+was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
                const struct was_server_handler *handler, void *handler_ctx)
 {
     assert(pool != NULL);
@@ -485,7 +485,7 @@ was_server_free(struct was_server *server)
 
 void
 was_server_response(struct was_server *server, http_status_t status,
-                    struct strmap *headers, istream_t body)
+                    struct strmap *headers, struct istream *body)
 {
     assert(server != NULL);
     assert(server->request.pool != NULL);

@@ -7,9 +7,13 @@
 #ifndef BENG_PROXY_WAS_INPUT_H
 #define BENG_PROXY_WAS_INPUT_H
 
-#include "istream.h"
+#include <glib.h>
 
+#include <stdbool.h>
 #include <stdint.h>
+
+struct pool;
+struct istream;
 
 struct was_input_handler {
     void (*eof)(void *ctx);
@@ -24,7 +28,7 @@ struct was_input_handler {
 };
 
 struct was_input *
-was_input_new(pool_t pool, int fd,
+was_input_new(struct pool *pool, int fd,
               const struct was_input_handler *handler, void *handler_ctx);
 
 /**
@@ -56,7 +60,7 @@ was_input_free_unused_p(struct was_input **input_p)
     was_input_free_unused(input);
 }
 
-istream_t
+struct istream *
 was_input_enable(struct was_input *input);
 
 /**

@@ -7,14 +7,19 @@
 #ifndef BENG_PROXY_WAS_STOCK_H
 #define BENG_PROXY_WAS_STOCK_H
 
-#include "stock.h"
 #include "was-launch.h"
 
+struct pool;
+struct hstock;
+struct stock_item;
+struct stock_handler;
+struct async_operation_ref;
+
 struct hstock *
-was_stock_new(pool_t pool, unsigned limit);
+was_stock_new(struct pool *pool, unsigned limit);
 
 void
-was_stock_get(struct hstock *hstock, pool_t pool,
+was_stock_get(struct hstock *hstock, struct pool *pool,
               const struct jail_params *jail,
               const char *executable_path,
               const struct stock_handler *handler, void *handler_ctx,
@@ -31,7 +36,7 @@ was_stock_item_get(const struct stock_item *item);
  */
 const char *
 was_stock_translate_path(const struct stock_item *item,
-                         const char *path, pool_t pool);
+                         const char *path, struct pool *pool);
 
 /**
  * Wrapper for hstock_put().
