@@ -43,14 +43,6 @@ static const struct lease delegate_socket_lease = {
 };
 
 static void
-delegate_callback(int fd, void *_ctx)
-{
-    struct delegate_glue *glue = _ctx;
-
-    glue->callback(fd, glue->callback_ctx);
-}
-
-static void
 delegate_stock_ready(struct stock_item *item, void *_ctx)
 {
     struct delegate_glue *glue = _ctx;
@@ -60,7 +52,7 @@ delegate_stock_ready(struct stock_item *item, void *_ctx)
     delegate_open(delegate_stock_item_get(item),
                   &delegate_socket_lease, glue,
                   glue->pool, glue->path,
-                  delegate_callback, glue, glue->async_ref);
+                  glue->callback, glue->callback_ctx, glue->async_ref);
 }
 
 static void
