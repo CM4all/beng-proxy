@@ -1,5 +1,6 @@
 #include "stock.h"
 #include "async.h"
+#include "pool.h"
 
 #include <glib.h>
 
@@ -29,7 +30,7 @@ test_quark(void)
  */
 
 static pool_t
-my_stock_pool(G_GNUC_UNUSED void *ctx, pool_t parent,
+my_stock_pool(G_GNUC_UNUSED void *ctx, struct pool *parent,
               G_GNUC_UNUSED const char *uri)
 {
     return pool_new_linear(parent, "my_stock", 512);
@@ -38,7 +39,7 @@ my_stock_pool(G_GNUC_UNUSED void *ctx, pool_t parent,
 static void
 my_stock_create(void *ctx __attr_unused, struct stock_item *_item,
                 G_GNUC_UNUSED const char *uri, void *info,
-                G_GNUC_UNUSED pool_t caller_pool,
+                G_GNUC_UNUSED struct pool *caller_pool,
                 G_GNUC_UNUSED struct async_operation_ref *async_ref)
 {
     struct my_stock_item *item = (struct my_stock_item *)_item;
@@ -114,7 +115,7 @@ static const struct stock_handler my_stock_handler = {
 int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 {
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
     struct stock *stock;
     struct async_operation_ref async_ref;
     struct stock_item *item, *second, *third;

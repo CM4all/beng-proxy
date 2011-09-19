@@ -6,6 +6,7 @@
 
 #include "stock.h"
 #include "hashmap.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 
@@ -14,7 +15,7 @@
 #include <assert.h>
 
 struct hstock {
-    pool_t pool;
+    struct pool *pool;
     const struct stock_class *class;
     void *class_ctx;
 
@@ -65,7 +66,7 @@ hstock_cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 struct hstock *
-hstock_new(pool_t pool, const struct stock_class *class, void *class_ctx,
+hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
            unsigned limit)
 {
     struct hstock *hstock;
@@ -113,7 +114,7 @@ hstock_free(struct hstock *hstock)
 }
 
 void
-hstock_get(struct hstock *hstock, pool_t pool,
+hstock_get(struct hstock *hstock, struct pool *pool,
            const char *uri, void *info,
            const struct stock_handler *handler, void *handler_ctx,
            struct async_operation_ref *async_ref)

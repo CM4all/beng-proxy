@@ -6,6 +6,7 @@
 
 #include "stock.h"
 #include "async.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 
