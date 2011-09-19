@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 struct fcgi_request {
-    pool_t pool;
+    struct pool *pool;
 
     struct hstock *fcgi_stock;
     const char *action;
@@ -37,7 +37,7 @@ struct fcgi_request {
     const char *document_root;
     const char *remote_addr;
     struct strmap *headers;
-    istream_t body;
+    struct istream *body;
 
     const char *const* params;
     unsigned num_params;
@@ -125,7 +125,7 @@ static const struct stock_handler fcgi_stock_handler = {
  */
 
 void
-fcgi_request(pool_t pool, struct hstock *fcgi_stock,
+fcgi_request(struct pool *pool, struct hstock *fcgi_stock,
              const struct jail_params *jail,
              const char *action,
              const char *path,
@@ -134,7 +134,7 @@ fcgi_request(pool_t pool, struct hstock *fcgi_stock,
              const char *query_string,
              const char *document_root,
              const char *remote_addr,
-             struct strmap *headers, istream_t body,
+             struct strmap *headers, struct istream *body,
              const char *const params[], unsigned num_params,
              const struct http_response_handler *handler,
              void *handler_ctx,

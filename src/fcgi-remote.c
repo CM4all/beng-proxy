@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 struct fcgi_remote_request {
-    pool_t pool;
+    struct pool *pool;
 
     struct tcp_balancer *tcp_balancer;
 
@@ -37,7 +37,7 @@ struct fcgi_remote_request {
     const char *document_root;
     const char *remote_addr;
     struct strmap *headers;
-    istream_t body;
+    struct istream *body;
 
     const char *const* params;
     unsigned num_params;
@@ -113,7 +113,7 @@ static const struct stock_handler fcgi_remote_stock_handler = {
  */
 
 void
-fcgi_remote_request(pool_t pool, struct tcp_balancer *tcp_balancer,
+fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     const struct address_list *address_list,
                     const char *path,
                     http_method_t method, const char *uri,
@@ -121,7 +121,7 @@ fcgi_remote_request(pool_t pool, struct tcp_balancer *tcp_balancer,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    struct strmap *headers, istream_t body,
+                    struct strmap *headers, struct istream *body,
                     const char *const params[], unsigned num_params,
                     const struct http_response_handler *handler,
                     void *handler_ctx,

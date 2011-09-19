@@ -7,6 +7,7 @@
 #include "fcgi-stock.h"
 #include "fcgi-quark.h"
 #include "fcgi-launch.h"
+#include "stock.h"
 #include "child.h"
 #include "async.h"
 #include "client-socket.h"
@@ -54,7 +55,7 @@ struct fcgi_child {
 };
 
 static const char *
-fcgi_stock_key(pool_t pool, const struct fcgi_child_params *params)
+fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
 {
     return params->jail == NULL || !params->jail->enabled
         ? params->executable_path
@@ -248,7 +249,7 @@ static const struct async_operation_class fcgi_create_operation = {
  */
 
 static pool_t
-fcgi_stock_pool(void *ctx __attr_unused, pool_t parent,
+fcgi_stock_pool(void *ctx __attr_unused, struct pool *parent,
                const char *uri __attr_unused)
 {
     return pool_new_linear(parent, "fcgi_child", 2048);
@@ -257,10 +258,10 @@ fcgi_stock_pool(void *ctx __attr_unused, pool_t parent,
 static void
 fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
                   const char *key, void *info,
-                  pool_t caller_pool,
+                  struct pool *caller_pool,
                   struct async_operation_ref *async_ref)
 {
-    pool_t pool = item->pool;
+    struct pool *pool = item->pool;
     struct fcgi_child_params *params = info;
     struct fcgi_child *child = (struct fcgi_child *)item;
 
@@ -370,13 +371,13 @@ static const struct stock_class fcgi_stock_class = {
  */
 
 struct hstock *
-fcgi_stock_new(pool_t pool, unsigned limit)
+fcgi_stock_new(struct pool *pool, unsigned limit)
 {
     return hstock_new(pool, &fcgi_stock_class, NULL, limit);
 }
 
 void
-fcgi_stock_get(struct hstock *hstock, pool_t pool,
+fcgi_stock_get(struct hstock *hstock, struct pool *pool,
                const struct jail_params *jail,
                const char *executable_path,
                const struct stock_handler *handler, void *handler_ctx,
@@ -418,7 +419,7 @@ fcgi_stock_item_get(const struct stock_item *item)
 
 const char *
 fcgi_stock_translate_path(const struct stock_item *item,
-                          const char *path, pool_t pool)
+                          const char *path, struct pool *pool)
 {
     const struct fcgi_child *child = (const struct fcgi_child *)item;
 
