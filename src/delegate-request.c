@@ -25,6 +25,11 @@ struct delegate_get {
     struct http_response_handler_ref handler;
 };
 
+/*
+ * delegate_handler
+ *
+ */
+
 static void
 delegate_get_callback(int fd, void *ctx)
 {
@@ -33,11 +38,6 @@ delegate_get_callback(int fd, void *ctx)
     struct stat st;
     struct strmap *headers;
     istream_t body;
-
-    if (fd < 0) {
-        http_response_handler_invoke_errno(&get->handler, get->pool, -fd);
-        return;
-    }
 
     ret = fstat(fd, &st);
     if (ret < 0) {
@@ -66,6 +66,24 @@ delegate_get_callback(int fd, void *ctx)
                                           headers, body);
 }
 
+static void
+delegate_get_error(GError *error, void *ctx)
+{
+    struct delegate_get *get = ctx;
+
+    http_response_handler_invoke_abort(&get->handler, error);
+}
+
+static const struct delegate_handler delegate_get_handler = {
+    .success = delegate_get_callback,
+    .error = delegate_get_error,
+};
+
+/*
+ * public
+ *
+ */
+
 void
 delegate_stock_request(struct hstock *stock, pool_t pool,
                        const char *helper,
@@ -83,6 +101,6 @@ delegate_stock_request(struct hstock *stock, pool_t pool,
 
     delegate_stock_open(stock, pool,
                         helper, jail, path,
-                        delegate_get_callback, get,
+                        &delegate_get_handler, get,
                         async_ref);
 }

@@ -33,6 +33,11 @@ method_not_allowed(struct request *request2, const char *allow)
                                headers, "This method is not allowed.");
 }
 
+/*
+ * delegate_handler
+ *
+ */
+
 static void
 delegate_handler_callback(int fd, void *ctx)
 {
@@ -45,14 +50,6 @@ delegate_handler_callback(int fd, void *ctx)
         .range = RANGE_NONE,
         .skip = 0,
     };
-
-    if (fd < 0) {
-        struct http_response_handler_ref handler_ref;
-        request_discard_body(request2);
-        http_response_handler_set(&handler_ref, &response_handler, request2);
-        http_response_handler_invoke_errno(&handler_ref, request->pool, -fd);
-        return;
-    }
 
     /* get file information */
 
@@ -90,6 +87,25 @@ delegate_handler_callback(int fd, void *ctx)
                                       fd, ISTREAM_FILE, file_request.size));
 }
 
+static void
+delegate_handler_error(GError *error, void *ctx)
+{
+    struct request *request2 = ctx;
+
+    response_dispatch_error(request2, error);
+    g_error_free(error);
+}
+
+static const struct delegate_handler delegate_handler_handler = {
+    .success = delegate_handler_callback,
+    .error = delegate_handler_error,
+};
+
+/*
+ * public
+ *
+ */
+
 void
 delegate_handler(struct request *request2)
 {
@@ -115,6 +131,6 @@ delegate_handler(struct request *request2)
                         tr->address.u.local.delegate,
                         &tr->address.u.local.jail,
                         tr->address.u.local.path,
-                        delegate_handler_callback, request2,
+                        &delegate_handler_handler, request2,
                         &request2->async_ref);
 }

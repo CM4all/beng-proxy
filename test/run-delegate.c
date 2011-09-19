@@ -23,13 +23,24 @@ my_stop(void *ctx __attr_unused)
 static void
 my_delegate_callback(int fd, void *ctx __attr_unused)
 {
-    if (fd < 0)
-        fprintf(stderr, "%s\n", strerror(-fd));
-    else
-        close(fd);
+    close(fd);
 
     defer(pool, my_stop, NULL, NULL);
 }
+
+static void
+my_delegate_error(GError *error, G_GNUC_UNUSED void *ctx)
+{
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
+
+    defer(pool, my_stop, NULL, NULL);
+}
+
+static const struct delegate_handler my_delegate_handler = {
+    .success = my_delegate_callback,
+    .error = my_delegate_error,
+};
 
 int main(int argc, char **argv)
 {
@@ -50,7 +61,7 @@ int main(int argc, char **argv)
 
     delegate_stock_open(delegate_stock, pool, helper_path, NULL,
                         argv[1],
-                        my_delegate_callback, NULL, &my_async_ref);
+                        &my_delegate_handler, NULL, &my_async_ref);
 
     event_dispatch();
 

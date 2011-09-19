@@ -16,8 +16,6 @@
 #include <fcntl.h>
 #endif
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
@@ -34,8 +32,9 @@ struct delegate_client {
     pool_t pool;
     const char *payload;
     size_t payload_rest;
-    delegate_callback_t callback;
-    void *callback_ctx;
+
+    const struct delegate_handler *handler;
+    void *handler_ctx;
 
     struct async_operation operation;
 };
@@ -65,8 +64,9 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
     if (length != 0) {
         delegate_release_socket(d, false);
 
-        daemon_log(1, "Invalid message length\n");
-        d->callback(-EINVAL, d->callback_ctx);
+        GError *error = g_error_new_literal(delegate_client_quark(), 0,
+                                            "Invalid message length");
+        d->handler->error(error, d->handler_ctx);
         pool_unref(d->pool);
         return;
     }
@@ -75,8 +75,9 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
     if (cmsg == NULL) {
         delegate_release_socket(d, false);
 
-        daemon_log(1, "No fd passed\n");
-        d->callback(-EINVAL, d->callback_ctx);
+        GError *error = g_error_new_literal(delegate_client_quark(), 0,
+                                            "No fd passed");
+        d->handler->error(error, d->handler_ctx);
         pool_unref(d->pool);
         return;
     }
@@ -84,9 +85,10 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
     if (cmsg->cmsg_type != SCM_RIGHTS) {
         delegate_release_socket(d, false);
 
-        daemon_log(1, "got control message of unknown type %d\n",
-                   cmsg->cmsg_type);
-        d->callback(-EINVAL, d->callback_ctx);
+        GError *error = g_error_new(delegate_client_quark(), 0,
+                                    "got control message of unknown type %d",
+                                    cmsg->cmsg_type);
+        d->handler->error(error, d->handler_ctx);
         pool_unref(d->pool);
         return;
     }
@@ -96,7 +98,7 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
     const int *fd_p = (const int *)CMSG_DATA(cmsg);
 
     int fd = *fd_p;
-    d->callback(fd, d->callback_ctx);
+    d->handler->success(fd, d->handler_ctx);
     pool_unref(d->pool);
 }
 
@@ -109,22 +111,28 @@ delegate_handle_errno(struct delegate_client *d,
     if (length != sizeof(e)) {
         delegate_release_socket(d, false);
 
-        daemon_log(1, "Invalid message length\n");
-        d->callback(-EINVAL, d->callback_ctx);
+        GError *error = g_error_new_literal(delegate_client_quark(), 0,
+                                            "Invalid message length");
+        d->handler->error(error, d->handler_ctx);
         pool_unref(d->pool);
         return;
     }
 
     ssize_t nbytes = recv(d->fd, &e, sizeof(e), 0);
+    GError *error;
+
     if (nbytes == sizeof(e)) {
         delegate_release_socket(d, true);
+
+        error = g_error_new_literal(g_file_error_quark(), e, g_strerror(e));
     } else {
         delegate_release_socket(d, false);
-        daemon_log(1, "Failed to receive errno\n");
-        e = EINVAL;
+
+        error = g_error_new_literal(delegate_client_quark(), 0,
+                                    "Failed to receive errno");
     }
 
-    d->callback(-e, d->callback_ctx);
+    d->handler->error(error, d->handler_ctx);
     pool_unref(d->pool);
 }
 
@@ -144,8 +152,9 @@ delegate_handle_msghdr(struct delegate_client *d, const struct msghdr *msg,
     }
 
     delegate_release_socket(d, false);
-    daemon_log(1, "Invalid delegate response\n");
-    d->callback(-EINVAL, d->callback_ctx);
+    GError *error = g_error_new_literal(delegate_client_quark(), 0,
+                                        "Invalid delegate response");
+    d->handler->error(error, d->handler_ctx);
     pool_unref(d->pool);
 }
 
@@ -177,8 +186,10 @@ delegate_try_read(struct delegate_client *d)
 
         delegate_release_socket(d, false);
 
-        daemon_log(1, "recvmsg() failed: %s\n", strerror(errno));
-        d->callback(fd, d->callback_ctx);
+        GError *error = g_error_new(g_file_error_quark(), errno,
+                                    "recvmsg() failed: %s\n",
+                                    g_strerror(errno));
+        d->handler->error(error, d->handler_ctx);
         pool_unref(d->pool);
         return;
     }
@@ -186,8 +197,9 @@ delegate_try_read(struct delegate_client *d)
     if ((size_t)nbytes != sizeof(header)) {
         delegate_release_socket(d, false);
 
-        daemon_log(1, "short recvmsg()\n");
-        d->callback(-EWOULDBLOCK, d->callback_ctx);
+        GError *error = g_error_new_literal(delegate_client_quark(), 0,
+                                            "short recvmsg()");
+        d->handler->error(error, d->handler_ctx);
         pool_unref(d->pool);
         return;
     }
@@ -216,12 +228,14 @@ delegate_try_write(struct delegate_client *d)
 
     nbytes = send(d->fd, d->payload, d->payload_rest, MSG_DONTWAIT);
     if (nbytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-        int fd = -errno;
+        int e = errno;
 
         delegate_release_socket(d, false);
 
-        daemon_log(1, "failed to send to delegate: %s\n", strerror(errno));
-        d->callback(fd, d->callback_ctx);
+        GError *error = g_error_new(g_file_error_quark(), e,
+                                    "failed to send to delegate: %s\n",
+                                    g_strerror(e));
+        d->handler->error(error, d->handler_ctx);
         pool_unref(d->pool);
         return;
     }
@@ -285,7 +299,7 @@ static const struct async_operation_class delegate_operation = {
 void
 delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               pool_t pool, const char *path,
-              delegate_callback_t callback, void *ctx,
+              const struct delegate_handler *handler, void *ctx,
               struct async_operation_ref *async_ref)
 {
     struct delegate_client *d;
@@ -304,20 +318,22 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
 
     nbytes = send(d->fd, &header, sizeof(header), MSG_DONTWAIT);
     if (nbytes < 0) {
-        fd = -errno;
-
+        int e = -errno;
         delegate_release_socket(d, false);
 
-        daemon_log(1, "failed to send to delegate: %s\n", strerror(errno));
-        callback(fd, ctx);
+        GError *error = g_error_new(g_file_error_quark(), e,
+                                    "failed to send to delegate: %s\n",
+                                    g_strerror(e));
+        handler->error(error, ctx);
         return;
     }
 
     if ((size_t)nbytes != sizeof(header)) {
         delegate_release_socket(d, false);
 
-        daemon_log(1, "short send to delegate\n");
-        callback(-EWOULDBLOCK, ctx);
+        GError *error = g_error_new_literal(delegate_client_quark(), 0,
+                                            "short send to delegate");
+        handler->error(error, ctx);
         return;
     }
 
@@ -325,8 +341,8 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
 
     d->payload = path;
     d->payload_rest = strlen(path);
-    d->callback = callback;
-    d->callback_ctx = ctx;
+    d->handler = handler;
+    d->handler_ctx = ctx;
 
     async_init(&d->operation, &delegate_operation);
     async_ref_set(async_ref, &d->operation);

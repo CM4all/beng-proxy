@@ -25,8 +25,8 @@ struct delegate_glue {
     struct hstock *stock;
     struct stock_item *item;
 
-    delegate_callback_t callback;
-    void *callback_ctx;
+    const struct delegate_handler *handler;
+    void *handler_ctx;
     struct async_operation_ref *async_ref;
 };
 
@@ -52,7 +52,7 @@ delegate_stock_ready(struct stock_item *item, void *_ctx)
     delegate_open(delegate_stock_item_get(item),
                   &delegate_socket_lease, glue,
                   glue->pool, glue->path,
-                  glue->callback, glue->callback_ctx, glue->async_ref);
+                  glue->handler, glue->handler_ctx, glue->async_ref);
 }
 
 static void
@@ -60,10 +60,7 @@ delegate_stock_error(GError *error, void *ctx)
 {
     struct delegate_glue *glue = ctx;
 
-    daemon_log(2, "Delegate error: %s\n", error->message);
-    g_error_free(error);
-
-    glue->callback(-EINVAL, glue->callback_ctx);
+    glue->handler->error(error, glue->handler_ctx);
 }
 
 static const struct stock_handler delegate_stock_handler = {
@@ -77,7 +74,7 @@ delegate_stock_open(struct hstock *stock, pool_t pool,
                     const char *helper,
                     const struct jail_params *jail,
                     const char *path,
-                    delegate_callback_t callback, void *ctx,
+                    const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref *async_ref)
 {
     struct delegate_glue *glue = p_malloc(pool, sizeof(*glue));
@@ -85,8 +82,8 @@ delegate_stock_open(struct hstock *stock, pool_t pool,
     glue->pool = pool;
     glue->path = path;
     glue->stock = stock;
-    glue->callback = callback;
-    glue->callback_ctx = ctx;
+    glue->handler = handler;
+    glue->handler_ctx = ctx;
     glue->async_ref = async_ref;
 
     delegate_stock_get(stock, pool, helper, jail,

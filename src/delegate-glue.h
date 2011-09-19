@@ -19,7 +19,7 @@ delegate_stock_open(struct hstock *stock, pool_t pool,
                     const char *helper,
                     const struct jail_params *jail,
                     const char *path,
-                    delegate_callback_t callback, void *ctx,
+                    const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref *async_ref);
 
 #endif
