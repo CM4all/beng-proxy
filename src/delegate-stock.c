@@ -85,7 +85,7 @@ delegate_stock_event(int fd, short event, void *ctx)
  */
 
 static pool_t
-delegate_stock_pool(void *ctx __attr_unused, pool_t parent,
+delegate_stock_pool(void *ctx __attr_unused, struct pool *parent,
                     const char *uri __attr_unused)
 {
     return pool_new_linear(parent, "delegate_stock", 512);
@@ -94,7 +94,7 @@ delegate_stock_pool(void *ctx __attr_unused, pool_t parent,
 static void
 delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
                       const char *uri, void *_info,
-                      pool_t caller_pool __attr_unused,
+                      struct pool *caller_pool __attr_unused,
                       struct async_operation_ref *async_ref __attr_unused)
 {
     struct delegate_process *process = (struct delegate_process *)item;
@@ -210,13 +210,13 @@ static const struct stock_class delegate_stock_class = {
  */
 
 struct hstock *
-delegate_stock_new(pool_t pool)
+delegate_stock_new(struct pool *pool)
 {
     return hstock_new(pool, &delegate_stock_class, NULL, 0);
 }
 
 void
-delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
+delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
                    const char *helper,
                    const struct jail_params *jail,
                    const struct stock_handler *handler, void *handler_ctx,

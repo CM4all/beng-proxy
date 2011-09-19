@@ -15,7 +15,7 @@ struct hstock;
 struct jail_params;
 
 void
-delegate_stock_open(struct hstock *stock, pool_t pool,
+delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const char *helper,
                     const struct jail_params *jail,
                     const char *path,

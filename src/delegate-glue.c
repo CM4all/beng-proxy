@@ -9,6 +9,7 @@
 #include "delegate-stock.h"
 #include "stock.h"
 #include "lease.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 
@@ -18,7 +19,7 @@ struct async_operation_ref;
 struct hstock;
 
 struct delegate_glue {
-    pool_t pool;
+    struct pool *pool;
 
     const char *path;
 
@@ -70,7 +71,7 @@ static const struct stock_handler delegate_stock_handler = {
 
 
 void
-delegate_stock_open(struct hstock *stock, pool_t pool,
+delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const char *helper,
                     const struct jail_params *jail,
                     const char *path,

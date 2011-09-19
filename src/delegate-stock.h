@@ -9,13 +9,14 @@
 
 #include "stock.h"
 
+struct pool;
 struct jail_params;
 
 struct hstock *
-delegate_stock_new(pool_t pool);
+delegate_stock_new(struct pool *pool);
 
 void
-delegate_stock_get(struct hstock *delegate_stock, pool_t pool,
+delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
                    const char *path,
                    const struct jail_params *jail,
                    const struct stock_handler *handler, void *handler_ctx,

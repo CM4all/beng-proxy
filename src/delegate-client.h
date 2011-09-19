@@ -10,8 +10,7 @@
 
 #include <glib.h>
 
-#include "pool.h"
-
+struct pool;
 struct lease;
 struct async_operation_ref;
 
@@ -34,7 +33,7 @@ delegate_client_quark(void)
  */
 void
 delegate_open(int fd, const struct lease *lease, void *lease_ctx,
-              pool_t pool, const char *path,
+              struct pool *pool, const char *path,
               const struct delegate_handler *handler, void *ctx,
               struct async_operation_ref *async_ref);
 

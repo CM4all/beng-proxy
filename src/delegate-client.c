@@ -29,7 +29,7 @@ struct delegate_client {
     int fd;
     struct event event;
 
-    pool_t pool;
+    struct pool *pool;
     const char *payload;
     size_t payload_rest;
 
@@ -298,7 +298,7 @@ static const struct async_operation_class delegate_operation = {
 
 void
 delegate_open(int fd, const struct lease *lease, void *lease_ctx,
-              pool_t pool, const char *path,
+              struct pool *pool, const char *path,
               const struct delegate_handler *handler, void *ctx,
               struct async_operation_ref *async_ref)
 {
