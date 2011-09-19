@@ -11,9 +11,10 @@
 
 #include "abort-unref.h"
 #include "async.h"
+#include "pool.h"
 
 struct unref_on_abort {
-    pool_t pool;
+    struct pool *pool;
     struct async_operation operation;
     struct async_operation_ref ref;
 
@@ -58,7 +59,8 @@ static const struct async_operation_class uoa_operation = {
  */
 
 struct async_operation_ref *
-async_unref_on_abort_impl(pool_t pool, struct async_operation_ref *async_ref
+async_unref_on_abort_impl(struct pool *pool,
+                          struct async_operation_ref *async_ref
                           TRACE_ARGS_DECL)
 {
     struct unref_on_abort *uoa = p_malloc(pool, sizeof(*uoa));

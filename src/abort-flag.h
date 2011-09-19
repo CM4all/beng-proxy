@@ -5,8 +5,9 @@
 #ifndef BENG_ABORT_FLAG_H
 #define BENG_ABORT_FLAG_H
 
-#include "pool.h"
 #include "async.h"
+
+#include <stdbool.h>
 
 /**
  * An async_operation implementation which sets a flag.  This can be

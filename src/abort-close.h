@@ -7,8 +7,8 @@
 #ifndef BENG_PROXY_ABORT_CLOSE_H
 #define BENG_PROXY_ABORT_CLOSE_H
 
-#include "istream.h"
-
+struct pool;
+struct istream;
 struct async_operation_ref;
 
 /**
@@ -16,14 +16,14 @@ struct async_operation_ref;
  * allocated from the specified pool, and must not have a handler
  */
 struct async_operation_ref *
-async_close_on_abort(pool_t pool, istream_t istream,
+async_close_on_abort(struct pool *pool, struct istream *istream,
                      struct async_operation_ref *async_ref);
 
 /**
  * Same as async_close_on_abort(), but allows #istream to be NULL.
  */
 struct async_operation_ref *
-async_optional_close_on_abort(pool_t pool, istream_t istream,
+async_optional_close_on_abort(struct pool *pool, struct istream *istream,
                               struct async_operation_ref *async_ref);
 
 #endif

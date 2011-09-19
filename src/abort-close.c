@@ -6,9 +6,12 @@
 
 #include "abort-close.h"
 #include "async.h"
+#include "pool.h"
+#include "pool.h"
+#include "istream.h"
 
 struct close_on_abort {
-    istream_t istream;
+    struct istream *istream;
     struct async_operation operation;
     struct async_operation_ref ref;
 };
@@ -44,7 +47,7 @@ static const struct async_operation_class coa_operation = {
  */
 
 struct async_operation_ref *
-async_close_on_abort(pool_t pool, istream_t istream,
+async_close_on_abort(struct pool *pool, struct istream *istream,
                      struct async_operation_ref *async_ref)
 {
     struct close_on_abort *coa = p_malloc(pool, sizeof(*coa));
@@ -61,7 +64,7 @@ async_close_on_abort(pool_t pool, istream_t istream,
 }
 
 struct async_operation_ref *
-async_optional_close_on_abort(pool_t pool, istream_t istream,
+async_optional_close_on_abort(struct pool *pool, struct istream *istream,
                               struct async_operation_ref *async_ref)
 {
     return istream != NULL
