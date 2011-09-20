@@ -7,14 +7,15 @@
 #ifndef HEADER_FORWARD_H
 #define HEADER_FORWARD_H
 
-#include "pool.h"
-
 #include <beng-proxy/headers.h>
+
+#include <stdbool.h>
 
 struct header_forward_settings {
     enum beng_header_forward_mode modes[HEADER_GROUP_MAX];
 };
 
+struct pool;
 struct session;
 
 /**
@@ -23,7 +24,7 @@ struct session;
  * need to generate a new one
  */
 struct strmap *
-forward_request_headers(pool_t pool, struct strmap *src,
+forward_request_headers(struct pool *pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
                         bool exclude_host,
                         bool with_body, bool forward_charset,
@@ -33,7 +34,7 @@ forward_request_headers(pool_t pool, struct strmap *src,
                         const char *host_and_port, const char *uri);
 
 struct strmap *
-forward_response_headers(pool_t pool, struct strmap *src,
+forward_response_headers(struct pool *pool, struct strmap *src,
                          const char *local_host,
                          const struct header_forward_settings *settings);
 

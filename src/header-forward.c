@@ -138,7 +138,7 @@ forward_user_agent(struct strmap *dest, const struct strmap *src,
 }
 
 static void
-forward_via(pool_t pool, struct strmap *dest, const struct strmap *src,
+forward_via(struct pool *pool, struct strmap *dest, const struct strmap *src,
             const char *local_host, bool mangle)
 {
     const char *p;
@@ -158,7 +158,7 @@ forward_via(pool_t pool, struct strmap *dest, const struct strmap *src,
 }
 
 static void
-forward_xff(pool_t pool, struct strmap *dest, const struct strmap *src,
+forward_xff(struct pool *pool, struct strmap *dest, const struct strmap *src,
             const char *remote_host, bool mangle)
 {
     const char *p;
@@ -177,7 +177,7 @@ forward_xff(pool_t pool, struct strmap *dest, const struct strmap *src,
 }
 
 static void
-forward_identity(pool_t pool, struct strmap *dest, const struct strmap *src,
+forward_identity(struct pool *pool, struct strmap *dest, const struct strmap *src,
                  const char *local_host, const char *remote_host,
                  bool mangle)
 {
@@ -213,7 +213,7 @@ forward_other_headers(struct strmap *dest, struct strmap *src)
 }
 
 struct strmap *
-forward_request_headers(pool_t pool, struct strmap *src,
+forward_request_headers(struct pool *pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
                         bool exclude_host,
                         bool with_body, bool forward_charset,
@@ -326,7 +326,7 @@ forward_server(struct strmap *dest, const struct strmap *src,
 }
 
 struct strmap *
-forward_response_headers(pool_t pool, struct strmap *src,
+forward_response_headers(struct pool *pool, struct strmap *src,
                          const char *local_host,
                          const struct header_forward_settings *settings)
 {

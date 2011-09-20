@@ -8,6 +8,7 @@
 #include "strmap.h"
 #include "format.h"
 #include "date.h"
+#include "pool.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -40,7 +41,7 @@ make_etag(char *p, const struct stat *st)
 }
 
 void
-static_response_headers(pool_t pool, struct strmap *headers,
+static_response_headers(struct pool *pool, struct strmap *headers,
                         int fd, const struct stat *st,
                         const char *content_type)
 {

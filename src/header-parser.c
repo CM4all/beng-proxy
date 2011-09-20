@@ -15,7 +15,7 @@
 #include <string.h>
 
 void
-header_parse_line(pool_t pool, struct strmap *headers,
+header_parse_line(struct pool *pool, struct strmap *headers,
                   const char *line, size_t length)
 {
     const char *colon, *key_end;
@@ -42,7 +42,7 @@ header_parse_line(pool_t pool, struct strmap *headers,
 }
 
 void
-header_parse_buffer(pool_t pool, struct strmap *headers,
+header_parse_buffer(struct pool *pool, struct strmap *headers,
                     const struct growing_buffer *gb)
 {
     assert(pool != NULL);

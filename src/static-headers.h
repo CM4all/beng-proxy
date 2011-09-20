@@ -7,10 +7,9 @@
 #ifndef BENG_PROXY_STATIC_HEADERS_H
 #define BENG_PROXY_STATIC_HEADERS_H
 
-#include "pool.h"
-
 #include <sys/types.h>
 
+struct pool;
 struct strmap;
 struct stat;
 
@@ -28,7 +27,7 @@ struct file_request {
 };
 
 void
-static_response_headers(pool_t pool, struct strmap *headers,
+static_response_headers(struct pool *pool, struct strmap *headers,
                         int fd, const struct stat *st,
                         const char *content_type);
 
