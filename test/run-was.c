@@ -4,6 +4,7 @@
 #include "http-response.h"
 #include "direct.h"
 #include "async.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -20,7 +21,7 @@
 struct context {
     struct was_process process;
 
-    istream_t body;
+    struct istream *body;
     bool error;
 
     struct async_operation_ref async_ref;
@@ -107,7 +108,7 @@ static const struct istream_handler my_istream_handler = {
 
 static void
 my_response(http_status_t status, struct strmap *headers __attr_unused,
-            istream_t body __attr_unused,
+            struct istream *body __attr_unused,
             void *ctx)
 {
     struct context *c = ctx;

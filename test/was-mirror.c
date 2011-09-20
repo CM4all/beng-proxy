@@ -14,7 +14,7 @@ struct instance {
 
 static void
 mirror_request(pool_t pool, http_method_t method, const char *uri,
-               struct strmap *headers, istream_t body, void *ctx)
+               struct strmap *headers, struct istream *body, void *ctx)
 {
     struct instance *instance = ctx;
 

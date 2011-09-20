@@ -9,6 +9,7 @@
 #include "pevent.h"
 #include "direct.h"
 #include "fd-util.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
