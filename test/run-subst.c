@@ -1,4 +1,5 @@
 #include "istream.h"
+#include "istream-file.h"
 
 #include <inline/compiler.h>
 

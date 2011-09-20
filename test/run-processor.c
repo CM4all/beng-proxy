@@ -5,6 +5,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "rewrite-uri.h"
+#include "istream-file.h"
 
 #include <event.h>
 

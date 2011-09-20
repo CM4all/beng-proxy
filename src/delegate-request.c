@@ -12,6 +12,7 @@
 #include "http-error.h"
 #include "strmap.h"
 #include "istream.h"
+#include "istream-file.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

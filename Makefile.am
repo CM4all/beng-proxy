@@ -73,7 +73,7 @@ ISTREAM_SRC = \
 	src/istream-zero.c \
 	src/istream-block.c \
 	src/istream-string.c \
-	src/istream-file.c \
+	src/istream-file.c src/istream-file.h \
 	src/istream-chunked.c \
 	src/istream-dechunk.c \
 	src/istream-fcgi.c \

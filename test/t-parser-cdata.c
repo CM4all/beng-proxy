@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "istream.h"
+#include "istream-file.h"
 
 #include <unistd.h>
 #include <stdlib.h>

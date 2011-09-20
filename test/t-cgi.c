@@ -4,6 +4,7 @@
 #include "child.h"
 #include "direct.h"
 #include "crash.h"
+#include "istream-file.h"
 
 #include <inline/compiler.h>
 

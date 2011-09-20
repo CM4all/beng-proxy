@@ -5,6 +5,7 @@
 #include "fd_util.h"
 #include "lease.h"
 #include "direct.h"
+#include "istream-file.h"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>

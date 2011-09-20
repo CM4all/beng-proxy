@@ -13,6 +13,7 @@
 #include "growing-buffer.h"
 #include "http-server.h"
 #include "global.h"
+#include "istream-file.h"
 
 #include <assert.h>
 #include <sys/stat.h>

@@ -11,7 +11,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-struct stat;
 struct async_operation;
 struct stock;
 struct cache;
@@ -48,22 +47,6 @@ istream_memory_new(pool_t pool, const void *data, size_t length);
 
 istream_t __attr_malloc
 istream_string_new(pool_t pool, const char *s);
-
-istream_t
-istream_file_fd_new(pool_t pool, const char *path,
-                    int fd, enum istream_direct fd_type, off_t length);
-
-/**
- * Opens a file and stats it.
- */
-istream_t
-istream_file_stat_new(pool_t pool, const char *path, struct stat *st);
-
-istream_t __attr_malloc
-istream_file_new(pool_t pool, const char *path, off_t length);
-
-int
-istream_file_fd(istream_t istream);
 
 #ifdef __linux
 istream_t

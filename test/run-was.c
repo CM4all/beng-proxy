@@ -5,6 +5,7 @@
 #include "direct.h"
 #include "async.h"
 #include "istream.h"
+#include "istream-file.h"
 
 #include <daemon/log.h>
 
