@@ -7,8 +7,7 @@
 #ifndef __BENG_COOKIE_SERVER_H
 #define __BENG_COOKIE_SERVER_H
 
-#include "pool.h"
-
+struct pool;
 struct strmap;
 
 /**
@@ -16,6 +15,6 @@ struct strmap;
  * specified strmap.
  */
 void
-cookie_map_parse(struct strmap *cookies, const char *p, pool_t pool);
+cookie_map_parse(struct strmap *cookies, const char *p, struct pool *pool);
 
 #endif

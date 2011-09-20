@@ -333,7 +333,7 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
 char *
 cookie_jar_http_header_value(struct cookie_jar *jar,
                              const char *domain, const char *path,
-                             pool_t pool)
+                             struct pool *pool)
 {
     static const size_t buffer_size = 4096;
     char *buffer;
@@ -403,7 +403,7 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
 void
 cookie_jar_http_header(struct cookie_jar *jar,
                        const char *domain, const char *path,
-                       struct strmap *headers, pool_t pool)
+                       struct strmap *headers, struct pool *pool)
 {
     char *cookie = cookie_jar_http_header_value(jar, domain, path, pool);
 

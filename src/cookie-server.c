@@ -9,11 +9,12 @@
 #include "strref-pool.h"
 #include "strmap.h"
 #include "http-string.h"
+#include "pool.h"
 
 #include <inline/list.h>
 
 void
-cookie_map_parse(struct strmap *cookies, const char *p, pool_t pool)
+cookie_map_parse(struct strmap *cookies, const char *p, struct pool *pool)
 {
     struct strref input, name, value;
 

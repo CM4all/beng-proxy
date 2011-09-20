@@ -7,8 +7,9 @@
 #ifndef __BENG_COOKIE_CLIENT_H
 #define __BENG_COOKIE_CLIENT_H
 
-#include "pool.h"
+#include <inline/compiler.h>
 
+struct pool;
 struct dpool;
 struct strmap;
 struct cookie_jar;
@@ -39,7 +40,7 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
 char *
 cookie_jar_http_header_value(struct cookie_jar *jar,
                              const char *domain, const char *path,
-                             pool_t pool);
+                             struct pool *pool);
 
 /**
  * Generate HTTP request headers passing for all cookies in the linked
@@ -48,6 +49,6 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
 void
 cookie_jar_http_header(struct cookie_jar *jar,
                        const char *domain, const char *path,
-                       struct strmap *headers, pool_t pool);
+                       struct strmap *headers, struct pool *pool);
 
 #endif
