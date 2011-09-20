@@ -8,15 +8,14 @@
 #ifndef BENG_PROXY_DELEGATE_REQUEST_H
 #define BENG_PROXY_DELEGATE_REQUEST_H
 
-#include "pool.h"
-
+struct pool;
 struct hstock;
 struct http_response_handler;
 struct async_operation_ref;
 struct jail_params;
 
 void
-delegate_stock_request(struct hstock *stock, pool_t pool,
+delegate_stock_request(struct hstock *stock, struct pool *pool,
                        const char *helper,
                        const struct jail_params *jail,
                        const char *path, const char *content_type,
