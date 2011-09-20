@@ -11,6 +11,7 @@
 
 #include <stddef.h>
 
+struct pool;
 struct fifo_buffer;
 
 struct http_body_reader {
@@ -78,7 +79,7 @@ http_body_socket_eof(struct http_body_reader *body,
 
 istream_t
 http_body_init(struct http_body_reader *body,
-               const struct istream *stream, pool_t stream_pool,
-               pool_t pool, off_t content_length, bool chunked);
+               const struct istream *stream, struct pool *stream_pool,
+               struct pool *pool, off_t content_length, bool chunked);
 
 #endif

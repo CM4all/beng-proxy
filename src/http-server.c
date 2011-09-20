@@ -21,7 +21,7 @@
 struct http_server_request *
 http_server_request_new(struct http_server_connection *connection)
 {
-    pool_t pool;
+    struct pool *pool;
     struct http_server_request *request;
 
     assert(connection != NULL);
@@ -145,7 +145,7 @@ http_server_timeout_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 void
-http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
+http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_type,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
                            const char *remote_host,
@@ -226,7 +226,7 @@ http_server_socket_close(struct http_server_connection *connection)
 static void
 http_server_request_close(struct http_server_connection *connection)
 {
-    pool_t pool;
+    struct pool *pool;
 
     assert(connection->request.read_state != READ_START);
     assert(connection->request.request != NULL);

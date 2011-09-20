@@ -38,7 +38,7 @@
 #include <unistd.h>
 
 struct http_client {
-    pool_t pool, caller_pool;
+    struct pool *pool, *caller_pool;
 
     struct stopwatch *stopwatch;
 
@@ -1125,7 +1125,8 @@ static const struct async_operation_class http_client_async_operation = {
  */
 
 void
-http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
+http_client_request(struct pool *caller_pool,
+                    int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
@@ -1147,7 +1148,8 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
         return;
     }
 
-    pool_t pool = pool_new_linear(caller_pool, "http_client_request", 8192);
+    struct pool *pool =
+        pool_new_linear(caller_pool, "http_client_request", 8192);
 
     struct http_client *client = p_malloc(pool, sizeof(*client));
     client->stopwatch = stopwatch_fd_new(pool, fd, uri);

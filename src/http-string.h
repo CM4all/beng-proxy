@@ -7,12 +7,13 @@
 #ifndef __BENG_HTTP_STRING_H
 #define __BENG_HTTP_STRING_H
 
-#include "pool.h"
 #include "strref.h"
 
 #include <inline/compiler.h>
 
 #include <stdbool.h>
+
+struct pool;
 
 static __attr_always_inline bool
 char_is_http_char(char ch)
@@ -66,13 +67,14 @@ void
 http_next_token(struct strref *input, struct strref *value);
 
 void
-http_next_quoted_string(pool_t pool, struct strref *input, struct strref *value);
+http_next_quoted_string(struct pool *pool, struct strref *input,
+                        struct strref *value);
 
 void
-http_next_value(pool_t pool, struct strref *input, struct strref *value);
+http_next_value(struct pool *pool, struct strref *input, struct strref *value);
 
 void
-http_next_name_value(pool_t pool, struct strref *input,
+http_next_name_value(struct pool *pool, struct strref *input,
                      struct strref *name, struct strref *value,
                      bool rfc_ignorant);
 

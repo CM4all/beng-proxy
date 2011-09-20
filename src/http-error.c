@@ -12,7 +12,7 @@
 
 void
 http_response_handler_invoke_errno(struct http_response_handler_ref *handler,
-                                   pool_t pool, int error)
+                                   struct pool *pool, int error)
 {
     switch (error) {
     case ENOENT:

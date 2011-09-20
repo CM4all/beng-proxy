@@ -7,11 +7,14 @@
 #ifndef __BENG_HTTP_CLIENT_H
 #define __BENG_HTTP_CLIENT_H
 
-#include "pool.h"
 #include "istream.h"
 
 #include <http/method.h>
 
+#include <glib.h>
+
+struct pool;
+struct istream;
 struct lease;
 struct growing_buffer;
 struct http_response_handler;
@@ -76,11 +79,11 @@ http_client_quark(void)
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-http_client_request(pool_t pool, int fd, enum istream_direct fd_type,
+http_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
-                    istream_t body,
+                    struct istream *body,
                     const struct http_response_handler *handler,
                     void *ctx,
                     struct async_operation_ref *async_ref);

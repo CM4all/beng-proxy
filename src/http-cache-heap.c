@@ -7,13 +7,14 @@
 #include "http-cache-internal.h"
 #include "cache.h"
 #include "growing-buffer.h"
+#include "istream.h"
 
 #include <time.h>
 
 struct http_cache_item {
     struct cache_item item;
 
-    pool_t pool;
+    struct pool *pool;
 
     struct http_cache_document document;
 
@@ -59,7 +60,7 @@ http_cache_heap_get(struct cache *cache, const char *uri,
 }
 
 void
-http_cache_heap_put(struct cache *cache, pool_t pool, const char *url,
+http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
                     const struct http_cache_info *info,
                     struct strmap *request_headers,
                     http_status_t status,
@@ -138,7 +139,7 @@ http_cache_heap_unlock(struct cache *cache,
 }
 
 istream_t
-http_cache_heap_istream(pool_t pool, struct cache *cache,
+http_cache_heap_istream(struct pool *pool, struct cache *cache,
                         struct http_cache_document *document)
 {
     struct http_cache_item *item = document_to_item(document);
@@ -188,7 +189,7 @@ static const struct cache_class http_cache_class = {
  */
 
 struct cache *
-http_cache_heap_new(pool_t pool, size_t max_size)
+http_cache_heap_new(struct pool *pool, size_t max_size)
 {
     return cache_new(pool, &http_cache_class, 65521, max_size);
 }

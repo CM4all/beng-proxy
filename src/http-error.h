@@ -7,10 +7,9 @@
 #ifndef BENG_PROXY_HTTP_ERROR_H
 #define BENG_PROXY_HTTP_ERROR_H
 
-#include "pool.h"
-
 #include <glib.h>
 
+struct pool;
 struct http_response_handler_ref;
 
 static inline GQuark
@@ -24,6 +23,6 @@ http_quark(void)
  */
 void
 http_response_handler_invoke_errno(struct http_response_handler_ref *handler,
-                                   pool_t pool, int error);
+                                   struct pool *pool, int error);
 
 #endif

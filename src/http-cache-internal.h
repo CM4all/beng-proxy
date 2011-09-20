@@ -12,6 +12,10 @@
 #define cache_log(...) do {} while (0)
 #endif
 
+#include <glib.h>
+#include <sys/time.h>
+
+struct pool;
 struct growing_buffer;
 struct background_manager;
 
@@ -61,21 +65,21 @@ http_cache_info_init(struct http_cache_info *info)
 }
 
 void
-http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
+http_cache_copy_info(struct pool *pool, struct http_cache_info *dest,
                      const struct http_cache_info *src);
 
 struct http_cache_info *
-http_cache_info_dup(pool_t pool, const struct http_cache_info *src);
+http_cache_info_dup(struct pool *pool, const struct http_cache_info *src);
 
 struct http_cache_info *
-http_cache_request_evaluate(pool_t pool,
+http_cache_request_evaluate(struct pool *pool,
                             http_method_t method,
                             const struct resource_address *address,
                             const struct strmap *headers,
-                            istream_t body);
+                            struct istream *body);
 
 void
-http_cache_document_init(struct http_cache_document *document, pool_t pool,
+http_cache_document_init(struct http_cache_document *document, struct pool *pool,
                          const struct http_cache_info *info,
                          struct strmap *request_headers,
                          http_status_t status,
@@ -108,7 +112,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
  * new strmap.
  */
 struct strmap *
-http_cache_copy_vary(pool_t pool, const char *vary,
+http_cache_copy_vary(struct pool *pool, const char *vary,
                      const struct strmap *headers);
 
 /**
@@ -120,7 +124,7 @@ http_cache_prefer_cached(const struct http_cache_document *document,
                          const struct strmap *response_headers);
 
 struct cache *
-http_cache_heap_new(pool_t pool, size_t max_size);
+http_cache_heap_new(struct pool *pool, size_t max_size);
 
 void
 http_cache_heap_free(struct cache *cache);
@@ -130,7 +134,7 @@ http_cache_heap_get(struct cache *cache, const char *uri,
                     struct strmap *request_headers);
 
 void
-http_cache_heap_put(struct cache *cache, pool_t pool, const char *url,
+http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
                     const struct http_cache_info *info,
                     struct strmap *request_headers,
                     http_status_t status,
@@ -155,28 +159,28 @@ void
 http_cache_heap_unlock(struct cache *cache,
                        struct http_cache_document *document);
 
-istream_t
-http_cache_heap_istream(pool_t pool, struct cache *cache,
+struct istream *
+http_cache_heap_istream(struct pool *pool, struct cache *cache,
                         struct http_cache_document *document);
 
 typedef void (*http_cache_memcached_flush_t)(bool success,
                                              GError *error, void *ctx);
 
 typedef void (*http_cache_memcached_get_t)(struct http_cache_document *document,
-                                           istream_t body,
+                                           struct istream *body,
                                            GError *error, void *ctx);
 
 typedef void (*http_cache_memcached_put_t)(GError *error, void *ctx);
 
 void
-http_cache_memcached_flush(pool_t pool, struct memcached_stock *stock,
+http_cache_memcached_flush(struct pool *pool, struct memcached_stock *stock,
                            http_cache_memcached_flush_t callback,
                            void *callback_ctx,
                            struct async_operation_ref *async_ref);
 
 void
-http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
-                         pool_t background_pool,
+http_cache_memcached_get(struct pool *pool, struct memcached_stock *stock,
+                         struct pool *background_pool,
                          struct background_manager *background,
                          const char *uri, struct strmap *request_headers,
                          http_cache_memcached_get_t callback,
@@ -184,26 +188,26 @@ http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
                          struct async_operation_ref *async_ref);
 
 void
-http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
-                         pool_t background_pool,
+http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
+                         struct pool *background_pool,
                          struct background_manager *background,
                          const char *uri,
                          const struct http_cache_info *info,
                          struct strmap *request_headers,
                          http_status_t status, struct strmap *response_headers,
-                         istream_t value,
+                         struct istream *value,
                          http_cache_memcached_put_t put, void *callback_ctx,
                          struct async_operation_ref *async_ref);
 
 void
 http_cache_memcached_remove_uri(struct memcached_stock *stock,
-                                pool_t background_pool,
+                                struct pool *background_pool,
                                 struct background_manager *background,
                                 const char *uri);
 
 void
 http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
-                                      pool_t background_pool,
+                                      struct pool *background_pool,
                                       struct background_manager *background,
                                       const char *uri, struct strmap *headers);
 

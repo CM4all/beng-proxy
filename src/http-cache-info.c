@@ -5,9 +5,10 @@
  */
 
 #include "http-cache-internal.h"
+#include "pool.h"
 
 void
-http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
+http_cache_copy_info(struct pool *pool, struct http_cache_info *dest,
                      const struct http_cache_info *src)
 {
     dest->expires = src->expires;
@@ -29,7 +30,7 @@ http_cache_copy_info(pool_t pool, struct http_cache_info *dest,
 }
 
 struct http_cache_info *
-http_cache_info_dup(pool_t pool, const struct http_cache_info *src)
+http_cache_info_dup(struct pool *pool, const struct http_cache_info *src)
 {
     struct http_cache_info *dest = p_malloc(pool, sizeof(*dest));
 

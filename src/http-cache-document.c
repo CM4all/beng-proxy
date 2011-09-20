@@ -8,7 +8,8 @@
 #include "strmap.h"
 
 void
-http_cache_document_init(struct http_cache_document *document, pool_t pool,
+http_cache_document_init(struct http_cache_document *document,
+                         struct pool *pool,
                          const struct http_cache_info *info,
                          struct strmap *request_headers,
                          http_status_t status,

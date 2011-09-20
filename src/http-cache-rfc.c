@@ -39,7 +39,7 @@ next_item(struct strref *s, struct strref *p)
 }
 
 static struct http_cache_info *
-http_cache_info_new(pool_t pool)
+http_cache_info_new(struct pool *pool)
 {
     struct http_cache_info *info = p_malloc(pool, sizeof(*info));
 
@@ -78,11 +78,11 @@ resource_address_has_query_string(const struct resource_address *address)
 
 /* check whether the request could produce a cacheable response */
 struct http_cache_info *
-http_cache_request_evaluate(pool_t pool,
+http_cache_request_evaluate(struct pool *pool,
                             http_method_t method,
                             const struct resource_address *address,
                             const struct strmap *headers,
-                            istream_t body)
+                            struct istream *body)
 {
     struct http_cache_info *info = NULL;
     const char *p;
@@ -300,7 +300,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
 }
 
 struct strmap *
-http_cache_copy_vary(pool_t pool, const char *vary,
+http_cache_copy_vary(struct pool *pool, const char *vary,
                      const struct strmap *headers)
 {
     struct strmap *dest = strmap_new(pool, 16);

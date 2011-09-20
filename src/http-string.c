@@ -6,6 +6,7 @@
 
 #include "http-string.h"
 #include "strref2.h"
+#include "pool.h"
 
 void
 http_next_token(struct strref *input, struct strref *value)
@@ -22,7 +23,8 @@ http_next_token(struct strref *input, struct strref *value)
 }
 
 void
-http_next_quoted_string(pool_t pool, struct strref *input, struct strref *value)
+http_next_quoted_string(struct pool *pool, struct strref *input,
+                        struct strref *value)
 {
     char *dest = p_malloc(pool, input->length); /* XXX optimize memory consumption */
     size_t pos = 1;
@@ -72,7 +74,7 @@ http_next_rfc_ignorant_token(struct strref *input, struct strref *value)
 }
 
 void
-http_next_value(pool_t pool, struct strref *input, struct strref *value)
+http_next_value(struct pool *pool, struct strref *input, struct strref *value)
 {
     if (!strref_is_empty(input) && input->data[0] == '"')
         http_next_quoted_string(pool, input, value);
@@ -81,7 +83,7 @@ http_next_value(pool_t pool, struct strref *input, struct strref *value)
 }
 
 static void
-http_next_rfc_ignorant_value(pool_t pool, struct strref *input,
+http_next_rfc_ignorant_value(struct pool *pool, struct strref *input,
                              struct strref *value)
 {
     if (!strref_is_empty(input) && input->data[0] == '"')
@@ -91,7 +93,7 @@ http_next_rfc_ignorant_value(pool_t pool, struct strref *input,
 }
 
 void
-http_next_name_value(pool_t pool, struct strref *input,
+http_next_name_value(struct pool *pool, struct strref *input,
                      struct strref *name, struct strref *value,
                      bool rfc_ignorant)
 {

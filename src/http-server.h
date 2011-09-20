@@ -7,12 +7,12 @@
 #ifndef __BENG_HTTP_SERVER_H
 #define __BENG_HTTP_SERVER_H
 
-#include "pool.h"
 #include "istream.h"
 
 #include <http/method.h>
 #include <http/status.h>
 
+struct pool;
 struct sockaddr;
 struct growing_buffer;
 struct async_operation_ref;
@@ -48,7 +48,7 @@ enum http_server_score {
 };
 
 struct http_server_request {
-    pool_t pool;
+    struct pool *pool;
     struct http_server_connection *connection;
 
     const struct sockaddr *local_address;
@@ -93,7 +93,8 @@ http_server_quark(void)
 }
 
 void
-http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
+http_server_connection_new(struct pool *pool,
+                           int fd, enum istream_direct fd_type,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
                            const char *remote_host,
