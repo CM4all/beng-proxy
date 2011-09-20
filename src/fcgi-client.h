@@ -7,10 +7,12 @@
 #ifndef __BENG_FCGI_CLIENT_H
 #define __BENG_FCGI_CLIENT_H
 
-#include "istream.h"
+#include "istream-direct.h"
 
 #include <http/method.h>
 
+struct pool;
+struct istream;
 struct lease;
 struct strmap;
 struct http_response_handler;
@@ -40,7 +42,7 @@ struct async_operation_ref;
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-fcgi_client_request(pool_t pool, int fd, enum istream_direct fd_type,
+fcgi_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const char *script_filename,
@@ -48,7 +50,7 @@ fcgi_client_request(pool_t pool, int fd, enum istream_direct fd_type,
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    struct strmap *headers, istream_t body,
+                    struct strmap *headers, struct istream *body,
                     const char *const params[], unsigned num_params,
                     const struct http_response_handler *handler,
                     void *handler_ctx,

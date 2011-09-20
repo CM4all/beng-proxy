@@ -7,23 +7,29 @@
 #ifndef MEMCACHED_CLIENT_H
 #define MEMCACHED_CLIENT_H
 
-#include "istream.h"
+#include "istream-direct.h"
 #include "memcached-protocol.h"
+
+#include <glib.h>
+#include <stddef.h>
 
 enum {
     MEMCACHED_EXTRAS_MAX = 0xff,
     MEMCACHED_KEY_MAX = 0x7fff,
 };
 
+struct pool;
+struct istream;
 struct lease;
 struct http_response_handler;
 struct strmap;
+struct async_operation_ref;
 
 struct memcached_client_handler {
     void (*response)(enum memcached_response_status status,
                      const void *extras, size_t extras_length,
                      const void *key, size_t key_length,
-                     istream_t value, void *ctx);
+                     struct istream *value, void *ctx);
 
     void (*error)(GError *error, void *ctx);
 };
@@ -54,12 +60,12 @@ memcached_client_quark(void)
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-memcached_client_invoke(pool_t pool, int fd, enum istream_direct fd_type,
+memcached_client_invoke(struct pool *pool, int fd, enum istream_direct fd_type,
                         const struct lease *lease, void *lease_ctx,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
-                        istream_t value,
+                        struct istream *value,
                         const struct memcached_client_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref);

@@ -2,6 +2,7 @@
 #include "lease.h"
 #include "async.h"
 #include "fd-util.h"
+#include "istream.h"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -21,7 +22,7 @@ struct context {
     bool idle, reuse, aborted;
     enum memcached_response_status status;
 
-    istream_t value;
+    struct istream *value;
     bool value_eof, value_abort, value_closed;
 };
 
@@ -109,7 +110,7 @@ my_mcd_response(enum memcached_response_status status,
                 G_GNUC_UNUSED size_t extras_length,
                 G_GNUC_UNUSED const void *key,
                 G_GNUC_UNUSED size_t key_length,
-                istream_t value, void *ctx)
+                struct istream *value, void *ctx)
 {
     struct context *c = ctx;
 

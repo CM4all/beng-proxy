@@ -8,6 +8,7 @@
 #include "lease.h"
 #include "direct.h"
 #include "fd_util.h"
+#include "istream.h"
 
 #include <inline/compiler.h>
 

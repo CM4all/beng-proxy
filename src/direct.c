@@ -6,6 +6,7 @@
 
 #include "direct.h"
 
+#include <stdbool.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <errno.h>

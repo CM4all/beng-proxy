@@ -18,6 +18,7 @@
 #include "abort-close.h"
 #include "failure.h"
 #include "address-envelope.h"
+#include "istream.h"
 
 #include <inline/compiler.h>
 
@@ -37,7 +38,7 @@ struct http_request {
     const char *uri;
     struct uri_with_address *uwa;
     struct growing_buffer *headers;
-    istream_t body;
+    struct istream *body;
 
     unsigned retries;
 
@@ -71,7 +72,7 @@ static const struct stock_handler http_request_stock_handler;
 
 static void
 http_request_response_response(http_status_t status, struct strmap *headers,
-                               istream_t body, void *ctx)
+                               struct istream *body, void *ctx)
 {
     struct http_request *hr = ctx;
 
@@ -189,7 +190,7 @@ http_request(pool_t pool,
              http_method_t method,
              struct uri_with_address *uwa,
              struct growing_buffer *headers,
-             istream_t body,
+             struct istream *body,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref)

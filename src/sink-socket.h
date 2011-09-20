@@ -7,9 +7,13 @@
 #ifndef BENG_PROXY_SINK_SOCKET_H
 #define BENG_PROXY_SINK_SOCKET_H
 
-#include "istream.h"
+#include "istream-direct.h"
+
+#include <glib.h>
+#include <stdbool.h>
 
 struct pool;
+struct istream;
 
 struct sink_socket_handler {
     /**

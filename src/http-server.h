@@ -7,12 +7,17 @@
 #ifndef __BENG_HTTP_SERVER_H
 #define __BENG_HTTP_SERVER_H
 
-#include "istream.h"
+#include "istream-direct.h"
 
 #include <http/method.h>
 #include <http/status.h>
 
+#include <glib.h>
+#include <stdint.h>
+#include <sys/types.h>
+
 struct pool;
+struct istream;
 struct sockaddr;
 struct growing_buffer;
 struct async_operation_ref;
@@ -62,7 +67,7 @@ struct http_server_request {
     char *uri;
     struct strmap *headers;
 
-    istream_t body;
+    struct istream *body;
 };
 
 struct http_server_connection_handler {
@@ -121,7 +126,7 @@ void
 http_server_response(const struct http_server_request *request,
                      http_status_t status,
                      struct growing_buffer *headers,
-                     istream_t body);
+                     struct istream *body);
 
 void
 http_server_send_message(const struct http_server_request *request,

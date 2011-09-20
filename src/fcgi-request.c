@@ -13,6 +13,7 @@
 #include "stock.h"
 #include "abort-close.h"
 #include "jail.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 

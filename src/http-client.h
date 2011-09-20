@@ -7,7 +7,7 @@
 #ifndef __BENG_HTTP_CLIENT_H
 #define __BENG_HTTP_CLIENT_H
 
-#include "istream.h"
+#include "istream-direct.h"
 
 #include <http/method.h>
 

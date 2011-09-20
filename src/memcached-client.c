@@ -21,7 +21,7 @@
 #include <string.h>
 
 struct memcached_client {
-    pool_t pool, caller_pool;
+    struct pool *pool, *caller_pool;
 
     /* I/O */
     int fd;
@@ -37,7 +37,7 @@ struct memcached_client {
 
         struct async_operation async;
 
-        istream_t istream;
+        struct istream *istream;
     } request;
 
     /* response */
@@ -251,13 +251,13 @@ memcached_client_fill_buffer(struct memcached_client *client);
  */
 
 static inline struct memcached_client *
-istream_to_memcached_client(istream_t istream)
+istream_to_memcached_client(struct istream *istream)
 {
     return (struct memcached_client *)(((char*)istream) - offsetof(struct memcached_client, response.value));
 }
 
 static off_t
-istream_memcached_available(istream_t istream, G_GNUC_UNUSED bool partial)
+istream_memcached_available(struct istream *istream, G_GNUC_UNUSED bool partial)
 {
     struct memcached_client *client = istream_to_memcached_client(istream);
 
@@ -268,7 +268,7 @@ istream_memcached_available(istream_t istream, G_GNUC_UNUSED bool partial)
 }
 
 static void
-istream_memcached_read(istream_t istream)
+istream_memcached_read(struct istream *istream)
 {
     struct memcached_client *client = istream_to_memcached_client(istream);
 
@@ -285,10 +285,10 @@ istream_memcached_read(istream_t istream)
 }
 
 static void
-istream_memcached_close(istream_t istream)
+istream_memcached_close(struct istream *istream)
 {
     struct memcached_client *client = istream_to_memcached_client(istream);
-    pool_t caller_pool = client->caller_pool;
+    struct pool *caller_pool = client->caller_pool;
 
     assert(client->response.read_state == READ_VALUE);
     assert(client->request.istream == NULL);
@@ -432,7 +432,7 @@ memcached_consume_key(struct memcached_client *client)
     if (client->response.remaining > 0) {
         /* there's a value: pass it to the callback, continue
            reading */
-        istream_t value;
+        struct istream *value;
         bool valid;
 
         if (fifo_buffer_empty(client->response.input))
@@ -822,8 +822,8 @@ memcached_client_request_abort(struct async_operation *ao)
 {
     struct memcached_client *client
         = async_to_memcached_client(ao);
-    pool_t caller_pool = client->caller_pool;
-    istream_t request_istream = client->request.istream;
+    struct pool *caller_pool = client->caller_pool;
+    struct istream *request_istream = client->request.istream;
 
     /* async_abort() can only be used before the response was
        delivered to our callback */
@@ -848,24 +848,24 @@ static const struct async_operation_class memcached_client_async_operation = {
  */
 
 void
-memcached_client_invoke(pool_t caller_pool,
+memcached_client_invoke(struct pool *caller_pool,
                         int fd, enum istream_direct fd_type,
                         const struct lease *lease, void *lease_ctx,
                         enum memcached_opcode opcode,
                         const void *extras, size_t extras_length,
                         const void *key, size_t key_length,
-                        istream_t value,
+                        struct istream *value,
                         const struct memcached_client_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref)
 {
     struct memcached_client *client;
-    istream_t request;
+    struct istream *request;
 
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
 
-    pool_t pool = pool_new_linear(caller_pool, "memcached_client", 16384);
+    struct pool *pool = pool_new_linear(caller_pool, "memcached_client", 16384);
 
     request = memcached_request_packet(pool, opcode, extras, extras_length,
                                        key, key_length, value,

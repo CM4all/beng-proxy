@@ -13,6 +13,8 @@
 #include "stock.h"
 #include "abort-close.h"
 #include "address-list.h"
+#include "pool.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 

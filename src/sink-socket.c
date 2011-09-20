@@ -8,6 +8,7 @@
 #include "pevent.h"
 #include "direct.h"
 #include "fd-util.h"
+#include "istream.h"
 
 #include <event.h>
 #include <sys/types.h>

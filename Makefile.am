@@ -205,6 +205,7 @@ HDR = \
 	src/istream-internal.h \
 	src/istream-invoke.h \
 	src/istream-new.h \
+	src/istream-direct.h \
 	src/istream.h \
 	src/jail.h \
 	src/lease.h \
