@@ -188,8 +188,7 @@ response_invoke_processor(struct request *request2,
         if (widget->from_request.focus_ref == NULL)
             /* drop the widget session and all descendants if there is
                no focus */
-            session_drop_widgets(session,
-                                 strref_dup(request->pool, &request2->uri.base),
+            session_drop_widgets(session, widget->id,
                                  proxy_ref);
 
         session_put(session);
