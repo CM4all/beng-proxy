@@ -211,3 +211,32 @@ udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
 
     return true;
 }
+
+bool
+udp_listener_reply(struct udp_listener *udp,
+                   const struct sockaddr *address, size_t address_length,
+                   const void *data, size_t data_length,
+                   GError **error_r)
+{
+    assert(udp != NULL);
+    assert(udp->fd >= 0);
+    assert(address != NULL);
+    assert(address_length > 0);
+
+    ssize_t nbytes = sendto(udp->fd, data, data_length,
+                            MSG_DONTWAIT|MSG_NOSIGNAL,
+                            address, address_length);
+    if (G_UNLIKELY(nbytes < 0)) {
+        g_set_error(error_r, g_file_error_quark(), errno,
+                    "Failed to send UDP packet: %s",
+                    g_strerror(errno));
+        return false;
+    }
+
+    if ((size_t)nbytes != data_length) {
+        g_set_error_literal(error_r, udp_listener_quark(), 0, "Short send");
+        return false;
+    }
+
+    return true;
+}

@@ -62,4 +62,13 @@ bool
 udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
                    GError **error_r);
 
+/**
+ * Send a reply datagram to a client.
+ */
+bool
+udp_listener_reply(struct udp_listener *udp,
+                   const struct sockaddr *address, size_t address_length,
+                   const void *data, size_t data_length,
+                   GError **error_r);
+
 #endif
