@@ -15,6 +15,12 @@ class Client:
 
         if host and host[0] == '/':
             self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+
+            # bind to a unique address, so the server has something it
+            # can send a reply to
+            import os
+            self._socket.bind('\0beng-proxy-client-' + str(os.getpid()))
+
             self._socket.connect(host)
         else:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
