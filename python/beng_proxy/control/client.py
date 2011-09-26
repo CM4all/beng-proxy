@@ -9,12 +9,13 @@ import struct
 from beng_proxy.control.protocol import *
 
 class Client:
-    def __init__(self, host, port=5478, broadcast=False):
+    def __init__(self, host, port=5478, broadcast=False, timeout=10):
         assert isinstance(host, str)
         assert isinstance(port, int)
 
         if host and host[0] == '/':
             self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            self._socket.settimeout(timeout)
 
             # bind to a unique address, so the server has something it
             # can send a reply to
@@ -27,6 +28,7 @@ class Client:
             if broadcast:
                 self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             self._socket.connect((host, port))
+            self._socket.settimeout(timeout)
 
     def receive(self):
         """Receive a datagram from the server.  Returns a list of
