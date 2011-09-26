@@ -28,6 +28,20 @@ class Client:
                 self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             self._socket.connect((host, port))
 
+    def receive(self):
+        """Receive a datagram from the server.  Returns a list of
+        (command, payload) tuples."""
+        packets = []
+        data = self._socket.recv(8192)
+        while len(data) > 4:
+            header, data = data[:4], data[4:]
+            length, command = struct.unpack('>HH', header)
+            if length > len(data):
+                break
+            payload, data = data[:length], data[length:]
+            packets.append((command, payload))
+        return packets
+
     def send(self, command, payload=None):
         assert isinstance(command, int)
         if payload is None: payload = ''
