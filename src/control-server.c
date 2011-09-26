@@ -20,6 +20,7 @@ struct control_server {
 
 void
 control_server_decode(const void *data, size_t length,
+                      const struct sockaddr *address, size_t address_length,
                       const struct control_handler *handler, void *handler_ctx)
 {
     assert(handler != NULL);
@@ -76,7 +77,9 @@ control_server_decode(const void *data, size_t length,
         /* this command is ok, pass it to the callback */
 
         handler->packet(command, payload_length > 0 ? payload : NULL,
-                        payload_length, handler_ctx);
+                        payload_length,
+                        address, address_length,
+                        handler_ctx);
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
 
@@ -87,13 +90,14 @@ control_server_decode(const void *data, size_t length,
 
 static void
 control_server_udp_datagram(const void *data, size_t length,
-                            G_GNUC_UNUSED const struct sockaddr *addr,
-                            G_GNUC_UNUSED size_t addrlen,
+                            const struct sockaddr *address,
+                            size_t address_length,
                             void *ctx)
 {
     struct control_server *cs = ctx;
 
-    control_server_decode(data, length, cs->handler, cs->handler_ctx);
+    control_server_decode(data, length, address, address_length,
+                          cs->handler, cs->handler_ctx);
 }
 
 static void

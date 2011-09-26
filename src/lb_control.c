@@ -119,13 +119,11 @@ fade_node(const struct lb_instance *instance,
 static void
 lb_control_packet(enum beng_control_command command,
                   const void *payload, size_t payload_length,
+                  G_GNUC_UNUSED const struct sockaddr *address,
+                  G_GNUC_UNUSED size_t address_length,
                   void *ctx)
 {
     struct lb_control *control = ctx;
-
-    (void)control;
-    (void)payload;
-    (void)payload_length;
 
     switch (command) {
     case CONTROL_NOP:

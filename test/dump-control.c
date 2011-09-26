@@ -16,6 +16,8 @@
 static void
 dump_control_packet(enum beng_control_command command,
                     G_GNUC_UNUSED const void *payload, size_t payload_length,
+                    G_GNUC_UNUSED const struct sockaddr *address,
+                    G_GNUC_UNUSED size_t address_length,
                     G_GNUC_UNUSED void *ctx)
 {
     printf("packet command=%u length=%zu\n", command, payload_length);

@@ -152,6 +152,8 @@ control_tcache_invalidate(struct instance *instance,
 static void
 global_control_packet(enum beng_control_command command,
                       const void *payload, size_t payload_length,
+                      G_GNUC_UNUSED const struct sockaddr *address,
+                      G_GNUC_UNUSED size_t address_length,
                       void *ctx)
 {
     struct instance *instance = ctx;
@@ -194,8 +196,8 @@ static struct udp_distribute *global_udp_distribute;
 
 static void
 global_control_udp_datagram(const void *data, size_t length,
-                            G_GNUC_UNUSED const struct sockaddr *addr,
-                            G_GNUC_UNUSED size_t addrlen,
+                            const struct sockaddr *address,
+                            size_t address_length,
                             void *ctx)
 {
     struct instance *instance = ctx;
@@ -204,7 +206,8 @@ global_control_udp_datagram(const void *data, size_t length,
     udp_distribute_packet(global_udp_distribute, data, length);
 
     /* handle the packet in this process */
-    control_server_decode(data, length, &global_control_handler, instance);
+    control_server_decode(data, length, address, address_length,
+                          &global_control_handler, instance);
 }
 
 static void
