@@ -35,6 +35,18 @@ enum beng_control_command {
      * a colon and the port number.
      */
     CONTROL_FADE_NODE = 3,
+
+    /**
+     * Get the status of the specified node.
+     *
+     * The payload is the node name according to lb.conf, followed by
+     * a colon and the port number.
+     *
+     * The server then sends a response to the source IP.  Its payload
+     * is the node name and port, a null byte, and a string describing
+     * the worker status.  Possible values: "ok", "error", "fade".
+     */
+    CONTROL_NODE_STATUS = 4,
 };
 
 struct beng_control_header {

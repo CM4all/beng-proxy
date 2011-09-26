@@ -80,3 +80,9 @@ class Client:
         assert isinstance(port, int)
 
         self.send(CONTROL_FADE_NODE, '%s:%i' % (node, port))
+
+    def send_node_status(self, node, port):
+        assert isinstance(node, str)
+        assert isinstance(port, int)
+
+        self.send(CONTROL_NODE_STATUS, '%s:%i' % (node, port))

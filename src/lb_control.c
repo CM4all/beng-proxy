@@ -116,11 +116,117 @@ fade_node(const struct lb_instance *instance,
     pool_rewind(tpool, &mark);
 }
 
+G_GNUC_CONST
+static const char *
+failure_status_to_string(enum failure_status status)
+{
+    switch (status) {
+    case FAILURE_OK:
+        return "ok";
+
+    case FAILURE_FADE:
+        return "fade";
+
+    case FAILURE_RESPONSE:
+    case FAILURE_FAILED:
+        break;
+    }
+
+    return "error";
+}
+
+static bool
+node_status_response(struct control_server *server, struct pool *pool,
+                     const struct sockaddr *address, size_t address_length,
+                     const char *payload, size_t length, const char *status,
+                     GError **error_r)
+{
+    size_t status_length = strlen(status);
+
+    size_t response_length = length + 1 + status_length;
+    char *response = p_malloc(tpool, response_length);
+    memcpy(response, payload, length);
+    response[length] = 0;
+    memcpy(response + length + 1, status, status_length);
+
+    return control_server_reply(server, pool, address, address_length,
+                                CONTROL_NODE_STATUS, response, response_length,
+                                error_r);
+}
+
+static void
+query_node_status(struct lb_control *control,
+                  const char *payload, size_t length,
+                  const struct sockaddr *address, size_t address_length)
+{
+    if (address_length == 0) {
+        daemon_log(3, "got NODE_STATUS from unbound client socket\n");
+        return;
+    }
+
+    const char *colon = memchr(payload, ':', length);
+    if (colon == NULL || colon == payload || colon == payload + length - 1) {
+        node_status_response(control->server, tpool, address, address_length,
+                             payload, length, "malformed", NULL);
+        daemon_log(3, "malformed NODE_STATUS control packet: no port\n");
+        return;
+    }
+
+    struct pool_mark mark;
+    pool_mark(tpool, &mark);
+
+    char *node_name = p_strndup(tpool, payload, length);
+    char *port_string = node_name + (colon - payload);
+    *port_string++ = 0;
+
+    const struct lb_node_config *node =
+        lb_config_find_node(control->instance->config, node_name);
+    if (node == NULL) {
+        node_status_response(control->server, tpool, address, address_length,
+                             payload, length, "unknown", NULL);
+        pool_rewind(tpool, &mark);
+        daemon_log(3, "unknown node in NODE_STATUS control packet\n");
+        return;
+    }
+
+    char *endptr;
+    unsigned port = strtoul(port_string, &endptr, 10);
+    if (port == 0 || *endptr != 0) {
+        node_status_response(control->server, tpool, address, address_length,
+                             payload, length, "malformed", NULL);
+        pool_rewind(tpool, &mark);
+        daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
+        return;
+    }
+
+    const struct sockaddr *with_port =
+        sockaddr_set_port(tpool,
+                          &node->envelope->address, node->envelope->length,
+                          port);
+
+    char buffer[64];
+    socket_address_to_string(buffer, sizeof(buffer), with_port,
+                             node->envelope->length);
+
+    enum failure_status status =
+        failure_get_status(with_port, node->envelope->length);
+    const char *s = failure_status_to_string(status);
+
+    GError *error = NULL;
+    if (!node_status_response(control->server, tpool, address, address_length,
+                              payload, length, s,
+                              &error)) {
+        daemon_log(3, "%s\n", error->message);
+        g_error_free(error);
+    }
+
+    pool_rewind(tpool, &mark);
+}
+
 static void
 lb_control_packet(enum beng_control_command command,
                   const void *payload, size_t payload_length,
-                  G_GNUC_UNUSED const struct sockaddr *address,
-                  G_GNUC_UNUSED size_t address_length,
+                  const struct sockaddr *address, size_t address_length,
                   void *ctx)
 {
     struct lb_control *control = ctx;
@@ -136,6 +242,11 @@ lb_control_packet(enum beng_control_command command,
 
     case CONTROL_FADE_NODE:
         fade_node(control->instance, payload, payload_length);
+        break;
+
+    case CONTROL_NODE_STATUS:
+        query_node_status(control, payload, payload_length,
+                          address, address_length);
         break;
     }
 }

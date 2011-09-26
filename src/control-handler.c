@@ -175,6 +175,7 @@ global_control_packet(enum beng_control_command command,
 
     case CONTROL_ENABLE_NODE:
     case CONTROL_FADE_NODE:
+    case CONTROL_NODE_STATUS:
         /* only for beng-lb */
         break;
     }
