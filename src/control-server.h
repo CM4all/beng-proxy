@@ -15,6 +15,7 @@
 #include <stddef.h>
 
 struct address_envelope;
+struct sockaddr;
 struct in_addr;
 
 struct control_handler {
@@ -46,6 +47,13 @@ control_server_new_envelope(pool_t pool,
 
 void
 control_server_free(struct control_server *cs);
+
+bool
+control_server_reply(struct control_server *cs, struct pool *pool,
+                     const struct sockaddr *address, size_t address_length,
+                     enum beng_control_command command,
+                     const void *payload, size_t payload_length,
+                     GError **error_r);
 
 void
 control_server_decode(const void *data, size_t length,

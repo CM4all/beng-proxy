@@ -9,6 +9,7 @@
 
 #include <glib.h>
 #include <assert.h>
+#include <string.h>
 
 struct control_server {
     struct udp_listener *udp;
@@ -167,4 +168,27 @@ void
 control_server_free(struct control_server *cs)
 {
     udp_listener_free(cs->udp);
+}
+
+bool
+control_server_reply(struct control_server *cs, struct pool *pool,
+                     const struct sockaddr *address, size_t address_length,
+                     enum beng_control_command command,
+                     const void *payload, size_t payload_length,
+                     GError **error_r)
+{
+    assert(cs != NULL);
+    assert(cs->udp != NULL);
+    assert(address != NULL);
+    assert(address_length > 0);
+
+    struct beng_control_header *header =
+        p_malloc(pool, sizeof(*header) + payload_length);
+    header->length = GUINT16_TO_BE(payload_length);
+    header->command = GUINT16_TO_BE(command);
+    memcpy(header + 1, payload, payload_length);
+
+    return udp_listener_reply(cs->udp, address, address_length,
+                              header, sizeof(*header) + payload_length,
+                              error_r);
 }
