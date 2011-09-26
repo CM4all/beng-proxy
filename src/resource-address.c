@@ -34,7 +34,7 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
         dest->u.local.document_root =
             p_strdup_checked(pool, src->u.local.document_root);
 
-        jail_params_copy(pool, &dest->u.cgi.jail, &src->u.cgi.jail);
+        jail_params_copy(pool, &dest->u.local.jail, &src->u.local.jail);
         break;
 
     case RESOURCE_ADDRESS_HTTP:

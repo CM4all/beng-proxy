@@ -140,7 +140,9 @@ response_invoke_processor(struct request *request2,
 
     widget = p_malloc(request->pool, sizeof(*widget));
     widget_init(widget, request->pool, &root_widget_class);
-    widget->id = strref_dup(request->pool, &request2->uri.base);
+    widget->id = request2->translate.response->uri != NULL
+        ? request2->translate.response->uri
+        : strref_dup(request->pool, &request2->uri.base);
     widget->lazy.path = "";
     widget->lazy.prefix = "__";
 
@@ -192,8 +194,7 @@ response_invoke_processor(struct request *request2,
         if (widget->from_request.focus_ref == NULL)
             /* drop the widget session and all descendants if there is
                no focus */
-            session_drop_widgets(session,
-                                 strref_dup(request->pool, &request2->uri.base),
+            session_drop_widgets(session, widget->id,
                                  proxy_ref);
 
         session_put(session);
