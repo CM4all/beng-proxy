@@ -6,7 +6,7 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * python/control/client: implement timeout
   * lb_control: allow querying node status over control socket
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
 
 cm4all-beng-proxy (1.1.12) unstable; urgency=low
 
