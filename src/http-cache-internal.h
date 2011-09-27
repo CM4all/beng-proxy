@@ -14,6 +14,7 @@
 
 #include <glib.h>
 #include <sys/time.h>
+#include <sys/types.h> /* for off_t */
 
 struct pool;
 struct growing_buffer;
