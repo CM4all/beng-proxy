@@ -234,7 +234,7 @@ udp_listener_reply(struct udp_listener *udp,
     }
 
     if ((size_t)nbytes != data_length) {
-        g_set_error_literal(error_r, udp_listener_quark(), 0, "Short send");
+        g_set_error(error_r, udp_listener_quark(), 0, "Short send");
         return false;
     }
 
