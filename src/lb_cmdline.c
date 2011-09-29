@@ -64,6 +64,10 @@ static void usage(void) {
 #endif
          " -U name        execute the error logger program with this user id\n"
 #ifdef __GLIBC__
+         " --watchdog\n"
+#endif
+         " -W             enable the watchdog that auto-restarts beng-lb on crash\n"
+#ifdef __GLIBC__
          " --bulldog-path PATH\n"
 #endif
          " -B PATH        obtain worker status information from the Bulldog-Tyke path\n"
@@ -180,6 +184,7 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
         {"user", 1, NULL, 'u'},
         {"group", 1, NULL, 'g'},
         {"logger-user", 1, NULL, 'U'},
+        {"watchdog", 0, NULL, 'W'},
         {"bulldog-path", 1, NULL, 'B'},
         {"set", 1, NULL, 's'},
         {NULL,0,NULL,0}
@@ -193,10 +198,10 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:A:u:g:U:B:s:",
+        ret = getopt_long(argc, argv, "hVvqDP:l:A:u:g:U:WB:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:A:u:g:U:B:s:");
+        ret = getopt(argc, argv, "hVvqDP:l:A:u:g:U:WB:s:");
 #endif
         if (ret == -1)
             break;
@@ -260,6 +265,14 @@ parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
 
         case 't':
             config->translation_socket = optarg;
+            break;
+
+        case 'W':
+            /* Abusing beng-proxy's "num_workers" attributes for the
+               watchdog; non-zero means watchdog is enabled.  That is
+               similar enough to beng-proxy's interpretation: 0 means
+               don't fork, no auto-restart. */
+            config->num_workers = 1;
             break;
 
         case 'B':

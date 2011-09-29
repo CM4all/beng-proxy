@@ -153,4 +153,10 @@ cache_item_lock(struct cache_item *item);
 void
 cache_item_unlock(struct cache *cache, struct cache_item *item);
 
+void
+cache_event_add(struct cache *cache);
+
+void
+cache_event_del(struct cache *cache);
+
 #endif

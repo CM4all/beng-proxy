@@ -33,4 +33,10 @@ const struct address_envelope *
 balancer_get(struct balancer *balancer, const struct address_list *list,
              unsigned session);
 
+void
+balancer_event_add(struct balancer *balancer);
+
+void
+balancer_event_del(struct balancer *balancer);
+
 #endif

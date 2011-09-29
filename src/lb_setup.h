@@ -18,6 +18,12 @@ init_all_listeners(struct lb_instance *instance, GError **error_r);
 void
 deinit_all_listeners(struct lb_instance *instance);
 
+void
+all_listeners_event_add(struct lb_instance *instance);
+
+void
+all_listeners_event_del(struct lb_instance *instance);
+
 bool
 init_all_controls(struct lb_instance *instance, GError **error_r);
 

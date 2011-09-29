@@ -38,4 +38,10 @@ lb_listener_new(struct lb_instance *instance,
 void
 lb_listener_free(struct lb_listener *listener);
 
+void
+lb_listener_event_add(struct lb_listener *listener);
+
+void
+lb_listener_event_del(struct lb_listener *listener);
+
 #endif

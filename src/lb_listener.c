@@ -119,3 +119,15 @@ lb_listener_free(struct lb_listener *listener)
 
     pool_unref(listener->pool);
 }
+
+void
+lb_listener_event_add(struct lb_listener *listener)
+{
+    listener_event_add(listener->listener);
+}
+
+void
+lb_listener_event_del(struct lb_listener *listener)
+{
+    listener_event_del(listener->listener);
+}

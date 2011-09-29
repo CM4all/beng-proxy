@@ -56,6 +56,24 @@ deinit_all_listeners(struct lb_instance *instance)
     }
 }
 
+void
+all_listeners_event_add(struct lb_instance *instance)
+{
+    for (struct lb_listener *l = (struct lb_listener *)instance->listeners.next;
+         &l->siblings != &instance->listeners;
+         l = (struct lb_listener *)l->siblings.next)
+        lb_listener_event_add(l);
+}
+
+void
+all_listeners_event_del(struct lb_instance *instance)
+{
+    for (struct lb_listener *l = (struct lb_listener *)instance->listeners.next;
+         &l->siblings != &instance->listeners;
+         l = (struct lb_listener *)l->siblings.next)
+        lb_listener_event_del(l);
+}
+
 bool
 init_all_controls(struct lb_instance *instance, GError **error_r)
 {
