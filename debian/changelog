@@ -1,6 +1,7 @@
 cm4all-beng-proxy (1.0.9) unstable; urgency=low
 
   * tcp-balancer: store a copy of the socket address
+  * lb: default log directory is /var/log/cm4all/beng-lb
 
  --
 
