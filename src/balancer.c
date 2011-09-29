@@ -203,3 +203,15 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
 
     return next_address_checked(item);
 }
+
+void
+balancer_event_add(struct balancer *balancer)
+{
+    cache_event_add(balancer->cache);
+}
+
+void
+balancer_event_del(struct balancer *balancer)
+{
+    cache_event_del(balancer->cache);
+}
