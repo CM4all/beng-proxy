@@ -21,17 +21,82 @@
 #include "log-glue.h"
 #include "lb_config.h"
 #include "ssl_init.h"
+#include "child.h"
 
 #include <daemon/daemonize.h>
 
 #include <assert.h>
 #include <unistd.h>
 #include <sys/signal.h>
+#include <sys/wait.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include <netdb.h>
 
 #include <event.h>
+
+static const struct timeval launch_worker_now = {
+    .tv_sec = 0,
+    .tv_usec = 10000,
+};
+
+static const struct timeval launch_worker_delayed = {
+    .tv_sec = 10,
+    .tv_usec = 0,
+};
+
+static bool is_watchdog;
+static pid_t worker_pid;
+static struct event launch_worker_event;
+
+static void
+worker_callback(int status, void *ctx)
+{
+    struct lb_instance *instance = ctx;
+
+    int exit_status = WEXITSTATUS(status);
+    if (WIFSIGNALED(status))
+        fprintf(stderr, "worker %d died from signal %d%s\n",
+                worker_pid, WTERMSIG(status),
+                WCOREDUMP(status) ? " (core dumped)" : "");
+    else if (exit_status == 0)
+        fprintf(stderr, "worker %d exited with success\n",
+                worker_pid);
+    else
+        fprintf(stderr, "worker %d exited with status %d\n",
+                worker_pid, exit_status);
+
+    worker_pid = 0;
+
+    if (!instance->should_exit)
+        evtimer_add(&launch_worker_event, &launch_worker_delayed);
+}
+
+static void
+launch_worker_callback(int fd __attr_unused, short event __attr_unused,
+                       void *ctx)
+{
+    assert(is_watchdog);
+    assert(worker_pid <= 0);
+
+    struct lb_instance *instance = ctx;
+
+    worker_pid = fork();
+    if (worker_pid < 0) {
+        fprintf(stderr, "Failed to fork: %s\n", strerror(errno));
+        evtimer_add(&launch_worker_event, &launch_worker_delayed);
+        return;
+    }
+
+    if (worker_pid == 0) {
+        event_reinit(instance->event_base);
+        all_listeners_event_add(instance);
+        return;
+    }
+
+    child_register(worker_pid, worker_callback, instance);
+}
 
 static void
 exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
@@ -43,6 +108,14 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 
     instance->should_exit = true;
     deinit_signals(instance);
+
+    if (is_watchdog && worker_pid > 0)
+        kill(worker_pid, SIGTERM);
+
+    children_shutdown();
+
+    if (is_watchdog)
+        evtimer_del(&launch_worker_event);
 
     deinit_all_listeners(instance);
 
@@ -148,6 +221,8 @@ int main(int argc, char **argv)
 
     init_signals(&instance);
 
+    children_init(instance.pool);
+
     instance.balancer = balancer_new(instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.pool,
                                        instance.cmdline.tcp_stock_limit);
@@ -181,9 +256,21 @@ int main(int argc, char **argv)
 
     /* main loop */
 
+    if (instance.cmdline.num_workers > 0) {
+        /* watchdog */
+
+        all_listeners_event_del(&instance);
+
+        is_watchdog = true;
+        evtimer_set(&launch_worker_event, launch_worker_callback, &instance);
+        evtimer_add(&launch_worker_event, &launch_worker_now);
+    }
+
     event_dispatch();
 
     /* cleanup */
+
+    children_shutdown();
 
     log_global_deinit();
 
