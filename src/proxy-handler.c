@@ -17,6 +17,7 @@
 #include "strref-pool.h"
 #include "strmap.h"
 #include "http-response.h"
+#include "istream-impl.h"
 
 static void
 proxy_collect_cookies(struct request *request2, const struct strmap *headers)
@@ -63,7 +64,7 @@ proxy_collect_cookies(struct request *request2, const struct strmap *headers)
 
 static void
 proxy_response(http_status_t status, struct strmap *headers,
-               istream_t body, void *ctx)
+               struct istream *body, void *ctx)
 {
     struct request *request2 = ctx;
     const struct translate_response *tr = request2->translate.response;

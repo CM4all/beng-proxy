@@ -8,6 +8,7 @@
 #include "pool.h"
 #include "html-chars.h"
 #include "expansible-buffer.h"
+#include "istream.h"
 
 #include <inline/poison.h>
 
@@ -67,7 +68,7 @@ enum parser_state {
 struct parser {
     struct pool *pool;
 
-    istream_t input;
+    struct istream *input;
     off_t position;
 
     /* internal state */
@@ -638,7 +639,7 @@ static const struct istream_handler parser_input_handler = {
  */
 
 struct parser * gcc_malloc
-parser_new(struct pool *pool, istream_t input,
+parser_new(struct pool *pool, struct istream *input,
            const struct parser_handler *handler, void *handler_ctx)
 {
     struct parser *parser = p_malloc(pool, sizeof(*parser));

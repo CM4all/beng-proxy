@@ -18,12 +18,13 @@
 #include "http-response.h"
 #include "processor.h"
 #include "global.h"
+#include "istream-impl.h"
 
 #include <daemon/log.h>
 
 static void
 widget_proxy_response(http_status_t status, struct strmap *headers,
-                      istream_t body, void *ctx)
+                      struct istream *body, void *ctx)
 {
     struct request *request2 = ctx;
     struct http_server_request *request = request2->request;
@@ -204,7 +205,8 @@ static const struct widget_lookup_handler widget_processor_handler = {
 };
 
 void
-proxy_widget(struct request *request2, http_status_t status, istream_t body,
+proxy_widget(struct request *request2, http_status_t status,
+             struct istream *body,
              struct widget *widget, const struct widget_ref *proxy_ref,
              unsigned options)
 {

@@ -9,18 +9,20 @@
 #ifndef BENG_PROXY_SINK_HEADER_H
 #define BENG_PROXY_SINK_HEADER_H
 
-#include "istream.h"
+#include <stddef.h>
+#include <glib.h>
 
 struct pool;
+struct istream;
 struct async_operation_ref;
 
 struct sink_header_handler {
-    void (*done)(void *header, size_t length, istream_t tail, void *ctx);
+    void (*done)(void *header, size_t length, struct istream *tail, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 
 void
-sink_header_new(struct pool *pool, istream_t input,
+sink_header_new(struct pool *pool, struct istream *input,
                 const struct sink_header_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref);
 

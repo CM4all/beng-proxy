@@ -7,12 +7,12 @@
 #ifndef __BENG_FORK_H
 #define __BENG_FORK_H
 
-#include "istream.h"
 #include "child.h"
 
 #include <glib.h>
 
 struct pool;
+struct istream;
 
 static inline GQuark
 fork_quark(void)
@@ -31,7 +31,7 @@ fork_quark(void)
  * consumed/closed)
  */
 pid_t
-beng_fork(struct pool *pool, istream_t input, istream_t *output_r,
+beng_fork(struct pool *pool, struct istream *input, struct istream **output_r,
           child_callback_t callback, void *ctx,
           GError **error_r);
 

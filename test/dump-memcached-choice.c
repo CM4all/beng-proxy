@@ -8,6 +8,7 @@
 #include "tpool.h"
 #include "serialize.h"
 #include "sink-buffer.h"
+#include "istream.h"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -27,7 +28,7 @@ struct context {
     int fd;
     bool idle, reuse;
 
-    istream_t value;
+    struct istream *value;
     bool value_eof, value_abort;
 
     struct async_operation_ref async_ref;
@@ -135,7 +136,7 @@ my_mcd_response(enum memcached_response_status status,
                 G_GNUC_UNUSED size_t extras_length,
                 G_GNUC_UNUSED const void *key,
                 G_GNUC_UNUSED size_t key_length,
-                istream_t value, void *ctx)
+                struct istream *value, void *ctx)
 {
     struct context *c = ctx;
 

@@ -8,12 +8,11 @@
 #ifndef BENG_PROXY_RESOURCE_LOADER_H
 #define BENG_PROXY_RESOURCE_LOADER_H
 
-#include "istream.h"
-
 #include <http/method.h>
 #include <http/status.h>
 
 struct pool;
+struct istream;
 struct hstock;
 struct tcp_balancer;
 struct resource_address;
@@ -42,7 +41,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         http_method_t method,
                         const struct resource_address *address,
                         http_status_t status, struct strmap *headers,
-                        istream_t body,
+                        struct istream *body,
                         const struct http_response_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref);

@@ -1,20 +1,22 @@
 #include "sink-header.h"
 #include "async.h"
+#include "istream.h"
 
 #include <string.h>
 
 #define EXPECTED_RESULT "foo"
 
-static istream_t
+static struct istream *
 create_input(struct pool *pool)
 {
     return istream_memory_new(pool, "\0\0\0\x06" "foobarfoo", 13);
 }
 
 static void
-my_sink_header_done(void *header, size_t length, istream_t tail, void *ctx)
+my_sink_header_done(void *header, size_t length, struct istream *tail,
+                    void *ctx)
 {
-    istream_t delayed = ctx;
+    struct istream *delayed = ctx;
 
     assert(length == 6);
     assert(header != NULL);
@@ -29,7 +31,7 @@ my_sink_header_done(void *header, size_t length, istream_t tail, void *ctx)
 static void
 my_sink_header_error(GError *error, void *ctx)
 {
-    istream_t delayed = ctx;
+    struct istream *delayed = ctx;
 
     istream_delayed_set_abort(delayed, error);
 }
@@ -40,9 +42,9 @@ static const struct sink_header_handler my_sink_header_handler = {
 };
 
 static istream_t
-create_test(struct pool *pool, istream_t input)
+create_test(struct pool *pool, struct istream *input)
 {
-    istream_t delayed, hold;
+    struct istream *delayed, *hold;
 
     delayed = istream_delayed_new(pool);
     hold = istream_hold_new(pool, delayed);

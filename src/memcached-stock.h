@@ -7,14 +7,17 @@
 #ifndef MEMCACHED_STOCK_H
 #define MEMCACHED_STOCK_H
 
-#include "istream.h"
 #include "memcached-protocol.h"
 
+#include <stddef.h>
+
 struct pool;
+struct istream;
 struct memcached_client_handler;
 struct memcached_stock;
 struct tcp_balancer;
 struct uri_with_address;
+struct async_operation_ref;
 
 struct memcached_stock *
 memcached_stock_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
@@ -33,7 +36,7 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
-                       istream_t value,
+                       struct istream *value,
                        const struct memcached_client_handler *handler,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref);

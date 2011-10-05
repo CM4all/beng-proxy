@@ -2,6 +2,8 @@
 #include "duplex.h"
 #include "direct.h"
 #include "sink-impl.h"
+#include "pool.h"
+#include "istream.h"
 
 #include <stdio.h>
 #include <stdlib.h>

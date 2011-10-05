@@ -8,12 +8,11 @@
 #ifndef __BENG_GET_H
 #define __BENG_GET_H
 
-#include "istream.h"
-
 #include <http/method.h>
 #include <http/status.h>
 
 struct pool;
+struct istream;
 struct http_cache;
 struct hstock;
 struct tcp_balancer;
@@ -46,7 +45,8 @@ resource_get(struct http_cache *cache,
              unsigned session_sticky,
              http_method_t method,
              const struct resource_address *address,
-             http_status_t status, struct strmap *headers, istream_t body,
+             http_status_t status, struct strmap *headers,
+             struct istream *body,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref);

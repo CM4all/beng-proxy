@@ -37,8 +37,8 @@ static const struct istream_notify_handler widget_dump_handler = {
     .close = widget_dump_callback,
 };
 
-istream_t
-widget_dump_tree_after_istream(struct pool *pool, istream_t istream,
+struct istream *
+widget_dump_tree_after_istream(struct pool *pool, struct istream *istream,
                                struct widget *widget)
 {
     assert(widget != NULL);

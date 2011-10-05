@@ -5,6 +5,7 @@
 #include "direct.h"
 #include "crash.h"
 #include "istream-file.h"
+#include "istream.h"
 
 #include <inline/compiler.h>
 

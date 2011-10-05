@@ -25,6 +25,7 @@
 #include "strmap.h"
 #include "css_syntax.h"
 #include "css_util.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -72,7 +73,7 @@ struct processor {
     struct processor_env *env;
     unsigned options;
 
-    istream_t replace;
+    struct istream *replace;
 
     struct parser *parser;
     bool had_input;
@@ -172,7 +173,7 @@ processor_option_prefix(const struct processor *processor)
 
 static void
 processor_replace_add(struct processor *processor, off_t start, off_t end,
-                      istream_t istream)
+                      struct istream *istream)
 {
     istream_replace_add(processor->replace, start, end, istream);
 }
@@ -229,7 +230,7 @@ base_uri(struct pool *pool, const char *absolute_uri)
 }
 
 static void
-processor_subst_beng_widget(istream_t istream,
+processor_subst_beng_widget(struct istream *istream,
                             struct widget *widget,
                             const struct processor_env *env)
 {
@@ -245,7 +246,7 @@ processor_subst_beng_widget(istream_t istream,
 }
 
 static void
-processor_parser_init(struct processor *processor, istream_t input);
+processor_parser_init(struct processor *processor, struct istream *input);
 
 static void
 headers_copy2(struct strmap *in, struct strmap *out,
@@ -315,7 +316,7 @@ processor_new(struct pool *caller_pool,
 }
 
 istream_t
-processor_process(struct pool *caller_pool, istream_t istream,
+processor_process(struct pool *caller_pool, struct istream *istream,
                   struct widget *widget,
                   struct processor_env *env,
                   unsigned options)
@@ -355,7 +356,7 @@ processor_process(struct pool *caller_pool, istream_t istream,
 
 void
 processor_lookup_widget(struct pool *caller_pool, http_status_t status,
-                        istream_t istream,
+                        struct istream *istream,
                         struct widget *widget, const char *id,
                         struct processor_env *env,
                         unsigned options,
@@ -659,7 +660,7 @@ parse_uri_base(const struct strref *s);
 static void
 replace_attribute_value(struct processor *processor,
                         const struct parser_attr *attr,
-                        istream_t value)
+                        struct istream *value)
 {
     processor_replace_add(processor,
                           attr->value_start, attr->value_end,
@@ -691,7 +692,7 @@ transform_uri_attribute(struct processor *processor,
     struct widget *widget = NULL;
     const struct strref *value = &attr->value;
     struct strref child_id, suffix;
-    istream_t istream;
+    struct istream *istream;
 
     switch (base) {
     case URI_BASE_TEMPLATE:
@@ -1099,7 +1100,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
     widget_copy_from_request(widget, env);
 
     if (processor->replace != NULL) {
-        istream_t istream;
+        struct istream *istream;
 
         istream = embed_inline_widget(processor->pool, env, widget);
         if (istream != NULL)
@@ -1148,7 +1149,7 @@ static void
 widget_element_finished(struct processor *processor,
                         const struct parser_tag *tag, struct widget *widget)
 {
-    istream_t istream = open_widget_element(processor, widget);
+    struct istream *istream = open_widget_element(processor, widget);
     assert(istream == NULL || processor->replace != NULL);
 
     if (processor->replace != NULL)
@@ -1350,7 +1351,7 @@ static const struct parser_handler processor_parser_handler = {
 };
 
 static void
-processor_parser_init(struct processor *processor, istream_t input)
+processor_parser_init(struct processor *processor, struct istream *input)
 {
     processor->parser = parser_new(processor->pool, input,
                                    &processor_parser_handler, processor);

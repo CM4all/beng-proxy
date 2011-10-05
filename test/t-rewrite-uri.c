@@ -9,6 +9,7 @@
 #include "async.h"
 #include "escape_pool.h"
 #include "escape_html.h"
+#include "istream.h"
 
 #include <glib.h>
 
@@ -120,7 +121,7 @@ sink_gstring_callback(GString *value, GError *error, void *_ctx)
 }
 
 static void
-assert_istream_equals(struct pool *pool, istream_t istream, const char *value)
+assert_istream_equals(struct pool *pool, struct istream *istream, const char *value)
 {
     struct sink_gstring_ctx ctx = { .finished = false };
     struct async_operation_ref async_ref;
@@ -148,7 +149,7 @@ assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
 {
     struct pool *pool = pool_new_libc(widget_pool, "rewrite");
     struct strref value2;
-    istream_t istream;
+    struct istream *istream;
 
     if (value != NULL) {
         strref_set_c(&value2, value);

@@ -16,6 +16,7 @@
 #include "tcp-stock.h"
 #include "tcp-balancer.h"
 #include "abort-close.h"
+#include "istream.h"
 
 #include <inline/compiler.h>
 
@@ -37,7 +38,7 @@ struct ajp_request {
     http_method_t method;
     const char *uri;
     struct strmap *headers;
-    istream_t body;
+    struct istream *body;
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
@@ -124,7 +125,7 @@ ajp_stock_request(struct pool *pool,
                   http_method_t method,
                   struct uri_with_address *uwa,
                   struct strmap *headers,
-                  istream_t body,
+                  struct istream *body,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref)

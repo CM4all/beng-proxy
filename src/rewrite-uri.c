@@ -15,6 +15,7 @@
 #include "escape_class.h"
 #include "istream-escape.h"
 #include "strmap.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -224,14 +225,14 @@ struct rewrite_widget_uri {
 
     const struct escape_class *escape;
 
-    istream_t delayed;
+    struct istream *delayed;
 };
 
 static void
 class_lookup_callback(void *ctx)
 {
     struct rewrite_widget_uri *rwu = ctx;
-    istream_t istream;
+    struct istream *istream;
 
     bool escape = false;
     if (rwu->widget->class != NULL) {
@@ -294,7 +295,7 @@ class_lookup_callback(void *ctx)
  *
  */
 
-istream_t
+struct istream *
 rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
                    struct tcache *translate_cache,
                    const char *absolute_uri,
@@ -331,7 +332,7 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
         if (uri == NULL)
             return NULL;
 
-        istream_t istream = istream_string_new(pool, uri);
+        struct istream *istream = istream_string_new(pool, uri);
         if (escape != NULL)
             istream = istream_escape_new(pool, istream, escape);
 

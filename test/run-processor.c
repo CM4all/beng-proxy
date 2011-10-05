@@ -6,6 +6,7 @@
 #include "widget-class.h"
 #include "rewrite-uri.h"
 #include "istream-file.h"
+#include "istream.h"
 
 #include <event.h>
 
@@ -34,7 +35,7 @@ const struct widget_class root_widget_class = {
 
 struct tcache *global_translate_cache;
 
-istream_t
+struct istream *
 embed_inline_widget(struct pool *pool,
                     gcc_unused struct processor_env *env,
                     struct widget *widget)
@@ -167,7 +168,7 @@ int main(int argc, char **argv) {
                        HTTP_METHOD_GET, NULL,
                        NULL);
 
-    istream_t result =
+    struct istream *result =
         processor_process(pool,
                           istream_file_new(pool, "/dev/stdin", (off_t)-1),
                           &widget, &env, PROCESSOR_CONTAINER);

@@ -7,14 +7,16 @@
 #ifndef MEMCACHED_PACKET_H
 #define MEMCACHED_PACKET_H
 
-#include "istream.h"
 #include "memcached-protocol.h"
 
+#include <stddef.h>
+
 struct pool;
+struct istream;
 
 /**
  * Serialize a memcached request packet, and return it as an
- * istream_t.
+ * istream.
  *
  * @param pool the memory pool used to allocate the packet
  * @param opcode the opcode of the memcached method
@@ -25,11 +27,11 @@ struct pool;
  * @param value an optional request value
  * @param message_id the id of the message
  */
-istream_t
+struct istream *
 memcached_request_packet(struct pool *pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
-                         istream_t value,
+                         struct istream *value,
                          uint32_t message_id);
 
 #endif

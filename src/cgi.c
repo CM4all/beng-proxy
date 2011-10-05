@@ -33,7 +33,7 @@ struct cgi {
 
     struct stopwatch *stopwatch;
 
-    istream_t input;
+    struct istream *input;
     struct fifo_buffer *buffer;
     struct strmap *headers;
 
@@ -388,13 +388,13 @@ static const struct istream_handler cgi_input_handler = {
  */
 
 static inline struct cgi *
-istream_to_cgi(istream_t istream)
+istream_to_cgi(struct istream *istream)
 {
     return (struct cgi *)(((char*)istream) - offsetof(struct cgi, output));
 }
 
 static off_t
-istream_cgi_available(istream_t istream, bool partial)
+istream_cgi_available(struct istream *istream, bool partial)
 {
     struct cgi *cgi = istream_to_cgi(istream);
 
@@ -432,7 +432,7 @@ istream_cgi_available(istream_t istream, bool partial)
 }
 
 static void
-istream_cgi_read(istream_t istream)
+istream_cgi_read(struct istream *istream)
 {
     struct cgi *cgi = istream_to_cgi(istream);
 
@@ -468,7 +468,7 @@ istream_cgi_read(istream_t istream)
 }
 
 static void
-istream_cgi_close(istream_t istream)
+istream_cgi_close(struct istream *istream)
 {
     struct cgi *cgi = istream_to_cgi(istream);
 
@@ -664,7 +664,7 @@ cgi_new(struct pool *pool, const struct jail_params *jail,
         const char *query_string,
         const char *document_root,
         const char *remote_addr,
-        struct strmap *headers, istream_t body,
+        struct strmap *headers, struct istream *body,
         const char *const params[], unsigned num_params,
         const struct http_response_handler *handler,
         void *handler_ctx,
@@ -678,7 +678,7 @@ cgi_new(struct pool *pool, const struct jail_params *jail,
 
     stopwatch = stopwatch_new(pool, path);
 
-    istream_t input;
+    struct istream *input;
     GError *error = NULL;
     pid_t pid = beng_fork(pool, body, &input,
                           cgi_child_callback, NULL, &error);

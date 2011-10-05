@@ -5,19 +5,20 @@
  */
 
 #include "memcached-packet.h"
+#include "istream.h"
 
 #include <glib.h>
 #include <string.h>
 
-istream_t
+struct istream *
 memcached_request_packet(struct pool *pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
-                         istream_t value,
+                         struct istream *value,
                          uint32_t message_id)
 {
     struct memcached_request_header *header;
-    istream_t header_stream, extras_stream;
+    struct istream *header_stream, *extras_stream;
     off_t value_length;
 
     value_length = value != NULL ? istream_available(value, false) : 0;

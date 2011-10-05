@@ -7,10 +7,9 @@
 #ifndef BENG_PROXY_ERRDOC_H
 #define BENG_PROXY_ERRDOC_H
 
-#include "istream.h"
-
 #include <http/status.h>
 
+struct istream;
 struct request;
 struct growing_buffer;
 
@@ -21,6 +20,6 @@ struct growing_buffer;
  */
 void
 errdoc_dispatch_response(struct request *request2, http_status_t status,
-                         struct growing_buffer *headers, istream_t body);
+                         struct growing_buffer *headers, struct istream *body);
 
 #endif

@@ -1,4 +1,5 @@
 #include "direct.h"
+#include "istream.h"
 
 #include <glib.h>
 #include <event.h>

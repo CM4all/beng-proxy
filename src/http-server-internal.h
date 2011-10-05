@@ -86,7 +86,7 @@ struct http_server_connection {
         http_status_t status;
         char status_buffer[64];
         char content_length_buffer[32];
-        istream_t istream;
+        struct istream *istream;
         off_t length;
 
         uint64_t bytes_sent;

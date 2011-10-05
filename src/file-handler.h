@@ -7,8 +7,10 @@
 #ifndef BENG_PROXY_FILE_HANDLER_H
 #define BENG_PROXY_FILE_HANDLER_H
 
-#include "istream.h"
+#include <stdbool.h>
+#include <sys/types.h>
 
+struct istream;
 struct request;
 struct stat;
 
@@ -34,7 +36,7 @@ file_evaluate_request(struct request *request2, int fd, const struct stat *st,
 void
 file_dispatch(struct request *request2, const struct stat *st,
               const struct file_request *file_request,
-              istream_t body);
+              struct istream *body);
 
 void
 file_callback(struct request *request);

@@ -9,6 +9,7 @@
 #include "widget-view.h"
 #include "strref-pool.h"
 #include "format.h"
+#include "istream.h"
 
 #include <string.h>
 #include <assert.h>

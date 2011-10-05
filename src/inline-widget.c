@@ -18,6 +18,7 @@
 #include "strref2.h"
 #include "strmap.h"
 #include "http-response.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -28,7 +29,7 @@ struct inline_widget {
     struct processor_env *env;
     struct widget *widget;
 
-    istream_t delayed;
+    struct istream *delayed;
 };
 
 static GQuark
@@ -50,7 +51,7 @@ inline_widget_close(struct inline_widget *iw, GError *error)
  */
 static istream_t
 widget_response_format(struct pool *pool, const struct widget *widget,
-                       struct strmap **headers_r, istream_t body,
+                       struct strmap **headers_r, struct istream *body,
                        GError **error_r)
 {
     struct strmap *headers = *headers_r;
@@ -87,7 +88,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
            utf-8; this widget however used a different charset.
            Automatically convert it with istream_iconv */
         const char *charset2 = strref_dup(pool, charset);
-        istream_t ic = istream_iconv_new(pool, body, "utf-8", charset2);
+        struct istream *ic = istream_iconv_new(pool, body, "utf-8", charset2);
         if (ic == NULL) {
             g_set_error(error_r, widget_quark(), 0,
                         "widget '%s' sent unknown charset '%s'",
@@ -133,7 +134,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
 static void
 inline_widget_response(http_status_t status,
                        struct strmap *headers,
-                       istream_t body, void *ctx)
+                       struct istream *body, void *ctx)
 {
     struct inline_widget *iw = ctx;
 
@@ -247,12 +248,12 @@ class_lookup_callback(void *_ctx)
  *
  */
 
-istream_t
+struct istream *
 embed_inline_widget(struct pool *pool, struct processor_env *env,
                     struct widget *widget)
 {
     struct inline_widget *iw = p_malloc(pool, sizeof(*iw));
-    istream_t hold;
+    struct istream *hold;
 
     assert(pool != NULL);
     assert(env != NULL);

@@ -14,6 +14,7 @@
 #include "http-server.h"
 #include "global.h"
 #include "istream-file.h"
+#include "istream.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -305,7 +306,7 @@ file_headers(struct growing_buffer *headers,
 void
 file_dispatch(struct request *request2, const struct stat *st,
               const struct file_request *file_request,
-              istream_t body)
+              struct istream *body)
 {
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
@@ -360,7 +361,7 @@ file_dispatch(struct request *request2, const struct stat *st,
 
 static bool
 file_dispatch_compressed(struct request *request2, const struct stat *st,
-                         istream_t body, const char *encoding,
+                         struct istream *body, const char *encoding,
                          const char *path)
 {
     struct http_server_request *request = request2->request;
@@ -368,7 +369,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
     const char *accept_encoding;
     struct growing_buffer *headers;
     http_status_t status;
-    istream_t compressed_body;
+    struct istream *compressed_body;
     struct stat st2;
 
     accept_encoding = strmap_get(request->headers, "accept-encoding");
@@ -415,7 +416,7 @@ file_callback(struct request *request2)
     struct http_server_request *request = request2->request;
     const struct translate_response *tr = request2->translate.response;
     const char *path;
-    istream_t body;
+    struct istream *body;
     struct stat st;
     struct file_request file_request = {
         .range = RANGE_NONE,

@@ -11,6 +11,8 @@
 #include "tcp-balancer.h"
 #include "uri-address.h"
 #include "lease.h"
+#include "pool.h"
+#include "istream.h"
 
 #include <glib.h>
 #include <assert.h>
@@ -54,7 +56,7 @@ struct memcached_stock_request {
     const void *key;
     size_t key_length;
 
-    istream_t value;
+    struct istream *value;
 
     const struct memcached_client_handler *handler;
     void *handler_ctx;
@@ -125,7 +127,7 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,
-                       istream_t value,
+                       struct istream *value,
                        const struct memcached_client_handler *handler,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref)

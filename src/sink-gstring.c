@@ -1,9 +1,10 @@
 #include "sink-gstring.h"
 #include "async.h"
+#include "istream.h"
 
 struct sink_gstring {
     struct pool *pool;
-    istream_t input;
+    struct istream *input;
 
     GString *value;
 
@@ -89,7 +90,7 @@ static const struct async_operation_class sink_gstring_operation = {
  */
 
 void
-sink_gstring_new(struct pool *pool, istream_t input,
+sink_gstring_new(struct pool *pool, struct istream *input,
                  void (*callback)(GString *value, GError *error, void *ctx),
                  void *ctx, struct async_operation_ref *async_ref)
 {

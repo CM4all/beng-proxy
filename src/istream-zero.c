@@ -13,13 +13,13 @@ struct istream_zero {
 };
 
 static inline struct istream_zero *
-istream_to_zero(istream_t istream)
+istream_to_zero(struct istream *istream)
 {
     return (struct istream_zero *)(((char*)istream) - offsetof(struct istream_zero, stream));
 }
 
 static off_t
-istream_zero_available(gcc_unused istream_t istream, bool partial)
+istream_zero_available(gcc_unused struct istream *istream, bool partial)
 {
     return partial
         ? INT_MAX
@@ -27,13 +27,13 @@ istream_zero_available(gcc_unused istream_t istream, bool partial)
 }
 
 static off_t
-istream_zero_skip(istream_t istream gcc_unused, off_t length)
+istream_zero_skip(struct istream *istream gcc_unused, off_t length)
 {
     return length;
 }
 
 static void
-istream_zero_read(istream_t istream)
+istream_zero_read(struct istream *istream)
 {
     struct istream_zero *zero = istream_to_zero(istream);
     static char buffer[1024];
@@ -42,7 +42,7 @@ istream_zero_read(istream_t istream)
 }
 
 static void
-istream_zero_close(istream_t istream)
+istream_zero_close(struct istream *istream)
 {
     struct istream_zero *zero = istream_to_zero(istream);
 

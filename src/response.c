@@ -30,6 +30,7 @@
 #include "strmap.h"
 #include "processor.h"
 #include "css_processor.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -114,11 +115,11 @@ static void
 response_invoke_processor(struct request *request2,
                           http_status_t status,
                           struct strmap *response_headers,
-                          istream_t body,
+                          struct istream *body,
                           const struct transformation *transformation)
 {
     struct http_server_request *request = request2->request;
-    istream_t request_body;
+    struct istream *request_body;
     struct widget *widget;
     const char *uri;
 
@@ -269,7 +270,7 @@ static void
 response_invoke_css_processor(struct request *request2,
                               http_status_t status,
                               struct strmap *response_headers,
-                              istream_t body,
+                              struct istream *body,
                               const struct transformation *transformation)
 {
     struct http_server_request *request = request2->request;
@@ -390,7 +391,7 @@ more_response_headers(const struct request *request2,
 static void
 response_dispatch_direct(struct request *request2,
                          http_status_t status, struct growing_buffer *headers,
-                         istream_t body)
+                         struct istream *body)
 {
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
@@ -451,7 +452,7 @@ response_dispatch_direct(struct request *request2,
 static void
 response_apply_filter(struct request *request2,
                       http_status_t status, struct strmap *headers2,
-                      istream_t body,
+                      struct istream *body,
                       const struct resource_address *filter)
 {
     struct http_server_request *request = request2->request;
@@ -479,7 +480,7 @@ response_apply_filter(struct request *request2,
 static void
 response_apply_transformation(struct request *request2,
                               http_status_t status, struct strmap *headers,
-                              istream_t body,
+                              struct istream *body,
                               const struct transformation *transformation)
 {
     assert(transformation != NULL);
@@ -520,7 +521,7 @@ filter_enabled(const struct translate_response *tr,
 void
 response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
-                  istream_t body)
+                  struct istream *body)
 {
     assert(!request2->response_sent);
     assert(body == NULL || !istream_has_handler(body));
@@ -611,7 +612,7 @@ response_dispatch_redirect(struct request *request2, http_status_t status,
 
 static void
 response_response(http_status_t status, struct strmap *headers,
-                  istream_t body,
+                  struct istream *body,
                   void *ctx)
 {
     struct request *request2 = ctx;

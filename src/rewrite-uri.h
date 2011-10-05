@@ -7,8 +7,9 @@
 #ifndef __BENG_REWRITE_URI_H
 #define __BENG_REWRITE_URI_H
 
-#include "istream.h"
 #include "session.h"
+
+#include <glib.h>
 
 struct pool;
 struct tcache;
@@ -36,7 +37,8 @@ parse_uri_mode(const struct strref *s);
  * taken into account (path_info and query_string)
  * @param view the name of a view, or NULL to use the default view
  */
-istream_t
+G_GNUC_MALLOC
+struct istream *
 rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
                    struct tcache *translate_cache,
                    const char *absolute_uri,

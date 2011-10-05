@@ -7,6 +7,7 @@
 #include "widget-lookup.h"
 #include "rewrite-uri.h"
 #include "async.h"
+#include "istream.h"
 
 #include <glib.h>
 
@@ -32,7 +33,7 @@ const struct widget_class root_widget_class = {
 
 struct tcache *global_translate_cache;
 
-istream_t
+struct istream *
 embed_inline_widget(struct pool *pool,
                     gcc_unused struct processor_env *env,
                     struct widget *widget)
@@ -58,7 +59,7 @@ parse_uri_mode(G_GNUC_UNUSED const struct strref *s)
     return URI_MODE_DIRECT;
 }
 
-istream_t
+struct istream *
 rewrite_widget_uri(gcc_unused struct pool *pool, gcc_unused struct pool *widget_pool,
                    gcc_unused struct tcache *translate_cache,
                    gcc_unused const char *absolute_uri,

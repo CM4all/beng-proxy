@@ -7,13 +7,11 @@
 #ifndef BENG_PROXY_INLINE_WIDGET_H
 #define BENG_PROXY_INLINE_WIDGET_H
 
-#include "istream.h"
-
 struct pool;
 struct widget;
 struct processor_env;
 
-istream_t
+struct istream *
 embed_inline_widget(struct pool *pool, struct processor_env *env,
                     struct widget *widget);
 

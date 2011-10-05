@@ -6,6 +6,7 @@
 #include "lease.h"
 #include "direct.h"
 #include "istream-file.h"
+#include "istream.h"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>

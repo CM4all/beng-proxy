@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_REQUEST_FORWARD_H
 #define BENG_PROXY_REQUEST_FORWARD_H
 
-#include "istream.h"
-
 #include <http/method.h>
 
 struct header_forward_settings;
@@ -19,7 +17,7 @@ struct forward_request {
 
     struct strmap *headers;
 
-    istream_t body;
+    struct istream *body;
 };
 
 void

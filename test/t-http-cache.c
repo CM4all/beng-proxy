@@ -8,6 +8,7 @@
 #include "http-response.h"
 #include "async.h"
 #include "tpool.h"
+#include "istream.h"
 
 #include <inline/compiler.h>
 

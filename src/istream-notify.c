@@ -13,7 +13,7 @@
 struct istream_notify {
     struct istream output;
 
-    istream_t input;
+    struct istream *input;
 
     const struct istream_notify_handler *handler;
     void *handler_ctx;
@@ -59,13 +59,13 @@ static const struct istream_handler notify_input_handler = {
  */
 
 static inline struct istream_notify *
-istream_to_notify(istream_t istream)
+istream_to_notify(struct istream *istream)
 {
     return (struct istream_notify *)(((char*)istream) - offsetof(struct istream_notify, output));
 }
 
 static off_t
-istream_notify_available(istream_t istream, bool partial)
+istream_notify_available(struct istream *istream, bool partial)
 {
     struct istream_notify *notify = istream_to_notify(istream);
 
@@ -73,7 +73,7 @@ istream_notify_available(istream_t istream, bool partial)
 }
 
 static void
-istream_notify_read(istream_t istream)
+istream_notify_read(struct istream *istream)
 {
     struct istream_notify *notify = istream_to_notify(istream);
 
@@ -82,7 +82,7 @@ istream_notify_read(istream_t istream)
 }
 
 static void
-istream_notify_close(istream_t istream)
+istream_notify_close(struct istream *istream)
 {
     struct istream_notify *notify = istream_to_notify(istream);
 
@@ -104,8 +104,8 @@ static const struct istream istream_notify = {
  *
  */
 
-istream_t
-istream_notify_new(struct pool *pool, istream_t input,
+struct istream *
+istream_notify_new(struct pool *pool, struct istream *input,
                    const struct istream_notify_handler *handler, void *ctx)
 {
     struct istream_notify *notify = istream_new_macro(pool, notify);

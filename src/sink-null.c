@@ -5,6 +5,7 @@
  */
 
 #include "sink-impl.h"
+#include "istream.h"
 
 static size_t
 sink_null_data(gcc_unused const void *data, size_t length,
@@ -31,7 +32,7 @@ static const struct istream_handler sink_null_handler = {
 };
 
 void
-sink_null_new(istream_t istream)
+sink_null_new(struct istream *istream)
 {
     istream_handler_set(istream, &sink_null_handler, NULL, 0);
 }

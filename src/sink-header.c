@@ -23,7 +23,7 @@ struct sink_header {
         SIZE, HEADER, CALLBACK, DATA
     } state;
 
-    istream_t input;
+    struct istream *input;
 
     unsigned char size_buffer[4];
 
@@ -279,13 +279,13 @@ static const struct istream_handler sink_header_input_handler = {
  */
 
 static inline struct sink_header *
-istream_to_header(istream_t istream)
+istream_to_header(struct istream *istream)
 {
     return (struct sink_header *)(((char*)istream) - offsetof(struct sink_header, output));
 }
 
 static off_t
-sink_header_available(istream_t istream, bool partial)
+sink_header_available(struct istream *istream, bool partial)
 {
     struct sink_header *header = istream_to_header(istream);
     off_t available = istream_available(header->input, partial);
@@ -304,7 +304,7 @@ sink_header_available(istream_t istream, bool partial)
 }
 
 static void
-sink_header_read(istream_t istream)
+sink_header_read(struct istream *istream)
 {
     struct sink_header *header = istream_to_header(istream);
 
@@ -318,7 +318,7 @@ sink_header_read(istream_t istream)
 }
 
 static void
-sink_header_close(istream_t istream)
+sink_header_close(struct istream *istream)
 {
     struct sink_header *header = istream_to_header(istream);
 
@@ -364,7 +364,7 @@ static const struct async_operation_class sink_header_operation = {
  */
 
 void
-sink_header_new(struct pool *pool, istream_t input,
+sink_header_new(struct pool *pool, struct istream *input,
                 const struct sink_header_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref)
 {

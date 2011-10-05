@@ -11,7 +11,6 @@
 #include "uri-parser.h"
 #include "translate.h"
 #include "penv.h"
-#include "istream.h"
 #include "async.h"
 #include "session.h"
 #include "transformation.h"
@@ -173,7 +172,7 @@ struct growing_buffer;
 void
 response_dispatch(struct request *request2,
                   http_status_t status, struct growing_buffer *headers,
-                  istream_t body);
+                  struct istream *body);
 
 void
 response_dispatch_message(struct request *request2, http_status_t status,

@@ -102,7 +102,7 @@ struct istream {
      * @return the number of bytes available or -1 if the object does
      * not know
      */
-    off_t (*available)(istream_t istream, bool partial);
+    off_t (*available)(struct istream *istream, bool partial);
 
     /**
      * Skip data without processing it.  By skipping 0 bytes, you can
@@ -110,7 +110,7 @@ struct istream {
      *
      * @return the number of bytes skipped or -1 if skipping is not supported
      */
-    off_t (*skip)(istream_t istream, off_t length);
+    off_t (*skip)(struct istream *istream, off_t length);
 
     /**
      * Try to read from the stream.  If the stream can read data
@@ -126,7 +126,7 @@ struct istream {
      * for calling back (and calling this function) is handed back to
      * the istream handler.
      */
-    void (*read)(istream_t istream);
+    void (*read)(struct istream *istream);
 
     /**
      * Close the istream object, and return the remaining data as a
@@ -134,21 +134,21 @@ struct istream {
      * Returns -1 if this is not possible (the istream object is still
      * usable).
      */
-    int (*as_fd)(istream_t istream);
+    int (*as_fd)(struct istream *istream);
 
     /**
      * Close the stream and free resources.  This must not be called
      * after the handler's eof() / abort() callbacks were invoked.
      */
-    void (*close)(istream_t istream);
+    void (*close)(struct istream *istream);
 };
 
-static inline istream_t
+static inline struct istream *
 istream_struct_cast(struct istream *istream)
 {
     assert(istream != NULL);
 
-    return (istream_t)istream;
+    return (struct istream *)istream;
 }
 
 static inline off_t
@@ -312,9 +312,9 @@ istream_close(struct istream *istream)
 }
 
 static inline void
-istream_free(istream_t *istream_r)
+istream_free(struct istream **istream_r)
 {
-    istream_t istream = *istream_r;
+    struct istream *istream = *istream_r;
     *istream_r = NULL;
     istream_close(istream);
 }
@@ -344,7 +344,7 @@ istream_handler_set(struct istream *istream,
 }
 
 static inline void
-istream_assign_handler(istream_t *istream_r, istream_t istream,
+istream_assign_handler(struct istream **istream_r, struct istream *istream,
                        const struct istream_handler *handler,
                        void *handler_ctx,
                        istream_direct_t handler_direct)
@@ -370,7 +370,7 @@ istream_handler_clear(struct istream *istream)
 }
 
 static inline void
-istream_close_handler(istream_t istream)
+istream_close_handler(struct istream *istream)
 {
     assert(istream != NULL);
     assert(istream_has_handler(istream));
@@ -380,7 +380,7 @@ istream_close_handler(istream_t istream)
 }
 
 static inline void
-istream_free_handler(istream_t *istream_r)
+istream_free_handler(struct istream **istream_r)
 {
     assert(istream_r != NULL);
     assert(*istream_r != NULL);
@@ -391,22 +391,22 @@ istream_free_handler(istream_t *istream_r)
 }
 
 /**
- * Close an istream_t which was never used, i.e. it does not have a
+ * Close an istream which was never used, i.e. it does not have a
  * handler yet.
  */
 static inline void
-istream_close_unused(istream_t istream)
+istream_close_unused(struct istream *istream)
 {
     assert(!istream_has_handler(istream));
     istream_close(istream);
 }
 
 /**
- * Free an istream_t which was never used, i.e. it does not have a
+ * Free an istream which was never used, i.e. it does not have a
  * handler yet.
  */
 static inline void
-istream_free_unused(istream_t *istream_r)
+istream_free_unused(struct istream **istream_r)
 {
     assert(istream_r != NULL);
     assert(*istream_r != NULL);

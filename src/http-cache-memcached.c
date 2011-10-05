@@ -16,6 +16,7 @@
 #include "tpool.h"
 #include "background.h"
 #include "istream-gb.h"
+#include "istream.h"
 
 #include <glib.h>
 
@@ -68,7 +69,7 @@ http_cache_memcached_flush_response(enum memcached_response_status status,
                                     G_GNUC_UNUSED size_t extras_length,
                                     G_GNUC_UNUSED const void *key,
                                     G_GNUC_UNUSED size_t key_length,
-                                    istream_t value, void *ctx)
+                                    struct istream *value, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
@@ -146,7 +147,7 @@ static void
 http_cache_memcached_get_response(enum memcached_response_status status,
                                   const void *extras, size_t extras_length,
                                   const void *key, size_t key_length,
-                                  istream_t value, void *ctx);
+                                  struct istream *value, void *ctx);
 
 static void
 http_cache_memcached_get_error(GError *error, void *ctx)
@@ -210,7 +211,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
 
 static void
 http_cache_memcached_header_done(void *header_ptr, size_t length,
-                                 istream_t tail, void *ctx)
+                                 struct istream *tail, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
     struct strref header;
@@ -264,7 +265,7 @@ http_cache_memcached_get_response(enum memcached_response_status status,
                                   G_GNUC_UNUSED size_t extras_length,
                                   G_GNUC_UNUSED const void *key,
                                   G_GNUC_UNUSED size_t key_length,
-                                  istream_t value, void *ctx)
+                                  struct istream *value, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
@@ -339,7 +340,7 @@ http_cache_memcached_put_response(enum memcached_response_status status,
                                   G_GNUC_UNUSED size_t extras_length,
                                   G_GNUC_UNUSED const void *key,
                                   G_GNUC_UNUSED size_t key_length,
-                                  istream_t value, void *ctx)
+                                  struct istream *value, void *ctx)
 {
     struct http_cache_memcached_request *request = ctx;
 
@@ -378,7 +379,7 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
                          const struct http_cache_info *info,
                          struct strmap *request_headers,
                          http_status_t status, struct strmap *response_headers,
-                         istream_t value,
+                         struct istream *value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
                          struct async_operation_ref *async_ref)
 {
@@ -451,7 +452,7 @@ mcd_background_response(G_GNUC_UNUSED enum memcached_response_status status,
                         G_GNUC_UNUSED size_t extras_length,
                         G_GNUC_UNUSED const void *key,
                         G_GNUC_UNUSED size_t key_length,
-                        istream_t value, void *ctx)
+                        struct istream *value, void *ctx)
 {
     struct background_job *job = ctx;
 

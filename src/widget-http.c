@@ -25,6 +25,7 @@
 #include "resource-tag.h"
 #include "uri-extract.h"
 #include "strmap.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -126,7 +127,7 @@ static const struct http_response_handler widget_response_handler;
 
 static bool
 widget_response_redirect(struct embed *embed, const char *location,
-                         istream_t body)
+                         struct istream *body)
 {
     const struct resource_address *address;
     struct session *session;
@@ -196,7 +197,7 @@ processable(const struct strmap *headers)
 
 static void
 widget_response_dispatch(struct embed *embed, http_status_t status,
-                         struct strmap *headers, istream_t body);
+                         struct strmap *headers, struct istream *body);
 
 static void
 widget_dispatch_error(struct embed *embed, GError *error)
@@ -216,7 +217,7 @@ widget_dispatch_error(struct embed *embed, GError *error)
  */
 static void
 widget_response_process(struct embed *embed, http_status_t status,
-                        struct strmap *headers, istream_t body,
+                        struct strmap *headers, struct istream *body,
                         unsigned options)
 {
     if (body == NULL) {
@@ -266,7 +267,7 @@ css_processable(const struct strmap *headers)
 
 static void
 widget_response_process_css(struct embed *embed, http_status_t status,
-                            struct strmap *headers, istream_t body,
+                            struct strmap *headers, struct istream *body,
                             unsigned options)
 {
     if (body == NULL) {
@@ -296,7 +297,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
 
 static void
 widget_response_apply_filter(struct embed *embed, http_status_t status,
-                             struct strmap *headers, istream_t body,
+                             struct strmap *headers, struct istream *body,
                              const struct resource_address *filter)
 {
     const char *source_tag;
@@ -325,7 +326,7 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
  */
 static void
 widget_response_transform(struct embed *embed, http_status_t status,
-                          struct strmap *headers, istream_t body,
+                          struct strmap *headers, struct istream *body,
                           const struct transformation *transformation)
 {
     const char *p;
@@ -390,7 +391,7 @@ widget_transformation_enabled(const struct widget *widget,
  */
 static void
 widget_response_dispatch(struct embed *embed, http_status_t status,
-                         struct strmap *headers, istream_t body)
+                         struct strmap *headers, struct istream *body)
 {
     const struct transformation *transformation = embed->transformation;
 
@@ -443,7 +444,7 @@ widget_collect_cookies(struct cookie_jar *jar, const struct strmap *headers,
 
 static void
 widget_response_response(http_status_t status, struct strmap *headers,
-                         istream_t body, void *ctx)
+                         struct istream *body, void *ctx)
 {
     struct embed *embed = ctx;
     /*const char *translate;*/

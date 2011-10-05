@@ -1,14 +1,13 @@
 #ifndef SINK_IMPL_H
 #define SINK_IMPL_H
 
-#include "istream.h"
-
+struct istream;
 struct async_operation_ref;
 
 void
-sink_null_new(istream_t istream);
+sink_null_new(struct istream *istream);
 
 void
-sink_close_new(istream_t istream);
+sink_close_new(struct istream *istream);
 
 #endif

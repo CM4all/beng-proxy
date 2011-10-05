@@ -31,7 +31,7 @@ struct http_body_reader {
 #endif
 };
 
-static inline istream_t
+static inline struct istream *
 http_body_istream(struct http_body_reader *body)
 {
     return istream_struct_cast(&body->output);
@@ -77,7 +77,7 @@ bool
 http_body_socket_eof(struct http_body_reader *body,
                      struct fifo_buffer *buffer);
 
-istream_t
+struct istream *
 http_body_init(struct http_body_reader *body,
                const struct istream *stream, struct pool *stream_pool,
                struct pool *pool, off_t content_length, bool chunked);

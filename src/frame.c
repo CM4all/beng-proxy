@@ -13,6 +13,7 @@
 #include "widget-lookup.h"
 #include "global.h"
 #include "http-response.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 

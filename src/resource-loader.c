@@ -21,6 +21,7 @@
 #include "delegate-request.h"
 #include "strutil.h"
 #include "strmap.h"
+#include "istream.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -127,7 +128,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         http_method_t method,
                         const struct resource_address *address,
                         http_status_t status, struct strmap *headers,
-                        istream_t body,
+                        struct istream *body,
                         const struct http_response_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref)

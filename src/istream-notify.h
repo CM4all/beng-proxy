@@ -8,7 +8,8 @@
 #ifndef BENG_PROXY_ISTREAM_NOTIFY_H
 #define BENG_PROXY_ISTREAM_NOTIFY_H
 
-#include "istream.h"
+struct pool;
+struct istream;
 
 struct istream_notify_handler {
     void (*eof)(void *ctx);
@@ -16,8 +17,8 @@ struct istream_notify_handler {
     void (*close)(void *ctx);
 };
 
-istream_t
-istream_notify_new(struct pool *pool, istream_t input,
+struct istream *
+istream_notify_new(struct pool *pool, struct istream *input,
                    const struct istream_notify_handler *handler, void *ctx);
 
 #endif

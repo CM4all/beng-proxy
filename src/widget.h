@@ -8,7 +8,6 @@
 #define __BENG_WIDGET_H
 
 #include "strref.h"
-#include "istream.h"
 #include "resource-address.h"
 
 #include <inline/list.h>
@@ -82,7 +81,7 @@ struct widget {
         http_method_t method;
 
         /** the request body (from processor_env.body) */
-        istream_t body;
+        struct istream * body;
 
         /** should the resource be passed raw, i.e. not processed? */
         bool raw;

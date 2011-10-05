@@ -7,13 +7,18 @@
 #ifndef __BENG_AJP_CLIENT_H
 #define __BENG_AJP_CLIENT_H
 
-#include "istream.h"
+#include "istream-direct.h"
 
 #include <http/method.h>
 
+#include <glib.h>
+
+struct pool;
+struct istream;
 struct lease;
 struct http_response_handler;
 struct strmap;
+struct async_operation_ref;
 
 G_GNUC_CONST
 static inline GQuark
@@ -53,7 +58,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
                    struct strmap *headers,
-                   istream_t body,
+                   struct istream *body,
                    const struct http_response_handler *handler,
                    void *ctx,
                    struct async_operation_ref *async_ref);

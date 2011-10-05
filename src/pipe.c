@@ -10,6 +10,8 @@
 #include "format.h"
 #include "stopwatch.h"
 #include "strmap.h"
+#include "pool.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -85,13 +87,13 @@ make_pipe_etag(struct pool *pool, const char *in,
 void
 pipe_filter(struct pool *pool, const char *path,
             const char *const* args, unsigned num_args,
-            http_status_t status, struct strmap *headers, istream_t body,
+            http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx)
 {
     struct stopwatch *stopwatch;
     pid_t pid;
-    istream_t response;
+    struct istream *response;
     char *argv[1 + num_args + 1];
     const char *etag;
 

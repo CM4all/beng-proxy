@@ -31,7 +31,7 @@ struct context {
     int fd;
     bool idle, reuse;
 
-    istream_t value;
+    struct istream *value;
     bool value_eof, value_abort;
 
     struct async_operation_ref async_ref;

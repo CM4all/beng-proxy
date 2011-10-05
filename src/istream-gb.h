@@ -7,11 +7,10 @@
 #ifndef BENG_PROXY_ISTREAM_GB_H
 #define BENG_PROXY_ISTREAM_GB_H
 
-#include "istream.h"
-
+struct pool;
 struct growing_buffer;
 
-istream_t
+struct istream *
 istream_gb_new(struct pool *pool, const struct growing_buffer *gb);
 
 #endif

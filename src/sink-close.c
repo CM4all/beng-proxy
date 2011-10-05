@@ -6,6 +6,7 @@
  */
 
 #include "sink-impl.h"
+#include "istream.h"
 
 #include <stdlib.h>
 

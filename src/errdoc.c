@@ -13,6 +13,7 @@
 #include "tcache.h"
 #include "get.h"
 #include "http-response.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -24,7 +25,7 @@ struct error_response {
 
     http_status_t status;
     struct growing_buffer *headers;
-    istream_t body;
+    struct istream *body;
 
     struct translate_request translate_request;
 };
@@ -42,7 +43,7 @@ errdoc_resubmit(const struct error_response *er)
 
 static void
 errdoc_response_response(http_status_t status, struct strmap *headers,
-                          istream_t body, void *ctx)
+                         struct istream *body, void *ctx)
 {
     struct error_response *er = ctx;
 
@@ -160,7 +161,7 @@ static const struct async_operation_class errdoc_operation = {
 
 void
 errdoc_dispatch_response(struct request *request2, http_status_t status,
-                         struct growing_buffer *headers, istream_t body)
+                         struct growing_buffer *headers, struct istream *body)
 {
     struct instance *instance = request2->connection->instance;
 

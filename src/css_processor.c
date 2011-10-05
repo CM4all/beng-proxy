@@ -22,6 +22,7 @@
 #include "global.h"
 #include "expansible-buffer.h"
 #include "escape_css.h"
+#include "istream.h"
 
 #include <daemon/log.h>
 
@@ -43,7 +44,7 @@ struct css_processor {
     struct processor_env *env;
     unsigned options;
 
-    istream_t replace;
+    struct istream *replace;
 
     struct css_parser *parser;
     bool had_input;

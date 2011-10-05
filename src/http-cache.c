@@ -16,6 +16,7 @@
 #include "async.h"
 #include "background.h"
 #include "istream-gb.h"
+#include "istream.h"
 
 #include <glib.h>
 
@@ -84,10 +85,10 @@ struct http_cache_request {
 
     /**
      * The response body from the http_cache_document.  This is not
-     * used for the heap backend: it creates the #istream_t on demand
+     * used for the heap backend: it creates the #istream on demand
      * with http_cache_heap_istream().
      */
-    istream_t document_body;
+    struct istream *document_body;
 
     /**
      * This struct holds response information while this module
@@ -101,7 +102,7 @@ struct http_cache_request {
          * The response body istream we got from the http_request()
          * callback.
          */
-        istream_t input;
+        struct istream *input;
 
         /**
          * The current size of #output.  We could use
@@ -237,7 +238,7 @@ http_cache_put(struct http_cache_request *request)
     else if (request->cache->memcached_stock != NULL) {
         struct background_job *job = p_malloc(request->pool, sizeof(*job));
 
-        istream_t value = request->response.output != NULL
+        struct istream *value = request->response.output != NULL
             ? istream_gb_new(request->pool, request->response.output)
             : NULL;
 
@@ -367,7 +368,7 @@ static const struct istream_handler http_cache_response_body_handler = {
 
 static void
 http_cache_response_response(http_status_t status, struct strmap *headers,
-                             istream_t body,
+                             struct istream *body,
                              void *ctx)
 {
     struct http_cache_request *request = ctx;
@@ -748,7 +749,7 @@ http_cache_heap_serve(struct cache *cache,
                       void *handler_ctx)
 {
     struct http_response_handler_ref handler_ref;
-    istream_t response_body;
+    struct istream *response_body;
 
     cache_log(4, "http_cache: serve %s\n", key);
 
@@ -997,7 +998,7 @@ http_cache_memcached_miss(struct http_cache_request *request)
  */
 static void
 http_cache_memcached_get_callback(struct http_cache_document *document,
-                                  istream_t body, GError *error, void *ctx)
+                                  struct istream *body, GError *error, void *ctx)
 {
     struct http_cache_request *request = ctx;
 
@@ -1092,7 +1093,7 @@ http_cache_request(struct http_cache *cache,
                    struct pool *pool, unsigned session_sticky,
                    http_method_t method,
                    const struct resource_address *address,
-                   struct strmap *headers, istream_t body,
+                   struct strmap *headers, struct istream *body,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)

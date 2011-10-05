@@ -7,15 +7,15 @@
 #ifndef BENG_PROXY_WIDGET_DUMP_H
 #define BENG_PROXY_WIDGET_DUMP_H
 
-#include "istream.h"
-
+struct pool;
+struct istream;
 struct widget;
 
 /**
  * Dump the widget tree to the log file after the istream is done.
  */
-istream_t
-widget_dump_tree_after_istream(struct pool *pool, istream_t istream,
+struct istream *
+widget_dump_tree_after_istream(struct pool *pool, struct istream *istream,
                                struct widget *widget);
 
 #endif

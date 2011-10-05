@@ -8,13 +8,14 @@
 #define __BENG_PARSER_H
 
 #include "strref.h"
-#include "istream.h"
 
 #include <inline/compiler.h>
 
 #include <sys/types.h>
+#include <glib.h>
 
 struct pool;
+struct istream;
 
 enum parser_tag_type {
     TAG_OPEN,
@@ -55,7 +56,7 @@ struct parser_handler {
 struct parser;
 
 struct parser * gcc_malloc
-parser_new(struct pool *pool, istream_t input,
+parser_new(struct pool *pool, struct istream *input,
            const struct parser_handler *handler, void *handler_ctx);
 
 /**

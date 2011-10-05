@@ -15,6 +15,7 @@
 #include "fcache.h"
 #include "transformation.h"
 #include "crash.h"
+#include "istream.h"
 
 #include <inline/compiler.h>
 
@@ -49,8 +50,8 @@ const struct widget_class root_widget_class;
 static unsigned test_id;
 static bool got_request, got_response;
 
-istream_t
-processor_process(gcc_unused struct pool *pool, istream_t istream,
+struct istream *
+processor_process(gcc_unused struct pool *pool, struct istream *istream,
                   gcc_unused struct widget *widget,
                   gcc_unused struct processor_env *env,
                   gcc_unused unsigned options)
@@ -61,7 +62,7 @@ processor_process(gcc_unused struct pool *pool, istream_t istream,
 void
 processor_lookup_widget(gcc_unused struct pool *pool,
                         gcc_unused http_status_t status,
-                        gcc_unused istream_t istream,
+                        gcc_unused struct istream *istream,
                         gcc_unused struct widget *widget,
                         gcc_unused const char *id,
                         gcc_unused struct processor_env *env,
@@ -91,7 +92,7 @@ filter_cache_request(gcc_unused struct filter_cache *cache,
                      gcc_unused const char *source_id,
                      gcc_unused http_status_t status,
                      gcc_unused struct strmap *headers,
-                     gcc_unused istream_t body,
+                     gcc_unused struct istream *body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
                      gcc_unused struct async_operation_ref *async_ref)
@@ -104,7 +105,7 @@ filter_cache_request(gcc_unused struct filter_cache *cache,
 struct stock *global_pipe_stock;
 
 istream_t
-istream_pipe_new(gcc_unused struct pool *pool, istream_t input,
+istream_pipe_new(gcc_unused struct pool *pool, struct istream *input,
                  gcc_unused struct stock *pipe_stock)
 {
     return input;
@@ -125,13 +126,13 @@ resource_get(gcc_unused struct http_cache *cache,
              gcc_unused unsigned session_sticky,
              http_method_t method,
              gcc_unused const struct resource_address *address,
-             http_status_t status, struct strmap *headers, istream_t body,
+             http_status_t status, struct strmap *headers, struct istream *body,
              const struct http_response_handler *handler,
              void *handler_ctx,
              gcc_unused struct async_operation_ref *async_ref)
 {
     struct strmap *response_headers = strmap_new(pool, 16);
-    istream_t response_body = istream_null_new(pool);
+    struct istream *response_body = istream_null_new(pool);
     const char *p;
 
     assert(!got_request);
@@ -188,7 +189,7 @@ resource_get(gcc_unused struct http_cache *cache,
 
 static void
 my_http_response(http_status_t status, gcc_unused struct strmap *headers,
-                 istream_t body, gcc_unused void *ctx)
+                 struct istream *body, gcc_unused void *ctx)
 {
     assert(!got_response);
     assert(status == 200);

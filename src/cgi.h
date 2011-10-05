@@ -7,11 +7,12 @@
 #ifndef __BENG_CGI_H
 #define __BENG_CGI_H
 
-#include "istream.h"
-
 #include <http/method.h>
 
+#include <glib.h>
+
 struct pool;
+struct istream;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -36,7 +37,7 @@ cgi_new(struct pool *pool, const struct jail_params *jail,
         const char *query_string,
         const char *document_root,
         const char *remote_addr,
-        struct strmap *headers, istream_t body,
+        struct strmap *headers, struct istream *body,
         const char *const params[], unsigned num_params,
         const struct http_response_handler *handler,
         void *handler_ctx,

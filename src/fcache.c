@@ -19,6 +19,7 @@
 #include "get.h"
 #include "resource-address.h"
 #include "resource-loader.h"
+#include "istream.h"
 
 #include <string.h>
 #include <time.h>
@@ -84,7 +85,7 @@ struct filter_cache_request {
     struct {
         http_status_t status;
         struct strmap *headers;
-        istream_t input;
+        struct istream *input;
         size_t length;
         struct growing_buffer *output;
     } response;
@@ -355,7 +356,7 @@ static const struct istream_handler filter_cache_response_body_handler = {
 
 static void
 filter_cache_response_response(http_status_t status, struct strmap *headers,
-                               istream_t body,
+                               struct istream *body,
                                void *ctx)
 {
     struct filter_cache_request *request = ctx;
@@ -536,7 +537,8 @@ static void
 filter_cache_miss(struct filter_cache *cache, struct pool *caller_pool,
                   struct filter_cache_info *info,
                   const struct resource_address *address,
-                  http_status_t status, struct strmap *headers, istream_t body,
+                  http_status_t status, struct strmap *headers,
+                  struct istream *body,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref)
@@ -568,12 +570,12 @@ filter_cache_miss(struct filter_cache *cache, struct pool *caller_pool,
 
 static void
 filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
-                   struct pool *pool, istream_t body,
+                   struct pool *pool, struct istream *body,
                    const struct http_response_handler *handler,
                    void *handler_ctx)
 {
     struct http_response_handler_ref handler_ref;
-    istream_t response_body;
+    struct istream *response_body;
 
     if (body != NULL)
         istream_close_unused(body);
@@ -601,7 +603,7 @@ filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
 static void
 filter_cache_found(struct filter_cache *cache,
                    struct filter_cache_item *item,
-                   struct pool *pool, istream_t body,
+                   struct pool *pool, struct istream *body,
                    const struct http_response_handler *handler,
                    void *handler_ctx)
 {
@@ -613,7 +615,8 @@ filter_cache_request(struct filter_cache *cache,
                      struct pool *pool,
                      const struct resource_address *address,
                      const char *source_id,
-                     http_status_t status, struct strmap *headers, istream_t body,
+                     http_status_t status, struct strmap *headers,
+                     struct istream *body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
                      struct async_operation_ref *async_ref)

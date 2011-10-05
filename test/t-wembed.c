@@ -7,6 +7,7 @@
 #include "penv.h"
 #include "async.h"
 #include "http-response.h"
+#include "istream.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -97,7 +98,7 @@ test_abort_resolver(struct pool *pool)
     struct parsed_uri parsed_uri;
     struct widget widget;
     struct processor_env env;
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 4096);
 

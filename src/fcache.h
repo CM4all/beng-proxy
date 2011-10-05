@@ -7,11 +7,10 @@
 #ifndef BENG_FILTER_CACHE_H
 #define BENG_FILTER_CACHE_H
 
-#include "istream.h"
-
 #include <http/status.h>
 
 struct pool;
+struct istream;
 struct resource_loader;
 struct resource_address;
 struct strmap;
@@ -39,7 +38,8 @@ filter_cache_request(struct filter_cache *cache,
                      struct pool *pool,
                      const struct resource_address *address,
                      const char *source_id,
-                     http_status_t status, struct strmap *headers, istream_t body,
+                     http_status_t status, struct strmap *headers,
+                     struct istream *body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
                      struct async_operation_ref *async_ref);

@@ -1,6 +1,7 @@
 #include "growing-buffer.h"
 #include "direct.h"
 #include "istream-gb.h"
+#include "istream.h"
 
 #include <event.h>
 
@@ -9,7 +10,7 @@
 struct ctx {
     struct pool *pool;
     bool got_data, eof, abort, closed;
-    istream_t abort_istream;
+    struct istream *abort_istream;
 };
 
 /*
@@ -71,14 +72,14 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static int
-istream_read_event(istream_t istream)
+istream_read_event(struct istream *istream)
 {
     istream_read(istream);
     return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
 }
 
 static void
-istream_read_expect(struct ctx *ctx, istream_t istream)
+istream_read_expect(struct ctx *ctx, struct istream *istream)
 {
     int ret;
 
@@ -94,7 +95,7 @@ istream_read_expect(struct ctx *ctx, istream_t istream)
 }
 
 static void
-run_istream_ctx(struct ctx *ctx, struct pool *pool, istream_t istream)
+run_istream_ctx(struct ctx *ctx, struct pool *pool, struct istream *istream)
 {
     ctx->eof = false;
 
@@ -120,7 +121,7 @@ run_istream_ctx(struct ctx *ctx, struct pool *pool, istream_t istream)
 }
 
 static void
-run_istream(struct pool *pool, istream_t istream)
+run_istream(struct pool *pool, struct istream *istream)
 {
     struct ctx ctx = {
         .pool = pool,
@@ -155,7 +156,7 @@ create_empty(struct pool *pool)
 static void
 test_normal(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
     istream = create_test(pool);
@@ -167,7 +168,7 @@ test_normal(struct pool *pool)
 static void
 test_empty(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
     istream = create_empty(pool);
@@ -273,7 +274,7 @@ test_concurrent_rw(struct pool *pool)
 static void
 test_abort_without_handler(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -293,7 +294,7 @@ test_abort_with_handler(struct pool *pool)
         .abort_istream = NULL,
         .eof = false,
     };
-    istream_t istream;
+    struct istream *istream;
 
     ctx.pool = pool_new_linear(pool, "test", 8192);
 
