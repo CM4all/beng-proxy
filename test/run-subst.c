@@ -65,7 +65,7 @@ static const struct istream_handler my_istream_handler = {
  */
 
 int main(int argc, char **argv) {
-    pool_t root_pool, pool;
+    struct pool *root_pool, *pool;
     istream_t istream;
     int i;
 

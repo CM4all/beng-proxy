@@ -3,6 +3,7 @@
 
 #include "istream.h"
 
+struct pool;
 struct async_operation_ref;
 
 struct sink_buffer_handler {
@@ -11,7 +12,7 @@ struct sink_buffer_handler {
 };
 
 void
-sink_buffer_new(pool_t pool, istream_t input,
+sink_buffer_new(struct pool *pool, istream_t input,
                 const struct sink_buffer_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref);
 

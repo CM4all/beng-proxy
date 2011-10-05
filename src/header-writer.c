@@ -83,7 +83,7 @@ headers_copy_most(struct strmap *in, struct growing_buffer *out)
 }
 
 struct growing_buffer *
-headers_dup(pool_t pool, struct strmap *in)
+headers_dup(struct pool *pool, struct strmap *in)
 {
     struct growing_buffer *out = growing_buffer_new(pool, 2048);
     headers_copy_most(in, out);

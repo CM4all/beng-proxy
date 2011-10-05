@@ -377,7 +377,7 @@ fork_child_callback(int status, void *ctx)
  */
 
 pid_t
-beng_fork(pool_t pool, istream_t input, istream_t *output_r,
+beng_fork(struct pool *pool, istream_t input, istream_t *output_r,
           child_callback_t callback, void *ctx,
           GError **error_r)
 {

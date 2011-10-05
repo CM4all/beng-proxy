@@ -81,7 +81,8 @@ quote_prefix(struct pool *pool, const char *p)
 }
 
 void
-widget_set_id(struct widget *widget, pool_t pool, const struct strref *id)
+widget_set_id(struct widget *widget, struct pool *pool,
+              const struct strref *id)
 {
     const char *p;
 

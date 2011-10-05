@@ -69,7 +69,7 @@ apply_translation_packet(struct translate_request *request,
 }
 
 static unsigned
-decode_translation_packets(pool_t pool, struct translate_request *request,
+decode_translation_packets(struct pool *pool, struct translate_request *request,
                            uint16_t *cmds, unsigned max_cmds,
                            const void *data, size_t length,
                            const char **site_r)
@@ -226,7 +226,7 @@ static const struct udp_handler global_control_udp_handler = {
 static struct udp_listener *global_udp_listener;
 
 bool
-global_control_handler_init(pool_t pool, struct instance *instance)
+global_control_handler_init(struct pool *pool, struct instance *instance)
 {
     if (instance->config.control_listen == NULL)
         return true;

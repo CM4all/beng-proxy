@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 
     struct event_base *event_base = event_init();
 
-    pool_t pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(NULL, "root");
 
     GError *error = NULL;
     struct udp_listener *udp =

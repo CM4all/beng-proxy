@@ -29,7 +29,7 @@ test_quark(void)
  *
  */
 
-static pool_t
+static struct pool *
 my_stock_pool(G_GNUC_UNUSED void *ctx, struct pool *parent,
               G_GNUC_UNUSED const char *uri)
 {

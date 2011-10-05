@@ -9,7 +9,7 @@
  */
 
 int main(int argc, char **argv) {
-    pool_t pool;
+    struct pool *pool;
     static const struct resource_address ra1 = {
         .type = RESOURCE_ADDRESS_LOCAL,
         .u = {

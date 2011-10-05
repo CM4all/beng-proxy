@@ -11,6 +11,7 @@
 #include "balancer.h"
 #include "failure.h"
 #include "async.h"
+#include "pool.h"
 
 struct client_balancer_request {
     struct pool *pool;

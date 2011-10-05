@@ -7,6 +7,7 @@
 #include "config.h"
 #include "uri-resolver.h"
 #include "stopwatch.h"
+#include "pool.h"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -288,7 +289,7 @@ handle_set(struct config *config, struct pool *pool,
 
 /** read configuration options from the command line */
 void
-parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
+parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
 {
     int ret;
     char *endptr;

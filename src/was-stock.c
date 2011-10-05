@@ -97,7 +97,7 @@ was_child_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
  *
  */
 
-static pool_t
+static struct pool *
 was_stock_pool(gcc_unused void *ctx, struct pool *parent,
                gcc_unused const char *uri)
 {

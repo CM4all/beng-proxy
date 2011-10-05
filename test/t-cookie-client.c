@@ -12,7 +12,7 @@
 #include <string.h>
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
-    pool_t pool;
+    struct pool *pool;
     struct shm *shm;
     struct dpool *dpool;
     struct cookie_jar *jar;

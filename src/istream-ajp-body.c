@@ -246,7 +246,7 @@ static const struct istream istream_ajp_body = {
  */
 
 istream_t
-istream_ajp_body_new(pool_t pool, istream_t input)
+istream_ajp_body_new(struct pool *pool, istream_t input)
 {
     struct istream_ajp_body *ab = istream_new_macro(pool, ajp_body);
 

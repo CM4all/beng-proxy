@@ -7,7 +7,6 @@
 #ifndef __BENG_WIDGET_H
 #define __BENG_WIDGET_H
 
-#include "pool.h"
 #include "strref.h"
 #include "istream.h"
 #include "resource-address.h"
@@ -19,6 +18,7 @@
 #include <assert.h>
 #include <stdbool.h>
 
+struct pool;
 struct strmap;
 struct processor_env;
 struct parsed_uri;
@@ -31,7 +31,7 @@ struct widget {
     struct list_head siblings, children;
     struct widget *parent;
 
-    pool_t pool;
+    struct pool *pool;
 
     const char *class_name;
 
@@ -121,7 +121,7 @@ struct widget_ref {
 #define WIDGET_REF_SEPARATOR_S ":"
 
 static inline void
-widget_init(struct widget *widget, pool_t pool,
+widget_init(struct widget *widget, struct pool *pool,
             const struct widget_class *class)
 {
     list_init(&widget->children);
@@ -152,7 +152,7 @@ widget_init(struct widget *widget, pool_t pool,
 }
 
 void
-widget_set_id(struct widget *widget, pool_t pool, const struct strref *id);
+widget_set_id(struct widget *widget, struct pool *pool, const struct strref *id);
 
 static inline struct widget *
 widget_root(struct widget *widget)
@@ -210,7 +210,7 @@ widget_get_session(struct widget *widget, struct session *session,
                    bool create);
 
 const struct widget_ref *
-widget_ref_parse(pool_t pool, const char *p);
+widget_ref_parse(struct pool *pool, const char *p);
 
 /**
  * Is the specified "inner" reference inside or the same as "outer"?
@@ -237,7 +237,7 @@ widget_sync_session(struct widget *widget, struct session *session);
 void
 widget_copy_from_location(struct widget *widget, struct session *session,
                           const char *location, size_t location_length,
-                          pool_t pool);
+                          struct pool *pool);
 
 const struct resource_address *
 widget_determine_address(const struct widget *widget, bool stateful);
@@ -262,19 +262,19 @@ widget_stateless_address(struct widget *widget)
 }
 
 const char *
-widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
+widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
                     const struct strref *relative_uri);
 
 /**
  * Returns an URI relative to the widget base address.
  */
 const struct strref *
-widget_relative_uri(pool_t pool, struct widget *widget, bool stateful,
+widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
                     const char *relative_uri, size_t relative_uri_length,
                     struct strref *buffer);
 
 const char *
-widget_external_uri(pool_t pool,
+widget_external_uri(struct pool *pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
                     struct widget *widget, bool stateful,

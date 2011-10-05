@@ -57,7 +57,7 @@ static const struct istream istream_zero = {
 };
 
 istream_t
-istream_zero_new(pool_t pool)
+istream_zero_new(struct pool *pool)
 {
     struct istream_zero *zero = istream_new_macro(pool, zero);
     return istream_struct_cast(&zero->stream);

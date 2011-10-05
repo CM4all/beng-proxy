@@ -7,12 +7,12 @@
 #ifndef BENG_PROXY_UDP_DISTRIBUTE_H
 #define BENG_PROXY_UDP_DISTRIBUTE_H
 
-#include "pool.h"
-
 #include <stddef.h>
 
+struct pool;
+
 struct udp_distribute *
-udp_distribute_new(pool_t pool);
+udp_distribute_new(struct pool *pool);
 
 void
 udp_distribute_free(struct udp_distribute *ud);

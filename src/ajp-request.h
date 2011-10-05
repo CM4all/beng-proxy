@@ -11,6 +11,7 @@
 
 #include <http/method.h>
 
+struct pool;
 struct tcp_balancer;
 struct uri_with_address;
 struct strmap;
@@ -22,7 +23,7 @@ struct async_operation_ref;
  * select the worker; 0 means disable stickiness
  */
 void
-ajp_stock_request(pool_t pool,
+ajp_stock_request(struct pool *pool,
                   struct tcp_balancer *tcp_balancer,
                   unsigned session_sticky,
                   const char *protocol, const char *remote_addr,

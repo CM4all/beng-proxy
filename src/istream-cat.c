@@ -246,7 +246,7 @@ static const struct istream istream_cat = {
  */
 
 istream_t
-istream_cat_new(pool_t pool, ...)
+istream_cat_new(struct pool *pool, ...)
 {
     struct istream_cat *cat;
     va_list ap;

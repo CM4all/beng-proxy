@@ -44,7 +44,7 @@ static const size_t fcache_item_base_size = 1024;
 static const struct timeval fcache_timeout = { .tv_sec = 60 };
 
 struct filter_cache {
-    pool_t pool;
+    struct pool *pool;
     struct cache *cache;
 
     struct resource_loader *resource_loader;
@@ -63,7 +63,7 @@ struct filter_cache_info {
 struct filter_cache_item {
     struct cache_item item;
 
-    pool_t pool;
+    struct pool *pool;
 
     struct filter_cache_info info;
 
@@ -75,7 +75,7 @@ struct filter_cache_item {
 struct filter_cache_request {
     struct list_head siblings;
 
-    pool_t pool, caller_pool;
+    struct pool *pool, *caller_pool;
     struct filter_cache *cache;
     struct http_response_handler_ref handler;
 
@@ -98,7 +98,7 @@ struct filter_cache_request {
 
 
 static struct filter_cache_info *
-filter_cache_info_new(pool_t pool)
+filter_cache_info_new(struct pool *pool)
 {
     struct filter_cache_info *info = p_malloc(pool, sizeof(*info));
 
@@ -136,7 +136,7 @@ filter_cache_request_abort(struct filter_cache_request *request)
 
 /* check whether the request could produce a cacheable response */
 static struct filter_cache_info *
-filter_cache_request_evaluate(pool_t pool,
+filter_cache_request_evaluate(struct pool *pool,
                               const struct resource_address *address,
                               const char *source_id)
 {
@@ -153,7 +153,7 @@ filter_cache_request_evaluate(pool_t pool,
 }
 
 static void
-filter_cache_info_copy(pool_t pool, struct filter_cache_info *dest,
+filter_cache_info_copy(struct pool *pool, struct filter_cache_info *dest,
                        const struct filter_cache_info *src)
 {
     dest->expires = src->expires;
@@ -161,7 +161,7 @@ filter_cache_info_copy(pool_t pool, struct filter_cache_info *dest,
 }
 
 static struct filter_cache_info *
-filter_cache_info_dup(pool_t pool, const struct filter_cache_info *src)
+filter_cache_info_dup(struct pool *pool, const struct filter_cache_info *src)
 {
     struct filter_cache_info *dest = p_malloc(pool, sizeof(*dest));
 
@@ -170,7 +170,8 @@ filter_cache_info_dup(pool_t pool, const struct filter_cache_info *src)
 }
 
 static struct filter_cache_request *
-filter_cache_request_dup(pool_t pool, const struct filter_cache_request *src)
+filter_cache_request_dup(struct pool *pool,
+                         const struct filter_cache_request *src)
 {
     struct filter_cache_request *dest = p_malloc(pool, sizeof(*dest));
 
@@ -186,7 +187,7 @@ static void
 filter_cache_put(struct filter_cache_request *request)
 {
     time_t expires;
-    pool_t pool;
+    struct pool *pool;
     struct filter_cache_item *item;
 
     assert(request != NULL);
@@ -359,7 +360,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 {
     struct filter_cache_request *request = ctx;
     off_t available;
-    pool_t caller_pool = request->caller_pool;
+    struct pool *caller_pool = request->caller_pool;
 
     available = body == NULL ? 0 : istream_available(body, true);
 
@@ -378,7 +379,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         request->response.output = NULL;
         filter_cache_put(request);
     } else {
-        pool_t pool;
+        struct pool *pool;
         size_t buffer_size;
 
         /* move all this stuff to a new pool, so istream_tee's second
@@ -481,7 +482,7 @@ static const struct cache_class filter_cache_class = {
  */
 
 struct filter_cache *
-filter_cache_new(pool_t pool, size_t max_size,
+filter_cache_new(struct pool *pool, size_t max_size,
                  struct resource_loader *resource_loader)
 {
     pool = pool_new_libc(pool, "filter_cache");
@@ -532,7 +533,7 @@ filter_cache_flush(struct filter_cache *cache)
 }
 
 static void
-filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
+filter_cache_miss(struct filter_cache *cache, struct pool *caller_pool,
                   struct filter_cache_info *info,
                   const struct resource_address *address,
                   http_status_t status, struct strmap *headers, istream_t body,
@@ -540,7 +541,7 @@ filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref)
 {
-    pool_t pool;
+    struct pool *pool;
     struct filter_cache_request *request;
 
     /* the cache request may live longer than the caller pool, so
@@ -567,7 +568,7 @@ filter_cache_miss(struct filter_cache *cache, pool_t caller_pool,
 
 static void
 filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
-                   pool_t pool, istream_t body,
+                   struct pool *pool, istream_t body,
                    const struct http_response_handler *handler,
                    void *handler_ctx)
 {
@@ -600,7 +601,7 @@ filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
 static void
 filter_cache_found(struct filter_cache *cache,
                    struct filter_cache_item *item,
-                   pool_t pool, istream_t body,
+                   struct pool *pool, istream_t body,
                    const struct http_response_handler *handler,
                    void *handler_ctx)
 {
@@ -609,7 +610,7 @@ filter_cache_found(struct filter_cache *cache,
 
 void
 filter_cache_request(struct filter_cache *cache,
-                     pool_t pool,
+                     struct pool *pool,
                      const struct resource_address *address,
                      const char *source_id,
                      http_status_t status, struct strmap *headers, istream_t body,

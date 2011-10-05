@@ -7,8 +7,7 @@
 #ifndef __BENG_WIDGET_HTTP_H
 #define __BENG_WIDGET_HTTP_H
 
-#include "pool.h"
-
+struct pool;
 struct widget;
 struct widget_lookup_handler;
 struct processor_env;
@@ -20,7 +19,7 @@ struct async_operation_ref;
  * return the result to the #http_response_handler.
  */
 void
-widget_http_request(pool_t pool, struct widget *widget,
+widget_http_request(struct pool *pool, struct widget *widget,
                     struct processor_env *env,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
@@ -34,7 +33,7 @@ widget_http_request(pool_t pool, struct widget *widget,
  * @param id the id of the widget to be looked up
  */
 void
-widget_http_lookup(pool_t pool, struct widget *widget, const char *id,
+widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
                    struct processor_env *env,
                    const struct widget_lookup_handler *handler,
                    void *handler_ctx,

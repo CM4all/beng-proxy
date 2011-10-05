@@ -282,7 +282,7 @@ static const struct istream istream_chunked = {
  */
 
 istream_t
-istream_chunked_new(pool_t pool, istream_t input)
+istream_chunked_new(struct pool *pool, istream_t input)
 {
     struct istream_chunked *chunked = istream_new_macro(pool, chunked);
 

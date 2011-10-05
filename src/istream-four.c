@@ -95,7 +95,7 @@ static const struct istream istream_four = {
  */
 
 istream_t
-istream_four_new(pool_t pool, istream_t input)
+istream_four_new(struct pool *pool, istream_t input)
 {
     struct istream_four *four = istream_new_macro(pool, four);
 

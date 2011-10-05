@@ -24,7 +24,7 @@
 static void
 remove_connection(struct client_connection *connection)
 {
-    pool_t pool;
+    struct pool *pool;
 
     assert(connection->http != NULL);
     assert(connection->instance != NULL);
@@ -123,7 +123,7 @@ http_listener_connected(int fd,
                         void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
-    pool_t pool;
+    struct pool *pool;
     struct client_connection *connection;
     struct sockaddr_storage local_address;
     socklen_t local_address_length;

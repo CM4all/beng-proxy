@@ -7,12 +7,11 @@
 #ifndef BENG_RESOURCE_TAG_H
 #define BENG_RESOURCE_TAG_H
 
-#include "pool.h"
-
+struct pool;
 struct strmap;
 
 const char *
-resource_tag_append_etag(pool_t pool, const char *tag,
+resource_tag_append_etag(struct pool *pool, const char *tag,
                          const struct strmap *headers);
 
 #endif

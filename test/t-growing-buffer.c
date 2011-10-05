@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 struct ctx {
-    pool_t pool;
+    struct pool *pool;
     bool got_data, eof, abort, closed;
     istream_t abort_istream;
 };
@@ -94,7 +94,7 @@ istream_read_expect(struct ctx *ctx, istream_t istream)
 }
 
 static void
-run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
+run_istream_ctx(struct ctx *ctx, struct pool *pool, istream_t istream)
 {
     ctx->eof = false;
 
@@ -120,7 +120,7 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 }
 
 static void
-run_istream(pool_t pool, istream_t istream)
+run_istream(struct pool *pool, istream_t istream)
 {
     struct ctx ctx = {
         .pool = pool,
@@ -131,7 +131,7 @@ run_istream(pool_t pool, istream_t istream)
 }
 
 static istream_t
-create_test(pool_t pool)
+create_test(struct pool *pool)
 {
     struct growing_buffer *gb = growing_buffer_new(pool, 64);
     growing_buffer_write_string(gb, "foo");
@@ -139,7 +139,7 @@ create_test(pool_t pool)
 }
 
 static istream_t
-create_empty(pool_t pool)
+create_empty(struct pool *pool)
 {
     struct growing_buffer *gb = growing_buffer_new(pool, 64);
     return istream_gb_new(pool, gb);
@@ -153,7 +153,7 @@ create_empty(pool_t pool)
 
 /** normal run */
 static void
-test_normal(pool_t pool)
+test_normal(struct pool *pool)
 {
     istream_t istream;
 
@@ -165,7 +165,7 @@ test_normal(pool_t pool)
 
 /** empty input */
 static void
-test_empty(pool_t pool)
+test_empty(struct pool *pool)
 {
     istream_t istream;
 
@@ -177,7 +177,7 @@ test_empty(pool_t pool)
 
 /** first buffer is too small, empty */
 static void
-test_first_empty(pool_t pool)
+test_first_empty(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     struct growing_buffer *buffer = growing_buffer_new(pool, 16);
@@ -200,7 +200,7 @@ test_first_empty(pool_t pool)
 
 /** test growing_buffer_reader_skip() */
 static void
-test_skip(pool_t pool)
+test_skip(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     struct growing_buffer *buffer = growing_buffer_new(pool, 3);
@@ -237,7 +237,7 @@ test_skip(pool_t pool)
 
 /** test reading the head while appending to the tail */
 static void
-test_concurrent_rw(pool_t pool)
+test_concurrent_rw(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     struct growing_buffer *buffer = growing_buffer_new(pool, 3);
@@ -271,7 +271,7 @@ test_concurrent_rw(pool_t pool)
 
 /** abort without handler */
 static void
-test_abort_without_handler(pool_t pool)
+test_abort_without_handler(struct pool *pool)
 {
     istream_t istream;
 
@@ -287,7 +287,7 @@ test_abort_without_handler(pool_t pool)
 
 /** abort with handler */
 static void
-test_abort_with_handler(pool_t pool)
+test_abort_with_handler(struct pool *pool)
 {
     struct ctx ctx = {
         .abort_istream = NULL,
@@ -310,7 +310,7 @@ test_abort_with_handler(pool_t pool)
 
 /** abort in handler */
 static void
-test_abort_in_handler(pool_t pool)
+test_abort_in_handler(struct pool *pool)
 {
     struct ctx ctx = {
         .eof = false,
@@ -341,7 +341,7 @@ test_abort_in_handler(pool_t pool)
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t root_pool;
+    struct pool *root_pool;
 
     (void)argc;
     (void)argv;

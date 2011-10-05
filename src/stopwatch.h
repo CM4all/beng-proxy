@@ -7,8 +7,9 @@
 #ifndef BENG_PROXY_STOPWATCH_H
 #define BENG_PROXY_STOPWATCH_H
 
-#include "pool.h"
+#include <stddef.h>
 
+struct pool;
 struct stopwatch;
 struct sockaddr;
 
@@ -18,14 +19,14 @@ void
 stopwatch_enable(void);
 
 struct stopwatch *
-stopwatch_new(pool_t pool, const char *name);
+stopwatch_new(struct pool *pool, const char *name);
 
 struct stopwatch *
-stopwatch_sockaddr_new(pool_t pool, const struct sockaddr *address,
+stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
                        size_t address_length, const char *suffix);
 
 struct stopwatch *
-stopwatch_fd_new(pool_t pool, int fd, const char *suffix);
+stopwatch_fd_new(struct pool *pool, int fd, const char *suffix);
 
 void
 stopwatch_event(struct stopwatch *stopwatch, const char *name);
@@ -41,7 +42,7 @@ stopwatch_enable(void)
 }
 
 static inline struct stopwatch *
-stopwatch_new(pool_t pool, const char *name)
+stopwatch_new(struct pool *pool, const char *name)
 {
     (void)pool;
     (void)name;
@@ -50,7 +51,7 @@ stopwatch_new(pool_t pool, const char *name)
 }
 
 static inline struct stopwatch *
-stopwatch_sockaddr_new(pool_t pool, const struct sockaddr *address,
+stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
                        size_t address_length, const char *suffix)
 {
     (void)pool;
@@ -62,7 +63,7 @@ stopwatch_sockaddr_new(pool_t pool, const struct sockaddr *address,
 }
 
 static inline struct stopwatch *
-stopwatch_fd_new(pool_t pool, int fd, const char *suffix)
+stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
 {
     (void)pool;
     (void)fd;

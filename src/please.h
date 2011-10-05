@@ -16,7 +16,7 @@
 static inline void
 p_lease_ref_set(struct lease_ref *lease_ref,
                 const struct lease *lease, void *ctx,
-                pool_t pool, const char *name)
+                struct pool *pool, const char *name)
 {
     assert(lease_ref != NULL);
     assert(lease != NULL);
@@ -29,7 +29,7 @@ p_lease_ref_set(struct lease_ref *lease_ref,
 }
 
 static inline void
-p_lease_release(struct lease_ref *lease_ref, bool reuse, pool_t pool)
+p_lease_release(struct lease_ref *lease_ref, bool reuse, struct pool *pool)
 {
     assert(lease_ref != NULL);
     assert(pool != NULL);

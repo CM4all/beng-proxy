@@ -230,7 +230,7 @@ static const struct istream istream_iconv = {
 
 
 istream_t
-istream_iconv_new(pool_t pool, istream_t input,
+istream_iconv_new(struct pool *pool, istream_t input,
                   const char *tocode, const char *fromcode)
 {
     struct istream_iconv *ic = istream_new_macro(pool, iconv);

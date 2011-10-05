@@ -360,7 +360,7 @@ static const struct istream istream_tee1 = {
  */
 
 istream_t
-istream_tee_new(pool_t pool, istream_t input,
+istream_tee_new(struct pool *pool, istream_t input,
                 bool first_weak, bool second_weak)
 {
     struct istream_tee *tee = (struct istream_tee *)

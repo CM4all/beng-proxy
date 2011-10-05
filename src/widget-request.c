@@ -145,7 +145,7 @@ widget_sync_session(struct widget *widget, struct session *session)
 void
 widget_copy_from_location(struct widget *widget, struct session *session,
                           const char *location, size_t location_length,
-                          pool_t pool)
+                          struct pool *pool)
 {
     const char *qmark;
 

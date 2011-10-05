@@ -162,7 +162,7 @@ static const struct istream istream_trace = {
  */
 
 istream_t
-istream_trace_new(pool_t pool, istream_t input)
+istream_trace_new(struct pool *pool, istream_t input)
 {
     struct istream_trace *trace = istream_new_macro(pool, trace);
 

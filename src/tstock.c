@@ -22,7 +22,7 @@ struct tstock {
 };
 
 struct tstock_request {
-    pool_t pool;
+    struct pool *pool;
 
     struct tstock *stock;
     struct stock_item *item;
@@ -91,7 +91,7 @@ static const struct stock_handler tstock_stock_handler = {
  */
 
 struct tstock *
-tstock_new(pool_t pool, struct hstock *tcp_stock, const char *socket_path)
+tstock_new(struct pool *pool, struct hstock *tcp_stock, const char *socket_path)
 {
     struct tstock *stock = p_malloc(pool, sizeof(*stock));
 
@@ -112,7 +112,7 @@ tstock_new(pool_t pool, struct hstock *tcp_stock, const char *socket_path)
 }
 
 void
-tstock_translate(struct tstock *stock, pool_t pool,
+tstock_translate(struct tstock *stock, struct pool *pool,
                  const struct translate_request *request,
                  const struct translate_handler *handler, void *ctx,
                  struct async_operation_ref *async_ref)

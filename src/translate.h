@@ -7,7 +7,6 @@
 #ifndef __BENG_TRANSLATE_H
 #define __BENG_TRANSLATE_H
 
-#include "pool.h"
 #include "resource-address.h"
 #include "header-forward.h"
 #include "strref.h"
@@ -18,6 +17,7 @@
 
 #include <stdint.h>
 
+struct pool;
 struct sockaddr;
 struct lease;
 struct async_operation_ref;
@@ -155,7 +155,7 @@ translate_quark(void)
 }
 
 void
-translate(pool_t pool, int fd,
+translate(struct pool *pool, int fd,
           const struct lease *lease, void *lease_ctx,
           const struct translate_request *request,
           const struct translate_handler *handler, void *ctx,

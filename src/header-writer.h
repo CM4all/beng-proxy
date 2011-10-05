@@ -7,8 +7,7 @@
 #ifndef __BENG_HEADER_WRITER_H
 #define __BENG_HEADER_WRITER_H
 
-#include "pool.h"
-
+struct pool;
 struct strmap;
 struct growing_buffer;
 
@@ -23,6 +22,6 @@ void
 headers_copy_all(struct strmap *in, struct growing_buffer *out);
 
 struct growing_buffer *
-headers_dup(pool_t pool, struct strmap *in);
+headers_dup(struct pool *pool, struct strmap *in);
 
 #endif

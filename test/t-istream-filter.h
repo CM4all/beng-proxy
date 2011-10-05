@@ -172,7 +172,7 @@ istream_read_expect(struct ctx *ctx, istream_t istream)
 }
 
 static void
-run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
+run_istream_ctx(struct ctx *ctx, struct pool *pool, istream_t istream)
 {
     ctx->eof = false;
 
@@ -204,7 +204,7 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 }
 
 static void
-run_istream_block(pool_t pool, istream_t istream, bool record gcc_unused,
+run_istream_block(struct pool *pool, istream_t istream, bool record gcc_unused,
                   int block_after)
 {
     struct ctx ctx = {
@@ -219,7 +219,7 @@ run_istream_block(pool_t pool, istream_t istream, bool record gcc_unused,
 }
 
 static void
-run_istream(pool_t pool, istream_t istream, bool record)
+run_istream(struct pool *pool, istream_t istream, bool record)
 {
     run_istream_block(pool, istream, record, -1);
 }
@@ -232,7 +232,7 @@ run_istream(pool_t pool, istream_t istream, bool record)
 
 /** normal run */
 static void
-test_normal(pool_t pool)
+test_normal(struct pool *pool)
 {
     istream_t istream;
 
@@ -247,9 +247,9 @@ test_normal(pool_t pool)
 
 /** block once after n data() invocations */
 static void
-test_block(pool_t parent_pool)
+test_block(struct pool *parent_pool)
 {
-    pool_t pool;
+    struct pool *pool;
 
     for (int n = 1; n < 8; ++n) {
         istream_t istream;
@@ -266,7 +266,7 @@ test_block(pool_t parent_pool)
 
 /** test with istream_byte */
 static void
-test_byte(pool_t pool)
+test_byte(struct pool *pool)
 {
     istream_t istream;
 
@@ -278,7 +278,7 @@ test_byte(pool_t pool)
 
 /** accept only half of the data */
 static void
-test_half(pool_t pool)
+test_half(struct pool *pool)
 {
     struct ctx ctx = {
         .eof = false,
@@ -297,7 +297,7 @@ test_half(pool_t pool)
 
 /** input fails */
 static void
-test_fail(pool_t pool)
+test_fail(struct pool *pool)
 {
     istream_t istream;
 
@@ -310,7 +310,7 @@ test_fail(pool_t pool)
 
 /** input fails after the first byte */
 static void
-test_fail_1byte(pool_t pool)
+test_fail_1byte(struct pool *pool)
 {
     istream_t istream;
 
@@ -327,7 +327,7 @@ test_fail_1byte(pool_t pool)
 
 /** abort without handler */
 static void
-test_abort_without_handler(pool_t pool)
+test_abort_without_handler(struct pool *pool)
 {
     istream_t istream;
 
@@ -347,7 +347,7 @@ test_abort_without_handler(pool_t pool)
 
 /** abort in handler */
 static void
-test_abort_in_handler(pool_t pool)
+test_abort_in_handler(struct pool *pool)
 {
     struct ctx ctx = {
         .eof = false,
@@ -380,7 +380,7 @@ test_abort_in_handler(pool_t pool)
 
 /** abort in handler, with some data consumed */
 static void
-test_abort_in_handler_half(pool_t pool)
+test_abort_in_handler_half(struct pool *pool)
 {
     struct ctx ctx = {
         .eof = false,
@@ -415,7 +415,7 @@ test_abort_in_handler_half(pool_t pool)
 
 /** abort after 1 byte of output */
 static void
-test_abort_1byte(pool_t pool)
+test_abort_1byte(struct pool *pool)
 {
     istream_t istream;
 
@@ -430,7 +430,7 @@ test_abort_1byte(pool_t pool)
 
 /** test with istream_later filter */
 static void
-test_later(pool_t pool)
+test_later(struct pool *pool)
 {
     istream_t istream;
 
@@ -443,7 +443,7 @@ test_later(pool_t pool)
 #ifdef EXPECTED_RESULT
 /** test with large input and blocking handler */
 static void
-test_big_hold(pool_t pool)
+test_big_hold(struct pool *pool)
 {
     istream_t istream, hold;
 
@@ -472,8 +472,8 @@ test_big_hold(pool_t pool)
 
 
 int main(int argc, char **argv) {
+    struct pool *root_pool;
     struct event_base *event_base;
-    pool_t root_pool;
 
     (void)argc;
     (void)argv;

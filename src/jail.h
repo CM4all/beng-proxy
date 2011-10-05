@@ -7,10 +7,9 @@
 #ifndef BENG_PROXY_JAIL_H
 #define BENG_PROXY_JAIL_H
 
-#include "pool.h"
-
 #include <stdbool.h>
 
+struct pool;
 struct exec;
 
 struct jail_config {
@@ -34,10 +33,11 @@ struct jail_params {
  * @return true on success, false on error
  */
 bool
-jail_config_load(struct jail_config *config, const char *path, pool_t pool);
+jail_config_load(struct jail_config *config, const char *path,
+                 struct pool *pool);
 
 void
-jail_params_copy(pool_t pool, struct jail_params *dest,
+jail_params_copy(struct pool *pool, struct jail_params *dest,
                  const struct jail_params *src);
 
 /**
@@ -48,7 +48,7 @@ jail_params_copy(pool_t pool, struct jail_params *dest,
  */
 const char *
 jail_translate_path(const struct jail_config *config, const char *path,
-                    const char *document_root, pool_t pool);
+                    const char *document_root, struct pool *pool);
 
 void
 jail_wrapper_insert(struct exec *e, const struct jail_params *params,

@@ -7,9 +7,9 @@
 #ifndef __BENG_DUPLEX_H
 #define __BENG_DUPLEX_H
 
-#include "pool.h"
+struct pool;
 
 int
-duplex_new(pool_t pool, int read_fd, int write_fd);
+duplex_new(struct pool *pool, int read_fd, int write_fd);
 
 #endif

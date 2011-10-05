@@ -20,7 +20,7 @@
 #include <errno.h>
 
 struct delegate_get {
-    pool_t pool;
+    struct pool *pool;
     const char *path;
     const char *content_type;
     struct http_response_handler_ref handler;
@@ -86,7 +86,7 @@ static const struct delegate_handler delegate_get_handler = {
  */
 
 void
-delegate_stock_request(struct hstock *stock, pool_t pool,
+delegate_stock_request(struct hstock *stock, struct pool *pool,
                        const char *helper,
                        const struct jail_params *jail,
                        const char *path, const char *content_type,

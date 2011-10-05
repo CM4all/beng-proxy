@@ -10,7 +10,7 @@
 #include "escape_html.h"
 
 istream_t
-istream_html_escape_new(pool_t pool, istream_t input)
+istream_html_escape_new(struct pool *pool, istream_t input)
 {
     return istream_escape_new(pool, input, &html_escape_class);
 }

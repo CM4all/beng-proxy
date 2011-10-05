@@ -44,7 +44,7 @@
 #endif
 
 struct fcgi_client {
-    pool_t pool, caller_pool;
+    struct pool *pool, *caller_pool;
 
     int fd;
     struct lease_ref lease_ref;
@@ -334,7 +334,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
                     client->response.read_state = READ_DISCARD;
                 }
 
-                pool_t caller_pool = client->caller_pool;
+                struct pool *caller_pool = client->caller_pool;
                 pool_ref(caller_pool);
 
                 http_response_handler_invoke_response(&client->handler, status,
@@ -724,7 +724,7 @@ static const struct async_operation_class fcgi_client_async_operation = {
  */
 
 void
-fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
+fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const char *script_filename,
@@ -751,7 +751,7 @@ fcgi_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
         .role = macro_htons(FCGI_RESPONDER),
         .flags = FCGI_KEEP_CONN,
     };
-    pool_t pool;
+    struct pool *pool;
     struct fcgi_client *client;
 
     assert(http_method_is_valid(method));

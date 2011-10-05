@@ -327,7 +327,7 @@ static const struct istream istream_dechunk = {
  */
 
 istream_t
-istream_dechunk_new(pool_t pool, istream_t input,
+istream_dechunk_new(struct pool *pool, istream_t input,
                     void (*eof_callback)(void *ctx), void *callback_ctx)
 {
     struct istream_dechunk *dechunk = istream_new_macro(pool, dechunk);

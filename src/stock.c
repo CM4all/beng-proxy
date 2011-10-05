@@ -19,7 +19,7 @@ enum {
 };
 
 struct stock {
-    pool_t pool;
+    struct pool *pool;
     const struct stock_class *class;
     void *class_ctx;
     const char *uri;
@@ -54,7 +54,7 @@ struct stock_waiting {
 
     struct async_operation operation;
 
-    pool_t pool;
+    struct pool *pool;
     void *info;
 
     const struct stock_handler *handler;
@@ -140,7 +140,7 @@ stock_get_idle(struct stock *stock,
                const struct stock_handler *handler, void *handler_ctx);
 
 static void
-stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
+stock_get_create(struct stock *stock, struct pool *caller_pool, void *info,
                  const struct stock_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref);
 
@@ -252,7 +252,7 @@ stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
  */
 
 struct stock *
-stock_new(pool_t pool, const struct stock_class *class,
+stock_new(struct pool *pool, const struct stock_class *class,
           void *class_ctx, const char *uri, unsigned limit)
 {
     struct stock *stock;
@@ -375,11 +375,11 @@ stock_get_idle(struct stock *stock,
 }
 
 static void
-stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
+stock_get_create(struct stock *stock, struct pool *caller_pool, void *info,
                  const struct stock_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    pool_t pool;
+    struct pool *pool;
     struct stock_item *item;
 
     pool = stock->class->pool(stock->class_ctx, stock->pool, stock->uri);
@@ -400,7 +400,7 @@ stock_get_create(struct stock *stock, pool_t caller_pool, void *info,
 }
 
 void
-stock_get(struct stock *stock, pool_t caller_pool, void *info,
+stock_get(struct stock *stock, struct pool *caller_pool, void *info,
           const struct stock_handler *handler, void *handler_ctx,
           struct async_operation_ref *async_ref)
 {
@@ -474,7 +474,8 @@ static const struct stock_handler stock_now_handler = {
 };
 
 struct stock_item *
-stock_get_now(struct stock *stock, pool_t pool, void *info, GError **error_r)
+stock_get_now(struct stock *stock, struct pool *pool, void *info,
+              GError **error_r)
 {
     struct now_data data = {
 #ifndef NDEBUG

@@ -11,6 +11,7 @@
 
 #include "istream.h"
 
+struct pool;
 struct async_operation_ref;
 
 struct sink_header_handler {
@@ -19,7 +20,7 @@ struct sink_header_handler {
 };
 
 void
-sink_header_new(pool_t pool, istream_t input,
+sink_header_new(struct pool *pool, istream_t input,
                 const struct sink_header_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref);
 

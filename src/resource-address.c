@@ -14,7 +14,7 @@
 #include "strref.h"
 
 void
-resource_address_copy(pool_t pool, struct resource_address *dest,
+resource_address_copy(struct pool *pool, struct resource_address *dest,
                       const struct resource_address *src)
 {
     dest->type = src->type;
@@ -79,7 +79,7 @@ resource_address_copy(pool_t pool, struct resource_address *dest,
 }
 
 const struct resource_address *
-resource_address_insert_query_string_from(pool_t pool,
+resource_address_insert_query_string_from(struct pool *pool,
                                           const struct resource_address *src,
                                           const char *uri)
 {
@@ -135,7 +135,7 @@ resource_address_insert_query_string_from(pool_t pool,
 }
 
 const struct resource_address *
-resource_address_insert_args(pool_t pool,
+resource_address_insert_args(struct pool *pool,
                              const struct resource_address *src,
                              const char *args, size_t length)
 {
@@ -199,7 +199,7 @@ base_string(const char *p, const char *suffix)
 }
 
 static size_t
-base_string_unescape(pool_t pool, const char *p, const char *suffix)
+base_string_unescape(struct pool *pool, const char *p, const char *suffix)
 {
     char *unescaped = p_strdup(pool, suffix);
     unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
@@ -208,7 +208,7 @@ base_string_unescape(pool_t pool, const char *p, const char *suffix)
 }
 
 struct resource_address *
-resource_address_save_base(pool_t pool, struct resource_address *dest,
+resource_address_save_base(struct pool *pool, struct resource_address *dest,
                            const struct resource_address *src,
                            const char *suffix)
 {
@@ -264,7 +264,7 @@ resource_address_save_base(pool_t pool, struct resource_address *dest,
 }
 
 struct resource_address *
-resource_address_load_base(pool_t pool, struct resource_address *dest,
+resource_address_load_base(struct pool *pool, struct resource_address *dest,
                            const struct resource_address *src,
                            const char *suffix)
 {
@@ -324,7 +324,7 @@ resource_address_load_base(pool_t pool, struct resource_address *dest,
 }
 
 const struct resource_address *
-resource_address_apply(pool_t pool, const struct resource_address *src,
+resource_address_apply(struct pool *pool, const struct resource_address *src,
                        const char *relative, size_t relative_length,
                        struct resource_address *buffer)
 {
@@ -416,7 +416,7 @@ resource_address_relative(const struct resource_address *base,
 }
 
 static const char *
-append_args(pool_t pool, const struct resource_address *address,
+append_args(struct pool *pool, const struct resource_address *address,
             const char *p)
 {
     for (unsigned i = 0; i < address->u.cgi.num_args; ++i)
@@ -426,7 +426,7 @@ append_args(pool_t pool, const struct resource_address *address,
 }
 
 const char *
-resource_address_id(const struct resource_address *address, pool_t pool)
+resource_address_id(const struct resource_address *address, struct pool *pool)
 {
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:

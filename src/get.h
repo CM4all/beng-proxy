@@ -13,6 +13,7 @@
 #include <http/method.h>
 #include <http/status.h>
 
+struct pool;
 struct http_cache;
 struct hstock;
 struct tcp_balancer;
@@ -41,7 +42,7 @@ resource_get(struct http_cache *cache,
              struct hstock *fcgi_stock,
              struct hstock *was_stock,
              struct hstock *delegate_stock,
-             pool_t pool,
+             struct pool *pool,
              unsigned session_sticky,
              http_method_t method,
              const struct resource_address *address,

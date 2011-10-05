@@ -45,7 +45,7 @@ widget_sync_session(struct widget *widget gcc_unused,
 }
 
 void
-widget_http_request(pool_t pool gcc_unused, struct widget *widget gcc_unused,
+widget_http_request(struct pool *pool gcc_unused, struct widget *widget gcc_unused,
                     struct processor_env *env gcc_unused,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
@@ -58,7 +58,7 @@ widget_http_request(pool_t pool gcc_unused, struct widget *widget gcc_unused,
 
 struct test_operation {
     struct async_operation operation;
-    pool_t pool;
+    struct pool *pool;
 };
 
 static void
@@ -74,7 +74,7 @@ static const struct async_operation_class test_operation = {
 };
 
 void
-widget_resolver_new(pool_t pool, pool_t widget_pool gcc_unused,
+widget_resolver_new(struct pool *pool, struct pool *widget_pool gcc_unused,
                     struct widget *widget gcc_unused,
                     struct tcache *translate_cache gcc_unused,
                     widget_resolver_callback_t callback gcc_unused, void *ctx gcc_unused,
@@ -90,7 +90,7 @@ widget_resolver_new(pool_t pool, pool_t widget_pool gcc_unused,
 }
 
 static void
-test_abort_resolver(pool_t pool)
+test_abort_resolver(struct pool *pool)
 {
     const char *uri;
     bool ret;
@@ -117,7 +117,7 @@ test_abort_resolver(pool_t pool)
 }
 
 int main(int argc, char **argv) {
-    pool_t pool;
+    struct pool *pool;
 
     (void)argc;
     (void)argv;

@@ -24,7 +24,7 @@
 #include <stdlib.h>
 
 struct http_cache {
-    pool_t pool;
+    struct pool *pool;
     struct cache *cache;
     struct memcached_stock *memcached_stock;
     struct resource_loader *resource_loader;
@@ -45,7 +45,7 @@ struct http_cache_flush {
 struct http_cache_request {
     struct list_head siblings;
 
-    pool_t pool, caller_pool;
+    struct pool *pool, *caller_pool;
 
 #ifndef NDEBUG
     struct pool_notify caller_pool_notify;
@@ -121,7 +121,7 @@ struct http_cache_request {
 };
 
 static const char *
-http_cache_cgi_key(pool_t pool, const struct resource_address *address)
+http_cache_cgi_key(struct pool *pool, const struct resource_address *address)
 {
     assert(address != NULL);
     assert(address->type == RESOURCE_ADDRESS_CGI ||
@@ -182,7 +182,7 @@ http_cache_cgi_key(pool_t pool, const struct resource_address *address)
 }
 
 static const char *
-http_cache_key(pool_t pool, const struct resource_address *address)
+http_cache_key(struct pool *pool, const struct resource_address *address)
 {
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:
@@ -379,7 +379,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     if (request->document != NULL && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == NULL);
 
-        pool_t caller_pool = request->caller_pool;
+        struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
         struct pool_notify notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
@@ -404,7 +404,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         if (body != NULL)
             istream_close_unused(body);
 
-        pool_t caller_pool = request->caller_pool;
+        struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
         struct pool_notify notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
@@ -437,7 +437,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         /* don't cache response */
         cache_log(4, "http_cache: nocache %s\n", request->key);
 
-        pool_t caller_pool = request->caller_pool;
+        struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
         struct pool_notify notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
@@ -495,7 +495,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         pool_ref(request->pool);
     }
 
-    pool_t caller_pool = request->caller_pool;
+    struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
     struct pool_notify notify;
     pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
@@ -531,7 +531,7 @@ http_cache_response_abort(GError *error, void *ctx)
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
 
-    pool_t caller_pool = request->caller_pool;
+    struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
     struct pool_notify notify;
     pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
@@ -585,7 +585,7 @@ static const struct async_operation_class http_cache_async_operation = {
  */
 
 struct http_cache *
-http_cache_new(pool_t pool, size_t max_size,
+http_cache_new(struct pool *pool, size_t max_size,
                struct memcached_stock *memcached_stock,
                struct resource_loader *resource_loader)
 {
@@ -666,8 +666,8 @@ http_cache_flush(struct http_cache *cache)
     if (cache->cache != NULL)
         http_cache_heap_flush(cache->cache);
     else if (cache->memcached_stock != NULL) {
-        pool_t pool = pool_new_linear(cache->pool,
-                                      "http_cache_memcached_flush", 1024);
+        struct pool *pool = pool_new_linear(cache->pool,
+                                            "http_cache_memcached_flush", 1024);
         struct http_cache_flush *flush = p_malloc(pool, sizeof(*flush));
 
         http_cache_memcached_flush(pool, cache->memcached_stock,
@@ -684,7 +684,7 @@ http_cache_flush(struct http_cache *cache)
  * Caller pool is referenced synchronously and freed asynchronously.
  */
 static void
-http_cache_miss(struct http_cache *cache, pool_t caller_pool,
+http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
                 unsigned session_sticky,
                 struct http_cache_info *info,
                 http_method_t method,
@@ -694,7 +694,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
                 void *handler_ctx,
                 struct async_operation_ref *async_ref)
 {
-    pool_t pool;
+    struct pool *pool;
     struct http_cache_request *request;
 
     if (info->only_if_cached) {
@@ -742,7 +742,7 @@ http_cache_miss(struct http_cache *cache, pool_t caller_pool,
 static void
 http_cache_heap_serve(struct cache *cache,
                       struct http_cache_document *document,
-                      pool_t pool,
+                      struct pool *pool,
                       const char *key gcc_unused,
                       const struct http_response_handler *handler,
                       void *handler_ctx)
@@ -833,7 +833,7 @@ http_cache_test(struct http_cache_request *request,
  * Caller pool is referenced synchronously and freed asynchronously.
  */
 static void
-http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
+http_cache_heap_test(struct http_cache *cache, struct pool *caller_pool,
                      unsigned session_sticky,
                      struct http_cache_info *info,
                      struct http_cache_document *document,
@@ -846,7 +846,7 @@ http_cache_heap_test(struct http_cache *cache, pool_t caller_pool,
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    pool_t pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
+    struct pool *pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
     struct http_cache_request *request = p_malloc(pool,
                                                   sizeof(*request));
     request->pool = pool;
@@ -889,7 +889,7 @@ static void
 http_cache_found(struct http_cache *cache,
                  struct http_cache_info *info,
                  struct http_cache_document *document,
-                 pool_t pool,
+                 struct pool *pool,
                  unsigned session_sticky,
                  http_method_t method,
                  const struct resource_address *address,
@@ -916,7 +916,7 @@ http_cache_found(struct http_cache *cache,
  */
 static void
 http_cache_heap_use(struct http_cache *cache,
-                    pool_t pool, unsigned session_sticky,
+                    struct pool *pool, unsigned session_sticky,
                     http_method_t method,
                     const struct resource_address *address,
                     struct strmap *headers,
@@ -967,7 +967,7 @@ http_cache_memcached_miss(struct http_cache_request *request)
     struct http_cache_info *info = request->info;
 
     if (info->only_if_cached) {
-        pool_t caller_pool = request->caller_pool;
+        struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
         struct pool_notify notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
@@ -1014,7 +1014,7 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
     if (http_cache_may_serve(request->info, document)) {
         cache_log(4, "http_cache: serve %s\n", request->key);
 
-        pool_t caller_pool = request->caller_pool;
+        struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
         struct pool_notify notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
@@ -1043,7 +1043,7 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
  */
 static void
 http_cache_memcached_use(struct http_cache *cache,
-                         pool_t caller_pool, unsigned session_sticky,
+                         struct pool *caller_pool, unsigned session_sticky,
                          http_method_t method,
                          const struct resource_address *address,
                          struct strmap *headers,
@@ -1053,7 +1053,7 @@ http_cache_memcached_use(struct http_cache *cache,
                          struct async_operation_ref *async_ref)
 {
     struct http_cache_request *request;
-    pool_t pool;
+    struct pool *pool;
 
     assert(cache->memcached_stock != NULL);
 
@@ -1089,7 +1089,7 @@ http_cache_memcached_use(struct http_cache *cache,
 
 void
 http_cache_request(struct http_cache *cache,
-                   pool_t pool, unsigned session_sticky,
+                   struct pool *pool, unsigned session_sticky,
                    http_method_t method,
                    const struct resource_address *address,
                    struct strmap *headers, istream_t body,

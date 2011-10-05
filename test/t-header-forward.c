@@ -60,7 +60,7 @@ check_strmap(struct strmap *map, const char *p)
 
 int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 {
-    pool_t pool;
+    struct pool *pool;
     struct strmap *headers, *out;
     struct header_forward_settings settings = {
         .modes = {

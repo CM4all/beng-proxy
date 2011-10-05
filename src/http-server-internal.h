@@ -14,7 +14,7 @@
 #include "async.h"
 
 struct http_server_connection {
-    pool_t pool;
+    struct pool *pool;
 
     /* I/O */
     int fd;

@@ -120,7 +120,7 @@ static const struct istream istream_optional = {
  */
 
 istream_t
-istream_optional_new(pool_t pool, istream_t input)
+istream_optional_new(struct pool *pool, istream_t input)
 {
     struct istream_optional *optional = istream_new_macro(pool, optional);
 

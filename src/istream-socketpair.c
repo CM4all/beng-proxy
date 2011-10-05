@@ -257,7 +257,7 @@ socketpair_send_callback(int fd gcc_unused, short event gcc_unused,
  */
 
 istream_t
-istream_socketpair_new(pool_t pool, istream_t input, int *fd_r)
+istream_socketpair_new(struct pool *pool, istream_t input, int *fd_r)
 {
     struct istream_socketpair *sp;
     int ret, fds[2];

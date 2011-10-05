@@ -17,7 +17,7 @@
 #define EXPECTED_RESULT "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> bar"
 
 void
-widget_class_lookup(gcc_unused pool_t pool, gcc_unused pool_t widget_pool,
+widget_class_lookup(gcc_unused struct pool *pool, gcc_unused struct pool *widget_pool,
                     gcc_unused struct tcache *translate_cache,
                     gcc_unused const char *widget_type,
                     widget_class_callback_t callback,
@@ -28,20 +28,20 @@ widget_class_lookup(gcc_unused pool_t pool, gcc_unused pool_t widget_pool,
 }
 
 istream_t
-embed_inline_widget(pool_t pool, gcc_unused struct processor_env *env,
+embed_inline_widget(struct pool *pool, gcc_unused struct processor_env *env,
                     struct widget *widget)
 {
     return istream_string_new(pool, p_strdup(pool, widget->class_name));
 }
 
 static istream_t
-create_input(pool_t pool)
+create_input(struct pool *pool)
 {
     return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
 }
 
 static istream_t
-create_test(pool_t pool, istream_t input)
+create_test(struct pool *pool, istream_t input)
 {
     bool ret;
     const char *uri;

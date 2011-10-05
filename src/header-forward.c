@@ -10,6 +10,7 @@
 #include "session.h"
 #include "cookie-client.h"
 #include "growing-buffer.h"
+#include "pool.h"
 
 #ifndef NDEBUG
 #include <daemon/log.h>

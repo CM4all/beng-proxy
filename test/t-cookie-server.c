@@ -1,13 +1,14 @@
 #include "cookie-server.h"
 #include "header-writer.h"
 #include "strmap.h"
+#include "pool.h"
 
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
-    pool_t pool;
+    struct pool *pool;
     struct strmap *cookies;
 
     pool = pool_new_libc(NULL, "root");

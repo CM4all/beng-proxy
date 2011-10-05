@@ -26,11 +26,11 @@ enum http_cache_memcached_type {
 };
 
 struct http_cache_memcached_request {
-    pool_t pool;
+    struct pool *pool;
 
     struct memcached_stock *stock;
 
-    pool_t background_pool;
+    struct pool *background_pool;
     struct background_manager *background;
 
     const char *uri;
@@ -93,7 +93,7 @@ static const struct memcached_client_handler http_cache_memcached_flush_handler 
 };
 
 void
-http_cache_memcached_flush(pool_t pool, struct memcached_stock *stock,
+http_cache_memcached_flush(struct pool *pool, struct memcached_stock *stock,
                            http_cache_memcached_flush_t callback,
                            void *callback_ctx,
                            struct async_operation_ref *async_ref)
@@ -113,7 +113,7 @@ http_cache_memcached_flush(pool_t pool, struct memcached_stock *stock,
 }
 
 static struct http_cache_document *
-mcd_deserialize_document(pool_t pool, struct strref *header,
+mcd_deserialize_document(struct pool *pool, struct strref *header,
                          const struct strmap *request_headers)
 {
     struct http_cache_document *document;
@@ -183,7 +183,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
     if (unclean) {
         /* this choice record is unclean - start cleanup as a
            background job */
-        pool_t pool = pool_new_linear(request->background_pool,
+        struct pool *pool = pool_new_linear(request->background_pool,
                                       "http_cache_choice_cleanup", 8192);
         struct background_job *job = p_malloc(pool, sizeof(*job));
 
@@ -293,8 +293,8 @@ http_cache_memcached_get_response(enum memcached_response_status status,
 }
 
 void
-http_cache_memcached_get(pool_t pool, struct memcached_stock *stock,
-                         pool_t background_pool,
+http_cache_memcached_get(struct pool *pool, struct memcached_stock *stock,
+                         struct pool *background_pool,
                          struct background_manager *background,
                          const char *uri, struct strmap *request_headers,
                          http_cache_memcached_get_t callback,
@@ -371,8 +371,8 @@ static const struct memcached_client_handler http_cache_memcached_put_handler = 
 };
 
 void
-http_cache_memcached_put(pool_t pool, struct memcached_stock *stock,
-                         pool_t background_pool,
+http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
+                         struct pool *background_pool,
                          struct background_manager *background,
                          const char *uri,
                          const struct http_cache_info *info,
@@ -481,12 +481,12 @@ static const struct memcached_client_handler mcd_background_handler = {
 
 static void
 mcd_background_delete(struct memcached_stock *stock,
-                      pool_t background_pool,
+                      struct pool *background_pool,
                       struct background_manager *background,
                       const char *uri, struct strmap *vary)
 {
-    pool_t pool = pool_new_linear(background_pool,
-                                  "http_cache_memcached_bkg_delete", 1024);
+    struct pool *pool = pool_new_linear(background_pool,
+                                        "http_cache_memcached_bkg_delete", 1024);
     struct background_job *job = p_malloc(pool, sizeof(*job));
     const char *key = http_cache_choice_vary_key(pool, uri, vary);
 
@@ -502,14 +502,14 @@ mcd_background_delete(struct memcached_stock *stock,
 
 void
 http_cache_memcached_remove_uri(struct memcached_stock *stock,
-                                pool_t background_pool,
+                                struct pool *background_pool,
                                 struct background_manager *background,
                                 const char *uri)
 {
     mcd_background_delete(stock, background_pool, background, uri, NULL);
 
-    pool_t pool = pool_new_linear(background_pool,
-                                  "http_cache_memcached_remove_uri", 8192);
+    struct pool *pool = pool_new_linear(background_pool,
+                                        "http_cache_memcached_remove_uri", 8192);
     struct background_job *job = p_malloc(pool, sizeof(*job));
     http_cache_choice_delete(pool, stock, uri,
                              background_callback, job,
@@ -522,7 +522,7 @@ struct match_data {
     struct background_job job;
 
     struct memcached_stock *stock;
-    pool_t background_pool;
+    struct pool *background_pool;
     struct background_manager *background;
     const char *uri;
     struct strmap *headers;
@@ -556,15 +556,15 @@ mcd_delete_filter_callback(const struct http_cache_document *document,
 
 void
 http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
-                                      pool_t background_pool,
+                                      struct pool *background_pool,
                                       struct background_manager *background,
                                       const char *uri, struct strmap *headers)
 {
     /* delete the main document */
     mcd_background_delete(stock, background_pool, background, uri, NULL);
 
-    pool_t pool = pool_new_linear(background_pool,
-                                  "http_cache_memcached_remove_uri", 8192);
+    struct pool *pool = pool_new_linear(background_pool,
+                                        "http_cache_memcached_remove_uri", 8192);
 
     /* now delete all matching Vary documents */
     struct match_data *data = p_malloc(pool, sizeof(*data));

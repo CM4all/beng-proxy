@@ -7,11 +7,10 @@
 #ifndef __BENG_FAILURE_H
 #define __BENG_FAILURE_H
 
-#include "pool.h"
-
 #include <stdbool.h>
 #include <stddef.h>
 
+struct pool;
 struct sockaddr;
 
 enum failure_status {
@@ -37,7 +36,7 @@ enum failure_status {
 };
 
 void
-failure_init(pool_t pool);
+failure_init(struct pool *pool);
 
 void
 failure_deinit(void);

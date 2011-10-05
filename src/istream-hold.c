@@ -178,7 +178,7 @@ static const struct istream istream_hold = {
  */
 
 istream_t
-istream_hold_new(pool_t pool, istream_t input)
+istream_hold_new(struct pool *pool, istream_t input)
 {
     struct istream_hold *hold = istream_new_macro(pool, hold);
 

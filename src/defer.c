@@ -7,11 +7,12 @@
 
 #include "defer.h"
 #include "async.h"
+#include "pool.h"
 
 #include <event.h>
 
 struct defer {
-    pool_t pool;
+    struct pool *pool;
 
     defer_callback_t callback;
     void *callback_ctx;
@@ -73,7 +74,7 @@ static const struct async_operation_class defer_operation = {
  */
 
 void
-defer(pool_t pool, defer_callback_t callback, void *ctx,
+defer(struct pool *pool, defer_callback_t callback, void *ctx,
       struct async_operation_ref *async_ref)
 {
     struct defer *d = p_malloc(pool, sizeof(*d));

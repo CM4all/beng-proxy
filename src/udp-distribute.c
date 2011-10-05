@@ -6,6 +6,7 @@
 
 #include "udp-distribute.h"
 #include "fd_util.h"
+#include "pool.h"
 
 #include <inline/list.h>
 
@@ -18,14 +19,14 @@
 struct udp_recipient {
     struct list_head siblings;
 
-    pool_t pool;
+    struct pool *pool;
 
     int fd;
     struct event event;
 };
 
 struct udp_distribute {
-    pool_t pool;
+    struct pool *pool;
     struct list_head recipients;
 };
 
@@ -50,7 +51,7 @@ udp_recipient_event_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
 }
 
 struct udp_distribute *
-udp_distribute_new(pool_t pool)
+udp_distribute_new(struct pool *pool)
 {
     struct udp_distribute *ud = p_malloc(pool, sizeof(*ud));
     ud->pool = pool;

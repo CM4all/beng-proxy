@@ -26,7 +26,7 @@
 #include <errno.h>
 
 struct context {
-    pool_t pool;
+    struct pool *pool;
 
     int fd;
     bool idle, reuse;
@@ -54,7 +54,7 @@ cleanup_callback(GError *error, G_GNUC_UNUSED void *ctx)
 int main(int argc, char **argv) {
     struct addrinfo hints;
     struct event_base *event_base;
-    pool_t root_pool;
+    struct pool *root_pool;
     static struct context ctx;
     struct uri_with_address *uwa;
     struct hstock *tcp_stock;

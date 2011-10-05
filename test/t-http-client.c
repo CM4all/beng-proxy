@@ -87,7 +87,7 @@ connect_fixed(void)
 }
 
 struct context {
-    pool_t pool;
+    struct pool *pool;
 
     unsigned data_blocking;
     bool close_response_body_early, close_response_body_late, close_response_body_data;
@@ -254,7 +254,7 @@ static const struct http_response_handler my_response_handler = {
  */
 
 static void
-test_empty(pool_t pool, struct context *c)
+test_empty(struct pool *pool, struct context *c)
 {
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
@@ -274,7 +274,7 @@ test_empty(pool_t pool, struct context *c)
 }
 
 static void
-test_body(pool_t pool, struct context *c)
+test_body(struct pool *pool, struct context *c)
 {
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
@@ -298,7 +298,7 @@ test_body(pool_t pool, struct context *c)
 }
 
 static void
-test_close_response_body_early(pool_t pool, struct context *c)
+test_close_response_body_early(struct pool *pool, struct context *c)
 {
     c->close_response_body_early = true;
     c->fd = connect_mirror();
@@ -320,7 +320,7 @@ test_close_response_body_early(pool_t pool, struct context *c)
 }
 
 static void
-test_close_response_body_late(pool_t pool, struct context *c)
+test_close_response_body_late(struct pool *pool, struct context *c)
 {
     c->close_response_body_late = true;
     c->fd = connect_mirror();
@@ -342,7 +342,7 @@ test_close_response_body_late(pool_t pool, struct context *c)
 }
 
 static void
-test_close_response_body_data(pool_t pool, struct context *c)
+test_close_response_body_data(struct pool *pool, struct context *c)
 {
     c->close_response_body_data = true;
     c->fd = connect_mirror();
@@ -370,7 +370,7 @@ test_close_response_body_data(pool_t pool, struct context *c)
 }
 
 static void
-test_close_request_body_early(pool_t pool, struct context *c)
+test_close_request_body_early(struct pool *pool, struct context *c)
 {
     istream_t request_body = istream_delayed_new(pool);
 
@@ -397,7 +397,7 @@ test_close_request_body_early(pool_t pool, struct context *c)
 }
 
 static void
-test_close_request_body_fail(pool_t pool, struct context *c)
+test_close_request_body_fail(struct pool *pool, struct context *c)
 {
     istream_t delayed = istream_delayed_new(pool);
     istream_t request_body =
@@ -425,7 +425,7 @@ test_close_request_body_fail(pool_t pool, struct context *c)
 }
 
 static void
-test_data_blocking(pool_t pool, struct context *c)
+test_data_blocking(struct pool *pool, struct context *c)
 {
     c->data_blocking = 5;
     c->fd = connect_mirror();
@@ -461,7 +461,7 @@ test_data_blocking(pool_t pool, struct context *c)
  * in the buffer.
  */
 static void
-test_data_blocking2(pool_t pool, struct context *c)
+test_data_blocking2(struct pool *pool, struct context *c)
 {
     struct growing_buffer *request_headers;
 
@@ -503,7 +503,7 @@ test_data_blocking2(pool_t pool, struct context *c)
 }
 
 static void
-test_body_fail(pool_t pool, struct context *c)
+test_body_fail(struct pool *pool, struct context *c)
 {
     c->fd = connect_mirror();
 
@@ -524,7 +524,7 @@ test_body_fail(pool_t pool, struct context *c)
 }
 
 static void
-test_head(pool_t pool, struct context *c)
+test_head(struct pool *pool, struct context *c)
 {
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
@@ -545,7 +545,7 @@ test_head(pool_t pool, struct context *c)
 }
 
 static void
-test_ignored_body(pool_t pool, struct context *c)
+test_ignored_body(struct pool *pool, struct context *c)
 {
     c->fd = connect_null();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
@@ -569,7 +569,7 @@ test_ignored_body(pool_t pool, struct context *c)
  * Close request body in the response handler (with response body).
  */
 static void
-test_close_ignored_request_body(pool_t pool, struct context *c)
+test_close_ignored_request_body(struct pool *pool, struct context *c)
 {
     c->fd = connect_null();
     c->close_request_body_early = true;
@@ -595,7 +595,7 @@ test_close_ignored_request_body(pool_t pool, struct context *c)
  * response body).
  */
 static void
-test_head_close_ignored_request_body(pool_t pool, struct context *c)
+test_head_close_ignored_request_body(struct pool *pool, struct context *c)
 {
     c->fd = connect_null();
     c->close_request_body_early = true;
@@ -620,7 +620,7 @@ test_head_close_ignored_request_body(pool_t pool, struct context *c)
  * Close request body in the response_eof handler.
  */
 static void
-test_close_request_body_eor(pool_t pool, struct context *c)
+test_close_request_body_eor(struct pool *pool, struct context *c)
 {
     c->fd = connect_dummy();
     c->close_request_body_eof = true;
@@ -645,7 +645,7 @@ test_close_request_body_eor(pool_t pool, struct context *c)
  * Close request body in the response_eof handler.
  */
 static void
-test_close_request_body_eor2(pool_t pool, struct context *c)
+test_close_request_body_eor2(struct pool *pool, struct context *c)
 {
     c->fd = connect_fixed();
     c->close_request_body_eof = true;
@@ -673,7 +673,7 @@ test_close_request_body_eor2(pool_t pool, struct context *c)
  */
 
 static void
-run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
+run_test(struct pool *pool, void (*test)(struct pool *pool, struct context *c)) {
     struct context c;
 
     memset(&c, 0, sizeof(c));
@@ -684,7 +684,7 @@ run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
 
     (void)argc;
     (void)argv;

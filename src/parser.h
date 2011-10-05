@@ -55,7 +55,7 @@ struct parser_handler {
 struct parser;
 
 struct parser * gcc_malloc
-parser_new(pool_t pool, istream_t input,
+parser_new(struct pool *pool, istream_t input,
            const struct parser_handler *handler, void *handler_ctx);
 
 /**

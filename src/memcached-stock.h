@@ -10,13 +10,14 @@
 #include "istream.h"
 #include "memcached-protocol.h"
 
+struct pool;
 struct memcached_client_handler;
 struct memcached_stock;
 struct tcp_balancer;
 struct uri_with_address;
 
 struct memcached_stock *
-memcached_stock_new(pool_t pool, struct tcp_balancer *tcp_balancer,
+memcached_stock_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct uri_with_address *address);
 
 void
@@ -28,7 +29,7 @@ memcached_stock_free(struct memcached_stock *stock);
  * description of the other arguments.
  */
 void
-memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
+memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,

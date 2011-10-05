@@ -90,7 +90,7 @@ static bool eof;
 static size_t body_read;
 
 void
-http_cache_memcached_flush(G_GNUC_UNUSED pool_t pool,
+http_cache_memcached_flush(G_GNUC_UNUSED struct pool *pool,
                            G_GNUC_UNUSED struct memcached_stock *stock,
                            G_GNUC_UNUSED http_cache_memcached_flush_t callback,
                            G_GNUC_UNUSED void *callback_ctx,
@@ -99,9 +99,9 @@ http_cache_memcached_flush(G_GNUC_UNUSED pool_t pool,
 }
 
 void
-http_cache_memcached_get(G_GNUC_UNUSED pool_t pool,
+http_cache_memcached_get(G_GNUC_UNUSED struct pool *pool,
                          G_GNUC_UNUSED struct memcached_stock *stock,
-                         G_GNUC_UNUSED pool_t background_pool,
+                         G_GNUC_UNUSED struct pool *background_pool,
                          G_GNUC_UNUSED struct background_manager *background,
                          G_GNUC_UNUSED const char *uri,
                          G_GNUC_UNUSED struct strmap *request_headers,
@@ -112,9 +112,9 @@ http_cache_memcached_get(G_GNUC_UNUSED pool_t pool,
 }
 
 void
-http_cache_memcached_put(G_GNUC_UNUSED pool_t pool,
+http_cache_memcached_put(G_GNUC_UNUSED struct pool *pool,
                          G_GNUC_UNUSED struct memcached_stock *stock,
-                         G_GNUC_UNUSED pool_t background_pool,
+                         G_GNUC_UNUSED struct pool *background_pool,
                          G_GNUC_UNUSED struct background_manager *background,
                          G_GNUC_UNUSED const char *uri,
                          G_GNUC_UNUSED const struct http_cache_info *info,
@@ -130,7 +130,7 @@ http_cache_memcached_put(G_GNUC_UNUSED pool_t pool,
 
 void
 http_cache_memcached_remove_uri(G_GNUC_UNUSED struct memcached_stock *stock,
-                                G_GNUC_UNUSED pool_t background_pool,
+                                G_GNUC_UNUSED struct pool *background_pool,
                                 G_GNUC_UNUSED struct background_manager *background,
                                 G_GNUC_UNUSED const char *uri)
 {
@@ -138,7 +138,7 @@ http_cache_memcached_remove_uri(G_GNUC_UNUSED struct memcached_stock *stock,
 
 void
 http_cache_memcached_remove_uri_match(G_GNUC_UNUSED struct memcached_stock *stock,
-                                      G_GNUC_UNUSED pool_t background_pool,
+                                      G_GNUC_UNUSED struct pool *background_pool,
                                       G_GNUC_UNUSED struct background_manager *background,
                                       G_GNUC_UNUSED const char *uri,
                                       G_GNUC_UNUSED struct strmap *headers)
@@ -146,7 +146,7 @@ http_cache_memcached_remove_uri_match(G_GNUC_UNUSED struct memcached_stock *stoc
 }
 
 static struct strmap *
-parse_headers(pool_t pool, const char *raw)
+parse_headers(struct pool *pool, const char *raw)
 {
     struct growing_buffer *gb;
     struct strmap *headers;
@@ -163,19 +163,19 @@ parse_headers(pool_t pool, const char *raw)
 }
 
 static struct strmap *
-parse_request_headers(pool_t pool, const struct request *request)
+parse_request_headers(struct pool *pool, const struct request *request)
 {
     return parse_headers(pool, request->request_headers);
 }
 
 static struct strmap *
-parse_response_headers(pool_t pool, const struct request *request)
+parse_response_headers(struct pool *pool, const struct request *request)
 {
     return parse_headers(pool, request->response_headers);
 }
 
 void
-resource_loader_request(gcc_unused struct resource_loader *rl, pool_t pool,
+resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool,
                         gcc_unused unsigned session_sticky,
                         http_method_t method,
                         gcc_unused const struct resource_address *address,
@@ -269,7 +269,7 @@ static void
 my_http_response(http_status_t status, struct strmap *headers,
                  istream_t body, void *ctx)
 {
-    pool_t pool = ctx;
+    struct pool *pool = ctx;
     const struct request *request = &requests[current_request];
     struct strmap *expected_rh;
 
@@ -313,10 +313,10 @@ static const struct http_response_handler my_http_response_handler = {
 };
 
 static void
-run_cache_test(pool_t root_pool, unsigned num, bool cached)
+run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 {
     const struct request *request = &requests[num];
-    pool_t pool = pool_new_linear(root_pool, "t_http_cache", 8192);
+    struct pool *pool = pool_new_linear(root_pool, "t_http_cache", 8192);
     struct uri_with_address uwa = {
         .pool = pool,
         .uri = request->uri,
@@ -359,7 +359,7 @@ run_cache_test(pool_t root_pool, unsigned num, bool cached)
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
 
     (void)argc;
     (void)argv;

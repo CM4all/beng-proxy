@@ -56,7 +56,7 @@ struct packet_reader {
 };
 
 struct translate_client {
-    pool_t pool;
+    struct pool *pool;
 
     struct stopwatch *stopwatch;
 
@@ -243,7 +243,7 @@ write_optional_sockaddr(struct growing_buffer *gb,
 }
 
 static struct growing_buffer *
-marshal_request(pool_t pool, const struct translate_request *request,
+marshal_request(struct pool *pool, const struct translate_request *request,
                 GError **error_r)
 {
     struct growing_buffer *gb;
@@ -306,7 +306,7 @@ packet_reader_init(struct packet_reader *reader)
  * @return 0 on EOF, -1 on error, -2 when the packet is incomplete, 1 if the packet is complete
  */
 static enum packet_reader_result
-packet_reader_read(pool_t pool, struct packet_reader *reader, int fd)
+packet_reader_read(struct pool *pool, struct packet_reader *reader, int fd)
 {
     ssize_t nbytes;
 
@@ -380,7 +380,7 @@ translate_add_transformation(struct translate_client *client)
 }
 
 static bool
-parse_address_string(pool_t pool, struct address_list *list, const char *p)
+parse_address_string(struct pool *pool, struct address_list *list, const char *p)
 {
     if (*p == '/') {
         /* unix domain socket */
@@ -526,7 +526,7 @@ parse_header_forward(struct header_forward_settings *settings,
 }
 
 static bool
-parse_header(pool_t pool, struct translate_response *response,
+parse_header(struct pool *pool, struct translate_response *response,
              const char *payload, size_t payload_length,
              GError **error_r)
 {
@@ -1662,7 +1662,7 @@ static const struct async_operation_class translate_operation = {
  */
 
 void
-translate(pool_t pool, int fd,
+translate(struct pool *pool, int fd,
           const struct lease *lease, void *lease_ctx,
           const struct translate_request *request,
           const struct translate_handler *handler, void *ctx,

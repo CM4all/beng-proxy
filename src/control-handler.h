@@ -7,14 +7,13 @@
 #ifndef BENG_PROXY_CONTROL_HANDLER_H
 #define BENG_PROXY_CONTROL_HANDLER_H
 
-#include "pool.h"
-
 #include <stdbool.h>
 
+struct pool;
 struct instance;
 
 bool
-global_control_handler_init(pool_t pool, struct instance *instance);
+global_control_handler_init(struct pool *pool, struct instance *instance);
 
 void
 global_control_handler_deinit(void);

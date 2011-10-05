@@ -13,6 +13,7 @@
 #include "event2.h"
 #include "buffered-io.h"
 #include "fd_util.h"
+#include "pool.h"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -180,7 +181,7 @@ sock_event_callback(int fd, short event, void *ctx)
 }
 
 int
-duplex_new(pool_t pool, int read_fd, int write_fd)
+duplex_new(struct pool *pool, int read_fd, int write_fd)
 {
     struct duplex *duplex;
     int ret, fds[2];

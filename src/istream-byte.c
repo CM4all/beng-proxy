@@ -92,7 +92,7 @@ static const struct istream istream_byte = {
  */
 
 istream_t
-istream_byte_new(pool_t pool, istream_t input)
+istream_byte_new(struct pool *pool, istream_t input)
 {
     struct istream_byte *byte = istream_new_macro(pool, byte);
 

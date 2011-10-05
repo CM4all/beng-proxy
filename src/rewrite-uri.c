@@ -42,7 +42,7 @@ parse_uri_mode(const struct strref *s)
  */
 
 static const char *
-uri_replace_hostname(pool_t pool, const char *uri, const char *hostname)
+uri_replace_hostname(struct pool *pool, const char *uri, const char *hostname)
 {
     const char *start, *end;
 
@@ -72,7 +72,7 @@ uri_replace_hostname(pool_t pool, const char *uri, const char *hostname)
 }
 
 static const char *
-uri_add_prefix(pool_t pool, const char *uri, const char *absolute_uri,
+uri_add_prefix(struct pool *pool, const char *uri, const char *absolute_uri,
                const char *untrusted_host, const char *untrusted_prefix)
 {
     assert(untrusted_prefix != NULL);
@@ -105,7 +105,7 @@ uri_add_prefix(pool_t pool, const char *uri, const char *absolute_uri,
 }
 
 static const char *
-uri_add_site_suffix(pool_t pool, const char *uri, const char *site_name,
+uri_add_site_suffix(struct pool *pool, const char *uri, const char *site_name,
                     const char *untrusted_host,
                     const char *untrusted_site_suffix)
 {
@@ -134,7 +134,7 @@ uri_add_site_suffix(pool_t pool, const char *uri, const char *site_name,
 }
 
 static const char *
-do_rewrite_widget_uri(pool_t pool,
+do_rewrite_widget_uri(struct pool *pool,
                       const char *absolute_uri,
                       const struct parsed_uri *external_uri,
                       const char *site_name,
@@ -203,7 +203,7 @@ do_rewrite_widget_uri(pool_t pool,
  */
 
 struct rewrite_widget_uri {
-    pool_t pool;
+    struct pool *pool;
     const char *absolute_uri;
     const struct parsed_uri *external_uri;
     const char *site_name;
@@ -295,7 +295,7 @@ class_lookup_callback(void *ctx)
  */
 
 istream_t
-rewrite_widget_uri(pool_t pool, pool_t widget_pool,
+rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
                    struct tcache *translate_cache,
                    const char *absolute_uri,
                    const struct parsed_uri *external_uri,

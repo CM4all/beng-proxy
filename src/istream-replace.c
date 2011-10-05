@@ -582,7 +582,7 @@ static const struct istream istream_replace = {
  */
 
 istream_t
-istream_replace_new(pool_t pool, istream_t input)
+istream_replace_new(struct pool *pool, istream_t input)
 {
     struct istream_replace *replace = istream_new_macro(pool, replace);
 

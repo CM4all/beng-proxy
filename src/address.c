@@ -5,11 +5,13 @@
  */
 
 #include "address.h"
+#include "pool.h"
 
 #include <socket/address.h>
 
 const char *
-address_to_string(pool_t pool, const struct sockaddr *addr, size_t addrlen)
+address_to_string(struct pool *pool,
+                  const struct sockaddr *addr, size_t addrlen)
 {
     bool success;
     char host[512];

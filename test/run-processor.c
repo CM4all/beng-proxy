@@ -35,7 +35,7 @@ const struct widget_class root_widget_class = {
 struct tcache *global_translate_cache;
 
 istream_t
-embed_inline_widget(pool_t pool,
+embed_inline_widget(struct pool *pool,
                     gcc_unused struct processor_env *env,
                     struct widget *widget)
 {
@@ -61,7 +61,8 @@ parse_uri_mode(G_GNUC_UNUSED const struct strref *s)
 }
 
 istream_t
-rewrite_widget_uri(gcc_unused pool_t pool, gcc_unused pool_t widget_pool,
+rewrite_widget_uri(gcc_unused struct pool *pool,
+                   gcc_unused struct pool *widget_pool,
                    gcc_unused struct tcache *translate_cache,
                    gcc_unused const char *absolute_uri,
                    gcc_unused const struct parsed_uri *external_uri,
@@ -131,7 +132,7 @@ static const struct istream_handler my_istream_handler = {
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
     const char *uri;
     bool ret;
     struct parsed_uri parsed_uri;

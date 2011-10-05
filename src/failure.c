@@ -7,6 +7,7 @@
 #include "failure.h"
 #include "expiry.h"
 #include "address-envelope.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 
@@ -28,7 +29,7 @@ struct failure {
 #define FAILURE_SLOTS 64
 
 struct failure_list {
-    pool_t pool;
+    struct pool *pool;
 
     struct failure *slots[FAILURE_SLOTS];
 };
@@ -50,7 +51,7 @@ calc_hash(const struct sockaddr *addr, size_t addrlen)
 }
 
 void
-failure_init(pool_t pool)
+failure_init(struct pool *pool)
 {
     fl.pool = pool_new_libc(pool, "failure_list");
     memset(fl.slots, 0, sizeof(fl.slots));

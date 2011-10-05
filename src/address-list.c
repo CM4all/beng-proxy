@@ -14,7 +14,7 @@
 #include <string.h>
 
 void
-address_list_copy(pool_t pool, struct address_list *dest,
+address_list_copy(struct pool *pool, struct address_list *dest,
                   const struct address_list *src)
 {
     address_list_init(dest);
@@ -27,7 +27,7 @@ address_list_copy(pool_t pool, struct address_list *dest,
 }
 
 bool
-address_list_add(pool_t pool, struct address_list *al,
+address_list_add(struct pool *pool, struct address_list *al,
                  const struct sockaddr *address, size_t length)
 {
     assert(al->size <= MAX_ADDRESSES);

@@ -41,7 +41,7 @@ static const struct istream istream_fail = {
 };
 
 istream_t
-istream_fail_new(pool_t pool, GError *error)
+istream_fail_new(struct pool *pool, GError *error)
 {
     assert(pool != NULL);
     assert(error != NULL);

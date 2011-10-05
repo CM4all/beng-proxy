@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 void *
-p_memdup(pool_t pool, const void *src, size_t length)
+p_memdup(struct pool *pool, const void *src, size_t length)
 {
     void *dest = p_malloc(pool, length);
     memcpy(dest, src, length);
@@ -20,13 +20,13 @@ p_memdup(pool_t pool, const void *src, size_t length)
 }
 
 char *
-p_strdup(pool_t pool, const char *src)
+p_strdup(struct pool *pool, const char *src)
 {
     return p_memdup(pool, src, strlen(src) + 1);
 }
 
 char *
-p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL)
+p_strndup_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL)
 {
     char *dest = p_malloc_fwd(pool, length + 1);
     memcpy(dest, src, length);
@@ -35,7 +35,7 @@ p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL)
 }
 
 char * gcc_malloc
-p_sprintf(pool_t pool, const char *fmt, ...)
+p_sprintf(struct pool *pool, const char *fmt, ...)
 {
 #if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__ICC)
     size_t length;
@@ -63,7 +63,7 @@ p_sprintf(pool_t pool, const char *fmt, ...)
 }
 
 char * gcc_malloc
-p_strcat(pool_t pool, const char *first, ...)
+p_strcat(struct pool *pool, const char *first, ...)
 {
     size_t length = 1;
     va_list ap;
@@ -91,7 +91,7 @@ p_strcat(pool_t pool, const char *first, ...)
 }
 
 char * gcc_malloc
-p_strncat(pool_t pool, const char *first, size_t first_length, ...)
+p_strncat(struct pool *pool, const char *first, size_t first_length, ...)
 {
     size_t length = first_length + 1;
     va_list ap;

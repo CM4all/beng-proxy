@@ -20,7 +20,7 @@ transformation_is_container(const struct transformation *t)
 }
 
 struct transformation *
-transformation_dup(pool_t pool, const struct transformation *src)
+transformation_dup(struct pool *pool, const struct transformation *src)
 {
     struct transformation *dest = p_malloc(pool, sizeof(*dest));
 
@@ -45,7 +45,7 @@ transformation_dup(pool_t pool, const struct transformation *src)
 }
 
 struct transformation *
-transformation_dup_chain(pool_t pool, const struct transformation *src)
+transformation_dup_chain(struct pool *pool, const struct transformation *src)
 {
     struct transformation *dest = NULL, **tail_p = &dest;
 

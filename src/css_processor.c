@@ -279,7 +279,7 @@ headers_copy2(struct strmap *in, struct strmap *out,
 }
 
 struct strmap *
-css_processor_header_forward(pool_t pool, struct strmap *headers)
+css_processor_header_forward(struct pool *pool, struct strmap *headers)
 {
     if (headers == NULL)
         return NULL;

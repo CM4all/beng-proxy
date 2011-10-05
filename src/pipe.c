@@ -34,7 +34,7 @@ pipe_child_callback(int status, void *ctx gcc_unused)
 }
 
 static const char *
-append_etag(pool_t pool, const char *in, const char *suffix)
+append_etag(struct pool *pool, const char *in, const char *suffix)
 {
     size_t length;
 
@@ -63,7 +63,7 @@ calc_hash(const char *p) {
 }
 
 static const char *
-make_pipe_etag(pool_t pool, const char *in,
+make_pipe_etag(struct pool *pool, const char *in,
                const char *path,
                const char *const* args, unsigned num_args)
 {
@@ -83,7 +83,7 @@ make_pipe_etag(pool_t pool, const char *in,
 }
 
 void
-pipe_filter(pool_t pool, const char *path,
+pipe_filter(struct pool *pool, const char *path,
             const char *const* args, unsigned num_args,
             http_status_t status, struct strmap *headers, istream_t body,
             const struct http_response_handler *handler,

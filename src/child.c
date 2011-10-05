@@ -6,6 +6,7 @@
 
 #include "child.h"
 #include "crash.h"
+#include "pool.h"
 
 #include <inline/list.h>
 
@@ -23,7 +24,7 @@ struct child {
 };
 
 static bool shutdown = false;
-static pool_t pool;
+static struct pool *pool;
 static struct list_head children;
 static struct event sigchld_event;
 
@@ -66,7 +67,7 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
 }
 
 void
-children_init(pool_t _pool)
+children_init(struct pool *_pool)
 {
     assert(!shutdown);
 

@@ -102,7 +102,7 @@ static const struct istream istream_unlock = {
  */
 
 istream_t
-istream_unlock_new(pool_t pool, istream_t input,
+istream_unlock_new(struct pool *pool, istream_t input,
                    struct cache *cache, struct cache_item *item)
 {
     struct istream_unlock *unlock = istream_new_macro(pool, unlock);

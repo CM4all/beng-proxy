@@ -10,6 +10,8 @@
 #include "istream.h"
 #include "memcached-protocol.h"
 
+struct pool;
+
 /**
  * Serialize a memcached request packet, and return it as an
  * istream_t.
@@ -24,7 +26,7 @@
  * @param message_id the id of the message
  */
 istream_t
-memcached_request_packet(pool_t pool, enum memcached_opcode opcode,
+memcached_request_packet(struct pool *pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
                          istream_t value,

@@ -5,6 +5,7 @@
  */
 
 #include "stopwatch.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -29,7 +30,7 @@ struct stopwatch_event {
 };
 
 struct stopwatch {
-    pool_t pool;
+    struct pool *pool;
 
     struct pool_notify pool_notify;
 
@@ -65,7 +66,7 @@ stopwatch_event_init(struct stopwatch_event *event, const char *name)
 }
 
 struct stopwatch *
-stopwatch_new(pool_t pool, const char *name)
+stopwatch_new(struct pool *pool, const char *name)
 {
     struct stopwatch *stopwatch;
 
@@ -87,7 +88,7 @@ stopwatch_new(pool_t pool, const char *name)
 }
 
 struct stopwatch *
-stopwatch_sockaddr_new(pool_t pool, const struct sockaddr *address,
+stopwatch_sockaddr_new(struct pool *pool, const struct sockaddr *address,
                        size_t address_length, const char *suffix)
 {
     char buffer[1024];
@@ -105,7 +106,7 @@ stopwatch_sockaddr_new(pool_t pool, const struct sockaddr *address,
 }
 
 struct stopwatch *
-stopwatch_fd_new(pool_t pool, int fd, const char *suffix)
+stopwatch_fd_new(struct pool *pool, int fd, const char *suffix)
 {
     struct sockaddr_storage address;
     socklen_t address_length = sizeof(address);

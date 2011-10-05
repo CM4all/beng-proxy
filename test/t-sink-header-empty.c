@@ -6,7 +6,7 @@
 #define EXPECTED_RESULT ""
 
 static istream_t
-create_input(pool_t pool)
+create_input(struct pool *pool)
 {
     return istream_memory_new(pool, "\0\0\0\x06" "foobar", 10);
 }
@@ -41,7 +41,7 @@ static const struct sink_header_handler my_sink_header_handler = {
 };
 
 static istream_t
-create_test(pool_t pool, istream_t input)
+create_test(struct pool *pool, istream_t input)
 {
     istream_t delayed, hold;
 

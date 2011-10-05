@@ -71,7 +71,7 @@ struct istream_handler {
 /** an input stream */
 struct istream {
     /** the memory pool which allocated this object */
-    pool_t pool;
+    struct pool *pool;
 
     /** data sink */
     const struct istream_handler *handler;

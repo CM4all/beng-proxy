@@ -158,8 +158,8 @@ static const struct client_socket_handler tcp_stock_socket_handler = {
  *
  */
 
-static pool_t
-tcp_stock_pool(void *ctx gcc_unused, pool_t parent,
+static struct pool *
+tcp_stock_pool(void *ctx gcc_unused, struct pool *parent,
                const char *uri gcc_unused)
 {
     return pool_new_linear(parent, "tcp_stock", 2048);
@@ -168,7 +168,7 @@ tcp_stock_pool(void *ctx gcc_unused, pool_t parent,
 static void
 tcp_stock_create(void *ctx, struct stock_item *item,
                  const char *uri, void *info,
-                 pool_t caller_pool,
+                 struct pool *caller_pool,
                  struct async_operation_ref *async_ref)
 {
     (void)ctx;
@@ -246,13 +246,13 @@ static const struct stock_class tcp_stock_class = {
  */
 
 struct hstock *
-tcp_stock_new(pool_t pool, unsigned limit)
+tcp_stock_new(struct pool *pool, unsigned limit)
 {
     return hstock_new(pool, &tcp_stock_class, NULL, limit);
 }
 
 void
-tcp_stock_get(struct hstock *tcp_stock, pool_t pool, const char *name,
+tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               const struct sockaddr *address, size_t address_length,
               const struct stock_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)

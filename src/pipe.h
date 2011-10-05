@@ -11,6 +11,7 @@
 
 #include <http/status.h>
 
+struct pool;
 struct strmap;
 struct http_response_handler;
 
@@ -19,7 +20,7 @@ struct http_response_handler;
  * handler
  */
 void
-pipe_filter(pool_t pool, const char *path,
+pipe_filter(struct pool *pool, const char *path,
             const char *const* args, unsigned num_args,
             http_status_t status, struct strmap *headers, istream_t body,
             const struct http_response_handler *handler,

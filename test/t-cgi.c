@@ -188,7 +188,7 @@ static const struct http_response_handler my_response_handler = {
  */
 
 static void
-test_normal(pool_t pool, struct context *c)
+test_normal(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -219,7 +219,7 @@ test_normal(pool_t pool, struct context *c)
 }
 
 static void
-test_close_early(pool_t pool, struct context *c)
+test_close_early(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -252,7 +252,7 @@ test_close_early(pool_t pool, struct context *c)
 }
 
 static void
-test_close_late(pool_t pool, struct context *c)
+test_close_late(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -285,7 +285,7 @@ test_close_late(pool_t pool, struct context *c)
 }
 
 static void
-test_close_data(pool_t pool, struct context *c)
+test_close_data(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -317,7 +317,7 @@ test_close_data(pool_t pool, struct context *c)
 }
 
 static void
-test_post(pool_t pool, struct context *c)
+test_post(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -350,7 +350,7 @@ test_post(pool_t pool, struct context *c)
 }
 
 static void
-test_status(pool_t pool, struct context *c)
+test_status(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -383,7 +383,7 @@ test_status(pool_t pool, struct context *c)
 }
 
 static void
-test_no_content(pool_t pool, struct context *c)
+test_no_content(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -416,7 +416,7 @@ test_no_content(pool_t pool, struct context *c)
 }
 
 static void
-test_no_length(pool_t pool, struct context *c)
+test_no_length(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -445,7 +445,7 @@ test_no_length(pool_t pool, struct context *c)
 }
 
 static void
-test_length_ok(pool_t pool, struct context *c)
+test_length_ok(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -474,7 +474,7 @@ test_length_ok(pool_t pool, struct context *c)
 }
 
 static void
-test_length_ok_large(pool_t pool, struct context *c)
+test_length_ok_large(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -505,7 +505,7 @@ test_length_ok_large(pool_t pool, struct context *c)
 }
 
 static void
-test_length_too_small(pool_t pool, struct context *c)
+test_length_too_small(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -533,7 +533,7 @@ test_length_too_small(pool_t pool, struct context *c)
 }
 
 static void
-test_length_too_big(pool_t pool, struct context *c)
+test_length_too_big(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -562,7 +562,7 @@ test_length_too_big(pool_t pool, struct context *c)
 }
 
 static void
-test_length_too_small_late(pool_t pool, struct context *c)
+test_length_too_small_late(struct pool *pool, struct context *c)
 {
     const char *path;
 
@@ -597,7 +597,7 @@ test_length_too_small_late(pool_t pool, struct context *c)
  */
 
 static void
-run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
+run_test(struct pool *pool, void (*test)(struct pool *pool, struct context *c)) {
     struct context c;
 
     memset(&c, 0, sizeof(c));
@@ -610,7 +610,7 @@ run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
 }
 
 static void
-run_all_tests(pool_t pool)
+run_all_tests(struct pool *pool)
 {
     run_test(pool, test_normal);
     run_test(pool, test_close_early);
@@ -629,7 +629,7 @@ run_all_tests(pool_t pool)
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
 
     (void)argc;
     (void)argv;

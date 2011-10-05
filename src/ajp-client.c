@@ -36,7 +36,7 @@
 #include <limits.h>
 
 struct ajp_client {
-    pool_t pool;
+    struct pool *pool;
 
     /* I/O */
     int fd;
@@ -819,7 +819,7 @@ static const struct async_operation_class ajp_client_request_async_operation = {
  */
 
 void
-ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
+ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                    const struct lease *lease, void *lease_ctx,
                    const char *protocol, const char *remote_addr,
                    const char *remote_host, const char *server_name,

@@ -3,6 +3,7 @@
 #include "stock.h"
 #include "async.h"
 #include "defer.h"
+#include "pool.h"
 
 #include <event.h>
 #include <assert.h>
@@ -12,7 +13,7 @@
 
 static const char helper_path[] = "./src/cm4all-beng-proxy-delegate-helper";
 static struct hstock *delegate_stock;
-static pool_t pool;
+static struct pool *pool;
 
 static void
 my_stop(void *ctx gcc_unused)
@@ -45,7 +46,7 @@ static const struct delegate_handler my_delegate_handler = {
 int main(int argc, char **argv)
 {
     struct event_base *event_base;
-    pool_t root_pool;
+    struct pool *root_pool;
     struct async_operation_ref my_async_ref;
 
     if (argc != 2) {

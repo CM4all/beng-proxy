@@ -27,7 +27,7 @@
 
 struct client_socket {
     struct async_operation operation;
-    pool_t pool;
+    struct pool *pool;
     int fd;
     struct event event;
 

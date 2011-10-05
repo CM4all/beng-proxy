@@ -10,7 +10,7 @@
 #include <string.h>
 
 istream_t
-memcached_request_packet(pool_t pool, enum memcached_opcode opcode,
+memcached_request_packet(struct pool *pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
                          istream_t value,

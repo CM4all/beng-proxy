@@ -74,7 +74,8 @@ struct resource_address {
 };
 
 static inline const char *
-resource_address_cgi_uri(pool_t pool, const struct resource_address *address)
+resource_address_cgi_uri(struct pool *pool,
+                         const struct resource_address *address)
 {
     const char *p;
 
@@ -99,11 +100,11 @@ resource_address_cgi_uri(pool_t pool, const struct resource_address *address)
 }
 
 void
-resource_address_copy(pool_t pool, struct resource_address *dest,
+resource_address_copy(struct pool *pool, struct resource_address *dest,
                       const struct resource_address *src);
 
 static inline struct resource_address *
-resource_address_dup(pool_t pool, const struct resource_address *src)
+resource_address_dup(struct pool *pool, const struct resource_address *src)
 {
     struct resource_address *dest = p_malloc(pool, sizeof(*dest));
 
@@ -118,7 +119,7 @@ resource_address_dup(pool_t pool, const struct resource_address *src)
  * original #resource_address pointer is returned.
  */
 const struct resource_address *
-resource_address_insert_query_string_from(pool_t pool,
+resource_address_insert_query_string_from(struct pool *pool,
                                           const struct resource_address *src,
                                           const char *uri);
 
@@ -128,7 +129,7 @@ resource_address_insert_query_string_from(pool_t pool,
  * arguments, the original #resource_address pointer is returned.
  */
 const struct resource_address *
-resource_address_insert_args(pool_t pool,
+resource_address_insert_args(struct pool *pool,
                              const struct resource_address *src,
                              const char *args, size_t length);
 
@@ -141,7 +142,7 @@ resource_address_insert_args(pool_t pool,
  * cannot have a base address
  */
 struct resource_address *
-resource_address_save_base(pool_t pool, struct resource_address *dest,
+resource_address_save_base(struct pool *pool, struct resource_address *dest,
                            const struct resource_address *src,
                            const char *suffix);
 
@@ -153,12 +154,12 @@ resource_address_save_base(pool_t pool, struct resource_address *dest,
  * @return NULL if this address type cannot have a base address
  */
 struct resource_address *
-resource_address_load_base(pool_t pool, struct resource_address *dest,
+resource_address_load_base(struct pool *pool, struct resource_address *dest,
                            const struct resource_address *src,
                            const char *suffix);
 
 const struct resource_address *
-resource_address_apply(pool_t pool, const struct resource_address *src,
+resource_address_apply(struct pool *pool, const struct resource_address *src,
                        const char *relative, size_t relative_length,
                        struct resource_address *buffer);
 
@@ -172,7 +173,7 @@ resource_address_relative(const struct resource_address *base,
  * key in a hash table.
  */
 const char *
-resource_address_id(const struct resource_address *address, pool_t pool);
+resource_address_id(const struct resource_address *address, struct pool *pool);
 
 /**
  * Determine the URI path.  May return NULL if unknown or not

@@ -9,6 +9,8 @@
 
 #include "resource-address.h"
 
+struct pool;
+
 struct transformation {
     struct transformation *next;
 
@@ -39,9 +41,9 @@ bool
 transformation_is_container(const struct transformation *t);
 
 struct transformation *
-transformation_dup(pool_t pool, const struct transformation *src);
+transformation_dup(struct pool *pool, const struct transformation *src);
 
 struct transformation *
-transformation_dup_chain(pool_t pool, const struct transformation *src);
+transformation_dup_chain(struct pool *pool, const struct transformation *src);
 
 #endif

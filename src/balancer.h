@@ -7,16 +7,15 @@
 #ifndef BENG_BALANCER_H
 #define BENG_BALANCER_H
 
-#include "pool.h"
-
 #include <sys/socket.h>
 
+struct pool;
 struct balancer;
 struct address_list;
 struct sockaddr;
 
 struct balancer *
-balancer_new(pool_t pool);
+balancer_new(struct pool *pool);
 
 void
 balancer_free(struct balancer *balancer);

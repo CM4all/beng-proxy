@@ -137,7 +137,7 @@ static const struct http_response_handler my_response_handler = {
 };
 
 static istream_t
-request_body(pool_t pool)
+request_body(struct pool *pool)
 {
     struct stat st;
     return fstat(0, &st) == 0 && S_ISREG(st.st_mode)
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    pool_t pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(NULL, "root");
 
     unsigned num_parameters = 0;
     if (parameters != NULL)

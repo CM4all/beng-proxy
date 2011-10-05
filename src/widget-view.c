@@ -21,7 +21,7 @@ widget_view_init(struct widget_view *view)
 }
 
 bool
-widget_view_inherit_address(pool_t pool, struct widget_view *view,
+widget_view_inherit_address(struct pool *pool, struct widget_view *view,
                             const struct resource_address *address)
 {
     assert(view != NULL);
@@ -36,7 +36,7 @@ widget_view_inherit_address(pool_t pool, struct widget_view *view,
 }
 
 bool
-widget_view_inherit_from(pool_t pool, struct widget_view *dest,
+widget_view_inherit_from(struct pool *pool, struct widget_view *dest,
                          const struct widget_view *src)
 {
     if (widget_view_inherit_address(pool, dest, &src->address)) {
@@ -87,7 +87,7 @@ widget_view_dup(struct pool *pool, const struct widget_view *src)
 }
 
 struct widget_view *
-widget_view_dup_chain(pool_t pool, const struct widget_view *src)
+widget_view_dup_chain(struct pool *pool, const struct widget_view *src)
 {
     struct widget_view *dest = NULL, **tail_p = &dest;
 

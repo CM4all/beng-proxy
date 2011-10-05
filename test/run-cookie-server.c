@@ -8,7 +8,7 @@
 #include <string.h>
 
 int main(int argc, char **argv) {
-    pool_t pool;
+    struct pool *pool;
     struct strmap *cookies;
     const struct strmap_pair *pair;
 

@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
     int fd, ret;
     struct addrinfo hints, *ai;
     struct event_base *event_base;
-    pool_t root_pool, pool;
+    struct pool *root_pool, *pool;
     http_method_t method;
     istream_t request_body;
     static struct context ctx;

@@ -6,6 +6,7 @@
 
 #include "cache.h"
 #include "hashmap.h"
+#include "pool.h"
 
 #include <assert.h>
 #include <time.h>
@@ -36,7 +37,7 @@ cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
                             void *ctx);
 
 struct cache *
-cache_new(pool_t pool, const struct cache_class *class,
+cache_new(struct pool *pool, const struct cache_class *class,
           unsigned hashtable_capacity, size_t max_size)
 {
     struct cache *cache = p_malloc(pool, sizeof(*cache));

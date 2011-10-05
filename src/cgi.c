@@ -656,7 +656,7 @@ cgi_child_callback(int status, void *ctx gcc_unused)
 }
 
 void
-cgi_new(pool_t pool, const struct jail_params *jail,
+cgi_new(struct pool *pool, const struct jail_params *jail,
         const char *interpreter, const char *action,
         const char *path,
         http_method_t method, const char *uri,

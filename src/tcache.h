@@ -7,10 +7,9 @@
 #ifndef __BENG_TCACHE_H
 #define __BENG_TCACHE_H
 
-#include "pool.h"
-
 #include <stdint.h>
 
+struct pool;
 struct tcache;
 struct tstock;
 struct translate_handler;
@@ -18,7 +17,7 @@ struct translate_request;
 struct async_operation_ref;
 
 struct tcache *
-translate_cache_new(pool_t pool, struct tstock *stock,
+translate_cache_new(struct pool *pool, struct tstock *stock,
                     unsigned max_size);
 
 void
@@ -36,7 +35,7 @@ translate_cache_flush(struct tcache *tcache);
  * added to the cache.
  */
 void
-translate_cache(pool_t pool, struct tcache *tcache,
+translate_cache(struct pool *pool, struct tcache *tcache,
                 const struct translate_request *request,
                 const struct translate_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref);

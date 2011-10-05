@@ -18,7 +18,7 @@
 struct balancer_item {
     struct cache_item item;
 
-    pool_t pool;
+    struct pool *pool;
 
     /** the index of the item that will be returned next */
     unsigned next;
@@ -27,7 +27,7 @@ struct balancer_item {
 };
 
 struct balancer {
-    pool_t pool;
+    struct pool *pool;
 
     /**
      * This library uses the cache library to store remote host
@@ -159,7 +159,7 @@ static const struct cache_class balancer_cache_class = {
  */
 
 struct balancer *
-balancer_new(pool_t pool)
+balancer_new(struct pool *pool)
 {
     struct balancer *balancer = p_malloc(pool, sizeof(*balancer));
 
@@ -181,7 +181,7 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
 {
     const char *key;
     struct balancer_item *item;
-    pool_t pool;
+    struct pool *pool;
 
     if (address_list_is_single(list))
         return address_list_first(list);

@@ -70,7 +70,7 @@ static const struct istream istream_null = {
 };
 
 istream_t
-istream_null_new(pool_t pool)
+istream_null_new(struct pool *pool)
 {
     struct istream_null *null = istream_new_macro(pool, null);
     return istream_struct_cast(&null->stream);

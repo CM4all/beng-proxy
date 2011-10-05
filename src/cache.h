@@ -7,12 +7,13 @@
 #ifndef __BENG_CACHE_H
 #define __BENG_CACHE_H
 
-#include "pool.h"
-
 #include <inline/list.h>
 
 #include <sys/time.h>
+#include <stdbool.h>
+#include <stddef.h>
 
+struct pool;
 struct cache;
 
 struct cache_item {
@@ -49,7 +50,7 @@ struct cache_class {
 };
 
 struct cache *
-cache_new(pool_t pool, const struct cache_class *class,
+cache_new(struct pool *pool, const struct cache_class *class,
           unsigned hashtable_capacity, size_t max_size);
 
 void

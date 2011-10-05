@@ -1,6 +1,7 @@
 #include "was-server.h"
 #include "duplex.h"
 #include "direct.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 
@@ -13,7 +14,7 @@ struct instance {
 };
 
 static void
-mirror_request(pool_t pool, http_method_t method, const char *uri,
+mirror_request(struct pool *pool, http_method_t method, const char *uri,
                struct strmap *headers, struct istream *body, void *ctx)
 {
     struct instance *instance = ctx;
@@ -47,7 +48,7 @@ int main(int argc, char **argv) {
     direct_global_init();
     struct event_base *event_base = event_init();
 
-    pool_t pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(NULL, "root");
 
     struct instance instance;
     instance.server = was_server_new(pool, control_fd, in_fd, out_fd,

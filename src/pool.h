@@ -14,7 +14,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-typedef struct pool *pool_t;
+struct pool;
 
 struct pool_mark {
     struct linear_pool_area *area;
@@ -24,11 +24,13 @@ struct pool_mark {
 void
 pool_recycler_clear(void);
 
-pool_t
-pool_new_libc(pool_t parent, const char *name);
+gcc_malloc
+struct pool *
+pool_new_libc(struct pool *parent, const char *name);
 
-pool_t
-pool_new_linear(pool_t parent, const char *name, size_t initial_size);
+gcc_malloc
+struct pool *
+pool_new_linear(struct pool *parent, const char *name, size_t initial_size);
 
 #ifdef NDEBUG
 
@@ -37,18 +39,18 @@ pool_new_linear(pool_t parent, const char *name, size_t initial_size);
 #else
 
 void
-pool_set_major(pool_t pool);
+pool_set_major(struct pool *pool);
 
 #endif
 
 void
-pool_ref_impl(pool_t pool TRACE_ARGS_DECL);
+pool_ref_impl(struct pool *pool TRACE_ARGS_DECL);
 
 #define pool_ref(pool) pool_ref_impl(pool TRACE_ARGS)
 #define pool_ref_fwd(pool) pool_ref_impl(pool TRACE_ARGS_FWD)
 
 unsigned
-pool_unref_impl(pool_t pool TRACE_ARGS_DECL);
+pool_unref_impl(struct pool *pool TRACE_ARGS_DECL);
 
 #define pool_unref(pool) pool_unref_impl(pool TRACE_ARGS)
 #define pool_unref_fwd(pool) pool_unref_impl(pool TRACE_ARGS_FWD)
@@ -59,7 +61,7 @@ pool_unref_impl(pool_t pool TRACE_ARGS_DECL);
 struct pool_notify {
     struct list_head siblings;
 
-    pool_t pool;
+    struct pool *pool;
 
     bool destroyed, registered;
 
@@ -70,7 +72,7 @@ struct pool_notify {
 };
 
 void
-pool_notify(pool_t pool, struct pool_notify *notify);
+pool_notify(struct pool *pool, struct pool_notify *notify);
 
 bool
 pool_denotify(struct pool_notify *notify);
@@ -80,7 +82,7 @@ pool_denotify(struct pool_notify *notify);
  * old one is unregistered.
  */
 void
-pool_notify_move(pool_t pool, struct pool_notify *src,
+pool_notify_move(struct pool *pool, struct pool_notify *src,
                  struct pool_notify *dest);
 
 #endif
@@ -88,10 +90,10 @@ pool_notify_move(pool_t pool, struct pool_notify *src,
 #ifndef NDEBUG
 
 void
-pool_ref_notify_impl(pool_t pool, struct pool_notify *notify TRACE_ARGS_DECL);
+pool_ref_notify_impl(struct pool *pool, struct pool_notify *notify TRACE_ARGS_DECL);
 
 void
-pool_unref_denotify_impl(pool_t pool, struct pool_notify *notify
+pool_unref_denotify_impl(struct pool *pool, struct pool_notify *notify
                          TRACE_ARGS_DECL);
 
 /**
@@ -131,23 +133,23 @@ pool_attach(gcc_unused struct pool *pool, gcc_unused const void *p,
 }
 
 static inline void
-pool_attach_checked(gcc_unused pool_t pool, gcc_unused const void *p,
+pool_attach_checked(gcc_unused struct pool *pool, gcc_unused const void *p,
                     gcc_unused const char *name)
 {
 }
 
 static inline void
-pool_detach(gcc_unused pool_t pool, gcc_unused const void *p)
+pool_detach(gcc_unused struct pool *pool, gcc_unused const void *p)
 {
 }
 
 static inline void
-pool_detach_checked(gcc_unused pool_t pool, gcc_unused const void *p)
+pool_detach_checked(gcc_unused struct pool *pool, gcc_unused const void *p)
 {
 }
 
 static inline const char *
-pool_attachment_name(gcc_unused pool_t pool, gcc_unused const void *p)
+pool_attachment_name(gcc_unused struct pool *pool, gcc_unused const void *p)
 {
     return NULL;
 }
@@ -155,13 +157,13 @@ pool_attachment_name(gcc_unused pool_t pool, gcc_unused const void *p)
 #else
 
 void
-pool_trash(pool_t pool);
+pool_trash(struct pool *pool);
 
 void
 pool_commit(void);
 
 bool
-pool_contains(pool_t pool, const void *ptr, size_t size);
+pool_contains(struct pool *pool, const void *ptr, size_t size);
 
 /**
  * Attach an opaque object to the pool.  It must be detached before
@@ -169,78 +171,78 @@ pool_contains(pool_t pool, const void *ptr, size_t size);
  * whether all external objects have been destroyed.
  */
 void
-pool_attach(pool_t pool, const void *p, const char *name);
+pool_attach(struct pool *pool, const void *p, const char *name);
 
 /**
  * Same as pool_attach(), but checks if the object is already
  * registered.
  */
 void
-pool_attach_checked(pool_t pool, const void *p, const char *name);
+pool_attach_checked(struct pool *pool, const void *p, const char *name);
 
 void
-pool_detach(pool_t pool, const void *p);
+pool_detach(struct pool *pool, const void *p);
 
 void
-pool_detach_checked(pool_t pool, const void *p);
+pool_detach_checked(struct pool *pool, const void *p);
 
 const char *
-pool_attachment_name(pool_t pool, const void *p);
+pool_attachment_name(struct pool *pool, const void *p);
 
 #endif
 
 void
-pool_mark(pool_t pool, struct pool_mark *mark);
+pool_mark(struct pool *pool, struct pool_mark *mark);
 
 void
-pool_rewind(pool_t pool, const struct pool_mark *mark);
+pool_rewind(struct pool *pool, const struct pool_mark *mark);
 
 gcc_malloc
 void *
-p_malloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
+p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL);
 
 #define p_malloc(pool, size) p_malloc_impl(pool, size TRACE_ARGS)
 #define p_malloc_fwd(pool, size) p_malloc_impl(pool, size TRACE_ARGS_FWD)
 
 void
-p_free(pool_t pool, const void *ptr);
+p_free(struct pool *pool, const void *ptr);
 
 gcc_malloc
 void *
-p_calloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
+p_calloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL);
 
 #define p_calloc(pool, size) p_calloc_impl(pool, size TRACE_ARGS)
 
 gcc_malloc
 void *
-p_memdup(pool_t pool, const void *src, size_t length);
+p_memdup(struct pool *pool, const void *src, size_t length);
 
 gcc_malloc
 char *
-p_strdup(pool_t pool, const char *src);
+p_strdup(struct pool *pool, const char *src);
 
 static inline const char *
-p_strdup_checked(pool_t pool, const char *s)
+p_strdup_checked(struct pool *pool, const char *s)
 {
     return s == NULL ? NULL : p_strdup(pool, s);
 }
 
 gcc_malloc
 char *
-p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL);
+p_strndup_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL);
 
 #define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
 
 gcc_malloc gcc_printf(2, 3)
 char *
-p_sprintf(pool_t pool, const char *fmt, ...);
+p_sprintf(struct pool *pool, const char *fmt, ...);
 
 gcc_malloc
 char *
-p_strcat(pool_t pool, const char *s, ...);
+p_strcat(struct pool *pool, const char *s, ...);
 
 gcc_malloc
 char *
-p_strncat(pool_t pool, const char *s, size_t length, ...);
+p_strncat(struct pool *pool, const char *s, size_t length, ...);
 
 #endif

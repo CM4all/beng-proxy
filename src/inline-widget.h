@@ -9,11 +9,12 @@
 
 #include "istream.h"
 
+struct pool;
 struct widget;
 struct processor_env;
 
 istream_t
-embed_inline_widget(pool_t pool, struct processor_env *env,
+embed_inline_widget(struct pool *pool, struct processor_env *env,
                     struct widget *widget);
 
 #endif

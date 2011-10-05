@@ -50,7 +50,7 @@ deflate_abort(struct istream_deflate *defl, GError *error)
 static voidpf z_alloc
 (voidpf opaque, uInt items, uInt size)
 {
-    pool_t pool = opaque;
+    struct pool *pool = opaque;
 
     return p_malloc(pool, items * size);
 }
@@ -406,7 +406,7 @@ static const struct istream istream_deflate = {
  */
 
 istream_t
-istream_deflate_new(pool_t pool, istream_t input)
+istream_deflate_new(struct pool *pool, istream_t input)
 {
     struct istream_deflate *defl = istream_new_macro(pool, deflate);
 

@@ -9,8 +9,7 @@
 #ifndef __BENG_WIDGET_RESOLVER_H
 #define __BENG_WIDGET_RESOLVER_H
 
-#include "pool.h"
-
+struct pool;
 struct widget;
 struct tcache;
 struct widget_class;
@@ -19,7 +18,8 @@ struct async_operation_ref;
 typedef void (*widget_resolver_callback_t)(void *ctx);
 
 void
-widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
+widget_resolver_new(struct pool *pool, struct pool *widget_pool,
+                    struct widget *widget,
                     struct tcache *translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
                     struct async_operation_ref *async_ref);

@@ -22,7 +22,7 @@
 struct tcache_item {
     struct cache_item item;
 
-    pool_t pool;
+    struct pool *pool;
 
     struct {
         const char *session;
@@ -41,7 +41,7 @@ struct tcache_item {
 };
 
 struct tcache {
-    pool_t pool;
+    struct pool *pool;
 
     struct cache *cache;
 
@@ -49,7 +49,7 @@ struct tcache {
 };
 
 struct tcache_request {
-    pool_t pool;
+    struct pool *pool;
 
     struct tcache *tcache;
 
@@ -72,7 +72,7 @@ struct tcache_request {
 #endif
 
 static const char *
-tcache_uri_key(pool_t pool, const char *uri, http_status_t status,
+tcache_uri_key(struct pool *pool, const char *uri, http_status_t status,
                const struct strref *check)
 {
     const char *key = status != 0
@@ -90,7 +90,7 @@ tcache_uri_key(pool_t pool, const char *uri, http_status_t status,
 }
 
 static const char *
-tcache_request_key(pool_t pool, const struct translate_request *request)
+tcache_request_key(struct pool *pool, const struct translate_request *request)
 {
     return request->uri != NULL
         ? tcache_uri_key(pool, request->uri, request->error_document_status,
@@ -144,7 +144,7 @@ base_suffix(const char *uri, const char *base)
 }
 
 static void
-tcache_dup_response(pool_t pool, struct translate_response *dest,
+tcache_dup_response(struct pool *pool, struct translate_response *dest,
                     const struct translate_response *src)
 {
     /* we don't copy the "max_age" attribute, because it's only used
@@ -233,7 +233,7 @@ base_string(const char *p, const char *suffix)
  * is no matching BASE packet).
  */
 static const char *
-tcache_store_address(pool_t pool, struct resource_address *dest,
+tcache_store_address(struct pool *pool, struct resource_address *dest,
                      const struct resource_address *src,
                      const char *uri, const char *base)
 {
@@ -250,7 +250,7 @@ tcache_store_address(pool_t pool, struct resource_address *dest,
 }
 
 static const char *
-tcache_store_response(pool_t pool, struct translate_response *dest,
+tcache_store_response(struct pool *pool, struct translate_response *dest,
                       const struct translate_response *src,
                       const struct translate_request *request)
 {
@@ -287,7 +287,7 @@ tcache_store_response(pool_t pool, struct translate_response *dest,
  * any BASE changes (if a BASE is present).
  */
 static void
-tcache_load_address(pool_t pool, const char *uri,
+tcache_load_address(struct pool *pool, const char *uri,
                     struct resource_address *dest,
                     const struct translate_response *src)
 {
@@ -303,7 +303,7 @@ tcache_load_address(pool_t pool, const char *uri,
 }
 
 static void
-tcache_load_response(pool_t pool, struct translate_response *dest,
+tcache_load_response(struct pool *pool, struct translate_response *dest,
                      const struct translate_response *src,
                      const char *uri)
 {
@@ -323,7 +323,7 @@ tcache_vary_contains(const struct translate_response *response,
 }
 
 static const char *
-tcache_vary_copy(pool_t pool, const char *p,
+tcache_vary_copy(struct pool *pool, const char *p,
                  const struct translate_response *response,
                  enum beng_translation_command command)
 {
@@ -472,7 +472,7 @@ tcache_get(struct tcache *tcache, const struct translate_request *request,
 }
 
 static struct tcache_item *
-tcache_lookup(pool_t pool, struct tcache *tcache,
+tcache_lookup(struct pool *pool, struct tcache *tcache,
               const struct translate_request *request, const char *key)
 {
     struct tcache_item *item;
@@ -575,7 +575,7 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
                                    NULL);
 
     if (tcache_response_evaluate(response)) {
-        pool_t pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 512);
+        struct pool *pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 512);
         struct tcache_item *item = p_malloc(pool, sizeof(*item));
         unsigned max_age = response->max_age;
         const char *key;
@@ -649,7 +649,7 @@ static const struct translate_handler tcache_handler = {
 };
 
 static void
-tcache_hit(pool_t pool, const char *key, const struct tcache_item *item,
+tcache_hit(struct pool *pool, const char *key, const struct tcache_item *item,
            const struct translate_handler *handler, void *ctx)
 {
     struct translate_response *response =
@@ -662,7 +662,7 @@ tcache_hit(pool_t pool, const char *key, const struct tcache_item *item,
 }
 
 static void
-tcache_miss(pool_t pool, struct tcache *tcache,
+tcache_miss(struct pool *pool, struct tcache *tcache,
             const struct translate_request *request, const char *key,
             const struct translate_handler *handler, void *ctx,
             struct async_operation_ref *async_ref)
@@ -708,7 +708,7 @@ static const struct cache_class tcache_class = {
  */
 
 struct tcache *
-translate_cache_new(pool_t pool, struct tstock *stock,
+translate_cache_new(struct pool *pool, struct tstock *stock,
                     unsigned max_size)
 {
     pool = pool_new_libc(pool, "translate_cache");
@@ -748,7 +748,7 @@ translate_cache_flush(struct tcache *tcache)
  */
 
 void
-translate_cache(pool_t pool, struct tcache *tcache,
+translate_cache(struct pool *pool, struct tcache *tcache,
                 const struct translate_request *request,
                 const struct translate_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref)

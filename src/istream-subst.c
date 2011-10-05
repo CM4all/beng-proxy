@@ -682,7 +682,7 @@ static const struct istream istream_subst = {
  */
 
 istream_t
-istream_subst_new(pool_t pool, istream_t input)
+istream_subst_new(struct pool *pool, istream_t input)
 {
     struct istream_subst *subst = istream_new_macro(pool, subst);
 

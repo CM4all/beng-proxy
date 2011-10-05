@@ -11,6 +11,7 @@
 #include "address-list.h"
 #include "balancer.h"
 #include "failure.h"
+#include "pool.h"
 
 struct tcp_balancer {
     struct hstock *tcp_stock;

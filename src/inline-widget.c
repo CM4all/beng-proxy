@@ -24,7 +24,7 @@
 #include <assert.h>
 
 struct inline_widget {
-    pool_t pool;
+    struct pool *pool;
     struct processor_env *env;
     struct widget *widget;
 
@@ -49,7 +49,7 @@ inline_widget_close(struct inline_widget *iw, GError *error)
  * impossible.
  */
 static istream_t
-widget_response_format(pool_t pool, const struct widget *widget,
+widget_response_format(struct pool *pool, const struct widget *widget,
                        struct strmap **headers_r, istream_t body,
                        GError **error_r)
 {
@@ -248,7 +248,7 @@ class_lookup_callback(void *_ctx)
  */
 
 istream_t
-embed_inline_widget(pool_t pool, struct processor_env *env,
+embed_inline_widget(struct pool *pool, struct processor_env *env,
                     struct widget *widget)
 {
     struct inline_widget *iw = p_malloc(pool, sizeof(*iw));

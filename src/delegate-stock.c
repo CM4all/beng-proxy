@@ -84,7 +84,7 @@ delegate_stock_event(int fd, short event, void *ctx)
  *
  */
 
-static pool_t
+static struct pool *
 delegate_stock_pool(void *ctx gcc_unused, struct pool *parent,
                     const char *uri gcc_unused)
 {

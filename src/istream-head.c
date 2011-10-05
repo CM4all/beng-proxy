@@ -167,7 +167,7 @@ static const struct istream istream_head = {
  */
 
 istream_t
-istream_head_new(pool_t pool, istream_t input, size_t size)
+istream_head_new(struct pool *pool, istream_t input, size_t size)
 {
     struct istream_head *head = istream_new_macro(pool, head);
 

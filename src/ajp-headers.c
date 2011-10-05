@@ -12,6 +12,7 @@
 #include "strmap.h"
 #include "strref.h"
 #include "strutil.h"
+#include "pool.h"
 
 static bool
 serialize_ajp_header_name(struct growing_buffer *gb, const char *name)
@@ -48,7 +49,7 @@ serialize_ajp_headers(struct growing_buffer *gb, struct strmap *headers)
 }
 
 void
-deserialize_ajp_headers(pool_t pool, struct strmap *headers,
+deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
                         struct strref *input, unsigned num_headers)
 {
     while (num_headers-- > 0) {

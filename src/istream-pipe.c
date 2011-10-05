@@ -353,7 +353,7 @@ static const struct istream istream_pipe = {
  */
 
 istream_t
-istream_pipe_new(pool_t pool, istream_t input, struct stock *pipe_stock)
+istream_pipe_new(struct pool *pool, istream_t input, struct stock *pipe_stock)
 {
     struct istream_pipe *p = istream_new_macro(pool, pipe);
 

@@ -114,7 +114,8 @@ static const struct udp_handler control_server_udp_handler = {
 };
 
 struct control_server *
-control_server_new(pool_t pool, const char *host_and_port, int default_port,
+control_server_new(struct pool *pool,
+                   const char *host_and_port, int default_port,
                    const struct in_addr *group,
                    const struct control_handler *handler, void *ctx,
                    GError **error_r)
@@ -144,7 +145,7 @@ control_server_new(pool_t pool, const char *host_and_port, int default_port,
 }
 
 struct control_server *
-control_server_new_envelope(pool_t pool,
+control_server_new_envelope(struct pool *pool,
                             const struct address_envelope *envelope,
                             const struct control_handler *handler, void *ctx,
                             GError **error_r)

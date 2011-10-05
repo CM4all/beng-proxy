@@ -22,7 +22,7 @@
 #include <errno.h>
 
 struct context {
-    pool_t pool;
+    struct pool *pool;
 
     int fd;
     bool idle, reuse;
@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
     int fd, ret;
     struct addrinfo hints, *ai;
     struct event_base *event_base;
-    pool_t root_pool;
+    struct pool *root_pool;
     const char *key;
     static struct context ctx;
 

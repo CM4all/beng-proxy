@@ -7,6 +7,7 @@
 #include "jail.h"
 #include "strutil.h"
 #include "exec.h"
+#include "pool.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -33,7 +34,8 @@ next_word(char *p)
 }
 
 bool
-jail_config_load(struct jail_config *config, const char *path, pool_t pool)
+jail_config_load(struct jail_config *config, const char *path,
+                 struct pool *pool)
 {
     FILE *file = fopen(path, "r");
     if (file == NULL)
@@ -69,7 +71,7 @@ jail_config_load(struct jail_config *config, const char *path, pool_t pool)
 static const char *
 jail_try_translate_path(const char *path,
                         const char *global_prefix, const char *jailed_prefix,
-                        pool_t pool)
+                        struct pool *pool)
 {
     if (jailed_prefix == NULL)
         return NULL;
@@ -88,7 +90,7 @@ jail_try_translate_path(const char *path,
 }
 
 void
-jail_params_copy(pool_t pool, struct jail_params *dest,
+jail_params_copy(struct pool *pool, struct jail_params *dest,
                  const struct jail_params *src)
 {
     dest->enabled = src->enabled;
@@ -102,7 +104,7 @@ jail_params_copy(pool_t pool, struct jail_params *dest,
 
 const char *
 jail_translate_path(const struct jail_config *config, const char *path,
-                    const char *document_root, pool_t pool)
+                    const char *document_root, struct pool *pool)
 {
     const char *translated =
         jail_try_translate_path(path, document_root, config->jailed_home,

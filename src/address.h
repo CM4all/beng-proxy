@@ -7,8 +7,9 @@
 #ifndef __BENG_ADDRESS_H
 #define __BENG_ADDRESS_H
 
-#include "pool.h"
+#include <stddef.h>
 
+struct pool;
 struct sockaddr;
 
 /**
@@ -16,6 +17,7 @@ struct sockaddr;
  * "IP:PORT".
  */
 const char *
-address_to_string(pool_t pool, const struct sockaddr *addr, size_t addrlen);
+address_to_string(struct pool *pool,
+                  const struct sockaddr *addr, size_t addrlen);
 
 #endif

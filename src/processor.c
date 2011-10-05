@@ -65,7 +65,7 @@ enum tag {
 };
 
 struct processor {
-    pool_t pool, caller_pool;
+    struct pool *pool, *caller_pool;
 
     struct widget *container;
     const char *lookup_id;
@@ -115,7 +115,7 @@ struct processor {
     struct {
         off_t start_offset;
 
-        pool_t pool;
+        struct pool *pool;
         struct widget *widget;
 
         struct {
@@ -211,7 +211,7 @@ static const struct async_operation_class processor_async_operation = {
  */
 
 static const char *
-base_uri(pool_t pool, const char *absolute_uri)
+base_uri(struct pool *pool, const char *absolute_uri)
 {
     const char *p;
 
@@ -261,7 +261,7 @@ headers_copy2(struct strmap *in, struct strmap *out,
 }
 
 struct strmap *
-processor_header_forward(pool_t pool, struct strmap *headers)
+processor_header_forward(struct pool *pool, struct strmap *headers)
 {
     if (headers == NULL)
         return NULL;
@@ -280,14 +280,14 @@ processor_header_forward(pool_t pool, struct strmap *headers)
 }
 
 static struct processor *
-processor_new(pool_t caller_pool,
+processor_new(struct pool *caller_pool,
               struct widget *widget,
               struct processor_env *env,
               unsigned options)
 {
     assert(widget != NULL);
 
-    pool_t pool = pool_new_linear(caller_pool, "processor", 32768);
+    struct pool *pool = pool_new_linear(caller_pool, "processor", 32768);
     struct processor *processor;
 
     processor = p_malloc(pool, sizeof(*processor));
@@ -315,7 +315,7 @@ processor_new(pool_t caller_pool,
 }
 
 istream_t
-processor_process(pool_t caller_pool, istream_t istream,
+processor_process(struct pool *caller_pool, istream_t istream,
                   struct widget *widget,
                   struct processor_env *env,
                   unsigned options)
@@ -354,7 +354,7 @@ processor_process(pool_t caller_pool, istream_t istream,
 }
 
 void
-processor_lookup_widget(pool_t caller_pool, http_status_t status,
+processor_lookup_widget(struct pool *caller_pool, http_status_t status,
                         istream_t istream,
                         struct widget *widget, const char *id,
                         struct processor_env *env,
@@ -748,7 +748,7 @@ transform_uri_attribute(struct processor *processor,
 
 static void
 parser_widget_attr_finished(struct widget *widget,
-                            pool_t pool,
+                            struct pool *pool,
                             const struct strref *name,
                             const struct strref *value)
 {
@@ -1109,7 +1109,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
         return istream;
     } else if (widget->id != NULL &&
                strcmp(processor->lookup_id, widget->id) == 0) {
-        pool_t caller_pool = processor->caller_pool;
+        struct pool *caller_pool = processor->caller_pool;
         const struct widget_lookup_handler *handler = processor->handler;
         void *handler_ctx = processor->handler_ctx;
 

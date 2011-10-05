@@ -46,11 +46,11 @@ void
 widget_view_init(struct widget_view *view);
 
 bool
-widget_view_inherit_address(pool_t pool, struct widget_view *view,
+widget_view_inherit_address(struct pool *pool, struct widget_view *view,
                             const struct resource_address *address);
 
 bool
-widget_view_inherit_from(pool_t pool, struct widget_view *dest,
+widget_view_inherit_from(struct pool *pool, struct widget_view *dest,
                          const struct widget_view *src);
 
 /**

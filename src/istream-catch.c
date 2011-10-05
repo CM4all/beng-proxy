@@ -189,7 +189,7 @@ static const struct istream istream_catch = {
  */
 
 istream_t
-istream_catch_new(pool_t pool, istream_t input,
+istream_catch_new(struct pool *pool, istream_t input,
                   GError *(*callback)(GError *error, void *ctx), void *ctx)
 {
     struct istream_catch *catch = istream_new_macro(pool, catch);

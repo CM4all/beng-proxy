@@ -248,7 +248,7 @@ static const struct async_operation_class fcgi_create_operation = {
  *
  */
 
-static pool_t
+static struct pool *
 fcgi_stock_pool(void *ctx gcc_unused, struct pool *parent,
                const char *uri gcc_unused)
 {

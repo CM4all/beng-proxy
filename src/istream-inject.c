@@ -128,7 +128,7 @@ static const struct istream istream_inject = {
  */
 
 istream_t
-istream_inject_new(pool_t pool, istream_t input)
+istream_inject_new(struct pool *pool, istream_t input)
 {
     assert(pool != NULL);
     assert(input != NULL);

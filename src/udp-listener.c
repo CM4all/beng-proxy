@@ -106,7 +106,8 @@ udp_listener_envelope_new(struct pool *pool,
 }
 
 struct udp_listener *
-udp_listener_port_new(pool_t pool, const char *host_and_port, int default_port,
+udp_listener_port_new(struct pool *pool,
+                      const char *host_and_port, int default_port,
                       const struct udp_handler *handler, void *ctx,
                       GError **error_r)
 {

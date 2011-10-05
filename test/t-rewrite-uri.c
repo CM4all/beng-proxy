@@ -50,7 +50,7 @@ widget_sync_session(G_GNUC_UNUSED struct widget *widget,
  */
 
 void
-widget_resolver_new(G_GNUC_UNUSED pool_t pool, G_GNUC_UNUSED pool_t widget_pool,
+widget_resolver_new(G_GNUC_UNUSED struct pool *pool, G_GNUC_UNUSED struct pool *widget_pool,
                     struct widget *widget,
                     G_GNUC_UNUSED struct tcache *translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
@@ -120,7 +120,7 @@ sink_gstring_callback(GString *value, GError *error, void *_ctx)
 }
 
 static void
-assert_istream_equals(pool_t pool, istream_t istream, const char *value)
+assert_istream_equals(struct pool *pool, istream_t istream, const char *value)
 {
     struct sink_gstring_ctx ctx = { .finished = false };
     struct async_operation_ref async_ref;
@@ -141,12 +141,12 @@ assert_istream_equals(pool_t pool, istream_t istream, const char *value)
 }
 
 static void
-assert_rewrite_check3(pool_t widget_pool, struct widget *widget,
+assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
                       const char *view,
                       const char *result)
 {
-    pool_t pool = pool_new_libc(widget_pool, "rewrite");
+    struct pool *pool = pool_new_libc(widget_pool, "rewrite");
     struct strref value2;
     istream_t istream;
 
@@ -176,7 +176,7 @@ assert_rewrite_check3(pool_t widget_pool, struct widget *widget,
 }
 
 static void
-assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
+assert_rewrite_check2(struct pool *widget_pool, struct widget *widget,
                       const char *value, enum uri_mode mode, bool stateful,
                       const char *result)
 {
@@ -185,7 +185,7 @@ assert_rewrite_check2(pool_t widget_pool, struct widget *widget,
 }
 
 static void
-assert_rewrite_check(pool_t widget_pool, struct widget *widget,
+assert_rewrite_check(struct pool *widget_pool, struct widget *widget,
                      const char *value, enum uri_mode mode,
                      const char *result)
 {
@@ -201,7 +201,7 @@ assert_rewrite_check(pool_t widget_pool, struct widget *widget,
 int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 {
     bool ret;
-    pool_t root_pool, pool;
+    struct pool *root_pool, *pool;
     struct widget container, widget;
     struct strref value;
 

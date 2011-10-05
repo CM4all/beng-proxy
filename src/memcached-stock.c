@@ -24,7 +24,7 @@ struct memcached_stock {
 };
 
 struct memcached_stock *
-memcached_stock_new(pool_t pool, struct tcp_balancer *tcp_balancer,
+memcached_stock_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct uri_with_address *address)
 {
     struct memcached_stock *stock = p_malloc(pool, sizeof(*stock));
@@ -41,7 +41,7 @@ memcached_stock_free(G_GNUC_UNUSED struct memcached_stock *stock)
 }
 
 struct memcached_stock_request {
-    pool_t pool;
+    struct pool *pool;
 
     struct memcached_stock *stock;
     struct stock_item *item;
@@ -121,7 +121,7 @@ static const struct stock_handler memcached_stock_handler = {
 };
 
 void
-memcached_stock_invoke(pool_t pool, struct memcached_stock *stock,
+memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                        enum memcached_opcode opcode,
                        const void *extras, size_t extras_length,
                        const void *key, size_t key_length,

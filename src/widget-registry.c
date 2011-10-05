@@ -13,11 +13,12 @@
 #include "translate.h"
 #include "uri-address.h"
 #include "transformation.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 
 static void
-widget_registry_lookup(pool_t pool,
+widget_registry_lookup(struct pool *pool,
                        struct tcache *tcache,
                        const char *widget_type,
                        const struct translate_handler *handler, void *ctx,
@@ -46,7 +47,7 @@ widget_registry_lookup(pool_t pool,
 }
 
 struct widget_class_lookup {
-    pool_t pool;
+    struct pool *pool;
 
     widget_class_callback_t callback;
     void *callback_ctx;
@@ -99,7 +100,7 @@ static const struct translate_handler widget_translate_handler = {
 };
 
 void
-widget_class_lookup(pool_t pool, pool_t widget_pool,
+widget_class_lookup(struct pool *pool, struct pool *widget_pool,
                     struct tcache *tcache,
                     const char *widget_type,
                     widget_class_callback_t callback,

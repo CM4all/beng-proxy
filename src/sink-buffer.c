@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 
 struct sink_buffer {
-    pool_t pool;
+    struct pool *pool;
     istream_t input;
 
     unsigned char *data;
@@ -127,7 +127,7 @@ static const struct async_operation_class sink_buffer_operation = {
  */
 
 void
-sink_buffer_new(pool_t pool, istream_t input,
+sink_buffer_new(struct pool *pool, istream_t input,
                 const struct sink_buffer_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref)
 {

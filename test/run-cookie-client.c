@@ -12,7 +12,7 @@
 #include <string.h>
 
 int main(int argc, char **argv) {
-    pool_t pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(NULL, "root");
     tpool_init(pool);
 
     struct shm *shm = shm_new(1024, 512);

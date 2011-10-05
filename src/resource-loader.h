@@ -13,6 +13,7 @@
 #include <http/method.h>
 #include <http/status.h>
 
+struct pool;
 struct hstock;
 struct tcp_balancer;
 struct resource_address;
@@ -21,7 +22,7 @@ struct http_response_handler;
 struct async_operation_ref;
 
 struct resource_loader *
-resource_loader_new(pool_t pool, struct tcp_balancer *tcp_balancer,
+resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
                     struct hstock *delegate_stock);
 
@@ -36,7 +37,7 @@ resource_loader_new(pool_t pool, struct tcp_balancer *tcp_balancer,
  * @param status a HTTP status code for protocols which do have one
  */
 void
-resource_loader_request(struct resource_loader *rl, pool_t pool,
+resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         unsigned session_sticky,
                         http_method_t method,
                         const struct resource_address *address,

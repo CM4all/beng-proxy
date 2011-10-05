@@ -22,7 +22,7 @@
  * parameters from the parent container.
  */
 static const struct resource_address *
-widget_base_address(pool_t pool, struct widget *widget, bool stateful)
+widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
 {
     const struct resource_address *src = stateful
         ? widget_address(widget) : widget_stateless_address(widget);
@@ -67,7 +67,7 @@ widget_get_original_address(const struct widget *widget)
 const struct resource_address *
 widget_determine_address(const struct widget *widget, bool stateful)
 {
-    pool_t pool = widget->pool;
+    struct pool *pool = widget->pool;
     const char *path_info, *uri;
     struct resource_address *address;
 
@@ -153,7 +153,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
 }
 
 const char *
-widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
+widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
                     const struct strref *relative_uri)
 {
     const char *base, *uri;
@@ -191,7 +191,7 @@ widget_absolute_uri(pool_t pool, struct widget *widget, bool stateful,
 }
 
 const struct strref *
-widget_relative_uri(pool_t pool, struct widget *widget, bool stateful,
+widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
                     const char *relative_uri, size_t relative_uri_length,
                     struct strref *buffer)
 {
@@ -224,7 +224,7 @@ widget_relative_uri(pool_t pool, struct widget *widget, bool stateful,
 }
 
 const char *
-widget_external_uri(pool_t pool,
+widget_external_uri(struct pool *pool,
                     const struct parsed_uri *external_uri,
                     struct strmap *args,
                     struct widget *widget, bool stateful,

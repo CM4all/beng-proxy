@@ -9,7 +9,7 @@
 #include <string.h>
 
 const struct widget_ref *
-widget_ref_parse(pool_t pool, const char *_p)
+widget_ref_parse(struct pool *pool, const char *_p)
 {
     char *p, *slash;
     const struct widget_ref *root = NULL, **wr_p = &root;

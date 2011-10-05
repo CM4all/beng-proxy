@@ -38,7 +38,7 @@ static const struct istream istream_block = {
 };
 
 istream_t
-istream_block_new(pool_t pool)
+istream_block_new(struct pool *pool)
 {
     struct istream_block *block = istream_new_macro(pool, block);
     return istream_struct_cast(&block->stream);

@@ -48,7 +48,7 @@ static const struct http_server_connection_handler catch_close_handler = {
 };
 
 static void
-test_catch(pool_t pool)
+test_catch(struct pool *pool)
 {
     istream_t request, socket;
     int fd;
@@ -75,7 +75,7 @@ test_catch(pool_t pool)
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
 
     (void)argc;
     (void)argv;

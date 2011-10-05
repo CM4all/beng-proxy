@@ -50,7 +50,7 @@ static unsigned test_id;
 static bool got_request, got_response;
 
 istream_t
-processor_process(gcc_unused pool_t pool, istream_t istream,
+processor_process(gcc_unused struct pool *pool, istream_t istream,
                   gcc_unused struct widget *widget,
                   gcc_unused struct processor_env *env,
                   gcc_unused unsigned options)
@@ -59,7 +59,7 @@ processor_process(gcc_unused pool_t pool, istream_t istream,
 }
 
 void
-processor_lookup_widget(gcc_unused pool_t pool,
+processor_lookup_widget(gcc_unused struct pool *pool,
                         gcc_unused http_status_t status,
                         gcc_unused istream_t istream,
                         gcc_unused struct widget *widget,
@@ -86,7 +86,7 @@ struct filter_cache;
 
 void
 filter_cache_request(gcc_unused struct filter_cache *cache,
-                     gcc_unused pool_t pool,
+                     gcc_unused struct pool *pool,
                      gcc_unused const struct resource_address *address,
                      gcc_unused const char *source_id,
                      gcc_unused http_status_t status,
@@ -104,7 +104,7 @@ filter_cache_request(gcc_unused struct filter_cache *cache,
 struct stock *global_pipe_stock;
 
 istream_t
-istream_pipe_new(gcc_unused pool_t pool, istream_t input,
+istream_pipe_new(gcc_unused struct pool *pool, istream_t input,
                  gcc_unused struct stock *pipe_stock)
 {
     return input;
@@ -121,7 +121,7 @@ resource_get(gcc_unused struct http_cache *cache,
              gcc_unused struct hstock *fcgi_stock,
              gcc_unused struct hstock *was_stock,
              gcc_unused struct hstock *delegate_stock,
-             pool_t pool,
+             struct pool *pool,
              gcc_unused unsigned session_sticky,
              http_method_t method,
              gcc_unused const struct resource_address *address,
@@ -214,7 +214,7 @@ static const struct http_response_handler my_http_response_handler = {
 };
 
 static void
-test_cookie_client(pool_t pool)
+test_cookie_client(struct pool *pool)
 {
     static struct uri_with_address address = {
         .uri = "http://foo/bar/",
@@ -280,7 +280,7 @@ test_cookie_client(pool_t pool)
 int main(int argc, char **argv) {
     struct event_base *event_base;
     bool success;
-    pool_t pool;
+    struct pool *pool;
 
     (void)argc;
     (void)argv;

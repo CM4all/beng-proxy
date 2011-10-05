@@ -65,7 +65,7 @@ enum parser_state {
 };
 
 struct parser {
-    pool_t pool;
+    struct pool *pool;
 
     istream_t input;
     off_t position;

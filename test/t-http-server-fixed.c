@@ -44,7 +44,7 @@ static const struct http_server_connection_handler handler = {
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
     int in_fd, out_fd, sockfd;
     struct http_server_connection *connection;
 

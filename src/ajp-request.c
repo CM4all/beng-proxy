@@ -22,7 +22,7 @@
 #include <string.h>
 
 struct ajp_request {
-    pool_t pool;
+    struct pool *pool;
 
     struct tcp_balancer *tcp_balancer;
     struct stock_item *stock_item;
@@ -115,7 +115,7 @@ static const struct stock_handler ajp_request_stock_handler = {
  */
 
 void
-ajp_stock_request(pool_t pool,
+ajp_stock_request(struct pool *pool,
                   struct tcp_balancer *tcp_balancer,
                   unsigned session_sticky,
                   const char *protocol, const char *remote_addr,

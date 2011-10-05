@@ -11,6 +11,7 @@
 #include "strmap.h"
 #include "istream.h"
 #include "istream-file.h"
+#include "pool.h"
 
 #include <http/status.h>
 
@@ -19,7 +20,7 @@
 #include <errno.h>
 
 void
-static_file_get(pool_t pool, const char *path, const char *content_type,
+static_file_get(struct pool *pool, const char *path, const char *content_type,
                 const struct http_response_handler *handler,
                 void *handler_ctx)
 {

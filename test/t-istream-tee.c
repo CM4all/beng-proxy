@@ -69,7 +69,7 @@ buffer_callback(GString *value, GError *error, void *_ctx)
 }
 
 static void
-test_block1(pool_t pool)
+test_block1(struct pool *pool)
 {
     struct ctx ctx = {
         .value = NULL,
@@ -111,7 +111,7 @@ test_block1(pool_t pool)
 }
 
 static void
-test_close_data(pool_t pool)
+test_close_data(struct pool *pool)
 {
     struct ctx ctx = {
         .value = NULL,
@@ -148,7 +148,7 @@ test_close_data(pool_t pool)
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t root_pool;
+    struct pool *root_pool;
 
     (void)argc;
     (void)argv;

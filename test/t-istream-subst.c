@@ -3,13 +3,13 @@
 #define EXPECTED_RESULT "bar fo fo bar bla! fo"
 
 static istream_t
-create_input(pool_t pool)
+create_input(struct pool *pool)
 {
     return istream_string_new(pool, "foo fo fo bar blablablablubb fo");
 }
 
 static istream_t
-create_test(pool_t pool, istream_t input)
+create_test(struct pool *pool, istream_t input)
 {
     istream_t istream = istream_subst_new(pool, input);
     istream_subst_add(istream, "foo", "bar");

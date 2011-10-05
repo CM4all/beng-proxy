@@ -9,10 +9,10 @@
 
 #include "pool.h"
 
-extern pool_t tpool;
+extern struct pool *tpool;
 
 void
-tpool_init(pool_t parent);
+tpool_init(struct pool *parent);
 
 void
 tpool_deinit(void);

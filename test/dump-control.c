@@ -1,4 +1,5 @@
 #include "control-server.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 #include <socket/resolver.h>
@@ -50,7 +51,7 @@ int main(int argc, char **argv) {
 
     struct event_base *event_base = event_init();
 
-    pool_t pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(NULL, "root");
 
     struct in_addr mcast_group_addr;
     if (mcast_group != NULL)

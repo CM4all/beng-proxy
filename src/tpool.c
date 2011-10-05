@@ -8,10 +8,10 @@
 
 #include <assert.h>
 
-pool_t tpool;
+struct pool *tpool;
 
 void
-tpool_init(pool_t parent)
+tpool_init(struct pool *parent)
 {
     assert(tpool == NULL);
 

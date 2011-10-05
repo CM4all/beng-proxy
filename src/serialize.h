@@ -7,10 +7,9 @@
 #ifndef BENG_PROXY_SERIALIZE_H
 #define BENG_PROXY_SERIALIZE_H
 
-#include "pool.h"
-
 #include <stdint.h>
 
+struct pool;
 struct growing_buffer;
 struct strmap;
 struct strref;
@@ -49,6 +48,6 @@ const char *
 deserialize_string_null(struct strref *input);
 
 struct strmap *
-deserialize_strmap(struct strref *input, pool_t pool);
+deserialize_strmap(struct strref *input, struct pool *pool);
 
 #endif

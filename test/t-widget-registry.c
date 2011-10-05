@@ -51,7 +51,7 @@ static const struct async_operation_class my_operation = {
  */
 
 void
-tstock_translate(gcc_unused struct tstock *stock, pool_t pool,
+tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
                  const struct translate_request *request,
                  const struct translate_handler *handler, void *ctx,
                  struct async_operation_ref *async_ref)
@@ -88,7 +88,7 @@ tstock_translate(gcc_unused struct tstock *stock, pool_t pool,
 
 /** normal run */
 static void
-test_normal(pool_t pool)
+test_normal(struct pool *pool)
 {
     struct data data = {
         .got_class = false,
@@ -121,7 +121,7 @@ test_normal(pool_t pool)
 
 /** caller aborts */
 static void
-test_abort(pool_t pool)
+test_abort(struct pool *pool)
 {
     struct data data = {
         .got_class = false,
@@ -165,7 +165,7 @@ int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
     struct event_base *event_base;
-    pool_t root_pool;
+    struct pool *root_pool;
 
     event_base = event_init();
 

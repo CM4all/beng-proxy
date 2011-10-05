@@ -29,7 +29,7 @@
 #include <assert.h>
 
 static const char *
-bounce_uri(pool_t pool, const struct request *request,
+bounce_uri(struct pool *pool, const struct request *request,
            const struct translate_response *response)
 {
     const char *scheme = response->scheme != NULL
@@ -62,7 +62,7 @@ bounce_uri(pool_t pool, const struct request *request,
  * server.  Guaranteed to return non-NULL.
  */
 static const char *
-get_request_realm(pool_t pool, const struct strmap *request_headers,
+get_request_realm(struct pool *pool, const struct strmap *request_headers,
                   const struct translate_response *response)
 {
     assert(response != NULL);

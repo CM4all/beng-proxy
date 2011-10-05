@@ -11,6 +11,7 @@
 
 #include <http/status.h>
 
+struct pool;
 struct resource_loader;
 struct resource_address;
 struct strmap;
@@ -18,7 +19,7 @@ struct http_response_handler;
 struct async_operation_ref;
 
 struct filter_cache *
-filter_cache_new(pool_t pool, size_t max_size,
+filter_cache_new(struct pool *pool, size_t max_size,
                  struct resource_loader *resource_loader);
 
 void
@@ -35,7 +36,7 @@ filter_cache_flush(struct filter_cache *cache);
  */
 void
 filter_cache_request(struct filter_cache *cache,
-                     pool_t pool,
+                     struct pool *pool,
                      const struct resource_address *address,
                      const char *source_id,
                      http_status_t status, struct strmap *headers, istream_t body,

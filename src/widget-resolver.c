@@ -16,7 +16,7 @@
 struct widget_resolver_listener {
     struct list_head siblings;
 
-    pool_t pool;
+    struct pool *pool;
 
     struct widget_resolver *resolver;
 
@@ -32,7 +32,7 @@ struct widget_resolver_listener {
 };
 
 struct widget_resolver {
-    pool_t pool;
+    struct pool *pool;
 
     struct widget *widget;
 
@@ -165,7 +165,7 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
  */
 
 static struct widget_resolver *
-widget_resolver_alloc(pool_t pool, struct widget *widget)
+widget_resolver_alloc(struct pool *pool, struct widget *widget)
 {
     struct widget_resolver *resolver = p_malloc(pool, sizeof(*resolver));
 
@@ -187,7 +187,8 @@ widget_resolver_alloc(pool_t pool, struct widget *widget)
 }
 
 void
-widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
+widget_resolver_new(struct pool *pool, struct pool *widget_pool,
+                    struct widget *widget,
                     struct tcache *translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
                     struct async_operation_ref *async_ref)

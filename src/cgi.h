@@ -11,6 +11,7 @@
 
 #include <http/method.h>
 
+struct pool;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -27,7 +28,7 @@ cgi_quark(void)
  * @param params environment variables for the child process
  */
 void
-cgi_new(pool_t pool, const struct jail_params *jail,
+cgi_new(struct pool *pool, const struct jail_params *jail,
         const char *interpreter, const char *action,
         const char *path,
         http_method_t method, const char *uri,

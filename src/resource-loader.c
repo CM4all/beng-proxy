@@ -39,7 +39,7 @@ resource_loader_quark(void)
 }
 
 struct resource_loader *
-resource_loader_new(pool_t pool, struct tcp_balancer *tcp_balancer,
+resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
                     struct hstock *delegate_stock)
 {
@@ -76,7 +76,7 @@ extract_remote_addr(const struct strmap *headers)
 }
 
 static const char *
-extract_remote_ip(pool_t pool, const struct strmap *headers)
+extract_remote_ip(struct pool *pool, const struct strmap *headers)
 {
     const char *p = extract_remote_addr(headers);
     if (p == NULL)
@@ -98,7 +98,7 @@ extract_remote_ip(pool_t pool, const struct strmap *headers)
 }
 
 static const char *
-extract_server_name(pool_t pool, const struct strmap *headers,
+extract_server_name(struct pool *pool, const struct strmap *headers,
                     unsigned *port_r)
 {
     const char *p = strmap_get_checked(headers, "host");
@@ -122,7 +122,7 @@ extract_server_name(pool_t pool, const struct strmap *headers,
 }
 
 void
-resource_loader_request(struct resource_loader *rl, pool_t pool,
+resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         unsigned session_sticky,
                         http_method_t method,
                         const struct resource_address *address,

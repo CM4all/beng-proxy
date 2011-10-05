@@ -106,7 +106,7 @@ static const struct istream istream_delayed = {
  */
 
 istream_t
-istream_delayed_new(pool_t pool)
+istream_delayed_new(struct pool *pool)
 {
     struct istream_delayed *delayed = istream_new_macro(pool, delayed);
 

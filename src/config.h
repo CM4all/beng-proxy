@@ -7,10 +7,10 @@
 #ifndef __BENG_CONFIG_H
 #define __BENG_CONFIG_H
 
-#include "pool.h"
-
 #include <sys/types.h>
 #include <stdbool.h>
+
+struct pool;
 
 enum {
     MAX_PORTS = 32,
@@ -80,6 +80,6 @@ struct config {
 };
 
 void
-parse_cmdline(struct config *config, pool_t pool, int argc, char **argv);
+parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv);
 
 #endif

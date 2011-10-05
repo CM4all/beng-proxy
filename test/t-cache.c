@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "pool.h"
 
 #include <assert.h>
 #include <time.h>
@@ -19,7 +20,7 @@ ptr_to_match(void *p)
 struct my_cache_item {
     struct cache_item item;
 
-    pool_t pool;
+    struct pool *pool;
     int match;
     int value;
 };
@@ -37,7 +38,7 @@ static void
 my_cache_destroy(struct cache_item *item)
 {
     struct my_cache_item *i = (struct my_cache_item *)item;
-    pool_t pool = i->pool;
+    struct pool *pool = i->pool;
 
     p_free(pool, i);
     pool_unref(pool);
@@ -49,7 +50,7 @@ static const struct cache_class my_cache_class = {
 };
 
 static struct my_cache_item *
-my_cache_item_new(pool_t pool, int match, int value)
+my_cache_item_new(struct pool *pool, int match, int value)
 {
     struct my_cache_item *i;
 
@@ -74,7 +75,7 @@ my_match(const struct cache_item *item, void *ctx)
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
     struct cache *cache;
     struct my_cache_item *i;
 

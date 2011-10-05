@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
     int ret;
     struct addrinfo hints, *ai;
     struct event_base *event_base;
-    pool_t root_pool, pool;
+    struct pool *root_pool, *pool;
     enum memcached_opcode opcode;
     const char *key, *value;
     const void *extras;

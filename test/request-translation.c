@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
         .host = "example.com",
         .uri = "/foo/index.html",
     };
-    pool_t pool;
+    struct pool *pool;
     struct hstock *tcp_stock;
     struct tstock *translate_stock;
     struct async_operation_ref async_ref;

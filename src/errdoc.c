@@ -93,7 +93,7 @@ errdoc_translate_response(const struct translate_response *response, void *ctx)
          http_status_is_success(response->status)) &&
         response->address.type != RESOURCE_ADDRESS_NONE) {
         struct request *request2 = er->request2;
-        pool_t pool = request2->request->pool;
+        struct pool *pool = request2->request->pool;
         struct instance *instance = request2->connection->instance;
 
         resource_get(instance->http_cache,
@@ -166,7 +166,7 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
 
     assert(instance->translate_cache != NULL);
 
-    pool_t pool = request2->request->pool;
+    struct pool *pool = request2->request->pool;
     struct error_response *er = p_malloc(pool, sizeof(*er));
     er->request2 = request2;
     er->status = status;

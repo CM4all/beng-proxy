@@ -85,7 +85,7 @@ my_htons(uint16_t x)
 }
 
 struct listener *
-listener_new(pool_t pool, int family, int socktype, int protocol,
+listener_new(struct pool *pool, int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
              const struct listener_handler *handler, void *ctx,
              GError **error_r)
@@ -152,7 +152,7 @@ listener_new(pool_t pool, int family, int socktype, int protocol,
 }
 
 struct listener *
-listener_tcp_port_new(pool_t pool, int port,
+listener_tcp_port_new(struct pool *pool, int port,
                       const struct listener_handler *handler, void *ctx,
                       GError **error_r)
 {

@@ -63,7 +63,7 @@ connect_fake_server(void)
 }
 
 struct context {
-    pool_t pool;
+    struct pool *pool;
 
     unsigned data_blocking;
     bool close_value_early, close_value_late, close_value_data;
@@ -175,7 +175,7 @@ static const struct istream istream_request_value = {
 };
 
 static istream_t
-request_value_new(pool_t pool, bool read_close, bool read_abort)
+request_value_new(struct pool *pool, bool read_close, bool read_abort)
 {
     struct request_value *v = (struct request_value *)
         istream_new(pool, &istream_request_value, sizeof(*v));
@@ -305,7 +305,7 @@ static const struct memcached_client_handler my_mcd_handler = {
  */
 
 static void
-test_basic(pool_t pool, struct context *c)
+test_basic(struct pool *pool, struct context *c)
 {
     c->fd = connect_fake_server();
 
@@ -331,7 +331,7 @@ test_basic(pool_t pool, struct context *c)
 }
 
 static void
-test_close_early(pool_t pool, struct context *c)
+test_close_early(struct pool *pool, struct context *c)
 {
     c->fd = connect_fake_server();
     c->close_value_early = true;
@@ -359,7 +359,7 @@ test_close_early(pool_t pool, struct context *c)
 }
 
 static void
-test_close_late(pool_t pool, struct context *c)
+test_close_late(struct pool *pool, struct context *c)
 {
     c->fd = connect_fake_server();
     c->close_value_late = true;
@@ -388,7 +388,7 @@ test_close_late(pool_t pool, struct context *c)
 }
 
 static void
-test_close_data(pool_t pool, struct context *c)
+test_close_data(struct pool *pool, struct context *c)
 {
     c->fd = connect_fake_server();
     c->close_value_data = true;
@@ -417,7 +417,7 @@ test_close_data(pool_t pool, struct context *c)
 }
 
 static void
-test_abort(pool_t pool, struct context *c)
+test_abort(struct pool *pool, struct context *c)
 {
     c->fd = connect_fake_server();
     c->close_value_data = true;
@@ -444,7 +444,7 @@ test_abort(pool_t pool, struct context *c)
 }
 
 static void
-test_request_value(pool_t pool, struct context *c)
+test_request_value(struct pool *pool, struct context *c)
 {
     istream_t value;
 
@@ -474,7 +474,7 @@ test_request_value(pool_t pool, struct context *c)
 }
 
 static void
-test_request_value_close(pool_t pool, struct context *c)
+test_request_value_close(struct pool *pool, struct context *c)
 {
     istream_t value;
 
@@ -500,7 +500,7 @@ test_request_value_close(pool_t pool, struct context *c)
 }
 
 static void
-test_request_value_abort(pool_t pool, struct context *c)
+test_request_value_abort(struct pool *pool, struct context *c)
 {
     istream_t value;
 
@@ -531,7 +531,7 @@ test_request_value_abort(pool_t pool, struct context *c)
  */
 
 static void
-run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
+run_test(struct pool *pool, void (*test)(struct pool *pool, struct context *c)) {
     struct context c;
 
     memset(&c, 0, sizeof(c));
@@ -542,7 +542,7 @@ run_test(pool_t pool, void (*test)(pool_t pool, struct context *c)) {
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
 
     (void)argc;
     (void)argv;

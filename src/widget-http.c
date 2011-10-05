@@ -32,7 +32,7 @@
 #include <string.h>
 
 struct embed {
-    pool_t pool;
+    struct pool *pool;
 
     unsigned num_redirects;
 
@@ -535,7 +535,7 @@ static const struct http_response_handler widget_response_handler = {
  */
 
 void
-widget_http_request(pool_t pool, struct widget *widget,
+widget_http_request(struct pool *pool, struct widget *widget,
                     struct processor_env *env,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
@@ -601,7 +601,7 @@ widget_http_request(pool_t pool, struct widget *widget,
 }
 
 void
-widget_http_lookup(pool_t pool, struct widget *widget, const char *id,
+widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
                    struct processor_env *env,
                    const struct widget_lookup_handler *handler,
                    void *handler_ctx,

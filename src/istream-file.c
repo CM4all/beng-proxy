@@ -348,7 +348,7 @@ static const struct istream istream_file = {
  */
 
 istream_t
-istream_file_fd_new(pool_t pool, const char *path,
+istream_file_fd_new(struct pool *pool, const char *path,
                     int fd, enum istream_direct fd_type, off_t length)
 {
     struct file *file;
@@ -369,7 +369,7 @@ istream_file_fd_new(pool_t pool, const char *path,
 }
 
 istream_t
-istream_file_stat_new(pool_t pool, const char *path, struct stat *st)
+istream_file_stat_new(struct pool *pool, const char *path, struct stat *st)
 {
     int fd, ret;
 
@@ -397,7 +397,7 @@ istream_file_stat_new(pool_t pool, const char *path, struct stat *st)
 }
 
 istream_t
-istream_file_new(pool_t pool, const char *path, off_t length)
+istream_file_new(struct pool *pool, const char *path, off_t length)
 {
     int fd;
 

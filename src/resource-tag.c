@@ -7,9 +7,10 @@
 #include "resource-tag.h"
 #include "strmap.h"
 #include "http-util.h"
+#include "pool.h"
 
 const char *
-resource_tag_append_etag(pool_t pool, const char *tag,
+resource_tag_append_etag(struct pool *pool, const char *tag,
                          const struct strmap *headers)
 {
     const char *etag, *p;

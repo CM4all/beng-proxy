@@ -164,7 +164,7 @@ deserialize_string_null(struct strref *input)
 }
 
 struct strmap *
-deserialize_strmap(struct strref *input, pool_t pool)
+deserialize_strmap(struct strref *input, struct pool *pool)
 {
     const char *key, *value;
     struct strmap *map;

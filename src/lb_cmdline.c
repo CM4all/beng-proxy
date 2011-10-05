@@ -168,7 +168,7 @@ handle_set(struct config *config, const char *argv0, const char *p)
 
 /** read configuration options from the command line */
 void
-parse_cmdline(struct config *config, pool_t pool, int argc, char **argv)
+parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
 {
     int ret;
 #ifdef __GLIBC__

@@ -15,6 +15,7 @@
 #include "drop.h"
 #include "fd_util.h"
 #include "ssl_filter.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 

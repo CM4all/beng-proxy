@@ -81,7 +81,7 @@ static const struct parser_handler my_parser_handler = {
  */
 
 int main(int argc, char **argv) {
-    pool_t root_pool, pool;
+    struct pool *root_pool, *pool;
     istream_t istream;
     struct parser *parser;
 

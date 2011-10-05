@@ -20,7 +20,7 @@ struct listener_node {
 };
 
 struct instance {
-    pool_t pool;
+    struct pool *pool;
 
     struct config config;
 

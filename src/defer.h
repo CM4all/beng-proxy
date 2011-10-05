@@ -8,8 +8,7 @@
 #ifndef BENG_DEFER_H
 #define BENG_DEFER_H
 
-#include "pool.h"
-
+struct pool;
 struct async_operation_ref;
 
 typedef void (*defer_callback_t)(void *ctx);
@@ -19,7 +18,7 @@ typedef void (*defer_callback_t)(void *ctx);
  * know you'll never need to abort this callback)
  */
 void
-defer(pool_t pool, defer_callback_t callback, void *ctx,
+defer(struct pool *pool, defer_callback_t callback, void *ctx,
       struct async_operation_ref *async_ref);
 
 #endif

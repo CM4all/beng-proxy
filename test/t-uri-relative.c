@@ -9,7 +9,7 @@
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    pool_t pool;
+    struct pool *pool;
 
     pool = pool_new_libc(NULL, "root");
 

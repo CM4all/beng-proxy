@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
-    pool_t pool;
+    struct pool *pool;
     struct growing_buffer *gb;
     char buffer[16];
     ssize_t nbytes;

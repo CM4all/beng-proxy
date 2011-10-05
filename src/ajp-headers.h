@@ -7,8 +7,7 @@
 #ifndef BENG_PROXY_AJP_HEADERS_H
 #define BENG_PROXY_AJP_HEADERS_H
 
-#include "pool.h"
-
+struct pool;
 struct growing_buffer;
 struct strmap;
 struct strref;
@@ -22,7 +21,7 @@ unsigned
 serialize_ajp_headers(struct growing_buffer *gb, struct strmap *headers);
 
 void
-deserialize_ajp_headers(pool_t pool, struct strmap *headers,
+deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
                         struct strref *input, unsigned num_headers);
 
 #endif

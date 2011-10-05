@@ -7,13 +7,12 @@
 #ifndef __BENG_STATIC_FILE_H
 #define __BENG_STATIC_FILE_H
 
-#include "pool.h"
-
+struct pool;
 struct http_response_handler;
 struct async_operation_ref;
 
 void
-static_file_get(pool_t pool, const char *path, const char *content_type,
+static_file_get(struct pool *pool, const char *path, const char *content_type,
                 const struct http_response_handler *handler,
                 void *handler_ctx);
 

@@ -10,6 +10,7 @@
 #include "istream.h"
 #include "session.h"
 
+struct pool;
 struct tcache;
 struct parsed_uri;
 struct strmap;
@@ -36,7 +37,7 @@ parse_uri_mode(const struct strref *s);
  * @param view the name of a view, or NULL to use the default view
  */
 istream_t
-rewrite_widget_uri(pool_t pool, pool_t widget_pool,
+rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
                    struct tcache *translate_cache,
                    const char *absolute_uri,
                    const struct parsed_uri *external_uri,

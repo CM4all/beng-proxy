@@ -7,6 +7,7 @@
 #include "pipe-stock.h"
 #include "stock.h"
 #include "fd_util.h"
+#include "pool.h"
 
 #include <glib.h>
 
@@ -35,8 +36,8 @@ valid_fd(int fd)
  *
  */
 
-static pool_t
-pipe_stock_pool(G_GNUC_UNUSED void *ctx, pool_t parent,
+static struct pool *
+pipe_stock_pool(G_GNUC_UNUSED void *ctx, struct pool *parent,
                 G_GNUC_UNUSED const char *uri)
 {
     return pool_new_linear(parent, "pipe_stock", 64);
@@ -45,7 +46,7 @@ pipe_stock_pool(G_GNUC_UNUSED void *ctx, pool_t parent,
 static void
 pipe_stock_create(void *ctx gcc_unused, struct stock_item *_item,
                   G_GNUC_UNUSED const char *uri, G_GNUC_UNUSED void *info,
-                  G_GNUC_UNUSED pool_t caller_pool,
+                  G_GNUC_UNUSED struct pool *caller_pool,
                   G_GNUC_UNUSED struct async_operation_ref *async_ref)
 {
     struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
@@ -112,7 +113,7 @@ static const struct stock_class pipe_stock_class = {
  */
 
 struct stock *
-pipe_stock_new(pool_t pool)
+pipe_stock_new(struct pool *pool)
 {
     return stock_new(pool, &pipe_stock_class, NULL, NULL, 0);
 }

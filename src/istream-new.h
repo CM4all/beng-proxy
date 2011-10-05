@@ -11,7 +11,7 @@
 
 static inline void
 istream_init_impl(struct istream *istream, const struct istream *class,
-                  pool_t pool TRACE_ARGS_DECL)
+                  struct pool *pool TRACE_ARGS_DECL)
 {
     *istream = *class;
 
@@ -22,7 +22,7 @@ istream_init_impl(struct istream *istream, const struct istream *class,
 #define istream_init(istream, class, pool) istream_init_impl(istream, class, pool TRACE_ARGS)
 
 static inline struct istream *
-istream_new_impl(pool_t pool, 
+istream_new_impl(struct pool *pool,
                  const struct istream *class, size_t size
                  TRACE_ARGS_DECL)
 {
@@ -52,7 +52,7 @@ istream_new_impl(pool_t pool,
 static inline void
 istream_deinit_impl(struct istream *istream TRACE_ARGS_DECL)
 {
-    pool_t pool = istream->pool;
+    struct pool *pool = istream->pool;
 
 #ifndef NDEBUG
     /* poison the istream struct (but not its implementation

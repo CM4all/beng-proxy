@@ -18,7 +18,7 @@ struct slot {
 };
 
 struct hashmap {
-    pool_t pool;
+    struct pool *pool;
     unsigned capacity;
     struct slot *current_slot;
     unsigned next_slot;
@@ -38,7 +38,7 @@ calc_hash(const char *p) {
 }
 
 struct hashmap *
-hashmap_new(pool_t pool, unsigned capacity)
+hashmap_new(struct pool *pool, unsigned capacity)
 {
     struct hashmap *map = p_calloc(pool, sizeof(*map) + sizeof(map->slots) * (capacity - 1));
     assert(capacity > 1);

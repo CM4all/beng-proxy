@@ -9,7 +9,7 @@
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
-    pool_t pool;
+    struct pool *pool;
     struct expansible_buffer *eb;
     const void *p, *q;
     size_t size;

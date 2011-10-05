@@ -25,7 +25,7 @@
 #include <string.h>
 
 struct http_request {
-    pool_t pool;
+    struct pool *pool;
 
     struct tcp_balancer *tcp_balancer;
 
@@ -184,7 +184,7 @@ static const struct stock_handler http_request_stock_handler = {
  */
 
 void
-http_request(pool_t pool,
+http_request(struct pool *pool,
              struct tcp_balancer *tcp_balancer,
              unsigned session_sticky,
              http_method_t method,

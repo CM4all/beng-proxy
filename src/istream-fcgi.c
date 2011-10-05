@@ -209,7 +209,7 @@ static const struct istream istream_fcgi = {
  */
 
 istream_t
-istream_fcgi_new(pool_t pool, istream_t input, uint16_t request_id)
+istream_fcgi_new(struct pool *pool, istream_t input, uint16_t request_id)
 {
     struct istream_fcgi *fcgi = istream_new_macro(pool, fcgi);
 

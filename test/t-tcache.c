@@ -119,7 +119,7 @@ static const struct translate_response response5c = {
 const struct translate_response *next_response, *expected_response;
 
 void
-tstock_translate(gcc_unused struct tstock *stock, gcc_unused pool_t pool,
+tstock_translate(gcc_unused struct tstock *stock, gcc_unused struct pool *pool,
                  gcc_unused const struct translate_request *request,
                  const struct translate_handler *handler, void *ctx,
                  gcc_unused struct async_operation_ref *async_ref)
@@ -160,7 +160,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 {
     struct tstock *const translate_stock = (void *)0x1;
     struct event_base *event_base;
-    pool_t pool;
+    struct pool *pool;
     struct tcache *cache;
     static const struct translate_request request1 = {
         .uri = "/",

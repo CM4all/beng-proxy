@@ -564,7 +564,7 @@ void
 response_dispatch_message2(struct request *request2, http_status_t status,
                            struct growing_buffer *headers, const char *msg)
 {
-    pool_t pool = request2->request->pool;
+    struct pool *pool = request2->request->pool;
 
     assert(request2 != NULL);
     assert(http_status_is_valid(status));
@@ -590,7 +590,7 @@ void
 response_dispatch_redirect(struct request *request2, http_status_t status,
                            const char *location, const char *msg)
 {
-    pool_t pool = request2->request->pool;
+    struct pool *pool = request2->request->pool;
 
     assert(status >= 300 && status < 400);
     assert(location != NULL);

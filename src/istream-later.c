@@ -117,7 +117,7 @@ static const struct istream istream_later = {
  */
 
 istream_t
-istream_later_new(pool_t pool, istream_t input)
+istream_later_new(struct pool *pool, istream_t input)
 {
     struct istream_later *later = istream_new_macro(pool, later);
 

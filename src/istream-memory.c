@@ -63,7 +63,7 @@ static const struct istream istream_memory = {
 };
 
 istream_t
-istream_memory_new(pool_t pool, const void *data, size_t length)
+istream_memory_new(struct pool *pool, const void *data, size_t length)
 {
     struct istream_memory *memory = istream_new_macro(pool, memory);
 

@@ -114,7 +114,7 @@ static const struct istream istream_stopwatch = {
  */
 
 istream_t
-istream_stopwatch_new(pool_t pool, istream_t input,
+istream_stopwatch_new(struct pool *pool, istream_t input,
                       struct stopwatch *_stopwatch)
 {
     struct istream_stopwatch *stopwatch;

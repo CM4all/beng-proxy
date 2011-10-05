@@ -8,12 +8,13 @@
 #define BENG_PROXY_CONTROL_SERVER_H
 
 #include "beng-proxy/control.h"
-#include "pool.h"
 
 #include <glib.h>
 
 #include <stddef.h>
+#include <stdbool.h>
 
+struct pool;
 struct address_envelope;
 struct sockaddr;
 struct in_addr;
@@ -35,13 +36,14 @@ control_server_quark(void)
 }
 
 struct control_server *
-control_server_new(pool_t pool, const char *host_and_port, int default_port,
+control_server_new(struct pool *pool,
+                   const char *host_and_port, int default_port,
                    const struct in_addr *group,
                    const struct control_handler *handler, void *ctx,
                    GError **error_r);
 
 struct control_server *
-control_server_new_envelope(pool_t pool,
+control_server_new_envelope(struct pool *pool,
                             const struct address_envelope *envelope,
                             const struct control_handler *handler, void *ctx,
                             GError **error_r);
