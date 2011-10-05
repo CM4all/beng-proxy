@@ -114,7 +114,7 @@ struct context {
  */
 
 static void
-my_release(bool reuse __attr_unused, void *ctx)
+my_release(bool reuse gcc_unused, void *ctx)
 {
     struct context *c = ctx;
 
@@ -134,7 +134,7 @@ static const struct lease my_lease = {
  */
 
 static size_t
-my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
+my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
 {
     struct context *c = ctx;
 
@@ -194,8 +194,8 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static void
-my_response(http_status_t status, struct strmap *headers __attr_unused,
-            istream_t body __attr_unused,
+my_response(http_status_t status, struct strmap *headers gcc_unused,
+            istream_t body gcc_unused,
             void *ctx)
 {
     struct context *c = ctx;

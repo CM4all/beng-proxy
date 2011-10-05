@@ -86,7 +86,7 @@ stock_unschedule_cleanup(struct stock *stock)
 }
 
 static void
-stock_cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
+stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
                              void *ctx)
 {
     struct stock *stock = ctx;
@@ -230,7 +230,7 @@ stock_clear_idle(struct stock *stock)
 }
 
 static void
-stock_clear_event_callback(int fd __attr_unused, short event __attr_unused,
+stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
                            void *ctx)
 {
     struct stock *stock = ctx;

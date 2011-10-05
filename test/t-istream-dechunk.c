@@ -11,7 +11,7 @@ create_input(pool_t pool)
 }
 
 static void
-dechunk_eof(__attr_unused void *ctx)
+dechunk_eof(gcc_unused void *ctx)
 {
 }
 

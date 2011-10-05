@@ -20,7 +20,7 @@ struct strref {
     const char *data;
 };
 
-static __attr_always_inline const char *
+static gcc_always_inline const char *
 strref_end(const struct strref *s)
 {
     assert(s != NULL);
@@ -29,7 +29,7 @@ strref_end(const struct strref *s)
     return s->data + s->length;
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_clear(struct strref *s)
 {
     assert(s != NULL);
@@ -40,7 +40,7 @@ strref_clear(struct strref *s)
 #endif
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_null(struct strref *s)
 {
     assert(s != NULL);
@@ -49,7 +49,7 @@ strref_null(struct strref *s)
     s->data = NULL;
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_set(struct strref *s, const char *p, size_t length)
 {
     assert(s != NULL);
@@ -59,7 +59,7 @@ strref_set(struct strref *s, const char *p, size_t length)
     s->data = p;
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_set_c(struct strref *s, const char *p)
 {
     assert(s != NULL);
@@ -69,7 +69,7 @@ strref_set_c(struct strref *s, const char *p)
     s->data = p;
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_set2(struct strref *s, const char *start, const char *end)
 {
     assert(s != NULL);
@@ -81,7 +81,7 @@ strref_set2(struct strref *s, const char *start, const char *end)
     s->data = start;
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_right(struct strref *dest, const struct strref *src, const char *start)
 {
     assert(dest != NULL);
@@ -92,7 +92,7 @@ strref_right(struct strref *dest, const struct strref *src, const char *start)
     strref_set2(dest, start, strref_end(src));
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_trunc(struct strref *s, const char *end)
 {
     assert(s != NULL);
@@ -102,7 +102,7 @@ strref_trunc(struct strref *s, const char *end)
     s->length = end - s->data;
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_skip(struct strref *s, size_t nbytes)
 {
     assert(s != NULL);
@@ -123,7 +123,7 @@ strref_is_null(const struct strref *s)
     return s->data == NULL;
 }
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 strref_is_empty(const struct strref *s)
 {
     assert(s != NULL);
@@ -132,7 +132,7 @@ strref_is_empty(const struct strref *s)
     return s->length == 0;
 }
 
-static __attr_always_inline char
+static gcc_always_inline char
 strref_last(const struct strref *s)
 {
     assert(s != NULL);
@@ -142,7 +142,7 @@ strref_last(const struct strref *s)
     return s->data[s->length - 1];
 }
 
-static __attr_always_inline int
+static gcc_always_inline int
 strref_cmp(const struct strref *s,
            const char *p, size_t length)
 {
@@ -156,7 +156,7 @@ strref_cmp(const struct strref *s,
     return memcmp(s->data, p, length);
 }
 
-static __attr_always_inline int
+static gcc_always_inline int
 strref_cmp_c(const struct strref *s, const char *p)
 {
     assert(p != NULL);
@@ -166,7 +166,7 @@ strref_cmp_c(const struct strref *s, const char *p)
 
 #define strref_cmp_literal(s, l) strref_cmp((s), (l), sizeof(l) - 1)
 
-static __attr_always_inline int
+static gcc_always_inline int
 strref_cmp2(const struct strref *a, const struct strref *b)
 {
     assert(a != NULL);
@@ -175,7 +175,7 @@ strref_cmp2(const struct strref *a, const struct strref *b)
     return strref_cmp(a, b->data, b->length);
 }
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 strref_starts_with_n(const struct strref *s,
                      const char *p, size_t length)
 {
@@ -186,7 +186,7 @@ strref_starts_with_n(const struct strref *s,
         memcmp(s->data, p, length) == 0;
 }
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 strref_ends_with_n(const struct strref *s,
                    const char *p, size_t length)
 {
@@ -197,7 +197,7 @@ strref_ends_with_n(const struct strref *s,
         memcmp(s->data + s->length - length, p, length) == 0;
 }
 
-static __attr_always_inline const char *
+static gcc_always_inline const char *
 strref_chr(const struct strref *s, char ch)
 {
     assert(s != NULL);
@@ -206,7 +206,7 @@ strref_chr(const struct strref *s, char ch)
     return memchr(s->data, ch, s->length);
 }
 
-static __attr_always_inline const char *
+static gcc_always_inline const char *
 strref_chr_at(const struct strref *s, char ch, size_t start)
 {
     assert(s != NULL);

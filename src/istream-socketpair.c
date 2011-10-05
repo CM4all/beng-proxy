@@ -225,7 +225,7 @@ socketpair_read(struct istream_socketpair *sp)
  */
 
 static void
-socketpair_recv_callback(int fd __attr_unused, short event __attr_unused,
+socketpair_recv_callback(int fd gcc_unused, short event gcc_unused,
                          void *ctx)
 {
     struct istream_socketpair *sp = ctx;
@@ -238,7 +238,7 @@ socketpair_recv_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 static void
-socketpair_send_callback(int fd __attr_unused, short event __attr_unused,
+socketpair_send_callback(int fd gcc_unused, short event gcc_unused,
                          void *ctx)
 {
     struct istream_socketpair *sp = ctx;

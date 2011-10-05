@@ -28,7 +28,7 @@ istream_file_fd_new(struct pool *pool, const char *path,
 struct istream *
 istream_file_stat_new(struct pool *pool, const char *path, struct stat *st);
 
-struct istream * __attr_malloc
+struct istream * gcc_malloc
 istream_file_new(struct pool *pool, const char *path, off_t length);
 
 int

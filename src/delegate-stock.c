@@ -85,17 +85,17 @@ delegate_stock_event(int fd, short event, void *ctx)
  */
 
 static pool_t
-delegate_stock_pool(void *ctx __attr_unused, struct pool *parent,
-                    const char *uri __attr_unused)
+delegate_stock_pool(void *ctx gcc_unused, struct pool *parent,
+                    const char *uri gcc_unused)
 {
     return pool_new_linear(parent, "delegate_stock", 512);
 }
 
 static void
-delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
+delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
                       const char *uri, void *_info,
-                      struct pool *caller_pool __attr_unused,
-                      struct async_operation_ref *async_ref __attr_unused)
+                      struct pool *caller_pool gcc_unused,
+                      struct async_operation_ref *async_ref gcc_unused)
 {
     struct delegate_process *process = (struct delegate_process *)item;
     int ret, fds[2];
@@ -162,7 +162,7 @@ delegate_stock_create(void *ctx __attr_unused, struct stock_item *item,
 }
 
 static bool
-delegate_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
+delegate_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
 {
     struct delegate_process *process =
         (struct delegate_process *)item;
@@ -172,7 +172,7 @@ delegate_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static void
-delegate_stock_release(void *ctx __attr_unused, struct stock_item *item)
+delegate_stock_release(void *ctx gcc_unused, struct stock_item *item)
 {
     struct delegate_process *process =
         (struct delegate_process *)item;
@@ -186,7 +186,7 @@ delegate_stock_release(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static void
-delegate_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
+delegate_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
 {
     struct delegate_process *process = (struct delegate_process *)item;
 

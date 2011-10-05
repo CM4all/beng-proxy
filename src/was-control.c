@@ -236,7 +236,7 @@ was_control_try_write(struct was_control *control)
  */
 
 static void
-was_control_input_event_callback(int fd __attr_unused, short event, void *ctx)
+was_control_input_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct was_control *control = ctx;
 
@@ -266,7 +266,7 @@ was_control_input_event_callback(int fd __attr_unused, short event, void *ctx)
 }
 
 static void
-was_control_output_event_callback(int fd __attr_unused, short event, void *ctx)
+was_control_output_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct was_control *control = ctx;
 

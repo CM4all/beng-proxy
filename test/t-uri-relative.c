@@ -6,7 +6,9 @@
 #include <assert.h>
 #include <string.h>
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int
+main(gcc_unused int argc, gcc_unused char **argv)
+{
     pool_t pool;
 
     pool = pool_new_libc(NULL, "root");

@@ -64,7 +64,7 @@ fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
 }
 
 static void
-fcgi_child_callback(int status __attr_unused, void *ctx)
+fcgi_child_callback(int status gcc_unused, void *ctx)
 {
     struct fcgi_child *child = ctx;
 
@@ -73,7 +73,7 @@ fcgi_child_callback(int status __attr_unused, void *ctx)
 
 static void
 fcgi_child_socket_path(struct sockaddr_un *address,
-                       const char *executable_path __attr_unused)
+                       const char *executable_path gcc_unused)
 {
     address->sun_family = AF_UNIX;
 
@@ -249,8 +249,8 @@ static const struct async_operation_class fcgi_create_operation = {
  */
 
 static pool_t
-fcgi_stock_pool(void *ctx __attr_unused, struct pool *parent,
-               const char *uri __attr_unused)
+fcgi_stock_pool(void *ctx gcc_unused, struct pool *parent,
+               const char *uri gcc_unused)
 {
     return pool_new_linear(parent, "fcgi_child", 2048);
 }
@@ -316,7 +316,7 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
 }
 
 static bool
-fcgi_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
+fcgi_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
 {
     struct fcgi_child *child = (struct fcgi_child *)item;
 
@@ -325,7 +325,7 @@ fcgi_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static void
-fcgi_stock_release(void *ctx __attr_unused, struct stock_item *item)
+fcgi_stock_release(void *ctx gcc_unused, struct stock_item *item)
 {
     struct fcgi_child *child = (struct fcgi_child *)item;
     struct timeval tv = {
@@ -337,7 +337,7 @@ fcgi_stock_release(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static void
-fcgi_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
+fcgi_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
 {
     struct fcgi_child *child =
         (struct fcgi_child *)item;

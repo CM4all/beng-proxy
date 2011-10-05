@@ -12,7 +12,7 @@
 
 #include <inline/poison.h>
 
-static __attr_always_inline char *
+static gcc_always_inline char *
 strref_set_dup(pool_t pool, struct strref *dest, const struct strref *src)
 {
     assert(dest != NULL);
@@ -30,7 +30,7 @@ strref_set_dup(pool_t pool, struct strref *dest, const struct strref *src)
     }
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_append(pool_t pool, struct strref *dest, const struct strref *src)
 {
     char *p;
@@ -50,7 +50,7 @@ strref_append(pool_t pool, struct strref *dest, const struct strref *src)
     dest->length += src->length;
 }
 
-static __attr_always_inline char *
+static gcc_always_inline char *
 strref_dup(pool_t pool, const struct strref *s)
 {
     assert(pool != NULL);
@@ -59,7 +59,7 @@ strref_dup(pool_t pool, const struct strref *s)
     return p_strndup(pool, s->data, s->length);
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_free(pool_t pool, struct strref *s)
 {
     assert(pool != NULL);

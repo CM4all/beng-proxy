@@ -115,7 +115,7 @@ pool_unref_denotify_impl(pool_t pool, struct pool_notify *notify
 #ifdef NDEBUG
 
 static inline void
-pool_trash(pool_t pool __attr_unused)
+pool_trash(gcc_unused struct pool *pool)
 {
 }
 
@@ -125,29 +125,29 @@ pool_commit(void)
 }
 
 static inline void
-pool_attach(__attr_unused pool_t pool, __attr_unused const void *p,
-            __attr_unused const char *name)
+pool_attach(gcc_unused struct pool *pool, gcc_unused const void *p,
+            gcc_unused const char *name)
 {
 }
 
 static inline void
-pool_attach_checked(__attr_unused pool_t pool, __attr_unused const void *p,
-                    __attr_unused const char *name)
+pool_attach_checked(gcc_unused pool_t pool, gcc_unused const void *p,
+                    gcc_unused const char *name)
 {
 }
 
 static inline void
-pool_detach(__attr_unused pool_t pool, __attr_unused const void *p)
+pool_detach(gcc_unused pool_t pool, gcc_unused const void *p)
 {
 }
 
 static inline void
-pool_detach_checked(__attr_unused pool_t pool, __attr_unused const void *p)
+pool_detach_checked(gcc_unused pool_t pool, gcc_unused const void *p)
 {
 }
 
 static inline const char *
-pool_attachment_name(__attr_unused pool_t pool, __attr_unused const void *p)
+pool_attachment_name(gcc_unused pool_t pool, gcc_unused const void *p)
 {
     return NULL;
 }
@@ -195,7 +195,8 @@ pool_mark(pool_t pool, struct pool_mark *mark);
 void
 pool_rewind(pool_t pool, const struct pool_mark *mark);
 
-void * __attr_malloc
+gcc_malloc
+void *
 p_malloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
 
 #define p_malloc(pool, size) p_malloc_impl(pool, size TRACE_ARGS)
@@ -204,15 +205,18 @@ p_malloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
 void
 p_free(pool_t pool, const void *ptr);
 
-void * __attr_malloc
+gcc_malloc
+void *
 p_calloc_impl(pool_t pool, size_t size TRACE_ARGS_DECL);
 
 #define p_calloc(pool, size) p_calloc_impl(pool, size TRACE_ARGS)
 
-void * __attr_malloc
+gcc_malloc
+void *
 p_memdup(pool_t pool, const void *src, size_t length);
 
-char * __attr_malloc
+gcc_malloc
+char *
 p_strdup(pool_t pool, const char *src);
 
 static inline const char *
@@ -221,18 +225,22 @@ p_strdup_checked(pool_t pool, const char *s)
     return s == NULL ? NULL : p_strdup(pool, s);
 }
 
-char * __attr_malloc
+gcc_malloc
+char *
 p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL);
 
 #define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
 
-char * __attr_malloc __attr_printf(2, 3)
+gcc_malloc gcc_printf(2, 3)
+char *
 p_sprintf(pool_t pool, const char *fmt, ...);
 
-char * __attr_malloc
+gcc_malloc
+char *
 p_strcat(pool_t pool, const char *s, ...);
 
-char * __attr_malloc
+gcc_malloc
+char *
 p_strncat(pool_t pool, const char *s, size_t length, ...);
 
 #endif

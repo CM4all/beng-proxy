@@ -11,43 +11,43 @@
 
 #include <stdbool.h>
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 char_is_whitespace(char ch)
 {
     return ((unsigned char)ch) <= 0x20;
 }
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 char_is_digit(char ch)
 {
     return ch >= '0' && ch <= '9';
 }
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 char_is_minuscule_letter(char ch)
 {
     return ch >= 'a' && ch <= 'z';
 }
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 char_is_capital_letter(char ch)
 {
     return ch >= 'A' && ch <= 'Z';
 }
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 char_is_letter(char ch)
 {
     return char_is_minuscule_letter(ch) || char_is_capital_letter(ch);
 }
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 char_is_alphanumeric(char ch)
 {
     return char_is_letter(ch) || char_is_digit(ch);
 }
 
-static __attr_always_inline char
+static gcc_always_inline char
 char_to_lower(char ch)
 {
     if (unlikely(char_is_capital_letter(ch)))
@@ -56,7 +56,7 @@ char_to_lower(char ch)
         return ch;
 }
 
-static __attr_always_inline char
+static gcc_always_inline char
 char_to_upper(char ch)
 {
     if (unlikely(char_is_minuscule_letter(ch)))
@@ -65,14 +65,14 @@ char_to_upper(char ch)
         return ch;
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 char_to_lower_inplace(char *ch_r)
 {
     if (unlikely(char_is_capital_letter(*ch_r)))
         *ch_r += 'a' - 'A';
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 char_to_upper_inplace(char *ch_r)
 {
     if (unlikely(char_is_minuscule_letter(*ch_r)))

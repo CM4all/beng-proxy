@@ -743,7 +743,7 @@ static void
 http_cache_heap_serve(struct cache *cache,
                       struct http_cache_document *document,
                       pool_t pool,
-                      const char *key __attr_unused,
+                      const char *key gcc_unused,
                       const struct http_response_handler *handler,
                       void *handler_ctx)
 {

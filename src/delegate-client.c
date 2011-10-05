@@ -208,7 +208,7 @@ delegate_try_read(struct delegate_client *d)
 }
 
 static void
-delegate_read_event_callback(int fd __attr_unused, short event __attr_unused,
+delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
                               void *ctx)
 {
     struct delegate_client *d = ctx;
@@ -253,7 +253,7 @@ delegate_try_write(struct delegate_client *d)
 }
 
 static void
-delegate_write_event_callback(int fd __attr_unused, short event __attr_unused,
+delegate_write_event_callback(int fd gcc_unused, short event gcc_unused,
                               void *ctx)
 {
     struct delegate_client *d = ctx;

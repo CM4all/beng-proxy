@@ -517,7 +517,7 @@ static const struct async_operation_class cgi_async_operation = {
  *
  */
 
-static void __attr_noreturn
+static void gcc_noreturn
 cgi_run(const struct jail_params *jail,
         const char *interpreter, const char *action,
         const char *path,
@@ -642,7 +642,7 @@ cgi_run(const struct jail_params *jail,
 }
 
 static void
-cgi_child_callback(int status, void *ctx __attr_unused)
+cgi_child_callback(int status, void *ctx gcc_unused)
 {
     int exit_status = WEXITSTATUS(status);
 

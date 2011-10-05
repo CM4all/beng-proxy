@@ -23,7 +23,7 @@ struct growing_buffer_reader {
     size_t position;
 };
 
-struct growing_buffer *__attr_malloc
+struct growing_buffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size);
 
 void *

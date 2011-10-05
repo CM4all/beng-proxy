@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int main(int argc gcc_unused, char **argv gcc_unused) {
     assert(http_list_contains("foo", "foo"));
     assert(!http_list_contains("foo", "bar"));
     assert(http_list_contains("foo,bar", "bar"));

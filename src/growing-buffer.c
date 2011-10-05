@@ -27,7 +27,7 @@ struct growing_buffer {
     struct buffer *current, *tail, first;
 };
 
-struct growing_buffer *__attr_malloc
+struct growing_buffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size)
 {
     struct growing_buffer *gb = p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);

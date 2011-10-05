@@ -91,7 +91,7 @@ cookie_jar_free(struct cookie_jar *jar)
     d_free(jar->pool, jar);
 }
 
-static struct cookie * __attr_malloc
+static struct cookie * gcc_malloc
 cookie_dup(struct dpool *pool, const struct cookie *src)
 {
     struct cookie *dest;
@@ -122,7 +122,7 @@ cookie_dup(struct dpool *pool, const struct cookie *src)
     return dest;
 }
 
-struct cookie_jar * __attr_malloc
+struct cookie_jar * gcc_malloc
 cookie_jar_dup(struct dpool *pool, const struct cookie_jar *src)
 {
     struct cookie_jar *dest;

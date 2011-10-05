@@ -50,7 +50,7 @@ http_next_quoted_string(struct pool *pool, struct strref *input,
     strref_skip(input, pos);
 }
 
-static __attr_always_inline bool
+static gcc_always_inline bool
 char_is_rfc_ignorant(char ch)
 {
     return char_is_http_token(ch) || ch == '[' || ch == ']' ||

@@ -25,7 +25,7 @@ static void
 schedule_respawn(struct instance *instance);
 
 static void
-respawn_event_callback(int fd __attr_unused, short event __attr_unused,
+respawn_event_callback(int fd gcc_unused, short event gcc_unused,
                        void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
@@ -117,7 +117,6 @@ worker_new(struct instance *instance)
     assert(!crash_in_unsafe());
 
     pid_t pid;
-    bool ret __attr_unused;
 
     deinit_signals(instance);
     children_event_del();
@@ -168,9 +167,10 @@ worker_new(struct instance *instance)
 
         session_manager_event_del();
 
-        ret = session_manager_init(instance->config.session_idle_timeout,
-                                   instance->config.cluster_size,
-                                   instance->config.cluster_node);
+        gcc_unused
+        bool ret = session_manager_init(instance->config.session_idle_timeout,
+                                        instance->config.cluster_size,
+                                        instance->config.cluster_node);
         assert(ret);
 
         all_listeners_event_add(instance);

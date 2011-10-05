@@ -45,7 +45,7 @@ my_istream_eof(void *ctx)
     should_exit = true;
 }
 
-static void __attr_noreturn
+static void gcc_noreturn
 my_istream_abort(G_GNUC_UNUSED GError *error, G_GNUC_UNUSED void *ctx)
 {
     g_error_free(error);

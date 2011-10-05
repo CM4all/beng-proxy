@@ -18,7 +18,7 @@ struct istream_later {
 
 
 static void
-later_event_callback(int fd __attr_unused, short event __attr_unused,
+later_event_callback(int fd gcc_unused, short event gcc_unused,
                      void *ctx)
 {
     struct istream_later *later = ctx;

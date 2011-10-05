@@ -197,7 +197,7 @@ widget_get_view_name(const struct widget *widget)
         : widget->view;
 }
 
-__attr_pure
+gcc_pure
 const struct widget_view *
 widget_get_view(const struct widget *widget);
 

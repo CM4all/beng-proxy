@@ -40,7 +40,7 @@ static istream_direct_t my_handler_direct = 0;
  */
 
 static size_t
-my_istream_data(const void *data __attr_unused, size_t length, void *ctx)
+my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
 {
     struct context *c = ctx;
 
@@ -129,7 +129,7 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static void
-my_response(http_status_t status, struct strmap *headers __attr_unused,
+my_response(http_status_t status, struct strmap *headers gcc_unused,
             istream_t body,
             void *ctx)
 {

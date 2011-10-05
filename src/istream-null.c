@@ -19,14 +19,14 @@ istream_to_null(istream_t istream)
 }
 
 static off_t
-istream_null_available(istream_t istream __attr_unused,
-                       bool partial __attr_unused)
+istream_null_available(istream_t istream gcc_unused,
+                       bool partial gcc_unused)
 {
     return 0;
 }
 
 static off_t
-istream_null_skip(istream_t istream __attr_unused, off_t length __attr_unused)
+istream_null_skip(istream_t istream gcc_unused, off_t length gcc_unused)
 {
     return 0;
 }

@@ -637,7 +637,7 @@ static const struct istream_handler parser_input_handler = {
  *
  */
 
-struct parser * __attr_malloc
+struct parser * gcc_malloc
 parser_new(struct pool *pool, istream_t input,
            const struct parser_handler *handler, void *handler_ctx)
 {

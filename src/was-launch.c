@@ -20,7 +20,7 @@
 #include <string.h>
 #include <errno.h>
 
-__attr_noreturn
+gcc_noreturn
 static void
 was_run(const char *executable_path,
         const struct jail_params *jail,

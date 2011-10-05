@@ -14,7 +14,7 @@
 #include "strref.h"
 #include "strutil.h"
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_ltrim(struct strref *s)
 {
     while (s->length > 0 && char_is_whitespace(s->data[0])) {
@@ -23,21 +23,21 @@ strref_ltrim(struct strref *s)
     }
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_rtrim(struct strref *s)
 {
     while (s->length > 0 && char_is_whitespace(strref_last(s)))
         --s->length;
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 strref_trim(struct strref *s)
 {
     strref_ltrim(s);
     strref_rtrim(s);
 }
 
-static __attr_always_inline int
+static gcc_always_inline int
 strref_lower_cmp(const struct strref *s, const char *p, size_t length)
 {
     size_t i;
@@ -60,7 +60,7 @@ strref_lower_cmp(const struct strref *s, const char *p, size_t length)
     return 0;
 }
 
-static __attr_always_inline int
+static gcc_always_inline int
 strref_lower_cmp_c(const struct strref *s, const char *p)
 {
     assert(p != NULL);

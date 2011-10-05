@@ -204,7 +204,7 @@ run_istream_ctx(struct ctx *ctx, pool_t pool, istream_t istream)
 }
 
 static void
-run_istream_block(pool_t pool, istream_t istream, bool record __attr_unused,
+run_istream_block(pool_t pool, istream_t istream, bool record gcc_unused,
                   int block_after)
 {
     struct ctx ctx = {

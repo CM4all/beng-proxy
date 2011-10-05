@@ -4,7 +4,7 @@
 
 #include <assert.h>
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int main(int argc gcc_unused, char **argv gcc_unused) {
     struct shm *shm;
     void *a, *b, *c;
 

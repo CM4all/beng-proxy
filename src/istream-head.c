@@ -101,7 +101,7 @@ istream_to_head(istream_t istream)
 }
 
 static off_t
-istream_head_available(__attr_unused istream_t istream, bool partial)
+istream_head_available(gcc_unused istream_t istream, bool partial)
 {
     struct istream_head *head = istream_to_head(istream);
     off_t available = istream_available(head->input, partial);

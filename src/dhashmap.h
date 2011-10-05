@@ -17,7 +17,7 @@ struct dhashmap_pair {
     void *value;
 };
 
-struct dhashmap *__attr_malloc
+struct dhashmap *gcc_malloc
 dhashmap_new(struct dpool *pool, unsigned capacity);
 
 void

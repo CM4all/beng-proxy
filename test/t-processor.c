@@ -34,7 +34,7 @@ struct tcache *global_translate_cache;
 
 istream_t
 embed_inline_widget(pool_t pool,
-                    __attr_unused struct processor_env *env,
+                    gcc_unused struct processor_env *env,
                     struct widget *widget)
 {
     const char *s = widget_path(widget);
@@ -45,9 +45,9 @@ embed_inline_widget(pool_t pool,
 }
 
 struct widget_session *
-widget_get_session(__attr_unused struct widget *widget,
-                   __attr_unused struct session *session,
-                   __attr_unused bool create)
+widget_get_session(gcc_unused struct widget *widget,
+                   gcc_unused struct session *session,
+                   gcc_unused bool create)
 {
     return NULL;
 }
@@ -59,20 +59,20 @@ parse_uri_mode(G_GNUC_UNUSED const struct strref *s)
 }
 
 istream_t
-rewrite_widget_uri(__attr_unused pool_t pool, __attr_unused pool_t widget_pool,
-                   __attr_unused struct tcache *translate_cache,
-                   __attr_unused const char *absolute_uri,
-                   __attr_unused const struct parsed_uri *external_uri,
-                   __attr_unused const char *site_name,
-                   __attr_unused const char *untrusted_host,
-                   __attr_unused struct strmap *args,
-                   __attr_unused struct widget *widget,
-                   __attr_unused session_id_t session_id,
-                   __attr_unused const struct strref *value,
-                   __attr_unused enum uri_mode mode,
-                   __attr_unused bool stateful,
-                   __attr_unused const char *view,
-                   __attr_unused const struct escape_class *escape)
+rewrite_widget_uri(gcc_unused pool_t pool, gcc_unused pool_t widget_pool,
+                   gcc_unused struct tcache *translate_cache,
+                   gcc_unused const char *absolute_uri,
+                   gcc_unused const struct parsed_uri *external_uri,
+                   gcc_unused const char *site_name,
+                   gcc_unused const char *untrusted_host,
+                   gcc_unused struct strmap *args,
+                   gcc_unused struct widget *widget,
+                   gcc_unused session_id_t session_id,
+                   gcc_unused const struct strref *value,
+                   gcc_unused enum uri_mode mode,
+                   gcc_unused bool stateful,
+                   gcc_unused const char *view,
+                   gcc_unused const struct escape_class *escape)
 {
     return NULL;
 }
@@ -83,19 +83,19 @@ rewrite_widget_uri(__attr_unused pool_t pool, __attr_unused pool_t widget_pool,
  */
 
 static void
-my_widget_found(__attr_unused struct widget *widget, __attr_unused void *ctx)
+my_widget_found(gcc_unused struct widget *widget, gcc_unused void *ctx)
 {
     g_printerr("widget found\n");
 }
 
 static void
-my_widget_not_found(__attr_unused void *ctx)
+my_widget_not_found(gcc_unused void *ctx)
 {
     g_printerr("widget not found\n");
 }
 
 static void
-my_widget_error(GError *error, __attr_unused void *ctx)
+my_widget_error(GError *error, gcc_unused void *ctx)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);

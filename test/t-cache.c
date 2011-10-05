@@ -72,7 +72,7 @@ my_match(const struct cache_item *item, void *ctx)
     return i->match == match;
 }
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int main(int argc gcc_unused, char **argv gcc_unused) {
     struct event_base *event_base;
     pool_t pool;
     struct cache *cache;

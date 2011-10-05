@@ -64,17 +64,17 @@ typedef enum {
 struct ajp_header {
     uint8_t a, b;
     uint16_t length;
-} __attr_packed;
+} gcc_packed;
 
 struct ajp_send_body_chunk {
     uint8_t code;
     uint16_t length;
-} __attr_packed;
+} gcc_packed;
 
 struct ajp_get_body_chunk {
     uint8_t code;
     uint16_t length;
-} __attr_packed;
+} gcc_packed;
 
 static inline ajp_method_t
 to_ajp_method(http_method_t method)

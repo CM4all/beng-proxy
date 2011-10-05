@@ -108,8 +108,8 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static void
-my_response(http_status_t status, struct strmap *headers __attr_unused,
-            struct istream *body __attr_unused,
+my_response(http_status_t status, struct strmap *headers gcc_unused,
+            struct istream *body gcc_unused,
             void *ctx)
 {
     struct context *c = ctx;

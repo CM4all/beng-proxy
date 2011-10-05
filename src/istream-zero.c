@@ -19,7 +19,7 @@ istream_to_zero(istream_t istream)
 }
 
 static off_t
-istream_zero_available(__attr_unused istream_t istream, bool partial)
+istream_zero_available(gcc_unused istream_t istream, bool partial)
 {
     return partial
         ? INT_MAX
@@ -27,7 +27,7 @@ istream_zero_available(__attr_unused istream_t istream, bool partial)
 }
 
 static off_t
-istream_zero_skip(istream_t istream __attr_unused, off_t length)
+istream_zero_skip(istream_t istream gcc_unused, off_t length)
 {
     return length;
 }

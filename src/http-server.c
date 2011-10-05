@@ -121,7 +121,7 @@ http_server_event_callback2(struct http_server_connection *connection,
 }
 
 static void
-http_server_event_callback(int fd __attr_unused, short event, void *ctx)
+http_server_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
@@ -135,7 +135,7 @@ http_server_event_callback(int fd __attr_unused, short event, void *ctx)
 }
 
 static void
-http_server_timeout_callback(int fd __attr_unused, short event __attr_unused,
+http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
                              void *ctx)
 {
     struct http_server_connection *connection = ctx;

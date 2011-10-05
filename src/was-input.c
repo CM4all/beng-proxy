@@ -243,7 +243,7 @@ was_input_try_read(struct was_input *input)
  */
 
 static void
-was_input_event_callback(int fd __attr_unused, short event, void *ctx)
+was_input_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct was_input *input = ctx;
 

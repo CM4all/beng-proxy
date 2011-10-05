@@ -12,19 +12,19 @@
 #include <event.h>
 
 struct cookie_jar *
-cookie_jar_new(struct dpool *pool __attr_unused)
+cookie_jar_new(struct dpool *pool gcc_unused)
 {
     return NULL;
 }
 
 struct cookie_jar *
-cookie_jar_dup(struct dpool *pool __attr_unused,
-               const struct cookie_jar *src __attr_unused)
+cookie_jar_dup(struct dpool *pool gcc_unused,
+               const struct cookie_jar *src gcc_unused)
 {
     return NULL;
 }
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int main(int argc gcc_unused, char **argv gcc_unused) {
     struct event_base *event_base;
     pid_t pid;
     int fds[2];

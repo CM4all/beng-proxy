@@ -215,7 +215,7 @@ session_id_low(session_id_t id)
  * The returned session object is locked and must be unlocked with
  * session_put().
  */
-struct session * __attr_malloc
+struct session * gcc_malloc
 session_new(void);
 
 void

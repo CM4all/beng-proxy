@@ -175,15 +175,15 @@ parse_response_headers(pool_t pool, const struct request *request)
 }
 
 void
-resource_loader_request(__attr_unused struct resource_loader *rl, pool_t pool,
-                        __attr_unused unsigned session_sticky,
+resource_loader_request(gcc_unused struct resource_loader *rl, pool_t pool,
+                        gcc_unused unsigned session_sticky,
                         http_method_t method,
-                        __attr_unused const struct resource_address *address,
-                        __attr_unused http_status_t status, struct strmap *headers,
+                        gcc_unused const struct resource_address *address,
+                        gcc_unused http_status_t status, struct strmap *headers,
                         istream_t body,
                         const struct http_response_handler *handler,
                         void *handler_ctx,
-                        __attr_unused struct async_operation_ref *async_ref)
+                        gcc_unused struct async_operation_ref *async_ref)
 {
     const struct request *request = &requests[current_request];
     struct strmap *expected_rh;
@@ -235,7 +235,8 @@ resource_loader_request(__attr_unused struct resource_loader *rl, pool_t pool,
 }
 
 static size_t
-my_response_body_data(__attr_unused const void *data, size_t length, __attr_unused void *ctx)
+my_response_body_data(gcc_unused const void *data, size_t length,
+                      gcc_unused void *ctx)
 {
     const struct request *request = &requests[current_request];
 
@@ -247,13 +248,13 @@ my_response_body_data(__attr_unused const void *data, size_t length, __attr_unus
 }
 
 static void
-my_response_body_eof(__attr_unused void *ctx)
+my_response_body_eof(gcc_unused void *ctx)
 {
     eof = true;
 }
 
-static void __attr_noreturn
-my_response_body_abort(__attr_unused GError *error, __attr_unused void *ctx)
+static void gcc_noreturn
+my_response_body_abort(gcc_unused GError *error, gcc_unused void *ctx)
 {
     assert(false);
 }
@@ -297,8 +298,8 @@ my_http_response(http_status_t status, struct strmap *headers,
     got_response = true;
 }
 
-static void __attr_noreturn
-my_http_abort(GError *error, __attr_unused void *ctx)
+static void gcc_noreturn
+my_http_abort(GError *error, gcc_unused void *ctx)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);

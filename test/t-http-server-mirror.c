@@ -8,7 +8,7 @@
 
 static void
 my_request(struct http_server_request *request, void *ctx,
-           struct async_operation_ref *async_ref __attr_unused)
+           struct async_operation_ref *async_ref gcc_unused)
 {
     (void)ctx;
 

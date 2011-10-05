@@ -18,7 +18,7 @@ struct istream_gb {
 };
 
 static off_t
-istream_gb_available(istream_t istream, bool partial __attr_unused)
+istream_gb_available(istream_t istream, bool partial gcc_unused)
 {
     struct istream_gb *igb = (struct istream_gb *)istream;
 

@@ -15,41 +15,41 @@
 #include <string.h>
 
 void
-widget_cancel(struct widget *widget __attr_unused)
+widget_cancel(struct widget *widget gcc_unused)
 {
 }
 
 bool
-widget_check_host(const struct widget *widget __attr_unused,
-                  const char *host __attr_unused,
-                  const char *site_name __attr_unused)
+widget_check_host(const struct widget *widget gcc_unused,
+                  const char *host gcc_unused,
+                  const char *site_name gcc_unused)
 {
     return true;
 }
 
 struct session *
-session_get(session_id_t id __attr_unused)
+session_get(session_id_t id gcc_unused)
 {
     return NULL;
 }
 
 void
-session_put(struct session *session __attr_unused)
+session_put(struct session *session gcc_unused)
 {
 }
 
 void
-widget_sync_session(struct widget *widget __attr_unused,
-                    struct session *session __attr_unused)
+widget_sync_session(struct widget *widget gcc_unused,
+                    struct session *session gcc_unused)
 {
 }
 
 void
-widget_http_request(pool_t pool __attr_unused, struct widget *widget __attr_unused,
-                    struct processor_env *env __attr_unused,
+widget_http_request(pool_t pool gcc_unused, struct widget *widget gcc_unused,
+                    struct processor_env *env gcc_unused,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
-                    struct async_operation_ref *async_ref __attr_unused)
+                    struct async_operation_ref *async_ref gcc_unused)
 {
     GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
                                         "Test");
@@ -62,7 +62,7 @@ struct test_operation {
 };
 
 static void
-test_abort(struct async_operation *ao __attr_unused)
+test_abort(struct async_operation *ao gcc_unused)
 {
     struct test_operation *to = (struct test_operation *)ao;
 
@@ -74,10 +74,10 @@ static const struct async_operation_class test_operation = {
 };
 
 void
-widget_resolver_new(pool_t pool, pool_t widget_pool __attr_unused,
-                    struct widget *widget __attr_unused,
-                    struct tcache *translate_cache __attr_unused,
-                    widget_resolver_callback_t callback __attr_unused, void *ctx __attr_unused,
+widget_resolver_new(pool_t pool, pool_t widget_pool gcc_unused,
+                    struct widget *widget gcc_unused,
+                    struct tcache *translate_cache gcc_unused,
+                    widget_resolver_callback_t callback gcc_unused, void *ctx gcc_unused,
                     struct async_operation_ref *async_ref)
 {
     struct test_operation *to = p_malloc(pool, sizeof(*to));

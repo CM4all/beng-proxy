@@ -15,13 +15,13 @@ static struct hstock *delegate_stock;
 static pool_t pool;
 
 static void
-my_stop(void *ctx __attr_unused)
+my_stop(void *ctx gcc_unused)
 {
     hstock_free(delegate_stock);
 }
 
 static void
-my_delegate_callback(int fd, void *ctx __attr_unused)
+my_delegate_callback(int fd, void *ctx gcc_unused)
 {
     close(fd);
 

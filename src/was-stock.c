@@ -57,7 +57,7 @@ was_stock_key(struct pool *pool, const struct was_child_params *params)
 }
 
 static void
-was_child_callback(int status __attr_unused, void *ctx)
+was_child_callback(gcc_unused int status, void *ctx)
 {
     struct was_child *child = ctx;
 
@@ -98,8 +98,8 @@ was_child_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
  */
 
 static pool_t
-was_stock_pool(void *ctx __attr_unused, struct pool *parent,
-               const char *uri __attr_unused)
+was_stock_pool(gcc_unused void *ctx, struct pool *parent,
+               gcc_unused const char *uri)
 {
     return pool_new_linear(parent, "was_child", 2048);
 }
@@ -153,7 +153,7 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
 }
 
 static bool
-was_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
+was_stock_borrow(gcc_unused void *ctx, struct stock_item *item)
 {
     struct was_child *child = (struct was_child *)item;
 
@@ -162,7 +162,7 @@ was_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static void
-was_stock_release(void *ctx __attr_unused, struct stock_item *item)
+was_stock_release(gcc_unused void *ctx, struct stock_item *item)
 {
     struct was_child *child = (struct was_child *)item;
     struct timeval tv = {
@@ -174,7 +174,7 @@ was_stock_release(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static void
-was_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
+was_stock_destroy(gcc_unused void *ctx, struct stock_item *item)
 {
     struct was_child *child =
         (struct was_child *)item;

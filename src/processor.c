@@ -1280,8 +1280,8 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 }
 
 static size_t
-processor_parser_cdata(const char *p __attr_unused, size_t length,
-                       bool escaped __attr_unused, void *ctx)
+processor_parser_cdata(const char *p gcc_unused, size_t length,
+                       bool escaped gcc_unused, void *ctx)
 {
     struct processor *processor = ctx;
 
@@ -1291,7 +1291,7 @@ processor_parser_cdata(const char *p __attr_unused, size_t length,
 }
 
 static void
-processor_parser_eof(void *ctx, off_t length __attr_unused)
+processor_parser_eof(void *ctx, off_t length gcc_unused)
 {
     struct processor *processor = ctx;
 

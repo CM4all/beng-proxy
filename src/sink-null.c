@@ -7,19 +7,19 @@
 #include "sink-impl.h"
 
 static size_t
-sink_null_data(__attr_unused const void *data, size_t length,
-               __attr_unused void *_ctx)
+sink_null_data(gcc_unused const void *data, size_t length,
+               gcc_unused void *_ctx)
 {
     return length;
 }
 
 static void
-sink_null_eof(__attr_unused void *_ctx)
+sink_null_eof(gcc_unused void *_ctx)
 {
 }
 
 static void
-sink_null_abort(GError *error, __attr_unused void *_ctx)
+sink_null_abort(GError *error, gcc_unused void *_ctx)
 {
     g_error_free(error);
 }

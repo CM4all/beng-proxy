@@ -29,7 +29,7 @@ struct async_operation_ref;
  */
 
 static void
-defer_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
+defer_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
 {
     struct defer *d = ctx;
 

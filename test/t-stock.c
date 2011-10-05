@@ -37,7 +37,7 @@ my_stock_pool(G_GNUC_UNUSED void *ctx, struct pool *parent,
 }
 
 static void
-my_stock_create(void *ctx __attr_unused, struct stock_item *_item,
+my_stock_create(void *ctx gcc_unused, struct stock_item *_item,
                 G_GNUC_UNUSED const char *uri, void *info,
                 G_GNUC_UNUSED struct pool *caller_pool,
                 G_GNUC_UNUSED struct async_operation_ref *async_ref)

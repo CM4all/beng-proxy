@@ -910,7 +910,7 @@ http_client_try_read(struct http_client *client)
 }
 
 static void
-http_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
+http_client_send_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct http_client *client = ctx;
 
@@ -934,7 +934,7 @@ http_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
 }
 
 static void
-http_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
+http_client_recv_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct http_client *client = ctx;
 

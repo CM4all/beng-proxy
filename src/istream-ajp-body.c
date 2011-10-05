@@ -17,7 +17,7 @@ struct istream_ajp_body {
 
     size_t requested, packet_remaining;
 
-    __attr_packed struct {
+    gcc_packed struct {
         struct ajp_header header;
         uint16_t length;
     } header;

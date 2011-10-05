@@ -64,7 +64,7 @@ was_output_abort(struct was_output *output, GError *error)
  */
 
 static void
-was_output_event_callback(int fd __attr_unused, short event, void *ctx)
+was_output_event_callback(gcc_unused int fd, short event, void *ctx)
 {
     struct was_output *output = ctx;
 

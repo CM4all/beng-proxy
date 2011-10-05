@@ -33,7 +33,7 @@ struct listener {
 };
 
 static void
-listener_event_callback(int fd, short event __attr_unused, void *ctx)
+listener_event_callback(int fd, short event gcc_unused, void *ctx)
 {
     struct listener *listener = ctx;
     struct sockaddr_storage sa;
@@ -69,7 +69,7 @@ listener_event_callback(int fd, short event __attr_unused, void *ctx)
     pool_commit();
 }
 
-static __attr_always_inline uint16_t
+static gcc_always_inline uint16_t
 my_htons(uint16_t x)
 {
 #ifdef __ICC

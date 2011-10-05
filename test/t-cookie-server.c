@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int main(int argc gcc_unused, char **argv gcc_unused) {
     pool_t pool;
     struct strmap *cookies;
 

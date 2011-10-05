@@ -20,7 +20,7 @@
 #include <errno.h>
 
 static void
-pipe_child_callback(int status, void *ctx __attr_unused)
+pipe_child_callback(int status, void *ctx gcc_unused)
 {
     int exit_status = WEXITSTATUS(status);
 

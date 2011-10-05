@@ -119,17 +119,17 @@ static const struct translate_response response5c = {
 const struct translate_response *next_response, *expected_response;
 
 void
-tstock_translate(__attr_unused struct tstock *stock, __attr_unused pool_t pool,
-                 __attr_unused const struct translate_request *request,
+tstock_translate(gcc_unused struct tstock *stock, gcc_unused pool_t pool,
+                 gcc_unused const struct translate_request *request,
                  const struct translate_handler *handler, void *ctx,
-                 __attr_unused struct async_operation_ref *async_ref)
+                 gcc_unused struct async_operation_ref *async_ref)
 {
     handler->response(next_response, ctx);
 }
 
 static void
 my_translate_response(const struct translate_response *response,
-                      __attr_unused void *ctx)
+                      gcc_unused void *ctx)
 {
     if (response == NULL) {
         assert(expected_response == NULL);
@@ -155,7 +155,9 @@ static const struct translate_handler my_translate_handler = {
     .error = my_translate_error,
 };
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int
+main(gcc_unused int argc, gcc_unused char **argv)
+{
     struct tstock *const translate_stock = (void *)0x1;
     struct event_base *event_base;
     pool_t pool;

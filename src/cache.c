@@ -32,7 +32,7 @@ static const struct timeval cache_expire_interval = {
 };
 
 static void
-cache_expire_event_callback(int fd __attr_unused, short event __attr_unused,
+cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
                             void *ctx);
 
 struct cache *
@@ -443,7 +443,7 @@ struct cache_remove_all_match_data {
 };
 
 static bool
-cache_remove_all_match_callback(__attr_unused const char *key, void *value,
+cache_remove_all_match_callback(gcc_unused const char *key, void *value,
                                 void *ctx)
 {
     const struct cache_remove_all_match_data *data = ctx;
@@ -497,7 +497,7 @@ cache_item_unlock(struct cache *cache, struct cache_item *item)
 
 /** clean up expired cache items every 60 seconds */
 static void
-cache_expire_event_callback(int fd __attr_unused, short event __attr_unused,
+cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
                             void *ctx)
 {
     struct cache *cache = ctx;

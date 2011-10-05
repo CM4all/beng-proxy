@@ -42,10 +42,10 @@ istream_catch_new(pool_t pool, istream_t input,
 istream_t
 istream_later_new(pool_t pool, istream_t input);
 
-istream_t __attr_malloc
+istream_t gcc_malloc
 istream_memory_new(pool_t pool, const void *data, size_t length);
 
-istream_t __attr_malloc
+istream_t gcc_malloc
 istream_string_new(pool_t pool, const char *s);
 
 #ifdef __linux

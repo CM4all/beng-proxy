@@ -54,7 +54,7 @@ hstock_match_empty_stock(const char *key, void *value, void *ctx)
 }
 
 static void
-hstock_cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
+hstock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
                               void *ctx)
 {
     struct hstock *hstock = ctx;
@@ -135,7 +135,7 @@ hstock_get(struct hstock *hstock, struct pool *pool,
 }
 
 void
-hstock_put(struct hstock *hstock __attr_unused, const char *uri __attr_unused,
+hstock_put(struct hstock *hstock gcc_unused, const char *uri gcc_unused,
            struct stock_item *object, bool destroy)
 {
 #ifndef NDEBUG

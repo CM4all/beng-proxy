@@ -219,7 +219,7 @@ file_try_read(struct file *file)
 }
 
 static void
-file_event_callback(__attr_unused int fd, __attr_unused short event,
+file_event_callback(gcc_unused int fd, gcc_unused short event,
                     void *ctx)
 {
     struct file *file = ctx;

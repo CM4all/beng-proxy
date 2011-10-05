@@ -136,7 +136,7 @@ static struct {
     struct linear_pool_area *linear_areas;
 } recycler;
 
-static void * __attr_malloc
+static void * gcc_malloc
 xmalloc(size_t size)
 {
     void *p = malloc(size);
@@ -147,7 +147,7 @@ xmalloc(size_t size)
     return p;
 }
 
-static inline size_t __attr_const
+static inline size_t gcc_const
 align_size(size_t size)
 {
     return ((size - 1) | ALIGN_BITS) + 1;
@@ -253,7 +253,7 @@ pool_remove_child(pool_t pool, pool_t child)
     child->parent = NULL;
 }
 
-static pool_t __attr_malloc
+static pool_t gcc_malloc
 pool_new(pool_t parent, const char *name)
 {
     pool_t pool;
@@ -305,7 +305,7 @@ pool_new_libc(pool_t parent, const char *name)
     return pool;
 }
 
-static struct linear_pool_area * __attr_malloc
+static struct linear_pool_area * gcc_malloc
 pool_new_linear_area(struct linear_pool_area *prev, size_t size)
 {
     struct linear_pool_area *area = xmalloc(sizeof(*area) - sizeof(area->data) + size);
@@ -953,7 +953,7 @@ clear_memory(void *p, size_t size)
 {
 #if defined(__GNUC__) && defined(__x86_64__)
     size_t n = (size + 7) / 8;
-    size_t __attr_unused dummy0, dummy1;
+    size_t gcc_unused dummy0, dummy1;
     asm volatile("cld\n\t"
                  "rep stosq\n\t"
                  : "=&c"(dummy0), "=&D"(dummy1)

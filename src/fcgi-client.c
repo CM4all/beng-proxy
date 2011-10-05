@@ -495,7 +495,7 @@ fcgi_client_try_read(struct fcgi_client *client)
  */
 
 static void
-fcgi_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
+fcgi_client_send_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct fcgi_client *client = ctx;
 
@@ -516,7 +516,7 @@ fcgi_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
 }
 
 static void
-fcgi_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
+fcgi_client_recv_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct fcgi_client *client = ctx;
 

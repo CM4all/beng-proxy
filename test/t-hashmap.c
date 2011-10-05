@@ -6,7 +6,7 @@
 const char key[] = "foo";
 char a, b, c;
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int main(int argc gcc_unused, char **argv gcc_unused) {
     struct pool *pool;
     struct hashmap *map;
     void *p;

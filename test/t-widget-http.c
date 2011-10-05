@@ -50,34 +50,34 @@ static unsigned test_id;
 static bool got_request, got_response;
 
 istream_t
-processor_process(__attr_unused pool_t pool, istream_t istream,
-                  __attr_unused struct widget *widget,
-                  __attr_unused struct processor_env *env,
-                  __attr_unused unsigned options)
+processor_process(gcc_unused pool_t pool, istream_t istream,
+                  gcc_unused struct widget *widget,
+                  gcc_unused struct processor_env *env,
+                  gcc_unused unsigned options)
 {
     return istream;
 }
 
 void
-processor_lookup_widget(__attr_unused pool_t pool,
-                        __attr_unused http_status_t status,
-                        __attr_unused istream_t istream,
-                        __attr_unused struct widget *widget,
-                        __attr_unused const char *id,
-                        __attr_unused struct processor_env *env,
-                        __attr_unused unsigned options,
+processor_lookup_widget(gcc_unused pool_t pool,
+                        gcc_unused http_status_t status,
+                        gcc_unused istream_t istream,
+                        gcc_unused struct widget *widget,
+                        gcc_unused const char *id,
+                        gcc_unused struct processor_env *env,
+                        gcc_unused unsigned options,
                         const struct widget_lookup_handler *handler,
                         void *handler_ctx,
-                        __attr_unused struct async_operation_ref *async_ref)
+                        gcc_unused struct async_operation_ref *async_ref)
 {
     handler->not_found(handler_ctx);
 }
 
 struct istream *
-css_processor(__attr_unused struct pool *pool, struct istream *stream,
-              __attr_unused struct widget *widget,
-              __attr_unused struct processor_env *env,
-              __attr_unused unsigned options)
+css_processor(gcc_unused struct pool *pool, struct istream *stream,
+              gcc_unused struct widget *widget,
+              gcc_unused struct processor_env *env,
+              gcc_unused unsigned options)
 {
     return stream;
 }
@@ -85,16 +85,16 @@ css_processor(__attr_unused struct pool *pool, struct istream *stream,
 struct filter_cache;
 
 void
-filter_cache_request(__attr_unused struct filter_cache *cache,
-                     __attr_unused pool_t pool,
-                     __attr_unused const struct resource_address *address,
-                     __attr_unused const char *source_id,
-                     __attr_unused http_status_t status,
-                     __attr_unused struct strmap *headers,
-                     __attr_unused istream_t body,
+filter_cache_request(gcc_unused struct filter_cache *cache,
+                     gcc_unused pool_t pool,
+                     gcc_unused const struct resource_address *address,
+                     gcc_unused const char *source_id,
+                     gcc_unused http_status_t status,
+                     gcc_unused struct strmap *headers,
+                     gcc_unused istream_t body,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
-                     __attr_unused struct async_operation_ref *async_ref)
+                     gcc_unused struct async_operation_ref *async_ref)
 {
     GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
                                         "Test");
@@ -104,8 +104,8 @@ filter_cache_request(__attr_unused struct filter_cache *cache,
 struct stock *global_pipe_stock;
 
 istream_t
-istream_pipe_new(__attr_unused pool_t pool, istream_t input,
-                 __attr_unused struct stock *pipe_stock)
+istream_pipe_new(gcc_unused pool_t pool, istream_t input,
+                 gcc_unused struct stock *pipe_stock)
 {
     return input;
 }
@@ -116,19 +116,19 @@ struct fcgi_stock;
 struct hstock;
 
 void
-resource_get(__attr_unused struct http_cache *cache,
-             __attr_unused struct tcp_balancer *tcp_balancer,
-             __attr_unused struct hstock *fcgi_stock,
-             __attr_unused struct hstock *was_stock,
-             __attr_unused struct hstock *delegate_stock,
+resource_get(gcc_unused struct http_cache *cache,
+             gcc_unused struct tcp_balancer *tcp_balancer,
+             gcc_unused struct hstock *fcgi_stock,
+             gcc_unused struct hstock *was_stock,
+             gcc_unused struct hstock *delegate_stock,
              pool_t pool,
-             __attr_unused unsigned session_sticky,
+             gcc_unused unsigned session_sticky,
              http_method_t method,
-             __attr_unused const struct resource_address *address,
+             gcc_unused const struct resource_address *address,
              http_status_t status, struct strmap *headers, istream_t body,
              const struct http_response_handler *handler,
              void *handler_ctx,
-             __attr_unused struct async_operation_ref *async_ref)
+             gcc_unused struct async_operation_ref *async_ref)
 {
     struct strmap *response_headers = strmap_new(pool, 16);
     istream_t response_body = istream_null_new(pool);
@@ -187,8 +187,8 @@ resource_get(__attr_unused struct http_cache *cache,
 }
 
 static void
-my_http_response(http_status_t status, __attr_unused struct strmap *headers,
-                 istream_t body, __attr_unused void *ctx)
+my_http_response(http_status_t status, gcc_unused struct strmap *headers,
+                 istream_t body, gcc_unused void *ctx)
 {
     assert(!got_response);
     assert(status == 200);
@@ -199,8 +199,8 @@ my_http_response(http_status_t status, __attr_unused struct strmap *headers,
     got_response = true;
 }
 
-static void __attr_noreturn
-my_http_abort(GError *error, __attr_unused void *ctx)
+static void gcc_noreturn
+my_http_abort(GError *error, gcc_unused void *ctx)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);

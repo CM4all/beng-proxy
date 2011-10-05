@@ -103,8 +103,8 @@ session_remove(struct session *session)
 }
 
 static void
-cleanup_event_callback(int fd __attr_unused, short event __attr_unused,
-                       void *ctx __attr_unused)
+cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
+                       void *ctx gcc_unused)
 {
     struct timespec now;
     int ret;
@@ -605,11 +605,11 @@ session_set_language(struct session *session, const char *language)
     return session->language != NULL;
 }
 
-static struct dhashmap * __attr_malloc
+static struct dhashmap * gcc_malloc
 widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
                        struct session *session, struct widget_session *parent);
 
-static struct widget_session * __attr_malloc
+static struct widget_session * gcc_malloc
 widget_session_dup(struct dpool *pool, const struct widget_session *src,
                    struct session *session)
 {
@@ -652,7 +652,7 @@ widget_session_dup(struct dpool *pool, const struct widget_session *src,
     return dest;
 }
 
-static struct dhashmap * __attr_malloc
+static struct dhashmap * gcc_malloc
 widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
                        struct session *session, struct widget_session *parent)
 {
@@ -682,7 +682,7 @@ widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
     return dest;
 }
 
-static struct session * __attr_malloc
+static struct session * gcc_malloc
 session_dup(struct dpool *pool, const struct session *src)
 {
     struct session *dest;
@@ -744,7 +744,7 @@ session_dup(struct dpool *pool, const struct session *src)
  * and frees the old session instance.  Of course, this requires that
  * there is enough free shared memory.
  */
-static struct session * __attr_malloc
+static struct session * gcc_malloc
 session_defragment(struct session *src)
 {
     assert(crash_in_unsafe());

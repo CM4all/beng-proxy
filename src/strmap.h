@@ -17,10 +17,10 @@ struct strmap_pair {
     const char *key, *value;
 };
 
-struct strmap *__attr_malloc
+struct strmap *gcc_malloc
 strmap_new(struct pool *pool, unsigned capacity);
 
-struct strmap *__attr_malloc
+struct strmap *gcc_malloc
 strmap_dup(struct pool *pool, struct strmap *src);
 
 void

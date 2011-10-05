@@ -77,7 +77,7 @@ all_listeners_event_del(struct instance *instance)
 }
 
 static void
-exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
+exit_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
 
@@ -143,7 +143,7 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 }
 
 static void
-reload_event_callback(int fd __attr_unused, short event __attr_unused,
+reload_event_callback(int fd gcc_unused, short event gcc_unused,
                       void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
@@ -235,7 +235,7 @@ int main(int argc, char **argv)
 {
     int ret;
     bool bret;
-    int __attr_unused ref;
+    int gcc_unused ref;
     static struct instance instance = {
         .config = {
             .session_cookie = "beng_proxy_session",

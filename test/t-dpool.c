@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <string.h>
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int main(int argc gcc_unused, char **argv gcc_unused) {
     struct shm *shm;
     struct dpool *pool;
     void *a, *b, *c, *d;

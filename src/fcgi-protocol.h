@@ -49,12 +49,12 @@ struct fcgi_record_header {
     unsigned char content_data[content_length];
     unsigned char padding_data[padding_length];
     */
-} __attr_packed;
+} gcc_packed;
 
 struct fcgi_begin_request {
     uint16_t role;
     unsigned char flags;
     unsigned char reserved[5];
-} __attr_packed;
+} gcc_packed;
 
 #endif

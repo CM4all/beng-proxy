@@ -35,7 +35,7 @@ widget_class_callback(const struct widget_class *class, void *ctx)
  */
 
 static void
-my_abort(struct async_operation *ao __attr_unused)
+my_abort(gcc_unused struct async_operation *ao)
 {
     aborted = true;
 }
@@ -51,7 +51,7 @@ static const struct async_operation_class my_operation = {
  */
 
 void
-tstock_translate(__attr_unused struct tstock *stock, pool_t pool,
+tstock_translate(gcc_unused struct tstock *stock, pool_t pool,
                  const struct translate_request *request,
                  const struct translate_handler *handler, void *ctx,
                  struct async_operation_ref *async_ref)
@@ -161,7 +161,9 @@ test_abort(pool_t pool)
  *
  */
 
-int main(int argc __attr_unused, char **argv __attr_unused) {
+int
+main(gcc_unused int argc, gcc_unused char **argv)
+{
     struct event_base *event_base;
     pool_t root_pool;
 

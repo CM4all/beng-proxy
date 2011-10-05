@@ -78,7 +78,7 @@ duplex_check_close(struct duplex *duplex)
 }
 
 static void
-read_event_callback(int fd, short event __attr_unused, void *ctx)
+read_event_callback(int fd, short event gcc_unused, void *ctx)
 {
     struct duplex *duplex = ctx;
     ssize_t nbytes;
@@ -110,7 +110,7 @@ read_event_callback(int fd, short event __attr_unused, void *ctx)
 }
 
 static void
-write_event_callback(int fd, short event __attr_unused, void *ctx)
+write_event_callback(int fd, short event gcc_unused, void *ctx)
 {
     struct duplex *duplex = ctx;
     ssize_t nbytes;

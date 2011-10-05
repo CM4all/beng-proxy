@@ -75,7 +75,7 @@ worker_callback(int status, void *ctx)
 }
 
 static void
-launch_worker_callback(int fd __attr_unused, short event __attr_unused,
+launch_worker_callback(int fd gcc_unused, short event gcc_unused,
                        void *ctx)
 {
     assert(is_watchdog);
@@ -100,7 +100,7 @@ launch_worker_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 static void
-exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
+exit_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
 {
     struct lb_instance *instance = ctx;
 
@@ -141,7 +141,7 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 }
 
 static void
-reload_event_callback(int fd __attr_unused, short event __attr_unused,
+reload_event_callback(int fd gcc_unused, short event gcc_unused,
                       void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
@@ -185,7 +185,7 @@ deinit_signals(struct lb_instance *instance)
 int main(int argc, char **argv)
 {
     int ret;
-    int __attr_unused ref;
+    int gcc_unused ref;
     static struct lb_instance instance = {
         .cmdline = {
             .max_connections = 8192,

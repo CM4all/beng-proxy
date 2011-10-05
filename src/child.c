@@ -42,8 +42,8 @@ find_child_by_pid(pid_t pid)
 }
 
 static void
-child_event_callback(int fd __attr_unused, short event __attr_unused,
-                     void *ctx __attr_unused)
+child_event_callback(int fd gcc_unused, short event gcc_unused,
+                     void *ctx gcc_unused)
 {
     pid_t pid;
     int status;

@@ -28,7 +28,7 @@ struct dpool {
     struct dpool_chunk first_chunk;
 };
 
-static inline size_t __attr_const
+static inline size_t gcc_const
 align_size(size_t size)
 {
     return ((size - 1) | ALIGN_BITS) + 1;
@@ -111,7 +111,7 @@ dpool_is_fragmented(const struct dpool *pool)
 }
 
 static void
-allocation_split(const struct dpool_chunk *chunk __attr_unused,
+allocation_split(const struct dpool_chunk *chunk gcc_unused,
                  struct dpool_allocation *alloc, size_t size)
 {
     struct dpool_allocation *other;

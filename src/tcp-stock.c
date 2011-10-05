@@ -159,8 +159,8 @@ static const struct client_socket_handler tcp_stock_socket_handler = {
  */
 
 static pool_t
-tcp_stock_pool(void *ctx __attr_unused, pool_t parent,
-               const char *uri __attr_unused)
+tcp_stock_pool(void *ctx gcc_unused, pool_t parent,
+               const char *uri gcc_unused)
 {
     return pool_new_linear(parent, "tcp_stock", 2048);
 }
@@ -194,7 +194,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
 }
 
 static bool
-tcp_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
+tcp_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
 {
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
@@ -204,7 +204,7 @@ tcp_stock_borrow(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static void
-tcp_stock_release(void *ctx __attr_unused, struct stock_item *item)
+tcp_stock_release(void *ctx gcc_unused, struct stock_item *item)
 {
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
@@ -217,7 +217,7 @@ tcp_stock_release(void *ctx __attr_unused, struct stock_item *item)
 }
 
 static void
-tcp_stock_destroy(void *ctx __attr_unused, struct stock_item *item)
+tcp_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
 {
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;

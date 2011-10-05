@@ -15,14 +15,14 @@
 extern const char hex_digits[0x10];
 
 
-static __attr_always_inline void
+static gcc_always_inline void
 format_2digit(char *dest, unsigned number)
 {
     dest[0] = (char)('0' + (number / 10));
     dest[1] = (char)('0' + number % 10);
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 format_4digit(char *dest, unsigned number)
 {
     dest[0] = (char)('0' + number / 1000);
@@ -31,13 +31,13 @@ format_4digit(char *dest, unsigned number)
     dest[3] = (char)('0' + number % 10);
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 format_uint8_hex_fixed(char dest[2], uint8_t number) {
     dest[0] = hex_digits[(number >> 4) & 0xf];
     dest[1] = hex_digits[number & 0xf];
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 format_uint16_hex_fixed(char dest[4], uint16_t number) {
     dest[0] = hex_digits[(number >> 12) & 0xf];
     dest[1] = hex_digits[(number >> 8) & 0xf];
@@ -45,7 +45,7 @@ format_uint16_hex_fixed(char dest[4], uint16_t number) {
     dest[3] = hex_digits[number & 0xf];
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 format_uint32_hex_fixed(char dest[8], uint32_t number) {
     dest[0] = hex_digits[(number >> 28) & 0xf];
     dest[1] = hex_digits[(number >> 24) & 0xf];
@@ -57,7 +57,7 @@ format_uint32_hex_fixed(char dest[8], uint32_t number) {
     dest[7] = hex_digits[number & 0xf];
 }
 
-static __attr_always_inline void
+static gcc_always_inline void
 format_uint64_hex_fixed(char dest[16], uint64_t number) {
     format_uint32_hex_fixed(dest, number >> 32);
     format_uint32_hex_fixed(dest + 8, number);
@@ -66,7 +66,7 @@ format_uint64_hex_fixed(char dest[16], uint64_t number) {
 /**
  * Format a 64 bit unsigned integer into a decimal string.
  */
-static __attr_always_inline size_t
+static gcc_always_inline size_t
 format_uint64(char dest[32], uint64_t number)
 {
     char *p = dest + 32 - 1;
@@ -87,7 +87,7 @@ format_uint64(char dest[32], uint64_t number)
 /**
  * Format a 32 bit unsigned integer into a hex string.
  */
-static __attr_always_inline size_t
+static gcc_always_inline size_t
 format_uint32_hex(char dest[9], uint32_t number)
 {
     char *p = dest + 9 - 1;

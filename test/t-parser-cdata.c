@@ -55,7 +55,7 @@ parser_eof(void *ctx, off_t length)
     should_exit = true;
 }
 
-static __attr_noreturn void
+static gcc_noreturn void
 parser_abort(GError *error, void *ctx)
 {
     (void)ctx;

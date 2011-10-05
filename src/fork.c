@@ -287,7 +287,7 @@ fork_read_from_output(struct fork *f)
 }
 
 static void
-fork_input_event_callback(int fd __attr_unused, short event __attr_unused,
+fork_input_event_callback(int fd gcc_unused, short event gcc_unused,
                           void *ctx)
 {
     struct fork *f = ctx;
@@ -301,7 +301,7 @@ fork_input_event_callback(int fd __attr_unused, short event __attr_unused,
 }
 
 static void
-fork_output_event_callback(int fd __attr_unused, short event __attr_unused,
+fork_output_event_callback(int fd gcc_unused, short event gcc_unused,
                            void *ctx)
 {
     struct fork *f = ctx;

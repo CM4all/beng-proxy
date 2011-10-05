@@ -127,7 +127,7 @@ delegate_handle(enum delegate_request_command command,
     return false;
 }
 
-int main(int argc __attr_unused, char **argv __attr_unused)
+int main(int argc gcc_unused, char **argv gcc_unused)
 {
     struct delegate_header header;
     ssize_t nbytes;

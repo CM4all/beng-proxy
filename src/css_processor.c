@@ -227,7 +227,7 @@ css_processor_parser_url(const struct css_parser_value *url, void *ctx)
 }
 
 static void
-css_processor_parser_eof(void *ctx, off_t length __attr_unused)
+css_processor_parser_eof(void *ctx, off_t length gcc_unused)
 {
     struct css_processor *processor = ctx;
 

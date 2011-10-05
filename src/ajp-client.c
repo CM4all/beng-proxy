@@ -630,7 +630,7 @@ ajp_try_read(struct ajp_client *client)
 }
 
 static void
-ajp_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
+ajp_client_send_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct ajp_client *client = ctx;
 
@@ -656,7 +656,7 @@ ajp_client_send_event_callback(int fd __attr_unused, short event, void *ctx)
 }
 
 static void
-ajp_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
+ajp_client_recv_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct ajp_client *client = ctx;
 

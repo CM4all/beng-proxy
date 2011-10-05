@@ -17,7 +17,7 @@
 #include <string.h>
 #include <errno.h>
 
-__attr_noreturn
+gcc_noreturn
 static void
 log_run(const char *program, int fd)
 {

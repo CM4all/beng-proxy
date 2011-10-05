@@ -43,7 +43,7 @@ pipe_stock_pool(G_GNUC_UNUSED void *ctx, pool_t parent,
 }
 
 static void
-pipe_stock_create(void *ctx __attr_unused, struct stock_item *_item,
+pipe_stock_create(void *ctx gcc_unused, struct stock_item *_item,
                   G_GNUC_UNUSED const char *uri, G_GNUC_UNUSED void *info,
                   G_GNUC_UNUSED pool_t caller_pool,
                   G_GNUC_UNUSED struct async_operation_ref *async_ref)

@@ -281,7 +281,7 @@ filter_cache_response_evaluate(struct filter_cache_info *info,
 }
 
 static void
-fcache_timeout_callback(int fd __attr_unused, short event __attr_unused,
+fcache_timeout_callback(int fd gcc_unused, short event gcc_unused,
                         void *ctx)
 {
     struct filter_cache_request *request = ctx;

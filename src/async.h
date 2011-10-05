@@ -79,7 +79,7 @@ async_init(struct async_operation *ao,
  * build.
  */
 static inline void
-async_operation_finished(struct async_operation *ao __attr_unused)
+async_operation_finished(gcc_unused struct async_operation *ao)
 {
     assert(ao != NULL);
     assert(!ao->finished);
@@ -107,7 +107,7 @@ async_ref_defined(const struct async_operation_ref *ref)
 }
 
 static inline void
-async_ref_poison(struct async_operation_ref *ref __attr_unused)
+async_ref_poison(gcc_unused struct async_operation_ref *ref)
 {
     assert(ref != NULL);
 

@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-__attr_noreturn
+gcc_noreturn
 static void
 fcgi_run(const struct jail_params *jail,
          const char *executable_path,

@@ -33,7 +33,7 @@ strmap_new(struct pool *pool, unsigned capacity)
     return map;
 }
 
-struct strmap *__attr_malloc
+struct strmap *gcc_malloc
 strmap_dup(struct pool *pool, struct strmap *src)
 {
     struct strmap *dest = strmap_new(pool, src->capacity);
