@@ -29,8 +29,8 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
     /* this is actually invalid, but unfortunately RFC ignorance is
        viral, and forces us to accept square brackets :-( */
-    cookie_map_parse(cookies, "invalid2=foo|[bar]", pool);
-    assert(strcmp(strmap_get(cookies, "invalid2"), "foo|[bar]") == 0);
+    cookie_map_parse(cookies, "invalid2=foo |[bar] ", pool);
+    assert(strcmp(strmap_get(cookies, "invalid2"), "foo |[bar] ") == 0);
 
     pool_unref(pool);
     pool_commit();
