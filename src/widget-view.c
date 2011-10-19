@@ -56,7 +56,7 @@ widget_view_lookup(const struct widget_view *view, const char *name)
     assert(view != NULL);
     assert(view->name == NULL);
 
-    if (name == NULL)
+    if (name == NULL || *name == 0)
         /* the default view has no name */
         return view;
 

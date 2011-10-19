@@ -1,6 +1,7 @@
 cm4all-beng-proxy (1.2.2) unstable; urgency=low
 
   * merge release 1.1.15
+  * widget-view: an empty name refers to the default view
 
  --
 
