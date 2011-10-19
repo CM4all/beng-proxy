@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.0.11) unstable; urgency=low
 
-  * 
+  * lb_config: fix binding to wildcard address
 
  --
 

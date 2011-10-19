@@ -12,16 +12,24 @@
 #include <string.h>
 
 struct address_envelope *
-address_envelope_parse(struct pool *pool, const char *p, int default_port)
+address_envelope_parse(struct pool *pool, const char *p, int default_port,
+                       bool passive)
 {
     static const struct addrinfo hints = {
         .ai_flags = AI_NUMERICHOST,
         .ai_family = AF_UNSPEC,
         .ai_socktype = SOCK_STREAM,
     };
+    static const struct addrinfo passive_hints = {
+        .ai_flags = AI_NUMERICHOST|AI_PASSIVE,
+        .ai_family = AF_UNSPEC,
+        .ai_socktype = SOCK_STREAM,
+    };
 
     struct addrinfo *ai;
-    int result = socket_resolve_host_port(p, default_port, &hints, &ai);
+    int result = socket_resolve_host_port(p, default_port,
+                                          passive ? &passive_hints : &hints,
+                                          &ai);
     if (result != 0)
         return NULL;
 

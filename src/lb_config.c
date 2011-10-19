@@ -226,7 +226,7 @@ config_parser_feed_node(struct config_parser *parser, char *p,
 
         if (node->envelope == NULL) {
             node->envelope = address_envelope_parse(parser->config->pool,
-                                                    node->name, 80);
+                                                    node->name, 80, false);
             if (node->envelope == NULL)
                 return throw(error_r, "Could not parse node address from name");
         }
@@ -250,7 +250,7 @@ config_parser_feed_node(struct config_parser *parser, char *p,
                 return throw(error_r, "Duplicate node address");
 
             node->envelope = address_envelope_parse(parser->config->pool,
-                                                    value, 80);
+                                                    value, 80, false);
             if (node->envelope == NULL)
                 return throw(error_r, "Could not parse node address");
 
@@ -269,7 +269,7 @@ auto_create_node(struct config_parser *parser, const char *name,
                  GError **error_r)
 {
     const struct address_envelope *envelope =
-        address_envelope_parse(parser->config->pool, name, 80);
+        address_envelope_parse(parser->config->pool, name, 80, false);
     if (envelope == NULL) {
         g_set_error(error_r, lb_config_quark(), 0,
                     "Failed to parse node address");
@@ -585,7 +585,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
                 return syntax_error(error_r);
 
             listener->envelope = address_envelope_parse(parser->config->pool,
-                                                        address, 80);
+                                                        address, 80, true);
             if (listener->envelope == NULL)
                 return throw(error_r, "Could not parse listener address");
 
