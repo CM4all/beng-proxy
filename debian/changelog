@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.15) unstable; urgency=low
 
-  * 
+  * merge release 1.0.11
 
  --
 
@@ -126,6 +126,13 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.11) unstable; urgency=low
+
+  * lb_config: fix binding to wildcard address
+  * rewrite-uri: clarify warning message when widget has no id
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 19 Oct 2011 09:26:48 +0200
+
 cm4all-beng-proxy (1.0.10) unstable; urgency=low
 
   * debian/control: beng-lb doesn't need "daemon" anymore

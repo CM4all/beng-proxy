@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
     struct address_envelope *envelope =
-        address_envelope_parse(pool, argv[1], 0);
+        address_envelope_parse(pool, argv[1], 0, false);
     if (envelope == NULL) {
         fprintf(stderr, "Could not parse IP address\n");
         pool_unref(pool);
