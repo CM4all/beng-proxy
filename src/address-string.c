@@ -16,6 +16,7 @@ address_envelope_parse(struct pool *pool, const char *p, int default_port)
 {
     static const struct addrinfo hints = {
         .ai_flags = AI_NUMERICHOST,
+        .ai_family = AF_UNSPEC,
     };
 
     struct addrinfo *ai;
