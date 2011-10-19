@@ -157,8 +157,15 @@ do_rewrite_widget_uri(pool_t pool,
                               value,
                               frame, raw);
     if (uri == NULL) {
-        daemon_log(4, "Base mismatch in widget '%s', type '%s'\n",
-                   widget_path(widget), widget->class_name);
+        if (widget->id == NULL)
+            daemon_log(4, "Cannot rewrite URI for widget of type '%s': no id\n",
+                       widget->class_name);
+        else if (widget_path(widget) == NULL)
+            daemon_log(4, "Cannot rewrite URI for widget '%s', type '%s': broken id chain\n",
+                       widget->id, widget->class_name);
+        else
+            daemon_log(4, "Base mismatch in widget '%s', type '%s'\n",
+                       widget_path(widget), widget->class_name);
         return NULL;
     }
 
