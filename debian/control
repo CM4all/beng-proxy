@@ -233,7 +233,7 @@ Description: Documentation for cm4all-beng-proxy
 Package: cm4all-beng-lb
 Architecture: any
 Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6),
- cm4all-thirdparty-multilog, adduser, daemon
+ cm4all-thirdparty-multilog, adduser
 Provides: httpd
 Description: HTTP load balancer
  BENG lb is a HTTP proxy server and load balancer.

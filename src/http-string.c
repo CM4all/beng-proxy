@@ -54,6 +54,7 @@ static gcc_always_inline bool
 char_is_rfc_ignorant(char ch)
 {
     return char_is_http_token(ch) || ch == '[' || ch == ']' ||
+        ch == ' ' ||
         ch == '(' || ch == ')' || ch == '=' || ch == '/' ||
         ch == ':' || ch == '@' || ch == '<' || ch == '>' ||
         ch == '{' || ch == '}' || ch == '?';

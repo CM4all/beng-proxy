@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.2.2) unstable; urgency=low
 
-  * 
+  * merge release 1.1.15
 
  --
 
@@ -19,6 +19,18 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.15) unstable; urgency=low
+
+  * merge release 1.0.11
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 19 Oct 2011 09:36:38 +0200
+
+cm4all-beng-proxy (1.1.14) unstable; urgency=low
+
+  * merge release 1.0.10
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 07 Oct 2011 15:15:00 +0200
 
 cm4all-beng-proxy (1.1.13) unstable; urgency=low
 
@@ -136,6 +148,20 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.11) unstable; urgency=low
+
+  * lb_config: fix binding to wildcard address
+  * rewrite-uri: clarify warning message when widget has no id
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 19 Oct 2011 09:26:48 +0200
+
+cm4all-beng-proxy (1.0.10) unstable; urgency=low
+
+  * debian/control: beng-lb doesn't need "daemon" anymore
+  * http-string: allow space in unquoted cookie values (RFC ignorant)
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 07 Oct 2011 15:06:32 +0200
+
 cm4all-beng-proxy (1.0.9) unstable; urgency=low
 
   * tcp-balancer: store a copy of the socket address
