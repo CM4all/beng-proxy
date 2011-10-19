@@ -8,6 +8,10 @@
 struct pool;
 struct addrinfo;
 
+/**
+ * Parse a numeric socket address for use with stream sockets
+ * (e.g. TCP).
+ */
 struct address_envelope *
 address_envelope_parse(struct pool *pool, const char *p, int default_port);
 
