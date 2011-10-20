@@ -19,6 +19,7 @@ demo_path = '/usr/share/cm4all/beng-proxy/demo/htdocs'
 test_path = os.path.join(os.getcwd(), 'test')
 coma_fastcgi = '/usr/bin/cm4all-coma-fastcgi'
 coma_was = '/usr/lib/cm4all/was/bin/coma-was'
+image_processor_path = '/usr/share/cm4all/coma/apps/imageprocessor/htdocs'
 ticket_fastcgi_dir = '/usr/lib/cm4all/ticket/cgi-bin'
 ticket_database_uri = 'codb:sqlite:/tmp/ticket.sqlite'
 xslt_fastcgi = '/usr/lib/cm4all/fcgi-bin/xslt'
@@ -235,11 +236,11 @@ class Translation(Protocol):
                 response.status(404)
         elif uri[:16] == '/imageprocessor/':
             self._handle_coma(response, uri[:16], uri[16:],
-                              '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
+                              image_processor_path,
                               '/etc/cm4all/coma/apps/imageprocessor/coma.config')
         elif uri[:20] == '/imageprocessor-was/':
             self._handle_coma(response, uri[:20], uri[20:],
-                              '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
+                              image_processor_path,
                               '/etc/cm4all/coma/apps/imageprocessor/coma.config', was=True)
         elif uri[:23] == '/imageprocessor-filter/':
             uri = uri[22:]
@@ -254,7 +255,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             response.path('/var/www' + uri)
             response.packet(TRANSLATE_FILTER)
-            response.packet(TRANSLATE_FASTCGI, '/usr/share/cm4all/coma/apps/imageprocessor/htdocs/filter.cls')
+            response.packet(TRANSLATE_FASTCGI, os.path.join(image_processor_path, 'filter.cls'))
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
             response.packet(TRANSLATE_PATH_INFO, path_info)
         elif uri[:15] == '/ticket/create/':
@@ -480,6 +481,7 @@ if __name__ == '__main__':
 
         coma_fastcgi = os.path.join(src_dir, 'cgi-coma/src/cm4all-coma-fastcgi')
         coma_was = os.path.join(src_dir, 'cgi-coma/src/coma-was')
+        image_processor_path = os.path.join(src_dir, 'image-processor/src')
         ticket_fastcgi_dir = os.path.join(src_dir, 'mod_ticket/src')
         xslt_fastcgi = os.path.join(src_dir, 'filters/src/xslt')
         xmlstrip = os.path.join(src_dir, 'filters/src/xmlstrip')
