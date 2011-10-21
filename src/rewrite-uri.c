@@ -28,8 +28,6 @@ parse_uri_mode(const struct strref *s)
         return URI_MODE_FOCUS;
     else if (strref_cmp_literal(s, "partial") == 0)
         return URI_MODE_PARTIAL;
-    else if (strref_cmp_literal(s, "proxy") == 0)
-        return URI_MODE_PROXY;
     else
         return URI_MODE_DIRECT;
 }
@@ -143,7 +141,6 @@ do_rewrite_widget_uri(struct pool *pool,
                       const char *view)
 {
     const char *frame = NULL;
-    bool raw = false;
     const char *uri;
 
     switch (mode) {
@@ -159,8 +156,6 @@ do_rewrite_widget_uri(struct pool *pool,
         frame = strmap_get_checked(args, "frame");
         break;
 
-    case URI_MODE_PROXY:
-        raw = true;
     case URI_MODE_PARTIAL:
         frame = widget_path(widget);
 
@@ -173,7 +168,7 @@ do_rewrite_widget_uri(struct pool *pool,
     uri = widget_external_uri(pool, external_uri, args,
                               widget, stateful,
                               value,
-                              frame, view, raw);
+                              frame, view);
     if (uri == NULL) {
         if (widget->id == NULL)
             daemon_log(4, "Cannot rewrite URI for widget of type '%s': no id\n",

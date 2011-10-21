@@ -1737,7 +1737,7 @@ rewrites URIs:
 Example:
 
 \begin{verbatim*}
-<img c:base="widget" c:mode="proxy" src="foo.jpg"/>
+<img c:base="widget" c:mode="partial" c:view="raw" src="foo.jpg"/>
 \end{verbatim*}
 
 \subsubsection{Processing Instruction syntax}
@@ -1795,11 +1795,12 @@ rendering an image:
 
 \begin{verbatim}
 <c:widget id="logo" type="logorenderer" display="none"/>
-<img c:base="child" c:mode="proxy" src="logo"
+<img c:base="child" c:mode="partial" c:view="raw" src="logo"
   alt="Our website logo"/>
 \end{verbatim}
 
-Note that we use \texttt{c:mode=proxy} here, because an image should
+Note that we use \texttt{c:view=raw} here (assuming a view with that
+name was defined), because an image should
 not (and can not) be processed by \emph{beng-proxy}.  You can also use
 \texttt{c:mode=direct} if you want the browser to request the resource
 from widget server directly instead of proxying through
@@ -1899,7 +1900,7 @@ Example:
 
 \begin{verbatim*}
 body {
-  -c-mode: proxy;
+  -c-mode: partial;
   -c-view: raw;
   background-image:url('background.png');
 }

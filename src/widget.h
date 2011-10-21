@@ -83,9 +83,6 @@ struct widget {
         /** the request body (from processor_env.body) */
         struct istream * body;
 
-        /** should the resource be passed raw, i.e. not processed? */
-        bool raw;
-
         /** the name of the view requested by the client */
         const char *view;
     } from_request;
@@ -142,7 +139,6 @@ widget_init(struct widget *widget, struct pool *pool,
     strref_clear(&widget->from_request.query_string);
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
-    widget->from_request.raw = false;
     widget->from_request.view = NULL;
     widget->lazy.path = NULL;
     widget->lazy.prefix = NULL;
@@ -278,7 +274,7 @@ widget_external_uri(struct pool *pool,
                     struct strmap *args,
                     struct widget *widget, bool stateful,
                     const struct strref *relative_uri,
-                    const char *frame, const char *view, bool raw);
+                    const char *frame, const char *view);
 
 /**
  * Determines whether it is allowed to embed the widget in a page with

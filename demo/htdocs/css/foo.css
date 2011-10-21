@@ -5,7 +5,7 @@ body {
 
 div.test {
     color: black;
-    -c-mode: proxy;
+    -c-mode: partial;
     -c-view: raw;
     background-image:url('background.png');
 }

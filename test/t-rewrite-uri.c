@@ -237,8 +237,6 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                          "/index.html;focus=1&path=123");
     assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTIAL,
                          "/index.html;focus=1&path=123&frame=1");
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_PROXY,
-                         "/index.html;focus=1&path=123&frame=1&raw=1");
 
     /* with query string */
 
@@ -253,11 +251,6 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     assert_rewrite_check(pool, &widget, "123?user=root&password=hansilein",
                          URI_MODE_PARTIAL,
                          "/index.html;focus=1&path=123&frame=1"
-                         "?user=root&password=hansilein");
-
-    assert_rewrite_check(pool, &widget, "123?user=root&password=hansilein",
-                         URI_MODE_PROXY,
-                         "/index.html;focus=1&path=123&frame=1&raw=1"
                          "?user=root&password=hansilein");
 
     /* with NULL value */
@@ -382,8 +375,6 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
                          NULL);
     assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTIAL,
-                         NULL);
-    assert_rewrite_check(pool, &widget, "123", URI_MODE_PROXY,
                          NULL);
 
     /* valid path */
