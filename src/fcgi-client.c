@@ -418,7 +418,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
                     g_error_new_literal(fcgi_quark(), 0,
                                         "premature end of headers "
                                         "from FastCGI application");
-                fcgi_client_abort_response(client, error);
+                fcgi_client_abort_response_headers(client, error);
                 return false;
             }
 
