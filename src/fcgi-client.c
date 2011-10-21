@@ -23,13 +23,12 @@
 
 #include <glib.h>
 
-#include <daemon/log.h>
-
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <event.h>
 
 #if __BYTE_ORDER == __BIG_ENDIAN
@@ -167,10 +166,11 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 }
 
 /**
- * Abort receiving the response body from the FastCGI server.
+ * Abort receiving the response body from the FastCGI server, and
+ * notify the response body istream handler.
  */
 static void
-fcgi_client_abort_response_body(struct fcgi_client *client)
+fcgi_client_abort_response_body(struct fcgi_client *client, GError *error)
 {
     assert(client->response.read_state == READ_BODY);
 
@@ -180,7 +180,7 @@ fcgi_client_abort_response_body(struct fcgi_client *client)
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
 
-    istream_deinit(&client->response.body);
+    istream_deinit_abort(&client->response.body, error);
     fcgi_client_release(client, false);
 }
 
@@ -197,12 +197,28 @@ fcgi_client_abort_response(struct fcgi_client *client, GError *error)
 
     if (client->response.read_state != READ_BODY)
         fcgi_client_abort_response_headers(client, error);
-    else {
-        daemon_log(2, "%s\n", error->message);
-        g_error_free(error);
+    else
+        fcgi_client_abort_response_body(client, error);
+}
 
-        fcgi_client_abort_response_body(client);
-    }
+/**
+ * Close the response body.  This is a request from the istream
+ * client, and we must not call it back according to the istream API
+ * definition.
+ */
+static void
+fcgi_client_close_response_body(struct fcgi_client *client)
+{
+    assert(client->response.read_state == READ_BODY);
+
+    if (client->fd >= 0)
+        fcgi_client_release_socket(client, false);
+
+    if (client->request.istream != NULL)
+        istream_free_handler(&client->request.istream);
+
+    istream_deinit(&client->response.body);
+    fcgi_client_release(client, false);
 }
 
 static bool
@@ -668,7 +684,7 @@ fcgi_client_response_body_close(istream_t istream)
 {
     struct fcgi_client *client = response_stream_to_client(istream);
 
-    fcgi_client_abort_response_body(client);
+    fcgi_client_close_response_body(client);
 }
 
 static const struct istream fcgi_client_response_body = {
