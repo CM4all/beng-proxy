@@ -147,7 +147,7 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
 
 /**
  * Abort receiving the response status/headers from the FastCGI
- * server.
+ * server, and notify the HTTP response handler.
  */
 static void
 fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
@@ -167,8 +167,7 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 }
 
 /**
- * Abort receiving the response status/headers from the FastCGI
- * server.
+ * Abort receiving the response body from the FastCGI server.
  */
 static void
 fcgi_client_abort_response_body(struct fcgi_client *client)
@@ -186,8 +185,9 @@ fcgi_client_abort_response_body(struct fcgi_client *client)
 }
 
 /**
- * Abort receiving the response status/headers from the FastCGI
- * server.
+ * Abort receiving the response from the FastCGI server.  This is a
+ * wrapper for fcgi_client_abort_response_headers() or
+ * fcgi_client_abort_response_body().
  */
 static void
 fcgi_client_abort_response(struct fcgi_client *client, GError *error)
