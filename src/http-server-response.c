@@ -155,7 +155,7 @@ http_server_response_stream_abort(GError *error, void *ctx)
 
     assert(connection->response.istream != NULL);
 
-    daemon_log(1, "error on HTTP response stream: %s", error->message);
+    daemon_log(1, "error on HTTP response stream: %s\n", error->message);
     g_error_free(error);
 
     connection->response.istream = NULL;
