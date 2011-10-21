@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.2.3) unstable; urgency=low
 
-  * 
+  * merge release 1.1.16
 
  --
 
@@ -27,6 +27,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.16) unstable; urgency=low
+
+  * merge release 1.0.12
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 21 Oct 2011 15:09:55 +0200
 
 cm4all-beng-proxy (1.1.15) unstable; urgency=low
 
@@ -156,6 +162,14 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.12) unstable; urgency=low
+
+  * http-server, proxy-widget: add missing newline to log message
+  * fcgi_client: fix assertion failure on response body error
+  * http-cache-choice: fix crash due to wrong filter callback
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 21 Oct 2011 15:02:42 +0200
+
 cm4all-beng-proxy (1.0.11) unstable; urgency=low
 
   * lb_config: fix binding to wildcard address

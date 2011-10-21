@@ -494,7 +494,7 @@ http_cache_choice_filter_buffer_error(GError *error, void *ctx)
 {
     struct http_cache_choice *choice = ctx;
 
-    choice->callback.get(NULL, true, error, choice->callback_ctx);
+    choice->callback.filter(NULL, error, choice->callback_ctx);
 }
 
 static const struct sink_buffer_handler http_cache_choice_filter_buffer_handler = {
