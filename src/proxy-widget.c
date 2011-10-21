@@ -133,7 +133,7 @@ proxy_widget_resolver_callback(void *ctx)
     struct widget *widget = request2->widget;
 
     if (widget->class == NULL) {
-        daemon_log(2, "lookup of widget class '%s' for '%s' failed",
+        daemon_log(2, "lookup of widget class '%s' for '%s' failed\n",
                    widget->class_name, widget_path(widget));
 
         widget_cancel(widget);

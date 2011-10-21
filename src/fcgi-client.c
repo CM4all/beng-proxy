@@ -24,13 +24,12 @@
 
 #include <glib.h>
 
-#include <daemon/log.h>
-
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <event.h>
 
 #if __BYTE_ORDER == __BIG_ENDIAN
@@ -148,7 +147,7 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
 
 /**
  * Abort receiving the response status/headers from the FastCGI
- * server.
+ * server, and notify the HTTP response handler.
  */
 static void
 fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
@@ -168,11 +167,48 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 }
 
 /**
- * Abort receiving the response status/headers from the FastCGI
- * server.
+ * Abort receiving the response body from the FastCGI server, and
+ * notify the response body istream handler.
  */
 static void
-fcgi_client_abort_response_body(struct fcgi_client *client)
+fcgi_client_abort_response_body(struct fcgi_client *client, GError *error)
+{
+    assert(client->response.read_state == READ_BODY);
+
+    if (client->fd >= 0)
+        fcgi_client_release_socket(client, false);
+
+    if (client->request.istream != NULL)
+        istream_free_handler(&client->request.istream);
+
+    istream_deinit_abort(&client->response.body, error);
+    fcgi_client_release(client, false);
+}
+
+/**
+ * Abort receiving the response from the FastCGI server.  This is a
+ * wrapper for fcgi_client_abort_response_headers() or
+ * fcgi_client_abort_response_body().
+ */
+static void
+fcgi_client_abort_response(struct fcgi_client *client, GError *error)
+{
+    assert(client->response.read_state == READ_HEADERS ||
+           client->response.read_state == READ_BODY);
+
+    if (client->response.read_state != READ_BODY)
+        fcgi_client_abort_response_headers(client, error);
+    else
+        fcgi_client_abort_response_body(client, error);
+}
+
+/**
+ * Close the response body.  This is a request from the istream
+ * client, and we must not call it back according to the istream API
+ * definition.
+ */
+static void
+fcgi_client_close_response_body(struct fcgi_client *client)
 {
     assert(client->response.read_state == READ_BODY);
 
@@ -184,26 +220,6 @@ fcgi_client_abort_response_body(struct fcgi_client *client)
 
     istream_deinit(&client->response.body);
     fcgi_client_release(client, false);
-}
-
-/**
- * Abort receiving the response status/headers from the FastCGI
- * server.
- */
-static void
-fcgi_client_abort_response(struct fcgi_client *client, GError *error)
-{
-    assert(client->response.read_state == READ_HEADERS ||
-           client->response.read_state == READ_BODY);
-
-    if (client->response.read_state != READ_BODY)
-        fcgi_client_abort_response_headers(client, error);
-    else {
-        daemon_log(2, "%s\n", error->message);
-        g_error_free(error);
-
-        fcgi_client_abort_response_body(client);
-    }
 }
 
 static bool
@@ -419,7 +435,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
                     g_error_new_literal(fcgi_quark(), 0,
                                         "premature end of headers "
                                         "from FastCGI application");
-                fcgi_client_abort_response(client, error);
+                fcgi_client_abort_response_headers(client, error);
                 return false;
             }
 
@@ -669,7 +685,7 @@ fcgi_client_response_body_close(istream_t istream)
 {
     struct fcgi_client *client = response_stream_to_client(istream);
 
-    fcgi_client_abort_response_body(client);
+    fcgi_client_close_response_body(client);
 }
 
 static const struct istream fcgi_client_response_body = {
