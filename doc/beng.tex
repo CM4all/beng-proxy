@@ -1493,6 +1493,15 @@ ways:
 \item as a HTTP response header from the widget server
 \end{itemize}
 
+For security reasons, the client may only choose views that have a
+different server address (not inherited from the ``default'' view).
+The reason is that a widget server might need to write secret data
+into the HTTP response, to be replaced by a transformation (such as
+parameters for sub-widgets), and choosing a view that was not designed
+for this kind of response would allow disabling the transformation.
+While the designed limitation described above does not guarantee real
+security, it was decided that it would be an acceptable compromise.
+
 The widget server can select the view with the response header
 \texttt{X-CM4all-View}.  Just the list of transformations (processor,
 filter) will be used, the new URI of the view will be ignored.  At
