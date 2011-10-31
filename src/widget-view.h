@@ -45,10 +45,25 @@ struct widget_view {
 void
 widget_view_init(struct widget_view *view);
 
+/**
+ * Copy the specified address into the view, if it does not have an
+ * address yet.
+ *
+ * @return true if the address was inherited, false if the view
+ * already had an address or if the specified address is empty
+ */
 bool
 widget_view_inherit_address(struct pool *pool, struct widget_view *view,
                             const struct resource_address *address);
 
+/**
+ * Inherit the address and other related settings from one view to
+ * another.
+ *
+ * @return true if attributes were inherited, false if the destination
+ * view already had an address or if the source view's address is
+ * empty
+ */
 bool
 widget_view_inherit_from(struct pool *pool, struct widget_view *dest,
                          const struct widget_view *src);
