@@ -1480,6 +1480,19 @@ The \texttt{Referer} request header is not supported.
 
 \subsection{Views}
 
+A widget class may have a number of named views; only the ``default''
+view has no name.  A view may have a different server address,
+different transformations and other settings.
+
+A view other than the default one can be selected in three different
+ways:
+
+\begin{itemize}
+\item in the template with the element \texttt{c:view}
+\item as a request argument from the client
+\item as a HTTP response header from the widget server
+\end{itemize}
+
 The widget server can select the view with the response header
 \texttt{X-CM4all-View}.  Just the list of transformations (processor,
 filter) will be used, the new URI of the view will be ignored.  At
