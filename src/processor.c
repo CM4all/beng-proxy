@@ -515,6 +515,7 @@ processor_processing_instruction(struct processor *processor,
         processor_option_rewrite_url(processor) &&
         strref_cmp_literal(name, "cm4all-rewrite-uri") == 0) {
         processor->tag = TAG_REWRITE_URI;
+        processor_uri_rewrite_init(processor);
         return true;
     }
 

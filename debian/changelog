@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.3.1) unstable; urgency=low
 
-  * 
+  * merge release 1.2.4
 
  --
 
@@ -10,6 +10,12 @@ cm4all-beng-proxy (1.3) unstable; urgency=low
   * proxy-widget: client can choose only views that have an address
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 31 Oct 2011 17:41:14 +0100
+
+cm4all-beng-proxy (1.2.4) unstable; urgency=low
+
+  * merge release 1.1.17
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 02 Nov 2011 16:58:28 +0100
 
 cm4all-beng-proxy (1.2.3) unstable; urgency=low
 
@@ -40,6 +46,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.17) unstable; urgency=low
+
+  * merge release 1.0.13
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 02 Nov 2011 16:52:21 +0100
 
 cm4all-beng-proxy (1.1.16) unstable; urgency=low
 
@@ -175,6 +187,12 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.13) unstable; urgency=low
+
+  * processor: initialize URI rewrite options for <?cm4all-rewrite-uri?>
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 02 Nov 2011 16:47:48 +0100
+
 cm4all-beng-proxy (1.0.12) unstable; urgency=low
 
   * http-server, proxy-widget: add missing newline to log message
