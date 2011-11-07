@@ -142,9 +142,6 @@ file_evaluate_request(struct request *request2, int fd, const struct stat *st,
     const char *p;
     char buffer[64];
 
-    if (request_transformation_enabled(request2))
-        return true;
-
     if (tr->status == 0 && request->method == HTTP_METHOD_GET &&
         !request_transformation_enabled(request2)) {
         p = strmap_get(request->headers, "range");
@@ -156,57 +153,59 @@ file_evaluate_request(struct request *request2, int fd, const struct stat *st,
                                    &file_request->size);
     }
 
-    p = strmap_get(request->headers, "if-modified-since");
-    if (p != NULL) {
-        time_t t = http_date_parse(p);
-        if (t != (time_t)-1 && st->st_mtime <= t) {
-            struct growing_buffer *headers = NULL;
-            if (!request_processor_first(request2)) {
+    if (!request_processor_enabled(request2)) {
+        p = strmap_get(request->headers, "if-modified-since");
+        if (p != NULL) {
+            time_t t = http_date_parse(p);
+            if (t != (time_t)-1 && st->st_mtime <= t) {
+                struct growing_buffer *headers = NULL;
                 headers = growing_buffer_new(request->pool, 512);
                 file_cache_headers(headers, fd, st);
+
+                response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
+                                  headers, NULL);
+                return false;
             }
+        }
 
-            response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
-                              headers, NULL);
-            return false;
+        p = strmap_get(request->headers, "if-unmodified-since");
+        if (p != NULL) {
+            time_t t = http_date_parse(p);
+            if (t != (time_t)-1 && st->st_mtime > t) {
+                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                                  NULL, NULL);
+                return false;
+            }
         }
     }
 
-    p = strmap_get(request->headers, "if-unmodified-since");
-    if (p != NULL) {
-        time_t t = http_date_parse(p);
-        if (t != (time_t)-1 && st->st_mtime > t) {
+    if (request_transformation_enabled(request2)) {
+        p = strmap_get(request->headers, "if-match");
+        if (p != NULL && strcmp(p, "*") != 0) {
+            make_etag(buffer, st);
+
+            if (!http_list_contains(p, buffer)) {
+                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                                  NULL, NULL);
+                return false;
+            }
+        }
+
+        p = strmap_get(request->headers, "if-none-match");
+        if (p != NULL && strcmp(p, "*") == 0) {
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                               NULL, NULL);
             return false;
         }
-    }
 
-    p = strmap_get(request->headers, "if-match");
-    if (p != NULL && strcmp(p, "*") != 0) {
-        make_etag(buffer, st);
+        if (p != NULL) {
+            make_etag(buffer, st);
 
-        if (!http_list_contains(p, buffer)) {
-            response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                              NULL, NULL);
-            return false;
-        }
-    }
-
-    p = strmap_get(request->headers, "if-none-match");
-    if (p != NULL && strcmp(p, "*") == 0) {
-        response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                          NULL, NULL);
-        return false;
-    }
-
-    if (p != NULL) {
-        make_etag(buffer, st);
-
-        if (http_list_contains(p, buffer)) {
-            response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                              NULL, NULL);
-            return false;
+            if (http_list_contains(p, buffer)) {
+                response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
+                                  NULL, NULL);
+                return false;
+            }
         }
     }
 

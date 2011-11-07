@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.2.5) unstable; urgency=low
 
-  * 
+  * file-handler: handle If-Modified-Since followed by filter
 
  --
 
