@@ -165,6 +165,7 @@ http_listener_connected(int fd,
                                : NULL,
                                local_address_length,
                                address_to_string(pool, addr, addrlen),
+                               true,
                                &my_http_server_connection_handler,
                                connection,
                                &connection->http);

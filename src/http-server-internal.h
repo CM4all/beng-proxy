@@ -92,6 +92,8 @@ struct http_server_connection {
         uint64_t bytes_sent;
     } response;
 
+    bool date_header;
+
     /* connection settings */
     bool keep_alive;
 };

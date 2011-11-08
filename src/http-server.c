@@ -149,6 +149,7 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
                            const char *remote_host,
+                           bool date_header,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
                            struct http_server_connection **connection_r)
@@ -181,6 +182,7 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
         ? address_to_string(pool, local_address, local_address_length)
         : NULL;
     connection->remote_host = remote_host;
+    connection->date_header = date_header;
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
     connection->request.bytes_received = 0;

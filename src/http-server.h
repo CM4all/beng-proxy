@@ -92,11 +92,15 @@ http_server_quark(void)
     return g_quark_from_static_string("http_server");
 }
 
+/**
+ * @param date_header generate Date response headers?
+ */
 void
 http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
                            const char *remote_host,
+                           bool date_header,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
                            struct http_server_connection **connection_r);
