@@ -123,7 +123,7 @@ http_server_response(const struct http_server_request *request,
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);
-    } else {
+    } else if (body != NULL || !http_method_is_empty(request->method)) {
         /* fixed body size */
         format_uint64(connection->response.content_length_buffer, content_length);
         header_write(headers, "content-length",

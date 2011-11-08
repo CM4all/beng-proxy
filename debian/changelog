@@ -1,6 +1,7 @@
 cm4all-beng-proxy (1.0.14) unstable; urgency=low
 
   * http-server: don't generate chunked HEAD response
+  * http-server: don't override Content-Length for HEAD response
 
  --
 
