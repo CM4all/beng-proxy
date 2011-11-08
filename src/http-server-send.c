@@ -115,7 +115,7 @@ http_server_response(const struct http_server_request *request,
         /* the response length is unknown yet */
         assert(!http_status_is_empty(status));
 
-        if (connection->keep_alive) {
+        if (!http_method_is_empty(request->method) && connection->keep_alive) {
             /* keep-alive is enabled, which means that we have to
                enable chunking */
             header_write(headers, "transfer-encoding", "chunked");
