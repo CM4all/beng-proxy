@@ -89,6 +89,7 @@ lb_connection_new(struct lb_instance *instance,
                                    : NULL,
                                    local_address_length,
                                    address_to_string(pool, addr, addrlen),
+                                   false,
                                    &lb_http_connection_handler,
                                    connection,
                                    &connection->http);

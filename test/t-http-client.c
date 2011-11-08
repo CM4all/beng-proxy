@@ -9,6 +9,7 @@
 #include "direct.h"
 #include "fd_util.h"
 #include "istream.h"
+#include "strmap.h"
 
 #include <inline/compiler.h>
 
@@ -96,6 +97,9 @@ struct context {
     int fd;
     bool released, aborted;
     http_status_t status;
+
+    char *content_length;
+    off_t available;
 
     istream_t delayed;
 
@@ -194,13 +198,19 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static void
-my_response(http_status_t status, struct strmap *headers gcc_unused,
-            istream_t body gcc_unused,
+my_response(http_status_t status, struct strmap *headers, istream_t body,
             void *ctx)
 {
     struct context *c = ctx;
 
     c->status = status;
+    const char *content_length =
+        strmap_get_checked(headers, "content-length");
+    if (content_length != NULL)
+        c->content_length = strdup(content_length);
+    c->available = body != NULL
+        ? istream_available(body, false)
+        : -2;
 
     if (c->close_request_body_early) {
         GError *error = g_error_new_literal(test_quark(), 0,
@@ -268,6 +278,7 @@ test_empty(struct pool *pool, struct context *c)
     assert(c->released);
     assert(c->fd < 0);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->content_length == NULL);
     assert(c->body == NULL);
     assert(!c->body_eof);
     assert(!c->body_abort);
@@ -293,6 +304,8 @@ test_body(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == NULL);
+    assert(c->available == 6);
     assert(c->body_eof);
     assert(c->body_data == 6);
 }
@@ -313,6 +326,8 @@ test_close_response_body_early(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == NULL);
+    assert(c->available == 6);
     assert(c->body == NULL);
     assert(c->body_data == 0);
     assert(!c->body_eof);
@@ -335,6 +350,8 @@ test_close_response_body_late(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == NULL);
+    assert(c->available == 6);
     assert(c->body == NULL);
     assert(c->body_data == 0);
     assert(!c->body_eof);
@@ -362,6 +379,8 @@ test_close_response_body_data(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == NULL);
+    assert(c->available == 6);
     assert(c->body == NULL);
     assert(c->body_data == 6);
     assert(!c->body_eof);
@@ -419,6 +438,8 @@ test_close_request_body_fail(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == 200);
+    assert(c->content_length == NULL);
+    assert(c->available == -1);
     assert(c->body == NULL);
     assert(!c->body_eof);
     assert(c->body_abort);
@@ -444,6 +465,8 @@ test_data_blocking(struct pool *pool, struct context *c)
 
     assert(!c->released);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == NULL);
+    assert(c->available == -1);
     assert(c->body != NULL);
     assert(c->body_data > 0);
     assert(!c->body_eof);
@@ -485,6 +508,8 @@ test_data_blocking2(struct pool *pool, struct context *c)
        yet */
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == NULL);
+    assert(c->available == -1);
     assert(c->body != NULL);
     assert(!c->body_eof);
     assert(!c->body_abort);
@@ -539,6 +564,9 @@ test_head(struct pool *pool, struct context *c)
     assert(c->released);
     assert(c->fd < 0);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length != NULL);
+    assert(strcmp(c->content_length, "6") == 0);
+    free(c->content_length);
     assert(c->body == NULL);
     assert(!c->body_eof);
     assert(!c->body_abort);
@@ -560,6 +588,7 @@ test_ignored_body(struct pool *pool, struct context *c)
     assert(c->released);
     assert(c->fd < 0);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->content_length == NULL);
     assert(c->body == NULL);
     assert(!c->body_eof);
     assert(!c->body_abort);
@@ -585,6 +614,7 @@ test_close_ignored_request_body(struct pool *pool, struct context *c)
     assert(c->released);
     assert(c->fd < 0);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->content_length == NULL);
     assert(c->body == NULL);
     assert(!c->body_eof);
     assert(!c->body_abort);
@@ -611,6 +641,7 @@ test_head_close_ignored_request_body(struct pool *pool, struct context *c)
     assert(c->released);
     assert(c->fd < 0);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->content_length == NULL);
     assert(c->body == NULL);
     assert(!c->body_eof);
     assert(!c->body_abort);
@@ -636,6 +667,7 @@ test_close_request_body_eor(struct pool *pool, struct context *c)
     assert(c->released);
     assert(c->fd < 0);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == NULL);
     assert(c->body == NULL);
     assert(c->body_eof);
     assert(!c->body_abort);
@@ -661,6 +693,7 @@ test_close_request_body_eor2(struct pool *pool, struct context *c)
     assert(c->released);
     assert(c->fd < 0);
     assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == NULL);
     assert(c->body == NULL);
     assert(c->body_eof);
     assert(!c->body_abort);
