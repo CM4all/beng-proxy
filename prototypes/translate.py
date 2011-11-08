@@ -241,6 +241,22 @@ class Translation(Protocol):
             self._handle_coma(response, uri[:20], uri[20:],
                               '/usr/share/cm4all/coma/apps/imageprocessor/htdocs',
                               '/etc/cm4all/coma/apps/imageprocessor/coma.config', was=True)
+        elif uri[:23] == '/imageprocessor-filter/':
+            uri = uri[22:]
+            i = uri.rfind('.jpg/')
+            if i < 0:
+                response.status(404)
+                return
+
+            i = uri.index('/', i)
+            uri, path_info = uri[:i], uri[i:]
+
+            response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
+            response.path('/var/www' + uri)
+            response.packet(TRANSLATE_FILTER)
+            response.packet(TRANSLATE_FASTCGI, '/usr/share/cm4all/coma/apps/imageprocessor/htdocs/filter.cls')
+            response.packet(TRANSLATE_ACTION, coma_fastcgi)
+            response.packet(TRANSLATE_PATH_INFO, path_info)
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))

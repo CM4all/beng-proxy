@@ -633,6 +633,8 @@ response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
+    const struct strmap *original_headers = headers;
+
     headers = forward_response_headers(request->pool, headers,
                                        request->local_host,
                                        &request2->translate.response->response_header_forward);
@@ -642,6 +644,10 @@ response_response(http_status_t status, struct strmap *headers,
     response_headers = headers != NULL
         ? headers_dup(request->pool, headers)
         : NULL;
+    if (original_headers != NULL && request->method == HTTP_METHOD_HEAD)
+        /* pass Content-Length, even though there is no response body
+           (RFC 2616 14.13) */
+        headers_copy_one(original_headers, response_headers, "content-length");
 
     response_dispatch(request2,
                       status, response_headers,

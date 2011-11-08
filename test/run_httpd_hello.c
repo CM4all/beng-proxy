@@ -86,7 +86,7 @@ my_listener_connected(int fd,
     connection->pool = pool;
     connection->instance = instance;
 
-    http_server_connection_new(pool, fd, ISTREAM_TCP, NULL, 0, NULL,
+    http_server_connection_new(pool, fd, ISTREAM_TCP, NULL, 0, NULL, true,
                                &my_http_handler, connection,
                                &connection->http);
 }

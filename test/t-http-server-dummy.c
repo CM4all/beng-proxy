@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
 
     http_server_connection_new(pool, sockfd, ISTREAM_SOCKET,
                                NULL, 0,
-                               "localhost", &handler, NULL,
+                               "localhost", true, &handler, NULL,
                                &connection);
 
     event_dispatch();
