@@ -39,6 +39,18 @@ header_write(struct growing_buffer *gb, const char *key, const char *value)
 }
 
 void
+headers_copy_one(const struct strmap *in, struct growing_buffer *out,
+                 const char *key)
+{
+    assert(in != NULL);
+    assert(out != NULL);
+
+    const char *value = strmap_get(in, key);
+    if (value != NULL)
+        header_write(out, key, value);
+}
+
+void
 headers_copy(struct strmap *in, struct growing_buffer *out, const char *const* keys)
 {
     const char *value;

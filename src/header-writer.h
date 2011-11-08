@@ -16,6 +16,10 @@ void
 header_write(struct growing_buffer *gb, const char *key, const char *value);
 
 void
+headers_copy_one(const struct strmap *in, struct growing_buffer *out,
+                 const char *key);
+
+void
 headers_copy(struct strmap *in, struct growing_buffer *out,
              const char *const* keys);
 
