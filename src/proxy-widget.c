@@ -41,6 +41,10 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     request2->product_token = strmap_remove(headers, "server");
 
     headers2 = headers_dup(request->pool, headers);
+    if (request->method == HTTP_METHOD_HEAD)
+        /* pass Content-Length, even though there is no response body
+           (RFC 2616 14.13) */
+        headers_copy_one(headers, headers2, "content-length");
 
 #ifndef NO_DEFLATE
     if (body != NULL && istream_available(body, false) == (off_t)-1 &&

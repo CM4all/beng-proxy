@@ -90,6 +90,10 @@ my_response_response(http_status_t status, struct strmap *headers,
     struct http_server_request *request = request2->request;
 
     struct growing_buffer *headers2 = headers_dup(request->pool, headers);
+    if (request2->request->method == HTTP_METHOD_HEAD)
+        /* pass Content-Length, even though there is no response body
+           (RFC 2616 14.13) */
+        headers_copy_one(headers, headers2, "content-length");
 
     if (request2->new_cookie != 0) {
         char buffer[64];
