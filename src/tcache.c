@@ -38,6 +38,8 @@ struct tcache_item {
     } request;
 
     struct translate_response response;
+
+    GRegex *regex;
 };
 
 struct tcache {
@@ -452,6 +454,12 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
            a "BASE" packet */
         return false;
 
+    if (item->response.base != NULL && item->regex != NULL &&
+        (request->uri == NULL ||
+         !g_regex_match(item->regex, request->uri, 0, NULL)))
+        /* the URI did not match the regular expression */
+        return false;
+
     for (unsigned i = 0; i < item->response.num_vary; ++i)
         if (!tcache_vary_match(item, request,
                                (enum beng_translation_command)item->response.vary[i],
@@ -629,6 +637,21 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
         if (key == NULL)
             key = p_strdup(pool, tcr->key);
 
+        if (response->regex != NULL) {
+            GError *error = NULL;
+            item->regex = g_regex_new(response->regex,
+                                      G_REGEX_MULTILINE|G_REGEX_DOTALL|
+                                      G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
+                                      G_REGEX_OPTIMIZE,
+                                      0, &error);
+            if (item->regex == NULL) {
+                cache_log(2, "translate_cache: failed to compile regular expression: %s",
+                          error->message);
+                g_error_free(error);
+            }
+        } else
+            item->regex = NULL;
+
         cache_put_match(tcr->tcache->cache, key, &item->item,
                         tcache_item_match, tcr);
     } else {
@@ -698,6 +721,9 @@ static void
 tcache_destroy(struct cache_item *_item)
 {
     struct tcache_item *item = (struct tcache_item *)_item;
+
+    if (item->regex != NULL)
+        g_regex_unref(item->regex);
 
     pool_unref(item->pool);
 }

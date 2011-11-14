@@ -262,6 +262,106 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
                     &my_translate_handler, NULL, &async_ref);
 }
 
+static void
+test_regex(struct pool *pool, struct tcache *cache)
+{
+    static const struct translate_request request1 = {
+        .uri = "/regex/a/foo.jpg",
+    };
+    static const struct translate_response response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/regex/images/a/foo.jpg",
+                },
+            },
+        },
+        .base = "/regex/",
+        .regex = "\\.jpg$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    static const struct translate_request request2 = {
+        .uri = "/regex/b/foo.html",
+    };
+    static const struct translate_response response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/regex/html/b/foo.html",
+                },
+            },
+        },
+        .base = "/regex/",
+        .regex = "\\.html$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    static const struct translate_request request3 = {
+        .uri = "/regex/c/bar.jpg",
+    };
+    static const struct translate_response response3 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/regex/images/c/bar.jpg",
+                },
+            },
+        },
+        .base = "/regex/",
+        .regex = "\\.jpg$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    static const struct translate_request request4 = {
+        .uri = "/regex/d/bar.html",
+    };
+    static const struct translate_response response4 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/regex/html/d/bar.html",
+                },
+            },
+        },
+        .base = "/regex/",
+        .regex = "\\.html$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    struct async_operation_ref async_ref;
+
+    /* fill the cache */
+    next_response = expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* regex mismatch */
+    next_response = expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* regex match */
+    next_response = NULL;
+    expected_response = &response3;
+    translate_cache(pool, cache, &request3,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* second regex match */
+    next_response = NULL;
+    expected_response = &response4;
+    translate_cache(pool, cache, &request4,
+                    &my_translate_handler, NULL, &async_ref);
+}
+
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
@@ -280,6 +380,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     test_basic(pool, cache);
     test_vary_invalidate(pool, cache);
+    test_regex(pool, cache);
 
     /* cleanup */
 
