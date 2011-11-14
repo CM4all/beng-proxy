@@ -72,6 +72,8 @@ struct translate_response {
 
     const char *base;
 
+    const char *regex;
+
     const char *site;
     const char *document_root;
     const char *redirect;

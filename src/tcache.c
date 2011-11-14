@@ -156,6 +156,7 @@ tcache_dup_response(struct pool *pool, struct translate_response *dest,
     dest->response_header_forward = src->response_header_forward;
 
     dest->base = p_strdup_checked(pool, src->base);
+    dest->regex = p_strdup_checked(pool, src->regex);
     dest->site = p_strdup_checked(pool, src->site);
     dest->document_root = p_strdup_checked(pool, src->document_root);
     dest->redirect = p_strdup_checked(pool, src->redirect);

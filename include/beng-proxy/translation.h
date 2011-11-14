@@ -198,6 +198,12 @@ enum beng_translation_command {
      * Rewrite XML ids with a leading underscore?
      */
     TRANSLATE_PREFIX_XML_ID = 78,
+
+    /**
+     * Reuse a cached response only if the request \verb|URI| matches
+     * the specified regular expression (Perl compatible).
+     */
+    TRANSLATE_REGEX = 79,
 };
 
 struct beng_translation_header {

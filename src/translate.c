@@ -1244,6 +1244,10 @@ translate_handle_packet(struct translate_client *client,
         client->response.base = payload;
         return true;
 
+    case TRANSLATE_REGEX:
+        client->response.regex = payload;
+        return true;
+
     case TRANSLATE_DELEGATE:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
