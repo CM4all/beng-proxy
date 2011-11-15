@@ -111,7 +111,9 @@ tcache_request_evaluate(const struct translate_request *request)
 static bool
 tcache_response_evaluate(const struct translate_response *response)
 {
-    return response != NULL && response->max_age != 0 &&
+    assert(response != NULL);
+
+    return response->max_age != 0 &&
         response->www_authenticate == NULL &&
         response->authentication_info == NULL &&
         response->status == 0;
@@ -569,7 +571,9 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
 {
     struct tcache_request *tcr = ctx;
 
-    if (response != NULL && response->num_invalidate > 0)
+    assert(response != NULL);
+
+    if (response->num_invalidate > 0)
         translate_cache_invalidate(tcr->tcache, tcr->request,
                                    response->invalidate,
                                    response->num_invalidate,

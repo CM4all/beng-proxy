@@ -16,7 +16,10 @@ tstock_translate(gcc_unused struct tstock *stock, gcc_unused struct pool *pool,
                  const struct translate_handler *handler, void *ctx,
                  gcc_unused struct async_operation_ref *async_ref)
 {
-    handler->response(next_response, ctx);
+    if (next_response != NULL)
+        handler->response(next_response, ctx);
+    else
+        handler->error(g_error_new(translate_quark(), 0, "Error"), ctx);
 }
 
 static void
