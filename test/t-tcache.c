@@ -8,114 +8,6 @@
 
 #include <string.h>
 
-static const struct translate_response response1 = {
-    .address = {
-        .type = RESOURCE_ADDRESS_LOCAL,
-        .u = {
-            .local = {
-                .path = "/var/www/index.html",
-            },
-        },
-    },
-    .max_age = -1,
-    .user_max_age = -1,
-};
-
-static const struct translate_response response2 = {
-    .address = {
-        .type = RESOURCE_ADDRESS_LOCAL,
-        .u = {
-            .local = {
-                .path = "/srv/foo/bar.html",
-            },
-        },
-    },
-    .base = "/foo/",
-    .max_age = -1,
-    .user_max_age = -1,
-};
-
-static const struct translate_response response3 = {
-    .address = {
-        .type = RESOURCE_ADDRESS_LOCAL,
-        .u = {
-            .local = {
-                .path = "/srv/foo/index.html",
-            },
-        },
-    },
-    .max_age = -1,
-    .user_max_age = -1,
-};
-
-static const struct translate_response response4 = {
-    .address = {
-        .type = RESOURCE_ADDRESS_LOCAL,
-        .u = {
-            .local = {
-                .path = "/srv/foo/",
-            },
-        },
-    },
-    .max_age = -1,
-    .user_max_age = -1,
-};
-
-static const uint16_t response5_vary[] = {
-    TRANSLATE_QUERY_STRING,
-};
-
-static const struct translate_response response5a = {
-    .address = {
-        .type = RESOURCE_ADDRESS_LOCAL,
-        .u = {
-            .local = {
-                .path = "/src/qs1",
-            },
-        },
-    },
-    .max_age = -1,
-    .user_max_age = -1,
-    .vary = response5_vary,
-    .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
-};
-
-static const struct translate_response response5b = {
-    .address = {
-        .type = RESOURCE_ADDRESS_LOCAL,
-        .u = {
-            .local = {
-                .path = "/src/qs2",
-            },
-        },
-    },
-    .max_age = -1,
-    .user_max_age = -1,
-    .vary = response5_vary,
-    .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
-};
-
-static const uint16_t response5_invalidate[] = {
-    TRANSLATE_QUERY_STRING,
-};
-
-static const struct translate_response response5c = {
-    .address = {
-        .type = RESOURCE_ADDRESS_LOCAL,
-        .u = {
-            .local = {
-                .path = "/src/qs3",
-            },
-        },
-    },
-    .max_age = -1,
-    .user_max_age = -1,
-    .vary = response5_vary,
-    .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
-    .invalidate = response5_invalidate,
-    .num_invalidate = sizeof(response5_invalidate) / sizeof(response5_invalidate[0]),
-};
-
 const struct translate_response *next_response, *expected_response;
 
 void
@@ -155,13 +47,9 @@ static const struct translate_handler my_translate_handler = {
     .error = my_translate_error,
 };
 
-int
-main(gcc_unused int argc, gcc_unused char **argv)
+static void
+test_basic(struct pool *pool, struct tcache *cache)
 {
-    struct tstock *const translate_stock = (void *)0x1;
-    struct event_base *event_base;
-    struct pool *pool;
-    struct tcache *cache;
     static const struct translate_request request1 = {
         .uri = "/",
     };
@@ -177,27 +65,61 @@ main(gcc_unused int argc, gcc_unused char **argv)
     static const struct translate_request request5 = {
         .uri = "/foo",
     };
-    static const struct translate_request request6 = {
-        .uri = "/qs",
-        .query_string = "abc",
+
+    static const struct translate_response response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/index.html",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
     };
-    static const struct translate_request request7 = {
-        .uri = "/qs",
-        .query_string = "xyz",
+
+    static const struct translate_response response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/srv/foo/bar.html",
+                },
+            },
+        },
+        .base = "/foo/",
+        .max_age = -1,
+        .user_max_age = -1,
     };
-    static const struct translate_request request8 = {
-        .uri = "/qs/",
-        .query_string = "xyz",
+
+    static const struct translate_response response3 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/srv/foo/index.html",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
     };
+
+    static const struct translate_response response4 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/srv/foo/",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
     struct async_operation_ref async_ref;
-
-    event_base = event_init();
-
-    pool = pool_new_libc(NULL, "root");
-
-    cache = translate_cache_new(pool, translate_stock, 1024);
-
-    /* test */
 
     next_response = expected_response = &response1;
     translate_cache(pool, cache, &request1,
@@ -223,6 +145,79 @@ main(gcc_unused int argc, gcc_unused char **argv)
     expected_response = NULL;
     translate_cache(pool, cache, &request5,
                     &my_translate_handler, NULL, &async_ref);
+}
+
+static void
+test_vary_invalidate(struct pool *pool, struct tcache *cache)
+{
+    static const struct translate_request request6 = {
+        .uri = "/qs",
+        .query_string = "abc",
+    };
+    static const struct translate_request request7 = {
+        .uri = "/qs",
+        .query_string = "xyz",
+    };
+    static const struct translate_request request8 = {
+        .uri = "/qs/",
+        .query_string = "xyz",
+    };
+    static const uint16_t response5_vary[] = {
+        TRANSLATE_QUERY_STRING,
+    };
+
+    static const struct translate_response response5a = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/src/qs1",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+        .vary = response5_vary,
+        .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
+    };
+
+    static const struct translate_response response5b = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/src/qs2",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+        .vary = response5_vary,
+        .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
+    };
+
+    static const uint16_t response5_invalidate[] = {
+        TRANSLATE_QUERY_STRING,
+    };
+
+    static const struct translate_response response5c = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/src/qs3",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+        .vary = response5_vary,
+        .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
+        .invalidate = response5_invalidate,
+        .num_invalidate = sizeof(response5_invalidate) / sizeof(response5_invalidate[0]),
+    };
+
+    struct async_operation_ref async_ref;
 
     next_response = expected_response = &response5a;
     translate_cache(pool, cache, &request6,
@@ -262,6 +257,26 @@ main(gcc_unused int argc, gcc_unused char **argv)
     expected_response = &response5c;
     translate_cache(pool, cache, &request7,
                     &my_translate_handler, NULL, &async_ref);
+}
+
+int
+main(gcc_unused int argc, gcc_unused char **argv)
+{
+    struct tstock *const translate_stock = (void *)0x1;
+    struct event_base *event_base;
+    struct pool *pool;
+    struct tcache *cache;
+
+    event_base = event_init();
+
+    pool = pool_new_libc(NULL, "root");
+
+    cache = translate_cache_new(pool, translate_stock, 1024);
+
+    /* test */
+
+    test_basic(pool, cache);
+    test_vary_invalidate(pool, cache);
 
     /* cleanup */
 
