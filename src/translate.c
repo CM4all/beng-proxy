@@ -1245,6 +1245,11 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_REGEX:
+        if (client->response.base == NULL) {
+            translate_client_error(client, "REGEX without BASE");
+            return false;
+        }
+
         client->response.regex = payload;
         return true;
 
