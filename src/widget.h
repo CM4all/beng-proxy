@@ -14,7 +14,6 @@
 #include <inline/compiler.h>
 #include <http/method.h>
 
-#include <assert.h>
 #include <stdbool.h>
 
 struct pool;
@@ -119,6 +118,9 @@ struct widget_ref {
 void
 widget_init(struct widget *widget, struct pool *pool,
             const struct widget_class *class);
+
+void
+widget_init_root(struct widget *widget, struct pool *pool, const char *id);
 
 void
 widget_set_id(struct widget *widget, struct pool *pool, const struct strref *id);

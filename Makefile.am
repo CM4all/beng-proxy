@@ -311,6 +311,7 @@ SRC = src/main.c \
 	src/ajp-headers.c \
 	src/widget.c \
 	src/widget-init.c \
+	src/widget-root.c \
 	src/widget-class.c \
 	src/widget-view.c \
 	src/widget-ref.c \

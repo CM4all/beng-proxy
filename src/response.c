@@ -140,12 +140,10 @@ response_invoke_processor(struct request *request2,
     }
 
     widget = p_malloc(request->pool, sizeof(*widget));
-    widget_init(widget, request->pool, &root_widget_class);
-    widget->id = request2->translate.response->uri != NULL
-        ? request2->translate.response->uri
-        : strref_dup(request->pool, &request2->uri.base);
-    widget->lazy.path = "";
-    widget->lazy.prefix = "__";
+    widget_init_root(widget, request->pool,
+                     request2->translate.response->uri != NULL
+                     ? request2->translate.response->uri
+                     : strref_dup(request->pool, &request2->uri.base));
 
     const struct widget_ref *focus_ref =
         widget_ref_parse(request->pool,
@@ -292,10 +290,8 @@ response_invoke_css_processor(struct request *request2,
     }
 
     struct widget *widget = p_malloc(request->pool, sizeof(*widget));
-    widget_init(widget, request->pool, &root_widget_class);
-    widget->id = strref_dup(request->pool, &request2->uri.base);
-    widget->lazy.path = "";
-    widget->lazy.prefix = "__";
+    widget_init_root(widget, request->pool,
+                     strref_dup(request->pool, &request2->uri.base));
 
     if (request2->translate.response->untrusted != NULL) {
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
