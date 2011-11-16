@@ -91,6 +91,7 @@ static struct strmap *
 widget_request_headers(struct embed *embed, const struct widget_view *view,
                        bool exclude_host, bool with_body)
 {
+    struct widget *widget = embed->widget;
     struct strmap *headers;
     struct session *session;
 
@@ -104,18 +105,18 @@ widget_request_headers(struct embed *embed, const struct widget_view *view,
                                       &view->request_header_forward,
                                       session,
                                       embed->host_and_port,
-                                      widget_uri(embed->widget));
+                                      widget_uri(widget));
 
     if (session != NULL)
         session_put(session);
 
-    if (embed->widget->headers != NULL) {
+    if (widget->headers != NULL) {
         /* copy HTTP request headers from template */
         const struct strmap_pair *pair;
 
-        strmap_rewind(embed->widget->headers);
+        strmap_rewind(widget->headers);
 
-        while ((pair = strmap_next(embed->widget->headers)) != NULL)
+        while ((pair = strmap_next(widget->headers)) != NULL)
             strmap_add(headers,
                        p_strdup(embed->pool, pair->key),
                        p_strdup(embed->pool, pair->value));
@@ -130,6 +131,7 @@ static bool
 widget_response_redirect(struct embed *embed, const char *location,
                          struct istream *body)
 {
+    struct widget *widget = embed->widget;
     const struct resource_address *address;
     struct session *session;
     struct strmap *headers;
@@ -140,28 +142,27 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (embed->num_redirects >= 8)
         return false;
 
-    const struct widget_view *view = widget_get_view(embed->widget);
+    const struct widget_view *view = widget_get_view(widget);
 
     if (view == NULL || view->address.type != RESOURCE_ADDRESS_HTTP)
         /* a static or CGI widget cannot send redirects */
         return false;
 
-    p = widget_relative_uri(embed->pool, embed->widget, true,
+    p = widget_relative_uri(embed->pool, widget, true,
                             location, strlen(location),
                             &strref_buffer);
     if (p == NULL)
         return false;
 
     session = session_get_if_stateful(embed);
-    widget_copy_from_location(embed->widget, session,
+    widget_copy_from_location(widget, session,
                               p->data, p->length, embed->pool);
     if (session != NULL)
         session_put(session);
 
     ++embed->num_redirects;
 
-    address = resource_address_apply(embed->pool,
-                                     widget_address(embed->widget),
+    address = resource_address_apply(embed->pool, widget_address(widget),
                                      location, strlen(location),
                                      &address_buffer);
     if (address == NULL)
@@ -221,11 +222,13 @@ widget_response_process(struct embed *embed, http_status_t status,
                         struct strmap *headers, struct istream *body,
                         unsigned options)
 {
+    struct widget *widget = embed->widget;
+
     if (body == NULL) {
         GError *error =
             g_error_new(widget_quark(), 0,
                         "widget '%s' didn't send a response body",
-                        widget_path(embed->widget));
+                        widget_path(widget));
         widget_dispatch_error(embed, error);
         return;
     }
@@ -236,21 +239,21 @@ widget_response_process(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), 0,
                         "widget '%s' sent non-HTML response",
-                        widget_path(embed->widget));
+                        widget_path(widget));
         widget_dispatch_error(embed, error);
         return;
     }
 
     if (embed->lookup_id != NULL)
         processor_lookup_widget(embed->pool, status, body,
-                                embed->widget, embed->lookup_id,
+                                widget, embed->lookup_id,
                                 embed->env, options,
                                 embed->lookup_handler,
                                 embed->lookup_handler_ctx,
                                 embed->async_ref);
     else {
         body = processor_process(embed->pool, body,
-                                 embed->widget, embed->env, options);
+                                 widget, embed->env, options);
 
         widget_response_dispatch(embed, status, headers, body);
     }
@@ -271,11 +274,13 @@ widget_response_process_css(struct embed *embed, http_status_t status,
                             struct strmap *headers, struct istream *body,
                             unsigned options)
 {
+    struct widget *widget = embed->widget;
+
     if (body == NULL) {
         GError *error =
             g_error_new(widget_quark(), 0,
                         "widget '%s' didn't send a response body",
-                        widget_path(embed->widget));
+                        widget_path(widget));
         widget_dispatch_error(embed, error);
         return;
     }
@@ -286,13 +291,12 @@ widget_response_process_css(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), 0,
                         "widget '%s' sent non-CSS response",
-                        widget_path(embed->widget));
+                        widget_path(widget));
         widget_dispatch_error(embed, error);
         return;
     }
 
-    body = css_processor(embed->pool, body, embed->widget, embed->env,
-                         options);
+    body = css_processor(embed->pool, body, widget, embed->env, options);
     widget_response_dispatch(embed, status, headers, body);
 }
 
@@ -310,11 +314,13 @@ static void
 widget_response_process_text(struct embed *embed, http_status_t status,
                              struct strmap *headers, struct istream *body)
 {
+    const struct widget *widget = embed->widget;
+
     if (body == NULL) {
         GError *error =
             g_error_new(widget_quark(), 0,
                         "widget '%s' didn't send a response body",
-                        widget_path(embed->widget));
+                        widget_path(widget));
         widget_dispatch_error(embed, error);
         return;
     }
@@ -325,12 +331,12 @@ widget_response_process_text(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), 0,
                         "widget '%s' sent non-text response",
-                        widget_path(embed->widget));
+                        widget_path(widget));
         widget_dispatch_error(embed, error);
         return;
     }
 
-    body = text_processor(embed->pool, body, embed->widget, embed->env);
+    body = text_processor(embed->pool, body, widget, embed->env);
     widget_response_dispatch(embed, status, headers, body);
 }
 
