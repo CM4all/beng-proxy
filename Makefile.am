@@ -310,6 +310,7 @@ SRC = src/main.c \
 	src/ajp-serialize.c \
 	src/ajp-headers.c \
 	src/widget.c \
+	src/widget-init.c \
 	src/widget-class.c \
 	src/widget-view.c \
 	src/widget-ref.c \
@@ -922,7 +923,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/strmap.c src/hashmap.c \
 	src/penv.c src/processor.c \
 	src/widget-request.c \
-	src/widget.c src/widget-ref.c src/widget-uri.c src/args.c \
+	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/parser.c src/widget-class.c \
 	src/widget-view.c \
 	src/tpool.c src/rewrite-uri.c src/widget-resolver.c \
@@ -1209,7 +1210,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/istream-escape.c \
 	src/istream-html-escape.c \
 	src/rewrite-uri.c src/widget-uri.c src/widget.c \
-	src/widget-view.c src/transformation.c \
+	src/widget-init.c src/widget-view.c src/transformation.c \
 	src/istream-null.c src/istream-delayed.c src/istream-memory.c \
 	src/istream-forward.c src/istream-string.c \
 	src/sink-gstring.c \
@@ -1243,6 +1244,7 @@ test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_wembed_SOURCES = test/t-wembed.c \
+	src/widget-init.c \
 	src/inline-widget.c \
 	$(POOL_SRC) \
 	src/istream-delayed.c src/istream-hold.c src/istream-forward.c \
@@ -1264,7 +1266,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
 	src/crash.c \
 	src/widget-session.c src/session.c \
-	src/widget-view.c src/widget.c \
+	src/widget-view.c src/widget.c src/widget-init.c \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \
 	src/args.c src/uri-escape.c src/uri-verify.c \
@@ -1374,7 +1376,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/processor.c src/penv.c src/parser.c \
 	src/escape_html.c \
 	src/istream-replace.c \
-	src/widget.c src/widget-ref.c \
+	src/widget.c src/widget-init.c src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
 	src/strmap.c src/hashmap.c \
@@ -1408,7 +1410,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/processor.c src/penv.c src/parser.c \
 	src/escape_html.c \
 	src/istream-replace.c \
-	src/widget.c src/widget-ref.c \
+	src/widget.c src/widget-init.c src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c \
 	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
 	src/strmap.c src/hashmap.c \
