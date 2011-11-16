@@ -13,5 +13,5 @@ widget_init_root(struct widget *widget, struct pool *pool, const char *id)
     widget_init(widget, pool, &root_widget_class);
     widget->id = id;
     widget->lazy.path = "";
-    widget->lazy.prefix = "__";
+    widget->lazy.prefix = "C_";
 }
