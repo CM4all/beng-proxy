@@ -1253,6 +1253,15 @@ translate_handle_packet(struct translate_client *client,
         client->response.regex = payload;
         return true;
 
+    case TRANSLATE_INVERSE_REGEX:
+        if (client->response.base == NULL) {
+            translate_client_error(client, "INVERSE_REGEX without BASE");
+            return false;
+        }
+
+        client->response.inverse_regex = payload;
+        return true;
+
     case TRANSLATE_DELEGATE:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {

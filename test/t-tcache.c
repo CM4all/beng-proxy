@@ -265,6 +265,42 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
 static void
 test_regex(struct pool *pool, struct tcache *cache)
 {
+    static const struct translate_request request_i1 = {
+        .uri = "/regex/foo",
+    };
+    static const struct translate_response response_i1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/regex/other/foo",
+                },
+            },
+        },
+        .base = "/regex/",
+        .inverse_regex = "\\.(jpg|html)$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    static const struct translate_request request_i2 = {
+        .uri = "/regex/bar",
+    };
+    static const struct translate_response response_i2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/regex/other/bar",
+                },
+            },
+        },
+        .base = "/regex/",
+        .inverse_regex = "\\.(jpg|html)$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
     static const struct translate_request request1 = {
         .uri = "/regex/a/foo.jpg",
     };
@@ -339,6 +375,11 @@ test_regex(struct pool *pool, struct tcache *cache)
 
     struct async_operation_ref async_ref;
 
+    /* add the "inverse_regex" test to the cache first */
+    next_response = expected_response = &response_i1;
+    translate_cache(pool, cache, &request_i1,
+                    &my_translate_handler, NULL, &async_ref);
+
     /* fill the cache */
     next_response = expected_response = &response1;
     translate_cache(pool, cache, &request1,
@@ -359,6 +400,12 @@ test_regex(struct pool *pool, struct tcache *cache)
     next_response = NULL;
     expected_response = &response4;
     translate_cache(pool, cache, &request4,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* see if the "inverse_regex" cache item is still there */
+    next_response = NULL;
+    expected_response = &response_i2;
+    translate_cache(pool, cache, &request_i2,
                     &my_translate_handler, NULL, &async_ref);
 }
 

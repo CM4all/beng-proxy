@@ -39,7 +39,7 @@ struct tcache_item {
 
     struct translate_response response;
 
-    GRegex *regex;
+    GRegex *regex, *inverse_regex;
 };
 
 struct tcache {
@@ -161,6 +161,7 @@ tcache_dup_response(struct pool *pool, struct translate_response *dest,
 
     dest->base = p_strdup_checked(pool, src->base);
     dest->regex = p_strdup_checked(pool, src->regex);
+    dest->inverse_regex = p_strdup_checked(pool, src->inverse_regex);
     dest->site = p_strdup_checked(pool, src->site);
     dest->document_root = p_strdup_checked(pool, src->document_root);
     dest->redirect = p_strdup_checked(pool, src->redirect);
@@ -454,6 +455,12 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
            a "BASE" packet */
         return false;
 
+    if (item->response.base != NULL && item->inverse_regex != NULL &&
+        request->uri != NULL &&
+        g_regex_match(item->inverse_regex, request->uri, 0, NULL))
+        /* the URI matches the inverse regular expression */
+        return false;
+
     if (item->response.base != NULL && item->regex != NULL &&
         (request->uri == NULL ||
          !g_regex_match(item->regex, request->uri, 0, NULL)))
@@ -652,6 +659,21 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
         } else
             item->regex = NULL;
 
+        if (response->inverse_regex != NULL) {
+            GError *error = NULL;
+            item->inverse_regex = g_regex_new(response->inverse_regex,
+                                              G_REGEX_MULTILINE|G_REGEX_DOTALL|
+                                              G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
+                                              G_REGEX_OPTIMIZE,
+                                              0, &error);
+            if (item->inverse_regex == NULL) {
+                cache_log(2, "translate_cache: failed to compile regular expression: %s",
+                          error->message);
+                g_error_free(error);
+            }
+        } else
+            item->inverse_regex = NULL;
+
         cache_put_match(tcr->tcache->cache, key, &item->item,
                         tcache_item_match, tcr);
     } else {
@@ -724,6 +746,9 @@ tcache_destroy(struct cache_item *_item)
 
     if (item->regex != NULL)
         g_regex_unref(item->regex);
+
+    if (item->inverse_regex != NULL)
+        g_regex_unref(item->inverse_regex);
 
     pool_unref(item->pool);
 }

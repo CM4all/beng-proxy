@@ -204,6 +204,12 @@ enum beng_translation_command {
      * the specified regular expression (Perl compatible).
      */
     TRANSLATE_REGEX = 79,
+
+    /**
+     * Don't apply the cached response if the request URI matches the
+     * specified regular expression (Perl compatible).
+     */
+    TRANSLATE_INVERSE_REGEX = 80,
 };
 
 struct beng_translation_header {
