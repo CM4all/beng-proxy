@@ -65,7 +65,7 @@ base_uri(struct pool *pool, const char *absolute_uri)
 
 static void
 processor_subst_beng_widget(struct istream *istream,
-                            struct widget *widget,
+                            const struct widget *widget,
                             const struct processor_env *env)
 {
     istream_subst_add(istream, "&c:path;", widget_path(widget));
@@ -82,7 +82,7 @@ processor_subst_beng_widget(struct istream *istream,
 
 struct istream *
 text_processor(struct pool *pool, struct istream *istream,
-               struct widget *widget, const struct processor_env *env)
+               const struct widget *widget, const struct processor_env *env)
 {
     assert(istream != NULL);
     assert(!istream_has_handler(istream));

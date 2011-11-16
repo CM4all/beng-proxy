@@ -86,7 +86,7 @@ css_processor(gcc_unused struct pool *pool, struct istream *stream,
 
 struct istream *
 text_processor(gcc_unused struct pool *pool, struct istream *stream,
-               gcc_unused struct widget *widget,
+               gcc_unused const struct widget *widget,
                gcc_unused const struct processor_env *env)
 {
     return stream;

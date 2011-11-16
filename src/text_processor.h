@@ -21,6 +21,6 @@ text_processor_header_forward(struct pool *pool, struct strmap *headers);
  */
 struct istream *
 text_processor(struct pool *pool, struct istream *istream,
-               struct widget *widget, const struct processor_env *env);
+               const struct widget *widget, const struct processor_env *env);
 
 #endif
