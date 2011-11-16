@@ -11,3 +11,7 @@ view "inherit"
 
 view "process"
 process
+
+view "text"
+path "/usr/share/cm4all/beng-proxy/demo/htdocs/beng-demo.html"
+process_text

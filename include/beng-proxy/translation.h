@@ -210,6 +210,11 @@ enum beng_translation_command {
      * specified regular expression (Perl compatible).
      */
     TRANSLATE_INVERSE_REGEX = 80,
+
+    /**
+     * Run the text processor to expand entity references.
+     */
+    TRANSLATE_PROCESS_TEXT = 81,
 };
 
 struct beng_translation_header {

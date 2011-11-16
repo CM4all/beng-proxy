@@ -10,6 +10,7 @@
 #include "http-response.h"
 #include "processor.h"
 #include "css_processor.h"
+#include "text_processor.h"
 #include "penv.h"
 #include "async.h"
 #include "fcache.h"
@@ -79,6 +80,14 @@ css_processor(gcc_unused struct pool *pool, struct istream *stream,
               gcc_unused struct widget *widget,
               gcc_unused struct processor_env *env,
               gcc_unused unsigned options)
+{
+    return stream;
+}
+
+struct istream *
+text_processor(gcc_unused struct pool *pool, struct istream *stream,
+               gcc_unused struct widget *widget,
+               gcc_unused const struct processor_env *env)
 {
     return stream;
 }

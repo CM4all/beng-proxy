@@ -821,6 +821,10 @@ section \ref{processor} \\
 
 \hline
 
+\verb|PROCESS_TEXT| & enables the \emph{beng-proxy} text processor \\
+
+\hline
+
 \verb|PROCESS_CSS| & enables the \emph{beng-proxy} CSS processor \\
 
 \hline
@@ -1656,6 +1660,7 @@ widget.  It can be one of the view names provided by the widget
 registry (i.e. the translation server).
 
 \subsection{Variable substitutions}
+\label{entities}
 
 \emph{beng-proxy} defines special entities beginning with \texttt{c:}
 for its purposes.  Namespaced entities are not actually allowed in XML
@@ -1916,6 +1921,14 @@ The \texttt{translate} argument is passed to the translation server as
 \texttt{view} is the name of the transformation view to use.  This
 parameter is ignored unless \texttt{frame} is set, or \texttt{mode} is
 ``\texttt{partial}''.
+
+
+\section{The Text Processor}
+\label{textprocessor}
+
+The text processor expands the entity references described in
+\ref{entities}, but does nothing else.  It may be useful to insert
+values into JavaScript files.
 
 
 \section{The CSS Processor}

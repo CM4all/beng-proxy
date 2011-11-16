@@ -113,6 +113,8 @@ class _Lookup:
             response.packet(TRANSLATE_CONTAINER)
         elif line == 'process_css':
             response.packet(TRANSLATE_PROCESS_CSS)
+        elif line == 'process_text':
+            response.packet(TRANSLATE_PROCESS_TEXT)
         elif line == 'prefix_css_class':
             response.packet(TRANSLATE_PREFIX_CSS_CLASS)
         elif line == 'prefix_xml_id':

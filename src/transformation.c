@@ -34,6 +34,9 @@ transformation_dup(struct pool *pool, const struct transformation *src)
         dest->u.css_processor.options = src->u.css_processor.options;
         break;
 
+    case TRANSFORMATION_PROCESS_TEXT:
+        break;
+
     case TRANSFORMATION_FILTER:
         resource_address_copy(pool, &dest->u.filter,
                               &src->u.filter);

@@ -17,6 +17,7 @@ struct transformation {
     enum {
         TRANSFORMATION_PROCESS,
         TRANSFORMATION_PROCESS_CSS,
+        TRANSFORMATION_PROCESS_TEXT,
         TRANSFORMATION_FILTER,
     } type;
 

@@ -1519,6 +1519,11 @@ translate_handle_packet(struct translate_client *client,
 
         client->response.anchor_absolute = true;
         return true;
+
+    case TRANSLATE_PROCESS_TEXT:
+        transformation = translate_add_transformation(client);
+        transformation->type = TRANSFORMATION_PROCESS_TEXT;
+        return true;
     }
 
     GError *error = g_error_new(translate_quark(), 0,
