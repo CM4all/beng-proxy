@@ -5,6 +5,7 @@
  */
 
 #include "processor.h"
+#include "text_processor.h"
 #include "penv.h"
 #include "parser.h"
 #include "uri-escape.h"
@@ -211,41 +212,6 @@ static const struct async_operation_class processor_async_operation = {
  *
  */
 
-static const char *
-base_uri(struct pool *pool, const char *absolute_uri)
-{
-    const char *p;
-
-    if (absolute_uri == NULL)
-        return NULL;
-
-    p = strchr(absolute_uri, ';');
-    if (p == NULL) {
-        p = strchr(absolute_uri, '?');
-        if (p == NULL)
-            return absolute_uri;
-    }
-
-    return p_strndup(pool, absolute_uri, p - absolute_uri);
-}
-
-static void
-processor_subst_beng_widget(struct istream *istream,
-                            struct widget *widget,
-                            const struct processor_env *env)
-{
-    istream_subst_add(istream, "&c:path;", widget_path(widget));
-    istream_subst_add(istream, "&c:prefix;", widget_prefix(widget));
-    istream_subst_add(istream, "&c:uri;", env->absolute_uri);
-    istream_subst_add(istream, "&c:base;",
-                      base_uri(env->pool, env->uri));
-    istream_subst_add(istream, "&c:frame;",
-                      strmap_get(env->args, "frame"));
-    istream_subst_add(istream, "&c:view;", widget_get_view_name(widget));
-    istream_subst_add(istream, "&c:session;",
-                      strmap_get(env->args, "session"));
-}
-
 static void
 processor_parser_init(struct processor *processor, struct istream *input);
 
@@ -330,8 +296,8 @@ processor_process(struct pool *caller_pool, struct istream *istream,
 
     processor->lookup_id = NULL;
 
-    istream = istream_subst_new(processor->pool, istream);
-    processor_subst_beng_widget(istream, widget, env);
+    /* the text processor will expand entities */
+    istream = text_processor(processor->pool, istream, widget, env);
 
     istream = istream_tee_new(processor->pool, istream, true, true);
     processor->replace = istream_replace_new(processor->pool,
