@@ -133,6 +133,8 @@ class _Lookup:
             response.packet(TRANSLATE_FOCUS_WIDGET)
         elif line == 'anchor_absolute':
             response.packet(TRANSLATE_ANCHOR_ABSOLUTE)
+        elif line == 'widget_info':
+            response.packet(TRANSLATE_WIDGET_INFO)
         else:
             raise MalformedLineError(self.path, line)
 

@@ -52,6 +52,12 @@ struct widget_class {
      */
     bool anchor_absolute;
 
+    /**
+     * Send the "info" request headers to the widget?  See
+     * #TRANSLATE_WIDGET_INFO.
+     */
+    bool info_headers;
+
     bool dump_headers;
 };
 

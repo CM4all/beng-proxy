@@ -1,3 +1,4 @@
 cgi "/usr/share/cm4all/beng-proxy/demo/env.py"
 script_name "/env.py"
 document_root "/var/www"
+widget_info

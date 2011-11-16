@@ -74,6 +74,7 @@ widget_translate_response(const struct translate_response *response, void *ctx)
     class->cookie_host = response->cookie_host;
     class->stateful = response->stateful;
     class->anchor_absolute = response->anchor_absolute;
+    class->info_headers = response->widget_info;
     class->dump_headers = response->dump_headers;
     if (response->views != NULL)
         class->views = *widget_view_dup_chain(lookup->pool, response->views);

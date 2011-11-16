@@ -102,6 +102,8 @@ struct translate_response {
 
     bool transparent;
 
+    bool widget_info;
+
     bool anchor_absolute;
 
     bool dump_headers;

@@ -215,6 +215,11 @@ enum beng_translation_command {
      * Run the text processor to expand entity references.
      */
     TRANSLATE_PROCESS_TEXT = 81,
+
+    /**
+     * Send widget metadata (id, prefix, type) to the widget server.
+     */
+    TRANSLATE_WIDGET_INFO = 82,
 };
 
 struct beng_translation_header {

@@ -1412,6 +1412,10 @@ translate_handle_packet(struct translate_client *client,
         client->response.transparent = true;
         return true;
 
+    case TRANSLATE_WIDGET_INFO:
+        client->response.widget_info = true;
+        return true;
+
     case TRANSLATE_STICKY:
         if (client->address_list == NULL) {
             translate_client_error(client,

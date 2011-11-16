@@ -110,6 +110,18 @@ widget_request_headers(struct embed *embed, const struct widget_view *view,
     if (session != NULL)
         session_put(session);
 
+    if (widget->class->info_headers) {
+        if (widget->id != NULL)
+            strmap_add(headers, "x-cm4all-widget-id", widget->id);
+
+        if (widget->class_name != NULL)
+            strmap_add(headers, "x-cm4all-widget-type", widget->class_name);
+
+        const char *prefix = widget_prefix(widget);
+        if (prefix != NULL)
+            strmap_add(headers, "x-cm4all-widget-prefix", prefix);
+    }
+
     if (widget->headers != NULL) {
         /* copy HTTP request headers from template */
         const struct strmap_pair *pair;
