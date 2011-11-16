@@ -252,7 +252,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     if (info->is_remote) {
         p = strmap_get(headers, "date");
         if (p == NULL)
-            /* we cannot determine wether to cache a resource if the
+            /* we cannot determine whether to cache a resource if the
                server does not provide its system time */
             return false;
 
