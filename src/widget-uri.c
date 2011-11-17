@@ -229,13 +229,15 @@ widget_external_uri(struct pool *pool,
                     struct strmap *args,
                     struct widget *widget, bool stateful,
                     const struct strref *relative_uri,
-                    const char *frame, const char *view)
+                    const char *frame, const char *view, bool raw)
 {
     const char *path;
     const char *qmark, *args2, *new_uri;
     struct strref buffer, query_string;
     const struct strref *p;
     struct pool_mark mark;
+
+    assert(frame != NULL || !raw);
 
     path = widget_path(widget);
     if (path == NULL ||
@@ -294,6 +296,7 @@ widget_external_uri(struct pool *pool,
                         external_uri->base.length,
                         ";", (size_t)1,
                         args2, strlen(args2),
+                        "&raw=1", (size_t)(raw ? 6 : 0),
                         "&view=", (size_t)(view != NULL ? 6 : 0),
                         view != NULL ? view : "",
                         view != NULL ? strlen(view) : (size_t)0,

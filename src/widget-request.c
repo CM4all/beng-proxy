@@ -127,8 +127,8 @@ widget_sync_session(struct widget *widget, struct session *session)
 
     if (widget_has_focus(widget)) {
 
-        /* do not save to session when this is a POST request */
-        if (widget->from_request.body == NULL) {
+        /* do not save to session when this is a raw or POST request */
+        if (!widget->from_request.raw && widget->from_request.body == NULL) {
             struct widget_session *ws = widget_get_session(widget, session, true);
             if (ws != NULL)
                 widget_to_session(ws, widget);

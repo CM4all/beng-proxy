@@ -82,6 +82,9 @@ struct widget {
         /** the request body (from processor_env.body) */
         struct istream * body;
 
+        /** should the resource be passed raw, i.e. not processed? */
+        bool raw;
+
         /** the name of the view requested by the client */
         const char *view;
     } from_request;
@@ -250,7 +253,7 @@ widget_external_uri(struct pool *pool,
                     struct strmap *args,
                     struct widget *widget, bool stateful,
                     const struct strref *relative_uri,
-                    const char *frame, const char *view);
+                    const char *frame, const char *view, bool raw);
 
 /**
  * Determines whether it is allowed to embed the widget in a page with
