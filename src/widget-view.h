@@ -29,11 +29,6 @@ struct widget_view {
      */
     bool filter_4xx;
 
-    /**
-     * Was the address inherited from another view?
-     */
-    bool inherited;
-
     struct transformation *transformation;
 
     /**

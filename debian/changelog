@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4) unstable; urgency=low
 
-  * 
+  * proxy-widget: revert 'client can choose only views that have an address'
 
  --
 
