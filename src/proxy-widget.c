@@ -111,9 +111,6 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
     } else {
         const struct processor_env *env = &request2->env;
 
-        if (strmap_get(env->args, "raw") != NULL)
-            widget->from_request.raw = true;
-
         /* the client can select the view; he can never explicitly
            select the default view */
         widget->from_request.view = env->view_name;

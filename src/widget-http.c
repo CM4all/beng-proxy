@@ -634,8 +634,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
     embed->host_and_port = widget->class->cookie_host != NULL
         ? widget->class->cookie_host
         : resource_address_host_and_port(&view->address, pool);
-    embed->transformation = embed->widget->from_request.raw
-        ? NULL : view->transformation;
+    embed->transformation = view->transformation;
 
     headers = widget_request_headers(embed, view,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,

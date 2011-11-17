@@ -13,7 +13,7 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
 
     if (base_uri == null ||
         (mode != null && mode != "focus" && mode != "frame" &&
-         mode != "partial" && mode != "proxy" && mode != "save"))
+         mode != "partial" && mode != "save"))
         return null;
 
     var uri = base_uri + ";session=" + _beng_proxy_escape(session_id || "");
@@ -22,7 +22,7 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
             mode = "partial";
 
         uri += "&focus=" + _beng_proxy_escape(focus);
-        if (mode == "partial" || mode == "proxy" || mode == "save")
+        if (mode == "partial" || mode == "save")
             frame = focus;
 
         if (frame != null) {
@@ -32,8 +32,6 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
                 uri += "&view=" + _beng_proxy_escape(view);
         }
 
-        if (mode == "proxy")
-            uri += "&raw=1";
         if (mode == "save")
             uri += "&save=1";
         if (path != null) {
