@@ -28,9 +28,6 @@ parse_uri_mode(const struct strref *s)
         return URI_MODE_FOCUS;
     else if (strref_cmp_literal(s, "partial") == 0)
         return URI_MODE_PARTIAL;
-    else if (strref_cmp_literal(s, "partition") == 0)
-        /* deprecated */
-        return URI_MODE_PARTIAL;
     else if (strref_cmp_literal(s, "proxy") == 0)
         return URI_MODE_PROXY;
     else
