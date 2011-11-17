@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.0) unstable; urgency=low
 
   * rewrite-uri: reapply 'drop the deprecated mode "proxy"'
+  * proxy-widget: reapply 'client can choose only views that have an address'
 
  --
 

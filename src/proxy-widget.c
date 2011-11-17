@@ -115,9 +115,25 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
            select the default view */
         widget->from_request.view = env->view_name;
 
-        if (widget_get_view(widget) == NULL) {
+        const struct widget_view *view = widget_get_view(widget);
+        if (view == NULL) {
             response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                       "No such view");
+            return;
+        }
+
+        /* the client may choose only views that are not
+           "inherited" */
+        if (env->view_name != NULL && view->inherited &&
+            /* exception from the rule: allow an inherited view when
+               it was specified in the template */
+            (widget->view == NULL || strcmp(env->view_name,
+                                            widget->view) != 0)) {
+            daemon_log(2, "view '%s' of widget class '%s' cannot be requested "
+                       "because it does not have an address\n",
+                       env->view_name, widget->class_name);
+            response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
+                                      "Forbidden");
             return;
         }
 
