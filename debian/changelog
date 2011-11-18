@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4.1) unstable; urgency=low
 
-  * 
+  * merge release 1.2.6
 
  --   
 
@@ -33,6 +33,12 @@ cm4all-beng-proxy (1.3) unstable; urgency=low
   * proxy-widget: client can choose only views that have an address
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 31 Oct 2011 17:41:14 +0100
+
+cm4all-beng-proxy (1.2.6) unstable; urgency=low
+
+  * merge release 1.1.19
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 18 Nov 2011 13:47:43 -0000
 
 cm4all-beng-proxy (1.2.5) unstable; urgency=low
 
@@ -76,6 +82,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.19) unstable; urgency=low
+
+  * {css_,}processor: quote widget classes for prefixing XML IDs, CSS classes
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 18 Nov 2011 13:17:02 -0000
 
 cm4all-beng-proxy (1.1.18) unstable; urgency=low
 

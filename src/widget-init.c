@@ -33,6 +33,7 @@ widget_init(struct widget *widget, struct pool *pool,
     widget->from_request.view = NULL;
     widget->lazy.path = NULL;
     widget->lazy.prefix = NULL;
+    widget->lazy.quoted_class_name = NULL;
     widget->lazy.address = NULL;
     widget->lazy.stateless_address = NULL;
 }
