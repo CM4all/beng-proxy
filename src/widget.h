@@ -91,6 +91,8 @@ struct widget {
 
         const char *prefix;
 
+        const char *quoted_class_name;
+
         /** the address which is actually retrieved - this is the same
             as class->address, except when the user clicked on a
             relative link */
@@ -147,6 +149,10 @@ widget_prefix(const struct widget *widget)
 {
     return widget->lazy.prefix;
 }
+
+gcc_pure
+const char *
+widget_get_quoted_class_name(struct widget *widget);
 
 static inline const char *
 widget_get_path_info(const struct widget *widget)

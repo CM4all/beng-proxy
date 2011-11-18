@@ -106,6 +106,21 @@ widget_set_id(struct widget *widget, struct pool *pool,
                                        "__", NULL);
 }
 
+const char *
+widget_get_quoted_class_name(struct widget *widget)
+{
+    assert(widget != NULL);
+
+    if (widget->class_name == NULL)
+        return NULL;
+
+    if (widget->lazy.quoted_class_name == NULL)
+        widget->lazy.quoted_class_name = quote_prefix(widget->pool,
+                                                      widget->class_name);
+
+    return widget->lazy.quoted_class_name;
+}
+
 const struct widget_view *
 widget_get_view(const struct widget *widget)
 {
