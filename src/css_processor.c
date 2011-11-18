@@ -128,7 +128,8 @@ css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
     } else if (n == 2) {
         /* single underscore: add class name prefix */
 
-        const char *class_name = processor->container->class_name;
+        const char *class_name =
+            widget_get_quoted_class_name(processor->container);
         if (class_name == NULL)
             return;
 
@@ -162,7 +163,8 @@ css_processor_parser_xml_id(const struct css_parser_value *name, void *ctx)
     } else if (n == 2) {
         /* single underscore: add class name prefix */
 
-        const char *class_name = processor->container->class_name;
+        const char *class_name =
+            widget_get_quoted_class_name(processor->container);
         if (class_name == NULL)
             return;
 

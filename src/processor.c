@@ -876,9 +876,8 @@ handle_class_attribute(struct processor *processor,
         if (n == 3 && (prefix = widget_prefix(processor->container)) != NULL) {
             expansible_buffer_write_string(buffer, prefix);
             p += 3;
-        } else if (n == 2 && processor->container->class_name != NULL) {
-            expansible_buffer_write_string(buffer,
-                                           processor->container->class_name);
+        } else if (n == 2 && (prefix = widget_get_quoted_class_name(processor->container)) != NULL) {
+            expansible_buffer_write_string(buffer, prefix);
             expansible_buffer_write_buffer(buffer, p, 1);
             p += 2;
         } else {
@@ -922,7 +921,8 @@ handle_id_attribute(struct processor *processor,
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
-        const char *class_name = processor->container->class_name;
+        const char *class_name =
+            widget_get_quoted_class_name(processor->container);
         if (class_name == NULL)
             return;
 
