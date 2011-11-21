@@ -13,7 +13,7 @@ from sys import stdout
 
 form = FieldStorage()
 path = form["path"].value
-if path.find('/') >= 0: raise "Unauthorized path"
+if path[0] == '/' or path.find('..') >= 0: raise "Unauthorized path"
 
 mtime = stat(path)[ST_MTIME]
 mtime = mktime(datetime.utcfromtimestamp(mtime).timetuple())
