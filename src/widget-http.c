@@ -319,7 +319,8 @@ text_processable(const struct strmap *headers)
 
     content_type = strmap_get_checked(headers, "content-type");
     return content_type != NULL &&
-        strncmp(content_type, "text/", 5) == 0;
+        (strncmp(content_type, "text/", 5) == 0 ||
+         strncmp(content_type, "application/javascript", 22) == 0);
 }
 
 static void
