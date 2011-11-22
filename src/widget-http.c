@@ -312,17 +312,6 @@ widget_response_process_css(struct embed *embed, http_status_t status,
     widget_response_dispatch(embed, status, headers, body);
 }
 
-static bool
-text_processable(const struct strmap *headers)
-{
-    const char *content_type;
-
-    content_type = strmap_get_checked(headers, "content-type");
-    return content_type != NULL &&
-        (strncmp(content_type, "text/", 5) == 0 ||
-         strncmp(content_type, "application/javascript", 22) == 0);
-}
-
 static void
 widget_response_process_text(struct embed *embed, http_status_t status,
                              struct strmap *headers, struct istream *body)
@@ -338,7 +327,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
         return;
     }
 
-    if (!text_processable(headers)) {
+    if (!text_processor_allowed(headers)) {
         istream_close_unused(body);
 
         GError *error =
