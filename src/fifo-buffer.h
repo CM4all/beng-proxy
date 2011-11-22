@@ -52,9 +52,11 @@ fifo_buffer_write(struct fifo_buffer *buffer, size_t *max_length_r);
 void
 fifo_buffer_append(struct fifo_buffer *buffer, size_t length);
 
+gcc_pure
 int
 fifo_buffer_empty(struct fifo_buffer *buffer);
 
+gcc_pure
 int
 fifo_buffer_full(struct fifo_buffer *buffer);
 

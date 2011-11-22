@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_ESCAPE_CLASS_H
 #define BENG_PROXY_ESCAPE_CLASS_H
 
+#include <inline/compiler.h>
+
 #include <assert.h>
 #include <stddef.h>
 
@@ -47,6 +49,7 @@ struct escape_class {
     size_t (*escape)(const char *p, size_t length, char *q);
 };
 
+gcc_pure
 static inline const char *
 unescape_find(const struct escape_class *class, const char *p, size_t length)
 {
@@ -84,6 +87,7 @@ unescape_inplace(const struct escape_class *class, char *p, size_t length)
     return length2;
 }
 
+gcc_pure
 static inline const char *
 escape_find(const struct escape_class *class, const char *p, size_t length)
 {
@@ -93,6 +97,7 @@ escape_find(const struct escape_class *class, const char *p, size_t length)
     return class->escape_find(p, length);
 }
 
+gcc_pure
 static inline size_t
 escape_size(const struct escape_class *class, const char *p, size_t length)
 {
@@ -102,6 +107,7 @@ escape_size(const struct escape_class *class, const char *p, size_t length)
     return class->escape_size(p, length);
 }
 
+gcc_pure
 static inline const char *
 escape_char(const struct escape_class *class, char ch)
 {

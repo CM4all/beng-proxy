@@ -10,6 +10,8 @@
 #include "resource-address.h"
 #include "header-forward.h"
 
+#include <inline/compiler.h>
+
 struct pool;
 
 struct widget_view {
@@ -77,9 +79,11 @@ widget_view_inherit_from(struct pool *pool, struct widget_view *dest,
  * Finds a view by its name.  If name==NULL, it returns the first
  * view.
  */
+gcc_pure
 const struct widget_view *
 widget_view_lookup(const struct widget_view *view, const char *name);
 
+gcc_malloc
 struct widget_view *
 widget_view_dup_chain(struct pool *pool, const struct widget_view *src);
 

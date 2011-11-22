@@ -7,6 +7,7 @@
 /**
  * Returns the current monotonic time stamp in microseconds.
  */
+gcc_pure
 static uint64_t
 now_us(void)
 {

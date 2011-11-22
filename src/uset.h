@@ -30,6 +30,7 @@ uset_add(struct uset *u, unsigned value)
         u->values[u->num++] = value;
 }
 
+gcc_pure
 static inline bool
 uset_contains(const struct uset *u, unsigned value)
 {

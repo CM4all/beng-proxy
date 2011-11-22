@@ -114,6 +114,7 @@ strref_skip(struct strref *s, size_t nbytes)
     s->data += nbytes;
 }
 
+gcc_pure
 static inline bool
 strref_is_null(const struct strref *s)
 {
@@ -123,6 +124,7 @@ strref_is_null(const struct strref *s)
     return s->data == NULL;
 }
 
+gcc_pure
 static gcc_always_inline bool
 strref_is_empty(const struct strref *s)
 {
@@ -132,6 +134,7 @@ strref_is_empty(const struct strref *s)
     return s->length == 0;
 }
 
+gcc_pure
 static gcc_always_inline char
 strref_last(const struct strref *s)
 {
@@ -142,6 +145,7 @@ strref_last(const struct strref *s)
     return s->data[s->length - 1];
 }
 
+gcc_pure
 static gcc_always_inline int
 strref_cmp(const struct strref *s,
            const char *p, size_t length)
@@ -156,6 +160,7 @@ strref_cmp(const struct strref *s,
     return memcmp(s->data, p, length);
 }
 
+gcc_pure
 static gcc_always_inline int
 strref_cmp_c(const struct strref *s, const char *p)
 {
@@ -166,6 +171,7 @@ strref_cmp_c(const struct strref *s, const char *p)
 
 #define strref_cmp_literal(s, l) strref_cmp((s), (l), sizeof(l) - 1)
 
+gcc_pure
 static gcc_always_inline int
 strref_cmp2(const struct strref *a, const struct strref *b)
 {
@@ -175,6 +181,7 @@ strref_cmp2(const struct strref *a, const struct strref *b)
     return strref_cmp(a, b->data, b->length);
 }
 
+gcc_pure
 static gcc_always_inline bool
 strref_starts_with_n(const struct strref *s,
                      const char *p, size_t length)
@@ -186,6 +193,7 @@ strref_starts_with_n(const struct strref *s,
         memcmp(s->data, p, length) == 0;
 }
 
+gcc_pure
 static gcc_always_inline bool
 strref_ends_with_n(const struct strref *s,
                    const char *p, size_t length)
@@ -197,6 +205,7 @@ strref_ends_with_n(const struct strref *s,
         memcmp(s->data + s->length - length, p, length) == 0;
 }
 
+gcc_pure
 static gcc_always_inline const char *
 strref_chr(const struct strref *s, char ch)
 {
@@ -206,6 +215,7 @@ strref_chr(const struct strref *s, char ch)
     return memchr(s->data, ch, s->length);
 }
 
+gcc_pure
 static gcc_always_inline const char *
 strref_chr_at(const struct strref *s, char ch, size_t start)
 {

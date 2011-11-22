@@ -37,6 +37,7 @@ strref_trim(struct strref *s)
     strref_rtrim(s);
 }
 
+gcc_pure
 static gcc_always_inline int
 strref_lower_cmp(const struct strref *s, const char *p, size_t length)
 {
@@ -60,6 +61,7 @@ strref_lower_cmp(const struct strref *s, const char *p, size_t length)
     return 0;
 }
 
+gcc_pure
 static gcc_always_inline int
 strref_lower_cmp_c(const struct strref *s, const char *p)
 {

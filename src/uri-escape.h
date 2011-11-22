@@ -17,6 +17,7 @@ size_t
 uri_escape(char *dest, const char *src, size_t src_length,
            char escape_char);
 
+gcc_pure gcc_malloc
 static inline const char *
 uri_escape_dup(struct pool *pool, const char *src, size_t src_length,
                char escape_char)

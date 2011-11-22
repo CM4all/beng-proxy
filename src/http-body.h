@@ -9,6 +9,8 @@
 
 #include "istream.h"
 
+#include <inline/compiler.h>
+
 #include <stddef.h>
 
 struct pool;
@@ -43,6 +45,7 @@ http_body_eof(struct http_body_reader *body)
     return body->rest == 0 || body->rest == -2;
 }
 
+gcc_pure
 off_t
 http_body_available(const struct http_body_reader *body,
                     const struct fifo_buffer *buffer, bool partial);
@@ -63,6 +66,7 @@ http_body_try_direct(struct http_body_reader *body, int fd,
  * the body is empty, or if the data in the buffer contains enough for
  * the full response.
  */
+gcc_pure
 bool
 http_body_socket_is_done(struct http_body_reader *body,
                          const struct fifo_buffer *buffer);

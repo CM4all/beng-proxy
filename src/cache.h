@@ -7,6 +7,7 @@
 #ifndef __BENG_CACHE_H
 #define __BENG_CACHE_H
 
+#include <inline/compiler.h>
 #include <inline/list.h>
 
 #include <sys/time.h>
@@ -49,6 +50,7 @@ struct cache_class {
     void (*destroy)(struct cache_item *item);
 };
 
+gcc_malloc
 struct cache *
 cache_new(struct pool *pool, const struct cache_class *class,
           unsigned hashtable_capacity, size_t max_size);
@@ -59,6 +61,7 @@ cache_close(struct cache *cache);
 void
 cache_flush(struct cache *cache);
 
+gcc_pure
 struct cache_item *
 cache_get(struct cache *cache, const char *key);
 
@@ -71,6 +74,7 @@ cache_get(struct cache *cache, const char *key);
  * @param match the match callback function
  * @param ctx a context pointer for the callback
  */
+gcc_pure
 struct cache_item *
 cache_get_match(struct cache *cache, const char *key,
                 bool (*match)(const struct cache_item *, void *),

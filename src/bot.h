@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_BOT_H
 #define BENG_PROXY_BOT_H
 
+#include <inline/compiler.h>
+
 #include <stdbool.h>
 
 /**
@@ -15,6 +17,7 @@
  * bots in the world.  This is just here to optimize session
  * management: don't create sessions for bots.
  */
+gcc_pure
 bool
 user_agent_is_bot(const char *user_agent);
 

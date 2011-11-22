@@ -56,6 +56,7 @@ hashmap_remove_all_match(struct hashmap *map,
                                        void *ctx),
                          void *ctx);
 
+gcc_pure
 void *
 hashmap_get(const struct hashmap *map, const char *key);
 
@@ -66,6 +67,7 @@ hashmap_get(const struct hashmap *map, const char *key);
  * function
  * @return the next value, or NULL if there are no more
  */
+gcc_pure
 void *
 hashmap_get_next(const struct hashmap *map, const char *key, const void *prev);
 

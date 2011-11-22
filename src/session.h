@@ -165,6 +165,7 @@ session_manager_event_add(void);
 void
 session_manager_event_del(void);
 
+gcc_pure
 static inline bool
 session_id_is_defined(session_id_t id)
 {
@@ -256,9 +257,11 @@ session_put(struct session *session);
 void
 session_delete(session_id_t id);
 
+gcc_pure
 struct widget_session *
 session_get_widget(struct session *session, const char *id, bool create);
 
+gcc_pure
 struct widget_session *
 widget_session_get_child(struct widget_session *parent, const char *id,
                          bool create);

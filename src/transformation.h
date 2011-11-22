@@ -9,6 +9,8 @@
 
 #include "resource-address.h"
 
+#include <inline/compiler.h>
+
 struct pool;
 
 struct transformation {
@@ -38,12 +40,15 @@ struct transformation {
  * Returns true if the first "PROCESS" transformation in the chain (if
  * any) includes the "CONTAINER" processor option.
  */
+gcc_pure
 bool
 transformation_is_container(const struct transformation *t);
 
+gcc_malloc
 struct transformation *
 transformation_dup(struct pool *pool, const struct transformation *src);
 
+gcc_malloc
 struct transformation *
 transformation_dup_chain(struct pool *pool, const struct transformation *src);
 

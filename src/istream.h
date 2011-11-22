@@ -10,6 +10,8 @@
 #include "pool.h"
 #include "istream-direct.h"
 
+#include <inline/compiler.h>
+
 #include <glib.h>
 
 #include <assert.h>
@@ -151,6 +153,7 @@ istream_struct_cast(struct istream *istream)
     return (struct istream *)istream;
 }
 
+gcc_pure
 static inline off_t
 istream_available(struct istream *istream, bool partial)
 {
@@ -266,6 +269,7 @@ istream_read(struct istream *istream)
 #endif
 }
 
+gcc_pure
 static inline int
 istream_as_fd(struct istream *istream)
 {

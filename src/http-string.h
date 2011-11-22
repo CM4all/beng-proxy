@@ -45,6 +45,7 @@ char_is_http_ht(char ch)
     return ch == '\t';
 }
 
+gcc_pure
 static gcc_always_inline bool
 char_is_http_separator(char ch)
 {
@@ -56,6 +57,7 @@ char_is_http_separator(char ch)
         char_is_http_sp(ch) || char_is_http_ht(ch);
 }
 
+gcc_pure
 static gcc_always_inline bool
 char_is_http_token(char ch)
 {
@@ -78,6 +80,7 @@ http_next_name_value(struct pool *pool, struct strref *input,
                      struct strref *name, struct strref *value,
                      bool rfc_ignorant);
 
+gcc_pure
 static inline bool
 http_must_quote_token(const struct strref *src)
 {

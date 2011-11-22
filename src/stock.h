@@ -13,6 +13,7 @@
 #ifndef __BENG_STOCK_H
 #define __BENG_STOCK_H
 
+#include <inline/compiler.h>
 #include <inline/list.h>
 
 #include <glib.h>
@@ -69,6 +70,7 @@ stock_free(struct stock *stock);
  * Returns true if there are no items in the stock - neither idle nor
  * busy.
  */
+gcc_pure
 bool
 stock_is_empty(const struct stock *stock);
 
@@ -82,6 +84,7 @@ stock_get(struct stock *stock, struct pool *pool, void *info,
  * This requires a stock class which finishes the create() method
  * immediately.
  */
+gcc_pure
 struct stock_item *
 stock_get_now(struct stock *stock, struct pool *pool, void *info, GError **error_r);
 
@@ -105,6 +108,7 @@ stock_del(struct stock_item *item);
 
 struct hstock;
 
+gcc_malloc
 struct hstock *
 hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
            unsigned limit);

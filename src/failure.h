@@ -7,6 +7,8 @@
 #ifndef __BENG_FAILURE_H
 #define __BENG_FAILURE_H
 
+#include <inline/compiler.h>
+
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -61,12 +63,14 @@ void
 failure_unset(const struct sockaddr *address, size_t length,
               enum failure_status status);
 
+gcc_pure
 enum failure_status
 failure_get_status(const struct sockaddr *address, size_t length);
 
 /**
  * Returns true if the specified address has failed.
  */
+gcc_pure
 static inline bool
 failure_check(const struct sockaddr *address, size_t length)
 {

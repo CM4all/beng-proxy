@@ -127,6 +127,7 @@ widget_init_root(struct widget *widget, struct pool *pool, const char *id);
 void
 widget_set_id(struct widget *widget, struct pool *pool, const struct strref *id);
 
+gcc_pure
 static inline struct widget *
 widget_root(struct widget *widget)
 {
@@ -135,6 +136,7 @@ widget_root(struct widget *widget)
     return widget;
 }
 
+gcc_pure
 struct widget *
 widget_get_child(struct widget *widget, const char *id);
 
@@ -186,12 +188,14 @@ struct widget_session *
 widget_get_session(struct widget *widget, struct session *session,
                    bool create);
 
+gcc_pure gcc_malloc
 const struct widget_ref *
 widget_ref_parse(struct pool *pool, const char *p);
 
 /**
  * Is the specified "inner" reference inside or the same as "outer"?
  */
+gcc_pure
 bool
 widget_ref_includes(const struct widget_ref *outer,
                     const struct widget_ref *inner);
@@ -219,6 +223,7 @@ widget_copy_from_location(struct widget *widget, struct session *session,
 const struct resource_address *
 widget_determine_address(const struct widget *widget, bool stateful);
 
+gcc_pure
 static inline const struct resource_address *
 widget_address(struct widget *widget)
 {
@@ -228,6 +233,7 @@ widget_address(struct widget *widget)
     return widget->lazy.address;
 }
 
+gcc_pure
 static inline const struct resource_address *
 widget_stateless_address(struct widget *widget)
 {
@@ -238,6 +244,7 @@ widget_stateless_address(struct widget *widget)
     return widget->lazy.stateless_address;
 }
 
+gcc_pure
 const char *
 widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
                     const struct strref *relative_uri);
@@ -245,11 +252,13 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
 /**
  * Returns an URI relative to the widget base address.
  */
+gcc_pure
 const struct strref *
 widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
                     const char *relative_uri, size_t relative_uri_length,
                     struct strref *buffer);
 
+gcc_pure
 const char *
 widget_external_uri(struct pool *pool,
                     const struct parsed_uri *external_uri,
@@ -262,6 +271,7 @@ widget_external_uri(struct pool *pool,
  * Determines whether it is allowed to embed the widget in a page with
  * the specified host name.
  */
+gcc_pure
 bool
 widget_check_host(const struct widget *widget, const char *host,
                   const char *site_name);
@@ -270,6 +280,7 @@ widget_check_host(const struct widget *widget, const char *host,
  * Recursion detection: check if the widget or its parent chain
  * contains the specified class name.
  */
+gcc_pure
 bool
 widget_check_recursion(const struct widget *widget);
 

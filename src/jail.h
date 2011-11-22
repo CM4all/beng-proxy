@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_JAIL_H
 #define BENG_PROXY_JAIL_H
 
+#include <inline/compiler.h>
+
 #include <stdbool.h>
 
 struct pool;
@@ -46,6 +48,7 @@ jail_params_copy(struct pool *pool, struct jail_params *dest,
  * @return the path inside the jail, allocated from the pool, or NULL
  * if the specified path cannot be translated
  */
+gcc_pure
 const char *
 jail_translate_path(const struct jail_config *config, const char *path,
                     const char *document_root, struct pool *pool);

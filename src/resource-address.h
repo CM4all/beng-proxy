@@ -73,6 +73,7 @@ struct resource_address {
     } u;
 };
 
+gcc_pure
 static inline const char *
 resource_address_cgi_uri(struct pool *pool,
                          const struct resource_address *address)
@@ -103,6 +104,7 @@ void
 resource_address_copy(struct pool *pool, struct resource_address *dest,
                       const struct resource_address *src);
 
+gcc_malloc
 static inline struct resource_address *
 resource_address_dup(struct pool *pool, const struct resource_address *src)
 {
@@ -118,6 +120,7 @@ resource_address_dup(struct pool *pool, const struct resource_address *src)
  * support a query string, or if the URI does not have one, the
  * original #resource_address pointer is returned.
  */
+gcc_pure gcc_malloc
 const struct resource_address *
 resource_address_insert_query_string_from(struct pool *pool,
                                           const struct resource_address *src,
@@ -128,6 +131,7 @@ resource_address_insert_query_string_from(struct pool *pool,
  * arguments.  If this resource address does not support URI
  * arguments, the original #resource_address pointer is returned.
  */
+gcc_pure gcc_malloc
 const struct resource_address *
 resource_address_insert_args(struct pool *pool,
                              const struct resource_address *src,
@@ -141,6 +145,7 @@ resource_address_insert_args(struct pool *pool,
  * @return NULL if the suffix does not match, or if this address type
  * cannot have a base address
  */
+gcc_malloc
 struct resource_address *
 resource_address_save_base(struct pool *pool, struct resource_address *dest,
                            const struct resource_address *src,
@@ -153,16 +158,19 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
  * @param suffix the suffix to be addded to #src
  * @return NULL if this address type cannot have a base address
  */
+gcc_malloc
 struct resource_address *
 resource_address_load_base(struct pool *pool, struct resource_address *dest,
                            const struct resource_address *src,
                            const char *suffix);
 
+gcc_pure
 const struct resource_address *
 resource_address_apply(struct pool *pool, const struct resource_address *src,
                        const char *relative, size_t relative_length,
                        struct resource_address *buffer);
 
+gcc_pure
 const struct strref *
 resource_address_relative(const struct resource_address *base,
                           const struct resource_address *address,
@@ -172,6 +180,7 @@ resource_address_relative(const struct resource_address *base,
  * Generates a string identifying the address.  This can be used as a
  * key in a hash table.
  */
+gcc_pure
 const char *
 resource_address_id(const struct resource_address *address, struct pool *pool);
 
@@ -179,6 +188,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool);
  * Determine the URI path.  May return NULL if unknown or not
  * applicable.
  */
+gcc_pure
 const char *
 resource_address_host_and_port(const struct resource_address *address,
                                struct pool *pool);
@@ -187,6 +197,7 @@ resource_address_host_and_port(const struct resource_address *address,
  * Determine the URI path.  May return NULL if unknown or not
  * applicable.
  */
+gcc_pure
 const char *
 resource_address_uri_path(const struct resource_address *address);
 

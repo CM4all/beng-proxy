@@ -7,6 +7,8 @@
 #ifndef __BENG_URI_H
 #define __BENG_URI_H
 
+#include <inline/compiler.h>
+
 #include <stddef.h>
 
 struct pool;
@@ -16,6 +18,7 @@ struct strref;
  * Compresses an URI (eliminates all "/./" and "/../"), and returns
  * the result.  May return NULL if there are too many "/../".
  */
+gcc_pure gcc_malloc
 const char *
 uri_compress(struct pool *pool, const char *uri);
 
@@ -23,6 +26,7 @@ uri_compress(struct pool *pool, const char *uri);
  * Append a relative URI to an absolute base URI, and return the
  * resulting absolute URI.
  */
+gcc_pure gcc_malloc
 const char *
 uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length);
 

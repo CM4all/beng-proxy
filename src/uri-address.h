@@ -10,6 +10,7 @@
 #include "address-list.h"
 
 #include <inline/list.h>
+#include <inline/compiler.h>
 
 #include <sys/socket.h>
 
@@ -25,9 +26,11 @@ struct uri_with_address {
     struct address_list addresses;
 };
 
+gcc_malloc
 struct uri_with_address *
 uri_address_new(struct pool *pool, const char *uri);
 
+gcc_malloc
 struct uri_with_address *
 uri_address_dup(struct pool *pool, const struct uri_with_address *uwa);
 
@@ -35,6 +38,7 @@ uri_address_dup(struct pool *pool, const struct uri_with_address *uwa);
  * Duplicates this #uri_with_address object and inserts the specified
  * query string into the URI.
  */
+gcc_malloc
 struct uri_with_address *
 uri_address_insert_query_string(struct pool *pool,
                                 const struct uri_with_address *uwa,
@@ -44,6 +48,7 @@ uri_address_insert_query_string(struct pool *pool,
  * Duplicates this #uri_with_address object and inserts the specified
  * arguments into the URI.
  */
+gcc_malloc
 struct uri_with_address *
 uri_address_insert_args(struct pool *pool,
                         const struct uri_with_address *uwa,
@@ -56,6 +61,7 @@ uri_address_add(struct uri_with_address *uwa,
 /**
  * Is there no more than one address?
  */
+gcc_pure
 bool
 uri_address_is_single(const struct uri_with_address *uwa);
 
@@ -63,6 +69,7 @@ uri_address_is_single(const struct uri_with_address *uwa);
  * Generates a unique string which identifies this object in a hash
  * table.  This string stored in a statically allocated buffer.
  */
+gcc_pure
 const char *
 uri_address_key(const struct uri_with_address *uwa);
 
