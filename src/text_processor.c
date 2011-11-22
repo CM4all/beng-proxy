@@ -19,6 +19,7 @@ text_processor_allowed_content_type(const char *content_type)
     assert(content_type != NULL);
 
     return strncmp(content_type, "text/", 5) == 0 ||
+        strncmp(content_type, "application/json", 16) == 0 ||
         strncmp(content_type, "application/javascript", 22) == 0;
 }
 

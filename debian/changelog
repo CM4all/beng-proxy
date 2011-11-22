@@ -1,6 +1,7 @@
 cm4all-beng-proxy (1.4.2) unstable; urgency=low
 
-  * text-processor: allow processing "application/javascript"
+  * text-processor: allow processing "application/javascript",
+    "application/json"
 
  --
 
