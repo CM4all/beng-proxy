@@ -712,7 +712,7 @@ http_client_consume_headers(struct http_client *client)
             /* assertion workaround */
             client->response.read_state = READ_STATUS;
 #endif
-            http_client_abort_response_body(client, error);
+            http_client_abort_response_headers(client, error);
             return false;
         }
 

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.0.15) unstable; urgency=low
 
-  * 
+  * http-client: fix assertion failure on bogus "100 Continue"
 
  --   
 
