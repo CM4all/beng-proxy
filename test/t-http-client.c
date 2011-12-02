@@ -276,7 +276,7 @@ test_empty(pool_t pool, struct context *c)
 {
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
-                        HTTP_METHOD_GET, "/foo", NULL, NULL,
+                        HTTP_METHOD_GET, "/foo", NULL, NULL, false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -300,7 +300,7 @@ test_body(pool_t pool, struct context *c)
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        istream_string_new(pool, "foobar"),
+                        istream_string_new(pool, "foobar"), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -329,7 +329,7 @@ test_close_response_body_early(pool_t pool, struct context *c)
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        istream_string_new(pool, "foobar"),
+                        istream_string_new(pool, "foobar"), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -355,7 +355,7 @@ test_close_response_body_late(pool_t pool, struct context *c)
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        istream_string_new(pool, "foobar"),
+                        istream_string_new(pool, "foobar"), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -381,7 +381,7 @@ test_close_response_body_data(pool_t pool, struct context *c)
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        istream_string_new(pool, "foobar"),
+                        istream_string_new(pool, "foobar"), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -414,7 +414,7 @@ test_close_request_body_early(pool_t pool, struct context *c)
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        request_body,
+                        request_body, false,
                         &my_response_handler, c, &c->async_ref);
 
     GError *error = g_error_new_literal(test_quark(), 0,
@@ -450,7 +450,7 @@ test_close_request_body_fail(pool_t pool, struct context *c)
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        request_body,
+                        request_body, false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -484,6 +484,7 @@ test_data_blocking(pool_t pool, struct context *c)
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
                         istream_head_new(pool, istream_zero_new(pool), 65536),
+                        false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -531,6 +532,7 @@ test_data_blocking2(pool_t pool, struct context *c)
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", request_headers,
                         istream_head_new(pool, istream_zero_new(pool), 256),
+                        false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -576,7 +578,7 @@ test_body_fail(pool_t pool, struct context *c)
 
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        istream_fail_new(pool, error),
+                        istream_fail_new(pool, error), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -602,7 +604,7 @@ test_head(pool_t pool, struct context *c)
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_HEAD, "/foo", NULL,
-                        istream_string_new(pool, "foobar"),
+                        istream_string_new(pool, "foobar"), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -628,7 +630,7 @@ test_ignored_body(pool_t pool, struct context *c)
     c->fd = connect_null();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        istream_zero_new(pool),
+                        istream_zero_new(pool), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -656,7 +658,7 @@ test_close_ignored_request_body(pool_t pool, struct context *c)
     c->close_request_body_early = true;
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        c->request_body = istream_delayed_new(pool),
+                        c->request_body = istream_delayed_new(pool), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -685,7 +687,7 @@ test_head_close_ignored_request_body(pool_t pool, struct context *c)
     c->close_request_body_early = true;
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_HEAD, "/foo", NULL,
-                        c->request_body = istream_delayed_new(pool),
+                        c->request_body = istream_delayed_new(pool), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -713,7 +715,7 @@ test_close_request_body_eor(pool_t pool, struct context *c)
     c->close_request_body_eof = true;
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        c->request_body = istream_delayed_new(pool),
+                        c->request_body = istream_delayed_new(pool), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -741,7 +743,7 @@ test_close_request_body_eor2(pool_t pool, struct context *c)
     c->close_request_body_eof = true;
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        c->request_body = istream_delayed_new(pool),
+                        c->request_body = istream_delayed_new(pool), false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
     pool_commit();
@@ -768,7 +770,7 @@ test_bogus_100(pool_t pool, struct context *c)
 {
     c->fd = connect_twice_100();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
-                        HTTP_METHOD_GET, "/foo", NULL, NULL,
+                        HTTP_METHOD_GET, "/foo", NULL, NULL, false,
                         &my_response_handler, c, &c->async_ref);
 
     pool_unref(pool);
@@ -796,7 +798,7 @@ test_twice_100(pool_t pool, struct context *c)
     c->fd = connect_twice_100();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        c->request_body = istream_delayed_new(pool),
+                        c->request_body = istream_delayed_new(pool), false,
                         &my_response_handler, c, &c->async_ref);
     async_ref_clear(istream_delayed_async_ref(c->request_body));
 

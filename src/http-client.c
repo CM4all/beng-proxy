@@ -1114,7 +1114,7 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
-                    istream_t body,
+                    istream_t body, bool expect_100,
                     const struct http_response_handler *handler,
                     void *ctx,
                     struct async_operation_ref *async_ref)
@@ -1188,9 +1188,11 @@ http_client_request(pool_t caller_pool, int fd, enum istream_direct fd_type,
                          client->request.content_length_buffer);
         }
 
-        header_write(headers2, "expect", "100-continue");
-
-        body = client->request.body = istream_optional_new(pool, body);
+        if (expect_100) {
+            body = client->request.body = istream_optional_new(pool, body);
+            header_write(headers2, "expect", "100-continue");
+        } else
+            client->request.body = NULL;
     } else
         client->request.body = NULL;
 
