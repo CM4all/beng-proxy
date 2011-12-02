@@ -86,6 +86,12 @@ connect_fixed(void)
     return connect_server("./test/t-http-server-fixed");
 }
 
+static int
+connect_twice_100(void)
+{
+    return connect_server("./test/twice_100.sh");
+}
+
 struct context {
     pool_t pool;
 
@@ -753,6 +759,62 @@ test_close_request_body_eor2(pool_t pool, struct context *c)
     assert(c->body_error == NULL);
 }
 
+/**
+ * Check if the HTTP client handles "100 Continue" received without
+ * announcing the expectation.
+ */
+static void
+test_bogus_100(pool_t pool, struct context *c)
+{
+    c->fd = connect_twice_100();
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL, NULL,
+                        &my_response_handler, c, &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->aborted);
+    assert(c->request_error != NULL);
+    assert(c->request_error->domain == http_client_quark());
+    assert(c->request_error->code == HTTP_CLIENT_UNSPECIFIED);
+    assert(strcmp(c->request_error->message, "unexpected status 100") == 0);
+    g_error_free(c->request_error);
+    assert(c->body_error == NULL);
+}
+
+/**
+ * Check if the HTTP client handles "100 Continue" received twice
+ * well.
+ */
+static void
+test_twice_100(pool_t pool, struct context *c)
+{
+    c->fd = connect_twice_100();
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
+                        c->request_body = istream_delayed_new(pool),
+                        &my_response_handler, c, &c->async_ref);
+    async_ref_clear(istream_delayed_async_ref(c->request_body));
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->aborted);
+    assert(c->request_error != NULL);
+    assert(c->request_error->domain == http_client_quark());
+    assert(c->request_error->code == HTTP_CLIENT_UNSPECIFIED);
+    assert(strcmp(c->request_error->message, "unexpected status 100") == 0);
+    g_error_free(c->request_error);
+    assert(c->body_error == NULL);
+}
+
 
 /*
  * main
@@ -799,6 +861,8 @@ int main(int argc, char **argv) {
     run_test(pool, test_head_close_ignored_request_body);
     run_test(pool, test_close_request_body_eor);
     run_test(pool, test_close_request_body_eor2);
+    run_test(pool, test_bogus_100);
+    run_test(pool, test_twice_100);
 
     pool_unref(pool);
     pool_commit();
