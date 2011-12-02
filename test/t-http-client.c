@@ -93,6 +93,12 @@ connect_twice_100(void)
     return connect_server("./test/twice_100.sh");
 }
 
+static int
+connect_hold(void)
+{
+    return connect_server("./test/t-http-server-hold");
+}
+
 struct context {
     pool_t pool;
 
@@ -818,6 +824,32 @@ test_twice_100(pool_t pool, struct context *c)
     assert(c->body_error == NULL);
 }
 
+static void
+test_hold(pool_t pool, struct context *c)
+{
+    istream_t request_body = istream_block_new(pool);
+
+    c->fd = connect_hold();
+    http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
+                        HTTP_METHOD_GET, "/foo", NULL,
+                        request_body, false,
+                        &my_response_handler, c, &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(c->body_abort);
+    assert(c->request_error == NULL);
+    assert(c->body_error != NULL);
+    g_error_free(c->body_error);
+}
+
 
 /*
  * main
@@ -866,6 +898,7 @@ int main(int argc, char **argv) {
     run_test(pool, test_close_request_body_eor2);
     run_test(pool, test_bogus_100);
     run_test(pool, test_twice_100);
+    run_test(pool, test_hold);
 
     pool_unref(pool);
     pool_commit();

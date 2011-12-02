@@ -30,6 +30,7 @@ test/run-html-unescape
 test/run-html-escape
 test/t-html-escape
 test/t-http-server-mirror
+test/t-http-server-hold
 test/t-http-server-null
 test/t-http-server-dummy
 test/t-http-server-fixed
