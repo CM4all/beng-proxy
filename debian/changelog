@@ -4,6 +4,7 @@ cm4all-beng-proxy (1.0.15) unstable; urgency=low
   * handler: don't close the request body twice
   * session: add a missing out-of-memory check
   * fcgi-client: check for EV_READ event
+  * fcgi-serialize: fix serializing parameter without value
 
  --   
 
