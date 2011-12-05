@@ -1,3 +1,9 @@
+cm4all-beng-proxy (1.1.20) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-beng-proxy (1.1.19) unstable; urgency=low
 
   * {css_,}processor: quote widget classes for prefixing XML IDs, CSS classes
