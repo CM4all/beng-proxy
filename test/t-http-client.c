@@ -52,6 +52,15 @@ connect_server(const char *path)
         close(sv[1]);
         execl(path, path,
               "0", "0", NULL);
+
+        const char *srcdir = getenv("srcdir");
+        if (srcdir != NULL) {
+            /* support automake out-of-tree build */
+            chdir(srcdir);
+            execl(path, path,
+                  "0", "0", NULL);
+        }
+
         perror("exec() failed");
         exit(EXIT_FAILURE);
     }
