@@ -55,7 +55,9 @@ my_request(struct http_server_request *request, void *_ctx,
 {
     struct context *ctx = _ctx;
 
-    ctx->request_body = request->body;
+    ctx->request_body = request->body != NULL
+        ? istream_hold_new(request->pool, request->body)
+        : NULL;
 
     struct istream *response_body = istream_delayed_new(request->pool);
     async_init(&ctx->operation, &my_operation);

@@ -991,7 +991,7 @@ test_t_http_server_hold_SOURCES = test/t-http-server-hold.c \
 	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
 	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
-	src/istream-delayed.c \
+	src/istream-delayed.c src/istream-hold.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
 	src/http-body.c src/date.c \

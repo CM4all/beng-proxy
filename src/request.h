@@ -90,7 +90,11 @@ struct request {
      */
     const struct widget_ref *proxy_ref;
 
-    bool body_consumed;
+    /**
+     * A pointer to the request body, or NULL if there is none.  Once
+     * the request body has been "used", this pointer gets cleared.
+     */
+    struct istream *body;
 
     /**
      * Is the processor active, and is there a focused widget?
