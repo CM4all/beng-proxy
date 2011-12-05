@@ -173,10 +173,9 @@ response_invoke_processor(struct request *request2,
         return;
     }
 
-    if (http_server_request_has_body(request) && !request2->body_consumed &&
-        widget->from_request.focus_ref != NULL) {
-        request_body = request->body;
-        request2->body_consumed = true;
+    if (request2->body != NULL && widget->from_request.focus_ref != NULL) {
+        request_body = request2->body;
+        request2->body = NULL;
     } else {
         request_body = NULL;
     }

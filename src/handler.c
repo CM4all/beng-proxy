@@ -515,7 +515,9 @@ handle_http_request(struct client_connection *connection,
 #ifdef DUMP_WIDGET_TREE
     request2->dump_widget_tree = NULL;
 #endif
-    request2->body_consumed = false;
+    request2->body = http_server_request_has_body(request)
+        ? istream_hold_new(request->pool, request->body)
+        : NULL;
     request2->transformed = false;
 
     async_init(&request2->operation, &handler_operation);

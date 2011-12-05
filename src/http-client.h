@@ -71,6 +71,8 @@ http_client_quark(void)
  * @param uri the request URI path
  * @param headers the serialized request headers (optional)
  * @param body the request body (optional)
+ * @param expect_100 true to send "Expect: 100-continue" in the
+ * presence of a request body
  * @param handler a callback function which receives the response
  * @param ctx a context pointer for the callback function
  * @param async_ref a handle which may be used to abort the operation
@@ -80,7 +82,7 @@ http_client_request(pool_t pool, int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
-                    istream_t body,
+                    istream_t body, bool expect_100,
                     const struct http_response_handler *handler,
                     void *ctx,
                     struct async_operation_ref *async_ref);

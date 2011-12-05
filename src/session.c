@@ -920,6 +920,8 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
 
         /* lazy initialisation */
         *map_r = map = dhashmap_new(session->pool, 16);
+        if (map == NULL)
+            return NULL;
     } else {
         ws = (struct widget_session *)dhashmap_get(map, id);
         if (ws != NULL)
@@ -938,6 +940,11 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
     ws->parent = NULL;
     ws->session = session;
     ws->id = d_strdup(session->pool, id);
+    if (ws->id == NULL) {
+        d_free(session->pool, ws);
+        return NULL;
+    }
+
     ws->children = NULL;
     ws->path_info = NULL;
     ws->query_string = NULL;

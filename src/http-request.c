@@ -155,7 +155,8 @@ http_request_stock_ready(struct stock_item *item, void *ctx)
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         &http_socket_lease, hr,
-                        hr->method, hr->uri, hr->headers, hr->body,
+                        hr->method, hr->uri, hr->headers,
+                        hr->body, true,
                         &http_request_response_handler, hr,
                         hr->async_ref);
 }

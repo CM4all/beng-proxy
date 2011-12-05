@@ -36,9 +36,10 @@ request_processor_enabled(const struct request *request)
 void
 request_discard_body(struct request *request)
 {
-    if (request->request->body != NULL && !request->body_consumed) {
-        request->body_consumed = true;
-        istream_close_unused(request->request->body);
+    if (request->body != NULL) {
+        struct istream *body = request->body;
+        request->body = NULL;
+        istream_close_unused(body);
     }
 }
 

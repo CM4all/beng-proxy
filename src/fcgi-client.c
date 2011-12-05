@@ -547,7 +547,8 @@ fcgi_client_recv_event_callback(int fd __attr_unused, short event, void *ctx)
         return;
     }
 
-    fcgi_client_try_read(client);
+    if (likely(event & EV_READ))
+        fcgi_client_try_read(client);
 
     pool_commit();
 }
