@@ -721,6 +721,7 @@ check_PROGRAMS = \
 	test/t-http-server-mirror test/t-http-server-null \
 	test/t-http-server-dummy \
 	test/t-http-server-fixed \
+	test/t-http-server-hold \
 	test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
@@ -1026,6 +1027,33 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
 test_t_http_server_mirror_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
+
+test_t_http_server_hold_SOURCES = test/t-http-server-hold.c \
+	src/http-server.c src/http-server-send.c src/http-server-request.c \
+	src/http-server-read.c src/http-server-response.c \
+	src/address.c \
+	src/fifo-buffer.c \
+	src/duplex.c \
+	$(POOL_SRC) \
+	src/buffered-io.c \
+	src/strmap.c src/hashmap.c \
+	src/header-writer.c \
+	src/istream-gb.c \
+	src/istream-forward.c src/istream-string.c src/istream-dechunk.c \
+	src/istream-chunked.c src/istream-pipe.c src/istream-memory.c \
+	src/istream-cat.c src/istream-null.c \
+	src/istream-delayed.c src/istream-hold.c \
+	src/pipe-stock.c src/stock.c \
+	src/direct.c \
+	src/http-body.c src/date.c \
+	src/fd_util.c src/fd-util.c \
+	src/growing-buffer.c \
+	src/header-parser.c src/format.c \
+	src/strutil.c src/gmtime.c src/tpool.c src/event2.c
+test_t_http_server_hold_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)

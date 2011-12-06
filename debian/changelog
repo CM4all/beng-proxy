@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.2.7) unstable; urgency=low
 
-  * 
+  * merge release 1.1.20
 
  --   
 
@@ -52,6 +52,13 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.20) unstable; urgency=low
+
+  * merge release 1.0.15
+  * processor: don't rewrite "mailto:" hyperlinks
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 05 Dec 2011 18:37:10 -0000
 
 cm4all-beng-proxy (1.1.19) unstable; urgency=low
 
@@ -206,6 +213,16 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.15) unstable; urgency=low
+
+  * http-client: fix assertion failure on bogus "100 Continue"
+  * handler: don't close the request body twice
+  * session: add a missing out-of-memory check
+  * fcgi-client: check for EV_READ event
+  * fcgi-serialize: fix serializing parameter without value
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 05 Dec 2011 17:47:20 -0000
+
 cm4all-beng-proxy (1.0.14) unstable; urgency=low
 
   * http-server: don't generate chunked HEAD response
