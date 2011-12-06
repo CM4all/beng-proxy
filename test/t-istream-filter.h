@@ -177,8 +177,8 @@ run_istream_ctx(struct ctx *ctx, struct pool *pool, istream_t istream)
 {
     ctx->eof = false;
 
-    istream_available(istream, false);
-    istream_available(istream, true);
+    gcc_unused off_t a1 = istream_available(istream, false);
+    gcc_unused off_t a2 = istream_available(istream, true);
 
     istream_handler_set(istream, &my_istream_handler, ctx, 0);
 
