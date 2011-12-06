@@ -5,7 +5,7 @@ cm4all-beng-proxy (1.4.2) unstable; urgency=low
   * uri-relative: allow backtracking to the widget base with "../"
   * merge release 1.2.7
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 06 Dec 2011 12:39:24 -0000
 
 cm4all-beng-proxy (1.4.1) unstable; urgency=low
 
