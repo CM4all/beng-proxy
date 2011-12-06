@@ -22,6 +22,11 @@ main(gcc_unused int argc, gcc_unused char **argv)
     assert(strcmp(uri_compress(pool, "/foo///bar/"), "/foo/bar/") == 0);
     assert(strcmp(uri_compress(pool, "/1/2/../3/"), "/1/3/") == 0);
     assert(strcmp(uri_compress(pool, "/1/2/../../3/"), "/3/") == 0);
+    assert(strcmp(uri_compress(pool, "foo/../bar"), "bar") == 0);
+    assert(strcmp(uri_compress(pool, "foo//../bar"), "bar") == 0);
+    assert(strcmp(uri_compress(pool, "foo/.."), "") == 0);
+    assert(strcmp(uri_compress(pool, "foo/../."), "") == 0);
+
     assert(uri_compress(pool, "/1/2/../../../3/") == NULL);
     assert(uri_compress(pool, "/../") == NULL);
     assert(uri_compress(pool, "/a/../../") == NULL);

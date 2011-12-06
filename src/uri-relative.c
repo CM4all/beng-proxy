@@ -51,20 +51,20 @@ uri_compress(struct pool *pool, const char *uri)
     /* eliminate "/../" with backtracking */
 
     while ((p = strstr(dest, "/../")) != NULL) {
+        if (p == dest) {
+            /* this ".." cannot be resolved - scream! */
+            p_free(pool, dest);
+            return NULL;
+        }
+
         char *q = p;
 
         /* backtrack to the previous slash - we can't use strrchr()
            here, and memrchr() is not portable :( */
 
         do {
-            if (q <= dest) {
-                /* this ".." cannot be resolved - scream! */
-                p_free(pool, dest);
-                return NULL;
-            }
-
             --q;
-        } while (*q != '/');
+        } while (q >= dest && *q != '/');
 
         /* kill it */
 
@@ -78,16 +78,31 @@ uri_compress(struct pool *pool, const char *uri)
         if (p[1] == '.' && p[2] == 0)
             p[1] = 0;
         else if (p[1] == '.' && p[2] == '.' && p[3] == 0) {
-            *p = 0;
-
-            p = strrchr(dest, '/');
-            if (p == NULL) {
+            if (p == dest) {
+                /* refuse to delete the leading slash */
                 p_free(pool, dest);
                 return NULL;
             }
 
+            *p = 0;
+
+            p = strrchr(dest, '/');
+            if (p == NULL) {
+                /* if the string doesn't start with a slash, then an
+                   empty return value is allowed */
+                p_free(pool, dest);
+                return "";
+            }
+
             p[1] = 0;
         }
+    }
+
+    if (dest[0] == '.' && dest[1] == 0) {
+        /* if the string doesn't start with a slash, then an empty
+           return value is allowed */
+        p_free(pool, dest);
+        return "";
     }
 
     return dest;
