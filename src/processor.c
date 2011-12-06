@@ -689,8 +689,12 @@ transform_uri_attribute(struct processor *processor,
                         enum uri_mode mode,
                         const char *view)
 {
-    struct widget *widget = NULL;
     const struct strref *value = &attr->value;
+    if (strref_starts_with_n(value, "mailto:", 7))
+        /* ignore email links */
+        return;
+
+    struct widget *widget = NULL;
     struct strref child_id, suffix;
     istream_t istream;
 
