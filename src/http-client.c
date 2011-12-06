@@ -719,7 +719,7 @@ http_client_consume_headers(struct http_client *client)
             /* assertion workaround */
             client->response.read_state = READ_STATUS;
 #endif
-            http_client_abort_response_body(client, error);
+            http_client_abort_response_headers(client, error);
             return false;
         }
 
@@ -1130,7 +1130,7 @@ http_client_request(struct pool *caller_pool,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
-                    istream_t body,
+                    istream_t body, bool expect_100,
                     const struct http_response_handler *handler,
                     void *ctx,
                     struct async_operation_ref *async_ref)
@@ -1205,7 +1205,7 @@ http_client_request(struct pool *caller_pool,
                          client->request.content_length_buffer);
         }
 
-        off_t available = istream_available(body, true);
+        off_t available = expect_100 ? istream_available(body, true) : 0;
         if (available < 0 || available >= EXPECT_100_THRESHOLD) {
             /* large request body: ask the server for confirmation
                that he's really interested */

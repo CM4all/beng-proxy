@@ -18,7 +18,8 @@ request_forward(struct forward_request *dest, struct request *request2,
     struct http_server_request *request = request2->request;
     struct session *session;
 
-    assert(!request2->body_consumed);
+    assert(!http_server_request_has_body(request) ||
+           request2->body != NULL);
 
     /* send a request body? */
 
@@ -32,8 +33,8 @@ request_forward(struct forward_request *dest, struct request *request2,
         /* forward body (if any) to the real server */
 
         dest->method = request->method;
-        dest->body = request->body;
-        request2->body_consumed = true;
+        dest->body = request2->body;
+        request2->body = NULL;
     }
 
     /* generate request headers */

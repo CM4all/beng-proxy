@@ -877,7 +877,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
 
             return true;
         } else if (strcmp(word, "ssl") == 0) {
-            bool value;
+            bool value = false;
             if (!next_bool(&p, &value, error_r))
                 return false;
 
