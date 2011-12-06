@@ -173,10 +173,9 @@ response_invoke_processor(struct request *request2,
         return;
     }
 
-    if (http_server_request_has_body(request) && !request2->body_consumed &&
-        widget->from_request.focus_ref != NULL) {
-        request_body = request->body;
-        request2->body_consumed = true;
+    if (request2->body != NULL && widget->from_request.focus_ref != NULL) {
+        request_body = request2->body;
+        request2->body = NULL;
     } else {
         request_body = NULL;
     }
@@ -337,16 +336,6 @@ response_invoke_css_processor(struct request *request2,
                                           status, response_headers, body);
 }
 
-static bool
-text_processable(const struct strmap *headers)
-{
-    const char *content_type;
-
-    content_type = strmap_get_checked(headers, "content-type");
-    return content_type != NULL &&
-        strncmp(content_type, "text/", 5) == 0;
-}
-
 static void
 response_invoke_text_processor(struct request *request2,
                                http_status_t status,
@@ -364,7 +353,7 @@ response_invoke_text_processor(struct request *request2,
         return;
     }
 
-    if (!text_processable(response_headers)) {
+    if (!text_processor_allowed(response_headers)) {
         istream_close_unused(body);
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");

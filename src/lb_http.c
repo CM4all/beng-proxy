@@ -197,7 +197,7 @@ my_stock_ready(struct stock_item *item, void *ctx)
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         &my_socket_lease, request2,
                         request->method, request->uri,
-                        headers2, request->body,
+                        headers2, request->body, true,
                         &my_response_handler, request2,
                         request2->async_ref);
 }

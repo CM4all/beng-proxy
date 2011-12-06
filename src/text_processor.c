@@ -12,6 +12,25 @@
 
 #include <assert.h>
 
+gcc_pure
+static bool
+text_processor_allowed_content_type(const char *content_type)
+{
+    assert(content_type != NULL);
+
+    return strncmp(content_type, "text/", 5) == 0 ||
+        strncmp(content_type, "application/json", 16) == 0 ||
+        strncmp(content_type, "application/javascript", 22) == 0;
+}
+
+bool
+text_processor_allowed(const struct strmap *headers)
+{
+    const char *content_type = strmap_get_checked(headers, "content-type");
+    return content_type != NULL &&
+        text_processor_allowed_content_type(content_type);
+}
+
 static void
 headers_copy2(struct strmap *in, struct strmap *out,
               const char *const* keys)

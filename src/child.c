@@ -23,7 +23,7 @@ struct child {
     void *callback_ctx;
 };
 
-static bool shutdown = false;
+static bool shutdown_flag = false;
 static struct pool *pool;
 static struct list_head children;
 static struct event sigchld_event;
@@ -55,7 +55,7 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
             continue;
 
         list_remove(&child->siblings);
-        if (shutdown && list_empty(&children))
+        if (shutdown_flag && list_empty(&children))
             children_event_del();
 
         if (child->callback != NULL)
@@ -69,7 +69,7 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
 void
 children_init(struct pool *_pool)
 {
-    assert(!shutdown);
+    assert(!shutdown_flag);
 
     pool = _pool;
 
@@ -81,7 +81,7 @@ children_init(struct pool *_pool)
 void
 children_shutdown(void)
 {
-    shutdown = true;
+    shutdown_flag = true;
 
     if (list_empty(&children))
         children_event_del();
@@ -90,7 +90,7 @@ children_shutdown(void)
 void
 children_event_add(void)
 {
-    assert(!shutdown);
+    assert(!shutdown_flag);
 
     event_set(&sigchld_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
               child_event_callback, NULL);
@@ -104,7 +104,7 @@ children_event_del(void)
 
     /* reset the "shutdown" flag, so the test suite may initialize
        this library more than once */
-    shutdown = false;
+    shutdown_flag = false;
 }
 
 void
@@ -112,7 +112,7 @@ child_register(pid_t pid, child_callback_t callback, void *ctx)
 {
     struct child *child = p_malloc(pool, sizeof(*child));
 
-    assert(!shutdown);
+    assert(!shutdown_flag);
 
     child->pid = pid;
     child->callback = callback;

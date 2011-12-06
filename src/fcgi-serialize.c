@@ -66,6 +66,7 @@ fcgi_serialize_pair1(struct growing_buffer *gb, const char *name_and_value)
         ++value;
         value_length = strlen(value);
     } else {
+        name_length = strlen(name_and_value);
         value = "";
         value_length = 0;
     }

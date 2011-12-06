@@ -84,6 +84,12 @@ css_processor(gcc_unused struct pool *pool, struct istream *stream,
     return stream;
 }
 
+bool
+text_processor_allowed(gcc_unused const struct strmap *headers)
+{
+    return false;
+}
+
 struct istream *
 text_processor(gcc_unused struct pool *pool, struct istream *stream,
                gcc_unused const struct widget *widget,

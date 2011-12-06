@@ -7,9 +7,22 @@
 #ifndef BENG_PROXY_TEXT_PROCESSOR_H
 #define BENG_PROXY_TEXT_PROCESSOR_H
 
+#include <inline/compiler.h>
+
+#include <stdbool.h>
+
 struct pool;
+struct strmap;
 struct widget;
 struct processor_env;
+
+/**
+ * Check if the resource described by the specified headers can be
+ * processed by the text processor.
+ */
+gcc_pure
+bool
+text_processor_allowed(const struct strmap *headers);
 
 struct strmap *
 text_processor_header_forward(struct pool *pool, struct strmap *headers);
