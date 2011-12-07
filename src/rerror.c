@@ -41,6 +41,11 @@ response_dispatch_error(struct request *request, GError *error)
             response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
                                       error->message);
             return;
+
+        case WIDGET_ERROR_FORBIDDEN:
+            response_dispatch_message(request, HTTP_STATUS_FORBIDDEN,
+                                      "Forbidden");
+            return;
         }
     }
 

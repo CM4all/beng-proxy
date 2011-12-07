@@ -37,6 +37,11 @@ enum widget_error {
      * container.
      */
     WIDGET_ERROR_NOT_A_CONTAINER,
+
+    /**
+     * The client request is forbidden due to formal reasons.
+     */
+    WIDGET_ERROR_FORBIDDEN,
 };
 
 static inline GQuark

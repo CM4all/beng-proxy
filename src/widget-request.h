@@ -7,6 +7,9 @@
 #ifndef BENG_PROXY_WIDGET_REQUEST_H
 #define BENG_PROXY_WIDGET_REQUEST_H
 
+#include <glib.h>
+
+#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -17,8 +20,9 @@ struct session;
 /**
  * Copy parameters from the request to the widget.
  */
-void
-widget_copy_from_request(struct widget *widget, struct processor_env *env);
+bool
+widget_copy_from_request(struct widget *widget, struct processor_env *env,
+                         GError **error_r);
 
 /**
  * Synchronize the widget with its session.

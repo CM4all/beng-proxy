@@ -5,6 +5,7 @@
  */
 
 #include "widget-request.h"
+#include "widget-quark.h"
 #include "widget.h"
 #include "widget-class.h"
 #include "session.h"
@@ -77,8 +78,9 @@ widget_descendant_has_focus(const struct widget *widget)
         widget->parent->from_request.focus_ref->next != NULL;
 }
 
-void
-widget_copy_from_request(struct widget *widget, struct processor_env *env)
+bool
+widget_copy_from_request(struct widget *widget, struct processor_env *env,
+                         GError **error_r)
 {
     assert(widget != NULL);
     assert(widget->parent != NULL);
@@ -90,16 +92,22 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
     assert(widget->from_request.body == NULL);
 
     if (widget->id == NULL)
-        return;
+        return true;
 
     /* are we focused? */
 
     if (widget_has_focus(widget)) {
         /* we're in focus.  forward query string and request body. */
         widget->from_request.path_info = env->path_info;
-        if (widget->from_request.path_info != NULL)
+        if (widget->from_request.path_info != NULL) {
             widget->from_request.path_info =
                 uri_compress(env->pool, widget->from_request.path_info);
+            if (widget->from_request.path_info == NULL) {
+                g_set_error(error_r, widget_quark(), WIDGET_ERROR_FORBIDDEN,
+                            "path compression failed");
+                return false;
+            }
+        }
 
         widget->from_request.query_string = env->external_uri->query;
 
@@ -113,6 +121,8 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
         widget->from_request.focus_ref = widget->parent->from_request.focus_ref->next;
         widget->parent->from_request.focus_ref = NULL;
     }
+
+    return true;
 }
 
 void
