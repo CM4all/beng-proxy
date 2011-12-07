@@ -12,6 +12,7 @@
 #include "penv.h"
 #include "widget.h"
 #include "widget-class.h"
+#include "widget-request.h"
 #include "widget-lookup.h"
 #include "widget-quark.h"
 #include "session.h"

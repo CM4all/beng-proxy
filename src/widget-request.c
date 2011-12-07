@@ -4,6 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "widget-request.h"
 #include "widget.h"
 #include "widget-class.h"
 #include "session.h"

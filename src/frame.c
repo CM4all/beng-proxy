@@ -11,6 +11,7 @@
 #include "widget-class.h"
 #include "widget-resolver.h"
 #include "widget-lookup.h"
+#include "widget-request.h"
 #include "global.h"
 #include "http-response.h"
 #include "istream.h"

@@ -3,6 +3,7 @@
 #include "widget.h"
 #include "widget-http.h"
 #include "widget-resolver.h"
+#include "widget-request.h"
 #include "processor.h"
 #include "penv.h"
 #include "async.h"

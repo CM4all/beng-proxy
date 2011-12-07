@@ -200,26 +200,6 @@ bool
 widget_ref_includes(const struct widget_ref *outer,
                     const struct widget_ref *inner);
 
-/**
- * Copy parameters from the request to the widget.
- */
-void
-widget_copy_from_request(struct widget *widget, struct processor_env *env);
-
-/**
- * Synchronize the widget with its session.
- */
-void
-widget_sync_session(struct widget *widget, struct session *session);
-
-/**
- * Overwrite request data, copy values from a HTTP redirect location.
- */
-void
-widget_copy_from_location(struct widget *widget, struct session *session,
-                          const char *location, size_t location_length,
-                          struct pool *pool);
-
 const struct resource_address *
 widget_determine_address(const struct widget *widget, bool stateful);
 

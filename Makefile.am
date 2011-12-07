@@ -318,7 +318,7 @@ SRC = src/main.c \
 	src/widget-session.c \
 	src/widget-uri.c \
 	src/widget-quark.h \
-	src/widget-request.c \
+	src/widget-request.c src/widget-request.h \
 	src/widget-registry.c \
 	src/widget-resolver.c \
 	src/widget-dump.h \

@@ -3,6 +3,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-resolver.h"
+#include "widget-request.h"
 #include "uri-parser.h"
 #include "sink-gstring.h"
 #include "tpool.h"

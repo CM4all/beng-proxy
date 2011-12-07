@@ -10,6 +10,7 @@
 #include "parser.h"
 #include "uri-escape.h"
 #include "widget.h"
+#include "widget-request.h"
 #include "widget-lookup.h"
 #include "widget-class.h"
 #include "widget-quark.h"

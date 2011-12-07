@@ -10,6 +10,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-resolver.h"
+#include "widget-request.h"
 #include "async.h"
 #include "global.h"
 #include "http-util.h"
