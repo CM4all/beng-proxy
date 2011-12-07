@@ -12,6 +12,7 @@
 #include "cgi.h"
 #include "fcgi-quark.h"
 #include "was-quark.h"
+#include "widget-quark.h"
 #include "http-error.h"
 #include "http-response.h"
 #include "http-server.h"
@@ -19,6 +20,30 @@
 void
 response_dispatch_error(struct request *request, GError *error)
 {
+    if (error->domain == widget_quark()) {
+        switch ((enum widget_error)error->code) {
+        case WIDGET_ERROR_UNSPECIFIED:
+            break;
+
+        case WIDGET_ERROR_EMPTY:
+        case WIDGET_ERROR_WRONG_TYPE:
+        case WIDGET_ERROR_UNSUPPORTED_ENCODING:
+            response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,
+                                      "Malformed widget response");
+            return;
+
+        case WIDGET_ERROR_NO_SUCH_VIEW:
+            response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
+                                      "No such view");
+            return;
+
+        case WIDGET_ERROR_NOT_A_CONTAINER:
+            response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
+                                      error->message);
+            return;
+        }
+    }
+
     if (error->domain == translate_quark())
         response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,
                                   "Translation server failed");

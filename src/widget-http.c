@@ -13,6 +13,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-lookup.h"
+#include "widget-quark.h"
 #include "session.h"
 #include "cookie-client.h"
 #include "async.h"
@@ -62,12 +63,6 @@ struct embed {
     struct http_response_handler_ref handler_ref;
     struct async_operation_ref *async_ref;
 };
-
-static inline GQuark
-widget_quark(void)
-{
-    return g_quark_from_static_string("widget");
-}
 
 static struct session *
 session_get_if_stateful(const struct embed *embed)
@@ -238,7 +233,7 @@ widget_response_process(struct embed *embed, http_status_t status,
 
     if (body == NULL) {
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
                         widget_path(widget));
         widget_dispatch_error(embed, error);
@@ -249,7 +244,7 @@ widget_response_process(struct embed *embed, http_status_t status,
         istream_close_unused(body);
 
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-HTML response",
                         widget_path(widget));
         widget_dispatch_error(embed, error);
@@ -290,7 +285,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
 
     if (body == NULL) {
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
                         widget_path(widget));
         widget_dispatch_error(embed, error);
@@ -301,7 +296,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
         istream_close_unused(body);
 
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-CSS response",
                         widget_path(widget));
         widget_dispatch_error(embed, error);
@@ -320,7 +315,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
 
     if (body == NULL) {
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
                         widget_path(widget));
         widget_dispatch_error(embed, error);
@@ -331,7 +326,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
         istream_close_unused(body);
 
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-text response",
                         widget_path(widget));
         widget_dispatch_error(embed, error);
@@ -387,7 +382,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
             istream_close_unused(body);
 
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                         "widget '%s' sent non-identity response, "
                         "cannot transform",
                         widget_path(embed->widget));
@@ -462,7 +457,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
             istream_close_unused(body);
 
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                         "Cannot process container widget response of %s",
                         widget_path(embed->widget));
         embed->lookup_handler->error(error, embed->lookup_handler_ctx);
@@ -556,7 +551,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
                     istream_close_unused(body);
 
                 GError *error =
-                    g_error_new(widget_quark(), 0,
+                    g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
                                 "No such view: %s", view_name);
                 widget_dispatch_error(embed, error);
                 return;
@@ -606,7 +601,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
     const struct widget_view *view = widget_get_view(widget);
     if (view == NULL) {
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
                         "unknown view name for class '%s': '%s'",
                         widget->class_name, widget_get_view_name(widget));
         widget_cancel(widget);
@@ -676,7 +671,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     const struct widget_view *view = widget_get_view(widget);
     if (view == NULL) {
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
                         "unknown view name for class '%s': '%s'",
                         widget->class_name, widget_get_view_name(widget));
         handler->error(error, handler_ctx);

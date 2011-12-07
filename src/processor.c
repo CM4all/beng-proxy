@@ -12,6 +12,7 @@
 #include "widget.h"
 #include "widget-lookup.h"
 #include "widget-class.h"
+#include "widget-quark.h"
 #include "growing-buffer.h"
 #include "tpool.h"
 #include "inline-widget.h"
@@ -338,8 +339,9 @@ processor_lookup_widget(struct pool *caller_pool, http_status_t status,
     assert(id != NULL);
 
     if ((options & PROCESSOR_CONTAINER) == 0) {
-        GError *error = g_error_new_literal(processor_quark(), 0,
-                                            "Not a container");
+        GError *error =
+            g_error_new_literal(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
+                                "Not a container");
         handler->error(error, handler_ctx);
         return;
     }
