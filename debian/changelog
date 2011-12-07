@@ -4,7 +4,7 @@ cm4all-beng-proxy (2.0.2) unstable; urgency=low
   * widget-http: improved HTTP error messages
   * processor: forbid widget request after URI compress failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 07 Dec 2011 16:51:58 -0000
 
 cm4all-beng-proxy (2.0.1) unstable; urgency=low
 
