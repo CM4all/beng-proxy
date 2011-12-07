@@ -1069,12 +1069,11 @@ embed_widget(struct processor *processor, struct processor_env *env,
         return NULL;
     }
 
-    widget_copy_from_request(widget, env);
-
     if (processor->replace != NULL) {
-        struct istream *istream;
+        widget_copy_from_request(widget, env);
 
-        istream = embed_inline_widget(processor->pool, env, widget);
+        struct istream *istream = embed_inline_widget(processor->pool,
+                                                      env, widget);
         if (istream != NULL)
             istream = istream_catch_new(processor->pool, istream,
                                         widget_catch_callback, widget);
@@ -1082,6 +1081,8 @@ embed_widget(struct processor *processor, struct processor_env *env,
         return istream;
     } else if (widget->id != NULL &&
                strcmp(processor->lookup_id, widget->id) == 0) {
+        widget_copy_from_request(widget, env);
+
         struct pool *caller_pool = processor->caller_pool;
         const struct widget_lookup_handler *handler = processor->handler;
         void *handler_ctx = processor->handler_ctx;
