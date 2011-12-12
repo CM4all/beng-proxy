@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.0.16) unstable; urgency=low
 
-  * 
+  * http-server: disable timeout while waiting for CGI
 
  --   
 
