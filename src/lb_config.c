@@ -45,7 +45,7 @@ config_parser_init(struct config_parser *parser, struct lb_config *config)
 static bool
 throw(GError **error_r, const char *msg)
 {
-    g_set_error(error_r, lb_config_quark(), 0, msg);
+    g_set_error(error_r, lb_config_quark(), 0, "%s", msg);
     return false;
 }
 
