@@ -109,6 +109,7 @@ event2_setbit(struct event2 *event, short mask, int condition)
 static inline void
 event2_occurred_persist(struct event2 *event, short mask)
 {
+    assert(event->locked > 0);
     assert((event->always_mask & EV_PERSIST) != 0);
 
     if (event->tv != NULL)
