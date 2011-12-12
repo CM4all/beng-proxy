@@ -95,6 +95,15 @@ event2_nand(struct event2 *event, short mask)
 }
 
 static inline void
+event2_nand_or(struct event2 *event, short nand_mask, short or_mask)
+{
+    event->new_mask = (short)((event->new_mask & ~nand_mask) | or_mask);
+
+    if (event->locked == 0)
+        event2_commit(event);
+}
+
+static inline void
 event2_setbit(struct event2 *event, short mask, int condition)
 {
     if (condition)
@@ -112,12 +121,10 @@ event2_occurred_persist(struct event2 *event, short mask)
     assert(event->locked > 0);
     assert((event->always_mask & EV_PERSIST) != 0);
 
-    if (event->tv != NULL)
-        /* if there's a configured timeout, we must refresh it in
-           event_commit()  */
-        event->new_mask |= EV_TIMEOUT;
-
-    event2_nand(event, mask);
+    event2_nand_or(event, mask,
+                   /* if there's a configured timeout, we must refresh
+                      it in event_commit()  */
+                   event->tv != NULL ? EV_TIMEOUT : 0);
 }
 
 #endif
