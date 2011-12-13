@@ -32,7 +32,10 @@ notify_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 {
     struct notify *notify = ctx;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wbad-function-cast"
     if (!g_atomic_int_compare_and_exchange(&notify->value, 1, 0))
+#pragma GCC diagnostic pop
         return;
 
     char buffer[32];
@@ -73,6 +76,9 @@ notify_free(struct notify *notify)
 void
 notify_signal(struct notify *notify)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wbad-function-cast"
     if (g_atomic_int_compare_and_exchange(&notify->value, 0, 1))
+#pragma GCC diagnostic pop
         write(notify->fds[1], notify, 1);
 }
