@@ -76,6 +76,9 @@ widget_proxy_abort(GError *error, void *ctx)
     daemon_log(2, "error from widget on %s: %s\n",
                request2->request->uri, error->message);
 
+    if (request2->env.request_body != NULL)
+        istream_free_unused(&request2->env.request_body);
+
     response_dispatch_error(request2, error);
 
     g_error_free(error);
