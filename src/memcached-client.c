@@ -250,6 +250,10 @@ memcached_client_fill_buffer(struct memcached_client *client);
  *
  */
 
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wextended-offsetof"
+#endif
+
 static inline struct memcached_client *
 istream_to_memcached_client(struct istream *istream)
 {
