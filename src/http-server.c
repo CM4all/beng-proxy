@@ -74,6 +74,16 @@ static bool
 http_server_event_callback2(struct http_server_connection *connection,
                             short event)
 {
+    if (unlikely(event == EV_TIMEOUT &&
+                 connection->request.read_state == READ_END &&
+                 (connection->event.old_mask & (EV_READ|EV_WRITE)) == EV_READ)) {
+        /* workaround: ignore timeout when the request has been
+           received (but we're still checking EV_READ to detect a
+           closed socket); this kludge is needed because of an API
+           limitation in the "event2" library */
+        return true;
+    }
+
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");
         http_server_cancel(connection);

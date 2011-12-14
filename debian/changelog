@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.2.8) unstable; urgency=low
 
-  * 
+  * merge release 1.1.21
 
  --   
 
@@ -58,6 +58,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.21) unstable; urgency=low
+
+  * merge release 1.0.16
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 14 Dec 2011 11:07:58 -0000
 
 cm4all-beng-proxy (1.1.20) unstable; urgency=low
 
@@ -219,6 +225,15 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.16) unstable; urgency=low
+
+  * http-server: disable timeout while waiting for CGI
+  * cgi: fix segmentation fault
+  * processor: discard child's request body on abort
+  * proxy-widget: discard the unused request body on error
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 14 Dec 2011 11:53:31 +0100
+
 cm4all-beng-proxy (1.0.15) unstable; urgency=low
 
   * http-client: fix assertion failure on bogus "100 Continue"
