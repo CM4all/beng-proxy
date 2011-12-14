@@ -332,7 +332,6 @@ SRC = src/main.c \
 	src/static-headers.c \
 	src/static-file.c \
 	src/widget-http.c \
-	src/widget-childc \
 	src/inline-widget.c \
 	src/frame.c \
 	src/fd-util.c \
