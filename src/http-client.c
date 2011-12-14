@@ -249,6 +249,10 @@ http_client_abort_response(struct http_client *client, GError *error)
  *
  */
 
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wextended-offsetof"
+#endif
+
 static inline struct http_client *
 response_stream_to_http_client(istream_t istream)
 {

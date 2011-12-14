@@ -262,16 +262,17 @@ cgi_input_data(const void *data, size_t length, void *ctx)
         cgi->had_output = true;
 
         size_t nbytes = istream_invoke_data(&cgi->output, data, length);
-        if (nbytes > 0 && cgi->remaining != -1)
+        if (nbytes > 0 && cgi->remaining != -1) {
             cgi->remaining -= nbytes;
 
-        if (cgi->remaining == 0) {
-            stopwatch_event(cgi->stopwatch, "end");
-            stopwatch_dump(cgi->stopwatch);
+            if (cgi->remaining == 0) {
+                stopwatch_event(cgi->stopwatch, "end");
+                stopwatch_dump(cgi->stopwatch);
 
-            istream_close_handler(cgi->input);
-            istream_deinit_eof(&cgi->output);
-            return 0;
+                istream_close_handler(cgi->input);
+                istream_deinit_eof(&cgi->output);
+                return 0;
+            }
         }
 
         return nbytes;

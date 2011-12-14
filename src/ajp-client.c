@@ -212,6 +212,10 @@ ajp_client_abort_response(struct ajp_client *client, GError *error)
  *
  */
 
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wextended-offsetof"
+#endif
+
 static inline struct ajp_client *
 istream_to_ajp(istream_t istream)
 {

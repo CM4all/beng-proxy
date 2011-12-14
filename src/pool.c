@@ -34,10 +34,8 @@
 struct allocation_info {
     struct list_head siblings;
     size_t size;
-#ifdef DUMP_POOL_ALLOC
     const char *file;
     unsigned line;
-#endif
 };
 
 struct attachment {
@@ -63,7 +61,7 @@ struct libc_pool_chunk {
 #ifdef POISON
     size_t size;
 #endif
-#ifdef DUMP_POOL_ALLOC
+#ifndef NDEBUG
     struct allocation_info info;
 #endif
     unsigned char data[sizeof(size_t)];
@@ -801,13 +799,11 @@ p_malloc_libc(pool_t pool, size_t size TRACE_ARGS_DECL)
 {
     struct libc_pool_chunk *chunk = xmalloc(sizeof(*chunk) - sizeof(chunk->data) + size);
 
-#ifdef DUMP_POOL_ALLOC
+#ifndef NDEBUG
     list_add(&chunk->info.siblings, &pool->allocations);
     chunk->info.file = file;
     chunk->info.line = line;
     chunk->info.size = size;
-#else
-    TRACE_ARGS_IGNORE;
 #endif
 
     list_add(&chunk->siblings, &pool->current_area.libc);
@@ -869,10 +865,8 @@ p_malloc_linear(pool_t pool, size_t size TRACE_ARGS_DECL)
 
 #ifndef NDEBUG
     info = p;
-#ifdef DUMP_POOL_ALLOC
     info->file = file;
     info->line = line;
-#endif
     info->size = size - LINEAR_PREFIX;
     list_add(&info->siblings, &pool->allocations);
 #endif
@@ -910,7 +904,7 @@ p_free_libc(pool_t pool, void *ptr)
 
     (void)pool;
 
-#ifdef DUMP_POOL_ALLOC
+#ifndef NDEBUG
     list_remove(&chunk->info.siblings);
 #endif
 
@@ -951,6 +945,9 @@ p_free(pool_t pool, const void *cptr)
 static inline void
 clear_memory(void *p, size_t size)
 {
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wlanguage-extension-token"
+#endif
 #if defined(__GNUC__) && defined(__x86_64__)
     size_t n = (size + 7) / 8;
     size_t __attr_unused dummy0, dummy1;
