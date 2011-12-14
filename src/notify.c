@@ -8,6 +8,8 @@
 #include "fd_util.h"
 #include "pool.h"
 
+#include <inline/compiler.h>
+
 #include <stdbool.h>
 #include <assert.h>
 #include <unistd.h>
@@ -32,7 +34,14 @@ notify_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 {
     struct notify *notify = ctx;
 
+#if GCC_CHECK_VERSION(4,6)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wbad-function-cast"
+#endif
     if (!g_atomic_int_compare_and_exchange(&notify->value, 1, 0))
+#if GCC_CHECK_VERSION(4,6)
+#pragma GCC diagnostic pop
+#endif
         return;
 
     char buffer[32];
@@ -73,6 +82,13 @@ notify_free(struct notify *notify)
 void
 notify_signal(struct notify *notify)
 {
+#if GCC_CHECK_VERSION(4,6)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wbad-function-cast"
+#endif
     if (g_atomic_int_compare_and_exchange(&notify->value, 0, 1))
+#if GCC_CHECK_VERSION(4,6)
+#pragma GCC diagnostic pop
+#endif
         write(notify->fds[1], notify, 1);
 }

@@ -47,6 +47,10 @@ http_server_consume_body(struct http_server_connection *connection)
     return true;
 }
 
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wextended-offsetof"
+#endif
+
 static inline struct http_server_connection *
 response_stream_to_connection(istream_t istream)
 {

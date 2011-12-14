@@ -653,6 +653,10 @@ static const struct istream_handler fcgi_request_stream_handler = {
  *
  */
 
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wextended-offsetof"
+#endif
+
 static inline struct fcgi_client *
 response_stream_to_client(istream_t istream)
 {

@@ -196,6 +196,10 @@ static const struct istream_handler tee_input_handler = {
  *
  */
 
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wextended-offsetof"
+#endif
+
 static inline struct istream_tee *
 istream_to_tee0(istream_t istream)
 {

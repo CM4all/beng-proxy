@@ -196,6 +196,12 @@ processor_async_abort(struct async_operation *ao)
 {
     struct processor *processor = async_to_processor(ao);
 
+    if (processor->env->request_body != NULL &&
+        processor->container->from_request.focus_ref != NULL)
+        /* the request body was not yet submitted to the focused
+           widget; dispose it now */
+        istream_free_unused(&processor->env->request_body);
+
     pool_unref(processor->caller_pool);
 
     if (processor->parser != NULL)
