@@ -110,6 +110,7 @@ if test x$enable_debug = xyes; then
 		AM_CPPFLAGS="$AM_CPPFLAGS -DVALGRIND"
 	fi
 else
+	AM_CFLAGS="$AM_CFLAGS -ffunction-sections -fdata-sections"
 	AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
 	AM_LDFLAGS="$AM_LDFLAGS -Wl,-gc-sections"
 fi
