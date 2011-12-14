@@ -21,7 +21,6 @@ endif
 LIBZ_CFLAGS =
 LIBZ_LIBS = -lz
 
-AM_CFLAGS += 
 AM_CPPFLAGS += \
 	$(LIBCM4ALL_DAEMON_CFLAGS) \
 	$(LIBCM4ALL_INLINE_CFLAGS) \
@@ -39,7 +38,7 @@ AM_LDADD = \
 	-lrt \
 	$(GLIB_LIBS) \
 	$(LIBEVENT_LIBS)
-AM_LDFLAGS = -pthread
+AM_LDFLAGS += -pthread
 
 if DEFLATE
 else
